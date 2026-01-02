@@ -22,6 +22,17 @@ const Index = () => {
     toast.success(`${relay?.name} relay ${relay?.isActive ? "disabled" : "enabled"}`);
   };
 
+  const handleRelayExclusive = (id: string) => {
+    setRelays((prev) =>
+      prev.map((relay) => ({
+        ...relay,
+        isActive: relay.id === id,
+      }))
+    );
+    const relay = relays.find((r) => r.id === id);
+    toast.success(`Showing only ${relay?.name} relay`);
+  };
+
   const handleTagToggle = (id: string) => {
     setTags((prev) =>
       prev.map((tag) => {
@@ -32,6 +43,17 @@ const Index = () => {
         return { ...tag, filterState: nextState };
       })
     );
+  };
+
+  const handleTagExclusive = (id: string) => {
+    setTags((prev) =>
+      prev.map((tag) => ({
+        ...tag,
+        filterState: tag.id === id ? "included" : "neutral",
+      }))
+    );
+    const tag = tags.find((t) => t.id === id);
+    toast.success(`Showing only #${tag?.name}`);
   };
 
   const handlePersonToggle = (id: string) => {
@@ -70,20 +92,20 @@ const Index = () => {
     );
   };
 
-  const handleNewPost = (content: string, extractedTags: string[]) => {
+  const handleNewPost = (content: string, extractedTags: string[], relay: string, postType: string) => {
     const newPost: Post = {
       id: Date.now().toString(),
       author: people.find((p) => p.id === "me") || people[0],
       content,
       tags: extractedTags,
-      relay: "company",
+      relay,
       timestamp: new Date(),
       likes: 0,
       replies: 0,
       reposts: 0,
     };
     setPosts((prev) => [newPost, ...prev]);
-    toast.success("Post published to relay!");
+    toast.success(`${postType.charAt(0).toUpperCase() + postType.slice(1)} published to ${relays.find(r => r.id === relay)?.name} relay!`);
   };
 
   // Filter posts based on active filters
@@ -116,12 +138,16 @@ const Index = () => {
         tags={tags}
         people={people}
         onRelayToggle={handleRelayToggle}
+        onRelayExclusive={handleRelayExclusive}
         onTagToggle={handleTagToggle}
+        onTagExclusive={handleTagExclusive}
         onPersonToggle={handlePersonToggle}
       />
       <div className="flex flex-1">
         <Feed
           posts={filteredPosts}
+          relays={relays}
+          tags={tags}
           onLike={handleLike}
           onRepost={handleRepost}
           onNewPost={handleNewPost}

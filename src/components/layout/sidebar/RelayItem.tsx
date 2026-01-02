@@ -12,23 +12,31 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 interface RelayItemProps {
   relay: Relay;
   onToggle: () => void;
+  onExclusive: () => void;
 }
 
-export function RelayItem({ relay, onToggle }: RelayItemProps) {
+export function RelayItem({ relay, onToggle, onExclusive }: RelayItemProps) {
   const Icon = iconMap[relay.icon] || Building2;
 
   return (
-    <button
-      onClick={onToggle}
+    <div
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2 pl-7 transition-all group hover:bg-sidebar-accent/50",
         relay.isActive && "bg-sidebar-accent"
       )}
     >
-      <div className="relative">
+      {/* Icon - click for exclusive */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onExclusive();
+        }}
+        className="relative"
+        title="Show only this relay"
+      >
         <div
           className={cn(
-            "w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
+            "w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:ring-2 hover:ring-primary/50",
             relay.isActive
               ? "bg-primary/20 text-primary"
               : "bg-muted/50 text-muted-foreground group-hover:text-sidebar-foreground"
@@ -39,20 +47,26 @@ export function RelayItem({ relay, onToggle }: RelayItemProps) {
         {relay.isActive && (
           <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary" />
         )}
-      </div>
-      <div className="flex-1 text-left">
+      </button>
+
+      {/* Name - click for toggle */}
+      <button
+        onClick={onToggle}
+        className="flex-1 text-left"
+      >
         <span
           className={cn(
-            "text-sm transition-colors",
+            "text-sm transition-colors hover:text-primary",
             relay.isActive ? "text-foreground font-medium" : "text-sidebar-foreground"
           )}
         >
           {relay.name}
         </span>
-      </div>
+      </button>
+
       {relay.postCount && relay.postCount > 0 && (
         <span className="text-xs text-muted-foreground">{relay.postCount}</span>
       )}
-    </button>
+    </div>
   );
 }

@@ -1,21 +1,21 @@
-import { Post } from "@/types";
+import { Post, Relay, Tag } from "@/types";
 import { PostCard } from "./PostCard";
 import { PostComposer } from "./PostComposer";
-import { FeedHeader } from "./FeedHeader";
 
 interface FeedProps {
   posts: Post[];
+  relays: Relay[];
+  tags: Tag[];
   onLike?: (postId: string) => void;
   onReply?: (postId: string) => void;
   onRepost?: (postId: string) => void;
-  onNewPost?: (content: string, tags: string[]) => void;
+  onNewPost?: (content: string, tags: string[], relay: string, postType: string) => void;
 }
 
-export function Feed({ posts, onLike, onReply, onRepost, onNewPost }: FeedProps) {
+export function Feed({ posts, relays, tags, onLike, onReply, onRepost, onNewPost }: FeedProps) {
   return (
     <main className="flex-1 border-r border-border max-w-2xl">
-      <FeedHeader />
-      <PostComposer onSubmit={onNewPost} />
+      <PostComposer onSubmit={onNewPost} relays={relays} tags={tags} />
       <div className="divide-y divide-border">
         {posts.map((post) => (
           <PostCard
