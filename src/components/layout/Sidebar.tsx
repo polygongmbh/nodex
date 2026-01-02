@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Radio, Hash, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Relay, Tag, Person } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { TagItem } from "./sidebar/TagItem";
@@ -12,7 +11,9 @@ interface SidebarProps {
   tags: Tag[];
   people: Person[];
   onRelayToggle: (id: string) => void;
+  onRelayExclusive: (id: string) => void;
   onTagToggle: (id: string) => void;
+  onTagExclusive: (id: string) => void;
   onPersonToggle: (id: string) => void;
 }
 
@@ -21,7 +22,9 @@ export function Sidebar({
   tags,
   people,
   onRelayToggle,
+  onRelayExclusive,
   onTagToggle,
+  onTagExclusive,
   onPersonToggle,
 }: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
@@ -67,6 +70,7 @@ export function Sidebar({
               key={relay.id}
               relay={relay}
               onToggle={() => onRelayToggle(relay.id)}
+              onExclusive={() => onRelayExclusive(relay.id)}
             />
           ))}
         </SidebarSection>
@@ -84,6 +88,7 @@ export function Sidebar({
               key={tag.id}
               tag={tag}
               onToggle={() => onTagToggle(tag.id)}
+              onExclusive={() => onTagExclusive(tag.id)}
             />
           ))}
         </SidebarSection>
