@@ -148,6 +148,7 @@ const Index = () => {
           posts={filteredPosts}
           relays={relays}
           tags={tags}
+          people={people}
           onLike={handleLike}
           onRepost={handleRepost}
           onNewPost={handleNewPost}
