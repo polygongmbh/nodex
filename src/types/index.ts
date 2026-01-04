@@ -29,7 +29,7 @@ export interface Post {
   author: Person;
   content: string;
   tags: string[];
-  relays: string[]; // Changed to support multiple relays
+  relays: string[];
   postType: PostType;
   timestamp: Date;
   likes: number;
@@ -37,6 +37,15 @@ export interface Post {
   reposts: number;
   isLiked?: boolean;
   isReposted?: boolean;
+  // Task-specific
+  isCompleted?: boolean;
+  completedBy?: string;
+  // Event/Task date
+  dueDate?: Date;
+  dueTime?: string;
+  // Reference/reply
+  replyTo?: string;
+  mentions?: string[];
 }
 
 export interface FilterState {

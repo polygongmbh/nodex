@@ -1,12 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Send, Hash, Image, AtSign, Radio, ChevronDown, MessageSquare, CheckSquare, Calendar, Gift, HelpCircle, X, FileText, Check } from "lucide-react";
+import { Send, Hash, Image, Radio, ChevronDown, MessageSquare, CheckSquare, Calendar, Gift, HelpCircle, X, FileText, Check, Clock, Reply } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Tag, Person, PostType } from "@/types";
+import { Relay, Tag, Person, PostType, Post } from "@/types";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 const postTypes: { id: PostType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "message", label: "Message", icon: MessageSquare },
@@ -18,14 +20,28 @@ const postTypes: { id: PostType; label: string; icon: React.ComponentType<{ clas
 ];
 
 interface PostComposerProps {
-  onSubmit?: (content: string, tags: string[], relays: string[], postType: string) => void;
+  onSubmit?: (content: string, tags: string[], relays: string[], postType: string, dueDate?: Date, dueTime?: string, replyTo?: string) => void;
   relays: Relay[];
   tags: Tag[];
   people: Person[];
   activePostTypes: PostType[];
+  referencedPost?: Post;
+  onClearReference?: () => void;
+  isComposing: boolean;
+  onComposingChange: (composing: boolean) => void;
 }
 
-export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }: PostComposerProps) {
+export function PostComposer({ 
+  onSubmit, 
+  relays, 
+  tags, 
+  people, 
+  activePostTypes,
+  referencedPost,
+  onClearReference,
+  isComposing,
+  onComposingChange
+}: PostComposerProps) {
   const [content, setContent] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [selectedRelays, setSelectedRelays] = useState<string[]>([]);
@@ -36,12 +52,16 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
   const [hashtagFilter, setHashtagFilter] = useState("");
   const [mentionFilter, setMentionFilter] = useState("");
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [dueTime, setDueTime] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Track previous selections to detect changes
+  // Track previous selections to detect changes (excluding bulk operations)
   const prevIncludedTagsRef = useRef<string[]>([]);
   const prevSelectedPeopleRef = useRef<string[]>([]);
+  const prevTagCountRef = useRef<number>(0);
+  const prevPeopleCountRef = useRef<number>(0);
 
   // Sync defaults from sidebar selections
   useEffect(() => {
@@ -55,76 +75,88 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
     }
   }, [activePostTypes]);
 
-  // Sync tags with content - add/remove hashtags when sidebar tags change
+  // Sync tags with content - add/remove hashtags when sidebar tags change (individual toggles only)
   useEffect(() => {
     const currentIncludedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
     const prevIncludedTags = prevIncludedTagsRef.current;
+    const totalTags = tags.length;
+    const prevTotalTags = prevTagCountRef.current;
 
-    // Find newly added tags
+    // Detect bulk toggle: if the change affects all or most tags at once, skip
     const addedTags = currentIncludedTags.filter(t => !prevIncludedTags.includes(t));
-    // Find removed tags
     const removedTags = prevIncludedTags.filter(t => !currentIncludedTags.includes(t));
+    
+    const isBulkOperation = (addedTags.length > 1 && addedTags.length === totalTags) || 
+                           (removedTags.length > 1 && removedTags.length === prevIncludedTags.length);
 
-    let newContent = content;
+    if (!isBulkOperation) {
+      let newContent = content;
 
-    // Remove tags that were deselected
-    removedTags.forEach(tag => {
-      // Remove #tag followed by optional space
-      const regex = new RegExp(`#${tag}\\s?`, 'g');
-      newContent = newContent.replace(regex, '');
-    });
+      // Remove tags that were deselected
+      removedTags.forEach(tag => {
+        const regex = new RegExp(`#${tag}\\s?`, 'g');
+        newContent = newContent.replace(regex, '');
+      });
 
-    // Add tags that were newly selected
-    addedTags.forEach(tag => {
-      // Only add if not already in content
-      if (!newContent.match(new RegExp(`#${tag}(?:\\s|$)`))) {
-        newContent = newContent.trimEnd() + (newContent.trim() ? ' ' : '') + `#${tag} `;
+      // Add tags that were newly selected
+      addedTags.forEach(tag => {
+        if (!newContent.match(new RegExp(`#${tag}(?:\\s|$)`))) {
+          newContent = newContent.trimEnd() + (newContent.trim() ? ' ' : '') + `#${tag} `;
+        }
+      });
+
+      if (newContent !== content) {
+        setContent(newContent);
       }
-    });
-
-    if (newContent !== content) {
-      setContent(newContent);
     }
 
     prevIncludedTagsRef.current = currentIncludedTags;
+    prevTagCountRef.current = totalTags;
   }, [tags]);
 
-  // Sync people with content - add/remove mentions when sidebar people change
+  // Sync people with content - add/remove mentions when sidebar people change (individual toggles only)
   useEffect(() => {
     const currentSelectedPeople = people.filter(p => p.isSelected && p.id !== "me").map(p => p.name);
     const prevSelectedPeople = prevSelectedPeopleRef.current;
+    const totalPeople = people.filter(p => p.id !== "me").length;
 
     // Find newly added people
     const addedPeople = currentSelectedPeople.filter(p => !prevSelectedPeople.includes(p));
     // Find removed people
     const removedPeople = prevSelectedPeople.filter(p => !currentSelectedPeople.includes(p));
 
-    let newContent = content;
+    // Detect bulk toggle
+    const isBulkOperation = (addedPeople.length > 1 && addedPeople.length === totalPeople) || 
+                           (removedPeople.length > 1 && removedPeople.length === prevSelectedPeople.length);
 
-    // Remove mentions that were deselected
-    removedPeople.forEach(person => {
-      // Remove @person followed by optional space
-      const regex = new RegExp(`@${person}\\s?`, 'g');
-      newContent = newContent.replace(regex, '');
-    });
+    if (!isBulkOperation) {
+      let newContent = content;
 
-    // Add mentions that were newly selected
-    addedPeople.forEach(person => {
-      // Only add if not already in content
-      if (!newContent.match(new RegExp(`@${person}(?:\\s|$)`))) {
-        newContent = newContent.trimEnd() + (newContent.trim() ? ' ' : '') + `@${person} `;
+      // Remove mentions that were deselected
+      removedPeople.forEach(person => {
+        const regex = new RegExp(`@${person}\\s?`, 'g');
+        newContent = newContent.replace(regex, '');
+      });
+
+      // Add mentions that were newly selected
+      addedPeople.forEach(person => {
+        if (!newContent.match(new RegExp(`@${person}(?:\\s|$)`))) {
+          newContent = newContent.trimEnd() + (newContent.trim() ? ' ' : '') + `@${person} `;
+        }
+      });
+
+      if (newContent !== content) {
+        setContent(newContent);
       }
-    });
-
-    if (newContent !== content) {
-      setContent(newContent);
     }
 
     prevSelectedPeopleRef.current = currentSelectedPeople;
+    prevPeopleCountRef.current = totalPeople;
   }, [people]);
 
   const handleFocus = () => {
     setIsFocused(true);
+    onComposingChange(true);
   };
 
   const handleSubmit = () => {
@@ -138,9 +170,13 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
       return;
     }
     
-    onSubmit?.(content, extractedTags, selectedRelays, postType);
+    onSubmit?.(content, extractedTags, selectedRelays, postType, dueDate, dueTime || undefined, referencedPost?.id);
     setContent("");
     setAttachments([]);
+    setDueDate(undefined);
+    setDueTime("");
+    onClearReference?.();
+    onComposingChange(false);
   };
 
   // Check if post has at least one hashtag
@@ -153,6 +189,8 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
     if (e.key === "Escape") {
       setShowHashtagSuggestions(false);
       setShowMentionSuggestions(false);
+      onComposingChange(false);
+      onClearReference?.();
     }
   };
 
@@ -190,7 +228,6 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
     setContent(newContent);
     setShowHashtagSuggestions(false);
     
-    // Focus back to textarea
     setTimeout(() => {
       textareaRef.current?.focus();
     }, 0);
@@ -205,7 +242,6 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
     setContent(newContent);
     setShowMentionSuggestions(false);
     
-    // Focus back to textarea
     setTimeout(() => {
       textareaRef.current?.focus();
     }, 0);
@@ -238,31 +274,11 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
     setHashtagFilter("");
     setShowMentionSuggestions(false);
     
-    // Set cursor position and show suggestions after state update
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
         textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
         setShowHashtagSuggestions(true);
-      }
-    }, 10);
-  };
-
-  const openMentionPicker = () => {
-    const cursorPos = textareaRef.current?.selectionStart || content.length;
-    const newContent = content.slice(0, cursorPos) + "@" + content.slice(cursorPos);
-    setContent(newContent);
-    const newCursorPos = cursorPos + 1;
-    setCursorPosition(newCursorPos);
-    setMentionFilter("");
-    setShowHashtagSuggestions(false);
-    
-    // Set cursor position and show suggestions after state update
-    setTimeout(() => {
-      if (textareaRef.current) {
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
-        setShowMentionSuggestions(true);
       }
     }, 10);
   };
@@ -282,6 +298,8 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
     .filter(r => selectedRelays.includes(r.id))
     .map(r => r.name);
 
+  const showDatePicker = postType === "task" || postType === "event";
+
   return (
     <div
       className={cn(
@@ -289,6 +307,25 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
         isFocused && "bg-card/30"
       )}
     >
+      {/* Referenced Post Preview */}
+      {referencedPost && (
+        <div className="mb-3 pl-4 border-l-2 border-primary bg-primary/5 rounded-r-lg py-2 pr-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Reply className="w-3 h-3" />
+              <span>Replying to @{referencedPost.author.name}</span>
+            </div>
+            <button 
+              onClick={onClearReference}
+              className="p-1 rounded-full hover:bg-muted"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+          <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{referencedPost.content}</p>
+        </div>
+      )}
+
       <div className="flex gap-3">
         {/* Avatar */}
         <div className="flex-shrink-0">
@@ -366,6 +403,50 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
           {postType === "blog" && (
             <div className="text-xs text-muted-foreground mt-1">
               Markdown supported: **bold**, *italic*, `code`, [link](url), # heading
+            </div>
+          )}
+
+          {/* Date/Time Picker for Tasks and Events */}
+          {showDatePicker && (
+            <div className="flex items-center gap-2 mt-2 p-2 bg-muted/30 rounded-lg">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="text-sm text-muted-foreground hover:text-foreground">
+                    {dueDate ? format(dueDate, "MMM d, yyyy") : "Set date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {dueDate && (
+                <>
+                  <Clock className="w-4 h-4 text-muted-foreground ml-2" />
+                  <input
+                    type="time"
+                    value={dueTime}
+                    onChange={(e) => setDueTime(e.target.value)}
+                    className="text-sm bg-transparent text-foreground focus:outline-none"
+                    placeholder="Set time"
+                  />
+                  <button
+                    onClick={() => {
+                      setDueDate(undefined);
+                      setDueTime("");
+                    }}
+                    className="ml-auto p-1 hover:bg-muted rounded"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -462,80 +543,55 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
                 </PopoverContent>
               </Popover>
 
-              {/* Mention Button */}
-              <button 
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  openMentionPicker();
-                }}
-                className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors" 
-                title="Mention someone"
-              >
-                <AtSign className="w-5 h-5" />
-              </button>
+              {/* Post Type Selector */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-muted transition-colors text-sm">
+                    <PostTypeIcon className="w-4 h-4 text-primary" />
+                    <span className="text-muted-foreground">{currentPostType.label}</span>
+                    <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-44 p-1" align="start">
+                  {postTypes.map((type) => {
+                    const Icon = type.icon;
+                    return (
+                      <button
+                        key={type.id}
+                        onClick={() => setPostType(type.id)}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-muted text-left",
+                          postType === type.id && "bg-primary/10"
+                        )}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span className="text-sm">{type.label}</span>
+                      </button>
+                    );
+                  })}
+                </PopoverContent>
+              </Popover>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Selected Relays Badge */}
-              <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full truncate max-w-[150px]">
-                {selectedRelayNames.length === 0 
-                  ? "Select relay(s)" 
-                  : selectedRelayNames.length === 1 
-                    ? selectedRelayNames[0] 
-                    : `${selectedRelayNames.length} relays`}
+            <div className="flex items-center gap-2">
+              {/* Relay indicator */}
+              <span className="text-xs text-muted-foreground">
+                → {selectedRelayNames.length > 0 ? selectedRelayNames.join(", ") : "No relay selected"}
               </span>
 
-              {/* Post Button with Type Selector */}
-              <div className="flex items-center">
-                <button
-                  onClick={handleSubmit}
-                  disabled={!content.trim() || !hasHashtag || selectedRelays.length === 0}
-                  title={!hasHashtag ? "Add at least one #hashtag" : selectedRelays.length === 0 ? "Select at least one relay" : undefined}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-l-full font-medium text-sm transition-all",
-                    content.trim() && hasHashtag && selectedRelays.length > 0
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow"
-                      : "bg-muted text-muted-foreground cursor-not-allowed"
-                  )}
-                >
-                  <PostTypeIcon className="w-4 h-4" />
-                  {currentPostType.label}
-                </button>
-                
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={cn(
-                        "px-2 py-2 rounded-r-full font-medium text-sm transition-all border-l border-primary-foreground/20",
-                        content.trim()
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                          : "bg-muted text-muted-foreground cursor-not-allowed"
-                      )}
-                    >
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-40 p-1" align="end">
-                    <div className="text-xs text-muted-foreground px-2 py-1.5">Post type</div>
-                    {postTypes.map((type) => {
-                      const TypeIcon = type.icon;
-                      return (
-                        <button
-                          key={type.id}
-                          onClick={() => setPostType(type.id)}
-                          className={cn(
-                            "w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-muted text-left",
-                            postType === type.id && "bg-primary/10 text-primary"
-                          )}
-                        >
-                          <TypeIcon className="w-4 h-4" />
-                          <span className="text-sm">{type.label}</span>
-                        </button>
-                      );
-                    })}
-                  </PopoverContent>
-                </Popover>
-              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={!content.trim() || !hasHashtag || selectedRelays.length === 0}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all",
+                  content.trim() && hasHashtag && selectedRelays.length > 0
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                )}
+              >
+                <Send className="w-4 h-4" />
+                Post
+              </button>
             </div>
           </div>
         </div>

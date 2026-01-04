@@ -1,33 +1,108 @@
-import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Calendar, Clock, Reply, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Post } from "@/types";
-import { formatDistanceToNow } from "date-fns";
+import { Post, Person } from "@/types";
+import { formatDistanceToNow, format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface PostCardProps {
   post: Post;
-  onLike?: () => void;
-  onReply?: () => void;
-  onRepost?: () => void;
+  currentUser?: Person;
+  isComposing?: boolean;
+  onReference?: (postId: string) => void;
+  onToggleComplete?: (postId: string) => void;
+  onViewThread?: (postId: string) => void;
+  referencedPost?: Post;
 }
 
-export function PostCard({ post, onLike, onReply, onRepost }: PostCardProps) {
+export function PostCard({ 
+  post, 
+  currentUser, 
+  isComposing, 
+  onReference, 
+  onToggleComplete,
+  onViewThread,
+  referencedPost 
+}: PostCardProps) {
   const timeAgo = formatDistanceToNow(post.timestamp, { addSuffix: true });
 
+  // Check if current user can mark task complete
+  const canCompleteTask = () => {
+    if (post.postType !== "task") return false;
+    if (!currentUser) return false;
+    
+    // Extract mentioned people from content
+    const mentionedPeople = post.content.match(/@(\w+)/g)?.map(m => m.slice(1)) || [];
+    
+    // If no one is tagged, anyone can complete
+    if (mentionedPeople.length === 0) return true;
+    
+    // Only tagged users can complete
+    return mentionedPeople.includes(currentUser.name);
+  };
+
+  const handleClick = () => {
+    if (isComposing && onReference) {
+      onReference(post.id);
+    } else if (onViewThread) {
+      onViewThread(post.id);
+    }
+  };
+
   return (
-    <article className="p-4 border-b border-border hover:bg-card/50 transition-colors animate-fade-in">
+    <article 
+      className={cn(
+        "p-4 border-b border-border transition-colors animate-fade-in",
+        isComposing ? "cursor-pointer hover:bg-primary/5 hover:ring-2 ring-primary/20" : "hover:bg-card/50",
+        post.isCompleted && "opacity-60"
+      )}
+      onClick={handleClick}
+    >
+      {/* Referenced Post Preview */}
+      {referencedPost && (
+        <div className="mb-3 pl-4 border-l-2 border-muted">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+            <Reply className="w-3 h-3" />
+            <span>Replying to @{referencedPost.author.name}</span>
+          </div>
+          <p className="text-sm text-muted-foreground line-clamp-2">{referencedPost.content}</p>
+        </div>
+      )}
+
       <div className="flex gap-3">
+        {/* Task Checkbox */}
+        {post.postType === "task" && (
+          <div className="flex-shrink-0 pt-1">
+            <Checkbox
+              checked={post.isCompleted}
+              disabled={!canCompleteTask()}
+              onCheckedChange={() => onToggleComplete?.(post.id)}
+              onClick={(e) => e.stopPropagation()}
+              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            />
+          </div>
+        )}
+
         {/* Avatar */}
         <div className="flex-shrink-0">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center text-foreground font-medium">
-            {post.author.displayName.charAt(0)}
-          </div>
+          <Avatar className="w-10 h-10">
+            {post.author.avatar ? (
+              <AvatarImage src={post.author.avatar} alt={post.author.displayName} />
+            ) : null}
+            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-foreground font-medium">
+              {post.author.displayName.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-foreground hover:underline cursor-pointer">
+            <span className={cn(
+              "font-medium text-foreground hover:underline cursor-pointer",
+              post.isCompleted && "line-through"
+            )}>
               {post.author.displayName}
             </span>
             <span className="text-muted-foreground text-sm">@{post.author.name}</span>
@@ -35,16 +110,38 @@ export function PostCard({ post, onLike, onReply, onRepost }: PostCardProps) {
             <span className="text-muted-foreground text-sm hover:underline cursor-pointer">
               {timeAgo}
             </span>
-            <button className="ml-auto p-1 rounded-full hover:bg-muted transition-colors">
+            <button 
+              className="ml-auto p-1 rounded-full hover:bg-muted transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
               <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
 
+          {/* Due Date for Tasks/Events */}
+          {(post.postType === "task" || post.postType === "event") && post.dueDate && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <Calendar className="w-3 h-3" />
+              <span>{format(post.dueDate, "MMM d, yyyy")}</span>
+              {post.dueTime && (
+                <>
+                  <Clock className="w-3 h-3 ml-2" />
+                  <span>{post.dueTime}</span>
+                </>
+              )}
+            </div>
+          )}
+
           {/* Post Content */}
-          <p className="text-foreground leading-relaxed mb-2">{post.content}</p>
+          <p className={cn(
+            "text-foreground leading-relaxed mb-2",
+            post.isCompleted && "line-through text-muted-foreground"
+          )}>
+            {post.content}
+          </p>
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
+          <div className="flex flex-wrap gap-1.5 mb-1">
             {post.tags.map((tag) => (
               <span
                 key={tag}
@@ -58,78 +155,13 @@ export function PostCard({ post, onLike, onReply, onRepost }: PostCardProps) {
             </span>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-6 -ml-2">
-            <button
-              onClick={onReply}
-              className="flex items-center gap-1.5 p-2 rounded-full hover:bg-primary/10 hover:text-primary transition-colors group"
-            >
-              <MessageCircle className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-              <span className="text-xs text-muted-foreground group-hover:text-primary">
-                {post.replies}
-              </span>
-            </button>
-
-            <button
-              onClick={onRepost}
-              className={cn(
-                "flex items-center gap-1.5 p-2 rounded-full transition-colors group",
-                post.isReposted
-                  ? "text-success"
-                  : "hover:bg-success/10 hover:text-success"
-              )}
-            >
-              <Repeat2
-                className={cn(
-                  "w-4 h-4",
-                  post.isReposted
-                    ? "text-success"
-                    : "text-muted-foreground group-hover:text-success"
-                )}
-              />
-              <span
-                className={cn(
-                  "text-xs",
-                  post.isReposted
-                    ? "text-success"
-                    : "text-muted-foreground group-hover:text-success"
-                )}
-              >
-                {post.reposts}
-              </span>
-            </button>
-
-            <button
-              onClick={onLike}
-              className={cn(
-                "flex items-center gap-1.5 p-2 rounded-full transition-colors group",
-                post.isLiked ? "text-destructive" : "hover:bg-destructive/10 hover:text-destructive"
-              )}
-            >
-              <Heart
-                className={cn(
-                  "w-4 h-4",
-                  post.isLiked
-                    ? "text-destructive fill-destructive"
-                    : "text-muted-foreground group-hover:text-destructive"
-                )}
-              />
-              <span
-                className={cn(
-                  "text-xs",
-                  post.isLiked
-                    ? "text-destructive"
-                    : "text-muted-foreground group-hover:text-destructive"
-                )}
-              >
-                {post.likes}
-              </span>
-            </button>
-
-            <button className="p-2 rounded-full hover:bg-primary/10 hover:text-primary transition-colors group">
-              <Share className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
-            </button>
-          </div>
+          {/* Completed indicator */}
+          {post.isCompleted && post.completedBy && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
+              <CheckSquare className="w-3 h-3" />
+              <span>Completed by @{post.completedBy}</span>
+            </div>
+          )}
         </div>
       </div>
     </article>

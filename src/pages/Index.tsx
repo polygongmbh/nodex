@@ -21,6 +21,8 @@ const Index = () => {
   const [posts, setPosts] = useState<Post[]>(mockPosts);
   const [activePostTypes, setActivePostTypes] = useState<PostType[]>([]);
 
+  const currentUser = people.find(p => p.id === "me");
+
   const handleRelayToggle = (id: string) => {
     setRelays((prev) =>
       prev.map((relay) =>
@@ -113,49 +115,51 @@ const Index = () => {
     toast.success(allActive ? "All post types hidden" : "All post types shown");
   };
 
-  const handleLike = (postId: string) => {
+  const handleToggleComplete = (postId: string) => {
     setPosts((prev) =>
       prev.map((post) =>
         post.id === postId
           ? {
               ...post,
-              isLiked: !post.isLiked,
-              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+              isCompleted: !post.isCompleted,
+              completedBy: !post.isCompleted ? currentUser?.name : undefined,
             }
           : post
       )
     );
+    const post = posts.find(p => p.id === postId);
+    toast.success(post?.isCompleted ? "Task reopened" : "Task completed");
   };
 
-  const handleRepost = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              isReposted: !post.isReposted,
-              reposts: post.isReposted ? post.reposts - 1 : post.reposts + 1,
-            }
-          : post
-      )
-    );
-  };
-
-  const handleNewPost = (content: string, extractedTags: string[], relays: string[], postType: string) => {
+  const handleNewPost = (content: string, extractedTags: string[], relayIds: string[], postType: string, dueDate?: Date, dueTime?: string, replyTo?: string) => {
     const newPost: Post = {
       id: Date.now().toString(),
       author: people.find((p) => p.id === "me") || people[0],
       content,
       tags: extractedTags,
-      relays,
+      relays: relayIds,
       postType: postType as PostType,
       timestamp: new Date(),
       likes: 0,
       replies: 0,
       reposts: 0,
+      dueDate,
+      dueTime,
+      replyTo,
     };
     setPosts((prev) => [newPost, ...prev]);
-    const relayNames = relays.map(id => relays.find(r => r === id) || id).join(", ");
+    
+    // Increment reply count on parent post
+    if (replyTo) {
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === replyTo
+            ? { ...post, replies: post.replies + 1 }
+            : post
+        )
+      );
+    }
+    
     toast.success(`${postType.charAt(0).toUpperCase() + postType.slice(1)} published!`);
   };
 
@@ -208,13 +212,14 @@ const Index = () => {
       />
       <Feed
         posts={filteredPosts}
+        allPosts={posts}
         relays={relays}
         tags={tags}
         people={people}
         activePostTypes={activePostTypes}
-        onLike={handleLike}
-        onRepost={handleRepost}
+        currentUser={currentUser}
         onNewPost={handleNewPost}
+        onToggleComplete={handleToggleComplete}
       />
     </div>
   );
