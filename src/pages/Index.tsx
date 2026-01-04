@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Feed } from "@/components/feed/Feed";
-import { RightSidebar } from "@/components/widgets/RightSidebar";
 import { mockRelays, mockTags, mockPeople, mockPosts } from "@/data/mockData";
 import { Relay, Tag, Person, Post, PostType } from "@/types";
 import { toast } from "sonner";
@@ -9,11 +8,18 @@ import { toast } from "sonner";
 const ALL_POST_TYPES: PostType[] = ["message", "task", "event", "offer", "request", "blog"];
 
 const Index = () => {
-  const [relays, setRelays] = useState<Relay[]>(mockRelays);
-  const [tags, setTags] = useState<Tag[]>(mockTags);
-  const [people, setPeople] = useState<Person[]>(mockPeople);
+  // Initialize all filters as unselected
+  const [relays, setRelays] = useState<Relay[]>(
+    mockRelays.map((r) => ({ ...r, isActive: false }))
+  );
+  const [tags, setTags] = useState<Tag[]>(
+    mockTags.map((t) => ({ ...t, filterState: "neutral" as const }))
+  );
+  const [people, setPeople] = useState<Person[]>(
+    mockPeople.map((p) => ({ ...p, isSelected: false }))
+  );
   const [posts, setPosts] = useState<Post[]>(mockPosts);
-  const [activePostTypes, setActivePostTypes] = useState<PostType[]>(ALL_POST_TYPES);
+  const [activePostTypes, setActivePostTypes] = useState<PostType[]>([]);
 
   const handleRelayToggle = (id: string) => {
     setRelays((prev) =>
@@ -199,18 +205,15 @@ const Index = () => {
         onToggleAllPeople={handleToggleAllPeople}
         onToggleAllPostTypes={handleToggleAllPostTypes}
       />
-      <div className="flex flex-1">
-        <Feed
-          posts={filteredPosts}
-          relays={relays}
-          tags={tags}
-          people={people}
-          onLike={handleLike}
-          onRepost={handleRepost}
-          onNewPost={handleNewPost}
-        />
-        <RightSidebar />
-      </div>
+      <Feed
+        posts={filteredPosts}
+        relays={relays}
+        tags={tags}
+        people={people}
+        onLike={handleLike}
+        onRepost={handleRepost}
+        onNewPost={handleNewPost}
+      />
     </div>
   );
 };
