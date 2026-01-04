@@ -1,12 +1,24 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Send, Hash, Image, Radio, ChevronDown, MessageSquare, CheckSquare, Calendar, Gift, HelpCircle, X, FileText, Check, Clock, Reply } from "lucide-react";
+import {
+  Send,
+  Hash,
+  Image,
+  Radio,
+  ChevronDown,
+  MessageSquare,
+  CheckSquare,
+  Calendar,
+  Gift,
+  HelpCircle,
+  X,
+  FileText,
+  Check,
+  Clock,
+  Reply,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Tag, Person, PostType, Post } from "@/types";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
@@ -20,7 +32,15 @@ const postTypes: { id: PostType; label: string; icon: React.ComponentType<{ clas
 ];
 
 interface PostComposerProps {
-  onSubmit?: (content: string, tags: string[], relays: string[], postType: string, dueDate?: Date, dueTime?: string, replyTo?: string) => void;
+  onSubmit?: (
+    content: string,
+    tags: string[],
+    relays: string[],
+    postType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    replyTo?: string,
+  ) => void;
   relays: Relay[];
   tags: Tag[];
   people: Person[];
@@ -31,16 +51,16 @@ interface PostComposerProps {
   onComposingChange: (composing: boolean) => void;
 }
 
-export function PostComposer({ 
-  onSubmit, 
-  relays, 
-  tags, 
-  people, 
+export function PostComposer({
+  onSubmit,
+  relays,
+  tags,
+  people,
   activePostTypes,
   referencedPost,
   onClearReference,
   isComposing,
-  onComposingChange
+  onComposingChange,
 }: PostComposerProps) {
   const [content, setContent] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -65,7 +85,7 @@ export function PostComposer({
 
   // Sync defaults from sidebar selections
   useEffect(() => {
-    const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
+    const activeRelayIds = relays.filter((r) => r.isActive).map((r) => r.id);
     setSelectedRelays(activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean));
   }, [relays]);
 
@@ -77,31 +97,32 @@ export function PostComposer({
 
   // Sync tags with content - add/remove hashtags when sidebar tags change (individual toggles only)
   useEffect(() => {
-    const currentIncludedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
+    const currentIncludedTags = tags.filter((t) => t.filterState === "included").map((t) => t.name);
     const prevIncludedTags = prevIncludedTagsRef.current;
     const totalTags = tags.length;
     const prevTotalTags = prevTagCountRef.current;
 
     // Detect bulk toggle: if the change affects all or most tags at once, skip
-    const addedTags = currentIncludedTags.filter(t => !prevIncludedTags.includes(t));
-    const removedTags = prevIncludedTags.filter(t => !currentIncludedTags.includes(t));
-    
-    const isBulkOperation = (addedTags.length > 1 && addedTags.length === totalTags) || 
-                           (removedTags.length > 1 && removedTags.length === prevIncludedTags.length);
+    const addedTags = currentIncludedTags.filter((t) => !prevIncludedTags.includes(t));
+    const removedTags = prevIncludedTags.filter((t) => !currentIncludedTags.includes(t));
+
+    const isBulkOperation =
+      (addedTags.length > 1 && addedTags.length === totalTags) ||
+      (removedTags.length > 1 && removedTags.length === prevIncludedTags.length);
 
     if (!isBulkOperation) {
       let newContent = content;
 
       // Remove tags that were deselected
-      removedTags.forEach(tag => {
-        const regex = new RegExp(`#${tag}\\s?`, 'g');
-        newContent = newContent.replace(regex, '');
+      removedTags.forEach((tag) => {
+        const regex = new RegExp(`#${tag}\\s?`, "g");
+        newContent = newContent.replace(regex, "");
       });
 
       // Add tags that were newly selected
-      addedTags.forEach(tag => {
+      addedTags.forEach((tag) => {
         if (!newContent.match(new RegExp(`#${tag}(?:\\s|$)`))) {
-          newContent = newContent.trimEnd() + (newContent.trim() ? ' ' : '') + `#${tag} `;
+          newContent = newContent.trimEnd() + (newContent.trim() ? " " : "") + `#${tag} `;
         }
       });
 
@@ -116,32 +137,33 @@ export function PostComposer({
 
   // Sync people with content - add/remove mentions when sidebar people change (individual toggles only)
   useEffect(() => {
-    const currentSelectedPeople = people.filter(p => p.isSelected && p.id !== "me").map(p => p.name);
+    const currentSelectedPeople = people.filter((p) => p.isSelected && p.id !== "me").map((p) => p.name);
     const prevSelectedPeople = prevSelectedPeopleRef.current;
-    const totalPeople = people.filter(p => p.id !== "me").length;
+    const totalPeople = people.filter((p) => p.id !== "me").length;
 
     // Find newly added people
-    const addedPeople = currentSelectedPeople.filter(p => !prevSelectedPeople.includes(p));
+    const addedPeople = currentSelectedPeople.filter((p) => !prevSelectedPeople.includes(p));
     // Find removed people
-    const removedPeople = prevSelectedPeople.filter(p => !currentSelectedPeople.includes(p));
+    const removedPeople = prevSelectedPeople.filter((p) => !currentSelectedPeople.includes(p));
 
     // Detect bulk toggle
-    const isBulkOperation = (addedPeople.length > 1 && addedPeople.length === totalPeople) || 
-                           (removedPeople.length > 1 && removedPeople.length === prevSelectedPeople.length);
+    const isBulkOperation =
+      (addedPeople.length > 1 && addedPeople.length === totalPeople) ||
+      (removedPeople.length > 1 && removedPeople.length === prevSelectedPeople.length);
 
     if (!isBulkOperation) {
       let newContent = content;
 
       // Remove mentions that were deselected
-      removedPeople.forEach(person => {
-        const regex = new RegExp(`@${person}\\s?`, 'g');
-        newContent = newContent.replace(regex, '');
+      removedPeople.forEach((person) => {
+        const regex = new RegExp(`@${person}\\s?`, "g");
+        newContent = newContent.replace(regex, "");
       });
 
       // Add mentions that were newly selected
-      addedPeople.forEach(person => {
+      addedPeople.forEach((person) => {
         if (!newContent.match(new RegExp(`@${person}(?:\\s|$)`))) {
-          newContent = newContent.trimEnd() + (newContent.trim() ? ' ' : '') + `@${person} `;
+          newContent = newContent.trimEnd() + (newContent.trim() ? " " : "") + `@${person} `;
         }
       });
 
@@ -161,15 +183,15 @@ export function PostComposer({
 
   const handleSubmit = () => {
     if (!content.trim() || selectedRelays.length === 0) return;
-    
+
     // Extract tags from content
     const extractedTags = content.match(/#(\w+)/g)?.map((t) => t.slice(1)) || [];
-    
+
     // Require at least one hashtag
     if (extractedTags.length === 0) {
       return;
     }
-    
+
     onSubmit?.(content, extractedTags, selectedRelays, postType, dueDate, dueTime || undefined, referencedPost?.id);
     setContent("");
     setAttachments([]);
@@ -204,7 +226,7 @@ export function PostComposer({
     const textBeforeCursor = newContent.slice(0, cursorPos);
     const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
     const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
-    
+
     if (hashtagMatch) {
       setHashtagFilter(hashtagMatch[1].toLowerCase());
       setShowHashtagSuggestions(true);
@@ -219,50 +241,54 @@ export function PostComposer({
     }
   };
 
-  const insertHashtag = useCallback((tagName: string) => {
-    const textBeforeCursor = content.slice(0, cursorPosition);
-    const textAfterCursor = content.slice(cursorPosition);
-    const hashtagStart = textBeforeCursor.lastIndexOf("#");
-    
-    const newContent = textBeforeCursor.slice(0, hashtagStart) + `#${tagName} ` + textAfterCursor;
-    setContent(newContent);
-    setShowHashtagSuggestions(false);
-    
-    setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 0);
-  }, [content, cursorPosition]);
+  const insertHashtag = useCallback(
+    (tagName: string) => {
+      const textBeforeCursor = content.slice(0, cursorPosition);
+      const textAfterCursor = content.slice(cursorPosition);
+      const hashtagStart = textBeforeCursor.lastIndexOf("#");
 
-  const insertMention = useCallback((personName: string) => {
-    const textBeforeCursor = content.slice(0, cursorPosition);
-    const textAfterCursor = content.slice(cursorPosition);
-    const mentionStart = textBeforeCursor.lastIndexOf("@");
-    
-    const newContent = textBeforeCursor.slice(0, mentionStart) + `@${personName} ` + textAfterCursor;
-    setContent(newContent);
-    setShowMentionSuggestions(false);
-    
-    setTimeout(() => {
-      textareaRef.current?.focus();
-    }, 0);
-  }, [content, cursorPosition]);
+      const newContent = textBeforeCursor.slice(0, hashtagStart) + `#${tagName} ` + textAfterCursor;
+      setContent(newContent);
+      setShowHashtagSuggestions(false);
 
-  const filteredTags = tags.filter(tag => 
-    tag.name.toLowerCase().includes(hashtagFilter)
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
+    },
+    [content, cursorPosition],
   );
 
-  const filteredPeople = people.filter(person => 
-    person.name.toLowerCase().includes(mentionFilter) ||
-    person.displayName.toLowerCase().includes(mentionFilter)
+  const insertMention = useCallback(
+    (personName: string) => {
+      const textBeforeCursor = content.slice(0, cursorPosition);
+      const textAfterCursor = content.slice(cursorPosition);
+      const mentionStart = textBeforeCursor.lastIndexOf("@");
+
+      const newContent = textBeforeCursor.slice(0, mentionStart) + `@${personName} ` + textAfterCursor;
+      setContent(newContent);
+      setShowMentionSuggestions(false);
+
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
+    },
+    [content, cursorPosition],
+  );
+
+  const filteredTags = tags.filter((tag) => tag.name.toLowerCase().includes(hashtagFilter));
+
+  const filteredPeople = people.filter(
+    (person) =>
+      person.name.toLowerCase().includes(mentionFilter) || person.displayName.toLowerCase().includes(mentionFilter),
   );
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setAttachments(prev => [...prev, ...files]);
+    setAttachments((prev) => [...prev, ...files]);
   };
 
   const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const openHashtagPicker = () => {
@@ -273,7 +299,7 @@ export function PostComposer({
     setCursorPosition(newCursorPos);
     setHashtagFilter("");
     setShowMentionSuggestions(false);
-    
+
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
@@ -291,7 +317,7 @@ export function PostComposer({
     setCursorPosition(newCursorPos);
     setMentionFilter("");
     setShowHashtagSuggestions(false);
-    
+
     setTimeout(() => {
       if (textareaRef.current) {
         textareaRef.current.focus();
@@ -302,29 +328,18 @@ export function PostComposer({
   };
 
   const toggleRelay = (relayId: string) => {
-    setSelectedRelays(prev => 
-      prev.includes(relayId) 
-        ? prev.filter(id => id !== relayId)
-        : [...prev, relayId]
-    );
+    setSelectedRelays((prev) => (prev.includes(relayId) ? prev.filter((id) => id !== relayId) : [...prev, relayId]));
   };
 
-  const currentPostType = postTypes.find(p => p.id === postType) || postTypes[0];
+  const currentPostType = postTypes.find((p) => p.id === postType) || postTypes[0];
   const PostTypeIcon = currentPostType.icon;
 
-  const selectedRelayNames = relays
-    .filter(r => selectedRelays.includes(r.id))
-    .map(r => r.name);
+  const selectedRelayNames = relays.filter((r) => selectedRelays.includes(r.id)).map((r) => r.name);
 
   const showDatePicker = postType === "task" || postType === "event";
 
   return (
-    <div
-      className={cn(
-        "border-b border-border p-4 transition-all",
-        isFocused && "bg-card/30"
-      )}
-    >
+    <div className={cn("border-b border-border p-4 transition-all", isFocused && "bg-card/30")}>
       {/* Referenced Post Preview */}
       {referencedPost && (
         <div className="mb-3 pl-4 border-l-2 border-primary bg-primary/5 rounded-r-lg py-2 pr-2">
@@ -333,10 +348,7 @@ export function PostComposer({
               <Reply className="w-3 h-3" />
               <span>Replying to @{referencedPost.author.name}</span>
             </div>
-            <button 
-              onClick={onClearReference}
-              className="p-1 rounded-full hover:bg-muted"
-            >
+            <button onClick={onClearReference} className="p-1 rounded-full hover:bg-muted">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -363,10 +375,14 @@ export function PostComposer({
               setIsFocused(false);
             }}
             onKeyDown={handleKeyDown}
-            placeholder={postType === "blog" ? "Write your blog post... Supports **bold**, *italic*, and [links](url)" : "What's happening? Use #tags to categorize..."}
+            placeholder={
+              postType === "blog"
+                ? "Write your blog post... Supports **bold**, *italic*, and [links](url)"
+                : "What's happening? Use #tags to categorize..."
+            }
             className={cn(
               "w-full bg-transparent resize-none text-foreground placeholder:text-muted-foreground focus:outline-none leading-relaxed",
-              postType === "blog" ? "text-base min-h-[120px]" : "text-lg min-h-[60px]"
+              postType === "blog" ? "text-base min-h-[120px]" : "text-lg min-h-[60px]",
             )}
             rows={postType === "blog" ? 6 : 2}
           />
@@ -409,9 +425,7 @@ export function PostComposer({
                     <span className="text-sm font-medium">{person.displayName}</span>
                     <span className="text-xs text-muted-foreground">@{person.name}</span>
                   </div>
-                  {person.isOnline && (
-                    <div className="ml-auto w-2 h-2 rounded-full bg-green-500" />
-                  )}
+                  {person.isOnline && <div className="ml-auto w-2 h-2 rounded-full bg-green-500" />}
                 </button>
               ))}
             </div>
@@ -491,8 +505,25 @@ export function PostComposer({
           {/* Actions */}
           <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
             <div className="flex items-center gap-1">
+              {/* Attachment Button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
+                title="Add attachment"
+              >
+                <Image className="w-5 h-5" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
               {/* Hashtag Button */}
-              <button 
+              <button
                 onMouseDown={(e) => {
                   e.preventDefault();
                   openHashtagPicker();
@@ -504,7 +535,7 @@ export function PostComposer({
               </button>
 
               {/* Mention Button */}
-              <button 
+              <button
                 onMouseDown={(e) => {
                   e.preventDefault();
                   openMentionPicker();
@@ -515,11 +546,10 @@ export function PostComposer({
                 <span className="text-lg font-semibold">@</span>
               </button>
 
-
               {/* Relay Selector (Multi-select) */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <button 
+                  <button
                     className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors flex items-center gap-1"
                     title="Select relays"
                   >
@@ -537,18 +567,16 @@ export function PostComposer({
                       onClick={() => toggleRelay(relay.id)}
                       className={cn(
                         "w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-muted text-left",
-                        selectedRelays.includes(relay.id) && "bg-primary/10"
+                        selectedRelays.includes(relay.id) && "bg-primary/10",
                       )}
                     >
-                      <div className={cn(
-                        "w-4 h-4 rounded border flex items-center justify-center",
-                        selectedRelays.includes(relay.id) 
-                          ? "bg-primary border-primary" 
-                          : "border-muted-foreground"
-                      )}>
-                        {selectedRelays.includes(relay.id) && (
-                          <Check className="w-3 h-3 text-primary-foreground" />
+                      <div
+                        className={cn(
+                          "w-4 h-4 rounded border flex items-center justify-center",
+                          selectedRelays.includes(relay.id) ? "bg-primary border-primary" : "border-muted-foreground",
                         )}
+                      >
+                        {selectedRelays.includes(relay.id) && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
                       <Radio className="w-4 h-4" />
                       <span className="text-sm">{relay.name}</span>
@@ -575,7 +603,7 @@ export function PostComposer({
                         onClick={() => setPostType(type.id)}
                         className={cn(
                           "w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-muted text-left",
-                          postType === type.id && "bg-primary/10"
+                          postType === type.id && "bg-primary/10",
                         )}
                       >
                         <Icon className="w-4 h-4" />
@@ -588,23 +616,6 @@ export function PostComposer({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Attachment Button */}
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
-                title="Add attachment"
-              >
-                <Image className="w-5 h-5" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-
               {/* Relay indicator */}
               <span className="text-xs text-muted-foreground">
                 → {selectedRelayNames.length > 0 ? selectedRelayNames.join(", ") : "No relay selected"}
@@ -617,7 +628,7 @@ export function PostComposer({
                   "flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all",
                   content.trim() && hasHashtag && selectedRelays.length > 0
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                    : "bg-muted text-muted-foreground cursor-not-allowed",
                 )}
               >
                 <Send className="w-4 h-4" />
