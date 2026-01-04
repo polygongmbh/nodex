@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { Post, Relay, Tag, Person } from "@/types";
+import { Post, Relay, Tag, Person, PostType } from "@/types";
 import { PostCard } from "./PostCard";
 import { PostComposer } from "./PostComposer";
 
@@ -9,13 +9,14 @@ interface FeedProps {
   relays: Relay[];
   tags: Tag[];
   people: Person[];
+  activePostTypes: PostType[];
   onLike?: (postId: string) => void;
   onReply?: (postId: string) => void;
   onRepost?: (postId: string) => void;
-  onNewPost?: (content: string, tags: string[], relay: string, postType: string) => void;
+  onNewPost?: (content: string, tags: string[], relays: string[], postType: string) => void;
 }
 
-export function Feed({ posts, relays, tags, people, onLike, onReply, onRepost, onNewPost }: FeedProps) {
+export function Feed({ posts, relays, tags, people, activePostTypes, onLike, onReply, onRepost, onNewPost }: FeedProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredPosts = posts.filter((post) =>
@@ -24,7 +25,7 @@ export function Feed({ posts, relays, tags, people, onLike, onReply, onRepost, o
 
   return (
     <main className="flex-1 border-r border-border max-w-2xl flex flex-col h-screen">
-      <PostComposer onSubmit={onNewPost} relays={relays} tags={tags} people={people} />
+      <PostComposer onSubmit={onNewPost} relays={relays} tags={tags} people={people} activePostTypes={activePostTypes} />
       <div className="flex-1 overflow-y-auto divide-y divide-border">
         {filteredPosts.map((post) => (
           <PostCard

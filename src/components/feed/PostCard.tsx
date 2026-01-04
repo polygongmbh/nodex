@@ -54,7 +54,7 @@ export function PostCard({ post, onLike, onReply, onRepost }: PostCardProps) {
               </span>
             ))}
             <span className="px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground">
-              via {post.relay}
+              via {post.relays.join(", ")}
             </span>
           </div>
 

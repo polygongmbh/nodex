@@ -1,14 +1,12 @@
-import { useState, useRef, useCallback } from "react";
-import { Send, Hash, Image, AtSign, Radio, ChevronDown, MessageSquare, CheckSquare, Calendar, Gift, HelpCircle, X, FileText } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Send, Hash, Image, AtSign, Radio, ChevronDown, MessageSquare, CheckSquare, Calendar, Gift, HelpCircle, X, FileText, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Tag, Person } from "@/types";
+import { Relay, Tag, Person, PostType } from "@/types";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-type PostType = "message" | "task" | "event" | "offer" | "request" | "blog";
 
 const postTypes: { id: PostType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "message", label: "Message", icon: MessageSquare },
@@ -20,16 +18,17 @@ const postTypes: { id: PostType; label: string; icon: React.ComponentType<{ clas
 ];
 
 interface PostComposerProps {
-  onSubmit?: (content: string, tags: string[], relay: string, postType: string) => void;
+  onSubmit?: (content: string, tags: string[], relays: string[], postType: string) => void;
   relays: Relay[];
   tags: Tag[];
   people: Person[];
+  activePostTypes: PostType[];
 }
 
-export function PostComposer({ onSubmit, relays, tags, people }: PostComposerProps) {
+export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }: PostComposerProps) {
   const [content, setContent] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [selectedRelay, setSelectedRelay] = useState<string>(relays.find(r => r.isActive)?.id || relays[0]?.id || "");
+  const [selectedRelays, setSelectedRelays] = useState<string[]>([]);
   const [postType, setPostType] = useState<PostType>("message");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
@@ -40,8 +39,57 @@ export function PostComposer({ onSubmit, relays, tags, people }: PostComposerPro
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync defaults from sidebar selections
+  useEffect(() => {
+    const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
+    setSelectedRelays(activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean));
+  }, [relays]);
+
+  useEffect(() => {
+    if (activePostTypes.length === 1) {
+      setPostType(activePostTypes[0]);
+    }
+  }, [activePostTypes]);
+
+  // Pre-fill content with selected tags and people
+  const getDefaultContent = useCallback(() => {
+    const parts: string[] = [];
+    
+    // Add selected people as mentions
+    const selectedPeople = people.filter(p => p.isSelected && p.id !== "me");
+    if (selectedPeople.length > 0) {
+      parts.push(selectedPeople.map(p => `@${p.name}`).join(" "));
+    }
+    
+    // Add included tags as hashtags
+    const includedTags = tags.filter(t => t.filterState === "included");
+    if (includedTags.length > 0) {
+      parts.push(includedTags.map(t => `#${t.name}`).join(" "));
+    }
+    
+    return parts.join(" ");
+  }, [people, tags]);
+
+  // Apply defaults when focusing on empty composer
+  const handleFocus = () => {
+    setIsFocused(true);
+    if (content === "") {
+      const defaults = getDefaultContent();
+      if (defaults) {
+        setContent(defaults + " ");
+        // Move cursor to end
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.selectionStart = defaults.length + 1;
+            textareaRef.current.selectionEnd = defaults.length + 1;
+          }
+        }, 0);
+      }
+    }
+  };
+
   const handleSubmit = () => {
-    if (!content.trim()) return;
+    if (!content.trim() || selectedRelays.length === 0) return;
     
     // Extract tags from content
     const extractedTags = content.match(/#(\w+)/g)?.map((t) => t.slice(1)) || [];
@@ -51,7 +99,7 @@ export function PostComposer({ onSubmit, relays, tags, people }: PostComposerPro
       return;
     }
     
-    onSubmit?.(content, extractedTags, selectedRelay, postType);
+    onSubmit?.(content, extractedTags, selectedRelays, postType);
     setContent("");
     setAttachments([]);
   };
@@ -180,8 +228,20 @@ export function PostComposer({ onSubmit, relays, tags, people }: PostComposerPro
     }, 10);
   };
 
+  const toggleRelay = (relayId: string) => {
+    setSelectedRelays(prev => 
+      prev.includes(relayId) 
+        ? prev.filter(id => id !== relayId)
+        : [...prev, relayId]
+    );
+  };
+
   const currentPostType = postTypes.find(p => p.id === postType) || postTypes[0];
   const PostTypeIcon = currentPostType.icon;
+
+  const selectedRelayNames = relays
+    .filter(r => selectedRelays.includes(r.id))
+    .map(r => r.name);
 
   return (
     <div
@@ -204,7 +264,7 @@ export function PostComposer({ onSubmit, relays, tags, people }: PostComposerPro
             ref={textareaRef}
             value={content}
             onChange={handleContentChange}
-            onFocus={() => setIsFocused(true)}
+            onFocus={handleFocus}
             onBlur={() => {
               setIsFocused(false);
             }}
@@ -322,32 +382,42 @@ export function PostComposer({ onSubmit, relays, tags, people }: PostComposerPro
                 className="hidden"
               />
 
-              {/* Relay Selector */}
+              {/* Relay Selector (Multi-select) */}
               <Popover>
                 <PopoverTrigger asChild>
                   <button 
                     className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors flex items-center gap-1"
-                    title="Select relay"
+                    title="Select relays"
                   >
                     <Radio className="w-5 h-5" />
+                    {selectedRelays.length > 1 && (
+                      <span className="text-xs bg-primary/20 px-1.5 rounded-full">{selectedRelays.length}</span>
+                    )}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-48 p-1" align="start">
-                  <div className="text-xs text-muted-foreground px-2 py-1.5">Post to relay</div>
+                <PopoverContent className="w-52 p-1" align="start">
+                  <div className="text-xs text-muted-foreground px-2 py-1.5">Post to relays (multi-select)</div>
                   {relays.map((relay) => (
                     <button
                       key={relay.id}
-                      onClick={() => setSelectedRelay(relay.id)}
+                      onClick={() => toggleRelay(relay.id)}
                       className={cn(
                         "w-full flex items-center gap-2 px-2 py-2 rounded hover:bg-muted text-left",
-                        selectedRelay === relay.id && "bg-primary/10 text-primary"
+                        selectedRelays.includes(relay.id) && "bg-primary/10"
                       )}
                     >
+                      <div className={cn(
+                        "w-4 h-4 rounded border flex items-center justify-center",
+                        selectedRelays.includes(relay.id) 
+                          ? "bg-primary border-primary" 
+                          : "border-muted-foreground"
+                      )}>
+                        {selectedRelays.includes(relay.id) && (
+                          <Check className="w-3 h-3 text-primary-foreground" />
+                        )}
+                      </div>
                       <Radio className="w-4 h-4" />
                       <span className="text-sm">{relay.name}</span>
-                      {selectedRelay === relay.id && (
-                        <div className="ml-auto w-2 h-2 rounded-full bg-primary" />
-                      )}
                     </button>
                   ))}
                 </PopoverContent>
@@ -367,20 +437,24 @@ export function PostComposer({ onSubmit, relays, tags, people }: PostComposerPro
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Selected Relay Badge */}
-              <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                {relays.find(r => r.id === selectedRelay)?.name || "Select relay"}
+              {/* Selected Relays Badge */}
+              <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full truncate max-w-[150px]">
+                {selectedRelayNames.length === 0 
+                  ? "Select relay(s)" 
+                  : selectedRelayNames.length === 1 
+                    ? selectedRelayNames[0] 
+                    : `${selectedRelayNames.length} relays`}
               </span>
 
               {/* Post Button with Type Selector */}
               <div className="flex items-center">
                 <button
                   onClick={handleSubmit}
-                  disabled={!content.trim() || !hasHashtag}
-                  title={!hasHashtag ? "Add at least one #hashtag" : undefined}
+                  disabled={!content.trim() || !hasHashtag || selectedRelays.length === 0}
+                  title={!hasHashtag ? "Add at least one #hashtag" : selectedRelays.length === 0 ? "Select at least one relay" : undefined}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2 rounded-l-full font-medium text-sm transition-all",
-                    content.trim() && hasHashtag
+                    content.trim() && hasHashtag && selectedRelays.length > 0
                       ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow"
                       : "bg-muted text-muted-foreground cursor-not-allowed"
                   )}
