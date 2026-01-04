@@ -22,12 +22,15 @@ export interface Person {
   isSelected: boolean;
 }
 
+export type PostType = "message" | "task" | "event" | "offer" | "request" | "blog";
+
 export interface Post {
   id: string;
   author: Person;
   content: string;
   tags: string[];
   relay: string;
+  postType: PostType;
   timestamp: Date;
   likes: number;
   replies: number;

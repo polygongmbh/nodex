@@ -3,14 +3,17 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Feed } from "@/components/feed/Feed";
 import { RightSidebar } from "@/components/widgets/RightSidebar";
 import { mockRelays, mockTags, mockPeople, mockPosts } from "@/data/mockData";
-import { Relay, Tag, Person, Post } from "@/types";
+import { Relay, Tag, Person, Post, PostType } from "@/types";
 import { toast } from "sonner";
+
+const ALL_POST_TYPES: PostType[] = ["message", "task", "event", "offer", "request", "blog"];
 
 const Index = () => {
   const [relays, setRelays] = useState<Relay[]>(mockRelays);
   const [tags, setTags] = useState<Tag[]>(mockTags);
   const [people, setPeople] = useState<Person[]>(mockPeople);
   const [posts, setPosts] = useState<Post[]>(mockPosts);
+  const [activePostTypes, setActivePostTypes] = useState<PostType[]>(ALL_POST_TYPES);
 
   const handleRelayToggle = (id: string) => {
     setRelays((prev) =>
@@ -31,6 +34,12 @@ const Index = () => {
     );
     const relay = relays.find((r) => r.id === id);
     toast.success(`Showing only ${relay?.name} relay`);
+  };
+
+  const handleToggleAllRelays = () => {
+    const allActive = relays.every((r) => r.isActive);
+    setRelays((prev) => prev.map((relay) => ({ ...relay, isActive: !allActive })));
+    toast.success(allActive ? "All relays disabled" : "All relays enabled");
   };
 
   const handleTagToggle = (id: string) => {
@@ -56,12 +65,46 @@ const Index = () => {
     toast.success(`Showing only #${tag?.name}`);
   };
 
+  const handleToggleAllTags = () => {
+    const allNeutral = tags.every((t) => t.filterState === "neutral");
+    setTags((prev) =>
+      prev.map((tag) => ({
+        ...tag,
+        filterState: allNeutral ? "included" : "neutral",
+      }))
+    );
+    toast.success(allNeutral ? "All tags included" : "All tags reset");
+  };
+
   const handlePersonToggle = (id: string) => {
     setPeople((prev) =>
       prev.map((person) =>
         person.id === id ? { ...person, isSelected: !person.isSelected } : person
       )
     );
+  };
+
+  const handleToggleAllPeople = () => {
+    const allSelected = people.every((p) => p.isSelected);
+    setPeople((prev) => prev.map((person) => ({ ...person, isSelected: !allSelected })));
+    toast.success(allSelected ? "All people deselected" : "All people selected");
+  };
+
+  const handlePostTypeToggle = (type: PostType) => {
+    setActivePostTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
+
+  const handlePostTypeExclusive = (type: PostType) => {
+    setActivePostTypes([type]);
+    toast.success(`Showing only ${type}s`);
+  };
+
+  const handleToggleAllPostTypes = () => {
+    const allActive = activePostTypes.length === ALL_POST_TYPES.length;
+    setActivePostTypes(allActive ? [] : ALL_POST_TYPES);
+    toast.success(allActive ? "All post types hidden" : "All post types shown");
   };
 
   const handleLike = (postId: string) => {
@@ -99,6 +142,7 @@ const Index = () => {
       content,
       tags: extractedTags,
       relay,
+      postType: postType as PostType,
       timestamp: new Date(),
       likes: 0,
       replies: 0,
@@ -113,6 +157,11 @@ const Index = () => {
     // Filter by active relays
     const activeRelayIds = relays.filter((r) => r.isActive).map((r) => r.id);
     if (activeRelayIds.length > 0 && !activeRelayIds.includes(post.relay)) {
+      return false;
+    }
+
+    // Filter by post types
+    if (activePostTypes.length > 0 && !activePostTypes.includes(post.postType)) {
       return false;
     }
 
@@ -137,11 +186,18 @@ const Index = () => {
         relays={relays}
         tags={tags}
         people={people}
+        activePostTypes={activePostTypes}
         onRelayToggle={handleRelayToggle}
         onRelayExclusive={handleRelayExclusive}
         onTagToggle={handleTagToggle}
         onTagExclusive={handleTagExclusive}
         onPersonToggle={handlePersonToggle}
+        onPostTypeToggle={handlePostTypeToggle}
+        onPostTypeExclusive={handlePostTypeExclusive}
+        onToggleAllRelays={handleToggleAllRelays}
+        onToggleAllTags={handleToggleAllTags}
+        onToggleAllPeople={handleToggleAllPeople}
+        onToggleAllPostTypes={handleToggleAllPostTypes}
       />
       <div className="flex flex-1">
         <Feed

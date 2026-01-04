@@ -45,10 +45,19 @@ export function PostComposer({ onSubmit, relays, tags, people }: PostComposerPro
     
     // Extract tags from content
     const extractedTags = content.match(/#(\w+)/g)?.map((t) => t.slice(1)) || [];
+    
+    // Require at least one hashtag
+    if (extractedTags.length === 0) {
+      return;
+    }
+    
     onSubmit?.(content, extractedTags, selectedRelay, postType);
     setContent("");
     setAttachments([]);
   };
+
+  // Check if post has at least one hashtag
+  const hasHashtag = (content.match(/#(\w+)/g) || []).length > 0;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -367,10 +376,11 @@ export function PostComposer({ onSubmit, relays, tags, people }: PostComposerPro
               <div className="flex items-center">
                 <button
                   onClick={handleSubmit}
-                  disabled={!content.trim()}
+                  disabled={!content.trim() || !hasHashtag}
+                  title={!hasHashtag ? "Add at least one #hashtag" : undefined}
                   className={cn(
                     "flex items-center gap-2 px-4 py-2 rounded-l-full font-medium text-sm transition-all",
-                    content.trim()
+                    content.trim() && hasHashtag
                       ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow"
                       : "bg-muted text-muted-foreground cursor-not-allowed"
                   )}
