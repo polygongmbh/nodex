@@ -1,36 +1,54 @@
 import { useState } from "react";
-import { Radio, Hash, Users } from "lucide-react";
-import { Relay, Tag, Person } from "@/types";
+import { Radio, Hash, Users, Layers } from "lucide-react";
+import { Relay, Tag, Person, PostType } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { TagItem } from "./sidebar/TagItem";
 import { PersonItem } from "./sidebar/PersonItem";
+import { PostTypeItem } from "./sidebar/PostTypeItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
+
+const ALL_POST_TYPES: PostType[] = ["message", "task", "event", "offer", "request", "blog"];
 
 interface SidebarProps {
   relays: Relay[];
   tags: Tag[];
   people: Person[];
+  activePostTypes: PostType[];
   onRelayToggle: (id: string) => void;
   onRelayExclusive: (id: string) => void;
   onTagToggle: (id: string) => void;
   onTagExclusive: (id: string) => void;
   onPersonToggle: (id: string) => void;
+  onPostTypeToggle: (type: PostType) => void;
+  onPostTypeExclusive: (type: PostType) => void;
+  onToggleAllRelays: () => void;
+  onToggleAllTags: () => void;
+  onToggleAllPeople: () => void;
+  onToggleAllPostTypes: () => void;
 }
 
 export function Sidebar({
   relays,
   tags,
   people,
+  activePostTypes,
   onRelayToggle,
   onRelayExclusive,
   onTagToggle,
   onTagExclusive,
   onPersonToggle,
+  onPostTypeToggle,
+  onPostTypeExclusive,
+  onToggleAllRelays,
+  onToggleAllTags,
+  onToggleAllPeople,
+  onToggleAllPostTypes,
 }: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
     feeds: true,
     tags: true,
     people: true,
+    postTypes: true,
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -63,6 +81,7 @@ export function Sidebar({
           icon={Radio}
           isExpanded={expandedSections.feeds}
           onToggle={() => toggleSection("feeds")}
+          onIconClick={onToggleAllRelays}
           hint="Relays"
         >
           {relays.map((relay) => (
@@ -75,12 +94,33 @@ export function Sidebar({
           ))}
         </SidebarSection>
 
+        {/* Post Types */}
+        <SidebarSection
+          title="Types"
+          icon={Layers}
+          isExpanded={expandedSections.postTypes}
+          onToggle={() => toggleSection("postTypes")}
+          onIconClick={onToggleAllPostTypes}
+          hint="Post types"
+        >
+          {ALL_POST_TYPES.map((type) => (
+            <PostTypeItem
+              key={type}
+              type={type}
+              isActive={activePostTypes.includes(type)}
+              onToggle={() => onPostTypeToggle(type)}
+              onExclusive={() => onPostTypeExclusive(type)}
+            />
+          ))}
+        </SidebarSection>
+
         {/* Tags */}
         <SidebarSection
           title="Tags"
           icon={Hash}
           isExpanded={expandedSections.tags}
           onToggle={() => toggleSection("tags")}
+          onIconClick={onToggleAllTags}
           hint="Click to filter"
         >
           {tags.map((tag) => (
@@ -99,6 +139,7 @@ export function Sidebar({
           icon={Users}
           isExpanded={expandedSections.people}
           onToggle={() => toggleSection("people")}
+          onIconClick={onToggleAllPeople}
         >
           {people.map((person) => (
             <PersonItem
