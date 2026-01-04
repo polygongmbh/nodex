@@ -39,6 +39,10 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Track previous selections to detect changes
+  const prevIncludedTagsRef = useRef<string[]>([]);
+  const prevSelectedPeopleRef = useRef<string[]>([]);
+
   // Sync defaults from sidebar selections
   useEffect(() => {
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
@@ -51,41 +55,76 @@ export function PostComposer({ onSubmit, relays, tags, people, activePostTypes }
     }
   }, [activePostTypes]);
 
-  // Pre-fill content with selected tags and people
-  const getDefaultContent = useCallback(() => {
-    const parts: string[] = [];
-    
-    // Add selected people as mentions
-    const selectedPeople = people.filter(p => p.isSelected && p.id !== "me");
-    if (selectedPeople.length > 0) {
-      parts.push(selectedPeople.map(p => `@${p.name}`).join(" "));
-    }
-    
-    // Add included tags as hashtags
-    const includedTags = tags.filter(t => t.filterState === "included");
-    if (includedTags.length > 0) {
-      parts.push(includedTags.map(t => `#${t.name}`).join(" "));
-    }
-    
-    return parts.join(" ");
-  }, [people, tags]);
+  // Sync tags with content - add/remove hashtags when sidebar tags change
+  useEffect(() => {
+    const currentIncludedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
+    const prevIncludedTags = prevIncludedTagsRef.current;
 
-  // Apply defaults when focusing on empty composer
+    // Find newly added tags
+    const addedTags = currentIncludedTags.filter(t => !prevIncludedTags.includes(t));
+    // Find removed tags
+    const removedTags = prevIncludedTags.filter(t => !currentIncludedTags.includes(t));
+
+    let newContent = content;
+
+    // Remove tags that were deselected
+    removedTags.forEach(tag => {
+      // Remove #tag followed by optional space
+      const regex = new RegExp(`#${tag}\\s?`, 'g');
+      newContent = newContent.replace(regex, '');
+    });
+
+    // Add tags that were newly selected
+    addedTags.forEach(tag => {
+      // Only add if not already in content
+      if (!newContent.match(new RegExp(`#${tag}(?:\\s|$)`))) {
+        newContent = newContent.trimEnd() + (newContent.trim() ? ' ' : '') + `#${tag} `;
+      }
+    });
+
+    if (newContent !== content) {
+      setContent(newContent);
+    }
+
+    prevIncludedTagsRef.current = currentIncludedTags;
+  }, [tags]);
+
+  // Sync people with content - add/remove mentions when sidebar people change
+  useEffect(() => {
+    const currentSelectedPeople = people.filter(p => p.isSelected && p.id !== "me").map(p => p.name);
+    const prevSelectedPeople = prevSelectedPeopleRef.current;
+
+    // Find newly added people
+    const addedPeople = currentSelectedPeople.filter(p => !prevSelectedPeople.includes(p));
+    // Find removed people
+    const removedPeople = prevSelectedPeople.filter(p => !currentSelectedPeople.includes(p));
+
+    let newContent = content;
+
+    // Remove mentions that were deselected
+    removedPeople.forEach(person => {
+      // Remove @person followed by optional space
+      const regex = new RegExp(`@${person}\\s?`, 'g');
+      newContent = newContent.replace(regex, '');
+    });
+
+    // Add mentions that were newly selected
+    addedPeople.forEach(person => {
+      // Only add if not already in content
+      if (!newContent.match(new RegExp(`@${person}(?:\\s|$)`))) {
+        newContent = newContent.trimEnd() + (newContent.trim() ? ' ' : '') + `@${person} `;
+      }
+    });
+
+    if (newContent !== content) {
+      setContent(newContent);
+    }
+
+    prevSelectedPeopleRef.current = currentSelectedPeople;
+  }, [people]);
+
   const handleFocus = () => {
     setIsFocused(true);
-    if (content === "") {
-      const defaults = getDefaultContent();
-      if (defaults) {
-        setContent(defaults + " ");
-        // Move cursor to end
-        setTimeout(() => {
-          if (textareaRef.current) {
-            textareaRef.current.selectionStart = defaults.length + 1;
-            textareaRef.current.selectionEnd = defaults.length + 1;
-          }
-        }, 0);
-      }
-    }
   };
 
   const handleSubmit = () => {
