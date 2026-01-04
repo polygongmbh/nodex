@@ -29,7 +29,7 @@ export interface Post {
   author: Person;
   content: string;
   tags: string[];
-  relay: string;
+  relays: string[]; // Changed to support multiple relays
   postType: PostType;
   timestamp: Date;
   likes: number;

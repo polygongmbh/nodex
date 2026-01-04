@@ -141,13 +141,13 @@ const Index = () => {
     );
   };
 
-  const handleNewPost = (content: string, extractedTags: string[], relay: string, postType: string) => {
+  const handleNewPost = (content: string, extractedTags: string[], relays: string[], postType: string) => {
     const newPost: Post = {
       id: Date.now().toString(),
       author: people.find((p) => p.id === "me") || people[0],
       content,
       tags: extractedTags,
-      relay,
+      relays,
       postType: postType as PostType,
       timestamp: new Date(),
       likes: 0,
@@ -155,14 +155,15 @@ const Index = () => {
       reposts: 0,
     };
     setPosts((prev) => [newPost, ...prev]);
-    toast.success(`${postType.charAt(0).toUpperCase() + postType.slice(1)} published to ${relays.find(r => r.id === relay)?.name} relay!`);
+    const relayNames = relays.map(id => relays.find(r => r === id) || id).join(", ");
+    toast.success(`${postType.charAt(0).toUpperCase() + postType.slice(1)} published!`);
   };
 
   // Filter posts based on active filters
   const filteredPosts = posts.filter((post) => {
     // Filter by active relays
     const activeRelayIds = relays.filter((r) => r.isActive).map((r) => r.id);
-    if (activeRelayIds.length > 0 && !activeRelayIds.includes(post.relay)) {
+    if (activeRelayIds.length > 0 && !post.relays.some(pr => activeRelayIds.includes(pr))) {
       return false;
     }
 
@@ -210,6 +211,7 @@ const Index = () => {
         relays={relays}
         tags={tags}
         people={people}
+        activePostTypes={activePostTypes}
         onLike={handleLike}
         onRepost={handleRepost}
         onNewPost={handleNewPost}
