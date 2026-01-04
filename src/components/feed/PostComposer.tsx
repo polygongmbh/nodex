@@ -283,6 +283,24 @@ export function PostComposer({
     }, 10);
   };
 
+  const openMentionPicker = () => {
+    const cursorPos = textareaRef.current?.selectionStart || content.length;
+    const newContent = content.slice(0, cursorPos) + "@" + content.slice(cursorPos);
+    setContent(newContent);
+    const newCursorPos = cursorPos + 1;
+    setCursorPosition(newCursorPos);
+    setMentionFilter("");
+    setShowHashtagSuggestions(false);
+    
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        setShowMentionSuggestions(true);
+      }
+    }, 10);
+  };
+
   const toggleRelay = (relayId: string) => {
     setSelectedRelays(prev => 
       prev.includes(relayId) 
@@ -485,22 +503,18 @@ export function PostComposer({
                 <Hash className="w-5 h-5" />
               </button>
 
-              {/* Attachment Button */}
+              {/* Mention Button */}
               <button 
-                onClick={() => fileInputRef.current?.click()}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  openMentionPicker();
+                }}
                 className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
-                title="Add attachment"
+                title="Mention someone"
               >
-                <Image className="w-5 h-5" />
+                <span className="text-lg font-semibold">@</span>
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
+
 
               {/* Relay Selector (Multi-select) */}
               <Popover>
@@ -574,6 +588,23 @@ export function PostComposer({
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Attachment Button */}
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
+                title="Add attachment"
+              >
+                <Image className="w-5 h-5" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
               {/* Relay indicator */}
               <span className="text-xs text-muted-foreground">
                 → {selectedRelayNames.length > 0 ? selectedRelayNames.join(", ") : "No relay selected"}
