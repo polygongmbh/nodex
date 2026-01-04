@@ -24,13 +24,13 @@ export const mockTags: Tag[] = [
 ];
 
 export const mockPeople: Person[] = [
-  { id: "me", name: "me", displayName: "You", isOnline: true, isSelected: false },
-  { id: "alice", name: "alice", displayName: "Alice Chen", isOnline: true, isSelected: false },
-  { id: "bob", name: "bob", displayName: "Bob Smith", isOnline: false, isSelected: false },
-  { id: "carol", name: "carol", displayName: "Carol Davis", isOnline: true, isSelected: false },
-  { id: "david", name: "david", displayName: "David Kim", isOnline: false, isSelected: false },
-  { id: "emma", name: "emma", displayName: "Emma Wilson", isOnline: true, isSelected: false },
-  { id: "frank", name: "frank", displayName: "Frank Miller", isOnline: false, isSelected: false },
+  { id: "me", name: "me", displayName: "You", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=You", isOnline: true, isSelected: false },
+  { id: "alice", name: "alice", displayName: "Alice Chen", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alice", isOnline: true, isSelected: false },
+  { id: "bob", name: "bob", displayName: "Bob Smith", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob", isOnline: false, isSelected: false },
+  { id: "carol", name: "carol", displayName: "Carol Davis", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Carol", isOnline: true, isSelected: false },
+  { id: "david", name: "david", displayName: "David Kim", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David", isOnline: false, isSelected: false },
+  { id: "emma", name: "emma", displayName: "Emma Wilson", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emma", isOnline: true, isSelected: false },
+  { id: "frank", name: "frank", displayName: "Frank Miller", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Frank", isOnline: false, isSelected: false },
 ];
 
 export const mockPosts: Post[] = [
