@@ -1,3 +1,4 @@
+import { useRef, useCallback } from "react";
 import { X, ArrowLeft } from "lucide-react";
 import { Post, Person } from "@/types";
 import { PostCard } from "./PostCard";
@@ -9,11 +10,24 @@ interface ThreadViewProps {
   allPosts: Post[];
   onClose: () => void;
   onToggleComplete?: (postId: string) => void;
+  onViewThread?: (postId: string) => void;
 }
 
-export function ThreadView({ post, replies, currentUser, allPosts, onClose, onToggleComplete }: ThreadViewProps) {
+export function ThreadView({ post, replies, currentUser, allPosts, onClose, onToggleComplete, onViewThread }: ThreadViewProps) {
   // Find the referenced post if this is a reply
   const referencedPost = post.replyTo ? allPosts.find(p => p.id === post.replyTo) : undefined;
+  const postRefs = useRef<Map<string, HTMLElement>>(new Map());
+
+  const handleScrollToPost = useCallback((postId: string) => {
+    const postElement = postRefs.current.get(postId);
+    if (postElement) {
+      postElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      postElement.classList.add("ring-2", "ring-primary");
+      setTimeout(() => {
+        postElement.classList.remove("ring-2", "ring-primary");
+      }, 2000);
+    }
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-start justify-center pt-20">
@@ -38,12 +52,21 @@ export function ThreadView({ post, replies, currentUser, allPosts, onClose, onTo
         {/* Thread Content */}
         <div className="flex-1 overflow-y-auto">
           {/* Original Post */}
-          <PostCard 
-            post={post} 
-            currentUser={currentUser}
-            referencedPost={referencedPost}
-            onToggleComplete={onToggleComplete}
-          />
+          <div
+            ref={(el) => {
+              if (el) postRefs.current.set(post.id, el);
+              else postRefs.current.delete(post.id);
+            }}
+            className="transition-all duration-300"
+          >
+            <PostCard 
+              post={post} 
+              currentUser={currentUser}
+              referencedPost={referencedPost}
+              onToggleComplete={onToggleComplete}
+              onScrollToPost={handleScrollToPost}
+            />
+          </div>
 
           {/* Replies */}
           {replies.length > 0 && (
@@ -54,13 +77,23 @@ export function ThreadView({ post, replies, currentUser, allPosts, onClose, onTo
               {replies.map((reply) => {
                 const replyReferencedPost = reply.replyTo ? allPosts.find(p => p.id === reply.replyTo) : undefined;
                 return (
-                  <PostCard
+                  <div
                     key={reply.id}
-                    post={reply}
-                    currentUser={currentUser}
-                    referencedPost={replyReferencedPost}
-                    onToggleComplete={onToggleComplete}
-                  />
+                    ref={(el) => {
+                      if (el) postRefs.current.set(reply.id, el);
+                      else postRefs.current.delete(reply.id);
+                    }}
+                    className="transition-all duration-300 cursor-pointer"
+                    onClick={() => onViewThread?.(reply.id)}
+                  >
+                    <PostCard
+                      post={reply}
+                      currentUser={currentUser}
+                      referencedPost={replyReferencedPost}
+                      onToggleComplete={onToggleComplete}
+                      onScrollToPost={handleScrollToPost}
+                    />
+                  </div>
                 );
               })}
             </div>

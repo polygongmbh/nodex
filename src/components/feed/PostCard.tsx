@@ -4,6 +4,7 @@ import { Post, Person } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { linkifyContent } from "@/lib/linkify";
 
 interface PostCardProps {
   post: Post;
@@ -13,6 +14,7 @@ interface PostCardProps {
   onToggleComplete?: (postId: string) => void;
   onViewThread?: (postId: string) => void;
   referencedPost?: Post;
+  onScrollToPost?: (postId: string) => void;
 }
 
 export function PostCard({ 
@@ -22,7 +24,8 @@ export function PostCard({
   onReference, 
   onToggleComplete,
   onViewThread,
-  referencedPost 
+  referencedPost,
+  onScrollToPost
 }: PostCardProps) {
   const timeAgo = formatDistanceToNow(post.timestamp, { addSuffix: true });
 
@@ -60,7 +63,13 @@ export function PostCard({
     >
       {/* Referenced Post Preview */}
       {referencedPost && (
-        <div className="mb-3 pl-4 border-l-2 border-muted">
+        <div 
+          className="mb-3 pl-4 border-l-2 border-muted cursor-pointer hover:border-primary hover:bg-muted/30 transition-colors rounded-r"
+          onClick={(e) => {
+            e.stopPropagation();
+            onScrollToPost?.(referencedPost.id);
+          }}
+        >
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
             <Reply className="w-3 h-3" />
             <span>Replying to @{referencedPost.author.name}</span>
@@ -137,7 +146,7 @@ export function PostCard({
             "text-foreground leading-relaxed mb-2",
             post.isCompleted && "line-through text-muted-foreground"
           )}>
-            {post.content}
+            {linkifyContent(post.content)}
           </p>
 
           {/* Tags */}

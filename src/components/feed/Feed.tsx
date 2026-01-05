@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Search, X } from "lucide-react";
 import { Post, Relay, Tag, Person, PostType } from "@/types";
 import { PostCard } from "./PostCard";
 import { PostComposer } from "./PostComposer";
@@ -22,6 +22,8 @@ export function Feed({ posts, relays, tags, people, activePostTypes, allPosts, c
   const [isComposing, setIsComposing] = useState(false);
   const [referencedPostId, setReferencedPostId] = useState<string | undefined>();
   const [threadPostId, setThreadPostId] = useState<string | undefined>();
+  const feedRef = useRef<HTMLDivElement>(null);
+  const postRefs = useRef<Map<string, HTMLElement>>(new Map());
 
   const filteredPosts = posts.filter((post) =>
     searchQuery.trim() === "" || post.content.toLowerCase().includes(searchQuery.toLowerCase())
@@ -35,11 +37,42 @@ export function Feed({ posts, relays, tags, people, activePostTypes, allPosts, c
     setReferencedPostId(postId);
   };
 
+  const handleCancelComposing = useCallback(() => {
+    setIsComposing(false);
+    setReferencedPostId(undefined);
+  }, []);
+
   const handleViewThread = (postId: string) => {
     if (!isComposing) {
       setThreadPostId(postId);
     }
   };
+
+  const handleScrollToPost = useCallback((postId: string) => {
+    const postElement = postRefs.current.get(postId);
+    if (postElement) {
+      postElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      postElement.classList.add("ring-2", "ring-primary");
+      setTimeout(() => {
+        postElement.classList.remove("ring-2", "ring-primary");
+      }, 2000);
+    }
+  }, []);
+
+  // Global click handler for cancel button alternative to Escape
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isComposing) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCancelComposing();
+      }
+    };
+
+    // Use capture phase to catch Escape before extensions
+    document.addEventListener("keydown", handleGlobalKeyDown, true);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown, true);
+  }, [isComposing, handleCancelComposing]);
 
   return (
     <main className="flex-1 border-r border-border max-w-2xl flex flex-col h-screen">
@@ -57,25 +90,41 @@ export function Feed({ posts, relays, tags, people, activePostTypes, allPosts, c
       
       {/* Composing hint */}
       {isComposing && (
-        <div className="bg-primary/5 border-b border-primary/20 px-4 py-2 text-xs text-primary">
-          Click on a post to reference it in your reply. Press Escape to cancel.
+        <div className="bg-primary/5 border-b border-primary/20 px-4 py-2 text-xs text-primary flex items-center justify-between">
+          <span>Click on a post to reference it in your reply. Press Escape to cancel.</span>
+          <button
+            onClick={handleCancelComposing}
+            className="p-1 rounded-full hover:bg-primary/20 transition-colors"
+            aria-label="Cancel reply selection"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto divide-y divide-border">
+      <div ref={feedRef} className="flex-1 overflow-y-auto divide-y divide-border">
         {filteredPosts.map((post) => {
           const postReferencedPost = post.replyTo ? allPosts.find(p => p.id === post.replyTo) : undefined;
           return (
-            <PostCard
+            <div
               key={post.id}
-              post={post}
-              currentUser={currentUser}
-              isComposing={isComposing}
-              onReference={handleReference}
-              onToggleComplete={onToggleComplete}
-              onViewThread={handleViewThread}
-              referencedPost={postReferencedPost}
-            />
+              ref={(el) => {
+                if (el) postRefs.current.set(post.id, el);
+                else postRefs.current.delete(post.id);
+              }}
+              className="transition-all duration-300"
+            >
+              <PostCard
+                post={post}
+                currentUser={currentUser}
+                isComposing={isComposing}
+                onReference={handleReference}
+                onToggleComplete={onToggleComplete}
+                onViewThread={handleViewThread}
+                referencedPost={postReferencedPost}
+                onScrollToPost={handleScrollToPost}
+              />
+            </div>
           );
         })}
         {filteredPosts.length === 0 && (
@@ -108,6 +157,7 @@ export function Feed({ posts, relays, tags, people, activePostTypes, allPosts, c
           allPosts={allPosts}
           onClose={() => setThreadPostId(undefined)}
           onToggleComplete={onToggleComplete}
+          onViewThread={(postId) => setThreadPostId(postId)}
         />
       )}
     </main>
