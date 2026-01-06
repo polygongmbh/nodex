@@ -1,54 +1,42 @@
 import { useState } from "react";
-import { Radio, Hash, Users, Layers } from "lucide-react";
-import { Relay, Tag, Person, PostType } from "@/types";
+import { Radio, Hash, Users } from "lucide-react";
+import { Relay, Tag, Person } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { TagItem } from "./sidebar/TagItem";
 import { PersonItem } from "./sidebar/PersonItem";
-import { PostTypeItem } from "./sidebar/PostTypeItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
-
-const ALL_POST_TYPES: PostType[] = ["message", "task", "event", "offer", "request", "blog"];
 
 interface SidebarProps {
   relays: Relay[];
   tags: Tag[];
   people: Person[];
-  activePostTypes: PostType[];
   onRelayToggle: (id: string) => void;
   onRelayExclusive: (id: string) => void;
   onTagToggle: (id: string) => void;
   onTagExclusive: (id: string) => void;
   onPersonToggle: (id: string) => void;
-  onPostTypeToggle: (type: PostType) => void;
-  onPostTypeExclusive: (type: PostType) => void;
   onToggleAllRelays: () => void;
   onToggleAllTags: () => void;
   onToggleAllPeople: () => void;
-  onToggleAllPostTypes: () => void;
 }
 
 export function Sidebar({
   relays,
   tags,
   people,
-  activePostTypes,
   onRelayToggle,
   onRelayExclusive,
   onTagToggle,
   onTagExclusive,
   onPersonToggle,
-  onPostTypeToggle,
-  onPostTypeExclusive,
   onToggleAllRelays,
   onToggleAllTags,
   onToggleAllPeople,
-  onToggleAllPostTypes,
 }: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
     feeds: true,
     tags: true,
     people: true,
-    postTypes: true,
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -67,8 +55,8 @@ export function Sidebar({
             <Radio className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="font-heading font-semibold text-foreground">NostrChat</h1>
-            <p className="text-xs text-muted-foreground">Decentralized comms</p>
+            <h1 className="font-heading font-semibold text-foreground">Mostr</h1>
+            <p className="text-xs text-muted-foreground">Task Manager</p>
           </div>
         </div>
       </div>
@@ -90,26 +78,6 @@ export function Sidebar({
               relay={relay}
               onToggle={() => onRelayToggle(relay.id)}
               onExclusive={() => onRelayExclusive(relay.id)}
-            />
-          ))}
-        </SidebarSection>
-
-        {/* Post Types */}
-        <SidebarSection
-          title="Types"
-          icon={Layers}
-          isExpanded={expandedSections.postTypes}
-          onToggle={() => toggleSection("postTypes")}
-          onIconClick={onToggleAllPostTypes}
-          hint="Post types"
-        >
-          {ALL_POST_TYPES.map((type) => (
-            <PostTypeItem
-              key={type}
-              type={type}
-              isActive={activePostTypes.includes(type)}
-              onToggle={() => onPostTypeToggle(type)}
-              onExclusive={() => onPostTypeExclusive(type)}
             />
           ))}
         </SidebarSection>
@@ -155,7 +123,7 @@ export function Sidebar({
       <div className="p-3 border-t border-sidebar-border">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-          <span>Connected to 4 relays</span>
+          <span>Connected to {relays.filter(r => r.isActive).length} relays</span>
         </div>
       </div>
     </aside>

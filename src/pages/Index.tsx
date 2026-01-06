@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Feed } from "@/components/feed/Feed";
-import { mockRelays, mockTags, mockPeople, mockPosts } from "@/data/mockData";
-import { Relay, Tag, Person, Post, PostType } from "@/types";
+import { TaskTree } from "@/components/tasks/TaskTree";
+import { mockRelays, mockTags, mockPeople, mockTasks } from "@/data/mockData";
+import { Relay, Tag, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
 
-const ALL_POST_TYPES: PostType[] = ["message", "task", "event", "offer", "request", "blog"];
-
 const Index = () => {
-  // Initialize all filters as unselected
   const [relays, setRelays] = useState<Relay[]>(
     mockRelays.map((r) => ({ ...r, isActive: false }))
   );
@@ -18,8 +15,8 @@ const Index = () => {
   const [people, setPeople] = useState<Person[]>(
     mockPeople.map((p) => ({ ...p, isSelected: false }))
   );
-  const [posts, setPosts] = useState<Post[]>(mockPosts);
-  const [activePostTypes, setActivePostTypes] = useState<PostType[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const currentUser = people.find(p => p.id === "me");
 
@@ -98,93 +95,52 @@ const Index = () => {
     toast.success(allSelected ? "All people deselected" : "All people selected");
   };
 
-  const handlePostTypeToggle = (type: PostType) => {
-    setActivePostTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
-    );
-  };
-
-  const handlePostTypeExclusive = (type: PostType) => {
-    setActivePostTypes([type]);
-    toast.success(`Showing only ${type}s`);
-  };
-
-  const handleToggleAllPostTypes = () => {
-    const allActive = activePostTypes.length === ALL_POST_TYPES.length;
-    setActivePostTypes(allActive ? [] : ALL_POST_TYPES);
-    toast.success(allActive ? "All post types hidden" : "All post types shown");
-  };
-
-  const handleToggleComplete = (postId: string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
+  const handleToggleComplete = (taskId: string) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
           ? {
-              ...post,
-              isCompleted: !post.isCompleted,
-              completedBy: !post.isCompleted ? currentUser?.name : undefined,
+              ...task,
+              isCompleted: !task.isCompleted,
+              completedBy: !task.isCompleted ? currentUser?.name : undefined,
             }
-          : post
+          : task
       )
     );
-    const post = posts.find(p => p.id === postId);
-    toast.success(post?.isCompleted ? "Task reopened" : "Task completed");
+    const task = tasks.find(t => t.id === taskId);
+    toast.success(task?.isCompleted ? "Task reopened" : "Task completed");
   };
 
-  const handleNewPost = (content: string, extractedTags: string[], relayIds: string[], postType: string, dueDate?: Date, dueTime?: string, replyTo?: string) => {
-    const newPost: Post = {
+  const handleNewTask = (content: string, extractedTags: string[], relayIds: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => {
+    const newTask: Task = {
       id: Date.now().toString(),
       author: people.find((p) => p.id === "me") || people[0],
       content,
       tags: extractedTags,
-      relays: relayIds,
-      postType: postType as PostType,
+      relays: relayIds.length > 0 ? relayIds : [relays[0]?.id].filter(Boolean),
+      taskType: taskType as TaskType,
       timestamp: new Date(),
       likes: 0,
       replies: 0,
       reposts: 0,
       dueDate,
       dueTime,
-      replyTo,
+      parentId,
     };
-    setPosts((prev) => [newPost, ...prev]);
-    
-    // Increment reply count on parent post
-    if (replyTo) {
-      setPosts((prev) =>
-        prev.map((post) =>
-          post.id === replyTo
-            ? { ...post, replies: post.replies + 1 }
-            : post
-        )
-      );
-    }
-    
-    toast.success(`${postType.charAt(0).toUpperCase() + postType.slice(1)} published!`);
+    setTasks((prev) => [newTask, ...prev]);
+    toast.success(taskType === "comment" ? "Comment added!" : "Task created!");
   };
 
-  // Filter posts based on active filters
-  const filteredPosts = posts.filter((post) => {
-    // Filter by active relays
+  // Filter tasks based on active filters (relay filtering only for now)
+  const filteredTasks = tasks.filter((task) => {
     const activeRelayIds = relays.filter((r) => r.isActive).map((r) => r.id);
-    if (activeRelayIds.length > 0 && !post.relays.some(pr => activeRelayIds.includes(pr))) {
+    if (activeRelayIds.length > 0 && !task.relays.some(tr => activeRelayIds.includes(tr))) {
       return false;
     }
 
-    // Filter by post types
-    if (activePostTypes.length > 0 && !activePostTypes.includes(post.postType)) {
-      return false;
-    }
-
-    // Filter by included tags
-    const includedTags = tags.filter((t) => t.filterState === "included").map((t) => t.name);
-    if (includedTags.length > 0 && !post.tags.some((t) => includedTags.includes(t))) {
-      return false;
-    }
-
-    // Filter out excluded tags
+    // Exclude excluded tags
     const excludedTags = tags.filter((t) => t.filterState === "excluded").map((t) => t.name);
-    if (post.tags.some((t) => excludedTags.includes(t))) {
+    if (task.tags.some((t) => excludedTags.includes(t))) {
       return false;
     }
 
@@ -197,28 +153,25 @@ const Index = () => {
         relays={relays}
         tags={tags}
         people={people}
-        activePostTypes={activePostTypes}
         onRelayToggle={handleRelayToggle}
         onRelayExclusive={handleRelayExclusive}
         onTagToggle={handleTagToggle}
         onTagExclusive={handleTagExclusive}
         onPersonToggle={handlePersonToggle}
-        onPostTypeToggle={handlePostTypeToggle}
-        onPostTypeExclusive={handlePostTypeExclusive}
         onToggleAllRelays={handleToggleAllRelays}
         onToggleAllTags={handleToggleAllTags}
         onToggleAllPeople={handleToggleAllPeople}
-        onToggleAllPostTypes={handleToggleAllPostTypes}
       />
-      <Feed
-        posts={filteredPosts}
-        allPosts={posts}
+      <TaskTree
+        tasks={filteredTasks}
+        allTasks={tasks}
         relays={relays}
         tags={tags}
         people={people}
-        activePostTypes={activePostTypes}
         currentUser={currentUser}
-        onNewPost={handleNewPost}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onNewTask={handleNewTask}
         onToggleComplete={handleToggleComplete}
       />
     </div>
