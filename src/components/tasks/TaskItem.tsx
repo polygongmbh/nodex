@@ -1,0 +1,222 @@
+import { useState } from "react";
+import { ChevronRight, ChevronDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Task, Person } from "@/types";
+import { formatDistanceToNow, format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { linkifyContent } from "@/lib/linkify";
+
+interface TaskItemProps {
+  task: Task;
+  children: Task[];
+  allTasks: Task[];
+  currentUser?: Person;
+  depth?: number;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  onSelect?: (taskId: string) => void;
+  onToggleComplete?: (taskId: string) => void;
+  matchedByFilter?: boolean;
+}
+
+export function TaskItem({
+  task,
+  children,
+  allTasks,
+  currentUser,
+  depth = 0,
+  isExpanded = true,
+  onToggleExpand,
+  onSelect,
+  onToggleComplete,
+  matchedByFilter = true,
+}: TaskItemProps) {
+  const [localExpanded, setLocalExpanded] = useState(isExpanded);
+  const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
+
+  const hasChildren = children.length > 0;
+  const isComment = task.taskType === "comment";
+  const taskChildren = children.filter(c => c.taskType === "task");
+  const commentChildren = children.filter(c => c.taskType === "comment");
+
+  const handleToggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLocalExpanded(!localExpanded);
+    onToggleExpand?.();
+  };
+
+  const handleSelect = () => {
+    if (task.taskType === "task") {
+      onSelect?.(task.id);
+    }
+  };
+
+  const canCompleteTask = () => {
+    if (task.taskType !== "task") return false;
+    if (!currentUser) return false;
+    const mentionedPeople = task.content.match(/@(\w+)/g)?.map(m => m.slice(1)) || [];
+    if (mentionedPeople.length === 0) return true;
+    return mentionedPeople.includes(currentUser.name);
+  };
+
+  return (
+    <div className={cn("animate-fade-in", !matchedByFilter && "opacity-50")}>
+      <div
+        className={cn(
+          "group flex items-start gap-2 py-2 px-3 rounded-lg transition-colors",
+          isComment 
+            ? "bg-muted/30 hover:bg-muted/50" 
+            : "hover:bg-card/80 cursor-pointer",
+          task.isCompleted && "opacity-60",
+          depth > 0 && "ml-6 border-l-2 border-border pl-4"
+        )}
+        onClick={handleSelect}
+      >
+        {/* Expand/Collapse Toggle */}
+        {hasChildren && !isComment ? (
+          <button
+            onClick={handleToggleExpand}
+            className="flex-shrink-0 p-0.5 rounded hover:bg-muted mt-1"
+          >
+            {localExpanded ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+        ) : (
+          <div className="w-5 flex-shrink-0" />
+        )}
+
+        {/* Checkbox for tasks */}
+        {!isComment && (
+          <div className="flex-shrink-0 mt-0.5">
+            <Checkbox
+              checked={task.isCompleted}
+              disabled={!canCompleteTask()}
+              onCheckedChange={() => onToggleComplete?.(task.id)}
+              onClick={(e) => e.stopPropagation()}
+              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            />
+          </div>
+        )}
+
+        {/* Comment icon for comments */}
+        {isComment && (
+          <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+        )}
+
+        {/* Avatar */}
+        <Avatar className="w-6 h-6 flex-shrink-0">
+          {task.author.avatar ? (
+            <AvatarImage src={task.author.avatar} alt={task.author.displayName} />
+          ) : null}
+          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-foreground text-xs">
+            {task.author.displayName.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
+            <span className="font-medium text-foreground/80">{task.author.displayName}</span>
+            <span>·</span>
+            <span>{timeAgo}</span>
+            {!isComment && taskChildren.length > 0 && (
+              <>
+                <span>·</span>
+                <span className="flex items-center gap-1">
+                  <CheckSquare className="w-3 h-3" />
+                  {taskChildren.filter(c => c.isCompleted).length}/{taskChildren.length}
+                </span>
+              </>
+            )}
+            {commentChildren.length > 0 && (
+              <>
+                <span>·</span>
+                <span className="flex items-center gap-1">
+                  <MessageSquare className="w-3 h-3" />
+                  {commentChildren.length}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Task content */}
+          <p className={cn(
+            "text-sm leading-relaxed",
+            task.isCompleted && "line-through text-muted-foreground"
+          )}>
+            {linkifyContent(task.content)}
+          </p>
+
+          {/* Due date */}
+          {task.dueDate && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+              <Calendar className="w-3 h-3" />
+              <span>{format(task.dueDate, "MMM d, yyyy")}</span>
+              {task.dueTime && (
+                <>
+                  <Clock className="w-3 h-3 ml-1" />
+                  <span>{task.dueTime}</span>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Tags */}
+          {task.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {task.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Completed indicator */}
+          {task.isCompleted && task.completedBy && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+              <CheckSquare className="w-3 h-3" />
+              <span>Completed by @{task.completedBy}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-opacity"
+        >
+          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Children */}
+      {localExpanded && hasChildren && (
+        <div className="space-y-1">
+          {children.map((child) => {
+            const grandchildren = allTasks.filter(t => t.parentId === child.id);
+            return (
+              <TaskItem
+                key={child.id}
+                task={child}
+                children={grandchildren}
+                allTasks={allTasks}
+                currentUser={currentUser}
+                depth={depth + 1}
+                onSelect={onSelect}
+                onToggleComplete={onToggleComplete}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

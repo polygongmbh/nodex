@@ -22,29 +22,26 @@ export interface Person {
   isSelected: boolean;
 }
 
-export type PostType = "message" | "task" | "event" | "offer" | "request" | "blog";
+export type TaskType = "task" | "comment";
 
-export interface Post {
+export interface Task {
   id: string;
   author: Person;
   content: string;
   tags: string[];
   relays: string[];
-  postType: PostType;
+  taskType: TaskType;
   timestamp: Date;
   likes: number;
   replies: number;
   reposts: number;
   isLiked?: boolean;
   isReposted?: boolean;
-  // Task-specific
   isCompleted?: boolean;
   completedBy?: string;
-  // Event/Task date
   dueDate?: Date;
   dueTime?: string;
-  // Reference/reply
-  replyTo?: string;
+  parentId?: string;
   mentions?: string[];
 }
 
@@ -53,4 +50,9 @@ export interface FilterState {
   includedTags: string[];
   excludedTags: string[];
   selectedPeople: string[];
+  searchQuery: string;
 }
+
+// Legacy aliases for compatibility
+export type PostType = TaskType;
+export type Post = Task;
