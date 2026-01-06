@@ -107,41 +107,49 @@ export function TaskItem({
           <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
         )}
 
-        {/* Avatar */}
-        <Avatar className="w-6 h-6 flex-shrink-0">
-          {task.author.avatar ? (
-            <AvatarImage src={task.author.avatar} alt={task.author.displayName} />
-          ) : null}
-          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-foreground text-xs">
-            {task.author.displayName.charAt(0)}
-          </AvatarFallback>
-        </Avatar>
+        {/* Avatar - only show for comments */}
+        {isComment && (
+          <Avatar className="w-6 h-6 flex-shrink-0">
+            {task.author.avatar ? (
+              <AvatarImage src={task.author.avatar} alt={task.author.displayName} />
+            ) : null}
+            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-foreground text-xs">
+              {task.author.displayName.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+        )}
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
-            <span className="font-medium text-foreground/80">{task.author.displayName}</span>
-            <span>·</span>
-            <span>{timeAgo}</span>
-            {!isComment && taskChildren.length > 0 && (
-              <>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <CheckSquare className="w-3 h-3" />
-                  {taskChildren.filter(c => c.isCompleted).length}/{taskChildren.length}
-                </span>
-              </>
-            )}
-            {commentChildren.length > 0 && (
-              <>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <MessageSquare className="w-3 h-3" />
-                  {commentChildren.length}
-                </span>
-              </>
-            )}
-          </div>
+          {/* Meta info - author/time only for comments, counts only for tasks */}
+          {(isComment || taskChildren.length > 0 || commentChildren.length > 0) && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
+              {isComment && (
+                <>
+                  <span className="font-medium text-foreground/80">{task.author.displayName}</span>
+                  <span>·</span>
+                  <span>{timeAgo}</span>
+                </>
+              )}
+              {!isComment && taskChildren.length > 0 && (
+                <>
+                  <span className="flex items-center gap-1">
+                    <CheckSquare className="w-3 h-3" />
+                    {taskChildren.filter(c => c.isCompleted).length}/{taskChildren.length}
+                  </span>
+                </>
+              )}
+              {commentChildren.length > 0 && (
+                <>
+                  {!isComment && taskChildren.length > 0 && <span>·</span>}
+                  <span className="flex items-center gap-1">
+                    <MessageSquare className="w-3 h-3" />
+                    {commentChildren.length}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Task content */}
           <p className={cn(
@@ -197,10 +205,27 @@ export function TaskItem({
         </button>
       </div>
 
-      {/* Children */}
+      {/* Children - comments first, then subtasks */}
       {localExpanded && hasChildren && (
         <div className="space-y-1">
-          {children.map((child) => {
+          {/* Comments first */}
+          {commentChildren.map((child) => {
+            const grandchildren = allTasks.filter(t => t.parentId === child.id);
+            return (
+              <TaskItem
+                key={child.id}
+                task={child}
+                children={grandchildren}
+                allTasks={allTasks}
+                currentUser={currentUser}
+                depth={depth + 1}
+                onSelect={onSelect}
+                onToggleComplete={onToggleComplete}
+              />
+            );
+          })}
+          {/* Subtasks after */}
+          {taskChildren.map((child) => {
             const grandchildren = allTasks.filter(t => t.parentId === child.id);
             return (
               <TaskItem
