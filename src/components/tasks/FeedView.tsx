@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Search, Plus, X, Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
+import { Search, Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
 import { Task, Relay, Tag, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -18,6 +17,8 @@ interface FeedViewProps {
   onSearchChange: (query: string) => void;
   onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
   onToggleComplete: (taskId: string) => void;
+  focusedTaskId?: string | null;
+  onFocusTask?: (taskId: string | null) => void;
 }
 
 export function FeedView({
@@ -31,14 +32,35 @@ export function FeedView({
   onSearchChange,
   onNewTask,
   onToggleComplete,
+  focusedTaskId,
+  onFocusTask,
 }: FeedViewProps) {
-  const [isComposing, setIsComposing] = useState(false);
-
   const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
+
+  // Get all descendants of a task
+  const getDescendantIds = (taskId: string): Set<string> => {
+    const ids = new Set<string>();
+    const addDescendants = (id: string) => {
+      allTasks.filter(t => t.parentId === id).forEach(child => {
+        ids.add(child.id);
+        addDescendants(child.id);
+      });
+    };
+    addDescendants(taskId);
+    return ids;
+  };
 
   // Flatten and filter all tasks chronologically
   const feedTasks = allTasks
     .filter(task => {
+      // If focused on a task, only show that task and its descendants
+      if (focusedTaskId) {
+        if (task.id !== focusedTaskId) {
+          const descendantIds = getDescendantIds(focusedTaskId);
+          if (!descendantIds.has(task.id)) return false;
+        }
+      }
+
       // Apply search filter
       if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
@@ -62,8 +84,7 @@ export function FeedView({
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
   const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
-    onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime);
-    setIsComposing(false);
+    onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime, focusedTaskId || undefined);
   };
 
   const canCompleteTask = (task: Task) => {
@@ -74,13 +95,16 @@ export function FeedView({
     return mentionedPeople.includes(currentUser.name);
   };
 
-  const getParentBreadcrumb = (task: Task): string[] => {
-    const breadcrumb: string[] = [];
+  const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {
+    const breadcrumb: { id: string; text: string }[] = [];
     let current = task;
     while (current.parentId) {
       const parent = allTasks.find(t => t.id === current.parentId);
       if (parent) {
-        breadcrumb.unshift(parent.content.slice(0, 20) + (parent.content.length > 20 ? "..." : ""));
+        breadcrumb.unshift({
+          id: parent.id,
+          text: parent.content.slice(0, 20) + (parent.content.length > 20 ? "..." : "")
+        });
         current = parent;
       } else {
         break;
@@ -89,55 +113,43 @@ export function FeedView({
     return breadcrumb;
   };
 
+  const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
+
   return (
     <main className="flex-1 flex flex-col h-screen max-w-3xl">
-      {/* Header */}
+      {/* Header with Composer */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Feed</h2>
-          <button
-            onClick={() => setIsComposing(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            New Task
-          </button>
-        </div>
-      </div>
-
-      {/* Task Composer */}
-      {isComposing && (
-        <div className="border-b border-border p-4 bg-card/30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Creating new task</span>
+          {focusedTaskId && (
             <button
-              onClick={() => setIsComposing(false)}
-              className="p-1 rounded-full hover:bg-muted"
+              onClick={() => onFocusTask?.(null)}
+              className="text-xs text-primary hover:underline"
             >
-              <X className="w-4 h-4" />
+              ← Back to all
             </button>
-          </div>
-          <TaskComposer
-            onSubmit={handleNewTask}
-            relays={relays}
-            tags={tags}
-            people={people}
-            onCancel={() => setIsComposing(false)}
-          />
+          )}
         </div>
-      )}
+        {focusedTask && (
+          <div className="mb-3 p-2 bg-muted/50 rounded-lg border border-border">
+            <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
+            <div className="text-sm font-medium">{focusedTask.content.slice(0, 60)}{focusedTask.content.length > 60 ? "..." : ""}</div>
+          </div>
+        )}
+        <TaskComposer
+          onSubmit={handleNewTask}
+          relays={relays}
+          tags={tags}
+          people={people}
+          onCancel={() => {}}
+        />
+      </div>
 
       {/* Feed List */}
       <div className="flex-1 overflow-y-auto">
         {feedTasks.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
-            <p className="mb-3">No tasks to show</p>
-            <button
-              onClick={() => setIsComposing(true)}
-              className="text-primary hover:underline"
-            >
-              Create your first task
-            </button>
+            <p>No tasks to show</p>
           </div>
         ) : (
           feedTasks.map((task) => {
@@ -153,13 +165,18 @@ export function FeedView({
                   task.status === "done" && "opacity-60"
                 )}
               >
-                {/* Parent breadcrumb */}
+                {/* Parent breadcrumb - clickable */}
                 {breadcrumb.length > 0 && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
                     {breadcrumb.map((crumb, i) => (
-                      <span key={i} className="flex items-center gap-1">
+                      <span key={crumb.id} className="flex items-center gap-1">
                         {i > 0 && <span>/</span>}
-                        <span>{crumb}</span>
+                        <button
+                          onClick={() => onFocusTask?.(crumb.id)}
+                          className="hover:text-primary hover:underline cursor-pointer"
+                        >
+                          {crumb.text}
+                        </button>
                       </span>
                     ))}
                   </div>
@@ -212,10 +229,15 @@ export function FeedView({
                       )}
                     </div>
 
-                    <p className={cn(
-                      "text-sm leading-relaxed",
-                      task.status === "done" && "line-through text-muted-foreground"
-                    )}>
+                    {/* Clickable content to focus */}
+                    <p
+                      onClick={() => task.taskType === "task" && onFocusTask?.(task.id)}
+                      className={cn(
+                        "text-sm leading-relaxed",
+                        task.status === "done" && "line-through text-muted-foreground",
+                        task.taskType === "task" && "cursor-pointer hover:text-primary"
+                      )}
+                    >
                       {linkifyContent(task.content)}
                     </p>
 

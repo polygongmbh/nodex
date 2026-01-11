@@ -18,6 +18,8 @@ interface KanbanViewProps {
   onSearchChange: (query: string) => void;
   onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
   onToggleComplete: (taskId: string) => void;
+  focusedTaskId?: string | null;
+  onFocusTask?: (taskId: string | null) => void;
 }
 
 const columns: { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] = [
@@ -37,15 +39,37 @@ export function KanbanView({
   onSearchChange,
   onNewTask,
   onToggleComplete,
+  focusedTaskId,
+  onFocusTask,
 }: KanbanViewProps) {
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
 
   const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
 
+  // Get all descendants of a task
+  const getDescendantIds = (taskId: string): Set<string> => {
+    const ids = new Set<string>();
+    const addDescendants = (id: string) => {
+      allTasks.filter(t => t.parentId === id).forEach(child => {
+        ids.add(child.id);
+        addDescendants(child.id);
+      });
+    };
+    addDescendants(taskId);
+    return ids;
+  };
+
   // Get only task-type items (not comments), filtered
   const kanbanTasks = useMemo(() => {
     return allTasks.filter(task => {
       if (task.taskType !== "task") return false;
+
+      // If focused on a task, only show descendants
+      if (focusedTaskId) {
+        const descendantIds = getDescendantIds(focusedTaskId);
+        if (!descendantIds.has(task.id)) return false;
+      }
+
       // Apply search filter
       if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
@@ -65,7 +89,7 @@ export function KanbanView({
         return false;
       });
     });
-  }, [allTasks, tasks, searchQuery, includedTags]);
+  }, [allTasks, tasks, searchQuery, includedTags, focusedTaskId]);
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
@@ -83,7 +107,7 @@ export function KanbanView({
   }, [kanbanTasks]);
 
   const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
-    onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime);
+    onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime, focusedTaskId || undefined);
     setComposingColumn(null);
   };
 
@@ -94,18 +118,30 @@ export function KanbanView({
     return mentionedPeople.includes(currentUser.name);
   };
 
-  const getParentName = (task: Task): string | null => {
+  const getParentName = (task: Task): { id: string; text: string } | null => {
     if (!task.parentId) return null;
     const parent = allTasks.find(t => t.id === task.parentId);
-    return parent ? parent.content.slice(0, 25) + (parent.content.length > 25 ? "..." : "") : null;
+    return parent ? { id: parent.id, text: parent.content.slice(0, 25) + (parent.content.length > 25 ? "..." : "") } : null;
   };
+
+  const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
 
   return (
     <main className="flex-1 flex flex-col h-screen">
       {/* Header */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Kanban Board</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold">Kanban Board</h2>
+            {focusedTaskId && (
+              <button
+                onClick={() => onFocusTask?.(null)}
+                className="text-xs text-primary hover:underline"
+              >
+                ← Back to all
+              </button>
+            )}
+          </div>
           <div className="relative w-64">
             <input
               type="text"
@@ -116,6 +152,12 @@ export function KanbanView({
             />
           </div>
         </div>
+        {focusedTask && (
+          <div className="mt-3 p-2 bg-muted/50 rounded-lg border border-border">
+            <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
+            <div className="text-sm font-medium">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</div>
+          </div>
+        )}
       </div>
 
       {/* Kanban Columns */}
@@ -170,29 +212,37 @@ export function KanbanView({
               <ScrollArea className="flex-1 p-2">
                 <div className="space-y-2">
                   {tasksByStatus[column.id].map((task) => {
-                    const parentName = getParentName(task);
+                    const parentInfo = getParentName(task);
                     
                     return (
                       <div
                         key={task.id}
                         className={cn(
-                          "bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer",
+                          "bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow",
                           task.status === "done" && "opacity-70"
                         )}
-                        onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
                       >
-                        {/* Parent reference */}
-                        {parentName && (
-                          <div className="text-xs text-muted-foreground mb-1.5 truncate">
-                            ↳ {parentName}
-                          </div>
+                        {/* Parent reference - clickable */}
+                        {parentInfo && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onFocusTask?.(parentInfo.id);
+                            }}
+                            className="text-xs text-muted-foreground mb-1.5 truncate block w-full text-left hover:text-primary hover:underline"
+                          >
+                            ↳ {parentInfo.text}
+                          </button>
                         )}
 
-                        {/* Content */}
-                        <p className={cn(
-                          "text-sm leading-relaxed",
-                          task.status === "done" && "line-through text-muted-foreground"
-                        )}>
+                        {/* Content - clickable to focus */}
+                        <p
+                          onClick={() => onFocusTask?.(task.id)}
+                          className={cn(
+                            "text-sm leading-relaxed cursor-pointer hover:text-primary",
+                            task.status === "done" && "line-through text-muted-foreground"
+                          )}
+                        >
                           {linkifyContent(task.content)}
                         </p>
 
@@ -228,6 +278,29 @@ export function KanbanView({
                             )}
                           </div>
                         )}
+
+                        {/* Status toggle */}
+                        <div className="flex items-center justify-end mt-2 pt-2 border-t border-border">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (canCompleteTask(task)) onToggleComplete(task.id);
+                            }}
+                            disabled={!canCompleteTask(task)}
+                            className={cn(
+                              "p-1 rounded transition-colors",
+                              canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+                            )}
+                          >
+                            {task.status === "done" ? (
+                              <CheckCircle2 className="w-4 h-4 text-primary" />
+                            ) : task.status === "in-progress" ? (
+                              <CircleDot className="w-4 h-4 text-amber-500" />
+                            ) : (
+                              <Circle className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     );
                   })}

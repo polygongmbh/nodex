@@ -23,6 +23,7 @@ const Index = () => {
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentView, setCurrentView] = useState<ViewType>("tree");
+  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
 
   const currentUser = people.find(p => p.id === "me");
 
@@ -182,6 +183,8 @@ const Index = () => {
     onSearchChange: setSearchQuery,
     onNewTask: handleNewTask,
     onToggleComplete: handleToggleComplete,
+    focusedTaskId,
+    onFocusTask: setFocusedTaskId,
   };
 
   const renderView = () => {

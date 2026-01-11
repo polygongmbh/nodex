@@ -17,6 +17,8 @@ interface ListViewProps {
   onSearchChange: (query: string) => void;
   onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
   onToggleComplete: (taskId: string) => void;
+  focusedTaskId?: string | null;
+  onFocusTask?: (taskId: string | null) => void;
 }
 
 type SortField = "content" | "status" | "dueDate" | "timestamp";
@@ -33,6 +35,8 @@ export function ListView({
   onSearchChange,
   onNewTask,
   onToggleComplete,
+  focusedTaskId,
+  onFocusTask,
 }: ListViewProps) {
   const [isComposing, setIsComposing] = useState(false);
   const [sortField, setSortField] = useState<SortField>("timestamp");
@@ -40,10 +44,30 @@ export function ListView({
 
   const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
 
+  // Get all descendants of a task
+  const getDescendantIds = (taskId: string): Set<string> => {
+    const ids = new Set<string>();
+    const addDescendants = (id: string) => {
+      allTasks.filter(t => t.parentId === id).forEach(child => {
+        ids.add(child.id);
+        addDescendants(child.id);
+      });
+    };
+    addDescendants(taskId);
+    return ids;
+  };
+
   // Get only task-type items
   const listTasks = useMemo(() => {
     let filtered = allTasks.filter(task => {
       if (task.taskType !== "task") return false;
+
+      // If focused on a task, only show descendants
+      if (focusedTaskId) {
+        const descendantIds = getDescendantIds(focusedTaskId);
+        if (!descendantIds.has(task.id)) return false;
+      }
+
       if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
@@ -80,7 +104,7 @@ export function ListView({
     });
 
     return filtered;
-  }, [allTasks, searchQuery, includedTags, sortField, sortDirection]);
+  }, [allTasks, searchQuery, includedTags, sortField, sortDirection, focusedTaskId]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -92,7 +116,7 @@ export function ListView({
   };
 
   const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
-    onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime);
+    onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime, focusedTaskId || undefined);
     setIsComposing(false);
   };
 
@@ -102,6 +126,8 @@ export function ListView({
     if (mentionedPeople.length === 0) return true;
     return mentionedPeople.includes(currentUser.name);
   };
+
+  const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
 
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <button
@@ -121,7 +147,17 @@ export function ListView({
       {/* Header */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">List View</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold">List View</h2>
+            {focusedTaskId && (
+              <button
+                onClick={() => onFocusTask?.(null)}
+                className="text-xs text-primary hover:underline"
+              >
+                ← Back to all
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -142,6 +178,12 @@ export function ListView({
             </button>
           </div>
         </div>
+        {focusedTask && (
+          <div className="mt-3 p-2 bg-muted/50 rounded-lg border border-border">
+            <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
+            <div className="text-sm font-medium">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</div>
+          </div>
+        )}
       </div>
 
       {/* Task Composer */}
@@ -221,10 +263,13 @@ export function ListView({
                     </button>
                   </td>
                   <td className="p-3">
-                    <p className={cn(
-                      "text-sm",
-                      task.status === "done" && "line-through text-muted-foreground"
-                    )}>
+                    <p
+                      onClick={() => onFocusTask?.(task.id)}
+                      className={cn(
+                        "text-sm cursor-pointer hover:text-primary",
+                        task.status === "done" && "line-through text-muted-foreground"
+                      )}
+                    >
                       {linkifyContent(task.content)}
                     </p>
                   </td>
