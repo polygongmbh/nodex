@@ -13,16 +13,17 @@ interface TaskComposerProps {
   people: Person[];
   onCancel: () => void;
   compact?: boolean;
+  defaultDueDate?: Date;
 }
 
-export function TaskComposer({ onSubmit, relays, tags, people, onCancel, compact = false }: TaskComposerProps) {
+export function TaskComposer({ onSubmit, relays, tags, people, onCancel, compact = false, defaultDueDate }: TaskComposerProps) {
   const [content, setContent] = useState("");
   const [taskType, setTaskType] = useState<TaskType>("task");
   const [selectedRelays, setSelectedRelays] = useState<string[]>(() => {
     const activeRelays = relays.filter(r => r.isActive).map(r => r.id);
     return activeRelays.length > 0 ? activeRelays : [relays[0]?.id].filter(Boolean);
   });
-  const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [dueDate, setDueDate] = useState<Date | undefined>(defaultDueDate);
   const [dueTime, setDueTime] = useState("");
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState("");
