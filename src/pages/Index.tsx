@@ -97,18 +97,36 @@ const Index = () => {
 
   const handleToggleComplete = (taskId: string) => {
     setTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              isCompleted: !task.isCompleted,
-              completedBy: !task.isCompleted ? currentUser?.name : undefined,
-            }
-          : task
-      )
+      prev.map((task) => {
+        if (task.id !== taskId) return task;
+        
+        const currentStatus = task.status || "todo";
+        let nextStatus: "todo" | "in-progress" | "done";
+        let completedBy: string | undefined = task.completedBy;
+        
+        if (currentStatus === "todo") {
+          nextStatus = "in-progress";
+        } else if (currentStatus === "in-progress") {
+          nextStatus = "done";
+          completedBy = currentUser?.name;
+        } else {
+          nextStatus = "todo";
+          completedBy = undefined;
+        }
+        
+        return { ...task, status: nextStatus, completedBy };
+      })
     );
+    
     const task = tasks.find(t => t.id === taskId);
-    toast.success(task?.isCompleted ? "Task reopened" : "Task completed");
+    const currentStatus = task?.status || "todo";
+    if (currentStatus === "todo") {
+      toast.success("Task in progress");
+    } else if (currentStatus === "in-progress") {
+      toast.success("Task completed");
+    } else {
+      toast.success("Task reopened");
+    }
   };
 
   const handleNewTask = (content: string, extractedTags: string[], relayIds: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => {

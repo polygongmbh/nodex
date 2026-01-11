@@ -55,7 +55,7 @@ export const mockTasks: Task[] = [
     replies: 2,
     reposts: 0,
     parentId: "1",
-    isCompleted: true,
+    status: "done",
     completedBy: "bob",
   },
   {
@@ -96,7 +96,7 @@ export const mockTasks: Task[] = [
     replies: 0,
     reposts: 0,
     parentId: "1b",
-    isCompleted: true,
+    status: "done",
     completedBy: "alice",
   },
   // Comment on navigation task
@@ -152,7 +152,7 @@ export const mockTasks: Task[] = [
     replies: 2,
     reposts: 0,
     parentId: "2",
-    isCompleted: true,
+    status: "done",
     completedBy: "david",
   },
   {
@@ -247,7 +247,7 @@ export const mockTasks: Task[] = [
     replies: 1,
     reposts: 0,
     parentId: "3",
-    isCompleted: true,
+    status: "done",
     completedBy: "alice",
   },
 
@@ -289,7 +289,7 @@ export const mockTasks: Task[] = [
     replies: 0,
     reposts: 0,
     parentId: "4",
-    isCompleted: true,
+    status: "done",
     completedBy: "me",
   },
 

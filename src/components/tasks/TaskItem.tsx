@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { ChevronRight, ChevronDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock } from "lucide-react";
+import { ChevronRight, ChevronDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Task, Person } from "@/types";
+import { Task, Person, TaskStatus } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
 
@@ -68,7 +67,7 @@ export function TaskItem({
           isComment 
             ? "bg-muted/30 hover:bg-muted/50" 
             : "hover:bg-card/80 cursor-pointer",
-          task.isCompleted && "opacity-60",
+          task.status === "done" && "opacity-60",
           depth > 0 && "ml-6 border-l-2 border-border pl-4"
         )}
         onClick={handleSelect}
@@ -89,17 +88,29 @@ export function TaskItem({
           <div className="w-5 flex-shrink-0" />
         )}
 
-        {/* Checkbox for tasks */}
+        {/* Status toggle for tasks - tri-state: todo -> in-progress -> done */}
         {!isComment && (
-          <div className="flex-shrink-0 mt-0.5">
-            <Checkbox
-              checked={task.isCompleted}
-              disabled={!canCompleteTask()}
-              onCheckedChange={() => onToggleComplete?.(task.id)}
-              onClick={(e) => e.stopPropagation()}
-              className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-            />
-          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (canCompleteTask()) {
+                onToggleComplete?.(task.id);
+              }
+            }}
+            disabled={!canCompleteTask()}
+            className={cn(
+              "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+              canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+            )}
+          >
+            {task.status === "done" ? (
+              <CheckCircle2 className="w-5 h-5 text-primary" />
+            ) : task.status === "in-progress" ? (
+              <CircleDot className="w-5 h-5 text-amber-500" />
+            ) : (
+              <Circle className="w-5 h-5 text-muted-foreground" />
+            )}
+          </button>
         )}
 
         {/* Comment icon for comments */}
@@ -135,7 +146,7 @@ export function TaskItem({
                 <>
                   <span className="flex items-center gap-1">
                     <CheckSquare className="w-3 h-3" />
-                    {taskChildren.filter(c => c.isCompleted).length}/{taskChildren.length}
+                    {taskChildren.filter(c => c.status === "done").length}/{taskChildren.length}
                   </span>
                 </>
               )}
@@ -154,7 +165,7 @@ export function TaskItem({
           {/* Task content */}
           <p className={cn(
             "text-sm leading-relaxed",
-            task.isCompleted && "line-through text-muted-foreground"
+            task.status === "done" && "line-through text-muted-foreground"
           )}>
             {linkifyContent(task.content)}
           </p>
@@ -188,7 +199,7 @@ export function TaskItem({
           )}
 
           {/* Completed indicator */}
-          {task.isCompleted && task.completedBy && (
+          {task.status === "done" && task.completedBy && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
               <CheckSquare className="w-3 h-3" />
               <span>Completed by @{task.completedBy}</span>

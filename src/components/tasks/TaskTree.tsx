@@ -102,10 +102,48 @@ export function TaskTree({
     return ancestors;
   }, [allTasks]);
 
+  // Check if a task or any of its descendants is in-progress
+  const hasInProgressInTree = useCallback((taskId: string): boolean => {
+    const task = allTasks.find(t => t.id === taskId);
+    if (task?.status === "in-progress") return true;
+    
+    const children = childrenMap.get(taskId) || [];
+    return children.some(child => hasInProgressInTree(child.id));
+  }, [allTasks, childrenMap]);
+
+  // Get all ancestor task IDs for a given task
+  const getAncestorIds = useCallback((taskId: string): Set<string> => {
+    const ancestors = new Set<string>();
+    const task = allTasks.find(t => t.id === taskId);
+    if (task?.parentId) {
+      ancestors.add(task.parentId);
+      const parentAncestors = getAncestorIds(task.parentId);
+      parentAncestors.forEach(id => ancestors.add(id));
+    }
+    return ancestors;
+  }, [allTasks]);
+
+  // Get all in-progress task IDs and their related (ancestor/descendant) task IDs
+  const inProgressRelatedIds = useMemo(() => {
+    const related = new Set<string>();
+    
+    allTasks.forEach(task => {
+      if (task.status === "in-progress") {
+        // Add the task itself
+        related.add(task.id);
+        // Add all ancestors
+        const ancestors = getAncestorIds(task.id);
+        ancestors.forEach(id => related.add(id));
+      }
+    });
+    
+    return related;
+  }, [allTasks, getAncestorIds]);
+
   const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
   const hasActiveFilters = searchQuery.trim() !== "" || includedTags.length > 0;
 
-  // Get visible tasks based on context and filters
+  // Get visible tasks based on context and filters, sorted with in-progress first
   const visibleTasks = useMemo(() => {
     let rootTasks: Task[];
     
@@ -117,19 +155,27 @@ export function TaskTree({
       rootTasks = childrenMap.get(undefined) || [];
     }
 
-    if (!hasActiveFilters) {
-      return rootTasks;
+    if (hasActiveFilters) {
+      // Apply filtering
+      const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags);
+      const ancestorIds = getAncestors(matchingIds);
+      
+      // Filter to show tasks that match or are ancestors of matches
+      rootTasks = rootTasks.filter(task => 
+        matchingIds.has(task.id) || ancestorIds.has(task.id)
+      );
     }
 
-    // Apply filtering
-    const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags);
-    const ancestorIds = getAncestors(matchingIds);
-    
-    // Filter to show tasks that match or are ancestors of matches
-    return rootTasks.filter(task => 
-      matchingIds.has(task.id) || ancestorIds.has(task.id)
-    );
-  }, [currentContextId, childrenMap, hasActiveFilters, searchQuery, includedTags, getMatchingTasks, getAncestors]);
+    // Sort: tasks with in-progress status (or in-progress descendants) come first
+    return [...rootTasks].sort((a, b) => {
+      const aHasInProgress = a.status === "in-progress" || hasInProgressInTree(a.id);
+      const bHasInProgress = b.status === "in-progress" || hasInProgressInTree(b.id);
+      
+      if (aHasInProgress && !bHasInProgress) return -1;
+      if (!aHasInProgress && bHasInProgress) return 1;
+      return 0;
+    });
+  }, [currentContextId, childrenMap, hasActiveFilters, searchQuery, includedTags, getMatchingTasks, getAncestors, hasInProgressInTree]);
 
   const currentContextTask = currentContextId ? allTasks.find(t => t.id === currentContextId) : null;
 
@@ -147,19 +193,27 @@ export function TaskTree({
   };
 
   const getFilteredChildren = useCallback((parentId: string): Task[] => {
-    const children = childrenMap.get(parentId) || [];
+    let children = childrenMap.get(parentId) || [];
     
-    if (!hasActiveFilters) {
-      return children;
+    if (hasActiveFilters) {
+      const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags);
+      const ancestorIds = getAncestors(matchingIds);
+      
+      children = children.filter(child => 
+        matchingIds.has(child.id) || ancestorIds.has(child.id)
+      );
     }
 
-    const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags);
-    const ancestorIds = getAncestors(matchingIds);
-    
-    return children.filter(child => 
-      matchingIds.has(child.id) || ancestorIds.has(child.id)
-    );
-  }, [childrenMap, hasActiveFilters, currentContextId, searchQuery, includedTags, getMatchingTasks, getAncestors]);
+    // Sort: tasks with in-progress status (or in-progress descendants) come first
+    return [...children].sort((a, b) => {
+      const aHasInProgress = a.status === "in-progress" || hasInProgressInTree(a.id);
+      const bHasInProgress = b.status === "in-progress" || hasInProgressInTree(b.id);
+      
+      if (aHasInProgress && !bHasInProgress) return -1;
+      if (!aHasInProgress && bHasInProgress) return 1;
+      return 0;
+    });
+  }, [childrenMap, hasActiveFilters, currentContextId, searchQuery, includedTags, getMatchingTasks, getAncestors, hasInProgressInTree]);
 
   return (
     <main className="flex-1 flex flex-col h-screen max-w-3xl">
