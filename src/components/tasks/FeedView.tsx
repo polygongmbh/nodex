@@ -116,7 +116,7 @@ export function FeedView({
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
 
   return (
-    <main className="flex-1 flex flex-col h-screen max-w-3xl">
+    <main className="flex-1 flex flex-col h-[calc(100vh-57px)] w-full max-w-3xl mx-auto overflow-hidden">
       {/* Header with Composer */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-3">

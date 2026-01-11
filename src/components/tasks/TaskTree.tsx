@@ -3,6 +3,7 @@ import { Search, ChevronUp, Plus, X } from "lucide-react";
 import { Task, Relay, Tag, Person } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { TaskComposer } from "./TaskComposer";
+import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
 
 interface TaskTreeProps {
   tasks: Task[];
@@ -35,17 +36,12 @@ export function TaskTree({
   const currentContextId = contextStack[contextStack.length - 1];
 
   // Build a map of task ID to children
-  const childrenMap = useMemo(() => {
-    const map = new Map<string | undefined, Task[]>();
-    allTasks.forEach(task => {
-      const parentId = task.parentId;
-      if (!map.has(parentId)) {
-        map.set(parentId, []);
-      }
-      map.get(parentId)!.push(task);
-    });
-    return map;
-  }, [allTasks]);
+  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
+
+  const sortContext: SortContext = useMemo(() => ({
+    childrenMap,
+    allTasks,
+  }), [childrenMap, allTasks]);
 
   // Check if a task or any of its descendants matches the filter
   const taskMatchesFilter = useCallback((task: Task, query: string, includedTags: string[]): boolean => {
@@ -102,48 +98,10 @@ export function TaskTree({
     return ancestors;
   }, [allTasks]);
 
-  // Check if a task or any of its descendants is in-progress
-  const hasInProgressInTree = useCallback((taskId: string): boolean => {
-    const task = allTasks.find(t => t.id === taskId);
-    if (task?.status === "in-progress") return true;
-    
-    const children = childrenMap.get(taskId) || [];
-    return children.some(child => hasInProgressInTree(child.id));
-  }, [allTasks, childrenMap]);
-
-  // Get all ancestor task IDs for a given task
-  const getAncestorIds = useCallback((taskId: string): Set<string> => {
-    const ancestors = new Set<string>();
-    const task = allTasks.find(t => t.id === taskId);
-    if (task?.parentId) {
-      ancestors.add(task.parentId);
-      const parentAncestors = getAncestorIds(task.parentId);
-      parentAncestors.forEach(id => ancestors.add(id));
-    }
-    return ancestors;
-  }, [allTasks]);
-
-  // Get all in-progress task IDs and their related (ancestor/descendant) task IDs
-  const inProgressRelatedIds = useMemo(() => {
-    const related = new Set<string>();
-    
-    allTasks.forEach(task => {
-      if (task.status === "in-progress") {
-        // Add the task itself
-        related.add(task.id);
-        // Add all ancestors
-        const ancestors = getAncestorIds(task.id);
-        ancestors.forEach(id => related.add(id));
-      }
-    });
-    
-    return related;
-  }, [allTasks, getAncestorIds]);
-
   const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
   const hasActiveFilters = searchQuery.trim() !== "" || includedTags.length > 0;
 
-  // Get visible tasks based on context and filters, sorted with in-progress first
+  // Get visible tasks based on context and filters, sorted with priority system
   const visibleTasks = useMemo(() => {
     let rootTasks: Task[];
     
@@ -166,16 +124,9 @@ export function TaskTree({
       );
     }
 
-    // Sort: tasks with in-progress status (or in-progress descendants) come first
-    return [...rootTasks].sort((a, b) => {
-      const aHasInProgress = a.status === "in-progress" || hasInProgressInTree(a.id);
-      const bHasInProgress = b.status === "in-progress" || hasInProgressInTree(b.id);
-      
-      if (aHasInProgress && !bHasInProgress) return -1;
-      if (!aHasInProgress && bHasInProgress) return 1;
-      return 0;
-    });
-  }, [currentContextId, childrenMap, hasActiveFilters, searchQuery, includedTags, getMatchingTasks, getAncestors, hasInProgressInTree]);
+    // Sort using the new priority system
+    return sortTasks(rootTasks, sortContext);
+  }, [currentContextId, childrenMap, hasActiveFilters, searchQuery, includedTags, getMatchingTasks, getAncestors, sortContext]);
 
   const currentContextTask = currentContextId ? allTasks.find(t => t.id === currentContextId) : null;
 
@@ -204,21 +155,14 @@ export function TaskTree({
       );
     }
 
-    // Sort: tasks with in-progress status (or in-progress descendants) come first
-    return [...children].sort((a, b) => {
-      const aHasInProgress = a.status === "in-progress" || hasInProgressInTree(a.id);
-      const bHasInProgress = b.status === "in-progress" || hasInProgressInTree(b.id);
-      
-      if (aHasInProgress && !bHasInProgress) return -1;
-      if (!aHasInProgress && bHasInProgress) return 1;
-      return 0;
-    });
-  }, [childrenMap, hasActiveFilters, currentContextId, searchQuery, includedTags, getMatchingTasks, getAncestors, hasInProgressInTree]);
+    // Sort using the new priority system
+    return sortTasks(children, sortContext);
+  }, [childrenMap, hasActiveFilters, currentContextId, searchQuery, includedTags, getMatchingTasks, getAncestors, sortContext]);
 
   return (
-    <main className="flex-1 flex flex-col h-screen max-w-3xl">
+    <main className="flex-1 flex flex-col h-[calc(100vh-57px)] w-full max-w-3xl mx-auto overflow-hidden">
       {/* Header with context navigation */}
-      <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
+      <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {contextStack.length > 0 && (
@@ -269,7 +213,7 @@ export function TaskTree({
 
       {/* Task Composer */}
       {isComposing && (
-        <div className="border-b border-border p-4 bg-card/30">
+        <div className="border-b border-border p-4 bg-card/30 flex-shrink-0">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">
               {currentContextId ? `Adding subtask to "${currentContextTask?.content.slice(0, 30)}..."` : "Creating new root task"}
@@ -335,7 +279,7 @@ export function TaskTree({
       </div>
 
       {/* Search Bar */}
-      <div className="border-t border-border p-3 bg-background/95 backdrop-blur-sm">
+      <div className="border-t border-border p-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input

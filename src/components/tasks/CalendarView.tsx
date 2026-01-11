@@ -108,7 +108,7 @@ export function CalendarView({
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
 
   return (
-    <main className="flex-1 flex flex-col h-screen max-w-5xl">
+    <main className="flex-1 flex flex-col h-[calc(100vh-57px)] w-full overflow-hidden">
       {/* Header */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between">

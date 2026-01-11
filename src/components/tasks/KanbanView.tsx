@@ -1,11 +1,19 @@
-import { useState, useMemo } from "react";
-import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Leaf } from "lucide-react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Task, Relay, Tag, Person, TaskStatus } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { linkifyContent } from "@/lib/linkify";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -20,6 +28,7 @@ interface KanbanViewProps {
   onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
+  onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
 }
 
 const columns: { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] = [
@@ -27,6 +36,8 @@ const columns: { id: TaskStatus; label: string; icon: React.ReactNode; color: st
   { id: "in-progress", label: "In Progress", icon: <CircleDot className="w-4 h-4" />, color: "text-amber-500" },
   { id: "done", label: "Done", icon: <CheckCircle2 className="w-4 h-4" />, color: "text-primary" },
 ];
+
+type DepthMode = "1" | "2" | "3" | "all" | "leaves";
 
 export function KanbanView({
   tasks,
@@ -41,25 +52,74 @@ export function KanbanView({
   onToggleComplete,
   focusedTaskId,
   onFocusTask,
+  onStatusChange,
 }: KanbanViewProps) {
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
+  const [depthMode, setDepthMode] = useState<DepthMode>("1");
 
   const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
 
+  // Build children map
+  const childrenMap = useMemo(() => {
+    const map = new Map<string | undefined, Task[]>();
+    allTasks.forEach(task => {
+      const parentId = task.parentId;
+      if (!map.has(parentId)) {
+        map.set(parentId, []);
+      }
+      map.get(parentId)!.push(task);
+    });
+    return map;
+  }, [allTasks]);
+
   // Get all descendants of a task
-  const getDescendantIds = (taskId: string): Set<string> => {
+  const getDescendantIds = useCallback((taskId: string): Set<string> => {
     const ids = new Set<string>();
     const addDescendants = (id: string) => {
-      allTasks.filter(t => t.parentId === id).forEach(child => {
+      (childrenMap.get(id) || []).forEach(child => {
         ids.add(child.id);
         addDescendants(child.id);
       });
     };
     addDescendants(taskId);
     return ids;
-  };
+  }, [childrenMap]);
 
-  // Get only task-type items (not comments), filtered
+  // Check if task has children
+  const hasChildren = useCallback((taskId: string): boolean => {
+    const children = childrenMap.get(taskId) || [];
+    return children.some(c => c.taskType === "task");
+  }, [childrenMap]);
+
+  // Get depth of task from root
+  const getDepth = useCallback((taskId: string): number => {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task?.parentId) return 1;
+    return 1 + getDepth(task.parentId);
+  }, [allTasks]);
+
+  // Get full ancestor chain for a task
+  const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
+    const chain: { id: string; text: string }[] = [];
+    let current = allTasks.find(t => t.id === taskId);
+    
+    while (current?.parentId) {
+      const parent = allTasks.find(t => t.id === current!.parentId);
+      if (parent) {
+        chain.unshift({
+          id: parent.id,
+          text: parent.content.slice(0, 20) + (parent.content.length > 20 ? "..." : "")
+        });
+        current = parent;
+      } else {
+        break;
+      }
+    }
+    
+    return chain;
+  }, [allTasks]);
+
+  // Get only task-type items, filtered by depth mode
   const kanbanTasks = useMemo(() => {
     return allTasks.filter(task => {
       if (task.taskType !== "task") return false;
@@ -78,6 +138,27 @@ export function KanbanView({
       if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t))) {
         return false;
       }
+      
+      // Apply depth mode
+      const rootId = focusedTaskId || undefined;
+      const depth = focusedTaskId 
+        ? getDepth(task.id) - getDepth(focusedTaskId)
+        : getDepth(task.id);
+      
+      if (depthMode === "leaves") {
+        // Only show leaf tasks (no children)
+        return !hasChildren(task.id);
+      } else if (depthMode !== "all") {
+        const maxDepth = parseInt(depthMode);
+        // For focused view, only show tasks at exactly the specified depth from focus
+        if (focusedTaskId) {
+          return depth <= maxDepth;
+        } else {
+          // For root view, only show tasks up to specified depth
+          return depth <= maxDepth;
+        }
+      }
+
       // Check if in filtered tasks or descendant
       return tasks.some(t => t.id === task.id) || tasks.some(t => {
         let current = task;
@@ -89,7 +170,7 @@ export function KanbanView({
         return false;
       });
     });
-  }, [allTasks, tasks, searchQuery, includedTags, focusedTaskId]);
+  }, [allTasks, tasks, searchQuery, includedTags, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren]);
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
@@ -106,30 +187,31 @@ export function KanbanView({
     return grouped;
   }, [kanbanTasks]);
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    
+    const taskId = result.draggableId;
+    const newStatus = result.destination.droppableId as TaskStatus;
+    
+    if (onStatusChange) {
+      onStatusChange(taskId, newStatus);
+    } else {
+      // Fallback to toggle if no status change handler
+      onToggleComplete(taskId);
+    }
+  };
+
   const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
     onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime, focusedTaskId || undefined);
     setComposingColumn(null);
   };
 
-  const canCompleteTask = (task: Task) => {
-    if (!currentUser) return false;
-    const mentionedPeople = task.content.match(/@(\w+)/g)?.map(m => m.slice(1)) || [];
-    if (mentionedPeople.length === 0) return true;
-    return mentionedPeople.includes(currentUser.name);
-  };
-
-  const getParentName = (task: Task): { id: string; text: string } | null => {
-    if (!task.parentId) return null;
-    const parent = allTasks.find(t => t.id === task.parentId);
-    return parent ? { id: parent.id, text: parent.content.slice(0, 25) + (parent.content.length > 25 ? "..." : "") } : null;
-  };
-
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
 
   return (
-    <main className="flex-1 flex flex-col h-screen">
+    <main className="flex-1 flex flex-col h-[calc(100vh-57px)] overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
+      <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Kanban Board</h2>
@@ -142,14 +224,36 @@ export function KanbanView({
               </button>
             )}
           </div>
-          <div className="relative w-64">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search tasks..."
-              className="w-full bg-muted/50 border border-border rounded-lg pl-3 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-muted-foreground" />
+              <Select value={depthMode} onValueChange={(v) => setDepthMode(v as DepthMode)}>
+                <SelectTrigger className="w-[140px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">Top-level only</SelectItem>
+                  <SelectItem value="2">2 levels deep</SelectItem>
+                  <SelectItem value="3">3 levels deep</SelectItem>
+                  <SelectItem value="all">All levels</SelectItem>
+                  <SelectItem value="leaves">
+                    <span className="flex items-center gap-1">
+                      <Leaf className="w-3 h-3" />
+                      Leaf tasks only
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="relative w-64">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search tasks..."
+                className="w-full bg-muted/50 border border-border rounded-lg pl-3 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
           </div>
         </div>
         {focusedTask && (
@@ -161,160 +265,177 @@ export function KanbanView({
       </div>
 
       {/* Kanban Columns */}
-      <div className="flex-1 overflow-x-auto p-4">
-        <div className="flex gap-4 h-full min-w-max">
-          {columns.map((column) => (
-            <div
-              key={column.id}
-              className="flex flex-col w-80 bg-muted/30 rounded-lg"
-            >
-              {/* Column Header */}
-              <div className="flex items-center justify-between p-3 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <span className={column.color}>{column.icon}</span>
-                  <span className="font-medium">{column.label}</span>
-                  <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                    {tasksByStatus[column.id].length}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setComposingColumn(column.id)}
-                  className="p-1 rounded hover:bg-muted transition-colors"
-                >
-                  <Plus className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </div>
-
-              {/* Task Composer */}
-              {composingColumn === column.id && (
-                <div className="p-3 border-b border-border bg-card/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">New task in {column.label}</span>
-                    <button
-                      onClick={() => setComposingColumn(null)}
-                      className="p-0.5 rounded hover:bg-muted"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className="flex gap-4 h-full min-w-max">
+            {columns.map((column) => (
+              <div
+                key={column.id}
+                className="flex flex-col w-80 bg-muted/30 rounded-lg flex-shrink-0"
+              >
+                {/* Column Header */}
+                <div className="flex items-center justify-between p-3 border-b border-border flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <span className={column.color}>{column.icon}</span>
+                    <span className="font-medium">{column.label}</span>
+                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                      {tasksByStatus[column.id].length}
+                    </span>
                   </div>
-                  <TaskComposer
-                    onSubmit={handleNewTask}
-                    relays={relays}
-                    tags={tags}
-                    people={people}
-                    onCancel={() => setComposingColumn(null)}
-                    compact
-                  />
+                  <button
+                    onClick={() => setComposingColumn(column.id)}
+                    className="p-1 rounded hover:bg-muted transition-colors"
+                  >
+                    <Plus className="w-4 h-4 text-muted-foreground" />
+                  </button>
                 </div>
-              )}
 
-              {/* Column Content */}
-              <ScrollArea className="flex-1 p-2">
-                <div className="space-y-2">
-                  {tasksByStatus[column.id].map((task) => {
-                    const parentInfo = getParentName(task);
-                    
-                    return (
-                      <div
-                        key={task.id}
-                        className={cn(
-                          "bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow",
-                          task.status === "done" && "opacity-70"
-                        )}
+                {/* Task Composer */}
+                {composingColumn === column.id && (
+                  <div className="p-3 border-b border-border bg-card/50 flex-shrink-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-muted-foreground">New task in {column.label}</span>
+                      <button
+                        onClick={() => setComposingColumn(null)}
+                        className="p-0.5 rounded hover:bg-muted"
                       >
-                        {/* Parent reference - clickable */}
-                        {parentInfo && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onFocusTask?.(parentInfo.id);
-                            }}
-                            className="text-xs text-muted-foreground mb-1.5 truncate block w-full text-left hover:text-primary hover:underline"
-                          >
-                            ↳ {parentInfo.text}
-                          </button>
-                        )}
-
-                        {/* Content - clickable to focus */}
-                        <p
-                          onClick={() => onFocusTask?.(task.id)}
-                          className={cn(
-                            "text-sm leading-relaxed cursor-pointer hover:text-primary",
-                            task.status === "done" && "line-through text-muted-foreground"
-                          )}
-                        >
-                          {linkifyContent(task.content)}
-                        </p>
-
-                        {/* Due date */}
-                        {task.dueDate && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
-                            <Calendar className="w-3 h-3" />
-                            <span>{format(task.dueDate, "MMM d")}</span>
-                            {task.dueTime && (
-                              <>
-                                <Clock className="w-3 h-3" />
-                                <span>{task.dueTime}</span>
-                              </>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Tags */}
-                        {task.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {task.tags.slice(0, 3).map((tag) => (
-                              <span
-                                key={tag}
-                                className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
-                              >
-                                #{tag}
-                              </span>
-                            ))}
-                            {task.tags.length > 3 && (
-                              <span className="text-xs text-muted-foreground">
-                                +{task.tags.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Status toggle */}
-                        <div className="flex items-center justify-end mt-2 pt-2 border-t border-border">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (canCompleteTask(task)) onToggleComplete(task.id);
-                            }}
-                            disabled={!canCompleteTask(task)}
-                            className={cn(
-                              "p-1 rounded transition-colors",
-                              canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
-                            )}
-                          >
-                            {task.status === "done" ? (
-                              <CheckCircle2 className="w-4 h-4 text-primary" />
-                            ) : task.status === "in-progress" ? (
-                              <CircleDot className="w-4 h-4 text-amber-500" />
-                            ) : (
-                              <Circle className="w-4 h-4 text-muted-foreground" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {tasksByStatus[column.id].length === 0 && (
-                    <div className="text-center text-muted-foreground text-sm py-8">
-                      No tasks
+                        <X className="w-3 h-3" />
+                      </button>
                     </div>
+                    <TaskComposer
+                      onSubmit={handleNewTask}
+                      relays={relays}
+                      tags={tags}
+                      people={people}
+                      onCancel={() => setComposingColumn(null)}
+                      compact
+                    />
+                  </div>
+                )}
+
+                {/* Column Content - Droppable */}
+                <Droppable droppableId={column.id}>
+                  {(provided, snapshot) => (
+                    <ScrollArea 
+                      className={cn(
+                        "flex-1 p-2",
+                        snapshot.isDraggingOver && "bg-primary/5"
+                      )}
+                    >
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className="space-y-2 min-h-[100px]"
+                      >
+                        {tasksByStatus[column.id].map((task, index) => {
+                          const ancestorChain = (depthMode === "leaves" || depthMode === "all") 
+                            ? getAncestorChain(task.id) 
+                            : [];
+                          
+                          return (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={cn(
+                                    "bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-grab active:cursor-grabbing",
+                                    snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md",
+                                    task.status === "done" && "opacity-70"
+                                  )}
+                                >
+                                  {/* Parent chain for leaf/all mode */}
+                                  {ancestorChain.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground mb-2">
+                                      {ancestorChain.map((ancestor, i) => (
+                                        <span key={ancestor.id} className="flex items-center gap-1">
+                                          {i > 0 && <span className="text-muted-foreground/50">›</span>}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              onFocusTask?.(ancestor.id);
+                                            }}
+                                            className="hover:text-primary hover:underline truncate max-w-[80px]"
+                                          >
+                                            {ancestor.text}
+                                          </button>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* Content - clickable to focus */}
+                                  <p
+                                    onClick={() => onFocusTask?.(task.id)}
+                                    className={cn(
+                                      "text-sm leading-relaxed cursor-pointer hover:text-primary",
+                                      task.status === "done" && "line-through text-muted-foreground"
+                                    )}
+                                  >
+                                    {linkifyContent(task.content)}
+                                  </p>
+
+                                  {/* Children indicator */}
+                                  {hasChildren(task.id) && (
+                                    <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                                      <Layers className="w-3 h-3" />
+                                      <span>Has subtasks</span>
+                                    </div>
+                                  )}
+
+                                  {/* Due date */}
+                                  {task.dueDate && (
+                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
+                                      <Calendar className="w-3 h-3" />
+                                      <span>{format(task.dueDate, "MMM d")}</span>
+                                      {task.dueTime && (
+                                        <>
+                                          <Clock className="w-3 h-3" />
+                                          <span>{task.dueTime}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Tags */}
+                                  {task.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-2">
+                                      {task.tags.slice(0, 3).map((tag) => (
+                                        <span
+                                          key={tag}
+                                          className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
+                                        >
+                                          #{tag}
+                                        </span>
+                                      ))}
+                                      {task.tags.length > 3 && (
+                                        <span className="text-xs text-muted-foreground">
+                                          +{task.tags.length - 3}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </Draggable>
+                          );
+                        })}
+                        {provided.placeholder}
+
+                        {tasksByStatus[column.id].length === 0 && (
+                          <div className="text-center text-muted-foreground text-sm py-8">
+                            No tasks
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
                   )}
-                </div>
-              </ScrollArea>
-            </div>
-          ))}
-        </div>
+                </Droppable>
+              </div>
+            ))}
+          </div>
+        </DragDropContext>
       </div>
     </main>
   );

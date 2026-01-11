@@ -124,16 +124,19 @@ const Index = () => {
         return { ...task, status: nextStatus, completedBy };
       })
     );
-    
-    const task = tasks.find(t => t.id === taskId);
-    const currentStatus = task?.status || "todo";
-    if (currentStatus === "todo") {
-      toast.success("Task in progress");
-    } else if (currentStatus === "in-progress") {
-      toast.success("Task completed");
-    } else {
-      toast.success("Task reopened");
-    }
+  };
+
+  const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.id !== taskId) return task;
+        return { 
+          ...task, 
+          status: newStatus, 
+          completedBy: newStatus === "done" ? currentUser?.name : undefined 
+        };
+      })
+    );
   };
 
   const handleNewTask = (content: string, extractedTags: string[], relayIds: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => {
@@ -185,6 +188,7 @@ const Index = () => {
     onToggleComplete: handleToggleComplete,
     focusedTaskId,
     onFocusTask: setFocusedTaskId,
+    onStatusChange: handleStatusChange,
   };
 
   const renderView = () => {
