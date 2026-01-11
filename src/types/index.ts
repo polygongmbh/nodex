@@ -24,6 +24,8 @@ export interface Person {
 
 export type TaskType = "task" | "comment";
 
+export type TaskStatus = "todo" | "in-progress" | "done";
+
 export interface Task {
   id: string;
   author: Person;
@@ -37,7 +39,7 @@ export interface Task {
   reposts: number;
   isLiked?: boolean;
   isReposted?: boolean;
-  isCompleted?: boolean;
+  status?: TaskStatus;
   completedBy?: string;
   dueDate?: Date;
   dueTime?: string;
