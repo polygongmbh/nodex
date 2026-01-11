@@ -12,9 +12,10 @@ interface TaskComposerProps {
   tags: Tag[];
   people: Person[];
   onCancel: () => void;
+  compact?: boolean;
 }
 
-export function TaskComposer({ onSubmit, relays, tags, people, onCancel }: TaskComposerProps) {
+export function TaskComposer({ onSubmit, relays, tags, people, onCancel, compact = false }: TaskComposerProps) {
   const [content, setContent] = useState("");
   const [taskType, setTaskType] = useState<TaskType>("task");
   const [selectedRelays, setSelectedRelays] = useState<string[]>(() => {
@@ -80,32 +81,33 @@ export function TaskComposer({ onSubmit, relays, tags, people, onCancel }: TaskC
   const filteredTags = tags.filter(tag => tag.name.toLowerCase().includes(hashtagFilter));
 
   return (
-    <div className="space-y-3">
+    <div className={cn("space-y-3", compact && "space-y-2")}>
       {/* Type selector */}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => setTaskType("task")}
-          className={cn(
-            "flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors",
-            taskType === "task" ? "bg-primary/20 text-primary" : "hover:bg-muted"
-          )}
-        >
-          <CheckSquare className="w-4 h-4" />
-          Task
-        </button>
-        <button
-          onClick={() => setTaskType("comment")}
-          className={cn(
-            "flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors",
-            taskType === "comment" ? "bg-primary/20 text-primary" : "hover:bg-muted"
-          )}
-        >
-          <MessageSquare className="w-4 h-4" />
-          Comment
-        </button>
-      </div>
+      {!compact && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTaskType("task")}
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors",
+              taskType === "task" ? "bg-primary/20 text-primary" : "hover:bg-muted"
+            )}
+          >
+            <CheckSquare className="w-4 h-4" />
+            Task
+          </button>
+          <button
+            onClick={() => setTaskType("comment")}
+            className={cn(
+              "flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors",
+              taskType === "comment" ? "bg-primary/20 text-primary" : "hover:bg-muted"
+            )}
+          >
+            <MessageSquare className="w-4 h-4" />
+            Comment
+          </button>
+        </div>
+      )}
 
-      {/* Content */}
       <div className="relative">
         <textarea
           ref={textareaRef}
@@ -113,8 +115,11 @@ export function TaskComposer({ onSubmit, relays, tags, people, onCancel }: TaskC
           onChange={handleContentChange}
           onKeyDown={handleKeyDown}
           placeholder={taskType === "task" ? "What needs to be done? Use #tags..." : "Add a comment..."}
-          className="w-full bg-muted/30 border border-border rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[80px]"
-          rows={3}
+          className={cn(
+            "w-full bg-muted/30 border border-border rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50",
+            compact ? "min-h-[60px]" : "min-h-[80px]"
+          )}
+          rows={compact ? 2 : 3}
         />
 
         {/* Hashtag suggestions */}
