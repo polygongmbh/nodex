@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
+import { FeedView } from "@/components/tasks/FeedView";
+import { KanbanView } from "@/components/tasks/KanbanView";
+import { CalendarView } from "@/components/tasks/CalendarView";
+import { ListView } from "@/components/tasks/ListView";
+import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
 import { mockRelays, mockTags, mockPeople, mockTasks } from "@/data/mockData";
 import { Relay, Tag, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -17,6 +22,7 @@ const Index = () => {
   );
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentView, setCurrentView] = useState<ViewType>("tree");
 
   const currentUser = people.find(p => p.id === "me");
 
@@ -165,6 +171,36 @@ const Index = () => {
     return true;
   });
 
+  const viewProps = {
+    tasks: filteredTasks,
+    allTasks: tasks,
+    relays,
+    tags,
+    people,
+    currentUser,
+    searchQuery,
+    onSearchChange: setSearchQuery,
+    onNewTask: handleNewTask,
+    onToggleComplete: handleToggleComplete,
+  };
+
+  const renderView = () => {
+    switch (currentView) {
+      case "tree":
+        return <TaskTree {...viewProps} />;
+      case "feed":
+        return <FeedView {...viewProps} />;
+      case "kanban":
+        return <KanbanView {...viewProps} />;
+      case "calendar":
+        return <CalendarView {...viewProps} />;
+      case "list":
+        return <ListView {...viewProps} />;
+      default:
+        return <TaskTree {...viewProps} />;
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar
@@ -180,18 +216,14 @@ const Index = () => {
         onToggleAllTags={handleToggleAllTags}
         onToggleAllPeople={handleToggleAllPeople}
       />
-      <TaskTree
-        tasks={filteredTasks}
-        allTasks={tasks}
-        relays={relays}
-        tags={tags}
-        people={people}
-        currentUser={currentUser}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onNewTask={handleNewTask}
-        onToggleComplete={handleToggleComplete}
-      />
+      <div className="flex-1 flex flex-col">
+        {/* View Switcher Header */}
+        <div className="border-b border-border p-3 bg-background/95 backdrop-blur-sm flex justify-center">
+          <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
+        </div>
+        {/* Current View */}
+        {renderView()}
+      </div>
     </div>
   );
 };
