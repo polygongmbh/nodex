@@ -5,6 +5,7 @@ import { TaskComposer } from "./TaskComposer";
 import { linkifyContent } from "@/lib/linkify";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
 
 interface ListViewProps {
   tasks: Task[];
@@ -21,7 +22,7 @@ interface ListViewProps {
   onFocusTask?: (taskId: string | null) => void;
 }
 
-type SortField = "content" | "status" | "dueDate" | "timestamp";
+type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
 type SortDirection = "asc" | "desc";
 
 export function ListView({
@@ -39,10 +40,18 @@ export function ListView({
   onFocusTask,
 }: ListViewProps) {
   const [isComposing, setIsComposing] = useState(false);
-  const [sortField, setSortField] = useState<SortField>("timestamp");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<SortField>("priority");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
+
+  // Build children map for sorting context
+  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
+  
+  const sortContext: SortContext = useMemo(() => ({
+    childrenMap,
+    allTasks,
+  }), [childrenMap, allTasks]);
 
   // Get all descendants of a task
   const getDescendantIds = (taskId: string): Set<string> => {
@@ -77,7 +86,16 @@ export function ListView({
       return true;
     });
 
-    // Sort
+    // Use priority sort by default
+    if (sortField === "priority") {
+      filtered = sortTasks(filtered, sortContext);
+      if (sortDirection === "desc") {
+        filtered = filtered.reverse();
+      }
+      return filtered;
+    }
+
+    // Custom field sorting
     filtered.sort((a, b) => {
       let comparison = 0;
       
@@ -104,7 +122,7 @@ export function ListView({
     });
 
     return filtered;
-  }, [allTasks, searchQuery, includedTags, sortField, sortDirection, focusedTaskId]);
+  }, [allTasks, searchQuery, includedTags, sortField, sortDirection, focusedTaskId, sortContext]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -143,9 +161,9 @@ export function ListView({
   );
 
   return (
-    <main className="flex-1 flex flex-col h-screen">
+    <main className="flex-1 flex flex-col h-[calc(100vh-57px)] w-full overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
+      <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">List View</h2>
@@ -188,7 +206,7 @@ export function ListView({
 
       {/* Task Composer */}
       {isComposing && (
-        <div className="border-b border-border p-4 bg-card/30">
+        <div className="border-b border-border p-4 bg-card/30 flex-shrink-0">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Creating new task</span>
             <button
@@ -211,7 +229,7 @@ export function ListView({
       {/* Table */}
       <div className="flex-1 overflow-auto">
         <table className="w-full">
-          <thead className="sticky top-0 bg-background border-b border-border">
+          <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>
               <th className="text-left p-3 w-10">
                 <span className="sr-only">Status</span>
@@ -225,13 +243,16 @@ export function ListView({
               <th className="text-left p-3 w-40">
                 <SortButton field="dueDate">Due Date</SortButton>
               </th>
+              <th className="text-left p-3 w-32">
+                <SortButton field="priority">Priority</SortButton>
+              </th>
               <th className="text-left p-3 w-48">Tags</th>
             </tr>
           </thead>
           <tbody>
             {listTasks.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center text-muted-foreground py-8">
+                <td colSpan={6} className="text-center text-muted-foreground py-8">
                   No tasks found
                 </td>
               </tr>
@@ -299,6 +320,9 @@ export function ListView({
                     ) : (
                       <span className="text-sm text-muted-foreground">—</span>
                     )}
+                  </td>
+                  <td className="p-3">
+                    <span className="text-xs text-muted-foreground">—</span>
                   </td>
                   <td className="p-3">
                     <div className="flex flex-wrap gap-1">

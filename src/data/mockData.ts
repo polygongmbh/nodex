@@ -1,4 +1,7 @@
 import { Relay, Tag, Person, Task } from "@/types";
+import { addDays, subDays } from "date-fns";
+
+const today = new Date();
 
 export const mockRelays: Relay[] = [
   { id: "personal", name: "Personal", icon: "user", isActive: true, postCount: 12 },
@@ -29,7 +32,7 @@ export const mockPeople: Person[] = [
 ];
 
 export const mockTasks: Task[] = [
-  // Root task: Website Redesign
+  // Root task: Website Redesign - DUE TOMORROW
   {
     id: "1",
     author: mockPeople[1],
@@ -41,6 +44,7 @@ export const mockTasks: Task[] = [
     likes: 12,
     replies: 5,
     reposts: 2,
+    dueDate: addDays(today, 1),
   },
   // Subtasks of Website Redesign
   {
@@ -57,6 +61,7 @@ export const mockTasks: Task[] = [
     parentId: "1",
     status: "done",
     completedBy: "bob",
+    dueDate: subDays(today, 2),
   },
   {
     id: "1b",
@@ -70,6 +75,9 @@ export const mockTasks: Task[] = [
     replies: 1,
     reposts: 0,
     parentId: "1",
+    status: "in-progress",
+    dueDate: today,
+    dueTime: "14:00",
   },
   {
     id: "1b1",
@@ -83,6 +91,7 @@ export const mockTasks: Task[] = [
     replies: 0,
     reposts: 0,
     parentId: "1b",
+    dueDate: today,
   },
   {
     id: "1b2",
@@ -125,9 +134,10 @@ export const mockTasks: Task[] = [
     replies: 3,
     reposts: 1,
     parentId: "1",
+    dueDate: addDays(today, 3),
   },
 
-  // Root task: API Development
+  // Root task: API Development - OVERDUE
   {
     id: "2",
     author: mockPeople[3],
@@ -139,6 +149,7 @@ export const mockTasks: Task[] = [
     likes: 15,
     replies: 8,
     reposts: 3,
+    dueDate: subDays(today, 1),
   },
   {
     id: "2a",
@@ -154,6 +165,7 @@ export const mockTasks: Task[] = [
     parentId: "2",
     status: "done",
     completedBy: "david",
+    dueDate: subDays(today, 5),
   },
   {
     id: "2b",
@@ -167,6 +179,8 @@ export const mockTasks: Task[] = [
     replies: 1,
     reposts: 0,
     parentId: "2",
+    dueDate: today,
+    dueTime: "17:00",
   },
   {
     id: "2b1",
@@ -180,6 +194,7 @@ export const mockTasks: Task[] = [
     replies: 0,
     reposts: 0,
     parentId: "2b",
+    dueDate: addDays(today, 1),
   },
   // Comment on auth
   {
@@ -207,9 +222,10 @@ export const mockTasks: Task[] = [
     replies: 0,
     reposts: 0,
     parentId: "2",
+    dueDate: addDays(today, 5),
   },
 
-  // Root task: Bug Fixes
+  // Root task: Bug Fixes - DUE TODAY
   {
     id: "3",
     author: mockPeople[2],
@@ -221,6 +237,8 @@ export const mockTasks: Task[] = [
     likes: 7,
     replies: 4,
     reposts: 1,
+    dueDate: today,
+    dueTime: "18:00",
   },
   {
     id: "3a",
@@ -234,6 +252,8 @@ export const mockTasks: Task[] = [
     replies: 2,
     reposts: 0,
     parentId: "3",
+    status: "in-progress",
+    dueDate: today,
   },
   {
     id: "3b",
@@ -249,9 +269,10 @@ export const mockTasks: Task[] = [
     parentId: "3",
     status: "done",
     completedBy: "alice",
+    dueDate: subDays(today, 1),
   },
 
-  // Personal tasks
+  // Personal tasks - NO DEADLINE
   {
     id: "4",
     author: mockPeople[0],
@@ -276,6 +297,7 @@ export const mockTasks: Task[] = [
     replies: 0,
     reposts: 0,
     parentId: "4",
+    dueDate: addDays(today, 7),
   },
   {
     id: "4b",
@@ -293,7 +315,7 @@ export const mockTasks: Task[] = [
     completedBy: "me",
   },
 
-  // Personal productivity
+  // Personal productivity - NEXT WEEK
   {
     id: "5",
     author: mockPeople[0],
@@ -305,6 +327,7 @@ export const mockTasks: Task[] = [
     likes: 0,
     replies: 3,
     reposts: 0,
+    dueDate: addDays(today, 2),
   },
   {
     id: "5a",
@@ -318,6 +341,7 @@ export const mockTasks: Task[] = [
     replies: 0,
     reposts: 0,
     parentId: "5",
+    dueDate: addDays(today, 2),
   },
   {
     id: "5b",
@@ -331,6 +355,50 @@ export const mockTasks: Task[] = [
     replies: 0,
     reposts: 0,
     parentId: "5",
+    dueDate: addDays(today, 2),
+  },
+
+  // Additional tasks for demo
+  {
+    id: "6",
+    author: mockPeople[2],
+    content: "Q1 Planning Meeting Prep",
+    tags: ["planning"],
+    relays: ["work"],
+    taskType: "task",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+    likes: 2,
+    replies: 1,
+    reposts: 0,
+    dueDate: addDays(today, 4),
+  },
+  {
+    id: "6a",
+    author: mockPeople[2],
+    content: "Gather team input on priorities",
+    tags: ["planning"],
+    relays: ["work"],
+    taskType: "task",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60),
+    likes: 0,
+    replies: 0,
+    reposts: 0,
+    parentId: "6",
+    dueDate: addDays(today, 2),
+  },
+  {
+    id: "6b",
+    author: mockPeople[2],
+    content: "Create presentation slides",
+    tags: ["docs"],
+    relays: ["work"],
+    taskType: "task",
+    timestamp: new Date(Date.now() - 1000 * 60 * 30),
+    likes: 0,
+    replies: 0,
+    reposts: 0,
+    parentId: "6",
+    dueDate: addDays(today, 3),
   },
 ];
 
