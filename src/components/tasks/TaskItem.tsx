@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronRight, ChevronDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task, Person, TaskStatus } from "@/types";
@@ -32,7 +32,23 @@ export function TaskItem({
   matchedByFilter = true,
 }: TaskItemProps) {
   const [localExpanded, setLocalExpanded] = useState(isExpanded);
+  const prevStatusRef = useRef(task.status);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
+
+  // Auto-expand when marked in-progress, auto-collapse when marked done
+  useEffect(() => {
+    const prevStatus = prevStatusRef.current;
+    const currentStatus = task.status;
+    
+    if (prevStatus !== currentStatus) {
+      if (currentStatus === "in-progress") {
+        setLocalExpanded(true);
+      } else if (currentStatus === "done") {
+        setLocalExpanded(false);
+      }
+      prevStatusRef.current = currentStatus;
+    }
+  }, [task.status]);
 
   const hasChildren = children.length > 0;
   const isComment = task.taskType === "comment";
