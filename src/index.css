@@ -33,8 +33,10 @@
     --success: 145 60% 45%;
     --success-foreground: 220 20% 98%;
 
-    --warning: 35 90% 55%;
+    --warning: 30 95% 55%;
     --warning-foreground: 220 20% 10%;
+
+    --yellow-500: 45 93% 47%;
 
     --tag-included: 210 100% 55%;
     --tag-excluded: 0 60% 50%;
