@@ -37,7 +37,7 @@ export function CalendarView({
   onFocusTask,
 }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // Select today by default
   const [isComposingEvent, setIsComposingEvent] = useState(false);
 
   const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
