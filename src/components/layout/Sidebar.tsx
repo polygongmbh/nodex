@@ -55,8 +55,8 @@ export function Sidebar({
             <Radio className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="font-heading font-semibold text-foreground">Mostr</h1>
-            <p className="text-xs text-muted-foreground">Task Manager</p>
+            <h1 className="font-heading font-semibold text-foreground">Nodex</h1>
+            <p className="text-xs text-muted-foreground">Collaboration Platform</p>
           </div>
         </div>
       </div>
