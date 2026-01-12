@@ -160,7 +160,7 @@ export function TaskTree({
   }, [childrenMap, hasActiveFilters, currentContextId, searchQuery, includedTags, getMatchingTasks, getAncestors, sortContext]);
 
   return (
-    <main className="flex-1 flex flex-col h-[calc(100vh-57px)] w-full max-w-3xl mx-auto overflow-hidden">
+    <main className="flex-1 flex flex-col h-full w-full max-w-3xl mx-auto overflow-hidden">
       {/* Header with context navigation */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center justify-between mb-3">

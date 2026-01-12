@@ -159,17 +159,30 @@ const Index = () => {
     toast.success(taskType === "comment" ? "Comment added!" : "Task created!");
   };
 
-  // Filter tasks based on active filters (relay filtering only for now)
+  // Filter tasks based on active filters
   const filteredTasks = tasks.filter((task) => {
+    // Relay filter
     const activeRelayIds = relays.filter((r) => r.isActive).map((r) => r.id);
     if (activeRelayIds.length > 0 && !task.relays.some(tr => activeRelayIds.includes(tr))) {
       return false;
     }
 
-    // Exclude excluded tags
-    const excludedTags = tags.filter((t) => t.filterState === "excluded").map((t) => t.name);
-    if (task.tags.some((t) => excludedTags.includes(t))) {
-      return false;
+    // Tag exclusion filter - exclude tasks that have any excluded tags
+    const excludedTagNames = tags.filter((t) => t.filterState === "excluded").map((t) => t.name.toLowerCase());
+    if (excludedTagNames.length > 0) {
+      const taskTagsLower = task.tags.map(t => t.toLowerCase());
+      if (taskTagsLower.some(t => excludedTagNames.includes(t))) {
+        return false;
+      }
+    }
+
+    // Tag inclusion filter - if any tags are included, task must have at least one
+    const includedTagNames = tags.filter((t) => t.filterState === "included").map((t) => t.name.toLowerCase());
+    if (includedTagNames.length > 0) {
+      const taskTagsLower = task.tags.map(t => t.toLowerCase());
+      if (!taskTagsLower.some(t => includedTagNames.includes(t))) {
+        return false;
+      }
     }
 
     return true;
@@ -209,7 +222,7 @@ const Index = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
         relays={relays}
         tags={tags}
@@ -223,13 +236,15 @@ const Index = () => {
         onToggleAllTags={handleToggleAllTags}
         onToggleAllPeople={handleToggleAllPeople}
       />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* View Switcher Header */}
-        <div className="border-b border-border p-3 bg-background/95 backdrop-blur-sm flex justify-center">
+        <div className="border-b border-border p-3 bg-background/95 backdrop-blur-sm flex justify-center flex-shrink-0">
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
         </div>
         {/* Current View */}
-        {renderView()}
+        <div className="flex-1 overflow-hidden">
+          {renderView()}
+        </div>
       </div>
     </div>
   );

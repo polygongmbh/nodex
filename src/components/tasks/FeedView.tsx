@@ -35,7 +35,8 @@ export function FeedView({
   focusedTaskId,
   onFocusTask,
 }: FeedViewProps) {
-  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
+  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
+  const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
 
   // Get all descendants of a task
   const getDescendantIds = (taskId: string): Set<string> => {
@@ -65,8 +66,15 @@ export function FeedView({
       if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-      // Apply tag filter
-      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t))) {
+      // Apply tag exclusion filter
+      if (excludedTags.length > 0) {
+        const taskTagsLower = task.tags.map(t => t.toLowerCase());
+        if (taskTagsLower.some(t => excludedTags.includes(t))) {
+          return false;
+        }
+      }
+      // Apply tag inclusion filter
+      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t.toLowerCase()))) {
         return false;
       }
       // Only show tasks that passed relay/excluded tag filters
@@ -116,7 +124,7 @@ export function FeedView({
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
 
   return (
-    <main className="flex-1 flex flex-col h-[calc(100vh-57px)] w-full max-w-3xl mx-auto overflow-hidden">
+    <main className="flex-1 flex flex-col h-full w-full max-w-3xl mx-auto overflow-hidden">
       {/* Header with Composer */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-3">

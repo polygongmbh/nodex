@@ -1,18 +1,39 @@
 import { Task } from "@/types";
-import { isToday, isPast, startOfDay } from "date-fns";
+import { isToday, isTomorrow, isPast, startOfDay, differenceInDays } from "date-fns";
 
 /**
- * Sorting priority for tasks:
- * 1. Tasks due today or in the past (overdue)
- * 2. Tasks in progress (or with in-progress descendants)
- * 3. Open tasks with closest deadline first
- * 4. Other open tasks (no deadline)
- * 5. Done tasks
+ * Cumulative sorting for tasks:
+ * - Due date urgency (sooner = higher priority)
+ * - Status priority: in-progress > todo > done
+ * Combined into a single score for sorting
  */
 
 export interface SortContext {
   childrenMap: Map<string | undefined, Task[]>;
   allTasks: Task[];
+}
+
+// Get due date urgency score (lower = more urgent, null = least urgent)
+function getDueDateScore(dueDate: Date | undefined): number {
+  if (!dueDate) return 1000; // No due date = lowest priority
+  
+  const today = startOfDay(new Date());
+  const dueDay = startOfDay(dueDate);
+  const daysUntilDue = differenceInDays(dueDay, today);
+  
+  // Overdue tasks get negative scores (more urgent)
+  // Today = 0, tomorrow = 1, etc.
+  return daysUntilDue;
+}
+
+// Get status priority score (lower = higher priority)
+function getStatusScore(status: string | undefined): number {
+  switch (status) {
+    case "in-progress": return 0;
+    case "todo": return 1;
+    case "done": return 2;
+    default: return 1;
+  }
 }
 
 // Check if a task or any of its descendants is in-progress
@@ -66,28 +87,29 @@ export function sortTasks(tasks: Task[], context: SortContext): Task[] {
     if (aStatus !== "done" && bStatus === "done") return -1;
     if (aStatus === "done" && bStatus === "done") return 0;
     
-    // Check for due today or overdue (considering descendants)
-    const aDueTodayOrPast = hasDueTodayOrPastInTree(a.id, context);
-    const bDueTodayOrPast = hasDueTodayOrPastInTree(b.id, context);
+    // Get earliest deadline considering tree
+    const aEarliest = getEarliestDeadlineInTree(a.id, context);
+    const bEarliest = getEarliestDeadlineInTree(b.id, context);
     
-    if (aDueTodayOrPast && !bDueTodayOrPast) return -1;
-    if (!aDueTodayOrPast && bDueTodayOrPast) return 1;
+    // Calculate combined scores (due date + status)
+    const aDueDateScore = getDueDateScore(aEarliest || undefined);
+    const bDueDateScore = getDueDateScore(bEarliest || undefined);
     
     // Check in-progress status (considering descendants)
     const aHasInProgress = aStatus === "in-progress" || hasInProgressInTree(a.id, context);
     const bHasInProgress = bStatus === "in-progress" || hasInProgressInTree(b.id, context);
     
-    if (aHasInProgress && !bHasInProgress) return -1;
-    if (!aHasInProgress && bHasInProgress) return 1;
+    const aStatusScore = aHasInProgress ? 0 : getStatusScore(aStatus);
+    const bStatusScore = bHasInProgress ? 0 : getStatusScore(bStatus);
     
-    // Sort by earliest deadline in tree
-    const aEarliest = getEarliestDeadlineInTree(a.id, context);
-    const bEarliest = getEarliestDeadlineInTree(b.id, context);
+    // Primary sort by due date urgency
+    if (aDueDateScore !== bDueDateScore) {
+      return aDueDateScore - bDueDateScore;
+    }
     
-    if (aEarliest && !bEarliest) return -1;
-    if (!aEarliest && bEarliest) return 1;
-    if (aEarliest && bEarliest) {
-      return aEarliest.getTime() - bEarliest.getTime();
+    // Secondary sort by status priority
+    if (aStatusScore !== bStatusScore) {
+      return aStatusScore - bStatusScore;
     }
     
     return 0;
@@ -105,4 +127,29 @@ export function buildChildrenMap(allTasks: Task[]): Map<string | undefined, Task
     map.get(parentId)!.push(task);
   });
   return map;
+}
+
+// Get due date color class based on urgency
+export function getDueDateColorClass(dueDate: Date | undefined, status?: string): string {
+  if (!dueDate || status === "done") return "text-muted-foreground";
+  
+  const today = startOfDay(new Date());
+  const dueDay = startOfDay(dueDate);
+  const daysUntilDue = differenceInDays(dueDay, today);
+  
+  if (daysUntilDue < 0) {
+    // Overdue - red
+    return "text-destructive";
+  } else if (daysUntilDue === 0) {
+    // Due today - orange
+    return "text-warning";
+  } else if (daysUntilDue === 1) {
+    // Due tomorrow - yellow
+    return "text-yellow-500";
+  } else if (daysUntilDue <= 6) {
+    // Due within 6 days - green
+    return "text-success";
+  }
+  
+  return "text-muted-foreground";
 }

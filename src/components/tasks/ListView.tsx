@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Search, Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown } from "lucide-react";
 import { Task, Relay, Tag, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { linkifyContent } from "@/lib/linkify";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
+import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
 
 interface ListViewProps {
   tasks: Task[];
@@ -43,7 +43,8 @@ export function ListView({
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
-  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
+  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
+  const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
 
   // Build children map for sorting context
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
@@ -66,6 +67,27 @@ export function ListView({
     return ids;
   };
 
+  // Get full ancestor chain for a task
+  const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
+    const chain: { id: string; text: string }[] = [];
+    let current = allTasks.find(t => t.id === taskId);
+    
+    while (current?.parentId) {
+      const parent = allTasks.find(t => t.id === current!.parentId);
+      if (parent) {
+        chain.unshift({
+          id: parent.id,
+          text: parent.content.slice(0, 20) + (parent.content.length > 20 ? "..." : "")
+        });
+        current = parent;
+      } else {
+        break;
+      }
+    }
+    
+    return chain;
+  }, [allTasks]);
+
   // Get only task-type items
   const listTasks = useMemo(() => {
     let filtered = allTasks.filter(task => {
@@ -80,9 +102,20 @@ export function ListView({
       if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t))) {
+      
+      // Apply tag exclusion filter
+      if (excludedTags.length > 0) {
+        const taskTagsLower = task.tags.map(t => t.toLowerCase());
+        if (taskTagsLower.some(t => excludedTags.includes(t))) {
+          return false;
+        }
+      }
+      
+      // Apply tag inclusion filter
+      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t.toLowerCase()))) {
         return false;
       }
+      
       return true;
     });
 
@@ -122,7 +155,7 @@ export function ListView({
     });
 
     return filtered;
-  }, [allTasks, searchQuery, includedTags, sortField, sortDirection, focusedTaskId, sortContext]);
+  }, [allTasks, searchQuery, includedTags, excludedTags, sortField, sortDirection, focusedTaskId, sortContext]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -161,7 +194,7 @@ export function ListView({
   );
 
   return (
-    <main className="flex-1 flex flex-col h-[calc(100vh-57px)] w-full overflow-hidden">
+    <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Header */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -257,92 +290,115 @@ export function ListView({
                 </td>
               </tr>
             ) : (
-              listTasks.map((task) => (
-                <tr
-                  key={task.id}
-                  className={cn(
-                    "border-b border-border hover:bg-muted/30 transition-colors",
-                    task.status === "done" && "opacity-60"
-                  )}
-                >
-                  <td className="p-3">
-                    <button
-                      onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
-                      disabled={!canCompleteTask(task)}
-                      className={cn(
-                        "p-0.5 rounded transition-colors",
-                        canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
-                      )}
-                    >
-                      {task.status === "done" ? (
-                        <CheckCircle2 className="w-5 h-5 text-primary" />
-                      ) : task.status === "in-progress" ? (
-                        <CircleDot className="w-5 h-5 text-amber-500" />
+              listTasks.map((task) => {
+                const ancestorChain = getAncestorChain(task.id);
+                const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                
+                return (
+                  <tr
+                    key={task.id}
+                    className={cn(
+                      "border-b border-border hover:bg-muted/30 transition-colors",
+                      task.status === "done" && "opacity-60"
+                    )}
+                  >
+                    <td className="p-3">
+                      <button
+                        onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
+                        disabled={!canCompleteTask(task)}
+                        className={cn(
+                          "p-0.5 rounded transition-colors",
+                          canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+                        )}
+                      >
+                        {task.status === "done" ? (
+                          <CheckCircle2 className="w-5 h-5 text-primary" />
+                        ) : task.status === "in-progress" ? (
+                          <CircleDot className="w-5 h-5 text-amber-500" />
+                        ) : (
+                          <Circle className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </button>
+                    </td>
+                    <td className="p-3">
+                      <div className="space-y-1">
+                        {/* Parent context */}
+                        {ancestorChain.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                            {ancestorChain.map((ancestor, i) => (
+                              <span key={ancestor.id} className="flex items-center gap-1">
+                                {i > 0 && <span className="text-muted-foreground/50">›</span>}
+                                <button
+                                  onClick={() => onFocusTask?.(ancestor.id)}
+                                  className="hover:text-primary hover:underline truncate max-w-[100px]"
+                                >
+                                  {ancestor.text}
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <p
+                          onClick={() => onFocusTask?.(task.id)}
+                          className={cn(
+                            "text-sm cursor-pointer hover:text-primary",
+                            task.status === "done" && "line-through text-muted-foreground"
+                          )}
+                        >
+                          {linkifyContent(task.content)}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <span className={cn(
+                        "text-xs px-2 py-1 rounded-full font-medium",
+                        task.status === "done" ? "bg-primary/10 text-primary" :
+                        task.status === "in-progress" ? "bg-amber-500/10 text-amber-600" :
+                        "bg-muted text-muted-foreground"
+                      )}>
+                        {task.status === "in-progress" ? "In Progress" : 
+                         task.status === "done" ? "Done" : "To Do"}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      {task.dueDate ? (
+                        <div className={cn("flex items-center gap-1.5 text-sm", dueDateColor)}>
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{format(task.dueDate, "MMM d, yyyy")}</span>
+                          {task.dueTime && (
+                            <>
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{task.dueTime}</span>
+                            </>
+                          )}
+                        </div>
                       ) : (
-                        <Circle className="w-5 h-5 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">—</span>
                       )}
-                    </button>
-                  </td>
-                  <td className="p-3">
-                    <p
-                      onClick={() => onFocusTask?.(task.id)}
-                      className={cn(
-                        "text-sm cursor-pointer hover:text-primary",
-                        task.status === "done" && "line-through text-muted-foreground"
-                      )}
-                    >
-                      {linkifyContent(task.content)}
-                    </p>
-                  </td>
-                  <td className="p-3">
-                    <span className={cn(
-                      "text-xs px-2 py-1 rounded-full font-medium",
-                      task.status === "done" ? "bg-primary/10 text-primary" :
-                      task.status === "in-progress" ? "bg-amber-500/10 text-amber-600" :
-                      "bg-muted text-muted-foreground"
-                    )}>
-                      {task.status === "in-progress" ? "In Progress" : 
-                       task.status === "done" ? "Done" : "To Do"}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    {task.dueDate ? (
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{format(task.dueDate, "MMM d, yyyy")}</span>
-                        {task.dueTime && (
-                          <>
-                            <Clock className="w-3.5 h-3.5" />
-                            <span>{task.dueTime}</span>
-                          </>
+                    </td>
+                    <td className="p-3">
+                      <span className="text-xs text-muted-foreground">—</span>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex flex-wrap gap-1">
+                        {task.tags.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                        {task.tags.length > 3 && (
+                          <span className="text-xs text-muted-foreground">
+                            +{task.tags.length - 3}
+                          </span>
                         )}
                       </div>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <span className="text-xs text-muted-foreground">—</span>
-                  </td>
-                  <td className="p-3">
-                    <div className="flex flex-wrap gap-1">
-                      {task.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
-                        >
-                          #{tag}
-                        </span>
-                      ))}
-                      {task.tags.length > 3 && (
-                        <span className="text-xs text-muted-foreground">
-                          +{task.tags.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

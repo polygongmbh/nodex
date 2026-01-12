@@ -7,6 +7,7 @@ import { linkifyContent } from "@/lib/linkify";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { getDueDateColorClass, sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
 import {
   Select,
   SelectContent,
@@ -57,20 +58,16 @@ export function KanbanView({
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
   const [depthMode, setDepthMode] = useState<DepthMode>("1");
 
-  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
+  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
+  const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
 
   // Build children map
-  const childrenMap = useMemo(() => {
-    const map = new Map<string | undefined, Task[]>();
-    allTasks.forEach(task => {
-      const parentId = task.parentId;
-      if (!map.has(parentId)) {
-        map.set(parentId, []);
-      }
-      map.get(parentId)!.push(task);
-    });
-    return map;
-  }, [allTasks]);
+  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
+
+  const sortContext: SortContext = useMemo(() => ({
+    childrenMap,
+    allTasks,
+  }), [childrenMap, allTasks]);
 
   // Get all descendants of a task
   const getDescendantIds = useCallback((taskId: string): Set<string> => {
@@ -134,13 +131,21 @@ export function KanbanView({
       if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-      // Apply tag filter
-      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t))) {
+      
+      // Apply tag exclusion filter
+      if (excludedTags.length > 0) {
+        const taskTagsLower = task.tags.map(t => t.toLowerCase());
+        if (taskTagsLower.some(t => excludedTags.includes(t))) {
+          return false;
+        }
+      }
+      
+      // Apply tag inclusion filter
+      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t.toLowerCase()))) {
         return false;
       }
       
       // Apply depth mode
-      const rootId = focusedTaskId || undefined;
       const depth = focusedTaskId 
         ? getDepth(task.id) - getDepth(focusedTaskId)
         : getDepth(task.id);
@@ -150,27 +155,12 @@ export function KanbanView({
         return !hasChildren(task.id);
       } else if (depthMode !== "all") {
         const maxDepth = parseInt(depthMode);
-        // For focused view, only show tasks at exactly the specified depth from focus
-        if (focusedTaskId) {
-          return depth <= maxDepth;
-        } else {
-          // For root view, only show tasks up to specified depth
-          return depth <= maxDepth;
-        }
+        return depth <= maxDepth;
       }
 
-      // Check if in filtered tasks or descendant
-      return tasks.some(t => t.id === task.id) || tasks.some(t => {
-        let current = task;
-        while (current.parentId) {
-          if (tasks.some(ft => ft.id === current.parentId)) return true;
-          current = allTasks.find(t => t.id === current.parentId) || current;
-          if (!current.parentId) break;
-        }
-        return false;
-      });
+      return true;
     });
-  }, [allTasks, tasks, searchQuery, includedTags, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren]);
+  }, [allTasks, tasks, searchQuery, includedTags, excludedTags, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren]);
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
@@ -184,8 +174,13 @@ export function KanbanView({
       grouped[status].push(task);
     });
 
+    // Sort each column
+    grouped["todo"] = sortTasks(grouped["todo"], sortContext);
+    grouped["in-progress"] = sortTasks(grouped["in-progress"], sortContext);
+    grouped["done"] = sortTasks(grouped["done"], sortContext);
+
     return grouped;
-  }, [kanbanTasks]);
+  }, [kanbanTasks, sortContext]);
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -207,9 +202,12 @@ export function KanbanView({
   };
 
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
+  
+  // Determine if we should show context (depth > 1 or leaves mode)
+  const showContext = depthMode !== "1";
 
   return (
-    <main className="flex-1 flex flex-col h-[calc(100vh-57px)] overflow-hidden">
+    <main className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -328,9 +326,8 @@ export function KanbanView({
                         className="space-y-2 min-h-[100px]"
                       >
                         {tasksByStatus[column.id].map((task, index) => {
-                          const ancestorChain = (depthMode === "leaves" || depthMode === "all") 
-                            ? getAncestorChain(task.id) 
-                            : [];
+                          const ancestorChain = showContext ? getAncestorChain(task.id) : [];
+                          const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
                           
                           return (
                             <Draggable key={task.id} draggableId={task.id} index={index}>
@@ -345,7 +342,7 @@ export function KanbanView({
                                     task.status === "done" && "opacity-70"
                                   )}
                                 >
-                                  {/* Parent chain for leaf/all mode */}
+                                  {/* Parent chain for context */}
                                   {ancestorChain.length > 0 && (
                                     <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground mb-2">
                                       {ancestorChain.map((ancestor, i) => (
@@ -384,9 +381,9 @@ export function KanbanView({
                                     </div>
                                   )}
 
-                                  {/* Due date */}
+                                  {/* Due date with color coding */}
                                   {task.dueDate && (
-                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
+                                    <div className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}>
                                       <Calendar className="w-3 h-3" />
                                       <span>{format(task.dueDate, "MMM d")}</span>
                                       {task.dueTime && (
@@ -422,12 +419,6 @@ export function KanbanView({
                           );
                         })}
                         {provided.placeholder}
-
-                        {tasksByStatus[column.id].length === 0 && (
-                          <div className="text-center text-muted-foreground text-sm py-8">
-                            No tasks
-                          </div>
-                        )}
                       </div>
                     </ScrollArea>
                   )}
