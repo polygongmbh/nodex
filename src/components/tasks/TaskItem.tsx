@@ -17,6 +17,7 @@ interface TaskItemProps {
   onSelect?: (taskId: string) => void;
   onToggleComplete?: (taskId: string) => void;
   matchedByFilter?: boolean;
+  isDirectMatchFn?: (taskId: string) => boolean;
 }
 
 export function TaskItem({
@@ -25,13 +26,15 @@ export function TaskItem({
   allTasks,
   currentUser,
   depth = 0,
-  isExpanded = true,
+  isExpanded,
   onToggleExpand,
   onSelect,
   onToggleComplete,
   matchedByFilter = true,
+  isDirectMatchFn,
 }: TaskItemProps) {
-  const [localExpanded, setLocalExpanded] = useState(isExpanded);
+  // Start collapsed if not directly matched by filter
+  const [localExpanded, setLocalExpanded] = useState(isExpanded ?? matchedByFilter);
   const prevStatusRef = useRef(task.status);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
 
@@ -238,6 +241,7 @@ export function TaskItem({
           {/* Comments first */}
           {commentChildren.map((child) => {
             const grandchildren = allTasks.filter(t => t.parentId === child.id);
+            const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
             return (
               <TaskItem
                 key={child.id}
@@ -248,12 +252,15 @@ export function TaskItem({
                 depth={depth + 1}
                 onSelect={onSelect}
                 onToggleComplete={onToggleComplete}
+                matchedByFilter={childMatched}
+                isDirectMatchFn={isDirectMatchFn}
               />
             );
           })}
           {/* Subtasks after */}
           {taskChildren.map((child) => {
             const grandchildren = allTasks.filter(t => t.parentId === child.id);
+            const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
             return (
               <TaskItem
                 key={child.id}
@@ -264,6 +271,8 @@ export function TaskItem({
                 depth={depth + 1}
                 onSelect={onSelect}
                 onToggleComplete={onToggleComplete}
+                matchedByFilter={childMatched}
+                isDirectMatchFn={isDirectMatchFn}
               />
             );
           })}

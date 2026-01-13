@@ -58,36 +58,34 @@ export function TaskTree({
     return matchesQuery && matchesTags;
   }, []);
 
-  // Find all tasks that match or have matching descendants
-  const getMatchingTasks = useCallback((taskId: string | undefined, query: string, includedTags: string[], excludedTags: string[]): Set<string> => {
+  // Find all tasks that directly match the filter
+  const getDirectlyMatchingTasks = useCallback((query: string, includedTags: string[], excludedTags: string[]): Set<string> => {
     const matching = new Set<string>();
     
-    const checkTask = (id: string | undefined): boolean => {
-      const children = childrenMap.get(id) || [];
-      let hasMatchingChild = false;
-      
+    for (const task of allTasks) {
+      if (taskMatchesFilter(task, query, includedTags, excludedTags)) {
+        matching.add(task.id);
+      }
+    }
+    
+    return matching;
+  }, [allTasks, taskMatchesFilter]);
+
+  // Get all descendants of given task IDs
+  const getDescendants = useCallback((taskIds: Set<string>): Set<string> => {
+    const descendants = new Set<string>();
+    
+    const addDescendants = (parentId: string) => {
+      const children = childrenMap.get(parentId) || [];
       for (const child of children) {
-        const childMatches = checkTask(child.id);
-        if (childMatches) {
-          hasMatchingChild = true;
-          matching.add(child.id);
-        }
+        descendants.add(child.id);
+        addDescendants(child.id);
       }
-      
-      if (id) {
-        const task = allTasks.find(t => t.id === id);
-        if (task && taskMatchesFilter(task, query, includedTags, excludedTags)) {
-          matching.add(id);
-          return true;
-        }
-      }
-      
-      return hasMatchingChild;
     };
     
-    checkTask(taskId);
-    return matching;
-  }, [allTasks, childrenMap, taskMatchesFilter]);
+    taskIds.forEach(id => addDescendants(id));
+    return descendants;
+  }, [childrenMap]);
 
   // Get ancestors of matching tasks to keep them visible
   const getAncestors = useCallback((matchingIds: Set<string>): Set<string> => {
@@ -109,6 +107,20 @@ export function TaskTree({
   const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
   const hasActiveFilters = searchQuery.trim() !== "" || includedTags.length > 0 || excludedTags.length > 0;
 
+  // Compute matching tasks once
+  const { directlyMatchingIds, ancestorIds, descendantIds, allVisibleIds } = useMemo(() => {
+    if (!hasActiveFilters) {
+      return { directlyMatchingIds: new Set<string>(), ancestorIds: new Set<string>(), descendantIds: new Set<string>(), allVisibleIds: new Set<string>() };
+    }
+    
+    const directly = getDirectlyMatchingTasks(searchQuery, includedTags, excludedTags);
+    const ancestors = getAncestors(directly);
+    const descendants = getDescendants(directly);
+    const allVisible = new Set([...directly, ...ancestors, ...descendants]);
+    
+    return { directlyMatchingIds: directly, ancestorIds: ancestors, descendantIds: descendants, allVisibleIds: allVisible };
+  }, [hasActiveFilters, searchQuery, includedTags, excludedTags, getDirectlyMatchingTasks, getAncestors, getDescendants]);
+
   // Get visible tasks based on context and filters, sorted with priority system
   const visibleTasks = useMemo(() => {
     let rootTasks: Task[];
@@ -126,19 +138,13 @@ export function TaskTree({
     rootTasks = rootTasks.filter(task => filteredTaskIds.has(task.id));
 
     if (hasActiveFilters) {
-      // Apply filtering
-      const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags, excludedTags);
-      const ancestorIds = getAncestors(matchingIds);
-      
-      // Filter to show tasks that match or are ancestors of matches
-      rootTasks = rootTasks.filter(task => 
-        matchingIds.has(task.id) || ancestorIds.has(task.id)
-      );
+      // Filter to show tasks that match, are ancestors, or are descendants of matches
+      rootTasks = rootTasks.filter(task => allVisibleIds.has(task.id));
     }
 
     // Sort using the new priority system
     return sortTasks(rootTasks, sortContext);
-  }, [currentContextId, childrenMap, hasActiveFilters, searchQuery, includedTags, excludedTags, getMatchingTasks, getAncestors, sortContext, tasks]);
+  }, [currentContextId, childrenMap, hasActiveFilters, allVisibleIds, sortContext, tasks]);
 
   const currentContextTask = currentContextId ? allTasks.find(t => t.id === currentContextId) : null;
 
@@ -163,17 +169,19 @@ export function TaskTree({
     children = children.filter(child => filteredTaskIds.has(child.id));
     
     if (hasActiveFilters) {
-      const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags, excludedTags);
-      const ancestorIds = getAncestors(matchingIds);
-      
-      children = children.filter(child => 
-        matchingIds.has(child.id) || ancestorIds.has(child.id)
-      );
+      // Show children that are in the visible set (matching, ancestors, or descendants)
+      children = children.filter(child => allVisibleIds.has(child.id));
     }
 
     // Sort using the new priority system
     return sortTasks(children, sortContext);
-  }, [childrenMap, hasActiveFilters, currentContextId, searchQuery, includedTags, excludedTags, getMatchingTasks, getAncestors, sortContext, tasks]);
+  }, [childrenMap, hasActiveFilters, allVisibleIds, sortContext, tasks]);
+
+  // Check if a task directly matches the filter (for determining fold state)
+  const isTaskDirectMatch = useCallback((taskId: string): boolean => {
+    if (!hasActiveFilters) return true;
+    return directlyMatchingIds.has(taskId);
+  }, [hasActiveFilters, directlyMatchingIds]);
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
@@ -289,6 +297,8 @@ export function TaskTree({
               currentUser={currentUser}
               onSelect={handleSelectTask}
               onToggleComplete={onToggleComplete}
+              matchedByFilter={isTaskDirectMatch(task.id)}
+              isDirectMatchFn={isTaskDirectMatch}
             />
           ))
         )}
