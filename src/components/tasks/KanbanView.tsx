@@ -117,9 +117,15 @@ export function KanbanView({
   }, [allTasks]);
 
   // Get only task-type items, filtered by depth mode
+  // Use pre-filtered tasks from Index (relay/person filtering already applied)
+  const filteredTaskIds = useMemo(() => new Set(tasks.map(t => t.id)), [tasks]);
+  
   const kanbanTasks = useMemo(() => {
     return allTasks.filter(task => {
       if (task.taskType !== "task") return false;
+
+      // Must be in pre-filtered tasks (relay/person filtering already applied)
+      if (!filteredTaskIds.has(task.id)) return false;
 
       // If focused on a task, only show descendants
       if (focusedTaskId) {
@@ -160,7 +166,7 @@ export function KanbanView({
 
       return true;
     });
-  }, [allTasks, tasks, searchQuery, includedTags, excludedTags, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren]);
+  }, [allTasks, filteredTaskIds, searchQuery, includedTags, excludedTags, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren]);
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {

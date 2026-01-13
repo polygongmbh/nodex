@@ -52,8 +52,14 @@ export function FeedView({
   };
 
   // Flatten and filter all tasks chronologically
+  // Use pre-filtered tasks from Index, then apply local filters
+  const filteredTaskIds = new Set(tasks.map(t => t.id));
+  
   const feedTasks = allTasks
     .filter(task => {
+      // Must be in pre-filtered tasks (relay/person filtering already applied)
+      if (!filteredTaskIds.has(task.id)) return false;
+
       // If focused on a task, only show that task and its descendants
       if (focusedTaskId) {
         if (task.id !== focusedTaskId) {
@@ -77,17 +83,8 @@ export function FeedView({
       if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t.toLowerCase()))) {
         return false;
       }
-      // Only show tasks that passed relay/excluded tag filters
-      return tasks.some(t => t.id === task.id) || tasks.some(t => {
-        // Check if this is a descendant of a filtered task
-        let current = task;
-        while (current.parentId) {
-          if (tasks.some(ft => ft.id === current.parentId)) return true;
-          current = allTasks.find(t => t.id === current.parentId) || current;
-          if (!current.parentId) break;
-        }
-        return false;
-      });
+      
+      return true;
     })
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
@@ -124,7 +121,7 @@ export function FeedView({
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
 
   return (
-    <main className="flex-1 flex flex-col h-full w-full max-w-3xl mx-auto overflow-hidden">
+    <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Header with Composer */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-3">

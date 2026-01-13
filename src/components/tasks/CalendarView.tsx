@@ -78,9 +78,15 @@ export function CalendarView({
   }, [allTasks]);
 
   // Get tasks with due dates
+  // Use pre-filtered tasks from Index (relay/person filtering already applied)
+  const filteredTaskIds = useMemo(() => new Set(tasks.map(t => t.id)), [tasks]);
+  
   const tasksWithDueDates = useMemo(() => {
     return allTasks.filter(task => {
       if (!task.dueDate || task.taskType !== "task") return false;
+
+      // Must be in pre-filtered tasks (relay/person filtering already applied)
+      if (!filteredTaskIds.has(task.id)) return false;
 
       // If focused on a task, only show descendants
       if (focusedTaskId) {
@@ -107,7 +113,7 @@ export function CalendarView({
       
       return true;
     });
-  }, [allTasks, searchQuery, includedTags, excludedTags, focusedTaskId]);
+  }, [allTasks, filteredTaskIds, searchQuery, includedTags, excludedTags, focusedTaskId]);
 
   const days = useMemo(() => {
     const start = startOfMonth(currentMonth);

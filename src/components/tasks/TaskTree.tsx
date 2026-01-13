@@ -44,15 +44,22 @@ export function TaskTree({
   }), [childrenMap, allTasks]);
 
   // Check if a task or any of its descendants matches the filter
-  const taskMatchesFilter = useCallback((task: Task, query: string, includedTags: string[]): boolean => {
+  const taskMatchesFilter = useCallback((task: Task, query: string, includedTags: string[], excludedTags: string[]): boolean => {
     const queryLower = query.toLowerCase();
+    const taskTagsLower = task.tags.map(t => t.toLowerCase());
+    
+    // Exclude tasks with excluded tags
+    if (excludedTags.length > 0 && taskTagsLower.some(t => excludedTags.includes(t))) {
+      return false;
+    }
+    
     const matchesQuery = !query || task.content.toLowerCase().includes(queryLower);
-    const matchesTags = includedTags.length === 0 || task.tags.some(t => includedTags.includes(t));
+    const matchesTags = includedTags.length === 0 || taskTagsLower.some(t => includedTags.includes(t));
     return matchesQuery && matchesTags;
   }, []);
 
   // Find all tasks that match or have matching descendants
-  const getMatchingTasks = useCallback((taskId: string | undefined, query: string, includedTags: string[]): Set<string> => {
+  const getMatchingTasks = useCallback((taskId: string | undefined, query: string, includedTags: string[], excludedTags: string[]): Set<string> => {
     const matching = new Set<string>();
     
     const checkTask = (id: string | undefined): boolean => {
@@ -69,7 +76,7 @@ export function TaskTree({
       
       if (id) {
         const task = allTasks.find(t => t.id === id);
-        if (task && taskMatchesFilter(task, query, includedTags)) {
+        if (task && taskMatchesFilter(task, query, includedTags, excludedTags)) {
           matching.add(id);
           return true;
         }
@@ -98,8 +105,9 @@ export function TaskTree({
     return ancestors;
   }, [allTasks]);
 
-  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name);
-  const hasActiveFilters = searchQuery.trim() !== "" || includedTags.length > 0;
+  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
+  const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
+  const hasActiveFilters = searchQuery.trim() !== "" || includedTags.length > 0 || excludedTags.length > 0;
 
   // Get visible tasks based on context and filters, sorted with priority system
   const visibleTasks = useMemo(() => {
@@ -113,9 +121,13 @@ export function TaskTree({
       rootTasks = childrenMap.get(undefined) || [];
     }
 
+    // Filter by pre-filtered tasks from Index (relay/person filtering)
+    const filteredTaskIds = new Set(tasks.map(t => t.id));
+    rootTasks = rootTasks.filter(task => filteredTaskIds.has(task.id));
+
     if (hasActiveFilters) {
       // Apply filtering
-      const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags);
+      const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags, excludedTags);
       const ancestorIds = getAncestors(matchingIds);
       
       // Filter to show tasks that match or are ancestors of matches
@@ -126,7 +138,7 @@ export function TaskTree({
 
     // Sort using the new priority system
     return sortTasks(rootTasks, sortContext);
-  }, [currentContextId, childrenMap, hasActiveFilters, searchQuery, includedTags, getMatchingTasks, getAncestors, sortContext]);
+  }, [currentContextId, childrenMap, hasActiveFilters, searchQuery, includedTags, excludedTags, getMatchingTasks, getAncestors, sortContext, tasks]);
 
   const currentContextTask = currentContextId ? allTasks.find(t => t.id === currentContextId) : null;
 
@@ -146,8 +158,12 @@ export function TaskTree({
   const getFilteredChildren = useCallback((parentId: string): Task[] => {
     let children = childrenMap.get(parentId) || [];
     
+    // Filter by pre-filtered tasks from Index (relay/person filtering)
+    const filteredTaskIds = new Set(tasks.map(t => t.id));
+    children = children.filter(child => filteredTaskIds.has(child.id));
+    
     if (hasActiveFilters) {
-      const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags);
+      const matchingIds = getMatchingTasks(currentContextId, searchQuery, includedTags, excludedTags);
       const ancestorIds = getAncestors(matchingIds);
       
       children = children.filter(child => 
@@ -157,10 +173,10 @@ export function TaskTree({
 
     // Sort using the new priority system
     return sortTasks(children, sortContext);
-  }, [childrenMap, hasActiveFilters, currentContextId, searchQuery, includedTags, getMatchingTasks, getAncestors, sortContext]);
+  }, [childrenMap, hasActiveFilters, currentContextId, searchQuery, includedTags, excludedTags, getMatchingTasks, getAncestors, sortContext, tasks]);
 
   return (
-    <main className="flex-1 flex flex-col h-full w-full max-w-3xl mx-auto overflow-hidden">
+    <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Header with context navigation */}
       <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
