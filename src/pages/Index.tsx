@@ -167,6 +167,12 @@ const Index = () => {
       return false;
     }
 
+    // Person filter - filter by selected people (task author must be one of selected people)
+    const selectedPeopleIds = people.filter((p) => p.isSelected).map((p) => p.id);
+    if (selectedPeopleIds.length > 0 && !selectedPeopleIds.includes(task.author.id)) {
+      return false;
+    }
+
     // Tag exclusion filter - exclude tasks that have any excluded tags
     const excludedTagNames = tags.filter((t) => t.filterState === "excluded").map((t) => t.name.toLowerCase());
     if (excludedTagNames.length > 0) {

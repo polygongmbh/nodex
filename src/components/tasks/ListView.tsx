@@ -89,9 +89,15 @@ export function ListView({
   }, [allTasks]);
 
   // Get only task-type items
+  // Use pre-filtered tasks from Index (relay/person filtering already applied)
+  const filteredTaskIds = useMemo(() => new Set(tasks.map(t => t.id)), [tasks]);
+  
   const listTasks = useMemo(() => {
     let filtered = allTasks.filter(task => {
       if (task.taskType !== "task") return false;
+
+      // Must be in pre-filtered tasks (relay/person filtering already applied)
+      if (!filteredTaskIds.has(task.id)) return false;
 
       // If focused on a task, only show descendants
       if (focusedTaskId) {
@@ -155,7 +161,7 @@ export function ListView({
     });
 
     return filtered;
-  }, [allTasks, searchQuery, includedTags, excludedTags, sortField, sortDirection, focusedTaskId, sortContext]);
+  }, [allTasks, filteredTaskIds, searchQuery, includedTags, excludedTags, sortField, sortDirection, focusedTaskId, sortContext]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
