@@ -8,7 +8,7 @@ import { linkifyContent } from "@/lib/linkify";
 
 interface TaskItemProps {
   task: Task;
-  children: Task[];
+  filteredChildren: Task[];
   allTasks: Task[];
   currentUser?: Person;
   depth?: number;
@@ -18,11 +18,13 @@ interface TaskItemProps {
   onToggleComplete?: (taskId: string) => void;
   matchedByFilter?: boolean;
   isDirectMatchFn?: (taskId: string) => boolean;
+  getFilteredChildrenFn?: (parentId: string) => Task[];
+  hasActiveFilters?: boolean;
 }
 
 export function TaskItem({
   task,
-  children,
+  filteredChildren,
   allTasks,
   currentUser,
   depth = 0,
@@ -32,6 +34,8 @@ export function TaskItem({
   onToggleComplete,
   matchedByFilter = true,
   isDirectMatchFn,
+  getFilteredChildrenFn,
+  hasActiveFilters = false,
 }: TaskItemProps) {
   // Start collapsed if not directly matched by filter
   const [localExpanded, setLocalExpanded] = useState(isExpanded ?? matchedByFilter);
@@ -53,10 +57,21 @@ export function TaskItem({
     }
   }, [task.status]);
 
-  const hasChildren = children.length > 0;
+  // Get ALL children from allTasks for total counts
+  const allChildren = allTasks.filter(t => t.parentId === task.id);
+  const allTaskChildren = allChildren.filter(c => c.taskType === "task");
+  const allCommentChildren = allChildren.filter(c => c.taskType === "comment");
+  
+  // Get filtered children for display
+  const filteredTaskChildren = filteredChildren.filter(c => c.taskType === "task");
+  const filteredCommentChildren = filteredChildren.filter(c => c.taskType === "comment");
+  
+  const hasChildren = allChildren.length > 0;
+  const hasFilteredChildren = filteredChildren.length > 0;
   const isComment = task.taskType === "comment";
-  const taskChildren = children.filter(c => c.taskType === "task");
-  const commentChildren = children.filter(c => c.taskType === "comment");
+  
+  // Determine if there are hidden children due to filters
+  const hasHiddenChildren = hasActiveFilters && allChildren.length > filteredChildren.length;
 
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -152,7 +167,7 @@ export function TaskItem({
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Meta info - author/time only for comments, counts only for tasks */}
-          {(isComment || taskChildren.length > 0 || commentChildren.length > 0) && (
+          {(isComment || allTaskChildren.length > 0 || allCommentChildren.length > 0) && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
               {isComment && (
                 <>
@@ -161,20 +176,20 @@ export function TaskItem({
                   <span>{timeAgo}</span>
                 </>
               )}
-              {!isComment && taskChildren.length > 0 && (
+              {!isComment && allTaskChildren.length > 0 && (
                 <>
                   <span className="flex items-center gap-1">
                     <CheckSquare className="w-3 h-3" />
-                    {taskChildren.filter(c => c.status === "done").length}/{taskChildren.length}
+                    {allTaskChildren.filter(c => c.status === "done").length}/{allTaskChildren.length}
                   </span>
                 </>
               )}
-              {commentChildren.length > 0 && (
+              {allCommentChildren.length > 0 && (
                 <>
-                  {!isComment && taskChildren.length > 0 && <span>·</span>}
+                  {!isComment && allTaskChildren.length > 0 && <span>·</span>}
                   <span className="flex items-center gap-1">
                     <MessageSquare className="w-3 h-3" />
-                    {commentChildren.length}
+                    {allCommentChildren.length}
                   </span>
                 </>
               )}
@@ -235,47 +250,102 @@ export function TaskItem({
         </button>
       </div>
 
-      {/* Children - comments first, then subtasks */}
-      {localExpanded && hasChildren && (
+      {/* Children - show filtered when collapsed, all when expanded */}
+      {hasChildren && (
         <div className="space-y-1">
-          {/* Comments first */}
-          {commentChildren.map((child) => {
-            const grandchildren = allTasks.filter(t => t.parentId === child.id);
-            const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
-            return (
-              <TaskItem
-                key={child.id}
-                task={child}
-                children={grandchildren}
-                allTasks={allTasks}
-                currentUser={currentUser}
-                depth={depth + 1}
-                onSelect={onSelect}
-                onToggleComplete={onToggleComplete}
-                matchedByFilter={childMatched}
-                isDirectMatchFn={isDirectMatchFn}
-              />
-            );
-          })}
-          {/* Subtasks after */}
-          {taskChildren.map((child) => {
-            const grandchildren = allTasks.filter(t => t.parentId === child.id);
-            const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
-            return (
-              <TaskItem
-                key={child.id}
-                task={child}
-                children={grandchildren}
-                allTasks={allTasks}
-                currentUser={currentUser}
-                depth={depth + 1}
-                onSelect={onSelect}
-                onToggleComplete={onToggleComplete}
-                matchedByFilter={childMatched}
-                isDirectMatchFn={isDirectMatchFn}
-              />
-            );
-          })}
+          {localExpanded ? (
+            // When expanded, show ALL children (not just filtered)
+            <>
+              {/* Comments first */}
+              {allCommentChildren.map((child) => {
+                const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
+                const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
+                return (
+                  <TaskItem
+                    key={child.id}
+                    task={child}
+                    filteredChildren={childFilteredChildren}
+                    allTasks={allTasks}
+                    currentUser={currentUser}
+                    depth={depth + 1}
+                    onSelect={onSelect}
+                    onToggleComplete={onToggleComplete}
+                    matchedByFilter={childMatched}
+                    isDirectMatchFn={isDirectMatchFn}
+                    getFilteredChildrenFn={getFilteredChildrenFn}
+                    hasActiveFilters={hasActiveFilters}
+                  />
+                );
+              })}
+              {/* Subtasks after */}
+              {allTaskChildren.map((child) => {
+                const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
+                const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
+                return (
+                  <TaskItem
+                    key={child.id}
+                    task={child}
+                    filteredChildren={childFilteredChildren}
+                    allTasks={allTasks}
+                    currentUser={currentUser}
+                    depth={depth + 1}
+                    onSelect={onSelect}
+                    onToggleComplete={onToggleComplete}
+                    matchedByFilter={childMatched}
+                    isDirectMatchFn={isDirectMatchFn}
+                    getFilteredChildrenFn={getFilteredChildrenFn}
+                    hasActiveFilters={hasActiveFilters}
+                  />
+                );
+              })}
+            </>
+          ) : hasFilteredChildren ? (
+            // When collapsed but has filtered children, show only filtered ones
+            <>
+              {/* Comments first */}
+              {filteredCommentChildren.map((child) => {
+                const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
+                const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
+                return (
+                  <TaskItem
+                    key={child.id}
+                    task={child}
+                    filteredChildren={childFilteredChildren}
+                    allTasks={allTasks}
+                    currentUser={currentUser}
+                    depth={depth + 1}
+                    onSelect={onSelect}
+                    onToggleComplete={onToggleComplete}
+                    matchedByFilter={childMatched}
+                    isDirectMatchFn={isDirectMatchFn}
+                    getFilteredChildrenFn={getFilteredChildrenFn}
+                    hasActiveFilters={hasActiveFilters}
+                  />
+                );
+              })}
+              {/* Subtasks after */}
+              {filteredTaskChildren.map((child) => {
+                const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
+                const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
+                return (
+                  <TaskItem
+                    key={child.id}
+                    task={child}
+                    filteredChildren={childFilteredChildren}
+                    allTasks={allTasks}
+                    currentUser={currentUser}
+                    depth={depth + 1}
+                    onSelect={onSelect}
+                    onToggleComplete={onToggleComplete}
+                    matchedByFilter={childMatched}
+                    isDirectMatchFn={isDirectMatchFn}
+                    getFilteredChildrenFn={getFilteredChildrenFn}
+                    hasActiveFilters={hasActiveFilters}
+                  />
+                );
+              })}
+            </>
+          ) : null}
         </div>
       )}
     </div>
