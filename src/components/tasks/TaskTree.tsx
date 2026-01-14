@@ -292,13 +292,15 @@ export function TaskTree({
             <TaskItem
               key={task.id}
               task={task}
-              children={getFilteredChildren(task.id)}
+              filteredChildren={getFilteredChildren(task.id)}
               allTasks={allTasks}
               currentUser={currentUser}
               onSelect={handleSelectTask}
               onToggleComplete={onToggleComplete}
               matchedByFilter={isTaskDirectMatch(task.id)}
               isDirectMatchFn={isTaskDirectMatch}
+              getFilteredChildrenFn={getFilteredChildren}
+              hasActiveFilters={hasActiveFilters}
             />
           ))
         )}
