@@ -37,10 +37,24 @@ export function TaskItem({
   getFilteredChildrenFn,
   hasActiveFilters = false,
 }: TaskItemProps) {
+  // Track whether user has manually toggled this task
+  const [hasManuallyToggled, setHasManuallyToggled] = useState(false);
   // When filters are active, start expanded; otherwise use default behavior
-  const [localExpanded, setLocalExpanded] = useState(isExpanded ?? (hasActiveFilters ? true : true));
+  const [localExpanded, setLocalExpanded] = useState(isExpanded ?? true);
   const prevStatusRef = useRef(task.status);
+  const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
+
+  // Reset manual toggle state when filters change
+  useEffect(() => {
+    if (prevHasActiveFiltersRef.current !== hasActiveFilters) {
+      setHasManuallyToggled(false);
+      if (hasActiveFilters) {
+        setLocalExpanded(true);
+      }
+      prevHasActiveFiltersRef.current = hasActiveFilters;
+    }
+  }, [hasActiveFilters]);
 
   // Auto-expand when marked in-progress, auto-collapse when marked done
   useEffect(() => {
@@ -73,8 +87,12 @@ export function TaskItem({
   // Determine if there are hidden children due to filters
   const hasHiddenChildren = hasActiveFilters && allChildren.length > filteredChildren.length;
 
+  // Show all children only if user has manually toggled
+  const showAllChildren = hasManuallyToggled;
+
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setHasManuallyToggled(true);
     setLocalExpanded(!localExpanded);
     onToggleExpand?.();
   };
@@ -250,51 +268,65 @@ export function TaskItem({
         </button>
       </div>
 
-      {/* Children - folded = none, unfolded = all with non-matching greyed out */}
+      {/* Children - initially only filtered, after manual toggle show all with non-matching greyed out */}
       {hasChildren && localExpanded && (
         <div className="space-y-1">
-          {/* Comments first */}
-          {allCommentChildren.map((child) => {
-            const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
-            const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
+          {/* Determine which children to show based on manual toggle state */}
+          {(() => {
+            const commentsToShow = hasActiveFilters && !showAllChildren 
+              ? filteredCommentChildren 
+              : allCommentChildren;
+            const tasksToShow = hasActiveFilters && !showAllChildren 
+              ? filteredTaskChildren 
+              : allTaskChildren;
+            
             return (
-              <TaskItem
-                key={child.id}
-                task={child}
-                filteredChildren={childFilteredChildren}
-                allTasks={allTasks}
-                currentUser={currentUser}
-                depth={depth + 1}
-                onSelect={onSelect}
-                onToggleComplete={onToggleComplete}
-                matchedByFilter={childMatched}
-                isDirectMatchFn={isDirectMatchFn}
-                getFilteredChildrenFn={getFilteredChildrenFn}
-                hasActiveFilters={hasActiveFilters}
-              />
+              <>
+                {/* Comments first */}
+                {commentsToShow.map((child) => {
+                  const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
+                  const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
+                  return (
+                    <TaskItem
+                      key={child.id}
+                      task={child}
+                      filteredChildren={childFilteredChildren}
+                      allTasks={allTasks}
+                      currentUser={currentUser}
+                      depth={depth + 1}
+                      onSelect={onSelect}
+                      onToggleComplete={onToggleComplete}
+                      matchedByFilter={childMatched}
+                      isDirectMatchFn={isDirectMatchFn}
+                      getFilteredChildrenFn={getFilteredChildrenFn}
+                      hasActiveFilters={hasActiveFilters}
+                    />
+                  );
+                })}
+                {/* Subtasks after */}
+                {tasksToShow.map((child) => {
+                  const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
+                  const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
+                  return (
+                    <TaskItem
+                      key={child.id}
+                      task={child}
+                      filteredChildren={childFilteredChildren}
+                      allTasks={allTasks}
+                      currentUser={currentUser}
+                      depth={depth + 1}
+                      onSelect={onSelect}
+                      onToggleComplete={onToggleComplete}
+                      matchedByFilter={childMatched}
+                      isDirectMatchFn={isDirectMatchFn}
+                      getFilteredChildrenFn={getFilteredChildrenFn}
+                      hasActiveFilters={hasActiveFilters}
+                    />
+                  );
+                })}
+              </>
             );
-          })}
-          {/* Subtasks after */}
-          {allTaskChildren.map((child) => {
-            const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
-            const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
-            return (
-              <TaskItem
-                key={child.id}
-                task={child}
-                filteredChildren={childFilteredChildren}
-                allTasks={allTasks}
-                currentUser={currentUser}
-                depth={depth + 1}
-                onSelect={onSelect}
-                onToggleComplete={onToggleComplete}
-                matchedByFilter={childMatched}
-                isDirectMatchFn={isDirectMatchFn}
-                getFilteredChildrenFn={getFilteredChildrenFn}
-                hasActiveFilters={hasActiveFilters}
-              />
-            );
-          })}
+          })()}
         </div>
       )}
     </div>
