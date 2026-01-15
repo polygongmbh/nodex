@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronRight, ChevronDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2 } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task, Person, TaskStatus } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
 import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
+
+// Fold states: collapsed -> matchingOnly -> allVisible
+type FoldState = "collapsed" | "matchingOnly" | "allVisible";
+
 interface TaskItemProps {
   task: Task;
   filteredChildren: Task[];
@@ -37,21 +41,16 @@ export function TaskItem({
   getFilteredChildrenFn,
   hasActiveFilters = false,
 }: TaskItemProps) {
-  // Track whether user has manually toggled this task
-  const [hasManuallyToggled, setHasManuallyToggled] = useState(false);
-  // When filters are active, start expanded; otherwise use default behavior
-  const [localExpanded, setLocalExpanded] = useState(isExpanded ?? true);
+  // Three-state fold: collapsed -> matchingOnly -> allVisible
+  const [foldState, setFoldState] = useState<FoldState>("matchingOnly");
   const prevStatusRef = useRef(task.status);
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
 
-  // Reset manual toggle state when filters change
+  // Reset fold state when filters change
   useEffect(() => {
     if (prevHasActiveFiltersRef.current !== hasActiveFilters) {
-      setHasManuallyToggled(false);
-      if (hasActiveFilters) {
-        setLocalExpanded(true);
-      }
+      setFoldState("matchingOnly");
       prevHasActiveFiltersRef.current = hasActiveFilters;
     }
   }, [hasActiveFilters]);
@@ -63,9 +62,9 @@ export function TaskItem({
     
     if (prevStatus !== currentStatus) {
       if (currentStatus === "in-progress") {
-        setLocalExpanded(true);
+        setFoldState("matchingOnly");
       } else if (currentStatus === "done") {
-        setLocalExpanded(false);
+        setFoldState("collapsed");
       }
       prevStatusRef.current = currentStatus;
     }
@@ -76,24 +75,25 @@ export function TaskItem({
   const allTaskChildren = allChildren.filter(c => c.taskType === "task");
   const allCommentChildren = allChildren.filter(c => c.taskType === "comment");
   
-  // Get filtered children for display
+  // Get filtered children for display (matching filter OR not done when no filters)
   const filteredTaskChildren = filteredChildren.filter(c => c.taskType === "task");
   const filteredCommentChildren = filteredChildren.filter(c => c.taskType === "comment");
   
-  const hasChildren = allChildren.length > 0;
-  const hasFilteredChildren = filteredChildren.length > 0;
-  const isComment = task.taskType === "comment";
+  // When no active filters, "matching" means not done
+  const defaultMatchingTaskChildren = allTaskChildren.filter(c => c.status !== "done");
+  const defaultMatchingCommentChildren = allCommentChildren;
   
-  // Determine if there are hidden children due to filters
-  const hasHiddenChildren = hasActiveFilters && allChildren.length > filteredChildren.length;
+  const hasChildren = allChildren.length > 0;
+  const isComment = task.taskType === "comment";
 
-  // Show all children only if user has manually toggled
-  const showAllChildren = hasManuallyToggled;
-
+  // Cycle through fold states: collapsed -> matchingOnly -> allVisible -> collapsed
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setHasManuallyToggled(true);
-    setLocalExpanded(!localExpanded);
+    setFoldState(prev => {
+      if (prev === "collapsed") return "matchingOnly";
+      if (prev === "matchingOnly") return "allVisible";
+      return "collapsed";
+    });
     onToggleExpand?.();
   };
 
@@ -111,6 +111,9 @@ export function TaskItem({
     return mentionedPeople.includes(currentUser.name);
   };
 
+  // Calculate indentation based on depth
+  const indentStyle = depth > 0 ? { marginLeft: `${depth * 1.5}rem` } : {};
+
   return (
     <div className={cn("animate-fade-in", !matchedByFilter && "opacity-50")}>
       <div
@@ -120,20 +123,24 @@ export function TaskItem({
             ? "bg-muted/30 hover:bg-muted/50" 
             : "hover:bg-card/80 cursor-pointer",
           task.status === "done" && "opacity-60",
-          depth > 0 && "ml-6 border-l-2 border-border pl-4"
+          depth > 0 && "border-l-2 border-border pl-4"
         )}
+        style={indentStyle}
         onClick={handleSelect}
       >
-        {/* Expand/Collapse Toggle */}
+        {/* Expand/Collapse Toggle - three states */}
         {hasChildren && !isComment ? (
           <button
             onClick={handleToggleExpand}
             className="flex-shrink-0 p-0.5 rounded hover:bg-muted mt-1"
+            title={foldState === "collapsed" ? "Expand (matching only)" : foldState === "matchingOnly" ? "Expand (all)" : "Collapse"}
           >
-            {localExpanded ? (
+            {foldState === "collapsed" ? (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            ) : foldState === "matchingOnly" ? (
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
             ) : (
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              <ChevronsDown className="w-4 h-4 text-primary" />
             )}
           </button>
         ) : (
@@ -268,18 +275,28 @@ export function TaskItem({
         </button>
       </div>
 
-      {/* Children - initially only filtered, after manual toggle show all with non-matching greyed out */}
-      {hasChildren && localExpanded && (
+      {/* Children - three states: collapsed, matchingOnly, allVisible */}
+      {hasChildren && foldState !== "collapsed" && (
         <div className="space-y-1">
-          {/* Determine which children to show based on manual toggle state */}
           {(() => {
-            // After manual toggle, show ALL children (comments + tasks)
-            const commentsToShow = hasActiveFilters && !showAllChildren 
-              ? filteredCommentChildren 
-              : allCommentChildren;
-            const tasksToShow = hasActiveFilters && !showAllChildren 
-              ? filteredTaskChildren 
-              : allTaskChildren;
+            // Determine which children to show based on fold state
+            let commentsToShow: Task[];
+            let tasksToShow: Task[];
+            
+            if (foldState === "allVisible") {
+              // Show ALL children
+              commentsToShow = allCommentChildren;
+              tasksToShow = allTaskChildren;
+            } else {
+              // matchingOnly: show filtered if filters active, otherwise show non-done tasks
+              if (hasActiveFilters) {
+                commentsToShow = filteredCommentChildren;
+                tasksToShow = filteredTaskChildren;
+              } else {
+                commentsToShow = defaultMatchingCommentChildren;
+                tasksToShow = defaultMatchingTaskChildren;
+              }
+            }
             
             // Build context for sorting subtasks
             const childrenMap = buildChildrenMap(allTasks);
@@ -293,7 +310,10 @@ export function TaskItem({
                 {/* Comments first (maintain original order) */}
                 {commentsToShow.map((child) => {
                   const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
-                  const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
+                  // Determine if child matches based on fold state
+                  const childMatched = foldState === "allVisible" 
+                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : child.status !== "done"))
+                    : true;
                   return (
                     <TaskItem
                       key={child.id}
@@ -314,7 +334,10 @@ export function TaskItem({
                 {/* Subtasks after - now sorted */}
                 {sortedTasksToShow.map((child) => {
                   const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
-                  const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
+                  // Determine if child matches based on fold state
+                  const childMatched = foldState === "allVisible"
+                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : child.status !== "done"))
+                    : true;
                   return (
                     <TaskItem
                       key={child.id}
