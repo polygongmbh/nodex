@@ -5,7 +5,7 @@ import { Task, Person, TaskStatus } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
-
+import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
 interface TaskItemProps {
   task: Task;
   filteredChildren: Task[];
@@ -273,6 +273,7 @@ export function TaskItem({
         <div className="space-y-1">
           {/* Determine which children to show based on manual toggle state */}
           {(() => {
+            // After manual toggle, show ALL children (comments + tasks)
             const commentsToShow = hasActiveFilters && !showAllChildren 
               ? filteredCommentChildren 
               : allCommentChildren;
@@ -280,9 +281,16 @@ export function TaskItem({
               ? filteredTaskChildren 
               : allTaskChildren;
             
+            // Build context for sorting subtasks
+            const childrenMap = buildChildrenMap(allTasks);
+            const sortContext = { childrenMap, allTasks };
+            
+            // Sort subtasks using the same sorting logic as top-level tasks
+            const sortedTasksToShow = sortTasks(tasksToShow, sortContext);
+            
             return (
               <>
-                {/* Comments first */}
+                {/* Comments first (maintain original order) */}
                 {commentsToShow.map((child) => {
                   const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
                   const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
@@ -303,8 +311,8 @@ export function TaskItem({
                     />
                   );
                 })}
-                {/* Subtasks after */}
-                {tasksToShow.map((child) => {
+                {/* Subtasks after - now sorted */}
+                {sortedTasksToShow.map((child) => {
                   const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
                   const childMatched = isDirectMatchFn ? isDirectMatchFn(child.id) : true;
                   return (
