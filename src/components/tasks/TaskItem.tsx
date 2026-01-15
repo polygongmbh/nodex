@@ -24,6 +24,7 @@ interface TaskItemProps {
   isDirectMatchFn?: (taskId: string) => boolean;
   getFilteredChildrenFn?: (parentId: string) => Task[];
   hasActiveFilters?: boolean;
+  parentFoldState?: FoldState; // Propagate parent's fold state for recursive expansion
 }
 
 export function TaskItem({
@@ -40,9 +41,13 @@ export function TaskItem({
   isDirectMatchFn,
   getFilteredChildrenFn,
   hasActiveFilters = false,
+  parentFoldState,
 }: TaskItemProps) {
   // Three-state fold: collapsed -> matchingOnly -> allVisible
-  const [foldState, setFoldState] = useState<FoldState>("matchingOnly");
+  const [localFoldState, setLocalFoldState] = useState<FoldState>("matchingOnly");
+  
+  // If parent is in allVisible state, this child should also be allVisible
+  const foldState: FoldState = parentFoldState === "allVisible" ? "allVisible" : localFoldState;
   const prevStatusRef = useRef(task.status);
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
@@ -50,7 +55,7 @@ export function TaskItem({
   // Reset fold state when filters change
   useEffect(() => {
     if (prevHasActiveFiltersRef.current !== hasActiveFilters) {
-      setFoldState("matchingOnly");
+      setLocalFoldState("matchingOnly");
       prevHasActiveFiltersRef.current = hasActiveFilters;
     }
   }, [hasActiveFilters]);
@@ -62,9 +67,9 @@ export function TaskItem({
     
     if (prevStatus !== currentStatus) {
       if (currentStatus === "in-progress") {
-        setFoldState("matchingOnly");
+        setLocalFoldState("matchingOnly");
       } else if (currentStatus === "done") {
-        setFoldState("collapsed");
+        setLocalFoldState("collapsed");
       }
       prevStatusRef.current = currentStatus;
     }
@@ -89,7 +94,7 @@ export function TaskItem({
   // Cycle through fold states: collapsed -> matchingOnly -> allVisible -> collapsed
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setFoldState(prev => {
+    setLocalFoldState(prev => {
       if (prev === "collapsed") return "matchingOnly";
       if (prev === "matchingOnly") return "allVisible";
       return "collapsed";
@@ -115,7 +120,7 @@ export function TaskItem({
   const indentStyle = depth > 0 ? { marginLeft: `${depth * 1.5}rem` } : {};
 
   return (
-    <div className={cn("animate-fade-in", !matchedByFilter && "opacity-50")}>
+    <div className={cn(!matchedByFilter && "opacity-50")}>
       <div
         className={cn(
           "group flex items-start gap-2 py-2 px-3 rounded-lg transition-colors",
@@ -328,6 +333,7 @@ export function TaskItem({
                       isDirectMatchFn={isDirectMatchFn}
                       getFilteredChildrenFn={getFilteredChildrenFn}
                       hasActiveFilters={hasActiveFilters}
+                      parentFoldState={foldState}
                     />
                   );
                 })}
@@ -352,6 +358,7 @@ export function TaskItem({
                       isDirectMatchFn={isDirectMatchFn}
                       getFilteredChildrenFn={getFilteredChildrenFn}
                       hasActiveFilters={hasActiveFilters}
+                      parentFoldState={foldState}
                     />
                   );
                 })}
