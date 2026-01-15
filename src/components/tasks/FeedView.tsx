@@ -147,6 +147,15 @@ export function FeedView({
           tags={tags}
           people={people}
           onCancel={() => {}}
+          defaultContent={(() => {
+            const prefillTags = new Set<string>();
+            tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
+            if (focusedTask) {
+              focusedTask.tags.forEach(t => prefillTags.add(t));
+            }
+            if (prefillTags.size === 0) return "";
+            return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
+          })()}
         />
       </div>
 

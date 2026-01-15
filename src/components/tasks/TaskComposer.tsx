@@ -14,10 +14,11 @@ interface TaskComposerProps {
   onCancel: () => void;
   compact?: boolean;
   defaultDueDate?: Date;
+  defaultContent?: string;
 }
 
-export function TaskComposer({ onSubmit, relays, tags, people, onCancel, compact = false, defaultDueDate }: TaskComposerProps) {
-  const [content, setContent] = useState("");
+export function TaskComposer({ onSubmit, relays, tags, people, onCancel, compact = false, defaultDueDate, defaultContent = "" }: TaskComposerProps) {
+  const [content, setContent] = useState(defaultContent);
   const [taskType, setTaskType] = useState<TaskType>("task");
   const [selectedRelays, setSelectedRelays] = useState<string[]>(() => {
     const activeRelays = relays.filter(r => r.isActive).map(r => r.id);

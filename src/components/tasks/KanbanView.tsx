@@ -313,6 +313,12 @@ export function KanbanView({
                       people={people}
                       onCancel={() => setComposingColumn(null)}
                       compact
+                      defaultContent={(() => {
+                        const prefillTags = new Set<string>();
+                        tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
+                        if (prefillTags.size === 0) return "";
+                        return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
+                      })()}
                     />
                   </div>
                 )}
