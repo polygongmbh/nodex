@@ -261,6 +261,12 @@ export function ListView({
             tags={tags}
             people={people}
             onCancel={() => setIsComposing(false)}
+            defaultContent={(() => {
+              const prefillTags = new Set<string>();
+              tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
+              if (prefillTags.size === 0) return "";
+              return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
+            })()}
           />
         </div>
       )}
