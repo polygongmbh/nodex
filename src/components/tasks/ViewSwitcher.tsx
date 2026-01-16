@@ -13,7 +13,7 @@ const views: { id: ViewType; label: string; icon: React.ReactNode }[] = [
   { id: "feed", label: "Feed", icon: <LayoutList className="w-4 h-4" /> },
   { id: "kanban", label: "Kanban", icon: <Columns3 className="w-4 h-4" /> },
   { id: "calendar", label: "Calendar", icon: <Calendar className="w-4 h-4" /> },
-  { id: "list", label: "List", icon: <List className="w-4 h-4" /> },
+  { id: "list", label: "Table", icon: <List className="w-4 h-4" /> },
 ];
 
 export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
