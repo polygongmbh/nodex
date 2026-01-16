@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Task, Person, TaskStatus } from "@/types";
+import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
@@ -25,6 +25,7 @@ interface TaskItemProps {
   getFilteredChildrenFn?: (parentId: string) => Task[];
   hasActiveFilters?: boolean;
   parentFoldState?: FoldState; // Propagate parent's fold state for recursive expansion
+  activeRelays?: Relay[]; // For showing relay source when multiple are active
 }
 
 export function TaskItem({
@@ -42,8 +43,9 @@ export function TaskItem({
   getFilteredChildrenFn,
   hasActiveFilters = false,
   parentFoldState,
+  activeRelays = [],
 }: TaskItemProps) {
-  // Three-state fold: collapsed -> matchingOnly -> allVisible
+  // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const [localFoldState, setLocalFoldState] = useState<FoldState>("matchingOnly");
   
   // If parent is in allVisible state, this child should also be allVisible
@@ -88,16 +90,27 @@ export function TaskItem({
   const defaultMatchingTaskChildren = allTaskChildren.filter(c => c.status !== "done");
   const defaultMatchingCommentChildren = allCommentChildren;
   
+  // Determine if "expand all" would differ from "expand matching"
+  const matchingTaskCount = hasActiveFilters ? filteredTaskChildren.length : defaultMatchingTaskChildren.length;
+  const matchingCommentCount = hasActiveFilters ? filteredCommentChildren.length : defaultMatchingCommentChildren.length;
+  const allVisibleDiffersFromMatching = 
+    allTaskChildren.length !== matchingTaskCount || 
+    allCommentChildren.length !== matchingCommentCount;
+  
   const hasChildren = allChildren.length > 0;
   const isComment = task.taskType === "comment";
 
-  // Cycle through fold states: collapsed -> matchingOnly -> allVisible -> collapsed
+  // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
     setLocalFoldState(prev => {
-      if (prev === "collapsed") return "matchingOnly";
-      if (prev === "matchingOnly") return "allVisible";
-      return "collapsed";
+      if (prev === "matchingOnly") return "collapsed";
+      if (prev === "collapsed") {
+        // Skip allVisible if it's the same as matching
+        return allVisibleDiffersFromMatching ? "allVisible" : "matchingOnly";
+      }
+      // From allVisible, go back to matchingOnly
+      return "matchingOnly";
     });
     onToggleExpand?.();
   };
@@ -138,12 +151,12 @@ export function TaskItem({
           <button
             onClick={handleToggleExpand}
             className="flex-shrink-0 p-0.5 rounded hover:bg-muted mt-1"
-            title={foldState === "collapsed" ? "Expand (matching only)" : foldState === "matchingOnly" ? "Expand (all)" : "Collapse"}
+            title={foldState === "matchingOnly" ? "Collapse" : foldState === "collapsed" ? (allVisibleDiffersFromMatching ? "Expand (all)" : "Expand (matching only)") : "Expand (matching only)"}
           >
-            {foldState === "collapsed" ? (
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            ) : foldState === "matchingOnly" ? (
+            {foldState === "matchingOnly" ? (
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : foldState === "collapsed" ? (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
             ) : (
               <ChevronsDown className="w-4 h-4 text-primary" />
             )}
@@ -248,9 +261,14 @@ export function TaskItem({
             </div>
           )}
 
-          {/* Tags */}
+          {/* Tags (with relay source when multiple relays active and item has tags) */}
           {task.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-1.5">
+              {activeRelays.length > 1 && task.relays.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+                  {activeRelays.find(r => task.relays.includes(r.id))?.name || task.relays[0]}
+                </span>
+              )}
               {task.tags.map((tag) => (
                 <span
                   key={tag}
@@ -334,6 +352,7 @@ export function TaskItem({
                       getFilteredChildrenFn={getFilteredChildrenFn}
                       hasActiveFilters={hasActiveFilters}
                       parentFoldState={foldState}
+                      activeRelays={activeRelays}
                     />
                   );
                 })}
@@ -359,6 +378,7 @@ export function TaskItem({
                       getFilteredChildrenFn={getFilteredChildrenFn}
                       hasActiveFilters={hasActiveFilters}
                       parentFoldState={foldState}
+                      activeRelays={activeRelays}
                     />
                   );
                 })}

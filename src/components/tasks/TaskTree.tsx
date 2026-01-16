@@ -129,8 +129,8 @@ export function TaskTree({
       // Show children of current context
       rootTasks = childrenMap.get(currentContextId) || [];
     } else {
-      // Show root-level tasks (no parent)
-      rootTasks = childrenMap.get(undefined) || [];
+      // Show root-level tasks (no parent) - hide top-level comments
+      rootTasks = (childrenMap.get(undefined) || []).filter(task => task.taskType !== "comment");
     }
 
     // Filter by pre-filtered tasks from Index (relay/person filtering)
@@ -317,6 +317,7 @@ export function TaskTree({
               isDirectMatchFn={isTaskDirectMatch}
               getFilteredChildrenFn={getFilteredChildren}
               hasActiveFilters={hasActiveFilters}
+              activeRelays={relays.filter(r => r.isActive)}
             />
           ))
         )}
