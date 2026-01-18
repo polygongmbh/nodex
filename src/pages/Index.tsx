@@ -6,6 +6,8 @@ import { KanbanView } from "@/components/tasks/KanbanView";
 import { CalendarView } from "@/components/tasks/CalendarView";
 import { ListView } from "@/components/tasks/ListView";
 import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
+import { MobileLayout } from "@/components/mobile/MobileLayout";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { mockRelays, mockTags, mockPeople, mockTasks } from "@/data/mockData";
 import { Relay, Tag, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -25,6 +27,7 @@ const Index = () => {
   const [currentView, setCurrentView] = useState<ViewType>("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
 
+  const isMobile = useIsMobile();
   const currentUser = people.find(p => p.id === "me");
 
   const handleRelayToggle = (id: string) => {
@@ -227,6 +230,31 @@ const Index = () => {
     }
   };
 
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <MobileLayout
+        relays={relays}
+        tags={tags}
+        people={people}
+        tasks={filteredTasks}
+        allTasks={tasks}
+        searchQuery={searchQuery}
+        focusedTaskId={focusedTaskId}
+        currentUser={currentUser}
+        onSearchChange={setSearchQuery}
+        onNewTask={handleNewTask}
+        onToggleComplete={handleToggleComplete}
+        onStatusChange={handleStatusChange}
+        onFocusTask={setFocusedTaskId}
+        onRelayToggle={handleRelayToggle}
+        onTagToggle={handleTagToggle}
+        onPersonToggle={handlePersonToggle}
+      />
+    );
+  }
+
+  // Desktop layout
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
