@@ -16,6 +16,7 @@ interface TaskTreeProps {
   onSearchChange: (query: string) => void;
   onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
   onToggleComplete: (taskId: string) => void;
+  isMobile?: boolean;
 }
 
 export function TaskTree({
@@ -29,6 +30,7 @@ export function TaskTree({
   onSearchChange,
   onNewTask,
   onToggleComplete,
+  isMobile = false,
 }: TaskTreeProps) {
   const [contextStack, setContextStack] = useState<string[]>([]);
   const [isComposing, setIsComposing] = useState(false);
@@ -185,55 +187,57 @@ export function TaskTree({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Header with context navigation */}
-      <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            {contextStack.length > 0 && (
-              <button
-                onClick={handleGoUp}
-                className="flex items-center gap-1 px-2 py-1 text-sm rounded-md hover:bg-muted transition-colors"
-              >
-                <ChevronUp className="w-4 h-4" />
-                Up
-              </button>
-            )}
-            <h2 className="text-lg font-semibold">
-              {currentContextTask ? currentContextTask.content : "All Tasks"}
-            </h2>
-          </div>
-          <button
-            onClick={() => setIsComposing(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            {currentContextId ? "Add Subtask" : "New Task"}
-          </button>
-        </div>
-
-        {/* Breadcrumb */}
-        {contextStack.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <button onClick={() => setContextStack([])} className="hover:text-foreground">
-              All Tasks
+      {/* Header with context navigation - hidden on mobile */}
+      {!isMobile && (
+        <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              {contextStack.length > 0 && (
+                <button
+                  onClick={handleGoUp}
+                  className="flex items-center gap-1 px-2 py-1 text-sm rounded-md hover:bg-muted transition-colors"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                  Up
+                </button>
+              )}
+              <h2 className="text-lg font-semibold">
+                {currentContextTask ? currentContextTask.content : "All Tasks"}
+              </h2>
+            </div>
+            <button
+              onClick={() => setIsComposing(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              {currentContextId ? "Add Subtask" : "New Task"}
             </button>
-            {contextStack.map((id, index) => {
-              const task = allTasks.find(t => t.id === id);
-              return (
-                <span key={id} className="flex items-center gap-1">
-                  <span>/</span>
-                  <button 
-                    onClick={() => setContextStack(prev => prev.slice(0, index + 1))}
-                    className="hover:text-foreground truncate max-w-[150px]"
-                  >
-                    {task?.content.slice(0, 30)}...
-                  </button>
-                </span>
-              );
-            })}
           </div>
-        )}
-      </div>
+
+          {/* Breadcrumb */}
+          {contextStack.length > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <button onClick={() => setContextStack([])} className="hover:text-foreground">
+                All Tasks
+              </button>
+              {contextStack.map((id, index) => {
+                const task = allTasks.find(t => t.id === id);
+                return (
+                  <span key={id} className="flex items-center gap-1">
+                    <span>/</span>
+                    <button 
+                      onClick={() => setContextStack(prev => prev.slice(0, index + 1))}
+                      className="hover:text-foreground truncate max-w-[150px]"
+                    >
+                      {task?.content.slice(0, 30)}...
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Task Composer */}
       {isComposing && (
