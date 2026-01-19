@@ -83,13 +83,18 @@ export function ListView({
     }
   }, [tasks, searchQuery, focusedTaskId]);
 
-  // Build children map for sorting context
-  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
+  // Build children map for sorting context - memoize based on sortVersion to prevent re-sorting on status changes
+  const sortContextRef = useRef<SortContext | null>(null);
   
-  const sortContext: SortContext = useMemo(() => ({
-    childrenMap,
-    allTasks,
-  }), [childrenMap, allTasks]);
+  const sortContext: SortContext = useMemo(() => {
+    const childrenMap = buildChildrenMap(allTasks);
+    sortContextRef.current = {
+      childrenMap,
+      allTasks,
+    };
+    return sortContextRef.current;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortVersion]);
 
   // Get all descendants of a task
   const getDescendantIds = (taskId: string): Set<string> => {
@@ -439,24 +444,23 @@ export function ListView({
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>
               <th className="text-left p-3 w-10">
-                <span className="sr-only">Status</span>
-              </th>
-              <th className="text-left p-3">
-                <SortButton field="content">Task</SortButton>
-              </th>
-              <th className="text-left p-3 w-32">
-                <div className="flex items-center gap-2">
-                  <SortButton field="status">Status</SortButton>
+                <div className="flex items-center gap-1">
                   {(sortField !== "priority" || sortDirection !== "asc") && (
                     <button
                       onClick={handleResetSort}
                       className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                       title="Reset to default sorting"
                     >
-                      <RotateCcw className="w-3 h-3" />
+                      <RotateCcw className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
+              </th>
+              <th className="text-left p-3">
+                <SortButton field="content">Task</SortButton>
+              </th>
+              <th className="text-left p-3 w-32">
+                <SortButton field="status">Status</SortButton>
               </th>
               <th className="text-left p-3 w-40">
                 <SortButton field="dueDate">Due Date</SortButton>
