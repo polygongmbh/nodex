@@ -19,6 +19,7 @@ interface FeedViewProps {
   onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
+  isMobile?: boolean;
 }
 
 export function FeedView({
@@ -34,6 +35,7 @@ export function FeedView({
   onToggleComplete,
   focusedTaskId,
   onFocusTask,
+  isMobile = false,
 }: FeedViewProps) {
   const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
   const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
@@ -122,42 +124,44 @@ export function FeedView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Header with Composer */}
-      <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold">Feed</h2>
-          {focusedTaskId && (
-            <button
-              onClick={() => onFocusTask?.(null)}
-              className="text-xs text-primary hover:underline"
-            >
-              ← Back to all
-            </button>
-          )}
-        </div>
-        {focusedTask && (
-          <div className="mb-3 p-2 bg-muted/50 rounded-lg border border-border">
-            <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
-            <div className="text-sm font-medium">{focusedTask.content.slice(0, 60)}{focusedTask.content.length > 60 ? "..." : ""}</div>
+      {/* Header with Composer - hidden on mobile */}
+      {!isMobile && (
+        <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Feed</h2>
+            {focusedTaskId && (
+              <button
+                onClick={() => onFocusTask?.(null)}
+                className="text-xs text-primary hover:underline"
+              >
+                ← Back to all
+              </button>
+            )}
           </div>
-        )}
-        <TaskComposer
-          onSubmit={handleNewTask}
-          relays={relays}
-          tags={tags}
-          people={people}
-          onCancel={() => {}}
-          defaultContent={(() => {
-            const prefillTags = new Set<string>();
-            tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
-            if (focusedTask) {
-              focusedTask.tags.forEach(t => prefillTags.add(t));
-            }
-            if (prefillTags.size === 0) return "";
-            return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
-          })()}
-        />
-      </div>
+          {focusedTask && (
+            <div className="mb-3 p-2 bg-muted/50 rounded-lg border border-border">
+              <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
+              <div className="text-sm font-medium">{focusedTask.content.slice(0, 60)}{focusedTask.content.length > 60 ? "..." : ""}</div>
+            </div>
+          )}
+          <TaskComposer
+            onSubmit={handleNewTask}
+            relays={relays}
+            tags={tags}
+            people={people}
+            onCancel={() => {}}
+            defaultContent={(() => {
+              const prefillTags = new Set<string>();
+              tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
+              if (focusedTask) {
+                focusedTask.tags.forEach(t => prefillTags.add(t));
+              }
+              if (prefillTags.size === 0) return "";
+              return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
+            })()}
+          />
+        </div>
+      )}
 
       {/* Feed List */}
       <div className="flex-1 overflow-y-auto">

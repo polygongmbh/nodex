@@ -80,13 +80,13 @@ export function MobileLayout({
           />
         );
       case "tree":
-        return <TaskTree {...viewProps} />;
+        return <TaskTree {...viewProps} isMobile />;
       case "feed":
-        return <FeedView {...viewProps} />;
+        return <FeedView {...viewProps} isMobile />;
       case "calendar":
-        return <CalendarView {...viewProps} />;
+        return <CalendarView {...viewProps} isMobile />;
       default:
-        return <TaskTree {...viewProps} />;
+        return <TaskTree {...viewProps} isMobile />;
     }
   };
 

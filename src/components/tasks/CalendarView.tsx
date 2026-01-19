@@ -20,6 +20,7 @@ interface CalendarViewProps {
   onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
+  isMobile?: boolean;
 }
 
 export function CalendarView({
@@ -35,6 +36,7 @@ export function CalendarView({
   onToggleComplete,
   focusedTaskId,
   onFocusTask,
+  isMobile = false,
 }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // Select today by default
@@ -149,69 +151,92 @@ export function CalendarView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Header */}
-      <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold">Calendar</h2>
-            {focusedTaskId && (
-              <button
-                onClick={() => onFocusTask?.(null)}
-                className="text-xs text-primary hover:underline"
-              >
-                ← Back to all
-              </button>
-            )}
-            <div className="flex items-center gap-2">
+      {/* Header - hidden on mobile */}
+      {!isMobile && (
+        <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold">Calendar</h2>
+              {focusedTaskId && (
+                <button
+                  onClick={() => onFocusTask?.(null)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  ← Back to all
+                </button>
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  className="p-1.5 rounded hover:bg-muted transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="font-medium min-w-[140px] text-center">
+                  {format(currentMonth, "MMMM yyyy")}
+                </span>
+                <button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  className="p-1.5 rounded hover:bg-muted transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="relative w-64">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search tasks..."
+                className="w-full bg-muted/50 border border-border rounded-lg pl-3 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+          </div>
+          {focusedTask && (
+            <div className="mt-3 p-2 bg-muted/50 rounded-lg border border-border">
+              <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
+              <div className="text-sm font-medium">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className={cn("flex-1 flex overflow-hidden", isMobile && "flex-col")}>
+        {/* Calendar Grid */}
+        <div className={cn("flex-1 overflow-auto", isMobile ? "p-2" : "p-4")}>
+          {/* Mobile Month Navigation */}
+          {isMobile && (
+            <div className="flex items-center justify-center gap-3 mb-3">
               <button
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="p-1.5 rounded hover:bg-muted transition-colors"
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="font-medium min-w-[140px] text-center">
+              <span className="font-semibold text-base min-w-[140px] text-center">
                 {format(currentMonth, "MMMM yyyy")}
               </span>
               <button
                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="p-1.5 rounded hover:bg-muted transition-colors"
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
-          </div>
-          <div className="relative w-64">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search tasks..."
-              className="w-full bg-muted/50 border border-border rounded-lg pl-3 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
-        </div>
-        {focusedTask && (
-          <div className="mt-3 p-2 bg-muted/50 rounded-lg border border-border">
-            <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
-            <div className="text-sm font-medium">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</div>
-          </div>
-        )}
-      </div>
+          )}
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Calendar Grid */}
-        <div className="flex-1 p-4 overflow-auto">
           {/* Day Headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
+          <div className="grid grid-cols-7 gap-1 mb-1">
+            {(isMobile ? ["S", "M", "T", "W", "T", "F", "S"] : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]).map((day, i) => (
+              <div key={`${day}-${i}`} className="text-center text-xs font-medium text-muted-foreground py-1">
                 {day}
               </div>
             ))}
           </div>
 
           {/* Calendar Days */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5">
             {/* Padding for start of month */}
             {Array.from({ length: startPadding }).map((_, i) => (
               <div key={`pad-${i}`} className="aspect-square" />
@@ -226,43 +251,63 @@ export function CalendarView({
                   key={day.toISOString()}
                   onClick={() => setSelectedDate(day)}
                   className={cn(
-                    "aspect-square p-1 rounded-lg border transition-colors text-left flex flex-col",
+                    "aspect-square rounded-lg border transition-colors text-center flex flex-col items-center justify-center relative",
+                    isMobile ? "p-0.5" : "p-1 text-left",
                     isToday(day) && "border-primary",
                     isSelected ? "bg-primary/10 border-primary" : "border-transparent hover:bg-muted/50",
                     !isSameMonth(day, currentMonth) && "opacity-50"
                   )}
                 >
                   <span className={cn(
-                    "text-xs font-medium",
+                    "text-sm font-medium",
                     isToday(day) && "text-primary"
                   )}>
                     {format(day, "d")}
                   </span>
                   {dayTasks.length > 0 && (
-                    <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden">
-                      {dayTasks.slice(0, 2).map((task) => {
-                        const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
-                        return (
+                    isMobile ? (
+                      <div className="flex gap-0.5 mt-0.5">
+                        {dayTasks.slice(0, 3).map((task, i) => (
                           <div
                             key={task.id}
                             className={cn(
-                              "text-[10px] leading-tight px-1 py-0.5 rounded truncate",
-                              task.status === "done" ? "bg-muted text-muted-foreground line-through" :
-                              task.status === "in-progress" ? "bg-amber-500/20 text-amber-700" :
-                              "bg-primary/10",
-                              dueDateColor
+                              "w-1.5 h-1.5 rounded-full",
+                              task.status === "done" ? "bg-muted-foreground" :
+                              task.status === "in-progress" ? "bg-amber-500" :
+                              "bg-primary"
                             )}
-                          >
-                            {task.content.slice(0, 15)}...
-                          </div>
-                        );
-                      })}
-                      {dayTasks.length > 2 && (
-                        <span className="text-[10px] text-muted-foreground">
-                          +{dayTasks.length - 2} more
-                        </span>
-                      )}
-                    </div>
+                          />
+                        ))}
+                        {dayTasks.length > 3 && (
+                          <span className="text-[8px] text-muted-foreground">+</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
+                        {dayTasks.slice(0, 2).map((task) => {
+                          const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                          return (
+                            <div
+                              key={task.id}
+                              className={cn(
+                                "text-[10px] leading-tight px-1 py-0.5 rounded truncate",
+                                task.status === "done" ? "bg-muted text-muted-foreground line-through" :
+                                task.status === "in-progress" ? "bg-amber-500/20 text-amber-700" :
+                                "bg-primary/10",
+                                dueDateColor
+                              )}
+                            >
+                              {task.content.slice(0, 15)}...
+                            </div>
+                          );
+                        })}
+                        {dayTasks.length > 2 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            +{dayTasks.length - 2} more
+                          </span>
+                        )}
+                      </div>
+                    )
                   )}
                 </button>
               );
@@ -271,7 +316,12 @@ export function CalendarView({
         </div>
 
         {/* Selected Day Panel */}
-        <div className="w-80 border-l border-border p-4 overflow-y-auto flex-shrink-0">
+        <div className={cn(
+          "border-border overflow-y-auto flex-shrink-0",
+          isMobile 
+            ? "border-t p-3 max-h-[40%]" 
+            : "w-80 border-l p-4"
+        )}>
           {selectedDate ? (
             <>
               <div className="flex items-center justify-between mb-3">
