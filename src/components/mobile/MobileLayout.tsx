@@ -5,6 +5,7 @@ import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { FeedView } from "@/components/tasks/FeedView";
 import { CalendarView } from "@/components/tasks/CalendarView";
+import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Relay, Tag, Person, Task } from "@/types";
 
 interface MobileLayoutProps {
@@ -16,6 +17,8 @@ interface MobileLayoutProps {
   searchQuery: string;
   focusedTaskId: string | null;
   currentUser?: Person;
+  currentView: ViewType;
+  onViewChange: (view: ViewType) => void;
   onSearchChange: (query: string) => void;
   onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
   onToggleComplete: (taskId: string) => void;
@@ -35,6 +38,8 @@ export function MobileLayout({
   searchQuery,
   focusedTaskId,
   currentUser,
+  currentView,
+  onViewChange,
   onSearchChange,
   onNewTask,
   onToggleComplete,
@@ -44,7 +49,7 @@ export function MobileLayout({
   onTagToggle,
   onPersonToggle,
 }: MobileLayoutProps) {
-  const [currentView, setCurrentView] = useState<MobileViewType>("tree");
+  const [showFilters, setShowFilters] = useState(false);
 
   // Build default content from active tag filters
   const includedTags = tags.filter(t => t.filterState === "included");
@@ -66,19 +71,31 @@ export function MobileLayout({
     onStatusChange,
   };
 
+  const handleMobileViewChange = (view: MobileViewType) => {
+    if (view === "filters") {
+      setShowFilters(true);
+    } else {
+      setShowFilters(false);
+      onViewChange(view);
+    }
+  };
+
+  const mobileCurrentView: MobileViewType = showFilters ? "filters" : currentView;
+
   const renderView = () => {
+    if (showFilters) {
+      return (
+        <MobileFilters
+          relays={relays}
+          tags={tags}
+          people={people}
+          onRelayToggle={onRelayToggle}
+          onTagToggle={onTagToggle}
+          onPersonToggle={onPersonToggle}
+        />
+      );
+    }
     switch (currentView) {
-      case "filters":
-        return (
-          <MobileFilters
-            relays={relays}
-            tags={tags}
-            people={people}
-            onRelayToggle={onRelayToggle}
-            onTagToggle={onTagToggle}
-            onPersonToggle={onPersonToggle}
-          />
-        );
       case "tree":
         return <TaskTree {...viewProps} isMobile />;
       case "feed":
@@ -92,7 +109,7 @@ export function MobileLayout({
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <MobileNav currentView={currentView} onViewChange={setCurrentView} />
+      <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} />
       
       <main className="flex-1 overflow-hidden">
         {renderView()}

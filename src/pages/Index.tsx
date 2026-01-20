@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { FeedView } from "@/components/tasks/FeedView";
@@ -12,7 +13,17 @@ import { mockRelays, mockTags, mockPeople, mockTasks } from "@/data/mockData";
 import { Relay, Tag, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
 
+const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
+
 const Index = () => {
+  const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
+  const navigate = useNavigate();
+
+  // Derive current view from URL
+  const currentView: ViewType = validViews.includes(urlView as ViewType) 
+    ? (urlView as ViewType) 
+    : "tree";
+
   const [relays, setRelays] = useState<Relay[]>(
     mockRelays.map((r) => ({ ...r, isActive: false }))
   );
@@ -24,11 +35,30 @@ const Index = () => {
   );
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentView, setCurrentView] = useState<ViewType>("tree");
-  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
+
+  // Derive focused task from URL
+  const focusedTaskId = urlTaskId || null;
 
   const isMobile = useIsMobile();
   const currentUser = people.find(p => p.id === "me");
+
+  // Handle view change - update URL
+  const setCurrentView = useCallback((newView: ViewType) => {
+    if (focusedTaskId) {
+      navigate(`/${newView}/${focusedTaskId}`);
+    } else {
+      navigate(`/${newView}`);
+    }
+  }, [navigate, focusedTaskId]);
+
+  // Handle task focus - update URL
+  const setFocusedTaskId = useCallback((taskId: string | null) => {
+    if (taskId) {
+      navigate(`/${currentView}/${taskId}`);
+    } else {
+      navigate(`/${currentView}`);
+    }
+  }, [navigate, currentView]);
 
   const handleRelayToggle = (id: string) => {
     setRelays((prev) =>
@@ -242,6 +272,8 @@ const Index = () => {
         searchQuery={searchQuery}
         focusedTaskId={focusedTaskId}
         currentUser={currentUser}
+        currentView={currentView}
+        onViewChange={setCurrentView}
         onSearchChange={setSearchQuery}
         onNewTask={handleNewTask}
         onToggleComplete={handleToggleComplete}
