@@ -1,7 +1,8 @@
 import { Filter, GitBranch, LayoutList, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ViewType } from "@/components/tasks/ViewSwitcher";
 
-export type MobileViewType = "filters" | "tree" | "feed" | "calendar";
+export type MobileViewType = ViewType | "filters";
 
 interface MobileNavProps {
   currentView: MobileViewType;
