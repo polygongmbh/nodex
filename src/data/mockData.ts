@@ -1,4 +1,4 @@
-import { Relay, Tag, Person, Task } from "@/types";
+import { Relay, Channel, Person, Task } from "@/types";
 import { addDays, subDays } from "date-fns";
 
 const today = new Date();
@@ -10,7 +10,7 @@ export const mockRelays: Relay[] = [
   { id: "projects", name: "Projects", icon: "folder", isActive: true, postCount: 42 },
 ];
 
-export const mockTags: Tag[] = [
+export const mockChannels: Channel[] = [
   { id: "urgent", name: "urgent", filterState: "neutral" },
   { id: "design", name: "design", filterState: "neutral" },
   { id: "backend", name: "backend", filterState: "neutral" },
@@ -22,6 +22,9 @@ export const mockTags: Tag[] = [
   { id: "blocked", name: "blocked", filterState: "neutral" },
   { id: "planning", name: "planning", filterState: "neutral" },
 ];
+
+// Legacy alias
+export const mockTags = mockChannels;
 
 export const mockPeople: Person[] = [
   { id: "me", name: "me", displayName: "You", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=You", isOnline: true, isSelected: false },

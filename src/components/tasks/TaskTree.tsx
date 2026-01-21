@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Search, ChevronUp, Plus, X } from "lucide-react";
-import { Task, Relay, Tag, Person } from "@/types";
+import { Task, Relay, Channel, Person } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { TaskComposer } from "./TaskComposer";
 import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
@@ -9,7 +9,7 @@ interface TaskTreeProps {
   tasks: Task[];
   allTasks: Task[];
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -23,7 +23,7 @@ export function TaskTree({
   tasks,
   allTasks,
   relays,
-  tags,
+  channels,
   people,
   currentUser,
   searchQuery,
@@ -46,26 +46,28 @@ export function TaskTree({
   }), [childrenMap, allTasks]);
 
   // Check if a task or any of its descendants matches the filter
-  const taskMatchesFilter = useCallback((task: Task, query: string, includedTags: string[], excludedTags: string[]): boolean => {
+  // AND logic: task must have ALL included channels
+  const taskMatchesFilter = useCallback((task: Task, query: string, includedChannels: string[], excludedChannels: string[]): boolean => {
     const queryLower = query.toLowerCase();
     const taskTagsLower = task.tags.map(t => t.toLowerCase());
     
-    // Exclude tasks with excluded tags
-    if (excludedTags.length > 0 && taskTagsLower.some(t => excludedTags.includes(t))) {
+    // Exclude tasks with excluded channels
+    if (excludedChannels.length > 0 && taskTagsLower.some(t => excludedChannels.includes(t))) {
       return false;
     }
     
     const matchesQuery = !query || task.content.toLowerCase().includes(queryLower);
-    const matchesTags = includedTags.length === 0 || taskTagsLower.some(t => includedTags.includes(t));
-    return matchesQuery && matchesTags;
+    // AND logic: all included channels must be present
+    const matchesChannels = includedChannels.length === 0 || includedChannels.every(c => taskTagsLower.includes(c));
+    return matchesQuery && matchesChannels;
   }, []);
 
   // Find all tasks that directly match the filter
-  const getDirectlyMatchingTasks = useCallback((query: string, includedTags: string[], excludedTags: string[]): Set<string> => {
+  const getDirectlyMatchingTasks = useCallback((query: string, includedChannels: string[], excludedChannels: string[]): Set<string> => {
     const matching = new Set<string>();
     
     for (const task of allTasks) {
-      if (taskMatchesFilter(task, query, includedTags, excludedTags)) {
+      if (taskMatchesFilter(task, query, includedChannels, excludedChannels)) {
         matching.add(task.id);
       }
     }
@@ -105,9 +107,9 @@ export function TaskTree({
     return ancestors;
   }, [allTasks]);
 
-  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
-  const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
-  const hasActiveFilters = searchQuery.trim() !== "" || includedTags.length > 0 || excludedTags.length > 0;
+  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
+  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
+  const hasActiveFilters = searchQuery.trim() !== "" || includedChannels.length > 0 || excludedChannels.length > 0;
 
   // Compute matching tasks once
   const { directlyMatchingIds, ancestorIds, descendantIds, allVisibleIds } = useMemo(() => {
@@ -115,13 +117,13 @@ export function TaskTree({
       return { directlyMatchingIds: new Set<string>(), ancestorIds: new Set<string>(), descendantIds: new Set<string>(), allVisibleIds: new Set<string>() };
     }
     
-    const directly = getDirectlyMatchingTasks(searchQuery, includedTags, excludedTags);
+    const directly = getDirectlyMatchingTasks(searchQuery, includedChannels, excludedChannels);
     const ancestors = getAncestors(directly);
     const descendants = getDescendants(directly);
     const allVisible = new Set([...directly, ...ancestors, ...descendants]);
     
     return { directlyMatchingIds: directly, ancestorIds: ancestors, descendantIds: descendants, allVisibleIds: allVisible };
-  }, [hasActiveFilters, searchQuery, includedTags, excludedTags, getDirectlyMatchingTasks, getAncestors, getDescendants]);
+  }, [hasActiveFilters, searchQuery, includedChannels, excludedChannels, getDirectlyMatchingTasks, getAncestors, getDescendants]);
 
   // Get visible tasks based on context and filters, sorted with priority system
   const visibleTasks = useMemo(() => {
@@ -256,24 +258,24 @@ export function TaskTree({
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
-            tags={tags}
+            channels={channels}
             people={people}
             onCancel={() => setIsComposing(false)}
             defaultContent={(() => {
-              // Collect tags to prefill
-              const prefillTags = new Set<string>();
+              // Collect channels to prefill
+              const prefillChannels = new Set<string>();
               
-              // Add included filter tags
-              tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
+              // Add included filter channels
+              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
               
               // If in context (subtask), add parent task's tags
               if (currentContextTask) {
-                currentContextTask.tags.forEach(t => prefillTags.add(t));
+                currentContextTask.tags.forEach(t => prefillChannels.add(t));
               }
               
               // Format as hashtags with trailing space
-              if (prefillTags.size === 0) return "";
-              return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
+              if (prefillChannels.size === 0) return "";
+              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
             })()}
           />
         </div>

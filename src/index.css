@@ -38,9 +38,9 @@
 
     --yellow-500: 45 93% 47%;
 
-    --tag-included: 210 100% 55%;
-    --tag-excluded: 0 60% 50%;
-    --tag-neutral: 220 15% 35%;
+    --channel-included: 210 100% 55%;
+    --channel-excluded: 0 60% 50%;
+    --channel-neutral: 220 15% 35%;
 
     --border: 220 15% 22%;
     --input: 220 15% 18%;

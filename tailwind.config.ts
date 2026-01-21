@@ -63,10 +63,10 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        tag: {
-          included: "hsl(var(--tag-included))",
-          excluded: "hsl(var(--tag-excluded))",
-          neutral: "hsl(var(--tag-neutral))",
+        channel: {
+          included: "hsl(var(--channel-included))",
+          excluded: "hsl(var(--channel-excluded))",
+          neutral: "hsl(var(--channel-neutral))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

@@ -1,14 +1,14 @@
 import { Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tag } from "@/types";
+import { Channel } from "@/types";
 
-interface TagItemProps {
-  tag: Tag;
+interface ChannelItemProps {
+  channel: Channel;
   onToggle: () => void;
   onExclusive: () => void;
 }
 
-export function TagItem({ tag, onToggle, onExclusive }: TagItemProps) {
+export function ChannelItem({ channel, onToggle, onExclusive }: ChannelItemProps) {
   return (
     <div
       className={cn(
@@ -21,15 +21,15 @@ export function TagItem({ tag, onToggle, onExclusive }: TagItemProps) {
           e.stopPropagation();
           onExclusive();
         }}
-        title="Show only this tag"
+        title="Show only this channel"
         className="hover:ring-2 hover:ring-primary/50 rounded"
       >
         <Hash
           className={cn(
             "w-4 h-4 transition-colors",
-            tag.filterState === "included" && "text-tag-included",
-            tag.filterState === "excluded" && "text-tag-excluded",
-            tag.filterState === "neutral" && "text-tag-neutral group-hover:text-sidebar-foreground"
+            channel.filterState === "included" && "text-channel-included",
+            channel.filterState === "excluded" && "text-channel-excluded",
+            channel.filterState === "neutral" && "text-channel-neutral group-hover:text-sidebar-foreground"
           )}
         />
       </button>
@@ -42,21 +42,21 @@ export function TagItem({ tag, onToggle, onExclusive }: TagItemProps) {
         <span
           className={cn(
             "text-sm transition-colors hover:text-primary",
-            tag.filterState === "included" && "text-tag-included font-medium",
-            tag.filterState === "excluded" && "text-tag-excluded line-through opacity-60",
-            tag.filterState === "neutral" && "text-sidebar-foreground"
+            channel.filterState === "included" && "text-channel-included font-medium",
+            channel.filterState === "excluded" && "text-channel-excluded line-through opacity-60",
+            channel.filterState === "neutral" && "text-sidebar-foreground"
           )}
         >
-          {tag.name}
+          {channel.name}
         </span>
       </button>
 
-      {tag.filterState !== "neutral" && (
+      {channel.filterState !== "neutral" && (
         <div
           className={cn(
             "ml-auto w-1.5 h-1.5 rounded-full",
-            tag.filterState === "included" && "bg-tag-included",
-            tag.filterState === "excluded" && "bg-tag-excluded"
+            channel.filterState === "included" && "bg-channel-included",
+            channel.filterState === "excluded" && "bg-channel-excluded"
           )}
         />
       )}

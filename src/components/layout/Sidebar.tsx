@@ -1,41 +1,41 @@
 import { useState } from "react";
 import { Radio, Hash, Users } from "lucide-react";
-import { Relay, Tag, Person } from "@/types";
+import { Relay, Channel, Person } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
-import { TagItem } from "./sidebar/TagItem";
+import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
 
 interface SidebarProps {
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   onRelayToggle: (id: string) => void;
   onRelayExclusive: (id: string) => void;
-  onTagToggle: (id: string) => void;
-  onTagExclusive: (id: string) => void;
+  onChannelToggle: (id: string) => void;
+  onChannelExclusive: (id: string) => void;
   onPersonToggle: (id: string) => void;
   onToggleAllRelays: () => void;
-  onToggleAllTags: () => void;
+  onToggleAllChannels: () => void;
   onToggleAllPeople: () => void;
 }
 
 export function Sidebar({
   relays,
-  tags,
+  channels,
   people,
   onRelayToggle,
   onRelayExclusive,
-  onTagToggle,
-  onTagExclusive,
+  onChannelToggle,
+  onChannelExclusive,
   onPersonToggle,
   onToggleAllRelays,
-  onToggleAllTags,
+  onToggleAllChannels,
   onToggleAllPeople,
 }: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
     feeds: true,
-    tags: true,
+    channels: true,
     people: true,
   });
 
@@ -82,21 +82,21 @@ export function Sidebar({
           ))}
         </SidebarSection>
 
-        {/* Tags */}
+        {/* Channels */}
         <SidebarSection
-          title="Tags"
+          title="Channels"
           icon={Hash}
-          isExpanded={expandedSections.tags}
-          onToggle={() => toggleSection("tags")}
-          onIconClick={onToggleAllTags}
+          isExpanded={expandedSections.channels}
+          onToggle={() => toggleSection("channels")}
+          onIconClick={onToggleAllChannels}
           hint="Click to filter"
         >
-          {tags.map((tag) => (
-            <TagItem
-              key={tag.id}
-              tag={tag}
-              onToggle={() => onTagToggle(tag.id)}
-              onExclusive={() => onTagExclusive(tag.id)}
+          {channels.map((channel) => (
+            <ChannelItem
+              key={channel.id}
+              channel={channel}
+              onToggle={() => onChannelToggle(channel.id)}
+              onExclusive={() => onChannelExclusive(channel.id)}
             />
           ))}
         </SidebarSection>
