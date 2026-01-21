@@ -6,11 +6,11 @@ import { TaskTree } from "@/components/tasks/TaskTree";
 import { FeedView } from "@/components/tasks/FeedView";
 import { CalendarView } from "@/components/tasks/CalendarView";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
-import { Relay, Tag, Person, Task } from "@/types";
+import { Relay, Channel, Person, Task } from "@/types";
 
 interface MobileLayoutProps {
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   tasks: Task[];
   allTasks: Task[];
@@ -25,13 +25,13 @@ interface MobileLayoutProps {
   onStatusChange: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   onFocusTask: (taskId: string | null) => void;
   onRelayToggle: (id: string) => void;
-  onTagToggle: (id: string) => void;
+  onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
 }
 
 export function MobileLayout({
   relays,
-  tags,
+  channels,
   people,
   tasks,
   allTasks,
@@ -46,20 +46,20 @@ export function MobileLayout({
   onStatusChange,
   onFocusTask,
   onRelayToggle,
-  onTagToggle,
+  onChannelToggle,
   onPersonToggle,
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
 
-  // Build default content from active tag filters
-  const includedTags = tags.filter(t => t.filterState === "included");
-  const defaultContent = includedTags.map(t => `#${t.name}`).join(" ");
+  // Build default content from active channel filters
+  const includedChannels = channels.filter(c => c.filterState === "included");
+  const defaultContent = includedChannels.map(c => `#${c.name}`).join(" ");
 
   const viewProps = {
     tasks,
     allTasks,
     relays,
-    tags,
+    channels,
     people,
     currentUser,
     searchQuery,
@@ -87,10 +87,10 @@ export function MobileLayout({
       return (
         <MobileFilters
           relays={relays}
-          tags={tags}
+          channels={channels}
           people={people}
           onRelayToggle={onRelayToggle}
-          onTagToggle={onTagToggle}
+          onChannelToggle={onChannelToggle}
           onPersonToggle={onPersonToggle}
         />
       );
@@ -120,10 +120,10 @@ export function MobileLayout({
         onSearchChange={onSearchChange}
         onSubmit={onNewTask}
         relays={relays}
-        tags={tags}
+        channels={channels}
         people={people}
         onRelayToggle={onRelayToggle}
-        onTagToggle={onTagToggle}
+        onChannelToggle={onChannelToggle}
         onPersonToggle={onPersonToggle}
         defaultContent={defaultContent}
       />

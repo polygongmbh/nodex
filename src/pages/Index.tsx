@@ -9,8 +9,8 @@ import { ListView } from "@/components/tasks/ListView";
 import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { mockRelays, mockTags, mockPeople, mockTasks } from "@/data/mockData";
-import { Relay, Tag, Person, Task, TaskType } from "@/types";
+import { mockRelays, mockChannels, mockPeople, mockTasks } from "@/data/mockData";
+import { Relay, Channel, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
 
 const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
@@ -27,8 +27,8 @@ const Index = () => {
   const [relays, setRelays] = useState<Relay[]>(
     mockRelays.map((r) => ({ ...r, isActive: false }))
   );
-  const [tags, setTags] = useState<Tag[]>(
-    mockTags.map((t) => ({ ...t, filterState: "neutral" as const }))
+  const [channels, setChannels] = useState<Channel[]>(
+    mockChannels.map((c) => ({ ...c, filterState: "neutral" as const }))
   );
   const [people, setPeople] = useState<Person[]>(
     mockPeople.map((p) => ({ ...p, isSelected: false }))
@@ -87,38 +87,38 @@ const Index = () => {
     toast.success(allActive ? "All relays disabled" : "All relays enabled");
   };
 
-  const handleTagToggle = (id: string) => {
-    setTags((prev) =>
-      prev.map((tag) => {
-        if (tag.id !== id) return tag;
-        const states: Tag["filterState"][] = ["neutral", "included", "excluded"];
-        const currentIndex = states.indexOf(tag.filterState);
+  const handleChannelToggle = (id: string) => {
+    setChannels((prev) =>
+      prev.map((channel) => {
+        if (channel.id !== id) return channel;
+        const states: Channel["filterState"][] = ["neutral", "included", "excluded"];
+        const currentIndex = states.indexOf(channel.filterState);
         const nextState = states[(currentIndex + 1) % states.length];
-        return { ...tag, filterState: nextState };
+        return { ...channel, filterState: nextState };
       })
     );
   };
 
-  const handleTagExclusive = (id: string) => {
-    setTags((prev) =>
-      prev.map((tag) => ({
-        ...tag,
-        filterState: tag.id === id ? "included" : "neutral",
+  const handleChannelExclusive = (id: string) => {
+    setChannels((prev) =>
+      prev.map((channel) => ({
+        ...channel,
+        filterState: channel.id === id ? "included" : "neutral",
       }))
     );
-    const tag = tags.find((t) => t.id === id);
-    toast.success(`Showing only #${tag?.name}`);
+    const channel = channels.find((c) => c.id === id);
+    toast.success(`Showing only #${channel?.name}`);
   };
 
-  const handleToggleAllTags = () => {
-    const allNeutral = tags.every((t) => t.filterState === "neutral");
-    setTags((prev) =>
-      prev.map((tag) => ({
-        ...tag,
+  const handleToggleAllChannels = () => {
+    const allNeutral = channels.every((c) => c.filterState === "neutral");
+    setChannels((prev) =>
+      prev.map((channel) => ({
+        ...channel,
         filterState: allNeutral ? "included" : "neutral",
       }))
     );
-    toast.success(allNeutral ? "All tags included" : "All tags reset");
+    toast.success(allNeutral ? "All channels included" : "All channels reset");
   };
 
   const handlePersonToggle = (id: string) => {
@@ -206,20 +206,21 @@ const Index = () => {
       return false;
     }
 
-    // Tag exclusion filter - exclude tasks that have any excluded tags
-    const excludedTagNames = tags.filter((t) => t.filterState === "excluded").map((t) => t.name.toLowerCase());
-    if (excludedTagNames.length > 0) {
+    // Channel exclusion filter - exclude tasks that have any excluded channels
+    const excludedChannelNames = channels.filter((c) => c.filterState === "excluded").map((c) => c.name.toLowerCase());
+    if (excludedChannelNames.length > 0) {
       const taskTagsLower = task.tags.map(t => t.toLowerCase());
-      if (taskTagsLower.some(t => excludedTagNames.includes(t))) {
+      if (taskTagsLower.some(t => excludedChannelNames.includes(t))) {
         return false;
       }
     }
 
-    // Tag inclusion filter - if any tags are included, task must have at least one
-    const includedTagNames = tags.filter((t) => t.filterState === "included").map((t) => t.name.toLowerCase());
-    if (includedTagNames.length > 0) {
+    // Channel inclusion filter - AND logic: task must have ALL included channels
+    const includedChannelNames = channels.filter((c) => c.filterState === "included").map((c) => c.name.toLowerCase());
+    if (includedChannelNames.length > 0) {
       const taskTagsLower = task.tags.map(t => t.toLowerCase());
-      if (!taskTagsLower.some(t => includedTagNames.includes(t))) {
+      // Check if ALL included channels are present in the task's tags
+      if (!includedChannelNames.every(c => taskTagsLower.includes(c))) {
         return false;
       }
     }
@@ -231,7 +232,7 @@ const Index = () => {
     tasks: filteredTasks,
     allTasks: tasks,
     relays,
-    tags,
+    channels,
     people,
     currentUser,
     searchQuery,
@@ -265,7 +266,7 @@ const Index = () => {
     return (
       <MobileLayout
         relays={relays}
-        tags={tags}
+        channels={channels}
         people={people}
         tasks={filteredTasks}
         allTasks={tasks}
@@ -280,7 +281,7 @@ const Index = () => {
         onStatusChange={handleStatusChange}
         onFocusTask={setFocusedTaskId}
         onRelayToggle={handleRelayToggle}
-        onTagToggle={handleTagToggle}
+        onChannelToggle={handleChannelToggle}
         onPersonToggle={handlePersonToggle}
       />
     );
@@ -291,15 +292,15 @@ const Index = () => {
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
         relays={relays}
-        tags={tags}
+        channels={channels}
         people={people}
         onRelayToggle={handleRelayToggle}
         onRelayExclusive={handleRelayExclusive}
-        onTagToggle={handleTagToggle}
-        onTagExclusive={handleTagExclusive}
+        onChannelToggle={handleChannelToggle}
+        onChannelExclusive={handleChannelExclusive}
         onPersonToggle={handlePersonToggle}
         onToggleAllRelays={handleToggleAllRelays}
-        onToggleAllTags={handleToggleAllTags}
+        onToggleAllChannels={handleToggleAllChannels}
         onToggleAllPeople={handleToggleAllPeople}
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

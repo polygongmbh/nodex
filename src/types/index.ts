@@ -6,12 +6,15 @@ export interface Relay {
   postCount?: number;
 }
 
-export interface Tag {
+export interface Channel {
   id: string;
   name: string;
   color?: string;
   filterState: 'included' | 'excluded' | 'neutral';
 }
+
+// Legacy alias for compatibility
+export type Tag = Channel;
 
 export interface Person {
   id: string;
@@ -49,11 +52,14 @@ export interface Task {
 
 export interface FilterState {
   activeRelays: string[];
-  includedTags: string[];
-  excludedTags: string[];
+  includedChannels: string[];
+  excludedChannels: string[];
   selectedPeople: string[];
   searchQuery: string;
 }
+
+// Legacy aliases for compatibility
+export type { FilterState as TagFilterState };
 
 // Legacy aliases for compatibility
 export type PostType = TaskType;

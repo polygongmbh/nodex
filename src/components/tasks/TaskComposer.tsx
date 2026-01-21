@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Hash, Calendar, Clock, X, MessageSquare, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Tag, Person, TaskType } from "@/types";
+import { Relay, Channel, Person, TaskType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -9,7 +9,7 @@ import { format } from "date-fns";
 interface TaskComposerProps {
   onSubmit: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   onCancel: () => void;
   compact?: boolean;
@@ -17,7 +17,7 @@ interface TaskComposerProps {
   defaultContent?: string;
 }
 
-export function TaskComposer({ onSubmit, relays, tags, people, onCancel, compact = false, defaultDueDate, defaultContent = "" }: TaskComposerProps) {
+export function TaskComposer({ onSubmit, relays, channels, people, onCancel, compact = false, defaultDueDate, defaultContent = "" }: TaskComposerProps) {
   const [content, setContent] = useState(defaultContent);
   const [taskType, setTaskType] = useState<TaskType>("task");
   const [selectedRelays, setSelectedRelays] = useState<string[]>(() => {
@@ -80,7 +80,7 @@ export function TaskComposer({ onSubmit, relays, tags, people, onCancel, compact
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
-  const filteredTags = tags.filter(tag => tag.name.toLowerCase().includes(hashtagFilter));
+  const filteredChannels = channels.filter(channel => channel.name.toLowerCase().includes(hashtagFilter));
 
   return (
     <div className={cn("space-y-3", compact && "space-y-2")}>
@@ -124,20 +124,20 @@ export function TaskComposer({ onSubmit, relays, tags, people, onCancel, compact
           rows={compact ? 2 : 3}
         />
 
-        {/* Hashtag suggestions */}
-        {showHashtagSuggestions && filteredTags.length > 0 && (
+        {/* Channel suggestions */}
+        {showHashtagSuggestions && filteredChannels.length > 0 && (
           <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-50 w-48 py-1">
-            {filteredTags.map((tag) => (
+            {filteredChannels.map((channel) => (
               <button
-                key={tag.id}
+                key={channel.id}
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  insertHashtag(tag.name);
+                  insertHashtag(channel.name);
                 }}
                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-left"
               >
                 <Hash className="w-4 h-4 text-primary" />
-                <span className="text-sm">{tag.name}</span>
+                <span className="text-sm">{channel.name}</span>
               </button>
             ))}
           </div>

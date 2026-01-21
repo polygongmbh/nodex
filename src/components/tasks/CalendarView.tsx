@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Calendar, Clock } from "lucide-react";
-import { Task, Relay, Tag, Person } from "@/types";
+import { Task, Relay, Channel, Person } from "@/types";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday } from "date-fns";
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
@@ -11,7 +11,7 @@ interface CalendarViewProps {
   tasks: Task[];
   allTasks: Task[];
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -27,7 +27,7 @@ export function CalendarView({
   tasks,
   allTasks,
   relays,
-  tags,
+  channels,
   people,
   currentUser,
   searchQuery,
@@ -42,8 +42,8 @@ export function CalendarView({
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // Select today by default
   const [isComposingEvent, setIsComposingEvent] = useState(false);
 
-  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
-  const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
+  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
+  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
 
   // Get all descendants of a task
   const getDescendantIds = (taskId: string): Set<string> => {
@@ -100,22 +100,25 @@ export function CalendarView({
         return false;
       }
       
-      // Apply tag exclusion filter
-      if (excludedTags.length > 0) {
+      // Apply channel exclusion filter
+      if (excludedChannels.length > 0) {
         const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (taskTagsLower.some(t => excludedTags.includes(t))) {
+        if (taskTagsLower.some(t => excludedChannels.includes(t))) {
           return false;
         }
       }
       
-      // Apply tag inclusion filter
-      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t.toLowerCase()))) {
-        return false;
+      // Apply channel inclusion filter - AND logic: must have ALL included channels
+      if (includedChannels.length > 0) {
+        const taskTagsLower = task.tags.map(t => t.toLowerCase());
+        if (!includedChannels.every(c => taskTagsLower.includes(c))) {
+          return false;
+        }
       }
       
       return true;
     });
-  }, [allTasks, filteredTaskIds, searchQuery, includedTags, excludedTags, focusedTaskId]);
+  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId]);
 
   const days = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -355,16 +358,16 @@ export function CalendarView({
                   <TaskComposer
                     onSubmit={handleCreateEvent}
                     relays={relays}
-                    tags={tags}
+                    channels={channels}
                     people={people}
                     onCancel={() => setIsComposingEvent(false)}
                     compact
                     defaultDueDate={selectedDate}
                     defaultContent={(() => {
-                      const prefillTags = new Set<string>();
-                      tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
-                      if (prefillTags.size === 0) return "";
-                      return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
+                      const prefillChannels = new Set<string>();
+                      channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+                      if (prefillChannels.size === 0) return "";
+                      return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
                     })()}
                   />
                 </div>

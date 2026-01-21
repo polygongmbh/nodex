@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Leaf } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { Task, Relay, Tag, Person, TaskStatus } from "@/types";
+import { Task, Relay, Channel, Person, TaskStatus } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { linkifyContent } from "@/lib/linkify";
 import { format } from "date-fns";
@@ -20,7 +20,7 @@ interface KanbanViewProps {
   tasks: Task[];
   allTasks: Task[];
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -44,7 +44,7 @@ export function KanbanView({
   tasks,
   allTasks,
   relays,
-  tags,
+  channels,
   people,
   currentUser,
   searchQuery,
@@ -58,8 +58,8 @@ export function KanbanView({
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
   const [depthMode, setDepthMode] = useState<DepthMode>("1");
 
-  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
-  const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
+  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
+  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
 
   // Build children map
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
@@ -138,17 +138,20 @@ export function KanbanView({
         return false;
       }
       
-      // Apply tag exclusion filter
-      if (excludedTags.length > 0) {
+      // Apply channel exclusion filter
+      if (excludedChannels.length > 0) {
         const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (taskTagsLower.some(t => excludedTags.includes(t))) {
+        if (taskTagsLower.some(t => excludedChannels.includes(t))) {
           return false;
         }
       }
       
-      // Apply tag inclusion filter
-      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t.toLowerCase()))) {
-        return false;
+      // Apply channel inclusion filter - AND logic: must have ALL included channels
+      if (includedChannels.length > 0) {
+        const taskTagsLower = task.tags.map(t => t.toLowerCase());
+        if (!includedChannels.every(c => taskTagsLower.includes(c))) {
+          return false;
+        }
       }
       
       // Apply depth mode
@@ -166,7 +169,7 @@ export function KanbanView({
 
       return true;
     });
-  }, [allTasks, filteredTaskIds, searchQuery, includedTags, excludedTags, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren]);
+  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren]);
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
@@ -309,15 +312,15 @@ export function KanbanView({
                     <TaskComposer
                       onSubmit={handleNewTask}
                       relays={relays}
-                      tags={tags}
+                      channels={channels}
                       people={people}
                       onCancel={() => setComposingColumn(null)}
                       compact
                       defaultContent={(() => {
-                        const prefillTags = new Set<string>();
-                        tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
-                        if (prefillTags.size === 0) return "";
-                        return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
+                        const prefillChannels = new Set<string>();
+                        channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+                        if (prefillChannels.size === 0) return "";
+                        return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
                       })()}
                     />
                   </div>

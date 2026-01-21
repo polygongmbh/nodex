@@ -1,5 +1,5 @@
 import { Search, Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
-import { Task, Relay, Tag, Person } from "@/types";
+import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
@@ -10,7 +10,7 @@ interface FeedViewProps {
   tasks: Task[];
   allTasks: Task[];
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -26,7 +26,7 @@ export function FeedView({
   tasks,
   allTasks,
   relays,
-  tags,
+  channels,
   people,
   currentUser,
   searchQuery,
@@ -37,8 +37,8 @@ export function FeedView({
   onFocusTask,
   isMobile = false,
 }: FeedViewProps) {
-  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
-  const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
+  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
+  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
 
   // Get all descendants of a task
   const getDescendantIds = (taskId: string): Set<string> => {
@@ -74,16 +74,19 @@ export function FeedView({
       if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
       }
-      // Apply tag exclusion filter
-      if (excludedTags.length > 0) {
+      // Apply channel exclusion filter
+      if (excludedChannels.length > 0) {
         const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (taskTagsLower.some(t => excludedTags.includes(t))) {
+        if (taskTagsLower.some(t => excludedChannels.includes(t))) {
           return false;
         }
       }
-      // Apply tag inclusion filter
-      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t.toLowerCase()))) {
-        return false;
+      // Apply channel inclusion filter - AND logic: must have ALL included channels
+      if (includedChannels.length > 0) {
+        const taskTagsLower = task.tags.map(t => t.toLowerCase());
+        if (!includedChannels.every(c => taskTagsLower.includes(c))) {
+          return false;
+        }
       }
       
       return true;
@@ -147,17 +150,17 @@ export function FeedView({
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
-            tags={tags}
+            channels={channels}
             people={people}
             onCancel={() => {}}
             defaultContent={(() => {
-              const prefillTags = new Set<string>();
-              tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
+              const prefillChannels = new Set<string>();
+              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
               if (focusedTask) {
-                focusedTask.tags.forEach(t => prefillTags.add(t));
+                focusedTask.tags.forEach(t => prefillChannels.add(t));
               }
-              if (prefillTags.size === 0) return "";
-              return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
+              if (prefillChannels.size === 0) return "";
+              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
             })()}
           />
         </div>

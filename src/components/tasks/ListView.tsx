@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Search, Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw } from "lucide-react";
-import { Task, Relay, Tag, Person } from "@/types";
+import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { linkifyContent } from "@/lib/linkify";
 import { format } from "date-fns";
@@ -24,7 +24,7 @@ interface ListViewProps {
   tasks: Task[];
   allTasks: Task[];
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -43,7 +43,7 @@ export function ListView({
   tasks,
   allTasks,
   relays,
-  tags,
+  channels,
   people,
   currentUser,
   searchQuery,
@@ -64,8 +64,8 @@ export function ListView({
   const prevSearchRef = useRef(searchQuery);
   const prevFocusedRef = useRef(focusedTaskId);
 
-  const includedTags = tags.filter(t => t.filterState === "included").map(t => t.name.toLowerCase());
-  const excludedTags = tags.filter(t => t.filterState === "excluded").map(t => t.name.toLowerCase());
+  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
+  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
 
   // Detect filter/view changes (not status changes) to trigger re-sort
   useEffect(() => {
@@ -152,17 +152,20 @@ export function ListView({
         return false;
       }
       
-      // Apply tag exclusion filter
-      if (excludedTags.length > 0) {
+      // Apply channel exclusion filter
+      if (excludedChannels.length > 0) {
         const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (taskTagsLower.some(t => excludedTags.includes(t))) {
+        if (taskTagsLower.some(t => excludedChannels.includes(t))) {
           return false;
         }
       }
       
-      // Apply tag inclusion filter
-      if (includedTags.length > 0 && !task.tags.some(t => includedTags.includes(t.toLowerCase()))) {
-        return false;
+      // Apply channel inclusion filter - AND logic: must have ALL included channels
+      if (includedChannels.length > 0) {
+        const taskTagsLower = task.tags.map(t => t.toLowerCase());
+        if (!includedChannels.every(c => taskTagsLower.includes(c))) {
+          return false;
+        }
       }
       
       return true;
@@ -205,7 +208,7 @@ export function ListView({
 
     return filtered;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTasks, filteredTaskIds, searchQuery, includedTags, excludedTags, sortField, sortDirection, focusedTaskId, sortContext, sortVersion]);
+  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, sortField, sortDirection, focusedTaskId, sortContext, sortVersion]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -343,13 +346,6 @@ export function ListView({
           <span
             key={tag}
             className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary cursor-pointer hover:bg-primary/20 transition-colors"
-            onClick={() => {
-              // Toggle this tag in filters
-              const tagObj = tags.find(t => t.name.toLowerCase() === tag.toLowerCase());
-              if (tagObj) {
-                // This would need a callback to toggle tags
-              }
-            }}
           >
             #{tag}
           </span>
@@ -425,14 +421,14 @@ export function ListView({
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
-            tags={tags}
+            channels={channels}
             people={people}
             onCancel={() => setIsComposing(false)}
             defaultContent={(() => {
-              const prefillTags = new Set<string>();
-              tags.filter(t => t.filterState === "included").forEach(t => prefillTags.add(t.name));
-              if (prefillTags.size === 0) return "";
-              return Array.from(prefillTags).map(t => `#${t}`).join(" ") + " ";
+              const prefillChannels = new Set<string>();
+              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+              if (prefillChannels.size === 0) return "";
+              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
             })()}
           />
         </div>
