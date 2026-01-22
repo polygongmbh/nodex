@@ -1,23 +1,23 @@
 import { Radio, Hash, Users, Check, X, Minus } from "lucide-react";
-import { Relay, Tag, Person } from "@/types";
+import { Relay, Channel, Person } from "@/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MobileFiltersProps {
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   onRelayToggle: (id: string) => void;
-  onTagToggle: (id: string) => void;
+  onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
 }
 
 export function MobileFilters({
   relays,
-  tags,
+  channels,
   people,
   onRelayToggle,
-  onTagToggle,
+  onChannelToggle,
   onPersonToggle,
 }: MobileFiltersProps) {
   return (
@@ -49,29 +49,29 @@ export function MobileFilters({
           </div>
         </section>
 
-        {/* Tags */}
+        {/* Channels */}
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Hash className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm">Tags</h2>
+            <h2 className="font-semibold text-sm">Channels</h2>
             <span className="text-xs text-muted-foreground ml-1">Tap to cycle: neutral → include → exclude</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
+            {channels.map((channel) => (
               <button
-                key={tag.id}
-                onClick={() => onTagToggle(tag.id)}
+                key={channel.id}
+                onClick={() => onChannelToggle(channel.id)}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors border",
-                  tag.filterState === "included" && "bg-success/10 border-success text-success",
-                  tag.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive",
-                  tag.filterState === "neutral" && "border-border hover:bg-muted"
+                  channel.filterState === "included" && "bg-success/10 border-success text-success",
+                  channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive",
+                  channel.filterState === "neutral" && "border-border hover:bg-muted"
                 )}
               >
-                #{tag.name}
-                {tag.filterState === "included" && <Check className="w-3 h-3" />}
-                {tag.filterState === "excluded" && <X className="w-3 h-3" />}
-                {tag.filterState === "neutral" && <Minus className="w-3 h-3 opacity-50" />}
+                #{channel.name}
+                {channel.filterState === "included" && <Check className="w-3 h-3" />}
+                {channel.filterState === "excluded" && <X className="w-3 h-3" />}
+                {channel.filterState === "neutral" && <Minus className="w-3 h-3 opacity-50" />}
               </button>
             ))}
           </div>
