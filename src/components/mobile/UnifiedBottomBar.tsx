@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, Plus, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Tag, Person, TaskType } from "@/types";
+import { Relay, Channel, Person, TaskType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -13,30 +13,30 @@ interface UnifiedBottomBarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   // Compose props
-  onSubmit: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
+  onSubmit: (content: string, channels: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
   // Filter data (dual-purpose)
   relays: Relay[];
-  tags: Tag[];
+  channels: Channel[];
   people: Person[];
   // Filter handlers
   onRelayToggle: (id: string) => void;
-  onTagToggle: (id: string) => void;
+  onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
   // Default content for composing
   defaultContent?: string;
 }
 
-type SelectorType = "relay" | "tag" | "person" | null;
+type SelectorType = "relay" | "channel" | "person" | null;
 
 export function UnifiedBottomBar({
   searchQuery,
   onSearchChange,
   onSubmit,
   relays,
-  tags,
+  channels,
   people,
   onRelayToggle,
-  onTagToggle,
+  onChannelToggle,
   onPersonToggle,
   defaultContent = "",
 }: UnifiedBottomBarProps) {
@@ -63,10 +63,10 @@ export function UnifiedBottomBar({
 
   const handleSubmit = () => {
     if (!content.trim()) return;
-    const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
+    const extractedChannels = content.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
-    onSubmit(content, extractedTags, relayIds, taskType, dueDate, dueTime || undefined);
+    onSubmit(content, extractedChannels, relayIds, taskType, dueDate, dueTime || undefined);
     setContent("");
     setDueDate(undefined);
     setDueTime("");
@@ -84,15 +84,15 @@ export function UnifiedBottomBar({
     setActiveSelector(activeSelector === type ? null : type);
   };
 
-  const insertTag = (tagName: string) => {
+  const insertChannel = (channelName: string) => {
     if (mode === "compose") {
-      setContent(prev => prev + (prev && !prev.endsWith(" ") ? " " : "") + `#${tagName} `);
+      setContent(prev => prev + (prev && !prev.endsWith(" ") ? " " : "") + `#${channelName} `);
     }
   };
 
   // Count active filters
   const activeRelaysCount = relays.filter(r => r.isActive).length;
-  const activeTagsCount = tags.filter(t => t.filterState !== "neutral").length;
+  const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
   const activePeopleCount = people.filter(p => p.isSelected).length;
 
   return (
@@ -120,28 +120,28 @@ export function UnifiedBottomBar({
               ))}
             </div>
           )}
-          {activeSelector === "tag" && (
+          {activeSelector === "channel" && (
             <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
+              {channels.map((channel) => (
                 <button
-                  key={tag.id}
+                  key={channel.id}
                   onClick={() => {
-                    onTagToggle(tag.id);
-                    if (mode === "compose" && tag.filterState === "neutral") {
-                      insertTag(tag.name);
+                    onChannelToggle(channel.id);
+                    if (mode === "compose" && channel.filterState === "neutral") {
+                      insertChannel(channel.name);
                     }
                   }}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors",
-                    tag.filterState === "included" && "bg-success/10 border-success text-success",
-                    tag.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive",
-                    tag.filterState === "neutral" && "border-border"
+                    channel.filterState === "included" && "bg-success/10 border-success text-success",
+                    channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive",
+                    channel.filterState === "neutral" && "border-border"
                   )}
                 >
-                  #{tag.name}
-                  {tag.filterState === "included" && <Check className="w-3 h-3" />}
-                  {tag.filterState === "excluded" && <X className="w-3 h-3" />}
-                  {tag.filterState === "neutral" && <Minus className="w-3 h-3 opacity-50" />}
+                  #{channel.name}
+                  {channel.filterState === "included" && <Check className="w-3 h-3" />}
+                  {channel.filterState === "excluded" && <X className="w-3 h-3" />}
+                  {channel.filterState === "neutral" && <Minus className="w-3 h-3 opacity-50" />}
                 </button>
               ))}
             </div>
@@ -234,16 +234,16 @@ export function UnifiedBottomBar({
             )}
           </button>
           <button
-            onClick={() => toggleSelector("tag")}
+            onClick={() => toggleSelector("channel")}
             className={cn(
               "relative p-2 rounded-md transition-colors",
-              activeSelector === "tag" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
+              activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <Hash className="w-4 h-4" />
-            {activeTagsCount > 0 && (
+            {activeChannelsCount > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
-                {activeTagsCount}
+                {activeChannelsCount}
               </span>
             )}
           </button>
