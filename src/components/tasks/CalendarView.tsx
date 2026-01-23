@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Calendar, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, isPast, startOfDay, isTomorrow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskComposer } from "./TaskComposer";
@@ -39,8 +39,9 @@ export function CalendarView({
   isMobile = false,
 }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()); // Select today by default
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [isComposingEvent, setIsComposingEvent] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"calendar" | "upcoming">("upcoming");
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -132,6 +133,65 @@ export function CalendarView({
 
   const selectedDayTasks = selectedDate ? getTasksForDay(selectedDate) : [];
 
+  // Chronologically sorted tasks for upcoming feed
+  const upcomingTasks = useMemo(() => {
+    const today = startOfDay(new Date());
+    
+    return [...tasksWithDueDates]
+      .filter(t => t.status !== "done")
+      .sort((a, b) => {
+        const aDate = a.dueDate ? startOfDay(a.dueDate) : null;
+        const bDate = b.dueDate ? startOfDay(b.dueDate) : null;
+        
+        if (!aDate && !bDate) return 0;
+        if (!aDate) return 1;
+        if (!bDate) return -1;
+        
+        // Both have dates - sort chronologically
+        return aDate.getTime() - bDate.getTime();
+      });
+  }, [tasksWithDueDates]);
+
+  // Group upcoming tasks by date category
+  const groupedUpcoming = useMemo(() => {
+    const groups: { label: string; tasks: Task[]; isOverdue?: boolean }[] = [];
+    const today = startOfDay(new Date());
+    
+    const overdue: Task[] = [];
+    const todayTasks: Task[] = [];
+    const tomorrowTasks: Task[] = [];
+    const thisWeek: Task[] = [];
+    const later: Task[] = [];
+    
+    upcomingTasks.forEach(task => {
+      if (!task.dueDate) return;
+      const dueDay = startOfDay(task.dueDate);
+      
+      if (isPast(dueDay) && !isToday(dueDay)) {
+        overdue.push(task);
+      } else if (isToday(dueDay)) {
+        todayTasks.push(task);
+      } else if (isTomorrow(dueDay)) {
+        tomorrowTasks.push(task);
+      } else {
+        const daysUntil = Math.floor((dueDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysUntil <= 7) {
+          thisWeek.push(task);
+        } else {
+          later.push(task);
+        }
+      }
+    });
+    
+    if (overdue.length > 0) groups.push({ label: "Overdue", tasks: overdue, isOverdue: true });
+    if (todayTasks.length > 0) groups.push({ label: "Today", tasks: todayTasks });
+    if (tomorrowTasks.length > 0) groups.push({ label: "Tomorrow", tasks: tomorrowTasks });
+    if (thisWeek.length > 0) groups.push({ label: "This Week", tasks: thisWeek });
+    if (later.length > 0) groups.push({ label: "Later", tasks: later });
+    
+    return groups;
+  }, [upcomingTasks]);
+
   const canCompleteTask = (task: Task) => {
     if (!currentUser) return false;
     const mentionedPeople = task.content.match(/@(\w+)/g)?.map(m => m.slice(1)) || [];
@@ -206,125 +266,229 @@ export function CalendarView({
       )}
 
       <div className={cn("flex-1 flex overflow-hidden", isMobile && "flex-col")}>
-        {/* Calendar Grid */}
-        <div className={cn("flex-1 overflow-auto", isMobile ? "p-2" : "p-4")}>
-          {/* Mobile Month Navigation */}
-          {isMobile && (
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <button
-                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="p-2 rounded-lg hover:bg-muted transition-colors"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <span className="font-semibold text-base min-w-[140px] text-center">
-                {format(currentMonth, "MMMM yyyy")}
-              </span>
-              <button
-                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="p-2 rounded-lg hover:bg-muted transition-colors"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          )}
-
-          {/* Day Headers */}
-          <div className="grid grid-cols-7 gap-1 mb-1">
-            {(isMobile ? ["S", "M", "T", "W", "T", "F", "S"] : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]).map((day, i) => (
-              <div key={`${day}-${i}`} className="text-center text-xs font-medium text-muted-foreground py-1">
-                {day}
-              </div>
-            ))}
+        {/* Mobile Tab Switcher */}
+        {isMobile && (
+          <div className="flex border-b border-border flex-shrink-0">
+            <button
+              onClick={() => setMobileTab("upcoming")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors",
+                mobileTab === "upcoming" 
+                  ? "text-primary border-b-2 border-primary" 
+                  : "text-muted-foreground"
+              )}
+            >
+              <List className="w-4 h-4" />
+              Upcoming
+            </button>
+            <button
+              onClick={() => setMobileTab("calendar")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors",
+                mobileTab === "calendar" 
+                  ? "text-primary border-b-2 border-primary" 
+                  : "text-muted-foreground"
+              )}
+            >
+              <Grid className="w-4 h-4" />
+              Calendar
+            </button>
           </div>
+        )}
 
-          {/* Calendar Days */}
-          <div className="grid grid-cols-7 gap-0.5">
-            {/* Padding for start of month */}
-            {Array.from({ length: startPadding }).map((_, i) => (
-              <div key={`pad-${i}`} className="aspect-square" />
-            ))}
-            
-            {days.map((day) => {
-              const dayTasks = getTasksForDay(day);
-              const isSelected = selectedDate && isSameDay(day, selectedDate);
-              
-              return (
-                <button
-                  key={day.toISOString()}
-                  onClick={() => setSelectedDate(day)}
-                  className={cn(
-                    "aspect-square rounded-lg border transition-colors text-center flex flex-col items-center justify-center relative",
-                    isMobile ? "p-0.5" : "p-1 text-left",
-                    isToday(day) && "border-primary",
-                    isSelected ? "bg-primary/10 border-primary" : "border-transparent hover:bg-muted/50",
-                    !isSameMonth(day, currentMonth) && "opacity-50"
-                  )}
-                >
-                  <span className={cn(
-                    "text-sm font-medium",
-                    isToday(day) && "text-primary"
-                  )}>
-                    {format(day, "d")}
-                  </span>
-                  {dayTasks.length > 0 && (
-                    isMobile ? (
-                      <div className="flex gap-0.5 mt-0.5">
-                        {dayTasks.slice(0, 3).map((task, i) => (
+        {/* Mobile Upcoming Feed */}
+        {isMobile && mobileTab === "upcoming" && (
+          <div className="flex-1 overflow-auto p-3">
+            {groupedUpcoming.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No upcoming tasks</p>
+            ) : (
+              <div className="space-y-4">
+                {groupedUpcoming.map((group) => (
+                  <div key={group.label}>
+                    <h3 className={cn(
+                      "text-xs font-semibold uppercase tracking-wide mb-2",
+                      group.isOverdue ? "text-destructive" : "text-muted-foreground"
+                    )}>
+                      {group.label} ({group.tasks.length})
+                    </h3>
+                    <div className="space-y-1.5">
+                      {group.tasks.map((task) => {
+                        const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                        return (
                           <div
                             key={task.id}
-                            className={cn(
-                              "w-1.5 h-1.5 rounded-full",
-                              task.status === "done" ? "bg-muted-foreground" :
-                              task.status === "in-progress" ? "bg-amber-500" :
-                              "bg-primary"
-                            )}
-                          />
-                        ))}
-                        {dayTasks.length > 3 && (
-                          <span className="text-[8px] text-muted-foreground">+</span>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
-                        {dayTasks.slice(0, 2).map((task) => {
-                          const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
-                          return (
+                            className="flex items-start gap-2 p-2 rounded-lg bg-card border border-border"
+                          >
+                            <button
+                              onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
+                              disabled={!canCompleteTask(task)}
+                              className={cn(
+                                "flex-shrink-0 mt-0.5",
+                                canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                              )}
+                            >
+                              {task.status === "in-progress" ? (
+                                <CircleDot className="w-4 h-4 text-amber-500" />
+                              ) : (
+                                <Circle className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </button>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                onClick={() => onFocusTask?.(task.id)}
+                                className="text-sm cursor-pointer hover:text-primary line-clamp-2"
+                              >
+                                {task.content}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className={cn("text-xs flex items-center gap-1", dueDateColor)}>
+                                  <Clock className="w-3 h-3" />
+                                  {format(task.dueDate!, "MMM d")}
+                                  {task.dueTime && ` ${task.dueTime}`}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Calendar Grid - shown on desktop or when calendar tab selected on mobile */}
+        {(!isMobile || mobileTab === "calendar") && (
+          <div className={cn("flex-1 overflow-auto", isMobile ? "p-2" : "p-4")}>
+            {/* Mobile Month Navigation */}
+            {isMobile && (
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  className="p-1.5 rounded hover:bg-muted transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="font-semibold text-sm">
+                  {format(currentMonth, "MMMM yyyy")}
+                </span>
+                <button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  className="p-1.5 rounded hover:bg-muted transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 mb-0.5">
+              {(isMobile ? ["S", "M", "T", "W", "T", "F", "S"] : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]).map((day, i) => (
+                <div key={`${day}-${i}`} className={cn(
+                  "text-center text-xs font-medium text-muted-foreground",
+                  isMobile ? "py-0.5" : "py-1"
+                )}>
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar Days */}
+            <div className="grid grid-cols-7 gap-px bg-border/50">
+              {/* Padding for start of month */}
+              {Array.from({ length: startPadding }).map((_, i) => (
+                <div key={`pad-${i}`} className={cn(
+                  "bg-background",
+                  isMobile ? "aspect-[1/0.9]" : "aspect-square"
+                )} />
+              ))}
+              
+              {days.map((day) => {
+                const dayTasks = getTasksForDay(day);
+                const isSelected = selectedDate && isSameDay(day, selectedDate);
+                
+                return (
+                  <button
+                    key={day.toISOString()}
+                    onClick={() => setSelectedDate(day)}
+                    className={cn(
+                      "bg-background transition-colors text-center flex flex-col items-center justify-center relative",
+                      isMobile ? "aspect-[1/0.9] p-0.5" : "aspect-square p-1 text-left rounded-lg border",
+                      isToday(day) && (isMobile ? "bg-primary/10" : "border-primary"),
+                      isSelected ? "bg-primary/20" : "hover:bg-muted/50",
+                      !isMobile && !isToday(day) && !isSelected && "border-transparent",
+                      !isSameMonth(day, currentMonth) && "opacity-50"
+                    )}
+                  >
+                    <span className={cn(
+                      isMobile ? "text-xs" : "text-sm",
+                      "font-medium",
+                      isToday(day) && "text-primary"
+                    )}>
+                      {format(day, "d")}
+                    </span>
+                    {dayTasks.length > 0 && (
+                      isMobile ? (
+                        <div className="flex gap-0.5 mt-0.5">
+                          {dayTasks.slice(0, 3).map((task) => (
                             <div
                               key={task.id}
                               className={cn(
-                                "text-[10px] leading-tight px-1 py-0.5 rounded truncate",
-                                task.status === "done" ? "bg-muted text-muted-foreground line-through" :
-                                task.status === "in-progress" ? "bg-amber-500/20 text-amber-700" :
-                                "bg-primary/10",
-                                dueDateColor
+                                "w-1 h-1 rounded-full",
+                                task.status === "done" ? "bg-muted-foreground" :
+                                task.status === "in-progress" ? "bg-amber-500" :
+                                "bg-primary"
                               )}
-                            >
-                              {task.content.slice(0, 15)}...
-                            </div>
-                          );
-                        })}
-                        {dayTasks.length > 2 && (
-                          <span className="text-[10px] text-muted-foreground">
-                            +{dayTasks.length - 2} more
-                          </span>
-                        )}
-                      </div>
-                    )
-                  )}
-                </button>
-              );
-            })}
+                            />
+                          ))}
+                          {dayTasks.length > 3 && (
+                            <span className="text-[6px] text-muted-foreground">+</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
+                          {dayTasks.slice(0, 2).map((task) => {
+                            const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                            return (
+                              <div
+                                key={task.id}
+                                className={cn(
+                                  "text-[10px] leading-tight px-1 py-0.5 rounded truncate",
+                                  task.status === "done" ? "bg-muted text-muted-foreground line-through" :
+                                  task.status === "in-progress" ? "bg-amber-500/20 text-amber-700" :
+                                  "bg-primary/10",
+                                  dueDateColor
+                                )}
+                              >
+                                {task.content.slice(0, 15)}...
+                              </div>
+                            );
+                          })}
+                          {dayTasks.length > 2 && (
+                            <span className="text-[10px] text-muted-foreground">
+                              +{dayTasks.length - 2} more
+                            </span>
+                          )}
+                        </div>
+                      )
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Selected Day Panel */}
-        <div className={cn(
-          "border-border overflow-y-auto flex-shrink-0",
-          isMobile 
-            ? "border-t p-3 max-h-[40%]" 
-            : "w-80 border-l p-4"
-        )}>
+        {/* Selected Day Panel - desktop or mobile calendar tab */}
+        {(!isMobile || mobileTab === "calendar") && (
+          <div className={cn(
+            "border-border overflow-y-auto flex-shrink-0",
+            isMobile 
+              ? "border-t p-2 flex-1" 
+              : "w-80 border-l p-4"
+          )}>
           {selectedDate ? (
             <>
               <div className="flex items-center justify-between mb-3">
@@ -463,6 +627,7 @@ export function CalendarView({
             <p className="text-sm text-muted-foreground">Select a day to view tasks</p>
           )}
         </div>
+        )}
       </div>
     </main>
   );
