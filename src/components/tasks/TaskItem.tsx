@@ -136,15 +136,24 @@ export function TaskItem({
     <div className={cn(!matchedByFilter && "opacity-50")}>
       <div
         className={cn(
-          "group flex items-start gap-2 py-2 px-3 rounded-lg transition-colors",
+          "group flex items-start gap-3 py-2.5 px-3 rounded-lg transition-colors",
           isComment 
             ? "bg-muted/30 hover:bg-muted/50" 
             : "hover:bg-card/80 cursor-pointer",
           task.status === "done" && "opacity-60",
-          depth > 0 && "border-l-2 border-border pl-4"
+          depth > 0 && "border-l-2 border-muted ml-1.5 pl-4"
         )}
         style={indentStyle}
         onClick={handleSelect}
+        role={!isComment ? "button" : undefined}
+        tabIndex={!isComment ? 0 : undefined}
+        onKeyDown={!isComment ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleSelect();
+          }
+        } : undefined}
+        aria-label={!isComment ? `Task: ${task.content.slice(0, 50)}` : undefined}
       >
         {/* Expand/Collapse Toggle - three states */}
         {hasChildren && !isComment ? (

@@ -51,12 +51,12 @@ export function Sidebar({
       {/* Logo */}
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
             <Radio className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <h1 className="font-heading font-semibold text-foreground">Nodex</h1>
-            <p className="text-xs text-muted-foreground">Collaboration Platform</p>
+          <div className="min-w-0">
+            <h1 className="font-heading font-semibold text-foreground truncate">Nodex</h1>
+            <p className="text-xs text-muted-foreground truncate">Collaboration Platform</p>
           </div>
         </div>
       </div>
@@ -120,9 +120,9 @@ export function Sidebar({
       </nav>
 
       {/* Status */}
-      <div className="p-3 border-t border-sidebar-border">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+      <div className="p-3 border-t border-sidebar-border flex-shrink-0">
+        <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+          <div className="w-2 h-2 rounded-full bg-success animate-pulse flex-shrink-0" aria-hidden="true" />
           <span>Connected to {relays.filter(r => r.isActive).length} relays</span>
         </div>
       </div>
