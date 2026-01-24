@@ -305,7 +305,7 @@ const Index = () => {
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* View Switcher Header */}
-        <div className="border-b border-border p-3 bg-background/95 backdrop-blur-sm flex justify-center flex-shrink-0">
+        <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex justify-center flex-shrink-0">
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
         </div>
         {/* Current View */}

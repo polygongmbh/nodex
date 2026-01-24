@@ -18,20 +18,27 @@ const navItems: { id: MobileViewType; label: string; icon: React.ReactNode }[] =
 
 export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   return (
-    <nav className="flex items-center justify-around border-b border-border bg-background/95 backdrop-blur-sm px-2 py-2 safe-area-top">
+    <nav 
+      className="flex items-center justify-around border-b border-border bg-background/95 backdrop-blur-sm px-2 py-2.5 safe-area-top"
+      role="tablist"
+      aria-label="Navigation views"
+    >
       {navItems.map((item) => (
         <button
           key={item.id}
           onClick={() => onViewChange(item.id)}
+          role="tab"
+          aria-selected={currentView === item.id}
+          aria-label={`Switch to ${item.label} view`}
           className={cn(
-            "flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors flex-1",
+            "flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-lg transition-colors flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
             currentView === item.id
               ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground hover:text-foreground active:bg-muted/50"
           )}
         >
           {item.icon}
-          <span className="text-xs font-medium">{item.label}</span>
+          <span className="text-xs font-medium truncate">{item.label}</span>
         </button>
       ))}
     </nav>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
@@ -6,6 +6,7 @@ import { TaskTree } from "@/components/tasks/TaskTree";
 import { FeedView } from "@/components/tasks/FeedView";
 import { CalendarView } from "@/components/tasks/CalendarView";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
+import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { Relay, Channel, Person, Task } from "@/types";
 
 interface MobileLayoutProps {
@@ -28,6 +29,9 @@ interface MobileLayoutProps {
   onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
 }
+
+// Mobile view order for swipe navigation
+const mobileViews: ViewType[] = ["tree", "feed", "calendar"];
 
 export function MobileLayout({
   relays,
@@ -54,6 +58,33 @@ export function MobileLayout({
   // Build default content from active channel filters
   const includedChannels = channels.filter(c => c.filterState === "included");
   const defaultContent = includedChannels.map(c => `#${c.name}`).join(" ");
+
+  // Swipe navigation handlers
+  const handleSwipeLeft = useCallback(() => {
+    if (showFilters) {
+      setShowFilters(false);
+      return;
+    }
+    const currentIndex = mobileViews.indexOf(currentView);
+    if (currentIndex < mobileViews.length - 1) {
+      onViewChange(mobileViews[currentIndex + 1]);
+    }
+  }, [currentView, onViewChange, showFilters]);
+
+  const handleSwipeRight = useCallback(() => {
+    const currentIndex = mobileViews.indexOf(currentView);
+    if (currentIndex > 0) {
+      onViewChange(mobileViews[currentIndex - 1]);
+    } else if (currentIndex === 0) {
+      setShowFilters(true);
+    }
+  }, [currentView, onViewChange]);
+
+  const swipeHandlers = useSwipeNavigation({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    threshold: 60,
+  });
 
   const viewProps = {
     tasks,
@@ -111,7 +142,10 @@ export function MobileLayout({
     <div className="flex flex-col h-screen bg-background">
       <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} />
       
-      <main className="flex-1 overflow-hidden">
+      <main 
+        className="flex-1 overflow-hidden"
+        {...swipeHandlers}
+      >
         {renderView()}
       </main>
       
