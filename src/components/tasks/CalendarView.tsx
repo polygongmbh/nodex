@@ -214,9 +214,9 @@ export function CalendarView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Header - hidden on mobile */}
+      {/* Header - hidden on mobile, height matches sidebar logo */}
       {!isMobile && (
-        <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
+        <div className="min-h-14 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-semibold">Calendar</h2>
@@ -232,6 +232,7 @@ export function CalendarView({
                 <button
                   onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
+                  aria-label="Previous month"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -241,6 +242,7 @@ export function CalendarView({
                 <button
                   onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
+                  aria-label="Next month"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
