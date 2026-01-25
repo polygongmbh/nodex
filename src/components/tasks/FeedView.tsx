@@ -297,18 +297,22 @@ export function FeedView({
         )}
       </div>
 
-      {/* Search Bar - hidden on mobile, height matches sidebar status */}
+      {/* Floaty Search Bar - hidden on mobile */}
       {!isMobile && (
-        <div className="h-12 border-t border-border px-4 bg-background/95 backdrop-blur-sm flex items-center flex-shrink-0">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search tasks..."
-              className="w-full bg-muted/50 border border-border rounded-lg pl-9 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+        <div className="relative flex-shrink-0">
+          {/* Gradient fade overlay */}
+          <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+          <div className="px-4 py-3 bg-background/80 backdrop-blur-md flex items-center">
+            <div className="relative w-full max-w-xl mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search tasks..."
+                className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
+              />
+            </div>
           </div>
         </div>
       )}

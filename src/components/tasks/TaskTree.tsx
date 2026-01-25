@@ -191,8 +191,8 @@ export function TaskTree({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Header with context navigation - hidden on mobile */}
       {!isMobile && (
-        <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center justify-between mb-3">
+        <div className="h-14 border-b border-border px-4 bg-background/95 backdrop-blur-sm flex items-center flex-shrink-0">
+          <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2">
               {contextStack.length > 0 && (
                 <button
@@ -215,29 +215,31 @@ export function TaskTree({
               {currentContextId ? "Add Subtask" : "New Task"}
             </button>
           </div>
+        </div>
+      )}
 
-          {/* Breadcrumb */}
-          {contextStack.length > 0 && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <button onClick={() => setContextStack([])} className="hover:text-foreground">
-                All Tasks
-              </button>
-              {contextStack.map((id, index) => {
-                const task = allTasks.find(t => t.id === id);
-                return (
-                  <span key={id} className="flex items-center gap-1">
-                    <span>/</span>
-                    <button 
-                      onClick={() => setContextStack(prev => prev.slice(0, index + 1))}
-                      className="hover:text-foreground truncate max-w-[150px]"
-                    >
-                      {task?.content.slice(0, 30)}...
-                    </button>
-                  </span>
-                );
-              })}
-            </div>
-          )}
+      {/* Breadcrumb - shown below header when in context */}
+      {!isMobile && contextStack.length > 0 && (
+        <div className="px-4 py-2 border-b border-border bg-muted/30 flex-shrink-0">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <button onClick={() => setContextStack([])} className="hover:text-foreground">
+              All Tasks
+            </button>
+            {contextStack.map((id, index) => {
+              const task = allTasks.find(t => t.id === id);
+              return (
+                <span key={id} className="flex items-center gap-1">
+                  <span>/</span>
+                  <button 
+                    onClick={() => setContextStack(prev => prev.slice(0, index + 1))}
+                    className="hover:text-foreground truncate max-w-[150px]"
+                  >
+                    {task?.content.slice(0, 30)}...
+                  </button>
+                </span>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -329,18 +331,22 @@ export function TaskTree({
         )}
       </div>
 
-      {/* Search Bar - hidden on mobile, height matches sidebar status */}
+      {/* Floaty Search Bar - hidden on mobile */}
       {!isMobile && (
-        <div className="h-12 border-t border-border px-4 bg-background/95 backdrop-blur-sm flex items-center flex-shrink-0">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search tasks..."
-              className="w-full bg-muted/50 border border-border rounded-lg pl-9 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+        <div className="relative flex-shrink-0">
+          {/* Gradient fade overlay */}
+          <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+          <div className="px-4 py-3 bg-background/80 backdrop-blur-md flex items-center">
+            <div className="relative w-full max-w-xl mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search tasks..."
+                className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
+              />
+            </div>
           </div>
         </div>
       )}
