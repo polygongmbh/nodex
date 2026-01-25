@@ -48,8 +48,8 @@ export function Sidebar({
 
   return (
     <aside className="w-64 h-screen bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden">
-      {/* Logo */}
-      <div className="p-4 border-b border-sidebar-border">
+      {/* Logo - height matches view switcher header */}
+      <div className="h-14 px-4 border-b border-sidebar-border flex items-center flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
             <Radio className="w-5 h-5 text-primary" />
@@ -119,8 +119,8 @@ export function Sidebar({
         </SidebarSection>
       </nav>
 
-      {/* Status */}
-      <div className="p-3 border-t border-sidebar-border flex-shrink-0">
+      {/* Status - height matches search bar footer */}
+      <div className="h-12 px-3 border-t border-sidebar-border flex items-center flex-shrink-0">
         <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
           <div className="w-2 h-2 rounded-full bg-success animate-pulse flex-shrink-0" aria-hidden="true" />
           <span>Connected to {relays.filter(r => r.isActive).length} relays</span>

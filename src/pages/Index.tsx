@@ -304,8 +304,8 @@ const Index = () => {
         onToggleAllPeople={handleToggleAllPeople}
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* View Switcher Header */}
-        <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex justify-center flex-shrink-0">
+        {/* View Switcher Header - height matches sidebar logo */}
+        <div className="h-14 border-b border-border px-4 bg-background/95 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
         </div>
         {/* Current View */}

@@ -329,17 +329,17 @@ export function TaskTree({
         )}
       </div>
 
-      {/* Search Bar - hidden on mobile */}
+      {/* Search Bar - hidden on mobile, height matches sidebar status */}
       {!isMobile && (
-        <div className="border-t border-border p-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
-          <div className="relative">
+        <div className="h-12 border-t border-border px-4 bg-background/95 backdrop-blur-sm flex items-center flex-shrink-0">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search tasks..."
-              className="w-full bg-muted/50 border border-border rounded-lg pl-9 pr-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="w-full bg-muted/50 border border-border rounded-lg pl-9 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
         </div>

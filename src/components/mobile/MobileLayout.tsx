@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
+import { SwipeIndicator } from "./SwipeIndicator";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { FeedView } from "@/components/tasks/FeedView";
 import { CalendarView } from "@/components/tasks/CalendarView";
@@ -84,6 +85,7 @@ export function MobileLayout({
     onSwipeLeft: handleSwipeLeft,
     onSwipeRight: handleSwipeRight,
     threshold: 60,
+    enableHaptics: true,
   });
 
   const viewProps = {
@@ -141,6 +143,13 @@ export function MobileLayout({
   return (
     <div className="flex flex-col h-screen bg-background">
       <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} />
+      
+      {/* Swipe indicator */}
+      <SwipeIndicator 
+        views={mobileViews} 
+        currentView={currentView} 
+        showFilters={showFilters} 
+      />
       
       <main 
         className="flex-1 overflow-hidden"
