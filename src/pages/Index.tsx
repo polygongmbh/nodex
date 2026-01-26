@@ -9,6 +9,7 @@ import { ListView } from "@/components/tasks/ListView";
 import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { mockRelays, mockChannels, mockPeople, mockTasks } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -50,6 +51,13 @@ const Index = () => {
       navigate(`/${newView}`);
     }
   }, [navigate, focusedTaskId]);
+
+  // Desktop keyboard shortcuts (disabled on mobile)
+  useKeyboardShortcuts({
+    currentView,
+    onViewChange: setCurrentView,
+    enabled: !isMobile,
+  });
 
   // Handle task focus - update URL
   const setFocusedTaskId = useCallback((taskId: string | null) => {

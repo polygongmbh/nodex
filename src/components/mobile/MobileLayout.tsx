@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
@@ -9,6 +9,7 @@ import { CalendarView } from "@/components/tasks/CalendarView";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { Relay, Channel, Person, Task } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface MobileLayoutProps {
   relays: Relay[];
@@ -81,9 +82,33 @@ export function MobileLayout({
     }
   }, [currentView, onViewChange]);
 
+  // Swipe animation state
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const animatedSwipeLeft = useCallback(() => {
+    setSwipeDirection("left");
+    setIsAnimating(true);
+    setTimeout(() => {
+      handleSwipeLeft();
+      setIsAnimating(false);
+      setSwipeDirection(null);
+    }, 150);
+  }, [handleSwipeLeft]);
+
+  const animatedSwipeRight = useCallback(() => {
+    setSwipeDirection("right");
+    setIsAnimating(true);
+    setTimeout(() => {
+      handleSwipeRight();
+      setIsAnimating(false);
+      setSwipeDirection(null);
+    }, 150);
+  }, [handleSwipeRight]);
+
   const swipeHandlers = useSwipeNavigation({
-    onSwipeLeft: handleSwipeLeft,
-    onSwipeRight: handleSwipeRight,
+    onSwipeLeft: animatedSwipeLeft,
+    onSwipeRight: animatedSwipeRight,
     threshold: 60,
     enableHaptics: true,
   });
@@ -152,10 +177,18 @@ export function MobileLayout({
       />
       
       <main 
-        className="flex-1 overflow-hidden"
+        className="flex-1 overflow-hidden relative"
         {...swipeHandlers}
       >
-        {renderView()}
+        <div 
+          className={cn(
+            "h-full w-full transition-transform duration-150 ease-out",
+            isAnimating && swipeDirection === "left" && "-translate-x-4 opacity-80",
+            isAnimating && swipeDirection === "right" && "translate-x-4 opacity-80"
+          )}
+        >
+          {renderView()}
+        </div>
       </main>
       
       <UnifiedBottomBar
