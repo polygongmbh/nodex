@@ -41,20 +41,11 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      // Left/Right arrows to navigate between views
+      // Left/Right arrows or H/L to navigate between views (only H/L, arrows reserved for task nav)
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-        const currentIndex = viewOrder.indexOf(currentView);
-        if (currentIndex === -1) return;
-
-        let newIndex: number;
-        if (event.key === "ArrowLeft") {
-          newIndex = currentIndex > 0 ? currentIndex - 1 : viewOrder.length - 1;
-        } else {
-          newIndex = currentIndex < viewOrder.length - 1 ? currentIndex + 1 : 0;
-        }
-
-        event.preventDefault();
-        onViewChange(viewOrder[newIndex]);
+        // Don't handle arrows here anymore - reserved for task navigation
+        // View switching now only via number keys
+        return;
       }
     },
     [currentView, onViewChange]

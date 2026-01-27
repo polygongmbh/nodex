@@ -26,6 +26,7 @@ interface TaskItemProps {
   hasActiveFilters?: boolean;
   parentFoldState?: FoldState; // Propagate parent's fold state for recursive expansion
   activeRelays?: Relay[]; // For showing relay source when multiple are active
+  isKeyboardFocused?: boolean; // For keyboard navigation highlight
 }
 
 export function TaskItem({
@@ -44,6 +45,7 @@ export function TaskItem({
   hasActiveFilters = false,
   parentFoldState,
   activeRelays = [],
+  isKeyboardFocused = false,
 }: TaskItemProps) {
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const [localFoldState, setLocalFoldState] = useState<FoldState>("matchingOnly");
@@ -133,7 +135,7 @@ export function TaskItem({
   const indentStyle = depth > 0 ? { marginLeft: `${depth * 1.5}rem` } : {};
 
   return (
-    <div className={cn(!matchedByFilter && "opacity-50")}>
+    <div className={cn(!matchedByFilter && "opacity-50")} data-task-id={task.id}>
       <div
         className={cn(
           "group flex items-start gap-3 py-2.5 px-3 rounded-lg transition-colors",
@@ -141,7 +143,8 @@ export function TaskItem({
             ? "bg-muted/30 hover:bg-muted/50" 
             : "hover:bg-card/80 cursor-pointer",
           task.status === "done" && "opacity-60",
-          depth > 0 && "border-l-2 border-muted ml-1.5 pl-4"
+          depth > 0 && "border-l-2 border-muted ml-1.5 pl-4",
+          isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background bg-primary/5"
         )}
         style={indentStyle}
         onClick={handleSelect}
