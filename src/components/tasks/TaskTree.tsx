@@ -1,9 +1,10 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Search, ChevronUp, Plus, X } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { TaskComposer } from "./TaskComposer";
 import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
+import { useTaskNavigation } from "@/hooks/use-task-navigation";
 
 interface TaskTreeProps {
   tasks: Task[];
@@ -187,6 +188,37 @@ export function TaskTree({
     return directlyMatchingIds.has(taskId);
   }, [hasActiveFilters, directlyMatchingIds]);
 
+  // Flatten visible task IDs for keyboard navigation
+  const flattenedTaskIds = useMemo(() => {
+    const ids: string[] = [];
+    visibleTasks.forEach(task => {
+      if (task.taskType !== "comment") {
+        ids.push(task.id);
+      }
+    });
+    return ids;
+  }, [visibleTasks]);
+
+  // Task navigation with keyboard
+  const { focusedTaskId: keyboardFocusedTaskId, setFocusedIndex } = useTaskNavigation({
+    taskIds: flattenedTaskIds,
+    onSelectTask: handleSelectTask,
+    enabled: !isMobile && !isComposing,
+  });
+
+  // Scroll focused task into view
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (keyboardFocusedTaskId && scrollContainerRef.current) {
+      const element = scrollContainerRef.current.querySelector(
+        `[data-task-id="${keyboardFocusedTaskId}"]`
+      );
+      if (element) {
+        element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+  }, [keyboardFocusedTaskId]);
+
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Header with context navigation - hidden on mobile */}
@@ -284,7 +316,7 @@ export function TaskTree({
       )}
 
       {/* Task List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1">
         {visibleTasks.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             {hasActiveFilters ? (
@@ -326,6 +358,7 @@ export function TaskTree({
               getFilteredChildrenFn={getFilteredChildren}
               hasActiveFilters={hasActiveFilters}
               activeRelays={relays.filter(r => r.isActive)}
+              isKeyboardFocused={keyboardFocusedTaskId === task.id}
             />
           ))
         )}
