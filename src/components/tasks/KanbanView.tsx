@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Leaf } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Task, Relay, Channel, Person, TaskStatus } from "@/types";
@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getDueDateColorClass, sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
+import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import {
   Select,
   SelectContent,
@@ -212,6 +213,83 @@ export function KanbanView({
 
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
   
+  // Flatten all visible task IDs for keyboard navigation (across all columns)
+  const allVisibleTaskIds = useMemo(() => {
+    return [...tasksByStatus["todo"], ...tasksByStatus["in-progress"], ...tasksByStatus["done"]].map(t => t.id);
+  }, [tasksByStatus]);
+
+  // Track keyboard focus state
+  const [keyboardFocusedTaskId, setKeyboardFocusedTaskId] = useState<string | null>(null);
+  const keyboardFocusedTaskIdRef = useRef<string | null>(null);
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    keyboardFocusedTaskIdRef.current = keyboardFocusedTaskId;
+  }, [keyboardFocusedTaskId]);
+
+  // Handle moving task left (to previous column)
+  const handleMoveLeft = useCallback(() => {
+    const focusedId = keyboardFocusedTaskIdRef.current;
+    if (!focusedId) return;
+    const task = kanbanTasks.find(t => t.id === focusedId);
+    if (!task) return;
+    
+    const currentStatus = task.status || "todo";
+    let newStatus: TaskStatus;
+    
+    if (currentStatus === "done") newStatus = "in-progress";
+    else if (currentStatus === "in-progress") newStatus = "todo";
+    else return; // Already at leftmost
+    
+    onStatusChange?.(focusedId, newStatus);
+  }, [kanbanTasks, onStatusChange]);
+
+  // Handle moving task right (to next column)
+  const handleMoveRight = useCallback(() => {
+    const focusedId = keyboardFocusedTaskIdRef.current;
+    if (!focusedId) return;
+    const task = kanbanTasks.find(t => t.id === focusedId);
+    if (!task) return;
+    
+    const currentStatus = task.status || "todo";
+    let newStatus: TaskStatus;
+    
+    if (currentStatus === "todo") newStatus = "in-progress";
+    else if (currentStatus === "in-progress") newStatus = "done";
+    else return; // Already at rightmost
+    
+    onStatusChange?.(focusedId, newStatus);
+  }, [kanbanTasks, onStatusChange]);
+
+  // Keyboard navigation - arrows move tasks between columns, HJKL navigates
+  const { focusedTaskId: navFocusedTaskId } = useTaskNavigation({
+    taskIds: allVisibleTaskIds,
+    onSelectTask: (id) => onFocusTask?.(id),
+    onGoBack: () => onFocusTask?.(null),
+    onMoveLeft: handleMoveLeft,
+    onMoveRight: handleMoveRight,
+    enabled: composingColumn === null,
+    arrowsMoveTasks: true,
+  });
+
+  // Sync navigation focus with local state
+  useEffect(() => {
+    setKeyboardFocusedTaskId(navFocusedTaskId);
+  }, [navFocusedTaskId]);
+
+  // Scroll focused task into view
+  const columnsContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (keyboardFocusedTaskId && columnsContainerRef.current) {
+      const element = columnsContainerRef.current.querySelector(
+        `[data-task-id="${keyboardFocusedTaskId}"]`
+      );
+      if (element) {
+        element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+  }, [keyboardFocusedTaskId]);
+  
   // Determine if we should show context (depth > 1 or leaves mode)
   const showContext = depthMode !== "1";
 
@@ -272,7 +350,7 @@ export function KanbanView({
       </div>
 
       {/* Kanban Columns */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
+      <div ref={columnsContainerRef} className="flex-1 overflow-x-auto overflow-y-hidden p-4">
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-4 h-full min-w-max">
             {columns.map((column) => (
@@ -343,6 +421,7 @@ export function KanbanView({
                         {tasksByStatus[column.id].map((task, index) => {
                           const ancestorChain = showContext ? getAncestorChain(task.id) : [];
                           const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                          const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                           
                           return (
                             <Draggable key={task.id} draggableId={task.id} index={index}>
@@ -351,10 +430,12 @@ export function KanbanView({
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
+                                  data-task-id={task.id}
                                   className={cn(
                                     "bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-grab active:cursor-grabbing",
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md",
-                                    task.status === "done" && "opacity-70"
+                                    task.status === "done" && "opacity-70",
+                                    isKeyboardFocused && !snapshot.isDragging && "ring-2 ring-primary ring-offset-1 ring-offset-background"
                                   )}
                                 >
                                   {/* Parent chain for context */}

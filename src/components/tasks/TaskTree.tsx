@@ -203,6 +203,7 @@ export function TaskTree({
   const { focusedTaskId: keyboardFocusedTaskId, setFocusedIndex } = useTaskNavigation({
     taskIds: flattenedTaskIds,
     onSelectTask: handleSelectTask,
+    onGoBack: handleGoUp,
     enabled: !isMobile && !isComposing,
   });
 
