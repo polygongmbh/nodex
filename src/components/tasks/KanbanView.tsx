@@ -218,6 +218,13 @@ export function KanbanView({
     return [...tasksByStatus["todo"], ...tasksByStatus["in-progress"], ...tasksByStatus["done"]].map(t => t.id);
   }, [tasksByStatus]);
 
+  // Column-aware task IDs for Kanban navigation
+  const columnTaskIds = useMemo(() => [
+    tasksByStatus["todo"].map(t => t.id),
+    tasksByStatus["in-progress"].map(t => t.id),
+    tasksByStatus["done"].map(t => t.id),
+  ], [tasksByStatus]);
+
   // Track keyboard focus state
   const [keyboardFocusedTaskId, setKeyboardFocusedTaskId] = useState<string | null>(null);
   const keyboardFocusedTaskIdRef = useRef<string | null>(null);
@@ -261,16 +268,26 @@ export function KanbanView({
     onStatusChange?.(focusedId, newStatus);
   }, [kanbanTasks, onStatusChange]);
 
-  // Keyboard navigation - arrows move tasks between columns, HJKL navigates
-  const { focusedTaskId: navFocusedTaskId } = useTaskNavigation({
+  // Keyboard navigation - Kanban mode: arrows navigate, Shift+arrows/HJKL move tasks
+  const { focusedTaskId: navFocusedTaskId, setFocusByTaskId } = useTaskNavigation({
     taskIds: allVisibleTaskIds,
     onSelectTask: (id) => onFocusTask?.(id),
-    onGoBack: () => onFocusTask?.(null),
     onMoveLeft: handleMoveLeft,
     onMoveRight: handleMoveRight,
     enabled: composingColumn === null,
-    arrowsMoveTasks: true,
+    kanbanMode: true,
+    columnTaskIds,
   });
+
+  // Re-focus the moved task after status change
+  const prevTasksByStatusRef = useRef(tasksByStatus);
+  useEffect(() => {
+    // If we have a focused task, make sure it stays focused after moving
+    if (keyboardFocusedTaskId) {
+      setFocusByTaskId(keyboardFocusedTaskId);
+    }
+    prevTasksByStatusRef.current = tasksByStatus;
+  }, [tasksByStatus, keyboardFocusedTaskId, setFocusByTaskId]);
 
   // Sync navigation focus with local state
   useEffect(() => {

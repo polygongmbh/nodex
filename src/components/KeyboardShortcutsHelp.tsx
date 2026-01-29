@@ -30,7 +30,7 @@ const shortcutGroups: ShortcutGroup[] = [
       { key: "J / ↓", description: "Move focus down" },
       { key: "K / ↑", description: "Move focus up" },
       { key: "L / Enter", description: "Open/select task" },
-      { key: "H", description: "Go back / up level" },
+      { key: "H", description: "Clear focus / go back" },
       { key: "G", description: "Jump to first task" },
       { key: "Shift + G", description: "Jump to last task" },
       { key: "Esc", description: "Clear focus" },
@@ -39,8 +39,10 @@ const shortcutGroups: ShortcutGroup[] = [
   {
     title: "Kanban",
     shortcuts: [
-      { key: "← / →", description: "Move task between columns" },
-      { key: "H / J / K / L", description: "Navigate tasks" },
+      { key: "← / → / H / L", description: "Navigate between columns" },
+      { key: "↑ / ↓ / J / K", description: "Navigate within column" },
+      { key: "Shift + ← / →", description: "Move task between columns" },
+      { key: "Shift + H / L", description: "Move task between columns" },
     ],
   },
   {
