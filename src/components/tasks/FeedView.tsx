@@ -1,3 +1,4 @@
+import { useEffect, useRef, useMemo } from "react";
 import { Search, Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
@@ -5,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useTaskNavigation } from "@/hooks/use-task-navigation";
 
 interface FeedViewProps {
   tasks: Task[];
@@ -93,6 +95,30 @@ export function FeedView({
     })
     .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
+  // Task IDs for keyboard navigation
+  const taskIds = useMemo(() => feedTasks.map(t => t.id), [feedTasks]);
+
+  // Keyboard navigation
+  const { focusedTaskId: keyboardFocusedTaskId } = useTaskNavigation({
+    taskIds,
+    onSelectTask: (id) => onFocusTask?.(id),
+    onGoBack: () => onFocusTask?.(null),
+    enabled: !isMobile,
+  });
+
+  // Scroll focused task into view
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (keyboardFocusedTaskId && scrollContainerRef.current) {
+      const element = scrollContainerRef.current.querySelector(
+        `[data-task-id="${keyboardFocusedTaskId}"]`
+      );
+      if (element) {
+        element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+  }, [keyboardFocusedTaskId]);
+
   const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
     onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime, focusedTaskId || undefined);
   };
@@ -167,7 +193,7 @@ export function FeedView({
       )}
 
       {/* Feed List */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         {feedTasks.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             <p>No tasks to show</p>
@@ -177,13 +203,16 @@ export function FeedView({
             const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
             const isComment = task.taskType === "comment";
             const breadcrumb = getParentBreadcrumb(task);
+            const isKeyboardFocused = keyboardFocusedTaskId === task.id;
 
             return (
               <div
                 key={task.id}
+                data-task-id={task.id}
                 className={cn(
                   "border-b border-border p-4 hover:bg-card/50 transition-colors",
-                  task.status === "done" && "opacity-60"
+                  task.status === "done" && "opacity-60",
+                  isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
                 )}
               >
                 {/* Parent breadcrumb - clickable */}

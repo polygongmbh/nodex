@@ -3,13 +3,22 @@ import { useState, useEffect, useCallback, useRef } from "react";
 interface UseTaskNavigationOptions {
   taskIds: string[];
   onSelectTask: (taskId: string) => void;
+  onGoBack?: () => void;
+  onMoveLeft?: () => void;
+  onMoveRight?: () => void;
   enabled?: boolean;
+  // For Kanban: arrow keys move tasks, HJKL navigates
+  arrowsMoveTasks?: boolean;
 }
 
 export function useTaskNavigation({
   taskIds,
   onSelectTask,
+  onGoBack,
+  onMoveLeft,
+  onMoveRight,
   enabled = true,
+  arrowsMoveTasks = false,
 }: UseTaskNavigationOptions) {
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const focusedTaskId = focusedIndex >= 0 && focusedIndex < taskIds.length 
@@ -42,7 +51,7 @@ export function useTaskNavigation({
         return;
       }
 
-      // Don't trigger if modifier keys are pressed
+      // Don't trigger if modifier keys are pressed (except shift)
       if (event.metaKey || event.ctrlKey || event.altKey) {
         return;
       }
@@ -51,8 +60,12 @@ export function useTaskNavigation({
 
       const key = event.key.toLowerCase();
 
-      // Down arrow or J - move down
-      if (event.key === "ArrowDown" || key === "j") {
+      // Arrow keys - behavior depends on mode
+      if (event.key === "ArrowDown") {
+        if (arrowsMoveTasks) {
+          // In Kanban, arrows move tasks - don't handle navigation
+          return;
+        }
         event.preventDefault();
         setFocusedIndex((prev) => {
           if (prev < 0) return 0;
@@ -61,8 +74,10 @@ export function useTaskNavigation({
         return;
       }
 
-      // Up arrow or K - move up
-      if (event.key === "ArrowUp" || key === "k") {
+      if (event.key === "ArrowUp") {
+        if (arrowsMoveTasks) {
+          return;
+        }
         event.preventDefault();
         setFocusedIndex((prev) => {
           if (prev < 0) return taskIds.length - 1;
@@ -71,8 +86,45 @@ export function useTaskNavigation({
         return;
       }
 
-      // Enter or L - open/select task
-      if (event.key === "Enter" || key === "l") {
+      // Arrow left/right for moving tasks (Kanban) or column navigation
+      if (event.key === "ArrowLeft") {
+        if (arrowsMoveTasks && focusedTaskId && onMoveLeft) {
+          event.preventDefault();
+          onMoveLeft();
+        }
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        if (arrowsMoveTasks && focusedTaskId && onMoveRight) {
+          event.preventDefault();
+          onMoveRight();
+        }
+        return;
+      }
+
+      // J - move down (vim style)
+      if (key === "j") {
+        event.preventDefault();
+        setFocusedIndex((prev) => {
+          if (prev < 0) return 0;
+          return Math.min(prev + 1, taskIds.length - 1);
+        });
+        return;
+      }
+
+      // K - move up (vim style)
+      if (key === "k") {
+        event.preventDefault();
+        setFocusedIndex((prev) => {
+          if (prev < 0) return taskIds.length - 1;
+          return Math.max(prev - 1, 0);
+        });
+        return;
+      }
+
+      // L or Enter - open/select task
+      if (key === "l" || event.key === "Enter") {
         if (focusedIndex >= 0 && focusedIndex < taskIds.length) {
           event.preventDefault();
           onSelectTask(taskIds[focusedIndex]);
@@ -80,10 +132,14 @@ export function useTaskNavigation({
         return;
       }
 
-      // H - go back / deselect (reset focus)
+      // H - go back / up level. If at top of list or no focus, trigger onGoBack
       if (key === "h") {
         event.preventDefault();
-        setFocusedIndex(-1);
+        if (focusedIndex <= 0 && onGoBack) {
+          onGoBack();
+        } else {
+          setFocusedIndex(-1);
+        }
         return;
       }
 
@@ -94,7 +150,7 @@ export function useTaskNavigation({
       }
 
       // G - go to top
-      if (key === "g") {
+      if (key === "g" && !event.shiftKey) {
         event.preventDefault();
         setFocusedIndex(0);
         return;
@@ -107,7 +163,7 @@ export function useTaskNavigation({
         return;
       }
     },
-    [taskIds, focusedIndex, onSelectTask]
+    [taskIds, focusedIndex, focusedTaskId, onSelectTask, onGoBack, onMoveLeft, onMoveRight, arrowsMoveTasks]
   );
 
   useEffect(() => {

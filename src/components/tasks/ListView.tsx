@@ -6,6 +6,7 @@ import { linkifyContent } from "@/lib/linkify";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
+import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -239,6 +240,30 @@ export function ListView({
 
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
 
+  // Task IDs for keyboard navigation
+  const taskIds = useMemo(() => listTasks.map(t => t.id), [listTasks]);
+
+  // Keyboard navigation
+  const { focusedTaskId: keyboardFocusedTaskId } = useTaskNavigation({
+    taskIds,
+    onSelectTask: (id) => onFocusTask?.(id),
+    onGoBack: () => onFocusTask?.(null),
+    enabled: !isComposing,
+  });
+
+  // Scroll focused task into view
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (keyboardFocusedTaskId && tableContainerRef.current) {
+      const element = tableContainerRef.current.querySelector(
+        `[data-task-id="${keyboardFocusedTaskId}"]`
+      );
+      if (element) {
+        element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    }
+  }, [keyboardFocusedTaskId]);
+
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <button
       onClick={() => handleSort(field)}
@@ -435,7 +460,7 @@ export function ListView({
       )}
 
       {/* Table */}
-      <div className="flex-1 overflow-auto">
+      <div ref={tableContainerRef} className="flex-1 overflow-auto">
         <table className="w-full">
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>
@@ -477,13 +502,16 @@ export function ListView({
             ) : (
               listTasks.map((task) => {
                 const ancestorChain = getAncestorChain(task.id);
+                const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                 
                 return (
                   <tr
                     key={task.id}
+                    data-task-id={task.id}
                     className={cn(
                       "border-b border-border hover:bg-muted/30 transition-colors",
-                      task.status === "done" && "opacity-60"
+                      task.status === "done" && "opacity-60",
+                      isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
                     )}
                   >
                     <td className="p-3">

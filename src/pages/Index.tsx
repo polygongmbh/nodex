@@ -10,6 +10,7 @@ import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp, KeyboardShortcutsButton } from "@/components/KeyboardShortcutsHelp";
 import { mockRelays, mockChannels, mockPeople, mockTasks } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -42,6 +43,7 @@ const Index = () => {
 
   const isMobile = useIsMobile();
   const currentUser = people.find(p => p.id === "me");
+  const shortcutsHelp = useKeyboardShortcutsHelp();
 
   // Handle view change - update URL
   const setCurrentView = useCallback((newView: ViewType) => {
@@ -313,14 +315,19 @@ const Index = () => {
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* View Switcher Header - height matches sidebar logo */}
-        <div className="h-14 border-b border-border px-4 bg-background/95 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+        <div className="h-14 border-b border-border px-4 bg-background/95 backdrop-blur-sm flex items-center justify-between flex-shrink-0">
+          <div className="w-8" /> {/* Spacer for centering */}
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
+          <KeyboardShortcutsButton onClick={shortcutsHelp.open} />
         </div>
         {/* Current View */}
         <div className="flex-1 overflow-hidden">
           {renderView()}
         </div>
       </div>
+      
+      {/* Keyboard Shortcuts Help Dialog */}
+      <KeyboardShortcutsHelp isOpen={shortcutsHelp.isOpen} onClose={shortcutsHelp.close} />
     </div>
   );
 };
