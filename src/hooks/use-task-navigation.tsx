@@ -168,17 +168,19 @@ export function useTaskNavigation({
           }
         }
 
-        // Arrow keys navigate across columns
+        // Arrow keys navigate across columns (prevent default FIRST to stop scrolling)
         if (event.key === "ArrowLeft") {
           event.preventDefault();
+          event.stopPropagation();
           if (pos) {
             if (pos.column === 0 && onFocusSidebar) {
               setFocusedIndex(-1);
               onFocusSidebar();
-            } else {
+            } else if (pos.column > 0) {
               setFocusByPosition(pos.column - 1, pos.row);
             }
           } else if (onFocusSidebar) {
+            setFocusedIndex(-1);
             onFocusSidebar();
           }
           return;
@@ -186,8 +188,11 @@ export function useTaskNavigation({
 
         if (event.key === "ArrowRight") {
           event.preventDefault();
+          event.stopPropagation();
           if (pos) {
-            setFocusByPosition(pos.column + 1, pos.row);
+            if (pos.column < columnTaskIds.length - 1) {
+              setFocusByPosition(pos.column + 1, pos.row);
+            }
           } else {
             // Start at first column
             setFocusByPosition(0, 0);
@@ -198,6 +203,7 @@ export function useTaskNavigation({
         // Up/Down arrows navigate within column
         if (event.key === "ArrowDown") {
           event.preventDefault();
+          event.stopPropagation();
           if (pos) {
             setFocusByPosition(pos.column, pos.row + 1);
           } else {
@@ -208,6 +214,7 @@ export function useTaskNavigation({
 
         if (event.key === "ArrowUp") {
           event.preventDefault();
+          event.stopPropagation();
           if (pos) {
             setFocusByPosition(pos.column, pos.row - 1);
           } else {

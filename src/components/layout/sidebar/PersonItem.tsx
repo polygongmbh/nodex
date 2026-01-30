@@ -5,14 +5,17 @@ import { Person } from "@/types";
 interface PersonItemProps {
   person: Person;
   onToggle: () => void;
+  isKeyboardFocused?: boolean;
 }
 
-export function PersonItem({ person, onToggle }: PersonItemProps) {
+export function PersonItem({ person, onToggle, isKeyboardFocused = false }: PersonItemProps) {
   return (
     <button
       onClick={onToggle}
+      data-sidebar-item={`person-${person.id}`}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-2 pl-7 transition-all group hover:bg-sidebar-accent/50"
+        "w-full flex items-center gap-3 px-3 py-2 pl-7 transition-all group hover:bg-sidebar-accent/50",
+        isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent"
       )}
     >
       <div className="relative">

@@ -13,16 +13,19 @@ interface RelayItemProps {
   relay: Relay;
   onToggle: () => void;
   onExclusive: () => void;
+  isKeyboardFocused?: boolean;
 }
 
-export function RelayItem({ relay, onToggle, onExclusive }: RelayItemProps) {
+export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = false }: RelayItemProps) {
   const Icon = iconMap[relay.icon] || Building2;
 
   return (
     <div
+      data-sidebar-item={`relay-${relay.id}`}
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2 pl-7 transition-all group hover:bg-sidebar-accent/50",
-        relay.isActive && "bg-sidebar-accent"
+        relay.isActive && "bg-sidebar-accent",
+        isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent"
       )}
     >
       {/* Icon - click for exclusive */}
