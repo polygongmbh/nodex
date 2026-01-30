@@ -6,13 +6,16 @@ interface ChannelItemProps {
   channel: Channel;
   onToggle: () => void;
   onExclusive: () => void;
+  isKeyboardFocused?: boolean;
 }
 
-export function ChannelItem({ channel, onToggle, onExclusive }: ChannelItemProps) {
+export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused = false }: ChannelItemProps) {
   return (
     <div
+      data-sidebar-item={`channel-${channel.id}`}
       className={cn(
-        "w-full flex items-center gap-2 px-3 py-1.5 pl-7 transition-all group hover:bg-sidebar-accent/50"
+        "w-full flex items-center gap-2 px-3 py-1.5 pl-7 transition-all group hover:bg-sidebar-accent/50",
+        isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent"
       )}
     >
       {/* Icon - click for exclusive */}

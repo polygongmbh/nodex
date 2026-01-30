@@ -35,6 +35,7 @@ interface ListViewProps {
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
+  onFocusSidebar?: () => void;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -54,6 +55,7 @@ export function ListView({
   onStatusChange,
   focusedTaskId,
   onFocusTask,
+  onFocusSidebar,
 }: ListViewProps) {
   const [isComposing, setIsComposing] = useState(false);
   const [sortField, setSortField] = useState<SortField>("priority");
@@ -248,6 +250,7 @@ export function ListView({
     taskIds,
     onSelectTask: (id) => onFocusTask?.(id),
     onGoBack: () => onFocusTask?.(null),
+    onFocusSidebar,
     enabled: !isComposing,
   });
 

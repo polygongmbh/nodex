@@ -21,6 +21,7 @@ interface FeedViewProps {
   onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
+  onFocusSidebar?: () => void;
   isMobile?: boolean;
 }
 
@@ -37,6 +38,7 @@ export function FeedView({
   onToggleComplete,
   focusedTaskId,
   onFocusTask,
+  onFocusSidebar,
   isMobile = false,
 }: FeedViewProps) {
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
@@ -103,6 +105,7 @@ export function FeedView({
     taskIds,
     onSelectTask: (id) => onFocusTask?.(id),
     onGoBack: () => onFocusTask?.(null),
+    onFocusSidebar,
     enabled: !isMobile,
   });
 

@@ -30,10 +30,20 @@ const shortcutGroups: ShortcutGroup[] = [
       { key: "J / ↓", description: "Move focus down" },
       { key: "K / ↑", description: "Move focus up" },
       { key: "L / Enter", description: "Open/select task" },
-      { key: "H", description: "Clear focus / go back" },
+      { key: "H", description: "Focus sidebar (at top) / go back" },
       { key: "G", description: "Jump to first task" },
       { key: "Shift + G", description: "Jump to last task" },
       { key: "Esc", description: "Clear focus" },
+    ],
+  },
+  {
+    title: "Sidebar Navigation",
+    shortcuts: [
+      { key: "J / K / ↑ / ↓", description: "Navigate filters" },
+      { key: "Space", description: "Toggle selected filter" },
+      { key: "L / → / Enter", description: "Return to task list" },
+      { key: "G", description: "Jump to first filter" },
+      { key: "Shift + G", description: "Jump to last filter" },
     ],
   },
   {

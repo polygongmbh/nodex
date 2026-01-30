@@ -31,6 +31,7 @@ interface KanbanViewProps {
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
+  onFocusSidebar?: () => void;
 }
 
 const columns: { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] = [
@@ -55,6 +56,7 @@ export function KanbanView({
   focusedTaskId,
   onFocusTask,
   onStatusChange,
+  onFocusSidebar,
 }: KanbanViewProps) {
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
   const [depthMode, setDepthMode] = useState<DepthMode>("1");
@@ -228,13 +230,14 @@ export function KanbanView({
   // Track keyboard focus state
   const [keyboardFocusedTaskId, setKeyboardFocusedTaskId] = useState<string | null>(null);
   const keyboardFocusedTaskIdRef = useRef<string | null>(null);
+  const pendingRefocusRef = useRef<string | null>(null);
   
   // Keep ref in sync with state
   useEffect(() => {
     keyboardFocusedTaskIdRef.current = keyboardFocusedTaskId;
   }, [keyboardFocusedTaskId]);
 
-  // Handle moving task left (to previous column)
+  // Handle moving task left (to previous column) - preserves focus
   const handleMoveLeft = useCallback(() => {
     const focusedId = keyboardFocusedTaskIdRef.current;
     if (!focusedId) return;
@@ -248,10 +251,11 @@ export function KanbanView({
     else if (currentStatus === "in-progress") newStatus = "todo";
     else return; // Already at leftmost
     
+    pendingRefocusRef.current = focusedId;
     onStatusChange?.(focusedId, newStatus);
   }, [kanbanTasks, onStatusChange]);
 
-  // Handle moving task right (to next column)
+  // Handle moving task right (to next column) - preserves focus
   const handleMoveRight = useCallback(() => {
     const focusedId = keyboardFocusedTaskIdRef.current;
     if (!focusedId) return;
@@ -265,6 +269,7 @@ export function KanbanView({
     else if (currentStatus === "in-progress") newStatus = "done";
     else return; // Already at rightmost
     
+    pendingRefocusRef.current = focusedId;
     onStatusChange?.(focusedId, newStatus);
   }, [kanbanTasks, onStatusChange]);
 
@@ -274,25 +279,28 @@ export function KanbanView({
     onSelectTask: (id) => onFocusTask?.(id),
     onMoveLeft: handleMoveLeft,
     onMoveRight: handleMoveRight,
+    onFocusSidebar,
     enabled: composingColumn === null,
     kanbanMode: true,
     columnTaskIds,
   });
 
-  // Re-focus the moved task after status change
-  const prevTasksByStatusRef = useRef(tasksByStatus);
-  useEffect(() => {
-    // If we have a focused task, make sure it stays focused after moving
-    if (keyboardFocusedTaskId) {
-      setFocusByTaskId(keyboardFocusedTaskId);
-    }
-    prevTasksByStatusRef.current = tasksByStatus;
-  }, [tasksByStatus, keyboardFocusedTaskId, setFocusByTaskId]);
-
   // Sync navigation focus with local state
   useEffect(() => {
     setKeyboardFocusedTaskId(navFocusedTaskId);
   }, [navFocusedTaskId]);
+
+  // After tasksByStatus updates, re-apply focus if we have a pending refocus
+  useEffect(() => {
+    if (pendingRefocusRef.current) {
+      const taskIdToFocus = pendingRefocusRef.current;
+      pendingRefocusRef.current = null;
+      // Use requestAnimationFrame to ensure the state has fully updated
+      requestAnimationFrame(() => {
+        setFocusByTaskId(taskIdToFocus);
+      });
+    }
+  }, [tasksByStatus, setFocusByTaskId]);
 
   // Scroll focused task into view
   const columnsContainerRef = useRef<HTMLDivElement>(null);

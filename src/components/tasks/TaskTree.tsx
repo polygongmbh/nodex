@@ -17,6 +17,7 @@ interface TaskTreeProps {
   onSearchChange: (query: string) => void;
   onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
   onToggleComplete: (taskId: string) => void;
+  onFocusSidebar?: () => void;
   isMobile?: boolean;
 }
 
@@ -31,6 +32,7 @@ export function TaskTree({
   onSearchChange,
   onNewTask,
   onToggleComplete,
+  onFocusSidebar,
   isMobile = false,
 }: TaskTreeProps) {
   const [contextStack, setContextStack] = useState<string[]>([]);
@@ -204,6 +206,7 @@ export function TaskTree({
     taskIds: flattenedTaskIds,
     onSelectTask: handleSelectTask,
     onGoBack: handleGoUp,
+    onFocusSidebar,
     enabled: !isMobile && !isComposing,
   });
 

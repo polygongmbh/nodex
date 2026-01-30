@@ -37,6 +37,15 @@ const Index = () => {
   );
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSidebarFocused, setIsSidebarFocused] = useState(false);
+
+  const handleFocusSidebar = useCallback(() => {
+    setIsSidebarFocused(true);
+  }, []);
+
+  const handleFocusTasks = useCallback(() => {
+    setIsSidebarFocused(false);
+  }, []);
 
   // Derive focused task from URL
   const focusedTaskId = urlTaskId || null;
@@ -252,6 +261,7 @@ const Index = () => {
     focusedTaskId,
     onFocusTask: setFocusedTaskId,
     onStatusChange: handleStatusChange,
+    onFocusSidebar: handleFocusSidebar,
   };
 
   const renderView = () => {
@@ -312,6 +322,8 @@ const Index = () => {
         onToggleAllRelays={handleToggleAllRelays}
         onToggleAllChannels={handleToggleAllChannels}
         onToggleAllPeople={handleToggleAllPeople}
+        isFocused={isSidebarFocused}
+        onFocusTasks={handleFocusTasks}
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* View Switcher Header - height matches sidebar logo */}
