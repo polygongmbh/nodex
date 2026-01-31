@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { X, Keyboard } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Keyboard } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -69,9 +69,34 @@ interface KeyboardShortcutsHelpProps {
 }
 
 export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Handle keyboard scrolling within the dialog
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      const scrollAmount = 60;
+
+      if (event.key === "ArrowDown" || event.key === "j") {
+        event.preventDefault();
+        container.scrollBy({ top: scrollAmount, behavior: "smooth" });
+      } else if (event.key === "ArrowUp" || event.key === "k") {
+        event.preventDefault();
+        container.scrollBy({ top: -scrollAmount, behavior: "smooth" });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg max-h-[80vh] overflow-auto">
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Keyboard className="w-5 h-5" />
@@ -79,7 +104,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6 py-2">
+        <div ref={scrollContainerRef} className="space-y-6 py-2 overflow-auto flex-1">
           {shortcutGroups.map((group) => (
             <div key={group.title}>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">
@@ -106,7 +131,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
   );
 }
 
-// Hook to trigger shortcuts help with ? key
+// Hook to trigger shortcuts help with ? key (toggle behavior)
 export function useKeyboardShortcutsHelp() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -123,7 +148,7 @@ export function useKeyboardShortcutsHelp() {
 
       if (event.key === "?" || (event.shiftKey && event.key === "/")) {
         event.preventDefault();
-        setIsOpen(true);
+        setIsOpen((prev) => !prev); // Toggle instead of just open
       }
     };
 
