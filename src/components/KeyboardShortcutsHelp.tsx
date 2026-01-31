@@ -71,7 +71,7 @@ interface KeyboardShortcutsHelpProps {
 export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Handle keyboard scrolling within the dialog
+  // Handle keyboard scrolling within the dialog - use capture phase to intercept before other handlers
   useEffect(() => {
     if (!isOpen) return;
 
@@ -81,18 +81,37 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
 
       const scrollAmount = 60;
 
-      if (event.key === "ArrowDown" || event.key === "j") {
+      // Intercept navigation keys to prevent task list from scrolling
+      if (
+        event.key === "ArrowDown" || 
+        event.key === "ArrowUp" || 
+        event.key === "j" || 
+        event.key === "k" ||
+        event.key === "h" ||
+        event.key === "l" ||
+        event.key === "g" ||
+        event.key === "G" ||
+        event.key === "Enter" ||
+        event.key === " "
+      ) {
         event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+      }
+
+      if (event.key === "ArrowDown" || event.key === "j") {
         container.scrollBy({ top: scrollAmount, behavior: "smooth" });
       } else if (event.key === "ArrowUp" || event.key === "k") {
-        event.preventDefault();
         container.scrollBy({ top: -scrollAmount, behavior: "smooth" });
+      } else if (event.key === "Escape") {
+        onClose();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+    // Use capture phase to intercept events before they reach other handlers
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [isOpen, onClose]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
