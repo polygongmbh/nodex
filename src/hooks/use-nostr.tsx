@@ -3,15 +3,21 @@ import {
   NostrRelayPool,
   NostrEvent,
   NostrFilter,
-  RelayConnection,
   getRelayPool,
   resetRelayPool,
+  NostrEventKind,
 } from "@/lib/nostr";
+import { signEvent, createUnsignedEvent } from "@/lib/nostr/utils";
 
 export interface NostrRelay {
   url: string;
   status: "connected" | "connecting" | "disconnected" | "error";
   latency?: number;
+}
+
+// Extended event with relay source
+export interface NostrEventWithRelay extends NostrEvent {
+  relayUrl?: string;
 }
 
 export interface UseNostrOptions {
@@ -21,11 +27,12 @@ export interface UseNostrOptions {
 
 export interface UseNostrReturn {
   relays: NostrRelay[];
-  events: NostrEvent[];
+  events: NostrEventWithRelay[];
   isConnected: boolean;
   addRelay: (url: string) => void;
   removeRelay: (url: string) => void;
-  subscribe: (filters: NostrFilter[], onEvent?: (event: NostrEvent) => void) => () => void;
+  subscribe: (filters: NostrFilter[], onEvent?: (event: NostrEventWithRelay) => void) => () => void;
+  publish: (content: string, kind: NostrEventKind, tags?: string[][], parentId?: string) => Promise<boolean>;
   clearEvents: () => void;
 }
 
@@ -34,11 +41,14 @@ const DEFAULT_RELAYS = [
   "wss://relay.snort.social",
 ];
 
+// Mock pubkey for local development (in production, use NIP-07 extension)
+const MOCK_PUBKEY = "0".repeat(64);
+
 export function useNostr(options: UseNostrOptions = {}): UseNostrReturn {
   const { defaultRelays = DEFAULT_RELAYS, autoConnect = true } = options;
   
   const [relays, setRelays] = useState<NostrRelay[]>([]);
-  const [events, setEvents] = useState<NostrEvent[]>([]);
+  const [events, setEvents] = useState<NostrEventWithRelay[]>([]);
   const poolRef = useRef<NostrRelayPool | null>(null);
   const latencyMap = useRef<Map<string, number>>(new Map());
   const connectionStartTimes = useRef<Map<string, number>>(new Map());
@@ -146,7 +156,7 @@ export function useNostr(options: UseNostrOptions = {}): UseNostrReturn {
 
   // Subscribe to events
   const subscribe = useCallback(
-    (filters: NostrFilter[], onEvent?: (event: NostrEvent) => void) => {
+    (filters: NostrFilter[], onEvent?: (event: NostrEventWithRelay) => void) => {
       if (!poolRef.current) {
         return () => {};
       }
@@ -157,19 +167,21 @@ export function useNostr(options: UseNostrOptions = {}): UseNostrReturn {
         id: subscriptionId,
         filters,
         onEvent: (event) => {
+          // Add relay URL to event (note: relay pool doesn't provide this yet, but we prepare the type)
+          const eventWithRelay: NostrEventWithRelay = event;
           setEvents((prev) => {
             // Check for duplicates
             if (prev.some((e) => e.id === event.id)) {
               return prev;
             }
             // Add event and sort by created_at descending
-            const newEvents = [event, ...prev].sort(
+            const newEvents = [eventWithRelay, ...prev].sort(
               (a, b) => b.created_at - a.created_at
             );
             // Limit to 500 events
             return newEvents.slice(0, 500);
           });
-          onEvent?.(event);
+          onEvent?.(eventWithRelay);
         },
         onEose: () => {
           console.log(`End of stored events for ${subscriptionId}`);
@@ -180,6 +192,51 @@ export function useNostr(options: UseNostrOptions = {}): UseNostrReturn {
       });
 
       return unsubscribe;
+    },
+    []
+  );
+
+  // Publish an event to connected relays
+  const publish = useCallback(
+    async (content: string, kind: NostrEventKind, tags: string[][] = [], parentId?: string): Promise<boolean> => {
+      if (!poolRef.current) {
+        console.error("No relay pool available");
+        return false;
+      }
+
+      // Build tags
+      const eventTags: string[][] = [...tags];
+      
+      // Add reply tag if this is a reply
+      if (parentId) {
+        eventTags.push(["e", parentId, "", "reply"]);
+      }
+
+      // Extract hashtags from content and add as t tags
+      const hashtagRegex = /#(\w+)/g;
+      let match;
+      while ((match = hashtagRegex.exec(content)) !== null) {
+        eventTags.push(["t", match[1].toLowerCase()]);
+      }
+
+      // Create and sign the event
+      const unsignedEvent = createUnsignedEvent(MOCK_PUBKEY, kind, content, eventTags);
+      const signedEvent = signEvent(unsignedEvent);
+
+      try {
+        const results = await poolRef.current.publish(signedEvent);
+        const anySuccess = results.some((r) => r.success);
+        
+        if (anySuccess) {
+          // Add our own event to the list
+          setEvents((prev) => [signedEvent, ...prev].slice(0, 500));
+        }
+
+        return anySuccess;
+      } catch (error) {
+        console.error("Failed to publish event:", error);
+        return false;
+      }
     },
     []
   );
@@ -199,6 +256,7 @@ export function useNostr(options: UseNostrOptions = {}): UseNostrReturn {
     addRelay,
     removeRelay,
     subscribe,
+    publish,
     clearEvents,
   };
 }

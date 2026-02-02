@@ -13,7 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp, KeyboardShortcutsButton } from "@/components/KeyboardShortcutsHelp";
 import { useNostr } from "@/hooks/use-nostr";
-import { nostrEventToTask, eventHasTags, extractAllTags } from "@/lib/nostr/event-converter";
+import { nostrEventToTask, eventHasTags, extractAllTags, getRelayIdFromUrl, getRelayNameFromUrl } from "@/lib/nostr/event-converter";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
@@ -52,8 +52,8 @@ const Index = () => {
   // Convert relay URLs to app Relay format - combine demo relay with nostr relays
   const relays: Relay[] = useMemo(() => {
     const nostrRelayItems = nostrRelays.map((r) => ({
-      id: r.url.replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-"),
-      name: r.url.replace("wss://", "").replace("ws://", "").split(".")[0],
+      id: getRelayIdFromUrl(r.url),
+      name: getRelayNameFromUrl(r.url),
       icon: "radio",
       isActive: r.status === "connected",
       postCount: undefined,
@@ -93,23 +93,41 @@ const Index = () => {
     }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [localTasks, nostrTasks]);
 
-  // Dynamically derive channels from all tasks
+  // Dynamically derive channels from all tasks - only show tags that appear 6+ times
   const channels: Channel[] = useMemo(() => {
-    const allTagNames = new Set<string>();
+    const tagCounts = new Map<string, number>();
     
-    // Get tags from local tasks
+    // Count tags from local tasks
     localTasks.forEach((task) => {
-      task.tags.forEach((tag) => allTagNames.add(tag.toLowerCase()));
+      task.tags.forEach((tag) => {
+        const lower = tag.toLowerCase();
+        tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
+      });
     });
     
-    // Get tags from nostr events
-    const nostrTagNames = extractAllTags(filteredNostrEvents);
-    nostrTagNames.forEach((tag) => allTagNames.add(tag));
+    // Count tags from nostr events
+    filteredNostrEvents.forEach((event) => {
+      // Extract t tags
+      event.tags
+        .filter((tag) => tag[0] === "t" && tag[1])
+        .forEach((tag) => {
+          const lower = tag[1].toLowerCase();
+          tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
+        });
+      // Extract hashtags from content
+      const hashtagRegex = /#(\w+)/g;
+      let match;
+      while ((match = hashtagRegex.exec(event.content)) !== null) {
+        const lower = match[1].toLowerCase();
+        tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
+      }
+    });
     
-    // Convert to Channel objects sorted alphabetically
-    return Array.from(allTagNames)
-      .sort()
-      .map((name) => ({
+    // Filter to only include tags appearing 6+ times, then sort
+    return Array.from(tagCounts.entries())
+      .filter(([_, count]) => count >= 6)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name]) => ({
         id: name,
         name,
         filterState: "neutral" as const,
