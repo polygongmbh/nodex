@@ -1,16 +1,26 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Radio, Hash, Users } from "lucide-react";
+import { Radio, Hash, Users, Plus, Wifi, WifiOff } from "lucide-react";
 import { Relay, Channel, Person } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
+import { RelayManagement } from "@/components/relay/RelayManagement";
+import { NostrRelay } from "@/hooks/use-nostr";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SidebarProps {
   relays: Relay[];
   channels: Channel[];
   people: Person[];
+  nostrRelays: NostrRelay[];
   onRelayToggle: (id: string) => void;
   onRelayExclusive: (id: string) => void;
   onChannelToggle: (id: string) => void;
@@ -19,6 +29,8 @@ interface SidebarProps {
   onToggleAllRelays: () => void;
   onToggleAllChannels: () => void;
   onToggleAllPeople: () => void;
+  onAddRelay: (url: string) => void;
+  onRemoveRelay: (url: string) => void;
   isFocused?: boolean;
   onFocusTasks?: () => void;
 }
@@ -27,6 +39,7 @@ export function Sidebar({
   relays,
   channels,
   people,
+  nostrRelays,
   onRelayToggle,
   onRelayExclusive,
   onChannelToggle,
@@ -35,6 +48,8 @@ export function Sidebar({
   onToggleAllRelays,
   onToggleAllChannels,
   onToggleAllPeople,
+  onAddRelay,
+  onRemoveRelay,
   isFocused = false,
   onFocusTasks,
 }: SidebarProps) {
@@ -164,6 +179,10 @@ export function Sidebar({
     }));
   };
 
+  // Connection status
+  const connectedCount = nostrRelays.filter((r) => r.status === "connected").length;
+  const isConnected = connectedCount > 0;
+
   return (
     <aside 
       ref={sidebarRef}
@@ -195,6 +214,27 @@ export function Sidebar({
           onToggle={() => toggleSection("feeds")}
           onIconClick={onToggleAllRelays}
           hint="Relays"
+          action={
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <RelayManagement
+                    relays={nostrRelays}
+                    onAddRelay={onAddRelay}
+                    onRemoveRelay={onRemoveRelay}
+                    trigger={
+                      <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground">
+                        <Plus className="w-3.5 h-3.5" />
+                      </Button>
+                    }
+                  />
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Add relay</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          }
         >
           {relays.map((relay) => (
             <RelayItem
@@ -246,12 +286,34 @@ export function Sidebar({
         </SidebarSection>
       </nav>
 
-      {/* Status - height matches search bar footer */}
-      <div className="h-12 px-3 border-t border-sidebar-border flex items-center flex-shrink-0">
-        <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
-          <div className="w-2 h-2 rounded-full bg-success animate-pulse flex-shrink-0" aria-hidden="true" />
-          <span>Connected to {relays.filter(r => r.isActive).length} relays</span>
-        </div>
+      {/* Connection Status Footer */}
+      <div className="border-t border-sidebar-border flex-shrink-0">
+        <RelayManagement
+          relays={nostrRelays}
+          onAddRelay={onAddRelay}
+          onRemoveRelay={onRemoveRelay}
+          trigger={
+            <button className="w-full h-12 px-3 flex items-center gap-2.5 text-xs text-muted-foreground hover:bg-muted/30 transition-colors">
+              <div className={cn(
+                "w-2 h-2 rounded-full flex-shrink-0",
+                isConnected ? "bg-success animate-pulse" : "bg-muted-foreground"
+              )} aria-hidden="true" />
+              <span className="flex items-center gap-1.5">
+                {isConnected ? (
+                  <>
+                    <Wifi className="w-3.5 h-3.5" />
+                    Connected to {connectedCount} relay{connectedCount !== 1 ? "s" : ""}
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="w-3.5 h-3.5" />
+                    Disconnected
+                  </>
+                )}
+              </span>
+            </button>
+          }
+        />
       </div>
     </aside>
   );

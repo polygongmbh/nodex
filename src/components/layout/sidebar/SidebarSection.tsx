@@ -1,13 +1,14 @@
 import { ChevronDown, ChevronRight, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface SidebarSectionProps {
+export interface SidebarSectionProps {
   title: string;
   icon: LucideIcon;
   isExpanded: boolean;
   onToggle: () => void;
   onIconClick?: () => void;
   hint?: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -18,6 +19,7 @@ export function SidebarSection({
   onToggle,
   onIconClick,
   hint,
+  action,
   children,
 }: SidebarSectionProps) {
   return (
@@ -49,17 +51,20 @@ export function SidebarSection({
             )}
           </button>
         </div>
-        <button 
-          onClick={onToggle}
-          aria-hidden="true"
-          tabIndex={-1}
-        >
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          )}
-        </button>
+        <div className="flex items-center gap-1">
+          {action}
+          <button 
+            onClick={onToggle}
+            aria-hidden="true"
+            tabIndex={-1}
+          >
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+        </div>
       </div>
       <div
         className={cn(

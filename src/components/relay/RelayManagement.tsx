@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { Radio, Plus, X, Wifi, WifiOff, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +16,14 @@ interface RelayManagementProps {
   relays: NostrRelay[];
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
+  trigger?: ReactNode;
 }
 
 export function RelayManagement({
   relays,
   onAddRelay,
   onRemoveRelay,
+  trigger,
 }: RelayManagementProps) {
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -66,13 +68,17 @@ export function RelayManagement({
     }
   };
 
+  const defaultTrigger = (
+    <button className="w-full p-3 text-sm text-primary hover:bg-muted/30 transition-colors font-medium border-t border-border flex items-center justify-center gap-2">
+      <Radio className="w-4 h-4" />
+      Manage relays ({connectedCount}/{relays.length})
+    </button>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <button className="w-full p-3 text-sm text-primary hover:bg-muted/30 transition-colors font-medium border-t border-border flex items-center justify-center gap-2">
-          <Radio className="w-4 h-4" />
-          Manage relays ({connectedCount}/{relays.length})
-        </button>
+        {trigger || defaultTrigger}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

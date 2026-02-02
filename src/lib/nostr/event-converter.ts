@@ -33,17 +33,16 @@ export function nostrEventToTask(event: NostrEvent, relayUrl?: string): Task {
   // Extract hashtags from content
   const contentTags = extractHashtags(event.content);
 
-  // Extract tags from event tags (t tags)
+  // Extract tags from event tags (t tags) - these are the main nostr tags
   const eventTags = event.tags
     .filter((tag) => tag[0] === "t")
     .map((tag) => tag[1].toLowerCase());
 
-  // Combine and dedupe tags
-  const allTags = [...new Set([...contentTags, ...eventTags])];
+  // Combine and dedupe tags - prioritize event tags (t tags)
+  const allTags = [...new Set([...eventTags, ...contentTags])];
 
   // Determine task type from kind
   const isTask = event.kind === NostrEventKind.Task;
-  const isComment = event.kind === NostrEventKind.TextNote;
 
   // Extract status from tags for kind 1621
   let status: "todo" | "in-progress" | "done" = "todo";
@@ -61,10 +60,10 @@ export function nostrEventToTask(event: NostrEvent, relayUrl?: string): Task {
   const replyTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "reply");
   const parentId = replyTag ? replyTag[1] : undefined;
 
-  // Generate relay ID from URL
+  // Generate relay ID from URL - use a consistent format
   const relayId = relayUrl
     ? relayUrl.replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-")
-    : "unknown";
+    : "nostr";
 
   return {
     id: event.id,
@@ -80,6 +79,35 @@ export function nostrEventToTask(event: NostrEvent, relayUrl?: string): Task {
     status: isTask ? status : undefined,
     parentId,
   };
+}
+
+// Check if an event has any tags (t tags or hashtags in content)
+export function eventHasTags(event: NostrEvent): boolean {
+  // Check for t tags
+  const hasTTags = event.tags.some((tag) => tag[0] === "t" && tag[1]);
+  if (hasTTags) return true;
+  
+  // Check for hashtags in content
+  const hashtagRegex = /#(\w+)/g;
+  return hashtagRegex.test(event.content);
+}
+
+// Extract all unique tags from multiple events
+export function extractAllTags(events: NostrEvent[]): string[] {
+  const allTags = new Set<string>();
+  
+  events.forEach((event) => {
+    // Extract t tags
+    event.tags
+      .filter((tag) => tag[0] === "t" && tag[1])
+      .forEach((tag) => allTags.add(tag[1].toLowerCase()));
+    
+    // Extract hashtags from content
+    const contentTags = extractHashtags(event.content);
+    contentTags.forEach((tag) => allTags.add(tag));
+  });
+  
+  return Array.from(allTags).sort();
 }
 
 // Convert multiple Nostr events to Tasks
