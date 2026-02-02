@@ -1,8 +1,15 @@
 import { Search } from "lucide-react";
 import { TrendingWidget } from "./TrendingWidget";
 import { RelayStatusWidget } from "./RelayStatusWidget";
+import { NostrRelay } from "@/hooks/use-nostr";
 
-export function RightSidebar() {
+interface RightSidebarProps {
+  nostrRelays: NostrRelay[];
+  onAddRelay: (url: string) => void;
+  onRemoveRelay: (url: string) => void;
+}
+
+export function RightSidebar({ nostrRelays, onAddRelay, onRemoveRelay }: RightSidebarProps) {
   return (
     <aside className="w-80 h-screen sticky top-0 py-4 pr-4 hidden lg:block overflow-y-auto scrollbar-thin">
       {/* Search */}
@@ -19,7 +26,11 @@ export function RightSidebar() {
 
       <div className="space-y-4">
         <TrendingWidget />
-        <RelayStatusWidget />
+        <RelayStatusWidget
+          relays={nostrRelays}
+          onAddRelay={onAddRelay}
+          onRemoveRelay={onRemoveRelay}
+        />
       </div>
 
       {/* Footer Links */}

@@ -1,14 +1,28 @@
-import { Radio, Wifi, WifiOff } from "lucide-react";
+import { Radio, Wifi, WifiOff, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NostrRelay } from "@/hooks/use-nostr";
+import { RelayManagement } from "@/components/relay/RelayManagement";
 
-const relays = [
-  { url: "wss://relay.damus.io", status: "connected", latency: 45 },
-  { url: "wss://nos.lol", status: "connected", latency: 82 },
-  { url: "wss://relay.nostr.band", status: "connecting", latency: null },
-  { url: "wss://relay.snort.social", status: "disconnected", latency: null },
-];
+interface RelayStatusWidgetProps {
+  relays: NostrRelay[];
+  onAddRelay: (url: string) => void;
+  onRemoveRelay: (url: string) => void;
+}
 
-export function RelayStatusWidget() {
+export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelayStatusWidgetProps) {
+  const getStatusColor = (status: NostrRelay["status"]) => {
+    switch (status) {
+      case "connected":
+        return "bg-success";
+      case "connecting":
+        return "bg-warning animate-pulse";
+      case "error":
+        return "bg-destructive";
+      default:
+        return "bg-muted-foreground";
+    }
+  };
+
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="p-4 border-b border-border">
@@ -18,37 +32,47 @@ export function RelayStatusWidget() {
         </div>
       </div>
       <div className="p-3 space-y-2">
-        {relays.map(({ url, status, latency }) => (
-          <div
-            key={url}
-            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors"
-          >
+        {relays.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-2">
+            No relays connected
+          </p>
+        ) : (
+          relays.map((relay) => (
             <div
-              className={cn(
-                "w-2 h-2 rounded-full",
-                status === "connected" && "bg-success",
-                status === "connecting" && "bg-warning animate-pulse",
-                status === "disconnected" && "bg-destructive"
+              key={relay.url}
+              className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors"
+            >
+              <div
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  getStatusColor(relay.status)
+                )}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-foreground truncate font-mono">
+                  {relay.url.replace("wss://", "").replace("ws://", "")}
+                </p>
+              </div>
+              {relay.status === "connected" ? (
+                <span className="text-xs text-muted-foreground">
+                  {relay.latency ? `${relay.latency}ms` : "connected"}
+                </span>
+              ) : relay.status === "connecting" ? (
+                <Loader2 className="w-4 h-4 text-warning animate-spin" />
+              ) : relay.status === "error" ? (
+                <AlertCircle className="w-4 h-4 text-destructive" />
+              ) : (
+                <WifiOff className="w-4 h-4 text-muted-foreground" />
               )}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-foreground truncate font-mono">
-                {url.replace("wss://", "")}
-              </p>
             </div>
-            {status === "connected" ? (
-              <span className="text-xs text-muted-foreground">{latency}ms</span>
-            ) : status === "connecting" ? (
-              <span className="text-xs text-warning">connecting...</span>
-            ) : (
-              <WifiOff className="w-4 h-4 text-destructive" />
-            )}
-          </div>
-        ))}
+          ))
+        )}
       </div>
-      <button className="w-full p-3 text-sm text-primary hover:bg-muted/30 transition-colors font-medium border-t border-border">
-        Manage relays
-      </button>
+      <RelayManagement
+        relays={relays}
+        onAddRelay={onAddRelay}
+        onRemoveRelay={onRemoveRelay}
+      />
     </div>
   );
 }

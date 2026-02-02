@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
@@ -7,15 +7,25 @@ import { KanbanView } from "@/components/tasks/KanbanView";
 import { CalendarView } from "@/components/tasks/CalendarView";
 import { ListView } from "@/components/tasks/ListView";
 import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
+import { RightSidebar } from "@/components/widgets/RightSidebar";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp, KeyboardShortcutsButton } from "@/components/KeyboardShortcutsHelp";
-import { mockRelays, mockChannels, mockPeople, mockTasks } from "@/data/mockData";
+import { useNostr } from "@/hooks/use-nostr";
+import { nostrEventToTask } from "@/lib/nostr/event-converter";
+import { NostrEventKind } from "@/lib/nostr/types";
+import { mockChannels, mockPeople, mockTasks } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
 
 const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
+
+// Default Nostr relays
+const DEFAULT_NOSTR_RELAYS = [
+  "wss://relay.damus.io",
+  "wss://relay.snort.social",
+];
 
 const Index = () => {
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
@@ -26,18 +36,68 @@ const Index = () => {
     ? (urlView as ViewType) 
     : "tree";
 
-  const [relays, setRelays] = useState<Relay[]>(
-    mockRelays.map((r) => ({ ...r, isActive: false }))
-  );
+  // Nostr integration
+  const { 
+    relays: nostrRelays, 
+    events: nostrEvents, 
+    isConnected: isNostrConnected,
+    addRelay,
+    removeRelay,
+    subscribe,
+  } = useNostr({ defaultRelays: DEFAULT_NOSTR_RELAYS });
+
+  // Convert relay URLs to app Relay format for sidebar
+  const relays: Relay[] = useMemo(() => {
+    return nostrRelays.map((r) => ({
+      id: r.url.replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-"),
+      name: r.url.replace("wss://", "").replace("ws://", "").split(".")[0],
+      icon: "radio",
+      isActive: r.status === "connected",
+      postCount: nostrEvents.filter((e) => 
+        e.id.includes(r.url.replace("wss://", "").slice(0, 4))
+      ).length || undefined,
+    }));
+  }, [nostrRelays, nostrEvents]);
+
+  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set());
   const [channels, setChannels] = useState<Channel[]>(
     mockChannels.map((c) => ({ ...c, filterState: "neutral" as const }))
   );
   const [people, setPeople] = useState<Person[]>(
     mockPeople.map((p) => ({ ...p, isSelected: false }))
   );
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [localTasks, setLocalTasks] = useState<Task[]>(mockTasks);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
+
+  // Convert Nostr events to tasks
+  const nostrTasks: Task[] = useMemo(() => {
+    return nostrEvents.map((event) => nostrEventToTask(event));
+  }, [nostrEvents]);
+
+  // Combine local tasks with Nostr tasks
+  const allTasks = useMemo(() => {
+    const combined = [...localTasks, ...nostrTasks];
+    // Remove duplicates by id
+    const seen = new Set<string>();
+    return combined.filter((task) => {
+      if (seen.has(task.id)) return false;
+      seen.add(task.id);
+      return true;
+    }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }, [localTasks, nostrTasks]);
+
+  // Subscribe to Nostr events when connected
+  useEffect(() => {
+    if (!isNostrConnected) return;
+
+    // Subscribe to text notes (kind 1) and tasks (kind 1621)
+    const unsubscribe = subscribe([
+      { kinds: [NostrEventKind.TextNote, NostrEventKind.Task], limit: 50 },
+    ]);
+
+    return unsubscribe;
+  }, [isNostrConnected, subscribe]);
 
   const handleFocusSidebar = useCallback(() => {
     setIsSidebarFocused(true);
@@ -80,30 +140,33 @@ const Index = () => {
   }, [navigate, currentView]);
 
   const handleRelayToggle = (id: string) => {
-    setRelays((prev) =>
-      prev.map((relay) =>
-        relay.id === id ? { ...relay, isActive: !relay.isActive } : relay
-      )
-    );
+    setActiveRelayIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
     const relay = relays.find((r) => r.id === id);
-    toast.success(`${relay?.name} relay ${relay?.isActive ? "disabled" : "enabled"}`);
+    toast.success(`${relay?.name} relay filter ${activeRelayIds.has(id) ? "disabled" : "enabled"}`);
   };
 
   const handleRelayExclusive = (id: string) => {
-    setRelays((prev) =>
-      prev.map((relay) => ({
-        ...relay,
-        isActive: relay.id === id,
-      }))
-    );
+    setActiveRelayIds(new Set([id]));
     const relay = relays.find((r) => r.id === id);
     toast.success(`Showing only ${relay?.name} relay`);
   };
 
   const handleToggleAllRelays = () => {
-    const allActive = relays.every((r) => r.isActive);
-    setRelays((prev) => prev.map((relay) => ({ ...relay, isActive: !allActive })));
-    toast.success(allActive ? "All relays disabled" : "All relays enabled");
+    if (activeRelayIds.size === relays.length) {
+      setActiveRelayIds(new Set());
+      toast.success("All relay filters cleared");
+    } else {
+      setActiveRelayIds(new Set(relays.map((r) => r.id)));
+      toast.success("All relays selected");
+    }
   };
 
   const handleChannelToggle = (id: string) => {
@@ -155,7 +218,7 @@ const Index = () => {
   };
 
   const handleToggleComplete = (taskId: string) => {
-    setTasks((prev) =>
+    setLocalTasks((prev) =>
       prev.map((task) => {
         if (task.id !== taskId) return task;
         
@@ -179,7 +242,7 @@ const Index = () => {
   };
 
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
-    setTasks((prev) =>
+    setLocalTasks((prev) =>
       prev.map((task) => {
         if (task.id !== taskId) return task;
         return { 
@@ -207,15 +270,22 @@ const Index = () => {
       dueTime,
       parentId,
     };
-    setTasks((prev) => [newTask, ...prev]);
+    setLocalTasks((prev) => [newTask, ...prev]);
     toast.success(taskType === "comment" ? "Comment added!" : "Task created!");
   };
 
+  // Build relays with active state for sidebar display
+  const relaysWithActiveState: Relay[] = useMemo(() => {
+    return relays.map((r) => ({
+      ...r,
+      isActive: activeRelayIds.has(r.id),
+    }));
+  }, [relays, activeRelayIds]);
+
   // Filter tasks based on active filters
-  const filteredTasks = tasks.filter((task) => {
+  const filteredTasks = allTasks.filter((task) => {
     // Relay filter
-    const activeRelayIds = relays.filter((r) => r.isActive).map((r) => r.id);
-    if (activeRelayIds.length > 0 && !task.relays.some(tr => activeRelayIds.includes(tr))) {
+    if (activeRelayIds.size > 0 && !task.relays.some(tr => activeRelayIds.has(tr))) {
       return false;
     }
 
@@ -249,8 +319,8 @@ const Index = () => {
 
   const viewProps = {
     tasks: filteredTasks,
-    allTasks: tasks,
-    relays,
+    allTasks: allTasks,
+    relays: relaysWithActiveState,
     channels,
     people,
     currentUser,
@@ -285,11 +355,11 @@ const Index = () => {
   if (isMobile) {
     return (
       <MobileLayout
-        relays={relays}
+        relays={relaysWithActiveState}
         channels={channels}
         people={people}
         tasks={filteredTasks}
-        allTasks={tasks}
+        allTasks={allTasks}
         searchQuery={searchQuery}
         focusedTaskId={focusedTaskId}
         currentUser={currentUser}
@@ -311,7 +381,7 @@ const Index = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
-        relays={relays}
+        relays={relaysWithActiveState}
         channels={channels}
         people={people}
         onRelayToggle={handleRelayToggle}
@@ -337,6 +407,13 @@ const Index = () => {
           {renderView()}
         </div>
       </div>
+      
+      {/* Right Sidebar with Relay Management */}
+      <RightSidebar
+        nostrRelays={nostrRelays}
+        onAddRelay={addRelay}
+        onRemoveRelay={removeRelay}
+      />
       
       {/* Keyboard Shortcuts Help Dialog */}
       <KeyboardShortcutsHelp isOpen={shortcutsHelp.isOpen} onClose={shortcutsHelp.close} />
