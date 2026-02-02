@@ -13,7 +13,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp, KeyboardShortcutsButton } from "@/components/KeyboardShortcutsHelp";
 import { useNostr } from "@/hooks/use-nostr";
-import { nostrEventToTask, eventHasTags, extractAllTags, getRelayIdFromUrl, getRelayNameFromUrl } from "@/lib/nostr/event-converter";
+import { nostrEventToTask, eventHasTags, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
@@ -71,9 +71,15 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
 
-  // Filter nostr events - only keep those with tags
+  // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
-    return nostrEvents.filter(eventHasTags);
+    return nostrEvents.filter(event => {
+      // Must have tags
+      if (!eventHasTags(event)) return false;
+      // Filter out spam
+      if (isSpamContent(event.content)) return false;
+      return true;
+    });
   }, [nostrEvents]);
 
   // Convert filtered Nostr events to tasks
@@ -342,10 +348,18 @@ const Index = () => {
     }));
   }, [relays, activeRelayIds]);
 
+  // Check if any channel filters are active
+  const hasActiveChannelFilters = channelsWithState.some(c => c.filterState !== "neutral");
+
   // Filter tasks based on active filters
   const filteredTasks = allTasks.filter((task) => {
     // Relay filter - if any relay is selected, task must be in one of the selected relays
     if (activeRelayIds.size > 0 && !task.relays.some(tr => activeRelayIds.has(tr))) {
+      return false;
+    }
+
+    // Filter out posts with more than 10 tags if no channel filters are active
+    if (!hasActiveChannelFilters && task.tags.length > 10) {
       return false;
     }
 

@@ -23,10 +23,15 @@ export interface RelayPoolEvents {
   onNotice?: (relay: string, message: string) => void;
 }
 
+// Extended event with relay source
+export interface NostrEventWithRelay extends NostrEvent {
+  relayUrl: string;
+}
+
 interface ActiveSubscription {
   id: string;
   filters: NostrFilter[];
-  onEvent: (event: NostrEvent) => void;
+  onEvent: (event: NostrEventWithRelay) => void;
   onEose?: () => void;
   onError?: (error: string) => void;
   relays: Set<string>;
@@ -152,7 +157,7 @@ export class NostrRelayPool {
   /**
    * Subscribe to events matching filters
    */
-  subscribe(options: SubscriptionOptions, relayUrls?: string[]): () => void {
+  subscribe(options: Omit<SubscriptionOptions, 'onEvent'> & { onEvent: (event: NostrEventWithRelay) => void }, relayUrls?: string[]): () => void {
     const { id, filters, onEvent, onEose, onError } = options;
 
     const subscription: ActiveSubscription = {
@@ -293,7 +298,7 @@ export class NostrRelayPool {
       switch (message[0]) {
         case "EVENT": {
           const [, subscriptionId, event] = message;
-          this.handleEvent(subscriptionId, event);
+          this.handleEvent(subscriptionId, event, url);
           break;
         }
         case "EOSE": {
@@ -322,7 +327,7 @@ export class NostrRelayPool {
     }
   }
 
-  private handleEvent(subscriptionId: string, event: NostrEvent): void {
+  private handleEvent(subscriptionId: string, event: NostrEvent, relayUrl: string): void {
     const subscription = this.subscriptions.get(subscriptionId);
     if (!subscription) return;
 
@@ -338,7 +343,9 @@ export class NostrRelayPool {
       }
     }
 
-    subscription.onEvent(event);
+    // Attach relay URL to event
+    const eventWithRelay: NostrEventWithRelay = { ...event, relayUrl };
+    subscription.onEvent(eventWithRelay);
   }
 
   private handleEose(url: string, subscriptionId: string): void {

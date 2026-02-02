@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   NostrRelayPool,
-  NostrEvent,
   NostrFilter,
   getRelayPool,
   resetRelayPool,
   NostrEventKind,
+  NostrEventWithRelay,
 } from "@/lib/nostr";
 import { signEvent, createUnsignedEvent } from "@/lib/nostr/utils";
 
@@ -15,10 +15,7 @@ export interface NostrRelay {
   latency?: number;
 }
 
-// Extended event with relay source
-export interface NostrEventWithRelay extends NostrEvent {
-  relayUrl?: string;
-}
+export type { NostrEventWithRelay };
 
 export interface UseNostrOptions {
   defaultRelays?: string[];
@@ -228,8 +225,9 @@ export function useNostr(options: UseNostrOptions = {}): UseNostrReturn {
         const anySuccess = results.some((r) => r.success);
         
         if (anySuccess) {
-          // Add our own event to the list
-          setEvents((prev) => [signedEvent, ...prev].slice(0, 500));
+          // Add our own event to the list with a placeholder relay URL
+          const eventWithRelay: NostrEventWithRelay = { ...signedEvent, relayUrl: "local" };
+          setEvents((prev) => [eventWithRelay, ...prev].slice(0, 500));
         }
 
         return anySuccess;

@@ -1,6 +1,26 @@
 import { NostrEvent, NostrEventKind } from "@/lib/nostr/types";
 import { Task, Person } from "@/types";
 
+// Spam keywords for basic filtering
+const SPAM_KEYWORDS = [
+  // Sexual content
+  "onlyfans", "xxx", "porn", "nude", "nudes", "nsfw", "sex", "sexy", "horny",
+  "adult content", "18+", "🔞", "cum", "dick", "pussy", "cock", "boobs", "tits",
+  "milf", "fuck", "fucking", "blowjob", "handjob", "escort", "hookup",
+  // Spam patterns
+  "airdrop", "giveaway", "free money", "click here", "act now", "limited time",
+  "dm me", "dm for", "follow back", "f4f", "follow me", "check my", "visit my",
+  "get rich", "make money", "earn money", "crypto giveaway", "free btc", "free bitcoin",
+  "telegram", "whatsapp", "signal group", "join my", "subscribe to",
+  "casino", "betting", "gambling", "lottery", "jackpot",
+];
+
+// Check if content is spam
+export function isSpamContent(content: string): boolean {
+  const lowerContent = content.toLowerCase();
+  return SPAM_KEYWORDS.some(keyword => lowerContent.includes(keyword));
+}
+
 // Generate relay ID from URL - must match the ID generation in Index.tsx
 export function getRelayIdFromUrl(url: string): string {
   return url.replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-");
@@ -34,9 +54,11 @@ function extractHashtags(content: string): string[] {
   if (!matches) return [];
   return [...new Set(matches.map((tag) => tag.slice(1).toLowerCase()))];
 }
+// Import the relay event type
+import type { NostrEventWithRelay } from "./relay-pool";
 
 // Convert Nostr event to Task
-export function nostrEventToTask(event: NostrEvent, relayUrl?: string): Task {
+export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const author: Person = {
     id: event.pubkey,
     name: event.pubkey.slice(0, 8),
@@ -76,8 +98,8 @@ export function nostrEventToTask(event: NostrEvent, relayUrl?: string): Task {
   const replyTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "reply");
   const parentId = replyTag ? replyTag[1] : undefined;
 
-  // Generate relay ID from URL - use a consistent format
-  const relayId = relayUrl ? getRelayIdFromUrl(relayUrl) : "nostr";
+  // Generate relay ID from URL - use the attached relayUrl
+  const relayId = event.relayUrl ? getRelayIdFromUrl(event.relayUrl) : "nostr";
 
   return {
     id: event.id,
@@ -125,8 +147,8 @@ export function extractAllTags(events: NostrEvent[]): string[] {
 }
 
 // Convert multiple Nostr events to Tasks
-export function nostrEventsToTasks(events: NostrEvent[], relayUrl?: string): Task[] {
-  return events.map((event) => nostrEventToTask(event, relayUrl));
+export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
+  return events.map((event) => nostrEventToTask(event));
 }
 
 // Merge new tasks with existing tasks, avoiding duplicates
