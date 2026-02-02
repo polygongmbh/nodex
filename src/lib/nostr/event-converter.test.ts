@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { nostrEventToTask, nostrEventsToTasks, mergeTasks, eventHasTags, extractAllTags } from "./event-converter";
+import { nostrEventToTask, nostrEventsToTasks, mergeTasks, eventHasTags, extractAllTags, isSpamContent } from "./event-converter";
 import { NostrEvent, NostrEventKind } from "./types";
+import type { NostrEventWithRelay } from "./relay-pool";
 
 describe("nostrEventToTask", () => {
-  const baseEvent: NostrEvent = {
+  const baseEvent: NostrEventWithRelay = {
     id: "abc123",
     pubkey: "pubkey123456789012345678901234567890",
     created_at: 1700000000,
@@ -11,6 +12,7 @@ describe("nostrEventToTask", () => {
     tags: [],
     content: "Hello world",
     sig: "sig123",
+    relayUrl: "wss://relay.test.com",
   };
 
   it("converts a basic text note to a comment task", () => {
@@ -23,7 +25,7 @@ describe("nostrEventToTask", () => {
   });
 
   it("converts kind 1621 to a task", () => {
-    const taskEvent: NostrEvent = {
+    const taskEvent: NostrEventWithRelay = {
       ...baseEvent,
       kind: NostrEventKind.Task,
       content: "Complete the project",
@@ -36,7 +38,7 @@ describe("nostrEventToTask", () => {
   });
 
   it("extracts hashtags from content", () => {
-    const event: NostrEvent = {
+    const event: NostrEventWithRelay = {
       ...baseEvent,
       content: "Working on #design and #frontend issues",
     };
@@ -48,7 +50,7 @@ describe("nostrEventToTask", () => {
   });
 
   it("extracts tags from event t tags", () => {
-    const event: NostrEvent = {
+    const event: NostrEventWithRelay = {
       ...baseEvent,
       tags: [
         ["t", "urgent"],
@@ -63,7 +65,7 @@ describe("nostrEventToTask", () => {
   });
 
   it("deduplicates tags from content and event tags", () => {
-    const event: NostrEvent = {
+    const event: NostrEventWithRelay = {
       ...baseEvent,
       content: "Fix the #bug in the code",
       tags: [["t", "bug"]],
@@ -76,7 +78,7 @@ describe("nostrEventToTask", () => {
   });
 
   it("extracts status from status tag", () => {
-    const event: NostrEvent = {
+    const event: NostrEventWithRelay = {
       ...baseEvent,
       kind: NostrEventKind.Task,
       tags: [["status", "done"]],
@@ -88,7 +90,7 @@ describe("nostrEventToTask", () => {
   });
 
   it("handles in-progress status", () => {
-    const event: NostrEvent = {
+    const event: NostrEventWithRelay = {
       ...baseEvent,
       kind: NostrEventKind.Task,
       tags: [["status", "in-progress"]],
@@ -120,7 +122,7 @@ describe("nostrEventToTask", () => {
   });
 
   it("extracts parent ID from reply tag", () => {
-    const event: NostrEvent = {
+    const event: NostrEventWithRelay = {
       ...baseEvent,
       tags: [["e", "parent123", "", "reply"]],
     };
@@ -129,11 +131,17 @@ describe("nostrEventToTask", () => {
     
     expect(task.parentId).toBe("parent123");
   });
+
+  it("extracts relay ID from relay URL", () => {
+    const task = nostrEventToTask(baseEvent);
+    
+    expect(task.relays).toContain("relay-test-com");
+  });
 });
 
 describe("nostrEventsToTasks", () => {
   it("converts multiple events to tasks", () => {
-    const events: NostrEvent[] = [
+    const events: NostrEventWithRelay[] = [
       {
         id: "1",
         pubkey: "pub1",
@@ -142,6 +150,7 @@ describe("nostrEventsToTasks", () => {
         tags: [],
         content: "First",
         sig: "sig1",
+        relayUrl: "wss://relay.test.com",
       },
       {
         id: "2",
@@ -151,6 +160,7 @@ describe("nostrEventsToTasks", () => {
         tags: [],
         content: "Second",
         sig: "sig2",
+        relayUrl: "wss://relay.test.com",
       },
     ];
     
@@ -296,5 +306,31 @@ describe("extractAllTags", () => {
     
     expect(tags[0]).toBe("alpha");
     expect(tags[1]).toBe("zebra");
+  });
+});
+
+describe("isSpamContent", () => {
+  it("detects sexual content", () => {
+    expect(isSpamContent("Check out my onlyfans")).toBe(true);
+    expect(isSpamContent("NSFW content here")).toBe(true);
+    expect(isSpamContent("Adult content 18+")).toBe(true);
+  });
+
+  it("detects spam patterns", () => {
+    expect(isSpamContent("Free bitcoin giveaway")).toBe(true);
+    expect(isSpamContent("DM me for details")).toBe(true);
+    expect(isSpamContent("Click here now")).toBe(true);
+    expect(isSpamContent("Follow me for follow back")).toBe(true);
+  });
+
+  it("does not flag normal content", () => {
+    expect(isSpamContent("Working on #design today")).toBe(false);
+    expect(isSpamContent("Just finished a great project")).toBe(false);
+    expect(isSpamContent("Meeting at 3pm to discuss roadmap")).toBe(false);
+  });
+
+  it("is case insensitive", () => {
+    expect(isSpamContent("FREE BITCOIN")).toBe(true);
+    expect(isSpamContent("OnlyFans")).toBe(true);
   });
 });

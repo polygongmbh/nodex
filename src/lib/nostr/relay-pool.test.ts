@@ -203,7 +203,7 @@ describe("NostrRelayPool", () => {
 
       ws?.simulateMessage(["EVENT", "test-sub", mockEvent]);
 
-      expect(onEvent).toHaveBeenCalledWith(mockEvent);
+      expect(onEvent).toHaveBeenCalledWith({ ...mockEvent, relayUrl: "wss://relay.example.com" });
     });
 
     it("should deduplicate events", () => {
