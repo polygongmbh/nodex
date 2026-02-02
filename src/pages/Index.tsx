@@ -13,9 +13,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp, KeyboardShortcutsButton } from "@/components/KeyboardShortcutsHelp";
 import { useNostr } from "@/hooks/use-nostr";
-import { nostrEventToTask } from "@/lib/nostr/event-converter";
+import { nostrEventToTask, eventHasTags, extractAllTags } from "@/lib/nostr/event-converter";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { mockChannels, mockPeople, mockTasks } from "@/data/mockData";
+import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
 
@@ -26,6 +26,9 @@ const DEFAULT_NOSTR_RELAYS = [
   "wss://relay.damus.io",
   "wss://relay.snort.social",
 ];
+
+// Demo relay constant
+const DEMO_RELAY_ID = "demo";
 
 const Index = () => {
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
@@ -46,23 +49,21 @@ const Index = () => {
     subscribe,
   } = useNostr({ defaultRelays: DEFAULT_NOSTR_RELAYS });
 
-  // Convert relay URLs to app Relay format for sidebar
+  // Convert relay URLs to app Relay format - combine demo relay with nostr relays
   const relays: Relay[] = useMemo(() => {
-    return nostrRelays.map((r) => ({
+    const nostrRelayItems = nostrRelays.map((r) => ({
       id: r.url.replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-"),
       name: r.url.replace("wss://", "").replace("ws://", "").split(".")[0],
       icon: "radio",
       isActive: r.status === "connected",
-      postCount: nostrEvents.filter((e) => 
-        e.id.includes(r.url.replace("wss://", "").slice(0, 4))
-      ).length || undefined,
+      postCount: undefined,
     }));
-  }, [nostrRelays, nostrEvents]);
+    
+    // Include demo relay
+    return [...demoRelays, ...nostrRelayItems];
+  }, [nostrRelays]);
 
-  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set());
-  const [channels, setChannels] = useState<Channel[]>(
-    mockChannels.map((c) => ({ ...c, filterState: "neutral" as const }))
-  );
+  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set([DEMO_RELAY_ID]));
   const [people, setPeople] = useState<Person[]>(
     mockPeople.map((p) => ({ ...p, isSelected: false }))
   );
@@ -70,10 +71,15 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
 
-  // Convert Nostr events to tasks
-  const nostrTasks: Task[] = useMemo(() => {
-    return nostrEvents.map((event) => nostrEventToTask(event));
+  // Filter nostr events - only keep those with tags
+  const filteredNostrEvents = useMemo(() => {
+    return nostrEvents.filter(eventHasTags);
   }, [nostrEvents]);
+
+  // Convert filtered Nostr events to tasks
+  const nostrTasks: Task[] = useMemo(() => {
+    return filteredNostrEvents.map((event) => nostrEventToTask(event));
+  }, [filteredNostrEvents]);
 
   // Combine local tasks with Nostr tasks
   const allTasks = useMemo(() => {
@@ -86,6 +92,40 @@ const Index = () => {
       return true;
     }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [localTasks, nostrTasks]);
+
+  // Dynamically derive channels from all tasks
+  const channels: Channel[] = useMemo(() => {
+    const allTagNames = new Set<string>();
+    
+    // Get tags from local tasks
+    localTasks.forEach((task) => {
+      task.tags.forEach((tag) => allTagNames.add(tag.toLowerCase()));
+    });
+    
+    // Get tags from nostr events
+    const nostrTagNames = extractAllTags(filteredNostrEvents);
+    nostrTagNames.forEach((tag) => allTagNames.add(tag));
+    
+    // Convert to Channel objects sorted alphabetically
+    return Array.from(allTagNames)
+      .sort()
+      .map((name) => ({
+        id: name,
+        name,
+        filterState: "neutral" as const,
+      }));
+  }, [localTasks, filteredNostrEvents]);
+
+  // Maintain channel filter states across dynamic updates
+  const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(new Map());
+
+  // Merge dynamic channels with persisted filter states
+  const channelsWithState: Channel[] = useMemo(() => {
+    return channels.map((channel) => ({
+      ...channel,
+      filterState: channelFilterStates.get(channel.id) || "neutral",
+    }));
+  }, [channels, channelFilterStates]);
 
   // Subscribe to Nostr events when connected
   useEffect(() => {
@@ -170,36 +210,38 @@ const Index = () => {
   };
 
   const handleChannelToggle = (id: string) => {
-    setChannels((prev) =>
-      prev.map((channel) => {
-        if (channel.id !== id) return channel;
-        const states: Channel["filterState"][] = ["neutral", "included", "excluded"];
-        const currentIndex = states.indexOf(channel.filterState);
-        const nextState = states[(currentIndex + 1) % states.length];
-        return { ...channel, filterState: nextState };
-      })
-    );
+    setChannelFilterStates((prev) => {
+      const newMap = new Map(prev);
+      const currentState = newMap.get(id) || "neutral";
+      const states: Channel["filterState"][] = ["neutral", "included", "excluded"];
+      const currentIndex = states.indexOf(currentState);
+      const nextState = states[(currentIndex + 1) % states.length];
+      newMap.set(id, nextState);
+      return newMap;
+    });
   };
 
   const handleChannelExclusive = (id: string) => {
-    setChannels((prev) =>
-      prev.map((channel) => ({
-        ...channel,
-        filterState: channel.id === id ? "included" : "neutral",
-      }))
-    );
-    const channel = channels.find((c) => c.id === id);
+    setChannelFilterStates((prev) => {
+      const newMap = new Map<string, Channel["filterState"]>();
+      channels.forEach((c) => {
+        newMap.set(c.id, c.id === id ? "included" : "neutral");
+      });
+      return newMap;
+    });
+    const channel = channelsWithState.find((c) => c.id === id);
     toast.success(`Showing only #${channel?.name}`);
   };
 
   const handleToggleAllChannels = () => {
-    const allNeutral = channels.every((c) => c.filterState === "neutral");
-    setChannels((prev) =>
-      prev.map((channel) => ({
-        ...channel,
-        filterState: allNeutral ? "included" : "neutral",
-      }))
-    );
+    const allNeutral = Array.from(channelFilterStates.values()).every((s) => s === "neutral") || channelFilterStates.size === 0;
+    setChannelFilterStates((prev) => {
+      const newMap = new Map<string, Channel["filterState"]>();
+      channels.forEach((c) => {
+        newMap.set(c.id, allNeutral ? "included" : "neutral");
+      });
+      return newMap;
+    });
     toast.success(allNeutral ? "All channels included" : "All channels reset");
   };
 
@@ -260,7 +302,7 @@ const Index = () => {
       author: people.find((p) => p.id === "me") || people[0],
       content,
       tags: extractedTags,
-      relays: relayIds.length > 0 ? relayIds : [relays[0]?.id].filter(Boolean),
+      relays: relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID],
       taskType: taskType as TaskType,
       timestamp: new Date(),
       likes: 0,
@@ -284,7 +326,7 @@ const Index = () => {
 
   // Filter tasks based on active filters
   const filteredTasks = allTasks.filter((task) => {
-    // Relay filter
+    // Relay filter - if any relay is selected, task must be in one of the selected relays
     if (activeRelayIds.size > 0 && !task.relays.some(tr => activeRelayIds.has(tr))) {
       return false;
     }
@@ -296,7 +338,7 @@ const Index = () => {
     }
 
     // Channel exclusion filter - exclude tasks that have any excluded channels
-    const excludedChannelNames = channels.filter((c) => c.filterState === "excluded").map((c) => c.name.toLowerCase());
+    const excludedChannelNames = channelsWithState.filter((c) => c.filterState === "excluded").map((c) => c.name.toLowerCase());
     if (excludedChannelNames.length > 0) {
       const taskTagsLower = task.tags.map(t => t.toLowerCase());
       if (taskTagsLower.some(t => excludedChannelNames.includes(t))) {
@@ -305,7 +347,7 @@ const Index = () => {
     }
 
     // Channel inclusion filter - AND logic: task must have ALL included channels
-    const includedChannelNames = channels.filter((c) => c.filterState === "included").map((c) => c.name.toLowerCase());
+    const includedChannelNames = channelsWithState.filter((c) => c.filterState === "included").map((c) => c.name.toLowerCase());
     if (includedChannelNames.length > 0) {
       const taskTagsLower = task.tags.map(t => t.toLowerCase());
       // Check if ALL included channels are present in the task's tags
@@ -321,7 +363,7 @@ const Index = () => {
     tasks: filteredTasks,
     allTasks: allTasks,
     relays: relaysWithActiveState,
-    channels,
+    channels: channelsWithState,
     people,
     currentUser,
     searchQuery,
@@ -356,7 +398,7 @@ const Index = () => {
     return (
       <MobileLayout
         relays={relaysWithActiveState}
-        channels={channels}
+        channels={channelsWithState}
         people={people}
         tasks={filteredTasks}
         allTasks={allTasks}
@@ -382,8 +424,9 @@ const Index = () => {
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar
         relays={relaysWithActiveState}
-        channels={channels}
+        channels={channelsWithState}
         people={people}
+        nostrRelays={nostrRelays}
         onRelayToggle={handleRelayToggle}
         onRelayExclusive={handleRelayExclusive}
         onChannelToggle={handleChannelToggle}
@@ -392,6 +435,8 @@ const Index = () => {
         onToggleAllRelays={handleToggleAllRelays}
         onToggleAllChannels={handleToggleAllChannels}
         onToggleAllPeople={handleToggleAllPeople}
+        onAddRelay={addRelay}
+        onRemoveRelay={removeRelay}
         isFocused={isSidebarFocused}
         onFocusTasks={handleFocusTasks}
       />

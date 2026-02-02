@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { nostrEventToTask, nostrEventsToTasks, mergeTasks } from "./event-converter";
+import { nostrEventToTask, nostrEventsToTasks, mergeTasks, eventHasTags, extractAllTags } from "./event-converter";
 import { NostrEvent, NostrEventKind } from "./types";
 
 describe("nostrEventToTask", () => {
@@ -197,5 +197,104 @@ describe("mergeTasks", () => {
     expect(merged[0].id).toBe("2"); // Most recent first
     expect(merged[1].id).toBe("3");
     expect(merged[2].id).toBe("1");
+  });
+});
+
+describe("eventHasTags", () => {
+  const baseEvent: NostrEvent = {
+    id: "abc123",
+    pubkey: "pubkey123",
+    created_at: 1700000000,
+    kind: NostrEventKind.TextNote,
+    tags: [],
+    content: "Hello world",
+    sig: "sig123",
+  };
+
+  it("returns true for event with t tags", () => {
+    const event: NostrEvent = {
+      ...baseEvent,
+      tags: [["t", "design"]],
+    };
+    
+    expect(eventHasTags(event)).toBe(true);
+  });
+
+  it("returns true for event with hashtags in content", () => {
+    const event: NostrEvent = {
+      ...baseEvent,
+      content: "Working on #frontend",
+    };
+    
+    expect(eventHasTags(event)).toBe(true);
+  });
+
+  it("returns false for event without any tags", () => {
+    expect(eventHasTags(baseEvent)).toBe(false);
+  });
+
+  it("returns false for event with empty t tag", () => {
+    const event: NostrEvent = {
+      ...baseEvent,
+      tags: [["t", ""]],
+    };
+    
+    expect(eventHasTags(event)).toBe(false);
+  });
+});
+
+describe("extractAllTags", () => {
+  const baseEvent: NostrEvent = {
+    id: "abc123",
+    pubkey: "pubkey123",
+    created_at: 1700000000,
+    kind: NostrEventKind.TextNote,
+    tags: [],
+    content: "Hello world",
+    sig: "sig123",
+  };
+
+  it("extracts tags from multiple events", () => {
+    const events: NostrEvent[] = [
+      { ...baseEvent, tags: [["t", "design"]] },
+      { ...baseEvent, tags: [["t", "frontend"]] },
+    ];
+    
+    const tags = extractAllTags(events);
+    
+    expect(tags).toContain("design");
+    expect(tags).toContain("frontend");
+  });
+
+  it("deduplicates tags across events", () => {
+    const events: NostrEvent[] = [
+      { ...baseEvent, tags: [["t", "design"]] },
+      { ...baseEvent, tags: [["t", "design"]] },
+    ];
+    
+    const tags = extractAllTags(events);
+    
+    expect(tags.filter(t => t === "design")).toHaveLength(1);
+  });
+
+  it("extracts hashtags from content", () => {
+    const events: NostrEvent[] = [
+      { ...baseEvent, content: "Working on #backend" },
+    ];
+    
+    const tags = extractAllTags(events);
+    
+    expect(tags).toContain("backend");
+  });
+
+  it("returns sorted tags", () => {
+    const events: NostrEvent[] = [
+      { ...baseEvent, tags: [["t", "zebra"], ["t", "alpha"]] },
+    ];
+    
+    const tags = extractAllTags(events);
+    
+    expect(tags[0]).toBe("alpha");
+    expect(tags[1]).toBe("zebra");
   });
 });
