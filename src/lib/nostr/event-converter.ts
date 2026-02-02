@@ -1,6 +1,22 @@
 import { NostrEvent, NostrEventKind } from "@/lib/nostr/types";
 import { Task, Person } from "@/types";
 
+// Generate relay ID from URL - must match the ID generation in Index.tsx
+export function getRelayIdFromUrl(url: string): string {
+  return url.replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-");
+}
+
+// Generate relay display name from URL - trim common prefixes
+export function getRelayNameFromUrl(url: string): string {
+  const stripped = url.replace("wss://", "").replace("ws://", "");
+  // Remove common prefixes like relay., nostr., etc.
+  return stripped
+    .replace(/^relay\./, "")
+    .replace(/^nostr\./, "")
+    .replace(/^nos\./, "")
+    .split(".")[0];
+}
+
 // Generate a deterministic avatar from pubkey
 function getAvatarFromPubkey(pubkey: string): string {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${pubkey.slice(0, 8)}`;
@@ -61,9 +77,7 @@ export function nostrEventToTask(event: NostrEvent, relayUrl?: string): Task {
   const parentId = replyTag ? replyTag[1] : undefined;
 
   // Generate relay ID from URL - use a consistent format
-  const relayId = relayUrl
-    ? relayUrl.replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-")
-    : "nostr";
+  const relayId = relayUrl ? getRelayIdFromUrl(relayUrl) : "nostr";
 
   return {
     id: event.id,
