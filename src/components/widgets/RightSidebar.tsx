@@ -1,10 +1,10 @@
 import { Search } from "lucide-react";
 import { TrendingWidget } from "./TrendingWidget";
 import { RelayStatusWidget } from "./RelayStatusWidget";
-import { NostrRelay } from "@/hooks/use-nostr";
+import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 
 interface RightSidebarProps {
-  nostrRelays: NostrRelay[];
+  nostrRelays: NDKRelayStatus[];
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
 }

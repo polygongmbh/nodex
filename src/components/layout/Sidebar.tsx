@@ -6,7 +6,7 @@ import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
 import { RelayManagement } from "@/components/relay/RelayManagement";
-import { NostrRelay } from "@/hooks/use-nostr";
+import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,7 @@ interface SidebarProps {
   relays: Relay[];
   channels: Channel[];
   people: Person[];
-  nostrRelays: NostrRelay[];
+  nostrRelays: NDKRelayStatus[];
   onRelayToggle: (id: string) => void;
   onRelayExclusive: (id: string) => void;
   onChannelToggle: (id: string) => void;

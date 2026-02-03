@@ -51,3 +51,7 @@ export {
   getRelayNameFromUrl,
   isSpamContent,
 } from "./event-converter";
+
+// NDK-based integration
+export { NDKProvider, useNDK } from "./ndk-context";
+export type { NostrUser, NDKRelayStatus, NDKContextValue, AuthMethod } from "./ndk-context";

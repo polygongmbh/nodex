@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Hash, Calendar, Clock, X, MessageSquare, CheckSquare } from "lucide-react";
+import { Hash, Calendar, Clock, X, MessageSquare, CheckSquare, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { useNDK } from "@/lib/nostr/ndk-context";
+import { NostrEventKind } from "@/lib/nostr/types";
+import { toast } from "sonner";
 
 interface TaskComposerProps {
   onSubmit: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
@@ -15,9 +18,24 @@ interface TaskComposerProps {
   compact?: boolean;
   defaultDueDate?: Date;
   defaultContent?: string;
+  parentId?: string;
+  onSignInClick?: () => void;
 }
 
-export function TaskComposer({ onSubmit, relays, channels, people, onCancel, compact = false, defaultDueDate, defaultContent = "" }: TaskComposerProps) {
+export function TaskComposer({ 
+  onSubmit, 
+  relays, 
+  channels, 
+  people, 
+  onCancel, 
+  compact = false, 
+  defaultDueDate, 
+  defaultContent = "",
+  parentId,
+  onSignInClick,
+}: TaskComposerProps) {
+  const { user, publishEvent } = useNDK();
+  
   const [content, setContent] = useState(defaultContent);
   const [taskType, setTaskType] = useState<TaskType>("task");
   const [selectedRelays, setSelectedRelays] = useState<string[]>(() => {
@@ -29,15 +47,42 @@ export function TaskComposer({ onSubmit, relays, channels, people, onCancel, com
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState("");
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [isPublishing, setIsPublishing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!content.trim()) return;
+    
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
+    
+    // Check if user is signed in and any non-demo relay is selected
+    const hasNostrRelay = selectedRelays.some(r => r !== "demo");
+    
+    if (hasNostrRelay && user) {
+      // Publish to Nostr
+      setIsPublishing(true);
+      try {
+        const kind = taskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
+        const success = await publishEvent(kind, content, [], parentId);
+        
+        if (success) {
+          toast.success(`${taskType === "task" ? "Task" : "Comment"} published to Nostr!`);
+        } else {
+          toast.error("Failed to publish to Nostr");
+        }
+      } catch (error) {
+        console.error("Publish error:", error);
+        toast.error("Error publishing to Nostr");
+      } finally {
+        setIsPublishing(false);
+      }
+    }
+    
+    // Also add locally
     onSubmit(content, extractedTags, selectedRelays, taskType, dueDate, dueTime || undefined);
     setContent("");
     setDueDate(undefined);
@@ -187,6 +232,24 @@ export function TaskComposer({ onSubmit, relays, channels, people, onCancel, com
         </div>
       )}
 
+      {/* Sign in prompt for Nostr */}
+      {!user && selectedRelays.some(r => r !== "demo") && (
+        <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg">
+          <Zap className="w-4 h-4 text-primary" />
+          <span className="text-sm text-muted-foreground flex-1">
+            Sign in to post to Nostr relays
+          </span>
+          {onSignInClick && (
+            <button
+              onClick={onSignInClick}
+              className="text-sm text-primary hover:underline"
+            >
+              Sign in
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -219,9 +282,12 @@ export function TaskComposer({ onSubmit, relays, channels, people, onCancel, com
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!content.trim()}
-            className="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!content.trim() || isPublishing}
+            className="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
+            {isPublishing && (
+              <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+            )}
             {taskType === "task" ? "Create Task" : "Add Comment"}
           </button>
         </div>

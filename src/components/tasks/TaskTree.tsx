@@ -19,6 +19,7 @@ interface TaskTreeProps {
   onToggleComplete: (taskId: string) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
+  onSignInClick?: () => void;
 }
 
 export function TaskTree({
@@ -34,6 +35,7 @@ export function TaskTree({
   onToggleComplete,
   onFocusSidebar,
   isMobile = false,
+  onSignInClick,
 }: TaskTreeProps) {
   const [contextStack, setContextStack] = useState<string[]>([]);
   const [isComposing, setIsComposing] = useState(false);
@@ -299,6 +301,8 @@ export function TaskTree({
             channels={channels}
             people={people}
             onCancel={() => setIsComposing(false)}
+            parentId={currentContextId}
+            onSignInClick={onSignInClick}
             defaultContent={(() => {
               // Collect channels to prefill
               const prefillChannels = new Set<string>();
