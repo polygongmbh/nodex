@@ -118,9 +118,7 @@ export function TaskItem({
   };
 
   const handleSelect = () => {
-    if (task.taskType === "task") {
-      onSelect?.(task.id);
-    }
+    onSelect?.(task.id);
   };
 
   const canCompleteTask = () => {
@@ -138,25 +136,25 @@ export function TaskItem({
     <div className={cn(!matchedByFilter && "opacity-50")} data-task-id={task.id}>
       <div
         className={cn(
-          "group flex items-start gap-3 py-2.5 px-3 rounded-lg transition-colors",
+          "group flex items-start gap-3 py-2.5 px-3 rounded-lg transition-colors cursor-pointer",
           isComment 
             ? "bg-muted/30 hover:bg-muted/50" 
-            : "hover:bg-card/80 cursor-pointer",
+            : "hover:bg-card/80",
           task.status === "done" && "opacity-60",
           depth > 0 && "border-l-2 border-muted ml-1.5 pl-4",
           isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background bg-primary/5"
         )}
         style={indentStyle}
         onClick={handleSelect}
-        role={!isComment ? "button" : undefined}
-        tabIndex={!isComment ? 0 : undefined}
-        onKeyDown={!isComment ? (e) => {
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             handleSelect();
           }
-        } : undefined}
-        aria-label={!isComment ? `Task: ${task.content.slice(0, 50)}` : undefined}
+        }}
+        aria-label={`${isComment ? 'Comment' : 'Task'}: ${task.content.slice(0, 50)}`}
       >
         {/* Expand/Collapse Toggle - three states */}
         {hasChildren && !isComment ? (

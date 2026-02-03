@@ -31,505 +31,310 @@ export const mockPeople: Person[] = [
   { id: "david", name: "david", displayName: "David Kim", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David", isOnline: false, isSelected: false },
 ];
 
-export const mockTasks: Task[] = [
-  // Root task: Website Redesign - DUE TOMORROW
-  {
-    id: "1",
-    author: mockPeople[1],
-    content: "Website Redesign Project - Complete overhaul of the company website",
-    tags: ["design", "frontend"],
+// Helper to create mock task with nostr-compliant structure
+// Uses kind 1621 for tasks per NIP proposal for task events
+// Tags follow nostr conventions: ["t", "tagname"] for hashtags, ["e", "eventid", "", "reply"] for replies
+function createTask(
+  id: string,
+  author: Person,
+  content: string,
+  tags: string[],
+  options: {
+    parentId?: string;
+    status?: "todo" | "in-progress" | "done";
+    completedBy?: string;
+    dueDate?: Date;
+    dueTime?: string;
+    timestamp?: Date;
+    likes?: number;
+    replies?: number;
+    reposts?: number;
+  } = {}
+): Task {
+  return {
+    id,
+    author,
+    content,
+    tags,
     relays: ["demo"],
     taskType: "task",
+    timestamp: options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 14),
+    likes: options.likes || 0,
+    replies: options.replies || 0,
+    reposts: options.reposts || 0,
+    status: options.status,
+    completedBy: options.completedBy,
+    dueDate: options.dueDate,
+    dueTime: options.dueTime,
+    parentId: options.parentId,
+  };
+}
+
+// Helper to create mock comment (kind 1 text note with reply reference)
+function createComment(
+  id: string,
+  author: Person,
+  content: string,
+  tags: string[],
+  options: {
+    parentId?: string;
+    timestamp?: Date;
+    likes?: number;
+    replies?: number;
+    reposts?: number;
+  } = {}
+): Task {
+  return {
+    id,
+    author,
+    content,
+    tags,
+    relays: ["demo"],
+    taskType: "comment",
+    timestamp: options.timestamp || new Date(Date.now() - Math.random() * 1000 * 60 * 60 * 24 * 7),
+    likes: options.likes || 0,
+    replies: options.replies || 0,
+    reposts: options.reposts || 0,
+    parentId: options.parentId,
+  };
+}
+
+export const mockTasks: Task[] = [
+  // Root task: Website Redesign - DUE TOMORROW
+  createTask("1", mockPeople[1], "Website Redesign Project - Complete overhaul of the company website #design #frontend", ["design", "frontend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
     likes: 12,
     replies: 5,
     reposts: 2,
     dueDate: addDays(today, 1),
-  },
-  // Subtasks of Website Redesign
-  {
-    id: "1a",
-    author: mockPeople[2],
-    content: "Create wireframes for homepage and landing pages",
-    tags: ["design"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  // Subtasks of Website Redesign (using parentId as nostr "e" tag reference)
+  createTask("1a", mockPeople[2], "Create wireframes for homepage and landing pages #design", ["design"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6),
     likes: 5,
     replies: 2,
-    reposts: 0,
     parentId: "1",
     status: "done",
     completedBy: "bob",
     dueDate: subDays(today, 2),
-  },
-  {
-    id: "1b",
-    author: mockPeople[3],
-    content: "Implement responsive navigation component",
-    tags: ["frontend"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("1b", mockPeople[3], "Implement responsive navigation component #frontend", ["frontend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
     likes: 3,
     replies: 1,
-    reposts: 0,
     parentId: "1",
     status: "in-progress",
     dueDate: today,
     dueTime: "14:00",
-  },
-  {
-    id: "1b1",
-    author: mockPeople[4],
-    content: "Add mobile hamburger menu",
-    tags: ["frontend"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("1b1", mockPeople[4], "Add mobile hamburger menu #frontend", ["frontend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
     likes: 1,
-    replies: 0,
-    reposts: 0,
     parentId: "1b",
     dueDate: today,
-  },
-  {
-    id: "1b2",
-    author: mockPeople[1],
-    content: "Add keyboard navigation support",
-    tags: ["frontend"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("1b2", mockPeople[1], "Add keyboard navigation support #frontend", ["frontend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
     likes: 2,
-    replies: 0,
-    reposts: 0,
     parentId: "1b",
     status: "done",
     completedBy: "alice",
-  },
-  // Comment on navigation task
-  {
-    id: "1bc1",
-    author: mockPeople[2],
-    content: "Should we use CSS Grid or Flexbox for the layout?",
-    tags: [],
-    relays: ["demo"],
-    taskType: "comment",
+  }),
+  // Comment on navigation task (kind 1 text note with reply)
+  createComment("1bc1", mockPeople[2], "Should we use CSS Grid or Flexbox for the layout? #frontend", ["frontend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
     likes: 2,
     replies: 1,
-    reposts: 0,
     parentId: "1b",
-  },
-  {
-    id: "1c",
-    author: mockPeople[1],
-    content: "Set up design system with color tokens",
-    tags: ["design", "docs"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("1c", mockPeople[1], "Set up design system with color tokens #design #docs", ["design", "docs"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
     likes: 8,
     replies: 3,
     reposts: 1,
     parentId: "1",
     dueDate: addDays(today, 3),
-  },
+  }),
 
   // Root task: API Development - OVERDUE
-  {
-    id: "2",
-    author: mockPeople[3],
-    content: "API Development - Build REST API for mobile app",
-    tags: ["backend", "feature"],
-    relays: ["demo"],
-    taskType: "task",
+  createTask("2", mockPeople[3], "API Development - Build REST API for mobile app #backend #feature", ["backend", "feature"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
     likes: 15,
     replies: 8,
     reposts: 3,
     dueDate: subDays(today, 1),
-  },
-  {
-    id: "2a",
-    author: mockPeople[4],
-    content: "Design database schema",
-    tags: ["backend", "planning"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("2a", mockPeople[4], "Design database schema #backend #planning", ["backend", "planning"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9),
     likes: 6,
     replies: 2,
-    reposts: 0,
     parentId: "2",
     status: "done",
     completedBy: "david",
     dueDate: subDays(today, 5),
-  },
-  {
-    id: "2b",
-    author: mockPeople[1],
-    content: "Implement authentication endpoints",
-    tags: ["backend", "urgent"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("2b", mockPeople[1], "Implement authentication endpoints #backend #urgent", ["backend", "urgent"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 8),
     likes: 4,
     replies: 1,
-    reposts: 0,
     parentId: "2",
     dueDate: today,
     dueTime: "17:00",
-  },
-  {
-    id: "2b1",
-    author: mockPeople[2],
-    content: "Add JWT token refresh logic",
-    tags: ["backend"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("2b1", mockPeople[2], "Add JWT token refresh logic #backend", ["backend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
     likes: 2,
-    replies: 0,
-    reposts: 0,
     parentId: "2b",
     dueDate: addDays(today, 1),
-  },
+  }),
   // Comment on auth
-  {
-    id: "2bc1",
-    author: mockPeople[3],
-    content: "We should consider using refresh tokens with short-lived access tokens for better security.",
-    tags: [],
-    relays: ["demo"],
-    taskType: "comment",
+  createComment("2bc1", mockPeople[3], "We should consider using refresh tokens with short-lived access tokens for better security. #backend", ["backend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
     likes: 5,
-    replies: 0,
-    reposts: 0,
     parentId: "2b",
-  },
-  {
-    id: "2c",
-    author: mockPeople[3],
-    content: "Write API documentation",
-    tags: ["docs"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("2c", mockPeople[3], "Write API documentation #docs", ["docs"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6),
     likes: 3,
-    replies: 0,
-    reposts: 0,
     parentId: "2",
     dueDate: addDays(today, 5),
-  },
+  }),
 
   // Root task: Bug Fixes - DUE TODAY
-  {
-    id: "3",
-    author: mockPeople[2],
-    content: "Bug Fixes - Address critical issues before release",
-    tags: ["bug", "urgent"],
-    relays: ["demo"],
-    taskType: "task",
+  createTask("3", mockPeople[2], "Bug Fixes - Address critical issues before release #bug #urgent", ["bug", "urgent"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
     likes: 7,
     replies: 4,
     reposts: 1,
     dueDate: today,
     dueTime: "18:00",
-  },
-  {
-    id: "3a",
-    author: mockPeople[4],
-    content: "Fix login redirect loop on mobile Safari",
-    tags: ["bug", "frontend"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("3a", mockPeople[4], "Fix login redirect loop on mobile Safari #bug #frontend", ["bug", "frontend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
     likes: 3,
     replies: 2,
-    reposts: 0,
     parentId: "3",
     status: "in-progress",
     dueDate: today,
-  },
-  {
-    id: "3b",
-    author: mockPeople[1],
-    content: "Resolve memory leak in dashboard component",
-    tags: ["bug", "frontend"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("3b", mockPeople[1], "Resolve memory leak in dashboard component #bug #frontend", ["bug", "frontend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
     likes: 5,
     replies: 1,
-    reposts: 0,
     parentId: "3",
     status: "done",
     completedBy: "alice",
     dueDate: subDays(today, 1),
-  },
+  }),
 
   // Personal tasks - NO DEADLINE
-  {
-    id: "4",
-    author: mockPeople[0],
-    content: "Home Renovation Planning",
-    tags: ["planning"],
-    relays: ["demo"],
-    taskType: "task",
+  createTask("4", mockPeople[0], "Home Renovation Planning #planning", ["planning"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14),
-    likes: 0,
     replies: 2,
-    reposts: 0,
-  },
-  {
-    id: "4a",
-    author: mockPeople[0],
-    content: "Get quotes from contractors",
-    tags: ["planning"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("4a", mockPeople[0], "Get quotes from contractors #planning", ["planning"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 13),
-    likes: 0,
-    replies: 0,
-    reposts: 0,
     parentId: "4",
     dueDate: addDays(today, 7),
-  },
-  {
-    id: "4b",
-    author: mockPeople[0],
-    content: "Research kitchen cabinet styles",
-    tags: ["design"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("4b", mockPeople[0], "Research kitchen cabinet styles #design", ["design"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 12),
-    likes: 0,
-    replies: 0,
-    reposts: 0,
     parentId: "4",
     status: "done",
     completedBy: "me",
-  },
+  }),
 
   // Personal productivity - NEXT WEEK
-  {
-    id: "5",
-    author: mockPeople[0],
-    content: "Weekly Review Tasks",
-    tags: ["review"],
-    relays: ["demo"],
-    taskType: "task",
+  createTask("5", mockPeople[0], "Weekly Review Tasks #review", ["review"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-    likes: 0,
     replies: 3,
-    reposts: 0,
     dueDate: addDays(today, 2),
-  },
-  {
-    id: "5a",
-    author: mockPeople[0],
-    content: "Review completed tasks from last week",
-    tags: ["review"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("5a", mockPeople[0], "Review completed tasks from last week #review", ["review"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1),
-    likes: 0,
-    replies: 0,
-    reposts: 0,
     parentId: "5",
     dueDate: addDays(today, 2),
-  },
-  {
-    id: "5b",
-    author: mockPeople[0],
-    content: "Plan priorities for next week",
-    tags: ["planning"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("5b", mockPeople[0], "Plan priorities for next week #planning", ["planning"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60),
-    likes: 0,
-    replies: 0,
-    reposts: 0,
     parentId: "5",
     dueDate: addDays(today, 2),
-  },
+  }),
 
   // Additional tasks for demo
-  {
-    id: "6",
-    author: mockPeople[2],
-    content: "Q1 Planning Meeting Prep",
-    tags: ["planning"],
-    relays: ["demo"],
-    taskType: "task",
+  createTask("6", mockPeople[2], "Q1 Planning Meeting Prep #planning", ["planning"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
     likes: 2,
     replies: 1,
-    reposts: 0,
     dueDate: addDays(today, 4),
-  },
-  {
-    id: "6a",
-    author: mockPeople[2],
-    content: "Gather team input on priorities",
-    tags: ["planning"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("6a", mockPeople[2], "Gather team input on priorities #planning", ["planning"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60),
-    likes: 0,
-    replies: 0,
-    reposts: 0,
     parentId: "6",
     dueDate: addDays(today, 2),
-  },
-  {
-    id: "6b",
-    author: mockPeople[2],
-    content: "Create presentation slides",
-    tags: ["docs"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("6b", mockPeople[2], "Create presentation slides #docs", ["docs"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 30),
-    likes: 0,
-    replies: 0,
-    reposts: 0,
     parentId: "6",
     dueDate: addDays(today, 3),
-  },
+  }),
 
   // Top-level tasks without subtasks
-  {
-    id: "7",
-    author: mockPeople[1],
-    content: "Schedule team offsite meeting",
-    tags: ["planning"],
-    relays: ["demo"],
-    taskType: "task",
+  createTask("7", mockPeople[1], "Schedule team offsite meeting #planning", ["planning"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
     likes: 3,
-    replies: 0,
-    reposts: 0,
     dueDate: addDays(today, 6),
-  },
-  {
-    id: "8",
-    author: mockPeople[3],
-    content: "Update project dependencies to latest versions",
-    tags: ["backend", "frontend"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("8", mockPeople[3], "Update project dependencies to latest versions #backend #frontend", ["backend", "frontend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
     likes: 2,
     replies: 1,
-    reposts: 0,
     status: "in-progress",
-  },
-  {
-    id: "9",
-    author: mockPeople[0],
-    content: "Buy groceries for the week",
-    tags: ["personal"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("9", mockPeople[0], "Buy groceries for the week #planning", ["planning"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
-    likes: 0,
-    replies: 0,
-    reposts: 0,
     dueDate: today,
-  },
-  {
-    id: "10",
-    author: mockPeople[4],
-    content: "Prepare monthly expense report",
-    tags: ["docs", "review"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("10", mockPeople[4], "Prepare monthly expense report #docs #review", ["docs", "review"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
     likes: 1,
-    replies: 0,
-    reposts: 0,
     dueDate: addDays(today, 1),
     status: "done",
     completedBy: "david",
-  },
-  {
-    id: "11",
-    author: mockPeople[2],
-    content: "Clean up old branches in repository",
-    tags: ["backend"],
-    relays: ["demo"],
-    taskType: "task",
+  }),
+  createTask("11", mockPeople[2], "Clean up old branches in repository #backend", ["backend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
     likes: 4,
     replies: 2,
-    reposts: 0,
-  },
+  }),
 
-  // Top-level comments (general discussions)
-  {
-    id: "c1",
-    author: mockPeople[1],
-    content: "Has anyone looked into the new React 19 features? Wondering if we should plan an upgrade.",
-    tags: ["frontend"],
-    relays: ["demo"],
-    taskType: "comment",
+  // Top-level comments (general discussions - kind 1 text notes)
+  createComment("c1", mockPeople[1], "Has anyone looked into the new React 19 features? Wondering if we should plan an upgrade. #frontend", ["frontend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
     likes: 8,
     replies: 4,
     reposts: 1,
-  },
-  {
-    id: "c2",
-    author: mockPeople[3],
-    content: "Reminder: Please update your timesheets before end of day Friday!",
-    tags: ["work"],
-    relays: ["demo"],
-    taskType: "comment",
+  }),
+  createComment("c2", mockPeople[3], "Reminder: Please update your timesheets before end of day Friday! #review", ["review"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
     likes: 2,
-    replies: 0,
-    reposts: 0,
-  },
-  {
-    id: "c3",
-    author: mockPeople[0],
-    content: "Great progress on the website redesign this week, team! 🎉",
-    tags: ["design"],
-    relays: ["demo"],
-    taskType: "comment",
+  }),
+  createComment("c3", mockPeople[0], "Great progress on the website redesign this week, team! 🎉 #design", ["design"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 30),
     likes: 15,
     replies: 3,
     reposts: 2,
-  },
-  {
-    id: "c4",
-    author: mockPeople[4],
-    content: "Anyone interested in a lunch run today? Meeting at the lobby at noon.",
-    tags: ["social"],
-    relays: ["demo"],
-    taskType: "comment",
+  }),
+  createComment("c4", mockPeople[4], "Anyone interested in a lunch run today? Meeting at the lobby at noon. #planning", ["planning"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
     likes: 5,
     replies: 2,
-    reposts: 0,
-  },
-  {
-    id: "c5",
-    author: mockPeople[2],
-    content: "FYI: The staging server will be down for maintenance tonight from 10pm-12am.",
-    tags: ["backend"],
-    relays: ["demo"],
-    taskType: "comment",
+  }),
+  createComment("c5", mockPeople[2], "FYI: The staging server will be down for maintenance tonight from 10pm-12am. #backend", ["backend"], {
     timestamp: new Date(Date.now() - 1000 * 60 * 45),
     likes: 7,
     replies: 1,
-    reposts: 0,
-  },
+  }),
 ];
 
 // Legacy export for compatibility
