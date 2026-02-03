@@ -1,3 +1,5 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import { NostrEvent, NostrEventKind, UnsignedEvent } from "./types";
 
 /**
@@ -8,7 +10,41 @@ export function generateSubscriptionId(prefix = "sub"): string {
 }
 
 /**
- * Create an unsigned event (stub - in production would use actual crypto)
+ * Generate a random 32-byte hex string (for mock pubkeys/event IDs)
+ */
+export function generateRandomHex(bytes = 32): string {
+  const array = new Uint8Array(bytes);
+  crypto.getRandomValues(array);
+  return bytesToHex(array);
+}
+
+/**
+ * Serialize event for hashing according to NIP-01
+ * Format: [0, pubkey, created_at, kind, tags, content]
+ */
+export function serializeEventForId(event: UnsignedEvent): string {
+  return JSON.stringify([
+    0,
+    event.pubkey,
+    event.created_at,
+    event.kind,
+    event.tags,
+    event.content,
+  ]);
+}
+
+/**
+ * Generate event ID according to NIP-01 (SHA256 of serialized event)
+ */
+export function generateEventId(event: UnsignedEvent): string {
+  const serialized = serializeEventForId(event);
+  const encoder = new TextEncoder();
+  const hash = sha256(encoder.encode(serialized));
+  return bytesToHex(hash);
+}
+
+/**
+ * Create an unsigned event
  */
 export function createUnsignedEvent(
   pubkey: string,
@@ -26,87 +62,86 @@ export function createUnsignedEvent(
 }
 
 /**
- * Sign an event (stub - in production would use secp256k1)
- * This is a placeholder that generates mock signatures for testing
+ * Sign an event (mock implementation - in production use NIP-07 or secp256k1)
+ * This generates a proper event ID per NIP-01 but uses a mock signature
  */
 export function signEvent(unsignedEvent: UnsignedEvent): NostrEvent {
-  // In production, this would:
-  // 1. Serialize the event
-  // 2. Hash with SHA256
-  // 3. Sign with secp256k1
-  // 4. Return the complete event with id and sig
-
-  const mockId = generateMockEventId(unsignedEvent);
-  const mockSig = generateMockSignature();
+  // Generate proper NIP-01 compliant event ID
+  const id = generateEventId(unsignedEvent);
+  
+  // Mock signature (64 bytes = 128 hex chars)
+  // In production, this would be a schnorr signature over the event ID
+  const sig = generateRandomHex(64);
 
   return {
     ...unsignedEvent,
-    id: mockId,
-    sig: mockSig,
+    id,
+    sig,
   };
 }
 
 /**
- * Generate a mock event ID (stub for testing)
- */
-function generateMockEventId(event: UnsignedEvent): string {
-  // In production: SHA256(JSON.stringify([0, pubkey, created_at, kind, tags, content]))
-  const data = JSON.stringify([
-    0,
-    event.pubkey,
-    event.created_at,
-    event.kind,
-    event.tags,
-    event.content,
-  ]);
-  
-  // Simple hash simulation for testing
-  let hash = 0;
-  for (let i = 0; i < data.length; i++) {
-    const char = data.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  
-  return Math.abs(hash).toString(16).padStart(64, "0").slice(0, 64);
-}
-
-/**
- * Generate a mock signature (stub for testing)
- */
-function generateMockSignature(): string {
-  // In production: secp256k1 signature
-  return Array.from({ length: 128 }, () =>
-    Math.floor(Math.random() * 16).toString(16)
-  ).join("");
-}
-
-/**
- * Validate event structure (basic validation)
+ * Validate event structure (basic validation per NIP-01)
  */
 export function validateEvent(event: NostrEvent): boolean {
+  // Check id format (32 bytes hex = 64 chars)
   if (!event.id || typeof event.id !== "string" || event.id.length !== 64) {
     return false;
   }
+  if (!/^[0-9a-f]+$/.test(event.id)) {
+    return false;
+  }
+  
+  // Check pubkey format (32 bytes hex = 64 chars)
   if (!event.pubkey || typeof event.pubkey !== "string" || event.pubkey.length !== 64) {
     return false;
   }
+  if (!/^[0-9a-f]+$/.test(event.pubkey)) {
+    return false;
+  }
+  
+  // Check created_at is a valid unix timestamp
   if (typeof event.created_at !== "number" || event.created_at < 0) {
     return false;
   }
-  if (typeof event.kind !== "number" || event.kind < 0) {
+  
+  // Check kind is a valid integer
+  if (typeof event.kind !== "number" || event.kind < 0 || event.kind > 65535) {
     return false;
   }
+  
+  // Check tags is array of string arrays
   if (!Array.isArray(event.tags)) {
     return false;
   }
+  for (const tag of event.tags) {
+    if (!Array.isArray(tag) || !tag.every(t => typeof t === "string")) {
+      return false;
+    }
+  }
+  
+  // Check content is string
   if (typeof event.content !== "string") {
     return false;
   }
+  
+  // Check sig format (64 bytes hex = 128 chars)
   if (!event.sig || typeof event.sig !== "string" || event.sig.length !== 128) {
     return false;
   }
+  if (!/^[0-9a-f]+$/.test(event.sig)) {
+    return false;
+  }
+  
   return true;
+}
+
+/**
+ * Verify event ID matches content (NIP-01 compliance check)
+ */
+export function verifyEventId(event: NostrEvent): boolean {
+  const expectedId = generateEventId(event);
+  return event.id === expectedId;
 }
 
 /**

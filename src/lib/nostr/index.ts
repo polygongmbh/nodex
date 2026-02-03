@@ -27,9 +27,13 @@ export { NostrEventKind } from "./types";
 
 export {
   generateSubscriptionId,
+  generateRandomHex,
+  generateEventId,
+  serializeEventForId,
   createUnsignedEvent,
   signEvent,
   validateEvent,
+  verifyEventId,
   extractMentions,
   extractReferences,
   extractHashtags,
