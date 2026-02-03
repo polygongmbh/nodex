@@ -23,6 +23,7 @@ interface FeedViewProps {
   onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
+  onSignInClick?: () => void;
 }
 
 export function FeedView({
@@ -40,6 +41,7 @@ export function FeedView({
   onFocusTask,
   onFocusSidebar,
   isMobile = false,
+  onSignInClick,
 }: FeedViewProps) {
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -182,6 +184,8 @@ export function FeedView({
             channels={channels}
             people={people}
             onCancel={() => {}}
+            parentId={focusedTaskId || undefined}
+            onSignInClick={onSignInClick}
             defaultContent={(() => {
               const prefillChannels = new Set<string>();
               channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));

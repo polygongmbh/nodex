@@ -1,16 +1,16 @@
 import { Radio, Wifi, WifiOff, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NostrRelay } from "@/hooks/use-nostr";
+import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { RelayManagement } from "@/components/relay/RelayManagement";
 
 interface RelayStatusWidgetProps {
-  relays: NostrRelay[];
+  relays: NDKRelayStatus[];
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
 }
 
 export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelayStatusWidgetProps) {
-  const getStatusColor = (status: NostrRelay["status"]) => {
+  const getStatusColor = (status: NDKRelayStatus["status"]) => {
     switch (status) {
       case "connected":
         return "bg-success";

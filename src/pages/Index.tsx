@@ -12,12 +12,14 @@ import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp, KeyboardShortcutsButton } from "@/components/KeyboardShortcutsHelp";
-import { useNostr } from "@/hooks/use-nostr";
+import { useNDK } from "@/lib/nostr/ndk-context";
+import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { nostrEventToTask, eventHasTags, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
+import { NDKEvent } from "@nostr-dev-kit/ndk";
 
 const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
 
@@ -39,19 +41,24 @@ const Index = () => {
     ? (urlView as ViewType) 
     : "tree";
 
-  // Nostr integration
+  // NDK Nostr integration
   const { 
-    relays: nostrRelays, 
-    events: nostrEvents, 
+    relays: ndkRelays, 
     isConnected: isNostrConnected,
     addRelay,
     removeRelay,
     subscribe,
-  } = useNostr({ defaultRelays: DEFAULT_NOSTR_RELAYS });
+  } = useNDK();
 
-  // Convert relay URLs to app Relay format - combine demo relay with nostr relays
+  // Auth modal state
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // State for NDK events
+  const [nostrEvents, setNostrEvents] = useState<NDKEvent[]>([]);
+
+  // Convert relay statuses to app Relay format - combine demo relay with nostr relays
   const relays: Relay[] = useMemo(() => {
-    const nostrRelayItems = nostrRelays.map((r) => ({
+    const nostrRelayItems = ndkRelays.map((r) => ({
       id: getRelayIdFromUrl(r.url),
       name: getRelayNameFromUrl(r.url),
       icon: "radio",
@@ -61,7 +68,16 @@ const Index = () => {
     
     // Include demo relay
     return [...demoRelays, ...nostrRelayItems];
-  }, [nostrRelays]);
+  }, [ndkRelays]);
+
+  // Convert NDK relays to the format expected by sidebar/widgets
+  const nostrRelays = useMemo(() => {
+    return ndkRelays.map(r => ({
+      url: r.url,
+      status: r.status,
+      latency: r.latency,
+    }));
+  }, [ndkRelays]);
 
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set([DEMO_RELAY_ID]));
   const [people, setPeople] = useState<Person[]>(
@@ -74,8 +90,10 @@ const Index = () => {
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
     return nostrEvents.filter(event => {
-      // Must have tags
-      if (!eventHasTags(event)) return false;
+      // Convert NDKEvent to check tags
+      const hasTags = event.tags.some(tag => tag[0] === "t" && tag[1]) ||
+        /#\w+/.test(event.content);
+      if (!hasTags) return false;
       // Filter out spam
       if (isSpamContent(event.content)) return false;
       return true;
@@ -84,7 +102,20 @@ const Index = () => {
 
   // Convert filtered Nostr events to tasks
   const nostrTasks: Task[] = useMemo(() => {
-    return filteredNostrEvents.map((event) => nostrEventToTask(event));
+    return filteredNostrEvents.map((event) => {
+      // Convert NDKEvent to a format nostrEventToTask expects
+      const nostrEvent = {
+        id: event.id || "",
+        pubkey: event.pubkey,
+        created_at: event.created_at || Math.floor(Date.now() / 1000),
+        kind: event.kind as NostrEventKind,
+        tags: event.tags,
+        content: event.content,
+        sig: event.sig || "",
+        relayUrl: event.relay?.url || "unknown",
+      };
+      return nostrEventToTask(nostrEvent);
+    });
   }, [filteredNostrEvents]);
 
   // Combine local tasks with Nostr tasks
@@ -156,11 +187,27 @@ const Index = () => {
     if (!isNostrConnected) return;
 
     // Subscribe to text notes (kind 1) and tasks (kind 1621)
-    const unsubscribe = subscribe([
-      { kinds: [NostrEventKind.TextNote, NostrEventKind.Task], limit: 50 },
-    ]);
+    const subscription = subscribe(
+      [{ kinds: [1, 1621 as any], limit: 50 }],
+      (event) => {
+        setNostrEvents((prev) => {
+          // Check for duplicates
+          if (prev.some((e) => e.id === event.id)) {
+            return prev;
+          }
+          // Add event and sort by created_at descending
+          const newEvents = [event, ...prev].sort(
+            (a, b) => (b.created_at || 0) - (a.created_at || 0)
+          );
+          // Limit to 500 events
+          return newEvents.slice(0, 500);
+        });
+      }
+    );
 
-    return unsubscribe;
+    return () => {
+      subscription?.stop();
+    };
   }, [isNostrConnected, subscribe]);
 
   const handleFocusSidebar = useCallback(() => {
@@ -406,6 +453,7 @@ const Index = () => {
     onFocusTask: setFocusedTaskId,
     onStatusChange: handleStatusChange,
     onFocusSidebar: handleFocusSidebar,
+    onSignInClick: () => setIsAuthModalOpen(true),
   };
 
   const renderView = () => {
@@ -475,7 +523,7 @@ const Index = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* View Switcher Header - height matches sidebar logo */}
         <div className="h-14 border-b border-border px-4 bg-background/95 backdrop-blur-sm flex items-center justify-between flex-shrink-0">
-          <div className="w-8" /> {/* Spacer for centering */}
+          <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
           <KeyboardShortcutsButton onClick={shortcutsHelp.open} />
         </div>
@@ -494,6 +542,9 @@ const Index = () => {
       
       {/* Keyboard Shortcuts Help Dialog */}
       <KeyboardShortcutsHelp isOpen={shortcutsHelp.isOpen} onClose={shortcutsHelp.close} />
+      
+      {/* Nostr Auth Modal */}
+      <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
 };
