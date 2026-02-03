@@ -284,11 +284,10 @@ export function FeedView({
 
                     {/* Clickable content to focus */}
                     <p
-                      onClick={() => task.taskType === "task" && onFocusTask?.(task.id)}
+                      onClick={() => onFocusTask?.(task.id)}
                       className={cn(
-                        "text-sm leading-relaxed",
-                        task.status === "done" && "line-through text-muted-foreground",
-                        task.taskType === "task" && "cursor-pointer hover:text-primary"
+                        "text-sm leading-relaxed cursor-pointer hover:text-primary",
+                        task.status === "done" && "line-through text-muted-foreground"
                       )}
                     >
                       {linkifyContent(task.content)}
