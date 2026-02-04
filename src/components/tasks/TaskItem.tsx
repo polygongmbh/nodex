@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2 } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
 import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
+import { useNostrProfile, getDefaultAvatarUrl, getDefaultDisplayName } from "@/hooks/use-nostr-profiles";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -55,6 +56,15 @@ export function TaskItem({
   const prevStatusRef = useRef(task.status);
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
+  
+  // Fetch author profile from Nostr (only if author.id looks like a pubkey)
+  const isPubkey = task.author.id.length === 64 && /^[a-f0-9]+$/.test(task.author.id);
+  const { profile: nostrProfile } = useNostrProfile(isPubkey ? task.author.id : null);
+  
+  // Use Nostr profile if available, fallback to task author
+  const authorName = nostrProfile?.displayName || nostrProfile?.name || task.author.displayName;
+  const authorAvatar = nostrProfile?.picture || task.author.avatar || getDefaultAvatarUrl(task.author.id);
+  const authorNip05 = nostrProfile?.nip05;
 
   // Reset fold state when filters change
   useEffect(() => {
@@ -208,11 +218,11 @@ export function TaskItem({
         {/* Avatar - only show for comments */}
         {isComment && (
           <Avatar className="w-6 h-6 flex-shrink-0">
-            {task.author.avatar ? (
-              <AvatarImage src={task.author.avatar} alt={task.author.displayName} />
+            {authorAvatar ? (
+              <AvatarImage src={authorAvatar} alt={authorName} />
             ) : null}
             <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-foreground text-xs">
-              {task.author.displayName.charAt(0)}
+              {authorName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         )}
@@ -224,7 +234,14 @@ export function TaskItem({
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
               {isComment && (
                 <>
-                  <span className="font-medium text-foreground/80">{task.author.displayName}</span>
+                  <span className="font-medium text-foreground/80 flex items-center gap-1">
+                    {authorName}
+                    {authorNip05 && (
+                      <span title={authorNip05}>
+                        <BadgeCheck className="w-3 h-3 text-success" />
+                      </span>
+                    )}
+                  </span>
                   <span>·</span>
                   <span>{timeAgo}</span>
                 </>
