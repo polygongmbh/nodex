@@ -22,6 +22,7 @@ export interface NostrUser {
     picture?: string;
     about?: string;
     nip05?: string;
+    nip05Verified?: boolean;
   };
 }
 
@@ -54,6 +55,9 @@ export interface NDKContextValue {
   
   // Subscription
   subscribe: (filters: NDKFilter[], onEvent: (event: NDKEvent) => void) => NDKSubscription | null;
+  
+  // Guest key export
+  getGuestPrivateKey: () => string | null;
 }
 
 const NDKContext = createContext<NDKContextValue | null>(null);
@@ -66,6 +70,25 @@ const DEFAULT_RELAYS = [
 // Storage keys
 const STORAGE_KEY_AUTH = "nostr_auth_method";
 const STORAGE_KEY_NSEC = "nostr_guest_nsec";
+
+// NIP-05 verification helper
+async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
+  try {
+    const [name, domain] = nip05.split("@");
+    if (!name || !domain) return false;
+    
+    const url = `https://${domain}/.well-known/nostr.json?name=${name}`;
+    const response = await fetch(url);
+    if (!response.ok) return false;
+    
+    const data = await response.json();
+    const registeredPubkey = data.names?.[name];
+    
+    return registeredPubkey === pubkey;
+  } catch {
+    return false;
+  }
+}
 
 interface NDKProviderProps {
   children: ReactNode;
@@ -182,6 +205,13 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       const ndkUser = await signer.user();
       await ndkUser.fetchProfile();
       
+      const nip05 = ndkUser.profile?.nip05;
+      let nip05Verified = false;
+      
+      if (nip05) {
+        nip05Verified = await verifyNip05(nip05, ndkUser.pubkey);
+      }
+      
       setUser({
         pubkey: ndkUser.pubkey,
         npub: ndkUser.npub,
@@ -190,7 +220,8 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
           displayName: ndkUser.profile?.displayName,
           picture: ndkUser.profile?.image,
           about: ndkUser.profile?.about,
-          nip05: ndkUser.profile?.nip05,
+          nip05,
+          nip05Verified,
         },
       });
       setAuthMethod("extension");
@@ -271,6 +302,11 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       setIsAuthenticating(false);
     }
   }, [ndk]);
+
+  const getGuestPrivateKey = useCallback((): string | null => {
+    if (authMethod !== "guest") return null;
+    return localStorage.getItem(STORAGE_KEY_NSEC);
+  }, [authMethod]);
 
   const logout = useCallback(() => {
     if (ndk) {
@@ -391,6 +427,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     removeRelay,
     publishEvent,
     subscribe,
+    getGuestPrivateKey,
   }), [
     ndk,
     isConnected,
@@ -406,6 +443,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     removeRelay,
     publishEvent,
     subscribe,
+    getGuestPrivateKey,
   ]);
 
   return (
