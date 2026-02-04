@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { nip19 } from "nostr-tools";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -135,8 +136,8 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
               disabled={isAuthenticating}
               className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
             >
-              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                <Key className="w-5 h-5 text-amber-500" />
+              <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
+                <Key className="w-5 h-5 text-warning" />
               </div>
               <div className="flex-1">
                 <div className="font-medium">Private Key</div>
@@ -218,7 +219,34 @@ interface NostrUserMenuProps {
 }
 
 export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
-  const { user, authMethod, logout } = useNDK();
+  const { user, authMethod, logout, getGuestPrivateKey } = useNDK();
+  const [showKeyExport, setShowKeyExport] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+
+  const handleCopyKey = () => {
+    const hexKey = getGuestPrivateKey();
+    if (hexKey) {
+      try {
+        const nsec = nip19.nsecEncode(hexKey as unknown as Uint8Array);
+        navigator.clipboard.writeText(nsec);
+        toast.success("Private key copied to clipboard!");
+      } catch {
+        // If nsec encoding fails, copy hex
+        navigator.clipboard.writeText(hexKey);
+        toast.success("Private key (hex) copied to clipboard!");
+      }
+    }
+  };
+
+  const getDisplayKey = () => {
+    const hexKey = getGuestPrivateKey();
+    if (!hexKey) return "";
+    try {
+      return nip19.nsecEncode(hexKey as unknown as Uint8Array);
+    } catch {
+      return hexKey;
+    }
+  };
 
   if (!user) {
     return (
@@ -238,31 +266,103 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const methodLabel = authMethod === "extension" ? "Extension" : authMethod === "guest" ? "Guest" : "Key";
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted">
-        {user.profile?.picture ? (
-          <img 
-            src={user.profile.picture} 
-            alt="" 
-            className="w-5 h-5 rounded-full"
-          />
-        ) : (
-          <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-            <User className="w-3 h-3 text-primary" />
-          </div>
-        )}
-        <span className="text-sm font-medium">{displayName}</span>
-        <span className="text-xs text-muted-foreground">({methodLabel})</span>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted">
+          {user.profile?.picture ? (
+            <img 
+              src={user.profile.picture} 
+              alt="" 
+              className="w-5 h-5 rounded-full"
+            />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+              <User className="w-3 h-3 text-primary" />
+            </div>
+          )}
+          <span className="text-sm font-medium">{displayName}</span>
+          {user.profile?.nip05Verified && (
+            <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${user.profile.nip05}`}>
+              <BadgeCheck className="w-3.5 h-3.5" />
+            </span>
+          )}
+          <span className="text-xs text-muted-foreground">({methodLabel})</span>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={logout}
+          className="h-8 w-8 p-0"
+          title="Sign out"
+        >
+          <LogOut className="w-4 h-4" />
+        </Button>
       </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={logout}
-        className="h-8 w-8 p-0"
-        title="Sign out"
-      >
-        <LogOut className="w-4 h-4" />
-      </Button>
+      
+      {/* NIP-05 display */}
+      {user.profile?.nip05 && (
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-1">
+          {user.profile.nip05Verified ? (
+            <BadgeCheck className="w-3.5 h-3.5 text-success" />
+          ) : (
+            <span className="w-3.5 h-3.5 rounded-full border border-muted-foreground/50" />
+          )}
+          <span className={cn(user.profile.nip05Verified && "text-foreground")}>
+            {user.profile.nip05}
+          </span>
+        </div>
+      )}
+      
+      {/* Guest key export */}
+      {authMethod === "guest" && (
+        <div className="mt-1">
+          {!showKeyExport ? (
+            <button
+              onClick={() => setShowKeyExport(true)}
+              className="text-xs text-primary hover:underline flex items-center gap-1"
+            >
+              <Key className="w-3 h-3" />
+              Backup your private key
+            </button>
+          ) : (
+            <div className="p-2 bg-muted/50 rounded-lg space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-warning">⚠️ Keep this secret!</span>
+                <button
+                  onClick={() => setShowKeyExport(false)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Hide
+                </button>
+              </div>
+              <div className="flex items-center gap-1">
+                <code className="flex-1 text-xs bg-background p-1.5 rounded font-mono break-all">
+                  {showKey ? getDisplayKey() : "••••••••••••••••••••••••••••••••"}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowKey(!showKey)}
+                  className="h-7 w-7 p-0"
+                >
+                  {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyKey}
+                  className="h-7 w-7 p-0"
+                >
+                  <Copy className="w-3 h-3" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Import this key in other Nostr clients to access this identity.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
