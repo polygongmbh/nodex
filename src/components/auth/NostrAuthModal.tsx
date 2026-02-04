@@ -7,6 +7,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -220,7 +225,6 @@ interface NostrUserMenuProps {
 
 export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const { user, authMethod, logout, getGuestPrivateKey } = useNDK();
-  const [showKeyExport, setShowKeyExport] = useState(false);
   const [showKey, setShowKey] = useState(false);
 
   const handleCopyKey = () => {
@@ -266,103 +270,92 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const methodLabel = authMethod === "extension" ? "Extension" : authMethod === "guest" ? "Guest" : "Key";
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted">
-          {user.profile?.picture ? (
-            <img 
-              src={user.profile.picture} 
-              alt="" 
-              className="w-5 h-5 rounded-full"
-            />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-              <User className="w-3 h-3 text-primary" />
-            </div>
-          )}
-          <span className="text-sm font-medium">{displayName}</span>
-          {user.profile?.nip05Verified && (
-            <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${user.profile.nip05}`}>
-              <BadgeCheck className="w-3.5 h-3.5" />
-            </span>
-          )}
-          <span className="text-xs text-muted-foreground">({methodLabel})</span>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={logout}
-          className="h-8 w-8 p-0"
-          title="Sign out"
-        >
-          <LogOut className="w-4 h-4" />
-        </Button>
+    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted">
+        {user.profile?.picture ? (
+          <img 
+            src={user.profile.picture} 
+            alt="" 
+            className="w-5 h-5 rounded-full"
+          />
+        ) : (
+          <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+            <User className="w-3 h-3 text-primary" />
+          </div>
+        )}
+        <span className="text-sm font-medium">{displayName}</span>
+        {user.profile?.nip05Verified && (
+          <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${user.profile.nip05}`}>
+            <BadgeCheck className="w-3.5 h-3.5" />
+          </span>
+        )}
+        {user.profile?.nip05 && !user.profile?.nip05Verified && (
+          <span className="text-xs text-muted-foreground" title={user.profile.nip05}>
+            ✓
+          </span>
+        )}
+        <span className="text-xs text-muted-foreground">({methodLabel})</span>
       </div>
       
-      {/* NIP-05 display */}
-      {user.profile?.nip05 && (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-1">
-          {user.profile.nip05Verified ? (
-            <BadgeCheck className="w-3.5 h-3.5 text-success" />
-          ) : (
-            <span className="w-3.5 h-3.5 rounded-full border border-muted-foreground/50" />
-          )}
-          <span className={cn(user.profile.nip05Verified && "text-foreground")}>
-            {user.profile.nip05}
-          </span>
-        </div>
-      )}
-      
-      {/* Guest key export */}
+      {/* Guest key export popover */}
       {authMethod === "guest" && (
-        <div className="mt-1">
-          {!showKeyExport ? (
-            <button
-              onClick={() => setShowKeyExport(true)}
-              className="text-xs text-primary hover:underline flex items-center gap-1"
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Backup your private key"
             >
-              <Key className="w-3 h-3" />
-              Backup your private key
-            </button>
-          ) : (
-            <div className="p-2 bg-muted/50 rounded-lg space-y-2">
+              <Key className="w-4 h-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80" align="end">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-warning">⚠️ Keep this secret!</span>
-                <button
-                  onClick={() => setShowKeyExport(false)}
-                  className="text-xs text-muted-foreground hover:text-foreground"
-                >
-                  Hide
-                </button>
+                <span className="text-sm font-medium">Backup Private Key</span>
+                <span className="text-xs text-warning">⚠️ Keep secret!</span>
               </div>
               <div className="flex items-center gap-1">
-                <code className="flex-1 text-xs bg-background p-1.5 rounded font-mono break-all">
+                <code className="flex-1 text-xs bg-muted p-2 rounded font-mono break-all max-h-20 overflow-auto">
                   {showKey ? getDisplayKey() : "••••••••••••••••••••••••••••••••"}
                 </code>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowKey(!showKey)}
-                  className="h-7 w-7 p-0"
-                >
-                  {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopyKey}
-                  className="h-7 w-7 p-0"
-                >
-                  <Copy className="w-3 h-3" />
-                </Button>
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowKey(!showKey)}
+                    className="h-7 w-7 p-0"
+                  >
+                    {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyKey}
+                    className="h-7 w-7 p-0"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">
                 Import this key in other Nostr clients to access this identity.
               </p>
             </div>
-          )}
-        </div>
+          </PopoverContent>
+        </Popover>
       )}
+      
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={logout}
+        className="h-8 w-8 p-0"
+        title="Sign out"
+      >
+        <LogOut className="w-4 h-4" />
+      </Button>
     </div>
   );
 }
