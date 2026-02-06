@@ -7,7 +7,6 @@ import { KanbanView } from "@/components/tasks/KanbanView";
 import { CalendarView } from "@/components/tasks/CalendarView";
 import { ListView } from "@/components/tasks/ListView";
 import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
-import { RightSidebar } from "@/components/widgets/RightSidebar";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -23,11 +22,7 @@ import { NDKEvent } from "@nostr-dev-kit/ndk";
 
 const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
 
-// Default Nostr relays
-const DEFAULT_NOSTR_RELAYS = [
-  "wss://relay.damus.io",
-  "wss://relay.snort.social",
-];
+// Default Nostr relays - these are managed by NDKProvider in App.tsx
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
@@ -522,7 +517,7 @@ const Index = () => {
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* View Switcher Header - height matches sidebar logo */}
-        <div className="h-14 border-b border-border px-4 bg-background/95 backdrop-blur-sm flex items-center justify-between flex-shrink-0">
+        <div className="h-14 border-b border-border px-2 sm:px-4 bg-background/95 backdrop-blur-sm flex items-center justify-between flex-shrink-0 gap-1 sm:gap-2 min-w-0">
           <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
           <KeyboardShortcutsButton onClick={shortcutsHelp.open} />
@@ -533,12 +528,6 @@ const Index = () => {
         </div>
       </div>
       
-      {/* Right Sidebar with Relay Management */}
-      <RightSidebar
-        nostrRelays={nostrRelays}
-        onAddRelay={addRelay}
-        onRemoveRelay={removeRelay}
-      />
       
       {/* Keyboard Shortcuts Help Dialog */}
       <KeyboardShortcutsHelp isOpen={shortcutsHelp.isOpen} onClose={shortcutsHelp.close} />
