@@ -65,6 +65,8 @@ const NDKContext = createContext<NDKContextValue | null>(null);
 const DEFAULT_RELAYS = [
   "wss://relay.damus.io",
   "wss://relay.snort.social",
+  "wss://test.nostr.melonion.me",
+  "wss://nos.lol",
 ];
 
 // Storage keys
