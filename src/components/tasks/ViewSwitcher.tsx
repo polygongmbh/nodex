@@ -18,20 +18,21 @@ const views: { id: ViewType; label: string; icon: React.ReactNode }[] = [
 
 export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
   return (
-    <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+    <div className="flex items-center gap-0.5 p-1 bg-muted/50 rounded-lg min-w-0">
       {views.map((view) => (
         <button
           key={view.id}
           onClick={() => onViewChange(view.id)}
           className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+            "flex items-center gap-1 px-2 lg:px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex-shrink-0",
             currentView === view.id
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground hover:bg-background/50"
           )}
+          title={view.label}
         >
           {view.icon}
-          <span className="hidden sm:inline">{view.label}</span>
+          <span className="hidden lg:inline">{view.label}</span>
         </button>
       ))}
     </div>
