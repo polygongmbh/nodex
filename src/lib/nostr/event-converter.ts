@@ -23,7 +23,7 @@ export function isSpamContent(content: string): boolean {
 
 // Generate relay ID from URL - must match the ID generation in Index.tsx
 export function getRelayIdFromUrl(url: string): string {
-  return url.replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-");
+  return url.replace(/\/+$/, "").replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-");
 }
 
 // Generate relay display name from URL - trim common prefixes
