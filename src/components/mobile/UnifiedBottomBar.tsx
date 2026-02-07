@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Plus, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare } from "lucide-react";
+import { Search, Plus, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,6 +24,8 @@ interface UnifiedBottomBarProps {
   onPersonToggle: (id: string) => void;
   // Default content for composing
   defaultContent?: string;
+  isSignedIn: boolean;
+  onSignInClick: () => void;
 }
 
 type SelectorType = "relay" | "channel" | "person" | null;
@@ -39,6 +41,8 @@ export function UnifiedBottomBar({
   onChannelToggle,
   onPersonToggle,
   defaultContent = "",
+  isSignedIn,
+  onSignInClick,
 }: UnifiedBottomBarProps) {
   const [mode, setMode] = useState<BarMode>("search");
   const [content, setContent] = useState(defaultContent);
@@ -351,13 +355,22 @@ export function UnifiedBottomBar({
                 >
                   <X className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={!content.trim()}
-                  className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                >
-                  <Send className="w-5 h-5" />
-                </button>
+                {isSignedIn ? (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!content.trim()}
+                    className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={onSignInClick}
+                    className="p-3 rounded-lg border border-border text-foreground hover:bg-muted"
+                  >
+                    <Zap className="w-5 h-5" />
+                  </button>
+                )}
               </div>
             </div>
           </div>

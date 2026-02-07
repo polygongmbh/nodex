@@ -30,6 +30,7 @@ interface MobileLayoutProps {
   onRelayToggle: (id: string) => void;
   onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
+  onSignInClick: () => void;
 }
 
 // Mobile view order for swipe navigation
@@ -54,6 +55,7 @@ export function MobileLayout({
   onRelayToggle,
   onChannelToggle,
   onPersonToggle,
+  onSignInClick,
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
 
@@ -202,6 +204,8 @@ export function MobileLayout({
         onChannelToggle={onChannelToggle}
         onPersonToggle={onPersonToggle}
         defaultContent={defaultContent}
+        isSignedIn={Boolean(currentUser)}
+        onSignInClick={onSignInClick}
       />
     </div>
   );

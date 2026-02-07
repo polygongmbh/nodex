@@ -471,26 +471,30 @@ const Index = () => {
   // Mobile layout
   if (isMobile) {
     return (
-      <MobileLayout
-        relays={relaysWithActiveState}
-        channels={channelsWithState}
-        people={people}
-        tasks={filteredTasks}
-        allTasks={allTasks}
-        searchQuery={searchQuery}
-        focusedTaskId={focusedTaskId}
-        currentUser={currentUser}
-        currentView={currentView}
-        onViewChange={setCurrentView}
-        onSearchChange={setSearchQuery}
-        onNewTask={handleNewTask}
-        onToggleComplete={handleToggleComplete}
-        onStatusChange={handleStatusChange}
-        onFocusTask={setFocusedTaskId}
-        onRelayToggle={handleRelayToggle}
-        onChannelToggle={handleChannelToggle}
-        onPersonToggle={handlePersonToggle}
-      />
+      <>
+        <MobileLayout
+          relays={relaysWithActiveState}
+          channels={channelsWithState}
+          people={people}
+          tasks={filteredTasks}
+          allTasks={allTasks}
+          searchQuery={searchQuery}
+          focusedTaskId={focusedTaskId}
+          currentUser={currentUser}
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          onSearchChange={setSearchQuery}
+          onNewTask={handleNewTask}
+          onToggleComplete={handleToggleComplete}
+          onStatusChange={handleStatusChange}
+          onFocusTask={setFocusedTaskId}
+          onRelayToggle={handleRelayToggle}
+          onChannelToggle={handleChannelToggle}
+          onPersonToggle={handlePersonToggle}
+          onSignInClick={() => setIsAuthModalOpen(true)}
+        />
+        <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      </>
     );
   }
 
