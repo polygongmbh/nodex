@@ -111,22 +111,26 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     });
 
     // Set up relay event handlers
+    const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
+
     ndkInstance.pool.on("relay:connect", (relay: NDKRelay) => {
+      const normalized = normalizeUrl(relay.url);
       setRelays((prev) => {
-        const existing = prev.find((r) => r.url === relay.url);
+        const existing = prev.find((r) => normalizeUrl(r.url) === normalized);
         if (existing) {
           return prev.map((r) =>
-            r.url === relay.url ? { ...r, status: "connected" } : r
+            normalizeUrl(r.url) === normalized ? { ...r, url: normalized, status: "connected" } : r
           );
         }
-        return [...prev, { url: relay.url, status: "connected" }];
+        return [...prev, { url: normalized, status: "connected" }];
       });
     });
 
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
+      const normalized = normalizeUrl(relay.url);
       setRelays((prev) =>
         prev.map((r) =>
-          r.url === relay.url ? { ...r, status: "disconnected" } : r
+          normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
         )
       );
     });
