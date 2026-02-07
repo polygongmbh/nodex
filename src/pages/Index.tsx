@@ -518,8 +518,10 @@ const Index = () => {
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* View Switcher Header */}
-        <div className="h-14 border-b border-border px-2 sm:px-3 bg-background/95 backdrop-blur-sm flex items-center justify-between flex-shrink-0 gap-1 min-w-0">
-          <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
+        <div className="h-14 border-b border-border px-2 sm:px-3 bg-background/95 backdrop-blur-sm flex items-end justify-between flex-shrink-0 gap-2 min-w-0">
+          <div className="flex-1 min-w-0">
+            <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
+          </div>
           <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
         </div>
         {/* Current View */}

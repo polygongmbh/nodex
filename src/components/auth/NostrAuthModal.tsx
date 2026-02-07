@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +8,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -270,92 +273,106 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const methodLabel = authMethod === "extension" ? "Extension" : authMethod === "guest" ? "Guest" : "Key";
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted">
-        {user.profile?.picture ? (
-          <img 
-            src={user.profile.picture} 
-            alt="" 
-            className="w-5 h-5 rounded-full"
-          />
-        ) : (
-          <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-            <User className="w-3 h-3 text-primary" />
+    <DropdownMenu onOpenChange={(open) => { if (!open) setShowKey(false); }}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-9 px-2 gap-2">
+          {user.profile?.picture ? (
+            <img 
+              src={user.profile.picture} 
+              alt="" 
+              className="w-5 h-5 rounded-full"
+            />
+          ) : (
+            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+              <User className="w-3 h-3 text-primary" />
+            </div>
+          )}
+          <span className="text-sm font-medium hidden lg:inline">{displayName}</span>
+          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-80 p-2">
+        <DropdownMenuLabel className="px-2 py-1">
+          <div className="flex items-center gap-2">
+            {user.profile?.picture ? (
+              <img 
+                src={user.profile.picture} 
+                alt="" 
+                className="w-6 h-6 rounded-full"
+              />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                <User className="w-3.5 h-3.5 text-primary" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-medium truncate">{displayName}</span>
+                {user.profile?.nip05Verified && (
+                  <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${user.profile.nip05}`}>
+                    <BadgeCheck className="w-3.5 h-3.5" />
+                  </span>
+                )}
+                {user.profile?.nip05 && !user.profile?.nip05Verified && (
+                  <span className="text-xs text-muted-foreground" title={user.profile.nip05}>
+                    ✓
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground">Signed in via {methodLabel}</span>
+            </div>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {authMethod === "guest" && (
+          <div className="px-2 py-2 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium flex items-center gap-2">
+                <Key className="w-4 h-4 text-muted-foreground" />
+                Backup Private Key
+              </span>
+              <span className="text-xs text-warning">Keep secret</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <code className="flex-1 text-xs bg-muted p-2 rounded font-mono break-all max-h-20 overflow-auto">
+                {showKey ? getDisplayKey() : "••••••••••••••••••••••••••••••••"}
+              </code>
+              <div className="flex flex-col gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowKey(!showKey)}
+                  className="h-7 w-7 p-0"
+                >
+                  {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyKey}
+                  className="h-7 w-7 p-0"
+                >
+                  <Copy className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Import this key in other Nostr clients to access this identity.
+            </p>
           </div>
         )}
-        <span className="text-sm font-medium">{displayName}</span>
-        {user.profile?.nip05Verified && (
-          <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${user.profile.nip05}`}>
-            <BadgeCheck className="w-3.5 h-3.5" />
-          </span>
-        )}
-        {user.profile?.nip05 && !user.profile?.nip05Verified && (
-          <span className="text-xs text-muted-foreground" title={user.profile.nip05}>
-            ✓
-          </span>
-        )}
-        <span className="text-xs text-muted-foreground">({methodLabel})</span>
-      </div>
-      
-      {/* Guest key export popover */}
-      {authMethod === "guest" && (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              title="Backup your private key"
-            >
-              <Key className="w-4 h-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80" align="end">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Backup Private Key</span>
-                <span className="text-xs text-warning">⚠️ Keep secret!</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <code className="flex-1 text-xs bg-muted p-2 rounded font-mono break-all max-h-20 overflow-auto">
-                  {showKey ? getDisplayKey() : "••••••••••••••••••••••••••••••••"}
-                </code>
-                <div className="flex flex-col gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowKey(!showKey)}
-                    className="h-7 w-7 p-0"
-                  >
-                    {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopyKey}
-                    className="h-7 w-7 p-0"
-                  >
-                    <Copy className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Import this key in other Nostr clients to access this identity.
-              </p>
-            </div>
-          </PopoverContent>
-        </Popover>
-      )}
-      
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={logout}
-        className="h-8 w-8 p-0"
-        title="Sign out"
-      >
-        <LogOut className="w-4 h-4" />
-      </Button>
-    </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault();
+            logout();
+          }}
+          className="text-destructive focus:text-destructive"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
