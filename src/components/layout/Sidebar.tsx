@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Radio, Hash, Users, Plus, Wifi, WifiOff } from "lucide-react";
+import { Radio, Hash, Users, Plus, Wifi, WifiOff, Keyboard } from "lucide-react";
 import { Relay, Channel, Person } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
@@ -33,6 +33,7 @@ interface SidebarProps {
   onRemoveRelay: (url: string) => void;
   isFocused?: boolean;
   onFocusTasks?: () => void;
+  onShortcutsClick?: () => void;
 }
 
 export function Sidebar({
@@ -52,6 +53,7 @@ export function Sidebar({
   onRemoveRelay,
   isFocused = false,
   onFocusTasks,
+  onShortcutsClick,
 }: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
     feeds: true,
@@ -187,19 +189,19 @@ export function Sidebar({
     <aside 
       ref={sidebarRef}
       className={cn(
-        "w-64 h-screen bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden",
+        "w-48 lg:w-64 h-screen bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden flex-shrink-0",
         isFocused && "ring-2 ring-primary/30 ring-inset"
       )}
     >
       {/* Logo - height matches view switcher header */}
-      <div className="h-14 px-4 border-b border-sidebar-border flex items-center flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-            <Radio className="w-5 h-5 text-primary" />
+      <div className="h-14 px-3 lg:px-4 border-b border-sidebar-border flex items-center flex-shrink-0">
+        <div className="flex items-center gap-2 lg:gap-3">
+          <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <Radio className="w-4 h-4 lg:w-5 lg:h-5 text-primary" />
           </div>
           <div className="min-w-0">
-            <h1 className="font-heading font-semibold text-foreground truncate">Nodex</h1>
-            <p className="text-xs text-muted-foreground truncate">Collaboration Platform</p>
+            <h1 className="font-heading font-semibold text-foreground truncate text-sm lg:text-base">Nodex</h1>
+            <p className="text-xs text-muted-foreground truncate hidden lg:block">Collaboration Platform</p>
           </div>
         </div>
       </div>
@@ -286,27 +288,27 @@ export function Sidebar({
         </SidebarSection>
       </nav>
 
-      {/* Connection Status Footer */}
+      {/* Footer: Connection Status + Keyboard Shortcuts */}
       <div className="border-t border-sidebar-border flex-shrink-0">
         <RelayManagement
           relays={nostrRelays}
           onAddRelay={onAddRelay}
           onRemoveRelay={onRemoveRelay}
           trigger={
-            <button className="w-full h-12 px-3 flex items-center gap-2.5 text-xs text-muted-foreground hover:bg-muted/30 transition-colors">
+            <button className="w-full h-10 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors">
               <div className={cn(
                 "w-2 h-2 rounded-full flex-shrink-0",
                 isConnected ? "bg-success animate-pulse" : "bg-muted-foreground"
               )} aria-hidden="true" />
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 truncate">
                 {isConnected ? (
                   <>
-                    <Wifi className="w-3.5 h-3.5" />
-                    Connected to {connectedCount} relay{connectedCount !== 1 ? "s" : ""}
+                    <Wifi className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">{connectedCount} relay{connectedCount !== 1 ? "s" : ""}</span>
                   </>
                 ) : (
                   <>
-                    <WifiOff className="w-3.5 h-3.5" />
+                    <WifiOff className="w-3.5 h-3.5 flex-shrink-0" />
                     Disconnected
                   </>
                 )}
@@ -314,6 +316,17 @@ export function Sidebar({
             </button>
           }
         />
+        {onShortcutsClick && (
+          <button
+            onClick={onShortcutsClick}
+            className="w-full h-9 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
+            title="Keyboard shortcuts (?)"
+          >
+            <Keyboard className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">Shortcuts</span>
+            <kbd className="ml-auto text-[10px] font-mono bg-muted/50 border border-border rounded px-1">?</kbd>
+          </button>
+        )}
       </div>
     </aside>
   );

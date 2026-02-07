@@ -10,7 +10,7 @@ import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp, KeyboardShortcutsButton } from "@/components/KeyboardShortcutsHelp";
+import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { nostrEventToTask, eventHasTags, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
@@ -514,13 +514,13 @@ const Index = () => {
         onRemoveRelay={removeRelay}
         isFocused={isSidebarFocused}
         onFocusTasks={handleFocusTasks}
+        onShortcutsClick={shortcutsHelp.open}
       />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* View Switcher Header - height matches sidebar logo */}
-        <div className="h-14 border-b border-border px-2 sm:px-4 bg-background/95 backdrop-blur-sm flex items-center justify-between flex-shrink-0 gap-1 sm:gap-2 min-w-0">
-          <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
+        {/* View Switcher Header */}
+        <div className="h-14 border-b border-border px-2 sm:px-3 bg-background/95 backdrop-blur-sm flex items-center justify-between flex-shrink-0 gap-1 min-w-0">
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
-          <KeyboardShortcutsButton onClick={shortcutsHelp.open} />
+          <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
         </div>
         {/* Current View */}
         <div className="flex-1 overflow-hidden">
