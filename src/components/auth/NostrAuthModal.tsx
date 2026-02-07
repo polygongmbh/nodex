@@ -28,21 +28,24 @@ interface NostrAuthModalProps {
   onClose: () => void;
 }
 
-type AuthStep = "choose" | "privateKey";
+type AuthStep = "choose" | "privateKey" | "nostrConnect";
 
 export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const { 
     loginWithExtension, 
     loginWithPrivateKey, 
     loginAsGuest,
+    loginWithNostrConnect,
     isAuthenticating 
   } = useNDK();
   
   const [step, setStep] = useState<AuthStep>("choose");
   const [privateKey, setPrivateKey] = useState("");
+  const [bunkerUrl, setBunkerUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const hasExtension = typeof window !== "undefined" && (window as any).nostr;
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
   const handleExtensionLogin = async () => {
     setError(null);
@@ -83,9 +86,26 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     }
   };
 
+  const handleNostrConnectLogin = async () => {
+    setError(null);
+    if (!bunkerUrl.trim()) {
+      setError("Please paste a bunker:// connection string");
+      return;
+    }
+    const success = await loginWithNostrConnect(bunkerUrl.trim());
+    if (success) {
+      toast.success("Connected to signer app!");
+      setBunkerUrl("");
+      onClose();
+    } else {
+      setError("Failed to connect. Verify your bunker:// string and try again.");
+    }
+  };
+
   const handleClose = () => {
     setStep("choose");
     setPrivateKey("");
+    setBunkerUrl("");
     setError(null);
     onClose();
   };
@@ -96,9 +116,11 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
         <DialogHeader>
           <DialogTitle>Sign in to Nostr</DialogTitle>
           <DialogDescription>
-            {step === "choose" 
+            {step === "choose"
               ? "Choose how you want to authenticate to post to Nostr relays."
-              : "Enter your Nostr private key (nsec or hex format)."
+              : step === "privateKey"
+                ? "Enter your Nostr private key (nsec or hex format)."
+                : "Connect with a signer app using Nostr Connect (NIP-46)."
             }
           </DialogDescription>
         </DialogHeader>
@@ -115,10 +137,10 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             {/* Browser Extension */}
             <button
               onClick={handleExtensionLogin}
-              disabled={isAuthenticating || !hasExtension}
+              disabled={isAuthenticating || !hasExtension || isMobile}
               className={cn(
                 "w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-left",
-                hasExtension 
+                hasExtension && !isMobile
                   ? "border-border hover:bg-muted hover:border-primary/50" 
                   : "border-border/50 opacity-50 cursor-not-allowed"
               )}
@@ -129,13 +151,32 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
               <div className="flex-1">
                 <div className="font-medium">Browser Extension</div>
                 <div className="text-sm text-muted-foreground">
-                  {hasExtension 
-                    ? "Sign in with Alby, nos2x, or another NIP-07 extension"
-                    : "No Nostr extension detected"
+                  {isMobile
+                    ? "Extensions aren’t available on mobile"
+                    : hasExtension 
+                      ? "Sign in with Alby, nos2x, or another NIP-07 extension"
+                      : "No Nostr extension detected"
                   }
                 </div>
               </div>
               {isAuthenticating && <Loader2 className="w-4 h-4 animate-spin" />}
+            </button>
+
+            {/* Nostr Connect (Signer App) */}
+            <button
+              onClick={() => setStep("nostrConnect")}
+              disabled={isAuthenticating}
+              className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
+            >
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                <Key className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <div className="font-medium">Signer App (Nostr Connect)</div>
+                <div className="text-sm text-muted-foreground">
+                  Connect with a mobile signer using a bunker:// link
+                </div>
+              </div>
             </button>
 
             {/* Private Key */}
@@ -174,10 +215,10 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             </button>
 
             <p className="text-xs text-muted-foreground text-center pt-2">
-              Your identity is never sent to any server. All signing happens locally.
+              Your keys never leave your device or signer app. Signing happens locally or in your signer.
             </p>
           </div>
-        ) : (
+        ) : step === "privateKey" ? (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="privateKey">Private Key</Label>
@@ -212,6 +253,43 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
                 Sign In
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="bunkerUrl">Signer Connection</Label>
+              <Input
+                id="bunkerUrl"
+                type="text"
+                placeholder="bunker://..."
+                value={bunkerUrl}
+                onChange={(e) => setBunkerUrl(e.target.value)}
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground">
+                Paste the bunker:// link from your signer app to connect.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setStep("choose")}
+                disabled={isAuthenticating}
+                className="flex-1"
+              >
+                Back
+              </Button>
+              <Button
+                onClick={handleNostrConnectLogin}
+                disabled={isAuthenticating || !bunkerUrl.trim()}
+                className="flex-1"
+              >
+                {isAuthenticating ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Connect
               </Button>
             </div>
           </div>
@@ -258,10 +336,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   if (!user) {
     return (
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={onSignInClick}
-        className="gap-2"
+        className="h-full px-2 gap-2 text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent rounded-none"
       >
         <Zap className="w-4 h-4" />
         Sign in to post
@@ -270,12 +348,18 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   }
 
   const displayName = user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`;
-  const methodLabel = authMethod === "extension" ? "Extension" : authMethod === "guest" ? "Guest" : "Key";
+  const methodLabel = authMethod === "extension"
+    ? "Extension"
+    : authMethod === "guest"
+      ? "Guest"
+      : authMethod === "nostrConnect"
+        ? "Signer"
+        : "Key";
 
   return (
     <DropdownMenu onOpenChange={(open) => { if (!open) setShowKey(false); }}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-9 px-2 gap-2">
+        <Button variant="ghost" size="sm" className="h-full w-full px-2 gap-2 bg-transparent hover:bg-transparent rounded-none justify-end">
           {user.profile?.picture ? (
             <img 
               src={user.profile.picture} 
@@ -287,7 +371,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
               <User className="w-3 h-3 text-primary" />
             </div>
           )}
-          <span className="text-sm font-medium hidden lg:inline">{displayName}</span>
+          <span className="text-sm font-medium truncate max-w-[8rem]">{displayName}</span>
           <ChevronDown className="w-4 h-4 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>

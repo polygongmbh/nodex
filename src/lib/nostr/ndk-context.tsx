@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo, R
 import NDK, {
   NDKEvent,
   NDKNip07Signer,
+  NDKNip46Signer,
   NDKPrivateKeySigner,
   NDKUser,
   NDKRelay,
@@ -11,7 +12,7 @@ import NDK, {
 import { NostrEventKind } from "./types";
 
 // Authentication types
-export type AuthMethod = "extension" | "privateKey" | "guest" | null;
+export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | null;
 
 export interface NostrUser {
   pubkey: string;
@@ -44,6 +45,7 @@ export interface NDKContextValue {
   loginWithExtension: () => Promise<boolean>;
   loginWithPrivateKey: (nsecOrHex: string) => Promise<boolean>;
   loginAsGuest: () => Promise<boolean>;
+  loginWithNostrConnect: (bunkerUrl: string) => Promise<boolean>;
   logout: () => void;
   
   // Relay management
@@ -72,6 +74,8 @@ const DEFAULT_RELAYS = [
 // Storage keys
 const STORAGE_KEY_AUTH = "nostr_auth_method";
 const STORAGE_KEY_NSEC = "nostr_guest_nsec";
+const STORAGE_KEY_NIP46_BUNKER = "nostr_nip46_bunker";
+const STORAGE_KEY_NIP46_LOCAL_NSEC = "nostr_nip46_local_nsec";
 
 // NIP-05 verification helper
 async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
@@ -186,6 +190,34 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
           });
         }).catch(() => {
           localStorage.removeItem(STORAGE_KEY_AUTH);
+        });
+      }
+    } else if (savedAuthMethod === "nostrConnect") {
+      const bunkerUrl = localStorage.getItem(STORAGE_KEY_NIP46_BUNKER);
+      const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
+      if (!bunkerUrl) {
+        localStorage.removeItem(STORAGE_KEY_AUTH);
+      } else {
+        const signer = NDKNip46Signer.bunker(ndkInstance, bunkerUrl, localKey);
+        ndkInstance.signer = signer;
+        signer.blockUntilReady().then(async (ndkUser: NDKUser) => {
+          await ndkUser.fetchProfile();
+          setUser({
+            pubkey: ndkUser.pubkey,
+            npub: ndkUser.npub,
+            profile: {
+              name: ndkUser.profile?.name,
+              displayName: ndkUser.profile?.displayName,
+              picture: ndkUser.profile?.image,
+              about: ndkUser.profile?.about,
+              nip05: ndkUser.profile?.nip05,
+            },
+          });
+          setAuthMethod("nostrConnect");
+        }).catch(() => {
+          localStorage.removeItem(STORAGE_KEY_AUTH);
+          localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
+          localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
         });
       }
     }
@@ -309,6 +341,48 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     }
   }, [ndk]);
 
+  const loginWithNostrConnect = useCallback(async (bunkerUrl: string): Promise<boolean> => {
+    if (!ndk) return false;
+    if (!bunkerUrl.trim().startsWith("bunker://")) {
+      console.error("Invalid NIP-46 bunker URL");
+      return false;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
+      const signer = NDKNip46Signer.bunker(ndk, bunkerUrl.trim(), localKey);
+      ndk.signer = signer;
+
+      const ndkUser = await signer.blockUntilReady();
+      await ndkUser.fetchProfile();
+
+      setUser({
+        pubkey: ndkUser.pubkey,
+        npub: ndkUser.npub,
+        profile: {
+          name: ndkUser.profile?.name,
+          displayName: ndkUser.profile?.displayName,
+          picture: ndkUser.profile?.image,
+          about: ndkUser.profile?.about,
+          nip05: ndkUser.profile?.nip05,
+        },
+      });
+      setAuthMethod("nostrConnect");
+      localStorage.setItem(STORAGE_KEY_AUTH, "nostrConnect");
+      localStorage.setItem(STORAGE_KEY_NIP46_BUNKER, bunkerUrl.trim());
+      if (signer.localSigner?.privateKey) {
+        localStorage.setItem(STORAGE_KEY_NIP46_LOCAL_NSEC, signer.localSigner.privateKey);
+      }
+      return true;
+    } catch (error) {
+      console.error("Nostr Connect login failed:", error);
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [ndk]);
+
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
     return localStorage.getItem(STORAGE_KEY_NSEC);
@@ -321,6 +395,8 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     setUser(null);
     setAuthMethod(null);
     localStorage.removeItem(STORAGE_KEY_AUTH);
+    localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
+    localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
     // Keep guest key for potential re-login
   }, [ndk]);
 
@@ -428,6 +504,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     loginWithExtension,
     loginWithPrivateKey,
     loginAsGuest,
+    loginWithNostrConnect,
     logout,
     addRelay,
     removeRelay,
@@ -444,6 +521,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     loginWithExtension,
     loginWithPrivateKey,
     loginAsGuest,
+    loginWithNostrConnect,
     logout,
     addRelay,
     removeRelay,
