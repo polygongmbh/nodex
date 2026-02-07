@@ -16,6 +16,26 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+interface SidebarHeaderProps {
+  className?: string;
+}
+
+export function SidebarHeader({ className }: SidebarHeaderProps) {
+  return (
+    <div className={cn("px-2 sm:px-3 lg:px-4 border-b border-sidebar-border flex items-center flex-shrink-0", className)}>
+      <div className="flex items-center gap-2 lg:gap-3">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 xl:w-10 xl:h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+          <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 xl:w-5 xl:h-5 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <h1 className="font-heading font-semibold text-foreground truncate text-xs sm:text-sm xl:text-lg">Nodex</h1>
+          <p className="text-xs text-muted-foreground truncate hidden lg:block">Collaboration Platform</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface SidebarProps {
   relays: Relay[];
   channels: Channel[];
@@ -189,23 +209,10 @@ export function Sidebar({
     <aside 
       ref={sidebarRef}
       className={cn(
-        "w-48 lg:w-64 h-screen bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden flex-shrink-0",
+        "w-36 sm:w-44 lg:w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden flex-shrink-0",
         isFocused && "ring-2 ring-primary/30 ring-inset"
       )}
     >
-      {/* Logo - height matches view switcher header */}
-      <div className="h-14 px-3 lg:px-4 border-b border-sidebar-border flex items-center flex-shrink-0">
-        <div className="flex items-center gap-2 lg:gap-3">
-          <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-            <Radio className="w-4 h-4 lg:w-5 lg:h-5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-heading font-semibold text-foreground truncate text-sm lg:text-base">Nodex</h1>
-            <p className="text-xs text-muted-foreground truncate hidden lg:block">Collaboration Platform</p>
-          </div>
-        </div>
-      </div>
-
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto scrollbar-thin py-2">
         {/* Feeds/Relays */}

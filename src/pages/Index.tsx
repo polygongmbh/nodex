@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { Sidebar, SidebarHeader } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { FeedView } from "@/components/tasks/FeedView";
 import { KanbanView } from "@/components/tasks/KanbanView";
@@ -500,7 +500,16 @@ const Index = () => {
 
   // Desktop layout
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="grid h-screen overflow-hidden bg-background grid-cols-[auto,1fr] grid-rows-[var(--topbar-height),1fr] [--topbar-height:3rem] sm:[--topbar-height:3.5rem] xl:[--topbar-height:4rem]">
+      <SidebarHeader className="h-[var(--topbar-height)]" />
+      <div className="border-b border-border px-2 sm:px-3 bg-background/95 backdrop-blur-sm flex items-stretch justify-between gap-2 min-w-0 h-[var(--topbar-height)]">
+        <div className="flex-1 min-w-0 h-full">
+          <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
+        </div>
+        <div className="h-full flex items-stretch justify-end w-24 sm:w-36 lg:w-40">
+          <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
+        </div>
+      </div>
       <Sidebar
         relays={relaysWithActiveState}
         channels={channelsWithState}
@@ -520,18 +529,8 @@ const Index = () => {
         onFocusTasks={handleFocusTasks}
         onShortcutsClick={shortcutsHelp.open}
       />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* View Switcher Header */}
-        <div className="h-14 border-b border-border px-2 sm:px-3 bg-background/95 backdrop-blur-sm flex items-end justify-between flex-shrink-0 gap-2 min-w-0">
-          <div className="flex-1 min-w-0">
-            <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
-          </div>
-          <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
-        </div>
-        {/* Current View */}
-        <div className="flex-1 overflow-hidden">
-          {renderView()}
-        </div>
+      <div className="min-w-0 overflow-hidden">
+        {renderView()}
       </div>
       
       
