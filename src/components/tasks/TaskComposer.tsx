@@ -46,6 +46,7 @@ export function TaskComposer({
   const [dueTime, setDueTime] = useState("");
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState("");
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -162,9 +163,40 @@ export function TaskComposer({
     setDueTime("");
   };
 
+  const filteredChannels = channels.filter(channel => channel.name.toLowerCase().includes(hashtagFilter));
+  const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (showHashtagSuggestions && filteredChannels.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveSuggestionIndex((prev) => (prev + 1) % filteredChannels.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveSuggestionIndex((prev) => (prev - 1 + filteredChannels.length) % filteredChannels.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        const selected = filteredChannels[Math.max(activeSuggestionIndex, 0)] || filteredChannels[0];
+        if (selected) {
+          insertHashtag(selected.name);
+        }
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowHashtagSuggestions(false);
+        setActiveSuggestionIndex(0);
+        return;
+      }
+    }
+
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       handleSubmit();
+      return;
     }
     if (e.key === "Escape") {
       onCancel();
@@ -183,8 +215,10 @@ export function TaskComposer({
     if (hashtagMatch) {
       setHashtagFilter(hashtagMatch[1].toLowerCase());
       setShowHashtagSuggestions(true);
+      setActiveSuggestionIndex(0);
     } else {
       setShowHashtagSuggestions(false);
+      setActiveSuggestionIndex(0);
     }
   };
 
@@ -195,11 +229,9 @@ export function TaskComposer({
     const newContent = textBeforeCursor.slice(0, hashtagStart) + `#${tagName} ` + textAfterCursor;
     setContent(newContent);
     setShowHashtagSuggestions(false);
+    setActiveSuggestionIndex(0);
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
-
-  const filteredChannels = channels.filter(channel => channel.name.toLowerCase().includes(hashtagFilter));
-  const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
 
   return (
     <div className={cn("space-y-3", compact && "space-y-2")}>
@@ -249,11 +281,19 @@ export function TaskComposer({
             {filteredChannels.map((channel) => (
               <button
                 key={channel.id}
+                type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   insertHashtag(channel.name);
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-left"
+                onMouseEnter={() => {
+                  const index = filteredChannels.findIndex((c) => c.id === channel.id);
+                  setActiveSuggestionIndex(index >= 0 ? index : 0);
+                }}
+                className={cn(
+                  "w-full flex items-center gap-2 px-3 py-2 text-left",
+                  filteredChannels[activeSuggestionIndex]?.id === channel.id ? "bg-muted" : "hover:bg-muted"
+                )}
               >
                 <Hash className="w-4 h-4 text-primary" />
                 <span className="text-sm">{channel.name}</span>

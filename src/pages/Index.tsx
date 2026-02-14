@@ -14,6 +14,7 @@ import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/Ke
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { nostrEventToTask, eventHasTags, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
+import { deriveChannels } from "@/lib/channels";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
@@ -82,6 +83,7 @@ const Index = () => {
     mockPeople.map((p) => ({ ...p, isSelected: false }))
   );
   const [localTasks, setLocalTasks] = useState<Task[]>(mockTasks);
+  const [postedTags, setPostedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
 
@@ -128,46 +130,10 @@ const Index = () => {
     }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [localTasks, nostrTasks]);
 
-  // Dynamically derive channels from all tasks - only show tags that appear 6+ times
+  // Dynamically derive channels from tasks/events, always including tags posted by this user.
   const channels: Channel[] = useMemo(() => {
-    const tagCounts = new Map<string, number>();
-    
-    // Count tags from local tasks
-    localTasks.forEach((task) => {
-      task.tags.forEach((tag) => {
-        const lower = tag.toLowerCase();
-        tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
-      });
-    });
-    
-    // Count tags from nostr events
-    filteredNostrEvents.forEach((event) => {
-      // Extract t tags
-      event.tags
-        .filter((tag) => tag[0] === "t" && tag[1])
-        .forEach((tag) => {
-          const lower = tag[1].toLowerCase();
-          tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
-        });
-      // Extract hashtags from content
-      const hashtagRegex = /#(\w+)/g;
-      let match;
-      while ((match = hashtagRegex.exec(event.content)) !== null) {
-        const lower = match[1].toLowerCase();
-        tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
-      }
-    });
-    
-    // Filter to only include tags appearing 6+ times, then sort
-    return Array.from(tagCounts.entries())
-      .filter(([_, count]) => count >= 6)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([name]) => ({
-        id: name,
-        name,
-        filterState: "neutral" as const,
-      }));
-  }, [localTasks, filteredNostrEvents]);
+    return deriveChannels(localTasks, filteredNostrEvents, postedTags, 6);
+  }, [localTasks, filteredNostrEvents, postedTags]);
 
   // Maintain channel filter states across dynamic updates
   const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(new Map());
@@ -387,6 +353,7 @@ const Index = () => {
       toast.error("Add at least one #channel before posting");
       return;
     }
+    setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
 
     const requestedRelayIds = relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID];
     const hasNonDemoRelay = requestedRelayIds.some((id) => id !== DEMO_RELAY_ID);
