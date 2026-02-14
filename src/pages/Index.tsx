@@ -15,6 +15,7 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { nostrEventToTask, eventHasTags, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
+import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
@@ -301,26 +302,10 @@ const Index = () => {
       return;
     }
 
+    const existingTask = allTasks.find((task) => task.id === taskId);
+    const nextStatus = cycleTaskStatus(existingTask?.status || "todo");
     setLocalTasks((prev) =>
-      prev.map((task) => {
-        if (task.id !== taskId) return task;
-        
-        const currentStatus = task.status || "todo";
-        let nextStatus: "todo" | "in-progress" | "done";
-        let completedBy: string | undefined = task.completedBy;
-        
-        if (currentStatus === "todo") {
-          nextStatus = "in-progress";
-        } else if (currentStatus === "in-progress") {
-          nextStatus = "done";
-          completedBy = currentUser?.name;
-        } else {
-          nextStatus = "todo";
-          completedBy = undefined;
-        }
-        
-        return { ...task, status: nextStatus, completedBy };
-      })
+      applyTaskStatusUpdate(prev, allTasks, taskId, nextStatus, currentUser?.name)
     );
   };
 
@@ -332,14 +317,7 @@ const Index = () => {
     }
 
     setLocalTasks((prev) =>
-      prev.map((task) => {
-        if (task.id !== taskId) return task;
-        return { 
-          ...task, 
-          status: newStatus, 
-          completedBy: newStatus === "done" ? currentUser?.name : undefined 
-        };
-      })
+      applyTaskStatusUpdate(prev, allTasks, taskId, newStatus, currentUser?.name)
     );
   };
 

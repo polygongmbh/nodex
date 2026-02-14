@@ -201,10 +201,7 @@ export function CalendarView({
   }, [upcomingTasks]);
 
   const canCompleteTask = (task: Task) => {
-    if (!currentUser) return false;
-    const mentionedPeople = task.content.match(/@(\w+)/g)?.map(m => m.slice(1)) || [];
-    if (mentionedPeople.length === 0) return true;
-    return mentionedPeople.includes(currentUser.name);
+    return task.taskType === "task" && Boolean(currentUser);
   };
 
   // Get day of week for first day to add padding

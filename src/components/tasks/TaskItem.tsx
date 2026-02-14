@@ -140,11 +140,7 @@ export function TaskItem({
   };
 
   const canCompleteTask = () => {
-    if (task.taskType !== "task") return false;
-    if (!currentUser) return false;
-    const mentionedPeople = task.content.match(/@(\w+)/g)?.map(m => m.slice(1)) || [];
-    if (mentionedPeople.length === 0) return true;
-    return mentionedPeople.includes(currentUser.name);
+    return task.taskType === "task" && Boolean(currentUser);
   };
 
   // Calculate indentation based on depth

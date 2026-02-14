@@ -57,4 +57,22 @@ describe("TaskItem status actions", () => {
 
     expect(onStatusChange).toHaveBeenCalledWith("t1", "done");
   });
+
+  it("allows setting status even when task mentions another user", () => {
+    const onStatusChange = vi.fn();
+
+    render(
+      <TaskItem
+        task={{ ...baseTask, content: "Follow up with @alice" }}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+      />
+    );
+
+    fireEvent.click(screen.getByText("In Progress"));
+
+    expect(onStatusChange).toHaveBeenCalledWith("t1", "in-progress");
+  });
 });
