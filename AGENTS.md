@@ -55,6 +55,12 @@ structure:
       role: vite build/dev configuration
     - path: tsconfig.json
       role: typescript project configuration
+    - path: mostr-cli/
+      role: optional reference implementation for functional behavior
+      optional: true
+      notes:
+        - may be absent in some checkouts
+        - use as behavioral reference; Nodex should implement equivalent UX visually
   src:
     - path: src/pages/
       role: route-level page components
@@ -78,6 +84,7 @@ structure:
 - Nodex is a Nostr-native task and discussion application.
 - Primary entities are tasks/comments, channels (hashtags), relays, and people filters.
 - Compose behavior, filtering logic, and Nostr event compatibility are core product behavior and should be treated as high-impact areas.
+- `mostr-cli/` is an optional reference implementation for behavior parity, not a required runtime dependency.
 
 ## Commit Discipline
 - Always commit every completed change.
