@@ -86,6 +86,10 @@ structure:
 - Use semantic commit messages (Conventional Commits), e.g. `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
 - Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) were added/updated/removed.
 
+## Startup Repo Check
+- At the start of work, check `git status --short`.
+- If there are unstaged modifications beyond `package-lock.json`, warn the user before proceeding.
+
 ## Test-First Workflow
 - Write tests before each change.
 - Verify all tests run after each change.
