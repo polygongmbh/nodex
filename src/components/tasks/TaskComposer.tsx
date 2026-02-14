@@ -69,8 +69,31 @@ export function TaskComposer({
     const appendTag = (text: string, channelName: string) =>
       text + (text && !text.endsWith(" ") ? " " : "") + `#${channelName} `;
     const removeTag = (text: string, channelName: string) => {
-      const pattern = new RegExp(`(^|\\s)#${escapeRegex(channelName)}(?=\\s|$)`, "gi");
-      return text.replace(pattern, "$1").replace(/[ \t]{2,}/g, " ").replace(/^\s+/, "");
+      const tagPattern = new RegExp(`(^|\\s)#${escapeRegex(channelName)}(?=\\s|$)`, "gi");
+      const suffixHasOnlyTags = (suffix: string) => /^\s*(?:#\w+\s*)*$/.test(suffix);
+
+      let match: RegExpExecArray | null;
+      let updated = text;
+      let removedLengthOffset = 0;
+
+      while ((match = tagPattern.exec(text)) !== null) {
+        const fullMatch = match[0];
+        const leadingWhitespace = match[1] || "";
+        const start = match.index;
+        const end = start + fullMatch.length;
+        const suffix = text.slice(end);
+
+        if (!suffixHasOnlyTags(suffix)) {
+          continue;
+        }
+
+        const adjustedStart = start - removedLengthOffset;
+        const adjustedEnd = end - removedLengthOffset;
+        updated = updated.slice(0, adjustedStart) + leadingWhitespace + updated.slice(adjustedEnd);
+        removedLengthOffset += fullMatch.length - leadingWhitespace.length;
+      }
+
+      return updated.replace(/[ \t]{2,}/g, " ").replace(/^\s+/, "");
     };
 
     const previous = new Set(prevIncludedChannelsRef.current);
