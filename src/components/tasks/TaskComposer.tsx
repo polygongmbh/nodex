@@ -6,8 +6,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { NostrEventKind } from "@/lib/nostr/types";
-import { toast } from "sonner";
 
 interface TaskComposerProps {
   onSubmit: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
@@ -34,7 +32,7 @@ export function TaskComposer({
   parentId,
   onSignInClick,
 }: TaskComposerProps) {
-  const { user, publishEvent } = useNDK();
+  const { user } = useNDK();
   
   const [content, setContent] = useState(defaultContent);
   const [taskType, setTaskType] = useState<TaskType>("task");
@@ -54,44 +52,32 @@ export function TaskComposer({
     textareaRef.current?.focus();
   }, []);
 
+  // Keep selected publish targets aligned with currently active relay filters.
+  useEffect(() => {
+    const activeRelays = relays.filter((r) => r.isActive).map((r) => r.id);
+    setSelectedRelays(activeRelays.length > 0 ? activeRelays : [relays[0]?.id].filter(Boolean));
+  }, [relays]);
+
   const handleSubmit = async () => {
     if (!content.trim()) return;
     
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
     
-    // Check if user is signed in and any non-demo relay is selected
-    const hasNostrRelay = selectedRelays.some(r => r !== "demo");
-    
-    if (hasNostrRelay) {
-      // Require authentication for posting to Nostr relays
-      if (!user) {
-        if (onSignInClick) {
-          onSignInClick();
-        }
-        return;
+    // Require authentication for any posting action (including demo-only local posts).
+    if (!user) {
+      if (onSignInClick) {
+        onSignInClick();
       }
-      
-      // Publish to Nostr
-      setIsPublishing(true);
-      try {
-        const kind = taskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
-        const success = await publishEvent(kind, content, [], parentId);
-        
-        if (success) {
-          toast.success(`${taskType === "task" ? "Task" : "Comment"} published to Nostr!`);
-        } else {
-          toast.error("Failed to publish to Nostr");
-        }
-      } catch (error) {
-        console.error("Publish error:", error);
-        toast.error("Error publishing to Nostr");
-      } finally {
-        setIsPublishing(false);
-      }
+      return;
     }
     
-    // Also add locally
-    onSubmit(content, extractedTags, selectedRelays, taskType, dueDate, dueTime || undefined);
+    // Also add locally (and publish in parent handler)
+    setIsPublishing(true);
+    try {
+      await Promise.resolve(onSubmit(content, extractedTags, selectedRelays, taskType, dueDate, dueTime || undefined));
+    } finally {
+      setIsPublishing(false);
+    }
     setContent("");
     setDueDate(undefined);
     setDueTime("");
@@ -240,12 +226,12 @@ export function TaskComposer({
         </div>
       )}
 
-      {/* Sign in prompt for Nostr */}
-      {!user && selectedRelays.some(r => r !== "demo") && (
+      {/* Sign in prompt for posting */}
+      {!user && (
         <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg">
           <Zap className="w-4 h-4 text-primary" />
           <span className="text-sm text-muted-foreground flex-1">
-            Sign in to post to Nostr relays
+            Sign in to post or update tasks
           </span>
           {onSignInClick && (
             <button
@@ -290,13 +276,13 @@ export function TaskComposer({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!content.trim() || isPublishing || (!user && selectedRelays.some(r => r !== "demo"))}
+            disabled={!content.trim() || isPublishing || !user}
             className="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isPublishing && (
               <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
             )}
-            {!user && selectedRelays.some(r => r !== "demo") ? "Sign in to post" : (taskType === "task" ? "Create Task" : "Add Comment")}
+            {!user ? "Sign in to post" : (taskType === "task" ? "Create Task" : "Add Comment")}
           </button>
         </div>
       </div>

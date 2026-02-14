@@ -43,6 +43,8 @@ const Index = () => {
     addRelay,
     removeRelay,
     subscribe,
+    publishEvent,
+    user,
   } = useNDK();
 
   // Auth modal state
@@ -58,6 +60,7 @@ const Index = () => {
       name: getRelayNameFromUrl(r.url),
       icon: "radio",
       isActive: r.status === "connected",
+      url: r.url,
       postCount: undefined,
     }));
     
@@ -326,6 +329,12 @@ const Index = () => {
   };
 
   const handleToggleComplete = (taskId: string) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      toast.error("Sign in required to modify tasks");
+      return;
+    }
+
     setLocalTasks((prev) =>
       prev.map((task) => {
         if (task.id !== taskId) return task;
@@ -350,6 +359,12 @@ const Index = () => {
   };
 
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      toast.error("Sign in required to modify tasks");
+      return;
+    }
+
     setLocalTasks((prev) =>
       prev.map((task) => {
         if (task.id !== taskId) return task;
@@ -362,13 +377,40 @@ const Index = () => {
     );
   };
 
-  const handleNewTask = (content: string, extractedTags: string[], relayIds: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => {
+  const handleNewTask = async (content: string, extractedTags: string[], relayIds: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      toast.error("Sign in required to post");
+      return;
+    }
+
+    const requestedRelayIds = relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID];
+    const hasNonDemoRelay = requestedRelayIds.some((id) => id !== DEMO_RELAY_ID);
+    
+    const selectedRelayUrls = relays
+      .filter((r) => requestedRelayIds.includes(r.id))
+      .map((r) => r.url)
+      .filter((url): url is string => Boolean(url));
+    
+    const shouldPublish = hasNonDemoRelay && selectedRelayUrls.length > 0;
+    
+    let publishSuccess = false;
+    if (shouldPublish) {
+      console.log("Publishing event to relays:", selectedRelayUrls);
+      const kind = taskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
+      publishSuccess = await publishEvent(kind, content, [], parentId, selectedRelayUrls);
+    }
+    
+    const effectiveRelayIds = selectedRelayUrls.length > 0
+      ? selectedRelayUrls.map((url) => getRelayIdFromUrl(url))
+      : requestedRelayIds;
+    
     const newTask: Task = {
       id: Date.now().toString(),
       author: people.find((p) => p.id === "me") || people[0],
       content,
       tags: extractedTags,
-      relays: relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID],
+      relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
       taskType: taskType as TaskType,
       timestamp: new Date(),
       likes: 0,
@@ -379,7 +421,16 @@ const Index = () => {
       parentId,
     };
     setLocalTasks((prev) => [newTask, ...prev]);
-    toast.success(taskType === "comment" ? "Comment added!" : "Task created!");
+    
+    if (shouldPublish) {
+      if (publishSuccess) {
+        toast.success(`${taskType === "comment" ? "Comment" : "Task"} published to Nostr and added locally`);
+      } else {
+        toast.error("Failed to publish to Nostr; added locally");
+      }
+    } else {
+      toast.success(`${taskType === "comment" ? "Comment" : "Task"} added locally (demo only)`);
+    }
   };
 
   // Build relays with active state for sidebar display
