@@ -6,6 +6,12 @@ import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskComposer } from "./TaskComposer";
 import { getDueDateColorClass } from "@/lib/taskSorting";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -18,6 +24,7 @@ interface CalendarViewProps {
   onSearchChange: (query: string) => void;
   onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
   onToggleComplete: (taskId: string) => void;
+  onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
   isMobile?: boolean;
@@ -34,6 +41,7 @@ export function CalendarView({
   onSearchChange,
   onNewTask,
   onToggleComplete,
+  onStatusChange,
   focusedTaskId,
   onFocusTask,
   isMobile = false,
@@ -321,20 +329,47 @@ export function CalendarView({
                             key={task.id}
                             className="flex items-start gap-2 p-2 rounded-lg bg-card border border-border"
                           >
-                            <button
-                              onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
-                              disabled={!canCompleteTask(task)}
-                              className={cn(
-                                "flex-shrink-0 mt-0.5",
-                                canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  onClick={() => {
+                                    if (!onStatusChange && canCompleteTask(task)) {
+                                      onToggleComplete(task.id);
+                                    }
+                                  }}
+                                  disabled={!canCompleteTask(task)}
+                                  aria-label="Set status"
+                                  className={cn(
+                                    "flex-shrink-0 mt-0.5",
+                                    canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                                  )}
+                                >
+                                  {task.status === "done" ? (
+                                    <CheckCircle2 className="w-4 h-4 text-primary" />
+                                  ) : task.status === "in-progress" ? (
+                                    <CircleDot className="w-4 h-4 text-amber-500" />
+                                  ) : (
+                                    <Circle className="w-4 h-4 text-muted-foreground" />
+                                  )}
+                                </button>
+                              </DropdownMenuTrigger>
+                              {onStatusChange && canCompleteTask(task) && (
+                                <DropdownMenuContent align="start">
+                                  <DropdownMenuItem onClick={() => onStatusChange(task.id, "todo")}>
+                                    <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
+                                    To Do
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => onStatusChange(task.id, "in-progress")}>
+                                    <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
+                                    In Progress
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>
+                                    <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
+                                    Done
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
                               )}
-                            >
-                              {task.status === "in-progress" ? (
-                                <CircleDot className="w-4 h-4 text-amber-500" />
-                              ) : (
-                                <Circle className="w-4 h-4 text-muted-foreground" />
-                              )}
-                            </button>
+                            </DropdownMenu>
                             <div className="flex-1 min-w-0">
                               <p
                                 onClick={() => onFocusTask?.(task.id)}
@@ -573,22 +608,47 @@ export function CalendarView({
                         )}
                         
                         <div className="flex items-start gap-2">
-                          <button
-                            onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
-                            disabled={!canCompleteTask(task)}
-                            className={cn(
-                              "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
-                              canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                onClick={() => {
+                                  if (!onStatusChange && canCompleteTask(task)) {
+                                    onToggleComplete(task.id);
+                                  }
+                                }}
+                                disabled={!canCompleteTask(task)}
+                                aria-label="Set status"
+                                className={cn(
+                                  "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                                  canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+                                )}
+                              >
+                                {task.status === "done" ? (
+                                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                                ) : task.status === "in-progress" ? (
+                                  <CircleDot className="w-4 h-4 text-amber-500" />
+                                ) : (
+                                  <Circle className="w-4 h-4 text-muted-foreground" />
+                                )}
+                              </button>
+                            </DropdownMenuTrigger>
+                            {onStatusChange && canCompleteTask(task) && (
+                              <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={() => onStatusChange(task.id, "todo")}>
+                                  <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
+                                  To Do
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onStatusChange(task.id, "in-progress")}>
+                                  <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
+                                  In Progress
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>
+                                  <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
+                                  Done
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
                             )}
-                          >
-                            {task.status === "done" ? (
-                              <CheckCircle2 className="w-4 h-4 text-primary" />
-                            ) : task.status === "in-progress" ? (
-                              <CircleDot className="w-4 h-4 text-amber-500" />
-                            ) : (
-                              <Circle className="w-4 h-4 text-muted-foreground" />
-                            )}
-                          </button>
+                          </DropdownMenu>
                           <div className="flex-1 min-w-0">
                             <p
                               onClick={() => onFocusTask?.(task.id)}

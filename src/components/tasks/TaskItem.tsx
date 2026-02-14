@@ -7,6 +7,12 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
 import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
 import { useNostrProfile, getDefaultAvatarUrl, getDefaultDisplayName } from "@/hooks/use-nostr-profiles";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -21,6 +27,7 @@ interface TaskItemProps {
   onToggleExpand?: () => void;
   onSelect?: (taskId: string) => void;
   onToggleComplete?: (taskId: string) => void;
+  onStatusChange?: (taskId: string, status: TaskStatus) => void;
   matchedByFilter?: boolean;
   isDirectMatchFn?: (taskId: string) => boolean;
   getFilteredChildrenFn?: (parentId: string) => Task[];
@@ -40,6 +47,7 @@ export function TaskItem({
   onToggleExpand,
   onSelect,
   onToggleComplete,
+  onStatusChange,
   matchedByFilter = true,
   isDirectMatchFn,
   getFilteredChildrenFn,
@@ -187,27 +195,66 @@ export function TaskItem({
 
         {/* Status toggle for tasks - tri-state: todo -> in-progress -> done */}
         {!isComment && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (canCompleteTask()) {
-                onToggleComplete?.(task.id);
-              }
-            }}
-            disabled={!canCompleteTask()}
-            className={cn(
-              "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
-              canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!onStatusChange && canCompleteTask()) {
+                    onToggleComplete?.(task.id);
+                  }
+                }}
+                disabled={!canCompleteTask()}
+                aria-label="Set status"
+                className={cn(
+                  "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                  canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+                )}
+              >
+                {task.status === "done" ? (
+                  <CheckCircle2 className="w-5 h-5 text-primary" />
+                ) : task.status === "in-progress" ? (
+                  <CircleDot className="w-5 h-5 text-amber-500" />
+                ) : (
+                  <Circle className="w-5 h-5 text-muted-foreground" />
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            {onStatusChange && canCompleteTask() && (
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(task.id, "todo");
+                  }}
+                  className={cn((task.status || "todo") === "todo" && "bg-muted")}
+                >
+                  <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
+                  To Do
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(task.id, "in-progress");
+                  }}
+                  className={cn(task.status === "in-progress" && "bg-muted")}
+                >
+                  <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
+                  In Progress
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(task.id, "done");
+                  }}
+                  className={cn(task.status === "done" && "bg-muted")}
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
+                  Done
+                </DropdownMenuItem>
+              </DropdownMenuContent>
             )}
-          >
-            {task.status === "done" ? (
-              <CheckCircle2 className="w-5 h-5 text-primary" />
-            ) : task.status === "in-progress" ? (
-              <CircleDot className="w-5 h-5 text-amber-500" />
-            ) : (
-              <Circle className="w-5 h-5 text-muted-foreground" />
-            )}
-          </button>
+          </DropdownMenu>
         )}
 
         {/* Comment icon for comments */}

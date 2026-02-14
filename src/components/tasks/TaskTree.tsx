@@ -17,6 +17,7 @@ interface TaskTreeProps {
   onSearchChange: (query: string) => void;
   onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
   onToggleComplete: (taskId: string) => void;
+  onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
   onSignInClick?: () => void;
@@ -33,6 +34,7 @@ export function TaskTree({
   onSearchChange,
   onNewTask,
   onToggleComplete,
+  onStatusChange,
   onFocusSidebar,
   isMobile = false,
   onSignInClick,
@@ -361,6 +363,7 @@ export function TaskTree({
               currentUser={currentUser}
               onSelect={handleSelectTask}
               onToggleComplete={onToggleComplete}
+              onStatusChange={onStatusChange}
               matchedByFilter={isTaskDirectMatch(task.id)}
               isDirectMatchFn={isTaskDirectMatch}
               getFilteredChildrenFn={getFilteredChildren}
