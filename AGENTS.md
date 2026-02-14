@@ -2,10 +2,89 @@
 
 These rules apply to all AI-assisted changes in this repository.
 
+## Machine-Readable Metadata
+```yaml
+project:
+  name: Nodex
+  type: nostr-native-task-and-discussion-app
+  stage: beta
+```
+
+## Common Commands (Machine-Readable)
+```yaml
+commands:
+  install:
+    cmd: npm i
+    purpose: install dependencies
+  dev:
+    cmd: npm run dev
+    purpose: start local development server
+  build:
+    cmd: npm run build
+    purpose: create production build
+  build_dev:
+    cmd: npm run build:dev
+    purpose: create development-mode build
+  lint:
+    cmd: npm run lint
+    purpose: run eslint checks
+  preview:
+    cmd: npm run preview
+    purpose: preview production build locally
+  test:
+    cmd: npx vitest run
+    purpose: run test suite
+  test_watch:
+    cmd: npx vitest
+    purpose: run tests in watch mode
+```
+
+## Project Structure (Machine-Readable)
+```yaml
+structure:
+  root:
+    - path: src/
+      role: application source code
+    - path: public/
+      role: static public assets
+    - path: dist/
+      role: production build output (generated)
+    - path: package.json
+      role: scripts and dependency manifest
+    - path: vite.config.ts
+      role: vite build/dev configuration
+    - path: tsconfig.json
+      role: typescript project configuration
+  src:
+    - path: src/pages/
+      role: route-level page components
+    - path: src/components/
+      role: reusable ui and feature components
+    - path: src/components/tasks/
+      role: task views, compose flows, and task interactions
+    - path: src/components/mobile/
+      role: mobile layout/navigation and compose controls
+    - path: src/lib/
+      role: shared utilities and nostr integration helpers
+    - path: src/hooks/
+      role: custom react hooks
+    - path: src/types/
+      role: shared type definitions
+    - path: src/data/
+      role: mock/demo data
+```
+
+## Project Overview
+- Nodex is a Nostr-native task and discussion application.
+- Primary entities are tasks/comments, channels (hashtags), relays, and people filters.
+- Compose behavior, filtering logic, and Nostr event compatibility are core product behavior and should be treated as high-impact areas.
+
 ## Commit Discipline
+- Always commit every completed change.
 - After every change, create atomic commits that build individually and are coherent.
 - You may amend commits with corrections if they are not yet pushed.
 - Use semantic commit messages (Conventional Commits), e.g. `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
+- Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) were added/updated/removed.
 
 ## Test-First Workflow
 - Write tests before each change.
@@ -31,3 +110,11 @@ These rules apply to all AI-assisted changes in this repository.
   - Success toast for completed user actions.
   - Error toast for failures with clear next-step guidance where possible.
   - Avoid duplicate or spammy toasts for the same event.
+
+## Plans and Worktrees
+
+When the user asks you to create a plan to fix or implement something:
+
+- ALWAYS write that plan to the plans/ directory on the root of the repo.
+- NEVER commit plans to git
+- Give the plan a descriptive name using kebab-case (e.g., `fix-position-healing.md`, `feat-new-feature.md`)
