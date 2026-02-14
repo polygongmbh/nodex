@@ -4,6 +4,7 @@ import NDK, {
   NDKNip07Signer,
   NDKNip46Signer,
   NDKPrivateKeySigner,
+  NDKRelaySet,
   NDKUser,
   NDKRelay,
   NDKFilter,
@@ -53,7 +54,7 @@ export interface NDKContextValue {
   removeRelay: (url: string) => void;
   
   // Event publishing
-  publishEvent: (kind: NostrEventKind, content: string, tags?: string[][], parentId?: string) => Promise<boolean>;
+  publishEvent: (kind: NostrEventKind, content: string, tags?: string[][], parentId?: string, relayUrls?: string[]) => Promise<boolean>;
   
   // Subscription
   subscribe: (filters: NDKFilter[], onEvent: (event: NDKEvent) => void) => NDKSubscription | null;
@@ -435,7 +436,8 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     kind: NostrEventKind,
     content: string,
     tags: string[][] = [],
-    parentId?: string
+    parentId?: string,
+    relayUrls?: string[]
   ): Promise<boolean> => {
     if (!ndk || !ndk.signer) {
       console.error("Not authenticated or NDK not ready");
@@ -465,15 +467,30 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       event.tags = eventTags;
       
       await event.sign();
-      await event.publish();
       
-      console.log("Event published:", event.id);
+      const urls = (relayUrls && relayUrls.length > 0)
+        ? relayUrls
+        : relays.map((r) => r.url);
+      const relaySet = NDKRelaySet.fromRelayUrls(
+        urls.length > 0 ? urls : defaultRelays,
+        ndk,
+        true
+      );
+      
+      const publishedTo = await event.publish(relaySet);
+      
+      if (publishedTo.size === 0) {
+        console.warn("Event publish completed but no relays confirmed receipt");
+        return false;
+      }
+      
+      console.log("Event published:", event.id, "to", Array.from(publishedTo).map((r) => r.url));
       return true;
     } catch (error) {
       console.error("Failed to publish event:", error);
       return false;
     }
-  }, [ndk]);
+  }, [ndk, relays, defaultRelays]);
 
   const subscribe = useCallback((
     filters: NDKFilter[],

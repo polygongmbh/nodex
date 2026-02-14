@@ -3,6 +3,7 @@ export interface Relay {
   name: string;
   icon: string;
   isActive: boolean;
+  url?: string;
   postCount?: number;
 }
 
