@@ -5,6 +5,7 @@ import { Relay, Channel, Person, TaskType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 type BarMode = "search" | "compose";
 
@@ -44,6 +45,7 @@ export function UnifiedBottomBar({
   isSignedIn,
   onSignInClick,
 }: UnifiedBottomBarProps) {
+  const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   const [mode, setMode] = useState<BarMode>("search");
   const [content, setContent] = useState(defaultContent);
   const [taskType, setTaskType] = useState<TaskType>("task");
@@ -52,6 +54,8 @@ export function UnifiedBottomBar({
   const [dueTime, setDueTime] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prevIncludedChannelsRef = useRef<string[]>([]);
+  const autoManagedChannelsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (mode === "compose" && textareaRef.current) {
@@ -62,16 +66,64 @@ export function UnifiedBottomBar({
   }, [mode]);
 
   useEffect(() => {
-    setContent(defaultContent);
-  }, [defaultContent]);
+    const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const hasTag = (text: string, channelName: string) =>
+      new RegExp(`(^|\\s)#${escapeRegex(channelName)}(?=\\s|$)`, "i").test(text);
+    const appendTag = (text: string, channelName: string) =>
+      text + (text && !text.endsWith(" ") ? " " : "") + `#${channelName} `;
+    const removeTag = (text: string, channelName: string) => {
+      const pattern = new RegExp(`(^|\\s)#${escapeRegex(channelName)}(?=\\s|$)`, "gi");
+      return text.replace(pattern, "$1").replace(/[ \t]{2,}/g, " ").replace(/^\s+/, "");
+    };
+
+    const previous = new Set(prevIncludedChannelsRef.current);
+    const next = new Set(includedChannels);
+    const added = includedChannels.filter((name) => !previous.has(name));
+    const removed = prevIncludedChannelsRef.current.filter((name) => !next.has(name));
+
+    if (added.length === 0 && removed.length === 0) {
+      return;
+    }
+
+    setContent((previousContent) => {
+      let updated = previousContent;
+
+      for (const channelName of added) {
+        if (!hasTag(updated, channelName)) {
+          updated = appendTag(updated, channelName);
+        }
+        autoManagedChannelsRef.current.add(channelName);
+      }
+
+      for (const channelName of removed) {
+        if (autoManagedChannelsRef.current.has(channelName)) {
+          updated = removeTag(updated, channelName);
+          autoManagedChannelsRef.current.delete(channelName);
+        }
+      }
+
+      return updated;
+    });
+
+    prevIncludedChannelsRef.current = [...includedChannels];
+  }, [includedChannels]);
 
   const handleSubmit = () => {
     if (!content.trim()) return;
     const extractedChannels = content.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
+    if (extractedChannels.length === 0) {
+      toast.error("Add at least one #channel before posting");
+      return;
+    }
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
     onSubmit(content, extractedChannels, relayIds, taskType, dueDate, dueTime || undefined);
-    setContent("");
+    const selectedChannelsContent = includedChannels.length > 0
+      ? `${includedChannels.map((channelName) => `#${channelName}`).join(" ")} `
+      : "";
+    setContent(selectedChannelsContent);
+    prevIncludedChannelsRef.current = [...includedChannels];
+    autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
     setDueTime("");
     setMode("search");
@@ -88,16 +140,11 @@ export function UnifiedBottomBar({
     setActiveSelector(activeSelector === type ? null : type);
   };
 
-  const insertChannel = (channelName: string) => {
-    if (mode === "compose") {
-      setContent(prev => prev + (prev && !prev.endsWith(" ") ? " " : "") + `#${channelName} `);
-    }
-  };
-
   // Count active filters
   const activeRelaysCount = relays.filter(r => r.isActive).length;
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
   const activePeopleCount = people.filter(p => p.isSelected).length;
+  const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
 
   return (
     <div className="border-t border-border bg-background safe-area-bottom">
@@ -129,12 +176,7 @@ export function UnifiedBottomBar({
               {channels.map((channel) => (
                 <button
                   key={channel.id}
-                  onClick={() => {
-                    onChannelToggle(channel.id);
-                    if (mode === "compose" && channel.filterState === "neutral") {
-                      insertChannel(channel.name);
-                    }
-                  }}
+                  onClick={() => onChannelToggle(channel.id)}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors",
                     channel.filterState === "included" && "bg-success/10 border-success text-success",
@@ -358,7 +400,7 @@ export function UnifiedBottomBar({
                 {isSignedIn ? (
                   <button
                     onClick={handleSubmit}
-                    disabled={!content.trim()}
+                    disabled={!content.trim() || !hasAtLeastOneTag}
                     className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                   >
                     <Send className="w-5 h-5" />

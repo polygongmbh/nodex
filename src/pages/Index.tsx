@@ -383,6 +383,10 @@ const Index = () => {
       toast.error("Sign in required to post");
       return;
     }
+    if (extractedTags.length === 0) {
+      toast.error("Add at least one #channel before posting");
+      return;
+    }
 
     const requestedRelayIds = relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID];
     const hasNonDemoRelay = requestedRelayIds.some((id) => id !== DEMO_RELAY_ID);

@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useNDK } from "@/lib/nostr/ndk-context";
+import { toast } from "sonner";
 
 interface TaskComposerProps {
   onSubmit: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
@@ -33,6 +34,7 @@ export function TaskComposer({
   onSignInClick,
 }: TaskComposerProps) {
   const { user } = useNDK();
+  const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   
   const [content, setContent] = useState(defaultContent);
   const [taskType, setTaskType] = useState<TaskType>("task");
@@ -47,6 +49,8 @@ export function TaskComposer({
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prevIncludedChannelsRef = useRef<string[]>([]);
+  const autoManagedChannelsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     textareaRef.current?.focus();
@@ -58,10 +62,57 @@ export function TaskComposer({
     setSelectedRelays(activeRelays.length > 0 ? activeRelays : [relays[0]?.id].filter(Boolean));
   }, [relays]);
 
+  useEffect(() => {
+    const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const hasTag = (text: string, channelName: string) =>
+      new RegExp(`(^|\\s)#${escapeRegex(channelName)}(?=\\s|$)`, "i").test(text);
+    const appendTag = (text: string, channelName: string) =>
+      text + (text && !text.endsWith(" ") ? " " : "") + `#${channelName} `;
+    const removeTag = (text: string, channelName: string) => {
+      const pattern = new RegExp(`(^|\\s)#${escapeRegex(channelName)}(?=\\s|$)`, "gi");
+      return text.replace(pattern, "$1").replace(/[ \t]{2,}/g, " ").replace(/^\s+/, "");
+    };
+
+    const previous = new Set(prevIncludedChannelsRef.current);
+    const next = new Set(includedChannels);
+    const added = includedChannels.filter((name) => !previous.has(name));
+    const removed = prevIncludedChannelsRef.current.filter((name) => !next.has(name));
+
+    if (added.length === 0 && removed.length === 0) {
+      return;
+    }
+
+    setContent((previousContent) => {
+      let updated = previousContent;
+
+      for (const channelName of added) {
+        if (!hasTag(updated, channelName)) {
+          updated = appendTag(updated, channelName);
+        }
+        autoManagedChannelsRef.current.add(channelName);
+      }
+
+      for (const channelName of removed) {
+        if (autoManagedChannelsRef.current.has(channelName)) {
+          updated = removeTag(updated, channelName);
+          autoManagedChannelsRef.current.delete(channelName);
+        }
+      }
+
+      return updated;
+    });
+
+    prevIncludedChannelsRef.current = [...includedChannels];
+  }, [includedChannels]);
+
   const handleSubmit = async () => {
     if (!content.trim()) return;
     
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
+    if (extractedTags.length === 0) {
+      toast.error("Add at least one #channel before posting");
+      return;
+    }
     
     // Require authentication for any posting action (including demo-only local posts).
     if (!user) {
@@ -78,7 +129,12 @@ export function TaskComposer({
     } finally {
       setIsPublishing(false);
     }
-    setContent("");
+    const selectedChannelsContent = includedChannels.length > 0
+      ? `${includedChannels.map((channelName) => `#${channelName}`).join(" ")} `
+      : "";
+    setContent(selectedChannelsContent);
+    prevIncludedChannelsRef.current = [...includedChannels];
+    autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
     setDueTime("");
   };
@@ -120,6 +176,7 @@ export function TaskComposer({
   };
 
   const filteredChannels = channels.filter(channel => channel.name.toLowerCase().includes(hashtagFilter));
+  const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
 
   return (
     <div className={cn("space-y-3", compact && "space-y-2")}>
@@ -276,7 +333,7 @@ export function TaskComposer({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!content.trim() || isPublishing || !user}
+            disabled={!content.trim() || !hasAtLeastOneTag || isPublishing || !user}
             className="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isPublishing && (
