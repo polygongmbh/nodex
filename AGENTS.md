@@ -143,3 +143,15 @@ When the user asks you to create a plan to fix or implement something:
   - `🧪` tests/verification
 - When color is supported by the client, use it to reinforce the same status categories above.
 - Avoid verbose prose when short bullet points communicate the same information.
+
+## Progress Reporting Expectations
+- During active work, provide progress estimates in short updates.
+- Use staged progress labels when applicable, for example:
+  - `🔍 Researching (stage 1/5)`
+  - `🧭 Planning (stage 2/5)`
+  - `🛠️ Implementing (stage 3/5)`
+  - `🧪 Testing (stage 4/5)`
+  - `✅ Finalizing (stage 5/5)`
+- If staged labels are not suitable, use approximate percentage progress (e.g. `~40% complete`).
+- Pair each progress update with a visual indicator icon and keep the update to 1-2 concise lines.
+- Include blockers or uncertainty explicitly with `⚠️` and revised estimates when scope changes.
