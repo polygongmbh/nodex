@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff } from "lucide-react";
+import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2 } from "lucide-react";
 import { Relay, Channel, Person } from "@/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -72,10 +72,11 @@ export function MobileFilters({
         <section>
           <button
             onClick={onGuideClick}
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-left hover:bg-muted/50 transition-colors"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-left hover:bg-muted/50 transition-colors inline-flex items-center gap-2"
             aria-label="Open onboarding guide"
             title="Open onboarding guide"
           >
+            <Sparkles className="w-4 h-4 text-primary" />
             Open Guide
           </button>
         </section>
@@ -97,8 +98,9 @@ export function MobileFilters({
               {!user ? (
                 <button
                   onClick={onSignInClick}
-                  className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground"
+                  className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5"
                 >
+                  <LogIn className="w-3.5 h-3.5" />
                   Sign in
                 </button>
               ) : (
@@ -186,9 +188,10 @@ export function MobileFilters({
                 {relay.url && relay.id !== "demo" && (
                   <button
                     onClick={() => onRemoveRelay(relay.url!)}
-                    className="ml-1 text-xs text-muted-foreground hover:text-destructive"
+                    className="ml-1 text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
                     aria-label={`Remove feed ${relay.name}`}
                   >
+                    <Trash2 className="w-3 h-3" />
                     Remove
                   </button>
                 )}

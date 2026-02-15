@@ -6,6 +6,7 @@ import { SwipeIndicator } from "./SwipeIndicator";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { FeedView } from "@/components/tasks/FeedView";
 import { CalendarView } from "@/components/tasks/CalendarView";
+import { FocusedTaskBreadcrumb } from "@/components/tasks/FocusedTaskBreadcrumb";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { Relay, Channel, Person, Task } from "@/types";
@@ -218,14 +219,24 @@ export function MobileLayout({
         className="flex-1 overflow-hidden relative"
         {...swipeHandlers}
       >
-        <div 
-          className={cn(
-            "h-full w-full transition-transform duration-150 ease-out",
-            isAnimating && swipeDirection === "left" && "-translate-x-4 opacity-80",
-            isAnimating && swipeDirection === "right" && "translate-x-4 opacity-80"
+        <div className="h-full flex flex-col">
+          {!showFilters && focusedTaskId && (
+            <FocusedTaskBreadcrumb
+              allTasks={allTasks}
+              focusedTaskId={focusedTaskId}
+              onFocusTask={onFocusTask}
+              className="h-10 px-3 text-xs"
+            />
           )}
-        >
-          {renderView()}
+          <div 
+            className={cn(
+              "flex-1 min-h-0 w-full transition-transform duration-150 ease-out",
+              isAnimating && swipeDirection === "left" && "-translate-x-4 opacity-80",
+              isAnimating && swipeDirection === "right" && "translate-x-4 opacity-80"
+            )}
+          >
+            {renderView()}
+          </div>
         </div>
       </main>
       
