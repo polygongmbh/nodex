@@ -161,6 +161,7 @@ export function FeedView({
 
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
+  const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
 
   const openStatusMenu = (taskId: string) => {
     setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
@@ -262,9 +263,21 @@ export function FeedView({
                           }}
                           onFocus={(e) => {
                             if (!onStatusChange || !canCompleteTask(task)) return;
-                            if (shouldAutoOpenStatusMenuOnFocus(e.currentTarget)) {
+                            if (
+                              shouldAutoOpenStatusMenuOnFocus(
+                                e.currentTarget,
+                                statusTriggerPointerDownTaskIdsRef.current.has(task.id)
+                              )
+                            ) {
                               openStatusMenu(task.id);
                             }
+                            statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                          }}
+                          onPointerDown={() => {
+                            statusTriggerPointerDownTaskIdsRef.current.add(task.id);
+                          }}
+                          onBlur={() => {
+                            statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                           }}
                           disabled={!canCompleteTask(task)}
                           aria-label="Set status"

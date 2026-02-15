@@ -65,6 +65,7 @@ export function TaskItem({
   const prevStatusRef = useRef(task.status);
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const statusTriggerPointerDownRef = useRef(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   
   // Fetch author profile from Nostr (only if author.id looks like a pubkey)
@@ -213,9 +214,21 @@ export function TaskItem({
                 }}
                 onFocus={(e) => {
                   if (!onStatusChange || !canCompleteTask()) return;
-                  if (shouldAutoOpenStatusMenuOnFocus(e.currentTarget)) {
+                  if (
+                    shouldAutoOpenStatusMenuOnFocus(
+                      e.currentTarget,
+                      statusTriggerPointerDownRef.current
+                    )
+                  ) {
                     setStatusMenuOpen(true);
                   }
+                  statusTriggerPointerDownRef.current = false;
+                }}
+                onPointerDown={() => {
+                  statusTriggerPointerDownRef.current = true;
+                }}
+                onBlur={() => {
+                  statusTriggerPointerDownRef.current = false;
                 }}
                 disabled={!canCompleteTask()}
                 aria-label="Set status"

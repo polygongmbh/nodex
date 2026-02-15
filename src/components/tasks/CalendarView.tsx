@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, isPast, startOfDay, isTomorrow } from "date-fns";
@@ -52,6 +52,7 @@ export function CalendarView({
   const [isComposingEvent, setIsComposingEvent] = useState(false);
   const [mobileTab, setMobileTab] = useState<"calendar" | "upcoming">("upcoming");
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
+  const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -365,9 +366,21 @@ export function CalendarView({
                                   }}
                                   onFocus={(e) => {
                                     if (!onStatusChange || !canCompleteTask(task)) return;
-                                    if (shouldAutoOpenStatusMenuOnFocus(e.currentTarget)) {
+                                    if (
+                                      shouldAutoOpenStatusMenuOnFocus(
+                                        e.currentTarget,
+                                        statusTriggerPointerDownTaskIdsRef.current.has(task.id)
+                                      )
+                                    ) {
                                       openStatusMenu(task.id);
                                     }
+                                    statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                                  }}
+                                  onPointerDown={() => {
+                                    statusTriggerPointerDownTaskIdsRef.current.add(task.id);
+                                  }}
+                                  onBlur={() => {
+                                    statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                   }}
                                   disabled={!canCompleteTask(task)}
                                   aria-label="Set status"
@@ -659,9 +672,21 @@ export function CalendarView({
                                 }}
                                 onFocus={(e) => {
                                   if (!onStatusChange || !canCompleteTask(task)) return;
-                                  if (shouldAutoOpenStatusMenuOnFocus(e.currentTarget)) {
+                                  if (
+                                    shouldAutoOpenStatusMenuOnFocus(
+                                      e.currentTarget,
+                                      statusTriggerPointerDownTaskIdsRef.current.has(task.id)
+                                    )
+                                  ) {
                                     openStatusMenu(task.id);
                                   }
+                                  statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                                }}
+                                onPointerDown={() => {
+                                  statusTriggerPointerDownTaskIdsRef.current.add(task.id);
+                                }}
+                                onBlur={() => {
+                                  statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                 }}
                                 disabled={!canCompleteTask(task)}
                                 aria-label="Set status"
