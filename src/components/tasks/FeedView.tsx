@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import { Search, Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
@@ -7,6 +7,7 @@ import { linkifyContent } from "@/lib/linkify";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
+import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -159,6 +160,20 @@ export function FeedView({
   };
 
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
+  const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
+
+  const openStatusMenu = (taskId: string) => {
+    setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
+  };
+
+  const closeStatusMenu = (taskId: string) => {
+    setStatusMenuOpenByTaskId((prev) => {
+      if (!prev[taskId]) return prev;
+      const next = { ...prev };
+      delete next[taskId];
+      return next;
+    });
+  };
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
@@ -246,12 +261,27 @@ export function FeedView({
                 <div className="flex items-start gap-3">
                   {/* Status toggle or comment icon */}
                   {!isComment ? (
-                    <DropdownMenu>
+                    <DropdownMenu
+                      open={Boolean(statusMenuOpenByTaskId[task.id])}
+                      onOpenChange={(open) => {
+                        if (!open) closeStatusMenu(task.id);
+                      }}
+                    >
                       <DropdownMenuTrigger asChild>
                         <button
-                          onClick={() => {
-                            if (!onStatusChange && canCompleteTask(task)) {
-                              onToggleComplete(task.id);
+                          onClick={(e) => {
+                            if (!canCompleteTask(task)) return;
+                            if (onStatusChange) {
+                              const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+                              if (hasModifier) openStatusMenu(task.id);
+                              return;
+                            }
+                            onToggleComplete(task.id);
+                          }}
+                          onFocus={(e) => {
+                            if (!onStatusChange || !canCompleteTask(task)) return;
+                            if (shouldAutoOpenStatusMenuOnFocus(e.currentTarget)) {
+                              openStatusMenu(task.id);
                             }
                           }}
                           disabled={!canCompleteTask(task)}

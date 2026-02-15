@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskComposer } from "./TaskComposer";
 import { getDueDateColorClass } from "@/lib/taskSorting";
+import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +51,7 @@ export function CalendarView({
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [isComposingEvent, setIsComposingEvent] = useState(false);
   const [mobileTab, setMobileTab] = useState<"calendar" | "upcoming">("upcoming");
+  const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -204,6 +206,19 @@ export function CalendarView({
     return task.taskType === "task" && Boolean(currentUser);
   };
 
+  const openStatusMenu = (taskId: string) => {
+    setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
+  };
+
+  const closeStatusMenu = (taskId: string) => {
+    setStatusMenuOpenByTaskId((prev) => {
+      if (!prev[taskId]) return prev;
+      const next = { ...prev };
+      delete next[taskId];
+      return next;
+    });
+  };
+
   // Get day of week for first day to add padding
   const firstDayOfMonth = startOfMonth(currentMonth);
   const startPadding = firstDayOfMonth.getDay();
@@ -331,12 +346,27 @@ export function CalendarView({
                             key={task.id}
                             className="flex items-start gap-2 p-2 rounded-lg bg-card border border-border"
                           >
-                            <DropdownMenu>
+                            <DropdownMenu
+                              open={Boolean(statusMenuOpenByTaskId[task.id])}
+                              onOpenChange={(open) => {
+                                if (!open) closeStatusMenu(task.id);
+                              }}
+                            >
                               <DropdownMenuTrigger asChild>
                                 <button
-                                  onClick={() => {
-                                    if (!onStatusChange && canCompleteTask(task)) {
-                                      onToggleComplete(task.id);
+                                  onClick={(e) => {
+                                    if (!canCompleteTask(task)) return;
+                                    if (onStatusChange) {
+                                      const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+                                      if (hasModifier) openStatusMenu(task.id);
+                                      return;
+                                    }
+                                    onToggleComplete(task.id);
+                                  }}
+                                  onFocus={(e) => {
+                                    if (!onStatusChange || !canCompleteTask(task)) return;
+                                    if (shouldAutoOpenStatusMenuOnFocus(e.currentTarget)) {
+                                      openStatusMenu(task.id);
                                     }
                                   }}
                                   disabled={!canCompleteTask(task)}
@@ -610,12 +640,27 @@ export function CalendarView({
                         )}
                         
                         <div className="flex items-start gap-2">
-                          <DropdownMenu>
+                          <DropdownMenu
+                            open={Boolean(statusMenuOpenByTaskId[task.id])}
+                            onOpenChange={(open) => {
+                              if (!open) closeStatusMenu(task.id);
+                            }}
+                          >
                             <DropdownMenuTrigger asChild>
                               <button
-                                onClick={() => {
-                                  if (!onStatusChange && canCompleteTask(task)) {
-                                    onToggleComplete(task.id);
+                                onClick={(e) => {
+                                  if (!canCompleteTask(task)) return;
+                                  if (onStatusChange) {
+                                    const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+                                    if (hasModifier) openStatusMenu(task.id);
+                                    return;
+                                  }
+                                  onToggleComplete(task.id);
+                                }}
+                                onFocus={(e) => {
+                                  if (!onStatusChange || !canCompleteTask(task)) return;
+                                  if (shouldAutoOpenStatusMenuOnFocus(e.currentTarget)) {
+                                    openStatusMenu(task.id);
                                   }
                                 }}
                                 disabled={!canCompleteTask(task)}

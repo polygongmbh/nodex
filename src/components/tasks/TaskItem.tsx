@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
 import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
 import { useNostrProfile, getDefaultAvatarUrl, getDefaultDisplayName } from "@/hooks/use-nostr-profiles";
+import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +64,7 @@ export function TaskItem({
   const foldState: FoldState = parentFoldState === "allVisible" ? "allVisible" : localFoldState;
   const prevStatusRef = useRef(task.status);
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   
   // Fetch author profile from Nostr (only if author.id looks like a pubkey)
@@ -191,13 +193,28 @@ export function TaskItem({
 
         {/* Status toggle for tasks - tri-state: todo -> in-progress -> done */}
         {!isComment && (
-          <DropdownMenu>
+          <DropdownMenu
+            open={statusMenuOpen}
+            onOpenChange={(open) => {
+              if (!open) setStatusMenuOpen(false);
+            }}
+          >
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!onStatusChange && canCompleteTask()) {
-                    onToggleComplete?.(task.id);
+                  if (!canCompleteTask()) return;
+                  if (onStatusChange) {
+                    const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+                    if (hasModifier) setStatusMenuOpen(true);
+                    return;
+                  }
+                  onToggleComplete?.(task.id);
+                }}
+                onFocus={(e) => {
+                  if (!onStatusChange || !canCompleteTask()) return;
+                  if (shouldAutoOpenStatusMenuOnFocus(e.currentTarget)) {
+                    setStatusMenuOpen(true);
                   }
                 }}
                 disabled={!canCompleteTask()}
