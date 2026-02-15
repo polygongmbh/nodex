@@ -103,6 +103,12 @@ const mobileStepsBySection: StepMap = {
       requiredAction: "click-target",
       actionPrompt: "Tap a task item to continue.",
     },
+    {
+      id: "mobile-navigation-breadcrumb",
+      title: "Use breadcrumbs",
+      description: "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.",
+      target: '[data-onboarding="focused-breadcrumb"]',
+    },
   ],
   filters: [
     {
