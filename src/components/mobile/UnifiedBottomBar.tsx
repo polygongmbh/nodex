@@ -49,7 +49,7 @@ export function UnifiedBottomBar({
 }: UnifiedBottomBarProps) {
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   const [mode, setMode] = useState<BarMode>("search");
-  const [content, setContent] = useState(defaultContent);
+  const [sharedText, setSharedText] = useState(() => searchQuery || defaultContent);
   const [taskType, setTaskType] = useState<TaskType>("task");
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
   const [dueDate, setDueDate] = useState<Date | undefined>();
@@ -71,6 +71,12 @@ export function UnifiedBottomBar({
     if (!forceComposeMode) return;
     setMode("compose");
   }, [forceComposeMode]);
+
+  useEffect(() => {
+    if (mode !== "search") return;
+    if (searchQuery === sharedText) return;
+    setSharedText(searchQuery);
+  }, [mode, searchQuery, sharedText]);
 
   useEffect(() => {
     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -115,7 +121,7 @@ export function UnifiedBottomBar({
       return;
     }
 
-    setContent((previousContent) => {
+    setSharedText((previousContent) => {
       let updated = previousContent;
 
       for (const channelName of added) {
@@ -139,19 +145,19 @@ export function UnifiedBottomBar({
   }, [includedChannels]);
 
   const handleSubmit = () => {
-    if (!content.trim()) return;
-    const extractedChannels = content.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
+    if (!sharedText.trim()) return;
+    const extractedChannels = sharedText.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
     if (extractedChannels.length === 0) {
       toast.error("Add at least one #channel before posting");
       return;
     }
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
-    onSubmit(content, extractedChannels, relayIds, taskType, dueDate, dueTime || undefined);
+    onSubmit(sharedText, extractedChannels, relayIds, taskType, dueDate, dueTime || undefined);
     const selectedChannelsContent = includedChannels.length > 0
       ? `${includedChannels.map((channelName) => `#${channelName}`).join(" ")} `
       : "";
-    setContent(selectedChannelsContent);
+    setSharedText(selectedChannelsContent);
     prevIncludedChannelsRef.current = [...includedChannels];
     autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
@@ -161,7 +167,8 @@ export function UnifiedBottomBar({
   };
 
   const handleCancel = () => {
-    setContent("");
+    setSharedText("");
+    onSearchChange("");
     setMode("search");
     setActiveSelector(null);
   };
@@ -170,6 +177,9 @@ export function UnifiedBottomBar({
     if (nextMode === "compose" && !isSignedIn) {
       onSignInClick();
       return;
+    }
+    if (nextMode === "search") {
+      onSearchChange(sharedText);
     }
     setMode(nextMode);
   };
@@ -182,7 +192,7 @@ export function UnifiedBottomBar({
   const activeRelaysCount = relays.filter(r => r.isActive).length;
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
   const activePeopleCount = people.filter(p => p.isSelected).length;
-  const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
+  const hasAtLeastOneTag = (sharedText.match(/#(\w+)/g)?.length || 0) > 0;
 
   return (
     <div className="border-t border-border bg-background safe-area-bottom" data-onboarding="mobile-combined-box">
@@ -358,14 +368,21 @@ export function UnifiedBottomBar({
             <input
               ref={inputRef}
               type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              value={sharedText}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSharedText(value);
+                onSearchChange(value);
+              }}
               placeholder="Search tasks..."
               className="w-full pl-9 pr-4 py-3 bg-muted/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
-            {searchQuery && (
+            {sharedText && (
               <button
-                onClick={() => onSearchChange("")}
+                onClick={() => {
+                  setSharedText("");
+                  onSearchChange("");
+                }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
               >
                 <X className="w-3 h-3" />
@@ -416,8 +433,8 @@ export function UnifiedBottomBar({
               <textarea
                 data-onboarding="compose-input"
                 ref={textareaRef}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
+                value={sharedText}
+                onChange={(e) => setSharedText(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -441,7 +458,7 @@ export function UnifiedBottomBar({
                 {isSignedIn ? (
                   <button
                     onClick={handleSubmit}
-                    disabled={!content.trim() || !hasAtLeastOneTag}
+                    disabled={!sharedText.trim() || !hasAtLeastOneTag}
                     className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                   >
                     <Send className="w-5 h-5" />
