@@ -1,23 +1,30 @@
+import { Monitor, Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useThemeMode } from "./ThemeProvider";
 import { type ThemeMode } from "@/lib/theme-preferences";
 
+const THEME_ORDER: ThemeMode[] = ["auto", "light", "dark"];
+
 export function ThemeModeToggle() {
-  const { mode, effectiveTheme, setMode } = useThemeMode();
-  const systemLabel = effectiveTheme === "dark" ? "Dark" : "Light";
+  const { mode, setMode } = useThemeMode();
+  const currentIndex = THEME_ORDER.indexOf(mode);
+  const nextMode = THEME_ORDER[(currentIndex + 1) % THEME_ORDER.length];
+
+  const icon = mode === "auto" ? <Monitor className="h-4 w-4" /> : mode === "light" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />;
+  const label = mode === "auto" ? "Auto theme" : mode === "light" ? "Light theme" : "Dark theme";
+  const nextLabel = nextMode === "auto" ? "auto" : nextMode === "light" ? "light" : "dark";
 
   return (
-    <label className="inline-flex items-center gap-2 text-xs text-muted-foreground sm:text-sm">
-      <span className="hidden sm:inline">Theme</span>
-      <select
-        aria-label="Theme"
-        value={mode}
-        onChange={(event) => setMode(event.target.value as ThemeMode)}
-        className="h-8 rounded-md border border-border bg-background px-2 text-foreground text-xs sm:text-sm"
-      >
-        <option value="auto">Auto (System: {systemLabel})</option>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
-    </label>
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="h-9 w-9"
+      onClick={() => setMode(nextMode)}
+      aria-label={`${label}. Switch to ${nextLabel}.`}
+      title={`${label} (click to switch to ${nextLabel})`}
+    >
+      {icon}
+    </Button>
   );
 }

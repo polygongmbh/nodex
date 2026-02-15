@@ -770,8 +770,8 @@ const Index = () => {
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
         </div>
         <div className="h-full flex items-center justify-end gap-2 w-auto pl-2">
-          <ThemeModeToggle />
           <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
+          <ThemeModeToggle />
         </div>
       </div>
       <Sidebar
