@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useNDK } from "@/lib/nostr/ndk-context";
 import { Search, Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
@@ -58,6 +59,7 @@ export function ListView({
   onFocusTask,
   onFocusSidebar,
 }: ListViewProps) {
+  const { user } = useNDK();
   const COMPOSE_DRAFT_KEY = "nodex.compose-draft.list";
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -396,28 +398,30 @@ export function ListView({
         />
       )}
 
-      <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
-        <TaskComposer
-          onSubmit={handleNewTask}
-          relays={relays}
-          channels={channels}
-          people={people}
-          onCancel={() => {}}
-          compact
-          adaptiveSize
-          draftStorageKey={COMPOSE_DRAFT_KEY}
-          parentId={focusedTaskId || undefined}
-          defaultContent={(() => {
-            const prefillChannels = new Set<string>();
-            channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-            if (focusedTask) {
-              focusedTask.tags.forEach(t => prefillChannels.add(t));
-            }
-            if (prefillChannels.size === 0) return "";
-            return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-          })()}
-        />
-      </div>
+      {user && (
+        <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
+          <TaskComposer
+            onSubmit={handleNewTask}
+            relays={relays}
+            channels={channels}
+            people={people}
+            onCancel={() => {}}
+            compact
+            adaptiveSize
+            draftStorageKey={COMPOSE_DRAFT_KEY}
+            parentId={focusedTaskId || undefined}
+            defaultContent={(() => {
+              const prefillChannels = new Set<string>();
+              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+              if (focusedTask) {
+                focusedTask.tags.forEach(t => prefillChannels.add(t));
+              }
+              if (prefillChannels.size === 0) return "";
+              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
+            })()}
+          />
+        </div>
+      )}
 
       {/* Table */}
       <div ref={tableContainerRef} className="flex-1 overflow-auto">

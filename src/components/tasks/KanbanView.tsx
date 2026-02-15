@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useNDK } from "@/lib/nostr/ndk-context";
 import { Search, Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Leaf } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Task, Relay, Channel, Person, TaskStatus } from "@/types";
@@ -61,6 +62,7 @@ export function KanbanView({
   onStatusChange,
   onFocusSidebar,
 }: KanbanViewProps) {
+  const { user } = useNDK();
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
   const [depthMode, setDepthMode] = useState<DepthMode>("leaves");
 
@@ -360,12 +362,14 @@ export function KanbanView({
                       {tasksByStatus[column.id].length}
                     </span>
                   </div>
-                  <button
-                    onClick={() => setComposingColumn(column.id)}
-                    className="p-1 rounded hover:bg-muted transition-colors"
-                  >
-                    <Plus className="w-4 h-4 text-muted-foreground" />
-                  </button>
+                  {user && (
+                    <button
+                      onClick={() => setComposingColumn(column.id)}
+                      className="p-1 rounded hover:bg-muted transition-colors"
+                    >
+                      <Plus className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Task Composer */}

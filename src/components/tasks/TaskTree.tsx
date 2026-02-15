@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useNDK } from "@/lib/nostr/ndk-context";
 import { Search } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskItem } from "./TaskItem";
@@ -44,6 +45,7 @@ export function TaskTree({
   isMobile = false,
   onSignInClick,
 }: TaskTreeProps) {
+  const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
 
@@ -246,8 +248,8 @@ export function TaskTree({
         />
       )}
 
-      {/* Top composer with context controls - hidden on mobile */}
-      {!isMobile && (
+      {/* Top composer with context controls - hidden on mobile and when not signed in */}
+      {!isMobile && user && (
         <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
           <TaskComposer
             onSubmit={handleNewTask}

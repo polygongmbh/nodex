@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from "react";
+import { useNDK } from "@/lib/nostr/ndk-context";
 import { Search, ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, isPast, startOfDay, isTomorrow } from "date-fns";
@@ -49,6 +50,7 @@ export function CalendarView({
   onFocusTask,
   isMobile = false,
 }: CalendarViewProps) {
+  const { user } = useNDK();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [isComposingEvent, setIsComposingEvent] = useState(false);
@@ -555,13 +557,15 @@ export function CalendarView({
                 <h3 className="font-medium">
                   {format(selectedDate, "EEEE, MMMM d")}
                 </h3>
-                <button
-                  onClick={() => setIsComposingEvent(true)}
-                  className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
-                >
-                  <Plus className="w-3 h-3" />
-                  Add Event
-                </button>
+                {user && (
+                  <button
+                    onClick={() => setIsComposingEvent(true)}
+                    className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Add Event
+                  </button>
+                )}
               </div>
 
               {/* Event Composer */}
