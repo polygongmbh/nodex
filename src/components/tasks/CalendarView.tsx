@@ -5,6 +5,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskComposer } from "./TaskComposer";
+import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { getDueDateColorClass } from "@/lib/taskSorting";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
@@ -241,8 +242,6 @@ export function CalendarView({
     setIsComposingEvent(false);
   };
 
-  const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
-
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Header - hidden on mobile, height matches sidebar logo */}
@@ -251,14 +250,6 @@ export function CalendarView({
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <h2 className="text-lg font-semibold">Calendar</h2>
-              {focusedTaskId && (
-                <button
-                  onClick={() => onFocusTask?.(null)}
-                  className="text-xs text-primary hover:underline"
-                >
-                  ← Back to all
-                </button>
-              )}
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -280,17 +271,14 @@ export function CalendarView({
               </div>
             </div>
           </div>
-          {focusedTask && (
-            <div className="mt-3 p-2 bg-muted/40 rounded-xl border border-border/50">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span>All Tasks</span>
-                <span>/</span>
-                <span className="truncate">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</span>
-              </div>
-            </div>
-          )}
         </div>
       )}
+      <FocusedTaskBreadcrumb
+        allTasks={allTasks}
+        focusedTaskId={focusedTaskId}
+        onFocusTask={onFocusTask}
+        className="border-b border-border bg-muted/20 px-4 py-2"
+      />
 
       <div
         className={cn(

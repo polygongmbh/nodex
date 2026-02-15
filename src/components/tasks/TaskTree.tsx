@@ -3,6 +3,7 @@ import { Search, ChevronUp } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { TaskComposer } from "./TaskComposer";
+import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 
@@ -162,18 +163,6 @@ export function TaskTree({
   }, [currentContextId, childrenMap, hasActiveFilters, allVisibleIds, sortContext, tasks]);
 
   const currentContextTask = currentContextId ? allTasks.find(t => t.id === currentContextId) : null;
-  const contextPath = useMemo(() => {
-    if (!currentContextTask) return [] as Task[];
-    const chain: Task[] = [];
-    let current: Task | undefined = currentContextTask;
-    while (current) {
-      chain.unshift(current);
-      if (!current.parentId) break;
-      current = allTasks.find((task) => task.id === current?.parentId);
-    }
-    return chain;
-  }, [currentContextTask, allTasks]);
-
   const handleSelectTask = (taskId: string) => {
     onFocusTask?.(taskId);
   };
@@ -251,6 +240,12 @@ export function TaskTree({
       {/* Top composer with context controls - hidden on mobile */}
       {!isMobile && (
         <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
+          <FocusedTaskBreadcrumb
+            allTasks={allTasks}
+            focusedTaskId={currentContextId}
+            onFocusTask={onFocusTask}
+            className="mb-3 rounded-xl border border-border/60 bg-muted/40 px-2 py-1.5"
+          />
           <div className="flex items-center justify-end w-full mb-3">
             <div className="flex items-center gap-2 mr-auto">
               {currentContextId && (
@@ -286,30 +281,6 @@ export function TaskTree({
               return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
             })()}
           />
-        </div>
-      )}
-
-      {/* Breadcrumb - shown below composer when in context */}
-      {!isMobile && currentContextId && (
-        <div className="px-4 py-2 border-b border-border bg-muted/30 flex-shrink-0">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <button onClick={() => onFocusTask?.(null)} className="hover:text-foreground">
-              All Tasks
-            </button>
-            {contextPath.map((task, index) => {
-              return (
-                <span key={task.id} className="flex items-center gap-1">
-                  <span>/</span>
-                  <button 
-                    onClick={() => onFocusTask?.(task.id)}
-                    className="hover:text-foreground truncate max-w-[150px]"
-                  >
-                    {task?.content.slice(0, 30)}...
-                  </button>
-                </span>
-              );
-            })}
-          </div>
         </div>
       )}
 

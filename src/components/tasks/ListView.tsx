@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Search, Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
+import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -238,8 +239,6 @@ export function ListView({
     return canUserChangeTaskStatus(task, currentUser);
   };
 
-  const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
-
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => listTasks.map(t => t.id), [listTasks]);
 
@@ -395,14 +394,6 @@ export function ListView({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Table View</h2>
-            {focusedTaskId && (
-              <button
-                onClick={() => onFocusTask?.(null)}
-                className="text-xs text-primary hover:underline"
-              >
-                ← Back to all
-              </button>
-            )}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -414,16 +405,13 @@ export function ListView({
             </button>
           </div>
         </div>
-        {focusedTask && (
-          <div className="mt-3 p-2 bg-muted/40 rounded-xl border border-border/50">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span>All Tasks</span>
-              <span>/</span>
-              <span className="truncate">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</span>
-            </div>
-          </div>
-        )}
       </div>
+      <FocusedTaskBreadcrumb
+        allTasks={allTasks}
+        focusedTaskId={focusedTaskId}
+        onFocusTask={onFocusTask}
+        className="border-b border-border bg-muted/20 px-4 py-2"
+      />
 
       {/* Task Composer */}
       {isComposing && (

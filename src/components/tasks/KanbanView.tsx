@@ -3,6 +3,7 @@ import { Search, Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Laye
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Task, Relay, Channel, Person, TaskStatus } from "@/types";
 import { TaskComposer } from "./TaskComposer";
+import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -217,8 +218,6 @@ export function KanbanView({
     setComposingColumn(null);
   };
 
-  const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
-  
   // Flatten all visible task IDs for keyboard navigation (across all columns)
   const allVisibleTaskIds = useMemo(() => {
     return [...tasksByStatus["todo"], ...tasksByStatus["in-progress"], ...tasksByStatus["done"]].map(t => t.id);
@@ -331,14 +330,6 @@ export function KanbanView({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Kanban Board</h2>
-            {focusedTaskId && (
-              <button
-                onClick={() => onFocusTask?.(null)}
-                className="text-xs text-primary hover:underline"
-              >
-                ← Back to all
-              </button>
-            )}
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -363,16 +354,13 @@ export function KanbanView({
             </div>
           </div>
         </div>
-        {focusedTask && (
-          <div className="mt-3 p-2 bg-muted/40 rounded-xl border border-border/50">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span>All Tasks</span>
-              <span>/</span>
-              <span className="truncate">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</span>
-            </div>
-          </div>
-        )}
       </div>
+      <FocusedTaskBreadcrumb
+        allTasks={allTasks}
+        focusedTaskId={focusedTaskId}
+        onFocusTask={onFocusTask}
+        className="border-b border-border bg-muted/20 px-4 py-2"
+      />
 
       {/* Kanban Columns */}
       <div ref={columnsContainerRef} className="flex-1 overflow-x-auto overflow-y-hidden p-4">

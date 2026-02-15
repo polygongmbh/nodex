@@ -2,6 +2,7 @@ import { useEffect, useRef, useMemo, useState } from "react";
 import { Search, Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
+import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { linkifyContent } from "@/lib/linkify";
 import { formatDistanceToNow, format } from "date-fns";
@@ -192,25 +193,12 @@ export function FeedView({
       {/* Top composer - hidden on mobile */}
       {!isMobile && (
         <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm">
-          <div className="flex items-center justify-end mb-3">
-              {focusedTaskId && (
-                <button
-                  onClick={() => onFocusTask?.(null)}
-                  className="text-xs text-primary hover:underline"
-                >
-                  ← Back to all
-                </button>
-              )}
-          </div>
-          {focusedTask && (
-            <div className="mb-3 p-2 bg-muted/40 rounded-xl border border-border/50">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span>All Tasks</span>
-                <span>/</span>
-                <span className="truncate">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</span>
-              </div>
-            </div>
-          )}
+          <FocusedTaskBreadcrumb
+            allTasks={allTasks}
+            focusedTaskId={focusedTaskId}
+            onFocusTask={onFocusTask}
+            className="mb-3 rounded-xl border border-border/60 bg-muted/40 px-2 py-1.5"
+          />
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
