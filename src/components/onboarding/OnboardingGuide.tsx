@@ -82,19 +82,13 @@ export function OnboardingGuide({
       return;
     }
 
-    const previousPosition = target.style.position;
-    const previousZIndex = target.style.zIndex;
     const previousOutline = target.style.outline;
     const previousOutlineOffset = target.style.outlineOffset;
-    const previousBorderRadius = target.style.borderRadius;
     const previousBoxShadow = target.style.boxShadow;
     const previousTransition = target.style.transition;
 
-    target.style.position = target.style.position || "relative";
-    target.style.zIndex = "96";
     target.style.outline = "2px solid hsl(var(--primary))";
     target.style.outlineOffset = "3px";
-    target.style.borderRadius = target.style.borderRadius || "10px";
     target.style.boxShadow = "0 0 0 6px hsl(var(--primary) / 0.18)";
     target.style.transition = "outline-color 120ms ease";
 
@@ -144,11 +138,8 @@ export function OnboardingGuide({
       target.removeEventListener("pointerdown", onPointerDown, true);
       target.removeEventListener("focusin", onFocus, true);
       target.removeEventListener("keydown", onKeyDown, true);
-      target.style.position = previousPosition;
-      target.style.zIndex = previousZIndex;
       target.style.outline = previousOutline;
       target.style.outlineOffset = previousOutlineOffset;
-      target.style.borderRadius = previousBorderRadius;
       target.style.boxShadow = previousBoxShadow;
       target.style.transition = previousTransition;
     };
