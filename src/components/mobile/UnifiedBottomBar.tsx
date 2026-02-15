@@ -255,9 +255,10 @@ export function UnifiedBottomBar({
       )}
 
       {/* Controls Row */}
-      <div className="flex items-center gap-2 px-3 pt-2">
-        {canOfferComment && (
-          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+      <div className="px-3 pt-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {canOfferComment && (
+            <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg shrink-0">
             <button
               onClick={() => setTaskType("task")}
               aria-label="Task"
@@ -278,97 +279,105 @@ export function UnifiedBottomBar({
             >
               <MessageSquare className="w-4 h-4" />
             </button>
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Filter/Selector Buttons */}
-        <div className="flex items-center gap-1 ml-auto">
-          <button
-            onClick={() => toggleSelector("relay")}
-            className={cn(
-              "relative p-2 rounded-md transition-colors",
-              activeSelector === "relay" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
+          {taskType === "task" && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="flex items-center gap-1 px-2 py-1.5 rounded-md border border-border hover:bg-muted/60 transition-colors">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {dueDate ? format(dueDate, "MMM d") : "Due"}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={dueDate}
+                  onSelect={setDueDate}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            {dueDate && (
+              <>
+                <div className="flex items-center gap-1 px-2 py-1.5 rounded-md border border-border bg-muted/30">
+                  <Clock className="w-3.5 h-3.5" />
+                  <input
+                    type="time"
+                    value={dueTime}
+                    onChange={(e) => setDueTime(e.target.value)}
+                    className="text-xs bg-transparent focus:outline-none w-16"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    setDueDate(undefined);
+                    setDueTime("");
+                  }}
+                  className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                  aria-label="Clear due date"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </>
             )}
-          >
-            <Radio className="w-4 h-4" />
-            {activeRelaysCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
-                {activeRelaysCount}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => toggleSelector("channel")}
-            className={cn(
-              "relative p-2 rounded-md transition-colors",
-              activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Hash className="w-4 h-4" />
-            {activeChannelsCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
-                {activeChannelsCount}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => toggleSelector("person")}
-            className={cn(
-              "relative p-2 rounded-md transition-colors",
-              activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <Users className="w-4 h-4" />
-            {activePeopleCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
-                {activePeopleCount}
-              </span>
-            )}
-          </button>
+            </div>
+          )}
+
+          {/* Filter/Selector Buttons */}
+          <div className="flex items-center gap-1 ml-auto shrink-0">
+            <button
+              onClick={() => toggleSelector("relay")}
+              className={cn(
+                "relative p-2 rounded-md transition-colors",
+                activeSelector === "relay" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Radio className="w-4 h-4" />
+              {activeRelaysCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
+                  {activeRelaysCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => toggleSelector("channel")}
+              className={cn(
+                "relative p-2 rounded-md transition-colors",
+                activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Hash className="w-4 h-4" />
+              {activeChannelsCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
+                  {activeChannelsCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => toggleSelector("person")}
+              className={cn(
+                "relative p-2 rounded-md transition-colors",
+                activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Users className="w-4 h-4" />
+              {activePeopleCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
+                  {activePeopleCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Input Area */}
       <div className="flex items-end gap-2 p-3">
-        <div className="flex-1 space-y-2">
-          {/* Due date for tasks */}
-          {taskType === "task" && (
-            <div className="flex items-center gap-2 text-sm">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
-                    <Calendar className="w-4 h-4" />
-                    {dueDate ? format(dueDate, "MMM d") : "Due date"}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={setDueDate}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-              {dueDate && (
-                <>
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="time"
-                      value={dueTime}
-                      onChange={(e) => setDueTime(e.target.value)}
-                      className="text-sm bg-transparent focus:outline-none w-20"
-                    />
-                  </div>
-                  <button onClick={() => { setDueDate(undefined); setDueTime(""); }} className="p-1 hover:bg-muted rounded">
-                    <X className="w-3 h-3" />
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+        <div className="flex-1">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
