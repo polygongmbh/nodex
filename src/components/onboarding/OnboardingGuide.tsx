@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Eye, Filter, GitFork, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   OnboardingInitialSection,
@@ -195,6 +196,36 @@ export function OnboardingGuide({
     setStepIndex((prev) => Math.max(0, prev - 1));
   };
 
+  const getSectionIcon = (sectionId: OnboardingSectionId) => {
+    switch (sectionId) {
+      case "views":
+        return <Eye className="h-5 w-5 text-primary" />;
+      case "filters":
+        return <Filter className="h-5 w-5 text-primary" />;
+      case "focus":
+        return <GitFork className="h-5 w-5 text-primary" />;
+      case "compose":
+        return <PenSquare className="h-5 w-5 text-primary" />;
+      default:
+        return <Eye className="h-5 w-5 text-primary" />;
+    }
+  };
+
+  const getSectionAreaLabel = (sectionId: OnboardingSectionId) => {
+    switch (sectionId) {
+      case "views":
+        return "Top view tabs";
+      case "filters":
+        return "Sidebar / filter controls";
+      case "focus":
+        return "Task list and focused context";
+      case "compose":
+        return "Compose panel";
+      default:
+        return "Interface";
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[95] pointer-events-none"
@@ -211,10 +242,10 @@ export function OnboardingGuide({
         {showSectionPicker ? (
           <div className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold">Choose a guide section</h2>
-              <p className="text-sm text-muted-foreground">Pick one area to start from step 1.</p>
+              <h2 className="text-lg font-semibold">Choose an interface area</h2>
+              <p className="text-sm text-muted-foreground">Select where you want guided help first.</p>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               {sections.map((section) => (
                 <button
                   key={section.id}
@@ -222,10 +253,21 @@ export function OnboardingGuide({
                     setActiveSection(section.id);
                     setStepIndex(0);
                   }}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-left hover:bg-muted/60"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-3 text-left hover:bg-muted/60 transition-colors"
+                  aria-label={`Start ${section.title} onboarding section`}
                 >
-                  <div className="font-medium">{section.title}</div>
-                  <div className="text-xs text-muted-foreground">{section.description}</div>
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 rounded-md bg-primary/10 p-2">
+                      {getSectionIcon(section.id)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-medium">{section.title}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{section.description}</div>
+                      <div className="inline-flex mt-2 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                        {getSectionAreaLabel(section.id)}
+                      </div>
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
