@@ -205,7 +205,7 @@ export function TaskComposer({
     prevIncludedChannelsRef.current = [...includedChannels];
   }, [includedChannels]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (submitType?: TaskType) => {
     if (!content.trim()) return;
     
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
@@ -225,7 +225,9 @@ export function TaskComposer({
     // Also add locally (and publish in parent handler)
     setIsPublishing(true);
     try {
-      await Promise.resolve(onSubmit(content, extractedTags, selectedRelays, taskType, dueDate, dueTime || undefined));
+      await Promise.resolve(
+        onSubmit(content, extractedTags, selectedRelays, submitType ?? taskType, dueDate, dueTime || undefined)
+      );
     } finally {
       setIsPublishing(false);
     }
@@ -269,7 +271,10 @@ export function TaskComposer({
         setActiveSuggestionIndex((prev) => (prev - 1 + filteredChannels.length) % filteredChannels.length);
         return;
       }
-      if (e.key === "Enter" || e.key === "Tab") {
+      if (
+        e.key === "Tab" ||
+        (e.key === "Enter" && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey)
+      ) {
         e.preventDefault();
         const selected = filteredChannels[Math.max(activeSuggestionIndex, 0)] || filteredChannels[0];
         if (selected) {
@@ -285,7 +290,14 @@ export function TaskComposer({
       }
     }
 
+    if (e.key === "Enter" && e.altKey) {
+      e.preventDefault();
+      const alternateType: TaskType = taskType === "task" ? "comment" : "task";
+      handleSubmit(alternateType);
+      return;
+    }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
       handleSubmit();
       return;
     }

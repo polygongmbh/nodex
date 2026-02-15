@@ -162,7 +162,7 @@ export function UnifiedBottomBar({
     prevIncludedChannelsRef.current = [...includedChannels];
   }, [includedChannels]);
 
-  const handleSubmit = () => {
+  const handleSubmit = (submitType?: TaskType) => {
     if (!sharedText.trim()) return;
     const extractedChannels = sharedText.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
     if (extractedChannels.length === 0) {
@@ -171,7 +171,7 @@ export function UnifiedBottomBar({
     }
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
-    onSubmit(sharedText, extractedChannels, relayIds, taskType, dueDate, dueTime || undefined);
+    onSubmit(sharedText, extractedChannels, relayIds, submitType ?? taskType, dueDate, dueTime || undefined);
     const hashtagOnlyContent = Array.from(
       new Set((sharedText.match(/#(\w+)/g) || []).map((tag) => tag.toLowerCase()))
     ).join(" ");
@@ -313,6 +313,7 @@ export function UnifiedBottomBar({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setTaskType("task")}
+              aria-label="Task"
               className={cn(
                 "p-2 rounded-md transition-colors",
                 taskType === "task" ? "bg-primary/20 text-primary" : "text-muted-foreground"
@@ -322,6 +323,7 @@ export function UnifiedBottomBar({
             </button>
             <button
               onClick={() => setTaskType("comment")}
+              aria-label="Comment"
               className={cn(
                 "p-2 rounded-md transition-colors",
                 taskType === "comment" ? "bg-primary/20 text-primary" : "text-muted-foreground"
@@ -465,6 +467,12 @@ export function UnifiedBottomBar({
                 onKeyUp={(e) => saveSelection(e.currentTarget)}
                 onClick={(e) => saveSelection(e.currentTarget)}
                 onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.altKey) {
+                    e.preventDefault();
+                    const alternateType: TaskType = taskType === "task" ? "comment" : "task";
+                    handleSubmit(alternateType);
+                    return;
+                  }
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleSubmit();

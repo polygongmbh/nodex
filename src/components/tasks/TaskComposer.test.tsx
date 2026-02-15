@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { TaskComposer } from "./TaskComposer";
 import type { Channel, Relay, Person } from "@/types";
@@ -129,5 +129,33 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
 
     expect(screen.getByPlaceholderText(/add a comment/i)).toBeInTheDocument();
+  });
+
+  it("submits as the opposite kind on Alt+Enter", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    fireEvent.change(textarea, { target: { value: "Ship #backend" } });
+    fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship #backend",
+        ["backend"],
+        ["demo"],
+        "comment",
+        undefined,
+        undefined
+      );
+    });
   });
 });
