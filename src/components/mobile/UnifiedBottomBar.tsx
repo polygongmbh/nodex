@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType } from "@/types";
+import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -13,6 +14,8 @@ interface UnifiedBottomBarProps {
   onSearchChange: (query: string) => void;
   // Compose props
   onSubmit: (content: string, channels: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
+  currentView: ViewType;
+  focusedTaskId?: string | null;
   // Filter data (dual-purpose)
   relays: Relay[];
   channels: Channel[];
@@ -34,6 +37,8 @@ export function UnifiedBottomBar({
   searchQuery,
   onSearchChange,
   onSubmit,
+  currentView,
+  focusedTaskId = null,
   relays,
   channels,
   people,
@@ -54,12 +59,25 @@ export function UnifiedBottomBar({
   const prevSearchQueryRef = useRef(searchQuery);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const autoManagedChannelsRef = useRef<Set<string>>(new Set());
+  const canOfferComment = currentView === "feed" || (currentView === "tree" && Boolean(focusedTaskId));
 
   useEffect(() => {
     if (prevSearchQueryRef.current === searchQuery) return;
     prevSearchQueryRef.current = searchQuery;
     setSharedText(searchQuery);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (currentView === "calendar" && taskType === "task") {
+      setDueDate((previous) => previous ?? new Date());
+    }
+  }, [currentView, taskType]);
+
+  useEffect(() => {
+    if (!canOfferComment && taskType === "comment") {
+      setTaskType("task");
+    }
+  }, [canOfferComment, taskType]);
 
   useEffect(() => {
     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -247,16 +265,18 @@ export function UnifiedBottomBar({
           >
             <CheckSquare className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => setTaskType("comment")}
-            aria-label="Comment"
-            className={cn(
-              "p-2 rounded-md transition-colors",
-              taskType === "comment" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
-            )}
-          >
-            <MessageSquare className="w-4 h-4" />
-          </button>
+          {canOfferComment && (
+            <button
+              onClick={() => setTaskType("comment")}
+              aria-label="Comment"
+              className={cn(
+                "p-2 rounded-md transition-colors",
+                taskType === "comment" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
+              )}
+            >
+              <MessageSquare className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Filter/Selector Buttons */}
@@ -362,7 +382,10 @@ export function UnifiedBottomBar({
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && e.altKey) {
                     e.preventDefault();
-                    const alternateType: TaskType = taskType === "task" ? "comment" : "task";
+                    const alternateType: TaskType =
+                      taskType === "task"
+                        ? (canOfferComment ? "comment" : "task")
+                        : "task";
                     handleSubmit(alternateType);
                     return;
                   }

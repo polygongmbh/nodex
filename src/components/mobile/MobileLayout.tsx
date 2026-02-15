@@ -244,6 +244,8 @@ export function MobileLayout({
         searchQuery={searchQuery}
         onSearchChange={onSearchChange}
         onSubmit={onNewTask}
+        currentView={currentView}
+        focusedTaskId={focusedTaskId}
         relays={relays}
         channels={channels}
         people={people}

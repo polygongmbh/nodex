@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Person, Relay } from "@/types";
+import { format } from "date-fns";
 
 const relays: Relay[] = [
   { id: "demo", name: "Demo", icon: "D", isActive: true },
@@ -22,6 +23,7 @@ describe("UnifiedBottomBar auth gating", () => {
         searchQuery=""
         onSearchChange={() => {}}
         onSubmit={() => {}}
+        currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -47,6 +49,7 @@ describe("UnifiedBottomBar auth gating", () => {
         searchQuery=""
         onSearchChange={onSearchChange}
         onSubmit={() => {}}
+        currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -71,6 +74,7 @@ describe("UnifiedBottomBar auth gating", () => {
         searchQuery=""
         onSearchChange={() => {}}
         onSubmit={onSubmit}
+        currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -108,5 +112,70 @@ describe("UnifiedBottomBar auth gating", () => {
       undefined,
       undefined
     );
+  });
+
+  it("hides comment option in tree view without focused task", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => {}}
+        currentView="tree"
+        focusedTaskId={null}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /comment/i })).not.toBeInTheDocument();
+  });
+
+  it("shows comment option in tree view when task is focused", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => {}}
+        currentView="tree"
+        focusedTaskId="abc123"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /comment/i })).toBeInTheDocument();
+  });
+
+  it("prefills due date with today in calendar view", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => {}}
+        currentView="calendar"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.getByText(format(new Date(), "MMM d"))).toBeInTheDocument();
   });
 });
