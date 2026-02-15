@@ -256,18 +256,18 @@ export function UnifiedBottomBar({
 
       {/* Controls Row */}
       <div className="flex items-center gap-2 px-3 pt-2">
-        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
-          <button
-            onClick={() => setTaskType("task")}
-            aria-label="Task"
-            className={cn(
-              "p-2 rounded-md transition-colors",
-              taskType === "task" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
-            )}
-          >
-            <CheckSquare className="w-4 h-4" />
-          </button>
-          {canOfferComment && (
+        {canOfferComment && (
+          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
+            <button
+              onClick={() => setTaskType("task")}
+              aria-label="Task"
+              className={cn(
+                "p-2 rounded-md transition-colors",
+                taskType === "task" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
+              )}
+            >
+              <CheckSquare className="w-4 h-4" />
+            </button>
             <button
               onClick={() => setTaskType("comment")}
               aria-label="Comment"
@@ -278,8 +278,8 @@ export function UnifiedBottomBar({
             >
               <MessageSquare className="w-4 h-4" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Filter/Selector Buttons */}
         <div className="flex items-center gap-1 ml-auto">

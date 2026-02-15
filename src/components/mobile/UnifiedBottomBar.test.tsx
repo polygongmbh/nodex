@@ -134,6 +134,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
 
     expect(screen.queryByRole("button", { name: /comment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /task/i })).not.toBeInTheDocument();
   });
 
   it("shows comment option in tree view when task is focused", () => {
@@ -155,6 +156,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
+    expect(screen.getByRole("button", { name: /task/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /comment/i })).toBeInTheDocument();
   });
 
