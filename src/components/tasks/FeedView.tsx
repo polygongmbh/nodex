@@ -1,4 +1,5 @@
 import { useEffect, useRef, useMemo, useState } from "react";
+import { useNDK } from "@/lib/nostr/ndk-context";
 import { Search, Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
@@ -54,6 +55,7 @@ export function FeedView({
   isMobile = false,
   onSignInClick,
 }: FeedViewProps) {
+  const { user } = useNDK();
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -198,8 +200,8 @@ export function FeedView({
         />
       )}
 
-      {/* Top composer - hidden on mobile */}
-      {!isMobile && (
+      {/* Top composer - hidden on mobile and when not signed in */}
+      {!isMobile && user && (
         <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm">
           <TaskComposer
             onSubmit={handleNewTask}
