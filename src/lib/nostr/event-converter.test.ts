@@ -239,6 +239,57 @@ describe("nostrEventsToTasks", () => {
     expect(tasks[0].status).toBe("in-progress");
     expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000002 * 1000);
   });
+
+  it("hydrates task due date/time from linked calendar events", () => {
+    const events: NostrEventWithRelay[] = [
+      {
+        id: "task-2",
+        pubkey: "pub1",
+        created_at: 1700000000,
+        kind: NostrEventKind.Task,
+        tags: [],
+        content: "Release",
+        sig: "sig1",
+        relayUrl: "wss://relay.test.com",
+      },
+      {
+        id: "cal-1",
+        pubkey: "pub1",
+        created_at: 1700000003,
+        kind: NostrEventKind.CalendarDateBased,
+        tags: [
+          ["d", "deadline-1"],
+          ["title", "Release"],
+          ["start", "2026-03-23"],
+          ["e", "task-2", "", "task"],
+        ],
+        content: "Release",
+        sig: "sig2",
+        relayUrl: "wss://relay.test.com",
+      },
+      {
+        id: "cal-2",
+        pubkey: "pub1",
+        created_at: 1700000004,
+        kind: NostrEventKind.CalendarTimeBased,
+        tags: [
+          ["d", "deadline-2"],
+          ["title", "Release"],
+          ["start", "1774276200"],
+          ["due_time", "14:30"],
+          ["e", "task-2", "", "task"],
+        ],
+        content: "Release",
+        sig: "sig3",
+        relayUrl: "wss://relay.test.com",
+      },
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].dueDate?.toISOString()).toBe("2026-03-23T14:30:00.000Z");
+    expect(tasks[0].dueTime).toBe("14:30");
+  });
 });
 
 describe("mergeTasks", () => {

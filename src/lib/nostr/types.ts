@@ -31,6 +31,8 @@ export enum NostrEventKind {
   GitStatusClosed = 1632,
   GitStatusDraft = 1633,
   Procedure = 1639,
+  CalendarDateBased = 31922,
+  CalendarTimeBased = 31923,
 }
 
 export interface NostrFilter {

@@ -28,6 +28,7 @@ import { canUserChangeTaskStatus, extractAssignedMentionsFromContent } from "@/l
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
+import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
@@ -106,6 +107,12 @@ const Index = () => {
   const filteredNostrEvents = useMemo(() => {
     return nostrEvents.filter(event => {
       if (isTaskStateEventKind(event.kind)) return true;
+      if (
+        event.kind === NostrEventKind.CalendarDateBased ||
+        event.kind === NostrEventKind.CalendarTimeBased
+      ) {
+        return true;
+      }
       // Convert NDKEvent to check tags
       const hasTags = event.tags.some(tag => tag[0] === "t" && tag[1]) ||
         /#\w+/.test(event.content);
@@ -177,6 +184,8 @@ const Index = () => {
           NostrEventKind.GitStatusClosed as any,
           NostrEventKind.GitStatusDraft as any,
           NostrEventKind.Procedure as any,
+          NostrEventKind.CalendarDateBased as any,
+          NostrEventKind.CalendarTimeBased as any,
         ],
         limit: 200,
       }],
@@ -451,7 +460,7 @@ const Index = () => {
         toast.warning("Parent reference is local-only; publishing task without parent link");
       }
       const publishTags = taskType === "task"
-        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], dueDate, dueTime)
+        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0])
         : [];
       const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
       const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
@@ -459,6 +468,29 @@ const Index = () => {
       publishedEventId = result.eventId;
       if (result.success && taskType === "task" && publishedEventId && initialStatus) {
         await publishTaskStateUpdate(publishedEventId, initialStatus, selectedRelayUrls);
+      }
+      if (result.success && taskType === "task" && publishedEventId && dueDate) {
+        const calendarEvent = buildLinkedTaskCalendarEvent({
+          taskEventId: publishedEventId,
+          taskContent: content,
+          dueDate,
+          dueTime,
+          relayUrl: selectedRelayUrls[0],
+        });
+        const calendarResult = await publishEvent(
+          calendarEvent.kind,
+          calendarEvent.content,
+          calendarEvent.tags,
+          undefined,
+          selectedRelayUrls
+        );
+        if (!calendarResult.success) {
+          toast.error("Failed to publish linked deadline event to relays");
+          console.warn("Linked deadline publish failed", {
+            taskEventId: publishedEventId,
+            relayUrls: selectedRelayUrls,
+          });
+        }
       }
     }
     

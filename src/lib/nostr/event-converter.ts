@@ -1,6 +1,7 @@
 import { NostrEvent, NostrEventKind } from "@/lib/nostr/types";
 import { Task, Person } from "@/types";
 import { extractTaskStateTargetId, isTaskStateEventKind, mapTaskStateEventToTaskStatus } from "@/lib/nostr/task-state-events";
+import { parseLinkedTaskDueFromCalendarEvent } from "./task-calendar-events";
 
 // Spam keywords for basic filtering
 const SPAM_KEYWORDS = [
@@ -174,6 +175,11 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
     event.kind === NostrEventKind.Task || event.kind === NostrEventKind.TextNote
   );
   const stateEvents = events.filter((event) => isTaskStateEventKind(event.kind));
+  const calendarEvents = events.filter(
+    (event) =>
+      event.kind === NostrEventKind.CalendarDateBased ||
+      event.kind === NostrEventKind.CalendarTimeBased
+  );
 
   const taskMap = new Map<string, Task>(
     taskEvents.map((event) => {
@@ -211,6 +217,38 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       status: state.status,
       statusDescription: state.statusDescription,
       lastEditedAt: new Date(state.createdAt * 1000),
+    });
+  }
+
+  const latestDueByTaskId = new Map<
+    string,
+    { createdAt: number; dueDate?: Date; dueTime?: string }
+  >();
+
+  for (const calendarEvent of calendarEvents) {
+    const parsed = parseLinkedTaskDueFromCalendarEvent(calendarEvent.kind, calendarEvent.tags);
+    if (!parsed.taskId || !taskMap.has(parsed.taskId) || !parsed.dueDate) continue;
+    const prev = latestDueByTaskId.get(parsed.taskId);
+    if (!prev || calendarEvent.created_at >= prev.createdAt) {
+      latestDueByTaskId.set(parsed.taskId, {
+        createdAt: calendarEvent.created_at,
+        dueDate: parsed.dueDate,
+        dueTime: parsed.dueTime,
+      });
+    }
+  }
+
+  for (const [taskId, due] of latestDueByTaskId.entries()) {
+    const task = taskMap.get(taskId);
+    if (!task) continue;
+    taskMap.set(taskId, {
+      ...task,
+      dueDate: due.dueDate,
+      dueTime: due.dueTime ?? task.dueTime,
+      lastEditedAt:
+        !task.lastEditedAt || due.createdAt * 1000 > task.lastEditedAt.getTime()
+          ? new Date(due.createdAt * 1000)
+          : task.lastEditedAt,
     });
   }
 
