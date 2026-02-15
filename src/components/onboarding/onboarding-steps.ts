@@ -128,10 +128,12 @@ const mobileStepsBySection: StepMap = {
   ],
   compose: [
     {
-      id: "mobile-compose",
-      title: "Compose",
-      description: "Compose tasks/comments with #tags and @mentions from the bottom composer.",
-      target: '[data-onboarding="compose-input"]',
+      id: "mobile-compose-combobox",
+      title: "Search/Compose combobox",
+      description: "Use the combined bottom bar as a combobox: Search mode filters tasks, Compose mode creates tasks/comments with #tags and @mentions.",
+      target: '[data-onboarding="mobile-combined-box"]',
+      requiredAction: "click-target",
+      actionPrompt: "Tap Search or Compose in the combined bar to continue.",
     },
   ],
 };

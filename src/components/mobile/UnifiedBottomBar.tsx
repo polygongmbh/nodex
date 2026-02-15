@@ -185,7 +185,7 @@ export function UnifiedBottomBar({
   const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
 
   return (
-    <div className="border-t border-border bg-background safe-area-bottom">
+    <div className="border-t border-border bg-background safe-area-bottom" data-onboarding="mobile-combined-box">
       {/* Selector Panel */}
       {activeSelector && (
         <div className="border-b border-border p-3 max-h-48 overflow-y-auto">

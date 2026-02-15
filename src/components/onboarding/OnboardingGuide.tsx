@@ -209,7 +209,7 @@ export function OnboardingGuide({
         case "filters":
           return ['[data-onboarding="mobile-filters"]'];
         case "compose":
-          return ['[data-onboarding="compose-input"]', '[aria-label="Compose"]'];
+          return ['[data-onboarding="mobile-combined-box"]', '[aria-label="Compose"]'];
       }
     }
 
