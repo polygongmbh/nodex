@@ -18,6 +18,13 @@ interface OnboardingGuideProps {
   onComplete: (lastStep: number) => void;
 }
 
+interface RectBox {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
 export function OnboardingGuide({
   isOpen,
   isMobile = false,
@@ -31,6 +38,7 @@ export function OnboardingGuide({
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [interactionSatisfied, setInteractionSatisfied] = useState(false);
+  const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
 
   useEffect(() => {
     if (!isOpen) return;
@@ -155,6 +163,88 @@ export function OnboardingGuide({
   const showSectionPicker = activeSection === null;
   const nextDisabled = Boolean(currentStep?.requiredAction && !interactionSatisfied);
 
+  const getPickerSelectors = (sectionId: OnboardingSectionId): string[] => {
+    if (isMobile) {
+      switch (sectionId) {
+        case "views":
+          return ['[data-onboarding="mobile-nav"]'];
+        case "filters":
+          return ['[data-onboarding="mobile-filters"]'];
+        case "focus":
+          return ['[data-onboarding="task-list"]'];
+        case "compose":
+          return ['[data-onboarding="compose-input"]', '[aria-label="Compose"]'];
+      }
+    }
+
+    switch (sectionId) {
+      case "views":
+        return ['[data-onboarding="view-switcher"]'];
+      case "filters":
+        return ["aside", '[data-onboarding="channels-section"]'];
+      case "focus":
+        return ['[data-onboarding="task-list"]'];
+      case "compose":
+        return ['[data-onboarding="focused-compose"]', '[data-onboarding="compose-input"]'];
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen || !showSectionPicker) return;
+
+    const measurePickerRects = () => {
+      const nextRects: Partial<Record<OnboardingSectionId, RectBox>> = {};
+
+      const measureSection = (sectionId: OnboardingSectionId) => {
+        const selectors = getPickerSelectors(sectionId);
+        const elements = selectors.flatMap((selector) =>
+          Array.from(document.querySelectorAll(selector))
+        ) as HTMLElement[];
+        if (elements.length === 0) return;
+
+        let left = Number.POSITIVE_INFINITY;
+        let top = Number.POSITIVE_INFINITY;
+        let right = Number.NEGATIVE_INFINITY;
+        let bottom = Number.NEGATIVE_INFINITY;
+
+        for (const element of elements) {
+          const rect = element.getBoundingClientRect();
+          if (rect.width <= 0 || rect.height <= 0) continue;
+          left = Math.min(left, rect.left);
+          top = Math.min(top, rect.top);
+          right = Math.max(right, rect.right);
+          bottom = Math.max(bottom, rect.bottom);
+        }
+
+        if (!Number.isFinite(left) || !Number.isFinite(top) || !Number.isFinite(right) || !Number.isFinite(bottom)) {
+          return;
+        }
+
+        const padding = 2;
+        nextRects[sectionId] = {
+          left: Math.max(0, left - padding),
+          top: Math.max(0, top - padding),
+          width: Math.max(40, right - left + padding * 2),
+          height: Math.max(40, bottom - top + padding * 2),
+        };
+      };
+
+      measureSection("views");
+      measureSection("filters");
+      measureSection("focus");
+      measureSection("compose");
+      setPickerRects(nextRects);
+    };
+
+    measurePickerRects();
+    window.addEventListener("resize", measurePickerRects);
+    window.addEventListener("scroll", measurePickerRects, true);
+    return () => {
+      window.removeEventListener("resize", measurePickerRects);
+      window.removeEventListener("scroll", measurePickerRects, true);
+    };
+  }, [isMobile, isOpen, showSectionPicker]);
+
   const getAnchoredCardStyle = (): React.CSSProperties => {
     if (showSectionPicker || !currentStep || !targetRect) {
       return {
@@ -229,6 +319,16 @@ export function OnboardingGuide({
   };
 
   const getPickerPaneStyle = (sectionId: OnboardingSectionId): React.CSSProperties => {
+    const measured = pickerRects[sectionId];
+    if (measured) {
+      return {
+        left: measured.left,
+        top: measured.top,
+        width: measured.width,
+        height: measured.height,
+      };
+    }
+
     if (isMobile) {
       switch (sectionId) {
         case "views":
