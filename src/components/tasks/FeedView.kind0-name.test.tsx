@@ -45,7 +45,7 @@ const channels: Channel[] = [{ id: "general", name: "general", filterState: "neu
 const relays: Relay[] = [{ id: "demo", name: "Demo", icon: "D", isActive: true }];
 
 describe("FeedView kind:0 author labels", () => {
-  it("prefers kind:0 person name over legacy author display labels", () => {
+  it("prefers kind:0 metadata label and uses abbreviated pubkey when name exists", () => {
     render(
       <FeedView
         tasks={tasks}
@@ -60,7 +60,7 @@ describe("FeedView kind:0 author labels", () => {
       />
     );
 
-    expect(screen.getByText(/Janek/)).toBeInTheDocument();
-    expect(screen.queryByText(/You \(/)).not.toBeInTheDocument();
+    expect(screen.getByText("Janek (012345…cdef)")).toBeInTheDocument();
+    expect(screen.queryByText(/You/)).not.toBeInTheDocument();
   });
 });

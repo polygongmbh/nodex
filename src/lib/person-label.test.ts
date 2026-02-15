@@ -2,27 +2,50 @@ import { describe, expect, it } from "vitest";
 import { formatAuthorMetaLabel } from "./person-label";
 
 describe("formatAuthorMetaLabel", () => {
-  it("includes display name, username, and shortened pubkey", () => {
+  it("includes display name, username, and abbreviated pubkey", () => {
+    const pubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const label = formatAuthorMetaLabel({
-      personId: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      personId: pubkey,
       displayName: "Alice Doe",
       username: "alice",
     });
 
     expect(label).toContain("Alice Doe");
     expect(label).toContain("@alice");
-    expect(label).toMatch(/0123…cdef#[a-z0-9]{4}/i);
+    expect(label).toContain("012345…cdef");
   });
 
-  it("falls back when username is the same as display name", () => {
+  it("includes display name with abbreviated pubkey when username is not distinct", () => {
+    const pubkey = "npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
     const label = formatAuthorMetaLabel({
-      personId: "npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+      personId: pubkey,
       displayName: "alice",
       username: "alice",
     });
 
-    expect(label).toContain("alice");
+    expect(label).toBe("alice (npub1q…qqqq)");
     expect(label).not.toContain("@alice");
-    expect(label).toMatch(/npub…qqqq#[a-z0-9]{4}/i);
+  });
+
+  it("shows full pubkey when no display name and username are available", () => {
+    const pubkey = "npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
+    const label = formatAuthorMetaLabel({
+      personId: pubkey,
+      displayName: "",
+      username: "",
+    });
+
+    expect(label).toBe(pubkey);
+  });
+
+  it("shows full pubkey when display and username are pubkey-derived placeholders", () => {
+    const pubkey = "e752d82f04fb53a2e328ea9fb23a6d7ea52b8ba6f833de31e48d95107e8cb9f2";
+    const label = formatAuthorMetaLabel({
+      personId: pubkey,
+      displayName: "e752d82f...b9f2",
+      username: "e752d82f",
+    });
+
+    expect(label).toBe(pubkey);
   });
 });
