@@ -1,4 +1,5 @@
 import { ReactNode, useMemo } from "react";
+import { ChevronUp } from "lucide-react";
 import { Task } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,11 @@ export function FocusedTaskBreadcrumb({
 
     return chain;
   }, [allTasks, focusedTaskId]);
+  const parentFocusId = useMemo(() => {
+    if (!focusedTaskId) return null;
+    const focusedTask = allTasks.find((task) => task.id === focusedTaskId);
+    return focusedTask?.parentId || null;
+  }, [allTasks, focusedTaskId]);
 
   return (
     <div
@@ -41,6 +47,19 @@ export function FocusedTaskBreadcrumb({
         className
       )}
     >
+      <button
+        type="button"
+        onClick={() => onFocusTask?.(parentFocusId)}
+        disabled={!focusedTaskId}
+        aria-label="Up"
+        className={cn(
+          "inline-flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground transition-colors",
+          focusedTaskId ? "hover:text-foreground" : "opacity-40 cursor-not-allowed"
+        )}
+      >
+        <ChevronUp className="w-3.5 h-3.5" />
+        <span>Up</span>
+      </button>
       <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <button
           onClick={() => onFocusTask?.(null)}

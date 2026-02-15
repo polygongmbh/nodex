@@ -27,6 +27,7 @@ describe("FocusedTaskBreadcrumb", () => {
   it("renders all tasks breadcrumb even when no task is focused", () => {
     render(<FocusedTaskBreadcrumb allTasks={[baseTask]} focusedTaskId={null} onFocusTask={vi.fn()} />);
     expect(screen.getByRole("button", { name: "All Tasks" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Up" })).toBeDisabled();
   });
 
   it("renders full path and makes each level clickable", () => {
@@ -56,10 +57,12 @@ describe("FocusedTaskBreadcrumb", () => {
     fireEvent.click(screen.getByRole("button", { name: "Root task" }));
     fireEvent.click(screen.getByRole("button", { name: "Middle task" }));
     fireEvent.click(screen.getByRole("button", { name: "Leaf task" }));
+    fireEvent.click(screen.getByRole("button", { name: "Up" }));
 
     expect(onFocusTask).toHaveBeenNthCalledWith(1, null);
     expect(onFocusTask).toHaveBeenNthCalledWith(2, "root");
     expect(onFocusTask).toHaveBeenNthCalledWith(3, "middle");
     expect(onFocusTask).toHaveBeenNthCalledWith(4, "leaf");
+    expect(onFocusTask).toHaveBeenNthCalledWith(5, "middle");
   });
 });

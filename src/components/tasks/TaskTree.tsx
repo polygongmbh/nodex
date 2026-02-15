@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Search, ChevronUp } from "lucide-react";
+import { Search } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { TaskComposer } from "./TaskComposer";
@@ -239,26 +239,16 @@ export function TaskTree({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Top composer with context controls - hidden on mobile */}
       {!isMobile && (
+        <FocusedTaskBreadcrumb
+          allTasks={allTasks}
+          focusedTaskId={currentContextId}
+          onFocusTask={onFocusTask}
+        />
+      )}
+
+      {/* Top composer with context controls - hidden on mobile */}
+      {!isMobile && (
         <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
-          <FocusedTaskBreadcrumb
-            allTasks={allTasks}
-            focusedTaskId={currentContextId}
-            onFocusTask={onFocusTask}
-            className="mb-3 -mx-4 -mt-3"
-          />
-          <div className="flex items-center justify-end w-full mb-3">
-            <div className="flex items-center gap-2 mr-auto">
-              {currentContextId && (
-                <button
-                  onClick={handleGoUp}
-                  className="flex items-center gap-1 px-2 py-1 text-sm rounded-md hover:bg-muted transition-colors"
-                >
-                  <ChevronUp className="w-4 h-4" />
-                  Up
-                </button>
-              )}
-            </div>
-          </div>
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}

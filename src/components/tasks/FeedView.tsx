@@ -190,15 +190,17 @@ export function FeedView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
+      {!isMobile && (
+        <FocusedTaskBreadcrumb
+          allTasks={allTasks}
+          focusedTaskId={focusedTaskId}
+          onFocusTask={onFocusTask}
+        />
+      )}
+
       {/* Top composer - hidden on mobile */}
       {!isMobile && (
         <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm">
-          <FocusedTaskBreadcrumb
-            allTasks={allTasks}
-            focusedTaskId={focusedTaskId}
-            onFocusTask={onFocusTask}
-            className="mb-3 -mx-4 -mt-3"
-          />
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}

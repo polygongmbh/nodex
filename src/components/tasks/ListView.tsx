@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Search, Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw } from "lucide-react";
+import { Search, Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -21,7 +21,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
 
 interface ListViewProps {
   tasks: Task[];
@@ -59,7 +58,7 @@ export function ListView({
   onFocusTask,
   onFocusSidebar,
 }: ListViewProps) {
-  const [isComposing, setIsComposing] = useState(false);
+  const COMPOSE_DRAFT_KEY = "nodex.compose-draft.list";
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   
@@ -232,12 +231,12 @@ export function ListView({
 
   const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
     onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime, focusedTaskId || undefined);
-    setIsComposing(false);
   };
 
   const canCompleteTask = (task: Task) => {
     return canUserChangeTaskStatus(task, currentUser);
   };
+  const focusedTask = focusedTaskId ? allTasks.find((t) => t.id === focusedTaskId) : null;
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => listTasks.map(t => t.id), [listTasks]);
@@ -248,7 +247,7 @@ export function ListView({
     onSelectTask: (id) => onFocusTask?.(id),
     onGoBack: () => onFocusTask?.(null),
     onFocusSidebar,
-    enabled: !isComposing,
+    enabled: true,
   });
 
   // Scroll focused task into view
@@ -389,56 +388,34 @@ export function ListView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Header - height matches sidebar logo */}
-      <div className="min-h-14 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold">Table View</h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsComposing(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              New Task
-            </button>
-          </div>
-        </div>
-      </div>
       <FocusedTaskBreadcrumb
         allTasks={allTasks}
         focusedTaskId={focusedTaskId}
         onFocusTask={onFocusTask}
       />
 
-      {/* Task Composer */}
-      {isComposing && (
-        <div className="border-b border-border p-4 bg-card/30 flex-shrink-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Creating new task</span>
-            <button
-              onClick={() => setIsComposing(false)}
-              className="p-1 rounded-full hover:bg-muted"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <TaskComposer
-            onSubmit={handleNewTask}
-            relays={relays}
-            channels={channels}
-            people={people}
-            onCancel={() => setIsComposing(false)}
-            defaultContent={(() => {
-              const prefillChannels = new Set<string>();
-              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-              if (prefillChannels.size === 0) return "";
-              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-            })()}
-          />
-        </div>
-      )}
+      <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
+        <TaskComposer
+          onSubmit={handleNewTask}
+          relays={relays}
+          channels={channels}
+          people={people}
+          onCancel={() => {}}
+          compact
+          adaptiveSize
+          draftStorageKey={COMPOSE_DRAFT_KEY}
+          parentId={focusedTaskId || undefined}
+          defaultContent={(() => {
+            const prefillChannels = new Set<string>();
+            channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+            if (focusedTask) {
+              focusedTask.tags.forEach(t => prefillChannels.add(t));
+            }
+            if (prefillChannels.size === 0) return "";
+            return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
+          })()}
+        />
+      </div>
 
       {/* Table */}
       <div ref={tableContainerRef} className="flex-1 overflow-auto">

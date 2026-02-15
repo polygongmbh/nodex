@@ -249,7 +249,6 @@ export function CalendarView({
         <div className="min-h-14 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-              <h2 className="text-lg font-semibold">Calendar</h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
