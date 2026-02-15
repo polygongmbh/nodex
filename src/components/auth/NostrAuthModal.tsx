@@ -29,6 +29,7 @@ interface NostrAuthModalProps {
 }
 
 type AuthStep = "choose" | "privateKey" | "nostrConnect";
+type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | null;
 
 export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const { 
@@ -40,6 +41,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   } = useNDK();
   
   const [step, setStep] = useState<AuthStep>("choose");
+  const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
   const [privateKey, setPrivateKey] = useState("");
   const [bunkerUrl, setBunkerUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -49,12 +51,17 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
 
   const handleExtensionLogin = async () => {
     setError(null);
-    const success = await loginWithExtension();
-    if (success) {
-      toast.success("Signed in with Nostr extension!");
-      onClose();
-    } else {
-      setError("Failed to sign in with extension. Make sure you have a Nostr extension (like Alby or nos2x) installed.");
+    setPendingAuthMethod("extension");
+    try {
+      const success = await loginWithExtension();
+      if (success) {
+        toast.success("Signed in with Nostr extension!");
+        onClose();
+      } else {
+        setError("Failed to sign in with extension. Make sure you have a Nostr extension (like Alby or nos2x) installed.");
+      }
+    } finally {
+      setPendingAuthMethod(null);
     }
   };
 
@@ -64,25 +71,35 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
       setError("Please enter your private key");
       return;
     }
-    
-    const success = await loginWithPrivateKey(privateKey.trim());
-    if (success) {
-      toast.success("Signed in with private key!");
-      setPrivateKey("");
-      onClose();
-    } else {
-      setError("Invalid private key. Please check and try again.");
+
+    setPendingAuthMethod("privateKey");
+    try {
+      const success = await loginWithPrivateKey(privateKey.trim());
+      if (success) {
+        toast.success("Signed in with private key!");
+        setPrivateKey("");
+        onClose();
+      } else {
+        setError("Invalid private key. Please check and try again.");
+      }
+    } finally {
+      setPendingAuthMethod(null);
     }
   };
 
   const handleGuestLogin = async () => {
     setError(null);
-    const success = await loginAsGuest();
-    if (success) {
-      toast.success("Signed in as guest! A new identity was created for you.");
-      onClose();
-    } else {
-      setError("Failed to create guest identity.");
+    setPendingAuthMethod("guest");
+    try {
+      const success = await loginAsGuest();
+      if (success) {
+        toast.success("Signed in as guest! A new identity was created for you.");
+        onClose();
+      } else {
+        setError("Failed to create guest identity.");
+      }
+    } finally {
+      setPendingAuthMethod(null);
     }
   };
 
@@ -92,13 +109,18 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
       setError("Please paste a bunker:// connection string");
       return;
     }
-    const success = await loginWithNostrConnect(bunkerUrl.trim());
-    if (success) {
-      toast.success("Connected to signer app!");
-      setBunkerUrl("");
-      onClose();
-    } else {
-      setError("Failed to connect. Verify your bunker:// string and try again.");
+    setPendingAuthMethod("nostrConnect");
+    try {
+      const success = await loginWithNostrConnect(bunkerUrl.trim());
+      if (success) {
+        toast.success("Connected to signer app!");
+        setBunkerUrl("");
+        onClose();
+      } else {
+        setError("Failed to connect. Verify your bunker:// string and try again.");
+      }
+    } finally {
+      setPendingAuthMethod(null);
     }
   };
 
@@ -106,6 +128,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     setStep("choose");
     setPrivateKey("");
     setBunkerUrl("");
+    setPendingAuthMethod(null);
     setError(null);
     onClose();
   };
@@ -159,7 +182,9 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                   }
                 </div>
               </div>
-              {isAuthenticating && <Loader2 className="w-4 h-4 animate-spin" />}
+              {pendingAuthMethod === "extension" && (
+                <Loader2 data-testid="auth-loader-extension" className="w-4 h-4 animate-spin" />
+              )}
             </button>
 
             {/* Nostr Connect (Signer App) */}
@@ -211,7 +236,9 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                   Generate a temporary identity to try posting
                 </div>
               </div>
-              {isAuthenticating && <Loader2 className="w-4 h-4 animate-spin" />}
+              {pendingAuthMethod === "guest" && (
+                <Loader2 data-testid="auth-loader-guest" className="w-4 h-4 animate-spin" />
+              )}
             </button>
 
             <p className="text-xs text-muted-foreground text-center pt-2">
@@ -249,7 +276,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 disabled={isAuthenticating || !privateKey.trim()}
                 className="flex-1"
               >
-                {isAuthenticating ? (
+                {pendingAuthMethod === "privateKey" ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
                 Sign In
@@ -286,7 +313,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 disabled={isAuthenticating || !bunkerUrl.trim()}
                 className="flex-1"
               >
-                {isAuthenticating ? (
+                {pendingAuthMethod === "nostrConnect" ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
                 Connect
