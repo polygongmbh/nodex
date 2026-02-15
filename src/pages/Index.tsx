@@ -28,6 +28,7 @@ import { canUserChangeTaskStatus, extractAssignedMentionsFromContent } from "@/l
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
+import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -449,10 +450,9 @@ const Index = () => {
       if (taskType === "task" && parentId && !validParentId) {
         toast.warning("Parent reference is local-only; publishing task without parent link");
       }
-      const publishTags =
-        taskType === "task" && validParentId
-          ? [["e", validParentId, selectedRelayUrls[0], "parent"]]
-          : [];
+      const publishTags = taskType === "task"
+        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], dueDate, dueTime)
+        : [];
       const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
       const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
       publishSuccess = result.success;

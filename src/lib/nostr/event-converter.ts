@@ -99,6 +99,23 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const parentTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "parent");
   const replyTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "reply");
   const parentId = parentTag?.[1] || replyTag?.[1];
+  const dueTag = event.tags.find((tag) => tag[0] === "due" && tag[1]);
+  const dueTimeTag = event.tags.find((tag) => tag[0] === "due_time" && tag[1]);
+
+  let dueDate: Date | undefined;
+  if (dueTag?.[1]) {
+    if (/^\d+$/.test(dueTag[1])) {
+      const parsed = new Date(Number(dueTag[1]) * 1000);
+      if (!Number.isNaN(parsed.getTime())) {
+        dueDate = parsed;
+      }
+    } else {
+      const parsed = new Date(dueTag[1]);
+      if (!Number.isNaN(parsed.getTime())) {
+        dueDate = parsed;
+      }
+    }
+  }
 
   // Generate relay ID from URL - use the attached relayUrl
   const relayId = event.relayUrl ? getRelayIdFromUrl(event.relayUrl) : "nostr";
@@ -117,6 +134,8 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     reposts: 0,
     status: isTask ? status : undefined,
     parentId,
+    dueDate,
+    dueTime: dueTimeTag?.[1] || undefined,
   };
 }
 

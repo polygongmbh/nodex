@@ -149,6 +149,23 @@ describe("nostrEventToTask", () => {
     
     expect(task.relays).toContain("relay-test-com");
   });
+
+  it("extracts due date and due time from tags", () => {
+    const dueSeconds = 1773964800; // 2026-03-20T00:00:00.000Z
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      kind: NostrEventKind.Task,
+      tags: [
+        ["due", String(dueSeconds)],
+        ["due_time", "09:45"],
+      ],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.dueDate?.toISOString()).toBe("2026-03-20T00:00:00.000Z");
+    expect(task.dueTime).toBe("09:45");
+  });
 });
 
 describe("nostrEventsToTasks", () => {
