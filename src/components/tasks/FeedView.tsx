@@ -8,6 +8,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
+import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -139,7 +140,7 @@ export function FeedView({
   };
 
   const canCompleteTask = (task: Task) => {
-    return task.taskType === "task" && Boolean(currentUser);
+    return canUserChangeTaskStatus(task, currentUser);
   };
 
   const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {

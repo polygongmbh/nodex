@@ -7,6 +7,7 @@ import { linkifyContent } from "@/lib/linkify";
 import { TaskComposer } from "./TaskComposer";
 import { getDueDateColorClass } from "@/lib/taskSorting";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
+import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -205,7 +206,7 @@ export function CalendarView({
   }, [upcomingTasks]);
 
   const canCompleteTask = (task: Task) => {
-    return task.taskType === "task" && Boolean(currentUser);
+    return canUserChangeTaskStatus(task, currentUser);
   };
 
   const openStatusMenu = (taskId: string) => {

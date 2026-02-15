@@ -24,6 +24,7 @@ import {
 } from "@/lib/filter-preferences";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
 import { resolveCurrentUser } from "@/lib/current-user";
+import { canUserChangeTaskStatus, extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -334,7 +335,12 @@ const Index = () => {
     }
 
     const existingTask = allTasks.find((task) => task.id === taskId);
-    const nextStatus = cycleTaskStatus(existingTask?.status || "todo");
+    if (!existingTask) return;
+    if (!canUserChangeTaskStatus(existingTask, currentUser)) {
+      toast.error("Status updates are restricted to assigned users");
+      return;
+    }
+    const nextStatus = cycleTaskStatus(existingTask.status || "todo");
     setLocalTasks((prev) =>
       applyTaskStatusUpdate(prev, allTasks, taskId, nextStatus, currentUser?.name)
     );
@@ -374,6 +380,13 @@ const Index = () => {
     if (!user) {
       setIsAuthModalOpen(true);
       toast.error("Sign in required to modify tasks");
+      return;
+    }
+
+    const existingTask = allTasks.find((task) => task.id === taskId);
+    if (!existingTask) return;
+    if (!canUserChangeTaskStatus(existingTask, currentUser)) {
+      toast.error("Status updates are restricted to assigned users");
       return;
     }
 
@@ -438,6 +451,7 @@ const Index = () => {
       dueDate,
       dueTime,
       parentId,
+      mentions: taskType === "task" ? extractAssignedMentionsFromContent(content) : [],
     };
     setLocalTasks((prev) => [newTask, ...prev]);
     

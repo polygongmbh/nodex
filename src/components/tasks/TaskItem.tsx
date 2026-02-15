@@ -8,6 +8,7 @@ import { linkifyContent } from "@/lib/linkify";
 import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
 import { useNostrProfile, getDefaultAvatarUrl, getDefaultDisplayName } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
+import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -144,7 +145,7 @@ export function TaskItem({
   };
 
   const canCompleteTask = () => {
-    return task.taskType === "task" && Boolean(currentUser);
+    return canUserChangeTaskStatus(task, currentUser);
   };
 
   // Calculate indentation based on depth

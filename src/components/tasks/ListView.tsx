@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
+import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -234,10 +235,7 @@ export function ListView({
   };
 
   const canCompleteTask = (task: Task) => {
-    if (!currentUser) return false;
-    const mentionedPeople = task.content.match(/@(\w+)/g)?.map(m => m.slice(1)) || [];
-    if (mentionedPeople.length === 0) return true;
-    return mentionedPeople.includes(currentUser.name);
+    return canUserChangeTaskStatus(task, currentUser);
   };
 
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;

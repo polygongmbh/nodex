@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getDueDateColorClass, sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
+import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import {
   Select,
   SelectContent,
@@ -199,6 +200,8 @@ export function KanbanView({
     
     const taskId = result.draggableId;
     const newStatus = result.destination.droppableId as TaskStatus;
+    const task = kanbanTasks.find((item) => item.id === taskId);
+    if (!task || !canUserChangeTaskStatus(task, currentUser)) return;
     
     if (onStatusChange) {
       onStatusChange(taskId, newStatus);
@@ -243,6 +246,7 @@ export function KanbanView({
     if (!focusedId) return;
     const task = kanbanTasks.find(t => t.id === focusedId);
     if (!task) return;
+    if (!canUserChangeTaskStatus(task, currentUser)) return;
     
     const currentStatus = task.status || "todo";
     let newStatus: TaskStatus;
@@ -253,7 +257,7 @@ export function KanbanView({
     
     pendingRefocusRef.current = focusedId;
     onStatusChange?.(focusedId, newStatus);
-  }, [kanbanTasks, onStatusChange]);
+  }, [kanbanTasks, currentUser, onStatusChange]);
 
   // Handle moving task right (to next column) - preserves focus
   const handleMoveRight = useCallback(() => {
@@ -261,6 +265,7 @@ export function KanbanView({
     if (!focusedId) return;
     const task = kanbanTasks.find(t => t.id === focusedId);
     if (!task) return;
+    if (!canUserChangeTaskStatus(task, currentUser)) return;
     
     const currentStatus = task.status || "todo";
     let newStatus: TaskStatus;
@@ -271,7 +276,7 @@ export function KanbanView({
     
     pendingRefocusRef.current = focusedId;
     onStatusChange?.(focusedId, newStatus);
-  }, [kanbanTasks, onStatusChange]);
+  }, [kanbanTasks, currentUser, onStatusChange]);
 
   // Keyboard navigation - Kanban mode: arrows navigate, Shift+arrows/HJKL move tasks
   const { focusedTaskId: navFocusedTaskId, setFocusByTaskId } = useTaskNavigation({
@@ -440,7 +445,12 @@ export function KanbanView({
                           const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                           
                           return (
-                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                            <Draggable
+                              key={task.id}
+                              draggableId={task.id}
+                              index={index}
+                              isDragDisabled={!canUserChangeTaskStatus(task, currentUser)}
+                            >
                               {(provided, snapshot) => (
                                 <div
                                   ref={provided.innerRef}

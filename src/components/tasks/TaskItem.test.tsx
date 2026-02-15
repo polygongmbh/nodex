@@ -79,8 +79,9 @@ describe("TaskItem status actions", () => {
     expect(onStatusChange).toHaveBeenCalledWith("t1", "done");
   });
 
-  it("allows setting status even when task mentions another user", () => {
+  it("blocks status changes when task is assigned to another user", () => {
     const onStatusChange = vi.fn();
+    const onToggleComplete = vi.fn();
 
     render(
       <TaskItem
@@ -89,11 +90,14 @@ describe("TaskItem status actions", () => {
         allTasks={[baseTask]}
         currentUser={baseTask.author}
         onStatusChange={onStatusChange}
+        onToggleComplete={onToggleComplete}
       />
     );
 
-    fireEvent.click(screen.getByText("In Progress"));
-
-    expect(onStatusChange).toHaveBeenCalledWith("t1", "in-progress");
+    const statusButton = screen.getByLabelText("Set status");
+    expect(statusButton).toBeDisabled();
+    fireEvent.click(statusButton);
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(onToggleComplete).not.toHaveBeenCalled();
   });
 });
