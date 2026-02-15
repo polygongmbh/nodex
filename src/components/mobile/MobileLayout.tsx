@@ -37,7 +37,11 @@ interface MobileLayoutProps {
 }
 
 // Mobile view order for swipe navigation
-const mobileViews: MobileViewType[] = ["tree", "feed", "upcoming", "calendar"];
+const mobileViews: MobileViewType[] = ["tree", "feed", "list", "calendar"];
+
+const isPrimaryMobileView = (view: ViewType): view is "tree" | "feed" | "list" | "calendar" => {
+  return view === "tree" || view === "feed" || view === "list" || view === "calendar";
+};
 
 export function MobileLayout({
   relays,
@@ -64,7 +68,9 @@ export function MobileLayout({
   onSignInClick,
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
-  const [mobileView, setMobileView] = useState<MobileViewType>(currentView);
+  const [mobileView, setMobileView] = useState<MobileViewType>(
+    isPrimaryMobileView(currentView) ? currentView : "tree"
+  );
 
   // Build default content from active channel filters
   const includedChannels = channels.filter(c => c.filterState === "included");
@@ -78,15 +84,9 @@ export function MobileLayout({
     }
 
     setShowFilters(false);
-    if (view === "upcoming") {
-      setMobileView("upcoming");
-      if (currentView !== "calendar") onViewChange("calendar");
-      return;
-    }
-
     setMobileView(view);
     onViewChange(view);
-  }, [currentView, onViewChange]);
+  }, [onViewChange]);
 
   // Swipe navigation handlers
   const handleSwipeLeft = useCallback(() => {
@@ -162,14 +162,8 @@ export function MobileLayout({
 
   useEffect(() => {
     if (showFilters) return;
-    if (currentView !== "calendar") {
-      setMobileView(currentView);
-      return;
-    }
-    if (mobileView !== "upcoming") {
-      setMobileView("calendar");
-    }
-  }, [currentView, mobileView, showFilters]);
+    setMobileView(isPrimaryMobileView(currentView) ? currentView : "tree");
+  }, [currentView, showFilters]);
 
   const renderView = () => {
     if (showFilters) {
@@ -187,14 +181,13 @@ export function MobileLayout({
         />
       );
     }
-    if (mobileView === "upcoming") {
-      return <CalendarView {...viewProps} isMobile mobileView="upcoming" />;
-    }
     switch (currentView) {
       case "tree":
         return <TaskTree {...viewProps} isMobile />;
       case "feed":
         return <FeedView {...viewProps} isMobile />;
+      case "list":
+        return <CalendarView {...viewProps} isMobile mobileView="upcoming" />;
       case "calendar":
         return <CalendarView {...viewProps} isMobile mobileView="calendar" />;
       default:
