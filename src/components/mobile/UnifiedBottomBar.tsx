@@ -309,7 +309,8 @@ export function UnifiedBottomBar({
 
       {/* Controls Row */}
       <div className="px-3 pt-2">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex items-center gap-2 pt-1">
           {canOfferComment && (
             <div className="flex h-8 items-center gap-1 px-1 bg-muted/50 rounded-md shrink-0">
             <button
@@ -425,6 +426,7 @@ export function UnifiedBottomBar({
               )}
             </button>
           </div>
+        </div>
         </div>
       </div>
 
