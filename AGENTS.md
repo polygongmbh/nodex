@@ -129,3 +129,17 @@ When the user asks you to create a plan to fix or implement something:
 - ALWAYS write that plan to the plans/ directory on the root of the repo.
 - NEVER commit plans to git
 - Give the plan a descriptive name using kebab-case (e.g., `fix-position-healing.md`, `feat-new-feature.md`)
+
+## Assistant Response Formatting
+- Keep summaries compact and scannable.
+- Prefer single-line status items when the content fits.
+- Commit reporting should be one line per commit in this format:
+  - `✅ <hash> <type>: <message>`
+- Use concise visual indicators for sections and outcomes:
+  - `✅` success/completed
+  - `⚠️` warning/risk/blocker
+  - `❌` failure
+  - `🔍` investigation/diagnostics
+  - `🧪` tests/verification
+- When color is supported by the client, use it to reinforce the same status categories above.
+- Avoid verbose prose when short bullet points communicate the same information.
