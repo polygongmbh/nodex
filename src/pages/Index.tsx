@@ -109,6 +109,7 @@ const Index = () => {
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
+  const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
 
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
@@ -443,6 +444,58 @@ const Index = () => {
     toast.success(`Showing only ${person?.displayName || person?.name || "selected user"}`);
   };
 
+  const getMentionHandle = useCallback((person: Person): string => {
+    const candidates = [person.name, person.displayName, person.id];
+    for (const candidate of candidates) {
+      const trimmed = (candidate || "").trim();
+      if (!trimmed) continue;
+      if (/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+        return trimmed;
+      }
+    }
+    return person.id;
+  }, []);
+
+  const upsertAndSelectPerson = useCallback((author: Person) => {
+    setPeople((prev) => {
+      const exists = prev.some((person) => person.id === author.id);
+      const next = exists
+        ? prev
+        : [
+            ...prev,
+            {
+              ...author,
+              avatar: author.avatar || "",
+              isOnline: author.isOnline ?? true,
+              isSelected: false,
+            },
+          ];
+
+      return next.map((person) => ({
+        ...person,
+        isSelected: person.id === author.id,
+      }));
+    });
+  }, []);
+
+  const handleAuthorClick = useCallback((author: Person) => {
+    upsertAndSelectPerson(author);
+    const mention = `@${getMentionHandle(author)}`;
+    setMentionRequest({ mention, id: Date.now() });
+
+    if (isMobile) {
+      setSearchQuery((previous) => {
+        const escaped = mention.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        if (new RegExp(`(^|\\s)${escaped}(?=\\s|$)`, "i").test(previous)) {
+          return previous;
+        }
+        const separator = previous && !previous.endsWith(" ") ? " " : "";
+        return `${previous}${separator}${mention} `;
+      });
+    }
+    toast.success(`Showing only ${author.displayName || author.name} and tagging ${mention}`);
+  }, [getMentionHandle, isMobile, upsertAndSelectPerson]);
+
   const handleToggleAllPeople = () => {
     const allSelected = people.every((p) => p.isSelected);
     setPeople((prev) => prev.map((person) => ({ ...person, isSelected: !allSelected })));
@@ -726,6 +779,8 @@ const Index = () => {
     onSignInClick: handleOpenAuthModal,
     onHashtagClick: handleHashtagExclusive,
     forceShowComposer: isOnboardingOpen && activeOnboardingSection === "compose",
+    onAuthorClick: handleAuthorClick,
+    mentionRequest,
   };
 
   const renderView = () => {
@@ -775,6 +830,8 @@ const Index = () => {
           onGuideClick={handleOpenGuide}
           onHashtagClick={handleHashtagExclusive}
           forceComposeMode={isOnboardingOpen && activeOnboardingSection === "compose"}
+          onAuthorClick={handleAuthorClick}
+          mentionRequest={mentionRequest}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide

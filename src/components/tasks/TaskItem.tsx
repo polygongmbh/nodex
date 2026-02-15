@@ -39,6 +39,7 @@ interface TaskItemProps {
   activeRelays?: Relay[]; // For showing relay source when multiple are active
   isKeyboardFocused?: boolean; // For keyboard navigation highlight
   onHashtagClick?: (tag: string) => void;
+  onAuthorClick?: (author: Person) => void;
 }
 
 export function TaskItem({
@@ -60,6 +61,7 @@ export function TaskItem({
   activeRelays = [],
   isKeyboardFocused = false,
   onHashtagClick,
+  onAuthorClick,
 }: TaskItemProps) {
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const [localFoldState, setLocalFoldState] = useState<FoldState>("matchingOnly");
@@ -81,6 +83,12 @@ export function TaskItem({
   const authorName = nostrProfile?.displayName || nostrProfile?.name || task.author.displayName;
   const authorAvatar = nostrProfile?.picture || task.author.avatar;
   const authorNip05 = nostrProfile?.nip05;
+  const authorPerson: Person = {
+    ...task.author,
+    name: nostrProfile?.name || task.author.name,
+    displayName: authorName,
+    avatar: authorAvatar,
+  };
 
   // Reset fold state when filters change
   useEffect(() => {
@@ -306,13 +314,24 @@ export function TaskItem({
 
         {/* Avatar - only show for comments */}
         {isComment && (
-          <UserAvatar
-            id={task.author.id}
-            displayName={authorName}
-            avatarUrl={authorAvatar}
-            className="w-6 h-6 flex-shrink-0"
-            beamTestId={`task-item-beam-${task.id}`}
-          />
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onAuthorClick?.(authorPerson);
+            }}
+            className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+            aria-label={`Filter and mention ${authorName}`}
+            title={`Filter and mention ${authorName}`}
+          >
+            <UserAvatar
+              id={task.author.id}
+              displayName={authorName}
+              avatarUrl={authorAvatar}
+              className="w-6 h-6 flex-shrink-0"
+              beamTestId={`task-item-beam-${task.id}`}
+            />
+          </button>
         )}
 
         {/* Content */}
@@ -322,14 +341,23 @@ export function TaskItem({
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
               {isComment && (
                 <>
-                  <span className="font-medium text-foreground/80 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onAuthorClick?.(authorPerson);
+                    }}
+                    className="font-medium text-foreground/80 flex items-center gap-1 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
+                    aria-label={`Filter and mention ${authorName}`}
+                    title={`Filter and mention ${authorName}`}
+                  >
                     {authorName}
                     {authorNip05 && (
                       <span title={authorNip05}>
                         <BadgeCheck className="w-3 h-3 text-success" />
                       </span>
                     )}
-                  </span>
+                  </button>
                   <span>·</span>
                   <span>{timeAgo}</span>
                 </>

@@ -27,6 +27,11 @@ interface TaskTreeProps {
   onSignInClick?: () => void;
   onHashtagClick?: (tag: string) => void;
   forceShowComposer?: boolean;
+  onAuthorClick?: (author: Person) => void;
+  mentionRequest?: {
+    mention: string;
+    id: number;
+  } | null;
 }
 
 export function TaskTree({
@@ -48,6 +53,8 @@ export function TaskTree({
   onSignInClick,
   onHashtagClick,
   forceShowComposer = false,
+  onAuthorClick,
+  mentionRequest = null,
 }: TaskTreeProps) {
   const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
@@ -271,6 +278,7 @@ export function TaskTree({
             parentId={currentContextId}
             onSignInClick={onSignInClick}
             forceExpanded={forceShowComposer}
+            mentionRequest={mentionRequest}
             defaultContent={(() => {
               const prefillChannels = new Set<string>();
               channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
@@ -314,6 +322,7 @@ export function TaskTree({
               activeRelays={relays.filter(r => r.isActive)}
               isKeyboardFocused={keyboardFocusedTaskId === task.id}
               onHashtagClick={onHashtagClick}
+              onAuthorClick={onAuthorClick}
             />
           ))
         )}

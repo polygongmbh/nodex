@@ -11,6 +11,19 @@ import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { Relay, Channel, Person, Task } from "@/types";
 import { cn } from "@/lib/utils";
+import { useNDK } from "@/lib/nostr/ndk-context";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MobileLayoutProps {
   relays: Relay[];
@@ -38,6 +51,11 @@ interface MobileLayoutProps {
   onGuideClick: () => void;
   onHashtagClick: (tag: string) => void;
   forceComposeMode?: boolean;
+  onAuthorClick?: (author: Person) => void;
+  mentionRequest?: {
+    mention: string;
+    id: number;
+  } | null;
 }
 
 // Mobile view order for swipe navigation
@@ -73,12 +91,22 @@ export function MobileLayout({
   onGuideClick,
   onHashtagClick,
   forceComposeMode = false,
+  onAuthorClick,
+  mentionRequest = null,
 }: MobileLayoutProps) {
+  const { user, needsProfileSetup, updateUserProfile } = useNDK();
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [mobileView, setMobileView] = useState<MobileViewType>(
     isPrimaryMobileView(currentView) ? currentView : "tree"
   );
+  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileDisplayName, setProfileDisplayName] = useState("");
+  const [profilePicture, setProfilePicture] = useState("");
+  const [profileNip05, setProfileNip05] = useState("");
+  const [profileAbout, setProfileAbout] = useState("");
 
   // Build default content from active channel filters
   const includedChannels = channels.filter(c => c.filterState === "included");
@@ -95,6 +123,40 @@ export function MobileLayout({
     setMobileView(view);
     onViewChange(view);
   }, [onViewChange]);
+
+  const openProfileEditor = useCallback(() => {
+    setProfileName(user?.profile?.name || "");
+    setProfileDisplayName(user?.profile?.displayName || "");
+    setProfilePicture(user?.profile?.picture || "");
+    setProfileNip05(user?.profile?.nip05 || "");
+    setProfileAbout(user?.profile?.about || "");
+    setIsProfileEditorOpen(true);
+  }, [user?.profile?.about, user?.profile?.displayName, user?.profile?.name, user?.profile?.nip05, user?.profile?.picture]);
+
+  const handleSaveProfile = useCallback(async () => {
+    if (!profileName.trim()) {
+      toast.error("Profile name is required");
+      return;
+    }
+    setIsSavingProfile(true);
+    try {
+      const success = await updateUserProfile({
+        name: profileName,
+        displayName: profileDisplayName || undefined,
+        picture: profilePicture || undefined,
+        nip05: profileNip05 || undefined,
+        about: profileAbout || undefined,
+      });
+      if (success) {
+        toast.success("Profile updated on connected relays");
+        setIsProfileEditorOpen(false);
+      } else {
+        toast.error("Failed to update profile. Check relay connectivity and try again.");
+      }
+    } finally {
+      setIsSavingProfile(false);
+    }
+  }, [profileAbout, profileDisplayName, profileName, profileNip05, profilePicture, updateUserProfile]);
 
   // Swipe navigation handlers
   const handleSwipeLeft = useCallback(() => {
@@ -165,6 +227,8 @@ export function MobileLayout({
     onFocusTask,
     onStatusChange,
     onHashtagClick,
+    onAuthorClick,
+    mentionRequest,
   };
 
   const mobileCurrentView: MobileViewType = showFilters ? "filters" : mobileView;
@@ -173,6 +237,12 @@ export function MobileLayout({
     if (showFilters) return;
     setMobileView(isPrimaryMobileView(currentView) ? currentView : "tree");
   }, [currentView, showFilters]);
+
+  useEffect(() => {
+    if (user && needsProfileSetup && !isProfileEditorOpen) {
+      openProfileEditor();
+    }
+  }, [isProfileEditorOpen, needsProfileSetup, openProfileEditor, user]);
 
   const renderView = () => {
     if (showFilters) {
@@ -188,6 +258,7 @@ export function MobileLayout({
           onRemoveRelay={onRemoveRelay}
           onSignInClick={onSignInClick}
           onGuideClick={onGuideClick}
+          onEditProfileClick={openProfileEditor}
         />
       );
     }
@@ -259,6 +330,55 @@ export function MobileLayout({
         onSignInClick={onSignInClick}
         forceComposeMode={forceComposeMode}
       />
+
+      <Dialog
+        open={isProfileEditorOpen}
+        onOpenChange={(open) => {
+          if (!open && needsProfileSetup) return;
+          setIsProfileEditorOpen(open);
+        }}
+      >
+        <DialogContent className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-y-auto p-4 sm:max-w-lg sm:p-6">
+          <DialogHeader>
+            <DialogTitle>{needsProfileSetup ? "Set up your profile" : "Edit profile"}</DialogTitle>
+            <DialogDescription>
+              Your Nostr metadata (`kind:0`) will be published to connected relays. Name is required.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="mobile-profile-name">Name *</Label>
+              <Input id="mobile-profile-name" value={profileName} onChange={(e) => setProfileName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="mobile-profile-display-name">Display name</Label>
+              <Input id="mobile-profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="mobile-profile-picture">Picture URL</Label>
+              <Input id="mobile-profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="mobile-profile-nip05">NIP-05</Label>
+              <Input id="mobile-profile-nip05" value={profileNip05} onChange={(e) => setProfileNip05(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="mobile-profile-about">About</Label>
+              <Textarea id="mobile-profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
+            </div>
+          </div>
+          <div className="sticky bottom-0 flex justify-end gap-2 bg-background/95 pt-2">
+            {!needsProfileSetup && (
+              <Button variant="outline" onClick={() => setIsProfileEditorOpen(false)} disabled={isSavingProfile}>
+                Cancel
+              </Button>
+            )}
+            <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+              {isSavingProfile ? "Saving..." : "Save profile"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

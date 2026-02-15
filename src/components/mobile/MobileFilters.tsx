@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
+import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil } from "lucide-react";
 import { Relay, Channel, Person } from "@/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,6 +19,7 @@ interface MobileFiltersProps {
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
   onGuideClick: () => void;
+  onEditProfileClick?: () => void;
 }
 
 const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -41,6 +42,7 @@ export function MobileFilters({
   onRemoveRelay,
   onSignInClick,
   onGuideClick,
+  onEditProfileClick,
 }: MobileFiltersProps) {
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
@@ -119,13 +121,22 @@ export function MobileFilters({
                   Sign in
                 </button>
               ) : (
-                <button
-                  onClick={logout}
-                  className="px-3 py-1.5 rounded-md text-sm border border-destructive/40 text-destructive flex items-center gap-1"
-                >
-                  <LogOut className="w-3 h-3" />
-                  Sign out
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={onEditProfileClick}
+                    className="px-3 py-1.5 rounded-md text-sm border border-border inline-flex items-center gap-1"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="px-3 py-1.5 rounded-md text-sm border border-destructive/40 text-destructive flex items-center gap-1"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    Sign out
+                  </button>
+                </div>
               )}
             </div>
 

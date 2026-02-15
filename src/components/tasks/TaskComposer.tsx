@@ -23,6 +23,10 @@ interface TaskComposerProps {
   onExpandedChange?: (expanded: boolean) => void;
   draftStorageKey?: string;
   forceExpanded?: boolean;
+  mentionRequest?: {
+    mention: string;
+    id: number;
+  } | null;
 }
 
 interface ComposeDraftState {
@@ -60,6 +64,7 @@ export function TaskComposer({
   onExpandedChange,
   draftStorageKey,
   forceExpanded = false,
+  mentionRequest = null,
 }: TaskComposerProps) {
   const { user } = useNDK();
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
@@ -99,6 +104,11 @@ export function TaskComposer({
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const autoManagedChannelsRef = useRef<Set<string>>(new Set());
 
+  const hasMention = (text: string, mention: string) => {
+    const escaped = mention.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(^|\\s)${escaped}(?=\\s|$)`, "i").test(text);
+  };
+
   useEffect(() => {
     if (!adaptiveSize) {
       textareaRef.current?.focus();
@@ -132,6 +142,33 @@ export function TaskComposer({
       // Ignore persistence errors.
     }
   }, [content, taskType, dueDate, dueTime, selectedRelays, draftStorageKey]);
+
+  useEffect(() => {
+    if (!mentionRequest?.mention) return;
+    const mention = mentionRequest.mention.startsWith("@")
+      ? mentionRequest.mention
+      : `@${mentionRequest.mention}`;
+
+    setContent((previousContent) => {
+      if (hasMention(previousContent, mention)) {
+        return previousContent;
+      }
+      const separator = previousContent && !previousContent.endsWith(" ") ? " " : "";
+      return `${previousContent}${separator}${mention} `;
+    });
+
+    if (adaptiveSize) {
+      setIsExpanded(true);
+    }
+
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      const end = textarea.value.length;
+      textarea.setSelectionRange(end, end);
+    });
+  }, [mentionRequest, adaptiveSize]);
 
   // Keep selected publish targets aligned with currently active relay filters.
   useEffect(() => {

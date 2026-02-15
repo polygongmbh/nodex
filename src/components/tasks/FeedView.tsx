@@ -39,6 +39,11 @@ interface FeedViewProps {
   onSignInClick?: () => void;
   onHashtagClick?: (tag: string) => void;
   forceShowComposer?: boolean;
+  onAuthorClick?: (author: Person) => void;
+  mentionRequest?: {
+    mention: string;
+    id: number;
+  } | null;
 }
 
 export function FeedView({
@@ -60,6 +65,8 @@ export function FeedView({
   onSignInClick,
   onHashtagClick,
   forceShowComposer = false,
+  onAuthorClick,
+  mentionRequest = null,
 }: FeedViewProps) {
   const truncateMobilePubkey = (value: string): string => {
     if (!isMobile) return value;
@@ -230,6 +237,7 @@ export function FeedView({
             parentId={focusedTaskId || undefined}
             onSignInClick={onSignInClick}
             forceExpanded={forceShowComposer}
+            mentionRequest={mentionRequest}
             defaultContent={(() => {
               const prefillChannels = new Set<string>();
               channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
@@ -385,18 +393,38 @@ export function FeedView({
                   )}
 
                   {/* Avatar */}
-                  <UserAvatar
-                    id={resolvedAuthor.id}
-                    displayName={resolvedAuthor.displayName}
-                    avatarUrl={resolvedAuthor.avatar}
-                    className="w-8 h-8 flex-shrink-0"
-                    beamTestId={`feed-beam-${task.id}`}
-                  />
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onAuthorClick?.(resolvedAuthor);
+                    }}
+                    className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    aria-label={`Filter and mention ${resolvedAuthor.displayName}`}
+                    title={`Filter and mention ${resolvedAuthor.displayName}`}
+                  >
+                    <UserAvatar
+                      id={resolvedAuthor.id}
+                      displayName={resolvedAuthor.displayName}
+                      avatarUrl={resolvedAuthor.avatar}
+                      className="w-8 h-8 flex-shrink-0"
+                      beamTestId={`feed-beam-${task.id}`}
+                    />
+                  </button>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <span className="font-medium text-foreground">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onAuthorClick?.(resolvedAuthor);
+                        }}
+                        className="font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
+                        aria-label={`Filter and mention ${authorMeta.primary}`}
+                        title={`Filter and mention ${authorMeta.primary}`}
+                      >
                         <span title={authorMeta.primary}>{primaryAuthorLabel}</span>
                         {authorMeta.secondary && (
                           <span
@@ -407,7 +435,7 @@ export function FeedView({
                             ({authorMeta.secondary})
                           </span>
                         )}
-                      </span>
+                      </button>
                       <span>·</span>
                       <span>{timeAgo}</span>
                       {isComment && (
