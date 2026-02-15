@@ -763,12 +763,19 @@ export function CalendarView({
                             {task.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {task.tags.map((tag) => (
-                                  <span
+                                  <button
                                     key={tag}
-                                    className="px-1 py-0.5 rounded text-xs bg-primary/10 text-primary"
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      onHashtagClick?.(tag);
+                                    }}
+                                    className="px-1 py-0.5 rounded text-xs bg-primary/10 text-primary hover:bg-primary/20"
+                                    aria-label={`Filter to #${tag}`}
+                                    title={`Filter to #${tag}`}
                                   >
                                     #{tag}
-                                  </span>
+                                  </button>
                                 ))}
                               </div>
                             )}

@@ -384,13 +384,20 @@ export function TaskItem({
                 </span>
               )}
               {task.tags.map((tag) => (
-                <span
+                <button
                   key={tag}
                   data-onboarding="content-hashtag"
-                  className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onHashtagClick?.(tag);
+                  }}
+                  className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20"
+                  aria-label={`Filter to #${tag}`}
+                  title={`Filter to #${tag}`}
                 >
                   #{tag}
-                </span>
+                </button>
               ))}
             </div>
           )}

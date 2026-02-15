@@ -371,12 +371,19 @@ export function ListView({
     return (
       <div className="flex flex-wrap gap-1">
         {task.tags.slice(0, 3).map((tag) => (
-          <span
+          <button
             key={tag}
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onHashtagClick?.(tag);
+            }}
             className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary cursor-pointer hover:bg-primary/20 transition-colors"
+            aria-label={`Filter to #${tag}`}
+            title={`Filter to #${tag}`}
           >
             #{tag}
-          </span>
+          </button>
         ))}
         {task.tags.length > 3 && (
           <span className="text-xs text-muted-foreground">
