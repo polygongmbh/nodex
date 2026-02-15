@@ -162,6 +162,7 @@ export function FeedView({
   const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
+  const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
 
   const openStatusMenu = (taskId: string) => {
     setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
@@ -176,13 +177,20 @@ export function FeedView({
     });
   };
 
+  const allowStatusMenuOpen = (taskId: string) => {
+    allowStatusMenuOpenTaskIdsRef.current.add(taskId);
+  };
+
+  const clearStatusMenuOpenIntent = (taskId: string) => {
+    allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
+  };
+
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Header - hidden on mobile */}
+      {/* Top composer - hidden on mobile */}
       {!isMobile && (
         <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Feed</h2>
+          <div className="flex items-center justify-end mb-3">
             {focusedTaskId && (
               <button
                 onClick={() => onFocusTask?.(null)}
@@ -198,6 +206,26 @@ export function FeedView({
               <div className="text-sm font-medium">{focusedTask.content.slice(0, 60)}{focusedTask.content.length > 60 ? "..." : ""}</div>
             </div>
           )}
+          <TaskComposer
+            onSubmit={handleNewTask}
+            relays={relays}
+            channels={channels}
+            people={people}
+            onCancel={() => {}}
+            compact
+            adaptiveSize
+            parentId={focusedTaskId || undefined}
+            onSignInClick={onSignInClick}
+            defaultContent={(() => {
+              const prefillChannels = new Set<string>();
+              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+              if (focusedTask) {
+                focusedTask.tags.forEach(t => prefillChannels.add(t));
+              }
+              if (prefillChannels.size === 0) return "";
+              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
+            })()}
+          />
         </div>
       )}
 
@@ -247,18 +275,31 @@ export function FeedView({
                     <DropdownMenu
                       open={Boolean(statusMenuOpenByTaskId[task.id])}
                       onOpenChange={(open) => {
-                        if (!open) closeStatusMenu(task.id);
+                        if (!open) {
+                          closeStatusMenu(task.id);
+                          clearStatusMenuOpenIntent(task.id);
+                          return;
+                        }
+                        if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
+                          openStatusMenu(task.id);
+                        } else {
+                          closeStatusMenu(task.id);
+                        }
+                        clearStatusMenuOpenIntent(task.id);
                       }}
                     >
                       <DropdownMenuTrigger asChild>
                         <button
                           onClick={(e) => {
                             if (!canCompleteTask(task)) return;
-                            if (onStatusChange) {
-                              const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-                              if (hasModifier) openStatusMenu(task.id);
+                            const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+                            if (hasModifier && onStatusChange) {
+                              allowStatusMenuOpen(task.id);
+                              openStatusMenu(task.id);
                               return;
                             }
+                            closeStatusMenu(task.id);
+                            clearStatusMenuOpenIntent(task.id);
                             onToggleComplete(task.id);
                           }}
                           onFocus={(e) => {
@@ -269,15 +310,18 @@ export function FeedView({
                                 statusTriggerPointerDownTaskIdsRef.current.has(task.id)
                               )
                             ) {
+                              allowStatusMenuOpen(task.id);
                               openStatusMenu(task.id);
                             }
                             statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                           }}
                           onPointerDown={() => {
                             statusTriggerPointerDownTaskIdsRef.current.add(task.id);
+                            clearStatusMenuOpenIntent(task.id);
                           }}
                           onBlur={() => {
                             statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                            clearStatusMenuOpenIntent(task.id);
                           }}
                           disabled={!canCompleteTask(task)}
                           aria-label="Set status"
@@ -386,36 +430,12 @@ export function FeedView({
         )}
       </div>
 
-      {/* Bottom compose/search dock - hidden on mobile */}
+      {/* Bottom search dock - hidden on mobile */}
       {!isMobile && (
         <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
-          <div className="px-4 pt-3 pb-2">
-            <div className="w-full max-w-xl mx-auto">
-              <TaskComposer
-                onSubmit={handleNewTask}
-                relays={relays}
-                channels={channels}
-                people={people}
-                onCancel={() => {}}
-                compact
-                adaptiveSize
-                parentId={focusedTaskId || undefined}
-                onSignInClick={onSignInClick}
-                defaultContent={(() => {
-                  const prefillChannels = new Set<string>();
-                  channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-                  if (focusedTask) {
-                    focusedTask.tags.forEach(t => prefillChannels.add(t));
-                  }
-                  if (prefillChannels.size === 0) return "";
-                  return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-                })()}
-              />
-            </div>
-          </div>
           {/* Gradient fade overlay */}
           <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-          <div className="px-4 pb-3 flex items-center">
+          <div className="px-4 py-3 flex items-center">
             <div className="relative w-full max-w-xl mx-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input

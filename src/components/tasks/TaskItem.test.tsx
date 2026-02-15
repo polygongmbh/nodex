@@ -40,6 +40,27 @@ const baseTask: Task = {
 };
 
 describe("TaskItem status actions", () => {
+  it("cycles status on plain click even when status menu exists", () => {
+    const onStatusChange = vi.fn();
+    const onToggleComplete = vi.fn();
+
+    render(
+      <TaskItem
+        task={baseTask}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+        onToggleComplete={onToggleComplete}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Set status"));
+
+    expect(onToggleComplete).toHaveBeenCalledWith("t1");
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
   it("allows directly marking a task as done", () => {
     const onStatusChange = vi.fn();
 

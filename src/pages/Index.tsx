@@ -355,7 +355,7 @@ const Index = () => {
     }
 
     const mapped = mapTaskStatusToStateEvent(status);
-    const ok = await publishEvent(
+    const result = await publishEvent(
       mapped.kind,
       mapped.content,
       [["e", taskId, "", "property"]],
@@ -363,7 +363,7 @@ const Index = () => {
       relayUrls
     );
 
-    if (!ok) {
+    if (!result.success) {
       toast.error("Failed to publish status update to relays");
       console.warn("Status publish failed", { taskId, status, relayUrls });
     }
@@ -405,10 +405,18 @@ const Index = () => {
     const shouldPublish = hasNonDemoRelay && selectedRelayUrls.length > 0;
     
     let publishSuccess = false;
+    let publishedEventId: string | undefined;
     if (shouldPublish) {
       console.log("Publishing event to relays:", selectedRelayUrls);
       const kind = taskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
-      publishSuccess = await publishEvent(kind, content, [], parentId, selectedRelayUrls);
+      const publishTags =
+        taskType === "task" && parentId
+          ? [["e", parentId, "", "parent"]]
+          : [];
+      const publishParentId = taskType === "comment" ? parentId : undefined;
+      const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
+      publishSuccess = result.success;
+      publishedEventId = result.eventId;
     }
     
     const effectiveRelayIds = selectedRelayUrls.length > 0
@@ -416,7 +424,7 @@ const Index = () => {
       : requestedRelayIds;
     
     const newTask: Task = {
-      id: Date.now().toString(),
+      id: publishedEventId || Date.now().toString(),
       author: people.find((p) => p.id === "me") || people[0],
       content,
       tags: extractedTags,

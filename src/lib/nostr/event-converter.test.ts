@@ -132,6 +132,18 @@ describe("nostrEventToTask", () => {
     expect(task.parentId).toBe("parent123");
   });
 
+  it("extracts parent ID from parent marker tag", () => {
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      kind: NostrEventKind.Task,
+      tags: [["e", "parent456", "", "parent"]],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.parentId).toBe("parent456");
+  });
+
   it("extracts relay ID from relay URL", () => {
     const task = nostrEventToTask(baseEvent);
     

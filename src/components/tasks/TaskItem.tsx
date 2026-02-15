@@ -66,6 +66,7 @@ export function TaskItem({
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const statusTriggerPointerDownRef = useRef(false);
+  const allowStatusMenuOpenRef = useRef(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   
   // Fetch author profile from Nostr (only if author.id looks like a pubkey)
@@ -197,7 +198,13 @@ export function TaskItem({
           <DropdownMenu
             open={statusMenuOpen}
             onOpenChange={(open) => {
-              if (!open) setStatusMenuOpen(false);
+              if (!open) {
+                setStatusMenuOpen(false);
+                allowStatusMenuOpenRef.current = false;
+                return;
+              }
+              setStatusMenuOpen(allowStatusMenuOpenRef.current);
+              allowStatusMenuOpenRef.current = false;
             }}
           >
             <DropdownMenuTrigger asChild>
@@ -205,11 +212,13 @@ export function TaskItem({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!canCompleteTask()) return;
-                  if (onStatusChange) {
-                    const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-                    if (hasModifier) setStatusMenuOpen(true);
+                  const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+                  if (hasModifier && onStatusChange) {
+                    allowStatusMenuOpenRef.current = true;
+                    setStatusMenuOpen(true);
                     return;
                   }
+                  setStatusMenuOpen(false);
                   onToggleComplete?.(task.id);
                 }}
                 onFocus={(e) => {
@@ -220,15 +229,18 @@ export function TaskItem({
                       statusTriggerPointerDownRef.current
                     )
                   ) {
+                    allowStatusMenuOpenRef.current = true;
                     setStatusMenuOpen(true);
                   }
                   statusTriggerPointerDownRef.current = false;
                 }}
                 onPointerDown={() => {
                   statusTriggerPointerDownRef.current = true;
+                  allowStatusMenuOpenRef.current = false;
                 }}
                 onBlur={() => {
                   statusTriggerPointerDownRef.current = false;
+                  allowStatusMenuOpenRef.current = false;
                 }}
                 disabled={!canCompleteTask()}
                 aria-label="Set status"

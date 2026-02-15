@@ -53,6 +53,7 @@ export function CalendarView({
   const [mobileTab, setMobileTab] = useState<"calendar" | "upcoming">("upcoming");
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
+  const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -220,6 +221,14 @@ export function CalendarView({
     });
   };
 
+  const allowStatusMenuOpen = (taskId: string) => {
+    allowStatusMenuOpenTaskIdsRef.current.add(taskId);
+  };
+
+  const clearStatusMenuOpenIntent = (taskId: string) => {
+    allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
+  };
+
   // Get day of week for first day to add padding
   const firstDayOfMonth = startOfMonth(currentMonth);
   const startPadding = firstDayOfMonth.getDay();
@@ -268,15 +277,6 @@ export function CalendarView({
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-            <div className="relative w-full xl:w-64">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Search tasks..."
-                className="w-full bg-muted/50 border border-border rounded-lg pl-3 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
             </div>
           </div>
           {focusedTask && (
@@ -350,18 +350,31 @@ export function CalendarView({
                             <DropdownMenu
                               open={Boolean(statusMenuOpenByTaskId[task.id])}
                               onOpenChange={(open) => {
-                                if (!open) closeStatusMenu(task.id);
+                                if (!open) {
+                                  closeStatusMenu(task.id);
+                                  clearStatusMenuOpenIntent(task.id);
+                                  return;
+                                }
+                                if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
+                                  openStatusMenu(task.id);
+                                } else {
+                                  closeStatusMenu(task.id);
+                                }
+                                clearStatusMenuOpenIntent(task.id);
                               }}
                             >
                               <DropdownMenuTrigger asChild>
                                 <button
                                   onClick={(e) => {
                                     if (!canCompleteTask(task)) return;
-                                    if (onStatusChange) {
-                                      const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-                                      if (hasModifier) openStatusMenu(task.id);
+                                    const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+                                    if (hasModifier && onStatusChange) {
+                                      allowStatusMenuOpen(task.id);
+                                      openStatusMenu(task.id);
                                       return;
                                     }
+                                    closeStatusMenu(task.id);
+                                    clearStatusMenuOpenIntent(task.id);
                                     onToggleComplete(task.id);
                                   }}
                                   onFocus={(e) => {
@@ -372,15 +385,18 @@ export function CalendarView({
                                         statusTriggerPointerDownTaskIdsRef.current.has(task.id)
                                       )
                                     ) {
+                                      allowStatusMenuOpen(task.id);
                                       openStatusMenu(task.id);
                                     }
                                     statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                   }}
                                   onPointerDown={() => {
                                     statusTriggerPointerDownTaskIdsRef.current.add(task.id);
+                                    clearStatusMenuOpenIntent(task.id);
                                   }}
                                   onBlur={() => {
                                     statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                                    clearStatusMenuOpenIntent(task.id);
                                   }}
                                   disabled={!canCompleteTask(task)}
                                   aria-label="Set status"
@@ -656,18 +672,31 @@ export function CalendarView({
                           <DropdownMenu
                             open={Boolean(statusMenuOpenByTaskId[task.id])}
                             onOpenChange={(open) => {
-                              if (!open) closeStatusMenu(task.id);
+                              if (!open) {
+                                closeStatusMenu(task.id);
+                                clearStatusMenuOpenIntent(task.id);
+                                return;
+                              }
+                              if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
+                                openStatusMenu(task.id);
+                              } else {
+                                closeStatusMenu(task.id);
+                              }
+                              clearStatusMenuOpenIntent(task.id);
                             }}
                           >
                             <DropdownMenuTrigger asChild>
                               <button
                                 onClick={(e) => {
                                   if (!canCompleteTask(task)) return;
-                                  if (onStatusChange) {
-                                    const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-                                    if (hasModifier) openStatusMenu(task.id);
+                                  const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+                                  if (hasModifier && onStatusChange) {
+                                    allowStatusMenuOpen(task.id);
+                                    openStatusMenu(task.id);
                                     return;
                                   }
+                                  closeStatusMenu(task.id);
+                                  clearStatusMenuOpenIntent(task.id);
                                   onToggleComplete(task.id);
                                 }}
                                 onFocus={(e) => {
@@ -678,15 +707,18 @@ export function CalendarView({
                                       statusTriggerPointerDownTaskIdsRef.current.has(task.id)
                                     )
                                   ) {
+                                    allowStatusMenuOpen(task.id);
                                     openStatusMenu(task.id);
                                   }
                                   statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                 }}
                                 onPointerDown={() => {
                                   statusTriggerPointerDownTaskIdsRef.current.add(task.id);
+                                  clearStatusMenuOpenIntent(task.id);
                                 }}
                                 onBlur={() => {
                                   statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
+                                  clearStatusMenuOpenIntent(task.id);
                                 }}
                                 disabled={!canCompleteTask(task)}
                                 aria-label="Set status"
@@ -763,6 +795,23 @@ export function CalendarView({
         </div>
         )}
       </div>
+
+      {!isMobile && (
+        <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
+          <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+          <div className="px-4 py-3 flex items-center">
+            <div className="relative w-full max-w-xl mx-auto">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search tasks..."
+                className="w-full bg-muted/60 border border-border/50 rounded-xl px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -54,7 +54,7 @@ export interface NDKContextValue {
   removeRelay: (url: string) => void;
   
   // Event publishing
-  publishEvent: (kind: NostrEventKind, content: string, tags?: string[][], parentId?: string, relayUrls?: string[]) => Promise<boolean>;
+  publishEvent: (kind: NostrEventKind, content: string, tags?: string[][], parentId?: string, relayUrls?: string[]) => Promise<{ success: boolean; eventId?: string }>;
   
   // Subscription
   subscribe: (filters: NDKFilter[], onEvent: (event: NDKEvent) => void) => NDKSubscription | null;
@@ -438,10 +438,10 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     tags: string[][] = [],
     parentId?: string,
     relayUrls?: string[]
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean; eventId?: string }> => {
     if (!ndk || !ndk.signer) {
       console.error("Not authenticated or NDK not ready");
-      return false;
+      return { success: false };
     }
 
     try {
@@ -481,14 +481,14 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       
       if (publishedTo.size === 0) {
         console.warn("Event publish completed but no relays confirmed receipt");
-        return false;
+        return { success: false, eventId: event.id };
       }
       
       console.log("Event published:", event.id, "to", Array.from(publishedTo).map((r) => r.url));
-      return true;
+      return { success: true, eventId: event.id };
     } catch (error) {
       console.error("Failed to publish event:", error);
-      return false;
+      return { success: false };
     }
   }, [ndk, relays, defaultRelays]);
 

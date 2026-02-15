@@ -95,9 +95,10 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     }
   }
 
-  // Extract parent ID from reply tags
+  // Extract parent ID from explicit parent marker first, then fallback to reply marker.
+  const parentTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "parent");
   const replyTag = event.tags.find((tag) => tag[0] === "e" && tag[3] === "reply");
-  const parentId = replyTag ? replyTag[1] : undefined;
+  const parentId = parentTag?.[1] || replyTag?.[1];
 
   // Generate relay ID from URL - use the attached relayUrl
   const relayId = event.relayUrl ? getRelayIdFromUrl(event.relayUrl) : "nostr";
