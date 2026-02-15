@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2 } from "lucide-react";
+import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { Relay, Channel, Person } from "@/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
 
@@ -19,6 +20,15 @@ interface MobileFiltersProps {
   onSignInClick: () => void;
   onGuideClick: () => void;
 }
+
+const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  "building-2": Building2,
+  users: Users,
+  "gamepad-2": Gamepad2,
+  cpu: Cpu,
+  radio: Radio,
+  "play-circle": PlayCircle,
+};
 
 export function MobileFilters({
   relays,
@@ -167,36 +177,39 @@ export function MobileFilters({
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {relays.map((relay) => (
-              <div
-                key={relay.id}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
-                  relay.isActive
-                    ? "bg-primary/10 border-primary text-primary"
-                    : "border-border hover:bg-muted"
-                )}
-              >
-                <button
-                  onClick={() => onRelayToggle(relay.id)}
-                  className="flex items-center gap-2"
+            {relays.map((relay) => {
+              const RelayIcon = relayIconMap[relay.icon] || Building2;
+              return (
+                <div
+                  key={relay.id}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
+                    relay.isActive
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "border-border hover:bg-muted"
+                  )}
                 >
-                  <span className="text-base">{relay.icon}</span>
-                  {relay.name}
-                  {relay.isActive && <Check className="w-3 h-3" />}
-                </button>
-                {relay.url && relay.id !== "demo" && (
                   <button
-                    onClick={() => onRemoveRelay(relay.url!)}
-                    className="ml-1 text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
-                    aria-label={`Remove feed ${relay.name}`}
+                    onClick={() => onRelayToggle(relay.id)}
+                    className="flex items-center gap-2"
                   >
-                    <Trash2 className="w-3 h-3" />
-                    Remove
+                    <RelayIcon className="w-4 h-4" />
+                    {relay.name}
+                    {relay.isActive && <Check className="w-3 h-3" />}
                   </button>
-                )}
-              </div>
-            ))}
+                  {relay.url && relay.id !== "demo" && (
+                    <button
+                      onClick={() => onRemoveRelay(relay.url!)}
+                      className="ml-1 text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
+                      aria-label={`Remove feed ${relay.name}`}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Remove
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -246,10 +259,11 @@ export function MobileFilters({
                     : "border-border hover:bg-muted"
                 )}
               >
-                <img
-                  src={person.avatar}
-                  alt={person.name}
-                  className="w-5 h-5 rounded-full"
+                <UserAvatar
+                  id={person.id}
+                  displayName={person.displayName || person.name}
+                  avatarUrl={person.avatar}
+                  className="w-5 h-5"
                 />
                 {person.name}
                 {person.isSelected && <Check className="w-3 h-3" />}
