@@ -244,11 +244,13 @@ export function CalendarView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      <FocusedTaskBreadcrumb
-        allTasks={allTasks}
-        focusedTaskId={focusedTaskId}
-        onFocusTask={onFocusTask}
-      />
+      {focusedTaskId && (
+        <FocusedTaskBreadcrumb
+          allTasks={allTasks}
+          focusedTaskId={focusedTaskId}
+          onFocusTask={onFocusTask}
+        />
+      )}
 
       <div
         className={cn(

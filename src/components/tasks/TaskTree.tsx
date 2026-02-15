@@ -238,7 +238,7 @@ export function TaskTree({
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Top composer with context controls - hidden on mobile */}
-      {!isMobile && (
+      {!isMobile && currentContextId && (
         <FocusedTaskBreadcrumb
           allTasks={allTasks}
           focusedTaskId={currentContextId}

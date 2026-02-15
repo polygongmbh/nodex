@@ -388,11 +388,13 @@ export function ListView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      <FocusedTaskBreadcrumb
-        allTasks={allTasks}
-        focusedTaskId={focusedTaskId}
-        onFocusTask={onFocusTask}
-      />
+      {focusedTaskId && (
+        <FocusedTaskBreadcrumb
+          allTasks={allTasks}
+          focusedTaskId={focusedTaskId}
+          onFocusTask={onFocusTask}
+        />
+      )}
 
       <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
         <TaskComposer
