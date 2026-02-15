@@ -92,6 +92,12 @@ export function UnifiedBottomBar({
 
       if (channel.filterState === "included") {
         onChannelToggle(channel.id);
+        onChannelToggle(channel.id);
+        return;
+      }
+
+      if (channel.filterState === "excluded") {
+        onChannelToggle(channel.id);
       }
     });
   };

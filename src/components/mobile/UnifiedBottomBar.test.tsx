@@ -311,6 +311,6 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(toggleCalls).toEqual(["general"]);
 
     fireEvent.change(composeField, { target: { value: "Ship " } });
-    expect(toggleCalls).toEqual(["general", "general"]);
+    expect(toggleCalls).toEqual(["general", "general", "general"]);
   });
 });
