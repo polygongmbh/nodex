@@ -31,10 +31,10 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-channels",
       title: "Channel filters",
-      description: "Use include/exclude for channel tags in the Channels section.",
+      description: "In Channels, click a channel name to cycle neutral → include → exclude. Click the # icon to show only that channel.",
       target: '[data-onboarding="channels-section"]',
       requiredAction: "click-target",
-      actionPrompt: "Click a channel to cycle its filter state.",
+      actionPrompt: "Click a channel control to continue.",
     },
     {
       id: "filters-hashtag-content",
@@ -47,7 +47,7 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-reset",
       title: "Reset channel focus",
-      description: "Click a hashtag in Channels to return to all channels again.",
+      description: "Reset channels by cycling included/excluded tags back to neutral, or use the Channels header icon to reset all.",
       target: '[data-onboarding="channels-section"]',
     },
   ],
@@ -92,7 +92,7 @@ const mobileStepsBySection: StepMap = {
     {
       id: "mobile-filters",
       title: "Mobile filters",
-      description: "Open Filters to include/exclude channels and filter people.",
+      description: "In Manage, tap channel chips to cycle neutral → include → exclude, and tap people chips to toggle people filters.",
       target: '[data-onboarding="mobile-filters"]',
       requiredAction: "click-target",
       actionPrompt: "Tap any filter control to continue.",
