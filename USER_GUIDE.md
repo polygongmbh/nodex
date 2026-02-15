@@ -3,7 +3,7 @@
 ## Quick Start
 - Sign in from the profile menu to post tasks/comments to relays.
 - Compose a post with at least one `#channel` tag.
-- Choose Task or Comment from the compose kind control.
+- Choose Task or Comment from the mobile/desktop kind control.
 
 ## Core Concepts
 - Tasks and comments are Nostr events.
@@ -50,6 +50,9 @@
 - The view navigation is at the top.
 - Open `Manage` for relay, channel, people, profile, and guide controls.
 - `Open Guide` in Manage launches onboarding.
+- The bottom bar is a combined search/compose field:
+  - typing updates search results live,
+  - submit creates a task/comment from the same text.
 
 ## Onboarding Guide
 - Open guide from:
@@ -66,6 +69,7 @@
 - At least one hashtag is required to post.
 - Task/comment kind changes event behavior.
 - `#tags` and `@mentions` are supported in compose text.
+- On mobile, use the submit button in the combined bottom bar to create.
 
 ## Notes
 - Nodex is in beta; behavior can evolve as Nostr integrations mature.

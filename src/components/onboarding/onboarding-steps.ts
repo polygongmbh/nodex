@@ -130,10 +130,10 @@ const mobileStepsBySection: StepMap = {
     {
       id: "mobile-compose-combobox",
       title: "Search/Compose combobox",
-      description: "Use the combined bottom bar as a combobox: Search mode filters tasks, Compose mode creates tasks/comments with #tags and @mentions.",
+      description: "Use the combined bottom bar to search as you type and create tasks/comments from the same text using the submit button.",
       target: '[data-onboarding="mobile-combined-box"]',
       requiredAction: "click-target",
-      actionPrompt: "Tap Search or Compose in the combined bar to continue.",
+      actionPrompt: "Tap into the combined bar to continue.",
     },
   ],
 };
