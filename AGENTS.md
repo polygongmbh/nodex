@@ -99,12 +99,23 @@ structure:
 - If there are unstaged modifications beyond `package-lock.json`, warn the user before proceeding.
 
 ## Test-First Workflow
-- Write tests before each change.
+- Write tests before each change except for minor visual / cosmetic changes.
 - Verify all tests run after each change.
-- Ask before adjusting existing tests and explain why.
-- Before adjusting existing tests, first consider whether the implementation can be changed to preserve current functionality.
-- Prefer behavior tests over implementation-detail tests.
-- Avoid tests that only assert hardcoded classes/markup unless those classes are the behavior being specified (e.g., accessibility/state contract).
+- Before adjusting existing tests, first consider whether the tests fails because of a regression or because of a deliberate change.
+- Prioritize comprehensive coverage of core functionality and business logic (filtering, compose behavior, Nostr event mapping/publishing, permissions, state transitions).
+- Keep UI tests as targeted spot checks only where they protect important user flows or accessibility contracts.
+- Prefer behavior and outcome tests over implementation-detail tests.
+- Do not add tests that only assert cosmetic details (styling classes, exact DOM nesting, spacing, non-semantic icons) unless those are explicit product requirements.
+- Avoid tests that mainly duplicate implementation internals; test public behavior and contracts instead.
+
+## Refactoring Cadence
+- After each major milestone (feature completion, major bugfix batch, or cross-view UI change), run a cleanup pass focused on:
+  - reducing duplication
+  - harmonizing inconsistent patterns
+  - simplifying large/complex components
+  - paying down technical debt discovered during delivery
+- Prefer incremental refactors in small, reviewable commits that preserve behavior.
+- When adding new code in duplicated areas, favor extracting shared helpers/components rather than copy-pasting.
 
 ## Protocol Compliance
 - Conform to Nostr protocol standards as written in the NIPs repository:
