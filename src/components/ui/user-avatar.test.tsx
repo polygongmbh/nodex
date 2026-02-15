@@ -41,7 +41,7 @@ describe("UserAvatar", () => {
       <UserAvatar
         id="pubkey-abc"
         displayName="Alice"
-        avatarUrl="https://legacy-avatar.test/avataaars/seed-Alice.svg"
+        avatarUrl="/avataaars/seed-Alice.svg"
         className="w-8 h-8"
         beamTestId="user-beam"
       />
