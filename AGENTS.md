@@ -103,6 +103,8 @@ structure:
 - Verify all tests run after each change.
 - Ask before adjusting existing tests and explain why.
 - Before adjusting existing tests, first consider whether the implementation can be changed to preserve current functionality.
+- Prefer behavior tests over implementation-detail tests.
+- Avoid tests that only assert hardcoded classes/markup unless those classes are the behavior being specified (e.g., accessibility/state contract).
 
 ## Protocol Compliance
 - Conform to Nostr protocol standards as written in the NIPs repository:
