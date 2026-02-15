@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap } from "lucide-react";
+import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -33,6 +33,15 @@ interface UnifiedBottomBarProps {
 }
 
 type SelectorType = "relay" | "channel" | "person" | null;
+
+const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  "building-2": Building2,
+  users: Users,
+  "gamepad-2": Gamepad2,
+  cpu: Cpu,
+  radio: Radio,
+  "play-circle": PlayCircle,
+};
 
 export function UnifiedBottomBar({
   searchQuery,
@@ -239,22 +248,25 @@ export function UnifiedBottomBar({
         <div className="border-b border-border p-3 max-h-48 overflow-y-auto">
           {activeSelector === "relay" && (
             <div className="flex flex-wrap gap-2">
-              {relays.map((relay) => (
-                <button
-                  key={relay.id}
-                  onClick={() => onRelayToggle(relay.id)}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors",
-                    relay.isActive
-                      ? "bg-primary/10 border-primary text-primary"
-                      : "border-border"
-                  )}
-                >
-                  <span className="text-base">{relay.icon}</span>
-                  {relay.name}
-                  {relay.isActive && <Check className="w-3 h-3" />}
-                </button>
-              ))}
+              {relays.map((relay) => {
+                const RelayIcon = relayIconMap[relay.icon] || Building2;
+                return (
+                  <button
+                    key={relay.id}
+                    onClick={() => onRelayToggle(relay.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors",
+                      relay.isActive
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "border-border"
+                    )}
+                  >
+                    <RelayIcon className="w-4 h-4" />
+                    {relay.name}
+                    {relay.isActive && <Check className="w-3 h-3" />}
+                  </button>
+                );
+              })}
             </div>
           )}
           {activeSelector === "channel" && (
