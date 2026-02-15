@@ -10,6 +10,7 @@ import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
@@ -242,6 +243,28 @@ const Index = () => {
       navigate(`/${newView}`);
     }
   }, [navigate, focusedTaskId]);
+
+  const handleDesktopSwipeLeft = useCallback(() => {
+    const currentIndex = validViews.indexOf(currentView);
+    if (currentIndex < validViews.length - 1) {
+      setCurrentView(validViews[currentIndex + 1]);
+    }
+  }, [currentView, setCurrentView]);
+
+  const handleDesktopSwipeRight = useCallback(() => {
+    const currentIndex = validViews.indexOf(currentView);
+    if (currentIndex > 0) {
+      setCurrentView(validViews[currentIndex - 1]);
+    }
+  }, [currentView, setCurrentView]);
+
+  const desktopSwipeHandlers = useSwipeNavigation({
+    onSwipeLeft: handleDesktopSwipeLeft,
+    onSwipeRight: handleDesktopSwipeRight,
+    threshold: 55,
+    enableHaptics: false,
+    enableWheelSwipe: !isMobile,
+  });
 
   // Desktop keyboard shortcuts (disabled on mobile)
   useKeyboardShortcuts({
@@ -681,7 +704,7 @@ const Index = () => {
         onFocusTasks={handleFocusTasks}
         onShortcutsClick={shortcutsHelp.open}
       />
-      <div className="min-w-0 overflow-hidden">
+      <div className="min-w-0 overflow-hidden" {...desktopSwipeHandlers}>
         {renderView()}
       </div>
       

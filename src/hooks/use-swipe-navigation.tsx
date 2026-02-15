@@ -1,4 +1,4 @@
-import { useRef, useCallback, TouchEvent } from "react";
+import { useRef, useCallback, TouchEvent, WheelEvent } from "react";
 
 interface UseSwipeNavigationOptions {
   onSwipeLeft?: () => void;
@@ -6,6 +6,8 @@ interface UseSwipeNavigationOptions {
   threshold?: number;
   preventDefaultOnSwipe?: boolean;
   enableHaptics?: boolean;
+  enableWheelSwipe?: boolean;
+  wheelCooldownMs?: number;
 }
 
 // Trigger haptic feedback if available
@@ -23,10 +25,16 @@ export function useSwipeNavigation({
   threshold = 50,
   preventDefaultOnSwipe = false,
   enableHaptics = true,
+  enableWheelSwipe = false,
+  wheelCooldownMs = 350,
 }: UseSwipeNavigationOptions = {}) {
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const wheelAccumX = useRef(0);
+  const wheelAccumY = useRef(0);
+  const lastWheelEventAt = useRef(0);
+  const lastWheelSwipeAt = useRef(0);
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
@@ -72,9 +80,69 @@ export function useSwipeNavigation({
     touchEndX.current = null;
   }, [onSwipeLeft, onSwipeRight, threshold, preventDefaultOnSwipe, enableHaptics]);
 
+  const handleWheel = useCallback((e: WheelEvent) => {
+    if (!enableWheelSwipe) return;
+
+    const target = e.target as HTMLElement | null;
+    if (target) {
+      const tag = target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) {
+        return;
+      }
+    }
+
+    const now = Date.now();
+    if (now - lastWheelEventAt.current > 120) {
+      wheelAccumX.current = 0;
+      wheelAccumY.current = 0;
+    }
+    lastWheelEventAt.current = now;
+
+    const { deltaX, deltaY } = e;
+    if (Math.abs(deltaX) < Math.abs(deltaY)) return;
+
+    if (wheelAccumX.current !== 0 && Math.sign(wheelAccumX.current) !== Math.sign(deltaX)) {
+      wheelAccumX.current = 0;
+      wheelAccumY.current = 0;
+    }
+
+    wheelAccumX.current += deltaX;
+    wheelAccumY.current += Math.abs(deltaY);
+
+    const absX = Math.abs(wheelAccumX.current);
+    if (absX < threshold || absX <= wheelAccumY.current) return;
+    if (now - lastWheelSwipeAt.current < wheelCooldownMs) return;
+
+    if (preventDefaultOnSwipe) {
+      e.preventDefault();
+    }
+    if (enableHaptics) {
+      triggerHaptic("light");
+    }
+
+    if (wheelAccumX.current > 0) {
+      onSwipeLeft?.();
+    } else {
+      onSwipeRight?.();
+    }
+
+    lastWheelSwipeAt.current = now;
+    wheelAccumX.current = 0;
+    wheelAccumY.current = 0;
+  }, [
+    onSwipeLeft,
+    onSwipeRight,
+    threshold,
+    preventDefaultOnSwipe,
+    enableHaptics,
+    enableWheelSwipe,
+    wheelCooldownMs,
+  ]);
+
   return {
     onTouchStart: handleTouchStart,
     onTouchMove: handleTouchMove,
     onTouchEnd: handleTouchEnd,
+    onWheel: handleWheel,
   };
 }
