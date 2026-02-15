@@ -359,7 +359,7 @@ export function TaskComposer({
           }}
           placeholder={taskType === "task" ? "What needs to be done? Use #tags..." : "Add a comment..."}
           className={cn(
-            "w-full bg-muted/30 border border-border rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50",
+            "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
             adaptiveSize && !showExpandedControls
               ? "min-h-[42px] py-2"
               : compact
@@ -399,7 +399,7 @@ export function TaskComposer({
 
       {/* Due date for tasks */}
       {showExpandedControls && taskType === "task" && (
-        <div className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
+        <div className="flex items-center gap-2 p-2 bg-muted/40 border border-border/40 rounded-xl">
           <Calendar className="w-4 h-4 text-muted-foreground" />
           <Popover>
             <PopoverTrigger asChild>
@@ -442,7 +442,7 @@ export function TaskComposer({
 
       {/* Sign in prompt for posting */}
       {showExpandedControls && !user && (
-        <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg">
+        <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded-xl">
           <Zap className="w-4 h-4 text-primary" />
           <span className="text-sm text-muted-foreground flex-1">
             Sign in to post or update tasks
@@ -476,7 +476,7 @@ export function TaskComposer({
                 }
               }, 10);
             }}
-            className="p-2 rounded-full hover:bg-muted"
+            className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
           >
             <Hash className="w-4 h-4 text-primary" />
           </button>
@@ -484,20 +484,9 @@ export function TaskComposer({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              if (adaptiveSize) {
-                setIsExpanded(false);
-              }
-              onCancel();
-            }}
-            className="px-3 py-1.5 text-sm rounded-md hover:bg-muted"
-          >
-            Cancel
-          </button>
-          <button
             onClick={handleSubmit}
             disabled={!content.trim() || !hasAtLeastOneTag || isPublishing || !user}
-            className="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-primary text-primary-foreground text-sm rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
           >
             {isPublishing && (
               <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />

@@ -51,4 +51,23 @@ describe("CalendarView responsiveness", () => {
     const panel = addEventButton.closest("div[class*='overflow-y-auto']");
     expect(panel?.className).toContain("xl:w-80");
   });
+
+  it("renders bottom search with icon", () => {
+    const { container } = render(
+      <CalendarView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={people}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByPlaceholderText(/search tasks/i)).toBeInTheDocument();
+    expect(container.querySelector("svg.lucide-search")).toBeInTheDocument();
+  });
 });

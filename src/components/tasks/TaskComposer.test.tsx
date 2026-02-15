@@ -98,4 +98,18 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByDisplayValue("#persisted hello")).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/add a comment/i)).toBeInTheDocument();
   });
+
+  it("does not render a cancel action button", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /cancel/i })).not.toBeInTheDocument();
+  });
 });
