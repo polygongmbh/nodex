@@ -541,7 +541,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
           setIsProfileEditorOpen(open);
         }}
       >
-        <DialogContent>
+        <DialogContent className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-y-auto p-4 sm:max-w-lg sm:p-6">
           <DialogHeader>
             <DialogTitle>{needsProfileSetup ? "Set up your profile" : "Edit profile"}</DialogTitle>
             <DialogDescription>
@@ -570,7 +570,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
               <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
             </div>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="sticky bottom-0 flex justify-end gap-2 bg-background/95 pt-2">
             {!needsProfileSetup && (
               <Button variant="outline" onClick={() => setIsProfileEditorOpen(false)} disabled={isSavingProfile}>
                 Cancel
