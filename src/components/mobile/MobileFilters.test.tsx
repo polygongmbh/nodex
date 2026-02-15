@@ -61,5 +61,10 @@ describe("MobileFilters management view", () => {
     expect(onAddRelay).toHaveBeenCalledWith("wss://relay.example.com");
     expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
+    const keyField = screen.getByTestId("mobile-guest-key-field");
+    expect(keyField).toHaveClass("overflow-x-auto");
+    expect(keyField).toHaveClass("whitespace-nowrap");
+    expect(keyField).toHaveClass("max-w-[10rem]");
+    expect(keyField).not.toHaveClass("text-ellipsis");
   });
 });

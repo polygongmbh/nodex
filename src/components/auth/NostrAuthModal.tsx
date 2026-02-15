@@ -418,7 +418,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
               <span className="text-xs text-warning">Keep secret</span>
             </div>
             <div className="flex items-start gap-2">
-              <code className="flex-1 text-xs bg-muted p-2 rounded font-mono break-all max-h-20 overflow-auto">
+              <code
+                data-testid="desktop-guest-key-field"
+                className="block max-w-[10rem] w-full text-xs bg-muted p-2 rounded font-mono whitespace-nowrap overflow-x-auto"
+              >
                 {showKey ? getDisplayKey() : "••••••••••••••••••••••••••••••••"}
               </code>
               <div className="flex flex-col gap-1">
