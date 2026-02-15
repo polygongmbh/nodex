@@ -33,6 +33,7 @@ interface CalendarViewProps {
   onFocusTask?: (taskId: string | null) => void;
   isMobile?: boolean;
   mobileView?: "calendar" | "upcoming";
+  onHashtagClick?: (tag: string) => void;
 }
 
 export function CalendarView({
@@ -51,6 +52,7 @@ export function CalendarView({
   onFocusTask,
   isMobile = false,
   mobileView,
+  onHashtagClick,
 }: CalendarViewProps) {
   const { user } = useNDK();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -750,7 +752,7 @@ export function CalendarView({
                                 task.status === "done" && "line-through text-muted-foreground"
                               )}
                             >
-                              {linkifyContent(task.content)}
+                              {linkifyContent(task.content, onHashtagClick)}
                             </p>
                             {task.dueTime && (
                               <div className={cn("flex items-center gap-1 text-xs mt-1", dueDateColor)}>

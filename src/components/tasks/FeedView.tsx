@@ -36,6 +36,7 @@ interface FeedViewProps {
   onFocusSidebar?: () => void;
   isMobile?: boolean;
   onSignInClick?: () => void;
+  onHashtagClick?: (tag: string) => void;
 }
 
 export function FeedView({
@@ -55,6 +56,7 @@ export function FeedView({
   onFocusSidebar,
   isMobile = false,
   onSignInClick,
+  onHashtagClick,
 }: FeedViewProps) {
   const { user } = useNDK();
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
@@ -410,7 +412,7 @@ export function FeedView({
                         task.status === "done" && "line-through text-muted-foreground"
                       )}
                     >
-                      {linkifyContent(task.content)}
+                      {linkifyContent(task.content, onHashtagClick)}
                     </p>
 
                     {/* Due date */}

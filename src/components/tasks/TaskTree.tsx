@@ -25,6 +25,7 @@ interface TaskTreeProps {
   onFocusSidebar?: () => void;
   isMobile?: boolean;
   onSignInClick?: () => void;
+  onHashtagClick?: (tag: string) => void;
 }
 
 export function TaskTree({
@@ -44,6 +45,7 @@ export function TaskTree({
   onFocusSidebar,
   isMobile = false,
   onSignInClick,
+  onHashtagClick,
 }: TaskTreeProps) {
   const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
@@ -308,6 +310,7 @@ export function TaskTree({
               hasActiveFilters={hasActiveFilters}
               activeRelays={relays.filter(r => r.isActive)}
               isKeyboardFocused={keyboardFocusedTaskId === task.id}
+              onHashtagClick={onHashtagClick}
             />
           ))
         )}

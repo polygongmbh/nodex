@@ -36,6 +36,7 @@ interface KanbanViewProps {
   onFocusTask?: (taskId: string | null) => void;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
   onFocusSidebar?: () => void;
+  onHashtagClick?: (tag: string) => void;
 }
 
 const columns: { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] = [
@@ -61,6 +62,7 @@ export function KanbanView({
   onFocusTask,
   onStatusChange,
   onFocusSidebar,
+  onHashtagClick,
 }: KanbanViewProps) {
   const { user } = useNDK();
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
@@ -468,7 +470,7 @@ export function KanbanView({
                                       task.status === "done" && "line-through text-muted-foreground"
                                     )}
                                   >
-                                    {linkifyContent(task.content)}
+                                    {linkifyContent(task.content, onHashtagClick)}
                                   </p>
 
                                   {/* Children indicator */}

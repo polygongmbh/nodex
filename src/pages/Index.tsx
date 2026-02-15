@@ -406,6 +406,21 @@ const Index = () => {
     toast.success(allNeutral ? "All channels included" : "All channels reset");
   };
 
+  const handleHashtagExclusive = useCallback((tag: string) => {
+    const normalizedTag = tag.trim().toLowerCase();
+    if (!normalizedTag) return;
+
+    setChannelFilterStates(() => {
+      const next = new Map<string, Channel["filterState"]>();
+      channels.forEach((channel) => {
+        next.set(channel.id, channel.name.toLowerCase() === normalizedTag ? "included" : "neutral");
+      });
+      return next;
+    });
+
+    toast.success(`Showing only #${normalizedTag}`);
+  }, [channels]);
+
   const handlePersonToggle = (id: string) => {
     setPeople((prev) =>
       prev.map((person) =>
@@ -706,6 +721,7 @@ const Index = () => {
     onStatusChange: handleStatusChange,
     onFocusSidebar: handleFocusSidebar,
     onSignInClick: handleOpenAuthModal,
+    onHashtagClick: handleHashtagExclusive,
   };
 
   const renderView = () => {
@@ -753,6 +769,7 @@ const Index = () => {
           onRemoveRelay={removeRelay}
           onSignInClick={handleOpenAuthModal}
           onGuideClick={handleOpenGuide}
+          onHashtagClick={handleHashtagExclusive}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide

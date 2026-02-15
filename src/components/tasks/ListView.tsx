@@ -38,6 +38,7 @@ interface ListViewProps {
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
+  onHashtagClick?: (tag: string) => void;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -58,6 +59,7 @@ export function ListView({
   focusedTaskId,
   onFocusTask,
   onFocusSidebar,
+  onHashtagClick,
 }: ListViewProps) {
   const { user } = useNDK();
   const COMPOSE_DRAFT_KEY = "nodex.compose-draft.list";
@@ -521,7 +523,7 @@ export function ListView({
                             task.status === "done" && "line-through text-muted-foreground"
                           )}
                         >
-                          {linkifyContent(task.content)}
+                          {linkifyContent(task.content, onHashtagClick)}
                         </p>
                       </div>
                     </td>

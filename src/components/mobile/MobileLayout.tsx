@@ -35,6 +35,7 @@ interface MobileLayoutProps {
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
   onGuideClick: () => void;
+  onHashtagClick: (tag: string) => void;
 }
 
 // Mobile view order for swipe navigation
@@ -68,6 +69,7 @@ export function MobileLayout({
   onRemoveRelay,
   onSignInClick,
   onGuideClick,
+  onHashtagClick,
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [mobileView, setMobileView] = useState<MobileViewType>(
@@ -158,6 +160,7 @@ export function MobileLayout({
     focusedTaskId,
     onFocusTask,
     onStatusChange,
+    onHashtagClick,
   };
 
   const mobileCurrentView: MobileViewType = showFilters ? "filters" : mobileView;

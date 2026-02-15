@@ -37,6 +37,7 @@ interface TaskItemProps {
   parentFoldState?: FoldState; // Propagate parent's fold state for recursive expansion
   activeRelays?: Relay[]; // For showing relay source when multiple are active
   isKeyboardFocused?: boolean; // For keyboard navigation highlight
+  onHashtagClick?: (tag: string) => void;
 }
 
 export function TaskItem({
@@ -57,6 +58,7 @@ export function TaskItem({
   parentFoldState,
   activeRelays = [],
   isKeyboardFocused = false,
+  onHashtagClick,
 }: TaskItemProps) {
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const [localFoldState, setLocalFoldState] = useState<FoldState>("matchingOnly");
@@ -356,7 +358,7 @@ export function TaskItem({
             "text-sm leading-relaxed",
             task.status === "done" && "line-through text-muted-foreground"
           )}>
-            {linkifyContent(task.content)}
+            {linkifyContent(task.content, onHashtagClick)}
           </p>
 
           {/* Due date */}
@@ -466,6 +468,7 @@ export function TaskItem({
                       hasActiveFilters={hasActiveFilters}
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
+                      onHashtagClick={onHashtagClick}
                     />
                   );
                 })}
@@ -492,6 +495,7 @@ export function TaskItem({
                       hasActiveFilters={hasActiveFilters}
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
+                      onHashtagClick={onHashtagClick}
                     />
                   );
                 })}
