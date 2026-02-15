@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
-import { formatAuthorMetaLabel } from "@/lib/person-label";
+import { formatAuthorMetaParts } from "@/lib/person-label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -241,7 +241,7 @@ export function FeedView({
             const breadcrumb = getParentBreadcrumb(task);
             const isKeyboardFocused = keyboardFocusedTaskId === task.id;
             const resolvedAuthor = people.find((person) => person.id === task.author.id) ?? task.author;
-            const authorMetaLabel = formatAuthorMetaLabel({
+            const authorMeta = formatAuthorMetaParts({
               personId: resolvedAuthor.id,
               displayName: resolvedAuthor.displayName,
               username: resolvedAuthor.name,
@@ -377,7 +377,18 @@ export function FeedView({
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <span className="font-medium text-foreground">{authorMetaLabel}</span>
+                      <span className="font-medium text-foreground">
+                        {authorMeta.primary}
+                        {authorMeta.secondary && (
+                          <span
+                            data-testid={`feed-author-secondary-${task.id}`}
+                            className="opacity-60"
+                          >
+                            {" "}
+                            ({authorMeta.secondary})
+                          </span>
+                        )}
+                      </span>
                       <span>·</span>
                       <span>{timeAgo}</span>
                       {isComment && (

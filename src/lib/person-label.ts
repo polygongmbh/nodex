@@ -4,6 +4,11 @@ interface AuthorMetaLabelInput {
   username?: string;
 }
 
+interface AuthorMetaLabelParts {
+  primary: string;
+  secondary?: string;
+}
+
 function abbreviatePubkey(pubkey: string): string {
   if (pubkey.length <= 10) return pubkey;
   return `${pubkey.slice(0, 6)}…${pubkey.slice(-4)}`;
@@ -37,6 +42,16 @@ export function formatAuthorMetaLabel({
   displayName,
   username,
 }: AuthorMetaLabelInput): string {
+  const parts = formatAuthorMetaParts({ personId, displayName, username });
+  if (!parts.secondary) return parts.primary;
+  return `${parts.primary} (${parts.secondary})`;
+}
+
+export function formatAuthorMetaParts({
+  personId,
+  displayName,
+  username,
+}: AuthorMetaLabelInput): AuthorMetaLabelParts {
   const normalizedName = displayName.trim();
   const normalizedUsername = (username || "").trim();
   const hasDisplayName = normalizedName.length > 0;
@@ -50,21 +65,33 @@ export function formatAuthorMetaLabel({
     (!hasHumanDisplayName || normalizedUsername.toLowerCase() !== normalizedName.toLowerCase());
 
   if (!hasHumanDisplayName && !hasHumanUsername) {
-    return personId;
+    return { primary: personId };
   }
 
   const abbreviatedPubkey = abbreviatePubkey(personId);
 
   if (hasDistinctUsername) {
     if (hasHumanDisplayName) {
-      return `${normalizedName} (@${normalizedUsername} · ${abbreviatedPubkey})`;
+      return {
+        primary: normalizedName,
+        secondary: `@${normalizedUsername} · ${abbreviatedPubkey}`,
+      };
     }
-    return `@${normalizedUsername} (${abbreviatedPubkey})`;
+    return {
+      primary: `@${normalizedUsername}`,
+      secondary: abbreviatedPubkey,
+    };
   }
 
   if (hasHumanDisplayName) {
-    return `${normalizedName} (${abbreviatedPubkey})`;
+    return {
+      primary: normalizedName,
+      secondary: abbreviatedPubkey,
+    };
   }
 
-  return `@${normalizedUsername} (${abbreviatedPubkey})`;
+  return {
+    primary: `@${normalizedUsername}`,
+    secondary: abbreviatedPubkey,
+  };
 }

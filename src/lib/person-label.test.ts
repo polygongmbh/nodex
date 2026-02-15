@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatAuthorMetaLabel } from "./person-label";
+import { formatAuthorMetaLabel, formatAuthorMetaParts } from "./person-label";
 
 describe("formatAuthorMetaLabel", () => {
   it("includes display name, username, and abbreviated pubkey", () => {
@@ -47,5 +47,17 @@ describe("formatAuthorMetaLabel", () => {
     });
 
     expect(label).toBe(pubkey);
+  });
+
+  it("returns structured parts so secondary metadata can be styled separately", () => {
+    const pubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const parts = formatAuthorMetaParts({
+      personId: pubkey,
+      displayName: "Alice Doe",
+      username: "alice",
+    });
+
+    expect(parts.primary).toBe("Alice Doe");
+    expect(parts.secondary).toBe("@alice · 012345…cdef");
   });
 });

@@ -60,7 +60,9 @@ describe("FeedView kind:0 author labels", () => {
       />
     );
 
-    expect(screen.getByText("Janek (012345…cdef)")).toBeInTheDocument();
+    expect(
+      screen.getByText((_, element) => element?.textContent === "Janek (012345…cdef)")
+    ).toBeInTheDocument();
     expect(screen.queryByText(/You/)).not.toBeInTheDocument();
   });
 });
