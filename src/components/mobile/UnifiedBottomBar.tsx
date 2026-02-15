@@ -56,14 +56,32 @@ export function UnifiedBottomBar({
   const [dueTime, setDueTime] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const selectionStartRef = useRef(0);
+  const selectionEndRef = useRef(0);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const autoManagedChannelsRef = useRef<Set<string>>(new Set());
 
+  const saveSelection = (target: HTMLInputElement | HTMLTextAreaElement) => {
+    selectionStartRef.current = target.selectionStart ?? 0;
+    selectionEndRef.current = target.selectionEnd ?? selectionStartRef.current;
+  };
+
+  const restoreSelection = (target: HTMLInputElement | HTMLTextAreaElement) => {
+    const length = target.value.length;
+    const start = Math.min(selectionStartRef.current, length);
+    const end = Math.min(selectionEndRef.current, length);
+    target.setSelectionRange(start, end);
+  };
+
   useEffect(() => {
     if (mode === "compose" && textareaRef.current) {
-      textareaRef.current.focus();
+      const target = textareaRef.current;
+      target.focus();
+      restoreSelection(target);
     } else if (mode === "search" && inputRef.current) {
-      inputRef.current.focus();
+      const target = inputRef.current;
+      target.focus();
+      restoreSelection(target);
     }
   }, [mode]);
 
@@ -154,10 +172,11 @@ export function UnifiedBottomBar({
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
     onSubmit(sharedText, extractedChannels, relayIds, taskType, dueDate, dueTime || undefined);
-    const selectedChannelsContent = includedChannels.length > 0
-      ? `${includedChannels.map((channelName) => `#${channelName}`).join(" ")} `
-      : "";
-    setSharedText(selectedChannelsContent);
+    const hashtagOnlyContent = Array.from(
+      new Set((sharedText.match(/#(\w+)/g) || []).map((tag) => tag.toLowerCase()))
+    ).join(" ");
+    setSharedText(hashtagOnlyContent);
+    onSearchChange(hashtagOnlyContent);
     prevIncludedChannelsRef.current = [...includedChannels];
     autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
@@ -371,9 +390,13 @@ export function UnifiedBottomBar({
               value={sharedText}
               onChange={(e) => {
                 const value = e.target.value;
+                saveSelection(e.target);
                 setSharedText(value);
                 onSearchChange(value);
               }}
+              onSelect={(e) => saveSelection(e.currentTarget)}
+              onKeyUp={(e) => saveSelection(e.currentTarget)}
+              onClick={(e) => saveSelection(e.currentTarget)}
               placeholder="Search tasks..."
               className="w-full pl-9 pr-4 py-3 bg-muted/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
@@ -434,7 +457,13 @@ export function UnifiedBottomBar({
                 data-onboarding="compose-input"
                 ref={textareaRef}
                 value={sharedText}
-                onChange={(e) => setSharedText(e.target.value)}
+                onChange={(e) => {
+                  saveSelection(e.target);
+                  setSharedText(e.target.value);
+                }}
+                onSelect={(e) => saveSelection(e.currentTarget)}
+                onKeyUp={(e) => saveSelection(e.currentTarget)}
+                onClick={(e) => saveSelection(e.currentTarget)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
