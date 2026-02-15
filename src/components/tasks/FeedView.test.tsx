@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
@@ -59,5 +59,28 @@ describe("FeedView", () => {
     expect(
       screen.getByText((_, element) => element?.textContent === expectedLabel)
     ).toBeInTheDocument();
+  });
+
+  it("calls author quick action when clicking the author label", () => {
+    const onAuthorClick = vi.fn();
+
+    render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        onAuthorClick={onAuthorClick}
+      />
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: /filter and mention/i })[0]);
+
+    expect(onAuthorClick).toHaveBeenCalledWith(author);
   });
 });

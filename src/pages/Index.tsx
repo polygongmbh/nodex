@@ -38,6 +38,7 @@ import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import { derivePeopleFromKind0Events } from "@/lib/people-from-kind0";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
+import { taskMatchesSelectedPeople } from "@/lib/person-filter";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -502,6 +503,33 @@ const Index = () => {
     toast.success(allSelected ? "All people deselected" : "All people selected");
   };
 
+  const resolveMentionPubkeys = useCallback((content: string): string[] => {
+    const mentionHandles = extractAssignedMentionsFromContent(content);
+    if (mentionHandles.length === 0) return [];
+
+    const pubkeyPattern = /^[a-f0-9]{64}$/i;
+    const resolved = new Set<string>();
+
+    for (const mentionHandle of mentionHandles) {
+      if (pubkeyPattern.test(mentionHandle)) {
+        resolved.add(mentionHandle.toLowerCase());
+      }
+    }
+
+    for (const person of people) {
+      const personPubkey = person.id.trim().toLowerCase();
+      if (!pubkeyPattern.test(personPubkey)) continue;
+      const aliases = [person.id, person.name, person.displayName]
+        .filter(Boolean)
+        .map((value) => value.trim().toLowerCase());
+      if (mentionHandles.some((mentionHandle) => aliases.includes(mentionHandle))) {
+        resolved.add(personPubkey);
+      }
+    }
+
+    return Array.from(resolved);
+  }, [people]);
+
   const handleToggleComplete = (taskId: string) => {
     if (!user) {
       handleOpenAuthModal();
@@ -623,9 +651,10 @@ const Index = () => {
       if (taskType === "task" && parentId && !validParentId) {
         toast.warning("Parent reference is local-only; publishing task without parent link");
       }
+      const mentionPubkeys = resolveMentionPubkeys(content);
       const publishTags = taskType === "task"
-        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0])
-        : [];
+        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], mentionPubkeys)
+        : mentionPubkeys.map((pubkey) => ["p", pubkey]);
       const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
       const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
       publishSuccess = result.success;
@@ -690,7 +719,7 @@ const Index = () => {
       dueDate,
       dueTime,
       parentId,
-      mentions: taskType === "task" ? extractAssignedMentionsFromContent(content) : [],
+      mentions: extractAssignedMentionsFromContent(content),
     };
     setLocalTasks((prev) => [newTask, ...prev]);
     
@@ -733,9 +762,9 @@ const Index = () => {
       return false;
     }
 
-    // Person filter - filter by selected people (task author must be one of selected people)
-    const selectedPeopleIds = people.filter((p) => p.isSelected).map((p) => p.id);
-    if (selectedPeopleIds.length > 0 && !selectedPeopleIds.includes(task.author.id)) {
+    // Person filter - selected authors OR content that @mentions selected people.
+    const selectedPeople = people.filter((person) => person.isSelected);
+    if (!taskMatchesSelectedPeople(task, selectedPeople)) {
       return false;
     }
 

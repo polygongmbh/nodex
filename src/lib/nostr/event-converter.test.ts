@@ -165,6 +165,23 @@ describe("nostrEventToTask", () => {
     expect(task.dueDate?.toISOString()).toBe("2026-03-20T00:00:00.000Z");
     expect(task.dueTime).toBe("09:45");
   });
+
+  it("extracts mentions from person tags and @text mentions", () => {
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      content: "pair with @Alice",
+      tags: [
+        ["p", "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"],
+      ],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.mentions).toContain("alice");
+    expect(task.mentions).toContain(
+      "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+    );
+  });
 });
 
 describe("nostrEventsToTasks", () => {

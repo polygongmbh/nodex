@@ -2,6 +2,7 @@ import { NostrEvent, NostrEventKind } from "@/lib/nostr/types";
 import { Task, Person } from "@/types";
 import { extractTaskStateTargetId, isTaskStateEventKind, mapTaskStateEventToTaskStatus } from "@/lib/nostr/task-state-events";
 import { parseLinkedTaskDueFromCalendarEvent } from "./task-calendar-events";
+import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 
 // Spam keywords for basic filtering
 const SPAM_KEYWORDS = [
@@ -96,6 +97,10 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const parentId = parentTag?.[1] || replyTag?.[1];
   const dueTag = event.tags.find((tag) => tag[0] === "due" && tag[1]);
   const dueTimeTag = event.tags.find((tag) => tag[0] === "due_time" && tag[1]);
+  const mentionedPubkeys = event.tags
+    .filter((tag) => tag[0] === "p" && tag[1])
+    .map((tag) => tag[1].toLowerCase());
+  const mentionedHandles = extractAssignedMentionsFromContent(event.content);
 
   let dueDate: Date | undefined;
   if (dueTag?.[1]) {
@@ -131,6 +136,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     parentId,
     dueDate,
     dueTime: dueTimeTag?.[1] || undefined,
+    mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles])),
   };
 }
 

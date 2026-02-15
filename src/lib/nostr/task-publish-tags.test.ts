@@ -12,4 +12,14 @@ describe("buildTaskPublishTags", () => {
     const tags = buildTaskPublishTags(undefined, undefined);
     expect(tags).toEqual([]);
   });
+
+  it("appends deduplicated person tags for mentions", () => {
+    const tags = buildTaskPublishTags(undefined, undefined, [
+      "ABCDEF",
+      "abcdef",
+      "123456",
+    ]);
+
+    expect(tags).toEqual([["p", "abcdef"], ["p", "123456"]]);
+  });
 });

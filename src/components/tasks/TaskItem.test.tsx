@@ -113,4 +113,36 @@ describe("TaskItem status actions", () => {
     expect(screen.getByText("Ship feature")).toHaveClass("task-hover-text");
     expect(screen.getByRole("button", { name: "Filter to #frontend" })).toHaveClass("task-hashtag-chip");
   });
+
+  it("calls author quick action for comment avatar/name clicks", () => {
+    const onAuthorClick = vi.fn();
+    const commentTask: Task = {
+      ...baseTask,
+      id: "c1",
+      taskType: "comment",
+      content: "Looks good",
+      author: {
+        id: "alice-pubkey",
+        name: "alice",
+        displayName: "Alice",
+        avatar: "",
+        isOnline: true,
+        isSelected: false,
+      },
+    };
+
+    render(
+      <TaskItem
+        task={commentTask}
+        filteredChildren={[]}
+        allTasks={[commentTask]}
+        currentUser={baseTask.author}
+        onAuthorClick={onAuthorClick}
+      />
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: /filter and mention alice/i })[0]);
+
+    expect(onAuthorClick).toHaveBeenCalledWith(commentTask.author);
+  });
 });
