@@ -38,6 +38,7 @@ export function OnboardingGuide({
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [interactionSatisfied, setInteractionSatisfied] = useState(false);
+  const [interactionTimedOut, setInteractionTimedOut] = useState(false);
   const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
   const autoAdvancedStepIdsRef = useRef<Set<string>>(new Set());
 
@@ -47,6 +48,7 @@ export function OnboardingGuide({
     setStepIndex(0);
     setTargetRect(null);
     setInteractionSatisfied(false);
+    setInteractionTimedOut(false);
     autoAdvancedStepIdsRef.current.clear();
   }, [isOpen, initialSection]);
 
@@ -76,6 +78,7 @@ export function OnboardingGuide({
     if (!target) {
       setTargetRect(null);
       setInteractionSatisfied(!current.requiredAction);
+      setInteractionTimedOut(false);
       return;
     }
 
@@ -109,12 +112,15 @@ export function OnboardingGuide({
 
     if (!current.requiredAction) {
       setInteractionSatisfied(true);
+      setInteractionTimedOut(false);
     } else {
       setInteractionSatisfied(false);
+      setInteractionTimedOut(false);
     }
 
     const onClick = () => setInteractionSatisfied(true);
     const onFocus = () => setInteractionSatisfied(true);
+    const onPointerDown = () => setInteractionSatisfied(true);
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Enter" || event.key === " ") {
         setInteractionSatisfied(true);
@@ -123,6 +129,7 @@ export function OnboardingGuide({
 
     if (current.requiredAction === "click-target") {
       target.addEventListener("click", onClick, true);
+      target.addEventListener("pointerdown", onPointerDown, true);
       target.addEventListener("keydown", onKeyDown, true);
     }
     if (current.requiredAction === "focus-target") {
@@ -134,6 +141,7 @@ export function OnboardingGuide({
       window.removeEventListener("resize", updateRect);
       window.removeEventListener("scroll", updateRect, true);
       target.removeEventListener("click", onClick, true);
+      target.removeEventListener("pointerdown", onPointerDown, true);
       target.removeEventListener("focusin", onFocus, true);
       target.removeEventListener("keydown", onKeyDown, true);
       target.style.position = previousPosition;
@@ -167,10 +175,29 @@ export function OnboardingGuide({
     return () => window.clearTimeout(timeout);
   }, [activeSection, activeSteps, interactionSatisfied, isOpen, onClose, onComplete, stepIndex]);
 
+  useEffect(() => {
+    if (!isOpen || activeSection === null) return;
+    const step = activeSteps[stepIndex];
+    if (!step?.requiredAction) {
+      setInteractionTimedOut(false);
+      return;
+    }
+    if (interactionSatisfied) {
+      setInteractionTimedOut(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setInteractionTimedOut(true);
+    }, 5000);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeSection, activeSteps, interactionSatisfied, isOpen, stepIndex]);
+
   const currentStep = activeSteps[stepIndex];
   const isLastStep = stepIndex >= activeSteps.length - 1;
   const showSectionPicker = activeSection === null;
-  const nextDisabled = Boolean(currentStep?.requiredAction && !interactionSatisfied);
+  const nextDisabled = Boolean(currentStep?.requiredAction && !interactionSatisfied && !interactionTimedOut);
 
   const getPickerSelectors = (sectionId: OnboardingSectionId): string[] => {
     if (isMobile) {
@@ -261,17 +288,27 @@ export function OnboardingGuide({
       };
     }
     const cardWidth = 380;
-    const gap = 12;
+    const gap = 24;
     const left = Math.max(8, Math.min(targetRect.left, window.innerWidth - cardWidth - 8));
     const preferredTop = targetRect.bottom + gap;
     const top =
-      preferredTop + 220 > window.innerHeight
-        ? Math.max(8, targetRect.top - gap - 220)
+      preferredTop + 240 > window.innerHeight
+        ? Math.max(8, targetRect.top - gap - 240)
         : preferredTop;
+    const overlapsTarget =
+      top < targetRect.bottom &&
+      top + 240 > targetRect.top &&
+      left < targetRect.right &&
+      left + cardWidth > targetRect.left;
+    const shiftedLeft = Math.max(8, targetRect.left - cardWidth - gap);
+    const shiftedRight = Math.min(window.innerWidth - cardWidth - 8, targetRect.right + gap);
+    const finalLeft = overlapsTarget
+      ? (shiftedRight + cardWidth <= window.innerWidth - 8 ? shiftedRight : shiftedLeft)
+      : left;
     return {
       width: cardWidth,
       maxWidth: "calc(100vw - 16px)",
-      left,
+      left: finalLeft,
       top,
       position: "fixed",
       zIndex: 130,
@@ -360,7 +397,7 @@ export function OnboardingGuide({
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
       {showSectionPicker ? (
         <>
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[130] pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-3 shadow-lg max-w-xl w-[calc(100vw-2rem)]">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[130] pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md px-4 py-3 shadow-lg max-w-xl w-[calc(100vw-2rem)]">
             <h2 className="text-base font-semibold">Choose an interface area</h2>
             <p className="text-xs text-muted-foreground mt-1">Click a highlighted region to start focused guidance.</p>
           </div>
@@ -377,7 +414,7 @@ export function OnboardingGuide({
               aria-label={`Start ${section.title} onboarding section`}
               title={`${section.title}: ${section.description}`}
             >
-              <span className="inline-flex items-start gap-2 rounded-md bg-card/85 backdrop-blur-md px-2 py-1 border border-border shadow-sm">
+              <span className="inline-flex items-start gap-2 rounded-md bg-card/75 backdrop-blur-md px-2 py-1 border border-border shadow-sm">
                 {getSectionIcon(section.id)}
                 <span className="min-w-0">
                   <span className="block text-sm font-medium text-foreground">{section.title}</span>
@@ -396,7 +433,7 @@ export function OnboardingGuide({
         role="dialog"
         aria-modal="true"
         aria-label="Onboarding guide"
-        className="pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
+        className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
         style={getAnchoredCardStyle()}
       >
         {!currentStep ? (
@@ -416,6 +453,11 @@ export function OnboardingGuide({
               <p className="text-sm text-muted-foreground mt-1">{currentStep.description}</p>
               {currentStep.actionPrompt && (
                 <p className="text-xs text-primary mt-2">{currentStep.actionPrompt}</p>
+              )}
+              {currentStep.requiredAction && !interactionSatisfied && interactionTimedOut && (
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  No interaction detected. You can continue with Next.
+                </p>
               )}
             </div>
             <div className="flex items-center justify-between gap-2">
