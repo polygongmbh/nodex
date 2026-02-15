@@ -345,6 +345,8 @@ export function TaskComposer({
             }
           }}
           placeholder={taskType === "task" ? "What needs to be done? Use #tags..." : "Add a comment..."}
+          aria-label={taskType === "task" ? "Compose task content with tags and mentions" : "Compose comment content with tags and mentions"}
+          title="Use #channel tags and @mentions in this field"
           className={cn(
             "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
             adaptiveSize && !showExpandedControls
@@ -464,6 +466,8 @@ export function TaskComposer({
               }, 10);
             }}
             className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+            aria-label="Insert hashtag"
+            title="Insert hashtag and open channel suggestions"
           >
             <Hash className="w-4 h-4 text-primary" />
           </button>
@@ -477,6 +481,8 @@ export function TaskComposer({
             <button
               onClick={handleSubmit}
               disabled={Boolean(submitBlockedReason)}
+              aria-label={!user ? "Sign in to post" : (taskType === "task" ? "Create task" : "Add comment")}
+              title={!user ? "Sign in to post" : (taskType === "task" ? "Create task" : "Add comment")}
               className="px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isPublishing && (

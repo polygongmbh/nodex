@@ -309,7 +309,11 @@ export function Sidebar({
           onAddRelay={onAddRelay}
           onRemoveRelay={onRemoveRelay}
           trigger={
-            <button className="w-full h-10 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors">
+            <button
+              className="w-full h-10 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
+              aria-label={isConnected ? `Relay status: ${connectedCount} connected` : "Relay status: disconnected"}
+              title={isConnected ? "Manage relay connections and status" : "No connected relays. Open relay management"}
+            >
               <div className={cn(
                 "w-2 h-2 rounded-full flex-shrink-0",
                 isConnected ? "bg-success animate-pulse" : "bg-muted-foreground"
@@ -337,6 +341,7 @@ export function Sidebar({
                 onClick={onShortcutsClick}
                 className="h-9 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors border-r border-border/60"
                 title="Keyboard shortcuts (?)"
+                aria-label="Open keyboard shortcuts help"
               >
                 <Keyboard className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="truncate">Shortcuts</span>
@@ -347,7 +352,8 @@ export function Sidebar({
               <button
                 onClick={onGuideClick}
                 className="h-9 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
-                title="Open guide"
+                title="Open onboarding guide"
+                aria-label="Open onboarding guide"
               >
                 <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
                 <span className="truncate">Guide</span>
