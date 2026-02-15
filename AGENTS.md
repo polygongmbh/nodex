@@ -90,6 +90,7 @@ structure:
 - Always commit every completed change.
 - After every change, create atomic commits that build individually and are coherent.
 - You may amend commits with corrections if they are not yet pushed.
+- If a commit only fixes the immediately previous local commit, squash it before handoff (amend or autosquash); do not leave standalone fixup commits in shared history.
 - Use semantic commit messages (Conventional Commits), e.g. `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
 - Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) were added/updated/removed.
 
