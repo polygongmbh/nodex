@@ -31,7 +31,8 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
-import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
+import { derivePeopleFromKind0Events } from "@/lib/people-from-kind0";
+import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
@@ -97,9 +98,7 @@ const Index = () => {
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
     loadPersistedRelayIds([TEST_RELAY_ID])
   );
-  const [people, setPeople] = useState<Person[]>(
-    mockPeople.map((p) => ({ ...p, isSelected: false }))
-  );
+  const [people, setPeople] = useState<Person[]>([]);
   const [localTasks, setLocalTasks] = useState<Task[]>(mockTasks);
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -108,6 +107,7 @@ const Index = () => {
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
     return nostrEvents.filter(event => {
+      if (event.kind === NostrEventKind.Metadata) return false;
       if (isTaskStateEventKind(event.kind)) return true;
       if (
         event.kind === NostrEventKind.CalendarDateBased ||
@@ -124,6 +124,28 @@ const Index = () => {
       return true;
     });
   }, [nostrEvents]);
+
+  useEffect(() => {
+    setPeople((prev) => {
+      let next = derivePeopleFromKind0Events(nostrEvents, prev);
+
+      if (user?.pubkey && !next.some((person) => person.id === user.pubkey)) {
+        next = [
+          ...next,
+          {
+            id: user.pubkey,
+            name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
+            displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
+            avatar: user.profile?.picture,
+            isOnline: true,
+            isSelected: prev.find((person) => person.id === user.pubkey)?.isSelected || false,
+          },
+        ];
+      }
+
+      return next.sort((a, b) => a.displayName.localeCompare(b.displayName));
+    });
+  }, [nostrEvents, user]);
 
   // Convert filtered Nostr events to tasks
   const nostrTasks: Task[] = useMemo(() => {
@@ -181,6 +203,7 @@ const Index = () => {
         kinds: [
           NostrEventKind.TextNote as any,
           NostrEventKind.Task as any,
+          NostrEventKind.Metadata as any,
           NostrEventKind.GitStatusOpen as any,
           NostrEventKind.GitStatusApplied as any,
           NostrEventKind.GitStatusClosed as any,
