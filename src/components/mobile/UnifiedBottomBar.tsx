@@ -402,6 +402,11 @@ export function UnifiedBottomBar({
                   onSearchChange(value);
                 }}
                 onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    handleSubmit();
+                    return;
+                  }
                   if (e.key === "Enter" && e.altKey) {
                     e.preventDefault();
                     const alternateType: TaskType =

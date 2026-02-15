@@ -114,6 +114,51 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
+  it("submits current kind on Ctrl+Enter and Cmd+Enter", () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(composeField, { target: { value: "Ship #general" } });
+
+    fireEvent.keyDown(composeField, { key: "Enter", ctrlKey: true });
+    expect(onSubmit).toHaveBeenCalledWith(
+      "Ship #general",
+      ["general"],
+      ["demo"],
+      "task",
+      undefined,
+      undefined
+    );
+
+    fireEvent.change(composeField, { target: { value: "Ship again #general" } });
+    fireEvent.keyDown(composeField, { key: "Enter", metaKey: true });
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      "Ship again #general",
+      ["general"],
+      ["demo"],
+      "task",
+      undefined,
+      undefined
+    );
+  });
+
   it("hides comment option in tree view without focused task", () => {
     render(
       <UnifiedBottomBar
