@@ -311,26 +311,26 @@ export function UnifiedBottomBar({
       <div className="px-3 pt-2">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {canOfferComment && (
-            <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg shrink-0">
+            <div className="flex h-8 items-center gap-1 px-1 bg-muted/50 rounded-md shrink-0">
             <button
               onClick={() => setTaskType("task")}
               aria-label="Task"
               className={cn(
-                "p-2 rounded-md transition-colors",
+                "h-6 w-6 flex items-center justify-center rounded-sm transition-colors",
                 taskType === "task" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
               )}
             >
-              <CheckSquare className="w-4 h-4" />
+              <CheckSquare className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setTaskType("comment")}
               aria-label="Comment"
               className={cn(
-                "p-2 rounded-md transition-colors",
+                "h-6 w-6 flex items-center justify-center rounded-sm transition-colors",
                 taskType === "comment" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
               )}
             >
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-3.5 h-3.5" />
             </button>
             </div>
           )}
