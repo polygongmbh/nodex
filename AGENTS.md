@@ -157,6 +157,7 @@ When the user asks you to create a plan to fix or implement something:
 - ALWAYS write that plan to the plans/ directory on the root of the repo.
 - NEVER commit plans to git
 - Give the plan a descriptive name using kebab-case (e.g., `fix-position-healing.md`, `feat-new-feature.md`)
+- Before deleting untracked text artifacts (for example files in `plans/`), run `git add` on them once without committing so they remain recoverable from the index/reflog if deletion was a mistake.
 
 ## Assistant Response Formatting
 - Keep summaries compact and scannable.
