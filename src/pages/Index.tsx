@@ -498,9 +498,12 @@ const Index = () => {
   }, [getMentionHandle, isMobile, upsertAndSelectPerson]);
 
   const handleToggleAllPeople = () => {
-    const allSelected = people.every((p) => p.isSelected);
-    setPeople((prev) => prev.map((person) => ({ ...person, isSelected: !allSelected })));
-    toast.success(allSelected ? "All people deselected" : "All people selected");
+    const selectedCount = people.filter((person) => person.isSelected).length;
+    const hasNoSelection = selectedCount === 0;
+    setPeople((prev) =>
+      prev.map((person) => ({ ...person, isSelected: hasNoSelection }))
+    );
+    toast.success(hasNoSelection ? "All people selected" : "All people deselected");
   };
 
   const resolveMentionPubkeys = useCallback((content: string): string[] => {
