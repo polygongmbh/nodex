@@ -2,19 +2,14 @@ import { OnboardingSection } from "./onboarding-types";
 
 export const onboardingSections: OnboardingSection[] = [
   {
-    id: "views",
-    title: "Views",
-    description: "Understand tree, feed, kanban, calendar, and list views.",
+    id: "navigation",
+    title: "Navigation",
+    description: "Use view tabs and breadcrumbs to move through task contexts.",
   },
   {
     id: "filters",
     title: "Filters",
     description: "Use include/exclude channel and people filters effectively.",
-  },
-  {
-    id: "focus",
-    title: "Focus",
-    description: "Open a task context and create subtasks and comments.",
   },
   {
     id: "compose",

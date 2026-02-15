@@ -3,14 +3,28 @@ import { OnboardingSectionId, OnboardingStep } from "./onboarding-types";
 type StepMap = Record<OnboardingSectionId, OnboardingStep[]>;
 
 const desktopStepsBySection: StepMap = {
-  views: [
+  navigation: [
     {
-      id: "views-switcher",
+      id: "navigation-switcher",
       title: "Switch views",
       description: "Use the view switcher to move between Tree, Feed, Kanban, Calendar, and Table.",
       target: '[data-onboarding="view-switcher"]',
       requiredAction: "click-target",
       actionPrompt: "Click any view tab to continue.",
+    },
+    {
+      id: "navigation-focus",
+      title: "Open task context",
+      description: "Click a task to navigate into its context and reveal the breadcrumb path.",
+      target: '[data-onboarding="task-list"]',
+      requiredAction: "click-target",
+      actionPrompt: "Click a task item to continue.",
+    },
+    {
+      id: "navigation-breadcrumb",
+      title: "Use breadcrumbs",
+      description: "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.",
+      target: '[data-onboarding="focused-breadcrumb"]',
     },
   ],
   filters: [
@@ -37,22 +51,6 @@ const desktopStepsBySection: StepMap = {
       target: '[data-onboarding="channels-section"]',
     },
   ],
-  focus: [
-    {
-      id: "focus-item",
-      title: "Focus tasks",
-      description: "Click an item to focus and inspect only its context.",
-      target: '[data-onboarding="task-list"]',
-      requiredAction: "click-target",
-      actionPrompt: "Click a task item in the list.",
-    },
-    {
-      id: "focus-actions",
-      title: "Create subtasks and comments",
-      description: "In focused mode, compose new subtasks/comments in context.",
-      target: '[data-onboarding="focused-compose"]',
-    },
-  ],
   compose: [
     {
       id: "compose-kind",
@@ -72,14 +70,22 @@ const desktopStepsBySection: StepMap = {
 };
 
 const mobileStepsBySection: StepMap = {
-  views: [
+  navigation: [
     {
-      id: "mobile-views-nav",
+      id: "mobile-navigation-nav",
       title: "Mobile views",
       description: "Use the bottom navigation to switch between Tree, Feed, List, and Calendar.",
       target: '[data-onboarding="mobile-nav"]',
       requiredAction: "click-target",
       actionPrompt: "Tap a navigation tab to continue.",
+    },
+    {
+      id: "mobile-navigation-focus",
+      title: "Navigate into a task",
+      description: "Tap a task item to open its focused context and navigation path.",
+      target: '[data-onboarding="task-list"]',
+      requiredAction: "click-target",
+      actionPrompt: "Tap a task item to continue.",
     },
   ],
   filters: [
@@ -90,16 +96,6 @@ const mobileStepsBySection: StepMap = {
       target: '[data-onboarding="mobile-filters"]',
       requiredAction: "click-target",
       actionPrompt: "Tap any filter control to continue.",
-    },
-  ],
-  focus: [
-    {
-      id: "mobile-focus",
-      title: "Focus tasks",
-      description: "Tap an item to focus it and then add subtasks/comments in context.",
-      target: '[data-onboarding="task-list"]',
-      requiredAction: "click-target",
-      actionPrompt: "Tap a task item to continue.",
     },
   ],
   compose: [
@@ -118,9 +114,8 @@ export function getOnboardingStepsBySection(isMobile: boolean): StepMap {
 
 export function getOnboardingAllSteps(stepsBySection: StepMap): OnboardingStep[] {
   return [
-    ...(stepsBySection.views ?? []),
+    ...(stepsBySection.navigation ?? []),
     ...(stepsBySection.filters ?? []),
-    ...(stepsBySection.focus ?? []),
     ...(stepsBySection.compose ?? []),
   ];
 }

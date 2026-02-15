@@ -1,4 +1,4 @@
-export type OnboardingSectionId = "views" | "filters" | "focus" | "compose";
+export type OnboardingSectionId = "navigation" | "filters" | "compose";
 export type OnboardingInitialSection = OnboardingSectionId | "all" | null;
 export type OnboardingRequiredAction = "click-target" | "focus-target";
 

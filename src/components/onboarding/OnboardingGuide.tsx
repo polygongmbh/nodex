@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Eye, Filter, GitFork, PenSquare } from "lucide-react";
+import { Eye, Filter, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   OnboardingInitialSection,
@@ -166,24 +166,20 @@ export function OnboardingGuide({
   const getPickerSelectors = (sectionId: OnboardingSectionId): string[] => {
     if (isMobile) {
       switch (sectionId) {
-        case "views":
+        case "navigation":
           return ['[data-onboarding="mobile-nav"]'];
         case "filters":
           return ['[data-onboarding="mobile-filters"]'];
-        case "focus":
-          return ['[data-onboarding="task-list"]'];
         case "compose":
           return ['[data-onboarding="compose-input"]', '[aria-label="Compose"]'];
       }
     }
 
     switch (sectionId) {
-      case "views":
-        return ['[data-onboarding="view-switcher"]'];
+      case "navigation":
+        return ['[data-onboarding="view-switcher"]', '[data-onboarding="focused-breadcrumb"]'];
       case "filters":
         return ["aside", '[data-onboarding="channels-section"]'];
-      case "focus":
-        return ['[data-onboarding="task-list"]'];
       case "compose":
         return ['[data-onboarding="focused-compose"]', '[data-onboarding="compose-input"]'];
     }
@@ -229,9 +225,8 @@ export function OnboardingGuide({
         };
       };
 
-      measureSection("views");
+      measureSection("navigation");
       measureSection("filters");
-      measureSection("focus");
       measureSection("compose");
       setPickerRects(nextRects);
     };
@@ -290,12 +285,10 @@ export function OnboardingGuide({
 
   const getSectionIcon = (sectionId: OnboardingSectionId) => {
     switch (sectionId) {
-      case "views":
+      case "navigation":
         return <Eye className="h-5 w-5 text-primary" />;
       case "filters":
         return <Filter className="h-5 w-5 text-primary" />;
-      case "focus":
-        return <GitFork className="h-5 w-5 text-primary" />;
       case "compose":
         return <PenSquare className="h-5 w-5 text-primary" />;
       default:
@@ -305,12 +298,10 @@ export function OnboardingGuide({
 
   const getSectionAreaLabel = (sectionId: OnboardingSectionId) => {
     switch (sectionId) {
-      case "views":
-        return "Top view tabs";
+      case "navigation":
+        return "View tabs and breadcrumb";
       case "filters":
         return "Sidebar / filter controls";
-      case "focus":
-        return "Task list and focused context";
       case "compose":
         return "Compose panel";
       default:
@@ -331,26 +322,22 @@ export function OnboardingGuide({
 
     if (isMobile) {
       switch (sectionId) {
-        case "views":
+        case "navigation":
           return { left: "0%", top: "0%", width: "100%", height: "20%" };
         case "filters":
           return { left: "0%", top: "20%", width: "100%", height: "18%" };
-        case "focus":
-          return { left: "0%", top: "38%", width: "100%", height: "37%" };
         case "compose":
-          return { left: "0%", top: "75%", width: "100%", height: "25%" };
+          return { left: "0%", top: "38%", width: "100%", height: "62%" };
       }
     }
 
     switch (sectionId) {
-      case "views":
+      case "navigation":
         return { left: "16%", top: "0%", width: "84%", height: "15%" };
       case "filters":
         return { left: "0%", top: "0%", width: "16%", height: "100%" };
-      case "focus":
-        return { left: "16%", top: "15%", width: "84%", height: "55%" };
       case "compose":
-        return { left: "16%", top: "70%", width: "84%", height: "30%" };
+        return { left: "16%", top: "15%", width: "84%", height: "85%" };
     }
   };
 
