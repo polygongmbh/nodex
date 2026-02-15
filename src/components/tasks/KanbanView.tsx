@@ -62,7 +62,7 @@ export function KanbanView({
   onFocusSidebar,
 }: KanbanViewProps) {
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
-  const [depthMode, setDepthMode] = useState<DepthMode>("1");
+  const [depthMode, setDepthMode] = useState<DepthMode>("leaves");
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -334,33 +334,13 @@ export function KanbanView({
 
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
-      <FocusedTaskBreadcrumb
-        allTasks={allTasks}
-        focusedTaskId={focusedTaskId}
-        onFocusTask={onFocusTask}
-        rightSlot={(
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-foreground/70" />
-            <Select value={depthMode} onValueChange={(v) => setDepthMode(v as DepthMode)}>
-              <SelectTrigger className="w-[170px] h-8 text-sm bg-background/70 border-border/70">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Top-level only</SelectItem>
-                <SelectItem value="2">2 levels deep</SelectItem>
-                <SelectItem value="3">3 levels deep</SelectItem>
-                <SelectItem value="all">All levels</SelectItem>
-                <SelectItem value="leaves">
-                  <span className="flex items-center gap-1">
-                    <Leaf className="w-3 h-3" />
-                    Leaf tasks only
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      />
+      {focusedTaskId && (
+        <FocusedTaskBreadcrumb
+          allTasks={allTasks}
+          focusedTaskId={focusedTaskId}
+          onFocusTask={onFocusTask}
+        />
+      )}
 
       {/* Kanban Columns */}
       <div ref={columnsContainerRef} className="flex-1 overflow-x-auto overflow-y-hidden p-4">
@@ -543,11 +523,11 @@ export function KanbanView({
         </DragDropContext>
       </div>
 
-      {/* Bottom search dock */}
+      {/* Bottom search dock with levels selector */}
       <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
         <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-        <div className="px-4 py-3 flex items-center">
-          <div className="relative w-full max-w-xl mx-auto">
+        <div className="px-4 py-3 flex items-center gap-3">
+          <div className="relative flex-1 max-w-xl mx-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
@@ -556,6 +536,26 @@ export function KanbanView({
               placeholder="Search tasks..."
               className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
             />
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <Layers className="w-4 h-4 text-muted-foreground" />
+            <Select value={depthMode} onValueChange={(v) => setDepthMode(v as DepthMode)}>
+              <SelectTrigger className="w-[150px] h-8 text-sm bg-muted/60 border-border/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Top-level</SelectItem>
+                <SelectItem value="2">2 levels</SelectItem>
+                <SelectItem value="3">3 levels</SelectItem>
+                <SelectItem value="all">All levels</SelectItem>
+                <SelectItem value="leaves">
+                  <span className="flex items-center gap-1">
+                    <Leaf className="w-3 h-3" />
+                    Leaves only
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

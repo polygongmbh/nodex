@@ -190,7 +190,7 @@ export function FeedView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {!isMobile && (
+      {!isMobile && focusedTaskId && (
         <FocusedTaskBreadcrumb
           allTasks={allTasks}
           focusedTaskId={focusedTaskId}
