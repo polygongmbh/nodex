@@ -177,7 +177,7 @@ export function FeedView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Header with Composer - hidden on mobile */}
+      {/* Header - hidden on mobile */}
       {!isMobile && (
         <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3">
@@ -197,24 +197,6 @@ export function FeedView({
               <div className="text-sm font-medium">{focusedTask.content.slice(0, 60)}{focusedTask.content.length > 60 ? "..." : ""}</div>
             </div>
           )}
-          <TaskComposer
-            onSubmit={handleNewTask}
-            relays={relays}
-            channels={channels}
-            people={people}
-            onCancel={() => {}}
-            parentId={focusedTaskId || undefined}
-            onSignInClick={onSignInClick}
-            defaultContent={(() => {
-              const prefillChannels = new Set<string>();
-              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-              if (focusedTask) {
-                focusedTask.tags.forEach(t => prefillChannels.add(t));
-              }
-              if (prefillChannels.size === 0) return "";
-              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-            })()}
-          />
         </div>
       )}
 
@@ -391,12 +373,36 @@ export function FeedView({
         )}
       </div>
 
-      {/* Floaty Search Bar - hidden on mobile */}
+      {/* Bottom compose/search dock - hidden on mobile */}
       {!isMobile && (
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
+          <div className="px-4 pt-3 pb-2">
+            <div className="w-full max-w-xl mx-auto">
+              <TaskComposer
+                onSubmit={handleNewTask}
+                relays={relays}
+                channels={channels}
+                people={people}
+                onCancel={() => {}}
+                compact
+                adaptiveSize
+                parentId={focusedTaskId || undefined}
+                onSignInClick={onSignInClick}
+                defaultContent={(() => {
+                  const prefillChannels = new Set<string>();
+                  channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+                  if (focusedTask) {
+                    focusedTask.tags.forEach(t => prefillChannels.add(t));
+                  }
+                  if (prefillChannels.size === 0) return "";
+                  return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
+                })()}
+              />
+            </div>
+          </div>
           {/* Gradient fade overlay */}
           <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-          <div className="px-4 py-3 bg-background/80 backdrop-blur-md flex items-center">
+          <div className="px-4 pb-3 flex items-center">
             <div className="relative w-full max-w-xl mx-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input

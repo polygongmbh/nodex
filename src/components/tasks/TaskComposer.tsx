@@ -19,6 +19,8 @@ interface TaskComposerProps {
   defaultContent?: string;
   parentId?: string;
   onSignInClick?: () => void;
+  adaptiveSize?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 }
 
 export function TaskComposer({ 
@@ -32,6 +34,8 @@ export function TaskComposer({
   defaultContent = "",
   parentId,
   onSignInClick,
+  adaptiveSize = false,
+  onExpandedChange,
 }: TaskComposerProps) {
   const { user } = useNDK();
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
@@ -49,13 +53,22 @@ export function TaskComposer({
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(
+    () => !adaptiveSize || defaultContent.trim().length > 0
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const autoManagedChannelsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    textareaRef.current?.focus();
-  }, []);
+    if (!adaptiveSize) {
+      textareaRef.current?.focus();
+    }
+  }, [adaptiveSize]);
+
+  useEffect(() => {
+    onExpandedChange?.(isExpanded);
+  }, [isExpanded, onExpandedChange]);
 
   // Keep selected publish targets aligned with currently active relay filters.
   useEffect(() => {
@@ -161,6 +174,9 @@ export function TaskComposer({
     autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
     setDueTime("");
+    if (adaptiveSize && selectedChannelsContent.trim().length === 0) {
+      setIsExpanded(false);
+    }
   };
 
   const filteredChannels = channels.filter(channel => channel.name.toLowerCase().includes(hashtagFilter));
@@ -199,6 +215,9 @@ export function TaskComposer({
       return;
     }
     if (e.key === "Escape") {
+      if (adaptiveSize) {
+        setIsExpanded(false);
+      }
       onCancel();
     }
   };
@@ -207,6 +226,9 @@ export function TaskComposer({
     const newContent = e.target.value;
     const cursorPos = e.target.selectionStart;
     setContent(newContent);
+    if (adaptiveSize && !isExpanded) {
+      setIsExpanded(true);
+    }
     setCursorPosition(cursorPos);
 
     const textBeforeCursor = newContent.slice(0, cursorPos);
@@ -228,15 +250,20 @@ export function TaskComposer({
     const hashtagStart = textBeforeCursor.lastIndexOf("#");
     const newContent = textBeforeCursor.slice(0, hashtagStart) + `#${tagName} ` + textAfterCursor;
     setContent(newContent);
+    if (adaptiveSize && !isExpanded) {
+      setIsExpanded(true);
+    }
     setShowHashtagSuggestions(false);
     setActiveSuggestionIndex(0);
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
 
+  const showExpandedControls = !adaptiveSize || isExpanded || content.trim().length > 0;
+
   return (
-    <div className={cn("space-y-3", compact && "space-y-2")}>
+    <div className={cn("space-y-3", compact && "space-y-2", adaptiveSize && !showExpandedControls && "space-y-1")}>
       {/* Type selector */}
-      {!compact && (
+      {!compact && showExpandedControls && (
         <div className="flex items-center gap-2">
           <button
             onClick={() => setTaskType("task")}
@@ -267,12 +294,21 @@ export function TaskComposer({
           value={content}
           onChange={handleContentChange}
           onKeyDown={handleKeyDown}
+          onFocus={() => {
+            if (adaptiveSize && !isExpanded) {
+              setIsExpanded(true);
+            }
+          }}
           placeholder={taskType === "task" ? "What needs to be done? Use #tags..." : "Add a comment..."}
           className={cn(
             "w-full bg-muted/30 border border-border rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50",
-            compact ? "min-h-[60px]" : "min-h-[80px]"
+            adaptiveSize && !showExpandedControls
+              ? "min-h-[42px] py-2"
+              : compact
+                ? "min-h-[60px]"
+                : "min-h-[80px]"
           )}
-          rows={compact ? 2 : 3}
+          rows={adaptiveSize && !showExpandedControls ? 1 : compact ? 2 : 3}
         />
 
         {/* Channel suggestions */}
@@ -304,7 +340,7 @@ export function TaskComposer({
       </div>
 
       {/* Due date for tasks */}
-      {taskType === "task" && (
+      {showExpandedControls && taskType === "task" && (
         <div className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
           <Calendar className="w-4 h-4 text-muted-foreground" />
           <Popover>
@@ -347,7 +383,7 @@ export function TaskComposer({
       )}
 
       {/* Sign in prompt for posting */}
-      {!user && (
+      {showExpandedControls && !user && (
         <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-lg">
           <Zap className="w-4 h-4 text-primary" />
           <span className="text-sm text-muted-foreground flex-1">
@@ -365,6 +401,7 @@ export function TaskComposer({
       )}
 
       {/* Actions */}
+      {showExpandedControls && (
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <button
@@ -389,7 +426,12 @@ export function TaskComposer({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={onCancel}
+            onClick={() => {
+              if (adaptiveSize) {
+                setIsExpanded(false);
+              }
+              onCancel();
+            }}
             className="px-3 py-1.5 text-sm rounded-md hover:bg-muted"
           >
             Cancel
@@ -406,6 +448,7 @@ export function TaskComposer({
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }

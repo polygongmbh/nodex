@@ -53,4 +53,25 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(textarea.value).toBe("#backend ");
   });
+
+  it("stays compact in adaptive mode and expands on focus", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        compact
+        adaptiveSize
+      />
+    );
+
+    expect(screen.queryByText("Set due date (optional)")).not.toBeInTheDocument();
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    fireEvent.focus(textarea);
+
+    expect(screen.getByText("Set due date (optional)")).toBeInTheDocument();
+  });
 });

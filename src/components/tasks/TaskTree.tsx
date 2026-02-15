@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Search, ChevronUp, Plus, X } from "lucide-react";
+import { Search, ChevronUp } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { TaskComposer } from "./TaskComposer";
@@ -40,7 +40,7 @@ export function TaskTree({
   onSignInClick,
 }: TaskTreeProps) {
   const [contextStack, setContextStack] = useState<string[]>([]);
-  const [isComposing, setIsComposing] = useState(false);
+  const [isComposerExpanded, setIsComposerExpanded] = useState(false);
 
   const currentContextId = contextStack[contextStack.length - 1];
 
@@ -169,7 +169,7 @@ export function TaskTree({
 
   const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
     onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime, currentContextId);
-    setIsComposing(false);
+    setIsComposerExpanded(false);
   };
 
   const getFilteredChildren = useCallback((parentId: string): Task[] => {
@@ -206,12 +206,12 @@ export function TaskTree({
   }, [visibleTasks]);
 
   // Task navigation with keyboard
-  const { focusedTaskId: keyboardFocusedTaskId, setFocusedIndex } = useTaskNavigation({
+  const { focusedTaskId: keyboardFocusedTaskId } = useTaskNavigation({
     taskIds: flattenedTaskIds,
     onSelectTask: handleSelectTask,
     onGoBack: handleGoUp,
     onFocusSidebar,
-    enabled: !isMobile && !isComposing,
+    enabled: !isMobile && !isComposerExpanded,
   });
 
   // Scroll focused task into view
@@ -247,13 +247,6 @@ export function TaskTree({
                 {currentContextTask ? currentContextTask.content : "All Tasks"}
               </h2>
             </div>
-            <button
-              onClick={() => setIsComposing(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              {currentContextId ? "Add Subtask" : "New Task"}
-            </button>
           </div>
         </div>
       )}
@@ -283,48 +276,6 @@ export function TaskTree({
         </div>
       )}
 
-      {/* Task Composer */}
-      {isComposing && (
-        <div className="border-b border-border p-4 bg-card/30 flex-shrink-0">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">
-              {currentContextId ? `Adding subtask to "${currentContextTask?.content.slice(0, 30)}..."` : "Creating new root task"}
-            </span>
-            <button
-              onClick={() => setIsComposing(false)}
-              className="p-1 rounded-full hover:bg-muted"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <TaskComposer
-            onSubmit={handleNewTask}
-            relays={relays}
-            channels={channels}
-            people={people}
-            onCancel={() => setIsComposing(false)}
-            parentId={currentContextId}
-            onSignInClick={onSignInClick}
-            defaultContent={(() => {
-              // Collect channels to prefill
-              const prefillChannels = new Set<string>();
-              
-              // Add included filter channels
-              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-              
-              // If in context (subtask), add parent task's tags
-              if (currentContextTask) {
-                currentContextTask.tags.forEach(t => prefillChannels.add(t));
-              }
-              
-              // Format as hashtags with trailing space
-              if (prefillChannels.size === 0) return "";
-              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-            })()}
-          />
-        </div>
-      )}
-
       {/* Task List */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1">
         {visibleTasks.length === 0 ? (
@@ -332,25 +283,9 @@ export function TaskTree({
             {hasActiveFilters ? (
               <p>No tasks match your filters</p>
             ) : currentContextId ? (
-              <div>
-                <p className="mb-3">No subtasks yet</p>
-                <button
-                  onClick={() => setIsComposing(true)}
-                  className="text-primary hover:underline"
-                >
-                  Add the first subtask
-                </button>
-              </div>
+              <p>No subtasks yet</p>
             ) : (
-              <div>
-                <p className="mb-3">No tasks yet</p>
-                <button
-                  onClick={() => setIsComposing(true)}
-                  className="text-primary hover:underline"
-                >
-                  Create your first task
-                </button>
-              </div>
+              <p>No tasks yet</p>
             )}
           </div>
         ) : (
@@ -375,12 +310,37 @@ export function TaskTree({
         )}
       </div>
 
-      {/* Floaty Search Bar - hidden on mobile */}
+      {/* Bottom compose/search dock - hidden on mobile */}
       {!isMobile && (
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
+          <div className="px-4 pt-3 pb-2">
+            <div className="w-full max-w-xl mx-auto">
+              <TaskComposer
+                onSubmit={handleNewTask}
+                relays={relays}
+                channels={channels}
+                people={people}
+                onCancel={() => setIsComposerExpanded(false)}
+                compact
+                adaptiveSize
+                onExpandedChange={setIsComposerExpanded}
+                parentId={currentContextId}
+                onSignInClick={onSignInClick}
+                defaultContent={(() => {
+                  const prefillChannels = new Set<string>();
+                  channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+                  if (currentContextTask) {
+                    currentContextTask.tags.forEach(t => prefillChannels.add(t));
+                  }
+                  if (prefillChannels.size === 0) return "";
+                  return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
+                })()}
+              />
+            </div>
+          </div>
           {/* Gradient fade overlay */}
           <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-          <div className="px-4 py-3 bg-background/80 backdrop-blur-md flex items-center">
+          <div className="px-4 pb-3 flex items-center">
             <div className="relative w-full max-w-xl mx-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
