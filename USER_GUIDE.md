@@ -20,7 +20,9 @@
 - Click a channel name to cycle filter state:
   - `neutral` -> `included` -> `excluded` -> `neutral`
 - Click the `#` icon next to a channel to show only that channel (`included`) and reset other channels to `neutral`.
-- Click the Channels section header icon to toggle/reset all channels.
+- Click the Channels section header icon (next to the section title) to toggle all channels:
+  - if all are neutral -> set all to included
+  - otherwise -> reset all to neutral
 
 ### Content hashtag click behavior
 - Clicking a hashtag inside task/comment content applies an exclusive channel focus:
