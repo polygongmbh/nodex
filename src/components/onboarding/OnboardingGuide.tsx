@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye, Filter, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +39,7 @@ export function OnboardingGuide({
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [interactionSatisfied, setInteractionSatisfied] = useState(false);
   const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
+  const autoAdvancedStepIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isOpen) return;
@@ -46,6 +47,7 @@ export function OnboardingGuide({
     setStepIndex(0);
     setTargetRect(null);
     setInteractionSatisfied(false);
+    autoAdvancedStepIdsRef.current.clear();
   }, [isOpen, initialSection]);
 
   const activeSteps = useMemo(() => {
@@ -57,24 +59,12 @@ export function OnboardingGuide({
   }, [activeSection, stepsBySection]);
 
   useEffect(() => {
-    if (!isOpen || !activeSection || activeSteps.length === 0) return;
-
-    let nextIndex = stepIndex;
-    while (nextIndex < activeSteps.length) {
-      const step = activeSteps[nextIndex];
-      if (!step.target || document.querySelector(step.target)) break;
-      nextIndex += 1;
+    if (!isOpen || !activeSection) return;
+    if (activeSteps.length === 0) return;
+    if (stepIndex > activeSteps.length - 1) {
+      setStepIndex(0);
     }
-
-    if (nextIndex !== stepIndex) {
-      if (nextIndex >= activeSteps.length) {
-        onClose();
-        return;
-      }
-      setStepIndex(nextIndex);
-      return;
-    }
-  }, [activeSection, activeSteps, isOpen, onClose, stepIndex]);
+  }, [activeSection, activeSteps.length, isOpen, stepIndex]);
 
   useEffect(() => {
     if (!isOpen || !activeSection || activeSteps.length === 0) return;
@@ -155,6 +145,27 @@ export function OnboardingGuide({
       target.style.transition = previousTransition;
     };
   }, [activeSection, activeSteps, isOpen, stepIndex]);
+
+  useEffect(() => {
+    if (!isOpen || activeSection === null) return;
+    const step = activeSteps[stepIndex];
+    if (!step?.requiredAction) return;
+    if (!interactionSatisfied) return;
+    if (autoAdvancedStepIdsRef.current.has(step.id)) return;
+
+    autoAdvancedStepIdsRef.current.add(step.id);
+    const timeout = window.setTimeout(() => {
+      const lastStep = stepIndex >= activeSteps.length - 1;
+      if (lastStep) {
+        onComplete(stepIndex);
+        onClose();
+        return;
+      }
+      setStepIndex((prev) => Math.min(prev + 1, activeSteps.length - 1));
+    }, 220);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeSection, activeSteps, interactionSatisfied, isOpen, onClose, onComplete, stepIndex]);
 
   const currentStep = activeSteps[stepIndex];
   const isLastStep = stepIndex >= activeSteps.length - 1;
@@ -246,7 +257,7 @@ export function OnboardingGuide({
         top: "50%",
         transform: "translate(-50%, -50%)",
         position: "fixed",
-        zIndex: 97,
+        zIndex: 130,
       };
     }
     const cardWidth = 380;
@@ -263,7 +274,7 @@ export function OnboardingGuide({
       left,
       top,
       position: "fixed",
-      zIndex: 97,
+      zIndex: 130,
     };
   };
 
@@ -343,13 +354,13 @@ export function OnboardingGuide({
 
   return (
     <div
-      className="fixed inset-0 z-[95] pointer-events-none"
+      className="fixed inset-0 z-[120] pointer-events-none"
       aria-live="polite"
     >
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
       {showSectionPicker ? (
         <>
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[98] pointer-events-auto rounded-xl border border-border bg-card/95 px-4 py-3 shadow-lg max-w-xl w-[calc(100vw-2rem)]">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[130] pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-3 shadow-lg max-w-xl w-[calc(100vw-2rem)]">
             <h2 className="text-base font-semibold">Choose an interface area</h2>
             <p className="text-xs text-muted-foreground mt-1">Click a highlighted region to start focused guidance.</p>
           </div>
@@ -362,11 +373,11 @@ export function OnboardingGuide({
                 setStepIndex(0);
               }}
               style={getPickerPaneStyle(section.id)}
-              className="absolute z-[97] pointer-events-auto rounded-none border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 transition-colors text-left p-3"
+              className="absolute z-[125] pointer-events-auto rounded-none border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 transition-colors text-left p-3"
               aria-label={`Start ${section.title} onboarding section`}
               title={`${section.title}: ${section.description}`}
             >
-              <span className="inline-flex items-start gap-2 rounded-md bg-card/95 px-2 py-1 border border-border shadow-sm">
+              <span className="inline-flex items-start gap-2 rounded-md bg-card/85 backdrop-blur-md px-2 py-1 border border-border shadow-sm">
                 {getSectionIcon(section.id)}
                 <span className="min-w-0">
                   <span className="block text-sm font-medium text-foreground">{section.title}</span>
@@ -376,7 +387,7 @@ export function OnboardingGuide({
             </button>
           ))}
 
-          <div className="absolute bottom-4 right-4 z-[98] pointer-events-auto">
+          <div className="absolute bottom-4 right-4 z-[130] pointer-events-auto">
             <Button variant="ghost" onClick={onClose}>Close</Button>
           </div>
         </>
@@ -385,7 +396,7 @@ export function OnboardingGuide({
         role="dialog"
         aria-modal="true"
         aria-label="Onboarding guide"
-        className="pointer-events-auto rounded-xl border border-border bg-card text-card-foreground shadow-xl p-4 sm:p-5"
+        className="pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
         style={getAnchoredCardStyle()}
       >
         {!currentStep ? (
