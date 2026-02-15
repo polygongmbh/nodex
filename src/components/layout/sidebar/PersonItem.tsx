@@ -1,6 +1,6 @@
-import { User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Person } from "@/types";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface PersonItemProps {
   person: Person;
@@ -19,21 +19,18 @@ export function PersonItem({ person, onToggle, isKeyboardFocused = false }: Pers
       )}
     >
       <div className="relative">
-        <div
+        <UserAvatar
+          id={person.id}
+          displayName={person.displayName}
+          avatarUrl={person.avatar}
           className={cn(
-            "w-7 h-7 rounded-full flex items-center justify-center transition-colors",
+            "w-7 h-7 transition-colors",
             person.isSelected
-              ? "bg-primary/20 ring-2 ring-primary/50"
-              : "bg-muted/50 group-hover:bg-muted"
+              ? "ring-2 ring-primary/50"
+              : "group-hover:opacity-90"
           )}
-        >
-          <User
-            className={cn(
-              "w-4 h-4",
-              person.isSelected ? "text-primary" : "text-muted-foreground"
-            )}
-          />
-        </div>
+          beamTestId={`sidebar-person-beam-${person.id}`}
+        />
         {person.isOnline && (
           <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-sidebar" />
         )}

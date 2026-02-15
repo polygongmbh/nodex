@@ -4,7 +4,7 @@ import { Search, Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { linkifyContent } from "@/lib/linkify";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -359,14 +359,13 @@ export function FeedView({
                   )}
 
                   {/* Avatar */}
-                  <Avatar className="w-8 h-8 flex-shrink-0">
-                    {task.author.avatar ? (
-                      <AvatarImage src={task.author.avatar} alt={task.author.displayName} />
-                    ) : null}
-                    <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-foreground text-xs">
-                      {task.author.displayName.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    id={task.author.id}
+                    displayName={task.author.displayName}
+                    avatarUrl={task.author.avatar}
+                    className="w-8 h-8 flex-shrink-0"
+                    beamTestId={`feed-beam-${task.id}`}
+                  />
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
