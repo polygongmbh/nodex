@@ -1,13 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Plus, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap } from "lucide-react";
+import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
-
-type BarMode = "search" | "compose";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -45,56 +43,23 @@ export function UnifiedBottomBar({
   defaultContent = "",
   isSignedIn,
   onSignInClick,
-  forceComposeMode = false,
 }: UnifiedBottomBarProps) {
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
-  const [mode, setMode] = useState<BarMode>("search");
   const [sharedText, setSharedText] = useState(() => searchQuery || defaultContent);
   const [taskType, setTaskType] = useState<TaskType>("task");
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [dueTime, setDueTime] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const selectionStartRef = useRef(0);
-  const selectionEndRef = useRef(0);
+  const prevSearchQueryRef = useRef(searchQuery);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const autoManagedChannelsRef = useRef<Set<string>>(new Set());
 
-  const saveSelection = (target: HTMLInputElement | HTMLTextAreaElement) => {
-    selectionStartRef.current = target.selectionStart ?? 0;
-    selectionEndRef.current = target.selectionEnd ?? selectionStartRef.current;
-  };
-
-  const restoreSelection = (target: HTMLInputElement | HTMLTextAreaElement) => {
-    const length = target.value.length;
-    const start = Math.min(selectionStartRef.current, length);
-    const end = Math.min(selectionEndRef.current, length);
-    target.setSelectionRange(start, end);
-  };
-
   useEffect(() => {
-    if (mode === "compose" && textareaRef.current) {
-      const target = textareaRef.current;
-      target.focus();
-      restoreSelection(target);
-    } else if (mode === "search" && inputRef.current) {
-      const target = inputRef.current;
-      target.focus();
-      restoreSelection(target);
-    }
-  }, [mode]);
-
-  useEffect(() => {
-    if (!forceComposeMode) return;
-    setMode("compose");
-  }, [forceComposeMode]);
-
-  useEffect(() => {
-    if (mode !== "search") return;
-    if (searchQuery === sharedText) return;
+    if (prevSearchQueryRef.current === searchQuery) return;
+    prevSearchQueryRef.current = searchQuery;
     setSharedText(searchQuery);
-  }, [mode, searchQuery, sharedText]);
+  }, [searchQuery]);
 
   useEffect(() => {
     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -181,26 +146,13 @@ export function UnifiedBottomBar({
     autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
     setDueTime("");
-    setMode("search");
     setActiveSelector(null);
   };
 
   const handleCancel = () => {
     setSharedText("");
     onSearchChange("");
-    setMode("search");
     setActiveSelector(null);
-  };
-
-  const handleModeChange = (nextMode: BarMode) => {
-    if (nextMode === "compose" && !isSignedIn) {
-      onSignInClick();
-      return;
-    }
-    if (nextMode === "search") {
-      onSearchChange(sharedText);
-    }
-    setMode(nextMode);
   };
 
   const toggleSelector = (type: SelectorType) => {
@@ -282,57 +234,30 @@ export function UnifiedBottomBar({
         </div>
       )}
 
-      {/* Mode Toggle & Selectors Row */}
+      {/* Controls Row */}
       <div className="flex items-center gap-2 px-3 pt-2">
-        {/* Mode Toggle */}
         <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
           <button
-            onClick={() => handleModeChange("search")}
-            aria-label="Search"
+            onClick={() => setTaskType("task")}
+            aria-label="Task"
             className={cn(
               "p-2 rounded-md transition-colors",
-              mode === "search" ? "bg-background shadow-sm" : "text-muted-foreground"
+              taskType === "task" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
             )}
           >
-            <Search className="w-4 h-4" />
+            <CheckSquare className="w-4 h-4" />
           </button>
           <button
-            onClick={() => handleModeChange("compose")}
-            aria-label="Compose"
+            onClick={() => setTaskType("comment")}
+            aria-label="Comment"
             className={cn(
               "p-2 rounded-md transition-colors",
-              mode === "compose" ? "bg-background shadow-sm" : "text-muted-foreground"
+              taskType === "comment" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
             )}
           >
-            <Plus className="w-4 h-4" />
+            <MessageSquare className="w-4 h-4" />
           </button>
         </div>
-
-        {/* Task Type (only in compose mode) */}
-        {mode === "compose" && (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setTaskType("task")}
-              aria-label="Task"
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                taskType === "task" ? "bg-primary/20 text-primary" : "text-muted-foreground"
-              )}
-            >
-              <CheckSquare className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setTaskType("comment")}
-              aria-label="Comment"
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                taskType === "comment" ? "bg-primary/20 text-primary" : "text-muted-foreground"
-              )}
-            >
-              <MessageSquare className="w-4 h-4" />
-            </button>
-          </div>
-        )}
 
         {/* Filter/Selector Buttons */}
         <div className="flex items-center gap-1 ml-auto">
@@ -383,89 +308,57 @@ export function UnifiedBottomBar({
 
       {/* Input Area */}
       <div className="flex items-end gap-2 p-3">
-        {mode === "search" ? (
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={sharedText}
-              onChange={(e) => {
-                const value = e.target.value;
-                saveSelection(e.target);
-                setSharedText(value);
-                onSearchChange(value);
-              }}
-              onSelect={(e) => saveSelection(e.currentTarget)}
-              onKeyUp={(e) => saveSelection(e.currentTarget)}
-              onClick={(e) => saveSelection(e.currentTarget)}
-              placeholder="Search tasks..."
-              className="w-full pl-9 pr-4 py-3 bg-muted/30 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            {sharedText && (
-              <button
-                onClick={() => {
-                  setSharedText("");
-                  onSearchChange("");
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex-1 space-y-2">
-            {/* Due date for tasks */}
-            {taskType === "task" && (
-              <div className="flex items-center gap-2 text-sm">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
-                      <Calendar className="w-4 h-4" />
-                      {dueDate ? format(dueDate, "MMM d") : "Due date"}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarComponent
-                      mode="single"
-                      selected={dueDate}
-                      onSelect={setDueDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
+        <div className="flex-1 space-y-2">
+          {/* Due date for tasks */}
+          {taskType === "task" && (
+            <div className="flex items-center gap-2 text-sm">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
+                    <Calendar className="w-4 h-4" />
+                    {dueDate ? format(dueDate, "MMM d") : "Due date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {dueDate && (
+                <>
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="time"
+                      value={dueTime}
+                      onChange={(e) => setDueTime(e.target.value)}
+                      className="text-sm bg-transparent focus:outline-none w-20"
                     />
-                  </PopoverContent>
-                </Popover>
-                {dueDate && (
-                  <>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <input
-                        type="time"
-                        value={dueTime}
-                        onChange={(e) => setDueTime(e.target.value)}
-                        className="text-sm bg-transparent focus:outline-none w-20"
-                      />
-                    </div>
-                    <button onClick={() => { setDueDate(undefined); setDueTime(""); }} className="p-1 hover:bg-muted rounded">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-            <div className="flex items-end gap-2">
+                  </div>
+                  <button onClick={() => { setDueDate(undefined); setDueTime(""); }} className="p-1 hover:bg-muted rounded">
+                    <X className="w-3 h-3" />
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+          <div className="flex items-end gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <textarea
                 data-onboarding="compose-input"
                 ref={textareaRef}
                 value={sharedText}
                 onChange={(e) => {
-                  saveSelection(e.target);
-                  setSharedText(e.target.value);
+                  const value = e.target.value;
+                  setSharedText(value);
+                  onSearchChange(value);
                 }}
-                onSelect={(e) => saveSelection(e.currentTarget)}
-                onKeyUp={(e) => saveSelection(e.currentTarget)}
-                onClick={(e) => saveSelection(e.currentTarget)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && e.altKey) {
                     e.preventDefault();
@@ -473,45 +366,43 @@ export function UnifiedBottomBar({
                     handleSubmit(alternateType);
                     return;
                   }
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit();
-                  }
                   if (e.key === "Escape") {
                     handleCancel();
                   }
                 }}
-                placeholder={taskType === "task" ? "New task... #tags" : "Add comment..."}
-                className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px] max-h-32"
+                placeholder={taskType === "task" ? "Search or create task... #tags" : "Search or add comment... #tags"}
+                className="flex-1 w-full bg-muted/30 border border-border rounded-lg pl-9 pr-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px] max-h-32"
                 rows={1}
               />
-              <div className="flex gap-1">
+            </div>
+            <div className="flex gap-1">
+              <button
+                onClick={handleCancel}
+                className="p-3 rounded-lg hover:bg-muted"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              {isSignedIn ? (
                 <button
-                  onClick={handleCancel}
-                  className="p-3 rounded-lg hover:bg-muted"
+                  onClick={() => handleSubmit()}
+                  disabled={!sharedText.trim() || !hasAtLeastOneTag}
+                  className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  aria-label="Create from current text"
                 >
-                  <X className="w-5 h-5" />
+                  <Send className="w-5 h-5" />
                 </button>
-                {isSignedIn ? (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={!sharedText.trim() || !hasAtLeastOneTag}
-                    className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={onSignInClick}
-                    className="p-3 rounded-lg border border-border text-foreground hover:bg-muted"
-                  >
-                    <Zap className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
+              ) : (
+                <button
+                  onClick={onSignInClick}
+                  className="p-3 rounded-lg border border-border text-foreground hover:bg-muted"
+                  aria-label="Sign in to create"
+                >
+                  <Zap className="w-5 h-5" />
+                </button>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

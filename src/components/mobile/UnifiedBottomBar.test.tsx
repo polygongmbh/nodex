@@ -14,7 +14,7 @@ const channels: Channel[] = [
 const people: Person[] = [];
 
 describe("UnifiedBottomBar auth gating", () => {
-  it("opens sign-in when compose is tapped while signed out", () => {
+  it("opens sign-in when create is tapped while signed out", () => {
     const onSignInClick = vi.fn();
 
     render(
@@ -33,11 +33,36 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /compose/i }));
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
     expect(onSignInClick).toHaveBeenCalledTimes(1);
-    expect(screen.queryByPlaceholderText(/new task/i)).not.toBeInTheDocument();
   });
+
+  it("searches as user types in combined field", () => {
+    const onSearchChange = vi.fn();
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={onSearchChange}
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "hello #general" } });
+    expect(onSearchChange).toHaveBeenLastCalledWith("hello #general");
+  });
+
   it("submits as opposite kind on Alt+Enter in compose mode", () => {
     const onSubmit = vi.fn();
 
@@ -57,8 +82,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /compose/i }));
-    const composeField = screen.getByPlaceholderText(/new task/i) as HTMLTextAreaElement;
+    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Ship #general" } });
 
     fireEvent.keyDown(composeField, { key: "Enter", altKey: true });
@@ -71,9 +95,8 @@ describe("UnifiedBottomBar auth gating", () => {
       undefined
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /compose/i }));
     fireEvent.click(screen.getByRole("button", { name: /comment/i }));
-    const commentField = screen.getByPlaceholderText(/add comment/i) as HTMLTextAreaElement;
+    const commentField = screen.getByPlaceholderText(/search or add comment/i) as HTMLTextAreaElement;
     fireEvent.change(commentField, { target: { value: "Reply #general" } });
 
     fireEvent.keyDown(commentField, { key: "Enter", altKey: true });
