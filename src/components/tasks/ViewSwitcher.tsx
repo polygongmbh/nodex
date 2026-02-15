@@ -18,7 +18,10 @@ const views: { id: ViewType; label: string; icon: React.ReactNode }[] = [
 
 export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
   return (
-    <div className="h-full flex items-stretch justify-center gap-3 sm:gap-4 lg:gap-5 min-w-0 overflow-x-auto">
+    <div
+      className="h-full flex items-stretch justify-center gap-3 sm:gap-4 lg:gap-5 min-w-0 overflow-x-auto"
+      data-onboarding="view-switcher"
+    >
       {views.map((view) => (
         <button
           key={view.id}

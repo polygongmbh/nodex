@@ -384,6 +384,7 @@ export function TaskItem({
               {task.tags.map((tag) => (
                 <span
                   key={tag}
+                  data-onboarding="content-hashtag"
                   className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
                 >
                   #{tag}

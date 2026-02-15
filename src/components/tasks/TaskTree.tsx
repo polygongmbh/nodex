@@ -250,7 +250,10 @@ export function TaskTree({
 
       {/* Top composer with context controls - hidden on mobile and when not signed in */}
       {!isMobile && user && (
-        <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
+        <div
+          className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
+          data-onboarding="focused-compose"
+        >
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
@@ -277,7 +280,7 @@ export function TaskTree({
       )}
 
       {/* Task List */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1" data-onboarding="task-list">
         {visibleTasks.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             {hasActiveFilters ? (

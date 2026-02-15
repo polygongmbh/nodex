@@ -328,9 +328,13 @@ export function TaskComposer({
   const showExpandedControls = !adaptiveSize || isExpanded || content.trim().length > 0;
 
   return (
-    <div className={cn("space-y-3", compact && "space-y-2", adaptiveSize && !showExpandedControls && "space-y-1")}>
+    <div
+      className={cn("space-y-3", compact && "space-y-2", adaptiveSize && !showExpandedControls && "space-y-1")}
+      data-onboarding="focused-compose"
+    >
       <div className="relative">
         <textarea
+          data-onboarding="compose-input"
           ref={textareaRef}
           value={content}
           onChange={handleContentChange}
@@ -482,6 +486,7 @@ export function TaskComposer({
             </button>
             <div className="relative w-9 bg-primary/95 border-l border-primary-foreground/20">
               <select
+                data-onboarding="compose-kind"
                 aria-label="Kind"
                 value={taskType}
                 onChange={(e) => setTaskType(e.target.value as TaskType)}

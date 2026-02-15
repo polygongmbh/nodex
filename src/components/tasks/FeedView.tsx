@@ -203,7 +203,10 @@ export function FeedView({
 
       {/* Top composer - hidden on mobile and when not signed in */}
       {!isMobile && user && (
-        <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm">
+        <div
+          className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm"
+          data-onboarding="focused-compose"
+        >
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
@@ -229,7 +232,7 @@ export function FeedView({
       )}
 
       {/* Feed List */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto" data-onboarding="task-list">
         {feedTasks.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             <p>No tasks to show</p>
@@ -430,6 +433,7 @@ export function FeedView({
                         {task.tags.map((tag) => (
                           <span
                             key={tag}
+                            data-onboarding="content-hashtag"
                             className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
                           >
                             #{tag}

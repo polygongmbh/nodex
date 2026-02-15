@@ -15,6 +15,10 @@ import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/Ke
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
+import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
+import { onboardingSections } from "@/components/onboarding/onboarding-sections";
+import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
+import { OnboardingInitialSection } from "@/components/onboarding/onboarding-types";
 import { nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
@@ -33,6 +37,7 @@ import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/tas
 import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import { derivePeopleFromKind0Events } from "@/lib/people-from-kind0";
+import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -252,12 +257,36 @@ const Index = () => {
     setIsSidebarFocused(false);
   }, []);
 
+  const handleOpenGuide = useCallback(() => {
+    setOnboardingInitialSection(null);
+    setIsOnboardingOpen(true);
+  }, []);
+
+  const handleCloseGuide = useCallback(() => {
+    setIsOnboardingOpen(false);
+  }, []);
+
+  const handleCompleteGuide = useCallback((lastStep: number) => {
+    markOnboardingCompleted(lastStep);
+  }, []);
+
   // Derive focused task from URL
   const focusedTaskId = urlTaskId || null;
 
   const isMobile = useIsMobile();
   const currentUser = resolveCurrentUser(people, user);
   const shortcutsHelp = useKeyboardShortcutsHelp();
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
+  const onboardingStepsBySection = useMemo(() => getOnboardingStepsBySection(isMobile), [isMobile]);
+
+  useEffect(() => {
+    const onboardingState = loadOnboardingState();
+    if (!onboardingState.completed) {
+      setOnboardingInitialSection("all");
+      setIsOnboardingOpen(true);
+    }
+  }, []);
 
   // Handle view change - update URL
   const setCurrentView = useCallback((newView: ViewType) => {
@@ -720,6 +749,14 @@ const Index = () => {
           onSignInClick={() => setIsAuthModalOpen(true)}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        <OnboardingGuide
+          isOpen={isOnboardingOpen}
+          initialSection={onboardingInitialSection}
+          sections={onboardingSections}
+          stepsBySection={onboardingStepsBySection}
+          onClose={handleCloseGuide}
+          onComplete={handleCompleteGuide}
+        />
       </>
     );
   }
@@ -756,6 +793,7 @@ const Index = () => {
         isFocused={isSidebarFocused}
         onFocusTasks={handleFocusTasks}
         onShortcutsClick={shortcutsHelp.open}
+        onGuideClick={handleOpenGuide}
       />
       <div className="min-w-0 overflow-hidden" {...desktopSwipeHandlers}>
         {renderView()}
@@ -767,6 +805,14 @@ const Index = () => {
       
       {/* Nostr Auth Modal */}
       <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <OnboardingGuide
+        isOpen={isOnboardingOpen}
+        initialSection={onboardingInitialSection}
+        sections={onboardingSections}
+        stepsBySection={onboardingStepsBySection}
+        onClose={handleCloseGuide}
+        onComplete={handleCompleteGuide}
+      />
     </div>
   );
 };

@@ -23,6 +23,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
       className="flex items-center justify-around border-b border-border bg-background/95 backdrop-blur-sm px-2 py-2.5 safe-area-top"
       role="tablist"
       aria-label="Navigation views"
+      data-onboarding="mobile-nav"
     >
       {navItems.map((item) => (
         <button

@@ -65,7 +65,7 @@ export function MobileFilters({
   };
 
   return (
-    <ScrollArea className="flex-1">
+    <ScrollArea className="flex-1" data-onboarding="mobile-filters">
       <div className="p-4 space-y-6">
         {/* Profile Management */}
         <section>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Radio, Hash, Users, Plus, Wifi, WifiOff, Keyboard } from "lucide-react";
+import { Radio, Hash, Users, Plus, Wifi, WifiOff, Keyboard, BookOpen } from "lucide-react";
 import { Relay, Channel, Person } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
@@ -55,6 +55,7 @@ interface SidebarProps {
   isFocused?: boolean;
   onFocusTasks?: () => void;
   onShortcutsClick?: () => void;
+  onGuideClick?: () => void;
 }
 
 export function Sidebar({
@@ -76,6 +77,7 @@ export function Sidebar({
   isFocused = false,
   onFocusTasks,
   onShortcutsClick,
+  onGuideClick,
 }: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
     feeds: true,
@@ -259,6 +261,7 @@ export function Sidebar({
         </SidebarSection>
 
         {/* Channels */}
+        <div data-onboarding="channels-section">
         <SidebarSection
           title="Channels"
           icon={Hash}
@@ -277,6 +280,7 @@ export function Sidebar({
             />
           ))}
         </SidebarSection>
+        </div>
 
         {/* People */}
         <SidebarSection
@@ -326,16 +330,30 @@ export function Sidebar({
             </button>
           }
         />
-        {onShortcutsClick && (
-          <button
-            onClick={onShortcutsClick}
-            className="w-full h-9 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
-            title="Keyboard shortcuts (?)"
-          >
-            <Keyboard className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">Shortcuts</span>
-            <kbd className="ml-auto text-[10px] font-mono bg-muted/50 border border-border rounded px-1">?</kbd>
-          </button>
+        {(onShortcutsClick || onGuideClick) && (
+          <div className="grid grid-cols-2">
+            {onShortcutsClick && (
+              <button
+                onClick={onShortcutsClick}
+                className="h-9 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors border-r border-border/60"
+                title="Keyboard shortcuts (?)"
+              >
+                <Keyboard className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">Shortcuts</span>
+                <kbd className="ml-auto text-[10px] font-mono bg-muted/50 border border-border rounded px-1">?</kbd>
+              </button>
+            )}
+            {onGuideClick && (
+              <button
+                onClick={onGuideClick}
+                className="h-9 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
+                title="Open guide"
+              >
+                <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">Guide</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
     </aside>
