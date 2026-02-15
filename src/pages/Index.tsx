@@ -257,6 +257,11 @@ const Index = () => {
     setIsSidebarFocused(false);
   }, []);
 
+  const handleOpenAuthModal = useCallback(() => {
+    setIsOnboardingOpen(false);
+    setIsAuthModalOpen(true);
+  }, []);
+
   const handleOpenGuide = useCallback(() => {
     setOnboardingInitialSection(null);
     setIsOnboardingOpen(true);
@@ -428,7 +433,7 @@ const Index = () => {
 
   const handleToggleComplete = (taskId: string) => {
     if (!user) {
-      setIsAuthModalOpen(true);
+      handleOpenAuthModal();
       toast.error("Sign in required to modify tasks");
       return;
     }
@@ -489,7 +494,7 @@ const Index = () => {
 
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
     if (!user) {
-      setIsAuthModalOpen(true);
+      handleOpenAuthModal();
       toast.error("Sign in required to modify tasks");
       return;
     }
@@ -518,7 +523,7 @@ const Index = () => {
     initialStatus?: TaskStatus
   ) => {
     if (!user) {
-      setIsAuthModalOpen(true);
+      handleOpenAuthModal();
       toast.error("Sign in required to post");
       return;
     }
@@ -700,7 +705,7 @@ const Index = () => {
     onFocusTask: setFocusedTaskId,
     onStatusChange: handleStatusChange,
     onFocusSidebar: handleFocusSidebar,
-    onSignInClick: () => setIsAuthModalOpen(true),
+    onSignInClick: handleOpenAuthModal,
   };
 
   const renderView = () => {
@@ -746,11 +751,11 @@ const Index = () => {
           onPersonToggle={handlePersonToggle}
           onAddRelay={addRelay}
           onRemoveRelay={removeRelay}
-          onSignInClick={() => setIsAuthModalOpen(true)}
+          onSignInClick={handleOpenAuthModal}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide
-          isOpen={isOnboardingOpen}
+          isOpen={isOnboardingOpen && !isAuthModalOpen}
           initialSection={onboardingInitialSection}
           sections={onboardingSections}
           stepsBySection={onboardingStepsBySection}
@@ -770,7 +775,7 @@ const Index = () => {
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
         </div>
         <div className="h-full flex items-center justify-end gap-2 w-auto pl-2">
-          <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
+          <NostrUserMenu onSignInClick={handleOpenAuthModal} />
           <ThemeModeToggle />
         </div>
       </div>
@@ -806,7 +811,7 @@ const Index = () => {
       {/* Nostr Auth Modal */}
       <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <OnboardingGuide
-        isOpen={isOnboardingOpen}
+        isOpen={isOnboardingOpen && !isAuthModalOpen}
         initialSection={onboardingInitialSection}
         sections={onboardingSections}
         stepsBySection={onboardingStepsBySection}
