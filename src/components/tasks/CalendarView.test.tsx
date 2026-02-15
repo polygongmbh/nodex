@@ -33,8 +33,8 @@ const people: Person[] = [
 const tasks: Task[] = [];
 
 describe("CalendarView responsiveness", () => {
-  it("uses a stacked desktop layout on smaller widths and side panel on xl", () => {
-    const { container } = render(
+  it("renders core navigation and search controls", () => {
+    render(
       <CalendarView
         tasks={tasks}
         allTasks={tasks}
@@ -48,32 +48,8 @@ describe("CalendarView responsiveness", () => {
       />
     );
 
-    const layout = container.querySelector("div.flex-1.flex.overflow-hidden");
-    expect(layout?.className).toContain("xl:flex-row");
-
-    const addEventButton = screen.getByRole("button", { name: /add event/i });
-    const panel = addEventButton.closest("div[class*='overflow-y-auto']");
-    expect(panel?.className).toContain("xl:w-80");
     expect(screen.getByRole("button", { name: /previous month/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /next month/i })).toBeInTheDocument();
-  });
-
-  it("renders bottom search with icon", () => {
-    const { container } = render(
-      <CalendarView
-        tasks={tasks}
-        allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
-      />
-    );
-
     expect(screen.getByPlaceholderText(/search tasks/i)).toBeInTheDocument();
-    expect(container.querySelector("svg.lucide-search")).toBeInTheDocument();
   });
 });

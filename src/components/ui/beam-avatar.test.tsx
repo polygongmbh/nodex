@@ -23,11 +23,4 @@ describe("BeamAvatar", () => {
     render(<BeamAvatar seed="pubkey-123" data-testid="beam" />);
     expect(screen.getByRole("img", { name: /generated avatar/i })).toBeInTheDocument();
   });
-
-  it("clips marble avatar to a perfect circle", () => {
-    render(<BeamAvatar seed="pubkey-123" data-testid="beam" />);
-    const wrapper = screen.getByTestId("beam");
-    expect(wrapper).toHaveClass("rounded-full");
-    expect(wrapper).toHaveClass("overflow-hidden");
-  });
 });

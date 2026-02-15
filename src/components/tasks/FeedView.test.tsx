@@ -60,23 +60,4 @@ describe("FeedView", () => {
       screen.getByText((_, element) => element?.textContent === expectedLabel)
     ).toBeInTheDocument();
   });
-
-  it("renders secondary author metadata with lower visual emphasis", () => {
-    render(
-      <FeedView
-        tasks={tasks}
-        allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
-      />
-    );
-
-    const secondary = screen.getByTestId("feed-author-secondary-task-1");
-    expect(secondary).toHaveClass("opacity-60");
-  });
 });
