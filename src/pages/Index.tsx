@@ -756,6 +756,7 @@ const Index = () => {
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide
           isOpen={isOnboardingOpen && !isAuthModalOpen}
+          isMobile={isMobile}
           initialSection={onboardingInitialSection}
           sections={onboardingSections}
           stepsBySection={onboardingStepsBySection}
@@ -812,6 +813,7 @@ const Index = () => {
       <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <OnboardingGuide
         isOpen={isOnboardingOpen && !isAuthModalOpen}
+        isMobile={isMobile}
         initialSection={onboardingInitialSection}
         sections={onboardingSections}
         stepsBySection={onboardingStepsBySection}

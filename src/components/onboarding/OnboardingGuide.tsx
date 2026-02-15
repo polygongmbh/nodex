@@ -10,6 +10,7 @@ import { getOnboardingAllSteps } from "./onboarding-steps";
 
 interface OnboardingGuideProps {
   isOpen: boolean;
+  isMobile?: boolean;
   initialSection: OnboardingInitialSection;
   sections: OnboardingSection[];
   stepsBySection: Record<OnboardingSectionId, { id: string; title: string; description: string; target?: string }[]>;
@@ -19,6 +20,7 @@ interface OnboardingGuideProps {
 
 export function OnboardingGuide({
   isOpen,
+  isMobile = false,
   initialSection,
   sections,
   stepsBySection,
@@ -226,56 +228,80 @@ export function OnboardingGuide({
     }
   };
 
+  const getPickerPaneStyle = (sectionId: OnboardingSectionId): React.CSSProperties => {
+    if (isMobile) {
+      switch (sectionId) {
+        case "views":
+          return { left: "0%", top: "0%", width: "100%", height: "20%" };
+        case "filters":
+          return { left: "0%", top: "20%", width: "100%", height: "18%" };
+        case "focus":
+          return { left: "0%", top: "38%", width: "100%", height: "37%" };
+        case "compose":
+          return { left: "0%", top: "75%", width: "100%", height: "25%" };
+      }
+    }
+
+    switch (sectionId) {
+      case "views":
+        return { left: "16%", top: "0%", width: "84%", height: "15%" };
+      case "filters":
+        return { left: "0%", top: "0%", width: "16%", height: "100%" };
+      case "focus":
+        return { left: "16%", top: "15%", width: "84%", height: "55%" };
+      case "compose":
+        return { left: "16%", top: "70%", width: "84%", height: "30%" };
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[95] pointer-events-none"
       aria-live="polite"
     >
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+      {showSectionPicker ? (
+        <>
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[98] pointer-events-auto rounded-xl border border-border bg-card/95 px-4 py-3 shadow-lg max-w-xl w-[calc(100vw-2rem)]">
+            <h2 className="text-base font-semibold">Choose an interface area</h2>
+            <p className="text-xs text-muted-foreground mt-1">Click a highlighted region to start focused guidance.</p>
+          </div>
+
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => {
+                setActiveSection(section.id);
+                setStepIndex(0);
+              }}
+              style={getPickerPaneStyle(section.id)}
+              className="absolute z-[97] pointer-events-auto rounded-none border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 transition-colors text-left p-3"
+              aria-label={`Start ${section.title} onboarding section`}
+              title={`${section.title}: ${section.description}`}
+            >
+              <span className="inline-flex items-start gap-2 rounded-md bg-card/95 px-2 py-1 border border-border shadow-sm">
+                {getSectionIcon(section.id)}
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-foreground">{section.title}</span>
+                  <span className="block text-[11px] text-muted-foreground">{getSectionAreaLabel(section.id)}</span>
+                </span>
+              </span>
+            </button>
+          ))}
+
+          <div className="absolute bottom-4 right-4 z-[98] pointer-events-auto">
+            <Button variant="ghost" onClick={onClose}>Close</Button>
+          </div>
+        </>
+      ) : (
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Onboarding guide"
         className="pointer-events-auto rounded-xl border border-border bg-card text-card-foreground shadow-xl p-4 sm:p-5"
-        style={showSectionPicker ? undefined : getAnchoredCardStyle()}
+        style={getAnchoredCardStyle()}
       >
-        {showSectionPicker ? (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold">Choose an interface area</h2>
-              <p className="text-sm text-muted-foreground">Select where you want guided help first.</p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => {
-                    setActiveSection(section.id);
-                    setStepIndex(0);
-                  }}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-3 text-left hover:bg-muted/60 transition-colors"
-                  aria-label={`Start ${section.title} onboarding section`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-md bg-primary/10 p-2">
-                      {getSectionIcon(section.id)}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-medium">{section.title}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{section.description}</div>
-                      <div className="inline-flex mt-2 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
-                        {getSectionAreaLabel(section.id)}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-            <div className="flex justify-end">
-              <Button variant="ghost" onClick={onClose}>Close</Button>
-            </div>
-          </div>
-        ) : !currentStep ? (
+        {!currentStep ? (
           <div className="space-y-3">
             <h2 className="text-lg font-semibold">No onboarding steps available</h2>
             <div className="flex justify-end">
@@ -308,6 +334,7 @@ export function OnboardingGuide({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
