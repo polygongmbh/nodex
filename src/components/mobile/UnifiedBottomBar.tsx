@@ -73,13 +73,24 @@ export function UnifiedBottomBar({
     const removedText = nextContent.length < previousContent.length;
     if (!endedWithSpace && !removedText) return;
 
-    const committedTagNames = new Set(
-      (nextContent.match(/#(\w+)(?=\s)/g) || []).map((token) => token.slice(1).toLowerCase())
-    );
+    const extractCommittedTags = (content: string) =>
+      new Set((content.match(/#(\w+)(?=\s)/g) || []).map((token) => token.slice(1).toLowerCase()));
 
-    channels.forEach((channel) => {
-      const channelName = channel.name.toLowerCase();
-      const shouldBeIncluded = committedTagNames.has(channelName);
+    const previousCommittedTags = extractCommittedTags(previousContent);
+    const nextCommittedTags = extractCommittedTags(nextContent);
+    const changedTagNames = new Set<string>([
+      ...Array.from(previousCommittedTags).filter((tag) => !nextCommittedTags.has(tag)),
+      ...Array.from(nextCommittedTags).filter((tag) => !previousCommittedTags.has(tag)),
+    ]);
+
+    if (changedTagNames.size === 0) return;
+
+    const channelsByName = new Map(channels.map((channel) => [channel.name.toLowerCase(), channel]));
+    for (const tagName of changedTagNames) {
+      const channel = channelsByName.get(tagName);
+      if (!channel) continue;
+      const shouldBeIncluded = nextCommittedTags.has(tagName);
+
       if (shouldBeIncluded) {
         if (channel.filterState === "neutral") {
           onChannelToggle(channel.id);
@@ -87,19 +98,16 @@ export function UnifiedBottomBar({
           onChannelToggle(channel.id);
           onChannelToggle(channel.id);
         }
-        return;
+        continue;
       }
 
       if (channel.filterState === "included") {
         onChannelToggle(channel.id);
         onChannelToggle(channel.id);
-        return;
-      }
-
-      if (channel.filterState === "excluded") {
+      } else if (channel.filterState === "excluded") {
         onChannelToggle(channel.id);
       }
-    });
+    }
   };
 
   useEffect(() => {

@@ -313,4 +313,51 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(composeField, { target: { value: "Ship " } });
     expect(toggleCalls).toEqual(["general", "general", "general"]);
   });
+
+  it("does not touch unrelated channel filters when editing specific hashtags", () => {
+    const toggleCalls: string[] = [];
+
+    const StatefulBar = () => {
+      const [statefulChannels, setStatefulChannels] = useState<Channel[]>([
+        { id: "general", name: "general", filterState: "neutral" },
+        { id: "ops", name: "ops", filterState: "excluded" },
+      ]);
+
+      return (
+        <UnifiedBottomBar
+          searchQuery=""
+          onSearchChange={() => {}}
+          onSubmit={() => {}}
+          currentView="feed"
+          relays={relays}
+          channels={statefulChannels}
+          people={people}
+          onRelayToggle={() => {}}
+          onChannelToggle={(id) => {
+            toggleCalls.push(id);
+            setStatefulChannels((prev) =>
+              prev.map((channel) => {
+                if (channel.id !== id) return channel;
+                if (channel.filterState === "neutral") return { ...channel, filterState: "included" };
+                if (channel.filterState === "included") return { ...channel, filterState: "excluded" };
+                return { ...channel, filterState: "neutral" };
+              })
+            );
+          }}
+          onPersonToggle={() => {}}
+          isSignedIn={true}
+          onSignInClick={() => {}}
+        />
+      );
+    };
+
+    render(<StatefulBar />);
+
+    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(composeField, { target: { value: "Ship #general " } });
+    fireEvent.change(composeField, { target: { value: "Ship " } });
+
+    expect(toggleCalls).toEqual(["general", "general", "general"]);
+    expect(toggleCalls).not.toContain("ops");
+  });
 });
