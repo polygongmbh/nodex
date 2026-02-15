@@ -12,6 +12,7 @@ import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { formatAuthorMetaParts } from "@/lib/person-label";
+import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -273,7 +274,7 @@ export function FeedView({
                         {i > 0 && <span>/</span>}
                         <button
                           onClick={() => onFocusTask?.(crumb.id)}
-                          className="hover:text-primary hover:underline cursor-pointer"
+                          className={`${TASK_INTERACTION_STYLES.hoverLinkText} cursor-pointer`}
                         >
                           {crumb.text}
                         </button>
@@ -411,7 +412,7 @@ export function FeedView({
                     <p
                       onClick={() => onFocusTask?.(task.id)}
                       className={cn(
-                        "text-sm leading-relaxed cursor-pointer hover:text-primary",
+                        `text-sm leading-relaxed cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                         task.status === "done" && "line-through text-muted-foreground"
                       )}
                     >
@@ -444,7 +445,7 @@ export function FeedView({
                               event.stopPropagation();
                               onHashtagClick?.(tag);
                             }}
-                            className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20"
+                            className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
                             aria-label={`Filter to #${tag}`}
                             title={`Filter to #${tag}`}
                           >

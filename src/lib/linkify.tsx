@@ -1,4 +1,5 @@
 import React from "react";
+import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 
 const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
 const HASHTAG_REGEX = /(^|[^A-Za-z0-9_])#([A-Za-z0-9_]+)/g;
@@ -20,7 +21,7 @@ export function linkifyContent(
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="text-primary hover:underline break-all"
+          className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`}
         >
           {part}
         </a>
@@ -50,7 +51,7 @@ export function linkifyContent(
             event.stopPropagation();
             onHashtagClick?.(tag);
           }}
-          className="text-primary hover:underline"
+          className={TASK_INTERACTION_STYLES.inlineLink}
           data-onboarding="content-hashtag"
           aria-label={`Filter by #${tag}`}
           title={`Filter to #${tag}`}

@@ -10,6 +10,7 @@ import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { getDueDateColorClass } from "@/lib/taskSorting";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -405,7 +406,7 @@ export function CalendarView({
                             <div className="flex-1 min-w-0">
                               <p
                                 onClick={() => onFocusTask?.(task.id)}
-                                className="text-sm cursor-pointer hover:text-primary line-clamp-2"
+                                className={`text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`}
                               >
                                 {task.content}
                               </p>
@@ -650,7 +651,7 @@ export function CalendarView({
                                 {i > 0 && <span className="text-muted-foreground/50">›</span>}
                                 <button
                                   onClick={() => onFocusTask?.(ancestor.id)}
-                                  className="hover:text-primary hover:underline truncate max-w-[60px]"
+                                  className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[60px]`}
                                 >
                                   {ancestor.text}
                                 </button>
@@ -748,7 +749,7 @@ export function CalendarView({
                             <p
                               onClick={() => onFocusTask?.(task.id)}
                               className={cn(
-                                "text-sm cursor-pointer hover:text-primary",
+                                `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                                 task.status === "done" && "line-through text-muted-foreground"
                               )}
                             >
@@ -770,7 +771,7 @@ export function CalendarView({
                                       event.stopPropagation();
                                       onHashtagClick?.(tag);
                                     }}
-                                    className="px-1 py-0.5 rounded text-xs bg-primary/10 text-primary hover:bg-primary/20"
+                                    className={`px-1 py-0.5 rounded text-xs ${TASK_INTERACTION_STYLES.hashtagChip}`}
                                     aria-label={`Filter to #${tag}`}
                                     title={`Filter to #${tag}`}
                                   >

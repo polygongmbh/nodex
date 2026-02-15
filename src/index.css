@@ -63,6 +63,13 @@
 
     --shadow-glow: 0 0 18px hsl(211 100% 44% / 0.18);
     --shadow-card: 0 2px 12px hsl(215 25% 40% / 0.14);
+
+    --task-hover-blue: 223 92% 45%;
+    --task-hashtag-blue: 195 92% 36%;
+    --task-hashtag-blue-hover: 195 96% 32%;
+    --task-hashtag-bg: 195 100% 92%;
+    --task-hashtag-bg-hover: 195 100% 87%;
+
   }
 
   .dark {
@@ -117,6 +124,13 @@
 
     --shadow-glow: 0 0 20px hsl(210 100% 55% / 0.3);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
+
+    --task-hover-blue: 221 100% 78%;
+    --task-hashtag-blue: 193 100% 72%;
+    --task-hashtag-blue-hover: 193 100% 80%;
+    --task-hashtag-bg: 197 76% 24%;
+    --task-hashtag-bg-hover: 197 76% 31%;
+
   }
 }
 
@@ -140,6 +154,44 @@
 }
 
 @layer utilities {
+  .task-hover-text {
+    transition: color 180ms ease;
+  }
+
+  .task-hover-text:hover {
+    color: hsl(var(--task-hover-blue));
+  }
+
+  .task-hover-link {
+    transition: color 180ms ease;
+  }
+
+  .task-hover-link:hover {
+    color: hsl(var(--task-hover-blue));
+    text-decoration: underline;
+  }
+
+  .task-inline-link {
+    color: hsl(var(--task-hashtag-blue));
+    transition: color 180ms ease;
+    text-decoration: none;
+  }
+
+  .task-inline-link:hover {
+    color: hsl(var(--task-hashtag-blue-hover));
+    text-decoration: underline;
+  }
+
+  .task-hashtag-chip {
+    background-color: hsl(var(--task-hashtag-bg));
+    color: hsl(var(--task-hashtag-blue));
+    transition: background-color 180ms ease;
+  }
+
+  .task-hashtag-chip:hover {
+    background-color: hsl(var(--task-hashtag-bg-hover));
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted)) transparent;

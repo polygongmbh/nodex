@@ -9,6 +9,7 @@ import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
 import { useNostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -355,7 +356,7 @@ export function TaskItem({
 
           {/* Task content */}
           <p className={cn(
-            "text-sm leading-relaxed",
+            `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
             task.status === "done" && "line-through text-muted-foreground"
           )}>
             {linkifyContent(task.content, onHashtagClick)}
@@ -392,7 +393,7 @@ export function TaskItem({
                     event.stopPropagation();
                     onHashtagClick?.(tag);
                   }}
-                  className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20"
+                  className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
                   aria-label={`Filter to #${tag}`}
                   title={`Filter to #${tag}`}
                 >

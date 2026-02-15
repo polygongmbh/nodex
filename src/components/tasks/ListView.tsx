@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -382,7 +383,7 @@ export function ListView({
               event.stopPropagation();
               onHashtagClick?.(tag);
             }}
-            className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary cursor-pointer hover:bg-primary/20 transition-colors"
+            className={`px-1.5 py-0.5 rounded text-xs font-medium cursor-pointer ${TASK_INTERACTION_STYLES.hashtagChip}`}
             aria-label={`Filter to #${tag}`}
             title={`Filter to #${tag}`}
           >
@@ -521,7 +522,7 @@ export function ListView({
                                 {i > 0 && <span className="text-muted-foreground/50">›</span>}
                                 <button
                                   onClick={() => onFocusTask?.(ancestor.id)}
-                                  className="hover:text-primary hover:underline truncate max-w-[100px]"
+                                  className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[100px]`}
                                 >
                                   {ancestor.text}
                                 </button>
@@ -532,7 +533,7 @@ export function ListView({
                         <p
                           onClick={() => onFocusTask?.(task.id)}
                           className={cn(
-                            "text-sm cursor-pointer hover:text-primary",
+                            `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                             task.status === "done" && "line-through text-muted-foreground"
                           )}
                         >

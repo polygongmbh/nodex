@@ -13,6 +13,7 @@ import { getDueDateColorClass, sortTasks, buildChildrenMap, SortContext } from "
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
+import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import {
   Select,
   SelectContent,
@@ -453,7 +454,7 @@ export function KanbanView({
                                               e.stopPropagation();
                                               onFocusTask?.(ancestor.id);
                                             }}
-                                            className="hover:text-primary hover:underline truncate max-w-[80px]"
+                                            className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[80px]`}
                                           >
                                             {ancestor.text}
                                           </button>
@@ -466,7 +467,7 @@ export function KanbanView({
                                   <p
                                     onClick={() => onFocusTask?.(task.id)}
                                     className={cn(
-                                      "text-sm leading-relaxed cursor-pointer hover:text-primary",
+                                      `text-sm leading-relaxed cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                                       task.status === "done" && "line-through text-muted-foreground"
                                     )}
                                   >
@@ -506,7 +507,7 @@ export function KanbanView({
                                             event.stopPropagation();
                                             onHashtagClick?.(tag);
                                           }}
-                                          className="px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20"
+                                          className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
                                           aria-label={`Filter to #${tag}`}
                                           title={`Filter to #${tag}`}
                                         >
