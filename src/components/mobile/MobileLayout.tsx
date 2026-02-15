@@ -23,7 +23,7 @@ interface MobileLayoutProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
   onSearchChange: (query: string) => void;
-  onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
+  onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string, initialStatus?: "todo" | "in-progress" | "done") => void;
   onToggleComplete: (taskId: string) => void;
   onStatusChange: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   onFocusTask: (taskId: string | null) => void;

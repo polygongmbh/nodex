@@ -29,7 +29,7 @@ import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
-import { Relay, Channel, Person, Task, TaskType } from "@/types";
+import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
 
@@ -348,18 +348,26 @@ const Index = () => {
     void publishTaskStateUpdate(taskId, nextStatus);
   };
 
-  const publishTaskStateUpdate = useCallback(async (taskId: string, status: "todo" | "in-progress" | "done") => {
-    const sourceTask = allTasks.find((task) => task.id === taskId);
-    if (!sourceTask) return;
+  const publishTaskStateUpdate = useCallback(async (
+    taskId: string,
+    status: "todo" | "in-progress" | "done",
+    relayUrlsOverride?: string[]
+  ) => {
     if (!isNostrEventId(taskId)) {
       console.info("Skipping state publish: task id is not a Nostr event id", { taskId });
       return;
     }
 
-    const relayUrls = relays
-      .filter((relay) => sourceTask.relays.includes(relay.id))
-      .map((relay) => relay.url)
-      .filter((url): url is string => Boolean(url));
+    const relayUrls = relayUrlsOverride && relayUrlsOverride.length > 0
+      ? relayUrlsOverride
+      : (() => {
+          const sourceTask = allTasks.find((task) => task.id === taskId);
+          if (!sourceTask) return [];
+          return relays
+            .filter((relay) => sourceTask.relays.includes(relay.id))
+            .map((relay) => relay.url)
+            .filter((url): url is string => Boolean(url));
+        })();
 
     if (relayUrls.length === 0) {
       console.info("Skipping state publish: no non-demo relay mapped for task", taskId);
@@ -401,7 +409,16 @@ const Index = () => {
     void publishTaskStateUpdate(taskId, newStatus);
   };
 
-  const handleNewTask = async (content: string, extractedTags: string[], relayIds: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => {
+  const handleNewTask = async (
+    content: string,
+    extractedTags: string[],
+    relayIds: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    parentId?: string,
+    initialStatus?: TaskStatus
+  ) => {
     if (!user) {
       setIsAuthModalOpen(true);
       toast.error("Sign in required to post");
@@ -440,6 +457,9 @@ const Index = () => {
       const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
       publishSuccess = result.success;
       publishedEventId = result.eventId;
+      if (result.success && taskType === "task" && publishedEventId && initialStatus) {
+        await publishTaskStateUpdate(publishedEventId, initialStatus, selectedRelayUrls);
+      }
     }
     
     const effectiveRelayIds = selectedRelayUrls.length > 0
@@ -454,6 +474,7 @@ const Index = () => {
       relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
       taskType: taskType as TaskType,
       timestamp: new Date(),
+      status: taskType === "task" ? (initialStatus || "todo") : undefined,
       likes: 0,
       replies: 0,
       reposts: 0,
