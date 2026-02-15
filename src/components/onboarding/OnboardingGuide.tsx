@@ -156,8 +156,6 @@ export function OnboardingGuide({
     };
   }, [activeSection, activeSteps, isOpen, stepIndex]);
 
-  if (!isOpen) return null;
-
   const currentStep = activeSteps[stepIndex];
   const isLastStep = stepIndex >= activeSteps.length - 1;
   const showSectionPicker = activeSection === null;
@@ -340,6 +338,8 @@ export function OnboardingGuide({
         return { left: "16%", top: "15%", width: "84%", height: "85%" };
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div

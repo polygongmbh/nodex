@@ -74,7 +74,7 @@ const mobileStepsBySection: StepMap = {
     {
       id: "mobile-navigation-nav",
       title: "Mobile views",
-      description: "Use the bottom navigation to switch between Tree, Feed, List, and Calendar.",
+      description: "Use the top navigation to switch between Tree, Feed, List, and Calendar.",
       target: '[data-onboarding="mobile-nav"]',
       requiredAction: "click-target",
       actionPrompt: "Tap a navigation tab to continue.",
