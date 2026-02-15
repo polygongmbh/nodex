@@ -1,5 +1,6 @@
 import { NostrEvent, NostrEventKind } from "@/lib/nostr/types";
 import { Task, Person } from "@/types";
+import { extractTaskStateTargetId, isTaskStateEventKind, mapTaskStateEventToTaskStatus } from "@/lib/nostr/task-state-events";
 
 // Spam keywords for basic filtering
 const SPAM_KEYWORDS = [
@@ -148,7 +149,50 @@ export function extractAllTags(events: NostrEvent[]): string[] {
 
 // Convert multiple Nostr events to Tasks
 export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
-  return events.map((event) => nostrEventToTask(event));
+  const taskEvents = events.filter((event) =>
+    event.kind === NostrEventKind.Task || event.kind === NostrEventKind.TextNote
+  );
+  const stateEvents = events.filter((event) => isTaskStateEventKind(event.kind));
+
+  const taskMap = new Map<string, Task>(
+    taskEvents.map((event) => {
+      const task = nostrEventToTask(event);
+      return [task.id, task];
+    })
+  );
+
+  const latestStateByTaskId = new Map<
+    string,
+    { createdAt: number; status: Task["status"]; statusDescription?: string }
+  >();
+
+  for (const stateEvent of stateEvents) {
+    const targetTaskId = extractTaskStateTargetId(stateEvent.tags);
+    if (!targetTaskId) continue;
+    if (!taskMap.has(targetTaskId)) continue;
+
+    const mapped = mapTaskStateEventToTaskStatus(stateEvent.kind, stateEvent.content);
+    const prev = latestStateByTaskId.get(targetTaskId);
+    if (!prev || stateEvent.created_at >= prev.createdAt) {
+      latestStateByTaskId.set(targetTaskId, {
+        createdAt: stateEvent.created_at,
+        status: mapped.status,
+        statusDescription: mapped.statusDescription,
+      });
+    }
+  }
+
+  for (const [taskId, state] of latestStateByTaskId.entries()) {
+    const task = taskMap.get(taskId);
+    if (!task) continue;
+    taskMap.set(taskId, {
+      ...task,
+      status: state.status,
+      statusDescription: state.statusDescription,
+    });
+  }
+
+  return Array.from(taskMap.values());
 }
 
 // Merge new tasks with existing tasks, avoiding duplicates

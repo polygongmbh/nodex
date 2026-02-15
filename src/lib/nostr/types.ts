@@ -26,6 +26,11 @@ export enum NostrEventKind {
   ChannelMuteUser = 44,
   // Task-related kinds
   Task = 1621,
+  GitStatusOpen = 1630,
+  GitStatusApplied = 1631,
+  GitStatusClosed = 1632,
+  GitStatusDraft = 1633,
+  Procedure = 1639,
 }
 
 export interface NostrFilter {

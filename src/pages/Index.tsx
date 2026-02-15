@@ -13,7 +13,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
-import { nostrEventToTask, eventHasTags, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
+import { nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
   getEffectiveActiveRelayIds,
@@ -24,6 +24,7 @@ import {
 } from "@/lib/filter-preferences";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
 import { NostrEventKind } from "@/lib/nostr/types";
+import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -100,6 +101,7 @@ const Index = () => {
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
     return nostrEvents.filter(event => {
+      if (isTaskStateEventKind(event.kind)) return true;
       // Convert NDKEvent to check tags
       const hasTags = event.tags.some(tag => tag[0] === "t" && tag[1]) ||
         /#\w+/.test(event.content);
@@ -112,9 +114,8 @@ const Index = () => {
 
   // Convert filtered Nostr events to tasks
   const nostrTasks: Task[] = useMemo(() => {
-    return filteredNostrEvents.map((event) => {
-      // Convert NDKEvent to a format nostrEventToTask expects
-      const nostrEvent = {
+    return nostrEventsToTasks(
+      filteredNostrEvents.map((event) => ({
         id: event.id || "",
         pubkey: event.pubkey,
         created_at: event.created_at || Math.floor(Date.now() / 1000),
@@ -123,9 +124,8 @@ const Index = () => {
         content: event.content,
         sig: event.sig || "",
         relayUrl: event.relay?.url || "unknown",
-      };
-      return nostrEventToTask(nostrEvent);
-    });
+      }))
+    );
   }, [filteredNostrEvents]);
 
   // Combine local tasks with Nostr tasks
@@ -162,9 +162,20 @@ const Index = () => {
   useEffect(() => {
     if (!isNostrConnected) return;
 
-    // Subscribe to text notes (kind 1) and tasks (kind 1621)
+    // Subscribe to notes, tasks, and task state updates.
     const subscription = subscribe(
-      [{ kinds: [1, 1621 as any], limit: 50 }],
+      [{
+        kinds: [
+          NostrEventKind.TextNote as any,
+          NostrEventKind.Task as any,
+          NostrEventKind.GitStatusOpen as any,
+          NostrEventKind.GitStatusApplied as any,
+          NostrEventKind.GitStatusClosed as any,
+          NostrEventKind.GitStatusDraft as any,
+          NostrEventKind.Procedure as any,
+        ],
+        limit: 200,
+      }],
       (event) => {
         setNostrEvents((prev) => {
           // Check for duplicates
@@ -326,7 +337,37 @@ const Index = () => {
     setLocalTasks((prev) =>
       applyTaskStatusUpdate(prev, allTasks, taskId, nextStatus, currentUser?.name)
     );
+    void publishTaskStateUpdate(taskId, nextStatus);
   };
+
+  const publishTaskStateUpdate = useCallback(async (taskId: string, status: "todo" | "in-progress" | "done") => {
+    const sourceTask = allTasks.find((task) => task.id === taskId);
+    if (!sourceTask) return;
+
+    const relayUrls = relays
+      .filter((relay) => sourceTask.relays.includes(relay.id))
+      .map((relay) => relay.url)
+      .filter((url): url is string => Boolean(url));
+
+    if (relayUrls.length === 0) {
+      console.info("Skipping state publish: no non-demo relay mapped for task", taskId);
+      return;
+    }
+
+    const mapped = mapTaskStatusToStateEvent(status);
+    const ok = await publishEvent(
+      mapped.kind,
+      mapped.content,
+      [["e", taskId, "", "property"]],
+      undefined,
+      relayUrls
+    );
+
+    if (!ok) {
+      toast.error("Failed to publish status update to relays");
+      console.warn("Status publish failed", { taskId, status, relayUrls });
+    }
+  }, [allTasks, publishEvent, relays]);
 
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
     if (!user) {
@@ -338,6 +379,7 @@ const Index = () => {
     setLocalTasks((prev) =>
       applyTaskStatusUpdate(prev, allTasks, taskId, newStatus, currentUser?.name)
     );
+    void publishTaskStateUpdate(taskId, newStatus);
   };
 
   const handleNewTask = async (content: string, extractedTags: string[], relayIds: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => {

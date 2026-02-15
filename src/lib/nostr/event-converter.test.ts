@@ -170,6 +170,45 @@ describe("nostrEventsToTasks", () => {
     expect(tasks[0].id).toBe("1");
     expect(tasks[1].id).toBe("2");
   });
+
+  it("applies latest state-event update to task status", () => {
+    const events: NostrEventWithRelay[] = [
+      {
+        id: "task-1",
+        pubkey: "pub1",
+        created_at: 1700000000,
+        kind: NostrEventKind.Task,
+        tags: [],
+        content: "Implement feature",
+        sig: "sig1",
+        relayUrl: "wss://relay.test.com",
+      },
+      {
+        id: "state-old",
+        pubkey: "pub1",
+        created_at: 1700000001,
+        kind: NostrEventKind.GitStatusApplied,
+        tags: [["e", "task-1", "", "property"]],
+        content: "",
+        sig: "sig2",
+        relayUrl: "wss://relay.test.com",
+      },
+      {
+        id: "state-new",
+        pubkey: "pub1",
+        created_at: 1700000002,
+        kind: NostrEventKind.GitStatusOpen,
+        tags: [["e", "task-1", "", "property"]],
+        content: "In Progress",
+        sig: "sig3",
+        relayUrl: "wss://relay.test.com",
+      },
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].status).toBe("in-progress");
+  });
 });
 
 describe("mergeTasks", () => {

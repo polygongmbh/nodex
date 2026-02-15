@@ -44,6 +44,7 @@ export interface Task {
   isLiked?: boolean;
   isReposted?: boolean;
   status?: TaskStatus;
+  statusDescription?: string;
   completedBy?: string;
   dueDate?: Date;
   dueTime?: string;
