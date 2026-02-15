@@ -33,7 +33,7 @@ export const mockChannels: Channel[] = [
 export const mockTags = mockChannels;
 
 export const mockPeople: Person[] = [
-  { id: MOCK_PUBKEYS.me, name: "me", displayName: "You", isOnline: true, isSelected: false },
+  { id: MOCK_PUBKEYS.me, name: "me", displayName: "Local User", isOnline: true, isSelected: false },
   { id: MOCK_PUBKEYS.alice, name: "alice", displayName: "Alice Chen", isOnline: true, isSelected: false },
   { id: MOCK_PUBKEYS.bob, name: "bob", displayName: "Bob Smith", isOnline: false, isSelected: false },
   { id: MOCK_PUBKEYS.carol, name: "carol", displayName: "Carol Davis", isOnline: true, isSelected: false },

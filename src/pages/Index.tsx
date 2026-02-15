@@ -558,7 +558,20 @@ const Index = () => {
     
     const newTask: Task = {
       id: publishedEventId || Date.now().toString(),
-      author: people.find((p) => p.id === "me") || people[0],
+      author: (() => {
+        if (currentUser) return currentUser;
+        if (user?.pubkey) {
+          return {
+            id: user.pubkey,
+            name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
+            displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
+            avatar: user.profile?.picture,
+            isOnline: true,
+            isSelected: false,
+          };
+        }
+        return people[0];
+      })(),
       content,
       tags: extractedTags,
       relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],

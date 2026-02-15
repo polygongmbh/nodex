@@ -240,10 +240,11 @@ export function FeedView({
             const isComment = task.taskType === "comment";
             const breadcrumb = getParentBreadcrumb(task);
             const isKeyboardFocused = keyboardFocusedTaskId === task.id;
+            const resolvedAuthor = people.find((person) => person.id === task.author.id) ?? task.author;
             const authorMetaLabel = formatAuthorMetaLabel({
-              personId: task.author.id,
-              displayName: task.author.displayName,
-              username: task.author.name,
+              personId: resolvedAuthor.id,
+              displayName: resolvedAuthor.displayName,
+              username: resolvedAuthor.name,
             });
 
             return (
@@ -366,9 +367,9 @@ export function FeedView({
 
                   {/* Avatar */}
                   <UserAvatar
-                    id={task.author.id}
-                    displayName={task.author.displayName}
-                    avatarUrl={task.author.avatar}
+                    id={resolvedAuthor.id}
+                    displayName={resolvedAuthor.displayName}
+                    avatarUrl={resolvedAuthor.avatar}
                     className="w-8 h-8 flex-shrink-0"
                     beamTestId={`feed-beam-${task.id}`}
                   />
