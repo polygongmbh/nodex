@@ -114,6 +114,8 @@ structure:
   - harmonizing inconsistent patterns
   - simplifying large/complex components
   - paying down technical debt discovered during delivery
+- Execute this cleanup in a separate follow-up commit (`refactor:`) after the functional milestone commit is completed.
+- Do not mix milestone feature/fix changes and refactoring changes in the same commit, unless the refactor is strictly required to make the feature work.
 - Prefer incremental refactors in small, reviewable commits that preserve behavior.
 - When adding new code in duplicated areas, favor extracting shared helpers/components rather than copy-pasting.
 
