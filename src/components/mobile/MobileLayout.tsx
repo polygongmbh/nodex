@@ -36,6 +36,7 @@ interface MobileLayoutProps {
   onSignInClick: () => void;
   onGuideClick: () => void;
   onHashtagClick: (tag: string) => void;
+  forceComposeMode?: boolean;
 }
 
 // Mobile view order for swipe navigation
@@ -70,6 +71,7 @@ export function MobileLayout({
   onSignInClick,
   onGuideClick,
   onHashtagClick,
+  forceComposeMode = false,
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [mobileView, setMobileView] = useState<MobileViewType>(
@@ -240,6 +242,7 @@ export function MobileLayout({
         defaultContent={defaultContent}
         isSignedIn={isSignedIn}
         onSignInClick={onSignInClick}
+        forceComposeMode={forceComposeMode}
       />
     </div>
   );

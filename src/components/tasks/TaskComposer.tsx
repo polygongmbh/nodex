@@ -22,6 +22,7 @@ interface TaskComposerProps {
   adaptiveSize?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   draftStorageKey?: string;
+  forceExpanded?: boolean;
 }
 
 interface ComposeDraftState {
@@ -58,6 +59,7 @@ export function TaskComposer({
   adaptiveSize = false,
   onExpandedChange,
   draftStorageKey,
+  forceExpanded = false,
 }: TaskComposerProps) {
   const { user } = useNDK();
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
@@ -106,6 +108,12 @@ export function TaskComposer({
   useEffect(() => {
     onExpandedChange?.(isExpanded);
   }, [isExpanded, onExpandedChange]);
+
+  useEffect(() => {
+    if (adaptiveSize && forceExpanded) {
+      setIsExpanded(true);
+    }
+  }, [adaptiveSize, forceExpanded]);
 
   useEffect(() => {
     if (!draftStorageKey) return;

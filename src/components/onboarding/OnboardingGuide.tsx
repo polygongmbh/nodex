@@ -16,6 +16,7 @@ interface OnboardingGuideProps {
   stepsBySection: Record<OnboardingSectionId, { id: string; title: string; description: string; target?: string }[]>;
   onClose: () => void;
   onComplete: (lastStep: number) => void;
+  onActiveSectionChange?: (section: OnboardingSectionId | null) => void;
 }
 
 interface RectBox {
@@ -33,6 +34,7 @@ export function OnboardingGuide({
   stepsBySection,
   onClose,
   onComplete,
+  onActiveSectionChange,
 }: OnboardingGuideProps) {
   const [activeSection, setActiveSection] = useState<OnboardingInitialSection>(initialSection);
   const [stepIndex, setStepIndex] = useState(0);
@@ -51,6 +53,15 @@ export function OnboardingGuide({
     setInteractionTimedOut(false);
     autoAdvancedStepIdsRef.current.clear();
   }, [isOpen, initialSection]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (activeSection === null || activeSection === "all") {
+      onActiveSectionChange?.(null);
+      return;
+    }
+    onActiveSectionChange?.(activeSection);
+  }, [activeSection, isOpen, onActiveSectionChange]);
 
   const activeSteps = useMemo(() => {
     if (!activeSection) return [];

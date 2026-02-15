@@ -26,6 +26,7 @@ interface TaskTreeProps {
   isMobile?: boolean;
   onSignInClick?: () => void;
   onHashtagClick?: (tag: string) => void;
+  forceShowComposer?: boolean;
 }
 
 export function TaskTree({
@@ -46,6 +47,7 @@ export function TaskTree({
   isMobile = false,
   onSignInClick,
   onHashtagClick,
+  forceShowComposer = false,
 }: TaskTreeProps) {
   const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
@@ -250,8 +252,8 @@ export function TaskTree({
         />
       )}
 
-      {/* Top composer with context controls - hidden on mobile and when not signed in */}
-      {!isMobile && user && (
+      {/* Top composer with context controls - hidden on mobile */}
+      {!isMobile && (user || forceShowComposer) && (
         <div
           className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
           data-onboarding="focused-compose"
@@ -268,6 +270,7 @@ export function TaskTree({
             onExpandedChange={setIsComposerExpanded}
             parentId={currentContextId}
             onSignInClick={onSignInClick}
+            forceExpanded={forceShowComposer}
             defaultContent={(() => {
               const prefillChannels = new Set<string>();
               channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));

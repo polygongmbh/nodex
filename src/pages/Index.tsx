@@ -18,7 +18,7 @@ import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { onboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
-import { OnboardingInitialSection } from "@/components/onboarding/onboarding-types";
+import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
 import { nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
@@ -264,11 +264,13 @@ const Index = () => {
 
   const handleOpenGuide = useCallback(() => {
     setOnboardingInitialSection(null);
+    setActiveOnboardingSection(null);
     setIsOnboardingOpen(true);
   }, []);
 
   const handleCloseGuide = useCallback(() => {
     setIsOnboardingOpen(false);
+    setActiveOnboardingSection(null);
   }, []);
 
   const handleCompleteGuide = useCallback((lastStep: number) => {
@@ -283,6 +285,7 @@ const Index = () => {
   const shortcutsHelp = useKeyboardShortcutsHelp();
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
+  const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
   const onboardingStepsBySection = useMemo(() => getOnboardingStepsBySection(isMobile), [isMobile]);
 
   useEffect(() => {
@@ -722,6 +725,7 @@ const Index = () => {
     onFocusSidebar: handleFocusSidebar,
     onSignInClick: handleOpenAuthModal,
     onHashtagClick: handleHashtagExclusive,
+    forceShowComposer: isOnboardingOpen && activeOnboardingSection === "compose",
   };
 
   const renderView = () => {
@@ -770,6 +774,7 @@ const Index = () => {
           onSignInClick={handleOpenAuthModal}
           onGuideClick={handleOpenGuide}
           onHashtagClick={handleHashtagExclusive}
+          forceComposeMode={isOnboardingOpen && activeOnboardingSection === "compose"}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide
@@ -780,6 +785,7 @@ const Index = () => {
           stepsBySection={onboardingStepsBySection}
           onClose={handleCloseGuide}
           onComplete={handleCompleteGuide}
+          onActiveSectionChange={setActiveOnboardingSection}
         />
       </>
     );
@@ -837,6 +843,7 @@ const Index = () => {
         stepsBySection={onboardingStepsBySection}
         onClose={handleCloseGuide}
         onComplete={handleCompleteGuide}
+        onActiveSectionChange={setActiveOnboardingSection}
       />
     </div>
   );

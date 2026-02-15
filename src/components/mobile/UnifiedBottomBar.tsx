@@ -27,6 +27,7 @@ interface UnifiedBottomBarProps {
   defaultContent?: string;
   isSignedIn: boolean;
   onSignInClick: () => void;
+  forceComposeMode?: boolean;
 }
 
 type SelectorType = "relay" | "channel" | "person" | null;
@@ -44,6 +45,7 @@ export function UnifiedBottomBar({
   defaultContent = "",
   isSignedIn,
   onSignInClick,
+  forceComposeMode = false,
 }: UnifiedBottomBarProps) {
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   const [mode, setMode] = useState<BarMode>("search");
@@ -64,6 +66,11 @@ export function UnifiedBottomBar({
       inputRef.current.focus();
     }
   }, [mode]);
+
+  useEffect(() => {
+    if (!forceComposeMode) return;
+    setMode("compose");
+  }, [forceComposeMode]);
 
   useEffect(() => {
     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -407,6 +414,7 @@ export function UnifiedBottomBar({
             )}
             <div className="flex items-end gap-2">
               <textarea
+                data-onboarding="compose-input"
                 ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}

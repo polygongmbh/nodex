@@ -39,6 +39,8 @@ interface ListViewProps {
   onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
   onHashtagClick?: (tag: string) => void;
+  onSignInClick?: () => void;
+  forceShowComposer?: boolean;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -60,6 +62,8 @@ export function ListView({
   onFocusTask,
   onFocusSidebar,
   onHashtagClick,
+  onSignInClick,
+  forceShowComposer = false,
 }: ListViewProps) {
   const { user } = useNDK();
   const COMPOSE_DRAFT_KEY = "nodex.compose-draft.list";
@@ -407,7 +411,7 @@ export function ListView({
         />
       )}
 
-      {user && (
+      {(user || forceShowComposer) && (
         <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
           <TaskComposer
             onSubmit={handleNewTask}
@@ -419,6 +423,8 @@ export function ListView({
             adaptiveSize
             draftStorageKey={COMPOSE_DRAFT_KEY}
             parentId={focusedTaskId || undefined}
+            onSignInClick={onSignInClick}
+            forceExpanded={forceShowComposer}
             defaultContent={(() => {
               const prefillChannels = new Set<string>();
               channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));

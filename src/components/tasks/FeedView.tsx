@@ -37,6 +37,7 @@ interface FeedViewProps {
   isMobile?: boolean;
   onSignInClick?: () => void;
   onHashtagClick?: (tag: string) => void;
+  forceShowComposer?: boolean;
 }
 
 export function FeedView({
@@ -57,6 +58,7 @@ export function FeedView({
   isMobile = false,
   onSignInClick,
   onHashtagClick,
+  forceShowComposer = false,
 }: FeedViewProps) {
   const { user } = useNDK();
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
@@ -203,8 +205,8 @@ export function FeedView({
         />
       )}
 
-      {/* Top composer - hidden on mobile and when not signed in */}
-      {!isMobile && user && (
+      {/* Top composer - hidden on mobile */}
+      {!isMobile && (user || forceShowComposer) && (
         <div
           className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm"
           data-onboarding="focused-compose"
@@ -220,6 +222,7 @@ export function FeedView({
             draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
             parentId={focusedTaskId || undefined}
             onSignInClick={onSignInClick}
+            forceExpanded={forceShowComposer}
             defaultContent={(() => {
               const prefillChannels = new Set<string>();
               channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
