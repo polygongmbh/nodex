@@ -23,6 +23,7 @@ import {
   savePersistedRelayIds,
 } from "@/lib/filter-preferences";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
+import { resolveCurrentUser } from "@/lib/current-user";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -217,7 +218,7 @@ const Index = () => {
   const focusedTaskId = urlTaskId || null;
 
   const isMobile = useIsMobile();
-  const currentUser = people.find(p => p.id === "me");
+  const currentUser = resolveCurrentUser(people, user);
   const shortcutsHelp = useKeyboardShortcutsHelp();
 
   // Handle view change - update URL
