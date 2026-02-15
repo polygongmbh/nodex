@@ -172,6 +172,18 @@ When the user asks you to create a plan to fix or implement something:
 - When color is supported by the client, use it to reinforce the same status categories above.
 - Avoid verbose prose when short bullet points communicate the same information.
 
+## Prompt Effort Modes
+- If the user prompt starts with `quick`:
+  - minimize time spent on testing/refactoring
+  - run focused checks only for the changed area
+  - defer broader cleanup unless explicitly requested
+- If the user prompt starts with `long`:
+  - execute full, thorough workflow
+  - include comprehensive testing, deeper edge-case checks, and refactor/debt review
+  - include cleanup opportunities discovered during implementation
+- If neither prefix is used:
+  - choose a balanced level of testing/refactoring based on task complexity and risk.
+
 ## Progress Reporting Expectations
 - During active work, provide progress estimates in short updates.
 - Use staged progress labels when applicable, for example:
