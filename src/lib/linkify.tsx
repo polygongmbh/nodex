@@ -4,9 +4,14 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
 const HASHTAG_REGEX = /(^|[^A-Za-z0-9_])#([A-Za-z0-9_]+)/g;
 
+interface LinkifyOptions {
+  plainHashtags?: boolean;
+}
+
 export function linkifyContent(
   content: string,
-  onHashtagClick?: (tag: string) => void
+  onHashtagClick?: (tag: string) => void,
+  options?: LinkifyOptions
 ): React.ReactNode[] {
   const parts = content.split(URL_REGEX);
   
@@ -51,7 +56,7 @@ export function linkifyContent(
             event.stopPropagation();
             onHashtagClick?.(tag);
           }}
-          className={TASK_INTERACTION_STYLES.inlineLink}
+          className={options?.plainHashtags ? "" : TASK_INTERACTION_STYLES.inlineLink}
           data-onboarding="content-hashtag"
           aria-label={`Filter by #${tag}`}
           title={`Filter to #${tag}`}

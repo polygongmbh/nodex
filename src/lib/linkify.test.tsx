@@ -17,4 +17,11 @@ describe("linkifyContent interaction styles", () => {
     fireEvent.click(hashtag);
     expect(onHashtagClick).toHaveBeenCalledWith("frontend");
   });
+
+  it("renders plain hashtags when plainHashtags is enabled", () => {
+    render(<p>{linkifyContent("Ship #frontend", vi.fn(), { plainHashtags: true })}</p>);
+
+    const hashtag = screen.getByRole("button", { name: "Filter by #frontend" });
+    expect(hashtag).not.toHaveClass("task-inline-link");
+  });
 });

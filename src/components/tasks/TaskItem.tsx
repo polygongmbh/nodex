@@ -359,7 +359,9 @@ export function TaskItem({
             `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
             task.status === "done" && "line-through text-muted-foreground"
           )}>
-            {linkifyContent(task.content, onHashtagClick)}
+            {linkifyContent(task.content, onHashtagClick, {
+              plainHashtags: task.status === "done",
+            })}
           </p>
 
           {/* Due date */}

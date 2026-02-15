@@ -471,7 +471,9 @@ export function KanbanView({
                                       task.status === "done" && "line-through text-muted-foreground"
                                     )}
                                   >
-                                    {linkifyContent(task.content, onHashtagClick)}
+                                    {linkifyContent(task.content, onHashtagClick, {
+                                      plainHashtags: task.status === "done",
+                                    })}
                                   </p>
 
                                   {/* Children indicator */}

@@ -753,7 +753,9 @@ export function CalendarView({
                                 task.status === "done" && "line-through text-muted-foreground"
                               )}
                             >
-                              {linkifyContent(task.content, onHashtagClick)}
+                              {linkifyContent(task.content, onHashtagClick, {
+                                plainHashtags: task.status === "done",
+                              })}
                             </p>
                             {task.dueTime && (
                               <div className={cn("flex items-center gap-1 text-xs mt-1", dueDateColor)}>
