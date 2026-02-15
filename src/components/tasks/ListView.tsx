@@ -415,9 +415,12 @@ export function ListView({
           </div>
         </div>
         {focusedTask && (
-          <div className="mt-3 p-2 bg-muted/50 rounded-lg border border-border">
-            <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
-            <div className="text-sm font-medium">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</div>
+          <div className="mt-3 p-2 bg-muted/40 rounded-xl border border-border/50">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>All Tasks</span>
+              <span>/</span>
+              <span className="truncate">{focusedTask.content.slice(0, 80)}{focusedTask.content.length > 80 ? "..." : ""}</span>
+            </div>
           </div>
         )}
       </div>
