@@ -14,6 +14,7 @@ import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
+import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
@@ -731,7 +732,8 @@ const Index = () => {
         <div className="flex-1 min-w-0 h-full">
           <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
         </div>
-        <div className="h-full flex items-stretch justify-end w-24 sm:w-36 lg:w-40">
+        <div className="h-full flex items-center justify-end gap-2 w-auto pl-2">
+          <ThemeModeToggle />
           <NostrUserMenu onSignInClick={() => setIsAuthModalOpen(true)} />
         </div>
       </div>

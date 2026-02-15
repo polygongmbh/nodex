@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { NDKProvider } from "@/lib/nostr/ndk-context";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -15,21 +16,23 @@ const DEFAULT_NOSTR_RELAYS = [
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <NDKProvider defaultRelays={DEFAULT_NOSTR_RELAYS}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/tree" replace />} />
-            <Route path="/:view" element={<Index />} />
-            <Route path="/:view/:taskId" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </NDKProvider>
+    <ThemeProvider>
+      <NDKProvider defaultRelays={DEFAULT_NOSTR_RELAYS}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Navigate to="/tree" replace />} />
+              <Route path="/:view" element={<Index />} />
+              <Route path="/:view/:taskId" element={<Index />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </NDKProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

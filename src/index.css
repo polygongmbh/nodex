@@ -6,6 +6,66 @@
 
 @layer base {
   :root {
+    --background: 210 28% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 211 100% 44%;
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 210 25% 95%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 25% 94%;
+    --muted-foreground: 215 16% 40%;
+
+    --accent: 213 82% 52%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 72% 46%;
+    --destructive-foreground: 210 20% 98%;
+
+    --success: 145 67% 35%;
+    --success-foreground: 210 20% 98%;
+
+    --warning: 35 93% 44%;
+    --warning-foreground: 222 47% 11%;
+
+    --yellow-500: 45 93% 40%;
+
+    --channel-included: 211 100% 44%;
+    --channel-excluded: 0 72% 46%;
+    --channel-neutral: 215 16% 50%;
+
+    --border: 214 23% 88%;
+    --input: 214 23% 92%;
+    --ring: 211 100% 44%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 214 40% 97%;
+    --sidebar-foreground: 217 15% 35%;
+    --sidebar-primary: 211 100% 44%;
+    --sidebar-primary-foreground: 210 20% 98%;
+    --sidebar-accent: 210 25% 92%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 23% 88%;
+    --sidebar-ring: 211 100% 44%;
+
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Outfit', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --shadow-glow: 0 0 18px hsl(211 100% 44% / 0.18);
+    --shadow-card: 0 2px 12px hsl(215 25% 40% / 0.14);
+  }
+
+  .dark {
     --background: 220 20% 10%;
     --foreground: 220 10% 92%;
 
@@ -24,7 +84,7 @@
     --muted: 220 15% 20%;
     --muted-foreground: 220 10% 55%;
 
-    --accent: 270 60% 60%;
+    --accent: 213 82% 62%;
     --accent-foreground: 220 20% 98%;
 
     --destructive: 0 70% 50%;
@@ -46,8 +106,6 @@
     --input: 220 15% 18%;
     --ring: 210 100% 55%;
 
-    --radius: 0.75rem;
-
     --sidebar-background: 220 20% 8%;
     --sidebar-foreground: 220 10% 75%;
     --sidebar-primary: 210 100% 55%;
@@ -56,10 +114,6 @@
     --sidebar-accent-foreground: 220 10% 92%;
     --sidebar-border: 220 15% 18%;
     --sidebar-ring: 210 100% 55%;
-
-    --font-heading: 'Outfit', sans-serif;
-    --font-body: 'Outfit', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
 
     --shadow-glow: 0 0 20px hsl(210 100% 55% / 0.3);
     --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.4);
