@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, Check, Palette } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,12 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { nip19 } from "nostr-tools";
+import {
+  AvatarGenerator,
+  getPreferredAvatarGenerator,
+  setPreferredAvatarGenerator,
+} from "@/lib/avatar-preferences";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -342,6 +348,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const [profilePicture, setProfilePicture] = useState("");
   const [profileNip05, setProfileNip05] = useState("");
   const [profileAbout, setProfileAbout] = useState("");
+  const [avatarGenerator, setAvatarGenerator] = useState<AvatarGenerator>(() => getPreferredAvatarGenerator());
 
   const openProfileEditor = useCallback(() => {
     setProfileName(user?.profile?.name || "");
@@ -393,6 +400,12 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     }
   };
 
+  const handleAvatarGeneratorChange = (next: AvatarGenerator) => {
+    setPreferredAvatarGenerator(next);
+    setAvatarGenerator(next);
+    toast.success(next === "dicebear-local" ? "Avatar style set to DiceBear Local" : "Avatar style set to Boring Beam");
+  };
+
   const getDisplayKey = () => {
     const hexKey = getGuestPrivateKey();
     if (!hexKey) return "";
@@ -438,15 +451,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-full w-full px-2 gap-2 bg-transparent hover:bg-transparent rounded-none justify-end">
             {user.profile?.picture ? (
-              <img 
-                src={user.profile.picture} 
-                alt="" 
-                className="w-5 h-5 rounded-full"
-              />
+              <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={user.profile.picture} className="w-5 h-5" />
             ) : (
-              <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                <User className="w-3 h-3 text-primary" />
-              </div>
+              <UserAvatar id={user.pubkey} displayName={displayName} className="w-5 h-5" />
             )}
             <span className="text-sm font-medium truncate max-w-[8rem]">{displayName}</span>
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -456,15 +463,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
           <DropdownMenuLabel className="px-2 py-1">
             <div className="flex items-center gap-2">
               {user.profile?.picture ? (
-                <img 
-                  src={user.profile.picture} 
-                  alt="" 
-                  className="w-6 h-6 rounded-full"
-                />
+                <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={user.profile.picture} className="w-6 h-6" />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="w-3.5 h-3.5 text-primary" />
-                </div>
+                <UserAvatar id={user.pubkey} displayName={displayName} className="w-6 h-6" />
               )}
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
@@ -484,6 +485,18 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
               </div>
             </div>
           </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="px-2 py-1 text-xs text-muted-foreground">Avatar Style</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={() => handleAvatarGeneratorChange("boring")}>
+            <Palette className="w-4 h-4 mr-2" />
+            Boring Beam
+            {avatarGenerator === "boring" && <Check className="w-4 h-4 ml-auto text-primary" />}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => handleAvatarGeneratorChange("dicebear-local")}>
+            <Palette className="w-4 h-4 mr-2" />
+            DiceBear Local
+            {avatarGenerator === "dicebear-local" && <Check className="w-4 h-4 ml-auto text-primary" />}
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={(e) => {

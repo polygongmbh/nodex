@@ -74,4 +74,5 @@ describe("NostrAuthModal", () => {
 
     expect(screen.getByRole("button", { name: /sign in to post/i })).toBeInTheDocument();
   });
+
 });

@@ -33,11 +33,11 @@ export const mockChannels: Channel[] = [
 export const mockTags = mockChannels;
 
 export const mockPeople: Person[] = [
-  { id: MOCK_PUBKEYS.me, name: "me", displayName: "You", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=You", isOnline: true, isSelected: false },
-  { id: MOCK_PUBKEYS.alice, name: "alice", displayName: "Alice Chen", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alice", isOnline: true, isSelected: false },
-  { id: MOCK_PUBKEYS.bob, name: "bob", displayName: "Bob Smith", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Bob", isOnline: false, isSelected: false },
-  { id: MOCK_PUBKEYS.carol, name: "carol", displayName: "Carol Davis", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Carol", isOnline: true, isSelected: false },
-  { id: MOCK_PUBKEYS.david, name: "david", displayName: "David Kim", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David", isOnline: false, isSelected: false },
+  { id: MOCK_PUBKEYS.me, name: "me", displayName: "You", isOnline: true, isSelected: false },
+  { id: MOCK_PUBKEYS.alice, name: "alice", displayName: "Alice Chen", isOnline: true, isSelected: false },
+  { id: MOCK_PUBKEYS.bob, name: "bob", displayName: "Bob Smith", isOnline: false, isSelected: false },
+  { id: MOCK_PUBKEYS.carol, name: "carol", displayName: "Carol Davis", isOnline: true, isSelected: false },
+  { id: MOCK_PUBKEYS.david, name: "david", displayName: "David Kim", isOnline: false, isSelected: false },
 ];
 
 // Counter for generating unique event IDs

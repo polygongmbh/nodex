@@ -54,6 +54,7 @@ export function BeamAvatar({ seed, size = 32, className, "data-testid": dataTest
       width={size}
       height={size}
       className={className}
+      data-generator="boring"
       data-testid={dataTestId}
       role="img"
       aria-label="Generated avatar"

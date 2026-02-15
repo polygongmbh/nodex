@@ -145,9 +145,10 @@ export function useNostrProfile(pubkey: string | null) {
   };
 }
 
-// Generate deterministic avatar URL from pubkey (fallback)
+// No remote avatar URL fallback; local generator is used in UI components.
 export function getDefaultAvatarUrl(pubkey: string): string {
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${pubkey.slice(0, 8)}`;
+  void pubkey;
+  return "";
 }
 
 // Generate display name from pubkey (fallback)
