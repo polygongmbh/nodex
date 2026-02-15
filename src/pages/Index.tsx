@@ -25,6 +25,7 @@ import {
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
 import { resolveCurrentUser } from "@/lib/current-user";
 import { canUserChangeTaskStatus, extractAssignedMentionsFromContent } from "@/lib/task-permissions";
+import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -350,6 +351,10 @@ const Index = () => {
   const publishTaskStateUpdate = useCallback(async (taskId: string, status: "todo" | "in-progress" | "done") => {
     const sourceTask = allTasks.find((task) => task.id === taskId);
     if (!sourceTask) return;
+    if (!isNostrEventId(taskId)) {
+      console.info("Skipping state publish: task id is not a Nostr event id", { taskId });
+      return;
+    }
 
     const relayUrls = relays
       .filter((relay) => sourceTask.relays.includes(relay.id))
@@ -365,7 +370,7 @@ const Index = () => {
     const result = await publishEvent(
       mapped.kind,
       mapped.content,
-      [["e", taskId, "", "property"]],
+      [["e", taskId, relayUrls[0], "property"]],
       undefined,
       relayUrls
     );
@@ -423,11 +428,15 @@ const Index = () => {
     if (shouldPublish) {
       console.log("Publishing event to relays:", selectedRelayUrls);
       const kind = taskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
+      const validParentId = isNostrEventId(parentId) ? parentId : undefined;
+      if (taskType === "task" && parentId && !validParentId) {
+        toast.warning("Parent reference is local-only; publishing task without parent link");
+      }
       const publishTags =
-        taskType === "task" && parentId
-          ? [["e", parentId, "", "parent"]]
+        taskType === "task" && validParentId
+          ? [["e", validParentId, selectedRelayUrls[0], "parent"]]
           : [];
-      const publishParentId = taskType === "comment" ? parentId : undefined;
+      const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
       const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
       publishSuccess = result.success;
       publishedEventId = result.eventId;
