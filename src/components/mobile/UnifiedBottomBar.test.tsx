@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { useState } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Person, Relay } from "@/types";
 import { addDays, format } from "date-fns";
@@ -265,5 +266,51 @@ describe("UnifiedBottomBar auth gating", () => {
     );
 
     expect(screen.getByText(format(nextDay, "MMM d"))).toBeInTheDocument();
+  });
+
+  it("syncs channel filters when hashtags are completed or removed", () => {
+    const toggleCalls: string[] = [];
+
+    const StatefulBar = () => {
+      const [statefulChannels, setStatefulChannels] = useState<Channel[]>([
+        { id: "general", name: "general", filterState: "neutral" },
+      ]);
+
+      return (
+        <UnifiedBottomBar
+          searchQuery=""
+          onSearchChange={() => {}}
+          onSubmit={() => {}}
+          currentView="feed"
+          relays={relays}
+          channels={statefulChannels}
+          people={people}
+          onRelayToggle={() => {}}
+          onChannelToggle={(id) => {
+            toggleCalls.push(id);
+            setStatefulChannels((prev) =>
+              prev.map((channel) => {
+                if (channel.id !== id) return channel;
+                if (channel.filterState === "neutral") return { ...channel, filterState: "included" };
+                if (channel.filterState === "included") return { ...channel, filterState: "excluded" };
+                return { ...channel, filterState: "neutral" };
+              })
+            );
+          }}
+          onPersonToggle={() => {}}
+          isSignedIn={true}
+          onSignInClick={() => {}}
+        />
+      );
+    };
+
+    render(<StatefulBar />);
+
+    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(composeField, { target: { value: "Ship #general " } });
+    expect(toggleCalls).toEqual(["general"]);
+
+    fireEvent.change(composeField, { target: { value: "Ship " } });
+    expect(toggleCalls).toEqual(["general", "general"]);
   });
 });

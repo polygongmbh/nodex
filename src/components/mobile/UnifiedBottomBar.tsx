@@ -68,6 +68,34 @@ export function UnifiedBottomBar({
   const autoManagedChannelsRef = useRef<Set<string>>(new Set());
   const canOfferComment = currentView === "feed" || (currentView === "tree" && Boolean(focusedTaskId));
 
+  const syncChannelFiltersFromContent = (nextContent: string, previousContent: string) => {
+    const endedWithSpace = /\s$/.test(nextContent);
+    const removedText = nextContent.length < previousContent.length;
+    if (!endedWithSpace && !removedText) return;
+
+    const committedTagNames = new Set(
+      (nextContent.match(/#(\w+)(?=\s)/g) || []).map((token) => token.slice(1).toLowerCase())
+    );
+
+    channels.forEach((channel) => {
+      const channelName = channel.name.toLowerCase();
+      const shouldBeIncluded = committedTagNames.has(channelName);
+      if (shouldBeIncluded) {
+        if (channel.filterState === "neutral") {
+          onChannelToggle(channel.id);
+        } else if (channel.filterState === "excluded") {
+          onChannelToggle(channel.id);
+          onChannelToggle(channel.id);
+        }
+        return;
+      }
+
+      if (channel.filterState === "included") {
+        onChannelToggle(channel.id);
+      }
+    });
+  };
+
   useEffect(() => {
     if (prevSearchQueryRef.current === searchQuery) return;
     prevSearchQueryRef.current = searchQuery;
@@ -398,6 +426,7 @@ export function UnifiedBottomBar({
                 value={sharedText}
                 onChange={(e) => {
                   const value = e.target.value;
+                  syncChannelFiltersFromContent(value, sharedText);
                   setSharedText(value);
                   onSearchChange(value);
                 }}
