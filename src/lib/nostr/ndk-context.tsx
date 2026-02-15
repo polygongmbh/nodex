@@ -14,7 +14,7 @@ import { NostrEventKind } from "./types";
 import {
   buildKind0Content,
   hasRequiredProfileFields,
-  parseKind0Content,
+  mergeKind0Profiles,
   type EditableNostrProfile,
 } from "./profile-metadata";
 
@@ -120,18 +120,18 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     if (!ndk) return null;
 
     return await new Promise((resolve) => {
-      let latest: NDKEvent | null = null;
+      const candidates: { createdAt: number; content: string }[] = [];
       let settled = false;
 
       const finish = () => {
         if (settled) return;
         settled = true;
         subscription.stop();
-        if (!latest?.content) {
+        if (candidates.length === 0) {
           resolve(null);
           return;
         }
-        const parsed = parseKind0Content(latest.content);
+        const parsed = mergeKind0Profiles(candidates);
         resolve({
           name: parsed.name,
           displayName: parsed.displayName,
@@ -142,13 +142,13 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       };
 
       const subscription = ndk.subscribe(
-        [{ kinds: [NostrEventKind.Metadata as any], authors: [pubkey], limit: 10 }],
+        [{ kinds: [NostrEventKind.Metadata as any], authors: [pubkey], limit: 50 }],
         { closeOnEose: true }
       );
 
       subscription.on("event", (event: NDKEvent) => {
-        if (!latest || (event.created_at || 0) >= (latest.created_at || 0)) {
-          latest = event;
+        if (event.content) {
+          candidates.push({ createdAt: event.created_at || 0, content: event.content });
         }
       });
       subscription.on("eose", finish);

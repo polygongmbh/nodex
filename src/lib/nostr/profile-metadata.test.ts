@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildKind0Content, hasRequiredProfileFields, parseKind0Content } from "./profile-metadata";
+import {
+  buildKind0Content,
+  hasRequiredProfileFields,
+  mergeKind0Profiles,
+  parseKind0Content,
+} from "./profile-metadata";
 
 describe("profile metadata helpers", () => {
   it("requires a non-empty name", () => {
@@ -23,5 +28,20 @@ describe("profile metadata helpers", () => {
     expect(parsed.name).toBe("alice");
     expect(parsed.displayName).toBe("Alice");
     expect(parsed.nip05).toBe("alice@example.com");
+  });
+
+  it("merges all kind:0 events, preferring newer values and backfilling missing fields", () => {
+    const merged = mergeKind0Profiles([
+      { createdAt: 200, content: JSON.stringify({ name: "alice-new", about: "new about" }) },
+      { createdAt: 100, content: JSON.stringify({ displayName: "Alice", picture: "https://img", nip05: "alice@example.com" }) },
+    ]);
+
+    expect(merged).toEqual({
+      name: "alice-new",
+      about: "new about",
+      displayName: "Alice",
+      picture: "https://img",
+      nip05: "alice@example.com",
+    });
   });
 });

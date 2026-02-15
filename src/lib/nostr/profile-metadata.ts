@@ -6,6 +6,11 @@ export interface EditableNostrProfile {
   nip05?: string;
 }
 
+export interface Kind0EventCandidate {
+  createdAt: number;
+  content: string;
+}
+
 export function hasRequiredProfileFields(profile?: Partial<EditableNostrProfile> | null): boolean {
   return Boolean(profile?.name?.trim());
 }
@@ -38,4 +43,20 @@ export function parseKind0Content(content: string): Partial<EditableNostrProfile
   } catch {
     return {};
   }
+}
+
+export function mergeKind0Profiles(events: Kind0EventCandidate[]): Partial<EditableNostrProfile> {
+  const sorted = [...events].sort((a, b) => b.createdAt - a.createdAt);
+  const merged: Partial<EditableNostrProfile> = {};
+
+  for (const event of sorted) {
+    const parsed = parseKind0Content(event.content);
+    if (!merged.name && parsed.name?.trim()) merged.name = parsed.name.trim();
+    if (!merged.displayName && parsed.displayName?.trim()) merged.displayName = parsed.displayName.trim();
+    if (!merged.about && parsed.about?.trim()) merged.about = parsed.about.trim();
+    if (!merged.picture && parsed.picture?.trim()) merged.picture = parsed.picture.trim();
+    if (!merged.nip05 && parsed.nip05?.trim()) merged.nip05 = parsed.nip05.trim();
+  }
+
+  return merged;
 }

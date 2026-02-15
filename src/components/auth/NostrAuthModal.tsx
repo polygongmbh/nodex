@@ -403,6 +403,12 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     }
   };
 
+  useEffect(() => {
+    if (user && needsProfileSetup && !isProfileEditorOpen) {
+      openProfileEditor();
+    }
+  }, [user, needsProfileSetup, isProfileEditorOpen, openProfileEditor]);
+
   if (!user) {
     return (
       <Button
@@ -425,12 +431,6 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       : authMethod === "nostrConnect"
         ? "Signer"
         : "Key";
-
-  useEffect(() => {
-    if (needsProfileSetup && !isProfileEditorOpen) {
-      openProfileEditor();
-    }
-  }, [needsProfileSetup, isProfileEditorOpen, openProfileEditor]);
 
   return (
     <>
