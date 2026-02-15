@@ -251,41 +251,43 @@ export function TaskTree({
       {/* Top composer with context controls - hidden on mobile */}
       {!isMobile && (
         <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center justify-end w-full mb-3">
-            <div className="flex items-center gap-2 mr-auto">
-              {currentContextId && (
-                <button
-                  onClick={handleGoUp}
-                  className="flex items-center gap-1 px-2 py-1 text-sm rounded-md hover:bg-muted transition-colors"
-                >
-                  <ChevronUp className="w-4 h-4" />
-                  Up
-                </button>
-              )}
+          <div className="max-w-xl mx-auto">
+            <div className="flex items-center justify-end w-full mb-3">
+              <div className="flex items-center gap-2 mr-auto">
+                {currentContextId && (
+                  <button
+                    onClick={handleGoUp}
+                    className="flex items-center gap-1 px-2 py-1 text-sm rounded-md hover:bg-muted transition-colors"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                    Up
+                  </button>
+                )}
+              </div>
             </div>
+            <TaskComposer
+              onSubmit={handleNewTask}
+              relays={relays}
+              channels={channels}
+              people={people}
+              onCancel={() => setIsComposerExpanded(false)}
+              compact
+              adaptiveSize
+              draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
+              onExpandedChange={setIsComposerExpanded}
+              parentId={currentContextId}
+              onSignInClick={onSignInClick}
+              defaultContent={(() => {
+                const prefillChannels = new Set<string>();
+                channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+                if (currentContextTask) {
+                  currentContextTask.tags.forEach(t => prefillChannels.add(t));
+                }
+                if (prefillChannels.size === 0) return "";
+                return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
+              })()}
+            />
           </div>
-          <TaskComposer
-            onSubmit={handleNewTask}
-            relays={relays}
-            channels={channels}
-            people={people}
-            onCancel={() => setIsComposerExpanded(false)}
-            compact
-            adaptiveSize
-            draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
-            onExpandedChange={setIsComposerExpanded}
-            parentId={currentContextId}
-            onSignInClick={onSignInClick}
-            defaultContent={(() => {
-              const prefillChannels = new Set<string>();
-              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-              if (currentContextTask) {
-                currentContextTask.tags.forEach(t => prefillChannels.add(t));
-              }
-              if (prefillChannels.size === 0) return "";
-              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-            })()}
-          />
         </div>
       )}
 

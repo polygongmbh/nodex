@@ -320,32 +320,6 @@ export function TaskComposer({
 
   return (
     <div className={cn("space-y-3", compact && "space-y-2", adaptiveSize && !showExpandedControls && "space-y-1")}>
-      {/* Type selector */}
-      {!compact && showExpandedControls && (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setTaskType("task")}
-            className={cn(
-              "flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors",
-              taskType === "task" ? "bg-primary/20 text-primary" : "hover:bg-muted"
-            )}
-          >
-            <CheckSquare className="w-4 h-4" />
-            Task
-          </button>
-          <button
-            onClick={() => setTaskType("comment")}
-            className={cn(
-              "flex items-center gap-1.5 px-2 py-1 rounded text-sm transition-colors",
-              taskType === "comment" ? "bg-primary/20 text-primary" : "hover:bg-muted"
-            )}
-          >
-            <MessageSquare className="w-4 h-4" />
-            Comment
-          </button>
-        </div>
-      )}
-
       <div className="relative">
         <textarea
           ref={textareaRef}
@@ -483,6 +457,17 @@ export function TaskComposer({
         </div>
 
         <div className="flex items-center gap-2">
+          <label className="sr-only" htmlFor="task-composer-kind">Kind</label>
+          <select
+            id="task-composer-kind"
+            aria-label="Kind"
+            value={taskType}
+            onChange={(e) => setTaskType(e.target.value as TaskType)}
+            className="px-3 py-2 text-sm rounded-xl border border-border/50 bg-muted/40 hover:bg-muted/60 transition-colors"
+          >
+            <option value="task">Task</option>
+            <option value="comment">Comment</option>
+          </select>
           <button
             onClick={handleSubmit}
             disabled={!content.trim() || !hasAtLeastOneTag || isPublishing || !user}

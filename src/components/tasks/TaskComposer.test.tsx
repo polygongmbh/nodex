@@ -112,4 +112,22 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.queryByRole("button", { name: /cancel/i })).not.toBeInTheDocument();
   });
+
+  it("allows switching kind to comment from action dropdown", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+
+    expect(screen.getByPlaceholderText(/add a comment/i)).toBeInTheDocument();
+  });
 });

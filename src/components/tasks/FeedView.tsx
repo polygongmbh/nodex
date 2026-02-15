@@ -191,8 +191,9 @@ export function FeedView({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Top composer - hidden on mobile */}
       {!isMobile && (
-        <div className="border-b border-border p-4 bg-background/95 backdrop-blur-sm">
-          <div className="flex items-center justify-end mb-3">
+        <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm">
+          <div className="max-w-xl mx-auto">
+            <div className="flex items-center justify-end mb-3">
             {focusedTaskId && (
               <button
                 onClick={() => onFocusTask?.(null)}
@@ -201,34 +202,35 @@ export function FeedView({
                 ← Back to all
               </button>
             )}
-          </div>
-          {focusedTask && (
-            <div className="mb-3 p-2 bg-muted/50 rounded-lg border border-border">
-              <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
-              <div className="text-sm font-medium">{focusedTask.content.slice(0, 60)}{focusedTask.content.length > 60 ? "..." : ""}</div>
             </div>
-          )}
-          <TaskComposer
-            onSubmit={handleNewTask}
-            relays={relays}
-            channels={channels}
-            people={people}
-            onCancel={() => {}}
-            compact
-            adaptiveSize
-            draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
-            parentId={focusedTaskId || undefined}
-            onSignInClick={onSignInClick}
-            defaultContent={(() => {
-              const prefillChannels = new Set<string>();
-              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-              if (focusedTask) {
-                focusedTask.tags.forEach(t => prefillChannels.add(t));
-              }
-              if (prefillChannels.size === 0) return "";
-              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-            })()}
-          />
+            {focusedTask && (
+              <div className="mb-3 p-2 bg-muted/50 rounded-lg border border-border">
+                <div className="text-xs text-muted-foreground mb-1">Viewing subitems of:</div>
+                <div className="text-sm font-medium">{focusedTask.content.slice(0, 60)}{focusedTask.content.length > 60 ? "..." : ""}</div>
+              </div>
+            )}
+            <TaskComposer
+              onSubmit={handleNewTask}
+              relays={relays}
+              channels={channels}
+              people={people}
+              onCancel={() => {}}
+              compact
+              adaptiveSize
+              draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
+              parentId={focusedTaskId || undefined}
+              onSignInClick={onSignInClick}
+              defaultContent={(() => {
+                const prefillChannels = new Set<string>();
+                channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+                if (focusedTask) {
+                  focusedTask.tags.forEach(t => prefillChannels.add(t));
+                }
+                if (prefillChannels.size === 0) return "";
+                return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
+              })()}
+            />
+          </div>
         </div>
       )}
 
