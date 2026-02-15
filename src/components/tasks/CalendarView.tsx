@@ -32,6 +32,7 @@ interface CalendarViewProps {
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
   isMobile?: boolean;
+  mobileView?: "calendar" | "upcoming";
 }
 
 export function CalendarView({
@@ -49,6 +50,7 @@ export function CalendarView({
   focusedTaskId,
   onFocusTask,
   isMobile = false,
+  mobileView,
 }: CalendarViewProps) {
   const { user } = useNDK();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -58,6 +60,7 @@ export function CalendarView({
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
+  const effectiveMobileTab = mobileView ?? mobileTab;
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -261,7 +264,7 @@ export function CalendarView({
         )}
       >
         {/* Mobile Tab Switcher */}
-        {isMobile && (
+        {isMobile && !mobileView && (
           <div className="flex border-b border-border flex-shrink-0">
             <button
               onClick={() => setMobileTab("upcoming")}
@@ -291,7 +294,7 @@ export function CalendarView({
         )}
 
         {/* Mobile Upcoming Feed */}
-        {isMobile && mobileTab === "upcoming" && (
+        {isMobile && effectiveMobileTab === "upcoming" && (
           <div className="flex-1 overflow-auto p-3">
             {groupedUpcoming.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">No upcoming tasks</p>
@@ -424,8 +427,28 @@ export function CalendarView({
         )}
 
         {/* Calendar Grid - shown on desktop or when calendar tab selected on mobile */}
-        {(!isMobile || mobileTab === "calendar") && (
+        {(!isMobile || effectiveMobileTab === "calendar") && (
           <div className={cn("flex-1 overflow-auto min-w-0", isMobile ? "p-2" : "p-4")}>
+            {/* Mobile Month Navigation */}
+            {isMobile && (
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  className="p-1.5 rounded hover:bg-muted transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="font-semibold text-sm">
+                  {format(currentMonth, "MMMM yyyy")}
+                </span>
+                <button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  className="p-1.5 rounded hover:bg-muted transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
             {/* Day Headers */}
             <div className="grid grid-cols-7 mb-0.5">
               {(isMobile ? ["S", "M", "T", "W", "T", "F", "S"] : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]).map((day, i) => (
@@ -525,7 +548,7 @@ export function CalendarView({
         )}
 
         {/* Selected Day Panel - desktop or mobile calendar tab */}
-        {(!isMobile || mobileTab === "calendar") && (
+        {(!isMobile || effectiveMobileTab === "calendar") && (
           <div className={cn(
             "border-border overflow-y-auto flex-shrink-0",
             isMobile 

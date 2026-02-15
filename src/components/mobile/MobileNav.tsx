@@ -1,8 +1,8 @@
-import { Filter, GitBranch, LayoutList, Calendar } from "lucide-react";
+import { Filter, GitBranch, LayoutList, Calendar, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 
-export type MobileViewType = ViewType | "filters";
+export type MobileViewType = ViewType | "filters" | "upcoming";
 
 interface MobileNavProps {
   currentView: MobileViewType;
@@ -13,6 +13,7 @@ const navItems: { id: MobileViewType; label: string; icon: React.ReactNode }[] =
   { id: "filters", label: "Filters", icon: <Filter className="w-5 h-5" /> },
   { id: "tree", label: "Tree", icon: <GitBranch className="w-5 h-5" /> },
   { id: "feed", label: "Feed", icon: <LayoutList className="w-5 h-5" /> },
+  { id: "upcoming", label: "Upcoming", icon: <List className="w-5 h-5" /> },
   { id: "calendar", label: "Calendar", icon: <Calendar className="w-5 h-5" /> },
 ];
 

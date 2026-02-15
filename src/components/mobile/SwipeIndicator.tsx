@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
-import { ViewType } from "@/components/tasks/ViewSwitcher";
+import { MobileViewType } from "./MobileNav";
 
 interface SwipeIndicatorProps {
-  views: ViewType[];
-  currentView: ViewType;
+  views: MobileViewType[];
+  currentView: MobileViewType;
   showFilters?: boolean;
 }
 
