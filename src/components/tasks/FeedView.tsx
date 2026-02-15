@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { formatAuthorMetaLabel } from "@/lib/person-label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -239,6 +240,11 @@ export function FeedView({
             const isComment = task.taskType === "comment";
             const breadcrumb = getParentBreadcrumb(task);
             const isKeyboardFocused = keyboardFocusedTaskId === task.id;
+            const authorMetaLabel = formatAuthorMetaLabel({
+              personId: task.author.id,
+              displayName: task.author.displayName,
+              username: task.author.name,
+            });
 
             return (
               <div
@@ -370,7 +376,7 @@ export function FeedView({
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                      <span className="font-medium text-foreground">{task.author.displayName}</span>
+                      <span className="font-medium text-foreground">{authorMetaLabel}</span>
                       <span>·</span>
                       <span>{timeAgo}</span>
                       {isComment && (

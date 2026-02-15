@@ -46,6 +46,7 @@ interface SidebarProps {
   onChannelToggle: (id: string) => void;
   onChannelExclusive: (id: string) => void;
   onPersonToggle: (id: string) => void;
+  onPersonExclusive: (id: string) => void;
   onToggleAllRelays: () => void;
   onToggleAllChannels: () => void;
   onToggleAllPeople: () => void;
@@ -66,6 +67,7 @@ export function Sidebar({
   onChannelToggle,
   onChannelExclusive,
   onPersonToggle,
+  onPersonExclusive,
   onToggleAllRelays,
   onToggleAllChannels,
   onToggleAllPeople,
@@ -289,6 +291,7 @@ export function Sidebar({
               key={person.id}
               person={person}
               onToggle={() => onPersonToggle(person.id)}
+              onExclusive={() => onPersonExclusive(person.id)}
               isKeyboardFocused={focusedItem?.type === 'person' && focusedItem?.id === person.id}
             />
           ))}

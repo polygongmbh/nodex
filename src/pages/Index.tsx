@@ -379,6 +379,17 @@ const Index = () => {
     );
   };
 
+  const handlePersonExclusive = (id: string) => {
+    setPeople((prev) =>
+      prev.map((person) => ({
+        ...person,
+        isSelected: person.id === id,
+      }))
+    );
+    const person = people.find((p) => p.id === id);
+    toast.success(`Showing only ${person?.displayName || person?.name || "selected user"}`);
+  };
+
   const handleToggleAllPeople = () => {
     const allSelected = people.every((p) => p.isSelected);
     setPeople((prev) => prev.map((person) => ({ ...person, isSelected: !allSelected })));
@@ -721,6 +732,7 @@ const Index = () => {
         onChannelToggle={handleChannelToggle}
         onChannelExclusive={handleChannelExclusive}
         onPersonToggle={handlePersonToggle}
+        onPersonExclusive={handlePersonExclusive}
         onToggleAllRelays={handleToggleAllRelays}
         onToggleAllChannels={handleToggleAllChannels}
         onToggleAllPeople={handleToggleAllPeople}

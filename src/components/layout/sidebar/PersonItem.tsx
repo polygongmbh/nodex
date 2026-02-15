@@ -5,20 +5,31 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 interface PersonItemProps {
   person: Person;
   onToggle: () => void;
+  onExclusive: () => void;
   isKeyboardFocused?: boolean;
 }
 
-export function PersonItem({ person, onToggle, isKeyboardFocused = false }: PersonItemProps) {
+export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = false }: PersonItemProps) {
+  const personName = person.id === "me" ? "Me" : person.displayName;
+
   return (
-    <button
-      onClick={onToggle}
+    <div
       data-sidebar-item={`person-${person.id}`}
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2 pl-7 transition-all group hover:bg-sidebar-accent/50",
+        person.isSelected && "bg-sidebar-accent/80 border-l-2 border-l-primary pl-[1.625rem]",
         isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent"
       )}
     >
-      <div className="relative">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onExclusive();
+        }}
+        title={`Show only ${personName}`}
+        aria-label={`Show only ${personName}`}
+        className="relative rounded-full hover:ring-2 hover:ring-primary/50"
+      >
         <UserAvatar
           id={person.id}
           displayName={person.displayName}
@@ -34,15 +45,23 @@ export function PersonItem({ person, onToggle, isKeyboardFocused = false }: Pers
         {person.isOnline && (
           <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-sidebar" />
         )}
-      </div>
-      <span
-        className={cn(
-          "text-sm transition-colors flex-1 text-left",
-          person.isSelected ? "text-foreground font-medium" : "text-sidebar-foreground"
-        )}
-      >
-        {person.id === "me" ? "Me" : person.displayName}
-      </span>
-    </button>
+      </button>
+      <button onClick={onToggle} className="flex-1 text-left" aria-label={personName}>
+        <span
+          className={cn(
+            "text-sm transition-colors",
+            person.isSelected ? "text-foreground font-semibold" : "text-sidebar-foreground hover:text-primary"
+          )}
+        >
+          {personName}
+        </span>
+      </button>
+      {person.isSelected && (
+        <div
+          className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+          aria-label={`${personName} selected`}
+        />
+      )}
+    </div>
   );
 }
