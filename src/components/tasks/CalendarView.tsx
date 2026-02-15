@@ -222,8 +222,8 @@ export function CalendarView({
       {/* Header - hidden on mobile, height matches sidebar logo */}
       {!isMobile && (
         <div className="min-h-14 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <h2 className="text-lg font-semibold">Calendar</h2>
               {focusedTaskId && (
                 <button
@@ -253,7 +253,7 @@ export function CalendarView({
                 </button>
               </div>
             </div>
-            <div className="relative w-64">
+            <div className="relative w-full xl:w-64">
               <input
                 type="text"
                 value={searchQuery}
@@ -272,7 +272,12 @@ export function CalendarView({
         </div>
       )}
 
-      <div className={cn("flex-1 flex overflow-hidden", isMobile && "flex-col")}>
+      <div
+        className={cn(
+          "flex-1 flex overflow-hidden min-h-0",
+          isMobile ? "flex-col" : "flex-col xl:flex-row"
+        )}
+      >
         {/* Mobile Tab Switcher */}
         {isMobile && (
           <div className="flex border-b border-border flex-shrink-0">
@@ -395,7 +400,7 @@ export function CalendarView({
 
         {/* Calendar Grid - shown on desktop or when calendar tab selected on mobile */}
         {(!isMobile || mobileTab === "calendar") && (
-          <div className={cn("flex-1 overflow-auto", isMobile ? "p-2" : "p-4")}>
+          <div className={cn("flex-1 overflow-auto min-w-0", isMobile ? "p-2" : "p-4")}>
             {/* Mobile Month Navigation */}
             {isMobile && (
               <div className="flex items-center justify-between mb-2">
@@ -449,7 +454,7 @@ export function CalendarView({
                     onClick={() => setSelectedDate(day)}
                     className={cn(
                       "bg-background transition-colors text-center flex flex-col items-center justify-center relative",
-                      isMobile ? "aspect-[1/0.9] p-0.5" : "aspect-square p-1 text-left rounded-lg border",
+                      isMobile ? "aspect-[1/0.9] p-0.5" : "min-h-[5.5rem] xl:aspect-square p-1 text-left rounded-lg border",
                       isToday(day) && (isMobile ? "bg-primary/10" : "border-primary"),
                       isSelected ? "bg-primary/20" : "hover:bg-muted/50",
                       !isMobile && !isToday(day) && !isSelected && "border-transparent",
@@ -521,7 +526,7 @@ export function CalendarView({
             "border-border overflow-y-auto flex-shrink-0",
             isMobile 
               ? "border-t p-2 flex-1" 
-              : "w-80 border-l p-4"
+              : "w-full h-72 border-t p-3 xl:w-80 xl:h-auto xl:border-t-0 xl:border-l xl:p-4"
           )}>
           {selectedDate ? (
             <>
