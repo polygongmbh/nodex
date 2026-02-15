@@ -24,6 +24,11 @@ const baseTask: Task = {
 };
 
 describe("FocusedTaskBreadcrumb", () => {
+  it("renders all tasks breadcrumb even when no task is focused", () => {
+    render(<FocusedTaskBreadcrumb allTasks={[baseTask]} focusedTaskId={null} onFocusTask={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "All Tasks" })).toBeInTheDocument();
+  });
+
   it("renders full path and makes each level clickable", () => {
     const middle: Task = {
       ...baseTask,

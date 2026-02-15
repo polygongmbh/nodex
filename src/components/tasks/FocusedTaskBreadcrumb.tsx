@@ -1,11 +1,13 @@
-import { useMemo } from "react";
+import { ReactNode, useMemo } from "react";
 import { Task } from "@/types";
+import { cn } from "@/lib/utils";
 
 interface FocusedTaskBreadcrumbProps {
   allTasks: Task[];
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
   className?: string;
+  rightSlot?: ReactNode;
 }
 
 export function FocusedTaskBreadcrumb({
@@ -13,6 +15,7 @@ export function FocusedTaskBreadcrumb({
   focusedTaskId,
   onFocusTask,
   className,
+  rightSlot,
 }: FocusedTaskBreadcrumbProps) {
   const path = useMemo(() => {
     if (!focusedTaskId) return [] as Task[];
@@ -31,26 +34,33 @@ export function FocusedTaskBreadcrumb({
     return chain;
   }, [allTasks, focusedTaskId]);
 
-  if (!focusedTaskId || path.length === 0) {
-    return null;
-  }
-
   return (
-    <div className={className}>
-      <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+    <div
+      className={cn(
+        "w-full border-b border-border bg-background/95 px-4 py-2 flex items-center gap-3",
+        className
+      )}
+    >
+      <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
         <button
           onClick={() => onFocusTask?.(null)}
-          className="rounded px-1 py-0.5 hover:text-foreground hover:bg-muted/70 transition-colors"
+          className={cn(
+            "px-1 py-0.5 transition-colors hover:text-foreground",
+            path.length === 0 && "text-foreground font-medium"
+          )}
           type="button"
         >
           All Tasks
         </button>
-        {path.map((task) => (
+        {path.map((task, index) => (
           <span key={task.id} className="flex items-center gap-1 min-w-0">
             <span>/</span>
             <button
               onClick={() => onFocusTask?.(task.id)}
-              className="truncate max-w-[220px] rounded px-1 py-0.5 hover:text-foreground hover:bg-muted/70 transition-colors"
+              className={cn(
+                "truncate max-w-[220px] px-1 py-0.5 transition-colors hover:text-foreground",
+                index === path.length - 1 && "text-foreground font-medium"
+              )}
               type="button"
               title={task.content}
             >
@@ -60,6 +70,7 @@ export function FocusedTaskBreadcrumb({
           </span>
         ))}
       </div>
+      {rightSlot && <div className="ml-auto flex items-center gap-2">{rightSlot}</div>}
     </div>
   );
 }

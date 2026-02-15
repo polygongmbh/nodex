@@ -277,7 +277,6 @@ export function CalendarView({
         allTasks={allTasks}
         focusedTaskId={focusedTaskId}
         onFocusTask={onFocusTask}
-        className="border-b border-border bg-muted/20 px-4 py-2"
       />
 
       <div

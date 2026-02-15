@@ -331,35 +331,34 @@ export function KanbanView({
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold">Kanban Board</h2>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-muted-foreground" />
-              <Select value={depthMode} onValueChange={(v) => setDepthMode(v as DepthMode)}>
-                <SelectTrigger className="w-[140px] h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Top-level only</SelectItem>
-                  <SelectItem value="2">2 levels deep</SelectItem>
-                  <SelectItem value="3">3 levels deep</SelectItem>
-                  <SelectItem value="all">All levels</SelectItem>
-                  <SelectItem value="leaves">
-                    <span className="flex items-center gap-1">
-                      <Leaf className="w-3 h-3" />
-                      Leaf tasks only
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
         </div>
       </div>
       <FocusedTaskBreadcrumb
         allTasks={allTasks}
         focusedTaskId={focusedTaskId}
         onFocusTask={onFocusTask}
-        className="border-b border-border bg-muted/20 px-4 py-2"
+        rightSlot={(
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-muted-foreground" />
+            <Select value={depthMode} onValueChange={(v) => setDepthMode(v as DepthMode)}>
+              <SelectTrigger className="w-[150px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Top-level only</SelectItem>
+                <SelectItem value="2">2 levels deep</SelectItem>
+                <SelectItem value="3">3 levels deep</SelectItem>
+                <SelectItem value="all">All levels</SelectItem>
+                <SelectItem value="leaves">
+                  <span className="flex items-center gap-1">
+                    <Leaf className="w-3 h-3" />
+                    Leaf tasks only
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       />
 
       {/* Kanban Columns */}

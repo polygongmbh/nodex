@@ -244,7 +244,7 @@ export function TaskTree({
             allTasks={allTasks}
             focusedTaskId={currentContextId}
             onFocusTask={onFocusTask}
-            className="mb-3 rounded-xl border border-border/60 bg-muted/40 px-2 py-1.5"
+            className="mb-3 -mx-4 -mt-3"
           />
           <div className="flex items-center justify-end w-full mb-3">
             <div className="flex items-center gap-2 mr-auto">

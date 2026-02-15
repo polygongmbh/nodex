@@ -197,7 +197,7 @@ export function FeedView({
             allTasks={allTasks}
             focusedTaskId={focusedTaskId}
             onFocusTask={onFocusTask}
-            className="mb-3 rounded-xl border border-border/60 bg-muted/40 px-2 py-1.5"
+            className="mb-3 -mx-4 -mt-3"
           />
           <TaskComposer
             onSubmit={handleNewTask}
