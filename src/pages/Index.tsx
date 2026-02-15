@@ -752,6 +752,7 @@ const Index = () => {
           onAddRelay={addRelay}
           onRemoveRelay={removeRelay}
           onSignInClick={handleOpenAuthModal}
+          onGuideClick={handleOpenGuide}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide

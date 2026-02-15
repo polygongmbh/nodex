@@ -34,6 +34,7 @@ interface MobileLayoutProps {
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
+  onGuideClick: () => void;
 }
 
 // Mobile view order for swipe navigation
@@ -66,6 +67,7 @@ export function MobileLayout({
   onAddRelay,
   onRemoveRelay,
   onSignInClick,
+  onGuideClick,
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [mobileView, setMobileView] = useState<MobileViewType>(
@@ -178,6 +180,7 @@ export function MobileLayout({
           onAddRelay={onAddRelay}
           onRemoveRelay={onRemoveRelay}
           onSignInClick={onSignInClick}
+          onGuideClick={onGuideClick}
         />
       );
     }

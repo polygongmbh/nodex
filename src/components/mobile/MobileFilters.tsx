@@ -17,6 +17,7 @@ interface MobileFiltersProps {
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
+  onGuideClick: () => void;
 }
 
 export function MobileFilters({
@@ -29,6 +30,7 @@ export function MobileFilters({
   onAddRelay,
   onRemoveRelay,
   onSignInClick,
+  onGuideClick,
 }: MobileFiltersProps) {
   const { user, authMethod, logout, getGuestPrivateKey } = useNDK();
   const [newRelayUrl, setNewRelayUrl] = useState("");
@@ -67,6 +69,17 @@ export function MobileFilters({
   return (
     <ScrollArea className="flex-1" data-onboarding="mobile-filters">
       <div className="p-4 space-y-6">
+        <section>
+          <button
+            onClick={onGuideClick}
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-left hover:bg-muted/50 transition-colors"
+            aria-label="Open onboarding guide"
+            title="Open onboarding guide"
+          >
+            Open Guide
+          </button>
+        </section>
+
         {/* Profile Management */}
         <section>
           <div className="flex items-center gap-2 mb-3">
