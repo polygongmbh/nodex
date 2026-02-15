@@ -11,6 +11,12 @@ import NDK, {
   NDKSubscription,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "./types";
+import {
+  buildKind0Content,
+  hasRequiredProfileFields,
+  parseKind0Content,
+  type EditableNostrProfile,
+} from "./profile-metadata";
 
 // Authentication types
 export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | null;
@@ -55,6 +61,8 @@ export interface NDKContextValue {
   
   // Event publishing
   publishEvent: (kind: NostrEventKind, content: string, tags?: string[][], parentId?: string, relayUrls?: string[]) => Promise<{ success: boolean; eventId?: string }>;
+  updateUserProfile: (profile: EditableNostrProfile) => Promise<boolean>;
+  needsProfileSetup: boolean;
   
   // Subscription
   subscribe: (filters: NDKFilter[], onEvent: (event: NDKEvent) => void) => NDKSubscription | null;
@@ -106,6 +114,49 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [relays, setRelays] = useState<NDKRelayStatus[]>([]);
   const [removedRelays, setRemovedRelays] = useState<Set<string>>(new Set());
+  const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
+
+  const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
+    if (!ndk) return null;
+
+    return await new Promise((resolve) => {
+      let latest: NDKEvent | null = null;
+      let settled = false;
+
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        subscription.stop();
+        if (!latest?.content) {
+          resolve(null);
+          return;
+        }
+        const parsed = parseKind0Content(latest.content);
+        resolve({
+          name: parsed.name,
+          displayName: parsed.displayName,
+          picture: parsed.picture,
+          about: parsed.about,
+          nip05: parsed.nip05,
+        });
+      };
+
+      const subscription = ndk.subscribe(
+        [{ kinds: [NostrEventKind.Metadata as any], authors: [pubkey], limit: 10 }],
+        { closeOnEose: true }
+      );
+
+      subscription.on("event", (event: NDKEvent) => {
+        if (!latest || (event.created_at || 0) >= (latest.created_at || 0)) {
+          latest = event;
+        }
+      });
+      subscription.on("eose", finish);
+
+      // Fallback so the UI does not hang if eose never arrives.
+      setTimeout(finish, 3500);
+    });
+  }, [ndk]);
 
   // Initialize NDK
   useEffect(() => {
@@ -468,11 +519,13 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
         eventTags.push(["e", parentId, "", "reply"]);
       }
 
-      // Extract hashtags from content and add as t tags
-      const hashtagRegex = /#(\\w+)/g;
-      let match;
-      while ((match = hashtagRegex.exec(content)) !== null) {
-        eventTags.push(["t", match[1].toLowerCase()]);
+      // Extract hashtags for text content kinds only.
+      if (kind === NostrEventKind.TextNote || kind === NostrEventKind.Task) {
+        const hashtagRegex = /#(\w+)/g;
+        let match;
+        while ((match = hashtagRegex.exec(content)) !== null) {
+          eventTags.push(["t", match[1].toLowerCase()]);
+        }
       }
       
       event.tags = eventTags;
@@ -502,6 +555,93 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       return { success: false };
     }
   }, [ndk, relays, defaultRelays]);
+
+  const updateUserProfile = useCallback(async (profile: EditableNostrProfile): Promise<boolean> => {
+    if (!hasRequiredProfileFields(profile)) {
+      console.warn("Profile update rejected: missing required name");
+      return false;
+    }
+
+    const relayUrls = relays
+      .filter((relay) => relay.status === "connected")
+      .map((relay) => relay.url);
+
+    if (relayUrls.length === 0) {
+      console.warn("Profile update skipped: no connected relays");
+      return false;
+    }
+
+    const result = await publishEvent(
+      NostrEventKind.Metadata,
+      buildKind0Content(profile),
+      [],
+      undefined,
+      relayUrls
+    );
+
+    if (!result.success) {
+      return false;
+    }
+
+    let nip05Verified = false;
+    if (profile.nip05) {
+      nip05Verified = await verifyNip05(profile.nip05, user?.pubkey || "");
+    }
+
+    setUser((prev) => prev ? ({
+      ...prev,
+      profile: {
+        name: profile.name.trim(),
+        displayName: profile.displayName?.trim() || undefined,
+        picture: profile.picture?.trim() || undefined,
+        about: profile.about?.trim() || undefined,
+        nip05: profile.nip05?.trim() || undefined,
+        nip05Verified,
+      },
+    }) : prev);
+    setNeedsProfileSetup(false);
+    return true;
+  }, [publishEvent, relays, user?.pubkey]);
+
+  useEffect(() => {
+    if (!user?.pubkey) {
+      setNeedsProfileSetup(false);
+      return;
+    }
+
+    let cancelled = false;
+    const syncProfile = async () => {
+      const kind0Profile = await fetchLatestKind0Profile(user.pubkey);
+      if (cancelled) return;
+
+      if (kind0Profile) {
+        let nip05Verified = false;
+        if (kind0Profile.nip05) {
+          nip05Verified = await verifyNip05(kind0Profile.nip05, user.pubkey);
+        }
+        if (cancelled) return;
+
+        setUser((prev) => prev ? ({
+          ...prev,
+          profile: {
+            ...prev.profile,
+            ...kind0Profile,
+            nip05Verified,
+          },
+        }) : prev);
+        setNeedsProfileSetup(!hasRequiredProfileFields(kind0Profile));
+        return;
+      }
+
+      // No kind:0 event found across connected relays.
+      setNeedsProfileSetup(true);
+    };
+
+    void syncProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchLatestKind0Profile, user?.pubkey]);
 
   const subscribe = useCallback((
     filters: NDKFilter[],
@@ -537,6 +677,8 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     addRelay,
     removeRelay,
     publishEvent,
+    updateUserProfile,
+    needsProfileSetup,
     subscribe,
     getGuestPrivateKey,
   }), [
@@ -554,6 +696,8 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     addRelay,
     removeRelay,
     publishEvent,
+    updateUserProfile,
+    needsProfileSetup,
     subscribe,
     getGuestPrivateKey,
   ]);

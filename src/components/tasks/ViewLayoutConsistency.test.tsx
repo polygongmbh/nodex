@@ -50,7 +50,7 @@ describe("Feed/Tree layout consistency", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "All Tasks" })).toBeInTheDocument();
+    expect(screen.queryByText("Tree")).not.toBeInTheDocument();
     expect(screen.getByPlaceholderText(/what needs to be done/i)).toBeInTheDocument();
   });
 });

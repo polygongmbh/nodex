@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown } from "lucide-react";
 import {
   Dialog,
@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -332,8 +333,50 @@ interface NostrUserMenuProps {
 }
 
 export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
-  const { user, authMethod, logout, getGuestPrivateKey } = useNDK();
+  const { user, authMethod, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile } = useNDK();
   const [showKey, setShowKey] = useState(false);
+  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileDisplayName, setProfileDisplayName] = useState("");
+  const [profilePicture, setProfilePicture] = useState("");
+  const [profileNip05, setProfileNip05] = useState("");
+  const [profileAbout, setProfileAbout] = useState("");
+
+  const openProfileEditor = useCallback(() => {
+    setProfileName(user?.profile?.name || "");
+    setProfileDisplayName(user?.profile?.displayName || "");
+    setProfilePicture(user?.profile?.picture || "");
+    setProfileNip05(user?.profile?.nip05 || "");
+    setProfileAbout(user?.profile?.about || "");
+    setIsProfileEditorOpen(true);
+  }, [user?.profile?.about, user?.profile?.displayName, user?.profile?.name, user?.profile?.nip05, user?.profile?.picture]);
+
+  const handleSaveProfile = async () => {
+    if (!profileName.trim()) {
+      toast.error("Profile name is required");
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const success = await updateUserProfile({
+        name: profileName,
+        displayName: profileDisplayName || undefined,
+        picture: profilePicture || undefined,
+        nip05: profileNip05 || undefined,
+        about: profileAbout || undefined,
+      });
+      if (success) {
+        toast.success("Profile updated on connected relays");
+        setIsProfileEditorOpen(false);
+      } else {
+        toast.error("Failed to update profile. Check relay connectivity and try again.");
+      }
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   const handleCopyKey = () => {
     const hexKey = getGuestPrivateKey();
@@ -383,107 +426,173 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         ? "Signer"
         : "Key";
 
+  useEffect(() => {
+    if (needsProfileSetup && !isProfileEditorOpen) {
+      openProfileEditor();
+    }
+  }, [needsProfileSetup, isProfileEditorOpen, openProfileEditor]);
+
   return (
-    <DropdownMenu onOpenChange={(open) => { if (!open) setShowKey(false); }}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-full w-full px-2 gap-2 bg-transparent hover:bg-transparent rounded-none justify-end">
-          {user.profile?.picture ? (
-            <img 
-              src={user.profile.picture} 
-              alt="" 
-              className="w-5 h-5 rounded-full"
-            />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-              <User className="w-3 h-3 text-primary" />
-            </div>
-          )}
-          <span className="text-sm font-medium truncate max-w-[8rem]">{displayName}</span>
-          <ChevronDown className="w-4 h-4 text-muted-foreground" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 p-2">
-        <DropdownMenuLabel className="px-2 py-1">
-          <div className="flex items-center gap-2">
+    <>
+      <DropdownMenu onOpenChange={(open) => { if (!open) setShowKey(false); }}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-full w-full px-2 gap-2 bg-transparent hover:bg-transparent rounded-none justify-end">
             {user.profile?.picture ? (
               <img 
                 src={user.profile.picture} 
                 alt="" 
-                className="w-6 h-6 rounded-full"
+                className="w-5 h-5 rounded-full"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                <User className="w-3.5 h-3.5 text-primary" />
+              <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                <User className="w-3 h-3 text-primary" />
               </div>
             )}
-            <div className="min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-medium truncate">{displayName}</span>
-                {user.profile?.nip05Verified && (
-                  <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${user.profile.nip05}`}>
-                    <BadgeCheck className="w-3.5 h-3.5" />
-                  </span>
-                )}
-                {user.profile?.nip05 && !user.profile?.nip05Verified && (
-                  <span className="text-xs text-muted-foreground" title={user.profile.nip05}>
-                    ✓
-                  </span>
-                )}
-              </div>
-              <span className="text-xs text-muted-foreground">Signed in via {methodLabel}</span>
-            </div>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {authMethod === "guest" && (
-          <div className="px-2 py-2 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium flex items-center gap-2">
-                <Key className="w-4 h-4 text-muted-foreground" />
-                Backup Private Key
-              </span>
-              <span className="text-xs text-warning">Keep secret</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <code className="block max-w-[10rem] w-full text-xs bg-muted p-2 rounded font-mono whitespace-nowrap overflow-x-auto">
-                {showKey ? getDisplayKey() : "••••••••••••••••••••••••••••••••"}
-              </code>
-              <div className="flex flex-col gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowKey(!showKey)}
-                  className="h-7 w-7 p-0"
-                >
-                  {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopyKey}
-                  className="h-7 w-7 p-0"
-                >
-                  <Copy className="w-3 h-3" />
-                </Button>
+            <span className="text-sm font-medium truncate max-w-[8rem]">{displayName}</span>
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-80 p-2">
+          <DropdownMenuLabel className="px-2 py-1">
+            <div className="flex items-center gap-2">
+              {user.profile?.picture ? (
+                <img 
+                  src={user.profile.picture} 
+                  alt="" 
+                  className="w-6 h-6 rounded-full"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                  <User className="w-3.5 h-3.5 text-primary" />
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-medium truncate">{displayName}</span>
+                  {user.profile?.nip05Verified && (
+                    <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${user.profile.nip05}`}>
+                      <BadgeCheck className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+                  {user.profile?.nip05 && !user.profile?.nip05Verified && (
+                    <span className="text-xs text-muted-foreground" title={user.profile.nip05}>
+                      ✓
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">Signed in via {methodLabel}</span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Import this key in other Nostr clients to access this identity.
-            </p>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              openProfileEditor();
+            }}
+          >
+            <User className="w-4 h-4 mr-2" />
+            Edit profile
+          </DropdownMenuItem>
+          {authMethod === "guest" && (
+            <div className="px-2 py-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Key className="w-4 h-4 text-muted-foreground" />
+                  Backup Private Key
+                </span>
+                <span className="text-xs text-warning">Keep secret</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <code className="block max-w-[10rem] w-full text-xs bg-muted p-2 rounded font-mono whitespace-nowrap overflow-x-auto">
+                  {showKey ? getDisplayKey() : "••••••••••••••••••••••••••••••••"}
+                </code>
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowKey(!showKey)}
+                    className="h-7 w-7 p-0"
+                  >
+                    {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyKey}
+                    className="h-7 w-7 p-0"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Import this key in other Nostr clients to access this identity.
+              </p>
+            </div>
+          )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              logout();
+            }}
+            className="text-destructive focus:text-destructive"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog
+        open={isProfileEditorOpen}
+        onOpenChange={(open) => {
+          if (!open && needsProfileSetup) return;
+          setIsProfileEditorOpen(open);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{needsProfileSetup ? "Set up your profile" : "Edit profile"}</DialogTitle>
+            <DialogDescription>
+              Your Nostr metadata (`kind:0`) will be published to connected relays. Name is required.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-name">Name *</Label>
+              <Input id="profile-name" value={profileName} onChange={(e) => setProfileName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-display-name">Display name</Label>
+              <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-picture">Picture URL</Label>
+              <Input id="profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-nip05">NIP-05</Label>
+              <Input id="profile-nip05" value={profileNip05} onChange={(e) => setProfileNip05(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="profile-about">About</Label>
+              <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
+            </div>
           </div>
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={(e) => {
-            e.preventDefault();
-            logout();
-          }}
-          className="text-destructive focus:text-destructive"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <div className="flex justify-end gap-2">
+            {!needsProfileSetup && (
+              <Button variant="outline" onClick={() => setIsProfileEditorOpen(false)} disabled={isSavingProfile}>
+                Cancel
+              </Button>
+            )}
+            <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+              {isSavingProfile ? "Saving..." : "Save profile"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

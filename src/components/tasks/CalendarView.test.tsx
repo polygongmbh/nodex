@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { CalendarView } from "./CalendarView";
 import type { Channel, Person, Relay, Task } from "@/types";
 
+vi.mock("@/lib/nostr/ndk-context", () => ({
+  useNDK: () => ({ user: { id: "me" } }),
+}));
+
 const relays: Relay[] = [
   {
     id: "demo",
