@@ -107,6 +107,13 @@ structure:
 - Prefer behavior and outcome tests over implementation-detail tests.
 - Do not add tests that only assert cosmetic details (styling classes, exact DOM nesting, spacing, non-semantic icons) unless those are explicit product requirements.
 - Avoid tests that mainly duplicate implementation internals; test public behavior and contracts instead.
+- Any class/style assertion in tests must include a short comment explaining the product contract being protected.
+- For high-impact areas, require meaningful business-logic coverage before merge:
+  - compose parsing and submission behavior
+  - channel/tag include/exclude filtering
+  - Nostr event conversion/mapping/publishing tags
+  - permission/status transition rules
+- Snapshot tests are disallowed for complex UI surfaces unless narrowly scoped and justified in-file with a short rationale.
 
 ## Refactoring Cadence
 - After each major milestone (feature completion, major bugfix batch, or cross-view UI change), run a cleanup pass focused on:
@@ -118,6 +125,11 @@ structure:
 - Do not mix milestone feature/fix changes and refactoring changes in the same commit, unless the refactor is strictly required to make the feature work.
 - Prefer incremental refactors in small, reviewable commits that preserve behavior.
 - When adding new code in duplicated areas, favor extracting shared helpers/components rather than copy-pasting.
+- For each major milestone, include a short refactor checklist in handoff notes/PR description covering:
+  - duplication reviewed
+  - consistency issues reviewed
+  - large/complex components reviewed
+  - deferrals (if any) with rationale
 
 ## Protocol Compliance
 - Conform to Nostr protocol standards as written in the NIPs repository:
