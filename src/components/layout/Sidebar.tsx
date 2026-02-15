@@ -220,6 +220,7 @@ export function Sidebar({
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto scrollbar-thin py-2">
         {/* Feeds/Relays */}
+        <div data-onboarding="relays-section">
         <SidebarSection
           title="Feeds"
           icon={Radio}
@@ -259,6 +260,7 @@ export function Sidebar({
             />
           ))}
         </SidebarSection>
+        </div>
 
         {/* Channels */}
         <div data-onboarding="channels-section">
@@ -283,6 +285,7 @@ export function Sidebar({
         </div>
 
         {/* People */}
+        <div data-onboarding="people-section">
         <SidebarSection
           title="People"
           icon={Users}
@@ -300,6 +303,7 @@ export function Sidebar({
             />
           ))}
         </SidebarSection>
+        </div>
       </nav>
 
       {/* Footer: Connection Status + Keyboard Shortcuts */}

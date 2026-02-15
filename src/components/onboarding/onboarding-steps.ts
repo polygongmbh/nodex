@@ -29,12 +29,28 @@ const desktopStepsBySection: StepMap = {
   ],
   filters: [
     {
+      id: "filters-relays",
+      title: "Relay selection",
+      description: "Use Feeds to select which relays are visible. Click a relay name to toggle it, or click its icon for exclusive relay focus.",
+      target: '[data-onboarding="relays-section"]',
+      requiredAction: "click-target",
+      actionPrompt: "Click a relay control to continue.",
+    },
+    {
       id: "filters-channels",
       title: "Channel filters",
       description: "In Channels, click a channel name to cycle neutral → include → exclude. Click the # icon to show only that channel.",
       target: '[data-onboarding="channels-section"]',
       requiredAction: "click-target",
       actionPrompt: "Click a channel control to continue.",
+    },
+    {
+      id: "filters-people",
+      title: "People filters",
+      description: "In People, click a person name to toggle that person. Click the avatar/icon to show only that person.",
+      target: '[data-onboarding="people-section"]',
+      requiredAction: "click-target",
+      actionPrompt: "Click a person control to continue.",
     },
     {
       id: "filters-hashtag-content",
@@ -47,7 +63,7 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-reset",
       title: "Reset channel focus",
-      description: "Reset channels by cycling included/excluded tags back to neutral, or use the Channels header icon to reset all.",
+      description: "Reset channels by cycling tags back to neutral, or use the Channels header icon (in the section title row) to toggle all included/reset.",
       target: '[data-onboarding="channels-section"]',
     },
   ],
@@ -92,7 +108,7 @@ const mobileStepsBySection: StepMap = {
     {
       id: "mobile-filters",
       title: "Mobile filters",
-      description: "In Manage, tap channel chips to cycle neutral → include → exclude, and tap people chips to toggle people filters.",
+      description: "In Manage, tap feed chips to select relays, channel chips to cycle neutral → include → exclude, and people chips to toggle people filters.",
       target: '[data-onboarding="mobile-filters"]',
       requiredAction: "click-target",
       actionPrompt: "Tap any filter control to continue.",
