@@ -3,6 +3,23 @@ import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import type { Channel, Person, Relay, Task } from "@/types";
 
+const ndkMock = {
+  user: null as null | {
+    pubkey: string;
+    npub: string;
+    profile?: { displayName?: string; name?: string };
+  },
+  needsProfileSetup: false,
+  authMethod: "guest",
+  logout: vi.fn(),
+  getGuestPrivateKey: () => "f".repeat(64),
+  updateUserProfile: vi.fn(async () => true),
+};
+
+vi.mock("@/lib/nostr/ndk-context", () => ({
+  useNDK: () => ndkMock,
+}));
+
 vi.mock("./MobileNav", () => ({
   MobileNav: () => <div data-testid="mobile-nav" />,
 }));
@@ -32,6 +49,8 @@ const tasks: Task[] = [];
 
 describe("MobileLayout auth wiring", () => {
   it("uses auth state (not current user) to gate compose", () => {
+    ndkMock.user = null;
+    ndkMock.needsProfileSetup = false;
     const onSignInClick = vi.fn();
 
     render(
@@ -68,5 +87,42 @@ describe("MobileLayout auth wiring", () => {
     fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
     expect(onSignInClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("forces manage view and hides bottom bar when profile setup is required", () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = true;
+
+    render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn={true}
+        currentView="tree"
+        onViewChange={() => {}}
+        onSearchChange={() => {}}
+        onNewTask={() => {}}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+      />
+    );
+
+    expect(screen.getByRole("heading", { name: "Profile" })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
   });
 });
