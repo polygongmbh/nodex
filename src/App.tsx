@@ -10,10 +10,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const DEFAULT_NOSTR_RELAYS = [
-  "wss://relay.damus.io",
-  "wss://relay.snort.social",
   "wss://test.nostr.melonion.me",
-  "wss://nos.lol",
 ];
 
 const App = () => (
