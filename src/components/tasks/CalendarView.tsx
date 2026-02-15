@@ -244,34 +244,6 @@ export function CalendarView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Header - hidden on mobile, height matches sidebar logo */}
-      {!isMobile && (
-        <div className="min-h-14 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  className="p-1.5 rounded hover:bg-muted transition-colors"
-                  aria-label="Previous month"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="font-medium min-w-[140px] text-center">
-                  {format(currentMonth, "MMMM yyyy")}
-                </span>
-                <button
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  className="p-1.5 rounded hover:bg-muted transition-colors"
-                  aria-label="Next month"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       <FocusedTaskBreadcrumb
         allTasks={allTasks}
         focusedTaskId={focusedTaskId}
@@ -450,27 +422,6 @@ export function CalendarView({
         {/* Calendar Grid - shown on desktop or when calendar tab selected on mobile */}
         {(!isMobile || mobileTab === "calendar") && (
           <div className={cn("flex-1 overflow-auto min-w-0", isMobile ? "p-2" : "p-4")}>
-            {/* Mobile Month Navigation */}
-            {isMobile && (
-              <div className="flex items-center justify-between mb-2">
-                <button
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  className="p-1.5 rounded hover:bg-muted transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="font-semibold text-sm">
-                  {format(currentMonth, "MMMM yyyy")}
-                </span>
-                <button
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  className="p-1.5 rounded hover:bg-muted transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
             {/* Day Headers */}
             <div className="grid grid-cols-7 mb-0.5">
               {(isMobile ? ["S", "M", "T", "W", "T", "F", "S"] : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]).map((day, i) => (
@@ -579,6 +530,25 @@ export function CalendarView({
           )}>
           {selectedDate ? (
             <>
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  className="p-1.5 rounded hover:bg-muted transition-colors"
+                  aria-label="Previous month"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="font-medium text-sm">
+                  {format(currentMonth, "MMMM yyyy")}
+                </span>
+                <button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  className="p-1.5 rounded hover:bg-muted transition-colors"
+                  aria-label="Next month"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium">
                   {format(selectedDate, "EEEE, MMMM d")}

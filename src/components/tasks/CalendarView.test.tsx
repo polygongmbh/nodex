@@ -50,6 +50,8 @@ describe("CalendarView responsiveness", () => {
     const addEventButton = screen.getByRole("button", { name: /add event/i });
     const panel = addEventButton.closest("div[class*='overflow-y-auto']");
     expect(panel?.className).toContain("xl:w-80");
+    expect(screen.getByRole("button", { name: /previous month/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /next month/i })).toBeInTheDocument();
   });
 
   it("renders bottom search with icon", () => {
