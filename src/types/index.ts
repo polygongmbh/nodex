@@ -41,6 +41,7 @@ export interface Task {
   likes: number;
   replies: number;
   reposts: number;
+  lastEditedAt?: Date;
   isLiked?: boolean;
   isReposted?: boolean;
   status?: TaskStatus;

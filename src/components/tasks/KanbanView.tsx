@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { getDueDateColorClass, sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { sortByLatestModified } from "@/lib/kanban-sorting";
 import {
   Select,
   SelectContent,
@@ -187,10 +188,10 @@ export function KanbanView({
       grouped[status].push(task);
     });
 
-    // Sort each column
-    grouped["todo"] = sortTasks(grouped["todo"], sortContext);
-    grouped["in-progress"] = sortTasks(grouped["in-progress"], sortContext);
-    grouped["done"] = sortTasks(grouped["done"], sortContext);
+    // Sort each column by latest modification.
+    grouped["todo"] = sortByLatestModified(sortTasks(grouped["todo"], sortContext));
+    grouped["in-progress"] = sortByLatestModified(sortTasks(grouped["in-progress"], sortContext));
+    grouped["done"] = sortByLatestModified(sortTasks(grouped["done"], sortContext));
 
     return grouped;
   }, [kanbanTasks, sortContext]);

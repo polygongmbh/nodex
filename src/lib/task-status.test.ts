@@ -31,4 +31,16 @@ describe("applyTaskStatusUpdate", () => {
 
     expect(updated.find((t) => t.id === "n1")?.status).toBe("done");
   });
+
+  it("updates lastEditedAt when status changes", () => {
+    const localTasks: Task[] = [baseTask];
+    const allTasks: Task[] = [baseTask];
+
+    const before = Date.now();
+    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "in-progress", "me");
+    const editedAt = updated.find((t) => t.id === "n1")?.lastEditedAt;
+
+    expect(editedAt).toBeDefined();
+    expect(editedAt!.getTime()).toBeGreaterThanOrEqual(before);
+  });
 });

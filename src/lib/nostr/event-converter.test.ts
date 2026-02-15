@@ -220,6 +220,7 @@ describe("nostrEventsToTasks", () => {
     const tasks = nostrEventsToTasks(events);
     expect(tasks).toHaveLength(1);
     expect(tasks[0].status).toBe("in-progress");
+    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000002 * 1000);
   });
 });
 

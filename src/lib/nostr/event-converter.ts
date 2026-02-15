@@ -111,6 +111,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     relays: [relayId],
     taskType: isTask ? "task" : "comment",
     timestamp: new Date(event.created_at * 1000),
+    lastEditedAt: new Date(event.created_at * 1000),
     likes: 0,
     replies: 0,
     reposts: 0,
@@ -190,6 +191,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       ...task,
       status: state.status,
       statusDescription: state.statusDescription,
+      lastEditedAt: new Date(state.createdAt * 1000),
     });
   }
 
