@@ -226,18 +226,18 @@ export function Sidebar({
           action={
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <RelayManagement
-                    relays={nostrRelays}
-                    onAddRelay={onAddRelay}
-                    onRemoveRelay={onRemoveRelay}
-                    trigger={
+                <RelayManagement
+                  relays={nostrRelays}
+                  onAddRelay={onAddRelay}
+                  onRemoveRelay={onRemoveRelay}
+                  trigger={
+                    <TooltipTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground">
                         <Plus className="w-3.5 h-3.5" />
                       </Button>
-                    }
-                  />
-                </TooltipTrigger>
+                    </TooltipTrigger>
+                  }
+                />
                 <TooltipContent side="right">
                   <p>Add relay</p>
                 </TooltipContent>

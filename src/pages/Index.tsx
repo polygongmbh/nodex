@@ -15,6 +15,13 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { nostrEventToTask, eventHasTags, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
+import {
+  getEffectiveActiveRelayIds,
+  loadPersistedChannelFilters,
+  loadPersistedRelayIds,
+  savePersistedChannelFilters,
+  savePersistedRelayIds,
+} from "@/lib/filter-preferences";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { mockPeople, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -79,7 +86,9 @@ const Index = () => {
     }));
   }, [ndkRelays]);
 
-  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set([DEMO_RELAY_ID]));
+  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
+    loadPersistedRelayIds([DEMO_RELAY_ID])
+  );
   const [people, setPeople] = useState<Person[]>(
     mockPeople.map((p) => ({ ...p, isSelected: false }))
   );
@@ -137,7 +146,9 @@ const Index = () => {
   }, [localTasks, filteredNostrEvents, postedTags]);
 
   // Maintain channel filter states across dynamic updates
-  const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(new Map());
+  const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
+    () => loadPersistedChannelFilters()
+  );
 
   // Merge dynamic channels with persisted filter states
   const channelsWithState: Channel[] = useMemo(() => {
@@ -174,6 +185,14 @@ const Index = () => {
       subscription?.stop();
     };
   }, [isNostrConnected, subscribe]);
+
+  useEffect(() => {
+    savePersistedRelayIds(activeRelayIds);
+  }, [activeRelayIds]);
+
+  useEffect(() => {
+    savePersistedChannelFilters(channelFilterStates);
+  }, [channelFilterStates]);
 
   const handleFocusSidebar = useCallback(() => {
     setIsSidebarFocused(true);
@@ -382,13 +401,18 @@ const Index = () => {
     }
   };
 
+  const effectiveActiveRelayIds = useMemo(
+    () => getEffectiveActiveRelayIds(activeRelayIds, relays.map((relay) => relay.id)),
+    [activeRelayIds, relays]
+  );
+
   // Build relays with active state for sidebar display
   const relaysWithActiveState: Relay[] = useMemo(() => {
     return relays.map((r) => ({
       ...r,
-      isActive: activeRelayIds.has(r.id),
+      isActive: effectiveActiveRelayIds.has(r.id),
     }));
-  }, [relays, activeRelayIds]);
+  }, [relays, effectiveActiveRelayIds]);
 
   // Check if any channel filters are active
   const hasActiveChannelFilters = channelsWithState.some(c => c.filterState !== "neutral");
@@ -396,7 +420,7 @@ const Index = () => {
   // Filter tasks based on active filters
   const filteredTasks = allTasks.filter((task) => {
     // Relay filter - if any relay is selected, task must be in one of the selected relays
-    if (activeRelayIds.size > 0 && !task.relays.some(tr => activeRelayIds.has(tr))) {
+    if (effectiveActiveRelayIds.size > 0 && !task.relays.some(tr => effectiveActiveRelayIds.has(tr))) {
       return false;
     }
 
