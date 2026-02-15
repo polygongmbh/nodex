@@ -656,6 +656,7 @@ const Index = () => {
           searchQuery={searchQuery}
           focusedTaskId={focusedTaskId}
           currentUser={currentUser}
+          isSignedIn={Boolean(user)}
           currentView={currentView}
           onViewChange={setCurrentView}
           onSearchChange={setSearchQuery}

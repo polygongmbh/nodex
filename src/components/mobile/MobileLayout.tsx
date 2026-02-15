@@ -20,6 +20,7 @@ interface MobileLayoutProps {
   searchQuery: string;
   focusedTaskId: string | null;
   currentUser?: Person;
+  isSignedIn: boolean;
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
   onSearchChange: (query: string) => void;
@@ -47,6 +48,7 @@ export function MobileLayout({
   searchQuery,
   focusedTaskId,
   currentUser,
+  isSignedIn,
   currentView,
   onViewChange,
   onSearchChange,
@@ -237,7 +239,7 @@ export function MobileLayout({
         onChannelToggle={onChannelToggle}
         onPersonToggle={onPersonToggle}
         defaultContent={defaultContent}
-        isSignedIn={Boolean(currentUser)}
+        isSignedIn={isSignedIn}
         onSignInClick={onSignInClick}
       />
     </div>
