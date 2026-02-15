@@ -35,7 +35,7 @@ describe("UserAvatar", () => {
     expect(screen.getByText("A")).toBeInTheDocument();
   });
 
-  it("uses beam fallback for legacy dicebear placeholder urls", () => {
+  it("renders image for avataaars-like paths without special casing", () => {
     setPreferredAvatarGenerator("boring");
     render(
       <UserAvatar
@@ -47,8 +47,8 @@ describe("UserAvatar", () => {
       />
     );
 
-    expect(screen.getByTestId("user-beam")).toBeInTheDocument();
-    expect(screen.getByTestId("user-beam")).toHaveAttribute("data-generator", "boring");
+    expect(screen.queryByTestId("user-beam")).not.toBeInTheDocument();
+    expect(screen.getByText("A")).toBeInTheDocument();
   });
 
   it("uses local dicebear generator when selected", () => {

@@ -18,10 +18,6 @@ interface UserAvatarProps {
 export function UserAvatar({ id, displayName, avatarUrl, className, beamTestId }: UserAvatarProps) {
   const [generator, setGenerator] = useState(() => getPreferredAvatarGenerator());
   const initial = (displayName || id || "?").charAt(0).toUpperCase();
-  const isLegacyPlaceholder = Boolean(
-    avatarUrl && avatarUrl.includes("/avataaars/")
-  );
-  const effectiveAvatarUrl = isLegacyPlaceholder ? undefined : avatarUrl;
 
   useEffect(() => {
     return subscribeAvatarGeneratorChange(() => {
@@ -31,9 +27,9 @@ export function UserAvatar({ id, displayName, avatarUrl, className, beamTestId }
 
   return (
     <Avatar className={className}>
-      {effectiveAvatarUrl ? <AvatarImage src={effectiveAvatarUrl} alt={displayName || id} /> : null}
+      {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName || id} /> : null}
       <AvatarFallback className="p-0 overflow-hidden bg-transparent text-foreground text-xs">
-        {!effectiveAvatarUrl && id ? (
+        {!avatarUrl && id ? (
           generator === "dicebear-local" ? (
             <DicebearLocalAvatar seed={id} size={64} className="w-full h-full" data-testid={beamTestId} />
           ) : (
