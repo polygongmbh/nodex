@@ -66,10 +66,7 @@ export interface NDKContextValue {
 const NDKContext = createContext<NDKContextValue | null>(null);
 
 const DEFAULT_RELAYS = [
-  "wss://relay.damus.io",
-  "wss://relay.snort.social",
   "wss://test.nostr.melonion.me",
-  "wss://nos.lol",
 ];
 
 // Storage keys
@@ -108,6 +105,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [relays, setRelays] = useState<NDKRelayStatus[]>([]);
+  const [removedRelays, setRemovedRelays] = useState<Set<string>>(new Set());
 
   // Initialize NDK
   useEffect(() => {
@@ -120,24 +118,32 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
 
     ndkInstance.pool.on("relay:connect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
-      setRelays((prev) => {
-        const existing = prev.find((r) => normalizeUrl(r.url) === normalized);
-        if (existing) {
-          return prev.map((r) =>
-            normalizeUrl(r.url) === normalized ? { ...r, url: normalized, status: "connected" } : r
-          );
-        }
-        return [...prev, { url: normalized, status: "connected" }];
+      setRemovedRelays((removed) => {
+        if (removed.has(normalized)) return removed;
+        setRelays((prev) => {
+          const existing = prev.find((r) => normalizeUrl(r.url) === normalized);
+          if (existing) {
+            return prev.map((r) =>
+              normalizeUrl(r.url) === normalized ? { ...r, url: normalized, status: "connected" } : r
+            );
+          }
+          return [...prev, { url: normalized, status: "connected" }];
+        });
+        return removed;
       });
     });
 
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
-      setRelays((prev) =>
-        prev.map((r) =>
-          normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
-        )
-      );
+      setRemovedRelays((removed) => {
+        if (removed.has(normalized)) return removed;
+        setRelays((prev) =>
+          prev.map((r) =>
+            normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
+          )
+        );
+        return removed;
+      });
     });
 
     // Initialize relay states
@@ -422,14 +428,19 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
 
   const removeRelay = useCallback((url: string) => {
     if (!ndk) return;
+
+    const normalizeUrl = (u: string) => u.replace(/\/+$/, "");
+    const normalized = normalizeUrl(url);
+
+    // Mark as intentionally removed so disconnect events don't re-add it
+    setRemovedRelays((prev) => new Set(prev).add(normalized));
+    setRelays((prev) => prev.filter((r) => normalizeUrl(r.url) !== normalized));
     
     const relay = ndk.pool.getRelay(url);
     if (relay) {
       relay.disconnect();
       ndk.pool.removeRelay(url);
     }
-    
-    setRelays((prev) => prev.filter((r) => r.url !== url));
   }, [ndk]);
 
   const publishEvent = useCallback(async (

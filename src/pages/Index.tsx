@@ -92,8 +92,9 @@ const Index = () => {
     }));
   }, [ndkRelays]);
 
+  const TEST_RELAY_ID = "test-nostr-melonion-me";
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
-    loadPersistedRelayIds([DEMO_RELAY_ID])
+    loadPersistedRelayIds([TEST_RELAY_ID])
   );
   const [people, setPeople] = useState<Person[]>(
     mockPeople.map((p) => ({ ...p, isSelected: false }))
