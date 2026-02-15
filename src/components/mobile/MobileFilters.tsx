@@ -42,6 +42,11 @@ export function MobileFilters({
   onSignInClick,
   onGuideClick,
 }: MobileFiltersProps) {
+  const truncateMobilePubkey = (value: string): string => {
+    if (value.length <= 18) return value;
+    return `${value.slice(0, 10)}…${value.slice(-6)}`;
+  };
+
   const { user, authMethod, logout, getGuestPrivateKey } = useNDK();
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [showKey, setShowKey] = useState(false);
@@ -248,27 +253,33 @@ export function MobileFilters({
             <h2 className="font-semibold text-sm">People</h2>
           </div>
           <div className="flex flex-wrap gap-2">
-            {people.map((person) => (
-              <button
-                key={person.id}
-                onClick={() => onPersonToggle(person.id)}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
-                  person.isSelected
-                    ? "bg-primary/10 border-primary text-primary"
-                    : "border-border hover:bg-muted"
-                )}
-              >
-                <UserAvatar
-                  id={person.id}
-                  displayName={person.displayName || person.name}
-                  avatarUrl={person.avatar}
-                  className="w-5 h-5"
-                />
-                {person.name}
-                {person.isSelected && <Check className="w-3 h-3" />}
-              </button>
-            ))}
+            {people.map((person) => {
+              const personLabel =
+                person.name === person.id ? truncateMobilePubkey(person.name) : person.name;
+              return (
+                <button
+                  key={person.id}
+                  onClick={() => onPersonToggle(person.id)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
+                    person.isSelected
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "border-border hover:bg-muted"
+                  )}
+                >
+                  <UserAvatar
+                    id={person.id}
+                    displayName={person.displayName || person.name}
+                    avatarUrl={person.avatar}
+                    className="w-5 h-5"
+                  />
+                  <span className="truncate max-w-[9rem]" title={person.name}>
+                    {personLabel}
+                  </span>
+                  {person.isSelected && <Check className="w-3 h-3" />}
+                </button>
+              );
+            })}
           </div>
         </section>
       </div>

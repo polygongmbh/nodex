@@ -61,6 +61,12 @@ export function FeedView({
   onHashtagClick,
   forceShowComposer = false,
 }: FeedViewProps) {
+  const truncateMobilePubkey = (value: string): string => {
+    if (!isMobile) return value;
+    if (value.length <= 18) return value;
+    return `${value.slice(0, 10)}…${value.slice(-6)}`;
+  };
+
   const { user } = useNDK();
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
@@ -255,6 +261,10 @@ export function FeedView({
               displayName: resolvedAuthor.displayName,
               username: resolvedAuthor.name,
             });
+            const primaryAuthorLabel =
+              isMobile && authorMeta.primary === resolvedAuthor.id
+                ? truncateMobilePubkey(authorMeta.primary)
+                : authorMeta.primary;
 
             return (
               <div
@@ -387,7 +397,7 @@ export function FeedView({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                       <span className="font-medium text-foreground">
-                        {authorMeta.primary}
+                        <span title={authorMeta.primary}>{primaryAuthorLabel}</span>
                         {authorMeta.secondary && (
                           <span
                             data-testid={`feed-author-secondary-${task.id}`}
