@@ -666,6 +666,8 @@ const Index = () => {
           onRelayToggle={handleRelayToggle}
           onChannelToggle={handleChannelToggle}
           onPersonToggle={handlePersonToggle}
+          onAddRelay={addRelay}
+          onRemoveRelay={removeRelay}
           onSignInClick={() => setIsAuthModalOpen(true)}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />

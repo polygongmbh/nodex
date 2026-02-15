@@ -17,7 +17,7 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
       role="tablist"
       aria-label="View position indicator"
     >
-      {/* Filters dot */}
+      {/* Management dot */}
       <div
         className={cn(
           "w-1.5 h-1.5 rounded-full transition-all duration-200",
@@ -26,7 +26,7 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
             : "bg-muted-foreground/30"
         )}
         aria-selected={showFilters}
-        aria-label="Filters"
+        aria-label="Manage"
       />
       
       {/* View dots */}

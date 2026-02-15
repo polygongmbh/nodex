@@ -30,6 +30,8 @@ interface MobileLayoutProps {
   onRelayToggle: (id: string) => void;
   onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
+  onAddRelay: (url: string) => void;
+  onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
 }
 
@@ -55,6 +57,8 @@ export function MobileLayout({
   onRelayToggle,
   onChannelToggle,
   onPersonToggle,
+  onAddRelay,
+  onRemoveRelay,
   onSignInClick,
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
@@ -175,6 +179,9 @@ export function MobileLayout({
           onRelayToggle={onRelayToggle}
           onChannelToggle={onChannelToggle}
           onPersonToggle={onPersonToggle}
+          onAddRelay={onAddRelay}
+          onRemoveRelay={onRemoveRelay}
+          onSignInClick={onSignInClick}
         />
       );
     }
