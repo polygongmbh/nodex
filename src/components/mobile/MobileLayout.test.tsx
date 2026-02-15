@@ -58,10 +58,14 @@ describe("MobileLayout auth wiring", () => {
         onAddRelay={() => {}}
         onRemoveRelay={() => {}}
         onSignInClick={onSignInClick}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /compose/i }));
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
     expect(onSignInClick).toHaveBeenCalledTimes(1);
   });

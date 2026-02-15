@@ -75,6 +75,7 @@ export function MobileLayout({
   forceComposeMode = false,
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [mobileView, setMobileView] = useState<MobileViewType>(
     isPrimaryMobileView(currentView) ? currentView : "tree"
   );
@@ -196,9 +197,9 @@ export function MobileLayout({
       case "feed":
         return <FeedView {...viewProps} isMobile />;
       case "list":
-        return <CalendarView {...viewProps} isMobile mobileView="upcoming" />;
+        return <CalendarView {...viewProps} isMobile mobileView="upcoming" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       case "calendar":
-        return <CalendarView {...viewProps} isMobile mobileView="calendar" />;
+        return <CalendarView {...viewProps} isMobile mobileView="calendar" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
         return <TaskTree {...viewProps} isMobile />;
     }
@@ -220,7 +221,7 @@ export function MobileLayout({
         {...swipeHandlers}
       >
         <div className="h-full flex flex-col">
-          {!showFilters && focusedTaskId && (
+          {!showFilters && focusedTaskId && currentView !== "list" && currentView !== "calendar" && (
             <FocusedTaskBreadcrumb
               allTasks={allTasks}
               focusedTaskId={focusedTaskId}
@@ -246,6 +247,7 @@ export function MobileLayout({
         onSubmit={onNewTask}
         currentView={currentView}
         focusedTaskId={focusedTaskId}
+        selectedCalendarDate={currentView === "calendar" ? selectedCalendarDate : null}
         relays={relays}
         channels={channels}
         people={people}

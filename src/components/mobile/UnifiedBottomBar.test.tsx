@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Person, Relay } from "@/types";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 
 const relays: Relay[] = [
   { id: "demo", name: "Demo", icon: "D", isActive: true },
@@ -177,5 +177,46 @@ describe("UnifiedBottomBar auth gating", () => {
     );
 
     expect(screen.getByText(format(new Date(), "MMM d"))).toBeInTheDocument();
+  });
+
+  it("updates due date when selected calendar date changes", () => {
+    const nextDay = addDays(new Date(), 1);
+    const { rerender } = render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => {}}
+        currentView="calendar"
+        selectedCalendarDate={new Date()}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    rerender(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => {}}
+        currentView="calendar"
+        selectedCalendarDate={nextDay}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.getByText(format(nextDay, "MMM d"))).toBeInTheDocument();
   });
 });

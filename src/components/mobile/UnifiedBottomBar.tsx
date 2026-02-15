@@ -16,6 +16,7 @@ interface UnifiedBottomBarProps {
   onSubmit: (content: string, channels: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
   currentView: ViewType;
   focusedTaskId?: string | null;
+  selectedCalendarDate?: Date | null;
   // Filter data (dual-purpose)
   relays: Relay[];
   channels: Channel[];
@@ -39,6 +40,7 @@ export function UnifiedBottomBar({
   onSubmit,
   currentView,
   focusedTaskId = null,
+  selectedCalendarDate = null,
   relays,
   channels,
   people,
@@ -69,9 +71,9 @@ export function UnifiedBottomBar({
 
   useEffect(() => {
     if (currentView === "calendar" && taskType === "task") {
-      setDueDate((previous) => previous ?? new Date());
+      setDueDate(selectedCalendarDate || new Date());
     }
-  }, [currentView, taskType]);
+  }, [currentView, taskType, selectedCalendarDate]);
 
   useEffect(() => {
     if (!canOfferComment && taskType === "comment") {

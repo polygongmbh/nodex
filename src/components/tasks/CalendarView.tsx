@@ -32,6 +32,8 @@ interface CalendarViewProps {
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
+  selectedDate?: Date | null;
+  onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
   mobileView?: "calendar" | "upcoming";
   onHashtagClick?: (tag: string) => void;
@@ -51,19 +53,22 @@ export function CalendarView({
   onStatusChange,
   focusedTaskId,
   onFocusTask,
+  selectedDate: controlledSelectedDate,
+  onSelectedDateChange,
   isMobile = false,
   mobileView,
   onHashtagClick,
 }: CalendarViewProps) {
   const { user } = useNDK();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [selectedDateInternal, setSelectedDateInternal] = useState<Date | null>(new Date());
   const [isComposingEvent, setIsComposingEvent] = useState(false);
   const [mobileTab, setMobileTab] = useState<"calendar" | "upcoming">("upcoming");
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
   const effectiveMobileTab = mobileView ?? mobileTab;
+  const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : selectedDateInternal;
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -481,7 +486,12 @@ export function CalendarView({
                 return (
                   <button
                     key={day.toISOString()}
-                    onClick={() => setSelectedDate(day)}
+                    onClick={() => {
+                      if (controlledSelectedDate === undefined) {
+                        setSelectedDateInternal(day);
+                      }
+                      onSelectedDateChange?.(day);
+                    }}
                     className={cn(
                       "bg-background transition-colors text-center flex flex-col items-center justify-center relative",
                       isMobile ? "aspect-[1/0.9] p-0.5" : "min-h-[5.5rem] xl:aspect-square p-1 text-left rounded-lg border",
