@@ -340,9 +340,9 @@ export function KanbanView({
         onFocusTask={onFocusTask}
         rightSlot={(
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-muted-foreground" />
+            <Layers className="w-4 h-4 text-foreground/70" />
             <Select value={depthMode} onValueChange={(v) => setDepthMode(v as DepthMode)}>
-              <SelectTrigger className="w-[150px] h-8 text-xs">
+              <SelectTrigger className="w-[170px] h-9 text-sm bg-background/70 border-border/70">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

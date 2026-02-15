@@ -43,7 +43,7 @@ export function FocusedTaskBreadcrumb({
   return (
     <div
       className={cn(
-        "w-full border-b border-border bg-background/95 px-4 py-2 flex items-center gap-3",
+        "w-full min-h-12 border-b border-border/80 bg-muted/60 px-4 py-2.5 flex items-center gap-3 shadow-sm",
         className
       )}
     >
@@ -53,19 +53,21 @@ export function FocusedTaskBreadcrumb({
         disabled={!focusedTaskId}
         aria-label="Up"
         className={cn(
-          "inline-flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground transition-colors",
-          focusedTaskId ? "hover:text-foreground" : "opacity-40 cursor-not-allowed"
+          "inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
+          focusedTaskId
+            ? "text-foreground/85 hover:text-foreground hover:bg-background/70"
+            : "text-muted-foreground/60 cursor-not-allowed"
         )}
       >
         <ChevronUp className="w-3.5 h-3.5" />
         <span>Up</span>
       </button>
-      <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+      <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1.5 text-sm text-foreground/80">
         <button
           onClick={() => onFocusTask?.(null)}
           className={cn(
-            "px-1 py-0.5 transition-colors hover:text-foreground",
-            path.length === 0 && "text-foreground font-medium"
+            "rounded px-1.5 py-0.5 transition-colors hover:text-foreground hover:bg-background/70",
+            path.length === 0 && "text-foreground font-semibold"
           )}
           type="button"
         >
@@ -73,12 +75,12 @@ export function FocusedTaskBreadcrumb({
         </button>
         {path.map((task, index) => (
           <span key={task.id} className="flex items-center gap-1 min-w-0">
-            <span>/</span>
+            <span className="text-foreground/50">/</span>
             <button
               onClick={() => onFocusTask?.(task.id)}
               className={cn(
-                "truncate max-w-[220px] px-1 py-0.5 transition-colors hover:text-foreground",
-                index === path.length - 1 && "text-foreground font-medium"
+                "truncate max-w-[220px] rounded px-1.5 py-0.5 transition-colors hover:text-foreground hover:bg-background/70",
+                index === path.length - 1 && "text-foreground font-semibold"
               )}
               type="button"
               title={task.content}
@@ -89,7 +91,7 @@ export function FocusedTaskBreadcrumb({
           </span>
         ))}
       </div>
-      {rightSlot && <div className="ml-auto flex items-center gap-2">{rightSlot}</div>}
+      {rightSlot && <div className="ml-auto flex items-center gap-2 text-foreground/80">{rightSlot}</div>}
     </div>
   );
 }
