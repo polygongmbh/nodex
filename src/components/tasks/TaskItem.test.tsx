@@ -26,6 +26,7 @@ const baseTask: Task = {
     name: "me",
     displayName: "Me",
     avatar: "",
+    isOnline: false,
     isSelected: false,
   },
   content: "Ship feature #frontend",
