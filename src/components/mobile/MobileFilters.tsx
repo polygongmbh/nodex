@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown } from "lucide-react";
 import { Relay, Channel, Person } from "@/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -19,7 +20,6 @@ interface MobileFiltersProps {
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
   onGuideClick: () => void;
-  onEditProfileClick?: () => void;
 }
 
 const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -42,16 +42,22 @@ export function MobileFilters({
   onRemoveRelay,
   onSignInClick,
   onGuideClick,
-  onEditProfileClick,
 }: MobileFiltersProps) {
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;
   };
 
-  const { user, authMethod, logout, getGuestPrivateKey } = useNDK();
+  const { user, authMethod, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile } = useNDK();
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [showKey, setShowKey] = useState(false);
+  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileDisplayName, setProfileDisplayName] = useState("");
+  const [profilePicture, setProfilePicture] = useState("");
+  const [profileNip05, setProfileNip05] = useState("");
+  const [profileAbout, setProfileAbout] = useState("");
 
   const displayName = useMemo(() => {
     if (!user) return "Not signed in";
@@ -70,6 +76,25 @@ export function MobileFilters({
 
   const guestPrivateKey = getGuestPrivateKey();
 
+  useEffect(() => {
+    setProfileName(user?.profile?.name || "");
+    setProfileDisplayName(user?.profile?.displayName || "");
+    setProfilePicture(user?.profile?.picture || "");
+    setProfileNip05(user?.profile?.nip05 || "");
+    setProfileAbout(user?.profile?.about || "");
+    if (user && needsProfileSetup) {
+      setIsProfileEditorOpen(true);
+    }
+  }, [
+    needsProfileSetup,
+    user?.profile?.about,
+    user?.profile?.displayName,
+    user?.profile?.name,
+    user?.profile?.nip05,
+    user?.profile?.picture,
+    user,
+  ]);
+
   const handleAddRelay = () => {
     const trimmed = newRelayUrl.trim();
     if (!trimmed) return;
@@ -81,6 +106,33 @@ export function MobileFilters({
     if (!guestPrivateKey) return;
     navigator.clipboard.writeText(guestPrivateKey);
     toast.success("Private key copied to clipboard");
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profileName.trim()) {
+      toast.error("Profile name is required");
+      return;
+    }
+    setIsSavingProfile(true);
+    try {
+      const success = await updateUserProfile({
+        name: profileName,
+        displayName: profileDisplayName || undefined,
+        picture: profilePicture || undefined,
+        nip05: profileNip05 || undefined,
+        about: profileAbout || undefined,
+      });
+      if (success) {
+        toast.success("Profile updated on connected relays");
+        if (!needsProfileSetup) {
+          setIsProfileEditorOpen(false);
+        }
+      } else {
+        toast.error("Failed to update profile. Check relay connectivity and try again.");
+      }
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   return (
@@ -123,11 +175,17 @@ export function MobileFilters({
               ) : (
                 <div className="flex items-center gap-1.5">
                   <button
-                    onClick={onEditProfileClick}
+                    onClick={() => setIsProfileEditorOpen((prev) => (needsProfileSetup ? true : !prev))}
                     className="px-3 py-1.5 rounded-md text-sm border border-border inline-flex items-center gap-1"
                   >
                     <Pencil className="w-3 h-3" />
                     Edit
+                    <ChevronDown
+                      className={cn(
+                        "w-3 h-3 transition-transform",
+                        isProfileEditorOpen && "rotate-180"
+                      )}
+                    />
                   </button>
                   <button
                     onClick={logout}
@@ -139,6 +197,75 @@ export function MobileFilters({
                 </div>
               )}
             </div>
+
+            {user && isProfileEditorOpen && (
+              <div className="space-y-2 rounded-md border border-border/70 bg-muted/20 p-2.5">
+                <div className="space-y-1">
+                  <label htmlFor="manage-profile-name" className="text-xs text-muted-foreground">Name *</label>
+                  <Input
+                    id="manage-profile-name"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="manage-profile-display-name" className="text-xs text-muted-foreground">Display name</label>
+                  <Input
+                    id="manage-profile-display-name"
+                    value={profileDisplayName}
+                    onChange={(e) => setProfileDisplayName(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="manage-profile-picture" className="text-xs text-muted-foreground">Picture URL</label>
+                  <Input
+                    id="manage-profile-picture"
+                    value={profilePicture}
+                    onChange={(e) => setProfilePicture(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="manage-profile-nip05" className="text-xs text-muted-foreground">NIP-05</label>
+                  <Input
+                    id="manage-profile-nip05"
+                    value={profileNip05}
+                    onChange={(e) => setProfileNip05(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="manage-profile-about" className="text-xs text-muted-foreground">About</label>
+                  <Textarea
+                    id="manage-profile-about"
+                    value={profileAbout}
+                    onChange={(e) => setProfileAbout(e.target.value)}
+                    rows={3}
+                    className="min-h-20"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  {!needsProfileSetup && (
+                    <button
+                      onClick={() => setIsProfileEditorOpen(false)}
+                      className="px-3 py-1.5 rounded-md text-sm border border-border"
+                      disabled={isSavingProfile}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSaveProfile}
+                    className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground"
+                    disabled={isSavingProfile}
+                  >
+                    {isSavingProfile ? "Saving..." : "Save profile"}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {authMethod === "guest" && guestPrivateKey && (
               <div className="space-y-2">
