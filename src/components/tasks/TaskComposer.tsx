@@ -21,6 +21,27 @@ interface TaskComposerProps {
   onSignInClick?: () => void;
   adaptiveSize?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
+  draftStorageKey?: string;
+}
+
+interface ComposeDraftState {
+  content?: string;
+  taskType?: TaskType;
+  dueDate?: string;
+  dueTime?: string;
+  selectedRelays?: string[];
+}
+
+function readComposeDraft(key: string): ComposeDraftState | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ComposeDraftState;
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 export function TaskComposer({ 
@@ -36,25 +57,41 @@ export function TaskComposer({
   onSignInClick,
   adaptiveSize = false,
   onExpandedChange,
+  draftStorageKey,
 }: TaskComposerProps) {
   const { user } = useNDK();
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
+  const initialDraft = draftStorageKey ? readComposeDraft(draftStorageKey) : null;
+  const initialContent = initialDraft?.content ?? defaultContent;
   
-  const [content, setContent] = useState(defaultContent);
-  const [taskType, setTaskType] = useState<TaskType>("task");
+  const [content, setContent] = useState(initialContent);
+  const [taskType, setTaskType] = useState<TaskType>(
+    initialDraft?.taskType === "comment" ? "comment" : "task"
+  );
   const [selectedRelays, setSelectedRelays] = useState<string[]>(() => {
+    if (initialDraft?.selectedRelays && Array.isArray(initialDraft.selectedRelays)) {
+      return initialDraft.selectedRelays.filter((id): id is string => typeof id === "string");
+    }
     const activeRelays = relays.filter(r => r.isActive).map(r => r.id);
     return activeRelays.length > 0 ? activeRelays : [relays[0]?.id].filter(Boolean);
   });
-  const [dueDate, setDueDate] = useState<Date | undefined>(defaultDueDate);
-  const [dueTime, setDueTime] = useState("");
+  const [dueDate, setDueDate] = useState<Date | undefined>(() => {
+    if (initialDraft?.dueDate) {
+      const parsedDate = new Date(initialDraft.dueDate);
+      if (!Number.isNaN(parsedDate.getTime())) {
+        return parsedDate;
+      }
+    }
+    return defaultDueDate;
+  });
+  const [dueTime, setDueTime] = useState(initialDraft?.dueTime || "");
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState("");
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(
-    () => !adaptiveSize || defaultContent.trim().length > 0
+    () => !adaptiveSize || initialContent.trim().length > 0
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevIncludedChannelsRef = useRef<string[]>([]);
@@ -69,6 +106,24 @@ export function TaskComposer({
   useEffect(() => {
     onExpandedChange?.(isExpanded);
   }, [isExpanded, onExpandedChange]);
+
+  useEffect(() => {
+    if (!draftStorageKey) return;
+    try {
+      localStorage.setItem(
+        draftStorageKey,
+        JSON.stringify({
+          content,
+          taskType,
+          dueDate: dueDate ? dueDate.toISOString() : undefined,
+          dueTime,
+          selectedRelays,
+        } satisfies ComposeDraftState)
+      );
+    } catch {
+      // Ignore persistence errors.
+    }
+  }, [content, taskType, dueDate, dueTime, selectedRelays, draftStorageKey]);
 
   // Keep selected publish targets aligned with currently active relay filters.
   useEffect(() => {
@@ -176,6 +231,9 @@ export function TaskComposer({
     setDueTime("");
     if (adaptiveSize && selectedChannelsContent.trim().length === 0) {
       setIsExpanded(false);
+    }
+    if (draftStorageKey) {
+      localStorage.removeItem(draftStorageKey);
     }
   };
 

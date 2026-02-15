@@ -52,6 +52,7 @@ export function FeedView({
   isMobile = false,
   onSignInClick,
 }: FeedViewProps) {
+  const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
 
@@ -214,6 +215,7 @@ export function FeedView({
             onCancel={() => {}}
             compact
             adaptiveSize
+            draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
             parentId={focusedTaskId || undefined}
             onSignInClick={onSignInClick}
             defaultContent={(() => {

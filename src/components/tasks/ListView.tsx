@@ -407,16 +407,6 @@ export function ListView({
             )}
           </div>
           <div className="flex items-center gap-3">
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Search tasks..."
-                className="w-full bg-muted/50 border border-border rounded-lg pl-9 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
             <button
               onClick={() => setIsComposing(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
@@ -582,6 +572,23 @@ export function ListView({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Bottom search dock */}
+      <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
+        <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+        <div className="px-4 py-3 flex items-center">
+          <div className="relative w-full max-w-xl mx-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search tasks..."
+              className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
+            />
+          </div>
+        </div>
       </div>
     </main>
   );

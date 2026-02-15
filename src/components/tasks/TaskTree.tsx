@@ -18,6 +18,8 @@ interface TaskTreeProps {
   onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string) => void;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
+  focusedTaskId?: string | null;
+  onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
   onSignInClick?: () => void;
@@ -35,14 +37,16 @@ export function TaskTree({
   onNewTask,
   onToggleComplete,
   onStatusChange,
+  focusedTaskId,
+  onFocusTask,
   onFocusSidebar,
   isMobile = false,
   onSignInClick,
 }: TaskTreeProps) {
-  const [contextStack, setContextStack] = useState<string[]>([]);
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
+  const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
 
-  const currentContextId = contextStack[contextStack.length - 1];
+  const currentContextId = focusedTaskId || null;
 
   // Build a map of task ID to children
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
@@ -158,13 +162,28 @@ export function TaskTree({
   }, [currentContextId, childrenMap, hasActiveFilters, allVisibleIds, sortContext, tasks]);
 
   const currentContextTask = currentContextId ? allTasks.find(t => t.id === currentContextId) : null;
+  const contextPath = useMemo(() => {
+    if (!currentContextTask) return [] as Task[];
+    const chain: Task[] = [];
+    let current: Task | undefined = currentContextTask;
+    while (current) {
+      chain.unshift(current);
+      if (!current.parentId) break;
+      current = allTasks.find((task) => task.id === current?.parentId);
+    }
+    return chain;
+  }, [currentContextTask, allTasks]);
 
   const handleSelectTask = (taskId: string) => {
-    setContextStack(prev => [...prev, taskId]);
+    onFocusTask?.(taskId);
   };
 
   const handleGoUp = () => {
-    setContextStack(prev => prev.slice(0, -1));
+    if (!currentContextTask) {
+      onFocusTask?.(null);
+      return;
+    }
+    onFocusTask?.(currentContextTask.parentId || null);
   };
 
   const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
@@ -229,12 +248,12 @@ export function TaskTree({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Header with context navigation - hidden on mobile */}
+      {/* Top composer with context controls - hidden on mobile */}
       {!isMobile && (
-        <div className="h-14 border-b border-border px-4 bg-background/95 backdrop-blur-sm flex items-center flex-shrink-0">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
-              {contextStack.length > 0 && (
+        <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
+          <div className="flex items-center justify-end w-full mb-3">
+            <div className="flex items-center gap-2 mr-auto">
+              {currentContextId && (
                 <button
                   onClick={handleGoUp}
                   className="flex items-center gap-1 px-2 py-1 text-sm rounded-md hover:bg-muted transition-colors"
@@ -243,28 +262,46 @@ export function TaskTree({
                   Up
                 </button>
               )}
-              <h2 className="text-lg font-semibold">
-                {currentContextTask ? currentContextTask.content : "All Tasks"}
-              </h2>
             </div>
           </div>
+          <TaskComposer
+            onSubmit={handleNewTask}
+            relays={relays}
+            channels={channels}
+            people={people}
+            onCancel={() => setIsComposerExpanded(false)}
+            compact
+            adaptiveSize
+            draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
+            onExpandedChange={setIsComposerExpanded}
+            parentId={currentContextId}
+            onSignInClick={onSignInClick}
+            defaultContent={(() => {
+              const prefillChannels = new Set<string>();
+              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
+              if (currentContextTask) {
+                currentContextTask.tags.forEach(t => prefillChannels.add(t));
+              }
+              if (prefillChannels.size === 0) return "";
+              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
+            })()}
+          />
         </div>
       )}
 
-      {/* Breadcrumb - shown below header when in context */}
-      {!isMobile && contextStack.length > 0 && (
+      {/* Breadcrumb - shown below composer when in context */}
+      {!isMobile && currentContextId && (
         <div className="px-4 py-2 border-b border-border bg-muted/30 flex-shrink-0">
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <button onClick={() => setContextStack([])} className="hover:text-foreground">
+            <button onClick={() => onFocusTask?.(null)} className="hover:text-foreground">
               All Tasks
             </button>
-            {contextStack.map((id, index) => {
-              const task = allTasks.find(t => t.id === id);
+            {contextPath.map((task, index) => {
               return (
-                <span key={id} className="flex items-center gap-1">
+                <span key={task.id} className="flex items-center gap-1">
                   <span>/</span>
                   <button 
-                    onClick={() => setContextStack(prev => prev.slice(0, index + 1))}
+                    onClick={() => onFocusTask?.(task.id)}
                     className="hover:text-foreground truncate max-w-[150px]"
                   >
                     {task?.content.slice(0, 30)}...
@@ -310,37 +347,12 @@ export function TaskTree({
         )}
       </div>
 
-      {/* Bottom compose/search dock - hidden on mobile */}
+      {/* Bottom search dock - hidden on mobile */}
       {!isMobile && (
         <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
-          <div className="px-4 pt-3 pb-2">
-            <div className="w-full max-w-xl mx-auto">
-              <TaskComposer
-                onSubmit={handleNewTask}
-                relays={relays}
-                channels={channels}
-                people={people}
-                onCancel={() => setIsComposerExpanded(false)}
-                compact
-                adaptiveSize
-                onExpandedChange={setIsComposerExpanded}
-                parentId={currentContextId}
-                onSignInClick={onSignInClick}
-                defaultContent={(() => {
-                  const prefillChannels = new Set<string>();
-                  channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-                  if (currentContextTask) {
-                    currentContextTask.tags.forEach(t => prefillChannels.add(t));
-                  }
-                  if (prefillChannels.size === 0) return "";
-                  return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-                })()}
-              />
-            </div>
-          </div>
           {/* Gradient fade overlay */}
           <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-          <div className="px-4 pb-3 flex items-center">
+          <div className="px-4 py-3 flex items-center">
             <div className="relative w-full max-w-xl mx-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input

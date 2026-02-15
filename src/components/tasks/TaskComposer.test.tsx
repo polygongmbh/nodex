@@ -74,4 +74,28 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.getByText("Set due date (optional)")).toBeInTheDocument();
   });
+
+  it("restores draft content from shared storage key", () => {
+    localStorage.setItem(
+      "nodex.compose-draft.shared",
+      JSON.stringify({
+        content: "#persisted hello",
+        taskType: "comment",
+      })
+    );
+
+    render(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        draftStorageKey="nodex.compose-draft.shared"
+      />
+    );
+
+    expect(screen.getByDisplayValue("#persisted hello")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/add a comment/i)).toBeInTheDocument();
+  });
 });

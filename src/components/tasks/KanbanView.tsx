@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Leaf } from "lucide-react";
+import { Search, Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Leaf } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Task, Relay, Channel, Person, TaskStatus } from "@/types";
 import { TaskComposer } from "./TaskComposer";
@@ -355,15 +355,6 @@ export function KanbanView({
                 </SelectContent>
               </Select>
             </div>
-            <div className="relative w-64">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Search tasks..."
-                className="w-full bg-muted/50 border border-border rounded-lg pl-3 pr-4 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
           </div>
         </div>
         {focusedTask && (
@@ -548,6 +539,23 @@ export function KanbanView({
             ))}
           </div>
         </DragDropContext>
+      </div>
+
+      {/* Bottom search dock */}
+      <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
+        <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+        <div className="px-4 py-3 flex items-center">
+          <div className="relative w-full max-w-xl mx-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search tasks..."
+              className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
+            />
+          </div>
+        </div>
       </div>
     </main>
   );
