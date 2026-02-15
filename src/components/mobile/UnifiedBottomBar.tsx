@@ -159,6 +159,14 @@ export function UnifiedBottomBar({
     setActiveSelector(null);
   };
 
+  const handleModeChange = (nextMode: BarMode) => {
+    if (nextMode === "compose" && !isSignedIn) {
+      onSignInClick();
+      return;
+    }
+    setMode(nextMode);
+  };
+
   const toggleSelector = (type: SelectorType) => {
     setActiveSelector(activeSelector === type ? null : type);
   };
@@ -243,7 +251,8 @@ export function UnifiedBottomBar({
         {/* Mode Toggle */}
         <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg">
           <button
-            onClick={() => setMode("search")}
+            onClick={() => handleModeChange("search")}
+            aria-label="Search"
             className={cn(
               "p-2 rounded-md transition-colors",
               mode === "search" ? "bg-background shadow-sm" : "text-muted-foreground"
@@ -252,7 +261,8 @@ export function UnifiedBottomBar({
             <Search className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setMode("compose")}
+            onClick={() => handleModeChange("compose")}
+            aria-label="Compose"
             className={cn(
               "p-2 rounded-md transition-colors",
               mode === "compose" ? "bg-background shadow-sm" : "text-muted-foreground"
