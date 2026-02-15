@@ -106,12 +106,18 @@ const mobileStepsBySection: StepMap = {
   ],
   filters: [
     {
-      id: "mobile-filters",
-      title: "Mobile filters",
+      id: "mobile-filters-open",
+      title: "Open Manage",
+      description: "Tap Manage in the top navigation to open relay, channel, and people filters.",
+      target: '[aria-label="Switch to Manage view"]',
+      requiredAction: "click-target",
+      actionPrompt: "Tap Manage to continue.",
+    },
+    {
+      id: "mobile-filters-use",
+      title: "Use filters",
       description: "In Manage, tap feed chips to select relays, channel chips to cycle neutral → include → exclude, and people chips to toggle people filters.",
       target: '[data-onboarding="mobile-filters"]',
-      requiredAction: "click-target",
-      actionPrompt: "Tap any filter control to continue.",
     },
   ],
   compose: [
