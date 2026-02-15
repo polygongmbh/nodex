@@ -99,4 +99,18 @@ describe("TaskItem status actions", () => {
     expect(onStatusChange).not.toHaveBeenCalled();
     expect(onToggleComplete).not.toHaveBeenCalled();
   });
+
+  it("applies shared hover and hashtag style classes", () => {
+    render(
+      <TaskItem
+        task={baseTask}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+      />
+    );
+
+    expect(screen.getByText("Ship feature")).toHaveClass("task-hover-text");
+    expect(screen.getByRole("button", { name: "Filter to #frontend" })).toHaveClass("task-hashtag-chip");
+  });
 });
