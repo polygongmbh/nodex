@@ -6,8 +6,6 @@ import type { Task } from "@/types";
 
 vi.mock("@/hooks/use-nostr-profiles", () => ({
   useNostrProfile: () => ({ profile: null }),
-  getDefaultAvatarUrl: () => "",
-  getDefaultDisplayName: () => "",
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({

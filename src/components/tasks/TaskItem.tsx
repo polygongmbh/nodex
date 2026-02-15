@@ -3,10 +3,10 @@ import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Mo
 import { cn } from "@/lib/utils";
 import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { linkifyContent } from "@/lib/linkify";
 import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
-import { useNostrProfile, getDefaultAvatarUrl, getDefaultDisplayName } from "@/hooks/use-nostr-profiles";
+import { useNostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import {
@@ -76,7 +76,7 @@ export function TaskItem({
   
   // Use Nostr profile if available, fallback to task author
   const authorName = nostrProfile?.displayName || nostrProfile?.name || task.author.displayName;
-  const authorAvatar = nostrProfile?.picture || task.author.avatar || getDefaultAvatarUrl(task.author.id);
+  const authorAvatar = nostrProfile?.picture || task.author.avatar;
   const authorNip05 = nostrProfile?.nip05;
 
   // Reset fold state when filters change
@@ -303,14 +303,13 @@ export function TaskItem({
 
         {/* Avatar - only show for comments */}
         {isComment && (
-          <Avatar className="w-6 h-6 flex-shrink-0">
-            {authorAvatar ? (
-              <AvatarImage src={authorAvatar} alt={authorName} />
-            ) : null}
-            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/30 text-foreground text-xs">
-              {authorName.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            id={task.author.id}
+            displayName={authorName}
+            avatarUrl={authorAvatar}
+            className="w-6 h-6 flex-shrink-0"
+            beamTestId={`task-item-beam-${task.id}`}
+          />
         )}
 
         {/* Content */}

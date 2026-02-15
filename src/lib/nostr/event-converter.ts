@@ -39,11 +39,6 @@ export function getRelayNameFromUrl(url: string): string {
     .split(".")[0];
 }
 
-// Generate a deterministic avatar from pubkey
-function getAvatarFromPubkey(pubkey: string): string {
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${pubkey.slice(0, 8)}`;
-}
-
 // Generate a display name from pubkey
 function getDisplayNameFromPubkey(pubkey: string): string {
   return `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`;
@@ -65,7 +60,6 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     id: event.pubkey,
     name: event.pubkey.slice(0, 8),
     displayName: getDisplayNameFromPubkey(event.pubkey),
-    avatar: getAvatarFromPubkey(event.pubkey),
     isOnline: true,
     isSelected: false,
   };

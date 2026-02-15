@@ -39,6 +39,12 @@ export function BeamAvatar({ seed, size = 32, className, "data-testid": dataTest
       y2: 18 + ((hash >> 16) % 16),
       r2: 6 + ((hash >> 20) % 8),
       angle: (hash % 360).toString(),
+      eyeY: 24 + ((hash >> 3) % 6),
+      eyeGap: 8 + ((hash >> 9) % 4),
+      eyeR: 2 + ((hash >> 13) % 2),
+      mouthW: 18 + ((hash >> 15) % 10),
+      mouthY: 38 + ((hash >> 19) % 5),
+      mouthArc: 6 + ((hash >> 23) % 5),
     };
   }, [normalizedSeed]);
 
@@ -69,6 +75,16 @@ export function BeamAvatar({ seed, size = 32, className, "data-testid": dataTest
           fill={avatar.shapeC}
           opacity="0.75"
           transform={`rotate(${avatar.angle} 32 32)`}
+        />
+        <circle cx={32 - avatar.eyeGap} cy={avatar.eyeY} r={avatar.eyeR} fill="#1f2937" opacity="0.8" />
+        <circle cx={32 + avatar.eyeGap} cy={avatar.eyeY} r={avatar.eyeR} fill="#1f2937" opacity="0.8" />
+        <path
+          d={`M ${32 - avatar.mouthW / 2} ${avatar.mouthY} Q 32 ${avatar.mouthY + avatar.mouthArc} ${32 + avatar.mouthW / 2} ${avatar.mouthY}`}
+          stroke="#1f2937"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          fill="none"
+          opacity="0.7"
         />
       </g>
     </svg>

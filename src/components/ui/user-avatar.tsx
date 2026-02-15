@@ -11,12 +11,17 @@ interface UserAvatarProps {
 
 export function UserAvatar({ id, displayName, avatarUrl, className, beamTestId }: UserAvatarProps) {
   const initial = (displayName || id || "?").charAt(0).toUpperCase();
+  const isLegacyPlaceholder = Boolean(
+    avatarUrl &&
+      (avatarUrl.includes("api.dicebear.com") || avatarUrl.includes("/avataaars/"))
+  );
+  const effectiveAvatarUrl = isLegacyPlaceholder ? undefined : avatarUrl;
 
   return (
     <Avatar className={className}>
-      {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName || id} /> : null}
+      {effectiveAvatarUrl ? <AvatarImage src={effectiveAvatarUrl} alt={displayName || id} /> : null}
       <AvatarFallback className="p-0 overflow-hidden bg-transparent text-foreground text-xs">
-        {!avatarUrl && id ? (
+        {!effectiveAvatarUrl && id ? (
           <BeamAvatar seed={id} size={64} className="w-full h-full" data-testid={beamTestId} />
         ) : (
           <span>{initial}</span>

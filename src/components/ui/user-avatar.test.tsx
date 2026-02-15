@@ -30,4 +30,18 @@ describe("UserAvatar", () => {
     expect(screen.queryByTestId("user-beam")).not.toBeInTheDocument();
     expect(screen.getByText("A")).toBeInTheDocument();
   });
+
+  it("uses beam fallback for legacy dicebear placeholder urls", () => {
+    render(
+      <UserAvatar
+        id="pubkey-abc"
+        displayName="Alice"
+        avatarUrl="https://api.dicebear.com/7.x/avataaars/svg?seed=Alice"
+        className="w-8 h-8"
+        beamTestId="user-beam"
+      />
+    );
+
+    expect(screen.getByTestId("user-beam")).toBeInTheDocument();
+  });
 });

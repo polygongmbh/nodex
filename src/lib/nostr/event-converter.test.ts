@@ -101,11 +101,10 @@ describe("nostrEventToTask", () => {
     expect(task.status).toBe("in-progress");
   });
 
-  it("generates avatar from pubkey", () => {
+  it("does not force a placeholder avatar url", () => {
     const task = nostrEventToTask(baseEvent);
-    
-    expect(task.author.avatar).toContain("dicebear");
-    expect(task.author.avatar).toContain(baseEvent.pubkey.slice(0, 8));
+
+    expect(task.author.avatar).toBeUndefined();
   });
 
   it("generates display name from pubkey", () => {
