@@ -14,6 +14,6 @@ describe("SidebarHeader", () => {
     render(<SidebarHeader />);
 
     const brandLink = screen.getByRole("link", { name: "Nodex" });
-    expect(brandLink).toHaveAttribute("title", expect.stringMatching(/^Nodex v\d+\.\d+\.\d+$/));
+    expect(brandLink).toHaveAttribute("title", "Nodex v1.0.0");
   });
 });

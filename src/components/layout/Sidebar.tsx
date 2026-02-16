@@ -8,6 +8,7 @@ import { SidebarSection } from "./sidebar/SidebarSection";
 import { RelayManagement } from "@/components/relay/RelayManagement";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/app-version";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -21,7 +22,7 @@ interface SidebarHeaderProps {
 }
 
 export function SidebarHeader({ className }: SidebarHeaderProps) {
-  const appVersionHint = `Nodex v${import.meta.env.PACKAGE_VERSION || "0.0.0"}`;
+  const appVersionHint = `Nodex v${APP_VERSION || "0.0.0"}`;
 
   return (
     <div className={cn("px-2 sm:px-3 lg:px-4 border-b border-sidebar-border flex items-center flex-shrink-0", className)}>
@@ -315,65 +316,80 @@ export function Sidebar({
         </div>
       </nav>
 
-      {/* Footer: Connection Status + Keyboard Shortcuts */}
-      <div className="border-t border-sidebar-border flex-shrink-0">
-        <RelayManagement
-          relays={nostrRelays}
-          onAddRelay={onAddRelay}
-          onRemoveRelay={onRemoveRelay}
-          trigger={
-            <button
-              className="w-full h-10 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
-              aria-label={isConnected ? `Relay status: ${connectedCount} connected` : "Relay status: disconnected"}
-              title={isConnected ? "Manage relay connections and status" : "No connected relays. Open relay management"}
-            >
-              <div className={cn(
-                "w-2 h-2 rounded-full flex-shrink-0",
-                isConnected ? "bg-success animate-pulse" : "bg-muted-foreground"
-              )} aria-hidden="true" />
-              <span className="flex items-center gap-1.5 truncate">
-                {isConnected ? (
-                  <>
-                    <Wifi className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="truncate">{connectedCount} relay{connectedCount !== 1 ? "s" : ""}</span>
-                  </>
-                ) : (
-                  <>
-                    <WifiOff className="w-3.5 h-3.5 flex-shrink-0" />
-                    Disconnected
-                  </>
-                )}
-              </span>
-            </button>
-          }
-        />
-        {(onShortcutsClick || onGuideClick) && (
-          <div className="grid grid-cols-2">
+      {/* Footer: compact utility controls */}
+      <div className="border-t border-sidebar-border flex-shrink-0 px-2 py-1.5">
+        <TooltipProvider>
+          <div className="flex items-center justify-start gap-1">
+            <Tooltip>
+              <RelayManagement
+                relays={nostrRelays}
+                onAddRelay={onAddRelay}
+                onRemoveRelay={onRemoveRelay}
+                trigger={
+                  <TooltipTrigger asChild>
+                    <button
+                      className="relative h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors inline-flex items-center justify-center"
+                      aria-label={isConnected ? `Relay status: ${connectedCount} connected` : "Relay status: disconnected"}
+                      title={isConnected ? "Manage relays" : "Manage relays (currently disconnected)"}
+                    >
+                      {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+                      <span
+                        className={cn(
+                          "absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full",
+                          isConnected ? "bg-success" : "bg-muted-foreground",
+                        )}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </TooltipTrigger>
+                }
+              />
+              <TooltipContent side="top">
+                <p>
+                  {isConnected
+                    ? `Relay management (${connectedCount} connected)`
+                    : "Relay management (disconnected)"}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+
             {onShortcutsClick && (
-              <button
-                onClick={onShortcutsClick}
-                className="h-9 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors border-r border-border/60"
-                title="Keyboard shortcuts (?)"
-                aria-label="Open keyboard shortcuts help"
-              >
-                <Keyboard className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="truncate">Shortcuts</span>
-                <kbd className="ml-auto text-[10px] font-mono bg-muted/50 border border-border rounded px-1">?</kbd>
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onShortcutsClick}
+                    className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors inline-flex items-center justify-center"
+                    aria-label="Open keyboard shortcuts help"
+                    title="Keyboard shortcuts (?)"
+                  >
+                    <Keyboard className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>Keyboard shortcuts (?)</p>
+                </TooltipContent>
+              </Tooltip>
             )}
+
             {onGuideClick && (
-              <button
-                onClick={onGuideClick}
-                className="h-9 px-3 flex items-center gap-2 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
-                title="Open onboarding guide"
-                aria-label="Open onboarding guide"
-              >
-                <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="truncate">Guide</span>
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onGuideClick}
+                    className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors inline-flex items-center justify-center"
+                    aria-label="Open onboarding guide"
+                    title="Open onboarding guide"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>Guide</p>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
-        )}
+        </TooltipProvider>
       </div>
     </aside>
   );

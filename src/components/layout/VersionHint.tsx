@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/app-version";
 
 interface VersionHintProps {
   className?: string;
 }
 
 export function VersionHint({ className }: VersionHintProps) {
-  const version = import.meta.env.PACKAGE_VERSION || "0.0.0";
+  const version = APP_VERSION || "0.0.0";
 
   return (
     <span
