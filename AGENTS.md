@@ -96,9 +96,12 @@ structure:
 
 ## Changelog Discipline
 - Keep `CHANGELOG.md` continuously updated.
-- For each user-visible behavior change, add or update a changelog entry in the same change set.
+- Keep a top `## [Unreleased]` section and add new entries there until a release is cut.
+- For each notable user-visible behavior change, add or update a changelog entry in the same change set.
+- Do not add changelog entries for minor/internal-only changes (for example refactors, test-only updates, or small technical guardrail changes) unless the user explicitly asks.
 - One changelog entry may summarize multiple closely related commits, but it must stay concrete about user-facing effects.
 - Use semantic version sections (`MAJOR.MINOR.PATCH`) and dates in ISO format (`YYYY-MM-DD`).
+- On release, move grouped entries from `Unreleased` into the new versioned section.
 
 ## Startup Repo Check
 - At the start of work, check `git status --short`.
