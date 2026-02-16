@@ -23,7 +23,7 @@ export function SidebarSection({
   children,
 }: SidebarSectionProps) {
   return (
-    <div className="mb-2">
+    <div className="mb-3">
       <div className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-sidebar-accent/50 transition-colors group">
         <div className="flex items-center gap-2.5">
           <button
@@ -71,10 +71,10 @@ export function SidebarSection({
       <div
         className={cn(
           "overflow-hidden transition-all duration-200",
-          isExpanded ? "max-h-[500px]" : "max-h-0"
+          isExpanded ? "max-h-[2000px]" : "max-h-0"
         )}
       >
-        <div className="py-0.5">
+        <div className="py-0">
           {children}
         </div>
       </div>

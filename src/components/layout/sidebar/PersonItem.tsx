@@ -16,7 +16,7 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
     <div
       data-sidebar-item={`person-${person.id}`}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-2 pl-7 transition-all group hover:bg-sidebar-accent/50",
+        "w-full flex items-center gap-3 px-3 py-1.5 pl-7 transition-all group hover:bg-sidebar-accent/50",
         person.isSelected && "bg-sidebar-accent/80 border-l-2 border-l-primary pl-[1.625rem]",
         isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent"
       )}

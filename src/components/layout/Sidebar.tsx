@@ -224,7 +224,7 @@ export function Sidebar({
       )}
     >
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto scrollbar-thin py-2">
+      <nav className="flex-1 overflow-y-auto scrollbar-thin py-1.5 pb-3">
         {/* Feeds/Relays */}
         <div data-onboarding="relays-section">
         <SidebarSection

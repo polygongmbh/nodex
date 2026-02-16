@@ -23,7 +23,7 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
     <div
       data-sidebar-item={`relay-${relay.id}`}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-2 pl-7 transition-all group hover:bg-sidebar-accent/50",
+        "w-full flex items-center gap-3 px-3 py-1.5 pl-7 transition-all group hover:bg-sidebar-accent/50",
         relay.isActive && "bg-sidebar-accent",
         isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent"
       )}
