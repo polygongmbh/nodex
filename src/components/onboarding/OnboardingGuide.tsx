@@ -99,7 +99,7 @@ export function OnboardingGuide({
     return best;
   }, []);
 
-  const isTargetVisible = (selector: string): boolean => {
+  const isTargetVisible = useCallback((selector: string): boolean => {
     const target = getBestVisibleTarget(selector);
     if (!target) return false;
     const rect = target.getBoundingClientRect();
@@ -107,7 +107,7 @@ export function OnboardingGuide({
     const style = window.getComputedStyle(target);
     if (style.display === "none" || style.visibility === "hidden") return false;
     return true;
-  };
+  }, [getBestVisibleTarget]);
 
   const allSteps = useMemo(() => getOnboardingAllSteps(stepsBySection), [stepsBySection]);
 
@@ -321,7 +321,7 @@ export function OnboardingGuide({
       window.clearInterval(interval);
       cleanupAdvance?.();
     };
-  }, [activeSection, activeSteps, advanceStep, interactionSatisfied, isOpen, stepIndex, uiContextKey]);
+  }, [activeSection, activeSteps, advanceStep, interactionSatisfied, isOpen, isTargetVisible, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
