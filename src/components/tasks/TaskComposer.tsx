@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Hash, Calendar, Clock, X, ChevronDown, Zap } from "lucide-react";
+import { Hash, Calendar, Clock, X, ChevronDown, Zap, AtSign, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -93,7 +93,9 @@ export function TaskComposer({
   });
   const [dueTime, setDueTime] = useState(initialDraft?.dueTime || "");
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState("");
+  const [mentionFilter, setMentionFilter] = useState("");
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -285,6 +287,26 @@ export function TaskComposer({
   };
 
   const filteredChannels = channels.filter(channel => channel.name.toLowerCase().includes(hashtagFilter));
+  const mentionHandleForPerson = (person: Person) => {
+    const candidates = [person.name, person.displayName, person.id];
+    for (const candidate of candidates) {
+      const trimmed = (candidate || "").trim();
+      if (!trimmed) continue;
+      if (/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+        return trimmed;
+      }
+    }
+    return person.id;
+  };
+  const filteredPeople = people.filter((person) => {
+    const query = mentionFilter.trim().toLowerCase();
+    if (!query) return true;
+    const handle = mentionHandleForPerson(person).toLowerCase();
+    const name = person.name.toLowerCase();
+    const displayName = person.displayName.toLowerCase();
+    const id = person.id.toLowerCase();
+    return handle.includes(query) || name.includes(query) || displayName.includes(query) || id.includes(query);
+  }).slice(0, 8);
   const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
   const submitBlockedReason = !user
     ? "Sign in to post"
@@ -326,6 +348,35 @@ export function TaskComposer({
         return;
       }
     }
+    if (showMentionSuggestions && filteredPeople.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveSuggestionIndex((prev) => (prev + 1) % filteredPeople.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveSuggestionIndex((prev) => (prev - 1 + filteredPeople.length) % filteredPeople.length);
+        return;
+      }
+      if (
+        e.key === "Tab" ||
+        (e.key === "Enter" && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey)
+      ) {
+        e.preventDefault();
+        const selected = filteredPeople[Math.max(activeSuggestionIndex, 0)] || filteredPeople[0];
+        if (selected) {
+          insertMention(mentionHandleForPerson(selected));
+        }
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowMentionSuggestions(false);
+        setActiveSuggestionIndex(0);
+        return;
+      }
+    }
 
     if (e.key === "Enter" && e.altKey) {
       e.preventDefault();
@@ -357,13 +408,21 @@ export function TaskComposer({
 
     const textBeforeCursor = newContent.slice(0, cursorPos);
     const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
+    const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
 
     if (hashtagMatch) {
       setHashtagFilter(hashtagMatch[1].toLowerCase());
       setShowHashtagSuggestions(true);
+      setShowMentionSuggestions(false);
+      setActiveSuggestionIndex(0);
+    } else if (mentionMatch) {
+      setMentionFilter((mentionMatch[1] || "").toLowerCase());
+      setShowMentionSuggestions(true);
+      setShowHashtagSuggestions(false);
       setActiveSuggestionIndex(0);
     } else {
       setShowHashtagSuggestions(false);
+      setShowMentionSuggestions(false);
       setActiveSuggestionIndex(0);
     }
   };
@@ -377,6 +436,23 @@ export function TaskComposer({
     if (adaptiveSize && !isExpanded) {
       setIsExpanded(true);
     }
+    setShowHashtagSuggestions(false);
+    setShowMentionSuggestions(false);
+    setActiveSuggestionIndex(0);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const insertMention = (mentionToken: string) => {
+    const textBeforeCursor = content.slice(0, cursorPosition);
+    const textAfterCursor = content.slice(cursorPosition);
+    const mentionStart = textBeforeCursor.lastIndexOf("@");
+    if (mentionStart < 0) return;
+    const newContent = textBeforeCursor.slice(0, mentionStart) + `@${mentionToken} ` + textAfterCursor;
+    setContent(newContent);
+    if (adaptiveSize && !isExpanded) {
+      setIsExpanded(true);
+    }
+    setShowMentionSuggestions(false);
     setShowHashtagSuggestions(false);
     setActiveSuggestionIndex(0);
     setTimeout(() => textareaRef.current?.focus(), 0);
@@ -417,7 +493,7 @@ export function TaskComposer({
 
         {/* Channel suggestions */}
         {showHashtagSuggestions && filteredChannels.length > 0 && (
-          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-50 w-48 py-1">
+          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[110] w-48 py-1">
             {filteredChannels.map((channel) => (
               <button
                 key={channel.id}
@@ -439,6 +515,40 @@ export function TaskComposer({
                 <span className="text-sm">{channel.name}</span>
               </button>
             ))}
+          </div>
+        )}
+        {showMentionSuggestions && filteredPeople.length > 0 && (
+          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[110] w-64 py-1">
+            {filteredPeople.map((person) => {
+              const handle = mentionHandleForPerson(person);
+              const isActive = filteredPeople[activeSuggestionIndex]?.id === person.id;
+              return (
+                <button
+                  key={person.id}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    insertMention(handle);
+                  }}
+                  onMouseEnter={() => {
+                    const index = filteredPeople.findIndex((p) => p.id === person.id);
+                    setActiveSuggestionIndex(index >= 0 ? index : 0);
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-3 py-2 text-left",
+                    isActive ? "bg-muted" : "hover:bg-muted"
+                  )}
+                >
+                  {person.avatar ? (
+                    <img src={person.avatar} alt={person.displayName} className="w-4 h-4 rounded-full" />
+                  ) : (
+                    <User className="w-4 h-4 text-primary" />
+                  )}
+                  <span className="text-sm">@{handle}</span>
+                  <span className="text-xs text-muted-foreground truncate">({person.displayName})</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -527,6 +637,29 @@ export function TaskComposer({
             title="Insert hashtag and open channel suggestions"
           >
             <Hash className="w-4 h-4 text-primary" />
+          </button>
+          <button
+            onClick={() => {
+              const cursorPos = textareaRef.current?.selectionStart || content.length;
+              const newContent = content.slice(0, cursorPos) + "@" + content.slice(cursorPos);
+              setContent(newContent);
+              setCursorPosition(cursorPos + 1);
+              setTimeout(() => {
+                if (textareaRef.current) {
+                  textareaRef.current.focus();
+                  textareaRef.current.setSelectionRange(cursorPos + 1, cursorPos + 1);
+                  setShowMentionSuggestions(true);
+                  setShowHashtagSuggestions(false);
+                  setMentionFilter("");
+                  setActiveSuggestionIndex(0);
+                }
+              }, 10);
+            }}
+            className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+            aria-label="Insert mention"
+            title="Insert @mention and open people suggestions"
+          >
+            <AtSign className="w-4 h-4 text-primary" />
           </button>
         </div>
 

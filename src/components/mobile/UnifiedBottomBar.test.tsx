@@ -13,7 +13,16 @@ const channels: Channel[] = [
   { id: "general", name: "general", filterState: "neutral" },
 ];
 
-const people: Person[] = [];
+const people: Person[] = [
+  {
+    id: "e".repeat(64),
+    name: "alice",
+    displayName: "Alice",
+    avatar: "",
+    isOnline: true,
+    isSelected: false,
+  },
+];
 
 describe("UnifiedBottomBar auth gating", () => {
   it("opens sign-in when create is tapped while signed out", () => {
@@ -359,5 +368,35 @@ describe("UnifiedBottomBar auth gating", () => {
 
     expect(toggleCalls).toEqual(["general", "general", "general"]);
     expect(toggleCalls).not.toContain("ops");
+  });
+
+  it("supports @mention autocomplete in the combined search/compose field", () => {
+    const onSearchChange = vi.fn();
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={onSearchChange}
+        onSubmit={() => {}}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "ping @al", selectionStart: 8 } });
+
+    expect(screen.getByText("@alice")).toBeInTheDocument();
+
+    fireEvent.keyDown(field, { key: "Enter" });
+
+    expect(field.value).toBe("ping @alice ");
+    expect(onSearchChange).toHaveBeenLastCalledWith("ping @alice ");
   });
 });

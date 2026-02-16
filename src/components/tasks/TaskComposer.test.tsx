@@ -27,7 +27,16 @@ const channels: Channel[] = [
   { id: "design", name: "design", filterState: "neutral" },
 ];
 
-const people: Person[] = [];
+const people: Person[] = [
+  {
+    id: "f".repeat(64),
+    name: "alice",
+    displayName: "Alice",
+    avatar: "",
+    isOnline: true,
+    isSelected: false,
+  },
+];
 
 describe("TaskComposer hashtag autocomplete", () => {
   it("supports keyboard selection with Enter", () => {
@@ -157,5 +166,29 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined
       );
     });
+  });
+
+  it("supports @mention autocomplete via keyboard selection", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+
+    fireEvent.change(textarea, {
+      target: { value: "Need input from @al", selectionStart: 19 },
+    });
+
+    expect(screen.getByText("@alice")).toBeInTheDocument();
+
+    fireEvent.keyDown(textarea, { key: "Enter" });
+
+    expect(textarea.value).toBe("Need input from @alice ");
   });
 });
