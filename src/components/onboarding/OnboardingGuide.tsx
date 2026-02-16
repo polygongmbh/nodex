@@ -786,7 +786,7 @@ export function OnboardingGuide({
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[130] pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-2.5 shadow-lg max-w-2xl w-[calc(100vw-2rem)]">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm text-muted-foreground">
-                    Choose an interface area, then click a highlighted region to start guidance.
+                    Pick one highlighted area to begin its guide.
                   </p>
                   <Button variant="ghost" onClick={onClose}>Close</Button>
                 </div>
@@ -797,7 +797,7 @@ export function OnboardingGuide({
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[131] pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-2.5 shadow-lg w-[calc(100vw-1rem)]">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-muted-foreground">
-                  Choose an interface area, then tap a highlighted region to start guidance.
+                  Pick one highlighted area to begin its guide.
                 </p>
                 <Button variant="ghost" onClick={onClose}>Close</Button>
               </div>
