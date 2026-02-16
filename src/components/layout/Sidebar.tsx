@@ -21,6 +21,8 @@ interface SidebarHeaderProps {
 }
 
 export function SidebarHeader({ className }: SidebarHeaderProps) {
+  const appVersionHint = `Nodex v${import.meta.env.PACKAGE_VERSION || "0.0.0"}`;
+
   return (
     <div className={cn("px-2 sm:px-3 lg:px-4 border-b border-sidebar-border flex items-center flex-shrink-0", className)}>
       <div className="flex items-center gap-2 lg:gap-3">
@@ -28,7 +30,14 @@ export function SidebarHeader({ className }: SidebarHeaderProps) {
           <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 xl:w-5 xl:h-5 text-primary" />
         </div>
         <div className="min-w-0">
-          <h1 className="font-heading font-semibold text-foreground truncate text-xs sm:text-sm xl:text-lg">Nodex</h1>
+          <a
+            href="/"
+            title={appVersionHint}
+            aria-label="Nodex"
+            className="inline-flex items-center font-heading font-semibold text-foreground truncate text-xs sm:text-sm xl:text-lg hover:text-primary transition-colors"
+          >
+            Nodex
+          </a>
           <p className="text-xs text-muted-foreground truncate hidden lg:block">Collaboration Platform</p>
         </div>
       </div>
