@@ -312,20 +312,21 @@ export function Sidebar({
         </div>
       </nav>
 
-      {/* Footer: compact utility controls */}
-      <div className="border-t border-sidebar-border flex-shrink-0 px-2 py-1.5">
+      {/* Footer: utility tiles */}
+      <div className="border-t border-sidebar-border flex-shrink-0 p-2">
         {(onShortcutsClick || onGuideClick) && (
           <TooltipProvider>
-            <div className="flex w-full items-center justify-evenly gap-1">
+            <div className="grid w-full grid-cols-1 gap-1.5 lg:grid-cols-2">
               {onShortcutsClick && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onShortcutsClick}
-                    className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors inline-flex items-center justify-center"
+                    className="hidden h-9 w-full items-center justify-center gap-2 rounded-md px-2 text-muted-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground lg:inline-flex"
                     aria-label="Open keyboard shortcuts help"
                   >
                     <Keyboard className="w-4 h-4" />
+                    <span className="text-xs font-medium">Shortcuts</span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
@@ -339,10 +340,11 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onGuideClick}
-                    className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors inline-flex items-center justify-center"
+                    className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md px-2 text-muted-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
                     aria-label="Open onboarding guide"
                   >
                     <BookOpen className="w-4 h-4" />
+                    <span className="text-xs font-medium">Guide</span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
