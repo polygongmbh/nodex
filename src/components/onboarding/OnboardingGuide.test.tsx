@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { OnboardingGuide } from "./OnboardingGuide";
 import type { OnboardingSection, OnboardingSectionId, OnboardingStep } from "./onboarding-types";
@@ -505,6 +505,33 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start Compose onboarding section" }));
 
     expect(onActiveSectionChange).toHaveBeenLastCalledWith("compose");
+  });
+
+  it("does not reset selected section context back to null after compose selection", async () => {
+    const onActiveSectionChange = vi.fn();
+    const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+      navigation: [{ id: "navigation-only", title: "Navigation", description: "Navigation step" }],
+      filters: [{ id: "filters-only", title: "Filters", description: "Filters step" }],
+      compose: [{ id: "compose-only", title: "Compose", description: "Compose step" }],
+    };
+
+    render(
+      <OnboardingGuide
+        isOpen
+        initialSection={null}
+        sections={sections}
+        stepsBySection={stepsBySection}
+        onClose={vi.fn()}
+        onComplete={vi.fn()}
+        onActiveSectionChange={onActiveSectionChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Start Compose onboarding section" }));
+
+    await waitFor(() => {
+      expect(onActiveSectionChange).toHaveBeenLastCalledWith("compose");
+    });
   });
 
   it("dismisses section picker when clicking outside highlighted panes", () => {
