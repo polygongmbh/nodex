@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Compose guide selection now uses a stable activation signal plus section-context preservation and desktop feed coercion, ensuring compose force-open works on first and repeated manual starts.
 - Compose guidance steps now use collision-scored panel placement with target clearance, minimizing overlap and keeping the highlighted compose target unobstructed.
 - Guide section picker now dismisses when clicking outside the highlighted selection panes.
+- Desktop area-picker guidance text now lives in a bottom helper/action bar with Close, avoiding overlap with the top navigation target area.
 
 ## [1.0.0] - 2026-02-16
 

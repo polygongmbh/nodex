@@ -699,11 +699,6 @@ export function OnboardingGuide({
             </div>
           ) : (
             <>
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[130] pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md px-4 py-3 shadow-lg max-w-xl w-[calc(100vw-2rem)]">
-                <h2 className="text-base font-semibold">Choose an interface area</h2>
-                <p className="text-xs text-muted-foreground mt-1">Click a highlighted region to start focused guidance.</p>
-              </div>
-
               {sections.map((section) => (
                 <button
                   key={section.id}
@@ -728,12 +723,23 @@ export function OnboardingGuide({
                   </span>
                 </button>
               ))}
+
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[130] pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-2.5 shadow-lg max-w-2xl w-[calc(100vw-2rem)]">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Choose an interface area, then click a highlighted region to start guidance.
+                  </p>
+                  <Button variant="ghost" onClick={onClose}>Close</Button>
+                </div>
+              </div>
             </>
           )}
 
-          <div className="absolute bottom-4 right-4 z-[130] pointer-events-auto">
-            <Button variant="ghost" onClick={onClose}>Close</Button>
-          </div>
+          {isMobile && (
+            <div className="absolute bottom-4 right-4 z-[130] pointer-events-auto">
+              <Button variant="ghost" onClick={onClose}>Close</Button>
+            </div>
+          )}
         </>
       ) : (
         <>
