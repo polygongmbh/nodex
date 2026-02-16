@@ -455,6 +455,8 @@ export function KanbanView({
                                               onFocusTask?.(ancestor.id);
                                             }}
                                             className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[80px]`}
+                                            title={`Focus task: ${ancestor.text}`}
+                                            aria-label={`Focus task: ${ancestor.text}`}
                                           >
                                             {ancestor.text}
                                           </button>
@@ -470,6 +472,7 @@ export function KanbanView({
                                       `text-sm leading-relaxed cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                                       task.status === "done" && "line-through text-muted-foreground"
                                     )}
+                                    title="Focus this task"
                                   >
                                     {linkifyContent(task.content, onHashtagClick, {
                                       plainHashtags: task.status === "done",

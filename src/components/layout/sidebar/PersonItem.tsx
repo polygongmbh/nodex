@@ -46,7 +46,12 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
           <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-sidebar" />
         )}
       </button>
-      <button onClick={onExclusive} className="flex-1 text-left" aria-label={`Show only ${personName}`}>
+      <button
+        onClick={onExclusive}
+        className="flex-1 text-left"
+        aria-label={`Show only ${personName}`}
+        title={`Show only ${personName}`}
+      >
         <span
           className={cn(
             "text-sm transition-colors",

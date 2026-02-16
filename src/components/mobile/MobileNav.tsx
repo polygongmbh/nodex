@@ -32,6 +32,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
           role="tab"
           aria-selected={currentView === item.id}
           aria-label={`Switch to ${item.label} view`}
+          title={`Switch to ${item.label} view`}
           className={cn(
             "flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-lg transition-colors flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
             currentView === item.id

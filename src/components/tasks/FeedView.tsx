@@ -293,6 +293,8 @@ export function FeedView({
                         <button
                           onClick={() => onFocusTask?.(crumb.id)}
                           className={`${TASK_INTERACTION_STYLES.hoverLinkText} cursor-pointer`}
+                          title={`Focus task: ${crumb.text}`}
+                          aria-label={`Focus task: ${crumb.text}`}
                         >
                           {crumb.text}
                         </button>
@@ -453,6 +455,7 @@ export function FeedView({
                         `text-sm leading-relaxed cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                         task.status === "done" && "line-through text-muted-foreground"
                       )}
+                      title="Focus this task"
                     >
                       {linkifyContent(task.content, onHashtagClick, {
                         plainHashtags: task.status === "done",

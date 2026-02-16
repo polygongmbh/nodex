@@ -53,6 +53,7 @@ export function FocusedTaskBreadcrumb({
         onClick={() => onFocusTask?.(parentFocusId)}
         disabled={!focusedTaskId}
         aria-label="Up"
+        title="Go to parent task"
         className={cn(
           "inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
           focusedTaskId
@@ -71,6 +72,7 @@ export function FocusedTaskBreadcrumb({
             path.length === 0 && "text-foreground font-semibold"
           )}
           type="button"
+          title="Show all tasks"
         >
           All Tasks
         </button>

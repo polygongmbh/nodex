@@ -16,7 +16,10 @@ describe("ChannelItem", () => {
 
     render(<ChannelItem channel={baseChannel} onToggle={onToggle} onExclusive={onExclusive} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Show only #general" }));
+    const exclusiveButton = screen.getByRole("button", { name: "Show only #general" });
+    expect(exclusiveButton).toHaveAttribute("title", "Show only #general");
+
+    fireEvent.click(exclusiveButton);
 
     expect(onExclusive).toHaveBeenCalledTimes(1);
     expect(onToggle).not.toHaveBeenCalled();

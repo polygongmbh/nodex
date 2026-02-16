@@ -24,7 +24,10 @@ describe("PersonItem", () => {
 
     render(<PersonItem person={basePerson} onToggle={onToggle} onExclusive={onExclusive} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Show only Alice" }));
+    const exclusiveButton = screen.getByRole("button", { name: "Show only Alice" });
+    expect(exclusiveButton).toHaveAttribute("title", "Show only Alice");
+
+    fireEvent.click(exclusiveButton);
 
     expect(onExclusive).toHaveBeenCalledTimes(1);
     expect(onToggle).not.toHaveBeenCalled();

@@ -43,6 +43,7 @@ export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused 
         onClick={onExclusive}
         className="flex-1 text-left"
         aria-label={`Show only #${channel.name}`}
+        title={`Show only #${channel.name}`}
       >
         <span
           className={cn(

@@ -35,7 +35,8 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
           onExclusive();
         }}
         className="relative"
-        title="Show only this relay"
+        title={`Show only ${relay.name}`}
+        aria-label={`Show only ${relay.name}`}
       >
         <div
           className={cn(
@@ -56,6 +57,8 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
       <button
         onClick={onToggle}
         className="flex-1 text-left"
+        title={`Toggle ${relay.name}`}
+        aria-label={`Toggle ${relay.name}`}
       >
         <span
           className={cn(

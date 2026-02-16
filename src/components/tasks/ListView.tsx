@@ -523,6 +523,8 @@ export function ListView({
                                 <button
                                   onClick={() => onFocusTask?.(ancestor.id)}
                                   className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[100px]`}
+                                  title={`Focus task: ${ancestor.text}`}
+                                  aria-label={`Focus task: ${ancestor.text}`}
                                 >
                                   {ancestor.text}
                                 </button>
@@ -536,6 +538,7 @@ export function ListView({
                             `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                             task.status === "done" && "line-through text-muted-foreground"
                           )}
+                          title="Focus this task"
                         >
                           {linkifyContent(task.content, onHashtagClick, {
                             plainHashtags: task.status === "done",

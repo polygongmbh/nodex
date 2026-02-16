@@ -185,6 +185,7 @@ export function TaskItem({
           }
         }}
         aria-label={`${isComment ? 'Comment' : 'Task'}: ${task.content.slice(0, 50)}`}
+        title={`Focus ${isComment ? "comment" : "task"}`}
       >
         {/* Expand/Collapse Toggle - three states */}
         {hasChildren && !isComment ? (

@@ -42,6 +42,7 @@ export function SidebarSection({
             className="flex items-center gap-2 focus:outline-none"
             aria-expanded={isExpanded}
             aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${title}`}
+            title={`${isExpanded ? "Collapse" : "Expand"} ${title}`}
           >
             <span className="text-sm font-medium text-sidebar-foreground">{title}</span>
             {hint && (
@@ -57,6 +58,7 @@ export function SidebarSection({
             onClick={onToggle}
             aria-hidden="true"
             tabIndex={-1}
+            title={`${isExpanded ? "Collapse" : "Expand"} ${title}`}
           >
             {isExpanded ? (
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
