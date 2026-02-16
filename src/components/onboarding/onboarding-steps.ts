@@ -53,7 +53,7 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-search",
       title: "Search bar",
-      description: "Use the bottom search bar to narrow visible tasks by text across the current view.",
+      description: "Use the bottom search bar to narrow visible tasks by text across all views.",
       target: '[data-onboarding="search-bar"]',
     },
     {
@@ -78,7 +78,7 @@ const desktopStepsBySection: StepMap = {
     {
       id: "compose-input",
       title: "Tags and mentions",
-      description: "Use #release style tags and @mentions in the compose box.",
+      description: "Use #tags to organize items and @mentions to reference people in the compose box.",
       target: '[data-onboarding="compose-input"]',
     },
   ],
