@@ -59,6 +59,8 @@ export function OnboardingGuide({
   const [isManualSession, setIsManualSession] = useState(false);
   const [manualSelectedSection, setManualSelectedSection] = useState<OnboardingSectionId | null>(null);
   const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
+  const [guideCardSize, setGuideCardSize] = useState({ width: 380, height: 320 });
+  const guideCardRef = useRef<HTMLDivElement | null>(null);
   const manualSelectedSectionRef = useRef<OnboardingSectionId | null>(null);
   const autoAdvancedStepIdsRef = useRef<Set<string>>(new Set());
   const pendingAutoAdvanceStepIdsRef = useRef<Set<string>>(new Set());
@@ -443,6 +445,35 @@ export function OnboardingGuide({
     };
   }, [getPickerSelectors, isOpen, showSectionPicker]);
 
+  useEffect(() => {
+    if (!isOpen || showSectionPicker) return;
+
+    const measure = () => {
+      const rect = guideCardRef.current?.getBoundingClientRect();
+      if (!rect || rect.width <= 0 || rect.height <= 0) return;
+      setGuideCardSize({
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      });
+    };
+
+    measure();
+    const raf = window.requestAnimationFrame(measure);
+    window.addEventListener("resize", measure);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && guideCardRef.current) {
+      resizeObserver = new ResizeObserver(() => measure());
+      resizeObserver.observe(guideCardRef.current);
+    }
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", measure);
+      resizeObserver?.disconnect();
+    };
+  }, [currentStep?.id, isOpen, showSectionPicker]);
+
   const getAnchoredCardStyle = (): React.CSSProperties => {
     if (showSectionPicker || !currentStep || !targetRect) {
       return {
@@ -454,12 +485,16 @@ export function OnboardingGuide({
         zIndex: 130,
       };
     }
-    const cardWidth = 380;
+    const cardWidth = Math.max(280, Math.min(guideCardSize.width || 380, window.innerWidth - 16));
     const isComposeGuidanceStep =
       currentStep.id === "compose-kind" ||
       currentStep.id === "compose-input" ||
       currentStep.id === "mobile-compose-combobox";
-    const cardHeightEstimate = isComposeGuidanceStep ? 280 : 240;
+    const measuredHeight = guideCardSize.height || 0;
+    const cardHeightEstimate = Math.max(
+      isComposeGuidanceStep ? 300 : 260,
+      measuredHeight
+    );
     const gap = isComposeGuidanceStep ? 40 : 24;
     const viewportPadding = 8;
     const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -718,6 +753,7 @@ export function OnboardingGuide({
             role="dialog"
             aria-modal="true"
             aria-label="Onboarding guide"
+            ref={guideCardRef}
             className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
             style={getAnchoredCardStyle()}
           >
