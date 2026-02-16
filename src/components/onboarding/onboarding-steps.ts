@@ -59,10 +59,11 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-hashtag-content",
       title: "Hashtags in content",
-      description: "Click a hashtag in content to focus to only that tag.",
+      description:
+        "Hashtags in task text and tag chips are interactive filters. Click one to focus on that single tag immediately, then combine it with sidebar/search filters or clear it to widen results again.",
       target: '[data-onboarding="content-hashtag"]',
       requiredAction: "click-target",
-      actionPrompt: "Click a hashtag chip in a task item.",
+      actionPrompt: "Click any hashtag chip in a task item to apply a single-tag focus filter.",
     },
   ],
   compose: [

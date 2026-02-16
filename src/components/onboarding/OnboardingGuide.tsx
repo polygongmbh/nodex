@@ -543,13 +543,12 @@ export function OnboardingGuide({
 
     const candidates = isHashtagContentStep
       ? [
-          toCandidate(window.innerWidth - cardWidth - viewportPadding, viewportPadding + 8), // top-right
-          toCandidate(viewportPadding, viewportPadding + 8), // top-left
+          toCandidate(centeredLeft, belowTop),
+          toCandidate(targetRect.left, belowTop),
+          toCandidate(targetRect.right - cardWidth, belowTop),
           toCandidate(centeredLeft, aboveTop),
-          toCandidate(rightLeft, centeredTop), // right of target
-          toCandidate(leftLeft, centeredTop), // left of target
-          toCandidate(window.innerWidth - cardWidth - viewportPadding, window.innerHeight - cardHeightEstimate - viewportPadding),
-          toCandidate(viewportPadding, window.innerHeight - cardHeightEstimate - viewportPadding),
+          toCandidate(rightLeft, centeredTop),
+          toCandidate(leftLeft, centeredTop),
         ]
       : [
           toCandidate(centeredLeft, belowTop),
