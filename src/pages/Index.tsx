@@ -294,6 +294,7 @@ const Index = () => {
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
   const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
+  const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
   const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
   const onboardingStepsBySection = useMemo(() => getOnboardingStepsBySection(isMobile), [isMobile]);
 
@@ -402,6 +403,9 @@ const Index = () => {
 
   const handleOnboardingActiveSectionChange = useCallback((section: OnboardingSectionId | null) => {
     setActiveOnboardingSection(section);
+    if (section === "compose") {
+      setComposeGuideActivationSignal((previous) => previous + 1);
+    }
     if (!isMobile && section === "compose" && currentView !== "feed") {
       setCurrentView("feed");
     }
@@ -875,6 +879,7 @@ const Index = () => {
     forceShowComposer: forceShowComposeForGuide,
     onAuthorClick: handleAuthorClick,
     mentionRequest,
+    composeGuideActivationSignal,
   };
 
   const renderView = () => {

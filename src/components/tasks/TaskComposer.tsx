@@ -23,6 +23,7 @@ interface TaskComposerProps {
   onExpandedChange?: (expanded: boolean) => void;
   draftStorageKey?: string;
   forceExpanded?: boolean;
+  forceExpandSignal?: number;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -64,6 +65,7 @@ export function TaskComposer({
   onExpandedChange,
   draftStorageKey,
   forceExpanded = false,
+  forceExpandSignal,
   mentionRequest = null,
 }: TaskComposerProps) {
   const { user } = useNDK();
@@ -105,6 +107,7 @@ export function TaskComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const autoManagedChannelsRef = useRef<Set<string>>(new Set());
+  const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
 
   const hasMention = (text: string, mention: string) => {
     const escaped = mention.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -124,8 +127,22 @@ export function TaskComposer({
   useEffect(() => {
     if (adaptiveSize && forceExpanded) {
       setIsExpanded(true);
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+      });
     }
   }, [adaptiveSize, forceExpanded]);
+
+  useEffect(() => {
+    if (!adaptiveSize) return;
+    if (forceExpandSignal === undefined) return;
+    if (lastForceExpandSignalRef.current === forceExpandSignal) return;
+    lastForceExpandSignalRef.current = forceExpandSignal;
+    setIsExpanded(true);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
+  }, [adaptiveSize, forceExpandSignal]);
 
   useEffect(() => {
     if (!draftStorageKey) return;

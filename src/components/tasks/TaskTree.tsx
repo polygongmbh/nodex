@@ -26,6 +26,7 @@ interface TaskTreeProps {
   onSignInClick?: () => void;
   onHashtagClick?: (tag: string) => void;
   forceShowComposer?: boolean;
+  composeGuideActivationSignal?: number;
   onAuthorClick?: (author: Person) => void;
   mentionRequest?: {
     mention: string;
@@ -51,6 +52,7 @@ export function TaskTree({
   onSignInClick,
   onHashtagClick,
   forceShowComposer = false,
+  composeGuideActivationSignal,
   onAuthorClick,
   mentionRequest = null,
 }: TaskTreeProps) {
@@ -276,6 +278,7 @@ export function TaskTree({
             parentId={currentContextId}
             onSignInClick={onSignInClick}
             forceExpanded={forceShowComposer}
+            forceExpandSignal={composeGuideActivationSignal}
             mentionRequest={mentionRequest}
             defaultContent={(() => {
               const prefillChannels = new Set<string>();

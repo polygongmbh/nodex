@@ -460,78 +460,65 @@ export function OnboardingGuide({
       currentStep.id === "compose-input" ||
       currentStep.id === "mobile-compose-combobox";
     const cardHeightEstimate = isComposeGuidanceStep ? 280 : 240;
-    const gap = 24;
-    if (!isMobile && isComposeGuidanceStep) {
-      let composeTop = Math.min(
-        window.innerHeight - cardHeightEstimate - 8,
-        targetRect.bottom + 96
-      );
-      const overlapsComposeTarget =
-        composeTop < targetRect.bottom && composeTop + cardHeightEstimate > targetRect.top;
-      if (overlapsComposeTarget) {
-        composeTop = Math.max(8, targetRect.top - cardHeightEstimate - 32);
+    const gap = isComposeGuidanceStep ? 40 : 24;
+    const viewportPadding = 8;
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+    const maxLeft = Math.max(viewportPadding, window.innerWidth - cardWidth - viewportPadding);
+    const maxTop = Math.max(viewportPadding, window.innerHeight - cardHeightEstimate - viewportPadding);
+    const toCandidate = (left: number, top: number) => ({
+      left: clamp(left, viewportPadding, maxLeft),
+      top: clamp(top, viewportPadding, maxTop),
+    });
+    const targetClearance = isComposeGuidanceStep ? 24 : 12;
+    const safeTarget = {
+      left: targetRect.left - targetClearance,
+      top: targetRect.top - targetClearance,
+      right: targetRect.right + targetClearance,
+      bottom: targetRect.bottom + targetClearance,
+    };
+    const overlapArea = (left: number, top: number) => {
+      const right = left + cardWidth;
+      const bottom = top + cardHeightEstimate;
+      const overlapX = Math.max(0, Math.min(right, safeTarget.right) - Math.max(left, safeTarget.left));
+      const overlapY = Math.max(0, Math.min(bottom, safeTarget.bottom) - Math.max(top, safeTarget.top));
+      return overlapX * overlapY;
+    };
+    const centeredLeft = targetRect.left + targetRect.width / 2 - cardWidth / 2;
+    const centeredTop = targetRect.top + targetRect.height / 2 - cardHeightEstimate / 2;
+    const belowTop = targetRect.bottom + gap;
+    const aboveTop = targetRect.top - cardHeightEstimate - gap;
+    const rightLeft = targetRect.right + gap;
+    const leftLeft = targetRect.left - cardWidth - gap;
+
+    const candidates = [
+      toCandidate(centeredLeft, belowTop),
+      toCandidate(targetRect.left, belowTop),
+      toCandidate(targetRect.right - cardWidth, belowTop),
+      toCandidate(centeredLeft, aboveTop),
+      toCandidate(rightLeft, centeredTop),
+      toCandidate(leftLeft, centeredTop),
+    ];
+
+    let bestCandidate = candidates[0];
+    let bestOverlap = overlapArea(bestCandidate.left, bestCandidate.top);
+    for (const candidate of candidates) {
+      const area = overlapArea(candidate.left, candidate.top);
+      if (area === 0) {
+        bestCandidate = candidate;
+        bestOverlap = 0;
+        break;
       }
-      return {
-        width: cardWidth,
-        maxWidth: "calc(100vw - 16px)",
-        left: "50%",
-        transform: "translateX(-50%)",
-        top: composeTop,
-        position: "fixed",
-        zIndex: 130,
-      };
-    }
-    const preferredDownwardNudge = isComposeGuidanceStep ? 28 : 0;
-    const left = Math.max(8, Math.min(targetRect.left, window.innerWidth - cardWidth - 8));
-    const preferredTop = targetRect.bottom + gap + preferredDownwardNudge;
-    const top =
-      preferredTop + cardHeightEstimate > window.innerHeight
-        ? Math.max(8, targetRect.top - gap - cardHeightEstimate)
-        : preferredTop;
-    const overlapsTarget =
-      top < targetRect.bottom &&
-      top + cardHeightEstimate > targetRect.top &&
-      left < targetRect.right &&
-      left + cardWidth > targetRect.left;
-    const shiftedLeft = Math.max(8, targetRect.left - cardWidth - gap);
-    const shiftedRight = Math.min(window.innerWidth - cardWidth - 8, targetRect.right + gap);
-    const finalLeft = overlapsTarget
-      ? (shiftedRight + cardWidth <= window.innerWidth - 8 ? shiftedRight : shiftedLeft)
-      : left;
-    let finalTop = top;
-    if (overlapsTarget && isComposeGuidanceStep) {
-      const pushedDownTop = Math.min(
-        window.innerHeight - cardHeightEstimate - 8,
-        targetRect.bottom + gap + preferredDownwardNudge + 16
-      );
-      if (pushedDownTop > finalTop) {
-        finalTop = pushedDownTop;
-      }
-    }
-    if (isComposeGuidanceStep) {
-      const horizontalOverlap =
-        finalLeft < targetRect.right &&
-        finalLeft + cardWidth > targetRect.left;
-      const verticalOverlap =
-        finalTop < targetRect.bottom &&
-        finalTop + cardHeightEstimate > targetRect.top;
-      if (horizontalOverlap && verticalOverlap) {
-        const forcedBelowTop = Math.min(
-          window.innerHeight - cardHeightEstimate - 8,
-          targetRect.bottom + gap + 72
-        );
-        if (forcedBelowTop + cardHeightEstimate <= window.innerHeight - 8) {
-          finalTop = forcedBelowTop;
-        } else {
-          finalTop = Math.max(8, targetRect.top - gap - cardHeightEstimate - 24);
-        }
+      if (area < bestOverlap) {
+        bestCandidate = candidate;
+        bestOverlap = area;
       }
     }
+
     return {
       width: cardWidth,
       maxWidth: "calc(100vw - 16px)",
-      left: finalLeft,
-      top: finalTop,
+      left: bestCandidate.left,
+      top: bestCandidate.top,
       position: "fixed",
       zIndex: 130,
     };

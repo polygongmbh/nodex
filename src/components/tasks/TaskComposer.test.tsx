@@ -213,4 +213,39 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(textarea.value).toBe("Need input from @alice ");
   });
+
+  it("expands adaptively when forceExpandSignal changes", () => {
+    const { rerender } = render(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        compact
+        adaptiveSize
+        forceExpandSignal={1}
+      />
+    );
+
+    expect(screen.getByText("Set due date (optional)")).toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByPlaceholderText(/what needs to be done/i), { key: "Escape" });
+    expect(screen.queryByText("Set due date (optional)")).not.toBeInTheDocument();
+
+    rerender(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        compact
+        adaptiveSize
+        forceExpandSignal={2}
+      />
+    );
+
+    expect(screen.getByText("Set due date (optional)")).toBeInTheDocument();
+  });
 });

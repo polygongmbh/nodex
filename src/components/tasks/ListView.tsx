@@ -42,6 +42,7 @@ interface ListViewProps {
   onHashtagClick?: (tag: string) => void;
   onSignInClick?: () => void;
   forceShowComposer?: boolean;
+  composeGuideActivationSignal?: number;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -64,6 +65,7 @@ export function ListView({
   onHashtagClick,
   onSignInClick,
   forceShowComposer = false,
+  composeGuideActivationSignal,
 }: ListViewProps) {
   const { user } = useNDK();
   const COMPOSE_DRAFT_KEY = "nodex.compose-draft.list";
@@ -426,6 +428,7 @@ export function ListView({
             parentId={focusedTaskId || undefined}
             onSignInClick={onSignInClick}
             forceExpanded={forceShowComposer}
+            forceExpandSignal={composeGuideActivationSignal}
             defaultContent={(() => {
               const prefillChannels = new Set<string>();
               channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));

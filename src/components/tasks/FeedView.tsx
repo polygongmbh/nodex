@@ -39,6 +39,7 @@ interface FeedViewProps {
   onSignInClick?: () => void;
   onHashtagClick?: (tag: string) => void;
   forceShowComposer?: boolean;
+  composeGuideActivationSignal?: number;
   onAuthorClick?: (author: Person) => void;
   mentionRequest?: {
     mention: string;
@@ -64,6 +65,7 @@ export function FeedView({
   onSignInClick,
   onHashtagClick,
   forceShowComposer = false,
+  composeGuideActivationSignal,
   onAuthorClick,
   mentionRequest = null,
 }: FeedViewProps) {
@@ -236,6 +238,7 @@ export function FeedView({
             parentId={focusedTaskId || undefined}
             onSignInClick={onSignInClick}
             forceExpanded={forceShowComposer}
+            forceExpandSignal={composeGuideActivationSignal}
             mentionRequest={mentionRequest}
             defaultContent={(() => {
               const prefillChannels = new Set<string>();
