@@ -4,7 +4,7 @@ All notable changes to Nodex are documented in this file.
 
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
-## [0.1.0] - 2026-02-16
+## [1.0.0] - 2026-02-16
 
 ### Added
 - Interactive onboarding improvements across desktop and mobile, including guided navigation/composition flows with clearer highlights and better step progression.
