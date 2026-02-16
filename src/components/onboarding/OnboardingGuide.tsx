@@ -57,6 +57,7 @@ export function OnboardingGuide({
   const [interactionTimedOut, setInteractionTimedOut] = useState(false);
   const [skipDelayElapsed, setSkipDelayElapsed] = useState(false);
   const [isManualSession, setIsManualSession] = useState(false);
+  const [manualSelectedSection, setManualSelectedSection] = useState<OnboardingSectionId | null>(null);
   const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
   const autoAdvancedStepIdsRef = useRef<Set<string>>(new Set());
   const pendingAutoAdvanceStepIdsRef = useRef<Set<string>>(new Set());
@@ -107,6 +108,7 @@ export function OnboardingGuide({
   useEffect(() => {
     if (!isOpen) return;
     setIsManualSession(initialSection === null);
+    setManualSelectedSection(null);
     setActiveSection(initialSection);
     setStepIndex(0);
     setTargetRect(null);
@@ -121,11 +123,11 @@ export function OnboardingGuide({
   useEffect(() => {
     if (!isOpen) return;
     if (activeSection === null || activeSection === "all") {
-      onActiveSectionChange?.(null);
+      onActiveSectionChange?.(manualSelectedSection);
       return;
     }
     onActiveSectionChange?.(activeSection);
-  }, [activeSection, isOpen, onActiveSectionChange]);
+  }, [activeSection, isOpen, manualSelectedSection, onActiveSectionChange]);
 
   const activeSteps = useMemo(() => {
     if (!activeSection) return [];
@@ -587,6 +589,7 @@ export function OnboardingGuide({
                     <button
                       key={section.id}
                       onClick={() => {
+                        setManualSelectedSection(section.id);
                         setActiveSection("all");
                         setStepIndex(getFirstStepIndexForSection(section.id));
                       }}
@@ -614,6 +617,7 @@ export function OnboardingGuide({
                 <button
                   key={section.id}
                   onClick={() => {
+                    setManualSelectedSection(section.id);
                     setActiveSection("all");
                     setStepIndex(getFirstStepIndexForSection(section.id));
                   }}

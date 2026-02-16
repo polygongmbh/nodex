@@ -16,6 +16,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Sidebar channel and people filters now use distinct exclusive-vs-toggle click targets (text vs icon/avatar), with updated guide copy to match behavior.
 - Sidebar footer utilities now use flatter controls with always-visible labels; on narrow sidebars only the Guide control remains visible to reduce crowding.
 - Manually launched onboarding sections now jump into the global all-steps sequence (preserving original step numbers), allow backward navigation across prior steps, and remove skip/next delay gating.
+- Selecting the Compose onboarding section now immediately reports compose context so the compose window is forced open as soon as guide guidance starts.
 - Feed identity rendering now consistently prefers kind:0 profile metadata and improved fallback handling for pubkeys.
 - Hover hints were expanded across navigation, filter, and task-focus controls for clearer affordance.
 - The top-left Nodex brand text now links to the start page (`/`).

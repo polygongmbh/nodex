@@ -482,4 +482,29 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
   });
 
+  it("reports selected section context for manual all-steps starts", () => {
+    const onActiveSectionChange = vi.fn();
+    const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+      navigation: [{ id: "navigation-only", title: "Navigation", description: "Navigation step" }],
+      filters: [{ id: "filters-only", title: "Filters", description: "Filters step" }],
+      compose: [{ id: "compose-only", title: "Compose", description: "Compose step" }],
+    };
+
+    render(
+      <OnboardingGuide
+        isOpen
+        initialSection={null}
+        sections={sections}
+        stepsBySection={stepsBySection}
+        onClose={vi.fn()}
+        onComplete={vi.fn()}
+        onActiveSectionChange={onActiveSectionChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Start Compose onboarding section" }));
+
+    expect(onActiveSectionChange).toHaveBeenLastCalledWith("compose");
+  });
+
 });
