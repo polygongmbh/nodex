@@ -51,6 +51,12 @@ const desktopStepsBySection: StepMap = {
       target: '[data-onboarding="people-section"]',
     },
     {
+      id: "filters-search",
+      title: "Search bar",
+      description: "Use the bottom search bar to narrow visible tasks by text across the current view.",
+      target: '[data-onboarding="search-bar"]',
+    },
+    {
       id: "filters-hashtag-content",
       title: "Hashtags in content",
       description: "Click a hashtag in content to focus to only that tag.",

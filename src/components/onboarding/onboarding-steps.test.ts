@@ -10,12 +10,14 @@ describe("onboarding steps", () => {
       "filters-relays",
       "filters-channels",
       "filters-people",
+      "filters-search",
       "filters-hashtag-content",
     ]);
     expect(desktop.filters.find((step) => step.id === "filters-reset")).toBeUndefined();
 
     const channelStep = desktop.filters.find((step) => step.id === "filters-channels");
     const peopleStep = desktop.filters.find((step) => step.id === "filters-people");
+    const searchStep = desktop.filters.find((step) => step.id === "filters-search");
 
     expect(channelStep?.description).toContain("left of Channels");
     expect(peopleStep?.description).toContain("left of People");
@@ -23,5 +25,6 @@ describe("onboarding steps", () => {
     expect(peopleStep?.description).toContain("show only that person");
     expect(channelStep?.requiredAction).toBeUndefined();
     expect(peopleStep?.requiredAction).toBeUndefined();
+    expect(searchStep?.target).toBe('[data-onboarding="search-bar"]');
   });
 });
