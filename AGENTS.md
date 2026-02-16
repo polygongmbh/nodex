@@ -94,6 +94,12 @@ structure:
 - Use semantic commit messages (Conventional Commits), e.g. `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
 - Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) were added/updated/removed.
 
+## Changelog Discipline
+- Keep `CHANGELOG.md` continuously updated.
+- For each user-visible behavior change, add or update a changelog entry in the same change set.
+- One changelog entry may summarize multiple closely related commits, but it must stay concrete about user-facing effects.
+- Use semantic version sections (`MAJOR.MINOR.PATCH`) and dates in ISO format (`YYYY-MM-DD`).
+
 ## Startup Repo Check
 - At the start of work, check `git status --short`.
 - If there are unstaged modifications beyond `package-lock.json`, warn the user before proceeding.
@@ -189,6 +195,12 @@ When the user asks you to create a plan to fix or implement something:
 - If the user message is `squash` (or starts with `squash`), inspect recent commits and check whether some should be sensibly squashed because they are repetitive, fixups, or tightly related follow-ups.
 - In that check, prioritize preserving atomic, coherent history and avoid squashing unrelated functional changes together.
 - Only rewrite unpushed local history when performing squash/rebase operations; do not rewrite pushed/shared history unless the user explicitly requests it.
+- If the user instructs to `push`:
+  - list all unpushed commits (`git log origin/<branch>..HEAD --oneline`) and summarize each commit purpose briefly
+  - update `package.json` version semantically based on pending changes
+  - update `CHANGELOG.md` for that version
+  - run verification commands appropriate for the risk level
+  - push with `git push` only after the summary and version/changelog updates are complete
 
 ## Progress Reporting Expectations
 - During active work, provide progress estimates in short updates.
