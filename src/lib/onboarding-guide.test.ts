@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "./onboarding-guide";
 
 describe("shouldForceComposeForGuide", () => {
-  it("pre-opens compose on desktop at filters-hashtag-content for step 8 anchoring", () => {
+  it("does not force-open compose during filters-hashtag-content", () => {
     expect(
       shouldForceComposeForGuide({
         isOnboardingOpen: true,
@@ -10,18 +10,18 @@ describe("shouldForceComposeForGuide", () => {
         activeOnboardingStepId: "filters-hashtag-content",
         isMobile: false,
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
-  it("does not pre-open compose on mobile at filters-hashtag-content", () => {
+  it("forces compose at compose-kind", () => {
     expect(
       shouldForceComposeForGuide({
         isOnboardingOpen: true,
         activeOnboardingSection: null,
-        activeOnboardingStepId: "filters-hashtag-content",
+        activeOnboardingStepId: "compose-kind",
         isMobile: true,
       })
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 

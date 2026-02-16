@@ -11,7 +11,7 @@ export function shouldForceComposeForGuide({
   isOnboardingOpen,
   activeOnboardingSection,
   activeOnboardingStepId,
-  isMobile,
+  isMobile: _isMobile,
 }: ComposeForceParams): boolean {
   if (!isOnboardingOpen) return false;
   if (activeOnboardingSection === "compose") return true;
@@ -19,9 +19,6 @@ export function shouldForceComposeForGuide({
     return true;
   }
   if (activeOnboardingStepId === "mobile-compose-combobox") return true;
-
-  // Pre-open desktop compose one step before compose-kind so step 8 anchors correctly.
-  if (!isMobile && activeOnboardingStepId === "filters-hashtag-content") return true;
   return false;
 }
 
