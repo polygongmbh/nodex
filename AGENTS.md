@@ -196,11 +196,14 @@ When the user asks you to create a plan to fix or implement something:
 - In that check, prioritize preserving atomic, coherent history and avoid squashing unrelated functional changes together.
 - Only rewrite unpushed local history when performing squash/rebase operations; do not rewrite pushed/shared history unless the user explicitly requests it.
 - If the user instructs to `push`:
-  - list all unpushed commits (`git log origin/<branch>..HEAD --oneline`) and summarize each commit purpose briefly
+  - first list all unpushed commits (`git log origin/<branch>..HEAD --oneline`)
+  - then provide one high-level summary across all unpushed commits (not per-commit), focused on major functional/product changes
+  - omit cosmetic-only or low-level implementation details from that summary unless explicitly requested
   - update `package.json` version semantically based on pending changes
   - update `CHANGELOG.md` for that version
   - run verification commands appropriate for the risk level
-  - push with `git push` only after the summary and version/changelog updates are complete
+  - explicitly ask whether to push after providing the commit list and high-level summary
+  - push with `git push` only after the summary, version/changelog updates, and explicit user confirmation are complete
 
 ## Progress Reporting Expectations
 - During active work, provide progress estimates in short updates.
