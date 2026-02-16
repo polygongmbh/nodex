@@ -67,8 +67,39 @@ export function OnboardingGuide({
   const stepEntryContextKeyRef = useRef<{ stepId: string; contextKey?: string } | null>(null);
   const previousStepIdRef = useRef<string | null>(null);
 
+  const getBestVisibleTarget = useCallback((selector: string): HTMLElement | null => {
+    const matches = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
+    if (matches.length === 0) return null;
+
+    const visibleMatches = matches.filter((target) => {
+      const rect = target.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return false;
+      const style = window.getComputedStyle(target);
+      if (style.display === "none" || style.visibility === "hidden") return false;
+      return true;
+    });
+
+    if (visibleMatches.length === 0) return matches[0] ?? null;
+    if (visibleMatches.length === 1) return visibleMatches[0] ?? null;
+
+    let best = visibleMatches[0];
+    let bestArea = 0;
+    for (const target of visibleMatches) {
+      const rect = target.getBoundingClientRect();
+      const overlapWidth = Math.max(0, Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0));
+      const overlapHeight = Math.max(0, Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0));
+      const overlapArea = overlapWidth * overlapHeight;
+      if (overlapArea > bestArea) {
+        best = target;
+        bestArea = overlapArea;
+      }
+    }
+
+    return best;
+  }, []);
+
   const isTargetVisible = (selector: string): boolean => {
-    const target = document.querySelector(selector) as HTMLElement | null;
+    const target = getBestVisibleTarget(selector);
     if (!target) return false;
     const rect = target.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return false;
@@ -173,7 +204,7 @@ export function OnboardingGuide({
     const current = activeSteps[stepIndex];
     if (!current) return;
 
-    const target = current.target ? document.querySelector(current.target) as HTMLElement | null : null;
+    const target = current.target ? getBestVisibleTarget(current.target) : null;
     if (!target) {
       setTargetRect(null);
       return;
@@ -208,6 +239,9 @@ export function OnboardingGuide({
     };
 
     updateRect();
+    const remeasureTimeouts = [80, 200, 360].map((delay) =>
+      window.setTimeout(updateRect, delay)
+    );
     window.addEventListener("resize", updateRect);
     window.addEventListener("scroll", updateRect, true);
 
@@ -231,6 +265,7 @@ export function OnboardingGuide({
     }
 
     return () => {
+      remeasureTimeouts.forEach((timeout) => window.clearTimeout(timeout));
       window.removeEventListener("resize", updateRect);
       window.removeEventListener("scroll", updateRect, true);
       target.removeEventListener("click", onClick, true);
@@ -244,7 +279,7 @@ export function OnboardingGuide({
       target.style.backgroundColor = previousBackgroundColor;
       target.style.borderRadius = previousBorderRadius;
     };
-  }, [activeSection, activeSteps, interactionSatisfied, isOpen, stepIndex, uiContextKey]);
+  }, [activeSection, activeSteps, getBestVisibleTarget, interactionSatisfied, isOpen, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -541,23 +576,25 @@ export function OnboardingGuide({
     const rightLeft = targetRect.right + gap;
     const leftLeft = targetRect.left - cardWidth - gap;
 
-    const candidates = isHashtagContentStep
-      ? [
-          toCandidate(centeredLeft, belowTop),
-          toCandidate(targetRect.left, belowTop),
-          toCandidate(targetRect.right - cardWidth, belowTop),
-          toCandidate(centeredLeft, aboveTop),
-          toCandidate(rightLeft, centeredTop),
-          toCandidate(leftLeft, centeredTop),
-        ]
-      : [
-          toCandidate(centeredLeft, belowTop),
-          toCandidate(targetRect.left, belowTop),
-          toCandidate(targetRect.right - cardWidth, belowTop),
-          toCandidate(centeredLeft, aboveTop),
-          toCandidate(rightLeft, centeredTop),
-          toCandidate(leftLeft, centeredTop),
-        ];
+    if (isHashtagContentStep) {
+      return {
+        width: cardWidth,
+        maxWidth: "calc(100vw - 16px)",
+        left: clamp(centeredLeft, viewportPadding, maxLeft),
+        top: clamp(belowTop, viewportPadding, maxTop),
+        position: "fixed",
+        zIndex: 130,
+      };
+    }
+
+    const candidates = [
+      toCandidate(centeredLeft, belowTop),
+      toCandidate(targetRect.left, belowTop),
+      toCandidate(targetRect.right - cardWidth, belowTop),
+      toCandidate(centeredLeft, aboveTop),
+      toCandidate(rightLeft, centeredTop),
+      toCandidate(leftLeft, centeredTop),
+    ];
 
     let bestCandidate = candidates[0];
     let bestOverlap = overlapArea(bestCandidate.left, bestCandidate.top);
