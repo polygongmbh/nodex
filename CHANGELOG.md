@@ -6,20 +6,23 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-02-16
+
+### Added
+- Onboarding now includes a dedicated search-bar guidance step and improved compose guidance flow with explicit task/comment compose controls.
+
 ### Changed
-- Sidebar footer utilities now use flatter controls with always-visible labels; on narrow sidebars only the Guide control remains visible to reduce crowding.
-- Manually launched onboarding sections now jump into the global all-steps sequence (preserving original step numbers), allow backward navigation across prior steps, and remove skip/next delay gating.
-- Filter onboarding now includes a dedicated search bar step, with consistent search-bar targeting across desktop views.
-- Desktop search input is now centralized in a single shared dock outside individual view components, with Kanban level controls preserved in the same dock.
-- Compose guide selection now uses a stable activation signal plus section-context preservation and desktop feed coercion, ensuring compose force-open works on first and repeated manual starts.
-- Compose guidance steps now use collision-scored panel placement with target clearance, minimizing overlap and keeping the highlighted compose target unobstructed.
-- Guide section picker now dismisses when clicking outside the highlighted selection panes.
-- Desktop area-picker guidance text now lives in a bottom helper/action bar with Close, avoiding overlap with the top navigation target area.
-- Onboarding guide cards now cap desktop width and prioritize non-blocking placement for hashtag-content guidance; mobile area-picker guidance is pinned to a bottom helper/action bar with Close.
-- The hashtag-content onboarding step now anchors guide placement directly below the highlighted hashtag target and uses shorter filtering guidance text.
-- Desktop onboarding no longer force-opens compose during the hashtag-content step; compose now opens when entering the compose step.
-- Desktop onboarding pre-opens compose on the hashtag-content step so the compose-step guide appears after layout has settled.
-- Sidebar footer controls now use flat button styling with visible icon+label text, and the Shortcuts control remains hidden on narrow sidebars.
+- Desktop search is now centralized in a shared bottom dock across views, with Kanban depth controls aligned in the same dock.
+- Manual guide starts now enter the global step sequence, preserve original step numbering, and support back navigation.
+- Onboarding copy and helper text were clarified for section selection, search scope, hashtag filtering, and compose tags/mentions guidance.
+- Sidebar footer controls were redesigned to flat, labeled controls with improved spacing and responsive behavior.
+
+### Fixed
+- Compose guide activation is deterministic across repeated manual starts, with compose pre-open timing aligned to stable guide positioning.
+- Guide overlays now avoid blocking highlighted targets more reliably (including hashtag-content steps), with improved target measurement after layout shifts.
+- Section picker can be dismissed by clicking outside highlighted panes, and step side effects are gated by step IDs.
+- Back-navigation in onboarding no longer reintroduces next-step delay on revisited required-action steps.
+- Sidebar list clipping and scroll behavior were adjusted so trailing entries remain reachable.
 
 ## [1.0.0] - 2026-02-16
 
