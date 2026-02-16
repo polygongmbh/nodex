@@ -658,11 +658,8 @@ export function OnboardingGuide({
                 <div>
                   <h2 className="text-lg font-semibold">{currentStep.title}</h2>
                   <p className="text-sm text-muted-foreground mt-1">{currentStep.description}</p>
-                  <p className="text-xs text-primary mt-2">
-                    Click the highlighted area, or use Next.
-                  </p>
                   {currentStep.actionPrompt && (
-                    <p className="text-xs text-primary/90 mt-1">{currentStep.actionPrompt}</p>
+                    <p className="text-xs text-primary/90 mt-2">{currentStep.actionPrompt}</p>
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-2">

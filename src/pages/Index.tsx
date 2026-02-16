@@ -39,6 +39,7 @@ import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import { derivePeopleFromKind0Events } from "@/lib/people-from-kind0";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { taskMatchesSelectedPeople } from "@/lib/person-filter";
+import { shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -288,6 +289,7 @@ const Index = () => {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
+  const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
   const onboardingStepsBySection = useMemo(() => getOnboardingStepsBySection(isMobile), [isMobile]);
 
   useEffect(() => {
@@ -301,6 +303,7 @@ const Index = () => {
   useEffect(() => {
     if (!isOnboardingOpen) {
       lastHandledOnboardingStepRef.current = null;
+      setActiveOnboardingStepId(null);
     }
   }, [isOnboardingOpen]);
 
@@ -356,15 +359,17 @@ const Index = () => {
     id: string;
     stepNumber: number;
   }) => {
+    setActiveOnboardingStepId(payload.id);
+
     const stepKey = `${payload.stepNumber}:${payload.id}`;
     if (lastHandledOnboardingStepRef.current === stepKey) return;
     lastHandledOnboardingStepRef.current = stepKey;
 
-    if (payload.stepNumber === 2) {
+    if (payload.id === "navigation-focus" || payload.id === "mobile-navigation-focus") {
       setCurrentView("feed");
       return;
     }
-    if (payload.stepNumber !== 5 && payload.stepNumber !== 7) return;
+    if (payload.id !== "filters-channels" && payload.id !== "filters-hashtag-content") return;
 
     setFocusedTaskId(null);
     setSearchQuery("");
@@ -383,6 +388,13 @@ const Index = () => {
       }))
     );
   }, [channels, relays, setFocusedTaskId]);
+
+  const forceShowComposeForGuide = shouldForceComposeForGuide({
+    isOnboardingOpen,
+    activeOnboardingSection,
+    activeOnboardingStepId,
+    isMobile,
+  });
 
   const handleRelayToggle = (id: string) => {
     setActiveRelayIds((prev) => {
@@ -849,7 +861,7 @@ const Index = () => {
     onFocusSidebar: handleFocusSidebar,
     onSignInClick: handleOpenAuthModal,
     onHashtagClick: handleHashtagExclusive,
-    forceShowComposer: isOnboardingOpen && activeOnboardingSection === "compose",
+    forceShowComposer: forceShowComposeForGuide,
     onAuthorClick: handleAuthorClick,
     mentionRequest,
   };
@@ -900,7 +912,7 @@ const Index = () => {
           onSignInClick={handleOpenAuthModal}
           onGuideClick={handleOpenGuide}
           onHashtagClick={handleHashtagExclusive}
-          forceComposeMode={isOnboardingOpen && activeOnboardingSection === "compose"}
+          forceComposeMode={forceShowComposeForGuide}
           onAuthorClick={handleAuthorClick}
           mentionRequest={mentionRequest}
         />

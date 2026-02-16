@@ -1,10 +1,12 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { TaskComposer } from "./TaskComposer";
 import type { Channel, Relay, Person } from "@/types";
 
+let mockUser: { id: string } | null = { id: "me" };
+
 vi.mock("@/lib/nostr/ndk-context", () => ({
-  useNDK: () => ({ user: { id: "me" } }),
+  useNDK: () => ({ user: mockUser }),
 }));
 
 vi.mock("sonner", () => ({
@@ -39,6 +41,26 @@ const people: Person[] = [
 ];
 
 describe("TaskComposer hashtag autocomplete", () => {
+  beforeEach(() => {
+    mockUser = { id: "me" };
+  });
+
+  it("keeps task submit label when signed out and disabled", () => {
+    mockUser = null;
+    render(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
+    expect(screen.queryByText("Sign in to post")).not.toBeInTheDocument();
+  });
+
   it("supports keyboard selection with Enter", () => {
     render(
       <TaskComposer

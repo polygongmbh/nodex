@@ -185,6 +185,10 @@ When the user asks you to create a plan to fix or implement something:
 - If neither prefix is used:
   - choose a balanced level of testing/refactoring based on task complexity and risk.
 
+## Special Commands
+- If the user prompt starts with `squash`, review recent commits and identify sensible squash opportunities (for example repetitive fixups or tightly related micro-commits).
+- Only rewrite unpushed local history when performing squash/rebase operations; do not rewrite pushed/shared history unless the user explicitly requests it.
+
 ## Progress Reporting Expectations
 - During active work, provide progress estimates in short updates.
 - Use staged progress labels when applicable, for example:

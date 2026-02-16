@@ -41,18 +41,14 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-channels",
       title: "Channel filters",
-      description: "In Channels, click a channel name to cycle neutral → include → exclude. Click the # icon to show only that channel.",
+      description: "In Channels, click a channel name to cycle neutral → include → exclude. Click the # icon to show only that channel. Click the hashtag icon to the left of Channels to reset channel filters.",
       target: '[data-onboarding="channels-section"]',
-      requiredAction: "click-target",
-      actionPrompt: "Click a channel control to continue.",
     },
     {
       id: "filters-people",
       title: "People filters",
-      description: "In People, click a person name to toggle that person. Click the avatar/icon to show only that person.",
+      description: "In People, click a person name to toggle that person. Click the avatar/icon to show only that person. Click the icon to the left of People to reset people filters.",
       target: '[data-onboarding="people-section"]',
-      requiredAction: "click-target",
-      actionPrompt: "Click a person control to continue.",
     },
     {
       id: "filters-hashtag-content",
@@ -61,12 +57,6 @@ const desktopStepsBySection: StepMap = {
       target: '[data-onboarding="content-hashtag"]',
       requiredAction: "click-target",
       actionPrompt: "Click a hashtag chip in a task item.",
-    },
-    {
-      id: "filters-reset",
-      title: "Reset channel focus",
-      description: "Reset channels by cycling tags back to neutral, or use the Channels header icon (in the section title row) to toggle all included/reset.",
-      target: '[data-onboarding="channels-section"]',
     },
   ],
   compose: [

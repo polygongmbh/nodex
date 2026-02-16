@@ -143,7 +143,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
-  it("shows click hint text in each step card", () => {
+  it("does not render the generic click hint text", () => {
     render(
       <div>
         <div data-onboarding="task-list">Task list</div>
@@ -159,8 +159,8 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     );
 
     expect(
-      screen.getByText("Click the highlighted area, or use Next.")
-    ).toBeInTheDocument();
+      screen.queryByText("Click the highlighted area, or use Next.")
+    ).not.toBeInTheDocument();
   });
 
   it("renders a visual target arrow indicator for targeted steps", () => {

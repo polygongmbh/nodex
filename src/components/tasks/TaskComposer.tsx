@@ -309,7 +309,7 @@ export function TaskComposer({
   }).slice(0, 8);
   const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
   const submitBlockedReason = !user
-    ? "Sign in to post"
+    ? "Sign in required"
     : !content.trim()
       ? "Write a message first"
       : !hasAtLeastOneTag
@@ -671,14 +671,14 @@ export function TaskComposer({
             <button
               onClick={handleSubmit}
               disabled={Boolean(submitBlockedReason)}
-              aria-label={!user ? "Sign in to post" : (taskType === "task" ? "Create task" : "Add comment")}
-              title={!user ? "Sign in to post" : (taskType === "task" ? "Create task" : "Add comment")}
+              aria-label={taskType === "task" ? "Create task" : "Add comment"}
+              title={taskType === "task" ? "Create task" : "Add comment"}
               className="px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isPublishing && (
                 <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               )}
-              {!user ? "Sign in to post" : (taskType === "task" ? "Create Task" : "Add Comment")}
+              {taskType === "task" ? "Create Task" : "Add Comment"}
             </button>
             <div className="relative w-9 bg-primary/95 border-l border-primary-foreground/20">
               <select
