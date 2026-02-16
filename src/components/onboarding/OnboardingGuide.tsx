@@ -484,6 +484,25 @@ export function OnboardingGuide({
         finalTop = pushedDownTop;
       }
     }
+    if (isComposeGuidanceStep) {
+      const horizontalOverlap =
+        finalLeft < targetRect.right &&
+        finalLeft + cardWidth > targetRect.left;
+      const verticalOverlap =
+        finalTop < targetRect.bottom &&
+        finalTop + cardHeightEstimate > targetRect.top;
+      if (horizontalOverlap && verticalOverlap) {
+        const forcedBelowTop = Math.min(
+          window.innerHeight - cardHeightEstimate - 8,
+          targetRect.bottom + gap + 72
+        );
+        if (forcedBelowTop + cardHeightEstimate <= window.innerHeight - 8) {
+          finalTop = forcedBelowTop;
+        } else {
+          finalTop = Math.max(8, targetRect.top - gap - cardHeightEstimate - 24);
+        }
+      }
+    }
     return {
       width: cardWidth,
       maxWidth: "calc(100vw - 16px)",

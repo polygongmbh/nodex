@@ -399,6 +399,13 @@ const Index = () => {
     isMobile,
   });
 
+  const handleOnboardingActiveSectionChange = useCallback((section: OnboardingSectionId | null) => {
+    setActiveOnboardingSection(section);
+    if (!isMobile && section === "compose" && currentView !== "feed") {
+      setCurrentView("feed");
+    }
+  }, [currentView, isMobile, setCurrentView]);
+
   const handleRelayToggle = (id: string) => {
     setActiveRelayIds((prev) => {
       const next = new Set(prev);
@@ -929,7 +936,7 @@ const Index = () => {
           stepsBySection={onboardingStepsBySection}
           onClose={handleCloseGuide}
           onComplete={handleCompleteGuide}
-          onActiveSectionChange={setActiveOnboardingSection}
+          onActiveSectionChange={handleOnboardingActiveSectionChange}
           onStepChange={handleOnboardingStepChange}
         />
       </>
@@ -998,7 +1005,7 @@ const Index = () => {
         stepsBySection={onboardingStepsBySection}
         onClose={handleCloseGuide}
         onComplete={handleCompleteGuide}
-        onActiveSectionChange={setActiveOnboardingSection}
+        onActiveSectionChange={handleOnboardingActiveSectionChange}
         onStepChange={handleOnboardingStepChange}
       />
       <VersionHint className="fixed bottom-2 right-3 z-20 rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60" />
