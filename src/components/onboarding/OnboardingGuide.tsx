@@ -451,16 +451,22 @@ export function OnboardingGuide({
       };
     }
     const cardWidth = 380;
+    const isComposeGuidanceStep =
+      currentStep.id === "compose-kind" ||
+      currentStep.id === "compose-input" ||
+      currentStep.id === "mobile-compose-combobox";
+    const cardHeightEstimate = isComposeGuidanceStep ? 280 : 240;
     const gap = 24;
+    const preferredDownwardNudge = isComposeGuidanceStep ? 28 : 0;
     const left = Math.max(8, Math.min(targetRect.left, window.innerWidth - cardWidth - 8));
-    const preferredTop = targetRect.bottom + gap;
+    const preferredTop = targetRect.bottom + gap + preferredDownwardNudge;
     const top =
-      preferredTop + 240 > window.innerHeight
-        ? Math.max(8, targetRect.top - gap - 240)
+      preferredTop + cardHeightEstimate > window.innerHeight
+        ? Math.max(8, targetRect.top - gap - cardHeightEstimate)
         : preferredTop;
     const overlapsTarget =
       top < targetRect.bottom &&
-      top + 240 > targetRect.top &&
+      top + cardHeightEstimate > targetRect.top &&
       left < targetRect.right &&
       left + cardWidth > targetRect.left;
     const shiftedLeft = Math.max(8, targetRect.left - cardWidth - gap);
@@ -468,11 +474,21 @@ export function OnboardingGuide({
     const finalLeft = overlapsTarget
       ? (shiftedRight + cardWidth <= window.innerWidth - 8 ? shiftedRight : shiftedLeft)
       : left;
+    let finalTop = top;
+    if (overlapsTarget && isComposeGuidanceStep) {
+      const pushedDownTop = Math.min(
+        window.innerHeight - cardHeightEstimate - 8,
+        targetRect.bottom + gap + preferredDownwardNudge + 16
+      );
+      if (pushedDownTop > finalTop) {
+        finalTop = pushedDownTop;
+      }
+    }
     return {
       width: cardWidth,
       maxWidth: "calc(100vw - 16px)",
       left: finalLeft,
-      top,
+      top: finalTop,
       position: "fixed",
       zIndex: 130,
     };
