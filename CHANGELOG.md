@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Changed
 - Sidebar channel and people filters now use distinct exclusive-vs-toggle click targets (text vs icon/avatar), with updated guide copy to match behavior.
+- Sidebar footer utilities (relay management, shortcuts, guide) now render as a compact single-row icon strip to reduce crowding while keeping full functionality via tooltips.
 - Feed identity rendering now consistently prefers kind:0 profile metadata and improved fallback handling for pubkeys.
 - Hover hints were expanded across navigation, filter, and task-focus controls for clearer affordance.
 - The top-left Nodex brand text now links to the start page (`/`).
