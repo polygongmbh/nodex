@@ -56,6 +56,7 @@ export function OnboardingGuide({
   const [interactionSatisfied, setInteractionSatisfied] = useState(false);
   const [interactionTimedOut, setInteractionTimedOut] = useState(false);
   const [skipDelayElapsed, setSkipDelayElapsed] = useState(false);
+  const [isManualSession, setIsManualSession] = useState(false);
   const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
   const autoAdvancedStepIdsRef = useRef<Set<string>>(new Set());
   const pendingAutoAdvanceStepIdsRef = useRef<Set<string>>(new Set());
@@ -72,6 +73,16 @@ export function OnboardingGuide({
     return true;
   };
 
+  const allSteps = useMemo(() => getOnboardingAllSteps(stepsBySection), [stepsBySection]);
+
+  const getFirstStepIndexForSection = (sectionId: OnboardingSectionId): number => {
+    const sectionSteps = stepsBySection[sectionId] ?? [];
+    if (sectionSteps.length === 0) return 0;
+    const firstSectionStepId = sectionSteps[0].id;
+    const globalIndex = allSteps.findIndex((step) => step.id === firstSectionStepId);
+    return globalIndex >= 0 ? globalIndex : 0;
+  };
+
   const advanceStep = (stepId: string) => {
     if (autoAdvancedStepIdsRef.current.has(stepId)) return;
     if (pendingAutoAdvanceStepIdsRef.current.has(stepId)) return;
@@ -86,7 +97,7 @@ export function OnboardingGuide({
         return;
       }
       setStepIndex((prev) => Math.min(prev + 1, activeSteps.length - 1));
-    }, 220);
+    }, isManualSession ? 0 : 220);
     return () => {
       window.clearTimeout(timeout);
       pendingAutoAdvanceStepIdsRef.current.delete(stepId);
@@ -95,6 +106,7 @@ export function OnboardingGuide({
 
   useEffect(() => {
     if (!isOpen) return;
+    setIsManualSession(initialSection === null);
     setActiveSection(initialSection);
     setStepIndex(0);
     setTargetRect(null);
@@ -117,11 +129,9 @@ export function OnboardingGuide({
 
   const activeSteps = useMemo(() => {
     if (!activeSection) return [];
-    if (activeSection === "all") {
-      return getOnboardingAllSteps(stepsBySection);
-    }
+    if (activeSection === "all") return allSteps;
     return stepsBySection[activeSection];
-  }, [activeSection, stepsBySection]);
+  }, [activeSection, allSteps, stepsBySection]);
 
   useEffect(() => {
     if (!isOpen || !activeSection) return;
@@ -311,6 +321,10 @@ export function OnboardingGuide({
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
+    if (isManualSession) {
+      setSkipDelayElapsed(true);
+      return;
+    }
     if (stepIndex !== 0) {
       setSkipDelayElapsed(true);
       return;
@@ -322,12 +336,14 @@ export function OnboardingGuide({
     }, GUIDE_ACTION_TIMEOUT_MS);
 
     return () => window.clearTimeout(timeout);
-  }, [activeSection, isOpen, stepIndex]);
+  }, [activeSection, isManualSession, isOpen, stepIndex]);
 
   const currentStep = activeSteps[stepIndex];
   const isLastStep = stepIndex >= activeSteps.length - 1;
   const showSectionPicker = activeSection === null;
-  const nextDisabled = Boolean(currentStep?.requiredAction && !interactionSatisfied && !interactionTimedOut);
+  const nextDisabled = isManualSession
+    ? false
+    : Boolean(currentStep?.requiredAction && !interactionSatisfied && !interactionTimedOut);
   const skipDisabled = stepIndex === 0 && !skipDelayElapsed;
 
   useEffect(() => {
@@ -571,8 +587,8 @@ export function OnboardingGuide({
                     <button
                       key={section.id}
                       onClick={() => {
-                        setActiveSection(section.id);
-                        setStepIndex(0);
+                        setActiveSection("all");
+                        setStepIndex(getFirstStepIndexForSection(section.id));
                       }}
                       className="w-full flex items-start gap-2 rounded-lg border border-border bg-background/60 hover:bg-primary/10 px-3 py-2 text-left transition-colors"
                       aria-label={`Start ${section.title} onboarding section`}
@@ -598,8 +614,8 @@ export function OnboardingGuide({
                 <button
                   key={section.id}
                   onClick={() => {
-                    setActiveSection(section.id);
-                    setStepIndex(0);
+                    setActiveSection("all");
+                    setStepIndex(getFirstStepIndexForSection(section.id));
                   }}
                   style={getPickerPaneStyle(section.id)}
                   className="absolute z-[125] pointer-events-auto rounded-none border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 transition-colors text-left p-3"

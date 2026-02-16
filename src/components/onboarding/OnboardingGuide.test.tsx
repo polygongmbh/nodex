@@ -411,4 +411,75 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
+  it("starts manual section picks on global step numbering and allows back to earlier global steps", () => {
+    const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+      navigation: [
+        { id: "navigation-step-1", title: "Navigation 1", description: "Navigation step 1" },
+        { id: "navigation-step-2", title: "Navigation 2", description: "Navigation step 2" },
+      ],
+      filters: [
+        { id: "filters-step-1", title: "Filters 1", description: "Filters step 1" },
+      ],
+      compose: [
+        { id: "compose-step-1", title: "Compose 1", description: "Compose step 1" },
+        { id: "compose-step-2", title: "Compose 2", description: "Compose step 2" },
+      ],
+    };
+
+    render(
+      <OnboardingGuide
+        isOpen
+        initialSection={null}
+        sections={sections}
+        stepsBySection={stepsBySection}
+        onClose={vi.fn()}
+        onComplete={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Start Compose onboarding section" }));
+
+    expect(screen.getByText("Compose 1")).toBeInTheDocument();
+    expect(screen.getByText("Step 4 of 5")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByText("Filters 1")).toBeInTheDocument();
+    expect(screen.getByText("Step 3 of 5")).toBeInTheDocument();
+  });
+
+  it("keeps skip and next immediately available for manual guide starts", () => {
+    const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+      navigation: [
+        {
+          id: "navigation-required",
+          title: "Navigation required",
+          description: "Needs click",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+      ],
+      filters: [],
+      compose: [],
+    };
+
+    render(
+      <div>
+        <div data-onboarding="task-list">Task list</div>
+        <OnboardingGuide
+          isOpen
+          initialSection={null}
+          sections={sections}
+          stepsBySection={stepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Start Navigation onboarding section" }));
+
+    expect(screen.getByRole("button", { name: "Skip" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
+  });
+
 });
