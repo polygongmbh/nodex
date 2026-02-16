@@ -40,7 +40,7 @@ import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import { derivePeopleFromKind0Events } from "@/lib/people-from-kind0";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { taskMatchesSelectedPeople } from "@/lib/person-filter";
-import { shouldForceComposeForGuide } from "@/lib/onboarding-guide";
+import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -362,7 +362,7 @@ const Index = () => {
   }) => {
     setActiveOnboardingStepId(payload.id);
 
-    const stepKey = `${payload.stepNumber}:${payload.id}`;
+    const stepKey = getOnboardingBehaviorGateId(payload.id);
     if (lastHandledOnboardingStepRef.current === stepKey) return;
     lastHandledOnboardingStepRef.current = stepKey;
 

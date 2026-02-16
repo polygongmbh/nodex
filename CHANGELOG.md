@@ -18,6 +18,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Manually launched onboarding sections now jump into the global all-steps sequence (preserving original step numbers), allow backward navigation across prior steps, and remove skip/next delay gating.
 - Selecting the Compose onboarding section now immediately reports compose context so the compose window is forced open as soon as guide guidance starts.
 - Filter onboarding now includes a dedicated search bar step, with consistent search-bar targeting across desktop views.
+- Onboarding side-effect/reset triggers now gate on stable step IDs (not step numbers), reducing fragility when step ordering changes.
 - Feed identity rendering now consistently prefers kind:0 profile metadata and improved fallback handling for pubkeys.
 - Hover hints were expanded across navigation, filter, and task-focus controls for clearer affordance.
 - The top-left Nodex brand text now links to the start page (`/`).

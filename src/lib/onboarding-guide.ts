@@ -24,3 +24,7 @@ export function shouldForceComposeForGuide({
   if (!isMobile && activeOnboardingStepId === "filters-hashtag-content") return true;
   return false;
 }
+
+export function getOnboardingBehaviorGateId(stepId: string): string {
+  return stepId;
+}
