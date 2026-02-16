@@ -18,13 +18,14 @@ export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused 
         isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent"
       )}
     >
-      {/* Icon - click for exclusive */}
+      {/* Icon - click for toggle */}
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onExclusive();
+          onToggle();
         }}
-        title="Show only this channel"
+        title="Toggle channel filter"
+        aria-label={`Toggle #${channel.name} filter`}
         className="hover:ring-2 hover:ring-primary/50 rounded"
       >
         <Hash
@@ -37,10 +38,11 @@ export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused 
         />
       </button>
 
-      {/* Name - click for toggle */}
+      {/* Name - click for exclusive */}
       <button
-        onClick={onToggle}
+        onClick={onExclusive}
         className="flex-1 text-left"
+        aria-label={`Show only #${channel.name}`}
       >
         <span
           className={cn(

@@ -24,10 +24,10 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onExclusive();
+          onToggle();
         }}
-        title={`Show only ${personName}`}
-        aria-label={`Show only ${personName}`}
+        title={`Toggle ${personName}`}
+        aria-label={`Toggle ${personName}`}
         className="relative rounded-full hover:ring-2 hover:ring-primary/50"
       >
         <UserAvatar
@@ -46,7 +46,7 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
           <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-sidebar" />
         )}
       </button>
-      <button onClick={onToggle} className="flex-1 text-left" aria-label={personName}>
+      <button onClick={onExclusive} className="flex-1 text-left" aria-label={`Show only ${personName}`}>
         <span
           className={cn(
             "text-sm transition-colors",

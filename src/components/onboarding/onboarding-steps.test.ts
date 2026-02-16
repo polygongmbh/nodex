@@ -19,6 +19,8 @@ describe("onboarding steps", () => {
 
     expect(channelStep?.description).toContain("left of Channels");
     expect(peopleStep?.description).toContain("left of People");
+    expect(channelStep?.description).toContain("show only that channel");
+    expect(peopleStep?.description).toContain("show only that person");
     expect(channelStep?.requiredAction).toBeUndefined();
     expect(peopleStep?.requiredAction).toBeUndefined();
   });

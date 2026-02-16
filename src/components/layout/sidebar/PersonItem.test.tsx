@@ -18,19 +18,7 @@ describe("PersonItem", () => {
     expect(screen.getByTestId("sidebar-person-beam-npub123")).toBeInTheDocument();
   });
 
-  it("toggles filter when clicking the person text", () => {
-    const onToggle = vi.fn();
-    const onExclusive = vi.fn();
-
-    render(<PersonItem person={basePerson} onToggle={onToggle} onExclusive={onExclusive} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Alice" }));
-
-    expect(onToggle).toHaveBeenCalledTimes(1);
-    expect(onExclusive).not.toHaveBeenCalled();
-  });
-
-  it("enables exclusive filter when clicking the avatar", () => {
+  it("enables exclusive filter when clicking the person text", () => {
     const onToggle = vi.fn();
     const onExclusive = vi.fn();
 
@@ -40,5 +28,17 @@ describe("PersonItem", () => {
 
     expect(onExclusive).toHaveBeenCalledTimes(1);
     expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it("toggles filter when clicking the avatar", () => {
+    const onToggle = vi.fn();
+    const onExclusive = vi.fn();
+
+    render(<PersonItem person={basePerson} onToggle={onToggle} onExclusive={onExclusive} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Toggle Alice" }));
+
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    expect(onExclusive).not.toHaveBeenCalled();
   });
 });

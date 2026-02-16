@@ -41,13 +41,13 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-channels",
       title: "Channel filters",
-      description: "In Channels, click a channel name to cycle neutral → include → exclude. Click the # icon to show only that channel. Click the hashtag icon to the left of Channels to reset channel filters.",
+      description: "In Channels, click a channel name to show only that channel. Click the # icon to cycle neutral → include → exclude for that channel. Click the hashtag icon to the left of Channels to reset channel filters.",
       target: '[data-onboarding="channels-section"]',
     },
     {
       id: "filters-people",
       title: "People filters",
-      description: "In People, click a person name to toggle that person. Click the avatar/icon to show only that person. Click the icon to the left of People to reset people filters.",
+      description: "In People, click a person name to show only that person. Click the avatar/icon to toggle that person. Click the icon to the left of People to reset people filters.",
       target: '[data-onboarding="people-section"]',
     },
     {
