@@ -2,7 +2,6 @@ import { useEffect, useCallback } from "react";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 
 interface UseKeyboardShortcutsOptions {
-  currentView: ViewType;
   onViewChange: (view: ViewType) => void;
   enabled?: boolean;
 }
@@ -10,7 +9,6 @@ interface UseKeyboardShortcutsOptions {
 const viewOrder: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
 
 export function useKeyboardShortcuts({
-  currentView,
   onViewChange,
   enabled = true,
 }: UseKeyboardShortcutsOptions) {
@@ -48,7 +46,7 @@ export function useKeyboardShortcuts({
         return;
       }
     },
-    [currentView, onViewChange]
+    [onViewChange]
   );
 
   useEffect(() => {

@@ -287,7 +287,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     return () => {
       ndkInstance.pool.removeAllListeners();
     };
-  }, []);
+  }, [defaultRelays]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;

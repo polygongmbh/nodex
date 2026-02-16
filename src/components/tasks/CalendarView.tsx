@@ -73,7 +73,7 @@ export function CalendarView({
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
 
   // Get all descendants of a task
-  const getDescendantIds = (taskId: string): Set<string> => {
+  const getDescendantIds = useCallback((taskId: string): Set<string> => {
     const ids = new Set<string>();
     const addDescendants = (id: string) => {
       allTasks.filter(t => t.parentId === id).forEach(child => {
@@ -83,7 +83,7 @@ export function CalendarView({
     };
     addDescendants(taskId);
     return ids;
-  };
+  }, [allTasks]);
 
   // Get full ancestor chain for a task
   const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
@@ -145,7 +145,7 @@ export function CalendarView({
       
       return true;
     });
-  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId]);
+  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, getDescendantIds]);
 
   const days = useMemo(() => {
     const start = startOfMonth(currentMonth);

@@ -345,7 +345,6 @@ const Index = () => {
 
   // Desktop keyboard shortcuts (disabled on mobile)
   useKeyboardShortcuts({
-    currentView,
     onViewChange: setCurrentView,
     enabled: !isMobile,
   });
@@ -392,7 +391,7 @@ const Index = () => {
         isSelected: false,
       }))
     );
-  }, [channels, relays, setFocusedTaskId]);
+  }, [channels, relays, setCurrentView, setFocusedTaskId]);
 
   const forceShowComposeForGuide = shouldForceComposeForGuide({
     isOnboardingOpen,

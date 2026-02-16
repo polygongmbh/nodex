@@ -14,8 +14,9 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
   return (
     <div 
       className="flex items-center justify-center gap-1.5 py-2"
-      role="tablist"
-      aria-label="View position indicator"
+      role="status"
+      aria-live="polite"
+      aria-label="Current view position"
     >
       {/* Management dot */}
       <div
@@ -25,8 +26,7 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
             ? "w-4 bg-primary" 
             : "bg-muted-foreground/30"
         )}
-        aria-selected={showFilters}
-        aria-label="Manage"
+        aria-hidden="true"
       />
       
       {/* View dots */}
@@ -39,8 +39,7 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
               ? "w-4 bg-primary" 
               : "w-1.5 bg-muted-foreground/30"
           )}
-          aria-selected={!showFilters && currentIndex === index}
-          aria-label={view}
+          aria-hidden="true"
         />
       ))}
     </div>
