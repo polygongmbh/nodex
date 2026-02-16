@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Radio, Hash, Users, Plus, Wifi, WifiOff, Keyboard, BookOpen } from "lucide-react";
+import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
 import { Relay, Channel, Person } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
@@ -215,10 +215,6 @@ export function Sidebar({
     }));
   };
 
-  // Connection status
-  const connectedCount = nostrRelays.filter((r) => r.status === "connected").length;
-  const isConnected = connectedCount > 0;
-
   return (
     <aside 
       ref={sidebarRef}
@@ -318,49 +314,16 @@ export function Sidebar({
 
       {/* Footer: compact utility controls */}
       <div className="border-t border-sidebar-border flex-shrink-0 px-2 py-1.5">
-        <TooltipProvider>
-          <div className="flex items-center justify-start gap-1">
-            <Tooltip>
-              <RelayManagement
-                relays={nostrRelays}
-                onAddRelay={onAddRelay}
-                onRemoveRelay={onRemoveRelay}
-                trigger={
-                  <TooltipTrigger asChild>
-                    <button
-                      className="relative h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors inline-flex items-center justify-center"
-                      aria-label={isConnected ? `Relay status: ${connectedCount} connected` : "Relay status: disconnected"}
-                      title={isConnected ? "Manage relays" : "Manage relays (currently disconnected)"}
-                    >
-                      {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-                      <span
-                        className={cn(
-                          "absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full",
-                          isConnected ? "bg-success" : "bg-muted-foreground",
-                        )}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </TooltipTrigger>
-                }
-              />
-              <TooltipContent side="top">
-                <p>
-                  {isConnected
-                    ? `Relay management (${connectedCount} connected)`
-                    : "Relay management (disconnected)"}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-
-            {onShortcutsClick && (
+        {(onShortcutsClick || onGuideClick) && (
+          <TooltipProvider>
+            <div className="flex w-full items-center justify-evenly gap-1">
+              {onShortcutsClick && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onShortcutsClick}
                     className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors inline-flex items-center justify-center"
                     aria-label="Open keyboard shortcuts help"
-                    title="Keyboard shortcuts (?)"
                   >
                     <Keyboard className="w-4 h-4" />
                   </button>
@@ -369,16 +332,15 @@ export function Sidebar({
                   <p>Keyboard shortcuts (?)</p>
                 </TooltipContent>
               </Tooltip>
-            )}
+              )}
 
-            {onGuideClick && (
+              {onGuideClick && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onGuideClick}
                     className="h-8 w-8 rounded-md text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors inline-flex items-center justify-center"
                     aria-label="Open onboarding guide"
-                    title="Open onboarding guide"
                   >
                     <BookOpen className="w-4 h-4" />
                   </button>
@@ -387,9 +349,10 @@ export function Sidebar({
                   <p>Guide</p>
                 </TooltipContent>
               </Tooltip>
-            )}
-          </div>
-        </TooltipProvider>
+              )}
+            </div>
+          </TooltipProvider>
+        )}
       </div>
     </aside>
   );
