@@ -425,7 +425,7 @@ export function FeedView({
                         }}
                         className="font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
                         aria-label={`Filter and mention ${authorMeta.primary}`}
-                        title={`Filter and mention ${authorMeta.primary}`}
+                        title={resolvedAuthor.id}
                       >
                         <span title={authorMeta.primary}>{primaryAuthorLabel}</span>
                         {authorMeta.secondary && (

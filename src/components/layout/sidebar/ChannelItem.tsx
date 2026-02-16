@@ -10,6 +10,13 @@ interface ChannelItemProps {
 }
 
 export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused = false }: ChannelItemProps) {
+  const nextFilterStateLabel =
+    channel.filterState === "neutral"
+      ? "include"
+      : channel.filterState === "included"
+        ? "exclude"
+        : "unfiltered";
+
   return (
     <div
       data-sidebar-item={`channel-${channel.id}`}
@@ -24,7 +31,7 @@ export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused 
           e.stopPropagation();
           onToggle();
         }}
-        title="Toggle channel filter"
+        title={`Toggle #${channel.name} to ${nextFilterStateLabel}`}
         aria-label={`Toggle #${channel.name} filter`}
         className="hover:ring-2 hover:ring-primary/50 rounded"
       >
