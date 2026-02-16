@@ -475,7 +475,7 @@ export function OnboardingGuide({
   }, [currentStep?.id, isOpen, showSectionPicker]);
 
   const getAnchoredCardStyle = (): React.CSSProperties => {
-    if (showSectionPicker || !currentStep || !targetRect) {
+    if (showSectionPicker) {
       return {
         width: "min(42rem, calc(100vw - 16px))",
         left: "50%",
@@ -485,17 +485,33 @@ export function OnboardingGuide({
         zIndex: 130,
       };
     }
-    const cardWidth = Math.max(280, Math.min(guideCardSize.width || 380, window.innerWidth - 16));
+    if (!currentStep || !targetRect) {
+      return {
+        width: "min(42rem, calc(100vw - 16px))",
+        left: "50%",
+        top: "50%",
+        transform: "translate(-50%, -50%)",
+        position: "fixed",
+        zIndex: 130,
+      };
+    }
     const isComposeGuidanceStep =
       currentStep.id === "compose-kind" ||
       currentStep.id === "compose-input" ||
       currentStep.id === "mobile-compose-combobox";
+    const isHashtagContentStep = currentStep.id === "filters-hashtag-content";
+    const maxStepCardWidth = Math.min(isMobile ? window.innerWidth - 16 : 520, window.innerWidth - 16);
+    const minStepCardWidth = Math.min(280, maxStepCardWidth);
+    const cardWidth = Math.max(
+      minStepCardWidth,
+      Math.min(guideCardSize.width || 380, maxStepCardWidth)
+    );
     const measuredHeight = guideCardSize.height || 0;
     const cardHeightEstimate = Math.max(
       isComposeGuidanceStep ? 300 : 260,
       measuredHeight
     );
-    const gap = isComposeGuidanceStep ? 40 : 24;
+    const gap = isComposeGuidanceStep ? 40 : isHashtagContentStep ? 28 : 24;
     const viewportPadding = 8;
     const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
     const maxLeft = Math.max(viewportPadding, window.innerWidth - cardWidth - viewportPadding);
@@ -525,14 +541,24 @@ export function OnboardingGuide({
     const rightLeft = targetRect.right + gap;
     const leftLeft = targetRect.left - cardWidth - gap;
 
-    const candidates = [
-      toCandidate(centeredLeft, belowTop),
-      toCandidate(targetRect.left, belowTop),
-      toCandidate(targetRect.right - cardWidth, belowTop),
-      toCandidate(centeredLeft, aboveTop),
-      toCandidate(rightLeft, centeredTop),
-      toCandidate(leftLeft, centeredTop),
-    ];
+    const candidates = isHashtagContentStep
+      ? [
+          toCandidate(window.innerWidth - cardWidth - viewportPadding, viewportPadding + 8), // top-right
+          toCandidate(viewportPadding, viewportPadding + 8), // top-left
+          toCandidate(centeredLeft, aboveTop),
+          toCandidate(rightLeft, centeredTop), // right of target
+          toCandidate(leftLeft, centeredTop), // left of target
+          toCandidate(window.innerWidth - cardWidth - viewportPadding, window.innerHeight - cardHeightEstimate - viewportPadding),
+          toCandidate(viewportPadding, window.innerHeight - cardHeightEstimate - viewportPadding),
+        ]
+      : [
+          toCandidate(centeredLeft, belowTop),
+          toCandidate(targetRect.left, belowTop),
+          toCandidate(targetRect.right - cardWidth, belowTop),
+          toCandidate(centeredLeft, aboveTop),
+          toCandidate(rightLeft, centeredTop),
+          toCandidate(leftLeft, centeredTop),
+        ];
 
     let bestCandidate = candidates[0];
     let bestOverlap = overlapArea(bestCandidate.left, bestCandidate.top);
@@ -667,12 +693,10 @@ export function OnboardingGuide({
               role="dialog"
               aria-modal="true"
               aria-label="Choose guide section"
-              className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4"
-              style={getAnchoredCardStyle()}
+              className="absolute left-2 right-2 bottom-20 z-[130] pointer-events-auto rounded-xl border border-border bg-card/90 backdrop-blur-md text-card-foreground shadow-xl p-4"
             >
               <div className="space-y-3">
                 <h2 className="text-base font-semibold">Choose a guide section</h2>
-                <p className="text-xs text-muted-foreground">Pick an area to start mobile guidance.</p>
                 <div className="space-y-2">
                   {sections.map((section) => (
                     <button
@@ -723,7 +747,6 @@ export function OnboardingGuide({
                   </span>
                 </button>
               ))}
-
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[130] pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-2.5 shadow-lg max-w-2xl w-[calc(100vw-2rem)]">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm text-muted-foreground">
@@ -734,10 +757,14 @@ export function OnboardingGuide({
               </div>
             </>
           )}
-
           {isMobile && (
-            <div className="absolute bottom-4 right-4 z-[130] pointer-events-auto">
-              <Button variant="ghost" onClick={onClose}>Close</Button>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[131] pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-2.5 shadow-lg w-[calc(100vw-1rem)]">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">
+                  Choose an interface area, then tap a highlighted region to start guidance.
+                </p>
+                <Button variant="ghost" onClick={onClose}>Close</Button>
+              </div>
             </div>
           )}
         </>

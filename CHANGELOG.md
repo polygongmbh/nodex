@@ -15,6 +15,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Compose guidance steps now use collision-scored panel placement with target clearance, minimizing overlap and keeping the highlighted compose target unobstructed.
 - Guide section picker now dismisses when clicking outside the highlighted selection panes.
 - Desktop area-picker guidance text now lives in a bottom helper/action bar with Close, avoiding overlap with the top navigation target area.
+- Onboarding guide cards now cap desktop width and prioritize non-blocking placement for hashtag-content guidance; mobile area-picker guidance is pinned to a bottom helper/action bar with Close.
 
 ## [1.0.0] - 2026-02-16
 
