@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   NostrRelayPool,
   NostrFilter,
@@ -43,6 +43,7 @@ const MOCK_PUBKEY = "0".repeat(64);
 
 export function useNostr(options: UseNostrOptions = {}): UseNostrReturn {
   const { defaultRelays = DEFAULT_RELAYS, autoConnect = true } = options;
+  const defaultRelaysKey = useMemo(() => defaultRelays.join(","), [defaultRelays]);
   
   const [relays, setRelays] = useState<NostrRelay[]>([]);
   const [events, setEvents] = useState<NostrEventWithRelay[]>([]);
@@ -119,7 +120,7 @@ export function useNostr(options: UseNostrOptions = {}): UseNostrReturn {
       resetRelayPool();
       poolRef.current = null;
     };
-  }, [autoConnect, defaultRelays.join(",")]);
+  }, [autoConnect, defaultRelays, defaultRelaysKey]);
 
   // Add a new relay
   const addRelay = useCallback((url: string) => {

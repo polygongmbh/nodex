@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NDKEvent, NDKFilter, NDKKind, NDKSubscription } from "@nostr-dev-kit/ndk";
 
@@ -34,6 +34,7 @@ export function useNostrProfiles(pubkeys: string[]) {
   const [profiles, setProfiles] = useState<ProfileCache>({});
   const [loading, setLoading] = useState(false);
   const subscriptionRef = useRef<NDKSubscription | null>(null);
+  const pubkeysKey = useMemo(() => pubkeys.join(","), [pubkeys]);
   
   // Subscribe to cache updates
   useEffect(() => {
@@ -53,7 +54,7 @@ export function useNostrProfiles(pubkeys: string[]) {
     return () => {
       subscribers.delete(updateFromCache);
     };
-  }, [pubkeys.join(",")]);
+  }, [pubkeys, pubkeysKey]);
 
   // Fetch missing profiles
   useEffect(() => {
@@ -126,7 +127,7 @@ export function useNostrProfiles(pubkeys: string[]) {
     return () => {
       sub?.stop();
     };
-  }, [ndk, pubkeys.join(",")]);
+  }, [ndk, pubkeys, pubkeysKey]);
 
   // Get profile for a specific pubkey
   const getProfile = useCallback((pubkey: string): NostrProfile | null => {

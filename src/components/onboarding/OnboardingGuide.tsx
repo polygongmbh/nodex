@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, Eye, Filter, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,7 +85,13 @@ export function OnboardingGuide({
     return globalIndex >= 0 ? globalIndex : 0;
   };
 
-  const advanceStep = (stepId: string) => {
+  const activeSteps = useMemo(() => {
+    if (!activeSection) return [];
+    if (activeSection === "all") return allSteps;
+    return stepsBySection[activeSection];
+  }, [activeSection, allSteps, stepsBySection]);
+
+  const advanceStep = useCallback((stepId: string) => {
     if (autoAdvancedStepIdsRef.current.has(stepId)) return;
     if (pendingAutoAdvanceStepIdsRef.current.has(stepId)) return;
     pendingAutoAdvanceStepIdsRef.current.add(stepId);
@@ -104,7 +110,7 @@ export function OnboardingGuide({
       window.clearTimeout(timeout);
       pendingAutoAdvanceStepIdsRef.current.delete(stepId);
     };
-  };
+  }, [activeSteps.length, isManualSession, onClose, onComplete, stepIndex]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -131,12 +137,6 @@ export function OnboardingGuide({
     onActiveSectionChange?.(activeSection);
   }, [activeSection, isOpen, manualSelectedSection, onActiveSectionChange]);
 
-  const activeSteps = useMemo(() => {
-    if (!activeSection) return [];
-    if (activeSection === "all") return allSteps;
-    return stepsBySection[activeSection];
-  }, [activeSection, allSteps, stepsBySection]);
-
   useEffect(() => {
     if (!isOpen || !activeSection) return;
     if (activeSteps.length === 0) return;
@@ -149,8 +149,10 @@ export function OnboardingGuide({
     if (!isOpen || activeSection === null) return;
     const step = activeSteps[stepIndex];
     if (!step) return;
+    const entry = stepEntryContextKeyRef.current;
+    if (entry?.stepId === step.id) return;
     stepEntryContextKeyRef.current = { stepId: step.id, contextKey: uiContextKey };
-  }, [activeSection, activeSteps, isOpen, stepIndex]);
+  }, [activeSection, activeSteps, isOpen, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -250,7 +252,7 @@ export function OnboardingGuide({
     if (autoAdvancedStepIdsRef.current.has(step.id)) return;
 
     return advanceStep(step.id);
-  }, [activeSection, activeSteps, interactionSatisfied, isOpen, onClose, onComplete, stepIndex]);
+  }, [activeSection, activeSteps, advanceStep, interactionSatisfied, isOpen, stepIndex]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -280,7 +282,7 @@ export function OnboardingGuide({
       window.clearInterval(interval);
       cleanupAdvance?.();
     };
-  }, [activeSection, activeSteps, isOpen, stepIndex, uiContextKey]);
+  }, [activeSection, activeSteps, advanceStep, interactionSatisfied, isOpen, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -302,7 +304,7 @@ export function OnboardingGuide({
     if (entry.contextKey === uiContextKey) return;
 
     return advanceStep(step.id);
-  }, [activeSection, activeSteps, isOpen, stepIndex, uiContextKey]);
+  }, [activeSection, activeSteps, advanceStep, isOpen, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -364,7 +366,7 @@ export function OnboardingGuide({
     });
   }, [activeSection, activeSteps.length, currentStep, isOpen, onStepChange, stepIndex]);
 
-  const getPickerSelectors = (sectionId: OnboardingSectionId): string[] => {
+  const getPickerSelectors = useCallback((sectionId: OnboardingSectionId): string[] => {
     if (isMobile) {
       switch (sectionId) {
         case "navigation":
@@ -384,7 +386,7 @@ export function OnboardingGuide({
       case "compose":
         return ['[data-onboarding="focused-compose"]', '[data-onboarding="compose-input"]'];
     }
-  };
+  }, [isMobile]);
 
   useEffect(() => {
     if (!isOpen || !showSectionPicker) return;
@@ -439,7 +441,7 @@ export function OnboardingGuide({
       window.removeEventListener("resize", measurePickerRects);
       window.removeEventListener("scroll", measurePickerRects, true);
     };
-  }, [isMobile, isOpen, showSectionPicker]);
+  }, [getPickerSelectors, isOpen, showSectionPicker]);
 
   const getAnchoredCardStyle = (): React.CSSProperties => {
     if (showSectionPicker || !currentStep || !targetRect) {
