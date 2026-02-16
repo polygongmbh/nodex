@@ -19,6 +19,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - The hashtag-content onboarding step now anchors guide placement directly below the highlighted hashtag target and uses shorter filtering guidance text.
 - Desktop onboarding no longer force-opens compose during the hashtag-content step; compose now opens when entering the compose step.
 - Desktop onboarding pre-opens compose on the hashtag-content step so the compose-step guide appears after layout has settled.
+- Sidebar footer controls now use flat button styling with visible icon+label text, and the Shortcuts control remains hidden on narrow sidebars.
 
 ## [1.0.0] - 2026-02-16
 

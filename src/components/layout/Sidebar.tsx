@@ -316,13 +316,13 @@ export function Sidebar({
       <div className="border-t border-sidebar-border flex-shrink-0 p-2">
         {(onShortcutsClick || onGuideClick) && (
           <TooltipProvider>
-            <div className="grid w-full grid-cols-1 gap-1.5 lg:grid-cols-2">
+            <div className="flex w-full flex-col gap-1 lg:flex-row">
               {onShortcutsClick && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onShortcutsClick}
-                    className="hidden h-9 w-full items-center justify-center gap-2 rounded-md px-2 text-muted-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground lg:inline-flex"
+                    className="hidden h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:inline-flex"
                     aria-label="Open keyboard shortcuts help"
                   >
                     <Keyboard className="w-4 h-4" />
@@ -340,7 +340,7 @@ export function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onGuideClick}
-                    className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md px-2 text-muted-foreground transition-colors hover:bg-sidebar-accent/40 hover:text-foreground"
+                    className="inline-flex h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground"
                     aria-label="Open onboarding guide"
                   >
                     <BookOpen className="w-4 h-4" />
