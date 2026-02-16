@@ -23,6 +23,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile unified compose/search flow updates, including shared content behavior, keyboard submission parity, and tighter hashtag/person/relay quick-filter interactions.
 - Author mention and reference improvements for compose/search flows with Nostr-compatible mention publishing.
 - Semantic version tracking in-app via a top-left Nodex hover version hint.
+- GitHub Actions CI validation now runs lint, tests, and build on push/PR.
 
 ### Changed
 - Sidebar channel and people filters now use distinct exclusive-vs-toggle click targets (text vs icon/avatar), with updated guide copy to match behavior.
@@ -35,3 +36,5 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile profile setup and manage interactions, including reduced layout breakage from long pubkeys.
 - Filter and compose synchronization edge cases in the unified bottom bar, including hashtag removal and neutral-state handling.
 - Status and task interaction behavior consistency across views (feed/tree/kanban/calendar) during recent refinement passes.
+- Lint pipeline reliability by excluding generated artifacts and resolving blocking lint rule violations in runtime and tests.
+- Accessibility refinements for muted-text contrast and view position indicator semantics.
