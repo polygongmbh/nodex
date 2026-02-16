@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, Filter, PenSquare } from "lucide-react";
+import { ArrowDown, Eye, Filter, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   OnboardingInitialSection,
@@ -26,6 +26,8 @@ interface RectBox {
   height: number;
 }
 
+const GUIDE_ACTION_TIMEOUT_MS = 5000;
+
 export function OnboardingGuide({
   isOpen,
   isMobile = false,
@@ -41,8 +43,34 @@ export function OnboardingGuide({
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [interactionSatisfied, setInteractionSatisfied] = useState(false);
   const [interactionTimedOut, setInteractionTimedOut] = useState(false);
+  const [skipDelayElapsed, setSkipDelayElapsed] = useState(false);
   const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
   const autoAdvancedStepIdsRef = useRef<Set<string>>(new Set());
+
+  const isTargetVisible = (selector: string): boolean => {
+    const target = document.querySelector(selector) as HTMLElement | null;
+    if (!target) return false;
+    const rect = target.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    const style = window.getComputedStyle(target);
+    if (style.display === "none" || style.visibility === "hidden") return false;
+    return true;
+  };
+
+  const advanceStep = (stepId: string) => {
+    if (autoAdvancedStepIdsRef.current.has(stepId)) return;
+    autoAdvancedStepIdsRef.current.add(stepId);
+    const timeout = window.setTimeout(() => {
+      const lastStep = stepIndex >= activeSteps.length - 1;
+      if (lastStep) {
+        onComplete(stepIndex);
+        onClose();
+        return;
+      }
+      setStepIndex((prev) => Math.min(prev + 1, activeSteps.length - 1));
+    }, 220);
+    return () => window.clearTimeout(timeout);
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -51,6 +79,7 @@ export function OnboardingGuide({
     setTargetRect(null);
     setInteractionSatisfied(false);
     setInteractionTimedOut(false);
+    setSkipDelayElapsed(false);
     autoAdvancedStepIdsRef.current.clear();
   }, [isOpen, initialSection]);
 
@@ -93,14 +122,24 @@ export function OnboardingGuide({
       return;
     }
 
+    const isBreadcrumbStep =
+      current.id === "navigation-breadcrumb" || current.id === "mobile-navigation-breadcrumb";
     const previousOutline = target.style.outline;
     const previousOutlineOffset = target.style.outlineOffset;
     const previousBoxShadow = target.style.boxShadow;
     const previousTransition = target.style.transition;
+    const previousBackgroundColor = target.style.backgroundColor;
+    const previousBorderRadius = target.style.borderRadius;
 
-    target.style.outline = "2px solid hsl(var(--primary))";
-    target.style.outlineOffset = "3px";
-    target.style.boxShadow = "0 0 0 6px hsl(var(--primary) / 0.18)";
+    target.style.outline = isBreadcrumbStep ? "3px solid hsl(var(--primary))" : "2px solid hsl(var(--primary))";
+    target.style.outlineOffset = isBreadcrumbStep ? "4px" : "3px";
+    target.style.boxShadow = isBreadcrumbStep
+      ? "0 0 0 8px hsl(var(--primary) / 0.28)"
+      : "0 0 0 6px hsl(var(--primary) / 0.18)";
+    if (isBreadcrumbStep) {
+      target.style.backgroundColor = "hsl(var(--primary) / 0.12)";
+      target.style.borderRadius = "0.5rem";
+    }
     target.style.transition = "outline-color 120ms ease";
 
     if ("scrollIntoView" in target && typeof target.scrollIntoView === "function") {
@@ -153,6 +192,8 @@ export function OnboardingGuide({
       target.style.outlineOffset = previousOutlineOffset;
       target.style.boxShadow = previousBoxShadow;
       target.style.transition = previousTransition;
+      target.style.backgroundColor = previousBackgroundColor;
+      target.style.borderRadius = previousBorderRadius;
     };
   }, [activeSection, activeSteps, isOpen, stepIndex]);
 
@@ -163,19 +204,37 @@ export function OnboardingGuide({
     if (!interactionSatisfied) return;
     if (autoAdvancedStepIdsRef.current.has(step.id)) return;
 
-    autoAdvancedStepIdsRef.current.add(step.id);
-    const timeout = window.setTimeout(() => {
-      const lastStep = stepIndex >= activeSteps.length - 1;
-      if (lastStep) {
-        onComplete(stepIndex);
-        onClose();
-        return;
-      }
-      setStepIndex((prev) => Math.min(prev + 1, activeSteps.length - 1));
-    }, 220);
-
-    return () => window.clearTimeout(timeout);
+    return advanceStep(step.id);
   }, [activeSection, activeSteps, interactionSatisfied, isOpen, onClose, onComplete, stepIndex]);
+
+  useEffect(() => {
+    if (!isOpen || activeSection === null) return;
+    const step = activeSteps[stepIndex];
+    if (!step) return;
+
+    const isFocusStep = step.id === "navigation-focus" || step.id === "mobile-navigation-focus";
+    const isBreadcrumbStep =
+      step.id === "navigation-breadcrumb" || step.id === "mobile-navigation-breadcrumb";
+    if (!isFocusStep && !isBreadcrumbStep) return;
+
+    let cleanupAdvance: (() => void) | undefined;
+    const evaluate = () => {
+      const breadcrumbVisible = isTargetVisible('[data-onboarding="focused-breadcrumb"]');
+      if (isFocusStep && breadcrumbVisible) {
+        cleanupAdvance = advanceStep(step.id);
+      }
+      if (isBreadcrumbStep && !breadcrumbVisible) {
+        cleanupAdvance = advanceStep(step.id);
+      }
+    };
+
+    evaluate();
+    const interval = window.setInterval(evaluate, 180);
+    return () => {
+      window.clearInterval(interval);
+      cleanupAdvance?.();
+    };
+  }, [activeSection, activeSteps, isOpen, stepIndex]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -191,15 +250,31 @@ export function OnboardingGuide({
 
     const timeout = window.setTimeout(() => {
       setInteractionTimedOut(true);
-    }, 5000);
+    }, GUIDE_ACTION_TIMEOUT_MS);
 
     return () => window.clearTimeout(timeout);
   }, [activeSection, activeSteps, interactionSatisfied, isOpen, stepIndex]);
+
+  useEffect(() => {
+    if (!isOpen || activeSection === null) return;
+    if (stepIndex !== 0) {
+      setSkipDelayElapsed(true);
+      return;
+    }
+
+    setSkipDelayElapsed(false);
+    const timeout = window.setTimeout(() => {
+      setSkipDelayElapsed(true);
+    }, GUIDE_ACTION_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeSection, isOpen, stepIndex]);
 
   const currentStep = activeSteps[stepIndex];
   const isLastStep = stepIndex >= activeSteps.length - 1;
   const showSectionPicker = activeSection === null;
   const nextDisabled = Boolean(currentStep?.requiredAction && !interactionSatisfied && !interactionTimedOut);
+  const skipDisabled = stepIndex === 0 && !skipDelayElapsed;
 
   const getPickerSelectors = (sectionId: OnboardingSectionId): string[] => {
     if (isMobile) {
@@ -314,6 +389,19 @@ export function OnboardingGuide({
       top,
       position: "fixed",
       zIndex: 130,
+    };
+  };
+
+  const getTargetArrowStyle = (): React.CSSProperties => {
+    if (!targetRect) return {};
+
+    const arrowSize = 24;
+    const left = Math.max(8, Math.min(window.innerWidth - arrowSize - 8, targetRect.left + targetRect.width / 2 - arrowSize / 2));
+    const top = Math.max(8, targetRect.top - (arrowSize + 8));
+
+    return {
+      left: `${left}px`,
+      top: `${top}px`,
     };
   };
 
@@ -467,51 +555,63 @@ export function OnboardingGuide({
           </div>
         </>
       ) : (
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Onboarding guide"
-        className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
-        style={getAnchoredCardStyle()}
-      >
-        {!currentStep ? (
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold">No onboarding steps available</h2>
-            <div className="flex justify-end">
-              <Button onClick={onClose}>Close</Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="text-xs text-muted-foreground">
-              Step {stepIndex + 1} of {activeSteps.length}
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold">{currentStep.title}</h2>
-              <p className="text-sm text-muted-foreground mt-1">{currentStep.description}</p>
-              {currentStep.actionPrompt && (
-                <p className="text-xs text-primary mt-2">{currentStep.actionPrompt}</p>
-              )}
-              {currentStep.requiredAction && !interactionSatisfied && interactionTimedOut && (
-                <p className="text-[11px] text-muted-foreground mt-2">
-                  No interaction detected. You can continue with Next.
-                </p>
-              )}
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" onClick={onClose}>Skip</Button>
-                <Button variant="outline" onClick={handleBack} disabled={stepIndex === 0}>
-                  Back
-                </Button>
+        <>
+          {currentStep?.target && targetRect && (
+            <div
+              aria-hidden="true"
+              data-testid="onboarding-target-arrow"
+              className="absolute z-[129] pointer-events-none"
+              style={getTargetArrowStyle()}
+            >
+              <div className="rounded-full bg-primary text-primary-foreground shadow-md p-1.5 animate-bounce">
+                <ArrowDown className="w-4 h-4" />
               </div>
-              <Button onClick={handleNext} disabled={nextDisabled}>
-                {isLastStep ? "Finish" : "Next"}
-              </Button>
             </div>
+          )}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Onboarding guide"
+            className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
+            style={getAnchoredCardStyle()}
+          >
+            {!currentStep ? (
+              <div className="space-y-3">
+                <h2 className="text-lg font-semibold">No onboarding steps available</h2>
+                <div className="flex justify-end">
+                  <Button onClick={onClose}>Close</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-xs text-muted-foreground">
+                  Step {stepIndex + 1} of {activeSteps.length}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">{currentStep.title}</h2>
+                  <p className="text-sm text-muted-foreground mt-1">{currentStep.description}</p>
+                  <p className="text-xs text-primary mt-2">
+                    Click the highlighted area, or use Next.
+                  </p>
+                  {currentStep.actionPrompt && (
+                    <p className="text-xs text-primary/90 mt-1">{currentStep.actionPrompt}</p>
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" onClick={onClose} disabled={skipDisabled}>Skip</Button>
+                    <Button variant="outline" onClick={handleBack} disabled={stepIndex === 0}>
+                      Back
+                    </Button>
+                  </div>
+                  <Button onClick={handleNext} disabled={nextDisabled}>
+                    {isLastStep ? "Finish" : "Next"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
       )}
     </div>
   );
