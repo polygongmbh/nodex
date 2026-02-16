@@ -18,6 +18,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Onboarding guide cards now cap desktop width and prioritize non-blocking placement for hashtag-content guidance; mobile area-picker guidance is pinned to a bottom helper/action bar with Close.
 - The hashtag-content onboarding step now anchors guide placement directly below the highlighted hashtag target and uses shorter filtering guidance text.
 - Desktop onboarding no longer force-opens compose during the hashtag-content step; compose now opens when entering the compose step.
+- Desktop onboarding pre-opens compose on the hashtag-content step so the compose-step guide appears after layout has settled.
 
 ## [1.0.0] - 2026-02-16
 

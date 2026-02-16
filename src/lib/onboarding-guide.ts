@@ -11,7 +11,7 @@ export function shouldForceComposeForGuide({
   isOnboardingOpen,
   activeOnboardingSection,
   activeOnboardingStepId,
-  isMobile: _isMobile,
+  isMobile,
 }: ComposeForceParams): boolean {
   if (!isOnboardingOpen) return false;
   if (activeOnboardingSection === "compose") return true;
@@ -19,6 +19,7 @@ export function shouldForceComposeForGuide({
     return true;
   }
   if (activeOnboardingStepId === "mobile-compose-combobox") return true;
+  if (!isMobile && activeOnboardingStepId === "filters-hashtag-content") return true;
   return false;
 }
 
