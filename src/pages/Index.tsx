@@ -16,6 +16,7 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
+import { VersionHint } from "@/components/layout/VersionHint";
 import { onboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
 import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
@@ -989,6 +990,7 @@ const Index = () => {
         onActiveSectionChange={setActiveOnboardingSection}
         onStepChange={handleOnboardingStepChange}
       />
+      <VersionHint className="fixed bottom-2 right-3 z-20 rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60" />
     </div>
   );
 };

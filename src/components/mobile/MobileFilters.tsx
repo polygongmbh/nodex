@@ -8,6 +8,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { VersionHint } from "@/components/layout/VersionHint";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -139,15 +140,18 @@ export function MobileFilters({
     <ScrollArea className="flex-1" data-onboarding="mobile-filters">
       <div className="p-4 space-y-6">
         <section>
-          <button
-            onClick={onGuideClick}
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm text-left hover:bg-muted/50 transition-colors inline-flex items-center gap-2"
-            aria-label="Open onboarding guide"
-            title="Open onboarding guide"
-          >
-            <Sparkles className="w-4 h-4 text-primary" />
-            Open Guide
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onGuideClick}
+              className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-left hover:bg-muted/50 transition-colors inline-flex items-center gap-2"
+              aria-label="Open onboarding guide"
+              title="Open onboarding guide"
+            >
+              <Sparkles className="w-4 h-4 text-primary" />
+              Open Guide
+            </button>
+            <VersionHint className="shrink-0" />
+          </div>
         </section>
 
         {/* Profile Management */}

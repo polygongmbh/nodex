@@ -50,6 +50,7 @@ describe("MobileFilters management view", () => {
         onAddRelay={onAddRelay}
         onRemoveRelay={() => {}}
         onSignInClick={() => {}}
+        onGuideClick={() => {}}
       />
     );
 
@@ -61,5 +62,6 @@ describe("MobileFilters management view", () => {
     expect(onAddRelay).toHaveBeenCalledWith("wss://relay.example.com");
     expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
+    expect(screen.getByText(/^v\d+\.\d+\.\d+$/)).toBeInTheDocument();
   });
 });
