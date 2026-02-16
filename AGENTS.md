@@ -168,6 +168,7 @@ When the user asks you to create a plan to fix or implement something:
 ## Assistant Response Formatting
 - Keep summaries compact and scannable.
 - Prefer single-line status items when the content fits.
+- Avoid repetitive progress boilerplate; do not repeat the same phase/status label unless the phase actually changed.
 - Commit reporting should be one line per commit in this format:
   - `✅ <hash> <type>: <message>`
 - Use concise visual indicators for sections and outcomes:
@@ -215,4 +216,6 @@ When the user asks you to create a plan to fix or implement something:
   - `✅ Finalizing (stage 5/5)`
 - If staged labels are not suitable, use approximate percentage progress (e.g. `~40% complete`).
 - Pair each progress update with a visual indicator icon and keep the update to 1-2 concise lines.
+- Prefer milestone-only progress updates (phase changes, blockers, completion) instead of repeating researching/implementing/testing labels in every message.
 - Include blockers or uncertainty explicitly with `⚠️` and revised estimates when scope changes.
+- If unrelated files change while working, ignore those incidental changes and continue focusing on files you intentionally edited; do not treat this as a blocker unless it creates a direct conflict with your target files.
