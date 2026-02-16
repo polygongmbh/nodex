@@ -589,6 +589,7 @@ export function OnboardingGuide({
                     <button
                       key={section.id}
                       onClick={() => {
+                        onActiveSectionChange?.(section.id);
                         setManualSelectedSection(section.id);
                         setActiveSection("all");
                         setStepIndex(getFirstStepIndexForSection(section.id));
@@ -617,6 +618,7 @@ export function OnboardingGuide({
                 <button
                   key={section.id}
                   onClick={() => {
+                    onActiveSectionChange?.(section.id);
                     setManualSelectedSection(section.id);
                     setActiveSection("all");
                     setStepIndex(getFirstStepIndexForSection(section.id));

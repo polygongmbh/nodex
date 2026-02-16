@@ -12,6 +12,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Selecting the Compose onboarding section now immediately reports compose context so the compose window is forced open as soon as guide guidance starts.
 - Filter onboarding now includes a dedicated search bar step, with consistent search-bar targeting across desktop views.
 - Desktop search input is now centralized in a single shared dock outside individual view components, with Kanban level controls preserved in the same dock.
+- Compose guide selection now propagates section context immediately on click, ensuring the compose panel opens on the first manual guide start.
 
 ## [1.0.0] - 2026-02-16
 
