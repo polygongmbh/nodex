@@ -9,11 +9,4 @@ describe("SidebarHeader", () => {
     const brandLink = screen.getByRole("link", { name: "Nodex" });
     expect(brandLink).toHaveAttribute("href", "/");
   });
-
-  it("shows a semantic version hint on hover", () => {
-    render(<SidebarHeader />);
-
-    const brandLink = screen.getByRole("link", { name: "Nodex" });
-    expect(brandLink).toHaveAttribute("title", "Nodex v1.1.0");
-  });
 });

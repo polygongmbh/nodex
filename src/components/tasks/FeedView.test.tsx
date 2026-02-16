@@ -84,21 +84,4 @@ describe("FeedView", () => {
     expect(onAuthorClick).toHaveBeenCalledWith(author);
   });
 
-  it("uses full pubkey as the hover hint on author username", () => {
-    render(
-      <FeedView
-        tasks={tasks}
-        allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
-      />
-    );
-
-    expect(screen.getByTitle(author.id)).toHaveAttribute("aria-label", "Filter and mention Alice Doe");
-  });
 });

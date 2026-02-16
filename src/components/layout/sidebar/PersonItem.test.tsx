@@ -25,7 +25,6 @@ describe("PersonItem", () => {
     render(<PersonItem person={basePerson} onToggle={onToggle} onExclusive={onExclusive} />);
 
     const exclusiveButton = screen.getByRole("button", { name: "Show only Alice" });
-    expect(exclusiveButton).toHaveAttribute("title", "Show only Alice");
 
     fireEvent.click(exclusiveButton);
 

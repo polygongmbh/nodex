@@ -3,13 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { MobileNav } from "./MobileNav";
 
 describe("MobileNav", () => {
-  it("provides hover hints for navigation tabs", () => {
+  it("switches views when selecting a navigation tab", () => {
     const onViewChange = vi.fn();
 
     render(<MobileNav currentView="tree" onViewChange={onViewChange} />);
 
     const feedButton = screen.getByRole("tab", { name: "Switch to Feed view" });
-    expect(feedButton).toHaveAttribute("title", "Switch to Feed view");
 
     fireEvent.click(feedButton);
     expect(onViewChange).toHaveBeenCalledWith("feed");

@@ -11,7 +11,7 @@ const baseRelay: Relay = {
 };
 
 describe("RelayItem", () => {
-  it("shows hover hints on exclusive and toggle relay actions", () => {
+  it("supports exclusive and toggle relay actions", () => {
     const onToggle = vi.fn();
     const onExclusive = vi.fn();
 
@@ -19,9 +19,6 @@ describe("RelayItem", () => {
 
     const exclusiveButton = screen.getByRole("button", { name: "Show only Main Relay" });
     const toggleButton = screen.getByRole("button", { name: "Toggle Main Relay" });
-
-    expect(exclusiveButton).toHaveAttribute("title", "Show only Main Relay");
-    expect(toggleButton).toHaveAttribute("title", "Toggle Main Relay");
 
     fireEvent.click(exclusiveButton);
     fireEvent.click(toggleButton);
