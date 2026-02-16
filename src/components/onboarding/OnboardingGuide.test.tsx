@@ -507,4 +507,21 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     expect(onActiveSectionChange).toHaveBeenLastCalledWith("compose");
   });
 
+  it("dismisses section picker when clicking outside highlighted panes", () => {
+    const onClose = vi.fn();
+    render(
+      <OnboardingGuide
+        isOpen
+        initialSection={null}
+        sections={sections}
+        stepsBySection={baseStepsBySection}
+        onClose={onClose}
+        onComplete={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss guide section picker" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
 });

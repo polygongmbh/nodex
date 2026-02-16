@@ -587,6 +587,14 @@ export function OnboardingGuide({
       aria-live="polite"
     >
       <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+      {showSectionPicker && (
+        <button
+          type="button"
+          className="absolute inset-0 z-[121] pointer-events-auto"
+          aria-label="Dismiss guide section picker"
+          onClick={onClose}
+        />
+      )}
       {showSectionPicker ? (
         <>
           {isMobile ? (

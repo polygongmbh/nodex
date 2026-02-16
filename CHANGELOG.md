@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Desktop search input is now centralized in a single shared dock outside individual view components, with Kanban level controls preserved in the same dock.
 - Compose guide selection now propagates section context immediately on click, ensuring the compose panel opens on the first manual guide start.
 - Compose guidance steps now anchor the instruction panel with extra downward offset to avoid covering the highlighted compose target.
+- Guide section picker now dismisses when clicking outside the highlighted selection panes.
 
 ## [1.0.0] - 2026-02-16
 
