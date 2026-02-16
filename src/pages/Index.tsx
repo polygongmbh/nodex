@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarHeader } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
@@ -298,6 +298,12 @@ const Index = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!isOnboardingOpen) {
+      lastHandledOnboardingStepRef.current = null;
+    }
+  }, [isOnboardingOpen]);
+
   // Handle view change - update URL
   const setCurrentView = useCallback((newView: ViewType) => {
     if (focusedTaskId) {
@@ -344,6 +350,35 @@ const Index = () => {
       navigate(`/${currentView}`);
     }
   }, [navigate, currentView]);
+
+  const lastHandledOnboardingStepRef = useRef<string | null>(null);
+  const handleOnboardingStepChange = useCallback((payload: {
+    id: string;
+    stepNumber: number;
+  }) => {
+    const stepKey = `${payload.stepNumber}:${payload.id}`;
+    if (lastHandledOnboardingStepRef.current === stepKey) return;
+    lastHandledOnboardingStepRef.current = stepKey;
+
+    if (payload.stepNumber !== 5 && payload.stepNumber !== 7) return;
+
+    setFocusedTaskId(null);
+    setSearchQuery("");
+    setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
+    setChannelFilterStates(() => {
+      const next = new Map<string, Channel["filterState"]>();
+      channels.forEach((channel) => {
+        next.set(channel.id, "neutral");
+      });
+      return next;
+    });
+    setPeople((prev) =>
+      prev.map((person) => ({
+        ...person,
+        isSelected: false,
+      }))
+    );
+  }, [channels, relays, setFocusedTaskId]);
 
   const handleRelayToggle = (id: string) => {
     setActiveRelayIds((prev) => {
@@ -875,6 +910,7 @@ const Index = () => {
           onClose={handleCloseGuide}
           onComplete={handleCompleteGuide}
           onActiveSectionChange={setActiveOnboardingSection}
+          onStepChange={handleOnboardingStepChange}
         />
       </>
     );
@@ -933,6 +969,7 @@ const Index = () => {
         onClose={handleCloseGuide}
         onComplete={handleCompleteGuide}
         onActiveSectionChange={setActiveOnboardingSection}
+        onStepChange={handleOnboardingStepChange}
       />
     </div>
   );

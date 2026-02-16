@@ -5,6 +5,7 @@ import {
   OnboardingInitialSection,
   OnboardingSection,
   OnboardingSectionId,
+  OnboardingStep,
 } from "./onboarding-types";
 import { getOnboardingAllSteps } from "./onboarding-steps";
 
@@ -17,6 +18,14 @@ interface OnboardingGuideProps {
   onClose: () => void;
   onComplete: (lastStep: number) => void;
   onActiveSectionChange?: (section: OnboardingSectionId | null) => void;
+  onStepChange?: (step: {
+    id: string;
+    stepIndex: number;
+    stepNumber: number;
+    totalSteps: number;
+    section: OnboardingInitialSection;
+    step: OnboardingStep;
+  }) => void;
 }
 
 interface RectBox {
@@ -37,6 +46,7 @@ export function OnboardingGuide({
   onClose,
   onComplete,
   onActiveSectionChange,
+  onStepChange,
 }: OnboardingGuideProps) {
   const [activeSection, setActiveSection] = useState<OnboardingInitialSection>(initialSection);
   const [stepIndex, setStepIndex] = useState(0);
@@ -275,6 +285,20 @@ export function OnboardingGuide({
   const showSectionPicker = activeSection === null;
   const nextDisabled = Boolean(currentStep?.requiredAction && !interactionSatisfied && !interactionTimedOut);
   const skipDisabled = stepIndex === 0 && !skipDelayElapsed;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!currentStep) return;
+
+    onStepChange?.({
+      id: currentStep.id,
+      stepIndex,
+      stepNumber: stepIndex + 1,
+      totalSteps: activeSteps.length,
+      section: activeSection,
+      step: currentStep,
+    });
+  }, [activeSection, activeSteps.length, currentStep, isOpen, onStepChange, stepIndex]);
 
   const getPickerSelectors = (sectionId: OnboardingSectionId): string[] => {
     if (isMobile) {
