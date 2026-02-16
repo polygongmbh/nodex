@@ -32,6 +32,10 @@ interface NostrAuthModalProps {
 
 type AuthStep = "choose" | "privateKey" | "nostrConnect";
 type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | null;
+type WindowWithNostr = Window & { nostr?: unknown };
+
+const hasNostrExtension = (): boolean =>
+  typeof window !== "undefined" && Boolean((window as WindowWithNostr).nostr);
 
 export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const { 
@@ -48,7 +52,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const [bunkerUrl, setBunkerUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const hasExtension = typeof window !== "undefined" && (window as any).nostr;
+  const hasExtension = hasNostrExtension();
   const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
   const handleExtensionLogin = async () => {

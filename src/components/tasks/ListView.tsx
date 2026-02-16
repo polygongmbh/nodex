@@ -200,10 +200,11 @@ export function ListView({
         case "content":
           comparison = a.content.localeCompare(b.content);
           break;
-        case "status":
+        case "status": {
           const statusOrder = { "in-progress": 0, "todo": 1, "done": 2 };
           comparison = (statusOrder[a.status || "todo"] || 1) - (statusOrder[b.status || "todo"] || 1);
           break;
+        }
         case "dueDate":
           if (!a.dueDate && !b.dueDate) comparison = 0;
           else if (!a.dueDate) comparison = 1;

@@ -89,7 +89,9 @@ describe("nostr utils", () => {
     });
 
     it("should reject event with non-array tags", () => {
-      expect(validateEvent({ ...validEvent, tags: "invalid" as any })).toBe(false);
+      expect(
+        validateEvent({ ...validEvent, tags: "invalid" as unknown as string[][] })
+      ).toBe(false);
     });
 
     it("should reject event with invalid signature length", () => {

@@ -76,12 +76,13 @@ describe("NostrRelayPool", () => {
   beforeEach(() => {
     MockWebSocket.reset();
     resetRelayPool();
-    (globalThis as any).WebSocket = MockWebSocket;
+    (globalThis as typeof globalThis & { WebSocket: typeof WebSocket }).WebSocket =
+      MockWebSocket as unknown as typeof WebSocket;
   });
 
   afterEach(() => {
     resetRelayPool();
-    (globalThis as any).WebSocket = originalWebSocket;
+    (globalThis as typeof globalThis & { WebSocket: typeof WebSocket }).WebSocket = originalWebSocket;
   });
 
   describe("connection management", () => {

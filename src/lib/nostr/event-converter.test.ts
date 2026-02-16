@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { Task } from "@/types";
 import { nostrEventToTask, nostrEventsToTasks, mergeTasks, eventHasTags, extractAllTags, isSpamContent } from "./event-converter";
 import { NostrEvent, NostrEventKind } from "./types";
 import type { NostrEventWithRelay } from "./relay-pool";
@@ -313,12 +314,12 @@ describe("mergeTasks", () => {
     const existing = [
       { id: "1", timestamp: new Date(1000) },
       { id: "2", timestamp: new Date(2000) },
-    ] as any[];
+    ] as Pick<Task, "id" | "timestamp">[];
     
     const newTasks = [
       { id: "2", timestamp: new Date(2000) },
       { id: "3", timestamp: new Date(3000) },
-    ] as any[];
+    ] as Pick<Task, "id" | "timestamp">[];
     
     const merged = mergeTasks(existing, newTasks);
     
@@ -331,12 +332,12 @@ describe("mergeTasks", () => {
   it("sorts merged tasks by timestamp descending", () => {
     const existing = [
       { id: "1", timestamp: new Date(1000) },
-    ] as any[];
+    ] as Pick<Task, "id" | "timestamp">[];
     
     const newTasks = [
       { id: "2", timestamp: new Date(3000) },
       { id: "3", timestamp: new Date(2000) },
-    ] as any[];
+    ] as Pick<Task, "id" | "timestamp">[];
     
     const merged = mergeTasks(existing, newTasks);
     

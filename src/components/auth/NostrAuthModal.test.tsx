@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
+import type { AuthMethod, NostrUser } from "@/lib/nostr/ndk-context";
 
 const loginWithExtension = vi.fn(() => new Promise<boolean>(() => {}));
 const ndkMock = {
@@ -9,8 +10,8 @@ const ndkMock = {
   loginAsGuest: vi.fn(async () => true),
   loginWithNostrConnect: vi.fn(async () => true),
   isAuthenticating: false,
-  user: null as any,
-  authMethod: null as any,
+  user: null as NostrUser | null,
+  authMethod: null as AuthMethod,
   logout: vi.fn(),
   getGuestPrivateKey: vi.fn(() => null),
   needsProfileSetup: false,
@@ -30,7 +31,7 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 
 describe("NostrAuthModal", () => {
   it("shows loading indicator only on extension option when extension login starts", async () => {
-    (window as any).nostr = {};
+    Object.assign(window as Window & { nostr?: unknown }, { nostr: {} });
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       value: vi.fn().mockImplementation(() => ({

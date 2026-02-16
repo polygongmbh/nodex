@@ -209,20 +209,22 @@ const Index = () => {
     if (!isNostrConnected) return;
 
     // Subscribe to notes, tasks, and task state updates.
+    const subscribedKinds: NostrEventKind[] = [
+      NostrEventKind.TextNote,
+      NostrEventKind.Task,
+      NostrEventKind.Metadata,
+      NostrEventKind.GitStatusOpen,
+      NostrEventKind.GitStatusApplied,
+      NostrEventKind.GitStatusClosed,
+      NostrEventKind.GitStatusDraft,
+      NostrEventKind.Procedure,
+      NostrEventKind.CalendarDateBased,
+      NostrEventKind.CalendarTimeBased,
+    ];
+
     const subscription = subscribe(
       [{
-        kinds: [
-          NostrEventKind.TextNote as any,
-          NostrEventKind.Task as any,
-          NostrEventKind.Metadata as any,
-          NostrEventKind.GitStatusOpen as any,
-          NostrEventKind.GitStatusApplied as any,
-          NostrEventKind.GitStatusClosed as any,
-          NostrEventKind.GitStatusDraft as any,
-          NostrEventKind.Procedure as any,
-          NostrEventKind.CalendarDateBased as any,
-          NostrEventKind.CalendarTimeBased as any,
-        ],
+        kinds: subscribedKinds,
         limit: 200,
       }],
       (event) => {

@@ -82,6 +82,10 @@ const STORAGE_KEY_AUTH = "nostr_auth_method";
 const STORAGE_KEY_NSEC = "nostr_guest_nsec";
 const STORAGE_KEY_NIP46_BUNKER = "nostr_nip46_bunker";
 const STORAGE_KEY_NIP46_LOCAL_NSEC = "nostr_nip46_local_nsec";
+type WindowWithNostr = Window & { nostr?: unknown };
+
+const hasNostrExtension = (): boolean =>
+  typeof window !== "undefined" && Boolean((window as WindowWithNostr).nostr);
 
 // NIP-05 verification helper
 async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
@@ -142,7 +146,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       };
 
       const subscription = ndk.subscribe(
-        [{ kinds: [NostrEventKind.Metadata as any], authors: [pubkey], limit: 50 }],
+        [{ kinds: [NostrEventKind.Metadata], authors: [pubkey], limit: 50 }],
         { closeOnEose: true }
       );
 
@@ -224,7 +228,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       }
     } else if (savedAuthMethod === "extension") {
       // Check if extension is available
-      if (typeof window !== "undefined" && (window as any).nostr) {
+      if (hasNostrExtension()) {
         const signer = new NDKNip07Signer();
         ndkInstance.signer = signer;
         signer.user().then((ndkUser) => {
@@ -288,7 +292,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
     
-    if (typeof window === "undefined" || !(window as any).nostr) {
+    if (!hasNostrExtension()) {
       console.error("No Nostr extension found");
       return false;
     }
@@ -363,7 +367,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     setIsAuthenticating(true);
     try {
       // Check for existing guest key
-      let nsec = localStorage.getItem(STORAGE_KEY_NSEC);
+      const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
       let signer: NDKPrivateKeySigner;
       
       if (nsec) {
