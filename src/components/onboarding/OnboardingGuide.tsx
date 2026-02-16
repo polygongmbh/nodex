@@ -66,6 +66,7 @@ export function OnboardingGuide({
   const pendingAutoAdvanceStepIdsRef = useRef<Set<string>>(new Set());
   const stepEntryContextKeyRef = useRef<{ stepId: string; contextKey?: string } | null>(null);
   const previousStepIdRef = useRef<string | null>(null);
+  const backUnlockedStepIdsRef = useRef<Set<string>>(new Set());
 
   const getBestVisibleTarget = useCallback((selector: string): HTMLElement | null => {
     const matches = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
@@ -159,6 +160,7 @@ export function OnboardingGuide({
     autoAdvancedStepIdsRef.current.clear();
     pendingAutoAdvanceStepIdsRef.current.clear();
     previousStepIdRef.current = null;
+    backUnlockedStepIdsRef.current.clear();
   }, [isOpen, initialSection]);
 
   useEffect(() => {
@@ -384,9 +386,10 @@ export function OnboardingGuide({
   const currentStep = activeSteps[stepIndex];
   const isLastStep = stepIndex >= activeSteps.length - 1;
   const showSectionPicker = activeSection === null;
+  const isBackUnlockedStep = Boolean(currentStep && backUnlockedStepIdsRef.current.has(currentStep.id));
   const nextDisabled = isManualSession
     ? false
-    : Boolean(currentStep?.requiredAction && !interactionSatisfied && !interactionTimedOut);
+    : Boolean(currentStep?.requiredAction && !interactionSatisfied && !interactionTimedOut && !isBackUnlockedStep);
   const skipDisabled = stepIndex === 0 && !skipDelayElapsed;
 
   useEffect(() => {
@@ -645,7 +648,14 @@ export function OnboardingGuide({
   };
 
   const handleBack = () => {
-    setStepIndex((prev) => Math.max(0, prev - 1));
+    setStepIndex((prev) => {
+      const nextIndex = Math.max(0, prev - 1);
+      const nextStep = activeSteps[nextIndex];
+      if (nextStep) {
+        backUnlockedStepIdsRef.current.add(nextStep.id);
+      }
+      return nextIndex;
+    });
   };
 
   const getSectionIcon = (sectionId: OnboardingSectionId) => {

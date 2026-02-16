@@ -482,6 +482,39 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
   });
 
+  it("keeps Next immediately enabled after navigating back to a required-action step", () => {
+    vi.useFakeTimers();
+    render(
+      <div>
+        <div data-onboarding="task-list">Task list</div>
+        <OnboardingGuide
+          isOpen
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={baseStepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    fireEvent.click(screen.getByText("Task list"));
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(screen.getByText("Open task context")).toBeInTheDocument();
+
+    const nextButton = screen.getByRole("button", { name: "Next" });
+    expect(nextButton).toBeEnabled();
+    fireEvent.click(nextButton);
+    expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
   it("reports selected section context for manual all-steps starts", () => {
     const onActiveSectionChange = vi.fn();
     const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
