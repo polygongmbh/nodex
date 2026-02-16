@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { OnboardingGuide } from "./OnboardingGuide";
-import type { OnboardingSection, OnboardingSectionId } from "./onboarding-types";
+import type { OnboardingSection, OnboardingSectionId, OnboardingStep } from "./onboarding-types";
 
 const sections: OnboardingSection[] = [
   { id: "navigation", title: "Navigation", description: "Navigation help" },
@@ -9,19 +9,21 @@ const sections: OnboardingSection[] = [
   { id: "compose", title: "Compose", description: "Compose help" },
 ];
 
-const baseStepsBySection: Record<OnboardingSectionId, { id: string; title: string; description: string; target?: string }[]> = {
+const baseStepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
   navigation: [
     {
       id: "navigation-focus",
       title: "Open task context",
       description: "Open a task context.",
       target: '[data-onboarding="task-list"]',
+      requiredAction: "click-target",
     },
     {
       id: "navigation-breadcrumb",
       title: "Use breadcrumbs",
       description: "Use breadcrumb navigation.",
       target: '[data-onboarding="focused-breadcrumb"]',
+      requiredAction: "click-target",
     },
     {
       id: "navigation-next",
@@ -35,7 +37,7 @@ const baseStepsBySection: Record<OnboardingSectionId, { id: string; title: strin
 };
 
 describe("OnboardingGuide breadcrumb transitions", () => {
-  it("auto-advances from step 2 once breadcrumb becomes visible", () => {
+  it("advances to breadcrumb step after task interaction", () => {
     vi.useFakeTimers();
     const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRect() {
@@ -51,7 +53,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         toJSON: () => ({}),
       } as DOMRect;
     };
-    const { rerender } = render(
+    render(
       <div>
         <div data-onboarding="task-list">Task list</div>
         <OnboardingGuide
@@ -66,21 +68,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     );
 
     expect(screen.getByText("Open task context")).toBeInTheDocument();
-
-    rerender(
-      <div>
-        <div data-onboarding="task-list">Task list</div>
-        <div data-onboarding="focused-breadcrumb">Breadcrumb row</div>
-        <OnboardingGuide
-          isOpen
-          initialSection="navigation"
-          sections={sections}
-          stepsBySection={baseStepsBySection}
-          onClose={vi.fn()}
-          onComplete={vi.fn()}
-        />
-      </div>
-    );
+    fireEvent.click(screen.getByText("Task list"));
 
     act(() => {
       vi.advanceTimersByTime(500);
@@ -122,10 +110,12 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       </div>
     );
 
+    fireEvent.click(screen.getByText("Task list"));
     act(() => {
-      vi.advanceTimersByTime(500);
+      vi.advanceTimersByTime(300);
     });
     expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Breadcrumb row"));
 
     rerender(
       <div>
@@ -258,4 +248,167 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       })
     );
   });
+
+  it("rebinds highlighted target when ui context changes", () => {
+    const { rerender } = render(
+      <div>
+        <div data-onboarding="task-list">Tree list</div>
+        <OnboardingGuide
+          isOpen
+          uiContextKey="tree:"
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={baseStepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    const treeTarget = screen.getByText("Tree list");
+    expect(treeTarget.getAttribute("style") || "").toContain("outline:");
+
+    rerender(
+      <div>
+        <div data-onboarding="task-list">Feed list</div>
+        <OnboardingGuide
+          isOpen
+          uiContextKey="feed:"
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={baseStepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    const feedTarget = screen.getByText("Feed list");
+    expect(feedTarget.getAttribute("style") || "").toContain("outline:");
+  });
+
+  it("auto-advances click-required navigation steps when uiContextKey changes", () => {
+    vi.useFakeTimers();
+    const stepsBySection: Record<OnboardingSectionId, { id: string; title: string; description: string; target?: string; requiredAction?: "click-target" | "focus-target" }[]> = {
+      navigation: [
+        {
+          id: "navigation-switcher",
+          title: "Switch views",
+          description: "Switch view",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+        {
+          id: "navigation-focus",
+          title: "Open task context",
+          description: "Open task",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+      ],
+      filters: [],
+      compose: [],
+    };
+
+    const { rerender } = render(
+      <div>
+        <div data-onboarding="task-list">Tree list</div>
+        <OnboardingGuide
+          isOpen
+          uiContextKey="tree:"
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={stepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    expect(screen.getByText("Switch views")).toBeInTheDocument();
+
+    rerender(
+      <div>
+        <div data-onboarding="task-list">Feed list</div>
+        <OnboardingGuide
+          isOpen
+          uiContextKey="feed:"
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={stepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(screen.getByText("Open task context")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("does not auto-advance navigation-focus from uiContextKey change alone", () => {
+    vi.useFakeTimers();
+    const stepsBySection: Record<OnboardingSectionId, { id: string; title: string; description: string; target?: string; requiredAction?: "click-target" | "focus-target" }[]> = {
+      navigation: [
+        {
+          id: "navigation-focus",
+          title: "Open task context",
+          description: "Open task",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+        {
+          id: "navigation-breadcrumb",
+          title: "Use breadcrumbs",
+          description: "Use breadcrumb navigation.",
+          target: '[data-onboarding="focused-breadcrumb"]',
+          requiredAction: "click-target",
+        },
+      ],
+      filters: [],
+      compose: [],
+    };
+
+    const { rerender } = render(
+      <div>
+        <div data-onboarding="task-list">Tree list</div>
+        <OnboardingGuide
+          isOpen
+          uiContextKey="tree:"
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={stepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    rerender(
+      <div>
+        <div data-onboarding="task-list">Feed list</div>
+        <OnboardingGuide
+          isOpen
+          uiContextKey="feed:"
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={stepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+
+    expect(screen.getByText("Open task context")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
 });

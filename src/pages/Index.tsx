@@ -360,6 +360,10 @@ const Index = () => {
     if (lastHandledOnboardingStepRef.current === stepKey) return;
     lastHandledOnboardingStepRef.current = stepKey;
 
+    if (payload.stepNumber === 2) {
+      setCurrentView("feed");
+      return;
+    }
     if (payload.stepNumber !== 5 && payload.stepNumber !== 7) return;
 
     setFocusedTaskId(null);
@@ -904,6 +908,7 @@ const Index = () => {
         <OnboardingGuide
           isOpen={isOnboardingOpen && !isAuthModalOpen}
           isMobile={isMobile}
+          uiContextKey={`${currentView}:${focusedTaskId || ""}`}
           initialSection={onboardingInitialSection}
           sections={onboardingSections}
           stepsBySection={onboardingStepsBySection}
@@ -963,6 +968,7 @@ const Index = () => {
       <OnboardingGuide
         isOpen={isOnboardingOpen && !isAuthModalOpen}
         isMobile={isMobile}
+        uiContextKey={`${currentView}:${focusedTaskId || ""}`}
         initialSection={onboardingInitialSection}
         sections={onboardingSections}
         stepsBySection={onboardingStepsBySection}

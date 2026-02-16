@@ -12,6 +12,7 @@ import { getOnboardingAllSteps } from "./onboarding-steps";
 interface OnboardingGuideProps {
   isOpen: boolean;
   isMobile?: boolean;
+  uiContextKey?: string;
   initialSection: OnboardingInitialSection;
   sections: OnboardingSection[];
   stepsBySection: Record<OnboardingSectionId, { id: string; title: string; description: string; target?: string }[]>;
@@ -40,6 +41,7 @@ const GUIDE_ACTION_TIMEOUT_MS = 5000;
 export function OnboardingGuide({
   isOpen,
   isMobile = false,
+  uiContextKey,
   initialSection,
   sections,
   stepsBySection,
@@ -56,6 +58,9 @@ export function OnboardingGuide({
   const [skipDelayElapsed, setSkipDelayElapsed] = useState(false);
   const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
   const autoAdvancedStepIdsRef = useRef<Set<string>>(new Set());
+  const pendingAutoAdvanceStepIdsRef = useRef<Set<string>>(new Set());
+  const stepEntryContextKeyRef = useRef<{ stepId: string; contextKey?: string } | null>(null);
+  const previousStepIdRef = useRef<string | null>(null);
 
   const isTargetVisible = (selector: string): boolean => {
     const target = document.querySelector(selector) as HTMLElement | null;
@@ -69,8 +74,11 @@ export function OnboardingGuide({
 
   const advanceStep = (stepId: string) => {
     if (autoAdvancedStepIdsRef.current.has(stepId)) return;
-    autoAdvancedStepIdsRef.current.add(stepId);
+    if (pendingAutoAdvanceStepIdsRef.current.has(stepId)) return;
+    pendingAutoAdvanceStepIdsRef.current.add(stepId);
     const timeout = window.setTimeout(() => {
+      pendingAutoAdvanceStepIdsRef.current.delete(stepId);
+      autoAdvancedStepIdsRef.current.add(stepId);
       const lastStep = stepIndex >= activeSteps.length - 1;
       if (lastStep) {
         onComplete(stepIndex);
@@ -79,7 +87,10 @@ export function OnboardingGuide({
       }
       setStepIndex((prev) => Math.min(prev + 1, activeSteps.length - 1));
     }, 220);
-    return () => window.clearTimeout(timeout);
+    return () => {
+      window.clearTimeout(timeout);
+      pendingAutoAdvanceStepIdsRef.current.delete(stepId);
+    };
   };
 
   useEffect(() => {
@@ -91,6 +102,8 @@ export function OnboardingGuide({
     setInteractionTimedOut(false);
     setSkipDelayElapsed(false);
     autoAdvancedStepIdsRef.current.clear();
+    pendingAutoAdvanceStepIdsRef.current.clear();
+    previousStepIdRef.current = null;
   }, [isOpen, initialSection]);
 
   useEffect(() => {
@@ -119,6 +132,24 @@ export function OnboardingGuide({
   }, [activeSection, activeSteps.length, isOpen, stepIndex]);
 
   useEffect(() => {
+    if (!isOpen || activeSection === null) return;
+    const step = activeSteps[stepIndex];
+    if (!step) return;
+    stepEntryContextKeyRef.current = { stepId: step.id, contextKey: uiContextKey };
+  }, [activeSection, activeSteps, isOpen, stepIndex]);
+
+  useEffect(() => {
+    if (!isOpen || activeSection === null) return;
+    const step = activeSteps[stepIndex];
+    if (!step) return;
+    if (previousStepIdRef.current === step.id) return;
+    previousStepIdRef.current = step.id;
+
+    setInteractionTimedOut(false);
+    setInteractionSatisfied(!step.requiredAction);
+  }, [activeSection, activeSteps, isOpen, stepIndex]);
+
+  useEffect(() => {
     if (!isOpen || !activeSection || activeSteps.length === 0) return;
 
     const current = activeSteps[stepIndex];
@@ -127,8 +158,6 @@ export function OnboardingGuide({
     const target = current.target ? document.querySelector(current.target) as HTMLElement | null : null;
     if (!target) {
       setTargetRect(null);
-      setInteractionSatisfied(!current.requiredAction);
-      setInteractionTimedOut(false);
       return;
     }
 
@@ -164,14 +193,6 @@ export function OnboardingGuide({
     window.addEventListener("resize", updateRect);
     window.addEventListener("scroll", updateRect, true);
 
-    if (!current.requiredAction) {
-      setInteractionSatisfied(true);
-      setInteractionTimedOut(false);
-    } else {
-      setInteractionSatisfied(false);
-      setInteractionTimedOut(false);
-    }
-
     const onClick = () => setInteractionSatisfied(true);
     const onFocus = () => setInteractionSatisfied(true);
     const onPointerDown = () => setInteractionSatisfied(true);
@@ -205,7 +226,7 @@ export function OnboardingGuide({
       target.style.backgroundColor = previousBackgroundColor;
       target.style.borderRadius = previousBorderRadius;
     };
-  }, [activeSection, activeSteps, isOpen, stepIndex]);
+  }, [activeSection, activeSteps, interactionSatisfied, isOpen, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -226,6 +247,7 @@ export function OnboardingGuide({
     const isBreadcrumbStep =
       step.id === "navigation-breadcrumb" || step.id === "mobile-navigation-breadcrumb";
     if (!isFocusStep && !isBreadcrumbStep) return;
+    if (!interactionSatisfied) return;
 
     let cleanupAdvance: (() => void) | undefined;
     const evaluate = () => {
@@ -244,7 +266,29 @@ export function OnboardingGuide({
       window.clearInterval(interval);
       cleanupAdvance?.();
     };
-  }, [activeSection, activeSteps, isOpen, stepIndex]);
+  }, [activeSection, activeSteps, isOpen, stepIndex, uiContextKey]);
+
+  useEffect(() => {
+    if (!isOpen || activeSection === null) return;
+    if (!uiContextKey) return;
+    const step = activeSteps[stepIndex];
+    if (!step) return;
+    if (step.requiredAction !== "click-target") return;
+    if (autoAdvancedStepIdsRef.current.has(step.id)) return;
+
+    const contextDrivenStepIds = new Set([
+      "navigation-switcher",
+      "mobile-navigation-nav",
+    ]);
+    if (!contextDrivenStepIds.has(step.id)) return;
+
+    const entry = stepEntryContextKeyRef.current;
+    if (!entry || entry.stepId !== step.id) return;
+    if (!entry.contextKey) return;
+    if (entry.contextKey === uiContextKey) return;
+
+    return advanceStep(step.id);
+  }, [activeSection, activeSteps, isOpen, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;

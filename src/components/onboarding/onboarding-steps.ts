@@ -25,6 +25,8 @@ const desktopStepsBySection: StepMap = {
       title: "Use breadcrumbs",
       description: "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.",
       target: '[data-onboarding="focused-breadcrumb"]',
+      requiredAction: "click-target",
+      actionPrompt: "Click a breadcrumb item to continue.",
     },
   ],
   filters: [
@@ -108,6 +110,8 @@ const mobileStepsBySection: StepMap = {
       title: "Use breadcrumbs",
       description: "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.",
       target: '[data-onboarding="focused-breadcrumb"]',
+      requiredAction: "click-target",
+      actionPrompt: "Tap a breadcrumb item to continue.",
     },
   ],
   filters: [
