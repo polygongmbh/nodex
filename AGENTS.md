@@ -186,7 +186,8 @@ When the user asks you to create a plan to fix or implement something:
   - choose a balanced level of testing/refactoring based on task complexity and risk.
 
 ## Special Commands
-- If the user prompt starts with `squash`, review recent commits and identify sensible squash opportunities (for example repetitive fixups or tightly related micro-commits).
+- If the user message is `squash` (or starts with `squash`), inspect recent commits and check whether some should be sensibly squashed because they are repetitive, fixups, or tightly related follow-ups.
+- In that check, prioritize preserving atomic, coherent history and avoid squashing unrelated functional changes together.
 - Only rewrite unpushed local history when performing squash/rebase operations; do not rewrite pushed/shared history unless the user explicitly requests it.
 
 ## Progress Reporting Expectations
