@@ -124,6 +124,15 @@ structure:
   - permission/status transition rules
 - Snapshot tests are disallowed for complex UI surfaces unless narrowly scoped and justified in-file with a short rationale.
 
+## Lint Verification
+- Run `npm run lint` after each non-trivial change set and before each commit.
+- Treat lint warnings as actionable backlog; do not introduce new warnings.
+- For every milestone commit, verify at minimum:
+  - `npm run lint`
+  - `npx vitest run`
+  - `npm run build`
+- If a lint rule is intentionally relaxed or disabled, document the scope and rationale in the same commit.
+
 ## Refactoring Cadence
 - After each major milestone (feature completion, major bugfix batch, or cross-view UI change), run a cleanup pass focused on:
   - reducing duplication
