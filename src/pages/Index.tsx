@@ -6,6 +6,7 @@ import { FeedView } from "@/components/tasks/FeedView";
 import { KanbanView } from "@/components/tasks/KanbanView";
 import { CalendarView } from "@/components/tasks/CalendarView";
 import { ListView } from "@/components/tasks/ListView";
+import { DesktopSearchDock, type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -291,6 +292,7 @@ const Index = () => {
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
   const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
+  const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
   const onboardingStepsBySection = useMemo(() => getOnboardingStepsBySection(isMobile), [isMobile]);
 
   useEffect(() => {
@@ -874,7 +876,7 @@ const Index = () => {
       case "feed":
         return <FeedView {...viewProps} />;
       case "kanban":
-        return <KanbanView {...viewProps} />;
+        return <KanbanView {...viewProps} depthMode={kanbanDepthMode} />;
       case "calendar":
         return <CalendarView {...viewProps} />;
       case "list":
@@ -968,8 +970,17 @@ const Index = () => {
         onShortcutsClick={shortcutsHelp.open}
         onGuideClick={handleOpenGuide}
       />
-      <div className="min-w-0 overflow-hidden" {...desktopSwipeHandlers}>
-        {renderView()}
+      <div className="min-w-0 overflow-hidden flex flex-col" {...desktopSwipeHandlers}>
+        <div className="min-h-0 flex-1 overflow-hidden">
+          {renderView()}
+        </div>
+        <DesktopSearchDock
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          showKanbanLevels={currentView === "kanban"}
+          kanbanDepthMode={kanbanDepthMode}
+          onKanbanDepthModeChange={setKanbanDepthMode}
+        />
       </div>
       
       

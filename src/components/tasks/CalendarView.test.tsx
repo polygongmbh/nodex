@@ -33,7 +33,7 @@ const people: Person[] = [
 const tasks: Task[] = [];
 
 describe("CalendarView responsiveness", () => {
-  it("renders core navigation and search controls", () => {
+  it("renders core month navigation controls", () => {
     render(
       <CalendarView
         tasks={tasks}
@@ -50,6 +50,5 @@ describe("CalendarView responsiveness", () => {
 
     expect(screen.getByRole("button", { name: /previous month/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /next month/i })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/search tasks/i)).toBeInTheDocument();
   });
 });
