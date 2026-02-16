@@ -125,12 +125,13 @@ structure:
 - Snapshot tests are disallowed for complex UI surfaces unless narrowly scoped and justified in-file with a short rationale.
 
 ## Lint Verification
-- Run `npm run lint` after each non-trivial change set and before each commit.
+- Run `npm run lint` after major change sets (feature milestones, cross-view UI changes, release prep, or broad refactors), not after every minor edit.
 - Treat lint warnings as actionable backlog; do not introduce new warnings.
-- For every milestone commit, verify at minimum:
+- For major milestones, verify at minimum:
   - `npm run lint`
   - `npx vitest run`
   - `npm run build`
+- For minor/localized changes, run focused tests and build checks as appropriate; defer full lint to the next major milestone.
 - If a lint rule is intentionally relaxed or disabled, document the scope and rationale in the same commit.
 
 ## Refactoring Cadence
@@ -214,9 +215,15 @@ When the user asks you to create a plan to fix or implement something:
   - omit cosmetic-only or low-level implementation details from that summary unless explicitly requested
   - update `package.json` version semantically based on pending changes
   - update `CHANGELOG.md` for that version
+  - create an annotated release tag matching the version (for example `v1.1.0`) before pushing
   - run verification commands appropriate for the risk level
   - explicitly ask whether to push after providing the commit list and high-level summary
-  - push with `git push` only after the summary, version/changelog updates, and explicit user confirmation are complete
+  - push with `git push` only after the summary, version/changelog/tag updates, and explicit user confirmation are complete
+  - when approved, push both branch and tags (`git push` and `git push --tags`, or equivalent explicit ref pushes)
+
+## AGENTS Maintenance
+- When the user gives new standing workflow/process instructions for this repository, update `AGENTS.md` in the same session so the rule is persisted.
+- Keep these updates concise and place them in the most relevant existing section (create a new section only when needed).
 
 ## Progress Reporting Expectations
 - During active work, provide progress estimates in short updates.
