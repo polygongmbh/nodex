@@ -33,8 +33,8 @@ describe("onboarding steps", () => {
     const calendar = getOnboardingStepsBySection(false, "calendar");
 
     expect(kanban.compose.map((step) => step.id)).toEqual([
-      "kanban-columns-overview",
-      "kanban-move-tasks",
+      "kanban-columns-status",
+      "kanban-create-in-column",
       "kanban-depth",
     ]);
     expect(kanban.compose[2]?.target).toBe('[data-onboarding="kanban-levels"]');

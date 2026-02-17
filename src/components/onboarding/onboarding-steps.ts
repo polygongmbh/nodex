@@ -151,18 +151,20 @@ export function getOnboardingStepsBySection(isMobile: boolean, view: GuideView =
       ...desktopStepsBySection,
       compose: [
         {
-          id: "kanban-columns-overview",
-          title: "Kanban columns",
-          description: "Use To Do, In Progress, and Done columns to split work by status.",
+          id: "kanban-columns-status",
+          title: "Columns and status",
+          description: "Use To Do, In Progress, and Done columns to track status. Moving a task between columns changes its status.",
           target: '[data-onboarding="kanban-columns"]',
-        },
-        {
-          id: "kanban-move-tasks",
-          title: "Move work between columns",
-          description: "Drag a task card to another column to update its status.",
-          target: '[data-onboarding="kanban-board"]',
           requiredAction: "click-target",
           actionPrompt: "Click or drag a card in the board to continue.",
+        },
+        {
+          id: "kanban-create-in-column",
+          title: "Create in a specific column",
+          description: "Use the + button in a column header to create a new task directly in that column's status.",
+          target: '[data-onboarding="kanban-add-task"]',
+          requiredAction: "click-target",
+          actionPrompt: "Click a column + button to continue.",
         },
         {
           id: "kanban-depth",

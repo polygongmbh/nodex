@@ -394,6 +394,7 @@ export function KanbanView({
                     <button
                       onClick={() => setComposingColumn(column.id)}
                       className="p-1 rounded hover:bg-muted transition-colors"
+                      data-onboarding="kanban-add-task"
                     >
                       <Plus className="w-4 h-4 text-muted-foreground" />
                     </button>
