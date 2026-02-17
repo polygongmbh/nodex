@@ -7,6 +7,12 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 Upcoming improvements in progress.
 
+## [1.2.2] - 2026-02-17
+Maintenance release for version alignment and tagging.
+
+### Changed
+- Version bump and release tagging housekeeping.
+
 ## [1.2.1] - 2026-02-17
 Added focused guide updates for compose keyboard flows.
 
