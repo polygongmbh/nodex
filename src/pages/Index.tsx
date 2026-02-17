@@ -613,10 +613,21 @@ const Index = () => {
   }, [isMobile, upsertAndSelectPerson]);
 
   const handleToggleAllPeople = () => {
-    const selectedCount = people.filter((person) => person.isSelected).length;
-    const hasNoSelection = selectedCount === 0;
-    setPeople((prev) => mapPeopleSelection(prev, () => hasNoSelection));
-    toast.success(hasNoSelection ? "All people selected" : "All people deselected");
+    if (sidebarPeople.length === 0) {
+      toast.success("No frequent people to select");
+      return;
+    }
+    const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
+    const selectedCount = sidebarPeople.filter((person) => person.isSelected).length;
+    const shouldSelectAll = selectedCount !== sidebarPeople.length;
+    setPeople((prev) =>
+      prev.map((person) =>
+        sidebarIds.has(person.id)
+          ? { ...person, isSelected: shouldSelectAll }
+          : person
+      )
+    );
+    toast.success(shouldSelectAll ? "Frequent people selected" : "Frequent people deselected");
   };
 
   const resolveMentionPubkeys = useCallback((content: string): string[] => {
@@ -878,6 +889,17 @@ const Index = () => {
     [allTasks, channelsWithState, effectiveActiveRelayIds, people]
   );
 
+  const sidebarPeople = useMemo(() => {
+    const postCountByAuthor = new Map<string, number>();
+    for (const task of allTasks) {
+      const authorId = task.author?.id?.trim().toLowerCase();
+      if (!authorId) continue;
+      postCountByAuthor.set(authorId, (postCountByAuthor.get(authorId) || 0) + 1);
+    }
+
+    return people.filter((person) => (postCountByAuthor.get(person.id.toLowerCase()) || 0) >= 6);
+  }, [allTasks, people]);
+
   const viewProps = {
     tasks: filteredTasks,
     allTasks: allTasks,
@@ -985,7 +1007,7 @@ const Index = () => {
       <Sidebar
         relays={relaysWithActiveState}
         channels={channelsWithState}
-        people={people}
+        people={sidebarPeople}
         nostrRelays={nostrRelays}
         onRelayToggle={handleRelayToggle}
         onRelayExclusive={handleRelayExclusive}

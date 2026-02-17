@@ -21,6 +21,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Task filtering no longer hides tasks just because they contain many hashtags.
 - Kanban task cards now let you click the `+x` chip overflow indicator to expand and reveal all chips.
 - Sidebar channels now stay focused on most-used tags, while compose hashtag autocomplete can suggest all known tags.
+- Desktop sidebar people now show only identities with at least six known posts, while `@` autocomplete continues to include everyone.
 - Enabling people filters no longer crashes on malformed mention/author payloads, and uncaught runtime errors now render a recoverable error screen instead of a blank app.
 
 ## [1.1.0] - 2026-02-16
