@@ -52,6 +52,7 @@ export interface Task {
   dueTime?: string;
   parentId?: string;
   mentions?: string[];
+  assigneePubkeys?: string[];
 }
 
 export interface FilterState {

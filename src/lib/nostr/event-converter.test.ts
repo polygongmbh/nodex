@@ -185,6 +185,7 @@ describe("nostrEventToTask", () => {
   it("extracts mentions from person tags and @text mentions", () => {
     const event: NostrEventWithRelay = {
       ...baseEvent,
+      kind: NostrEventKind.Task,
       content: "pair with @Alice",
       tags: [
         ["p", "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"],
@@ -201,6 +202,10 @@ describe("nostrEventToTask", () => {
     expect(task.mentions).toContain(
       "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
     );
+    expect(task.assigneePubkeys).toEqual([
+      "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+      "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+    ]);
   });
 
   it("resolves indexed person references from content into @pubkey mentions", () => {

@@ -8,12 +8,14 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Changed
 - Mention autocomplete now shows human-friendly usernames while inserting NIP-05 identifiers when available (falling back to pubkeys), and compose preview chips render person mentions before hashtag/channel chips.
+- Browser-extension sign-in now completes immediately after identity resolution, while profile/NIP-05 hydration continues in the background.
 
 ### Fixed
 - Publishing now resolves `@` mentions from NIP-05/user aliases to pubkeys more reliably and includes corresponding Nostr `p` tags in posted events.
 - Retrieved mention tags now parse case-insensitively (`p`/`P`), and modifier+Enter in `@` autocomplete can add mention pubkey tags without inserting mention text.
 - Retrieved indexed Nostr person references (`#[n]`) now resolve into mention tokens, and uppercase `T` hashtag tags are parsed consistently in filters/channels.
 - Feed and shared task content now render resolved `@mentions` as user-linked labels (for example `@alice` instead of raw pubkeys when profile data is known).
+- Task assignment authority now prefers explicit assignee pubkeys (`p` tags), with task creation defaulting unassigned tasks to the author pubkey.
 - Enabling people filters no longer crashes on malformed mention/author payloads, and uncaught runtime errors now render a recoverable error screen instead of a blank app.
 
 ## [1.1.0] - 2026-02-16

@@ -25,9 +25,14 @@ export function taskMatchesSelectedPeople(task: Task, selectedPeople: Person[]):
   }
 
   const selectedIdentifiers = buildSelectedPersonIdentifierSet(selectedPeople);
-  const taskMentions =
-    task.mentions?.map((mention) => normalize(mention)).filter(Boolean) ||
-    extractAssignedMentionsFromContent(task.content || "");
+  const assigneeIdentifiers =
+    task.assigneePubkeys?.map((mention) => normalize(mention)).filter(Boolean) || [];
+  const taskMentions = assigneeIdentifiers.length > 0
+    ? assigneeIdentifiers
+    : (
+        task.mentions?.map((mention) => normalize(mention)).filter(Boolean) ||
+        extractAssignedMentionsFromContent(task.content || "")
+      );
 
   return taskMentions.some((mention) => selectedIdentifiers.has(mention));
 }

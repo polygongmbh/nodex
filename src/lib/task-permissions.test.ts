@@ -34,6 +34,19 @@ describe("canUserChangeTaskStatus", () => {
     expect(canUserChangeTaskStatus({ ...baseTask, mentions: ["bob"] }, user)).toBe(false);
   });
 
+  it("prefers assignee pubkeys over mention aliases", () => {
+    expect(
+      canUserChangeTaskStatus(
+        {
+          ...baseTask,
+          mentions: ["alice"],
+          assigneePubkeys: ["other-pubkey"],
+        },
+        user
+      )
+    ).toBe(false);
+  });
+
   it("allows assignee by username", () => {
     expect(canUserChangeTaskStatus({ ...baseTask, mentions: ["alice"] }, user)).toBe(true);
   });
@@ -46,6 +59,18 @@ describe("canUserChangeTaskStatus", () => {
 
   it("allows assignee by nip05 identifier", () => {
     expect(canUserChangeTaskStatus({ ...baseTask, mentions: ["alice@example.com"] }, user)).toBe(true);
+  });
+
+  it("allows assignee by explicit assignee pubkey", () => {
+    expect(
+      canUserChangeTaskStatus(
+        {
+          ...baseTask,
+          assigneePubkeys: ["user-1"],
+        },
+        user
+      )
+    ).toBe(true);
   });
 });
 

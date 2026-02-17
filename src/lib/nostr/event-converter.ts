@@ -154,6 +154,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     dueDate,
     dueTime: dueTimeTag?.[1] || undefined,
     mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles])),
+    assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
   };
 }
 

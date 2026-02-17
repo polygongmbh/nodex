@@ -680,6 +680,19 @@ const Index = () => {
     const mentionPubkeys = Array.from(
       new Set([...resolveMentionPubkeys(content), ...dedupedExplicitMentionPubkeys])
     );
+    const defaultAuthorAssignee =
+      taskType === "task" && /^[a-f0-9]{64}$/i.test(user.pubkey)
+        ? user.pubkey.toLowerCase()
+        : undefined;
+    const assigneePubkeys = taskType === "task"
+      ? Array.from(
+          new Set(
+            mentionPubkeys.length > 0
+              ? mentionPubkeys
+              : [defaultAuthorAssignee].filter((value): value is string => Boolean(value))
+          )
+        )
+      : [];
     
     let publishSuccess = false;
     let publishedEventId: string | undefined;
@@ -691,7 +704,7 @@ const Index = () => {
         toast.warning("Parent reference is local-only; publishing task without parent link");
       }
       const publishTags = taskType === "task"
-        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], mentionPubkeys)
+        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], assigneePubkeys)
         : mentionPubkeys.map((pubkey) => ["p", pubkey]);
       const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
       const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
@@ -761,6 +774,7 @@ const Index = () => {
       mentions: Array.from(
         new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
       ),
+      assigneePubkeys: taskType === "task" ? assigneePubkeys : undefined,
     };
     setLocalTasks((prev) => [newTask, ...prev]);
     

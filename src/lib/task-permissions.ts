@@ -6,6 +6,10 @@ export function extractAssignedMentionsFromContent(content: string): string[] {
 }
 
 function getTaskAssignees(task: Task): string[] {
+  const explicitAssigneePubkeys =
+    task.assigneePubkeys?.map((value) => value.trim().toLowerCase()).filter(Boolean) || [];
+  if (explicitAssigneePubkeys.length > 0) return explicitAssigneePubkeys;
+
   const explicitMentions =
     task.mentions?.map((value) => value.trim().toLowerCase()).filter(Boolean) || [];
   if (explicitMentions.length > 0) return explicitMentions;
