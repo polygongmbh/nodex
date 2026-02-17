@@ -44,6 +44,19 @@ interface RectBox {
 
 const GUIDE_ACTION_TIMEOUT_MS = 5000;
 
+function renderGuideTextWithItalics(text: string) {
+  return text.split(/(\*[^*]+\*)/g).filter(Boolean).map((part, index) => {
+    if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
+      return (
+        <em key={`${part}-${index}`} className="italic">
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    return <span key={`${part}-${index}`}>{part}</span>;
+  });
+}
+
 export function OnboardingGuide({
   isOpen,
   isMobile = false,
@@ -781,7 +794,9 @@ export function OnboardingGuide({
                       {getSectionIcon(section.id)}
                       <span className="min-w-0">
                         <span className="block text-sm font-medium text-foreground">{section.title}</span>
-                        <span className="block text-[11px] text-muted-foreground">{section.description}</span>
+                        <span className="block text-[11px] text-muted-foreground">
+                          {renderGuideTextWithItalics(section.description)}
+                        </span>
                       </span>
                     </button>
                   ))}
@@ -851,9 +866,13 @@ export function OnboardingGuide({
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold">{currentStep.title}</h2>
-                  <p className="text-sm text-muted-foreground mt-1">{currentStep.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {renderGuideTextWithItalics(currentStep.description)}
+                  </p>
                   {currentStep.actionPrompt && (
-                    <p className="text-xs text-primary/90 mt-2">{currentStep.actionPrompt}</p>
+                    <p className="text-xs text-primary/90 mt-2">
+                      {renderGuideTextWithItalics(currentStep.actionPrompt)}
+                    </p>
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-2">

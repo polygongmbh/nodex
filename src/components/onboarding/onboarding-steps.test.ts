@@ -19,10 +19,10 @@ describe("onboarding steps", () => {
     const peopleStep = desktop.filters.find((step) => step.id === "filters-people");
     const searchStep = desktop.filters.find((step) => step.id === "filters-search");
 
-    expect(channelStep?.description).toContain("left of Channels");
-    expect(peopleStep?.description).toContain("left of People");
-    expect(channelStep?.description).toContain("show only that channel");
-    expect(peopleStep?.description).toContain("show only that person");
+    expect(channelStep?.description).toContain("left of *Channels*");
+    expect(peopleStep?.description).toContain("left of *People*");
+    expect(channelStep?.description).toContain("show only posts with that channel");
+    expect(peopleStep?.description).toContain("show only posts from that person");
     expect(channelStep?.requiredAction).toBeUndefined();
     expect(peopleStep?.requiredAction).toBeUndefined();
     expect(searchStep?.target).toBe('[data-onboarding="search-bar"]');

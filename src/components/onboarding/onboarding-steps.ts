@@ -33,7 +33,7 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-relays",
       title: "Relay selection",
-      description: "Use Feeds to select which relays are visible. Click a relay name to toggle it, or click its icon for exclusive relay focus.",
+      description: "Use *Feeds* to select which relays are visible. Click a relay name to toggle it, or click its icon for exclusive relay focus.",
       target: '[data-onboarding="relays-section"]',
       requiredAction: "click-target",
       actionPrompt: "Click a relay control to continue.",
@@ -41,13 +41,13 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-channels",
       title: "Channel filters",
-      description: "In Channels, click a channel name to show only that channel. Click the # icon to cycle neutral → include → exclude for that channel. Click the hashtag icon to the left of Channels to reset channel filters.",
+      description: "In *Channels*, click a channel name to show only posts with that channel. Click the # icon to cycle neutral → include → exclude for that channel. Click the hashtag icon to the left of *Channels* to reset channel filters.",
       target: '[data-onboarding="channels-section"]',
     },
     {
       id: "filters-people",
       title: "People filters",
-      description: "In People, click a person name to show only that person. Click the avatar/icon to toggle that person. Click the icon to the left of People to reset people filters.",
+      description: "In *People*, click a person name to show only posts from that person. Click the avatar/icon to toggle that person. Click the icon to the left of *People* to reset people filters.",
       target: '[data-onboarding="people-section"]',
     },
     {
@@ -116,15 +116,15 @@ const mobileStepsBySection: StepMap = {
     {
       id: "mobile-filters-open",
       title: "Open Manage",
-      description: "Tap Manage in the top navigation to open relay, channel, and people filters.",
+      description: "Tap *Manage* in the top navigation to open relay, channel, and people filters.",
       target: '[aria-label="Switch to Manage view"]',
       requiredAction: "click-target",
-      actionPrompt: "Tap Manage to continue.",
+      actionPrompt: "Tap *Manage* to continue.",
     },
     {
       id: "mobile-filters-use",
       title: "Use filters",
-      description: "In Manage, tap feed chips to select relays, channel chips to cycle neutral → include → exclude, and people chips to toggle people filters.",
+      description: "In *Manage*, tap feed chips to select relays, channel chips to cycle neutral → include → exclude, and people chips to toggle people filters.",
       target: '[data-onboarding="mobile-filters"]',
     },
   ],

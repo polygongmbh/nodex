@@ -48,16 +48,16 @@
 
 ## Mobile Usage
 - The view navigation is at the top.
-- Open `Manage` for relay, channel, people, profile, and guide controls.
-- `Open Guide` in Manage launches onboarding.
+- Open *Manage* for relay, channel, people, profile, and guide controls.
+- *Open Guide* in *Manage* launches onboarding.
 - The bottom bar is a combined search/compose field:
   - typing updates search results live,
   - submit creates a task/comment from the same text.
 
 ## Onboarding Guide
 - Open guide from:
-  - Desktop sidebar: `Guide`
-  - Mobile Manage view: `Open Guide`
+  - Desktop sidebar: *Guide*
+  - Mobile *Manage* view: *Open Guide*
 - Choose area overlay:
   - Navigation
   - Filters
