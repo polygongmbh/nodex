@@ -182,6 +182,18 @@ describe("nostrEventToTask", () => {
     expect(task.dueTime).toBe("09:45");
   });
 
+  it("extracts numeric priority from tags", () => {
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      kind: NostrEventKind.Task,
+      tags: [["priority", "80"]],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.priority).toBe(80);
+  });
+
   it("extracts mentions from person tags and @text mentions", () => {
     const event: NostrEventWithRelay = {
       ...baseEvent,
@@ -344,6 +356,53 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].dueDate?.toISOString()).toBe("2026-03-23T14:30:00.000Z");
     expect(tasks[0].dueTime).toBe("14:30");
+  });
+
+  it("hydrates latest priority from property update notes and does not render them as tasks", () => {
+    const events: NostrEventWithRelay[] = [
+      {
+        id: "task-priority",
+        pubkey: "pub1",
+        created_at: 1700000000,
+        kind: NostrEventKind.Task,
+        tags: [["priority", "20"]],
+        content: "Prioritized task",
+        sig: "sig1",
+        relayUrl: "wss://relay.test.com",
+      },
+      {
+        id: "prio-update-old",
+        pubkey: "pub1",
+        created_at: 1700000010,
+        kind: NostrEventKind.TextNote,
+        tags: [
+          ["e", "task-priority", "", "property"],
+          ["priority", "40"],
+        ],
+        content: "Priority: 40",
+        sig: "sig2",
+        relayUrl: "wss://relay.test.com",
+      },
+      {
+        id: "prio-update-new",
+        pubkey: "pub1",
+        created_at: 1700000020,
+        kind: NostrEventKind.TextNote,
+        tags: [
+          ["e", "task-priority", "", "property"],
+          ["priority", "90"],
+        ],
+        content: "Priority: 90",
+        sig: "sig3",
+        relayUrl: "wss://relay.test.com",
+      },
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].id).toBe("task-priority");
+    expect(tasks[0].priority).toBe(90);
+    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000020 * 1000);
   });
 });
 

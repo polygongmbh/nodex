@@ -53,6 +53,14 @@ function extractHashtags(content: string): string[] {
   return [...new Set(matches.map((tag) => tag.slice(1).toLowerCase()))];
 }
 
+function parsePriorityTag(tags: string[][]): number | undefined {
+  const priorityTag = tags.find((tag) => tag[0]?.toLowerCase() === "priority" && tag[1]);
+  if (!priorityTag?.[1]) return undefined;
+  const parsed = Number.parseInt(priorityTag[1], 10);
+  if (!Number.isFinite(parsed)) return undefined;
+  return parsed;
+}
+
 // Replace indexed Nostr person references (e.g. #[0]) with @<pubkey> mention tokens.
 function replaceIndexedPersonMentions(content: string, tags: string[][]): string {
   return content.replace(/#\[(\d+)\]/g, (fullMatch, indexRaw: string) => {
@@ -119,6 +127,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     .filter((tag) => tag[0]?.toLowerCase() === "p" && tag[1])
     .map((tag) => tag[1].toLowerCase());
   const mentionedHandles = extractAssignedMentionsFromContent(normalizedContent);
+  const priority = parsePriorityTag(event.tags);
 
   let dueDate: Date | undefined;
   if (dueTag?.[1]) {
@@ -164,6 +173,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     dateType,
     mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles])),
     assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
+    priority,
   };
 }
 
@@ -198,10 +208,18 @@ export function extractAllTags(events: NostrEvent[]): string[] {
 
 // Convert multiple Nostr events to Tasks
 export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
-  const taskEvents = events.filter((event) =>
-    event.kind === NostrEventKind.Task || event.kind === NostrEventKind.TextNote
+  const isPriorityPropertyNote = (event: NostrEventWithRelay): boolean =>
+    event.kind === NostrEventKind.TextNote &&
+    parsePriorityTag(event.tags) !== undefined &&
+    Boolean(extractTaskStateTargetId(event.tags));
+
+  const taskEvents = events.filter(
+    (event) =>
+      (event.kind === NostrEventKind.Task || event.kind === NostrEventKind.TextNote) &&
+      !isPriorityPropertyNote(event)
   );
   const stateEvents = events.filter((event) => isTaskStateEventKind(event.kind));
+  const priorityPropertyEvents = events.filter(isPriorityPropertyNote);
   const calendarEvents = events.filter(
     (event) =>
       event.kind === NostrEventKind.CalendarDateBased ||
@@ -277,6 +295,33 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       lastEditedAt:
         !task.lastEditedAt || due.createdAt * 1000 > task.lastEditedAt.getTime()
           ? new Date(due.createdAt * 1000)
+          : task.lastEditedAt,
+    });
+  }
+
+  const latestPriorityByTaskId = new Map<string, { createdAt: number; priority: number }>();
+  for (const propertyEvent of priorityPropertyEvents) {
+    const taskId = extractTaskStateTargetId(propertyEvent.tags);
+    const priority = parsePriorityTag(propertyEvent.tags);
+    if (!taskId || typeof priority !== "number" || !taskMap.has(taskId)) continue;
+    const prev = latestPriorityByTaskId.get(taskId);
+    if (!prev || propertyEvent.created_at >= prev.createdAt) {
+      latestPriorityByTaskId.set(taskId, {
+        createdAt: propertyEvent.created_at,
+        priority,
+      });
+    }
+  }
+
+  for (const [taskId, update] of latestPriorityByTaskId.entries()) {
+    const task = taskMap.get(taskId);
+    if (!task) continue;
+    taskMap.set(taskId, {
+      ...task,
+      priority: update.priority,
+      lastEditedAt:
+        !task.lastEditedAt || update.createdAt * 1000 > task.lastEditedAt.getTime()
+          ? new Date(update.createdAt * 1000)
           : task.lastEditedAt,
     });
   }

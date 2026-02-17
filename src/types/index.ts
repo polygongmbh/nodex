@@ -55,6 +55,7 @@ export interface Task {
   parentId?: string;
   mentions?: string[];
   assigneePubkeys?: string[];
+  priority?: number;
 }
 
 export interface FilterState {

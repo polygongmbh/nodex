@@ -30,6 +30,10 @@ function applyDueTime(date: Date, dueTime: string): Date {
   return merged;
 }
 
+function buildStableDateTag(taskEventId: string, dateType: TaskDateType): string {
+  return `task-date-${taskEventId}-${dateType}`;
+}
+
 export function buildLinkedTaskCalendarEvent({
   taskEventId,
   taskContent,
@@ -50,7 +54,7 @@ export function buildLinkedTaskCalendarEvent({
     : toDateTagValue(dueDate);
   const primaryDateTagName = dateType === "end" ? "end" : "start";
 
-  const dTag = `task-deadline-${taskEventId.slice(0, 12)}-${Math.floor(Date.now() / 1000)}`;
+  const dTag = buildStableDateTag(taskEventId, dateType);
   const tags: string[][] = [
     ["d", dTag],
     ["title", taskContent.slice(0, 80)],
