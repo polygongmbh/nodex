@@ -662,6 +662,7 @@ export function CalendarView({
               "flex-1 overflow-auto min-w-0 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
               isMobile ? "p-2 space-y-4" : "p-4 space-y-5"
             )}
+            data-onboarding="calendar-month-stack"
           >
             {desktopMonthSections.map((section) => (
               <section
@@ -799,7 +800,9 @@ export function CalendarView({
             isMobile 
               ? "border-t p-2 flex-1" 
               : "w-full h-72 border-t p-3 xl:w-[27rem] 2xl:w-[31rem] xl:h-auto xl:border-t-0 xl:border-l xl:p-4"
-          )}>
+          )}
+          data-onboarding="calendar-day-panel"
+          >
           {selectedDate ? (
             <>
               <div className="flex items-center justify-between mb-3">

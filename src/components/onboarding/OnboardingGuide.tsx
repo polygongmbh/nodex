@@ -431,7 +431,7 @@ export function OnboardingGuide({
         case "filters":
           return ['[data-onboarding="mobile-filters"]'];
         case "compose":
-          return ['[data-onboarding="mobile-combined-box"]', '[data-onboarding="compose-input"]'];
+          return ['[data-onboarding="mobile-combined-box"]', '[data-onboarding="compose-input"]', '[data-onboarding="kanban-board"]', '[data-onboarding="calendar-month-stack"]'];
       }
     }
 
@@ -441,7 +441,7 @@ export function OnboardingGuide({
       case "filters":
         return ["aside", '[data-onboarding="channels-section"]'];
       case "compose":
-        return ['[data-onboarding="focused-compose"]', '[data-onboarding="compose-input"]'];
+        return ['[data-onboarding="compose-input"]', '[data-onboarding="kanban-board"]', '[data-onboarding="calendar-month-stack"]'];
     }
   }, [isMobile]);
 
@@ -485,20 +485,32 @@ export function OnboardingGuide({
         };
       };
 
-      measureSection("navigation");
-      measureSection("filters");
-      measureSection("compose");
+      for (const section of sections) {
+        measureSection(section.id);
+      }
       setPickerRects(nextRects);
     };
 
-    measurePickerRects();
-    window.addEventListener("resize", measurePickerRects);
-    window.addEventListener("scroll", measurePickerRects, true);
-    return () => {
-      window.removeEventListener("resize", measurePickerRects);
-      window.removeEventListener("scroll", measurePickerRects, true);
+    let rafId = 0;
+    const requestMeasure = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        measurePickerRects();
+      });
     };
-  }, [getPickerSelectors, isOpen, showSectionPicker]);
+
+    measurePickerRects();
+    window.addEventListener("resize", requestMeasure);
+    window.addEventListener("scroll", requestMeasure, true);
+    return () => {
+      window.removeEventListener("resize", requestMeasure);
+      window.removeEventListener("scroll", requestMeasure, true);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [getPickerSelectors, isOpen, sections, showSectionPicker]);
 
   useEffect(() => {
     if (!isOpen || showSectionPicker) return;
@@ -798,7 +810,7 @@ export function OnboardingGuide({
                   key={section.id}
                   onClick={() => handleSectionStart(section.id)}
                   style={getPickerPaneStyle(section.id)}
-                  className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-all duration-200 text-left p-5 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_0_38px_hsl(var(--primary)/0.24)] backdrop-blur-[1px]"
+                  className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-5 shadow-[0_0_0_1px_hsl(var(--primary)/0.18),0_10px_24px_hsl(var(--background)/0.45)]"
                   aria-label={`Start ${section.title} onboarding section`}
                   title={`${section.title}: ${section.description}`}
                 >

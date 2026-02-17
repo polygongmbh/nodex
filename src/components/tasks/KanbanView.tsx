@@ -369,7 +369,11 @@ export function KanbanView({
       )}
 
       {/* Kanban Columns */}
-      <div ref={columnsContainerRef} className="flex-1 overflow-x-auto overflow-y-hidden p-4">
+      <div
+        ref={columnsContainerRef}
+        className="flex-1 overflow-x-auto overflow-y-hidden p-4"
+        data-onboarding="kanban-board"
+      >
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-4 h-full min-w-max">
             {columns.map((column) => (

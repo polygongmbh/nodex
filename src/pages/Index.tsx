@@ -18,7 +18,7 @@ import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal"
 import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { VersionHint } from "@/components/layout/VersionHint";
-import { onboardingSections } from "@/components/onboarding/onboarding-sections";
+import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
 import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
 import { nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
@@ -369,7 +369,14 @@ const Index = () => {
   const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
   const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
-  const onboardingStepsBySection = useMemo(() => getOnboardingStepsBySection(isMobile), [isMobile]);
+  const onboardingSections = useMemo(
+    () => getOnboardingSections(isMobile, currentView),
+    [currentView, isMobile]
+  );
+  const onboardingStepsBySection = useMemo(
+    () => getOnboardingStepsBySection(isMobile, currentView),
+    [currentView, isMobile]
+  );
 
   const handleOpenGuide = useCallback(() => {
     const initialSectionForOpen: OnboardingInitialSection =

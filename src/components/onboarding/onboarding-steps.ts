@@ -1,6 +1,7 @@
 import { OnboardingSectionId, OnboardingStep } from "./onboarding-types";
 
 type StepMap = Record<OnboardingSectionId, OnboardingStep[]>;
+type GuideView = "tree" | "feed" | "kanban" | "calendar" | "list";
 
 const desktopStepsBySection: StepMap = {
   navigation: [
@@ -142,8 +143,50 @@ const mobileStepsBySection: StepMap = {
   ],
 };
 
-export function getOnboardingStepsBySection(isMobile: boolean): StepMap {
-  return isMobile ? mobileStepsBySection : desktopStepsBySection;
+export function getOnboardingStepsBySection(isMobile: boolean, view: GuideView = "tree"): StepMap {
+  if (isMobile) return mobileStepsBySection;
+
+  if (view === "kanban") {
+    return {
+      ...desktopStepsBySection,
+      compose: [
+        {
+          id: "kanban-columns",
+          title: "Kanban columns",
+          description: "Use To Do, In Progress, and Done columns to track state and drag tasks between them.",
+          target: '[data-onboarding="kanban-board"]',
+        },
+        {
+          id: "kanban-depth",
+          title: "Depth levels",
+          description: "Use the levels control near search to show top-level, limited depth, or leaves-only tasks.",
+          target: '[data-onboarding="kanban-levels"]',
+        },
+      ],
+    };
+  }
+
+  if (view === "calendar") {
+    return {
+      ...desktopStepsBySection,
+      compose: [
+        {
+          id: "calendar-months",
+          title: "Month timeline",
+          description: "Scroll the stacked months to move through time and select a day to inspect scheduled tasks.",
+          target: '[data-onboarding="calendar-month-stack"]',
+        },
+        {
+          id: "calendar-day-panel",
+          title: "Day details",
+          description: "Use the right panel to review tasks for the selected date and quickly update task status.",
+          target: '[data-onboarding="calendar-day-panel"]',
+        },
+      ],
+    };
+  }
+
+  return desktopStepsBySection;
 }
 
 export function getOnboardingAllSteps(stepsBySection: StepMap): OnboardingStep[] {
