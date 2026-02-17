@@ -206,7 +206,7 @@
     },
     "menu": {
       "signInToPost": "Zum Veröffentlichen anmelden",
-      "signedInVia": "Angemeldet über {{method}}",
+      "signedInVia": "Angemeldet als {{method}}",
       "editProfile": "Profil bearbeiten",
       "backupPrivateKey": "Privatschlüssel sichern",
       "keepSecret": "Geheim halten",
@@ -272,7 +272,7 @@
     "profile": {
       "title": "Profil",
       "notSignedIn": "Nicht angemeldet",
-      "signedInVia": "Angemeldet über {{method}}",
+      "signedInVia": "Angemeldet als {{method}}",
       "signin": "Anmelden",
       "signout": "Abmelden",
       "edit": "Bearbeiten",
