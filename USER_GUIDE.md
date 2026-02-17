@@ -4,6 +4,8 @@
 - Sign in from the profile menu to post tasks/comments to relays.
 - Compose a post with at least one `#channel` tag.
 - Choose Task or Comment from the mobile/desktop kind control.
+- Optional: set task priority before posting.
+- Optional: switch UI language (`EN`/`DE`) from the language toggle.
 
 ## Core Concepts
 - Tasks and comments are Nostr events.
@@ -43,7 +45,8 @@
 
 ## Relay Filtering and Publishing
 - Relay filter controls determine which items are visible.
-- Compose publishes to selected active relays.
+- New root tasks require exactly one selected relay.
+- Subtasks, task-context comments, and task updates publish to the task's origin relay.
 - If only demo/local relay is selected, item is stored locally (demo flow).
 
 ## Mobile Usage
@@ -70,10 +73,16 @@
 - Task/comment kind changes event behavior.
 - `#tags` and `@mentions` are supported in compose text.
 - Included channel filters automatically prepopulate compose with matching `#channel` tags.
+- Task compose supports optional priority selection.
 - Next to the date picker, choose the date type: `Due`, `Scheduled`, `Start`, `End`, or `Milestone`.
 - Date-typed tasks appear in Calendar view.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
 - On mobile, use the submit button in the combined bottom bar to create.
+
+## Table and Calendar Editing
+- Table view supports inline priority editing.
+- Table view supports inline due date/time/date-type editing.
+- Calendar urgency colors shift from yellow (sooner) toward greener tones (farther out).
 
 ### Compose keyboard behavior (desktop)
 - `Enter` / `Tab` with autocomplete open: insert the highlighted suggestion into text.
