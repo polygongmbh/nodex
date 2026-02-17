@@ -17,6 +17,7 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
+import { getDueDateColorClass } from "@/lib/taskSorting";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -301,6 +302,7 @@ export function FeedView({
               isMobile && authorMeta.primary === resolvedAuthor.id
                 ? truncateMobilePubkey(authorMeta.primary)
                 : authorMeta.primary;
+            const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
 
             return (
               <div
@@ -495,7 +497,7 @@ export function FeedView({
 
                     {/* Due date */}
                     {task.dueDate && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                      <div className={cn("flex items-center gap-2 text-xs mt-2", dueDateColor)}>
                         <Calendar className="w-3 h-3" />
                         <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
                         <span>{format(task.dueDate, "MMM d, yyyy")}</span>

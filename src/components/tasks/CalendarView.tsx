@@ -25,7 +25,7 @@ import { linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import { getDueDateColorClass } from "@/lib/taskSorting";
+import { getAuthorColor } from "@/lib/author-color";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
@@ -536,7 +536,7 @@ export function CalendarView({
                     </h3>
                     <div className="space-y-1.5">
                       {group.tasks.map((task) => {
-                        const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                        const authorColor = getAuthorColor(task.author);
                         return (
                           <div
                             key={task.id}
@@ -634,7 +634,11 @@ export function CalendarView({
                                 {task.content}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className={cn("text-xs flex items-center gap-1", dueDateColor)}>
+                                <span className="text-xs flex items-center gap-2">
+                                  <span
+                                    className="h-1.5 w-1.5 rounded-full"
+                                    style={{ backgroundColor: authorColor.accent }}
+                                  />
                                   <Clock className="w-3 h-3" />
                                   <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
                                   {format(task.dueDate!, "MMM d")}
@@ -731,19 +735,16 @@ export function CalendarView({
                             {dayTasks.length > 0 && (
                               isMobile ? (
                                 <div className="flex gap-0.5 mt-0.5">
-                                  {dayTasks.slice(0, 3).map((task) => (
-                                    <div
-                                      key={task.id}
-                                      className={cn(
-                                        "w-1 h-1 rounded-full",
-                                        task.status === "done"
-                                          ? "bg-muted-foreground"
-                                          : task.status === "in-progress"
-                                            ? "bg-amber-500"
-                                            : "bg-primary"
-                                      )}
-                                    />
-                                  ))}
+                                  {dayTasks.slice(0, 3).map((task) => {
+                                    const authorColor = getAuthorColor(task.author);
+                                    return (
+                                      <span
+                                        key={task.id}
+                                        className="w-1 h-1 rounded-full"
+                                        style={{ backgroundColor: authorColor.accent }}
+                                      />
+                                    );
+                                  })}
                                   {dayTasks.length > 3 && (
                                     <span className="text-[6px] text-muted-foreground">+</span>
                                   )}
@@ -751,20 +752,23 @@ export function CalendarView({
                               ) : (
                                 <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
                                   {dayTasks.slice(0, 2).map((task) => {
-                                    const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                                    const authorColor = getAuthorColor(task.author);
                                     return (
                                       <div
                                         key={task.id}
                                         className={cn(
-                                          "text-[10px] leading-tight px-1 py-0.5 rounded truncate",
+                                          "text-[10px] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
                                           task.status === "done"
                                             ? "bg-muted text-muted-foreground line-through"
                                             : task.status === "in-progress"
                                               ? "bg-amber-500/20 text-amber-700"
-                                              : "bg-primary/10",
-                                          dueDateColor
+                                              : "bg-primary/10"
                                         )}
                                       >
+                                        <span
+                                          className="h-1.5 w-1.5 rounded-full"
+                                          style={{ backgroundColor: authorColor.accent }}
+                                        />
                                         {task.content.slice(0, 15)}...
                                       </div>
                                     );
@@ -876,17 +880,18 @@ export function CalendarView({
                 <div className="space-y-2">
                   {selectedDayTasks.map((task) => {
                     const ancestorChain = getAncestorChain(task.id);
-                    const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                    const authorColor = getAuthorColor(task.author);
                     const isLockedUntilStart = isTaskLockedUntilStart(task);
-                    
+                   
                     return (
                       <div
                         key={task.id}
                         className={cn(
-                          "p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors",
+                          "p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card hover:bg-muted/50 transition-colors",
                           task.status === "done" && "opacity-60",
                           isLockedUntilStart && "opacity-50 grayscale"
                         )}
+                        style={{ borderLeftColor: authorColor.accent }}
                       >
                         {/* Parent context */}
                         {ancestorChain.length > 0 && (
@@ -1007,7 +1012,11 @@ export function CalendarView({
                               })}
                             </p>
                             {task.dueTime && (
-                              <div className={cn("flex items-center gap-1 text-xs mt-1", dueDateColor)}>
+                              <div className="flex items-center gap-2 text-xs mt-1">
+                                <span
+                                  className="h-1.5 w-1.5 rounded-full"
+                                  style={{ backgroundColor: authorColor.accent }}
+                                />
                                 <Clock className="w-3 h-3" />
                                 <span>{task.dueTime}</span>
                               </div>

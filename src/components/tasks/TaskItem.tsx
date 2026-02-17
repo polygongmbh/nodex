@@ -6,7 +6,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
-import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
+import { sortTasks, buildChildrenMap, getDueDateColorClass } from "@/lib/taskSorting";
 import { useNostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
@@ -140,6 +140,7 @@ export function TaskItem({
   const hasChildren = allChildren.length > 0;
   const isComment = task.taskType === "comment";
   const isLockedUntilStart = isTaskLockedUntilStart(task);
+  const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
 
   // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {
@@ -403,7 +404,7 @@ export function TaskItem({
 
           {/* Due date */}
           {task.dueDate && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+            <div className={cn("flex items-center gap-2 text-xs mt-1", dueDateColor)}>
               <Calendar className="w-3 h-3" />
               <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
               <span>{format(task.dueDate, "MMM d, yyyy")}</span>
