@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, Eye, Filter, PenSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   OnboardingInitialSection,
   OnboardingSection,
@@ -684,6 +685,32 @@ export function OnboardingGuide({
     }
   };
 
+  const handleSectionStart = (sectionId: OnboardingSectionId) => {
+    manualSelectedSectionRef.current = sectionId;
+    onActiveSectionChange?.(sectionId);
+    setManualSelectedSection(sectionId);
+    setActiveSection("all");
+    setStepIndex(getFirstStepIndexForSection(sectionId));
+  };
+
+  const renderPickerHelperBar = (mobile: boolean) => (
+    <div
+      className={cn(
+        "absolute left-1/2 -translate-x-1/2 pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-2.5 shadow-lg",
+        mobile
+          ? "bottom-4 z-[131] w-[calc(100vw-1rem)]"
+          : "bottom-4 z-[130] max-w-2xl w-[calc(100vw-2rem)]"
+      )}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          Pick one highlighted area to begin its guide.
+        </p>
+        <Button variant="ghost" onClick={onClose}>Close</Button>
+      </div>
+    </div>
+  );
+
   const getPickerPaneStyle = (sectionId: OnboardingSectionId): React.CSSProperties => {
     const measured = pickerRects[sectionId];
     if (measured) {
@@ -747,13 +774,7 @@ export function OnboardingGuide({
                   {sections.map((section) => (
                     <button
                       key={section.id}
-                      onClick={() => {
-                        manualSelectedSectionRef.current = section.id;
-                        onActiveSectionChange?.(section.id);
-                        setManualSelectedSection(section.id);
-                        setActiveSection("all");
-                        setStepIndex(getFirstStepIndexForSection(section.id));
-                      }}
+                      onClick={() => handleSectionStart(section.id)}
                       className="w-full flex items-start gap-2 rounded-lg border border-border bg-background/60 hover:bg-primary/10 px-3 py-2 text-left transition-colors"
                       aria-label={`Start ${section.title} onboarding section`}
                     >
@@ -772,13 +793,7 @@ export function OnboardingGuide({
               {sections.map((section) => (
                 <button
                   key={section.id}
-                  onClick={() => {
-                    manualSelectedSectionRef.current = section.id;
-                    onActiveSectionChange?.(section.id);
-                    setManualSelectedSection(section.id);
-                    setActiveSection("all");
-                    setStepIndex(getFirstStepIndexForSection(section.id));
-                  }}
+                  onClick={() => handleSectionStart(section.id)}
                   style={getPickerPaneStyle(section.id)}
                   className="absolute z-[125] pointer-events-auto rounded-none border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 transition-colors text-left p-3"
                   aria-label={`Start ${section.title} onboarding section`}
@@ -793,25 +808,11 @@ export function OnboardingGuide({
                   </span>
                 </button>
               ))}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[130] pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-2.5 shadow-lg max-w-2xl w-[calc(100vw-2rem)]">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-muted-foreground">
-                    Pick one highlighted area to begin its guide.
-                  </p>
-                  <Button variant="ghost" onClick={onClose}>Close</Button>
-                </div>
-              </div>
+              {renderPickerHelperBar(false)}
             </>
           )}
           {isMobile && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[131] pointer-events-auto rounded-xl border border-border bg-card/85 backdrop-blur-md px-4 py-2.5 shadow-lg w-[calc(100vw-1rem)]">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-muted-foreground">
-                  Pick one highlighted area to begin its guide.
-                </p>
-                <Button variant="ghost" onClick={onClose}>Close</Button>
-              </div>
-            </div>
+            renderPickerHelperBar(true)
           )}
         </>
       ) : (
