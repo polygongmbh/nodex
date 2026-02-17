@@ -2,11 +2,12 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Task, Relay, Channel, Person } from "@/types";
 import { TaskItem } from "./TaskItem";
-import { TaskComposer } from "./TaskComposer";
+import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
+import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 
 interface TaskTreeProps {
   tasks: Task[];
@@ -289,39 +290,24 @@ export function TaskTree({
         />
       )}
 
-      {/* Top composer with context controls - hidden on mobile */}
-      {!isMobile && (user || forceShowComposer) && (
-        <div
-          className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
-          data-onboarding="focused-compose"
-        >
-          <TaskComposer
-            onSubmit={handleNewTask}
-            relays={relays}
-            channels={composeChannels || channels}
-            people={people}
-            onCancel={() => setIsComposerExpanded(false)}
-            compact
-            adaptiveSize
-            draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
-            onExpandedChange={setIsComposerExpanded}
-            parentId={currentContextId}
-            onSignInClick={onSignInClick}
-            forceExpanded={forceShowComposer}
-            forceExpandSignal={composeGuideActivationSignal}
-            mentionRequest={mentionRequest}
-            defaultContent={(() => {
-              const prefillChannels = new Set<string>();
-              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-              if (currentContextTask) {
-                currentContextTask.tags.forEach(t => prefillChannels.add(t));
-              }
-              if (prefillChannels.size === 0) return "";
-              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-            })()}
-          />
-        </div>
-      )}
+      <SharedViewComposer
+        visible={!isMobile && (Boolean(user) || forceShowComposer)}
+        onSubmit={handleNewTask}
+        relays={relays}
+        channels={channels}
+        composeChannels={composeChannels}
+        people={people}
+        onCancel={() => setIsComposerExpanded(false)}
+        draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
+        parentId={currentContextId || undefined}
+        onSignInClick={onSignInClick}
+        forceExpanded={forceShowComposer}
+        forceExpandSignal={composeGuideActivationSignal}
+        onExpandedChange={setIsComposerExpanded}
+        mentionRequest={mentionRequest}
+        className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
+        defaultContent={buildComposePrefillFromFiltersAndContext(channels, currentContextTask?.tags)}
+      />
 
       {/* Task List */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1" data-onboarding="task-list">

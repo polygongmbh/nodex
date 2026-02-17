@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
-import { TaskComposer } from "./TaskComposer";
+import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
@@ -13,6 +13,7 @@ import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
+import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -451,33 +452,22 @@ export function ListView({
         />
       )}
 
-      {(user || forceShowComposer) && (
-        <div className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
-          <TaskComposer
-            onSubmit={handleNewTask}
-            relays={relays}
-            channels={composeChannels || channels}
-            people={people}
-            onCancel={() => {}}
-            compact
-            adaptiveSize
-            draftStorageKey={COMPOSE_DRAFT_KEY}
-            parentId={focusedTaskId || undefined}
-            onSignInClick={onSignInClick}
-            forceExpanded={forceShowComposer}
-            forceExpandSignal={composeGuideActivationSignal}
-            defaultContent={(() => {
-              const prefillChannels = new Set<string>();
-              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-              if (focusedTask) {
-                focusedTask.tags.forEach(t => prefillChannels.add(t));
-              }
-              if (prefillChannels.size === 0) return "";
-              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-            })()}
-          />
-        </div>
-      )}
+      <SharedViewComposer
+        visible={Boolean(user) || forceShowComposer}
+        onSubmit={handleNewTask}
+        relays={relays}
+        channels={channels}
+        composeChannels={composeChannels}
+        people={people}
+        onCancel={() => {}}
+        draftStorageKey={COMPOSE_DRAFT_KEY}
+        parentId={focusedTaskId || undefined}
+        onSignInClick={onSignInClick}
+        forceExpanded={forceShowComposer}
+        forceExpandSignal={composeGuideActivationSignal}
+        className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
+        defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
+      />
 
       {/* Table */}
       <div ref={tableContainerRef} className="flex-1 overflow-auto">

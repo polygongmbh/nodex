@@ -2,7 +2,7 @@ import { useEffect, useRef, useMemo, useState } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
 import { Task, Relay, Channel, Person } from "@/types";
-import { TaskComposer } from "./TaskComposer";
+import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { linkifyContent } from "@/lib/linkify";
@@ -15,6 +15,7 @@ import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { formatAuthorMetaParts } from "@/lib/person-label";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
+import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -252,38 +253,23 @@ export function FeedView({
         />
       )}
 
-      {/* Top composer - hidden on mobile */}
-      {!isMobile && (user || forceShowComposer) && (
-        <div
-          className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm"
-          data-onboarding="focused-compose"
-        >
-          <TaskComposer
-            onSubmit={handleNewTask}
-            relays={relays}
-            channels={composeChannels || channels}
-            people={people}
-            onCancel={() => {}}
-            compact
-            adaptiveSize
-            draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
-            parentId={focusedTaskId || undefined}
-            onSignInClick={onSignInClick}
-            forceExpanded={forceShowComposer}
-            forceExpandSignal={composeGuideActivationSignal}
-            mentionRequest={mentionRequest}
-            defaultContent={(() => {
-              const prefillChannels = new Set<string>();
-              channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-              if (focusedTask) {
-                focusedTask.tags.forEach(t => prefillChannels.add(t));
-              }
-              if (prefillChannels.size === 0) return "";
-              return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-            })()}
-          />
-        </div>
-      )}
+      <SharedViewComposer
+        visible={!isMobile && (Boolean(user) || forceShowComposer)}
+        onSubmit={handleNewTask}
+        relays={relays}
+        channels={channels}
+        composeChannels={composeChannels}
+        people={people}
+        onCancel={() => {}}
+        draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
+        parentId={focusedTaskId || undefined}
+        onSignInClick={onSignInClick}
+        forceExpanded={forceShowComposer}
+        forceExpandSignal={composeGuideActivationSignal}
+        mentionRequest={mentionRequest}
+        className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm"
+        defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
+      />
 
       {/* Feed List */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto" data-onboarding="task-list">
