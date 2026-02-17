@@ -27,14 +27,8 @@ export function filterTasks({
     .map((channel) => channel.name);
   const includedChannelSet = toLowerSet(includedChannelNames);
   const excludedChannelSet = toLowerSet(excludedChannelNames);
-  const hasActiveChannelFilters = includedChannelSet.size > 0 || excludedChannelSet.size > 0;
-
   return tasks.filter((task) => {
     if (activeRelayIds.size > 0 && !task.relays.some((relayId) => activeRelayIds.has(relayId))) {
-      return false;
-    }
-
-    if (!hasActiveChannelFilters && task.tags.length > 10) {
       return false;
     }
 

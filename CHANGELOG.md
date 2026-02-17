@@ -18,6 +18,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Task assignment authority now prefers explicit assignee pubkeys (`p` tags), with task creation defaulting unassigned tasks to the author pubkey.
 - Mobile compose now forwards explicit mention-tag selections in the correct publish payload field, so non-text person mentions persist as Nostr `p` tags.
 - Desktop task views now surface non-text mention tags as person chips, and compose drafts preserve explicit mention-tag-only selections until submit.
+- Task filtering no longer hides tasks just because they contain many hashtags.
 - Enabling people filters no longer crashes on malformed mention/author payloads, and uncaught runtime errors now render a recoverable error screen instead of a blank app.
 
 ## [1.1.0] - 2026-02-16

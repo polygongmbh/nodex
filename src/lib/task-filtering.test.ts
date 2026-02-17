@@ -72,27 +72,19 @@ describe("filterTasks", () => {
     expect(result.map((task) => task.id)).toEqual(["a"]);
   });
 
-  it("keeps large-tag tasks only when channel filters are active", () => {
+  it("does not drop tasks with many tags", () => {
     const heavyTagTask = buildTask({
       id: "heavy",
       tags: Array.from({ length: 11 }, (_, index) => `tag-${index}`),
     });
 
-    const withoutChannelFilters = filterTasks({
+    const result = filterTasks({
       tasks: [heavyTagTask],
       activeRelayIds: new Set(),
       channels: [],
       people: [alice, bob],
     });
-    expect(withoutChannelFilters).toHaveLength(0);
-
-    const withChannelFilters = filterTasks({
-      tasks: [heavyTagTask],
-      activeRelayIds: new Set(),
-      channels: [{ id: "tag-1", name: "tag-1", filterState: "included" }],
-      people: [alice, bob],
-    });
-    expect(withChannelFilters).toHaveLength(1);
+    expect(result).toHaveLength(1);
   });
 
   it("matches selected people by author id or mentions", () => {
