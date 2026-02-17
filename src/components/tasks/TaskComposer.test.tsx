@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { TaskComposer } from "./TaskComposer";
-import type { Channel, Relay, Person } from "@/types";
+import type { Channel, Relay, Person, TaskCreateResult } from "@/types";
+import { toast } from "sonner";
 
 let mockUser: { id: string } | null = { id: "me" };
 
@@ -58,16 +59,20 @@ const people: Person[] = [
   },
 ];
 
+const successfulCreateResult: TaskCreateResult = { ok: true, mode: "local" };
+
 describe("TaskComposer hashtag autocomplete", () => {
   beforeEach(() => {
     mockUser = { id: "me" };
+    vi.mocked(toast.error).mockClear();
+    vi.mocked(toast.success).mockClear();
   });
 
   it("keeps task submit label when signed out and disabled", () => {
     mockUser = null;
     render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -82,7 +87,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   it("supports keyboard selection with Enter", () => {
     render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -104,7 +109,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   });
 
   it("adds hashtag tags via modifier+Enter without inserting hashtag text", async () => {
-    const onSubmit = vi.fn();
+    const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
         onSubmit={onSubmit}
@@ -146,7 +151,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   });
 
   it("uses Alt+Enter to add hashtag tag-only when hashtag autocomplete is open", async () => {
-    const onSubmit = vi.fn();
+    const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
         onSubmit={onSubmit}
@@ -190,7 +195,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   it("stays compact in adaptive mode and expands on focus", () => {
     render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -220,7 +225,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -237,7 +242,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   it("does not render a cancel action button", () => {
     render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -251,7 +256,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   it("allows switching kind to comment from action dropdown", () => {
     render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -267,7 +272,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   });
 
   it("submits as the opposite kind on Alt+Enter", async () => {
-    const onSubmit = vi.fn();
+    const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
         onSubmit={onSubmit}
@@ -300,7 +305,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   it("supports @mention autocomplete via keyboard selection", () => {
     render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -322,7 +327,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   });
 
   it("adds mention pubkey tags via modifier+Enter without inserting mention text", async () => {
-    const onSubmit = vi.fn();
+    const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
         onSubmit={onSubmit}
@@ -366,7 +371,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   it("renders parsed mention chips before hashtag chips", () => {
     render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -388,7 +393,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   it("expands adaptively when forceExpandSignal changes", () => {
     const { rerender } = render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -406,7 +411,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     rerender(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={relays}
         channels={channels}
         people={people}
@@ -423,7 +428,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   it("blocks root task submit when multiple relays are selected", () => {
     render(
       <TaskComposer
-        onSubmit={() => {}}
+        onSubmit={() => successfulCreateResult}
         relays={multiRelays}
         channels={channels}
         people={people}
@@ -437,5 +442,51 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.getByText("Select one relay or a parent task")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+  });
+
+  it("keeps content when submit returns a failure result", async () => {
+    const onSubmit = vi.fn(async () => ({ ok: false as const, reason: "relay-selection" as const }));
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "Ship #backend now" } });
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+    expect(textarea.value).toBe("Ship #backend now");
+  });
+
+  it("keeps content and shows error toast when submit throws", async () => {
+    const onSubmit = vi.fn(async () => {
+      throw new Error("network down");
+    });
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "Ship #backend now" } });
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Task creation failed. Please try again.");
+    });
+    expect(textarea.value).toBe("Ship #backend now");
   });
 });

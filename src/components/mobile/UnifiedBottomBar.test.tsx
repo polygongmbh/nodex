@@ -33,7 +33,7 @@ describe("UnifiedBottomBar auth gating", () => {
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={() => {}}
-        onSubmit={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -59,7 +59,7 @@ describe("UnifiedBottomBar auth gating", () => {
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={onSearchChange}
-        onSubmit={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -77,8 +77,37 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(onSearchChange).toHaveBeenLastCalledWith("hello #general");
   });
 
+  it("keeps compose text when submit returns a failure result", async () => {
+    const onSubmit = vi.fn(async () => ({ ok: false as const, reason: "relay-selection" as const }));
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+    expect(field.value).toBe("Ship #general");
+  });
+
   it("submits as opposite kind on Alt+Enter in compose mode", () => {
-    const onSubmit = vi.fn();
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
 
     render(
       <UnifiedBottomBar
@@ -132,7 +161,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits current kind on Ctrl+Enter and Cmd+Enter", () => {
-    const onSubmit = vi.fn();
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
 
     render(
       <UnifiedBottomBar
@@ -187,7 +216,7 @@ describe("UnifiedBottomBar auth gating", () => {
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={() => {}}
-        onSubmit={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="tree"
         focusedTaskId={null}
         relays={relays}
@@ -210,7 +239,7 @@ describe("UnifiedBottomBar auth gating", () => {
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={() => {}}
-        onSubmit={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         relays={relays}
         channels={channels}
@@ -232,7 +261,7 @@ describe("UnifiedBottomBar auth gating", () => {
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={() => {}}
-        onSubmit={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         relays={relays}
         channels={channels}
@@ -254,7 +283,7 @@ describe("UnifiedBottomBar auth gating", () => {
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={() => {}}
-        onSubmit={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         selectedCalendarDate={new Date()}
         relays={relays}
@@ -272,7 +301,7 @@ describe("UnifiedBottomBar auth gating", () => {
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={() => {}}
-        onSubmit={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         selectedCalendarDate={nextDay}
         relays={relays}
@@ -301,7 +330,7 @@ describe("UnifiedBottomBar auth gating", () => {
         <UnifiedBottomBar
           searchQuery=""
           onSearchChange={() => {}}
-          onSubmit={() => {}}
+          onSubmit={() => ({ ok: true, mode: "local" })}
           currentView="feed"
           relays={relays}
           channels={statefulChannels}
@@ -348,7 +377,7 @@ describe("UnifiedBottomBar auth gating", () => {
         <UnifiedBottomBar
           searchQuery=""
           onSearchChange={() => {}}
-          onSubmit={() => {}}
+          onSubmit={() => ({ ok: true, mode: "local" })}
           currentView="feed"
           relays={relays}
           channels={statefulChannels}
@@ -388,7 +417,7 @@ describe("UnifiedBottomBar auth gating", () => {
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={onSearchChange}
-        onSubmit={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -417,7 +446,7 @@ describe("UnifiedBottomBar auth gating", () => {
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={() => {}}
-        onSubmit={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -439,7 +468,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("adds mention tag via modifier+Enter without inserting mention text", async () => {
-    const onSubmit = vi.fn();
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar

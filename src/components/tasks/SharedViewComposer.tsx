@@ -1,5 +1,5 @@
 import { TaskComposer } from "./TaskComposer";
-import type { Channel, Person, Relay, TaskDateType } from "@/types";
+import type { Channel, Person, Relay, TaskCreateResult, TaskDateType } from "@/types";
 
 interface SharedViewComposerProps {
   visible: boolean;
@@ -17,7 +17,7 @@ interface SharedViewComposerProps {
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => void;
+  ) => Promise<TaskCreateResult> | TaskCreateResult;
   onCancel?: () => void;
   draftStorageKey: string;
   parentId?: string;

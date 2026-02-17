@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
+import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -31,7 +31,7 @@ interface TaskTreeProps {
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => void;
+  ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   focusedTaskId?: string | null;
@@ -203,7 +203,7 @@ export function TaskTree({
     onFocusTask?.(currentContextTask.parentId || null);
   };
 
-  const handleNewTask = (
+  const handleNewTask = async (
     content: string,
     taskTags: string[],
     taskRelays: string[],
@@ -213,8 +213,8 @@ export function TaskTree({
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => {
-    onNewTask(
+  ): Promise<TaskCreateResult> => {
+    const result = await Promise.resolve(onNewTask(
       content,
       taskTags,
       taskRelays,
@@ -226,8 +226,11 @@ export function TaskTree({
       undefined,
       explicitMentionPubkeys,
       priority
-    );
-    setIsComposerExpanded(false);
+    ));
+    if (result.ok) {
+      setIsComposerExpanded(false);
+    }
+    return result;
   };
 
   const getFilteredChildren = useCallback((parentId: string): Task[] => {

@@ -29,6 +29,14 @@ export interface Person {
 
 export type TaskType = "task" | "comment";
 export type TaskDateType = "due" | "scheduled" | "start" | "end" | "milestone";
+export type TaskCreateFailureReason =
+  | "not-authenticated"
+  | "missing-tag"
+  | "relay-selection"
+  | "unexpected-error";
+export type TaskCreateResult =
+  | { ok: true; mode: "published" | "local" }
+  | { ok: false; reason: TaskCreateFailureReason };
 
 export type TaskStatus = "todo" | "in-progress" | "done";
 

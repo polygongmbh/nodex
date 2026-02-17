@@ -9,7 +9,7 @@ import { CalendarView } from "@/components/tasks/CalendarView";
 import { FocusedTaskBreadcrumb } from "@/components/tasks/FocusedTaskBreadcrumb";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
-import { Relay, Channel, Person, Task, TaskDateType } from "@/types";
+import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface MobileLayoutProps {
@@ -37,7 +37,7 @@ interface MobileLayoutProps {
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => void;
+  ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   onFocusTask: (taskId: string | null) => void;
@@ -200,8 +200,8 @@ export function MobileLayout({
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => {
-    onNewTask(
+  ): Promise<TaskCreateResult> => {
+    return Promise.resolve(onNewTask(
       content,
       tags,
       relayIds,
@@ -213,7 +213,7 @@ export function MobileLayout({
       undefined,
       explicitMentionPubkeys,
       priority
-    );
+    ));
   }, [onNewTask, focusedTaskId]);
 
   useEffect(() => {

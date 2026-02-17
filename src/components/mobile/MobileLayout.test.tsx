@@ -72,7 +72,7 @@ describe("MobileLayout auth wiring", () => {
         currentView="tree"
         onViewChange={() => {}}
         onSearchChange={() => {}}
-        onNewTask={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
         onToggleComplete={() => {}}
         onStatusChange={() => {}}
         onFocusTask={() => {}}
@@ -112,7 +112,7 @@ describe("MobileLayout auth wiring", () => {
         currentView="tree"
         onViewChange={() => {}}
         onSearchChange={() => {}}
-        onNewTask={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
         onToggleComplete={() => {}}
         onStatusChange={() => {}}
         onFocusTask={() => {}}
@@ -149,7 +149,7 @@ describe("MobileLayout auth wiring", () => {
         currentView="tree"
         onViewChange={() => {}}
         onSearchChange={() => {}}
-        onNewTask={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
         onToggleComplete={() => {}}
         onStatusChange={() => {}}
         onFocusTask={() => {}}

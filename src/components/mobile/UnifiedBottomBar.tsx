@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Channel, Person, TaskDateType, TaskType } from "@/types";
+import { Relay, Channel, Person, TaskCreateResult, TaskDateType, TaskType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -30,7 +30,7 @@ interface UnifiedBottomBarProps {
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => void;
+  ) => Promise<TaskCreateResult> | TaskCreateResult;
   currentView: ViewType;
   focusedTaskId?: string | null;
   selectedCalendarDate?: Date | null;
@@ -228,7 +228,7 @@ export function UnifiedBottomBar({
     prevIncludedChannelsRef.current = [...includedChannels];
   }, [includedChannels]);
 
-  const handleSubmit = (submitType?: TaskType) => {
+  const handleSubmit = async (submitType?: TaskType) => {
     if (!sharedText.trim()) return;
     const extractedChannels = sharedText.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
     if (extractedChannels.length === 0) {
@@ -241,17 +241,27 @@ export function UnifiedBottomBar({
       toast.error(t("toasts.errors.selectRelayOrParent"));
       return;
     }
-    onSubmit(
-      sharedText,
-      extractedChannels,
-      relayIds,
-      submitType ?? taskType,
-      dueDate,
-      dueTime || undefined,
-      dateType,
-      explicitMentionPubkeys,
-      priority
-    );
+    let result: TaskCreateResult;
+    try {
+      result = await Promise.resolve(onSubmit(
+        sharedText,
+        extractedChannels,
+        relayIds,
+        submitType ?? taskType,
+        dueDate,
+        dueTime || undefined,
+        dateType,
+        explicitMentionPubkeys,
+        priority
+      ));
+    } catch (error) {
+      console.error("Mobile task submit failed", error);
+      toast.error("Task creation failed. Please try again.");
+      return;
+    }
+    if (!result.ok) {
+      return;
+    }
     const hashtagOnlyContent = Array.from(
       new Set((sharedText.match(/#(\w+)/g) || []).map((tag) => tag.toLowerCase()))
     ).join(" ");

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Hash, Calendar, Clock, X, Zap, AtSign, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Channel, Person, TaskType, TaskDateType } from "@/types";
+import { Relay, Channel, Person, TaskType, TaskDateType, TaskCreateResult } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -27,7 +27,7 @@ interface TaskComposerProps {
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => void;
+  ) => Promise<TaskCreateResult> | TaskCreateResult;
   relays: Relay[];
   channels: Channel[];
   people: Person[];
@@ -339,8 +339,9 @@ export function TaskComposer({
     
     // Also add locally (and publish in parent handler)
     setIsPublishing(true);
+    let result: TaskCreateResult;
     try {
-      await Promise.resolve(
+      result = await Promise.resolve(
         onSubmit(
           content,
           submitTags,
@@ -353,8 +354,15 @@ export function TaskComposer({
           priority
         )
       );
-    } finally {
+    } catch (error) {
+      console.error("Task submit failed", error);
+      toast.error("Task creation failed. Please try again.");
       setIsPublishing(false);
+      return;
+    }
+    setIsPublishing(false);
+    if (!result.ok) {
+      return;
     }
     const selectedChannelsContent = includedChannels.length > 0
       ? `${includedChannels.map((channelName) => `#${channelName}`).join(" ")} `

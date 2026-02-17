@@ -1,7 +1,7 @@
 import { useEffect, useRef, useMemo, useState } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
-import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
+import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -46,7 +46,7 @@ interface FeedViewProps {
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => void;
+  ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   focusedTaskId?: string | null;
@@ -186,8 +186,8 @@ export function FeedView({
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => {
-    onNewTask(
+  ): Promise<TaskCreateResult> => {
+    return Promise.resolve(onNewTask(
       content,
       taskTags,
       taskRelays,
@@ -199,7 +199,7 @@ export function FeedView({
       undefined,
       explicitMentionPubkeys,
       priority
-    );
+    ));
   };
 
   const canCompleteTask = (task: Task) => {

@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
-import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
+import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import {
   format,
   startOfMonth,
@@ -60,7 +60,7 @@ interface CalendarViewProps {
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => void;
+  ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   focusedTaskId?: string | null;
@@ -431,7 +431,7 @@ export function CalendarView({
     allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
   };
 
-  const handleCreateEvent = (
+  const handleCreateEvent = async (
     content: string,
     taskTags: string[],
     taskRelays: string[],
@@ -441,10 +441,10 @@ export function CalendarView({
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => {
+  ): Promise<TaskCreateResult> => {
     // Use the selected date if no due date was set
     const eventDate = dueDate || selectedDate || new Date();
-    onNewTask(
+    const result = await Promise.resolve(onNewTask(
       content,
       taskTags,
       taskRelays,
@@ -456,8 +456,11 @@ export function CalendarView({
       undefined,
       explicitMentionPubkeys,
       priority
-    );
-    setIsComposingEvent(false);
+    ));
+    if (result.ok) {
+      setIsComposingEvent(false);
+    }
+    return result;
   };
 
   const navigateMonth = (direction: "prev" | "next") => {

@@ -68,7 +68,7 @@ import {
   setExclusiveChannelFilter,
 } from "@/lib/filter-state-utils";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
-import { Relay, Channel, Person, Task, TaskDateType, TaskStatus, TaskType } from "@/types";
+import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
 import { useTranslation } from "react-i18next";
@@ -819,15 +819,15 @@ const Index = () => {
     initialStatus?: TaskStatus,
     explicitMentionPubkeys: string[] = [],
     priority?: number
-  ) => {
+  ): Promise<TaskCreateResult> => {
     if (!user) {
       handleOpenAuthModal();
       toast.error(t("toasts.errors.needSigninPost"));
-      return;
+      return { ok: false, reason: "not-authenticated" };
     }
     if (extractedTags.length === 0) {
       toast.error(t("toasts.errors.needTag"));
-      return;
+      return { ok: false, reason: "missing-tag" };
     }
     setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
 
@@ -842,7 +842,7 @@ const Index = () => {
     });
     if (resolvedRelaySelection.error) {
       toast.error(resolvedRelaySelection.error || t("toasts.errors.selectRelayOrParent"));
-      return;
+      return { ok: false, reason: "relay-selection" };
     }
     const targetRelayIds = resolvedRelaySelection.relayIds;
     const hasNonDemoRelay = targetRelayIds.some((id) => id !== DEMO_RELAY_ID);
@@ -877,30 +877,35 @@ const Index = () => {
     let publishSuccess = false;
     let publishedEventId: string | undefined;
     if (shouldPublish) {
-      console.log("Publishing event to relays:", selectedRelayUrls);
-      const kind = taskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
-      const validParentId = isNostrEventId(parentId) ? parentId : undefined;
-      if (taskType === "task" && parentId && !validParentId) {
-        toast.warning("Parent reference is local-only; publishing task without parent link");
-      }
-      const publishTags = taskType === "task"
-        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], assigneePubkeys, priority)
-        : mentionPubkeys.map((pubkey) => ["p", pubkey]);
-      const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
-      const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
-      publishSuccess = result.success;
-      publishedEventId = result.eventId;
-      if (result.success && taskType === "task" && publishedEventId && initialStatus) {
-        await publishTaskStateUpdate(publishedEventId, initialStatus, selectedRelayUrls.slice(0, 1));
-      }
-      if (result.success && taskType === "task" && publishedEventId && dueDate) {
-        await publishTaskDueUpdate(
-          publishedEventId,
-          content,
-          dueDate,
-          dueTime,
-          dateType
-        );
+      try {
+        console.log("Publishing event to relays:", selectedRelayUrls);
+        const kind = taskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
+        const validParentId = isNostrEventId(parentId) ? parentId : undefined;
+        if (taskType === "task" && parentId && !validParentId) {
+          toast.warning("Parent reference is local-only; publishing task without parent link");
+        }
+        const publishTags = taskType === "task"
+          ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], assigneePubkeys, priority)
+          : mentionPubkeys.map((pubkey) => ["p", pubkey]);
+        const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
+        const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
+        publishSuccess = result.success;
+        publishedEventId = result.eventId;
+        if (result.success && taskType === "task" && publishedEventId && initialStatus) {
+          await publishTaskStateUpdate(publishedEventId, initialStatus, selectedRelayUrls.slice(0, 1));
+        }
+        if (result.success && taskType === "task" && publishedEventId && dueDate) {
+          await publishTaskDueUpdate(
+            publishedEventId,
+            content,
+            dueDate,
+            dueTime,
+            dateType
+          );
+        }
+      } catch (error) {
+        console.error("Task publish failed unexpectedly", error);
+        publishSuccess = false;
       }
     }
     
@@ -955,6 +960,7 @@ const Index = () => {
     } else {
       toast.success(taskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
     }
+    return { ok: true, mode: publishSuccess ? "published" : "local" };
   };
 
   const handleDueDateChange = useCallback((

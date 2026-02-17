@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { Task, Relay, Channel, Person, TaskDateType, TaskStatus } from "@/types";
+import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, TaskStatus } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
@@ -41,7 +41,7 @@ interface KanbanViewProps {
     initialStatus?: TaskStatus,
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => void;
+  ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
@@ -229,7 +229,7 @@ export function KanbanView({
     }
   };
 
-  const handleNewTask = (
+  const handleNewTask = async (
     content: string,
     taskTags: string[],
     taskRelays: string[],
@@ -239,8 +239,8 @@ export function KanbanView({
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number
-  ) => {
-    onNewTask(
+  ): Promise<TaskCreateResult> => {
+    const result = await Promise.resolve(onNewTask(
       content,
       taskTags,
       taskRelays,
@@ -252,8 +252,11 @@ export function KanbanView({
       composingColumn || undefined,
       explicitMentionPubkeys,
       priority
-    );
-    setComposingColumn(null);
+    ));
+    if (result.ok) {
+      setComposingColumn(null);
+    }
+    return result;
   };
 
   // Flatten all visible task IDs for keyboard navigation (across all columns)

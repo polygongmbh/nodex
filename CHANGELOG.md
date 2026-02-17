@@ -27,6 +27,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Fixed
 - Root task creation now blocks invalid multi-relay submissions with clear guidance: `Select one relay or a parent task`.
 - Lint warnings introduced during routing/i18n work were resolved.
+- Task creation is now failure-safe across desktop and mobile compose flows: failed submissions no longer clear drafts or close contextual composers, and critical submit failures are explicitly surfaced instead of silently dropping.
 
 ## [1.3.0] - 2026-02-17
 Introduced major calendar, table, and onboarding upgrades with view-specific guide flows and cleaner filter/compose behavior.

@@ -27,7 +27,7 @@ vi.mock("./SwipeIndicator", () => ({
 }));
 
 vi.mock("./UnifiedBottomBar", () => ({
-  UnifiedBottomBar: ({ onSubmit }: { onSubmit: (...args: unknown[]) => void }) => (
+  UnifiedBottomBar: ({ onSubmit }: { onSubmit: (...args: unknown[]) => Promise<unknown> | unknown }) => (
     <button
       onClick={() =>
         onSubmit(
@@ -66,7 +66,7 @@ const tasks: Task[] = [];
 
 describe("MobileLayout submit wiring", () => {
   it("forwards explicit mention pubkeys in the correct onNewTask argument slot", () => {
-    const onNewTask = vi.fn();
+    const onNewTask = vi.fn(async () => ({ ok: true, mode: "local" as const }));
 
     render(
       <MobileLayout
