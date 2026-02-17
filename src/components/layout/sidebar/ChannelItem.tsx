@@ -1,6 +1,7 @@
 import { Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Channel } from "@/types";
+import { SidebarFilterRow } from "./SidebarFilterRow";
 
 interface ChannelItemProps {
   channel: Channel;
@@ -18,12 +19,10 @@ export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused 
         : "unfiltered";
 
   return (
-    <div
-      data-sidebar-item={`channel-${channel.id}`}
-      className={cn(
-        "w-full flex items-center gap-2 px-3 py-1 pl-7 transition-all group hover:bg-sidebar-accent/50",
-        isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent"
-      )}
+    <SidebarFilterRow
+      itemId={`channel-${channel.id}`}
+      isKeyboardFocused={isKeyboardFocused}
+      className="gap-2 py-1"
     >
       {/* Icon - click for toggle */}
       <button
@@ -73,6 +72,6 @@ export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused 
           )}
         />
       )}
-    </div>
+    </SidebarFilterRow>
   );
 }

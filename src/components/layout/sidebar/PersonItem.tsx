@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Person } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { SidebarFilterRow } from "./SidebarFilterRow";
 
 interface PersonItemProps {
   person: Person;
@@ -13,12 +14,12 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
   const personName = person.id === "me" ? "Me" : person.displayName;
 
   return (
-    <div
-      data-sidebar-item={`person-${person.id}`}
+    <SidebarFilterRow
+      itemId={`person-${person.id}`}
+      isKeyboardFocused={isKeyboardFocused}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-1.5 pl-7 transition-all group hover:bg-sidebar-accent/50",
-        person.isSelected && "bg-sidebar-accent/80 border-l-2 border-l-primary pl-[1.625rem]",
-        isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent"
+        "gap-3 py-1.5",
+        person.isSelected && "bg-sidebar-accent/80 border-l-2 border-l-primary pl-[1.625rem]"
       )}
     >
       <button
@@ -67,6 +68,6 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
           aria-label={`${personName} selected`}
         />
       )}
-    </div>
+    </SidebarFilterRow>
   );
 }
