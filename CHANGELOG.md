@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-02-17
+
 ### Changed
 - Mention autocomplete now shows human-friendly usernames while inserting NIP-05 identifiers when available (falling back to pubkeys), and compose preview chips render person mentions before hashtag/channel chips.
 - Browser-extension sign-in now completes immediately after identity resolution, while profile/NIP-05 hydration continues in the background.
