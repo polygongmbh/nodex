@@ -67,5 +67,103 @@
       "inProgress": "In Arbeit",
       "done": "Erledigt"
     }
+  },
+  "navigation": {
+    "aria": {
+      "viewSwitcher": "Ansichtsumschalter",
+      "views": "Navigationsansichten"
+    },
+    "views": {
+      "manage": "Verwalten",
+      "tree": "Baum",
+      "feed": "Feed",
+      "kanban": "Kanban",
+      "calendar": "Kalender",
+      "list": "Tabelle",
+      "upcoming": "Anstehend",
+      "switchTo": "Zu {{view}}-Ansicht wechseln"
+    },
+    "mobile": {
+      "openGuide": "Guide öffnen"
+    }
+  },
+  "sidebar": {
+    "tagline": "Zusammenarbeitsplattform",
+    "sections": {
+      "feeds": "Feeds",
+      "channels": "Kanäle",
+      "people": "Personen"
+    },
+    "hints": {
+      "relays": "Relays",
+      "clickToFilter": "Zum Filtern klicken"
+    },
+    "actions": {
+      "addRelay": "Relay hinzufügen",
+      "openShortcuts": "Hilfe zu Tastenkürzeln öffnen",
+      "shortcuts": "Shortcuts",
+      "shortcutsTooltip": "Tastenkürzel (?)",
+      "openGuide": "Onboarding-Guide öffnen",
+      "guide": "Guide"
+    }
+  },
+  "filters": {
+    "profile": {
+      "title": "Profil",
+      "notSignedIn": "Nicht angemeldet",
+      "signedInVia": "Angemeldet über {{method}}",
+      "signin": "Anmelden",
+      "signout": "Abmelden",
+      "edit": "Bearbeiten",
+      "name": "Name *",
+      "displayName": "Anzeigename",
+      "picture": "Bild-URL",
+      "nip05": "NIP-05",
+      "about": "Über",
+      "cancel": "Abbrechen",
+      "saving": "Speichern...",
+      "save": "Profil speichern",
+      "privateKey": "Privater Schlüssel (Gast-Identität)",
+      "hidePrivateKey": "Privaten Schlüssel ausblenden",
+      "showPrivateKey": "Privaten Schlüssel anzeigen",
+      "copyPrivateKey": "Privaten Schlüssel kopieren",
+      "copiedPrivateKey": "Privater Schlüssel in Zwischenablage kopiert",
+      "nameRequired": "Profilname ist erforderlich",
+      "updated": "Profil auf verbundenen Relays aktualisiert",
+      "updateFailed": "Profil konnte nicht aktualisiert werden. Relay-Verbindung prüfen und erneut versuchen."
+    },
+    "feeds": {
+      "title": "Feeds",
+      "placeholder": "wss://relay.example.com",
+      "add": "Hinzufügen",
+      "addAria": "Feed hinzufügen",
+      "remove": "Entfernen",
+      "removeAria": "Feed {{name}} entfernen"
+    },
+    "channels": {
+      "title": "Kanäle",
+      "cycleHint": "Tippen zum Wechseln: neutral -> einschließen -> ausschließen"
+    },
+    "people": {
+      "title": "Personen"
+    },
+    "authMethod": {
+      "extension": "Erweiterung",
+      "guest": "Gast",
+      "signer": "Signer",
+      "privateKey": "Privater Schlüssel",
+      "unknown": "Unbekannt"
+    }
+  },
+  "search": {
+    "desktop": {
+      "placeholder": "Aufgaben suchen..."
+    },
+    "kanban": {
+      "topLevel": "Oberste Ebene",
+      "levels": "{{count}} Ebenen",
+      "allLevels": "Alle Ebenen",
+      "leavesOnly": "Nur Blätter"
+    }
   }
 }

@@ -16,12 +16,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
 interface SidebarHeaderProps {
   className?: string;
 }
 
 export function SidebarHeader({ className }: SidebarHeaderProps) {
+  const { t } = useTranslation();
   const appVersionHint = `Nodex v${APP_VERSION || "0.0.0"}`;
 
   return (
@@ -39,7 +41,7 @@ export function SidebarHeader({ className }: SidebarHeaderProps) {
           >
             Nodex
           </a>
-          <p className="text-xs text-muted-foreground truncate hidden lg:block">Collaboration Platform</p>
+          <p className="text-xs text-muted-foreground truncate hidden lg:block">{t("sidebar.tagline")}</p>
         </div>
       </div>
     </div>
@@ -89,6 +91,7 @@ export function Sidebar({
   onShortcutsClick,
   onGuideClick,
 }: SidebarProps) {
+  const { t } = useTranslation();
   const [expandedSections, setExpandedSections] = useState({
     feeds: true,
     channels: true,
@@ -228,12 +231,12 @@ export function Sidebar({
         {/* Feeds/Relays */}
         <div data-onboarding="relays-section">
         <SidebarSection
-          title="Feeds"
+          title={t("sidebar.sections.feeds")}
           icon={Radio}
           isExpanded={expandedSections.feeds}
           onToggle={() => toggleSection("feeds")}
           onIconClick={onToggleAllRelays}
-          hint="Relays"
+          hint={t("sidebar.hints.relays")}
           action={
             <TooltipProvider>
               <Tooltip>
@@ -250,7 +253,7 @@ export function Sidebar({
                   }
                 />
                 <TooltipContent side="right">
-                  <p>Add relay</p>
+                  <p>{t("sidebar.actions.addRelay")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -271,12 +274,12 @@ export function Sidebar({
         {/* Channels */}
         <div data-onboarding="channels-section">
         <SidebarSection
-          title="Channels"
+          title={t("sidebar.sections.channels")}
           icon={Hash}
           isExpanded={expandedSections.channels}
           onToggle={() => toggleSection("channels")}
           onIconClick={onToggleAllChannels}
-          hint="Click to filter"
+          hint={t("sidebar.hints.clickToFilter")}
         >
           {channels.map((channel) => (
             <ChannelItem
@@ -293,7 +296,7 @@ export function Sidebar({
         {/* People */}
         <div data-onboarding="people-section">
         <SidebarSection
-          title="People"
+          title={t("sidebar.sections.people")}
           icon={Users}
           isExpanded={expandedSections.people}
           onToggle={() => toggleSection("people")}
@@ -323,14 +326,14 @@ export function Sidebar({
                   <button
                     onClick={onShortcutsClick}
                     className="hidden h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:inline-flex lg:w-auto lg:flex-1"
-                    aria-label="Open keyboard shortcuts help"
+                    aria-label={t("sidebar.actions.openShortcuts")}
                   >
                     <Keyboard className="w-4 h-4" />
-                    <span className="text-xs font-medium">Shortcuts</span>
+                    <span className="text-xs font-medium">{t("sidebar.actions.shortcuts")}</span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  <p>Keyboard shortcuts (?)</p>
+                  <p>{t("sidebar.actions.shortcutsTooltip")}</p>
                 </TooltipContent>
               </Tooltip>
               )}
@@ -341,14 +344,14 @@ export function Sidebar({
                   <button
                     onClick={onGuideClick}
                     className="inline-flex h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:w-auto lg:flex-1"
-                    aria-label="Open onboarding guide"
+                    aria-label={t("sidebar.actions.openGuide")}
                   >
                     <BookOpen className="w-4 h-4" />
-                    <span className="text-xs font-medium">Guide</span>
+                    <span className="text-xs font-medium">{t("sidebar.actions.guide")}</span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  <p>Guide</p>
+                  <p>{t("sidebar.actions.guide")}</p>
                 </TooltipContent>
               </Tooltip>
               )}

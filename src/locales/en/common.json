@@ -67,5 +67,103 @@
       "inProgress": "In Progress",
       "done": "Done"
     }
+  },
+  "navigation": {
+    "aria": {
+      "viewSwitcher": "View switcher",
+      "views": "Navigation views"
+    },
+    "views": {
+      "manage": "Manage",
+      "tree": "Tree",
+      "feed": "Feed",
+      "kanban": "Kanban",
+      "calendar": "Calendar",
+      "list": "Table",
+      "upcoming": "Upcoming",
+      "switchTo": "Switch to {{view}} view"
+    },
+    "mobile": {
+      "openGuide": "Open Guide"
+    }
+  },
+  "sidebar": {
+    "tagline": "Collaboration Platform",
+    "sections": {
+      "feeds": "Feeds",
+      "channels": "Channels",
+      "people": "People"
+    },
+    "hints": {
+      "relays": "Relays",
+      "clickToFilter": "Click to filter"
+    },
+    "actions": {
+      "addRelay": "Add relay",
+      "openShortcuts": "Open keyboard shortcuts help",
+      "shortcuts": "Shortcuts",
+      "shortcutsTooltip": "Keyboard shortcuts (?)",
+      "openGuide": "Open onboarding guide",
+      "guide": "Guide"
+    }
+  },
+  "filters": {
+    "profile": {
+      "title": "Profile",
+      "notSignedIn": "Not signed in",
+      "signedInVia": "Signed in via {{method}}",
+      "signin": "Sign in",
+      "signout": "Sign out",
+      "edit": "Edit",
+      "name": "Name *",
+      "displayName": "Display name",
+      "picture": "Picture URL",
+      "nip05": "NIP-05",
+      "about": "About",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "save": "Save profile",
+      "privateKey": "Private key (guest identity)",
+      "hidePrivateKey": "Hide private key",
+      "showPrivateKey": "Show private key",
+      "copyPrivateKey": "Copy private key",
+      "copiedPrivateKey": "Private key copied to clipboard",
+      "nameRequired": "Profile name is required",
+      "updated": "Profile updated on connected relays",
+      "updateFailed": "Failed to update profile. Check relay connectivity and try again."
+    },
+    "feeds": {
+      "title": "Feeds",
+      "placeholder": "wss://relay.example.com",
+      "add": "Add",
+      "addAria": "Add feed",
+      "remove": "Remove",
+      "removeAria": "Remove feed {{name}}"
+    },
+    "channels": {
+      "title": "Channels",
+      "cycleHint": "Tap to cycle: neutral -> include -> exclude"
+    },
+    "people": {
+      "title": "People"
+    },
+    "authMethod": {
+      "extension": "Extension",
+      "guest": "Guest",
+      "signer": "Signer",
+      "privateKey": "Private key",
+      "unknown": "Unknown"
+    }
+  },
+  "search": {
+    "desktop": {
+      "placeholder": "Search tasks..."
+    },
+    "kanban": {
+      "topLevel": "Top-level",
+      "levels": "{{count}} levels",
+      "allLevels": "All levels",
+      "leavesOnly": "Leaves only"
+    }
   }
 }

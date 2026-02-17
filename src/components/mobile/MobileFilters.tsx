@@ -9,6 +9,7 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";
+import { useTranslation } from "react-i18next";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -44,6 +45,7 @@ export function MobileFilters({
   onSignInClick,
   onGuideClick,
 }: MobileFiltersProps) {
+  const { t } = useTranslation();
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;
@@ -61,19 +63,19 @@ export function MobileFilters({
   const [profileAbout, setProfileAbout] = useState("");
 
   const displayName = useMemo(() => {
-    if (!user) return "Not signed in";
+    if (!user) return t("filters.profile.notSignedIn");
     return user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`;
-  }, [user]);
+  }, [user, t]);
 
   const methodLabel = authMethod === "extension"
-    ? "Extension"
+    ? t("filters.authMethod.extension")
     : authMethod === "guest"
-      ? "Guest"
+      ? t("filters.authMethod.guest")
       : authMethod === "nostrConnect"
-        ? "Signer"
+        ? t("filters.authMethod.signer")
         : authMethod === "privateKey"
-          ? "Private key"
-          : "Unknown";
+          ? t("filters.authMethod.privateKey")
+          : t("filters.authMethod.unknown");
 
   const guestPrivateKey = getGuestPrivateKey();
 
@@ -103,12 +105,12 @@ export function MobileFilters({
   const handleCopyPrivateKey = () => {
     if (!guestPrivateKey) return;
     navigator.clipboard.writeText(guestPrivateKey);
-    toast.success("Private key copied to clipboard");
+    toast.success(t("filters.profile.copiedPrivateKey"));
   };
 
   const handleSaveProfile = async () => {
     if (!profileName.trim()) {
-      toast.error("Profile name is required");
+      toast.error(t("filters.profile.nameRequired"));
       return;
     }
     setIsSavingProfile(true);
@@ -121,10 +123,10 @@ export function MobileFilters({
         about: profileAbout || undefined,
       });
       if (success) {
-        toast.success("Profile updated on connected relays");
+        toast.success(t("filters.profile.updated"));
         setIsProfileEditorOpen(false);
       } else {
-        toast.error("Failed to update profile. Check relay connectivity and try again.");
+        toast.error(t("filters.profile.updateFailed"));
       }
     } finally {
       setIsSavingProfile(false);
@@ -139,11 +141,11 @@ export function MobileFilters({
             <button
               onClick={onGuideClick}
               className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-left hover:bg-muted/50 transition-colors inline-flex items-center gap-2"
-              aria-label="Open onboarding guide"
-              title="Open onboarding guide"
+              aria-label={t("sidebar.actions.openGuide")}
+              title={t("sidebar.actions.openGuide")}
             >
               <Sparkles className="w-4 h-4 text-primary" />
-              Open Guide
+              {t("navigation.mobile.openGuide")}
             </button>
             <VersionHint className="shrink-0" />
           </div>
@@ -153,14 +155,14 @@ export function MobileFilters({
         <section>
           <div className="flex items-center gap-2 mb-3">
             <User className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm">Profile</h2>
+            <h2 className="font-semibold text-sm">{t("filters.profile.title")}</h2>
           </div>
           <div className="space-y-3 rounded-lg border border-border p-3">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{displayName}</p>
                 {user && (
-                  <p className="text-xs text-muted-foreground">Signed in via {methodLabel}</p>
+                  <p className="text-xs text-muted-foreground">{t("filters.profile.signedInVia", { method: methodLabel })}</p>
                 )}
               </div>
               {!user ? (
@@ -169,7 +171,7 @@ export function MobileFilters({
                   className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5"
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  Sign in
+                  {t("filters.profile.signin")}
                 </button>
               ) : (
                 <div className="flex items-center gap-1.5">
@@ -178,7 +180,7 @@ export function MobileFilters({
                     className="px-3 py-1.5 rounded-md text-sm border border-border inline-flex items-center gap-1"
                   >
                     <Pencil className="w-3 h-3" />
-                    Edit
+                    {t("filters.profile.edit")}
                     <ChevronDown
                       className={cn(
                         "w-3 h-3 transition-transform",
@@ -191,7 +193,7 @@ export function MobileFilters({
                     className="px-3 py-1.5 rounded-md text-sm border border-destructive/40 text-destructive flex items-center gap-1"
                   >
                     <LogOut className="w-3 h-3" />
-                    Sign out
+                    {t("filters.profile.signout")}
                   </button>
                 </div>
               )}
@@ -200,7 +202,7 @@ export function MobileFilters({
             {user && isProfileEditorOpen && (
               <div className="space-y-2 rounded-md border border-border/70 bg-muted/20 p-2.5">
                 <div className="space-y-1">
-                  <label htmlFor="manage-profile-name" className="text-xs text-muted-foreground">Name *</label>
+                  <label htmlFor="manage-profile-name" className="text-xs text-muted-foreground">{t("filters.profile.name")}</label>
                   <Input
                     id="manage-profile-name"
                     value={profileName}
@@ -209,7 +211,7 @@ export function MobileFilters({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="manage-profile-display-name" className="text-xs text-muted-foreground">Display name</label>
+                  <label htmlFor="manage-profile-display-name" className="text-xs text-muted-foreground">{t("filters.profile.displayName")}</label>
                   <Input
                     id="manage-profile-display-name"
                     value={profileDisplayName}
@@ -218,7 +220,7 @@ export function MobileFilters({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="manage-profile-picture" className="text-xs text-muted-foreground">Picture URL</label>
+                  <label htmlFor="manage-profile-picture" className="text-xs text-muted-foreground">{t("filters.profile.picture")}</label>
                   <Input
                     id="manage-profile-picture"
                     value={profilePicture}
@@ -227,7 +229,7 @@ export function MobileFilters({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="manage-profile-nip05" className="text-xs text-muted-foreground">NIP-05</label>
+                  <label htmlFor="manage-profile-nip05" className="text-xs text-muted-foreground">{t("filters.profile.nip05")}</label>
                   <Input
                     id="manage-profile-nip05"
                     value={profileNip05}
@@ -236,7 +238,7 @@ export function MobileFilters({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label htmlFor="manage-profile-about" className="text-xs text-muted-foreground">About</label>
+                  <label htmlFor="manage-profile-about" className="text-xs text-muted-foreground">{t("filters.profile.about")}</label>
                   <Textarea
                     id="manage-profile-about"
                     value={profileAbout}
@@ -252,7 +254,7 @@ export function MobileFilters({
                       className="px-3 py-1.5 rounded-md text-sm border border-border"
                       disabled={isSavingProfile}
                     >
-                      Cancel
+                      {t("filters.profile.cancel")}
                     </button>
                   )}
                   <button
@@ -260,7 +262,7 @@ export function MobileFilters({
                     className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground"
                     disabled={isSavingProfile}
                   >
-                    {isSavingProfile ? "Saving..." : "Save profile"}
+                    {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
                   </button>
                 </div>
               </div>
@@ -270,7 +272,7 @@ export function MobileFilters({
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Key className="w-3.5 h-3.5" />
-                  Private key (guest identity)
+                  {t("filters.profile.privateKey")}
                 </div>
                 <div className="flex items-start gap-2">
                   <code className="block max-w-[10rem] w-full text-xs bg-muted p-2 rounded font-mono whitespace-nowrap overflow-x-auto">
@@ -279,14 +281,14 @@ export function MobileFilters({
                   <button
                     onClick={() => setShowKey((prev) => !prev)}
                     className="p-2 rounded-md border border-border"
-                    aria-label={showKey ? "Hide private key" : "Show private key"}
+                    aria-label={showKey ? t("filters.profile.hidePrivateKey") : t("filters.profile.showPrivateKey")}
                   >
                     {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                   <button
                     onClick={handleCopyPrivateKey}
                     className="p-2 rounded-md border border-border"
-                    aria-label="Copy private key"
+                    aria-label={t("filters.profile.copyPrivateKey")}
                   >
                     <Copy className="w-3.5 h-3.5" />
                   </button>
@@ -300,22 +302,22 @@ export function MobileFilters({
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Radio className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm">Feeds</h2>
+            <h2 className="font-semibold text-sm">{t("filters.feeds.title")}</h2>
           </div>
           <div className="flex items-center gap-2 mb-3">
             <Input
               value={newRelayUrl}
               onChange={(e) => setNewRelayUrl(e.target.value)}
-              placeholder="wss://relay.example.com"
+              placeholder={t("filters.feeds.placeholder")}
               className="h-9"
             />
             <button
               onClick={handleAddRelay}
               className="px-3 h-9 rounded-md border border-border text-sm flex items-center gap-1"
-              aria-label="Add feed"
+              aria-label={t("filters.feeds.addAria")}
             >
               <Plus className="w-3.5 h-3.5" />
-              Add
+              {t("filters.feeds.add")}
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -343,10 +345,10 @@ export function MobileFilters({
                     <button
                       onClick={() => onRemoveRelay(relay.url!)}
                       className="ml-1 text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
-                      aria-label={`Remove feed ${relay.name}`}
+                      aria-label={t("filters.feeds.removeAria", { name: relay.name })}
                     >
                       <Trash2 className="w-3 h-3" />
-                      Remove
+                      {t("filters.feeds.remove")}
                     </button>
                   )}
                 </div>
@@ -359,8 +361,8 @@ export function MobileFilters({
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Hash className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm">Channels</h2>
-            <span className="text-xs text-muted-foreground ml-1">Tap to cycle: neutral → include → exclude</span>
+            <h2 className="font-semibold text-sm">{t("filters.channels.title")}</h2>
+            <span className="text-xs text-muted-foreground ml-1">{t("filters.channels.cycleHint")}</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {channels.map((channel) => (
@@ -387,7 +389,7 @@ export function MobileFilters({
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Users className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm">People</h2>
+            <h2 className="font-semibold text-sm">{t("filters.people.title")}</h2>
           </div>
           <div className="flex flex-wrap gap-2">
             {people.map((person) => {
