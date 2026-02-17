@@ -7,6 +7,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 Upcoming improvements in progress.
 
+## [1.2.1] - 2026-02-17
+Added focused guide updates for compose keyboard flows.
+
 ### Changed
 - In-app and markdown guides now document current compose shortcut behavior, including `Alt+Enter` submit-vs-metadata rules and metadata-only tag/mention autocomplete usage.
 
