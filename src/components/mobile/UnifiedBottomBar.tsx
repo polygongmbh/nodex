@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
+import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskDateType, TaskType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -27,7 +27,8 @@ interface UnifiedBottomBarProps {
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => void;
   currentView: ViewType;
   focusedTaskId?: string | null;
@@ -90,6 +91,7 @@ export function UnifiedBottomBar({
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [dueTime, setDueTime] = useState("");
   const [dateType, setDateType] = useState<TaskDateType>("due");
+  const [priority, setPriority] = useState<number | undefined>(undefined);
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const cursorPositionRef = useRef(0);
@@ -233,6 +235,10 @@ export function UnifiedBottomBar({
     }
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
+    if ((submitType ?? taskType) === "task" && !focusedTaskId && relayIds.length !== 1) {
+      toast.error("Select one relay or a parent task");
+      return;
+    }
     onSubmit(
       sharedText,
       extractedChannels,
@@ -241,7 +247,8 @@ export function UnifiedBottomBar({
       dueDate,
       dueTime || undefined,
       dateType,
-      explicitMentionPubkeys
+      explicitMentionPubkeys,
+      priority
     );
     const hashtagOnlyContent = Array.from(
       new Set((sharedText.match(/#(\w+)/g) || []).map((tag) => tag.toLowerCase()))
@@ -253,6 +260,7 @@ export function UnifiedBottomBar({
     setDueDate(undefined);
     setDueTime("");
     setDateType("due");
+    setPriority(undefined);
     setExplicitMentionPubkeys([]);
     setActiveSelector(null);
   };
@@ -275,6 +283,8 @@ export function UnifiedBottomBar({
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
   const activePeopleCount = people.filter(p => p.isSelected).length;
   const hasAtLeastOneTag = (sharedText.match(/#(\w+)/g)?.length || 0) > 0;
+  const activeRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
+  const hasInvalidRootTaskRelaySelection = taskType === "task" && !focusedTaskId && activeRelayIds.length !== 1;
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
@@ -454,6 +464,28 @@ export function UnifiedBottomBar({
 
           {taskType === "task" && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+            <select
+              aria-label="Priority"
+              value={priority === undefined ? "" : String(priority)}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (!value) {
+                  setPriority(undefined);
+                  return;
+                }
+                const parsed = Number.parseInt(value, 10);
+                setPriority(Number.isFinite(parsed) ? parsed : undefined);
+              }}
+              className="h-7 rounded-md border border-border bg-background px-1.5 text-[11px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+            >
+              <option value="">Prio</option>
+              <option value="20">P20</option>
+              <option value="40">P40</option>
+              <option value="60">P60</option>
+              <option value="80">P80</option>
+              <option value="100">P100</option>
+            </select>
+            <Flag className="w-3.5 h-3.5" />
             <Popover>
               <PopoverTrigger asChild>
                 <button className="flex items-center gap-1 px-2 py-1.5 rounded-md border border-border hover:bg-muted/60 transition-colors">
@@ -694,9 +726,10 @@ export function UnifiedBottomBar({
               {isSignedIn ? (
                 <button
                   onClick={() => handleSubmit()}
-                  disabled={!sharedText.trim() || !hasAtLeastOneTag}
+                  disabled={!sharedText.trim() || !hasAtLeastOneTag || hasInvalidRootTaskRelaySelection}
                   className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                   aria-label="Create from current text"
+                  title={hasInvalidRootTaskRelaySelection ? "Select one relay or a parent task" : "Create from current text"}
                 >
                   <Send className="w-5 h-5" />
                 </button>

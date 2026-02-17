@@ -44,7 +44,8 @@ interface FeedViewProps {
     dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => void;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -183,7 +184,8 @@ export function FeedView({
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => {
     onNewTask(
       content,
@@ -195,7 +197,8 @@ export function FeedView({
       dateType,
       focusedTaskId || undefined,
       undefined,
-      explicitMentionPubkeys
+      explicitMentionPubkeys,
+      priority
     );
   };
 

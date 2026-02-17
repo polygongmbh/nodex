@@ -48,10 +48,13 @@ interface ListViewProps {
     dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => void;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
+  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
+  onUpdatePriority?: (taskId: string, priority: number) => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
@@ -77,6 +80,8 @@ export function ListView({
   onNewTask,
   onToggleComplete,
   onStatusChange,
+  onUpdateDueDate,
+  onUpdatePriority,
   focusedTaskId,
   onFocusTask,
   onFocusSidebar,
@@ -279,7 +284,8 @@ export function ListView({
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => {
     onNewTask(
       content,
@@ -291,7 +297,8 @@ export function ListView({
       dateType,
       focusedTaskId || undefined,
       undefined,
-      explicitMentionPubkeys
+      explicitMentionPubkeys,
+      priority
     );
   };
 
@@ -389,6 +396,8 @@ export function ListView({
   // Editable due date cell
   const DueDateCell = ({ task }: { task: Task }) => {
     const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+    const [localDueTime, setLocalDueTime] = useState(task.dueTime || "");
+    const [localDateType, setLocalDateType] = useState<TaskDateType>(task.dateType || "due");
     
     return (
       <Popover>
@@ -415,17 +424,74 @@ export function ListView({
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <CalendarComponent
-            mode="single"
-            selected={task.dueDate}
-            onSelect={(date) => {
-              // Note: This would need an onUpdateDueDate callback to fully work
-              // For now, just close the popover - the infrastructure is in place
-            }}
-            initialFocus
-          />
+          <div className="p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground" htmlFor={`list-date-type-${task.id}`}>Type</label>
+              <select
+                id={`list-date-type-${task.id}`}
+                value={localDateType}
+                onChange={(event) => setLocalDateType(event.target.value as TaskDateType)}
+                className="text-xs bg-background border border-border rounded px-2 py-1"
+              >
+                <option value="due">Due</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="start">Start</option>
+                <option value="end">End</option>
+                <option value="milestone">Milestone</option>
+              </select>
+            </div>
+            <CalendarComponent
+              mode="single"
+              selected={task.dueDate}
+              onSelect={(date) => {
+                onUpdateDueDate?.(task.id, date, localDueTime || undefined, localDateType);
+              }}
+              initialFocus
+            />
+            <div className="flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                type="time"
+                value={localDueTime}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setLocalDueTime(value);
+                  if (task.dueDate) {
+                    onUpdateDueDate?.(task.id, task.dueDate, value || undefined, localDateType);
+                  }
+                }}
+                className="text-xs bg-background border border-border rounded px-2 py-1"
+              />
+            </div>
+          </div>
         </PopoverContent>
       </Popover>
+    );
+  };
+
+  const PriorityCell = ({ task }: { task: Task }) => {
+    const value = typeof task.priority === "number" ? String(task.priority) : "";
+    return (
+      <select
+        aria-label={`Priority for ${task.content}`}
+        value={value}
+        onChange={(event) => {
+          const next = event.target.value;
+          if (!next) return;
+          const parsed = Number.parseInt(next, 10);
+          if (Number.isFinite(parsed)) {
+            onUpdatePriority?.(task.id, parsed);
+          }
+        }}
+        className="text-xs bg-background border border-border rounded px-2 py-1"
+      >
+        <option value="">—</option>
+        <option value="20">P20</option>
+        <option value="40">P40</option>
+        <option value="60">P60</option>
+        <option value="80">P80</option>
+        <option value="100">P100</option>
+      </select>
     );
   };
 
@@ -592,7 +658,7 @@ export function ListView({
                       <DueDateCell task={task} />
                     </td>
                     <td className="p-3">
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <PriorityCell task={task} />
                     </td>
                     <td className="p-3 min-w-0">
                       <TagsCell task={task} />

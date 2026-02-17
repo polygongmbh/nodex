@@ -39,7 +39,8 @@ interface KanbanViewProps {
     dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: TaskStatus,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => void;
   onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
@@ -236,7 +237,8 @@ export function KanbanView({
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => {
     onNewTask(
       content,
@@ -248,7 +250,8 @@ export function KanbanView({
       dateType,
       focusedTaskId || undefined,
       composingColumn || undefined,
-      explicitMentionPubkeys
+      explicitMentionPubkeys,
+      priority
     );
     setComposingColumn(null);
   };

@@ -29,7 +29,8 @@ interface TaskTreeProps {
     dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => void;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -210,7 +211,8 @@ export function TaskTree({
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => {
     onNewTask(
       content,
@@ -222,7 +224,8 @@ export function TaskTree({
       dateType,
       currentContextId,
       undefined,
-      explicitMentionPubkeys
+      explicitMentionPubkeys,
+      priority
     );
     setIsComposerExpanded(false);
   };

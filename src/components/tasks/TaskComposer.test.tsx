@@ -24,6 +24,23 @@ const relays: Relay[] = [{
   isActive: true,
 }];
 
+const multiRelays: Relay[] = [
+  {
+    id: "relay-a",
+    name: "Relay A",
+    url: "wss://relay-a.example.com",
+    icon: "R",
+    isActive: true,
+  },
+  {
+    id: "relay-b",
+    name: "Relay B",
+    url: "wss://relay-b.example.com",
+    icon: "R",
+    isActive: true,
+  },
+];
+
 const channels: Channel[] = [
   { id: "backend", name: "backend", filterState: "neutral" },
   { id: "design", name: "design", filterState: "neutral" },
@@ -122,7 +139,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         undefined,
         "due",
-        []
+        [],
+        undefined
       );
     });
   });
@@ -163,7 +181,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         undefined,
         "due",
-        []
+        [],
+        undefined
       );
     });
   });
@@ -272,7 +291,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         undefined,
         "due",
-        []
+        [],
+        undefined
       );
     });
   });
@@ -337,7 +357,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         undefined,
         "due",
-        ["f".repeat(64)]
+        ["f".repeat(64)],
+        undefined
       );
     });
   });
@@ -397,5 +418,24 @@ describe("TaskComposer hashtag autocomplete", () => {
     );
 
     expect(screen.getByText("Set due date (optional)")).toBeInTheDocument();
+  });
+
+  it("blocks root task submit when multiple relays are selected", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={multiRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+      target: { value: "Ship #backend now" },
+    });
+
+    expect(screen.getByText("Select one relay or a parent task")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
   });
 });

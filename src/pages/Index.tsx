@@ -37,7 +37,13 @@ import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
+import { buildTaskPriorityUpdateEvent } from "@/lib/nostr/task-property-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
+import {
+  RELAY_SELECTION_ERROR_MESSAGE,
+  resolveOriginRelayIdForTask,
+  resolveRelaySelectionForSubmission,
+} from "@/lib/task-relay-routing";
 import {
   derivePeopleFromKind0Events,
   loadCachedKind0Events,
@@ -643,6 +649,25 @@ const Index = () => {
     return resolveMentionedPubkeys(content, people);
   }, [people]);
 
+  const resolveRelayUrlsFromIds = useCallback((relayIds: string[]) => {
+    return relays
+      .filter((relay) => relayIds.includes(relay.id))
+      .map((relay) => relay.url)
+      .filter((url): url is string => Boolean(url));
+  }, [relays]);
+
+  const resolveTaskOriginRelay = useCallback((taskId: string) => {
+    const task = allTasks.find((item) => item.id === taskId);
+    const originRelayId = resolveOriginRelayIdForTask(task, DEMO_RELAY_ID);
+    if (!originRelayId) {
+      return { relayId: undefined, relayUrls: [] as string[] };
+    }
+    return {
+      relayId: originRelayId,
+      relayUrls: resolveRelayUrlsFromIds([originRelayId]),
+    };
+  }, [allTasks, resolveRelayUrlsFromIds]);
+
   const handleToggleComplete = (taskId: string) => {
     if (!user) {
       handleOpenAuthModal();
@@ -674,15 +699,8 @@ const Index = () => {
     }
 
     const relayUrls = relayUrlsOverride && relayUrlsOverride.length > 0
-      ? relayUrlsOverride
-      : (() => {
-          const sourceTask = allTasks.find((task) => task.id === taskId);
-          if (!sourceTask) return [];
-          return relays
-            .filter((relay) => sourceTask.relays.includes(relay.id))
-            .map((relay) => relay.url)
-            .filter((url): url is string => Boolean(url));
-        })();
+      ? relayUrlsOverride.slice(0, 1)
+      : resolveTaskOriginRelay(taskId).relayUrls;
 
     if (relayUrls.length === 0) {
       console.info("Skipping state publish: no non-demo relay mapped for task", taskId);
@@ -702,7 +720,70 @@ const Index = () => {
       toast.error("Failed to publish status update to relays");
       console.warn("Status publish failed", { taskId, status, relayUrls });
     }
-  }, [allTasks, publishEvent, relays]);
+  }, [publishEvent, resolveTaskOriginRelay]);
+
+  const publishTaskDueUpdate = useCallback(async (
+    taskId: string,
+    taskContent: string,
+    dueDate: Date,
+    dueTime?: string,
+    dateType: TaskDateType = "due"
+  ) => {
+    if (!isNostrEventId(taskId)) return false;
+    const { relayUrls } = resolveTaskOriginRelay(taskId);
+    if (relayUrls.length === 0) {
+      toast.error("Failed to publish date update: task relay unavailable");
+      return false;
+    }
+    const relayUrl = relayUrls[0];
+    const calendarEvent = buildLinkedTaskCalendarEvent({
+      taskEventId: taskId,
+      taskContent,
+      dueDate,
+      dueTime,
+      dateType,
+      relayUrl,
+    });
+    const result = await publishEvent(
+      calendarEvent.kind,
+      calendarEvent.content,
+      calendarEvent.tags,
+      undefined,
+      [relayUrl]
+    );
+    if (!result.success) {
+      toast.error("Failed to publish date update to relay");
+      console.warn("Date publish failed", { taskId, relayUrl });
+    }
+    return result.success;
+  }, [publishEvent, resolveTaskOriginRelay]);
+
+  const publishTaskPriorityUpdate = useCallback(async (taskId: string, priority: number) => {
+    if (!isNostrEventId(taskId)) return false;
+    const { relayUrls } = resolveTaskOriginRelay(taskId);
+    if (relayUrls.length === 0) {
+      toast.error("Failed to publish priority update: task relay unavailable");
+      return false;
+    }
+    const relayUrl = relayUrls[0];
+    const priorityEvent = buildTaskPriorityUpdateEvent({
+      taskEventId: taskId,
+      priority,
+      relayUrl,
+    });
+    const result = await publishEvent(
+      priorityEvent.kind,
+      priorityEvent.content,
+      priorityEvent.tags,
+      undefined,
+      [relayUrl]
+    );
+    if (!result.success) {
+      toast.error("Failed to publish priority update to relay");
+      console.warn("Priority publish failed", { taskId, priority, relayUrl });
+    }
+    return result.success;
+  }, [publishEvent, resolveTaskOriginRelay]);
 
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
     if (!user) {
@@ -734,7 +815,8 @@ const Index = () => {
     dateType: TaskDateType = "due",
     parentId?: string,
     initialStatus?: TaskStatus,
-    explicitMentionPubkeys: string[] = []
+    explicitMentionPubkeys: string[] = [],
+    priority?: number
   ) => {
     if (!user) {
       handleOpenAuthModal();
@@ -748,12 +830,22 @@ const Index = () => {
     setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
 
     const requestedRelayIds = relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID];
-    const hasNonDemoRelay = requestedRelayIds.some((id) => id !== DEMO_RELAY_ID);
-    
-    const selectedRelayUrls = relays
-      .filter((r) => requestedRelayIds.includes(r.id))
-      .map((r) => r.url)
-      .filter((url): url is string => Boolean(url));
+    const parentTask = parentId ? allTasks.find((task) => task.id === parentId) : undefined;
+    const resolvedRelaySelection = resolveRelaySelectionForSubmission({
+      taskType: taskType as TaskType,
+      selectedRelayIds: requestedRelayIds,
+      relays,
+      parentTask,
+      demoRelayId: DEMO_RELAY_ID,
+    });
+    if (resolvedRelaySelection.error) {
+      toast.error(resolvedRelaySelection.error || RELAY_SELECTION_ERROR_MESSAGE);
+      return;
+    }
+    const targetRelayIds = resolvedRelaySelection.relayIds;
+    const hasNonDemoRelay = targetRelayIds.some((id) => id !== DEMO_RELAY_ID);
+
+    const selectedRelayUrls = resolveRelayUrlsFromIds(targetRelayIds);
     
     const shouldPublish = hasNonDemoRelay && selectedRelayUrls.length > 0;
     const dedupedExplicitMentionPubkeys = Array.from(
@@ -790,44 +882,29 @@ const Index = () => {
         toast.warning("Parent reference is local-only; publishing task without parent link");
       }
       const publishTags = taskType === "task"
-        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], assigneePubkeys)
+        ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], assigneePubkeys, priority)
         : mentionPubkeys.map((pubkey) => ["p", pubkey]);
       const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
       const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
       publishSuccess = result.success;
       publishedEventId = result.eventId;
       if (result.success && taskType === "task" && publishedEventId && initialStatus) {
-        await publishTaskStateUpdate(publishedEventId, initialStatus, selectedRelayUrls);
+        await publishTaskStateUpdate(publishedEventId, initialStatus, selectedRelayUrls.slice(0, 1));
       }
       if (result.success && taskType === "task" && publishedEventId && dueDate) {
-        const calendarEvent = buildLinkedTaskCalendarEvent({
-          taskEventId: publishedEventId,
-          taskContent: content,
+        await publishTaskDueUpdate(
+          publishedEventId,
+          content,
           dueDate,
           dueTime,
-          dateType,
-          relayUrl: selectedRelayUrls[0],
-        });
-        const calendarResult = await publishEvent(
-          calendarEvent.kind,
-          calendarEvent.content,
-          calendarEvent.tags,
-          undefined,
-          selectedRelayUrls
+          dateType
         );
-        if (!calendarResult.success) {
-          toast.error("Failed to publish linked deadline event to relays");
-          console.warn("Linked deadline publish failed", {
-            taskEventId: publishedEventId,
-            relayUrls: selectedRelayUrls,
-          });
-        }
       }
     }
     
     const effectiveRelayIds = selectedRelayUrls.length > 0
-      ? selectedRelayUrls.map((url) => getRelayIdFromUrl(url))
-      : requestedRelayIds;
+      ? selectedRelayUrls.slice(0, 1).map((url) => getRelayIdFromUrl(url))
+      : targetRelayIds;
     
     const newTask: Task = {
       id: publishedEventId || Date.now().toString(),
@@ -863,6 +940,7 @@ const Index = () => {
         new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
       ),
       assigneePubkeys: taskType === "task" ? assigneePubkeys : undefined,
+      priority: taskType === "task" ? priority : undefined,
     };
     setLocalTasks((prev) => [newTask, ...prev]);
     
@@ -876,6 +954,37 @@ const Index = () => {
       toast.success(`${taskType === "comment" ? "Comment" : "Task"} added locally (demo only)`);
     }
   };
+
+  const handleDueDateChange = useCallback((
+    taskId: string,
+    dueDate: Date | undefined,
+    dueTime?: string,
+    dateType: TaskDateType = "due"
+  ) => {
+    const existingTask = allTasks.find((task) => task.id === taskId);
+    if (!existingTask || existingTask.taskType !== "task" || !dueDate) return;
+    setLocalTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? { ...task, dueDate, dueTime, dateType, lastEditedAt: new Date() }
+          : task
+      )
+    );
+    void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
+  }, [allTasks, publishTaskDueUpdate]);
+
+  const handlePriorityChange = useCallback((taskId: string, priority: number) => {
+    const existingTask = allTasks.find((task) => task.id === taskId);
+    if (!existingTask || existingTask.taskType !== "task") return;
+    setLocalTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? { ...task, priority, lastEditedAt: new Date() }
+          : task
+      )
+    );
+    void publishTaskPriorityUpdate(taskId, priority);
+  }, [allTasks, publishTaskPriorityUpdate]);
 
   const effectiveActiveRelayIds = useMemo(
     () => getEffectiveActiveRelayIds(activeRelayIds, relays.map((relay) => relay.id)),
@@ -927,6 +1036,8 @@ const Index = () => {
     onAuthorClick: handleAuthorClick,
     mentionRequest,
     composeGuideActivationSignal,
+    onUpdateDueDate: handleDueDateChange,
+    onUpdatePriority: handlePriorityChange,
   };
 
   const renderView = () => {

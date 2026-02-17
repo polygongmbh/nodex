@@ -35,7 +35,8 @@ interface MobileLayoutProps {
     dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => void;
   onToggleComplete: (taskId: string) => void;
   onStatusChange: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -197,7 +198,8 @@ export function MobileLayout({
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => {
     onNewTask(
       content,
@@ -209,7 +211,8 @@ export function MobileLayout({
       dateType,
       focusedTaskId || undefined,
       undefined,
-      explicitMentionPubkeys
+      explicitMentionPubkeys,
+      priority
     );
   }, [onNewTask, focusedTaskId]);
 

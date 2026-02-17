@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Hash, Calendar, Clock, X, ChevronDown, Zap, AtSign } from "lucide-react";
+import { Hash, Calendar, Clock, X, ChevronDown, Zap, AtSign, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType, TaskDateType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -24,7 +24,8 @@ interface TaskComposerProps {
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => void;
   relays: Relay[];
   channels: Channel[];
@@ -56,6 +57,7 @@ interface ComposeDraftState {
   selectedRelays?: string[];
   explicitMentionPubkeys?: string[];
   explicitTagNames?: string[];
+  priority?: number;
 }
 
 function readComposeDraft(key: string): ComposeDraftState | null {
@@ -141,6 +143,10 @@ export function TaskComposer({
       .map((value) => value.trim().toLowerCase())
       .filter((value) => /^[a-f0-9]{64}$/i.test(value));
   });
+  const [priority, setPriority] = useState<number | undefined>(() => {
+    if (typeof initialDraft?.priority !== "number") return undefined;
+    return Number.isFinite(initialDraft.priority) ? initialDraft.priority : undefined;
+  });
   const [isExpanded, setIsExpanded] = useState(
     () => !adaptiveSize || initialContent.trim().length > 0
   );
@@ -204,12 +210,13 @@ export function TaskComposer({
           selectedRelays,
           explicitTagNames,
           explicitMentionPubkeys,
+          priority,
         } satisfies ComposeDraftState)
       );
     } catch {
       // Ignore persistence errors.
     }
-  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, priority, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -340,7 +347,8 @@ export function TaskComposer({
           dueDate,
           dueTime || undefined,
           dateType,
-          explicitMentionPubkeys
+          explicitMentionPubkeys,
+          priority
         )
       );
     } finally {
@@ -357,6 +365,7 @@ export function TaskComposer({
     setDateType("due");
     setExplicitTagNames([]);
     setExplicitMentionPubkeys([]);
+    setPriority(undefined);
     if (adaptiveSize && selectedChannelsContent.trim().length === 0) {
       setIsExpanded(false);
     }
@@ -382,12 +391,15 @@ export function TaskComposer({
     ])
   );
   const hasAtLeastOneTag = ((content.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
+  const hasInvalidRootTaskRelaySelection = taskType === "task" && !parentId && selectedRelays.length !== 1;
   const submitBlockedReason = !user
     ? "Sign in required"
     : !content.trim()
       ? "Write a message first"
       : !hasAtLeastOneTag
         ? "Add at least one #channel"
+        : hasInvalidRootTaskRelaySelection
+          ? "Select one relay or a parent task"
         : isPublishing
           ? "Publishing..."
           : null;
@@ -775,6 +787,28 @@ export function TaskComposer({
       {/* Due date for tasks */}
       {showExpandedControls && taskType === "task" && (
         <div className="flex items-center gap-2 p-2 bg-muted/40 border border-border/40 rounded-xl">
+          <Flag className="w-4 h-4 text-muted-foreground" />
+          <select
+            aria-label="Priority"
+            value={priority === undefined ? "" : String(priority)}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (!value) {
+                setPriority(undefined);
+                return;
+              }
+              const parsed = Number.parseInt(value, 10);
+              setPriority(Number.isFinite(parsed) ? parsed : undefined);
+            }}
+            className="text-xs bg-background border border-border/50 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+          >
+            <option value="">Priority</option>
+            <option value="20">P20</option>
+            <option value="40">P40</option>
+            <option value="60">P60</option>
+            <option value="80">P80</option>
+            <option value="100">P100</option>
+          </select>
           <Calendar className="w-4 h-4 text-muted-foreground" />
           <select
             aria-label="Date type"

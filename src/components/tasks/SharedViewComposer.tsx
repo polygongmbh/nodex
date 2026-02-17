@@ -15,7 +15,8 @@ interface SharedViewComposerProps {
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => void;
   onCancel?: () => void;
   draftStorageKey: string;

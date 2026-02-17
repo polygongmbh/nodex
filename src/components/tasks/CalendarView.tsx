@@ -58,7 +58,8 @@ interface CalendarViewProps {
     dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => void;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -438,7 +439,8 @@ export function CalendarView({
     dueDate?: Date,
     dueTime?: string,
     dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[]
+    explicitMentionPubkeys?: string[],
+    priority?: number
   ) => {
     // Use the selected date if no due date was set
     const eventDate = dueDate || selectedDate || new Date();
@@ -452,7 +454,8 @@ export function CalendarView({
       dateType,
       focusedTaskId || undefined,
       undefined,
-      explicitMentionPubkeys
+      explicitMentionPubkeys,
+      priority
     );
     setIsComposingEvent(false);
   };
