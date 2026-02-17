@@ -88,7 +88,7 @@ describe("MobileLayout auth wiring", () => {
     expect(onSignInClick).toHaveBeenCalledTimes(1);
   });
 
-  it("forces manage view and hides bottom bar when profile setup is required", () => {
+  it("does not force manage view or hide compose when profile setup is required", () => {
     ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
     ndkMock.needsProfileSetup = true;
 
@@ -121,7 +121,7 @@ describe("MobileLayout auth wiring", () => {
       />
     );
 
-    expect(screen.getByRole("heading", { name: "Profile" })).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId("task-tree")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
   });
 });

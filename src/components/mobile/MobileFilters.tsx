@@ -83,9 +83,6 @@ export function MobileFilters({
     setProfilePicture(user?.profile?.picture || "");
     setProfileNip05(user?.profile?.nip05 || "");
     setProfileAbout(user?.profile?.about || "");
-    if (user && needsProfileSetup) {
-      setIsProfileEditorOpen(true);
-    }
   }, [
     needsProfileSetup,
     user?.profile?.about,
@@ -125,9 +122,7 @@ export function MobileFilters({
       });
       if (success) {
         toast.success("Profile updated on connected relays");
-        if (!needsProfileSetup) {
-          setIsProfileEditorOpen(false);
-        }
+        setIsProfileEditorOpen(false);
       } else {
         toast.error("Failed to update profile. Check relay connectivity and try again.");
       }
@@ -179,7 +174,7 @@ export function MobileFilters({
               ) : (
                 <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => setIsProfileEditorOpen((prev) => (needsProfileSetup ? true : !prev))}
+                    onClick={() => setIsProfileEditorOpen((prev) => !prev)}
                     className="px-3 py-1.5 rounded-md text-sm border border-border inline-flex items-center gap-1"
                   >
                     <Pencil className="w-3 h-3" />

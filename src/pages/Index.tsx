@@ -60,6 +60,7 @@ const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
+const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 
 const Index = () => {
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
@@ -278,10 +279,12 @@ const Index = () => {
   }, []);
 
   const handleOpenGuide = useCallback(() => {
-    setOnboardingInitialSection(null);
+    const initialSectionForOpen: OnboardingInitialSection =
+      isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
+    setOnboardingInitialSection(initialSectionForOpen);
     setActiveOnboardingSection(null);
     setIsOnboardingOpen(true);
-  }, []);
+  }, [isMobile]);
 
   const handleCloseGuide = useCallback(() => {
     setIsOnboardingOpen(false);

@@ -11,7 +11,6 @@ import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { Relay, Channel, Person, Task } from "@/types";
 import { cn } from "@/lib/utils";
-import { useNDK } from "@/lib/nostr/ndk-context";
 
 interface MobileLayoutProps {
   relays: Relay[];
@@ -82,8 +81,6 @@ export function MobileLayout({
   onAuthorClick,
   mentionRequest = null,
 }: MobileLayoutProps) {
-  const { user, needsProfileSetup } = useNDK();
-  const isProfileSetupRequired = Boolean(user && needsProfileSetup);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [mobileView, setMobileView] = useState<MobileViewType>(
@@ -95,12 +92,6 @@ export function MobileLayout({
   const defaultContent = includedChannels.map(c => `#${c.name}`).join(" ");
 
   const handleMobileViewChange = useCallback((view: MobileViewType) => {
-    if (isProfileSetupRequired && view !== "filters") {
-      setShowFilters(true);
-      setMobileView("filters");
-      return;
-    }
-
     if (view === "filters") {
       setShowFilters(true);
       setMobileView("filters");
@@ -110,14 +101,11 @@ export function MobileLayout({
     setShowFilters(false);
     setMobileView(view);
     onViewChange(view);
-  }, [isProfileSetupRequired, onViewChange]);
+  }, [onViewChange]);
 
   // Swipe navigation handlers
   const handleSwipeLeft = useCallback(() => {
     if (showFilters) {
-      if (isProfileSetupRequired) {
-        return;
-      }
       setShowFilters(false);
       return;
     }
@@ -126,15 +114,9 @@ export function MobileLayout({
       const nextView = mobileViews[currentIndex + 1];
       handleMobileViewChange(nextView);
     }
-  }, [mobileView, showFilters, handleMobileViewChange, isProfileSetupRequired]);
+  }, [mobileView, showFilters, handleMobileViewChange]);
 
   const handleSwipeRight = useCallback(() => {
-    if (isProfileSetupRequired) {
-      setShowFilters(true);
-      setMobileView("filters");
-      return;
-    }
-
     const currentIndex = mobileViews.indexOf(mobileView);
     if (currentIndex > 0) {
       const prevView = mobileViews[currentIndex - 1];
@@ -142,7 +124,7 @@ export function MobileLayout({
     } else if (currentIndex === 0) {
       setShowFilters(true);
     }
-  }, [mobileView, handleMobileViewChange, isProfileSetupRequired]);
+  }, [mobileView, handleMobileViewChange]);
 
   // Swipe animation state
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
@@ -200,12 +182,6 @@ export function MobileLayout({
     if (showFilters) return;
     setMobileView(isPrimaryMobileView(currentView) ? currentView : "tree");
   }, [currentView, showFilters]);
-
-  useEffect(() => {
-    if (!isProfileSetupRequired) return;
-    setShowFilters(true);
-    setMobileView("filters");
-  }, [isProfileSetupRequired]);
 
   const renderView = () => {
     if (showFilters) {
@@ -274,26 +250,24 @@ export function MobileLayout({
         </div>
       </main>
       
-      {!isProfileSetupRequired && (
-        <UnifiedBottomBar
-          searchQuery={searchQuery}
-          onSearchChange={onSearchChange}
-          onSubmit={onNewTask}
-          currentView={currentView}
-          focusedTaskId={focusedTaskId}
-          selectedCalendarDate={currentView === "calendar" ? selectedCalendarDate : null}
-          relays={relays}
-          channels={channels}
-          people={people}
-          onRelayToggle={onRelayToggle}
-          onChannelToggle={onChannelToggle}
-          onPersonToggle={onPersonToggle}
-          defaultContent={defaultContent}
-          isSignedIn={isSignedIn}
-          onSignInClick={onSignInClick}
-          forceComposeMode={forceComposeMode}
-        />
-      )}
+      <UnifiedBottomBar
+        searchQuery={searchQuery}
+        onSearchChange={onSearchChange}
+        onSubmit={onNewTask}
+        currentView={currentView}
+        focusedTaskId={focusedTaskId}
+        selectedCalendarDate={currentView === "calendar" ? selectedCalendarDate : null}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={onRelayToggle}
+        onChannelToggle={onChannelToggle}
+        onPersonToggle={onPersonToggle}
+        defaultContent={defaultContent}
+        isSignedIn={isSignedIn}
+        onSignInClick={onSignInClick}
+        forceComposeMode={forceComposeMode}
+      />
     </div>
   );
 }
