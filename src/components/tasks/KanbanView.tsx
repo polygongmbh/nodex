@@ -43,6 +43,7 @@ interface KanbanViewProps {
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
   onFocusSidebar?: () => void;
   onHashtagClick?: (tag: string) => void;
+  onAuthorClick?: (author: Person) => void;
 }
 
 const columns: { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] = [
@@ -67,6 +68,7 @@ export function KanbanView({
   onStatusChange,
   onFocusSidebar,
   onHashtagClick,
+  onAuthorClick,
 }: KanbanViewProps) {
   const { user } = useNDK();
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
@@ -514,7 +516,7 @@ export function KanbanView({
 
                                   {(hasTaskMentionChips(task) || task.tags.length > 0) && (
                                     <div className="flex flex-wrap gap-1 mt-2">
-                                      <TaskMentionChips task={task} people={people} inline />
+                                      <TaskMentionChips task={task} people={people} onPersonClick={onAuthorClick} inline />
                                       {task.tags.slice(0, 3).map((tag) => (
                                         <button
                                           key={tag}

@@ -48,6 +48,7 @@ interface CalendarViewProps {
   isMobile?: boolean;
   mobileView?: "calendar" | "upcoming";
   onHashtagClick?: (tag: string) => void;
+  onAuthorClick?: (author: Person) => void;
 }
 
 export function CalendarView({
@@ -68,6 +69,7 @@ export function CalendarView({
   isMobile = false,
   mobileView,
   onHashtagClick,
+  onAuthorClick,
 }: CalendarViewProps) {
   const { user } = useNDK();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -807,7 +809,7 @@ export function CalendarView({
                             )}
                             {(hasTaskMentionChips(task) || task.tags.length > 0) && (
                               <div className="flex flex-wrap gap-1 mt-1">
-                                <TaskMentionChips task={task} people={people} inline />
+                                <TaskMentionChips task={task} people={people} onPersonClick={onAuthorClick} inline />
                                 {task.tags.map((tag) => (
                                   <button
                                     key={tag}

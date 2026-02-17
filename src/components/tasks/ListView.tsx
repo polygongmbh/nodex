@@ -51,6 +51,7 @@ interface ListViewProps {
   onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
   onHashtagClick?: (tag: string) => void;
+  onAuthorClick?: (author: Person) => void;
   onSignInClick?: () => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
@@ -74,6 +75,7 @@ export function ListView({
   onFocusTask,
   onFocusSidebar,
   onHashtagClick,
+  onAuthorClick,
   onSignInClick,
   forceShowComposer = false,
   composeGuideActivationSignal,
@@ -408,7 +410,7 @@ export function ListView({
     const hasTags = task.tags.length > 0;
     return (
       <div className="flex flex-wrap gap-1">
-        <TaskMentionChips task={task} people={people} inline />
+        <TaskMentionChips task={task} people={people} onPersonClick={onAuthorClick} inline />
         {task.tags.slice(0, 3).map((tag) => (
           <button
             key={tag}
