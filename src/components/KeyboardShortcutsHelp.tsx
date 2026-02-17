@@ -58,7 +58,7 @@ const shortcutGroups: ShortcutGroup[] = [
   {
     title: "General",
     shortcuts: [
-      { key: "?", description: "Show keyboard shortcuts" },
+      { key: "?", description: "Toggle keyboard shortcuts" },
     ],
   },
   {
@@ -66,8 +66,8 @@ const shortcutGroups: ShortcutGroup[] = [
     shortcuts: [
       { key: "Ctrl/Cmd + Enter", description: "Submit as current kind" },
       { key: "Alt + Enter", description: "Submit as opposite kind (when no autocomplete is open)" },
-      { key: "Enter / Tab", description: "Insert highlighted autocomplete suggestion" },
-      { key: "Alt/Ctrl/Cmd/Shift + Enter", description: "Add highlighted tag/mention as publish metadata only (no token text)" },
+      { key: "Enter / Tab", description: "With autocomplete open: insert highlighted suggestion" },
+      { key: "Alt/Ctrl/Cmd/Shift + Enter", description: "With @/# autocomplete open: add highlighted tag/mention as publish metadata only (no token text)" },
     ],
   },
 ];
