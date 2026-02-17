@@ -215,6 +215,8 @@ policies:
 - For notable user-visible behavior changes, add/update a changelog entry in the same change set.
 - Do not add changelog entries for minor/internal-only changes unless explicitly requested.
 - Keep entries concrete; one entry may summarize closely related commits.
+- In version sections, classify genuinely new end-user capabilities under `### Added` (for example new guides, new flows, new controls), and reserve `### Fixed` for regressions/bugs in previously existing behavior.
+- When a feature is first introduced in the same release, do not add separate changelog bullets for implementation/fix-up iterations that occurred while building it; summarize only the final user-visible outcome.
 - Use semantic version sections (`MAJOR.MINOR.PATCH`) and ISO dates (`YYYY-MM-DD`).
 - On release, move grouped entries from `Unreleased` into the new versioned section.
 
@@ -253,6 +255,7 @@ When asked to create a plan to fix or implement something:
 - Rewrite only unpushed local history for squash/rebase unless explicitly instructed otherwise.
 - If instructed to `push`:
   - update user-facing guides before release/push when behavior changed (at minimum `USER_GUIDE.md`, plus in-app guide/shortcuts copy where relevant)
+  - explicitly review and revise `CHANGELOG.md` before release (wording, section classification, redundancy, and user-facing clarity)
   - list unpushed commits: `git log origin/<branch>..HEAD --oneline`
   - provide one high-level summary across all unpushed commits
   - omit cosmetic-only low-level details unless asked

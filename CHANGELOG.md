@@ -7,22 +7,21 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 Upcoming improvements in progress.
 
+## [1.3.0] - 2026-02-17
+Introduced major calendar, table, and onboarding upgrades with view-specific guide flows and cleaner filter/compose behavior.
+
+### Added
+- Dedicated desktop Kanban and Calendar guide flows with section-local numbering.
+- Kanban guide includes status behavior and creating tasks directly in specific columns.
+
 ### Changed
-- Calendar view now uses vertically stacked months with dynamic month loading while scrolling (desktop and mobile), shows ISO week numbers, widens the right-side day detail panel on widescreen layouts, and smooths month transitions by removing duplicated boundary weeks.
-- Calendar stacked-month styling is now flatter and continuous (without boxed month cards), with slower, non-staggered wheel scrolling for smoother month-to-month flow.
-- Calendar month-stack scrolling now uses native continuous scroll behavior to avoid month-by-month stagger effects.
-- Calendar month stack no longer sync-locks scrolling to an active month while scrolling, and sticky month headers were removed for smoother continuous vertical flow.
-- Calendar month stack now preserves scroll position more smoothly while prepending earlier months (reducing upward-scroll jank), and the month label in the day panel updates again based on scroll position.
-- Onboarding picker ovals were reduced in size, and desktop Kanban/Calendar now have dedicated, concrete guide step flows instead of reusing compose-focused guidance.
-- Guide area ovals were tightened further and now anchor to smaller Kanban/Calendar targets, reducing overlap and reposition jitter; dedicated Kanban/Calendar walkthrough steps now cover column/depth and day-panel/month-nav workflows.
-- Selecting Kanban/Calendar guides no longer redirects into Feed compose guidance; guide activation and compose force-open behavior are now view-aware and step-driven.
-- Calendar guide no longer includes a month-jump step, and Kanban/Calendar dedicated guides now run with section-local step numbering instead of global guide numbering.
-- Table view now gives more room to tags on wide screens (showing full chips), while smaller screens prioritize task text and use expandable tag chips; chip overflow behavior is now shared with Kanban via a reusable tag-chip row component.
-- Table status and priority columns now stay slimmer on smaller screens, with compact status labeling to preserve horizontal space.
-- Calendar guide day-details step now clarifies that you can create new tasks/events for the selected day, and comment creation is now restricted to Feed/Tree views (other views create tasks only).
-- In *Feeds* sidebar controls, relay icon clicks now toggle relays while relay name clicks set exclusive/solo relay view, matching People/Channels interaction semantics.
-- Kanban guide now combines column overview + status-change behavior in one step, and adds a dedicated step for creating tasks directly in a chosen column via the column + button.
-- Onboarding section picker performance and layout were improved with lighter guide targets, reduced overlap, and view-specific guidance (Kanban/Calendar now show dedicated guides instead of compose guidance where compose is not present).
+- Calendar now supports continuous stacked-month scrolling with dynamic month loading across desktop/mobile, ISO week numbers, a wider day-details panel on widescreens, smoother upward loading, and synced month indicator updates in the day panel.
+- Table view now prioritizes task text on smaller screens, gives more space to tags on larger screens (including full chip display on wide layouts), and uses compact status/priority columns on smaller screens.
+- Tag/mention chip overflow behavior is now shared between Kanban and Table via a reusable chip-row component, reducing UI inconsistency.
+- In *Feeds* sidebar controls, icon clicks now toggle relays while relay name clicks switch to solo/exclusive relay view, matching People/Channels semantics.
+
+### Fixed
+- Comment creation is now limited to Feed and Tree views; all other views create tasks only.
 
 ## [1.2.2] - 2026-02-17
 Maintenance release for version alignment and tagging.
