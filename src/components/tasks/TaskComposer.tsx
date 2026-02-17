@@ -51,6 +51,7 @@ interface ComposeDraftState {
   dueTime?: string;
   selectedRelays?: string[];
   explicitMentionPubkeys?: string[];
+  explicitTagNames?: string[];
 }
 
 function readComposeDraft(key: string): ComposeDraftState | null {
@@ -116,6 +117,15 @@ export function TaskComposer({
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [explicitTagNames, setExplicitTagNames] = useState<string[]>(() => {
+    if (!initialDraft?.explicitTagNames || !Array.isArray(initialDraft.explicitTagNames)) {
+      return [];
+    }
+    return initialDraft.explicitTagNames
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  });
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>(() => {
     if (!initialDraft?.explicitMentionPubkeys || !Array.isArray(initialDraft.explicitMentionPubkeys)) {
       return [];
@@ -179,13 +189,14 @@ export function TaskComposer({
           dueDate: dueDate ? dueDate.toISOString() : undefined,
           dueTime,
           selectedRelays,
+          explicitTagNames,
           explicitMentionPubkeys,
         } satisfies ComposeDraftState)
       );
     } catch {
       // Ignore persistence errors.
     }
-  }, [content, taskType, dueDate, dueTime, selectedRelays, explicitMentionPubkeys, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, selectedRelays, explicitTagNames, explicitMentionPubkeys, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -289,8 +300,9 @@ export function TaskComposer({
   const handleSubmit = async (submitType?: TaskType) => {
     if (!content.trim()) return;
     
-    const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
-    if (extractedTags.length === 0) {
+    const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1).toLowerCase()) || [];
+    const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
+    if (submitTags.length === 0) {
       toast.error("Add at least one #channel before posting");
       return;
     }
@@ -309,7 +321,7 @@ export function TaskComposer({
       await Promise.resolve(
         onSubmit(
           content,
-          extractedTags,
+          submitTags,
           selectedRelays,
           submitType ?? taskType,
           dueDate,
@@ -328,6 +340,7 @@ export function TaskComposer({
     autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
     setDueTime("");
+    setExplicitTagNames([]);
     setExplicitMentionPubkeys([]);
     if (adaptiveSize && selectedChannelsContent.trim().length === 0) {
       setIsExpanded(false);
@@ -348,9 +361,12 @@ export function TaskComposer({
   });
   const parsedMentionChips = Array.from(new Set([...parsedMentions, ...explicitMentionIdentifiers]));
   const parsedHashtags = Array.from(
-    new Set((content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase()))
+    new Set([
+      ...(content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase()),
+      ...explicitTagNames,
+    ])
   );
-  const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
+  const hasAtLeastOneTag = ((content.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
   const submitBlockedReason = !user
     ? "Sign in required"
     : !content.trim()
@@ -384,14 +400,14 @@ export function TaskComposer({
         }
         return;
       }
-      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey || e.shiftKey)) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
-        if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(content)) {
+        if (/#\w*$/.test(textBeforeCursor) || /#\w*$/.test(content)) {
           e.preventDefault();
-          const selected = filteredPeople[Math.max(activeSuggestionIndex, 0)] || filteredPeople[0];
+          const selected = filteredChannels[Math.max(activeSuggestionIndex, 0)] || filteredChannels[0];
           if (selected) {
-            addMentionTagOnly(selected);
+            addHashtagTagOnly(selected.name);
           }
           return;
         }
@@ -425,7 +441,7 @@ export function TaskComposer({
         }
         return;
       }
-      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey || e.shiftKey)) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
         if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(content)) {
@@ -523,6 +539,44 @@ export function TaskComposer({
     setShowHashtagSuggestions(false);
     setActiveSuggestionIndex(0);
     setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const addHashtagTagOnly = (tagName: string) => {
+    const normalizedTag = tagName.trim().toLowerCase();
+    if (!normalizedTag) return;
+
+    setExplicitTagNames((previous) =>
+      previous.includes(normalizedTag) ? previous : [...previous, normalizedTag]
+    );
+
+    const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
+    const textBeforeCursor = content.slice(0, effectiveCursor);
+    const hashtagStartFromCursor = textBeforeCursor.lastIndexOf("#");
+    const hashtagStart = hashtagStartFromCursor >= 0 ? hashtagStartFromCursor : content.lastIndexOf("#");
+    if (hashtagStart < 0) {
+      return;
+    }
+
+    let hashtagEnd = hashtagStart + 1;
+    while (hashtagEnd < content.length && !/\s/.test(content[hashtagEnd])) {
+      hashtagEnd += 1;
+    }
+
+    const nextContent = (content.slice(0, hashtagStart) + content.slice(hashtagEnd))
+      .replace(/[ \t]{2,}/g, " ");
+    setContent(nextContent);
+    setCursorPosition(hashtagStart);
+    setTimeout(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      textarea.setSelectionRange(hashtagStart, hashtagStart);
+    }, 0);
+
+    setShowHashtagSuggestions(false);
+    setShowMentionSuggestions(false);
+    setHashtagFilter("");
+    setActiveSuggestionIndex(0);
   };
 
   const addMentionTagOnly = (person: Person) => {

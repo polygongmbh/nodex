@@ -578,7 +578,7 @@ export function UnifiedBottomBar({
                       return;
                     }
                     if (e.key === "Enter" || e.key === "Tab") {
-                      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
+                      if (e.key === "Enter" && (e.metaKey || e.ctrlKey || e.shiftKey)) {
                         const textBeforeCursor = sharedText.slice(0, cursorPositionRef.current);
                         if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(sharedText)) {
                           e.preventDefault();
