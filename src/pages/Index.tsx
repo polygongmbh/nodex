@@ -42,7 +42,11 @@ import { derivePeopleFromKind0Events } from "@/lib/people-from-kind0";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { filterTasks } from "@/lib/task-filtering";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
-import { isFilterResetStep, isNavigationFocusStep } from "@/lib/onboarding-step-rules";
+import {
+  isFilterResetStep,
+  isNavigationFocusStep,
+  shouldForceFeedAndResetFiltersOnStep,
+} from "@/lib/onboarding-step-rules";
 import { getPreferredMentionIdentifier, resolveMentionedPubkeys } from "@/lib/mentions";
 import {
   mapPeopleSelection,
@@ -278,14 +282,6 @@ const Index = () => {
     setIsAuthModalOpen(true);
   }, []);
 
-  const handleOpenGuide = useCallback(() => {
-    const initialSectionForOpen: OnboardingInitialSection =
-      isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
-    setOnboardingInitialSection(initialSectionForOpen);
-    setActiveOnboardingSection(null);
-    setIsOnboardingOpen(true);
-  }, [isMobile]);
-
   const handleCloseGuide = useCallback(() => {
     setIsOnboardingOpen(false);
     setActiveOnboardingSection(null);
@@ -308,6 +304,14 @@ const Index = () => {
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
   const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
   const onboardingStepsBySection = useMemo(() => getOnboardingStepsBySection(isMobile), [isMobile]);
+
+  const handleOpenGuide = useCallback(() => {
+    const initialSectionForOpen: OnboardingInitialSection =
+      isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
+    setOnboardingInitialSection(initialSectionForOpen);
+    setActiveOnboardingSection(null);
+    setIsOnboardingOpen(true);
+  }, [isMobile]);
 
   useEffect(() => {
     const onboardingState = loadOnboardingState();
@@ -381,6 +385,16 @@ const Index = () => {
     if (lastHandledOnboardingStepRef.current === stepKey) return;
     lastHandledOnboardingStepRef.current = stepKey;
 
+    if (shouldForceFeedAndResetFiltersOnStep(payload.id, isMobile)) {
+      setCurrentView("feed");
+      setFocusedTaskId(null);
+      setSearchQuery("");
+      setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
+      setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
+      setPeople((prev) => mapPeopleSelection(prev, () => false));
+      return;
+    }
+
     if (isNavigationFocusStep(payload.id)) {
       setCurrentView("feed");
       return;
@@ -392,7 +406,7 @@ const Index = () => {
     setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
     setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
     setPeople((prev) => mapPeopleSelection(prev, () => false));
-  }, [channels, relays, setCurrentView, setFocusedTaskId]);
+  }, [channels, isMobile, relays, setCurrentView, setFocusedTaskId]);
 
   const forceShowComposeForGuide = shouldForceComposeForGuide({
     isOnboardingOpen,

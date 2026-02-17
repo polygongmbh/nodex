@@ -14,6 +14,10 @@ const NAVIGATION_BREADCRUMB_STEP_IDS = new Set([
   "mobile-navigation-breadcrumb",
 ]);
 
+const MOBILE_FORCE_FEED_AND_RESET_STEP_IDS = new Set([
+  "mobile-navigation-focus",
+]);
+
 const FILTER_RESET_STEP_IDS = new Set([
   "filters-channels",
   "filters-hashtag-content",
@@ -33,6 +37,13 @@ export function isNavigationFocusStep(stepId: string | null | undefined): boolea
 
 export function isNavigationBreadcrumbStep(stepId: string | null | undefined): boolean {
   return Boolean(stepId && NAVIGATION_BREADCRUMB_STEP_IDS.has(stepId));
+}
+
+export function shouldForceFeedAndResetFiltersOnStep(
+  stepId: string | null | undefined,
+  isMobile: boolean
+): boolean {
+  return Boolean(isMobile && stepId && MOBILE_FORCE_FEED_AND_RESET_STEP_IDS.has(stepId));
 }
 
 export function isFilterResetStep(stepId: string | null | undefined): boolean {
