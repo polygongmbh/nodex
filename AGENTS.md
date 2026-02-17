@@ -10,6 +10,55 @@ project:
   stage: beta
 ```
 
+## Machine-Readable Policy Rules
+```yaml
+policies:
+  startup:
+    must_run:
+      - git status --short
+    warn_if_unstaged_beyond:
+      - package-lock.json
+  commits:
+    must_commit_completed_changes: true
+    conventional_commits_required: true
+    squash_fixup_into_previous_when_local: true
+  testing:
+    test_first_default: true
+    skip_test_first_for:
+      - minor visual changes
+    major_milestone_minimum_checks:
+      - npm run lint
+      - npx vitest run
+      - npm run build
+  verification_matrix:
+    docs_or_agents_only:
+      required:
+        - targeted sanity check
+      recommended: []
+    minor_localized_logic_or_ui:
+      required:
+        - focused tests for changed area
+      recommended:
+        - npm run build
+    major_feature_or_cross_view_or_refactor:
+      required:
+        - npm run lint
+        - npx vitest run
+        - npm run build
+      recommended: []
+    protocol_or_event_mapping_changes:
+      required:
+        - npx vitest run
+        - npm run build
+      recommended:
+        - npm run lint
+  release:
+    bump_from_commit_types:
+      fix: patch
+      feat: minor
+      breaking_change: major
+```
+
 ## Common Commands (Machine-Readable)
 ```yaml
 commands:
@@ -86,6 +135,16 @@ structure:
 - Compose behavior, filtering logic, and Nostr event compatibility are core product behavior and should be treated as high-impact areas.
 - `mostr-cli/` is an optional reference implementation for behavior parity, not a required runtime dependency.
 
+## General Agent Policies
+- Follow commit/changelog/test/lint/refactor/process rules in this file for all AI-assisted changes.
+- Keep edits focused, reviewable, and behavior-safe unless intentional behavioral changes are requested.
+- Prefer explicit, parseable instructions for automation-critical rules; keep rationale and nuance in prose.
+
+## Repository-Specific Policies
+- Treat compose parsing, channel/tag filtering, Nostr event mapping/publishing, and permission/status transitions as high-impact areas.
+- Use `mostr-cli/` only as a behavioral reference when present; never require it as runtime dependency.
+- Prioritize UX and protocol correctness for a beta-stage Nostr-native task/discussion app.
+
 ## Commit Discipline
 - Always commit every completed change.
 - After every change, create atomic commits that build individually and are coherent.
@@ -133,6 +192,21 @@ structure:
   - `npm run build`
 - For minor/localized changes, run focused tests and build checks as appropriate; defer full lint to the next major milestone.
 - If a lint rule is intentionally relaxed or disabled, document the scope and rationale in the same commit.
+
+### CI/Verification Matrix
+| Change category | Required checks | Recommended checks |
+| --- | --- | --- |
+| Docs/process-only updates (for example `AGENTS.md`, non-runtime docs) | Targeted sanity check | None |
+| Minor localized logic or UI changes | Focused tests for changed area | `npm run build` |
+| Major feature, cross-view UI change, release prep, or broad refactor | `npm run lint`, `npx vitest run`, `npm run build` | None |
+| Protocol/event mapping/publishing changes | `npx vitest run`, `npm run build` | `npm run lint` |
+
+### Major Milestones: Definition Options and Default
+- Option A: Scope-based. A major milestone is any cross-view change, broad refactor, release prep, or feature spanning multiple modules.
+- Option B: Risk-based. A major milestone is any change to high-impact behavior (compose, filtering, event mapping, permission/status transitions).
+- Option C: Size-based. A major milestone is any change above agreed thresholds (files touched, LOC changed, subsystems impacted).
+- Option D: Time-based. A major milestone is the end of a planned delivery phase/sprint chunk.
+- Default in this repository: use a hybrid of Option A + Option B. If either scope or risk criteria is met, treat it as a major milestone.
 
 ## Refactoring Cadence
 - After each major milestone (feature completion, major bugfix batch, or cross-view UI change), run a cleanup pass focused on:
@@ -214,6 +288,10 @@ When the user asks you to create a plan to fix or implement something:
   - then provide one high-level summary across all unpushed commits (not per-commit), focused on major functional/product changes
   - omit cosmetic-only or low-level implementation details from that summary unless explicitly requested
   - update `package.json` version semantically based on pending changes
+  - apply semantic version bump using these examples:
+    - patch example: `1.4.2 -> 1.4.3` for `fix:` only
+    - minor example: `1.4.2 -> 1.5.0` when at least one `feat:` is included and no breaking change exists
+    - major example: `1.4.2 -> 2.0.0` for any breaking change (including `feat!:` / `fix!:` or `BREAKING CHANGE:` footer)
   - update `CHANGELOG.md` for that version
   - create an annotated release tag matching the version (for example `v1.1.0`) before pushing
   - run verification commands appropriate for the risk level
