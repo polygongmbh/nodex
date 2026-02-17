@@ -200,14 +200,6 @@ export function getOnboardingStepsBySection(isMobile: boolean, view: GuideView =
           description: "Use the right panel to review tasks for the selected date and change their status.",
           target: '[data-onboarding="calendar-day-panel"]',
         },
-        {
-          id: "calendar-month-nav",
-          title: "Month jump controls",
-          description: "Use the month arrows in the day panel to jump by month.",
-          target: '[data-onboarding="calendar-month-nav-next"]',
-          requiredAction: "click-target",
-          actionPrompt: "Click a month arrow to continue.",
-        },
       ],
     };
   }

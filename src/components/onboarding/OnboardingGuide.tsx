@@ -714,6 +714,15 @@ export function OnboardingGuide({
     manualSelectedSectionRef.current = sectionId;
     onActiveSectionChange?.(sectionId);
     setManualSelectedSection(sectionId);
+    const useSectionLocalNumbering =
+      !isMobile &&
+      sectionId === "compose" &&
+      (currentView === "kanban" || currentView === "calendar");
+    if (useSectionLocalNumbering) {
+      setActiveSection("compose");
+      setStepIndex(0);
+      return;
+    }
     setActiveSection("all");
     setStepIndex(getFirstStepIndexForSection(sectionId));
   };

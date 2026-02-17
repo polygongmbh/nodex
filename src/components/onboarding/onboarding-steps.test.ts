@@ -43,8 +43,7 @@ describe("onboarding steps", () => {
       "calendar-months",
       "calendar-pick-day",
       "calendar-day-panel",
-      "calendar-month-nav",
     ]);
-    expect(calendar.compose[3]?.target).toBe('[data-onboarding="calendar-month-nav-next"]');
+    expect(calendar.compose[2]?.target).toBe('[data-onboarding="calendar-day-panel"]');
   });
 });
