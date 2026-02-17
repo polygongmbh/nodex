@@ -5,10 +5,10 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-Short summary: Upcoming changes not yet released.
+Upcoming improvements in progress.
 
 ## [1.2.0] - 2026-02-17
-Short summary: Major compose, mention, and filtering reliability improvements across desktop/mobile views, plus better sidebar people ranking and search behavior.
+Introduced robust `@` user mentions and smarter cross-view search, with faster compose/autocomplete and cleaner sidebar people relevance.
 
 ### Changed
 - Mention autocomplete now shows human-friendly usernames while inserting NIP-05 identifiers when available (falling back to pubkeys), and compose preview chips render person mentions before hashtag/channel chips.
@@ -34,7 +34,7 @@ Short summary: Major compose, mention, and filtering reliability improvements ac
 - Enabling people filters no longer crashes on malformed mention/author payloads, and uncaught runtime errors now render a recoverable error screen instead of a blank app.
 
 ## [1.1.0] - 2026-02-16
-Short summary: Introduced the new onboarding flow and unified bottom search/compose experience with improved guide behavior and sidebar controls.
+Introduced guided onboarding and a unified bottom search/compose workflow across views.
 
 ### Added
 - Onboarding now includes a dedicated search-bar guidance step and improved compose guidance flow with explicit task/comment compose controls.
@@ -53,7 +53,7 @@ Short summary: Introduced the new onboarding flow and unified bottom search/comp
 - Sidebar list clipping and scroll behavior were adjusted so trailing entries remain reachable.
 
 ## [1.0.0] - 2026-02-16
-Short summary: Initial stable release with cross-view task workflows, onboarding, Nostr-native compose/filtering, and baseline CI/versioning.
+Launched Nodex 1.0 with Nostr-native tasks/comments, cross-view workflows, and a production-ready baseline.
 
 ### Added
 - Interactive onboarding improvements across desktop and mobile, including guided navigation/composition flows with clearer highlights and better step progression.
