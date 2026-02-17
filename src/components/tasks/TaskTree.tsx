@@ -290,7 +290,7 @@ export function TaskTree({
       {/* Top composer with context controls - hidden on mobile */}
       {!isMobile && (user || forceShowComposer) && (
         <div
-          className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
+          className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
           data-onboarding="focused-compose"
         >
           <TaskComposer

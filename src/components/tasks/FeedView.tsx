@@ -251,7 +251,7 @@ export function FeedView({
       {/* Top composer - hidden on mobile */}
       {!isMobile && (user || forceShowComposer) && (
         <div
-          className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm"
+          className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm"
           data-onboarding="focused-compose"
         >
           <TaskComposer

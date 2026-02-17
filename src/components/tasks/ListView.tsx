@@ -443,7 +443,7 @@ export function ListView({
       )}
 
       {(user || forceShowComposer) && (
-        <div className="border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
+        <div className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0">
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
