@@ -151,16 +151,26 @@ export function getOnboardingStepsBySection(isMobile: boolean, view: GuideView =
       ...desktopStepsBySection,
       compose: [
         {
-          id: "kanban-columns",
+          id: "kanban-columns-overview",
           title: "Kanban columns",
-          description: "Use To Do, In Progress, and Done columns to track state and drag tasks between them.",
+          description: "Use To Do, In Progress, and Done columns to split work by status.",
+          target: '[data-onboarding="kanban-columns"]',
+        },
+        {
+          id: "kanban-move-tasks",
+          title: "Move work between columns",
+          description: "Drag a task card to another column to update its status.",
           target: '[data-onboarding="kanban-board"]',
+          requiredAction: "click-target",
+          actionPrompt: "Click or drag a card in the board to continue.",
         },
         {
           id: "kanban-depth",
           title: "Depth levels",
-          description: "Use the levels control near search to show top-level, limited depth, or leaves-only tasks.",
+          description: "Use Levels next to search to show top-level, limited depth, or leaves-only tasks.",
           target: '[data-onboarding="kanban-levels"]',
+          requiredAction: "click-target",
+          actionPrompt: "Open the Levels selector to continue.",
         },
       ],
     };
@@ -173,14 +183,30 @@ export function getOnboardingStepsBySection(isMobile: boolean, view: GuideView =
         {
           id: "calendar-months",
           title: "Month timeline",
-          description: "Scroll the stacked months to move through time and select a day to inspect scheduled tasks.",
+          description: "Scroll stacked months continuously to move through time.",
           target: '[data-onboarding="calendar-month-stack"]',
+        },
+        {
+          id: "calendar-pick-day",
+          title: "Pick a day",
+          description: "Click any day cell to load that date in the detail panel.",
+          target: '[data-onboarding="calendar-month-stack"]',
+          requiredAction: "click-target",
+          actionPrompt: "Click a day in the calendar grid to continue.",
         },
         {
           id: "calendar-day-panel",
           title: "Day details",
-          description: "Use the right panel to review tasks for the selected date and quickly update task status.",
+          description: "Use the right panel to review tasks for the selected date and change their status.",
           target: '[data-onboarding="calendar-day-panel"]',
+        },
+        {
+          id: "calendar-month-nav",
+          title: "Month jump controls",
+          description: "Use the month arrows in the day panel to jump by month.",
+          target: '[data-onboarding="calendar-month-nav-next"]',
+          requiredAction: "click-target",
+          actionPrompt: "Click a month arrow to continue.",
         },
       ],
     };

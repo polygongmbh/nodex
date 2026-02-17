@@ -375,7 +375,7 @@ export function KanbanView({
         data-onboarding="kanban-board"
       >
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 h-full min-w-max">
+          <div className="flex gap-4 h-full min-w-max" data-onboarding="kanban-columns">
             {columns.map((column) => (
               <div
                 key={column.id}

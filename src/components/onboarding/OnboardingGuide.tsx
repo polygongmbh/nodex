@@ -726,12 +726,12 @@ export function OnboardingGuide({
   const getPickerPaneStyle = (sectionId: OnboardingSectionId): React.CSSProperties => {
     const measured = pickerRects[sectionId];
     if (measured) {
-      const inset = Math.min(18, Math.max(8, Math.min(measured.width, measured.height) * 0.05));
+      const inset = Math.min(30, Math.max(14, Math.min(measured.width, measured.height) * 0.12));
       return {
         left: measured.left + inset,
         top: measured.top + inset,
-        width: Math.max(96, measured.width - inset * 2),
-        height: Math.max(72, measured.height - inset * 2),
+        width: Math.max(84, measured.width - inset * 2),
+        height: Math.max(64, measured.height - inset * 2),
       };
     }
 
@@ -810,7 +810,7 @@ export function OnboardingGuide({
                   key={section.id}
                   onClick={() => handleSectionStart(section.id)}
                   style={getPickerPaneStyle(section.id)}
-                  className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-5 shadow-[0_0_0_1px_hsl(var(--primary)/0.18),0_10px_24px_hsl(var(--background)/0.45)]"
+                  className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-3 shadow-[0_0_0_1px_hsl(var(--primary)/0.18),0_8px_20px_hsl(var(--background)/0.42)]"
                   aria-label={`Start ${section.title} onboarding section`}
                   title={`${section.title}: ${section.description}`}
                 >

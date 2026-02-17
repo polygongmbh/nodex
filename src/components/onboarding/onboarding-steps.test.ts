@@ -27,4 +27,24 @@ describe("onboarding steps", () => {
     expect(peopleStep?.requiredAction).toBeUndefined();
     expect(searchStep?.target).toBe('[data-onboarding="search-bar"]');
   });
+
+  it("provides dedicated kanban and calendar guide steps on desktop", () => {
+    const kanban = getOnboardingStepsBySection(false, "kanban");
+    const calendar = getOnboardingStepsBySection(false, "calendar");
+
+    expect(kanban.compose.map((step) => step.id)).toEqual([
+      "kanban-columns-overview",
+      "kanban-move-tasks",
+      "kanban-depth",
+    ]);
+    expect(kanban.compose[2]?.target).toBe('[data-onboarding="kanban-levels"]');
+
+    expect(calendar.compose.map((step) => step.id)).toEqual([
+      "calendar-months",
+      "calendar-pick-day",
+      "calendar-day-panel",
+      "calendar-month-nav",
+    ]);
+    expect(calendar.compose[3]?.target).toBe('[data-onboarding="calendar-month-nav-next"]');
+  });
 });

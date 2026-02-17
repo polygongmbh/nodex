@@ -799,6 +799,7 @@ export function CalendarView({
                   onClick={() => navigateMonth("prev")}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
                   aria-label="Previous month"
+                  data-onboarding="calendar-month-nav-prev"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -809,6 +810,7 @@ export function CalendarView({
                   onClick={() => navigateMonth("next")}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
                   aria-label="Next month"
+                  data-onboarding="calendar-month-nav-next"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
