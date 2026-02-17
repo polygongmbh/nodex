@@ -1,0 +1,71 @@
+{
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "composer": {
+    "placeholders": {
+      "task": "What needs to be done? Use #tags...",
+      "comment": "Add a comment...",
+      "mobileTask": "Search or create task... #tags",
+      "mobileComment": "Search or add comment... #tags"
+    },
+    "blocked": {
+      "signin": "Sign in required",
+      "write": "Write a message first",
+      "tag": "Add at least one #channel",
+      "relay": "Select one relay or a parent task",
+      "publishing": "Publishing..."
+    },
+    "actions": {
+      "createTask": "Create Task",
+      "addComment": "Add Comment",
+      "signin": "Sign in"
+    },
+    "labels": {
+      "dateType": "Date type",
+      "priority": "Priority",
+      "kind": "Kind"
+    },
+    "dates": {
+      "setOptional": "Set {{dateType}} date (optional)",
+      "due": "Due",
+      "scheduled": "Scheduled",
+      "start": "Start",
+      "end": "End",
+      "milestone": "Milestone"
+    }
+  },
+  "toasts": {
+    "errors": {
+      "needTag": "Add at least one #channel before posting",
+      "needSigninPost": "Sign in required to post",
+      "needSigninModify": "Sign in required to modify tasks",
+      "statusRestricted": "Status updates are restricted to assigned users",
+      "selectRelayOrParent": "Select one relay or a parent task",
+      "publishStatusFailed": "Failed to publish status update to relays",
+      "publishDateFailed": "Failed to publish date update to relay",
+      "publishPriorityFailed": "Failed to publish priority update to relay"
+    },
+    "success": {
+      "publishedTask": "Task published to Nostr and added locally",
+      "publishedComment": "Comment published to Nostr and added locally",
+      "localTask": "Task added locally (demo only)",
+      "localComment": "Comment added locally (demo only)"
+    }
+  },
+  "listView": {
+    "sort": {
+      "task": "Task",
+      "status": "Status",
+      "dueDate": "Due Date",
+      "priority": "Priority"
+    },
+    "status": {
+      "todo": "To Do",
+      "inProgress": "In Progress",
+      "done": "Done"
+    }
+  }
+}

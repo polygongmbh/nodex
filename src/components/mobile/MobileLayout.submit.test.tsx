@@ -109,7 +109,8 @@ describe("MobileLayout submit wiring", () => {
       "due",
       "parent-123",
       undefined,
-      ["a".repeat(64)]
+      ["a".repeat(64)],
+      undefined
     );
   });
 });

@@ -200,12 +200,12 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    expect(screen.queryByText("Set due date (optional)")).not.toBeInTheDocument();
+    expect(screen.queryByText(/set .*date \(optional\)/i)).not.toBeInTheDocument();
 
     const textarea = screen.getByPlaceholderText(/what needs to be done/i);
     fireEvent.focus(textarea);
 
-    expect(screen.getByText("Set due date (optional)")).toBeInTheDocument();
+    expect(screen.getByText(/set .*date \(optional\)/i)).toBeInTheDocument();
   });
 
   it("restores draft content from shared storage key", () => {
@@ -399,10 +399,10 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    expect(screen.getByText("Set due date (optional)")).toBeInTheDocument();
+    expect(screen.getByText(/set .*date \(optional\)/i)).toBeInTheDocument();
 
     fireEvent.keyDown(screen.getByPlaceholderText(/what needs to be done/i), { key: "Escape" });
-    expect(screen.queryByText("Set due date (optional)")).not.toBeInTheDocument();
+    expect(screen.queryByText(/set .*date \(optional\)/i)).not.toBeInTheDocument();
 
     rerender(
       <TaskComposer
@@ -417,7 +417,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    expect(screen.getByText("Set due date (optional)")).toBeInTheDocument();
+    expect(screen.getByText(/set .*date \(optional\)/i)).toBeInTheDocument();
   });
 
   it("blocks root task submit when multiple relays are selected", () => {

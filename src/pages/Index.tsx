@@ -16,6 +16,7 @@ import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/Ke
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
+import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { VersionHint } from "@/components/layout/VersionHint";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
@@ -40,7 +41,6 @@ import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
 import { buildTaskPriorityUpdateEvent } from "@/lib/nostr/task-property-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import {
-  RELAY_SELECTION_ERROR_MESSAGE,
   resolveOriginRelayIdForTask,
   resolveRelaySelectionForSubmission,
 } from "@/lib/task-relay-routing";
@@ -71,6 +71,7 @@ import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskDateType, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
+import { useTranslation } from "react-i18next";
 
 const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
 
@@ -81,6 +82,7 @@ const DEMO_RELAY_ID = "demo";
 const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 
 const Index = () => {
+  const { t } = useTranslation();
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
 
@@ -671,14 +673,14 @@ const Index = () => {
   const handleToggleComplete = (taskId: string) => {
     if (!user) {
       handleOpenAuthModal();
-      toast.error("Sign in required to modify tasks");
+      toast.error(t("toasts.errors.needSigninModify"));
       return;
     }
 
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask) return;
     if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-      toast.error("Status updates are restricted to assigned users");
+      toast.error(t("toasts.errors.statusRestricted"));
       return;
     }
     const nextStatus = cycleTaskStatus(existingTask.status || "todo");
@@ -717,10 +719,10 @@ const Index = () => {
     );
 
     if (!result.success) {
-      toast.error("Failed to publish status update to relays");
+      toast.error(t("toasts.errors.publishStatusFailed"));
       console.warn("Status publish failed", { taskId, status, relayUrls });
     }
-  }, [publishEvent, resolveTaskOriginRelay]);
+  }, [publishEvent, resolveTaskOriginRelay, t]);
 
   const publishTaskDueUpdate = useCallback(async (
     taskId: string,
@@ -732,7 +734,7 @@ const Index = () => {
     if (!isNostrEventId(taskId)) return false;
     const { relayUrls } = resolveTaskOriginRelay(taskId);
     if (relayUrls.length === 0) {
-      toast.error("Failed to publish date update: task relay unavailable");
+      toast.error(t("toasts.errors.publishDateFailed"));
       return false;
     }
     const relayUrl = relayUrls[0];
@@ -752,17 +754,17 @@ const Index = () => {
       [relayUrl]
     );
     if (!result.success) {
-      toast.error("Failed to publish date update to relay");
+      toast.error(t("toasts.errors.publishDateFailed"));
       console.warn("Date publish failed", { taskId, relayUrl });
     }
     return result.success;
-  }, [publishEvent, resolveTaskOriginRelay]);
+  }, [publishEvent, resolveTaskOriginRelay, t]);
 
   const publishTaskPriorityUpdate = useCallback(async (taskId: string, priority: number) => {
     if (!isNostrEventId(taskId)) return false;
     const { relayUrls } = resolveTaskOriginRelay(taskId);
     if (relayUrls.length === 0) {
-      toast.error("Failed to publish priority update: task relay unavailable");
+      toast.error(t("toasts.errors.publishPriorityFailed"));
       return false;
     }
     const relayUrl = relayUrls[0];
@@ -779,23 +781,23 @@ const Index = () => {
       [relayUrl]
     );
     if (!result.success) {
-      toast.error("Failed to publish priority update to relay");
+      toast.error(t("toasts.errors.publishPriorityFailed"));
       console.warn("Priority publish failed", { taskId, priority, relayUrl });
     }
     return result.success;
-  }, [publishEvent, resolveTaskOriginRelay]);
+  }, [publishEvent, resolveTaskOriginRelay, t]);
 
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
     if (!user) {
       handleOpenAuthModal();
-      toast.error("Sign in required to modify tasks");
+      toast.error(t("toasts.errors.needSigninModify"));
       return;
     }
 
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask) return;
     if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-      toast.error("Status updates are restricted to assigned users");
+      toast.error(t("toasts.errors.statusRestricted"));
       return;
     }
 
@@ -820,11 +822,11 @@ const Index = () => {
   ) => {
     if (!user) {
       handleOpenAuthModal();
-      toast.error("Sign in required to post");
+      toast.error(t("toasts.errors.needSigninPost"));
       return;
     }
     if (extractedTags.length === 0) {
-      toast.error("Add at least one #channel before posting");
+      toast.error(t("toasts.errors.needTag"));
       return;
     }
     setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
@@ -839,7 +841,7 @@ const Index = () => {
       demoRelayId: DEMO_RELAY_ID,
     });
     if (resolvedRelaySelection.error) {
-      toast.error(resolvedRelaySelection.error || RELAY_SELECTION_ERROR_MESSAGE);
+      toast.error(resolvedRelaySelection.error || t("toasts.errors.selectRelayOrParent"));
       return;
     }
     const targetRelayIds = resolvedRelaySelection.relayIds;
@@ -946,12 +948,12 @@ const Index = () => {
     
     if (shouldPublish) {
       if (publishSuccess) {
-        toast.success(`${taskType === "comment" ? "Comment" : "Task"} published to Nostr and added locally`);
+        toast.success(taskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
       } else {
         toast.error("Failed to publish to Nostr; added locally");
       }
     } else {
-      toast.success(`${taskType === "comment" ? "Comment" : "Task"} added locally (demo only)`);
+      toast.success(taskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
     }
   };
 
@@ -1118,6 +1120,7 @@ const Index = () => {
         </div>
         <div className="h-full flex items-center justify-end gap-2 w-auto pl-2">
           <NostrUserMenu onSignInClick={handleOpenAuthModal} />
+          <LanguageToggle />
           <ThemeModeToggle />
         </div>
       </div>

@@ -1,0 +1,71 @@
+{
+  "language": {
+    "label": "Sprache",
+    "en": "English",
+    "de": "Deutsch"
+  },
+  "composer": {
+    "placeholders": {
+      "task": "Was muss erledigt werden? Nutze #tags...",
+      "comment": "Kommentar hinzufügen...",
+      "mobileTask": "Suchen oder Aufgabe erstellen... #tags",
+      "mobileComment": "Suchen oder Kommentar hinzufügen... #tags"
+    },
+    "blocked": {
+      "signin": "Anmeldung erforderlich",
+      "write": "Schreibe zuerst eine Nachricht",
+      "tag": "Mindestens einen #channel hinzufügen",
+      "relay": "Wähle ein Relay oder eine übergeordnete Aufgabe",
+      "publishing": "Wird veröffentlicht..."
+    },
+    "actions": {
+      "createTask": "Aufgabe erstellen",
+      "addComment": "Kommentar hinzufügen",
+      "signin": "Anmelden"
+    },
+    "labels": {
+      "dateType": "Datumstyp",
+      "priority": "Priorität",
+      "kind": "Typ"
+    },
+    "dates": {
+      "setOptional": "{{dateType}}-Datum setzen (optional)",
+      "due": "Fällig",
+      "scheduled": "Geplant",
+      "start": "Start",
+      "end": "Ende",
+      "milestone": "Meilenstein"
+    }
+  },
+  "toasts": {
+    "errors": {
+      "needTag": "Mindestens einen #channel vor dem Veröffentlichen hinzufügen",
+      "needSigninPost": "Anmeldung zum Veröffentlichen erforderlich",
+      "needSigninModify": "Anmeldung zum Ändern von Aufgaben erforderlich",
+      "statusRestricted": "Status-Updates sind auf zugewiesene Nutzer beschränkt",
+      "selectRelayOrParent": "Wähle ein Relay oder eine übergeordnete Aufgabe",
+      "publishStatusFailed": "Status-Update konnte nicht an Relays veröffentlicht werden",
+      "publishDateFailed": "Datums-Update konnte nicht an Relay veröffentlicht werden",
+      "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay veröffentlicht werden"
+    },
+    "success": {
+      "publishedTask": "Aufgabe an Nostr veröffentlicht und lokal hinzugefügt",
+      "publishedComment": "Kommentar an Nostr veröffentlicht und lokal hinzugefügt",
+      "localTask": "Aufgabe lokal hinzugefügt (nur Demo)",
+      "localComment": "Kommentar lokal hinzugefügt (nur Demo)"
+    }
+  },
+  "listView": {
+    "sort": {
+      "task": "Aufgabe",
+      "status": "Status",
+      "dueDate": "Datum",
+      "priority": "Priorität"
+    },
+    "status": {
+      "todo": "Offen",
+      "inProgress": "In Arbeit",
+      "done": "Erledigt"
+    }
+  }
+}

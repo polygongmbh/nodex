@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   formatMentionIdentifierForDisplay,
   getPreferredMentionIdentifier,
@@ -76,6 +77,7 @@ export function UnifiedBottomBar({
   isSignedIn,
   onSignInClick,
 }: UnifiedBottomBarProps) {
+  const { t } = useTranslation();
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;
@@ -230,13 +232,13 @@ export function UnifiedBottomBar({
     if (!sharedText.trim()) return;
     const extractedChannels = sharedText.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
     if (extractedChannels.length === 0) {
-      toast.error("Add at least one #channel before posting");
+      toast.error(t("toasts.errors.needTag"));
       return;
     }
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
     if ((submitType ?? taskType) === "task" && !focusedTaskId && relayIds.length !== 1) {
-      toast.error("Select one relay or a parent task");
+      toast.error(t("toasts.errors.selectRelayOrParent"));
       return;
     }
     onSubmit(
@@ -673,7 +675,7 @@ export function UnifiedBottomBar({
                     handleCancel();
                   }
                 }}
-                placeholder={taskType === "task" ? "Search or create task... #tags" : "Search or add comment... #tags"}
+                placeholder={taskType === "task" ? t("composer.placeholders.mobileTask") : t("composer.placeholders.mobileComment")}
                 className="flex-1 w-full bg-muted/30 border border-border rounded-lg pl-9 pr-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px] max-h-32"
                 rows={1}
               />
@@ -729,7 +731,7 @@ export function UnifiedBottomBar({
                   disabled={!sharedText.trim() || !hasAtLeastOneTag || hasInvalidRootTaskRelaySelection}
                   className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                   aria-label="Create from current text"
-                  title={hasInvalidRootTaskRelaySelection ? "Select one relay or a parent task" : "Create from current text"}
+                  title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : "Create from current text"}
                 >
                   <Send className="w-5 h-5" />
                 </button>

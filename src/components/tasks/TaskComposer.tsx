@@ -7,6 +7,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   extractMentionIdentifiersFromContent,
@@ -91,6 +92,7 @@ export function TaskComposer({
   mentionRequest = null,
   allowComment = true,
 }: TaskComposerProps) {
+  const { t } = useTranslation();
   const { user } = useNDK();
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   const initialDraft = draftStorageKey ? readComposeDraft(draftStorageKey) : null;
@@ -323,7 +325,7 @@ export function TaskComposer({
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1).toLowerCase()) || [];
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
     if (submitTags.length === 0) {
-      toast.error("Add at least one #channel before posting");
+      toast.error(t("toasts.errors.needTag"));
       return;
     }
     
@@ -393,15 +395,15 @@ export function TaskComposer({
   const hasAtLeastOneTag = ((content.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
   const hasInvalidRootTaskRelaySelection = taskType === "task" && !parentId && selectedRelays.length !== 1;
   const submitBlockedReason = !user
-    ? "Sign in required"
+    ? t("composer.blocked.signin")
     : !content.trim()
-      ? "Write a message first"
+      ? t("composer.blocked.write")
       : !hasAtLeastOneTag
-        ? "Add at least one #channel"
+        ? t("composer.blocked.tag")
         : hasInvalidRootTaskRelaySelection
-          ? "Select one relay or a parent task"
+          ? t("composer.blocked.relay")
         : isPublishing
-          ? "Publishing..."
+          ? t("composer.blocked.publishing")
           : null;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -676,8 +678,8 @@ export function TaskComposer({
               setIsExpanded(true);
             }
           }}
-          placeholder={taskType === "task" ? "What needs to be done? Use #tags..." : "Add a comment..."}
-          aria-label={taskType === "task" ? "Compose task content with tags and mentions" : "Compose comment content with tags and mentions"}
+          placeholder={taskType === "task" ? t("composer.placeholders.task") : t("composer.placeholders.comment")}
+          aria-label={taskType === "task" ? t("composer.placeholders.task") : t("composer.placeholders.comment")}
           title="Use #channel tags and @mentions in this field"
           className={cn(
             "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
@@ -789,7 +791,7 @@ export function TaskComposer({
         <div className="flex items-center gap-2 p-2 bg-muted/40 border border-border/40 rounded-xl">
           <Flag className="w-4 h-4 text-muted-foreground" />
           <select
-            aria-label="Priority"
+            aria-label={t("composer.labels.priority")}
             value={priority === undefined ? "" : String(priority)}
             onChange={(event) => {
               const value = event.target.value;
@@ -802,7 +804,7 @@ export function TaskComposer({
             }}
             className="text-xs bg-background border border-border/50 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
           >
-            <option value="">Priority</option>
+            <option value="">{t("composer.labels.priority")}</option>
             <option value="20">P20</option>
             <option value="40">P40</option>
             <option value="60">P60</option>
@@ -811,21 +813,25 @@ export function TaskComposer({
           </select>
           <Calendar className="w-4 h-4 text-muted-foreground" />
           <select
-            aria-label="Date type"
+            aria-label={t("composer.labels.dateType")}
             value={dateType}
             onChange={(event) => setDateType(event.target.value as TaskDateType)}
             className="text-xs bg-background border border-border/50 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
           >
-            <option value="due">Due</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="start">Start</option>
-            <option value="end">End</option>
-            <option value="milestone">Milestone</option>
+            <option value="due">{t("composer.dates.due")}</option>
+            <option value="scheduled">{t("composer.dates.scheduled")}</option>
+            <option value="start">{t("composer.dates.start")}</option>
+            <option value="end">{t("composer.dates.end")}</option>
+            <option value="milestone">{t("composer.dates.milestone")}</option>
           </select>
           <Popover>
             <PopoverTrigger asChild>
               <button className="text-sm text-muted-foreground hover:text-foreground">
-                {dueDate ? format(dueDate, "MMM d, yyyy") : `Set ${dateType} date (optional)`}
+                {dueDate
+                  ? format(dueDate, "MMM d, yyyy")
+                  : t("composer.dates.setOptional", {
+                      dateType: t(`composer.dates.${dateType}`),
+                    })}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -866,14 +872,14 @@ export function TaskComposer({
         <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded-xl">
           <Zap className="w-4 h-4 text-primary" />
           <span className="text-sm text-muted-foreground flex-1">
-            Sign in to post or update tasks
+            {t("composer.blocked.signin")}
           </span>
           {onSignInClick && (
             <button
               onClick={onSignInClick}
               className="text-sm text-primary hover:underline"
             >
-              Sign in
+              {t("composer.actions.signin")}
             </button>
           )}
         </div>
@@ -943,13 +949,13 @@ export function TaskComposer({
               {isPublishing && (
                 <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               )}
-              {taskType === "task" ? "Create Task" : "Add Comment"}
+              {taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
             </button>
             {allowComment && (
               <div className="relative w-9 bg-primary/95 border-l border-primary-foreground/20">
                 <select
                   data-onboarding="compose-kind"
-                  aria-label="Kind"
+                  aria-label={t("composer.labels.kind")}
                   value={taskType}
                   onChange={(e) => setTaskType(e.target.value as TaskType)}
                   className="absolute inset-0 opacity-0 cursor-pointer"

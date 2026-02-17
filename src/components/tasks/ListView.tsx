@@ -8,6 +8,7 @@ import { linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
@@ -91,6 +92,7 @@ export function ListView({
   forceShowComposer = false,
   composeGuideActivationSignal,
 }: ListViewProps) {
+  const { t } = useTranslation();
   const { user } = useNDK();
   const COMPOSE_DRAFT_KEY = "nodex.compose-draft.list";
   const [sortField, setSortField] = useState<SortField>("priority");
@@ -361,9 +363,9 @@ export function ListView({
             {status === "in-progress" ? (
               <>
                 <span className="sm:hidden">Doing</span>
-                <span className="hidden sm:inline">In Progress</span>
+                <span className="hidden sm:inline">{t("listView.status.inProgress")}</span>
               </>
-            ) : status === "done" ? "Done" : "To Do"}
+            ) : status === "done" ? t("listView.status.done") : t("listView.status.todo")}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
@@ -372,21 +374,21 @@ export function ListView({
             className={cn(status === "todo" && "bg-muted")}
           >
             <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-            To Do
+            {t("listView.status.todo")}
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => onStatusChange?.(task.id, "in-progress")}
             className={cn(status === "in-progress" && "bg-muted")}
           >
             <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
-            In Progress
+            {t("listView.status.inProgress")}
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => onStatusChange?.(task.id, "done")}
             className={cn(status === "done" && "bg-muted")}
           >
             <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-            Done
+            {t("listView.status.done")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -560,16 +562,16 @@ export function ListView({
                 </div>
               </th>
               <th className="text-left p-3 w-auto min-w-[22rem]">
-                <SortButton field="content">Task</SortButton>
+                <SortButton field="content">{t("listView.sort.task")}</SortButton>
               </th>
               <th className="text-left p-3 w-24 sm:w-28 md:w-32">
-                <SortButton field="status">Status</SortButton>
+                <SortButton field="status">{t("listView.sort.status")}</SortButton>
               </th>
               <th className="text-left p-3 w-40">
-                <SortButton field="dueDate">Due Date</SortButton>
+                <SortButton field="dueDate">{t("listView.sort.dueDate")}</SortButton>
               </th>
               <th className="text-left p-3 w-16 sm:w-20 md:w-24">
-                <SortButton field="priority">Priority</SortButton>
+                <SortButton field="priority">{t("listView.sort.priority")}</SortButton>
               </th>
               <th className="text-left p-3 w-32 md:w-40 lg:w-48 xl:w-64 2xl:w-[26rem]">Tags</th>
             </tr>

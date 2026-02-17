@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom";
+import "@/lib/i18n/config";
 
 // Mock matchMedia for tests
 Object.defineProperty(window, "matchMedia", {

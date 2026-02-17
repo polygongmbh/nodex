@@ -666,7 +666,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     return () => {
       cancelled = true;
     };
-  }, [ndk, fetchLatestKind0Profile, user?.pubkey]);
+  }, [ndk, fetchLatestKind0Profile, user?.pubkey, user?.profile]);
 
   const subscribe = useCallback((
     filters: NDKFilter[],

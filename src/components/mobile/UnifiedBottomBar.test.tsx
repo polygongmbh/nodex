@@ -109,7 +109,8 @@ describe("UnifiedBottomBar auth gating", () => {
       undefined,
       undefined,
       "due",
-      []
+      [],
+      undefined
     );
 
     fireEvent.click(screen.getByRole("button", { name: /comment/i }));
@@ -125,7 +126,8 @@ describe("UnifiedBottomBar auth gating", () => {
       undefined,
       undefined,
       "due",
-      []
+      [],
+      undefined
     );
   });
 
@@ -161,7 +163,8 @@ describe("UnifiedBottomBar auth gating", () => {
       undefined,
       undefined,
       "due",
-      []
+      [],
+      undefined
     );
 
     fireEvent.change(composeField, { target: { value: "Ship again #general" } });
@@ -174,7 +177,8 @@ describe("UnifiedBottomBar auth gating", () => {
       undefined,
       undefined,
       "due",
-      []
+      [],
+      undefined
     );
   });
 
@@ -472,7 +476,8 @@ describe("UnifiedBottomBar auth gating", () => {
       undefined,
       undefined,
       "due",
-      ["e".repeat(64)]
+      ["e".repeat(64)],
+      undefined
     );
   });
 });
