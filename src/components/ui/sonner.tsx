@@ -10,12 +10,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={(mode === "auto" ? "system" : mode) as ToasterProps["theme"]}
       className="toaster group"
-      position="top-center"
+      position="bottom-right"
       closeButton
       expand={false}
       visibleToasts={2}
       offset={12}
-      mobileOffset={{ top: 56, left: 12, right: 12, bottom: 12 }}
+      mobileOffset={{ top: 12, left: 12, right: 12, bottom: 84 }}
       toastOptions={{
         duration: 2800,
         dismissible: true,
