@@ -2,7 +2,9 @@
 
 These rules apply to all AI-assisted changes in this repository.
 
-## Machine-Readable Metadata
+## Project-Specific Instructions
+
+### Machine-Readable Metadata
 ```yaml
 project:
   name: Nodex
@@ -10,7 +12,7 @@ project:
   stage: beta
 ```
 
-## Common Commands (Machine-Readable)
+### Common Commands (Machine-Readable)
 ```yaml
 commands:
   install:
@@ -39,7 +41,7 @@ commands:
     purpose: run tests in watch mode
 ```
 
-## Project Structure (Machine-Readable)
+### Project Structure (Machine-Readable)
 ```yaml
 structure:
   root:
@@ -80,21 +82,42 @@ structure:
       role: mock/demo data
 ```
 
-## Repository-Specific Context
+### Repository Context
 - Nodex is a beta Nostr-native task and discussion application.
 - Primary entities are tasks/comments, channels (hashtags), relays, and people filters.
 - High-impact behavior areas: compose parsing/submission, channel/tag filtering, Nostr event mapping/publishing tags, and permission/status transitions.
 - `mostr-cli/` is an optional behavioral reference only; never require it as a runtime dependency.
 
-## Startup Repo Check
+### Startup Repo Check
 - At the start of work, run `git status --short`.
 - If there are unstaged modifications beyond `package-lock.json`, warn the user before proceeding.
 
-## Protocol Compliance
+### Protocol Compliance
 - Conform to Nostr protocol standards in https://github.com/nostr-protocol/nips/.
 - Reference relevant NIPs in commit messages and/or PR descriptions when protocol behavior is affected.
 
-## Machine-Readable Policy Rules
+### Product Stage
+- Software is in beta.
+- Breaking changes are allowed when justified, but document them clearly in commit messages and user-facing notes.
+
+### Logging and User Feedback
+- Keep logs structured and minimal.
+- Never log secrets, private keys, tokens, or sensitive user data.
+- Prefer `console.warn`/`console.error` for actionable issues; avoid noisy debug logs in normal flows.
+- Use toasts for significant outcomes:
+  - success toast for completed user actions
+  - error toast for failures with clear next-step guidance where possible
+  - avoid duplicate/spammy toasts for the same event
+
+### CI/Verification Matrix
+| Change category | Required checks | Recommended checks |
+| --- | --- | --- |
+| Docs/process-only updates (for example `AGENTS.md`, non-runtime docs) | Targeted sanity check | None |
+| Minor localized logic or UI changes | Focused tests for changed area | `npm run build` |
+| Major feature, cross-view UI change, release prep, or broad refactor | `npm run lint`, `npx vitest run`, `npm run build` | None |
+| Protocol/event mapping/publishing changes | `npx vitest run`, `npm run build` | `npm run lint` |
+
+### Machine-Readable Policy Rules
 ```yaml
 policies:
   startup:
@@ -157,12 +180,14 @@ policies:
       breaking_change: major
 ```
 
-## General Agent Policies
+## General Workflow Policies
+
+### General Agent Policies
 - Follow commit/changelog/test/lint/refactor/process rules in this file for all AI-assisted changes.
 - Keep edits focused, reviewable, and behavior-safe unless intentional behavioral changes are requested.
 - Prefer explicit, parseable rules for automation; keep prose for rationale and edge cases.
 
-## Test and Verification
+### Test and Verification
 - Write tests before each change except minor visual/cosmetic changes.
 - Verify tests after each change.
 - Before adjusting existing tests, first evaluate whether failures indicate regressions or deliberate behavior changes.
@@ -176,15 +201,7 @@ policies:
 - If a lint rule is intentionally relaxed/disabled, document scope and rationale in the same commit.
 - Run `npm run lint` for major milestones; for minor/localized changes, defer full lint to the next major milestone.
 
-### CI/Verification Matrix
-| Change category | Required checks | Recommended checks |
-| --- | --- | --- |
-| Docs/process-only updates (for example `AGENTS.md`, non-runtime docs) | Targeted sanity check | None |
-| Minor localized logic or UI changes | Focused tests for changed area | `npm run build` |
-| Major feature, cross-view UI change, release prep, or broad refactor | `npm run lint`, `npx vitest run`, `npm run build` | None |
-| Protocol/event mapping/publishing changes | `npx vitest run`, `npm run build` | `npm run lint` |
-
-## Commit Discipline
+### Commit Discipline
 - Always commit every completed change.
 - Make atomic commits that build individually and stay coherent.
 - You may amend commits with corrections if they are not yet pushed.
@@ -192,7 +209,7 @@ policies:
 - Use Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
 - Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) changed.
 
-## Changelog Discipline
+### Changelog Discipline
 - Keep `CHANGELOG.md` continuously updated.
 - Keep `## [Unreleased]` at the top and add notable user-visible changes there until release.
 - For notable user-visible behavior changes, add/update a changelog entry in the same change set.
@@ -201,7 +218,7 @@ policies:
 - Use semantic version sections (`MAJOR.MINOR.PATCH`) and ISO dates (`YYYY-MM-DD`).
 - On release, move grouped entries from `Unreleased` into the new versioned section.
 
-## Refactoring Cadence
+### Refactoring Cadence
 - After each major milestone, run a cleanup pass for duplication, consistency, complex components, and discovered debt.
 - Do cleanup in a separate follow-up `refactor:` commit after the functional milestone commit.
 - Do not mix milestone feature/fix and refactor changes in one commit unless required for functionality.
@@ -212,32 +229,21 @@ policies:
   - large/complex components reviewed
   - deferrals with rationale
 
-## Product Stage
-- Software is in beta.
-- Breaking changes are allowed when justified, but document them clearly in commit messages and user-facing notes.
+## Agent Operating Instructions
 
-## Logging and User Feedback
-- Keep logs structured and minimal.
-- Never log secrets, private keys, tokens, or sensitive user data.
-- Prefer `console.warn`/`console.error` for actionable issues; avoid noisy debug logs in normal flows.
-- Use toasts for significant outcomes:
-  - success toast for completed user actions
-  - error toast for failures with clear next-step guidance where possible
-  - avoid duplicate/spammy toasts for the same event
-
-## Plans and Worktrees
+### Plans and Worktrees
 When asked to create a plan to fix or implement something:
 - ALWAYS write the plan to `plans/` at repo root.
 - NEVER commit plans to git.
 - Use descriptive kebab-case filenames (for example `fix-position-healing.md`).
 - Before deleting untracked text artifacts (for example files in `plans/`), run `git add` on them once without committing so they are recoverable via index/reflog if deletion was a mistake.
 
-## Prompt Effort Modes
+### Prompt Effort Modes
 - `quick`: minimize testing/refactoring, run focused checks only, defer broader cleanup unless requested.
 - `long`: run thorough workflow with comprehensive testing, deeper edge-case checks, and refactor/debt review.
 - No prefix: choose a balanced level based on task complexity and risk.
 
-## Special Commands
+### Special Commands
 - `squash` (or starts with `squash`): inspect recent commits and suggest sensible squashes for repetitive/fixup/tightly related follow-ups.
 - For squash checks, preserve atomic coherent history and do not squash unrelated functional changes.
 - Rewrite only unpushed local history for squash/rebase unless explicitly instructed otherwise.
@@ -256,7 +262,7 @@ When asked to create a plan to fix or implement something:
   - ask explicit confirmation before pushing
   - on approval, push branch and tags
 
-## Assistant Response Formatting
+### Assistant Response Formatting
 - Keep summaries compact and scannable.
 - Prefer single-line status items when content fits.
 - Avoid repetitive progress boilerplate.
@@ -271,7 +277,7 @@ When asked to create a plan to fix or implement something:
 - Use color when supported to reinforce status categories.
 - Prefer concise bullets over verbose prose.
 
-## Progress Reporting Expectations
+### Progress Reporting Expectations
 - Provide progress estimates during active work.
 - Use staged labels when suitable:
   - `🔍 Researching (stage 1/5)`
@@ -285,6 +291,6 @@ When asked to create a plan to fix or implement something:
 - Include blockers/uncertainty with `⚠️` and revised estimates.
 - If unrelated files change while working, ignore incidental changes unless they directly conflict with target files.
 
-## AGENTS Maintenance
+### AGENTS Maintenance
 - When the user gives new standing workflow/process instructions, update `AGENTS.md` in the same session.
 - Keep updates concise and place them in the most relevant existing section (create a new section only when needed).
