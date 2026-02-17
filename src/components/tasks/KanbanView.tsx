@@ -385,7 +385,7 @@ export function KanbanView({
             {columns.map((column) => (
               <div
                 key={column.id}
-                className="flex flex-col w-80 bg-muted/30 rounded-lg flex-shrink-0"
+                className="flex flex-col w-80 xl:w-[24rem] 2xl:w-[28rem] bg-muted/30 rounded-lg flex-shrink-0"
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between p-3 border-b border-border flex-shrink-0">

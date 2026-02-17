@@ -28,6 +28,7 @@ Expanded relay-aware task publishing, priority editing, and English/German local
 - German sign-in status wording now distinguishes guest login (`Angemeldet als Gast`) from other methods (`Angemeldet über …`).
 - Desktop top navigation no longer scrolls horizontally; on smaller widths the German sign-in CTA is shortened to `Anmelden`.
 - Feed author labels now shorten raw pubkey fallbacks on slimmer desktop widths while keeping full pubkeys on wider desktop layouts.
+- Kanban columns now expand on wider desktop breakpoints for higher information density and reduced clipping.
 
 ### Fixed
 - Root task creation now blocks invalid multi-relay submissions with clear guidance: `Select one relay or a parent task`.
