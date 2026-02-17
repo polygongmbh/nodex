@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { NDKEvent, NDKFilter, NDKKind, NDKSubscription } from "@nostr-dev-kit/ndk";
+import { NDKEvent, NDKFilter, NDKKind } from "@nostr-dev-kit/ndk";
 
 export interface NostrProfile {
   pubkey: string;
@@ -23,29 +23,57 @@ interface ProfileCache {
 const profileCache: ProfileCache = {};
 const pendingRequests = new Set<string>();
 const subscribers = new Set<() => void>();
+const EMPTY_PUBKEYS: string[] = [];
 
 // Notify all subscribers when cache updates
 function notifySubscribers() {
   subscribers.forEach(callback => callback());
 }
 
+function buildPubkeysKey(pubkeys: string[]): string {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  pubkeys.forEach((pubkey) => {
+    if (!pubkey || seen.has(pubkey)) return;
+    seen.add(pubkey);
+    normalized.push(pubkey);
+  });
+  return normalized.join(",");
+}
+
+function profileMapEquals(a: ProfileCache, b: ProfileCache): boolean {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (!(key in b)) return false;
+    if (a[key] !== b[key]) return false;
+  }
+  return true;
+}
+
 export function useNostrProfiles(pubkeys: string[]) {
   const { ndk } = useNDK();
   const [profiles, setProfiles] = useState<ProfileCache>({});
   const [loading, setLoading] = useState(false);
-  const subscriptionRef = useRef<NDKSubscription | null>(null);
-  const pubkeysKey = useMemo(() => pubkeys.join(","), [pubkeys]);
+  const pubkeysKey = useMemo(() => buildPubkeysKey(pubkeys), [pubkeys]);
+  const normalizedPubkeys = useMemo(
+    () => (pubkeysKey.length > 0 ? pubkeysKey.split(",") : EMPTY_PUBKEYS),
+    [pubkeysKey]
+  );
   
   // Subscribe to cache updates
   useEffect(() => {
     const updateFromCache = () => {
       const cached: ProfileCache = {};
-      pubkeys.forEach(pk => {
+      normalizedPubkeys.forEach(pk => {
         if (profileCache[pk]) {
           cached[pk] = profileCache[pk];
         }
       });
-      setProfiles(cached);
+      setProfiles((previousProfiles) =>
+        profileMapEquals(previousProfiles, cached) ? previousProfiles : cached
+      );
     };
     
     subscribers.add(updateFromCache);
@@ -54,14 +82,14 @@ export function useNostrProfiles(pubkeys: string[]) {
     return () => {
       subscribers.delete(updateFromCache);
     };
-  }, [pubkeys, pubkeysKey]);
+  }, [pubkeysKey, normalizedPubkeys]);
 
   // Fetch missing profiles
   useEffect(() => {
-    if (!ndk || pubkeys.length === 0) return;
+    if (!ndk || normalizedPubkeys.length === 0) return;
     
     // Filter out already cached and pending profiles
-    const missingPubkeys = pubkeys.filter(pk => 
+    const missingPubkeys = normalizedPubkeys.filter(pk => 
       !profileCache[pk] && !pendingRequests.has(pk)
     );
     
@@ -78,7 +106,6 @@ export function useNostrProfiles(pubkeys: string[]) {
     };
     
     const sub = ndk.subscribe([filter], { closeOnEose: true });
-    subscriptionRef.current = sub;
     
     sub.on("event", (event: NDKEvent) => {
       try {
@@ -127,7 +154,7 @@ export function useNostrProfiles(pubkeys: string[]) {
     return () => {
       sub?.stop();
     };
-  }, [ndk, pubkeys, pubkeysKey]);
+  }, [ndk, pubkeysKey, normalizedPubkeys]);
 
   // Get profile for a specific pubkey
   const getProfile = useCallback((pubkey: string): NostrProfile | null => {
@@ -139,7 +166,11 @@ export function useNostrProfiles(pubkeys: string[]) {
 
 // Hook for getting a single profile
 export function useNostrProfile(pubkey: string | null) {
-  const { profiles, loading, getProfile } = useNostrProfiles(pubkey ? [pubkey] : []);
+  const stablePubkeys = useMemo(
+    () => (pubkey ? [pubkey] : EMPTY_PUBKEYS),
+    [pubkey]
+  );
+  const { profiles, loading, getProfile } = useNostrProfiles(stablePubkeys);
   return {
     profile: pubkey ? getProfile(pubkey) : null,
     loading,
