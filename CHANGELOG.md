@@ -14,7 +14,7 @@ Added focused guide updates for compose keyboard flows.
 - In-app and markdown guides now document current compose shortcut behavior, including `Alt+Enter` submit-vs-metadata rules and metadata-only tag/mention autocomplete usage.
 
 ## [1.2.0] - 2026-02-17
-Introduced robust `@` user mentions and smarter cross-view search, with faster compose/autocomplete and cleaner sidebar people relevance.
+Introduced robust `@` user mentions and smarter cross-view search, with faster compose/autocomplete and a more useful sidebar people list.
 
 ### Changed
 - Mention autocomplete now shows human-friendly usernames while inserting NIP-05 identifiers when available (falling back to pubkeys), and compose preview chips render person mentions before hashtag/channel chips.
