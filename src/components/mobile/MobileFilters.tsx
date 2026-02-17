@@ -162,7 +162,11 @@ export function MobileFilters({
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{displayName}</p>
                 {user && (
-                  <p className="text-xs text-muted-foreground">{t("filters.profile.signedInVia", { method: methodLabel })}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {authMethod === "guest"
+                      ? t("filters.profile.signedInAs", { method: methodLabel })
+                      : t("filters.profile.signedInVia", { method: methodLabel })}
+                  </p>
                 )}
               </div>
               {!user ? (

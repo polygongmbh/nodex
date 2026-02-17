@@ -476,7 +476,11 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground">{t("auth.menu.signedInVia", { method: methodLabel })}</span>
+                <span className="text-xs text-muted-foreground">
+                  {authMethod === "guest"
+                    ? t("auth.menu.signedInAs", { method: methodLabel })
+                    : t("auth.menu.signedInVia", { method: methodLabel })}
+                </span>
               </div>
             </div>
           </DropdownMenuLabel>

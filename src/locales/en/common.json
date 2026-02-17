@@ -207,6 +207,7 @@
     "menu": {
       "signInToPost": "Sign in to post",
       "signedInVia": "Signed in via {{method}}",
+      "signedInAs": "Signed in as {{method}}",
       "editProfile": "Edit profile",
       "backupPrivateKey": "Backup Private Key",
       "keepSecret": "Keep secret",
@@ -273,6 +274,7 @@
       "title": "Profile",
       "notSignedIn": "Not signed in",
       "signedInVia": "Signed in via {{method}}",
+      "signedInAs": "Signed in as {{method}}",
       "signin": "Sign in",
       "signout": "Sign out",
       "edit": "Edit",
