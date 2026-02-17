@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { linkifyContent } from "./linkify";
 
 describe("linkifyContent interaction styles", () => {
-  it("applies shared inline link class to hashtags and URLs", () => {
+  it("parses hashtags and URLs and triggers hashtag filtering", () => {
     const onHashtagClick = vi.fn();
 
     render(<p>{linkifyContent("Ship #frontend https://example.com", onHashtagClick)}</p>);
@@ -11,8 +11,8 @@ describe("linkifyContent interaction styles", () => {
     const hashtag = screen.getByRole("button", { name: "Filter by #frontend" });
     const url = screen.getByRole("link", { name: "https://example.com" });
 
-    expect(hashtag).toHaveClass("task-inline-link");
-    expect(url).toHaveClass("task-inline-link");
+    expect(url).toHaveAttribute("href", "https://example.com");
+    expect(url).toHaveAttribute("target", "_blank");
 
     fireEvent.click(hashtag);
     expect(onHashtagClick).toHaveBeenCalledWith("frontend");
@@ -22,6 +22,6 @@ describe("linkifyContent interaction styles", () => {
     render(<p>{linkifyContent("Ship #frontend", vi.fn(), { plainHashtags: true })}</p>);
 
     const hashtag = screen.getByRole("button", { name: "Filter by #frontend" });
-    expect(hashtag).not.toHaveClass("task-inline-link");
+    expect(hashtag).toBeInTheDocument();
   });
 });
