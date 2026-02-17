@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
@@ -113,6 +113,9 @@ export function CalendarView({
   const desktopMonthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const desktopInitialAlignDoneRef = useRef(false);
   const desktopLoadingRef = useRef(false);
+  const prependCompensationRef = useRef<{ previousHeight: number } | null>(null);
+  const loadingCooldownUntilRef = useRef(0);
+  const syncMonthRafIdRef = useRef<number | null>(null);
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -317,18 +320,59 @@ export function CalendarView({
     return () => cancelAnimationFrame(rafId);
   }, [alignDesktopScrollToMonth, currentMonth]);
 
+  useLayoutEffect(() => {
+    const scroller = desktopScrollerRef.current;
+    const pending = prependCompensationRef.current;
+    if (!scroller || !pending) return;
+    const addedHeight = scroller.scrollHeight - pending.previousHeight;
+    if (addedHeight > 0) {
+      scroller.scrollTop += addedHeight;
+    }
+    prependCompensationRef.current = null;
+    desktopLoadingRef.current = false;
+  }, [desktopMonths]);
+
   useEffect(() => {
     const scroller = desktopScrollerRef.current;
     if (!scroller) return;
 
+    const syncCurrentMonthFromScroll = () => {
+      syncMonthRafIdRef.current = null;
+      const marker = scroller.scrollTop + 96;
+      let activeMonth: Date | null = null;
+
+      for (const section of desktopMonthSections) {
+        const node = desktopMonthSectionRefs.current[section.key];
+        if (!node) continue;
+        if (node.offsetTop <= marker) {
+          activeMonth = section.month;
+        } else {
+          break;
+        }
+      }
+
+      if (!activeMonth) return;
+      const nextActiveMonth = activeMonth;
+      setCurrentMonth((prev) =>
+        getMonthKey(prev) === getMonthKey(nextActiveMonth) ? prev : nextActiveMonth
+      );
+    };
+
     const onScroll = () => {
+      if (syncMonthRafIdRef.current === null) {
+        syncMonthRafIdRef.current = requestAnimationFrame(syncCurrentMonthFromScroll);
+      }
       if (desktopLoadingRef.current) return;
 
-      const nearBottom = scroller.scrollHeight - (scroller.scrollTop + scroller.clientHeight) < 320;
-      const nearTop = scroller.scrollTop < 320;
+      const now = performance.now();
+      if (now < loadingCooldownUntilRef.current) return;
+
+      const nearBottom = scroller.scrollHeight - (scroller.scrollTop + scroller.clientHeight) < 360;
+      const nearTop = scroller.scrollTop < 160;
 
       if (nearBottom) {
         desktopLoadingRef.current = true;
+        loadingCooldownUntilRef.current = now + 120;
         setDesktopMonths((prev) => {
           const sorted = [...prev].sort((a, b) => a.getTime() - b.getTime());
           const last = sorted[sorted.length - 1] ?? startOfMonth(new Date());
@@ -341,23 +385,25 @@ export function CalendarView({
 
       if (nearTop) {
         desktopLoadingRef.current = true;
-        const previousHeight = scroller.scrollHeight;
+        loadingCooldownUntilRef.current = now + 140;
+        prependCompensationRef.current = { previousHeight: scroller.scrollHeight };
         setDesktopMonths((prev) => {
           const sorted = [...prev].sort((a, b) => a.getTime() - b.getTime());
           const first = sorted[0] ?? startOfMonth(new Date());
           return [subMonths(startOfMonth(first), 1), ...sorted];
         });
-        requestAnimationFrame(() => {
-          const nextHeight = scroller.scrollHeight;
-          scroller.scrollTop += nextHeight - previousHeight;
-          desktopLoadingRef.current = false;
-        });
       }
     };
 
     scroller.addEventListener("scroll", onScroll, { passive: true });
-    return () => scroller.removeEventListener("scroll", onScroll);
-  }, []);
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      if (syncMonthRafIdRef.current !== null) {
+        cancelAnimationFrame(syncMonthRafIdRef.current);
+        syncMonthRafIdRef.current = null;
+      }
+    };
+  }, [desktopMonthSections]);
 
   const canCompleteTask = (task: Task) => {
     return canUserChangeTaskStatus(task, currentUser);

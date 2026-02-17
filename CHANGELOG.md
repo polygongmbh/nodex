@@ -12,6 +12,7 @@ Upcoming improvements in progress.
 - Calendar stacked-month styling is now flatter and continuous (without boxed month cards), with slower, non-staggered wheel scrolling for smoother month-to-month flow.
 - Calendar month-stack scrolling now uses native continuous scroll behavior to avoid month-by-month stagger effects.
 - Calendar month stack no longer sync-locks scrolling to an active month while scrolling, and sticky month headers were removed for smoother continuous vertical flow.
+- Calendar month stack now preserves scroll position more smoothly while prepending earlier months (reducing upward-scroll jank), and the month label in the day panel updates again based on scroll position.
 - Onboarding section picker performance and layout were improved with lighter guide targets, reduced overlap, and view-specific guidance (Kanban/Calendar now show dedicated guides instead of compose guidance where compose is not present).
 
 ## [1.2.2] - 2026-02-17
