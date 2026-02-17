@@ -5,7 +5,23 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-Upcoming improvements in progress.
+### Added
+- Relay-scoped task lifecycle rules:
+  - New root tasks require exactly one selected relay.
+  - Subtasks, task-context comments, and task updates now route to the task origin relay.
+- Task creation now supports optional priority selection in both desktop composer and mobile unified compose/search bar.
+- New Nostr helper for priority property updates (`kind:1` with `priority` tag and `e` `property` marker), plus relay-routing utilities.
+- Internationalization foundation with runtime language switching (`en`/`de`) and persisted language preference.
+
+### Changed
+- Task priority is now part of the task model and is hydrated from base tags and latest property update events.
+- Task due-date update events now use stable `d` identifiers per task/date-type for editable update semantics.
+- Table view now supports inline due date/time/date-type editing and inline priority editing with event publishing.
+- Key task compose and mobile unified-bar copy/toasts are now translation-key-driven.
+
+### Fixed
+- Root task creation now blocks invalid multi-relay submissions with clear guidance: `Select one relay or a parent task`.
+- Lint warnings introduced during routing/i18n work were resolved.
 
 ## [1.3.0] - 2026-02-17
 Introduced major calendar, table, and onboarding upgrades with view-specific guide flows and cleaner filter/compose behavior.
