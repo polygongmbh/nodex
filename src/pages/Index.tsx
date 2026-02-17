@@ -42,6 +42,7 @@ import { derivePeopleFromKind0Events } from "@/lib/people-from-kind0";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { filterTasks } from "@/lib/task-filtering";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
+import { isFilterResetStep, isNavigationFocusStep } from "@/lib/onboarding-step-rules";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -370,11 +371,11 @@ const Index = () => {
     if (lastHandledOnboardingStepRef.current === stepKey) return;
     lastHandledOnboardingStepRef.current = stepKey;
 
-    if (payload.id === "navigation-focus" || payload.id === "mobile-navigation-focus") {
+    if (isNavigationFocusStep(payload.id)) {
       setCurrentView("feed");
       return;
     }
-    if (payload.id !== "filters-channels" && payload.id !== "filters-hashtag-content") return;
+    if (!isFilterResetStep(payload.id)) return;
 
     setFocusedTaskId(null);
     setSearchQuery("");

@@ -1,4 +1,5 @@
 import type { OnboardingSectionId } from "@/components/onboarding/onboarding-types";
+import { isComposeGuideStep, shouldPreopenComposeOnDesktop } from "@/lib/onboarding-step-rules";
 
 interface ComposeForceParams {
   isOnboardingOpen: boolean;
@@ -15,11 +16,8 @@ export function shouldForceComposeForGuide({
 }: ComposeForceParams): boolean {
   if (!isOnboardingOpen) return false;
   if (activeOnboardingSection === "compose") return true;
-  if (activeOnboardingStepId === "compose-kind" || activeOnboardingStepId === "compose-input") {
-    return true;
-  }
-  if (activeOnboardingStepId === "mobile-compose-combobox") return true;
-  if (!isMobile && activeOnboardingStepId === "filters-hashtag-content") return true;
+  if (isComposeGuideStep(activeOnboardingStepId)) return true;
+  if (!isMobile && shouldPreopenComposeOnDesktop(activeOnboardingStepId)) return true;
   return false;
 }
 

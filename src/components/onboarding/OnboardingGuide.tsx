@@ -8,6 +8,11 @@ import {
   OnboardingStep,
 } from "./onboarding-types";
 import { getOnboardingAllSteps } from "./onboarding-steps";
+import {
+  isComposeGuideStep,
+  isNavigationBreadcrumbStep,
+  isNavigationFocusStep,
+} from "@/lib/onboarding-step-rules";
 
 interface OnboardingGuideProps {
   isOpen: boolean;
@@ -212,8 +217,7 @@ export function OnboardingGuide({
       return;
     }
 
-    const isBreadcrumbStep =
-      current.id === "navigation-breadcrumb" || current.id === "mobile-navigation-breadcrumb";
+    const isBreadcrumbStep = isNavigationBreadcrumbStep(current.id);
     const previousOutline = target.style.outline;
     const previousOutlineOffset = target.style.outlineOffset;
     const previousBoxShadow = target.style.boxShadow;
@@ -298,9 +302,8 @@ export function OnboardingGuide({
     const step = activeSteps[stepIndex];
     if (!step) return;
 
-    const isFocusStep = step.id === "navigation-focus" || step.id === "mobile-navigation-focus";
-    const isBreadcrumbStep =
-      step.id === "navigation-breadcrumb" || step.id === "mobile-navigation-breadcrumb";
+    const isFocusStep = isNavigationFocusStep(step.id);
+    const isBreadcrumbStep = isNavigationBreadcrumbStep(step.id);
     if (!isFocusStep && !isBreadcrumbStep) return;
     if (!interactionSatisfied) return;
 
@@ -533,10 +536,7 @@ export function OnboardingGuide({
         zIndex: 130,
       };
     }
-    const isComposeGuidanceStep =
-      currentStep.id === "compose-kind" ||
-      currentStep.id === "compose-input" ||
-      currentStep.id === "mobile-compose-combobox";
+    const isComposeGuidanceStep = isComposeGuideStep(currentStep.id);
     const isHashtagContentStep = currentStep.id === "filters-hashtag-content";
     const maxStepCardWidth = Math.min(isMobile ? window.innerWidth - 16 : 520, window.innerWidth - 16);
     const minStepCardWidth = Math.min(280, maxStepCardWidth);
