@@ -982,6 +982,7 @@ const Index = () => {
         <OnboardingGuide
           isOpen={isOnboardingOpen && !isAuthModalOpen}
           isMobile={isMobile}
+          currentView={currentView}
           uiContextKey={`${currentView}:${focusedTaskId || ""}`}
           initialSection={onboardingInitialSection}
           sections={onboardingSections}
@@ -1051,6 +1052,7 @@ const Index = () => {
       <OnboardingGuide
         isOpen={isOnboardingOpen && !isAuthModalOpen}
         isMobile={isMobile}
+        currentView={currentView}
         uiContextKey={`${currentView}:${focusedTaskId || ""}`}
         initialSection={onboardingInitialSection}
         sections={onboardingSections}

@@ -14,6 +14,7 @@ Upcoming improvements in progress.
 - Calendar month stack no longer sync-locks scrolling to an active month while scrolling, and sticky month headers were removed for smoother continuous vertical flow.
 - Calendar month stack now preserves scroll position more smoothly while prepending earlier months (reducing upward-scroll jank), and the month label in the day panel updates again based on scroll position.
 - Onboarding picker ovals were reduced in size, and desktop Kanban/Calendar now have dedicated, concrete guide step flows instead of reusing compose-focused guidance.
+- Guide area ovals were tightened further and now anchor to smaller Kanban/Calendar targets, reducing overlap and reposition jitter; dedicated Kanban/Calendar walkthrough steps now cover column/depth and day-panel/month-nav workflows.
 - Onboarding section picker performance and layout were improved with lighter guide targets, reduced overlap, and view-specific guidance (Kanban/Calendar now show dedicated guides instead of compose guidance where compose is not present).
 
 ## [1.2.2] - 2026-02-17

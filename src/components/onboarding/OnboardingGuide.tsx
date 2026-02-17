@@ -18,6 +18,7 @@ import {
 interface OnboardingGuideProps {
   isOpen: boolean;
   isMobile?: boolean;
+  currentView?: "tree" | "feed" | "kanban" | "calendar" | "list";
   uiContextKey?: string;
   initialSection: OnboardingInitialSection;
   sections: OnboardingSection[];
@@ -60,6 +61,7 @@ function renderGuideTextWithItalics(text: string) {
 export function OnboardingGuide({
   isOpen,
   isMobile = false,
+  currentView = "tree",
   uiContextKey,
   initialSection,
   sections,
@@ -78,6 +80,7 @@ export function OnboardingGuide({
   const [isManualSession, setIsManualSession] = useState(false);
   const [manualSelectedSection, setManualSelectedSection] = useState<OnboardingSectionId | null>(null);
   const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
+  const [pickerMeasuredOnce, setPickerMeasuredOnce] = useState(false);
   const [guideCardSize, setGuideCardSize] = useState({ width: 380, height: 320 });
   const guideCardRef = useRef<HTMLDivElement | null>(null);
   const manualSelectedSectionRef = useRef<OnboardingSectionId | null>(null);
@@ -180,6 +183,7 @@ export function OnboardingGuide({
     pendingAutoAdvanceStepIdsRef.current.clear();
     previousStepIdRef.current = null;
     backUnlockedStepIdsRef.current.clear();
+    setPickerMeasuredOnce(false);
   }, [isOpen, initialSection]);
 
   useEffect(() => {
@@ -431,7 +435,7 @@ export function OnboardingGuide({
         case "filters":
           return ['[data-onboarding="mobile-filters"]'];
         case "compose":
-          return ['[data-onboarding="mobile-combined-box"]', '[data-onboarding="compose-input"]', '[data-onboarding="kanban-board"]', '[data-onboarding="calendar-month-stack"]'];
+          return ['[data-onboarding="mobile-combined-box"]', '[data-onboarding="compose-input"]'];
       }
     }
 
@@ -441,9 +445,15 @@ export function OnboardingGuide({
       case "filters":
         return ["aside", '[data-onboarding="channels-section"]'];
       case "compose":
-        return ['[data-onboarding="compose-input"]', '[data-onboarding="kanban-board"]', '[data-onboarding="calendar-month-stack"]'];
+        if (currentView === "kanban") {
+          return ['[data-onboarding="kanban-levels"]', '[data-onboarding="kanban-columns"]'];
+        }
+        if (currentView === "calendar") {
+          return ['[data-onboarding="calendar-day-panel"]', '[data-onboarding="calendar-month-nav-next"]'];
+        }
+        return ['[data-onboarding="compose-input"]', '[data-onboarding="focused-compose"]'];
     }
-  }, [isMobile]);
+  }, [currentView, isMobile]);
 
   useEffect(() => {
     if (!isOpen || !showSectionPicker) return;
@@ -489,6 +499,7 @@ export function OnboardingGuide({
         measureSection(section.id);
       }
       setPickerRects(nextRects);
+      return Object.keys(nextRects).length;
     };
 
     let rafId = 0;
@@ -497,10 +508,12 @@ export function OnboardingGuide({
       rafId = window.requestAnimationFrame(() => {
         rafId = 0;
         measurePickerRects();
+        setPickerMeasuredOnce(true);
       });
     };
 
     measurePickerRects();
+    setPickerMeasuredOnce(true);
     window.addEventListener("resize", requestMeasure);
     window.addEventListener("scroll", requestMeasure, true);
     return () => {
@@ -726,12 +739,12 @@ export function OnboardingGuide({
   const getPickerPaneStyle = (sectionId: OnboardingSectionId): React.CSSProperties => {
     const measured = pickerRects[sectionId];
     if (measured) {
-      const inset = Math.min(30, Math.max(14, Math.min(measured.width, measured.height) * 0.12));
+      const inset = Math.min(42, Math.max(20, Math.min(measured.width, measured.height) * 0.2));
       return {
         left: measured.left + inset,
         top: measured.top + inset,
-        width: Math.max(84, measured.width - inset * 2),
-        height: Math.max(64, measured.height - inset * 2),
+        width: Math.max(72, measured.width - inset * 2),
+        height: Math.max(54, measured.height - inset * 2),
       };
     }
 
@@ -805,12 +818,12 @@ export function OnboardingGuide({
             </div>
           ) : (
             <>
-              {sections.map((section) => (
+              {pickerMeasuredOnce && sections.map((section) => (
                 <button
                   key={section.id}
                   onClick={() => handleSectionStart(section.id)}
                   style={getPickerPaneStyle(section.id)}
-                  className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-3 shadow-[0_0_0_1px_hsl(var(--primary)/0.18),0_8px_20px_hsl(var(--background)/0.42)]"
+                  className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-2 shadow-[0_0_0_1px_hsl(var(--primary)/0.16),0_6px_14px_hsl(var(--background)/0.36)]"
                   aria-label={`Start ${section.title} onboarding section`}
                   title={`${section.title}: ${section.description}`}
                 >
