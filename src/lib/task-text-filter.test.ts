@@ -30,4 +30,25 @@ describe("taskMatchesTextQuery", () => {
     expect(taskMatchesTextQuery(task, "alice doe")).toBe(true);
     expect(taskMatchesTextQuery(task, "unrelated value")).toBe(false);
   });
+
+  it("matches via resolved people metadata when task author only has pubkey", () => {
+    const task = makeTask({
+      author: makePerson({
+        id: "f".repeat(64),
+        name: "",
+        displayName: "",
+      }),
+      content: "Content without author hints",
+    });
+    const people = [
+      makePerson({
+        id: "f".repeat(64),
+        name: "alice",
+        displayName: "Alice Example",
+      }),
+    ];
+
+    expect(taskMatchesTextQuery(task, "alice", people)).toBe(true);
+    expect(taskMatchesTextQuery(task, "alice example", people)).toBe(true);
+  });
 });

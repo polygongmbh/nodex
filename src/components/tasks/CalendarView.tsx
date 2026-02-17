@@ -139,7 +139,7 @@ export function CalendarView({
         if (!descendantIds.has(task.id)) return false;
       }
 
-      if (!taskMatchesTextQuery(task, searchQuery)) {
+      if (!taskMatchesTextQuery(task, searchQuery, people)) {
         return false;
       }
       

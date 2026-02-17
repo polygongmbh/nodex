@@ -94,11 +94,11 @@ export function TaskTree({
       return false;
     }
     
-    const matchesQuery = taskMatchesTextQuery(task, query);
+    const matchesQuery = taskMatchesTextQuery(task, query, people);
     // AND logic: all included channels must be present
     const matchesChannels = includedChannels.length === 0 || includedChannels.every(c => taskTagsLower.includes(c));
     return matchesQuery && matchesChannels;
-  }, []);
+  }, [people]);
 
   // Find all tasks that directly match the filter
   const getDirectlyMatchingTasks = useCallback((query: string, includedChannels: string[], excludedChannels: string[]): Set<string> => {

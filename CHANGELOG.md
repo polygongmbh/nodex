@@ -16,7 +16,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Modifier+Enter in hashtag autocomplete now adds the selected hashtag as a publish tag without inserting hashtag text into the compose message.
 - Alt+Enter now follows autocomplete context: with open hashtag/mention suggestions it applies tag-only selection, and alternate submit only triggers when no autocomplete dropdown is open.
 - Compose autocomplete dropdowns now cap height, scroll internally, and truncate long labels instead of overflowing the view.
-- Task text search now also matches task chips (hashtags/mentions) and posting-user identity fields (username/display name).
+- Task text search now also matches task chips (hashtags/mentions) and posting-user identity fields (username/display name), including names resolved from cached people metadata when task events only include pubkeys.
 - Sidebar people list now shows identities with at least three posts, sorts them by most recent post first, and marks users online only when they posted within the last three minutes.
 - Retrieved indexed Nostr person references (`#[n]`) now resolve into mention tokens, and uppercase `T` hashtag tags are parsed consistently in filters/channels.
 - Feed and shared task content now render resolved `@mentions` as user-linked labels (for example `@alice` instead of raw pubkeys when profile data is known).

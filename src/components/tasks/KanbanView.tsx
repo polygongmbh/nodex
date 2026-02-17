@@ -153,7 +153,7 @@ export function KanbanView({
       }
 
       // Apply search filter
-      if (!taskMatchesTextQuery(task, searchQuery)) {
+      if (!taskMatchesTextQuery(task, searchQuery, people)) {
         return false;
       }
       

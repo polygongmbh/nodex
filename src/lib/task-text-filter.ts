@@ -1,16 +1,20 @@
-import type { Task } from "@/types";
+import type { Person, Task } from "@/types";
 
 function normalize(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export function taskMatchesTextQuery(task: Task, query: string): boolean {
+export function taskMatchesTextQuery(task: Task, query: string, people: Person[] = []): boolean {
   const normalizedQuery = normalize(query);
   if (!normalizedQuery) return true;
 
   const tags = task.tags ?? [];
   const mentions = task.mentions ?? [];
   const assignees = task.assigneePubkeys ?? [];
+
+  const authorId = task.author?.id?.trim().toLowerCase();
+  const resolvedAuthor =
+    people.find((person) => person.id.trim().toLowerCase() === authorId) ?? task.author;
 
   const haystack = [
     task.content,
@@ -20,10 +24,10 @@ export function taskMatchesTextQuery(task: Task, query: string): boolean {
     ...mentions.map((mention) => `@${mention}`),
     ...assignees,
     ...assignees.map((assignee) => `@${assignee}`),
-    task.author?.name ?? "",
-    task.author?.displayName ?? "",
-    task.author?.nip05 ?? "",
-    task.author?.id ?? "",
+    resolvedAuthor?.name ?? "",
+    resolvedAuthor?.displayName ?? "",
+    resolvedAuthor?.nip05 ?? "",
+    resolvedAuthor?.id ?? "",
   ]
     .filter(Boolean)
     .map(normalize)
