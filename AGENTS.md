@@ -237,7 +237,10 @@ When asked to create a plan to fix or implement something:
 - NEVER commit plans to git.
 - Use descriptive kebab-case filenames (for example `fix-position-healing.md`).
 - After implementing a plan, you MUST delete the plan file before handoff/final response.
-- Before deleting untracked text artifacts (for example files in `plans/`), run `git add` on them once without committing so they are recoverable via index/reflog if deletion was a mistake.
+- Before deleting untracked text artifacts (for example files in `plans/`), run this sequence so there is a recoverable hash reference:
+  - `git add <file>`
+  - `git stash push -m \"archive <file>\" -- <file>`
+  - `git stash drop` (drop only after confirming the stash entry exists)
 
 ### Prompt Effort Modes
 - `quick`: minimize testing/refactoring, run focused checks only, defer broader cleanup unless requested.
