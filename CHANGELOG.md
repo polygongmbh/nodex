@@ -37,6 +37,7 @@ Expanded relay-aware task publishing, priority editing, and English/German local
 - Compose metadata-only channel selections now publish explicit Nostr `t` tags, so events remain discoverable and visible after reload even when hashtags were not inserted into content.
 - Relay filtering now keeps events visible when relay metadata is missing on inbound NDK events, avoiding false negatives in filtered task lists.
 - Table-view priority `<select>` controls now stay open and keyboard-usable by suspending global task-navigation hotkeys while native select elements are focused.
+- Table-view priority `<select>` controls now also remain stable during background list rerenders, preventing abrupt auto-close while open.
 
 ## [1.3.0] - 2026-02-17
 Introduced major calendar, table, and onboarding upgrades with view-specific guide flows and cleaner filter/compose behavior.

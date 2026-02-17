@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw } from "lucide-react";
 import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
@@ -68,6 +68,49 @@ interface ListViewProps {
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
 type SortDirection = "asc" | "desc";
+
+interface PriorityCellProps {
+  taskId: string;
+  taskContent: string;
+  priority?: number;
+  onUpdatePriority?: (taskId: string, priority: number) => void;
+}
+
+const PriorityCell = memo(function PriorityCell({
+  taskId,
+  taskContent,
+  priority,
+  onUpdatePriority,
+}: PriorityCellProps) {
+  const value = typeof priority === "number" ? String(priority) : "";
+  return (
+    <select
+      aria-label={`Priority for ${taskContent}`}
+      value={value}
+      onChange={(event) => {
+        const next = event.target.value;
+        if (!next) return;
+        const parsed = Number.parseInt(next, 10);
+        if (Number.isFinite(parsed)) {
+          onUpdatePriority?.(taskId, parsed);
+        }
+      }}
+      className="text-xs bg-background border border-border rounded px-2 py-1"
+    >
+      <option value="">—</option>
+      <option value="20">P20</option>
+      <option value="40">P40</option>
+      <option value="60">P60</option>
+      <option value="80">P80</option>
+      <option value="100">P100</option>
+    </select>
+  );
+}, (prev, next) =>
+  prev.taskId === next.taskId &&
+  prev.taskContent === next.taskContent &&
+  prev.priority === next.priority &&
+  prev.onUpdatePriority === next.onUpdatePriority
+);
 
 export function ListView({
   tasks,
@@ -471,32 +514,6 @@ export function ListView({
     );
   };
 
-  const PriorityCell = ({ task }: { task: Task }) => {
-    const value = typeof task.priority === "number" ? String(task.priority) : "";
-    return (
-      <select
-        aria-label={`Priority for ${task.content}`}
-        value={value}
-        onChange={(event) => {
-          const next = event.target.value;
-          if (!next) return;
-          const parsed = Number.parseInt(next, 10);
-          if (Number.isFinite(parsed)) {
-            onUpdatePriority?.(task.id, parsed);
-          }
-        }}
-        className="text-xs bg-background border border-border rounded px-2 py-1"
-      >
-        <option value="">—</option>
-        <option value="20">P20</option>
-        <option value="40">P40</option>
-        <option value="60">P60</option>
-        <option value="80">P80</option>
-        <option value="100">P100</option>
-      </select>
-    );
-  };
-
   // Editable tags cell
   const TagsCell = ({ task }: { task: Task }) => {
     return (
@@ -660,7 +677,12 @@ export function ListView({
                       <DueDateCell task={task} />
                     </td>
                     <td className="p-3">
-                      <PriorityCell task={task} />
+                      <PriorityCell
+                        taskId={task.id}
+                        taskContent={task.content}
+                        priority={task.priority}
+                        onUpdatePriority={onUpdatePriority}
+                      />
                     </td>
                     <td className="p-3 min-w-0">
                       <TagsCell task={task} />
