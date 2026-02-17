@@ -206,6 +206,7 @@
     },
     "menu": {
       "signInToPost": "Zum Veröffentlichen anmelden",
+      "signInShort": "Anmelden",
       "signedInVia": "Angemeldet über {{method}}",
       "signedInAs": "Angemeldet als {{method}}",
       "editProfile": "Profil bearbeiten",

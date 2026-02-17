@@ -206,6 +206,7 @@
     },
     "menu": {
       "signInToPost": "Sign in to post",
+      "signInShort": "Sign in",
       "signedInVia": "Signed in via {{method}}",
       "signedInAs": "Signed in as {{method}}",
       "editProfile": "Edit profile",

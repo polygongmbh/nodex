@@ -22,6 +22,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Due date urgency colors now transition from yellow (near upcoming dates) toward progressively greener tones for farther future dates.
 - Compose post-type selector is now styled as a clearer segmented control on desktop/mobile, and remaining Task/Comment/Mentions compose labels/tooltips are fully translation-key-driven.
 - German sign-in status wording now distinguishes guest login (`Angemeldet als Gast`) from other methods (`Angemeldet über …`).
+- Desktop top navigation no longer scrolls horizontally; on smaller widths the German sign-in CTA is shortened to `Anmelden`.
 
 ### Fixed
 - Root task creation now blocks invalid multi-relay submissions with clear guidance: `Select one relay or a parent task`.

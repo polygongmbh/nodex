@@ -431,10 +431,11 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         variant="ghost"
         size="sm"
         onClick={onSignInClick}
-        className="h-full px-2 gap-2 text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent rounded-none"
+        className="h-full px-2 gap-2 text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent rounded-none whitespace-nowrap"
       >
         <Zap className="w-4 h-4" />
-        {t("auth.menu.signInToPost")}
+        <span className="hidden xl:inline">{t("auth.menu.signInToPost")}</span>
+        <span className="xl:hidden">{t("auth.menu.signInShort")}</span>
       </Button>
     );
   }
