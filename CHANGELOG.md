@@ -7,6 +7,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 Upcoming improvements in progress.
 
+### Changed
+- Calendar view now uses vertically stacked months with dynamic month loading while scrolling (desktop and mobile), shows ISO week numbers, and widens the right-side day detail panel on widescreen layouts.
+
 ## [1.2.2] - 2026-02-17
 Maintenance release for version alignment and tagging.
 

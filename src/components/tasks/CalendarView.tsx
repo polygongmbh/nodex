@@ -1,8 +1,25 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, isPast, startOfDay, isTomorrow } from "date-fns";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
+  addMonths,
+  subMonths,
+  isToday,
+  isPast,
+  startOfDay,
+  isTomorrow,
+  startOfWeek,
+  endOfWeek,
+  eachWeekOfInterval,
+  getISOWeek,
+} from "date-fns";
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
@@ -55,6 +72,8 @@ interface CalendarViewProps {
   onAuthorClick?: (author: Person) => void;
 }
 
+const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
+
 export function CalendarView({
   tasks,
   allTasks,
@@ -78,6 +97,10 @@ export function CalendarView({
 }: CalendarViewProps) {
   const { user } = useNDK();
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [desktopMonths, setDesktopMonths] = useState<Date[]>(() => {
+    const now = startOfMonth(new Date());
+    return [subMonths(now, 1), now, addMonths(now, 1)];
+  });
   const [selectedDateInternal, setSelectedDateInternal] = useState<Date | null>(new Date());
   const [isComposingEvent, setIsComposingEvent] = useState(false);
   const [mobileTab, setMobileTab] = useState<"calendar" | "upcoming">("upcoming");
@@ -86,6 +109,10 @@ export function CalendarView({
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
   const effectiveMobileTab = mobileView ?? mobileTab;
   const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : selectedDateInternal;
+  const desktopScrollerRef = useRef<HTMLDivElement | null>(null);
+  const desktopMonthSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const desktopInitialAlignDoneRef = useRef(false);
+  const desktopLoadingRef = useRef(false);
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -165,17 +192,55 @@ export function CalendarView({
     });
   }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, getDescendantIds, people]);
 
-  const days = useMemo(() => {
-    const start = startOfMonth(currentMonth);
-    const end = endOfMonth(currentMonth);
-    return eachDayOfInterval({ start, end });
-  }, [currentMonth]);
+  const desktopMonthSections = useMemo(() => {
+    return desktopMonths
+      .map((month) => {
+        const monthStart = startOfMonth(month);
+        const monthEnd = endOfMonth(month);
+        const weekStarts = eachWeekOfInterval(
+          { start: monthStart, end: monthEnd },
+          { weekStartsOn: 1 }
+        );
+        const weeks = weekStarts.map((weekStart) =>
+          eachDayOfInterval({
+            start: weekStart,
+            end: endOfWeek(weekStart, { weekStartsOn: 1 }),
+          })
+        );
+        return {
+          key: getMonthKey(month),
+          month: monthStart,
+          weeks,
+        };
+      })
+      .sort((a, b) => a.month.getTime() - b.month.getTime());
+  }, [desktopMonths]);
 
   const getTasksForDay = (day: Date) => {
     return tasksWithDueDates.filter(task => task.dueDate && isSameDay(task.dueDate, day));
   };
 
   const selectedDayTasks = selectedDate ? getTasksForDay(selectedDate) : [];
+
+  const alignDesktopScrollToMonth = useCallback(
+    (month: Date, behavior: ScrollBehavior = "auto") => {
+      const key = getMonthKey(month);
+      const section = desktopMonthSectionRefs.current[key];
+      section?.scrollIntoView({ behavior, block: "start" });
+    },
+    []
+  );
+
+  const ensureDesktopMonthRendered = useCallback((month: Date) => {
+    const monthStart = startOfMonth(month);
+    const monthTime = monthStart.getTime();
+    setDesktopMonths((prev) => {
+      if (prev.some((candidate) => startOfMonth(candidate).getTime() === monthTime)) {
+        return prev;
+      }
+      return [...prev, monthStart].sort((a, b) => a.getTime() - b.getTime());
+    });
+  }, []);
 
   // Chronologically sorted tasks for upcoming feed
   const upcomingTasks = useMemo(() => {
@@ -236,6 +301,72 @@ export function CalendarView({
     return groups;
   }, [upcomingTasks]);
 
+  useEffect(() => {
+    if (desktopInitialAlignDoneRef.current) return;
+    const rafId = requestAnimationFrame(() => {
+      alignDesktopScrollToMonth(currentMonth, "auto");
+      desktopInitialAlignDoneRef.current = true;
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [alignDesktopScrollToMonth, currentMonth]);
+
+  useEffect(() => {
+    const scroller = desktopScrollerRef.current;
+    if (!scroller) return;
+
+    const onScroll = () => {
+      if (desktopLoadingRef.current) return;
+
+      const nearBottom = scroller.scrollHeight - (scroller.scrollTop + scroller.clientHeight) < 320;
+      const nearTop = scroller.scrollTop < 320;
+
+      if (nearBottom) {
+        desktopLoadingRef.current = true;
+        setDesktopMonths((prev) => {
+          const sorted = [...prev].sort((a, b) => a.getTime() - b.getTime());
+          const last = sorted[sorted.length - 1] ?? startOfMonth(currentMonth);
+          return [...sorted, addMonths(startOfMonth(last), 1)];
+        });
+        requestAnimationFrame(() => {
+          desktopLoadingRef.current = false;
+        });
+      }
+
+      if (nearTop) {
+        desktopLoadingRef.current = true;
+        const previousHeight = scroller.scrollHeight;
+        setDesktopMonths((prev) => {
+          const sorted = [...prev].sort((a, b) => a.getTime() - b.getTime());
+          const first = sorted[0] ?? startOfMonth(currentMonth);
+          return [subMonths(startOfMonth(first), 1), ...sorted];
+        });
+        requestAnimationFrame(() => {
+          const nextHeight = scroller.scrollHeight;
+          scroller.scrollTop += nextHeight - previousHeight;
+          desktopLoadingRef.current = false;
+        });
+      }
+
+      const marker = scroller.scrollTop + 120;
+      let activeMonth = currentMonth;
+      for (const section of desktopMonthSections) {
+        const node = desktopMonthSectionRefs.current[section.key];
+        if (!node) continue;
+        if (node.offsetTop <= marker) {
+          activeMonth = section.month;
+        } else {
+          break;
+        }
+      }
+      if (getMonthKey(activeMonth) !== getMonthKey(currentMonth)) {
+        setCurrentMonth(activeMonth);
+      }
+    };
+
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", onScroll);
+  }, [currentMonth, desktopMonthSections]);
+
   const canCompleteTask = (task: Task) => {
     return canUserChangeTaskStatus(task, currentUser);
   };
@@ -260,10 +391,6 @@ export function CalendarView({
   const clearStatusMenuOpenIntent = (taskId: string) => {
     allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
   };
-
-  // Get day of week for first day to add padding
-  const firstDayOfMonth = startOfMonth(currentMonth);
-  const startPadding = firstDayOfMonth.getDay();
 
   const handleCreateEvent = (
     content: string,
@@ -290,6 +417,16 @@ export function CalendarView({
       explicitMentionPubkeys
     );
     setIsComposingEvent(false);
+  };
+
+  const navigateMonth = (direction: "prev" | "next") => {
+    const targetMonth =
+      direction === "prev" ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1);
+    setCurrentMonth(targetMonth);
+    ensureDesktopMonthRendered(targetMonth);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => alignDesktopScrollToMonth(targetMonth, "smooth"));
+    });
   };
 
   return (
@@ -474,127 +611,133 @@ export function CalendarView({
 
         {/* Calendar Grid - shown on desktop or when calendar tab selected on mobile */}
         {(!isMobile || effectiveMobileTab === "calendar") && (
-          <div className={cn("flex-1 overflow-auto min-w-0", isMobile ? "p-2" : "p-4")}>
-            {/* Mobile Month Navigation */}
-            {isMobile && (
-              <div className="flex items-center justify-between mb-2">
-                <button
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  className="p-1.5 rounded hover:bg-muted transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="font-semibold text-sm">
-                  {format(currentMonth, "MMMM yyyy")}
-                </span>
-                <button
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  className="p-1.5 rounded hover:bg-muted transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-            {/* Day Headers */}
-            <div className="grid grid-cols-7 mb-0.5">
-              {(isMobile ? ["S", "M", "T", "W", "T", "F", "S"] : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]).map((day, i) => (
-                <div key={`${day}-${i}`} className={cn(
-                  "text-center text-xs font-medium text-muted-foreground",
-                  isMobile ? "py-0.5" : "py-1"
-                )}>
-                  {day}
-                </div>
-              ))}
-            </div>
+          <div
+            ref={desktopScrollerRef}
+            className={cn("flex-1 overflow-auto min-w-0", isMobile ? "p-2" : "p-4 space-y-5")}
+          >
+            {desktopMonthSections.map((section) => (
+              <section
+                key={section.key}
+                ref={(node) => {
+                  desktopMonthSectionRefs.current[section.key] = node;
+                }}
+                className="space-y-2"
+              >
+                <h2 className="sticky top-0 z-10 bg-background/95 backdrop-blur py-1 text-sm font-semibold border-b border-border">
+                  {format(section.month, "MMMM yyyy")}
+                </h2>
 
-            {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-px bg-border/50">
-              {/* Padding for start of month */}
-              {Array.from({ length: startPadding }).map((_, i) => (
-                <div key={`pad-${i}`} className={cn(
-                  "bg-background",
-                  isMobile ? "aspect-[1/0.9]" : "aspect-square"
-                )} />
-              ))}
-              
-              {days.map((day) => {
-                const dayTasks = getTasksForDay(day);
-                const isSelected = selectedDate && isSameDay(day, selectedDate);
-                
-                return (
-                  <button
-                    key={day.toISOString()}
-                    onClick={() => {
-                      if (controlledSelectedDate === undefined) {
-                        setSelectedDateInternal(day);
-                      }
-                      onSelectedDateChange?.(day);
-                    }}
-                    className={cn(
-                      "bg-background transition-colors text-center flex flex-col items-center justify-center relative",
-                      isMobile ? "aspect-[1/0.9] p-0.5" : "min-h-[5.5rem] xl:aspect-square p-1 text-left rounded-lg border",
-                      isToday(day) && (isMobile ? "bg-primary/10" : "border-primary"),
-                      isSelected ? "bg-primary/20" : "hover:bg-muted/50",
-                      !isMobile && !isToday(day) && !isSelected && "border-transparent",
-                      !isSameMonth(day, currentMonth) && "opacity-50"
-                    )}
-                  >
-                    <span className={cn(
-                      isMobile ? "text-xs" : "text-sm",
-                      "font-medium",
-                      isToday(day) && "text-primary"
-                    )}>
-                      {format(day, "d")}
-                    </span>
-                    {dayTasks.length > 0 && (
-                      isMobile ? (
-                        <div className="flex gap-0.5 mt-0.5">
-                          {dayTasks.slice(0, 3).map((task) => (
-                            <div
-                              key={task.id}
-                              className={cn(
-                                "w-1 h-1 rounded-full",
-                                task.status === "done" ? "bg-muted-foreground" :
-                                task.status === "in-progress" ? "bg-amber-500" :
-                                "bg-primary"
-                              )}
-                            />
-                          ))}
-                          {dayTasks.length > 3 && (
-                            <span className="text-[6px] text-muted-foreground">+</span>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
-                          {dayTasks.slice(0, 2).map((task) => {
-                            const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
-                            return (
-                              <div
-                                key={task.id}
-                                className={cn(
-                                  "text-[10px] leading-tight px-1 py-0.5 rounded truncate",
-                                  task.status === "done" ? "bg-muted text-muted-foreground line-through" :
-                                  task.status === "in-progress" ? "bg-amber-500/20 text-amber-700" :
-                                  "bg-primary/10",
-                                  dueDateColor
-                                )}
-                              >
-                                {task.content.slice(0, 15)}...
-                              </div>
-                            );
-                          })}
-                          {dayTasks.length > 2 && (
-                            <span className="text-[10px] text-muted-foreground">
-                              +{dayTasks.length - 2} more
+                <div className={cn(
+                  "grid gap-px mb-0.5",
+                  isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
+                )}>
+                  <div className="text-center text-xs font-medium text-muted-foreground py-1">Wk</div>
+                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                    <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
+                      {isMobile ? day[0] : day}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-px bg-border/50">
+                  {section.weeks.map((week) => (
+                    <div
+                      key={week[0]?.toISOString() ?? section.key}
+                      className={cn(
+                        "grid gap-px bg-border/50",
+                        isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
+                      )}
+                    >
+                      <div className="bg-muted/40 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                        {getISOWeek(week[3] ?? week[0])}
+                      </div>
+                      {week.map((day) => {
+                        const dayTasks = getTasksForDay(day);
+                        const isSelected = selectedDate && isSameDay(day, selectedDate);
+                        const isInDisplayedMonth = isSameMonth(day, section.month);
+
+                        return (
+                          <button
+                            key={day.toISOString()}
+                            onClick={() => {
+                              if (controlledSelectedDate === undefined) {
+                                setSelectedDateInternal(day);
+                              }
+                              onSelectedDateChange?.(day);
+                              if (!isInDisplayedMonth) {
+                                setCurrentMonth(startOfMonth(day));
+                                ensureDesktopMonthRendered(day);
+                              }
+                            }}
+                            className={cn(
+                              "bg-background transition-colors text-left flex flex-col relative rounded-lg border",
+                              isMobile ? "min-h-[4.4rem] p-1" : "min-h-[6.2rem] p-1",
+                              isToday(day) && "border-primary",
+                              isSelected ? "bg-primary/20" : "hover:bg-muted/50",
+                              !isToday(day) && !isSelected && "border-transparent",
+                              !isInDisplayedMonth && "opacity-55"
+                            )}
+                          >
+                            <span className={cn(isMobile ? "text-xs" : "text-sm", "font-medium", isToday(day) && "text-primary")}>
+                              {format(day, "d")}
                             </span>
-                          )}
-                        </div>
-                      )
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                            {dayTasks.length > 0 && (
+                              isMobile ? (
+                                <div className="flex gap-0.5 mt-0.5">
+                                  {dayTasks.slice(0, 3).map((task) => (
+                                    <div
+                                      key={task.id}
+                                      className={cn(
+                                        "w-1 h-1 rounded-full",
+                                        task.status === "done"
+                                          ? "bg-muted-foreground"
+                                          : task.status === "in-progress"
+                                            ? "bg-amber-500"
+                                            : "bg-primary"
+                                      )}
+                                    />
+                                  ))}
+                                  {dayTasks.length > 3 && (
+                                    <span className="text-[6px] text-muted-foreground">+</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex-1 flex flex-col gap-0.5 mt-1 overflow-hidden w-full">
+                                  {dayTasks.slice(0, 2).map((task) => {
+                                    const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                                    return (
+                                      <div
+                                        key={task.id}
+                                        className={cn(
+                                          "text-[10px] leading-tight px-1 py-0.5 rounded truncate",
+                                          task.status === "done"
+                                            ? "bg-muted text-muted-foreground line-through"
+                                            : task.status === "in-progress"
+                                              ? "bg-amber-500/20 text-amber-700"
+                                              : "bg-primary/10",
+                                          dueDateColor
+                                        )}
+                                      >
+                                        {task.content.slice(0, 15)}...
+                                      </div>
+                                    );
+                                  })}
+                                  {dayTasks.length > 2 && (
+                                    <span className="text-[10px] text-muted-foreground">
+                                      +{dayTasks.length - 2} more
+                                    </span>
+                                  )}
+                                </div>
+                              )
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
           </div>
         )}
 
@@ -604,13 +747,13 @@ export function CalendarView({
             "border-border overflow-y-auto flex-shrink-0",
             isMobile 
               ? "border-t p-2 flex-1" 
-              : "w-full h-72 border-t p-3 xl:w-80 xl:h-auto xl:border-t-0 xl:border-l xl:p-4"
+              : "w-full h-72 border-t p-3 xl:w-[27rem] 2xl:w-[31rem] xl:h-auto xl:border-t-0 xl:border-l xl:p-4"
           )}>
           {selectedDate ? (
             <>
               <div className="flex items-center justify-between mb-3">
                 <button
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  onClick={() => navigateMonth("prev")}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
                   aria-label="Previous month"
                 >
@@ -620,7 +763,7 @@ export function CalendarView({
                   {format(currentMonth, "MMMM yyyy")}
                 </span>
                 <button
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  onClick={() => navigateMonth("next")}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
                   aria-label="Next month"
                 >
