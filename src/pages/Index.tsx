@@ -48,6 +48,7 @@ import {
 } from "@/lib/people-from-kind0";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { filterTasks } from "@/lib/task-filtering";
+import { deriveSidebarPeople } from "@/lib/sidebar-people";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import {
   isFilterResetStep,
@@ -890,14 +891,7 @@ const Index = () => {
   );
 
   const sidebarPeople = useMemo(() => {
-    const postCountByAuthor = new Map<string, number>();
-    for (const task of allTasks) {
-      const authorId = task.author?.id?.trim().toLowerCase();
-      if (!authorId) continue;
-      postCountByAuthor.set(authorId, (postCountByAuthor.get(authorId) || 0) + 1);
-    }
-
-    return people.filter((person) => (postCountByAuthor.get(person.id.toLowerCase()) || 0) >= 6);
+    return deriveSidebarPeople(people, allTasks);
   }, [allTasks, people]);
 
   const viewProps = {
