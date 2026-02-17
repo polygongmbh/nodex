@@ -7,70 +7,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface ShortcutGroup {
   title: string;
   shortcuts: { key: string; description: string }[];
 }
-
-const shortcutGroups: ShortcutGroup[] = [
-  {
-    title: "Views",
-    shortcuts: [
-      { key: "1", description: "Tree view" },
-      { key: "2", description: "Feed view" },
-      { key: "3", description: "Kanban view" },
-      { key: "4", description: "Calendar view" },
-      { key: "5", description: "Table view" },
-    ],
-  },
-  {
-    title: "Task Navigation",
-    shortcuts: [
-      { key: "J / ↓", description: "Move focus down" },
-      { key: "K / ↑", description: "Move focus up" },
-      { key: "L / Enter", description: "Open/select task" },
-      { key: "H", description: "Focus sidebar (at top) / go back" },
-      { key: "G", description: "Jump to first task" },
-      { key: "Shift + G", description: "Jump to last task" },
-      { key: "Esc", description: "Clear focus" },
-    ],
-  },
-  {
-    title: "Sidebar Navigation",
-    shortcuts: [
-      { key: "J / K / ↑ / ↓", description: "Navigate filters" },
-      { key: "Space", description: "Toggle selected filter" },
-      { key: "L / → / Enter", description: "Return to task list" },
-      { key: "G", description: "Jump to first filter" },
-      { key: "Shift + G", description: "Jump to last filter" },
-    ],
-  },
-  {
-    title: "Kanban",
-    shortcuts: [
-      { key: "← / → / H / L", description: "Navigate between columns" },
-      { key: "↑ / ↓ / J / K", description: "Navigate within column" },
-      { key: "Shift + ← / →", description: "Move task between columns" },
-      { key: "Shift + H / L", description: "Move task between columns" },
-    ],
-  },
-  {
-    title: "General",
-    shortcuts: [
-      { key: "?", description: "Toggle keyboard shortcuts" },
-    ],
-  },
-  {
-    title: "Compose",
-    shortcuts: [
-      { key: "Ctrl/Cmd + Enter", description: "Submit as current kind" },
-      { key: "Alt + Enter", description: "Submit as opposite kind (when no autocomplete is open)" },
-      { key: "Enter / Tab", description: "With autocomplete open: insert highlighted suggestion" },
-      { key: "Alt/Ctrl/Cmd/Shift + Enter", description: "With @/# autocomplete open: add highlighted tag/mention as publish metadata only (no token text)" },
-    ],
-  },
-];
 
 interface KeyboardShortcutsHelpProps {
   isOpen: boolean;
@@ -78,7 +20,64 @@ interface KeyboardShortcutsHelpProps {
 }
 
 export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
+  const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const shortcutGroups: ShortcutGroup[] = [
+    {
+      title: t("shortcuts.groups.views"),
+      shortcuts: [
+        { key: "1", description: t("shortcuts.items.treeView") },
+        { key: "2", description: t("shortcuts.items.feedView") },
+        { key: "3", description: t("shortcuts.items.kanbanView") },
+        { key: "4", description: t("shortcuts.items.calendarView") },
+        { key: "5", description: t("shortcuts.items.tableView") },
+      ],
+    },
+    {
+      title: t("shortcuts.groups.taskNavigation"),
+      shortcuts: [
+        { key: "J / ↓", description: t("shortcuts.items.moveFocusDown") },
+        { key: "K / ↑", description: t("shortcuts.items.moveFocusUp") },
+        { key: "L / Enter", description: t("shortcuts.items.openSelectTask") },
+        { key: "H", description: t("shortcuts.items.focusSidebarGoBack") },
+        { key: "G", description: t("shortcuts.items.jumpFirstTask") },
+        { key: "Shift + G", description: t("shortcuts.items.jumpLastTask") },
+        { key: "Esc", description: t("shortcuts.items.clearFocus") },
+      ],
+    },
+    {
+      title: t("shortcuts.groups.sidebarNavigation"),
+      shortcuts: [
+        { key: "J / K / ↑ / ↓", description: t("shortcuts.items.navigateFilters") },
+        { key: "Space", description: t("shortcuts.items.toggleSelectedFilter") },
+        { key: "L / → / Enter", description: t("shortcuts.items.returnTaskList") },
+        { key: "G", description: t("shortcuts.items.jumpFirstFilter") },
+        { key: "Shift + G", description: t("shortcuts.items.jumpLastFilter") },
+      ],
+    },
+    {
+      title: t("shortcuts.groups.kanban"),
+      shortcuts: [
+        { key: "← / → / H / L", description: t("shortcuts.items.navigateColumns") },
+        { key: "↑ / ↓ / J / K", description: t("shortcuts.items.navigateWithinColumn") },
+        { key: "Shift + ← / →", description: t("shortcuts.items.moveTaskColumns") },
+        { key: "Shift + H / L", description: t("shortcuts.items.moveTaskColumns") },
+      ],
+    },
+    {
+      title: t("shortcuts.groups.general"),
+      shortcuts: [{ key: "?", description: t("shortcuts.items.toggleKeyboardShortcuts") }],
+    },
+    {
+      title: t("shortcuts.groups.compose"),
+      shortcuts: [
+        { key: "Ctrl/Cmd + Enter", description: t("shortcuts.items.submitCurrentKind") },
+        { key: "Alt + Enter", description: t("shortcuts.items.submitOppositeKind") },
+        { key: "Enter / Tab", description: t("shortcuts.items.insertHighlightedSuggestion") },
+        { key: "Alt/Ctrl/Cmd/Shift + Enter", description: t("shortcuts.items.addMetadataOnly") },
+      ],
+    },
+  ];
 
   // Handle keyboard scrolling within the dialog - use capture phase to intercept before other handlers
   useEffect(() => {
@@ -128,7 +127,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Keyboard className="w-5 h-5" />
-            Keyboard Shortcuts
+            {t("shortcuts.title")}
           </DialogTitle>
         </DialogHeader>
         
@@ -193,13 +192,14 @@ export function useKeyboardShortcutsHelp() {
 
 // Small button component to show in the UI
 export function KeyboardShortcutsButton({ onClick }: { onClick: () => void }) {
+  const { t } = useTranslation();
   return (
     <Button
       variant="ghost"
       size="icon"
       onClick={onClick}
       className="h-8 w-8"
-      title="Keyboard shortcuts (?)"
+      title={t("sidebar.actions.shortcutsTooltip")}
     >
       <Keyboard className="w-4 h-4" />
     </Button>

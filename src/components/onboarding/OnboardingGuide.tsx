@@ -14,6 +14,7 @@ import {
   isNavigationBreadcrumbStep,
   isNavigationFocusStep,
 } from "@/lib/onboarding-step-rules";
+import { useTranslation } from "react-i18next";
 
 interface OnboardingGuideProps {
   isOpen: boolean;
@@ -71,6 +72,7 @@ export function OnboardingGuide({
   onActiveSectionChange,
   onStepChange,
 }: OnboardingGuideProps) {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState<OnboardingInitialSection>(initialSection);
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -738,9 +740,9 @@ export function OnboardingGuide({
     >
       <div className="flex items-center justify-between gap-3">
         <p className="text-base font-medium text-foreground/90">
-          Pick one highlighted area to begin its guide.
+          {t("onboarding.picker.helper")}
         </p>
-        <Button variant="ghost" onClick={onClose}>Close</Button>
+        <Button variant="ghost" onClick={onClose}>{t("onboarding.picker.close")}</Button>
       </div>
     </div>
   );
@@ -790,7 +792,7 @@ export function OnboardingGuide({
         <button
           type="button"
           className="absolute inset-0 z-[121] pointer-events-auto"
-          aria-label="Dismiss guide section picker"
+          aria-label={t("onboarding.picker.dismiss")}
           onClick={onClose}
         />
       )}
@@ -800,18 +802,18 @@ export function OnboardingGuide({
             <div
               role="dialog"
               aria-modal="true"
-              aria-label="Choose guide section"
+              aria-label={t("onboarding.picker.chooseSection")}
               className="absolute left-2 right-2 bottom-20 z-[130] pointer-events-auto rounded-xl border border-border bg-card/90 backdrop-blur-md text-card-foreground shadow-xl p-4"
             >
               <div className="space-y-3">
-                <h2 className="text-base font-semibold">Choose a guide section</h2>
+                <h2 className="text-base font-semibold">{t("onboarding.picker.chooseSection")}</h2>
                 <div className="space-y-2">
                   {sections.map((section) => (
                     <button
                       key={section.id}
                       onClick={() => handleSectionStart(section.id)}
                       className="w-full flex items-start gap-2 rounded-lg border border-border bg-background/60 hover:bg-primary/10 px-3 py-2 text-left transition-colors"
-                      aria-label={`Start ${section.title} onboarding section`}
+                      aria-label={t("onboarding.picker.startSectionAria", { title: section.title })}
                     >
                       {getSectionIcon(section.id)}
                       <span className="min-w-0">
@@ -833,7 +835,7 @@ export function OnboardingGuide({
                   onClick={() => handleSectionStart(section.id)}
                   style={getPickerPaneStyle(section.id)}
                   className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-2 shadow-[0_0_0_1px_hsl(var(--primary)/0.16),0_6px_14px_hsl(var(--background)/0.36)]"
-                  aria-label={`Start ${section.title} onboarding section`}
+                  aria-label={t("onboarding.picker.startSectionAria", { title: section.title })}
                   title={`${section.title}: ${section.description}`}
                 >
                   <span className="inline-flex items-start gap-2 rounded-xl bg-card/80 backdrop-blur-md px-3 py-2 border border-border shadow-sm">
@@ -871,22 +873,22 @@ export function OnboardingGuide({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Onboarding guide"
+            aria-label={t("onboarding.dialog.ariaLabel")}
             ref={guideCardRef}
             className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
             style={getAnchoredCardStyle()}
           >
             {!currentStep ? (
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold">No onboarding steps available</h2>
+                <h2 className="text-lg font-semibold">{t("onboarding.dialog.emptyTitle")}</h2>
                 <div className="flex justify-end">
-                  <Button onClick={onClose}>Close</Button>
+                  <Button onClick={onClose}>{t("onboarding.picker.close")}</Button>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="text-xs text-muted-foreground">
-                  Step {stepIndex + 1} of {activeSteps.length}
+                  {t("onboarding.dialog.stepLabel", { current: stepIndex + 1, total: activeSteps.length })}
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold">{currentStep.title}</h2>
@@ -901,13 +903,13 @@ export function OnboardingGuide({
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" onClick={onClose} disabled={skipDisabled}>Skip</Button>
+                    <Button variant="ghost" onClick={onClose} disabled={skipDisabled}>{t("onboarding.dialog.skip")}</Button>
                     <Button variant="outline" onClick={handleBack} disabled={stepIndex === 0}>
-                      Back
+                      {t("onboarding.dialog.back")}
                     </Button>
                   </div>
                   <Button onClick={handleNext} disabled={nextDisabled}>
-                    {isLastStep ? "Finish" : "Next"}
+                    {isLastStep ? t("onboarding.dialog.finish") : t("onboarding.dialog.next")}
                   </Button>
                 </div>
               </div>

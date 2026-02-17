@@ -18,6 +18,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Task due-date update events now use stable `d` identifiers per task/date-type for editable update semantics.
 - Table view now supports inline due date/time/date-type editing and inline priority editing with event publishing.
 - Key task compose and mobile unified-bar copy/toasts are now translation-key-driven.
+- Localized remaining navigation/auth guide surfaces, including German `Hierarchisch` (formerly `Baum`), shortcuts/help copy, onboarding guide content/UI labels, breadcrumb labels (`All Tasks`/`Up`), and sign-in/profile-edit/sign-out flows.
 
 ### Fixed
 - Root task creation now blocks invalid multi-relay submissions with clear guidance: `Select one relay or a parent task`.

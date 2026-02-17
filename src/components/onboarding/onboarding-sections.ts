@@ -1,26 +1,27 @@
+import type { TFunction } from "i18next";
 import { OnboardingSection } from "./onboarding-types";
-
-const baseOnboardingSections: OnboardingSection[] = [
-  {
-    id: "navigation",
-    title: "Navigation",
-    description: "Use view tabs and breadcrumbs to move through task contexts.",
-  },
-  {
-    id: "filters",
-    title: "Filters",
-    description: "Use include/exclude channel and people filters effectively.",
-  },
-  {
-    id: "compose",
-    title: "Compose",
-    description: "Post tasks/comments with #tags and @mentions.",
-  },
-];
 
 type GuideView = "tree" | "feed" | "kanban" | "calendar" | "list";
 
-export function getOnboardingSections(isMobile: boolean, view: GuideView): OnboardingSection[] {
+export function getOnboardingSections(isMobile: boolean, view: GuideView, t: TFunction): OnboardingSection[] {
+  const baseOnboardingSections: OnboardingSection[] = [
+    {
+      id: "navigation",
+      title: t("onboarding.sections.navigation.title"),
+      description: t("onboarding.sections.navigation.description"),
+    },
+    {
+      id: "filters",
+      title: t("onboarding.sections.filters.title"),
+      description: t("onboarding.sections.filters.description"),
+    },
+    {
+      id: "compose",
+      title: t("onboarding.sections.compose.title"),
+      description: t("onboarding.sections.compose.description"),
+    },
+  ];
+
   if (isMobile) return baseOnboardingSections;
   if (view === "kanban") {
     return [
@@ -28,8 +29,8 @@ export function getOnboardingSections(isMobile: boolean, view: GuideView): Onboa
       baseOnboardingSections[1],
       {
         id: "compose",
-        title: "Kanban",
-        description: "Use columns, status lanes, and depth controls to organize work.",
+        title: t("onboarding.sections.kanban.title"),
+        description: t("onboarding.sections.kanban.description"),
       },
     ];
   }
@@ -39,8 +40,8 @@ export function getOnboardingSections(isMobile: boolean, view: GuideView): Onboa
       baseOnboardingSections[1],
       {
         id: "compose",
-        title: "Calendar",
-        description: "Plan tasks by date and review each day in the detail panel.",
+        title: t("onboarding.sections.calendar.title"),
+        description: t("onboarding.sections.calendar.description"),
       },
     ];
   }

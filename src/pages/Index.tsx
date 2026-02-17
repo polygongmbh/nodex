@@ -378,12 +378,12 @@ const Index = () => {
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
   const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
   const onboardingSections = useMemo(
-    () => getOnboardingSections(isMobile, currentView),
-    [currentView, isMobile]
+    () => getOnboardingSections(isMobile, currentView, t),
+    [currentView, isMobile, t]
   );
   const onboardingStepsBySection = useMemo(
-    () => getOnboardingStepsBySection(isMobile, currentView),
-    [currentView, isMobile]
+    () => getOnboardingStepsBySection(isMobile, currentView, t),
+    [currentView, isMobile, t]
   );
 
   const handleOpenGuide = useCallback(() => {

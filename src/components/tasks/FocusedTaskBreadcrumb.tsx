@@ -2,6 +2,7 @@ import { ReactNode, useMemo } from "react";
 import { ChevronUp } from "lucide-react";
 import { Task } from "@/types";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface FocusedTaskBreadcrumbProps {
   allTasks: Task[];
@@ -18,6 +19,7 @@ export function FocusedTaskBreadcrumb({
   className,
   rightSlot,
 }: FocusedTaskBreadcrumbProps) {
+  const { t } = useTranslation();
   const path = useMemo(() => {
     if (!focusedTaskId) return [] as Task[];
     const byId = new Map(allTasks.map((task) => [task.id, task]));
@@ -52,8 +54,8 @@ export function FocusedTaskBreadcrumb({
         type="button"
         onClick={() => onFocusTask?.(parentFocusId)}
         disabled={!focusedTaskId}
-        aria-label="Up"
-        title="Go to parent task"
+        aria-label={t("breadcrumbs.up")}
+        title={t("breadcrumbs.goToParent")}
         className={cn(
           "inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
           focusedTaskId
@@ -62,7 +64,7 @@ export function FocusedTaskBreadcrumb({
         )}
       >
         <ChevronUp className="w-3.5 h-3.5" />
-        <span>Up</span>
+        <span>{t("breadcrumbs.up")}</span>
       </button>
       <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1.5 text-sm text-foreground/80">
         <button
@@ -72,9 +74,9 @@ export function FocusedTaskBreadcrumb({
             path.length === 0 && "text-foreground font-semibold"
           )}
           type="button"
-          title="Show all tasks"
+          title={t("breadcrumbs.showAllTasks")}
         >
-          All Tasks
+          {t("breadcrumbs.allTasks")}
         </button>
         {path.map((task, index) => (
           <span key={task.id} className="flex items-center gap-1 min-w-0">

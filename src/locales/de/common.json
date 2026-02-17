@@ -75,7 +75,7 @@
     },
     "views": {
       "manage": "Verwalten",
-      "tree": "Baum",
+      "tree": "Hierarchisch",
       "feed": "Feed",
       "kanban": "Kanban",
       "calendar": "Kalender",
@@ -101,10 +101,158 @@
     "actions": {
       "addRelay": "Relay hinzufügen",
       "openShortcuts": "Hilfe zu Tastenkürzeln öffnen",
-      "shortcuts": "Shortcuts",
+      "shortcuts": "Tastenkürzel",
       "shortcutsTooltip": "Tastenkürzel (?)",
       "openGuide": "Onboarding-Guide öffnen",
-      "guide": "Guide"
+      "guide": "Leitfaden"
+    }
+  },
+  "breadcrumbs": {
+    "up": "Hoch",
+    "goToParent": "Zur übergeordneten Aufgabe wechseln",
+    "allTasks": "Alle Aufgaben",
+    "showAllTasks": "Alle Aufgaben anzeigen"
+  },
+  "shortcuts": {
+    "title": "Tastenkürzel",
+    "groups": {
+      "views": "Ansichten",
+      "taskNavigation": "Aufgaben-Navigation",
+      "sidebarNavigation": "Seitenleisten-Navigation",
+      "kanban": "Kanban",
+      "general": "Allgemein",
+      "compose": "Erstellen"
+    },
+    "items": {
+      "treeView": "Hierarchische Ansicht",
+      "feedView": "Feed-Ansicht",
+      "kanbanView": "Kanban-Ansicht",
+      "calendarView": "Kalenderansicht",
+      "tableView": "Tabellenansicht",
+      "moveFocusDown": "Fokus nach unten bewegen",
+      "moveFocusUp": "Fokus nach oben bewegen",
+      "openSelectTask": "Aufgabe öffnen/auswählen",
+      "focusSidebarGoBack": "Seitenleiste fokussieren (oben) / zurückgehen",
+      "jumpFirstTask": "Zur ersten Aufgabe springen",
+      "jumpLastTask": "Zur letzten Aufgabe springen",
+      "clearFocus": "Fokus aufheben",
+      "navigateFilters": "Filter navigieren",
+      "toggleSelectedFilter": "Ausgewählten Filter umschalten",
+      "returnTaskList": "Zur Aufgabenliste zurückkehren",
+      "jumpFirstFilter": "Zum ersten Filter springen",
+      "jumpLastFilter": "Zum letzten Filter springen",
+      "navigateColumns": "Zwischen Spalten navigieren",
+      "navigateWithinColumn": "Innerhalb der Spalte navigieren",
+      "moveTaskColumns": "Aufgabe zwischen Spalten verschieben",
+      "toggleKeyboardShortcuts": "Tastenkürzel ein-/ausblenden",
+      "submitCurrentKind": "Als aktuellen Typ senden",
+      "submitOppositeKind": "Als anderen Typ senden (wenn kein Autocomplete offen ist)",
+      "insertHighlightedSuggestion": "Bei offenem Autocomplete: markierten Vorschlag einfügen",
+      "addMetadataOnly": "Bei offenem @/#-Autocomplete: markierten Tag/Mention nur als Veröffentlichungs-Metadaten hinzufügen (ohne Tokentext)"
+    }
+  },
+  "auth": {
+    "modal": {
+      "title": "Bei Nostr anmelden",
+      "descriptionChoose": "Wähle, wie du dich zum Veröffentlichen auf Nostr-Relays anmelden möchtest.",
+      "descriptionPrivateKey": "Gib deinen Nostr-Privatschlüssel ein (nsec- oder Hex-Format).",
+      "descriptionNostrConnect": "Verbinde dich mit einer Signer-App über Nostr Connect (NIP-46).",
+      "browserExtension": "Browser-Erweiterung",
+      "extensionMobileUnavailable": "Erweiterungen sind auf Mobilgeräten nicht verfügbar",
+      "extensionSignInHint": "Mit Alby, nos2x oder einer anderen NIP-07-Erweiterung anmelden",
+      "extensionMissing": "Keine Nostr-Erweiterung erkannt",
+      "signerApp": "Signer-App (Nostr Connect)",
+      "signerAppHint": "Mit einem mobilen Signer über einen bunker://-Link verbinden",
+      "privateKey": "Privatschlüssel",
+      "privateKeyHint": "Deinen nsec- oder Hex-Privatschlüssel eingeben",
+      "guestIdentity": "Gast-Identität",
+      "guestIdentityHint": "Temporäre Identität zum Ausprobieren erstellen",
+      "securityHint": "Deine Schlüssel verlassen niemals dein Gerät oder deine Signer-App. Signaturen erfolgen lokal oder in deinem Signer.",
+      "privateKeyPlaceholder": "nsec1... oder Hex-Schlüssel",
+      "privateKeyLocalOnly": "Dein Schlüssel wird nur lokal verwendet und nie an einen Server gesendet.",
+      "back": "Zurück",
+      "signIn": "Anmelden",
+      "signerConnection": "Signer-Verbindung",
+      "signerPlaceholder": "bunker://...",
+      "signerHint": "Füge den bunker://-Link aus deiner Signer-App ein, um dich zu verbinden.",
+      "connect": "Verbinden",
+      "errors": {
+        "extensionFailed": "Anmeldung mit Erweiterung fehlgeschlagen. Stelle sicher, dass eine Nostr-Erweiterung (z. B. Alby oder nos2x) installiert ist.",
+        "privateKeyRequired": "Bitte gib deinen Privatschlüssel ein",
+        "privateKeyInvalid": "Ungültiger Privatschlüssel. Bitte prüfen und erneut versuchen.",
+        "guestFailed": "Gast-Identität konnte nicht erstellt werden.",
+        "signerRequired": "Bitte füge einen bunker://-Verbindungsstring ein",
+        "signerFailed": "Verbindung fehlgeschlagen. Prüfe deinen bunker://-String und versuche es erneut."
+      },
+      "success": {
+        "extension": "Mit Nostr-Erweiterung angemeldet!",
+        "privateKey": "Mit Privatschlüssel angemeldet!",
+        "guest": "Als Gast angemeldet! Eine neue Identität wurde erstellt.",
+        "signer": "Mit Signer-App verbunden!"
+      }
+    },
+    "menu": {
+      "signInToPost": "Zum Veröffentlichen anmelden",
+      "signedInVia": "Angemeldet über {{method}}",
+      "editProfile": "Profil bearbeiten",
+      "backupPrivateKey": "Privatschlüssel sichern",
+      "keepSecret": "Geheim halten",
+      "importKeyHint": "Importiere diesen Schlüssel in andere Nostr-Clients, um auf diese Identität zuzugreifen.",
+      "signOut": "Abmelden",
+      "profileSetupTitle": "Profil einrichten",
+      "profileEditTitle": "Profil bearbeiten",
+      "profileDescription": "Deine Nostr-Metadaten (`kind:0`) werden auf verbundenen Relays veröffentlicht. Name ist erforderlich.",
+      "copySuccessNsec": "Privatschlüssel in Zwischenablage kopiert!",
+      "copySuccessHex": "Privatschlüssel (Hex) in Zwischenablage kopiert!"
+    }
+  },
+  "onboarding": {
+    "picker": {
+      "helper": "Wähle einen markierten Bereich, um dessen Guide zu starten.",
+      "close": "Schließen",
+      "dismiss": "Guide-Bereichsauswahl schließen",
+      "chooseSection": "Guide-Bereich auswählen",
+      "startSectionAria": "{{title}}-Guide-Bereich starten"
+    },
+    "dialog": {
+      "ariaLabel": "Onboarding-Guide",
+      "emptyTitle": "Keine Onboarding-Schritte verfügbar",
+      "stepLabel": "Schritt {{current}} von {{total}}",
+      "skip": "Überspringen",
+      "back": "Zurück",
+      "finish": "Fertig",
+      "next": "Weiter"
+    },
+    "sections": {
+      "navigation": { "title": "Navigation", "description": "Nutze Ansichts-Tabs und Breadcrumbs, um zwischen Aufgaben-Kontexten zu wechseln." },
+      "filters": { "title": "Filter", "description": "Nutze Kanal- und Personenfilter mit Ein-/Ausschluss effektiv." },
+      "compose": { "title": "Erstellen", "description": "Veröffentliche Aufgaben/Kommentare mit #tags und @mentions." },
+      "kanban": { "title": "Kanban", "description": "Nutze Spalten, Statusbahnen und Tiefensteuerung zur Organisation der Arbeit." },
+      "calendar": { "title": "Kalender", "description": "Plane Aufgaben nach Datum und prüfe jeden Tag im Detailbereich." }
+    },
+    "steps": {
+      "navigationSwitcher": { "title": "Ansicht wechseln", "description": "Nutze den Ansichtsumschalter, um zwischen Hierarchisch, Feed, Kanban, Kalender und Tabelle zu wechseln.", "action": "Klicke auf einen Ansichtstab, um fortzufahren." },
+      "navigationFocus": { "title": "Aufgabenkontext öffnen", "description": "Klicke auf eine Aufgabe, um in ihren Kontext zu wechseln und den Breadcrumb-Pfad anzuzeigen.", "action": "Klicke auf eine Aufgabe, um fortzufahren." },
+      "navigationBreadcrumb": { "title": "Breadcrumbs nutzen", "description": "Nutze die Breadcrumb-Leiste, um in der Hierarchie nach oben zu gehen oder zwischen Elternaufgaben zu springen.", "action": "Klicke auf ein Breadcrumb-Element, um fortzufahren." },
+      "filtersRelays": { "title": "Relay-Auswahl", "description": "Nutze *Feeds*, um sichtbare Relays auszuwählen. Klicke auf ein Relay-Icon zum Umschalten oder auf den Namen für exklusiven Fokus.", "action": "Klicke auf ein Relay-Steuerelement, um fortzufahren." },
+      "filtersChannels": { "title": "Kanalfilter", "description": "In *Kanäle* zeigt ein Klick auf den Kanalnamen nur Beiträge mit diesem Kanal. Klicke auf das #-Icon, um neutral -> einschließen -> ausschließen zu wechseln. Klicke auf das Hashtag-Icon links von *Kanäle*, um Kanalfilter zurückzusetzen." },
+      "filtersPeople": { "title": "Personenfilter", "description": "In *Personen* zeigt ein Klick auf einen Namen nur Beiträge dieser Person. Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen." },
+      "filtersSearch": { "title": "Suchleiste", "description": "Nutze die untere Suchleiste, um sichtbare Aufgaben in allen Ansichten per Text einzugrenzen." },
+      "filtersHashtagContent": { "title": "Hashtags im Inhalt", "description": "Klicke auf einen Hashtag in einer Aufgabe, um auf diesen Tag zu fokussieren. Entferne den Tag-Filter, um zur vollen Liste zurückzukehren.", "action": "Klicke auf ein Hashtag-Chip in einer Aufgabe." },
+      "composeKind": { "title": "Aufgabe vs. Kommentar", "description": "Mit der Typ-Auswahl legst du fest, ob du eine Aufgabe oder einen Kommentar veröffentlichst.", "action": "Fokussiere die Typ-Auswahl, um fortzufahren." },
+      "composeInput": { "title": "Tags und Mentions", "description": "Nutze #tags zur Organisation und @mentions für Personenreferenzen im Eingabefeld. Eingeschlossene Kanäle werden automatisch als Hashtags eingefügt. Du kannst einen Datumstyp (Fällig, Geplant, Start, Ende oder Meilenstein) setzen, damit Aufgaben im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.", "action": "Power-User-Hinweis: Alt+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete kann Modifier+Enter den gewählten Tag/Mention nur als Metadaten hinzufügen, ohne Tokentext einzufügen." },
+      "mobileNavigationNav": { "title": "Mobile Ansichten", "description": "Nutze die obere Navigation, um zwischen Hierarchisch, Feed, Tabelle und Kalender zu wechseln.", "action": "Tippe auf einen Navigations-Tab, um fortzufahren." },
+      "mobileNavigationFocus": { "title": "In Aufgabe navigieren", "description": "Tippe auf eine Aufgabe, um ihren fokussierten Kontext und den Navigationspfad zu öffnen.", "action": "Tippe auf eine Aufgabe, um fortzufahren." },
+      "mobileNavigationBreadcrumb": { "title": "Breadcrumbs nutzen", "description": "Nutze die Breadcrumb-Leiste, um in der Hierarchie nach oben zu gehen oder zwischen Elternaufgaben zu springen.", "action": "Tippe auf ein Breadcrumb-Element, um fortzufahren." },
+      "mobileFiltersOpen": { "title": "Verwalten öffnen", "description": "Tippe in der oberen Navigation auf *Verwalten*, um Relay-, Kanal- und Personenfilter zu öffnen.", "action": "Tippe auf *Verwalten*, um fortzufahren." },
+      "mobileFiltersUse": { "title": "Filter nutzen", "description": "In *Verwalten* kannst du Feed-Chips für Relays wählen, Kanal-Chips durch neutral -> einschließen -> ausschließen schalten und Personen-Chips umschalten." },
+      "mobileComposeCombobox": { "title": "Suchen/Erstellen-Kombobox", "description": "Nutze die kombinierte untere Leiste, um beim Tippen zu suchen und aus demselben Text Aufgaben/Kommentare über den Senden-Button zu erstellen.", "action": "Tippe in die kombinierte Leiste, um fortzufahren." },
+      "kanbanColumnsStatus": { "title": "Spalten und Status", "description": "Nutze die Spalten Offen, In Arbeit und Erledigt zur Statusverfolgung. Beim Verschieben zwischen Spalten ändert sich der Status.", "action": "Klicke oder ziehe eine Karte im Board, um fortzufahren." },
+      "kanbanCreateInColumn": { "title": "In bestimmter Spalte erstellen", "description": "Nutze den + Button im Spaltenkopf, um eine neue Aufgabe direkt mit dem Status dieser Spalte zu erstellen.", "action": "Klicke einen + Button in einer Spalte, um fortzufahren." },
+      "kanbanDepth": { "title": "Tiefenstufen", "description": "Nutze Levels neben der Suche, um oberste Ebene, begrenzte Tiefe oder nur Blätter anzuzeigen.", "action": "Öffne den Levels-Selektor, um fortzufahren." },
+      "calendarMonths": { "title": "Monats-Zeitleiste", "description": "Scrolle durch gestapelte Monate, um dich kontinuierlich durch die Zeit zu bewegen." },
+      "calendarPickDay": { "title": "Tag auswählen", "description": "Klicke auf eine Tageszelle, um dieses Datum im Detailbereich zu laden.", "action": "Klicke auf einen Tag im Kalendergitter, um fortzufahren." },
+      "calendarDayPanel": { "title": "Tagesdetails", "description": "Nutze den rechten Bereich, um Aufgaben für das gewählte Datum zu prüfen, ihren Status zu ändern und neue Aufgaben/Events für diesen Tag zu erstellen." }
     }
   },
   "filters": {

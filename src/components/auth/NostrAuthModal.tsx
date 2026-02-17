@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { nip19 } from "nostr-tools";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useTranslation } from "react-i18next";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ const hasNostrExtension = (): boolean =>
   typeof window !== "undefined" && Boolean((window as WindowWithNostr).nostr);
 
 export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
+  const { t } = useTranslation();
   const { 
     loginWithExtension, 
     loginWithPrivateKey, 
@@ -61,10 +63,10 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     try {
       const success = await loginWithExtension();
       if (success) {
-        toast.success("Signed in with Nostr extension!");
+        toast.success(t("auth.modal.success.extension"));
         onClose();
       } else {
-        setError("Failed to sign in with extension. Make sure you have a Nostr extension (like Alby or nos2x) installed.");
+        setError(t("auth.modal.errors.extensionFailed"));
       }
     } finally {
       setPendingAuthMethod(null);
@@ -74,7 +76,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const handlePrivateKeyLogin = async () => {
     setError(null);
     if (!privateKey.trim()) {
-      setError("Please enter your private key");
+      setError(t("auth.modal.errors.privateKeyRequired"));
       return;
     }
 
@@ -82,11 +84,11 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     try {
       const success = await loginWithPrivateKey(privateKey.trim());
       if (success) {
-        toast.success("Signed in with private key!");
+        toast.success(t("auth.modal.success.privateKey"));
         setPrivateKey("");
         onClose();
       } else {
-        setError("Invalid private key. Please check and try again.");
+        setError(t("auth.modal.errors.privateKeyInvalid"));
       }
     } finally {
       setPendingAuthMethod(null);
@@ -99,10 +101,10 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     try {
       const success = await loginAsGuest();
       if (success) {
-        toast.success("Signed in as guest! A new identity was created for you.");
+        toast.success(t("auth.modal.success.guest"));
         onClose();
       } else {
-        setError("Failed to create guest identity.");
+        setError(t("auth.modal.errors.guestFailed"));
       }
     } finally {
       setPendingAuthMethod(null);
@@ -112,18 +114,18 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const handleNostrConnectLogin = async () => {
     setError(null);
     if (!bunkerUrl.trim()) {
-      setError("Please paste a bunker:// connection string");
+      setError(t("auth.modal.errors.signerRequired"));
       return;
     }
     setPendingAuthMethod("nostrConnect");
     try {
       const success = await loginWithNostrConnect(bunkerUrl.trim());
       if (success) {
-        toast.success("Connected to signer app!");
+        toast.success(t("auth.modal.success.signer"));
         setBunkerUrl("");
         onClose();
       } else {
-        setError("Failed to connect. Verify your bunker:// string and try again.");
+        setError(t("auth.modal.errors.signerFailed"));
       }
     } finally {
       setPendingAuthMethod(null);
@@ -143,13 +145,13 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Sign in to Nostr</DialogTitle>
+          <DialogTitle>{t("auth.modal.title")}</DialogTitle>
           <DialogDescription>
             {step === "choose"
-              ? "Choose how you want to authenticate to post to Nostr relays."
+              ? t("auth.modal.descriptionChoose")
               : step === "privateKey"
-                ? "Enter your Nostr private key (nsec or hex format)."
-                : "Connect with a signer app using Nostr Connect (NIP-46)."
+                ? t("auth.modal.descriptionPrivateKey")
+                : t("auth.modal.descriptionNostrConnect")
             }
           </DialogDescription>
         </DialogHeader>
@@ -178,13 +180,13 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 <Zap className="w-5 h-5 text-primary" />
               </div>
               <div className="flex-1">
-                <div className="font-medium">Browser Extension</div>
+                <div className="font-medium">{t("auth.modal.browserExtension")}</div>
                 <div className="text-sm text-muted-foreground">
                   {isMobile
-                    ? "Extensions aren’t available on mobile"
+                    ? t("auth.modal.extensionMobileUnavailable")
                     : hasExtension 
-                      ? "Sign in with Alby, nos2x, or another NIP-07 extension"
-                      : "No Nostr extension detected"
+                      ? t("auth.modal.extensionSignInHint")
+                      : t("auth.modal.extensionMissing")
                   }
                 </div>
               </div>
@@ -203,9 +205,9 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 <Key className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <div className="font-medium">Signer App (Nostr Connect)</div>
+                <div className="font-medium">{t("auth.modal.signerApp")}</div>
                 <div className="text-sm text-muted-foreground">
-                  Connect with a mobile signer using a bunker:// link
+                  {t("auth.modal.signerAppHint")}
                 </div>
               </div>
             </button>
@@ -220,9 +222,9 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 <Key className="w-5 h-5 text-warning" />
               </div>
               <div className="flex-1">
-                <div className="font-medium">Private Key</div>
+                <div className="font-medium">{t("auth.modal.privateKey")}</div>
                 <div className="text-sm text-muted-foreground">
-                  Enter your nsec or hex private key
+                  {t("auth.modal.privateKeyHint")}
                 </div>
               </div>
             </button>
@@ -237,9 +239,9 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 <User className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1">
-                <div className="font-medium">Guest Identity</div>
+                <div className="font-medium">{t("auth.modal.guestIdentity")}</div>
                 <div className="text-sm text-muted-foreground">
-                  Generate a temporary identity to try posting
+                  {t("auth.modal.guestIdentityHint")}
                 </div>
               </div>
               {pendingAuthMethod === "guest" && (
@@ -248,23 +250,23 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             </button>
 
             <p className="text-xs text-muted-foreground text-center pt-2">
-              Your keys never leave your device or signer app. Signing happens locally or in your signer.
+              {t("auth.modal.securityHint")}
             </p>
           </div>
         ) : step === "privateKey" ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="privateKey">Private Key</Label>
+              <Label htmlFor="privateKey">{t("auth.modal.privateKey")}</Label>
               <Input
                 id="privateKey"
                 type="password"
-                placeholder="nsec1... or hex key"
+                placeholder={t("auth.modal.privateKeyPlaceholder")}
                 value={privateKey}
                 onChange={(e) => setPrivateKey(e.target.value)}
                 autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
-                Your key is only used locally and never sent to any server.
+                {t("auth.modal.privateKeyLocalOnly")}
               </p>
             </div>
             
@@ -275,7 +277,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 disabled={isAuthenticating}
                 className="flex-1"
               >
-                Back
+                {t("auth.modal.back")}
               </Button>
               <Button
                 onClick={handlePrivateKeyLogin}
@@ -285,24 +287,24 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 {pendingAuthMethod === "privateKey" ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                Sign In
+                {t("auth.modal.signIn")}
               </Button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="bunkerUrl">Signer Connection</Label>
+              <Label htmlFor="bunkerUrl">{t("auth.modal.signerConnection")}</Label>
               <Input
                 id="bunkerUrl"
                 type="text"
-                placeholder="bunker://..."
+                placeholder={t("auth.modal.signerPlaceholder")}
                 value={bunkerUrl}
                 onChange={(e) => setBunkerUrl(e.target.value)}
                 autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
-                Paste the bunker:// link from your signer app to connect.
+                {t("auth.modal.signerHint")}
               </p>
             </div>
             <div className="flex gap-2">
@@ -312,7 +314,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 disabled={isAuthenticating}
                 className="flex-1"
               >
-                Back
+                {t("auth.modal.back")}
               </Button>
               <Button
                 onClick={handleNostrConnectLogin}
@@ -322,7 +324,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 {pendingAuthMethod === "nostrConnect" ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
                 ) : null}
-                Connect
+                {t("auth.modal.connect")}
               </Button>
             </div>
           </div>
@@ -338,6 +340,7 @@ interface NostrUserMenuProps {
 }
 
 export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
+  const { t } = useTranslation();
   const {
     user,
     authMethod,
@@ -367,7 +370,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
 
   const handleSaveProfile = async () => {
     if (!profileName.trim()) {
-      toast.error("Profile name is required");
+      toast.error(t("filters.profile.nameRequired"));
       return;
     }
 
@@ -381,10 +384,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         about: profileAbout || undefined,
       });
       if (success) {
-        toast.success("Profile updated on connected relays");
+        toast.success(t("filters.profile.updated"));
         setIsProfileEditorOpen(false);
       } else {
-        toast.error("Failed to update profile. Check relay connectivity and try again.");
+        toast.error(t("filters.profile.updateFailed"));
       }
     } finally {
       setIsSavingProfile(false);
@@ -397,11 +400,11 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       try {
         const nsec = nip19.nsecEncode(hexKey as unknown as Uint8Array);
         navigator.clipboard.writeText(nsec);
-        toast.success("Private key copied to clipboard!");
+        toast.success(t("auth.menu.copySuccessNsec"));
       } catch {
         // If nsec encoding fails, copy hex
         navigator.clipboard.writeText(hexKey);
-        toast.success("Private key (hex) copied to clipboard!");
+        toast.success(t("auth.menu.copySuccessHex"));
       }
     }
   };
@@ -431,19 +434,19 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         className="h-full px-2 gap-2 text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent rounded-none"
       >
         <Zap className="w-4 h-4" />
-        Sign in to post
+        {t("auth.menu.signInToPost")}
       </Button>
     );
   }
 
   const displayName = user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`;
   const methodLabel = authMethod === "extension"
-    ? "Extension"
+    ? t("filters.authMethod.extension")
     : authMethod === "guest"
-      ? "Guest"
+      ? t("filters.authMethod.guest")
       : authMethod === "nostrConnect"
-        ? "Signer"
-        : "Key";
+        ? t("filters.authMethod.signer")
+        : t("filters.authMethod.privateKey");
 
   return (
     <>
@@ -473,7 +476,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-muted-foreground">Signed in via {methodLabel}</span>
+                <span className="text-xs text-muted-foreground">{t("auth.menu.signedInVia", { method: methodLabel })}</span>
               </div>
             </div>
           </DropdownMenuLabel>
@@ -485,16 +488,16 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             }}
           >
             <User className="w-4 h-4 mr-2" />
-            Edit profile
+            {t("auth.menu.editProfile")}
           </DropdownMenuItem>
           {authMethod === "guest" && (
             <div className="px-2 py-2 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium flex items-center gap-2">
                   <Key className="w-4 h-4 text-muted-foreground" />
-                  Backup Private Key
+                  {t("auth.menu.backupPrivateKey")}
                 </span>
-                <span className="text-xs text-warning">Keep secret</span>
+                <span className="text-xs text-warning">{t("auth.menu.keepSecret")}</span>
               </div>
               <div className="flex items-start gap-2">
                 <code className="block max-w-[10rem] w-full text-xs bg-muted p-2 rounded font-mono whitespace-nowrap overflow-x-auto">
@@ -520,7 +523,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Import this key in other Nostr clients to access this identity.
+                {t("auth.menu.importKeyHint")}
               </p>
             </div>
           )}
@@ -533,7 +536,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             className="text-destructive focus:text-destructive"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Sign out
+            {t("auth.menu.signOut")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -547,41 +550,41 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       >
         <DialogContent className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-y-auto p-4 sm:max-w-lg sm:p-6">
           <DialogHeader>
-            <DialogTitle>{needsProfileSetup ? "Set up your profile" : "Edit profile"}</DialogTitle>
+            <DialogTitle>{needsProfileSetup ? t("auth.menu.profileSetupTitle") : t("auth.menu.profileEditTitle")}</DialogTitle>
             <DialogDescription>
-              Your Nostr metadata (`kind:0`) will be published to connected relays. Name is required.
+              {t("auth.menu.profileDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="profile-name">Name *</Label>
+              <Label htmlFor="profile-name">{t("filters.profile.name")}</Label>
               <Input id="profile-name" value={profileName} onChange={(e) => setProfileName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="profile-display-name">Display name</Label>
+              <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
               <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="profile-picture">Picture URL</Label>
+              <Label htmlFor="profile-picture">{t("filters.profile.picture")}</Label>
               <Input id="profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="profile-nip05">NIP-05</Label>
+              <Label htmlFor="profile-nip05">{t("filters.profile.nip05")}</Label>
               <Input id="profile-nip05" value={profileNip05} onChange={(e) => setProfileNip05(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="profile-about">About</Label>
+              <Label htmlFor="profile-about">{t("filters.profile.about")}</Label>
               <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
             </div>
           </div>
           <div className="sticky bottom-0 flex justify-end gap-2 bg-background/95 pt-2">
             {!needsProfileSetup && (
               <Button variant="outline" onClick={() => setIsProfileEditorOpen(false)} disabled={isSavingProfile}>
-                Cancel
+                {t("filters.profile.cancel")}
               </Button>
             )}
             <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
-              {isSavingProfile ? "Saving..." : "Save profile"}
+              {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
             </Button>
           </div>
         </DialogContent>

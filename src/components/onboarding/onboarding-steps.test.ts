@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { getOnboardingStepsBySection } from "./onboarding-steps";
+import i18n from "@/lib/i18n/config";
 
 describe("onboarding steps", () => {
   it("folds reset guidance into channel and people filter steps", () => {
-    const desktop = getOnboardingStepsBySection(false);
+    const desktop = getOnboardingStepsBySection(false, "tree", i18n.getFixedT("en", "common"));
     const filterIds = desktop.filters.map((step) => step.id);
 
     expect(filterIds).toEqual([
@@ -29,8 +30,9 @@ describe("onboarding steps", () => {
   });
 
   it("provides dedicated kanban and calendar guide steps on desktop", () => {
-    const kanban = getOnboardingStepsBySection(false, "kanban");
-    const calendar = getOnboardingStepsBySection(false, "calendar");
+    const t = i18n.getFixedT("en", "common");
+    const kanban = getOnboardingStepsBySection(false, "kanban", t);
+    const calendar = getOnboardingStepsBySection(false, "calendar", t);
 
     expect(kanban.compose.map((step) => step.id)).toEqual([
       "kanban-columns-status",

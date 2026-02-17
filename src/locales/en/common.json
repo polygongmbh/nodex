@@ -107,6 +107,154 @@
       "guide": "Guide"
     }
   },
+  "breadcrumbs": {
+    "up": "Up",
+    "goToParent": "Go to parent task",
+    "allTasks": "All Tasks",
+    "showAllTasks": "Show all tasks"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "groups": {
+      "views": "Views",
+      "taskNavigation": "Task Navigation",
+      "sidebarNavigation": "Sidebar Navigation",
+      "kanban": "Kanban",
+      "general": "General",
+      "compose": "Compose"
+    },
+    "items": {
+      "treeView": "Tree view",
+      "feedView": "Feed view",
+      "kanbanView": "Kanban view",
+      "calendarView": "Calendar view",
+      "tableView": "Table view",
+      "moveFocusDown": "Move focus down",
+      "moveFocusUp": "Move focus up",
+      "openSelectTask": "Open/select task",
+      "focusSidebarGoBack": "Focus sidebar (at top) / go back",
+      "jumpFirstTask": "Jump to first task",
+      "jumpLastTask": "Jump to last task",
+      "clearFocus": "Clear focus",
+      "navigateFilters": "Navigate filters",
+      "toggleSelectedFilter": "Toggle selected filter",
+      "returnTaskList": "Return to task list",
+      "jumpFirstFilter": "Jump to first filter",
+      "jumpLastFilter": "Jump to last filter",
+      "navigateColumns": "Navigate between columns",
+      "navigateWithinColumn": "Navigate within column",
+      "moveTaskColumns": "Move task between columns",
+      "toggleKeyboardShortcuts": "Toggle keyboard shortcuts",
+      "submitCurrentKind": "Submit as current kind",
+      "submitOppositeKind": "Submit as opposite kind (when no autocomplete is open)",
+      "insertHighlightedSuggestion": "With autocomplete open: insert highlighted suggestion",
+      "addMetadataOnly": "With @/# autocomplete open: add highlighted tag/mention as publish metadata only (no token text)"
+    }
+  },
+  "auth": {
+    "modal": {
+      "title": "Sign in to Nostr",
+      "descriptionChoose": "Choose how you want to authenticate to post to Nostr relays.",
+      "descriptionPrivateKey": "Enter your Nostr private key (nsec or hex format).",
+      "descriptionNostrConnect": "Connect with a signer app using Nostr Connect (NIP-46).",
+      "browserExtension": "Browser Extension",
+      "extensionMobileUnavailable": "Extensions aren’t available on mobile",
+      "extensionSignInHint": "Sign in with Alby, nos2x, or another NIP-07 extension",
+      "extensionMissing": "No Nostr extension detected",
+      "signerApp": "Signer App (Nostr Connect)",
+      "signerAppHint": "Connect with a mobile signer using a bunker:// link",
+      "privateKey": "Private Key",
+      "privateKeyHint": "Enter your nsec or hex private key",
+      "guestIdentity": "Guest Identity",
+      "guestIdentityHint": "Generate a temporary identity to try posting",
+      "securityHint": "Your keys never leave your device or signer app. Signing happens locally or in your signer.",
+      "privateKeyPlaceholder": "nsec1... or hex key",
+      "privateKeyLocalOnly": "Your key is only used locally and never sent to any server.",
+      "back": "Back",
+      "signIn": "Sign In",
+      "signerConnection": "Signer Connection",
+      "signerPlaceholder": "bunker://...",
+      "signerHint": "Paste the bunker:// link from your signer app to connect.",
+      "connect": "Connect",
+      "errors": {
+        "extensionFailed": "Failed to sign in with extension. Make sure you have a Nostr extension (like Alby or nos2x) installed.",
+        "privateKeyRequired": "Please enter your private key",
+        "privateKeyInvalid": "Invalid private key. Please check and try again.",
+        "guestFailed": "Failed to create guest identity.",
+        "signerRequired": "Please paste a bunker:// connection string",
+        "signerFailed": "Failed to connect. Verify your bunker:// string and try again."
+      },
+      "success": {
+        "extension": "Signed in with Nostr extension!",
+        "privateKey": "Signed in with private key!",
+        "guest": "Signed in as guest! A new identity was created for you.",
+        "signer": "Connected to signer app!"
+      }
+    },
+    "menu": {
+      "signInToPost": "Sign in to post",
+      "signedInVia": "Signed in via {{method}}",
+      "editProfile": "Edit profile",
+      "backupPrivateKey": "Backup Private Key",
+      "keepSecret": "Keep secret",
+      "importKeyHint": "Import this key in other Nostr clients to access this identity.",
+      "signOut": "Sign out",
+      "profileSetupTitle": "Set up your profile",
+      "profileEditTitle": "Edit profile",
+      "profileDescription": "Your Nostr metadata (`kind:0`) will be published to connected relays. Name is required.",
+      "copySuccessNsec": "Private key copied to clipboard!",
+      "copySuccessHex": "Private key (hex) copied to clipboard!"
+    }
+  },
+  "onboarding": {
+    "picker": {
+      "helper": "Pick one highlighted area to begin its guide.",
+      "close": "Close",
+      "dismiss": "Dismiss guide section picker",
+      "chooseSection": "Choose a guide section",
+      "startSectionAria": "Start {{title}} onboarding section"
+    },
+    "dialog": {
+      "ariaLabel": "Onboarding guide",
+      "emptyTitle": "No onboarding steps available",
+      "stepLabel": "Step {{current}} of {{total}}",
+      "skip": "Skip",
+      "back": "Back",
+      "finish": "Finish",
+      "next": "Next"
+    },
+    "sections": {
+      "navigation": { "title": "Navigation", "description": "Use view tabs and breadcrumbs to move through task contexts." },
+      "filters": { "title": "Filters", "description": "Use include/exclude channel and people filters effectively." },
+      "compose": { "title": "Compose", "description": "Post tasks/comments with #tags and @mentions." },
+      "kanban": { "title": "Kanban", "description": "Use columns, status lanes, and depth controls to organize work." },
+      "calendar": { "title": "Calendar", "description": "Plan tasks by date and review each day in the detail panel." }
+    },
+    "steps": {
+      "navigationSwitcher": { "title": "Switch views", "description": "Use the view switcher to move between Tree, Feed, Kanban, Calendar, and Table.", "action": "Click any view tab to continue." },
+      "navigationFocus": { "title": "Open task context", "description": "Click a task to navigate into its context and reveal the breadcrumb path.", "action": "Click a task item to continue." },
+      "navigationBreadcrumb": { "title": "Use breadcrumbs", "description": "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.", "action": "Click a breadcrumb item to continue." },
+      "filtersRelays": { "title": "Relay selection", "description": "Use *Feeds* to select which relays are visible. Click a relay icon to toggle it, or click its name for exclusive relay focus.", "action": "Click a relay control to continue." },
+      "filtersChannels": { "title": "Channel filters", "description": "In *Channels*, click a channel name to show only posts with that channel. Click the # icon to cycle neutral -> include -> exclude for that channel. Click the hashtag icon to the left of *Channels* to reset channel filters." },
+      "filtersPeople": { "title": "People filters", "description": "In *People*, click a person name to show only posts from that person. Click the avatar/icon to toggle that person. Click the icon to the left of *People* to reset people filters." },
+      "filtersSearch": { "title": "Search bar", "description": "Use the bottom search bar to narrow visible tasks by text across all views." },
+      "filtersHashtagContent": { "title": "Hashtags in content", "description": "Click a hashtag in a task to focus on that tag. Clear the tag filter to return to the full list.", "action": "Click a hashtag chip in a task item." },
+      "composeKind": { "title": "Task vs comment", "description": "Use the Kind selector to choose whether to post a task or a comment.", "action": "Focus the kind selector to continue." },
+      "composeInput": { "title": "Tags and mentions", "description": "Use #tags to organize items and @mentions to reference people in the compose box. Included channels auto-prepopulate as hashtags. You can set a date type (Due, Scheduled, Start, End, or Milestone) so tasks appear in Calendar view; future Start dates are shown as not yet doable.", "action": "Power-user hint: Alt+Enter submits as the other kind when no autocomplete is open; with autocomplete open, modifier+Enter can add the selected tag/mention as metadata without inserting token text." },
+      "mobileNavigationNav": { "title": "Mobile views", "description": "Use the top navigation to switch between Tree, Feed, List, and Calendar.", "action": "Tap a navigation tab to continue." },
+      "mobileNavigationFocus": { "title": "Navigate into a task", "description": "Tap a task item to open its focused context and navigation path.", "action": "Tap a task item to continue." },
+      "mobileNavigationBreadcrumb": { "title": "Use breadcrumbs", "description": "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.", "action": "Tap a breadcrumb item to continue." },
+      "mobileFiltersOpen": { "title": "Open Manage", "description": "Tap *Manage* in the top navigation to open relay, channel, and people filters.", "action": "Tap *Manage* to continue." },
+      "mobileFiltersUse": { "title": "Use filters", "description": "In *Manage*, tap feed chips to select relays, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters." },
+      "mobileComposeCombobox": { "title": "Search/Compose combobox", "description": "Use the combined bottom bar to search as you type and create tasks/comments from the same text using the submit button.", "action": "Tap into the combined bar to continue." },
+      "kanbanColumnsStatus": { "title": "Columns and status", "description": "Use To Do, In Progress, and Done columns to track status. Moving a task between columns changes its status.", "action": "Click or drag a card in the board to continue." },
+      "kanbanCreateInColumn": { "title": "Create in a specific column", "description": "Use the + button in a column header to create a new task directly in that column's status.", "action": "Click a column + button to continue." },
+      "kanbanDepth": { "title": "Depth levels", "description": "Use Levels next to search to show top-level, limited depth, or leaves-only tasks.", "action": "Open the Levels selector to continue." },
+      "calendarMonths": { "title": "Month timeline", "description": "Scroll stacked months continuously to move through time." },
+      "calendarPickDay": { "title": "Pick a day", "description": "Click any day cell to load that date in the detail panel.", "action": "Click a day in the calendar grid to continue." },
+      "calendarDayPanel": { "title": "Day details", "description": "Use the right panel to review tasks for the selected date, change their status, and create a new task/event for that day." }
+    }
+  },
   "filters": {
     "profile": {
       "title": "Profile",
