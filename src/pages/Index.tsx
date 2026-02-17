@@ -38,7 +38,14 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
-import { derivePeopleFromKind0Events } from "@/lib/people-from-kind0";
+import {
+  derivePeopleFromKind0Events,
+  loadCachedKind0Events,
+  loadLoggedInIdentityPriority,
+  mergeKind0EventsWithCache,
+  rememberLoggedInIdentity,
+  saveCachedKind0Events,
+} from "@/lib/people-from-kind0";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { filterTasks } from "@/lib/task-filtering";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
@@ -121,6 +128,8 @@ const Index = () => {
     loadPersistedRelayIds([TEST_RELAY_ID])
   );
   const [people, setPeople] = useState<Person[]>([]);
+  const [cachedKind0Events, setCachedKind0Events] = useState(() => loadCachedKind0Events());
+  const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
   const [localTasks, setLocalTasks] = useState<Task[]>(mockTasks);
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -148,9 +157,53 @@ const Index = () => {
     });
   }, [nostrEvents]);
 
+  const liveKind0Events = useMemo(
+    () =>
+      nostrEvents
+        .filter((event) => event.kind === NostrEventKind.Metadata)
+        .map((event) => ({
+          kind: event.kind,
+          pubkey: event.pubkey,
+          created_at: event.created_at,
+          content: event.content || "",
+        })),
+    [nostrEvents]
+  );
+
+  const mergedKind0Events = useMemo(
+    () => mergeKind0EventsWithCache(liveKind0Events, cachedKind0Events),
+    [cachedKind0Events, liveKind0Events]
+  );
+
   useEffect(() => {
+    const merged = mergeKind0EventsWithCache(liveKind0Events, loadCachedKind0Events());
+    saveCachedKind0Events(merged);
+    setCachedKind0Events(merged);
+  }, [liveKind0Events]);
+
+  useEffect(() => {
+    if (!user?.pubkey) return;
+    setLoggedInIdentityPriority(rememberLoggedInIdentity(user.pubkey));
+  }, [user?.pubkey]);
+
+  useEffect(() => {
+    const priorityLookup = new Map(
+      loggedInIdentityPriority.map((pubkey, index) => [pubkey.toLowerCase(), index] as const)
+    );
+    const sortPeopleByPriority = (value: Person[]): Person[] =>
+      [...value].sort((a, b) => {
+        const aPriority = priorityLookup.get(a.id.toLowerCase());
+        const bPriority = priorityLookup.get(b.id.toLowerCase());
+        if (aPriority !== undefined && bPriority !== undefined) return aPriority - bPriority;
+        if (aPriority !== undefined) return -1;
+        if (bPriority !== undefined) return 1;
+        return a.displayName.localeCompare(b.displayName);
+      });
+
     setPeople((prev) => {
-      let next = derivePeopleFromKind0Events(nostrEvents, prev);
+      let next = derivePeopleFromKind0Events(mergedKind0Events, prev, {
+        prioritizedPubkeys: loggedInIdentityPriority,
+      });
 
       if (user?.pubkey && !next.some((person) => person.id === user.pubkey)) {
         next = [
@@ -167,9 +220,9 @@ const Index = () => {
         ];
       }
 
-      return next.sort((a, b) => a.displayName.localeCompare(b.displayName));
+      return sortPeopleByPriority(next);
     });
-  }, [nostrEvents, user]);
+  }, [loggedInIdentityPriority, mergedKind0Events, user]);
 
   // Convert filtered Nostr events to tasks
   const nostrTasks: Task[] = useMemo(() => {
