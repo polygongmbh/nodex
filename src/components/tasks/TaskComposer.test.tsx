@@ -126,6 +126,46 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("uses Alt+Enter to add hashtag tag-only when hashtag autocomplete is open", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const draft = "Ship #ba";
+    fireEvent.change(textarea, {
+      target: { value: draft, selectionStart: draft.length },
+    });
+    textarea.focus();
+    textarea.setSelectionRange(draft.length, draft.length);
+
+    fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
+    await waitFor(() => {
+      expect(textarea.value).toBe("Ship ");
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship ",
+        ["backend"],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        []
+      );
+    });
+  });
+
   it("stays compact in adaptive mode and expands on focus", () => {
     render(
       <TaskComposer
@@ -218,12 +258,12 @@ describe("TaskComposer hashtag autocomplete", () => {
     );
 
     const textarea = screen.getByPlaceholderText(/what needs to be done/i);
-    fireEvent.change(textarea, { target: { value: "Ship #backend" } });
+    fireEvent.change(textarea, { target: { value: "Ship #backend now" } });
     fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(
-        "Ship #backend",
+        "Ship #backend now",
         ["backend"],
         ["demo"],
         "comment",

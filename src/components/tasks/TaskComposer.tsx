@@ -400,7 +400,7 @@ export function TaskComposer({
         }
         return;
       }
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey || e.shiftKey)) {
+      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
         if (/#\w*$/.test(textBeforeCursor) || /#\w*$/.test(content)) {
@@ -441,7 +441,7 @@ export function TaskComposer({
         }
         return;
       }
-      if (e.key === "Enter" && (e.metaKey || e.ctrlKey || e.shiftKey)) {
+      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
         if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(content)) {
@@ -461,7 +461,7 @@ export function TaskComposer({
       }
     }
 
-    if (e.key === "Enter" && e.altKey) {
+    if (e.key === "Enter" && e.altKey && !showHashtagSuggestions && !showMentionSuggestions) {
       e.preventDefault();
       const alternateType: TaskType = taskType === "task" ? "comment" : "task";
       handleSubmit(alternateType);
