@@ -67,8 +67,9 @@ import {
   setAllChannelFilters,
   setExclusiveChannelFilter,
 } from "@/lib/filter-state-utils";
+import { normalizeTaskType } from "@/lib/task-type";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
-import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus, TaskType } from "@/types";
+import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus } from "@/types";
 import { toast } from "sonner";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
 import { useTranslation } from "react-i18next";
@@ -829,12 +830,16 @@ const Index = () => {
       toast.error(t("toasts.errors.needTag"));
       return { ok: false, reason: "missing-tag" };
     }
+    const normalizedTaskType = normalizeTaskType(taskType);
+    if (normalizedTaskType !== taskType) {
+      console.warn("Unexpected taskType payload; defaulting to task", { taskType });
+    }
     setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
 
     const requestedRelayIds = relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID];
     const parentTask = parentId ? allTasks.find((task) => task.id === parentId) : undefined;
     const resolvedRelaySelection = resolveRelaySelectionForSubmission({
-      taskType: taskType as TaskType,
+      taskType: normalizedTaskType,
       selectedRelayIds: requestedRelayIds,
       relays,
       parentTask,
@@ -861,10 +866,10 @@ const Index = () => {
       new Set([...resolveMentionPubkeys(content), ...dedupedExplicitMentionPubkeys])
     );
     const defaultAuthorAssignee =
-      taskType === "task" && /^[a-f0-9]{64}$/i.test(user.pubkey)
+      normalizedTaskType === "task" && /^[a-f0-9]{64}$/i.test(user.pubkey)
         ? user.pubkey.toLowerCase()
         : undefined;
-    const assigneePubkeys = taskType === "task"
+    const assigneePubkeys = normalizedTaskType === "task"
       ? Array.from(
           new Set(
             mentionPubkeys.length > 0
@@ -882,12 +887,12 @@ const Index = () => {
     if (shouldPublish) {
       try {
         console.log("Publishing event to relays:", selectedRelayUrls);
-        const kind = taskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
+        const kind = normalizedTaskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
         const validParentId = isNostrEventId(parentId) ? parentId : undefined;
-        if (taskType === "task" && parentId && !validParentId) {
+        if (normalizedTaskType === "task" && parentId && !validParentId) {
           toast.warning("Parent reference is local-only; publishing task without parent link");
         }
-        const publishTags = taskType === "task"
+        const publishTags = normalizedTaskType === "task"
           ? buildTaskPublishTags(
               validParentId,
               selectedRelayUrls[0],
@@ -899,14 +904,14 @@ const Index = () => {
               ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
               ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
             ];
-        const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
+        const publishParentId = normalizedTaskType === "comment" && validParentId ? validParentId : undefined;
         const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
         publishSuccess = result.success;
         publishedEventId = result.eventId;
-        if (result.success && taskType === "task" && publishedEventId && initialStatus) {
+        if (result.success && normalizedTaskType === "task" && publishedEventId && initialStatus) {
           await publishTaskStateUpdate(publishedEventId, initialStatus, selectedRelayUrls.slice(0, 1));
         }
-        if (result.success && taskType === "task" && publishedEventId && dueDate) {
+        if (result.success && normalizedTaskType === "task" && publishedEventId && dueDate) {
           await publishTaskDueUpdate(
             publishedEventId,
             content,
@@ -945,9 +950,9 @@ const Index = () => {
       content,
       tags: extractedTags,
       relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
-      taskType: taskType as TaskType,
+      taskType: normalizedTaskType,
       timestamp: new Date(),
-      status: taskType === "task" ? (initialStatus || "todo") : undefined,
+      status: normalizedTaskType === "task" ? (initialStatus || "todo") : undefined,
       likes: 0,
       replies: 0,
       reposts: 0,
@@ -958,19 +963,19 @@ const Index = () => {
       mentions: Array.from(
         new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
       ),
-      assigneePubkeys: taskType === "task" ? assigneePubkeys : undefined,
-      priority: taskType === "task" ? priority : undefined,
+      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
+      priority: normalizedTaskType === "task" ? priority : undefined,
     };
     setLocalTasks((prev) => [newTask, ...prev]);
     
     if (shouldPublish) {
       if (publishSuccess) {
-        toast.success(taskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
+        toast.success(normalizedTaskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
       } else {
         toast.error("Failed to publish to Nostr; added locally");
       }
     } else {
-      toast.success(taskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
+      toast.success(normalizedTaskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
     }
     return { ok: true, mode: publishSuccess ? "published" : "local" };
   };
