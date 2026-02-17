@@ -19,6 +19,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile compose now forwards explicit mention-tag selections in the correct publish payload field, so non-text person mentions persist as Nostr `p` tags.
 - Desktop task views now surface non-text mention tags as person chips, and compose drafts preserve explicit mention-tag-only selections until submit.
 - Task filtering no longer hides tasks just because they contain many hashtags.
+- Kanban task cards now let you click the `+x` chip overflow indicator to expand and reveal all chips.
 - Enabling people filters no longer crashes on malformed mention/author payloads, and uncaught runtime errors now render a recoverable error screen instead of a blank app.
 
 ## [1.1.0] - 2026-02-16

@@ -72,6 +72,7 @@ export function KanbanView({
 }: KanbanViewProps) {
   const { user } = useNDK();
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
+  const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
@@ -518,7 +519,7 @@ export function KanbanView({
                                   {(hasTaskMentionChips(task) || task.tags.length > 0) && (
                                     <div className="flex flex-wrap gap-1 mt-2">
                                       <TaskMentionChips task={task} people={people} onPersonClick={onAuthorClick} inline />
-                                      {task.tags.slice(0, 3).map((tag) => (
+                                      {(expandedChipRows[task.id] ? task.tags : task.tags.slice(0, 3)).map((tag) => (
                                         <button
                                           key={tag}
                                           type="button"
@@ -533,10 +534,33 @@ export function KanbanView({
                                           #{tag}
                                         </button>
                                       ))}
-                                      {task.tags.length > 3 && (
-                                        <span className="text-xs text-muted-foreground">
+                                      {task.tags.length > 3 && !expandedChipRows[task.id] && (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            setExpandedChipRows((prev) => ({ ...prev, [task.id]: true }));
+                                          }}
+                                          className="text-xs text-muted-foreground hover:text-foreground"
+                                          aria-label={`Show ${task.tags.length - 3} more tags`}
+                                          title="Show all tags"
+                                        >
                                           +{task.tags.length - 3}
-                                        </span>
+                                        </button>
+                                      )}
+                                      {task.tags.length > 3 && expandedChipRows[task.id] && (
+                                        <button
+                                          type="button"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            setExpandedChipRows((prev) => ({ ...prev, [task.id]: false }));
+                                          }}
+                                          className="text-xs text-muted-foreground hover:text-foreground"
+                                          aria-label="Show fewer tags"
+                                          title="Show fewer tags"
+                                        >
+                                          less
+                                        </button>
                                       )}
                                     </div>
                                   )}
