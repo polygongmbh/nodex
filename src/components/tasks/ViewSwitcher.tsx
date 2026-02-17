@@ -21,7 +21,7 @@ export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
 
   return (
     <div
-      className="h-full flex items-stretch justify-center gap-1 sm:gap-2 lg:gap-3 min-w-0 overflow-hidden"
+      className="h-full flex items-stretch justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4 2xl:gap-5 min-w-0 overflow-hidden"
       data-onboarding="view-switcher"
       aria-label={t("navigation.aria.viewSwitcher")}
     >
@@ -30,7 +30,7 @@ export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
           key={view.id}
           onClick={() => onViewChange(view.id)}
           className={cn(
-            "h-full min-w-0 flex items-center gap-1 px-1 lg:px-2 text-sm font-medium transition-colors border-b-2 xl:text-base",
+            "h-full min-w-0 flex items-center gap-1 xl:gap-2 px-1 lg:px-2 xl:px-4 2xl:px-5 text-sm font-medium transition-colors border-b-2 xl:text-base",
             currentView === view.id
               ? "text-foreground border-primary"
               : "text-muted-foreground border-transparent hover:text-foreground hover:border-foreground/30"
