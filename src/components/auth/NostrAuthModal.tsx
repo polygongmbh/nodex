@@ -450,11 +450,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       <DropdownMenu onOpenChange={(open) => { if (!open) setShowKey(false); }}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-full w-full px-2 gap-2 bg-transparent hover:bg-transparent rounded-none justify-end">
-            {user.profile?.picture ? (
-              <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={user.profile.picture} className="w-5 h-5" />
-            ) : (
-              <UserAvatar id={user.pubkey} displayName={displayName} className="w-5 h-5" />
-            )}
+            <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={user.profile?.picture} className="w-5 h-5" />
             <span className="text-sm font-medium truncate max-w-[8rem]">{displayName}</span>
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
           </Button>
@@ -462,11 +458,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         <DropdownMenuContent align="end" className="w-80 p-2">
           <DropdownMenuLabel className="px-2 py-1">
             <div className="flex items-center gap-2">
-              {user.profile?.picture ? (
-                <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={user.profile.picture} className="w-6 h-6" />
-              ) : (
-                <UserAvatar id={user.pubkey} displayName={displayName} className="w-6 h-6" />
-              )}
+              <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={user.profile?.picture} className="w-6 h-6" />
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-medium truncate">{displayName}</span>

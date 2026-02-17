@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Hash, Calendar, Clock, X, ChevronDown, Zap, AtSign, User } from "lucide-react";
+import { Hash, Calendar, Clock, X, ChevronDown, Zap, AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -7,6 +7,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   extractMentionIdentifiersFromContent,
   getPreferredMentionIdentifier,
@@ -642,11 +643,12 @@ export function TaskComposer({
                     isActive ? "bg-muted" : "hover:bg-muted"
                   )}
                   >
-                  {person.avatar ? (
-                    <img src={person.avatar} alt={person.displayName} className="w-4 h-4 rounded-full" />
-                  ) : (
-                    <User className="w-4 h-4 text-primary" />
-                  )}
+                  <UserAvatar
+                    id={person.id}
+                    displayName={person.displayName || person.name}
+                    avatarUrl={person.avatar}
+                    className="w-4 h-4"
+                  />
                   <span className="text-sm">@{person.name || person.displayName}</span>
                   <span className="text-xs text-muted-foreground truncate">(@{mentionIdentifier})</span>
                 </button>

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle, User } from "lucide-react";
+import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -642,11 +642,12 @@ export function UnifiedBottomBar({
                           activeMentionIndex === index ? "bg-muted" : "hover:bg-muted"
                         )}
                       >
-                        {person.avatar ? (
-                          <img src={person.avatar} alt={person.displayName} className="w-4 h-4 rounded-full" />
-                        ) : (
-                          <User className="w-4 h-4 text-primary" />
-                        )}
+                        <UserAvatar
+                          id={person.id}
+                          displayName={person.displayName || person.name}
+                          avatarUrl={person.avatar}
+                          className="w-4 h-4"
+                        />
                         <span className="text-sm">@{person.name || person.displayName}</span>
                         <span className="text-xs text-muted-foreground truncate">(@{mentionIdentifier})</span>
                       </button>
