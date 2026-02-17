@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Person } from "@/types";
 import {
   extractMentionIdentifiersFromContent,
+  formatMentionIdentifierForDisplay,
   getPreferredMentionIdentifier,
   personMatchesMentionQuery,
   resolveMentionedPubkeys,
@@ -49,5 +50,14 @@ describe("mentions", () => {
       [alice, bob]
     );
     expect(resolved).toEqual([pubkeyMention, "a".repeat(64), "b".repeat(64)]);
+  });
+
+  it("truncates pubkey-like identifiers for compact display", () => {
+    const hex = "f".repeat(64);
+    const npub = "npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
+
+    expect(formatMentionIdentifierForDisplay(hex)).toBe("ffffffffff…ffffff");
+    expect(formatMentionIdentifierForDisplay(npub)).toBe("npub1qqqqq…qqqqqq");
+    expect(formatMentionIdentifierForDisplay("alice@example.com")).toBe("alice@example.com");
   });
 });

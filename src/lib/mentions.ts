@@ -2,6 +2,7 @@ import type { Person } from "@/types";
 
 const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
 const NIP05_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+const NPUB_PATTERN = /^npub1[023456789acdefghjklmnpqrstuvwxyz]+$/i;
 
 export function normalizeMentionIdentifier(value: string): string {
   return value.trim().toLowerCase().replace(/[.,!?;:]+$/g, "");
@@ -77,4 +78,13 @@ export function resolveMentionedPubkeys(content: string, people: Person[]): stri
   }
 
   return Array.from(resolved);
+}
+
+export function formatMentionIdentifierForDisplay(identifier: string): string {
+  const normalized = normalizeMentionIdentifier(identifier);
+  if (PUBKEY_PATTERN.test(normalized) || NPUB_PATTERN.test(normalized)) {
+    if (normalized.length <= 18) return normalized;
+    return `${normalized.slice(0, 10)}…${normalized.slice(-6)}`;
+  }
+  return normalized;
 }

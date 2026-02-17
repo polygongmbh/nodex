@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   extractMentionIdentifiersFromContent,
+  formatMentionIdentifierForDisplay,
   getPreferredMentionIdentifier,
   personMatchesMentionQuery,
 } from "@/lib/mentions";
@@ -661,7 +662,7 @@ export function TaskComposer({
 
         {/* Channel suggestions */}
         {showHashtagSuggestions && filteredChannels.length > 0 && (
-          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-48 py-1 max-h-60 overflow-y-auto overscroll-contain">
+          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-56 py-1 max-h-72 overflow-y-auto overscroll-contain">
             {filteredChannels.map((channel) => (
               <button
                 key={channel.id}
@@ -686,9 +687,10 @@ export function TaskComposer({
           </div>
         )}
         {showMentionSuggestions && filteredPeople.length > 0 && (
-          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-64 py-1 max-h-60 overflow-y-auto overscroll-contain">
+          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-[22rem] max-w-[calc(100vw-2rem)] py-1 max-h-72 overflow-y-auto overscroll-contain">
             {filteredPeople.map((person) => {
                   const mentionIdentifier = getPreferredMentionIdentifier(person);
+                  const mentionDisplay = formatMentionIdentifierForDisplay(mentionIdentifier);
                   const isActive = filteredPeople[activeSuggestionIndex]?.id === person.id;
                   return (
                     <button
@@ -713,8 +715,13 @@ export function TaskComposer({
                     avatarUrl={person.avatar}
                     className="w-4 h-4"
                   />
-                  <span className="text-sm min-w-0 truncate">@{person.name || person.displayName}</span>
-                  <span className="text-xs text-muted-foreground min-w-0 truncate">(@{mentionIdentifier})</span>
+                  <span className="text-sm min-w-0 flex-1 truncate">@{person.name || person.displayName}</span>
+                  <span
+                    className="text-xs text-muted-foreground max-w-[11rem] truncate"
+                    title={`@${mentionIdentifier}`}
+                  >
+                    (@{mentionDisplay})
+                  </span>
                 </button>
               );
             })}

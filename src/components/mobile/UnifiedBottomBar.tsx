@@ -7,7 +7,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { getPreferredMentionIdentifier, personMatchesMentionQuery } from "@/lib/mentions";
+import {
+  formatMentionIdentifierForDisplay,
+  getPreferredMentionIdentifier,
+  personMatchesMentionQuery,
+} from "@/lib/mentions";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface UnifiedBottomBarProps {
@@ -626,9 +630,10 @@ export function UnifiedBottomBar({
                 rows={1}
               />
               {showMentionSuggestions && filteredPeople.length > 0 && (
-                <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1 max-h-60 overflow-y-auto overscroll-contain">
+                <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1 max-h-72 overflow-y-auto overscroll-contain">
                   {filteredPeople.map((person, index) => {
                     const mentionIdentifier = getPreferredMentionIdentifier(person);
+                    const mentionDisplay = formatMentionIdentifierForDisplay(mentionIdentifier);
                     return (
                       <button
                         key={person.id}
@@ -648,8 +653,13 @@ export function UnifiedBottomBar({
                           avatarUrl={person.avatar}
                           className="w-4 h-4"
                         />
-                        <span className="text-sm min-w-0 truncate">@{person.name || person.displayName}</span>
-                        <span className="text-xs text-muted-foreground min-w-0 truncate">(@{mentionIdentifier})</span>
+                        <span className="text-sm min-w-0 flex-1 truncate">@{person.name || person.displayName}</span>
+                        <span
+                          className="text-xs text-muted-foreground max-w-[9rem] truncate"
+                          title={`@${mentionIdentifier}`}
+                        >
+                          (@{mentionDisplay})
+                        </span>
                       </button>
                     );
                   })}
