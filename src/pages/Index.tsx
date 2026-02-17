@@ -43,6 +43,11 @@ import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-s
 import { filterTasks } from "@/lib/task-filtering";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import { isFilterResetStep, isNavigationFocusStep } from "@/lib/onboarding-step-rules";
+import {
+  mapPeopleSelection,
+  setAllChannelFilters,
+  setExclusiveChannelFilter,
+} from "@/lib/filter-state-utils";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
@@ -380,19 +385,8 @@ const Index = () => {
     setFocusedTaskId(null);
     setSearchQuery("");
     setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
-    setChannelFilterStates(() => {
-      const next = new Map<string, Channel["filterState"]>();
-      channels.forEach((channel) => {
-        next.set(channel.id, "neutral");
-      });
-      return next;
-    });
-    setPeople((prev) =>
-      prev.map((person) => ({
-        ...person,
-        isSelected: false,
-      }))
-    );
+    setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
+    setPeople((prev) => mapPeopleSelection(prev, () => false));
   }, [channels, relays, setCurrentView, setFocusedTaskId]);
 
   const forceShowComposeForGuide = shouldForceComposeForGuide({
@@ -455,26 +449,14 @@ const Index = () => {
   };
 
   const handleChannelExclusive = (id: string) => {
-    setChannelFilterStates((prev) => {
-      const newMap = new Map<string, Channel["filterState"]>();
-      channels.forEach((c) => {
-        newMap.set(c.id, c.id === id ? "included" : "neutral");
-      });
-      return newMap;
-    });
+    setChannelFilterStates(() => setExclusiveChannelFilter(channels, id));
     const channel = channelsWithState.find((c) => c.id === id);
     toast.success(`Showing only #${channel?.name}`);
   };
 
   const handleToggleAllChannels = () => {
     const allNeutral = Array.from(channelFilterStates.values()).every((s) => s === "neutral") || channelFilterStates.size === 0;
-    setChannelFilterStates((prev) => {
-      const newMap = new Map<string, Channel["filterState"]>();
-      channels.forEach((c) => {
-        newMap.set(c.id, allNeutral ? "included" : "neutral");
-      });
-      return newMap;
-    });
+    setChannelFilterStates(() => setAllChannelFilters(channels, allNeutral ? "included" : "neutral"));
     toast.success(allNeutral ? "All channels included" : "All channels reset");
   };
 
@@ -483,11 +465,10 @@ const Index = () => {
     if (!normalizedTag) return;
 
     setChannelFilterStates(() => {
-      const next = new Map<string, Channel["filterState"]>();
-      channels.forEach((channel) => {
-        next.set(channel.id, channel.name.toLowerCase() === normalizedTag ? "included" : "neutral");
-      });
-      return next;
+      return setExclusiveChannelFilter(
+        channels,
+        channels.find((channel) => channel.name.toLowerCase() === normalizedTag)?.id || ""
+      );
     });
 
     toast.success(`Showing only #${normalizedTag}`);
@@ -502,12 +483,7 @@ const Index = () => {
   };
 
   const handlePersonExclusive = (id: string) => {
-    setPeople((prev) =>
-      prev.map((person) => ({
-        ...person,
-        isSelected: person.id === id,
-      }))
-    );
+    setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === id));
     const person = people.find((p) => p.id === id);
     toast.success(`Showing only ${person?.displayName || person?.name || "selected user"}`);
   };
@@ -567,9 +543,7 @@ const Index = () => {
   const handleToggleAllPeople = () => {
     const selectedCount = people.filter((person) => person.isSelected).length;
     const hasNoSelection = selectedCount === 0;
-    setPeople((prev) =>
-      prev.map((person) => ({ ...person, isSelected: hasNoSelection }))
-    );
+    setPeople((prev) => mapPeopleSelection(prev, () => hasNoSelection));
     toast.success(hasNoSelection ? "All people selected" : "All people deselected");
   };
 
