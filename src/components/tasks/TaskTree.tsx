@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Task, Relay, Channel, Person } from "@/types";
+import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -26,6 +26,7 @@ interface TaskTreeProps {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[]
@@ -208,6 +209,7 @@ export function TaskTree({
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     explicitMentionPubkeys?: string[]
   ) => {
     onNewTask(
@@ -217,6 +219,7 @@ export function TaskTree({
       taskType,
       dueDate,
       dueTime,
+      dateType,
       currentContextId,
       undefined,
       explicitMentionPubkeys

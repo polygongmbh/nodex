@@ -121,6 +121,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         "task",
         undefined,
         undefined,
+        "due",
         []
       );
     });
@@ -161,6 +162,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         "task",
         undefined,
         undefined,
+        "due",
         []
       );
     });
@@ -269,6 +271,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         "comment",
         undefined,
         undefined,
+        "due",
         []
       );
     });
@@ -333,6 +336,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         "task",
         undefined,
         undefined,
+        "due",
         ["f".repeat(64)]
       );
     });

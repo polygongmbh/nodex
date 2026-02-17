@@ -108,6 +108,7 @@ describe("UnifiedBottomBar auth gating", () => {
       "comment",
       undefined,
       undefined,
+      "due",
       []
     );
 
@@ -123,6 +124,7 @@ describe("UnifiedBottomBar auth gating", () => {
       "task",
       undefined,
       undefined,
+      "due",
       []
     );
   });
@@ -158,6 +160,7 @@ describe("UnifiedBottomBar auth gating", () => {
       "task",
       undefined,
       undefined,
+      "due",
       []
     );
 
@@ -170,6 +173,7 @@ describe("UnifiedBottomBar auth gating", () => {
       "task",
       undefined,
       undefined,
+      "due",
       []
     );
   });
@@ -468,6 +472,7 @@ describe("UnifiedBottomBar auth gating", () => {
       "task",
       undefined,
       undefined,
+      "due",
       ["e".repeat(64)]
     );
   });

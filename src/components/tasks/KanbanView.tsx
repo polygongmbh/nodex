@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { Task, Relay, Channel, Person, TaskStatus } from "@/types";
+import { Task, Relay, Channel, Person, TaskDateType, TaskStatus } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
@@ -16,6 +16,7 @@ import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
+import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 
 interface KanbanViewProps {
@@ -35,6 +36,7 @@ interface KanbanViewProps {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: TaskStatus,
     explicitMentionPubkeys?: string[]
@@ -188,7 +190,7 @@ export function KanbanView({
 
       return true;
     });
-  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren]);
+  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren, people]);
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
@@ -233,6 +235,7 @@ export function KanbanView({
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     explicitMentionPubkeys?: string[]
   ) => {
     onNewTask(
@@ -242,6 +245,7 @@ export function KanbanView({
       taskType,
       dueDate,
       dueTime,
+      dateType,
       focusedTaskId || undefined,
       composingColumn || undefined,
       explicitMentionPubkeys
@@ -439,6 +443,7 @@ export function KanbanView({
                           const ancestorChain = showContext ? getAncestorChain(task.id) : [];
                           const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
                           const isKeyboardFocused = keyboardFocusedTaskId === task.id;
+                          const isLockedUntilStart = isTaskLockedUntilStart(task);
                           
                           return (
                             <Draggable
@@ -458,6 +463,7 @@ export function KanbanView({
                                     "bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-grab active:cursor-grabbing",
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md",
                                     task.status === "done" && "opacity-70",
+                                    isLockedUntilStart && "opacity-50 grayscale",
                                     isKeyboardFocused && !snapshot.isDragging && "ring-2 ring-primary ring-offset-1 ring-offset-background"
                                   )}
                                 >
@@ -509,6 +515,7 @@ export function KanbanView({
                                   {task.dueDate && (
                                     <div className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}>
                                       <Calendar className="w-3 h-3" />
+                                      <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
                                       <span>{format(task.dueDate, "MMM d")}</span>
                                       {task.dueTime && (
                                         <>

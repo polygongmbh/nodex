@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw } from "lucide-react";
-import { Task, Relay, Channel, Person } from "@/types";
+import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
@@ -14,6 +14,7 @@ import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
+import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +45,7 @@ interface ListViewProps {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[]
@@ -264,6 +266,7 @@ export function ListView({
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     explicitMentionPubkeys?: string[]
   ) => {
     onNewTask(
@@ -273,6 +276,7 @@ export function ListView({
       taskType,
       dueDate,
       dueTime,
+      dateType,
       focusedTaskId || undefined,
       undefined,
       explicitMentionPubkeys
@@ -380,6 +384,7 @@ export function ListView({
             {task.dueDate ? (
               <>
                 <Calendar className="w-3.5 h-3.5" />
+                <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
                 <span>{format(task.dueDate, "MMM d, yyyy")}</span>
                 {task.dueTime && (
                   <>
@@ -513,6 +518,7 @@ export function ListView({
               listTasks.map((task) => {
                 const ancestorChain = getAncestorChain(task.id);
                 const isKeyboardFocused = keyboardFocusedTaskId === task.id;
+                const isLockedUntilStart = isTaskLockedUntilStart(task);
                 
                 return (
                   <tr
@@ -521,6 +527,7 @@ export function ListView({
                     className={cn(
                       "border-b border-border hover:bg-muted/30 transition-colors",
                       task.status === "done" && "opacity-60",
+                      isLockedUntilStart && "opacity-50 grayscale",
                       isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
                     )}
                   >

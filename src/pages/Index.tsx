@@ -62,7 +62,7 @@ import {
   setExclusiveChannelFilter,
 } from "@/lib/filter-state-utils";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
-import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
+import { Relay, Channel, Person, Task, TaskDateType, TaskStatus, TaskType } from "@/types";
 import { toast } from "sonner";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
 
@@ -723,6 +723,7 @@ const Index = () => {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType: TaskDateType = "due",
     parentId?: string,
     initialStatus?: TaskStatus,
     explicitMentionPubkeys: string[] = []
@@ -796,6 +797,7 @@ const Index = () => {
           taskContent: content,
           dueDate,
           dueTime,
+          dateType,
           relayUrl: selectedRelayUrls[0],
         });
         const calendarResult = await publishEvent(
@@ -847,6 +849,7 @@ const Index = () => {
       reposts: 0,
       dueDate,
       dueTime,
+      dateType,
       parentId,
       mentions: Array.from(
         new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])

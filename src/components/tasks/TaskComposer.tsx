@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Hash, Calendar, Clock, X, ChevronDown, Zap, AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Channel, Person, TaskType } from "@/types";
+import { Relay, Channel, Person, TaskType, TaskDateType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -23,6 +23,7 @@ interface TaskComposerProps {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     explicitMentionPubkeys?: string[]
   ) => void;
   relays: Relay[];
@@ -50,6 +51,7 @@ interface ComposeDraftState {
   taskType?: TaskType;
   dueDate?: string;
   dueTime?: string;
+  dateType?: TaskDateType;
   selectedRelays?: string[];
   explicitMentionPubkeys?: string[];
   explicitTagNames?: string[];
@@ -111,6 +113,7 @@ export function TaskComposer({
     return defaultDueDate;
   });
   const [dueTime, setDueTime] = useState(initialDraft?.dueTime || "");
+  const [dateType, setDateType] = useState<TaskDateType>(initialDraft?.dateType || "due");
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState("");
@@ -189,6 +192,7 @@ export function TaskComposer({
           taskType,
           dueDate: dueDate ? dueDate.toISOString() : undefined,
           dueTime,
+          dateType,
           selectedRelays,
           explicitTagNames,
           explicitMentionPubkeys,
@@ -197,7 +201,7 @@ export function TaskComposer({
     } catch {
       // Ignore persistence errors.
     }
-  }, [content, taskType, dueDate, dueTime, selectedRelays, explicitTagNames, explicitMentionPubkeys, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -327,6 +331,7 @@ export function TaskComposer({
           submitType ?? taskType,
           dueDate,
           dueTime || undefined,
+          dateType,
           explicitMentionPubkeys
         )
       );
@@ -341,6 +346,7 @@ export function TaskComposer({
     autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
     setDueTime("");
+    setDateType("due");
     setExplicitTagNames([]);
     setExplicitMentionPubkeys([]);
     if (adaptiveSize && selectedChannelsContent.trim().length === 0) {
@@ -758,10 +764,22 @@ export function TaskComposer({
       {showExpandedControls && taskType === "task" && (
         <div className="flex items-center gap-2 p-2 bg-muted/40 border border-border/40 rounded-xl">
           <Calendar className="w-4 h-4 text-muted-foreground" />
+          <select
+            aria-label="Date type"
+            value={dateType}
+            onChange={(event) => setDateType(event.target.value as TaskDateType)}
+            className="text-xs bg-background border border-border/50 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+          >
+            <option value="due">Due</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="start">Start</option>
+            <option value="end">End</option>
+            <option value="milestone">Milestone</option>
+          </select>
           <Popover>
             <PopoverTrigger asChild>
               <button className="text-sm text-muted-foreground hover:text-foreground">
-                {dueDate ? format(dueDate, "MMM d, yyyy") : "Set due date (optional)"}
+                {dueDate ? format(dueDate, "MMM d, yyyy") : `Set ${dateType} date (optional)`}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">

@@ -11,6 +11,7 @@ import { useNostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -138,6 +139,7 @@ export function TaskItem({
   
   const hasChildren = allChildren.length > 0;
   const isComment = task.taskType === "comment";
+  const isLockedUntilStart = isTaskLockedUntilStart(task);
 
   // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {
@@ -174,6 +176,7 @@ export function TaskItem({
             ? "bg-muted/30 hover:bg-muted/50" 
             : "hover:bg-card/80",
           task.status === "done" && "opacity-60",
+          isLockedUntilStart && "opacity-50 grayscale",
           depth > 0 && "border-l-2 border-muted ml-1.5 pl-4",
           isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background bg-primary/5"
         )}
@@ -402,6 +405,7 @@ export function TaskItem({
           {task.dueDate && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
               <Calendar className="w-3 h-3" />
+              <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
               <span>{format(task.dueDate, "MMM d, yyyy")}</span>
               {task.dueTime && (
                 <>

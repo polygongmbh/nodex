@@ -9,7 +9,7 @@ import { CalendarView } from "@/components/tasks/CalendarView";
 import { FocusedTaskBreadcrumb } from "@/components/tasks/FocusedTaskBreadcrumb";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
-import { Relay, Channel, Person, Task } from "@/types";
+import { Relay, Channel, Person, Task, TaskDateType } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface MobileLayoutProps {
@@ -32,6 +32,7 @@ interface MobileLayoutProps {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[]
@@ -195,6 +196,7 @@ export function MobileLayout({
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     explicitMentionPubkeys?: string[]
   ) => {
     onNewTask(
@@ -204,6 +206,7 @@ export function MobileLayout({
       taskType,
       dueDate,
       dueTime,
+      dateType,
       focusedTaskId || undefined,
       undefined,
       explicitMentionPubkeys

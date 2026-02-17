@@ -114,6 +114,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const parentId = parentTag?.[1] || replyTag?.[1];
   const dueTag = event.tags.find((tag) => tag[0] === "due" && tag[1]);
   const dueTimeTag = event.tags.find((tag) => tag[0] === "due_time" && tag[1]);
+  const dateTypeTag = event.tags.find((tag) => tag[0] === "date_type" && tag[1]);
   const mentionedPubkeys = event.tags
     .filter((tag) => tag[0]?.toLowerCase() === "p" && tag[1])
     .map((tag) => tag[1].toLowerCase());
@@ -133,6 +134,13 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
       }
     }
   }
+  const dateType = (() => {
+    const normalized = (dateTypeTag?.[1] || "").toLowerCase();
+    if (normalized === "scheduled" || normalized === "start" || normalized === "end" || normalized === "milestone" || normalized === "due") {
+      return normalized;
+    }
+    return dueTag ? "due" : undefined;
+  })();
 
   // Generate relay ID from URL - use the attached relayUrl
   const relayId = event.relayUrl ? getRelayIdFromUrl(event.relayUrl) : "nostr";
@@ -153,6 +161,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     parentId,
     dueDate,
     dueTime: dueTimeTag?.[1] || undefined,
+    dateType,
     mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles])),
     assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
   };
@@ -240,7 +249,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   const latestDueByTaskId = new Map<
     string,
-    { createdAt: number; dueDate?: Date; dueTime?: string }
+    { createdAt: number; dueDate?: Date; dueTime?: string; dateType?: Task["dateType"] }
   >();
 
   for (const calendarEvent of calendarEvents) {
@@ -252,6 +261,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
         createdAt: calendarEvent.created_at,
         dueDate: parsed.dueDate,
         dueTime: parsed.dueTime,
+        dateType: parsed.dateType,
       });
     }
   }
@@ -263,6 +273,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       ...task,
       dueDate: due.dueDate,
       dueTime: due.dueTime ?? task.dueTime,
+      dateType: due.dateType ?? task.dateType,
       lastEditedAt:
         !task.lastEditedAt || due.createdAt * 1000 > task.lastEditedAt.getTime()
           ? new Date(due.createdAt * 1000)

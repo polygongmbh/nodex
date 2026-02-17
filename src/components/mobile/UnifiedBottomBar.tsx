@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Channel, Person, TaskType } from "@/types";
+import { Relay, Channel, Person, TaskDateType, TaskType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -26,6 +26,7 @@ interface UnifiedBottomBarProps {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     explicitMentionPubkeys?: string[]
   ) => void;
   currentView: ViewType;
@@ -88,6 +89,7 @@ export function UnifiedBottomBar({
   const [activeMentionIndex, setActiveMentionIndex] = useState(0);
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [dueTime, setDueTime] = useState("");
+  const [dateType, setDateType] = useState<TaskDateType>("due");
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const cursorPositionRef = useRef(0);
@@ -238,6 +240,7 @@ export function UnifiedBottomBar({
       submitType ?? taskType,
       dueDate,
       dueTime || undefined,
+      dateType,
       explicitMentionPubkeys
     );
     const hashtagOnlyContent = Array.from(
@@ -249,6 +252,7 @@ export function UnifiedBottomBar({
     autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
     setDueTime("");
+    setDateType("due");
     setExplicitMentionPubkeys([]);
     setActiveSelector(null);
   };
@@ -454,7 +458,7 @@ export function UnifiedBottomBar({
               <PopoverTrigger asChild>
                 <button className="flex items-center gap-1 px-2 py-1.5 rounded-md border border-border hover:bg-muted/60 transition-colors">
                   <Calendar className="w-3.5 h-3.5" />
-                  {dueDate ? format(dueDate, "MMM d") : "Due"}
+                  {dueDate ? format(dueDate, "MMM d") : "Date"}
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -467,6 +471,18 @@ export function UnifiedBottomBar({
                 />
               </PopoverContent>
             </Popover>
+            <select
+              aria-label="Date type"
+              value={dateType}
+              onChange={(event) => setDateType(event.target.value as TaskDateType)}
+              className="h-7 rounded-md border border-border bg-background px-1.5 text-[11px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+            >
+              <option value="due">Due</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="start">Start</option>
+              <option value="end">End</option>
+              <option value="milestone">Milestone</option>
+            </select>
             {dueDate && (
               <>
                 <div className="flex items-center gap-1 px-2 py-1.5 rounded-md border border-border bg-muted/30">

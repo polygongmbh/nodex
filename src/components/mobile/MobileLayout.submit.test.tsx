@@ -37,6 +37,7 @@ vi.mock("./UnifiedBottomBar", () => ({
           "task",
           undefined,
           undefined,
+          "due",
           ["a".repeat(64)]
         )
       }
@@ -105,10 +106,10 @@ describe("MobileLayout submit wiring", () => {
       "task",
       undefined,
       undefined,
+      "due",
       "parent-123",
       undefined,
       ["a".repeat(64)]
     );
   });
 });
-

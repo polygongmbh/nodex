@@ -1,7 +1,7 @@
 import { useEffect, useRef, useMemo, useState } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
-import { Task, Relay, Channel, Person } from "@/types";
+import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -16,6 +16,7 @@ import { formatAuthorMetaParts } from "@/lib/person-label";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
+import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,7 @@ interface FeedViewProps {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[]
@@ -180,6 +182,7 @@ export function FeedView({
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     explicitMentionPubkeys?: string[]
   ) => {
     onNewTask(
@@ -189,6 +192,7 @@ export function FeedView({
       taskType,
       dueDate,
       dueTime,
+      dateType,
       focusedTaskId || undefined,
       undefined,
       explicitMentionPubkeys
@@ -283,6 +287,7 @@ export function FeedView({
             const isComment = task.taskType === "comment";
             const breadcrumb = getParentBreadcrumb(task);
             const isKeyboardFocused = keyboardFocusedTaskId === task.id;
+            const isLockedUntilStart = isTaskLockedUntilStart(task);
             const resolvedAuthor = people.find((person) => person.id === task.author.id) ?? task.author;
             const authorMeta = formatAuthorMetaParts({
               personId: resolvedAuthor.id,
@@ -301,6 +306,7 @@ export function FeedView({
                 className={cn(
                   "border-b border-border p-4 hover:bg-card/50 transition-colors",
                   task.status === "done" && "opacity-60",
+                  isLockedUntilStart && "opacity-50 grayscale",
                   isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
                 )}
               >
@@ -488,6 +494,7 @@ export function FeedView({
                     {task.dueDate && (
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                         <Calendar className="w-3 h-3" />
+                        <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
                         <span>{format(task.dueDate, "MMM d, yyyy")}</span>
                         {task.dueTime && (
                           <>

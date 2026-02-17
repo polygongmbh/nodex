@@ -18,6 +18,7 @@ Added focused guide updates for compose keyboard flows.
 
 ### Changed
 - In-app and markdown guides now document current compose shortcut behavior, including `Alt+Enter` submit-vs-metadata rules and metadata-only tag/mention autocomplete usage.
+- Task compose now supports date type selection (`Due`, `Scheduled`, `Start`, `End`, `Milestone`) alongside the date picker, and future `Start` tasks render as not-yet-doable across task views.
 
 ## [1.2.0] - 2026-02-17
 Introduced robust `@` user mentions and smarter cross-view search, with faster compose/autocomplete and a more useful sidebar people list.

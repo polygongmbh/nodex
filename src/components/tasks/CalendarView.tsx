@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
-import { Task, Relay, Channel, Person } from "@/types";
+import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, isPast, startOfDay, isTomorrow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
@@ -13,6 +13,7 @@ import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
+import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,7 @@ interface CalendarViewProps {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[]
@@ -161,7 +163,7 @@ export function CalendarView({
       
       return true;
     });
-  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, getDescendantIds]);
+  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, getDescendantIds, people]);
 
   const days = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -270,6 +272,7 @@ export function CalendarView({
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     explicitMentionPubkeys?: string[]
   ) => {
     // Use the selected date if no due date was set
@@ -281,6 +284,7 @@ export function CalendarView({
       taskType,
       eventDate,
       dueTime,
+      dateType,
       focusedTaskId || undefined,
       undefined,
       explicitMentionPubkeys
@@ -451,6 +455,7 @@ export function CalendarView({
                               <div className="flex items-center gap-2 mt-1">
                                 <span className={cn("text-xs flex items-center gap-1", dueDateColor)}>
                                   <Clock className="w-3 h-3" />
+                                  <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
                                   {format(task.dueDate!, "MMM d")}
                                   {task.dueTime && ` ${task.dueTime}`}
                                 </span>
@@ -671,19 +676,21 @@ export function CalendarView({
               )}
 
               {selectedDayTasks.length === 0 && !isComposingEvent ? (
-                <p className="text-sm text-muted-foreground">No tasks due this day</p>
+                <p className="text-sm text-muted-foreground">No tasks scheduled for this day</p>
               ) : (
                 <div className="space-y-2">
                   {selectedDayTasks.map((task) => {
                     const ancestorChain = getAncestorChain(task.id);
                     const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                    const isLockedUntilStart = isTaskLockedUntilStart(task);
                     
                     return (
                       <div
                         key={task.id}
                         className={cn(
                           "p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors",
-                          task.status === "done" && "opacity-60"
+                          task.status === "done" && "opacity-60",
+                          isLockedUntilStart && "opacity-50 grayscale"
                         )}
                       >
                         {/* Parent context */}

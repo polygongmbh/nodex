@@ -28,6 +28,7 @@ export interface Person {
 }
 
 export type TaskType = "task" | "comment";
+export type TaskDateType = "due" | "scheduled" | "start" | "end" | "milestone";
 
 export type TaskStatus = "todo" | "in-progress" | "done";
 
@@ -50,6 +51,7 @@ export interface Task {
   completedBy?: string;
   dueDate?: Date;
   dueTime?: string;
+  dateType?: TaskDateType;
   parentId?: string;
   mentions?: string[];
   assigneePubkeys?: string[];

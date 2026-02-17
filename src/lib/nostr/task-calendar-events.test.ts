@@ -17,6 +17,7 @@ describe("task calendar event helpers", () => {
     expect(event.kind).toBe(NostrEventKind.CalendarDateBased);
     expect(event.tags).toContainEqual(["title", "Plan launch"]);
     expect(event.tags).toContainEqual(["start", "2026-03-22"]);
+    expect(event.tags).toContainEqual(["date_type", "due"]);
     expect(event.tags).toContainEqual(["e", "task123", "", "task"]);
   });
 
@@ -27,13 +28,15 @@ describe("task calendar event helpers", () => {
       taskContent: "Ship update",
       dueDate,
       dueTime: "14:30",
+      dateType: "end",
       relayUrl: "wss://relay.example",
     });
 
     expect(event.kind).toBe(NostrEventKind.CalendarTimeBased);
     expect(event.tags).toContainEqual(["e", "task456", "wss://relay.example", "task"]);
     expect(event.tags).toContainEqual(["due_time", "14:30"]);
-    expect(event.tags.some((tag) => tag[0] === "start" && /^\d+$/.test(tag[1]))).toBe(true);
+    expect(event.tags).toContainEqual(["date_type", "end"]);
+    expect(event.tags.some((tag) => tag[0] === "end" && /^\d+$/.test(tag[1]))).toBe(true);
   });
 
   it("parses linked due data from calendar event tags", () => {
@@ -46,5 +49,6 @@ describe("task calendar event helpers", () => {
 
     expect(parsed.taskId).toBe("task-1");
     expect(parsed.dueDate?.toISOString()).toBe("2026-03-23T00:00:00.000Z");
+    expect(parsed.dateType).toBe("due");
   });
 });

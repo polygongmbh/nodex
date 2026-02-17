@@ -1,5 +1,5 @@
 import { TaskComposer } from "./TaskComposer";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Person, Relay, TaskDateType } from "@/types";
 
 interface SharedViewComposerProps {
   visible: boolean;
@@ -14,6 +14,7 @@ interface SharedViewComposerProps {
     taskType: string,
     dueDate?: Date,
     dueTime?: string,
+    dateType?: TaskDateType,
     explicitMentionPubkeys?: string[]
   ) => void;
   onCancel?: () => void;

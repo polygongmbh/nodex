@@ -70,7 +70,9 @@
 - Task/comment kind changes event behavior.
 - `#tags` and `@mentions` are supported in compose text.
 - Included channel filters automatically prepopulate compose with matching `#channel` tags.
-- Setting a due date on a task makes it appear in Calendar view.
+- Next to the date picker, choose the date type: `Due`, `Scheduled`, `Start`, `End`, or `Milestone`.
+- Date-typed tasks appear in Calendar view.
+- Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
 - On mobile, use the submit button in the combined bottom bar to create.
 
 ### Compose keyboard behavior (desktop)
