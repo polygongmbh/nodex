@@ -88,16 +88,44 @@ export function FeedView({
   onAuthorClick,
   mentionRequest = null,
 }: FeedViewProps) {
+  const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1279px)";
   const truncateMobilePubkey = (value: string): string => {
     if (!isMobile) return value;
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;
   };
+  const truncateSlimDesktopPubkey = (value: string): string => {
+    if (value.length <= 24) return value;
+    return `${value.slice(0, 12)}…${value.slice(-8)}`;
+  };
 
   const { user } = useNDK();
+  const [isSlimDesktop, setIsSlimDesktop] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
+
+  useEffect(() => {
+    if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      setIsSlimDesktop(false);
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(SLIM_DESKTOP_QUERY);
+    const handleMediaQueryChange = () => {
+      setIsSlimDesktop(mediaQuery.matches);
+    };
+
+    handleMediaQueryChange();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleMediaQueryChange);
+      return () => mediaQuery.removeEventListener("change", handleMediaQueryChange);
+    }
+
+    mediaQuery.addListener(handleMediaQueryChange);
+    return () => mediaQuery.removeListener(handleMediaQueryChange);
+  }, [isMobile]);
 
   // Get all descendants of a task
   const getDescendantIds = (taskId: string): Set<string> => {
@@ -298,10 +326,13 @@ export function FeedView({
               displayName: resolvedAuthor.displayName,
               username: resolvedAuthor.name,
             });
-            const primaryAuthorLabel =
-              isMobile && authorMeta.primary === resolvedAuthor.id
-                ? truncateMobilePubkey(authorMeta.primary)
-                : authorMeta.primary;
+            const isPubkeyPrimary = authorMeta.primary === resolvedAuthor.id;
+            const primaryAuthorLabel = (() => {
+              if (!isPubkeyPrimary) return authorMeta.primary;
+              if (isMobile) return truncateMobilePubkey(authorMeta.primary);
+              if (isSlimDesktop) return truncateSlimDesktopPubkey(authorMeta.primary);
+              return authorMeta.primary;
+            })();
             const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
 
             return (

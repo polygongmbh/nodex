@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
@@ -22,6 +22,48 @@ const channels: Channel[] = [makeChannel()];
 const relays: Relay[] = [makeRelay()];
 
 describe("FeedView", () => {
+  it("shortens fallback pubkey label on slim desktop widths", async () => {
+    const pubkeyOnlyAuthor: Person = {
+      id: author.id,
+      name: author.id,
+      displayName: author.id,
+      isOnline: true,
+      isSelected: false,
+    };
+    const pubkeyTask = makeTask({ id: "task-pubkey", author: pubkeyOnlyAuthor, status: "todo" });
+    const matchMediaSpy = vi
+      .spyOn(window, "matchMedia")
+      .mockImplementation((query: string) => ({
+        matches: query === "(min-width: 768px) and (max-width: 1279px)",
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      }));
+
+    render(
+      <FeedView
+        tasks={[pubkeyTask]}
+        allTasks={[pubkeyTask]}
+        relays={relays}
+        channels={channels}
+        people={[pubkeyOnlyAuthor]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("0123456789ab…89abcdef")).toBeInTheDocument();
+    });
+    matchMediaSpy.mockRestore();
+  });
+
   it("shows author metadata label with username and shortened pubkey", () => {
     render(
       <FeedView

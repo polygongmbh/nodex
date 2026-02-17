@@ -27,6 +27,7 @@ Expanded relay-aware task publishing, priority editing, and English/German local
 - Compose post-type selector is now styled as a clearer segmented control on desktop/mobile, and remaining Task/Comment/Mentions compose labels/tooltips are fully translation-key-driven.
 - German sign-in status wording now distinguishes guest login (`Angemeldet als Gast`) from other methods (`Angemeldet über …`).
 - Desktop top navigation no longer scrolls horizontally; on smaller widths the German sign-in CTA is shortened to `Anmelden`.
+- Feed author labels now shorten raw pubkey fallbacks on slimmer desktop widths while keeping full pubkeys on wider desktop layouts.
 
 ### Fixed
 - Root task creation now blocks invalid multi-relay submissions with clear guidance: `Select one relay or a parent task`.
