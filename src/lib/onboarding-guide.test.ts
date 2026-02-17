@@ -6,7 +6,6 @@ describe("shouldForceComposeForGuide", () => {
     expect(
       shouldForceComposeForGuide({
         isOnboardingOpen: true,
-        activeOnboardingSection: null,
         activeOnboardingStepId: "filters-hashtag-content",
         isMobile: false,
       })
@@ -17,7 +16,6 @@ describe("shouldForceComposeForGuide", () => {
     expect(
       shouldForceComposeForGuide({
         isOnboardingOpen: true,
-        activeOnboardingSection: null,
         activeOnboardingStepId: "compose-kind",
         isMobile: true,
       })
@@ -28,9 +26,28 @@ describe("shouldForceComposeForGuide", () => {
     expect(
       shouldForceComposeForGuide({
         isOnboardingOpen: true,
-        activeOnboardingSection: null,
         activeOnboardingStepId: "filters-hashtag-content",
         isMobile: true,
+      })
+    ).toBe(false);
+  });
+
+  it("does not force compose in dedicated desktop kanban/calendar guides", () => {
+    expect(
+      shouldForceComposeForGuide({
+        isOnboardingOpen: true,
+        activeOnboardingStepId: "kanban-columns-overview",
+        isMobile: false,
+        currentView: "kanban",
+      })
+    ).toBe(false);
+
+    expect(
+      shouldForceComposeForGuide({
+        isOnboardingOpen: true,
+        activeOnboardingStepId: "calendar-months",
+        isMobile: false,
+        currentView: "calendar",
       })
     ).toBe(false);
   });

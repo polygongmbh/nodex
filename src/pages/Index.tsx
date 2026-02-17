@@ -483,17 +483,18 @@ const Index = () => {
 
   const forceShowComposeForGuide = shouldForceComposeForGuide({
     isOnboardingOpen,
-    activeOnboardingSection,
     activeOnboardingStepId,
     isMobile,
+    currentView,
   });
 
   const handleOnboardingActiveSectionChange = useCallback((section: OnboardingSectionId | null) => {
     setActiveOnboardingSection(section);
-    if (section === "compose") {
+    const isDedicatedViewGuide = !isMobile && (currentView === "kanban" || currentView === "calendar");
+    if (section === "compose" && !isDedicatedViewGuide) {
       setComposeGuideActivationSignal((previous) => previous + 1);
     }
-    if (!isMobile && section === "compose" && currentView !== "feed") {
+    if (!isMobile && section === "compose" && !isDedicatedViewGuide && currentView !== "feed") {
       setCurrentView("feed");
     }
   }, [currentView, isMobile, setCurrentView]);
