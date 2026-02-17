@@ -40,7 +40,7 @@ import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import { derivePeopleFromKind0Events } from "@/lib/people-from-kind0";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
-import { taskMatchesSelectedPeople } from "@/lib/person-filter";
+import { filterTasks } from "@/lib/task-filtering";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskStatus, TaskType } from "@/types";
@@ -816,48 +816,16 @@ const Index = () => {
     }));
   }, [relays, effectiveActiveRelayIds]);
 
-  // Check if any channel filters are active
-  const hasActiveChannelFilters = channelsWithState.some(c => c.filterState !== "neutral");
-
-  // Filter tasks based on active filters
-  const filteredTasks = allTasks.filter((task) => {
-    // Relay filter - if any relay is selected, task must be in one of the selected relays
-    if (effectiveActiveRelayIds.size > 0 && !task.relays.some(tr => effectiveActiveRelayIds.has(tr))) {
-      return false;
-    }
-
-    // Filter out posts with more than 10 tags if no channel filters are active
-    if (!hasActiveChannelFilters && task.tags.length > 10) {
-      return false;
-    }
-
-    // Person filter - selected authors OR content that @mentions selected people.
-    const selectedPeople = people.filter((person) => person.isSelected);
-    if (!taskMatchesSelectedPeople(task, selectedPeople)) {
-      return false;
-    }
-
-    // Channel exclusion filter - exclude tasks that have any excluded channels
-    const excludedChannelNames = channelsWithState.filter((c) => c.filterState === "excluded").map((c) => c.name.toLowerCase());
-    if (excludedChannelNames.length > 0) {
-      const taskTagsLower = task.tags.map(t => t.toLowerCase());
-      if (taskTagsLower.some(t => excludedChannelNames.includes(t))) {
-        return false;
-      }
-    }
-
-    // Channel inclusion filter - AND logic: task must have ALL included channels
-    const includedChannelNames = channelsWithState.filter((c) => c.filterState === "included").map((c) => c.name.toLowerCase());
-    if (includedChannelNames.length > 0) {
-      const taskTagsLower = task.tags.map(t => t.toLowerCase());
-      // Check if ALL included channels are present in the task's tags
-      if (!includedChannelNames.every(c => taskTagsLower.includes(c))) {
-        return false;
-      }
-    }
-
-    return true;
-  });
+  const filteredTasks = useMemo(
+    () =>
+      filterTasks({
+        tasks: allTasks,
+        activeRelayIds: effectiveActiveRelayIds,
+        channels: channelsWithState,
+        people,
+      }),
+    [allTasks, channelsWithState, effectiveActiveRelayIds, people]
+  );
 
   const viewProps = {
     tasks: filteredTasks,
