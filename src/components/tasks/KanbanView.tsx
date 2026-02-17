@@ -6,7 +6,7 @@ import { Task, Relay, Channel, Person, TaskDateType, TaskStatus } from "@/types"
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
+import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -530,54 +530,17 @@ export function KanbanView({
                                     </div>
                                   )}
 
-                                  {(hasTaskMentionChips(task) || task.tags.length > 0) && (
-                                    <div className="flex flex-wrap gap-1 mt-2">
-                                      <TaskMentionChips task={task} people={people} onPersonClick={onAuthorClick} inline />
-                                      {(expandedChipRows[task.id] ? task.tags : task.tags.slice(0, 3)).map((tag) => (
-                                        <button
-                                          key={tag}
-                                          type="button"
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                            onHashtagClick?.(tag);
-                                          }}
-                                          className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
-                                          aria-label={`Filter to #${tag}`}
-                                          title={`Filter to #${tag}`}
-                                        >
-                                          #{tag}
-                                        </button>
-                                      ))}
-                                      {task.tags.length > 3 && !expandedChipRows[task.id] && (
-                                        <button
-                                          type="button"
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                            setExpandedChipRows((prev) => ({ ...prev, [task.id]: true }));
-                                          }}
-                                          className="text-xs text-muted-foreground hover:text-foreground"
-                                          aria-label={`Show ${task.tags.length - 3} more tags`}
-                                          title="Show all tags"
-                                        >
-                                          +{task.tags.length - 3}
-                                        </button>
-                                      )}
-                                      {task.tags.length > 3 && expandedChipRows[task.id] && (
-                                        <button
-                                          type="button"
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                            setExpandedChipRows((prev) => ({ ...prev, [task.id]: false }));
-                                          }}
-                                          className="text-xs text-muted-foreground hover:text-foreground"
-                                          aria-label="Show fewer tags"
-                                          title="Show fewer tags"
-                                        >
-                                          less
-                                        </button>
-                                      )}
-                                    </div>
-                                  )}
+                                  <TaskTagChipRow
+                                    task={task}
+                                    people={people}
+                                    className="mt-2"
+                                    expanded={Boolean(expandedChipRows[task.id])}
+                                    onToggleExpanded={(expanded) =>
+                                      setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
+                                    }
+                                    onHashtagClick={onHashtagClick}
+                                    onPersonClick={onAuthorClick}
+                                  />
                                 </div>
                               )}
                             </Draggable>

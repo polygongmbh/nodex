@@ -17,6 +17,7 @@ Upcoming improvements in progress.
 - Guide area ovals were tightened further and now anchor to smaller Kanban/Calendar targets, reducing overlap and reposition jitter; dedicated Kanban/Calendar walkthrough steps now cover column/depth and day-panel/month-nav workflows.
 - Selecting Kanban/Calendar guides no longer redirects into Feed compose guidance; guide activation and compose force-open behavior are now view-aware and step-driven.
 - Calendar guide no longer includes a month-jump step, and Kanban/Calendar dedicated guides now run with section-local step numbering instead of global guide numbering.
+- Table view now gives more room to tags on wide screens (showing full chips), while smaller screens prioritize task text and use expandable tag chips; chip overflow behavior is now shared with Kanban via a reusable tag-chip row component.
 - Onboarding section picker performance and layout were improved with lighter guide targets, reduced overlap, and view-specific guidance (Kanban/Calendar now show dedicated guides instead of compose guidance where compose is not present).
 
 ## [1.2.2] - 2026-02-17

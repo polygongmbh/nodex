@@ -5,7 +5,7 @@ import { Task, Relay, Channel, Person, TaskDateType } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
+import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
@@ -93,6 +93,8 @@ export function ListView({
   
   // Track sort version - incremented on view/filter changes, not status changes
   const [sortVersion, setSortVersion] = useState(0);
+  const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
+  const [showAllTagsOnWideScreens, setShowAllTagsOnWideScreens] = useState(false);
   const prevTasksRef = useRef<string>("");
   const prevSearchRef = useRef(searchQuery);
   const prevFocusedRef = useRef(focusedTaskId);
@@ -115,6 +117,16 @@ export function ListView({
       prevFocusedRef.current = focusedTaskId;
     }
   }, [tasks, searchQuery, focusedTaskId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(min-width: 1536px)");
+    const sync = (matches: boolean) => setShowAllTagsOnWideScreens(matches);
+    sync(mediaQuery.matches);
+    const listener = (event: MediaQueryListEvent) => sync(event.matches);
+    mediaQuery.addEventListener("change", listener);
+    return () => mediaQuery.removeEventListener("change", listener);
+  }, []);
 
   // Build children map for sorting context - memoize based on sortVersion to prevent re-sorting on status changes
   const sortContextRef = useRef<SortContext | null>(null);
@@ -415,35 +427,19 @@ export function ListView({
 
   // Editable tags cell
   const TagsCell = ({ task }: { task: Task }) => {
-    const hasMentions = hasTaskMentionChips(task);
-    const hasTags = task.tags.length > 0;
     return (
-      <div className="flex flex-wrap gap-1">
-        <TaskMentionChips task={task} people={people} onPersonClick={onAuthorClick} inline />
-        {task.tags.slice(0, 3).map((tag) => (
-          <button
-            key={tag}
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onHashtagClick?.(tag);
-            }}
-            className={`px-1.5 py-0.5 rounded text-xs font-medium cursor-pointer ${TASK_INTERACTION_STYLES.hashtagChip}`}
-            aria-label={`Filter to #${tag}`}
-            title={`Filter to #${tag}`}
-          >
-            #{tag}
-          </button>
-        ))}
-        {task.tags.length > 3 && (
-          <span className="text-xs text-muted-foreground">
-            +{task.tags.length - 3}
-          </span>
-        )}
-        {!hasMentions && !hasTags && (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
-      </div>
+      <TaskTagChipRow
+        task={task}
+        people={people}
+        expanded={Boolean(expandedChipRows[task.id])}
+        maxVisibleTags={2}
+        showAllTags={showAllTagsOnWideScreens}
+        onToggleExpanded={(expanded) =>
+          setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
+        }
+        onHashtagClick={onHashtagClick}
+        onPersonClick={onAuthorClick}
+      />
     );
   };
 
@@ -476,7 +472,7 @@ export function ListView({
 
       {/* Table */}
       <div ref={tableContainerRef} className="flex-1 overflow-auto">
-        <table className="w-full">
+        <table className="w-full table-fixed">
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>
               <th className="text-left p-3 w-10">
@@ -492,7 +488,7 @@ export function ListView({
                   )}
                 </div>
               </th>
-              <th className="text-left p-3">
+              <th className="text-left p-3 w-auto min-w-[22rem]">
                 <SortButton field="content">Task</SortButton>
               </th>
               <th className="text-left p-3 w-32">
@@ -504,7 +500,7 @@ export function ListView({
               <th className="text-left p-3 w-32">
                 <SortButton field="priority">Priority</SortButton>
               </th>
-              <th className="text-left p-3 w-48">Tags</th>
+              <th className="text-left p-3 w-32 md:w-40 lg:w-48 xl:w-64 2xl:w-[26rem]">Tags</th>
             </tr>
           </thead>
           <tbody>
@@ -549,7 +545,7 @@ export function ListView({
                         )}
                       </button>
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 min-w-0">
                       <div className="space-y-1">
                         {/* Parent context */}
                         {ancestorChain.length > 0 && (
@@ -572,7 +568,7 @@ export function ListView({
                         <p
                           onClick={() => onFocusTask?.(task.id)}
                           className={cn(
-                            `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
+                            `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} break-words`,
                             task.status === "done" && "line-through text-muted-foreground"
                           )}
                           title="Focus this task"
@@ -593,7 +589,7 @@ export function ListView({
                     <td className="p-3">
                       <span className="text-xs text-muted-foreground">—</span>
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 min-w-0">
                       <TagsCell task={task} />
                     </td>
                   </tr>
