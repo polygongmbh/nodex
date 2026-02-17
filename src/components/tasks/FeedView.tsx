@@ -25,6 +25,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+function formatCompactRelativeTime(date: Date): string {
+  const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+  if (diffSeconds < 60) return "now";
+  if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m`;
+  if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h`;
+  if (diffSeconds < 604800) return `${Math.floor(diffSeconds / 86400)}d`;
+  return format(date, "MMM d");
+}
+
 interface FeedViewProps {
   tasks: Task[];
   allTasks: Task[];
@@ -327,12 +336,19 @@ export function FeedView({
               username: resolvedAuthor.name,
             });
             const isPubkeyPrimary = authorMeta.primary === resolvedAuthor.id;
-            const primaryAuthorLabel = (() => {
+            const primaryAuthorLabelRaw = (() => {
               if (!isPubkeyPrimary) return authorMeta.primary;
               if (isMobile) return truncateMobilePubkey(authorMeta.primary);
               if (isSlimDesktop) return truncateSlimDesktopPubkey(authorMeta.primary);
               return authorMeta.primary;
             })();
+            const primaryAuthorLabel =
+              isMobile && primaryAuthorLabelRaw.length > 22
+                ? `${primaryAuthorLabelRaw.slice(0, 19)}…`
+                : primaryAuthorLabelRaw;
+            const timeLabel = isMobile
+              ? formatCompactRelativeTime(task.timestamp)
+              : formatDistanceToNow(task.timestamp, { addSuffix: true });
             const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
 
             return (
@@ -341,6 +357,7 @@ export function FeedView({
                 data-task-id={task.id}
                 className={cn(
                   "border-b border-border p-4 hover:bg-card/50 transition-colors",
+                  isMobile && "p-3",
                   task.status === "done" && "opacity-60",
                   isLockedUntilStart && "opacity-50 grayscale",
                   isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
@@ -365,7 +382,7 @@ export function FeedView({
                   </div>
                 )}
 
-                <div className="flex items-start gap-3">
+                <div className={cn("flex items-start gap-3", isMobile && "gap-2.5")}>
                   {/* Status toggle or comment icon */}
                   {!isComment ? (
                     <DropdownMenu
@@ -427,11 +444,11 @@ export function FeedView({
                           )}
                         >
                           {task.status === "done" ? (
-                            <CheckCircle2 className="w-5 h-5 text-primary" />
+                            <CheckCircle2 className={cn("text-primary", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                           ) : task.status === "in-progress" ? (
-                            <CircleDot className="w-5 h-5 text-amber-500" />
+                            <CircleDot className={cn("text-amber-500", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                           ) : (
-                            <Circle className="w-5 h-5 text-muted-foreground" />
+                            <Circle className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                           )}
                         </button>
                       </DropdownMenuTrigger>
@@ -453,7 +470,7 @@ export function FeedView({
                       )}
                     </DropdownMenu>
                   ) : (
-                    <MessageSquare className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                    <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                   )}
 
                   {/* Avatar */}
@@ -471,26 +488,34 @@ export function FeedView({
                       id={resolvedAuthor.id}
                       displayName={resolvedAuthor.displayName}
                       avatarUrl={resolvedAuthor.avatar}
-                      className="w-8 h-8 flex-shrink-0"
+                      className={cn("flex-shrink-0", isMobile ? "w-7 h-7" : "w-8 h-8")}
                       beamTestId={`feed-beam-${task.id}`}
                     />
                   </button>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                    <div
+                      className={cn(
+                        "flex items-center min-w-0 text-muted-foreground mb-1",
+                        isMobile ? "gap-1 text-xs whitespace-nowrap" : "gap-2 text-sm"
+                      )}
+                    >
                       <button
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
                           onAuthorClick?.(resolvedAuthor);
                         }}
-                        className="font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
+                        className={cn(
+                          "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
+                          isMobile && "max-w-[45vw]"
+                        )}
                         aria-label={`Filter and mention ${authorMeta.primary}`}
                         title={resolvedAuthor.id}
                       >
-                        <span title={authorMeta.primary}>{primaryAuthorLabel}</span>
-                        {authorMeta.secondary && (
+                        <span title={authorMeta.primary} className="block truncate">{primaryAuthorLabel}</span>
+                        {authorMeta.secondary && !isMobile && (
                           <span
                             data-testid={`feed-author-secondary-${task.id}`}
                             className="opacity-60"
@@ -500,11 +525,11 @@ export function FeedView({
                           </span>
                         )}
                       </button>
-                      <span>·</span>
-                      <span>{timeAgo}</span>
-                      {isComment && (
+                      <span className="shrink-0">·</span>
+                      <span className="shrink-0">{timeLabel}</span>
+                      {isComment && !isMobile && (
                         <>
-                          <span>·</span>
+                          <span className="shrink-0">·</span>
                           <span className="text-xs bg-muted px-1.5 py-0.5 rounded">comment</span>
                         </>
                       )}

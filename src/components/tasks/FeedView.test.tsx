@@ -89,6 +89,25 @@ describe("FeedView", () => {
     ).toBeInTheDocument();
   });
 
+  it("hides secondary author metadata on mobile for a denser header row", () => {
+    render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        isMobile
+      />
+    );
+
+    expect(screen.queryByTestId("feed-author-secondary-task-1")).not.toBeInTheDocument();
+  });
+
   it("calls author quick action when clicking the author label", () => {
     const onAuthorClick = vi.fn();
 

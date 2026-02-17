@@ -30,6 +30,7 @@ Expanded relay-aware task publishing, priority editing, and English/German local
 - Feed author labels now shorten raw pubkey fallbacks on slimmer desktop widths while keeping full pubkeys on wider desktop layouts.
 - Kanban columns now expand on wider desktop breakpoints for higher information density and reduced clipping.
 - Desktop top navigation tabs now use wider spacing and horizontal hit areas on wide screens for easier targeting.
+- Mobile feed cards now use a denser meta layout (short relative time, tighter spacing, truncated author header, and reduced secondary metadata) to cut noisy wrapping on slim screens.
 
 ### Fixed
 - Root task creation now blocks invalid multi-relay submissions with clear guidance: `Select one relay or a parent task`.
