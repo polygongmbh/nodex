@@ -374,23 +374,6 @@ export function CalendarView({
     return () => scroller.removeEventListener("scroll", onScroll);
   }, [currentMonth, desktopMonthSections]);
 
-  useEffect(() => {
-    const scroller = desktopScrollerRef.current;
-    if (!scroller) return;
-
-    const onWheel = (event: WheelEvent) => {
-      if (!event.cancelable) return;
-      event.preventDefault();
-      // Slow but continuous wheel scrolling without staggered easing jumps.
-      scroller.scrollTop += event.deltaY * 0.42;
-    };
-
-    scroller.addEventListener("wheel", onWheel, { passive: false });
-    return () => {
-      scroller.removeEventListener("wheel", onWheel);
-    };
-  }, []);
-
   const canCompleteTask = (task: Task) => {
     return canUserChangeTaskStatus(task, currentUser);
   };
