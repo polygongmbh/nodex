@@ -405,6 +405,32 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(onSearchChange).toHaveBeenLastCalledWith("ping @alice@example.com ");
   });
 
+  it("closes mention autocomplete when compose is cancelled", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => {}}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "ping @al", selectionStart: 8 } });
+    expect(screen.getByText("@alice")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /clear compose/i }));
+    expect(screen.queryByText("@alice")).not.toBeInTheDocument();
+  });
+
   it("adds mention tag via modifier+Enter without inserting mention text", async () => {
     const onSubmit = vi.fn();
     const onSearchChange = vi.fn();

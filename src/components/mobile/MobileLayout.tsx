@@ -260,24 +260,26 @@ export function MobileLayout({
         </div>
       </main>
       
-      <UnifiedBottomBar
-        searchQuery={searchQuery}
-        onSearchChange={onSearchChange}
-        onSubmit={onNewTask}
-        currentView={currentView}
-        focusedTaskId={focusedTaskId}
-        selectedCalendarDate={currentView === "calendar" ? selectedCalendarDate : null}
-        relays={relays}
-        channels={channels}
-        people={people}
-        onRelayToggle={onRelayToggle}
-        onChannelToggle={onChannelToggle}
-        onPersonToggle={onPersonToggle}
-        defaultContent={defaultContent}
-        isSignedIn={isSignedIn}
-        onSignInClick={onSignInClick}
-        forceComposeMode={forceComposeMode}
-      />
+      {!showFilters && (
+        <UnifiedBottomBar
+          searchQuery={searchQuery}
+          onSearchChange={onSearchChange}
+          onSubmit={onNewTask}
+          currentView={currentView}
+          focusedTaskId={focusedTaskId}
+          selectedCalendarDate={currentView === "calendar" ? selectedCalendarDate : null}
+          relays={relays}
+          channels={channels}
+          people={people}
+          onRelayToggle={onRelayToggle}
+          onChannelToggle={onChannelToggle}
+          onPersonToggle={onPersonToggle}
+          defaultContent={defaultContent}
+          isSignedIn={isSignedIn}
+          onSignInClick={onSignInClick}
+          forceComposeMode={forceComposeMode}
+        />
+      )}
     </div>
   );
 }

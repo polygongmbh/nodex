@@ -556,6 +556,13 @@ export function TaskComposer({
 
   const showExpandedControls = !adaptiveSize || isExpanded || content.trim().length > 0;
 
+  useEffect(() => {
+    if (showExpandedControls) return;
+    setShowMentionSuggestions(false);
+    setShowHashtagSuggestions(false);
+    setActiveSuggestionIndex(0);
+  }, [showExpandedControls]);
+
   return (
     <div
       className={cn("space-y-3", compact && "space-y-2", adaptiveSize && !showExpandedControls && "space-y-1")}
@@ -589,7 +596,7 @@ export function TaskComposer({
 
         {/* Channel suggestions */}
         {showHashtagSuggestions && filteredChannels.length > 0 && (
-          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[110] w-48 py-1">
+          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-48 py-1">
             {filteredChannels.map((channel) => (
               <button
                 key={channel.id}
@@ -614,7 +621,7 @@ export function TaskComposer({
           </div>
         )}
         {showMentionSuggestions && filteredPeople.length > 0 && (
-          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[110] w-64 py-1">
+          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-64 py-1">
             {filteredPeople.map((person) => {
                   const mentionIdentifier = getPreferredMentionIdentifier(person);
                   const isActive = filteredPeople[activeSuggestionIndex]?.id === person.id;

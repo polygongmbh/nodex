@@ -8,6 +8,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { getPreferredMentionIdentifier, personMatchesMentionQuery } from "@/lib/mentions";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -252,6 +253,9 @@ export function UnifiedBottomBar({
     setSharedText("");
     onSearchChange("");
     setActiveSelector(null);
+    setShowMentionSuggestions(false);
+    setMentionFilter("");
+    setActiveMentionIndex(0);
   };
 
   const toggleSelector = (type: SelectorType) => {
@@ -329,10 +333,10 @@ export function UnifiedBottomBar({
   };
 
   return (
-    <div className="border-t border-border bg-background safe-area-bottom" data-onboarding="mobile-combined-box">
+    <div className="relative z-[110] border-t border-border bg-background safe-area-bottom" data-onboarding="mobile-combined-box">
       {/* Selector Panel */}
       {activeSelector && (
-        <div className="border-b border-border p-3 max-h-48 overflow-y-auto">
+        <div className="relative z-[112] border-b border-border p-3 max-h-48 overflow-y-auto">
           {activeSelector === "relay" && (
             <div className="flex flex-wrap gap-2">
               {relays.map((relay) => {
@@ -393,7 +397,12 @@ export function UnifiedBottomBar({
                         : "border-border"
                     )}
                   >
-                    <img src={person.avatar} alt={person.name} className="w-5 h-5 rounded-full" />
+                    <UserAvatar
+                      id={person.id}
+                      displayName={person.displayName || person.name}
+                      avatarUrl={person.avatar}
+                      className="w-5 h-5"
+                    />
                     <span className="truncate max-w-[8rem]" title={person.name}>
                       {personLabel}
                     </span>
@@ -617,7 +626,7 @@ export function UnifiedBottomBar({
                 rows={1}
               />
               {showMentionSuggestions && filteredPeople.length > 0 && (
-                <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[110] w-full py-1">
+                <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1">
                   {filteredPeople.map((person, index) => {
                     const mentionIdentifier = getPreferredMentionIdentifier(person);
                     return (
@@ -650,6 +659,8 @@ export function UnifiedBottomBar({
               <button
                 onClick={handleCancel}
                 className="p-3 rounded-lg hover:bg-muted"
+                aria-label="Clear compose"
+                title="Clear compose"
               >
                 <X className="w-5 h-5" />
               </button>

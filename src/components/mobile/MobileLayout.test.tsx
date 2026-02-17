@@ -22,7 +22,13 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 }));
 
 vi.mock("./MobileNav", () => ({
-  MobileNav: () => <div data-testid="mobile-nav" />,
+  MobileNav: ({ onViewChange }: { onViewChange: (view: "tree" | "feed" | "list" | "calendar" | "filters") => void }) => (
+    <div data-testid="mobile-nav">
+      <button onClick={() => onViewChange("filters")} aria-label="Switch to Manage view">
+        Manage
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("./SwipeIndicator", () => ({
@@ -123,5 +129,43 @@ describe("MobileLayout auth wiring", () => {
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
+  });
+
+  it("hides unified compose bar when manage view is open", () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = false;
+
+    render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn={true}
+        currentView="tree"
+        onViewChange={() => {}}
+        onSearchChange={() => {}}
+        onNewTask={() => {}}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+      />
+    );
+
+    expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
+    expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
   });
 });
