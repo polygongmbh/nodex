@@ -188,6 +188,28 @@ export function MobileLayout({
 
   const mobileCurrentView: MobileViewType = showFilters ? "filters" : mobileView;
 
+  const handleMobileSubmit = useCallback((
+    content: string,
+    tags: string[],
+    relayIds: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    explicitMentionPubkeys?: string[]
+  ) => {
+    onNewTask(
+      content,
+      tags,
+      relayIds,
+      taskType,
+      dueDate,
+      dueTime,
+      focusedTaskId || undefined,
+      undefined,
+      explicitMentionPubkeys
+    );
+  }, [onNewTask, focusedTaskId]);
+
   useEffect(() => {
     if (showFilters) return;
     setMobileView(isPrimaryMobileView(currentView) ? currentView : "tree");
@@ -264,7 +286,7 @@ export function MobileLayout({
         <UnifiedBottomBar
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
-          onSubmit={onNewTask}
+          onSubmit={handleMobileSubmit}
           currentView={currentView}
           focusedTaskId={focusedTaskId}
           selectedCalendarDate={currentView === "calendar" ? selectedCalendarDate : null}

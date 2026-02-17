@@ -16,6 +16,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Retrieved indexed Nostr person references (`#[n]`) now resolve into mention tokens, and uppercase `T` hashtag tags are parsed consistently in filters/channels.
 - Feed and shared task content now render resolved `@mentions` as user-linked labels (for example `@alice` instead of raw pubkeys when profile data is known).
 - Task assignment authority now prefers explicit assignee pubkeys (`p` tags), with task creation defaulting unassigned tasks to the author pubkey.
+- Mobile compose now forwards explicit mention-tag selections in the correct publish payload field, so non-text person mentions persist as Nostr `p` tags.
 - Enabling people filters no longer crashes on malformed mention/author payloads, and uncaught runtime errors now render a recoverable error screen instead of a blank app.
 
 ## [1.1.0] - 2026-02-16
