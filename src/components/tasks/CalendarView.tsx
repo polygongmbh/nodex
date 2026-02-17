@@ -198,15 +198,22 @@ export function CalendarView({
         const monthStart = startOfMonth(month);
         const monthEnd = endOfMonth(month);
         const weekStarts = eachWeekOfInterval(
-          { start: monthStart, end: monthEnd },
+          {
+            start: startOfWeek(monthStart, { weekStartsOn: 1 }),
+            end: endOfWeek(monthEnd, { weekStartsOn: 1 }),
+          },
           { weekStartsOn: 1 }
         );
-        const weeks = weekStarts.map((weekStart) =>
-          eachDayOfInterval({
-            start: weekStart,
-            end: endOfWeek(weekStart, { weekStartsOn: 1 }),
-          })
-        );
+        const weeks = weekStarts
+          .map((weekStart) =>
+            eachDayOfInterval({
+              start: weekStart,
+              end: endOfWeek(weekStart, { weekStartsOn: 1 }),
+            })
+          )
+          // Assign cross-month weeks to a single month based on ISO anchor day (Thursday).
+          // This avoids duplicated first/last week rows between adjacent month sections.
+          .filter((week) => isSameMonth(week[3] ?? week[0], monthStart));
         return {
           key: getMonthKey(month),
           month: monthStart,
@@ -366,6 +373,44 @@ export function CalendarView({
     scroller.addEventListener("scroll", onScroll, { passive: true });
     return () => scroller.removeEventListener("scroll", onScroll);
   }, [currentMonth, desktopMonthSections]);
+
+  useEffect(() => {
+    const scroller = desktopScrollerRef.current;
+    if (!scroller) return;
+
+    let animationFrameId = 0;
+    let queuedDelta = 0;
+
+    const animate = () => {
+      const step = queuedDelta * 0.22;
+      scroller.scrollTop += step;
+      queuedDelta -= step;
+      if (Math.abs(queuedDelta) > 0.4) {
+        animationFrameId = requestAnimationFrame(animate);
+      } else {
+        queuedDelta = 0;
+        animationFrameId = 0;
+      }
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      if (!event.cancelable) return;
+      event.preventDefault();
+      // Dampened wheel motion so month transitions feel less abrupt.
+      queuedDelta += event.deltaY * 0.55;
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+
+    scroller.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      scroller.removeEventListener("wheel", onWheel);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, []);
 
   const canCompleteTask = (task: Task) => {
     return canUserChangeTaskStatus(task, currentUser);
@@ -613,7 +658,10 @@ export function CalendarView({
         {(!isMobile || effectiveMobileTab === "calendar") && (
           <div
             ref={desktopScrollerRef}
-            className={cn("flex-1 overflow-auto min-w-0", isMobile ? "p-2" : "p-4 space-y-5")}
+            className={cn(
+              "flex-1 overflow-auto min-w-0 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+              isMobile ? "p-2 space-y-4" : "p-4 space-y-5"
+            )}
           >
             {desktopMonthSections.map((section) => (
               <section
@@ -621,9 +669,12 @@ export function CalendarView({
                 ref={(node) => {
                   desktopMonthSectionRefs.current[section.key] = node;
                 }}
-                className="space-y-2"
+                className={cn(
+                  "space-y-2 border border-border/60 bg-card/35 shadow-sm",
+                  isMobile ? "rounded-xl p-2" : "rounded-2xl p-3"
+                )}
               >
-                <h2 className="sticky top-0 z-10 bg-background/95 backdrop-blur py-1 text-sm font-semibold border-b border-border">
+                <h2 className="sticky top-0 z-10 bg-gradient-to-r from-background via-background/95 to-muted/30 backdrop-blur py-1 text-sm font-semibold border-b border-border/70">
                   {format(section.month, "MMMM yyyy")}
                 </h2>
 
@@ -644,11 +695,11 @@ export function CalendarView({
                     <div
                       key={week[0]?.toISOString() ?? section.key}
                       className={cn(
-                        "grid gap-px bg-border/50",
+                        "grid gap-px bg-border/50 rounded-lg overflow-hidden",
                         isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
                       )}
                     >
-                      <div className="bg-muted/40 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                      <div className="bg-muted/55 flex items-center justify-center text-xs font-medium text-muted-foreground">
                         {getISOWeek(week[3] ?? week[0])}
                       </div>
                       {week.map((day) => {
@@ -670,12 +721,12 @@ export function CalendarView({
                               }
                             }}
                             className={cn(
-                              "bg-background transition-colors text-left flex flex-col relative rounded-lg border",
+                              "bg-background/95 transition-all duration-200 text-left flex flex-col relative rounded-lg border",
                               isMobile ? "min-h-[4.4rem] p-1" : "min-h-[6.2rem] p-1",
-                              isToday(day) && "border-primary",
-                              isSelected ? "bg-primary/20" : "hover:bg-muted/50",
+                              isToday(day) && "border-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)]",
+                              isSelected ? "bg-primary/20 border-primary/70" : "hover:bg-muted/55",
                               !isToday(day) && !isSelected && "border-transparent",
-                              !isInDisplayedMonth && "opacity-55"
+                              !isInDisplayedMonth && "opacity-60"
                             )}
                           >
                             <span className={cn(isMobile ? "text-xs" : "text-sm", "font-medium", isToday(day) && "text-primary")}>
