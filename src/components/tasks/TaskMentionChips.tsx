@@ -19,54 +19,66 @@ function collectMentionPubkeys(task: Task): string[] {
   );
 }
 
+export function hasTaskMentionChips(task: Task): boolean {
+  return collectMentionPubkeys(task).length > 0;
+}
+
 interface TaskMentionChipsProps {
   task: Task;
   people: Person[];
   onPersonClick?: (person: Person) => void;
   className?: string;
+  inline?: boolean;
 }
 
-export function TaskMentionChips({ task, people, onPersonClick, className }: TaskMentionChipsProps) {
+export function TaskMentionChips({
+  task,
+  people,
+  onPersonClick,
+  className,
+  inline = false,
+}: TaskMentionChipsProps) {
   const mentionPubkeys = collectMentionPubkeys(task);
   if (mentionPubkeys.length === 0) return null;
 
-  return (
-    <div className={cn("flex flex-wrap gap-1", className)}>
-      {mentionPubkeys.map((pubkey) => {
-        const matchedPerson = people.find((person) => person.id.toLowerCase() === pubkey);
-        const label = matchedPerson?.name || matchedPerson?.displayName || toDisplayPubkey(pubkey);
+  const chips = mentionPubkeys.map((pubkey) => {
+    const matchedPerson = people.find((person) => person.id.toLowerCase() === pubkey);
+    const label = matchedPerson?.name || matchedPerson?.displayName || toDisplayPubkey(pubkey);
 
-        if (matchedPerson && onPersonClick) {
-          return (
-            <button
-              key={pubkey}
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onPersonClick(matchedPerson);
-              }}
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
-              aria-label={`Open user ${label}`}
-              title={`@${pubkey}`}
-            >
-              <AtSign className="w-3 h-3" />
-              {label}
-            </button>
-          );
-        }
+    if (matchedPerson && onPersonClick) {
+      return (
+        <button
+          key={pubkey}
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onPersonClick(matchedPerson);
+          }}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
+          aria-label={`Open user ${label}`}
+          title={`@${pubkey}`}
+        >
+          <AtSign className="w-3 h-3" />
+          {label}
+        </button>
+      );
+    }
 
-        return (
-          <span
-            key={pubkey}
-            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
-            title={`@${pubkey}`}
-          >
-            <AtSign className="w-3 h-3" />
-            {label}
-          </span>
-        );
-      })}
-    </div>
-  );
+    return (
+      <span
+        key={pubkey}
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
+        title={`@${pubkey}`}
+      >
+        <AtSign className="w-3 h-3" />
+        {label}
+      </span>
+    );
+  });
+
+  if (inline) {
+    return <>{chips}</>;
+  }
+
+  return <div className={cn("flex flex-wrap gap-1", className)}>{chips}</div>;
 }
-

@@ -6,7 +6,7 @@ import { Task, Relay, Channel, Person, TaskStatus } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips } from "./TaskMentionChips";
+import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -490,8 +490,6 @@ export function KanbanView({
                                       people,
                                     })}
                                   </p>
-                                  <TaskMentionChips task={task} people={people} className="mt-2" />
-
                                   {/* Children indicator */}
                                   {hasChildren(task.id) && (
                                     <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
@@ -514,9 +512,9 @@ export function KanbanView({
                                     </div>
                                   )}
 
-                                  {/* Tags */}
-                                  {task.tags.length > 0 && (
+                                  {(hasTaskMentionChips(task) || task.tags.length > 0) && (
                                     <div className="flex flex-wrap gap-1 mt-2">
+                                      <TaskMentionChips task={task} people={people} inline />
                                       {task.tags.slice(0, 3).map((tag) => (
                                         <button
                                           key={tag}

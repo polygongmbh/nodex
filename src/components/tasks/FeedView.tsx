@@ -6,7 +6,7 @@ import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips } from "./TaskMentionChips";
+import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
@@ -509,16 +509,14 @@ export function FeedView({
                       </div>
                     )}
 
-                    <TaskMentionChips
-                      task={task}
-                      people={people}
-                      onPersonClick={onAuthorClick}
-                      className={task.dueDate ? "mt-1.5" : "mt-2"}
-                    />
-
-                    {/* Tags */}
-                    {task.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
+                    {(hasTaskMentionChips(task) || task.tags.length > 0) && (
+                      <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-2")}>
+                        <TaskMentionChips
+                          task={task}
+                          people={people}
+                          onPersonClick={onAuthorClick}
+                          inline
+                        />
                         {task.tags.map((tag) => (
                           <button
                             key={tag}

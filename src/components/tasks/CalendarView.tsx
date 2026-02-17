@@ -5,7 +5,7 @@ import { Task, Relay, Channel, Person } from "@/types";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday, isPast, startOfDay, isTomorrow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips } from "./TaskMentionChips";
+import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { getDueDateColorClass } from "@/lib/taskSorting";
@@ -799,15 +799,15 @@ export function CalendarView({
                                 people,
                               })}
                             </p>
-                            <TaskMentionChips task={task} people={people} className="mt-1.5" />
                             {task.dueTime && (
                               <div className={cn("flex items-center gap-1 text-xs mt-1", dueDateColor)}>
                                 <Clock className="w-3 h-3" />
                                 <span>{task.dueTime}</span>
                               </div>
                             )}
-                            {task.tags.length > 0 && (
+                            {(hasTaskMentionChips(task) || task.tags.length > 0) && (
                               <div className="flex flex-wrap gap-1 mt-1">
+                                <TaskMentionChips task={task} people={people} inline />
                                 {task.tags.map((tag) => (
                                   <button
                                     key={tag}

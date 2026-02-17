@@ -5,7 +5,7 @@ import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips } from "./TaskMentionChips";
+import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
 import { useNostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
@@ -412,16 +412,14 @@ export function TaskItem({
             </div>
           )}
 
-          <TaskMentionChips
-            task={task}
-            people={people}
-            onPersonClick={onAuthorClick}
-            className={task.dueDate ? "mt-1.5" : "mt-1"}
-          />
-
-          {/* Tags (with relay source when multiple relays active and item has tags) */}
-          {task.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
+          {(hasTaskMentionChips(task) || task.tags.length > 0) && (
+            <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-1.5")}>
+              <TaskMentionChips
+                task={task}
+                people={people}
+                onPersonClick={onAuthorClick}
+                inline
+              />
               {activeRelays.length > 1 && task.relays.length > 0 && (
                 <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
                   {activeRelays.find(r => task.relays.includes(r.id))?.name || task.relays[0]}

@@ -5,7 +5,7 @@ import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips } from "./TaskMentionChips";
+import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
@@ -404,8 +404,11 @@ export function ListView({
 
   // Editable tags cell
   const TagsCell = ({ task }: { task: Task }) => {
+    const hasMentions = hasTaskMentionChips(task);
+    const hasTags = task.tags.length > 0;
     return (
       <div className="flex flex-wrap gap-1">
+        <TaskMentionChips task={task} people={people} inline />
         {task.tags.slice(0, 3).map((tag) => (
           <button
             key={tag}
@@ -426,7 +429,7 @@ export function ListView({
             +{task.tags.length - 3}
           </span>
         )}
-        {task.tags.length === 0 && (
+        {!hasMentions && !hasTags && (
           <span className="text-xs text-muted-foreground">—</span>
         )}
       </div>
@@ -577,7 +580,6 @@ export function ListView({
                             people,
                           })}
                         </p>
-                        <TaskMentionChips task={task} people={people} className="mt-1" />
                       </div>
                     </td>
                     <td className="p-3">
