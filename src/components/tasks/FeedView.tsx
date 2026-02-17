@@ -26,6 +26,7 @@ interface FeedViewProps {
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -63,6 +64,7 @@ export function FeedView({
   allTasks,
   relays,
   channels,
+  composeChannels,
   people,
   currentUser,
   searchQuery,
@@ -258,7 +260,7 @@ export function FeedView({
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
-            channels={channels}
+            channels={composeChannels || channels}
             people={people}
             onCancel={() => {}}
             compact

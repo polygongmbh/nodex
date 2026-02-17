@@ -24,6 +24,7 @@ interface CalendarViewProps {
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -56,6 +57,7 @@ export function CalendarView({
   allTasks,
   relays,
   channels,
+  composeChannels,
   people,
   currentUser,
   searchQuery,
@@ -652,7 +654,7 @@ export function CalendarView({
                   <TaskComposer
                     onSubmit={handleCreateEvent}
                     relays={relays}
-                    channels={channels}
+                    channels={composeChannels || channels}
                     people={people}
                     onCancel={() => setIsComposingEvent(false)}
                     compact

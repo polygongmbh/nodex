@@ -252,9 +252,14 @@ const Index = () => {
     }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [localTasks, nostrTasks]);
 
-  // Dynamically derive channels from tasks/events, always including tags posted by this user.
+  // Sidebar channels: most-used tags plus user-posted tags.
   const channels: Channel[] = useMemo(() => {
     return deriveChannels(localTasks, filteredNostrEvents, postedTags, 6);
+  }, [localTasks, filteredNostrEvents, postedTags]);
+
+  // Compose autocomplete channels: all known tags.
+  const composeChannels: Channel[] = useMemo(() => {
+    return deriveChannels(localTasks, filteredNostrEvents, postedTags, 1);
   }, [localTasks, filteredNostrEvents, postedTags]);
 
   // Maintain channel filter states across dynamic updates
@@ -269,6 +274,13 @@ const Index = () => {
       filterState: channelFilterStates.get(channel.id) || "neutral",
     }));
   }, [channels, channelFilterStates]);
+
+  const composeChannelsWithState: Channel[] = useMemo(() => {
+    return composeChannels.map((channel) => ({
+      ...channel,
+      filterState: channelFilterStates.get(channel.id) || "neutral",
+    }));
+  }, [composeChannels, channelFilterStates]);
 
   // Subscribe to Nostr events when connected
   useEffect(() => {
@@ -871,6 +883,7 @@ const Index = () => {
     allTasks: allTasks,
     relays: relaysWithActiveState,
     channels: channelsWithState,
+    composeChannels: composeChannelsWithState,
     people,
     currentUser,
     searchQuery,

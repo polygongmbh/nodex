@@ -30,6 +30,7 @@ interface ListViewProps {
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -65,6 +66,7 @@ export function ListView({
   allTasks,
   relays,
   channels,
+  composeChannels,
   people,
   currentUser,
   searchQuery,
@@ -453,7 +455,7 @@ export function ListView({
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
-            channels={channels}
+            channels={composeChannels || channels}
             people={people}
             onCancel={() => {}}
             compact

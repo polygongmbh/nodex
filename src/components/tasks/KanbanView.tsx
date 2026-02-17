@@ -22,6 +22,7 @@ interface KanbanViewProps {
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -57,6 +58,7 @@ export function KanbanView({
   allTasks,
   relays,
   channels,
+  composeChannels,
   people,
   currentUser,
   searchQuery,
@@ -401,11 +403,11 @@ export function KanbanView({
                         <X className="w-3 h-3" />
                       </button>
                     </div>
-                    <TaskComposer
-                      onSubmit={handleNewTask}
-                      relays={relays}
-                      channels={channels}
-                      people={people}
+                      <TaskComposer
+                        onSubmit={handleNewTask}
+                        relays={relays}
+                        channels={composeChannels || channels}
+                        people={people}
                       onCancel={() => setComposingColumn(null)}
                       compact
                       defaultContent={(() => {

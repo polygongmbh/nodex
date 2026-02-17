@@ -12,6 +12,7 @@ interface TaskTreeProps {
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
@@ -49,6 +50,7 @@ export function TaskTree({
   allTasks,
   relays,
   channels,
+  composeChannels,
   people,
   currentUser,
   searchQuery,
@@ -296,7 +298,7 @@ export function TaskTree({
           <TaskComposer
             onSubmit={handleNewTask}
             relays={relays}
-            channels={channels}
+            channels={composeChannels || channels}
             people={people}
             onCancel={() => setIsComposerExpanded(false)}
             compact
