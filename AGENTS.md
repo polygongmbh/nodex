@@ -252,6 +252,7 @@ When asked to create a plan to fix or implement something:
 - For squash checks, preserve atomic coherent history and do not squash unrelated functional changes.
 - Rewrite only unpushed local history for squash/rebase unless explicitly instructed otherwise.
 - If instructed to `push`:
+  - update user-facing guides before release/push when behavior changed (at minimum `USER_GUIDE.md`, plus in-app guide/shortcuts copy where relevant)
   - list unpushed commits: `git log origin/<branch>..HEAD --oneline`
   - provide one high-level summary across all unpushed commits
   - omit cosmetic-only low-level details unless asked
