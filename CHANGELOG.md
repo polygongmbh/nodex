@@ -13,6 +13,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Publishing now resolves `@` mentions from NIP-05/user aliases to pubkeys more reliably and includes corresponding Nostr `p` tags in posted events.
 - Retrieved mention tags now parse case-insensitively (`p`/`P`), and modifier+Enter in `@` autocomplete can add mention pubkey tags without inserting mention text.
 - Retrieved indexed Nostr person references (`#[n]`) now resolve into mention tokens, and uppercase `T` hashtag tags are parsed consistently in filters/channels.
+- Feed and shared task content now render resolved `@mentions` as user-linked labels (for example `@alice` instead of raw pubkeys when profile data is known).
 - Enabling people filters no longer crashes on malformed mention/author payloads, and uncaught runtime errors now render a recoverable error screen instead of a blank app.
 
 ## [1.1.0] - 2026-02-16

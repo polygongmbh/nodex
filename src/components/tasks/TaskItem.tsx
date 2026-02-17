@@ -24,6 +24,7 @@ interface TaskItemProps {
   task: Task;
   filteredChildren: Task[];
   allTasks: Task[];
+  people?: Person[];
   currentUser?: Person;
   depth?: number;
   isExpanded?: boolean;
@@ -46,6 +47,7 @@ export function TaskItem({
   task,
   filteredChildren,
   allTasks,
+  people = [],
   currentUser,
   depth = 0,
   isExpanded,
@@ -390,6 +392,8 @@ export function TaskItem({
           )}>
             {linkifyContent(task.content, onHashtagClick, {
               plainHashtags: task.status === "done",
+              people,
+              onMentionClick: onAuthorClick,
             })}
           </p>
 
@@ -497,6 +501,7 @@ export function TaskItem({
                       task={child}
                       filteredChildren={childFilteredChildren}
                       allTasks={allTasks}
+                      people={people}
                       currentUser={currentUser}
                       depth={depth + 1}
                       onSelect={onSelect}
@@ -508,6 +513,7 @@ export function TaskItem({
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
                       onHashtagClick={onHashtagClick}
+                      onAuthorClick={onAuthorClick}
                     />
                   );
                 })}
@@ -524,6 +530,7 @@ export function TaskItem({
                       task={child}
                       filteredChildren={childFilteredChildren}
                       allTasks={allTasks}
+                      people={people}
                       currentUser={currentUser}
                       depth={depth + 1}
                       onSelect={onSelect}
@@ -535,6 +542,7 @@ export function TaskItem({
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
                       onHashtagClick={onHashtagClick}
+                      onAuthorClick={onAuthorClick}
                     />
                   );
                 })}

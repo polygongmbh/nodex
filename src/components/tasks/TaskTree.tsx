@@ -340,6 +340,7 @@ export function TaskTree({
               task={task}
               filteredChildren={getFilteredChildren(task.id)}
               allTasks={allTasks}
+              people={people}
               currentUser={currentUser}
               onSelect={handleSelectTask}
               onToggleComplete={onToggleComplete}

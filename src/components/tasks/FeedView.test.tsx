@@ -70,4 +70,36 @@ describe("FeedView", () => {
     expect(onAuthorClick).toHaveBeenCalledWith(author);
   });
 
+  it("renders pubkey mentions as @name links and triggers author quick action", () => {
+    const onAuthorClick = vi.fn();
+    const mentionedPubkey = author.id;
+    const mentionTask = makeTask({
+      id: "task-mention",
+      author,
+      content: `Please review @${mentionedPubkey} #frontend`,
+      status: "todo",
+    });
+
+    render(
+      <FeedView
+        tasks={[mentionTask]}
+        allTasks={[mentionTask]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        onAuthorClick={onAuthorClick}
+      />
+    );
+
+    const mention = screen.getByRole("button", { name: "Open user alice" });
+    expect(mention).toHaveTextContent("@alice");
+
+    fireEvent.click(mention);
+    expect(onAuthorClick).toHaveBeenCalledWith(author);
+  });
+
 });

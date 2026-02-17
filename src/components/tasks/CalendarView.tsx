@@ -795,6 +795,7 @@ export function CalendarView({
                             >
                               {linkifyContent(task.content, onHashtagClick, {
                                 plainHashtags: task.status === "done",
+                                people,
                               })}
                             </p>
                             {task.dueTime && (

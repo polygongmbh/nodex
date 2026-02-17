@@ -573,6 +573,7 @@ export function ListView({
                         >
                           {linkifyContent(task.content, onHashtagClick, {
                             plainHashtags: task.status === "done",
+                            people,
                           })}
                         </p>
                       </div>

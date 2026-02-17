@@ -486,6 +486,7 @@ export function KanbanView({
                                   >
                                     {linkifyContent(task.content, onHashtagClick, {
                                       plainHashtags: task.status === "done",
+                                      people,
                                     })}
                                   </p>
 

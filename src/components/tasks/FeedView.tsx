@@ -489,6 +489,8 @@ export function FeedView({
                     >
                       {linkifyContent(task.content, onHashtagClick, {
                         plainHashtags: task.status === "done",
+                        people,
+                        onMentionClick: onAuthorClick,
                       })}
                     </p>
 

@@ -1,6 +1,16 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { linkifyContent } from "./linkify";
+import type { Person } from "@/types";
+
+const alice: Person = {
+  id: "a".repeat(64),
+  name: "alice",
+  displayName: "Alice",
+  nip05: "alice@example.com",
+  isOnline: true,
+  isSelected: false,
+};
 
 describe("linkifyContent interaction styles", () => {
   it("parses hashtags and URLs and triggers hashtag filtering", () => {
@@ -23,5 +33,24 @@ describe("linkifyContent interaction styles", () => {
 
     const hashtag = screen.getByRole("button", { name: "Filter by #frontend" });
     expect(hashtag).toBeInTheDocument();
+  });
+
+  it("renders @mentions with resolved @name labels and supports person click callback", () => {
+    const onMentionClick = vi.fn();
+
+    render(
+      <p>
+        {linkifyContent(`Assign to @${alice.id}`, undefined, {
+          people: [alice],
+          onMentionClick,
+        })}
+      </p>
+    );
+
+    const mention = screen.getByRole("button", { name: "Open user alice" });
+    expect(mention).toHaveTextContent("@alice");
+
+    fireEvent.click(mention);
+    expect(onMentionClick).toHaveBeenCalledWith(alice);
   });
 });
