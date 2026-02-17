@@ -1,8 +1,8 @@
 import type { Person, Task } from "@/types";
 import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 
-function normalize(value: string): string {
-  return value.trim().toLowerCase();
+function normalize(value?: unknown): string {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
 function buildSelectedPersonIdentifierSet(selectedPeople: Person[]): Set<string> {
@@ -19,15 +19,15 @@ function buildSelectedPersonIdentifierSet(selectedPeople: Person[]): Set<string>
 export function taskMatchesSelectedPeople(task: Task, selectedPeople: Person[]): boolean {
   if (selectedPeople.length === 0) return true;
 
-  const selectedPersonIds = new Set(selectedPeople.map((person) => normalize(person.id)));
-  if (selectedPersonIds.has(normalize(task.author.id))) {
+  const selectedPersonIds = new Set(selectedPeople.map((person) => normalize(person.id)).filter(Boolean));
+  if (selectedPersonIds.has(normalize(task.author?.id))) {
     return true;
   }
 
   const selectedIdentifiers = buildSelectedPersonIdentifierSet(selectedPeople);
   const taskMentions =
-    task.mentions?.map(normalize).filter(Boolean) || extractAssignedMentionsFromContent(task.content);
+    task.mentions?.map((mention) => normalize(mention)).filter(Boolean) ||
+    extractAssignedMentionsFromContent(task.content || "");
 
   return taskMentions.some((mention) => selectedIdentifiers.has(mention));
 }
-

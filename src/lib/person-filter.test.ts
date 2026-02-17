@@ -56,5 +56,23 @@ describe("taskMatchesSelectedPeople", () => {
     const task: Task = { ...baseTask, content: "no mention for selected person" };
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(false);
   });
-});
 
+  it("does not crash when author id is missing at runtime", () => {
+    const task = {
+      ...baseTask,
+      author: { ...baseTask.author, id: undefined },
+      mentions: ["alice-pubkey"],
+    } as unknown as Task;
+
+    expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
+  });
+
+  it("does not crash when mentions contain non-string values", () => {
+    const task = {
+      ...baseTask,
+      mentions: [null, 42, "alice-pubkey"],
+    } as unknown as Task;
+
+    expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
+  });
+});

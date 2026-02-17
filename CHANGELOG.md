@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Fixed
 - Publishing now resolves `@` mentions from NIP-05/user aliases to pubkeys more reliably and includes corresponding Nostr `p` tags in posted events.
+- Enabling people filters no longer crashes on malformed mention/author payloads, and uncaught runtime errors now render a recoverable error screen instead of a blank app.
 
 ## [1.1.0] - 2026-02-16
 
