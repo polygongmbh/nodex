@@ -685,19 +685,6 @@ export function OnboardingGuide({
     }
   };
 
-  const getSectionAreaLabel = (sectionId: OnboardingSectionId) => {
-    switch (sectionId) {
-      case "navigation":
-        return "View tabs and breadcrumb";
-      case "filters":
-        return "Sidebar / filter controls";
-      case "compose":
-        return "Compose panel";
-      default:
-        return "Interface";
-    }
-  };
-
   const handleSectionStart = (sectionId: OnboardingSectionId) => {
     manualSelectedSectionRef.current = sectionId;
     onActiveSectionChange?.(sectionId);
@@ -716,7 +703,7 @@ export function OnboardingGuide({
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base font-medium text-foreground/90">
           Pick one highlighted area to begin its guide.
         </p>
         <Button variant="ghost" onClick={onClose}>Close</Button>
@@ -727,11 +714,12 @@ export function OnboardingGuide({
   const getPickerPaneStyle = (sectionId: OnboardingSectionId): React.CSSProperties => {
     const measured = pickerRects[sectionId];
     if (measured) {
+      const inset = Math.min(18, Math.max(8, Math.min(measured.width, measured.height) * 0.05));
       return {
-        left: measured.left,
-        top: measured.top,
-        width: measured.width,
-        height: measured.height,
+        left: measured.left + inset,
+        top: measured.top + inset,
+        width: Math.max(96, measured.width - inset * 2),
+        height: Math.max(72, measured.height - inset * 2),
       };
     }
 
@@ -810,15 +798,17 @@ export function OnboardingGuide({
                   key={section.id}
                   onClick={() => handleSectionStart(section.id)}
                   style={getPickerPaneStyle(section.id)}
-                  className="absolute z-[125] pointer-events-auto rounded-none border-2 border-primary/50 bg-primary/10 hover:bg-primary/20 transition-colors text-left p-3"
+                  className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-all duration-200 text-left p-5 shadow-[0_0_0_1px_hsl(var(--primary)/0.25),0_0_38px_hsl(var(--primary)/0.24)] backdrop-blur-[1px]"
                   aria-label={`Start ${section.title} onboarding section`}
                   title={`${section.title}: ${section.description}`}
                 >
-                  <span className="inline-flex items-start gap-2 rounded-md bg-card/75 backdrop-blur-md px-2 py-1 border border-border shadow-sm">
+                  <span className="inline-flex items-start gap-2 rounded-xl bg-card/80 backdrop-blur-md px-3 py-2 border border-border shadow-sm">
                     {getSectionIcon(section.id)}
                     <span className="min-w-0">
-                      <span className="block text-sm font-medium text-foreground">{section.title}</span>
-                      <span className="block text-[11px] text-muted-foreground">{getSectionAreaLabel(section.id)}</span>
+                      <span className="block text-base font-semibold text-foreground">{section.title}</span>
+                      <span className="block text-sm text-muted-foreground">
+                        {renderGuideTextWithItalics(section.description)}
+                      </span>
                     </span>
                   </span>
                 </button>
