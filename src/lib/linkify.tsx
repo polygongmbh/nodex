@@ -108,14 +108,18 @@ export function linkifyContent(
               }}
               className={TASK_INTERACTION_STYLES.inlineLink}
               aria-label={`Open user ${mentionLabel}`}
-              title={`Open user ${mentionLabel}`}
+              title={token}
             >
               @{mentionLabel}
             </button>
           );
         } else {
           nodes.push(
-            <span key={`${index}-${tokenStart}-${token}`} className={TASK_INTERACTION_STYLES.inlineLink}>
+            <span
+              key={`${index}-${tokenStart}-${token}`}
+              className={TASK_INTERACTION_STYLES.inlineLink}
+              title={token}
+            >
               @{mentionLabel}
             </span>
           );

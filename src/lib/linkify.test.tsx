@@ -53,4 +53,16 @@ describe("linkifyContent interaction styles", () => {
     fireEvent.click(mention);
     expect(onMentionClick).toHaveBeenCalledWith(alice);
   });
+
+  it("keeps original mention token as hover title after resolving display label", () => {
+    render(
+      <p>
+        {linkifyContent("Assign to @alice@example.com", undefined, {
+          people: [alice],
+        })}
+      </p>
+    );
+
+    expect(screen.getByText("@alice")).toHaveAttribute("title", "@alice@example.com");
+  });
 });
