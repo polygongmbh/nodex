@@ -102,4 +102,31 @@ describe("FeedView", () => {
     expect(onAuthorClick).toHaveBeenCalledWith(author);
   });
 
+  it("shows non-text mention chips from assignee pubkeys", () => {
+    const mentionTask = makeTask({
+      id: "task-chip",
+      author,
+      content: "Please review #frontend",
+      status: "todo",
+      assigneePubkeys: [author.id],
+      mentions: [author.id],
+    });
+
+    render(
+      <FeedView
+        tasks={[mentionTask]}
+        allTasks={[mentionTask]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("alice")).toBeInTheDocument();
+  });
+
 });

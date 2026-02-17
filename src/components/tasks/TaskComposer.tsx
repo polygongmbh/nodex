@@ -50,6 +50,7 @@ interface ComposeDraftState {
   dueDate?: string;
   dueTime?: string;
   selectedRelays?: string[];
+  explicitMentionPubkeys?: string[];
 }
 
 function readComposeDraft(key: string): ComposeDraftState | null {
@@ -115,7 +116,15 @@ export function TaskComposer({
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
+  const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>(() => {
+    if (!initialDraft?.explicitMentionPubkeys || !Array.isArray(initialDraft.explicitMentionPubkeys)) {
+      return [];
+    }
+    return initialDraft.explicitMentionPubkeys
+      .filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim().toLowerCase())
+      .filter((value) => /^[a-f0-9]{64}$/i.test(value));
+  });
   const [isExpanded, setIsExpanded] = useState(
     () => !adaptiveSize || initialContent.trim().length > 0
   );
@@ -170,12 +179,13 @@ export function TaskComposer({
           dueDate: dueDate ? dueDate.toISOString() : undefined,
           dueTime,
           selectedRelays,
+          explicitMentionPubkeys,
         } satisfies ComposeDraftState)
       );
     } catch {
       // Ignore persistence errors.
     }
-  }, [content, taskType, dueDate, dueTime, selectedRelays, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, selectedRelays, explicitMentionPubkeys, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;

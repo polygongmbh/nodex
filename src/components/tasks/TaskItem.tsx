@@ -5,6 +5,7 @@ import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { linkifyContent } from "@/lib/linkify";
+import { TaskMentionChips } from "./TaskMentionChips";
 import { sortTasks, buildChildrenMap } from "@/lib/taskSorting";
 import { useNostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
@@ -410,6 +411,13 @@ export function TaskItem({
               )}
             </div>
           )}
+
+          <TaskMentionChips
+            task={task}
+            people={people}
+            onPersonClick={onAuthorClick}
+            className={task.dueDate ? "mt-1.5" : "mt-1"}
+          />
 
           {/* Tags (with relay source when multiple relays active and item has tags) */}
           {task.tags.length > 0 && (

@@ -6,6 +6,7 @@ import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { linkifyContent } from "@/lib/linkify";
+import { TaskMentionChips } from "./TaskMentionChips";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
@@ -507,6 +508,13 @@ export function FeedView({
                         )}
                       </div>
                     )}
+
+                    <TaskMentionChips
+                      task={task}
+                      people={people}
+                      onPersonClick={onAuthorClick}
+                      className={task.dueDate ? "mt-1.5" : "mt-2"}
+                    />
 
                     {/* Tags */}
                     {task.tags.length > 0 && (

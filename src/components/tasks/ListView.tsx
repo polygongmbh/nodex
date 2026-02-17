@@ -5,6 +5,7 @@ import { Task, Relay, Channel, Person } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
+import { TaskMentionChips } from "./TaskMentionChips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
@@ -576,6 +577,7 @@ export function ListView({
                             people,
                           })}
                         </p>
+                        <TaskMentionChips task={task} people={people} className="mt-1" />
                       </div>
                     </td>
                     <td className="p-3">

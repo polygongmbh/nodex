@@ -6,6 +6,7 @@ import { Task, Relay, Channel, Person, TaskStatus } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
+import { TaskMentionChips } from "./TaskMentionChips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -489,6 +490,7 @@ export function KanbanView({
                                       people,
                                     })}
                                   </p>
+                                  <TaskMentionChips task={task} people={people} className="mt-2" />
 
                                   {/* Children indicator */}
                                   {hasChildren(task.id) && (
