@@ -20,6 +20,7 @@ Upcoming improvements in progress.
 - Table view now gives more room to tags on wide screens (showing full chips), while smaller screens prioritize task text and use expandable tag chips; chip overflow behavior is now shared with Kanban via a reusable tag-chip row component.
 - Table status and priority columns now stay slimmer on smaller screens, with compact status labeling to preserve horizontal space.
 - Calendar guide day-details step now clarifies that you can create new tasks/events for the selected day, and comment creation is now restricted to Feed/Tree views (other views create tasks only).
+- In *Feeds* sidebar controls, relay icon clicks now toggle relays while relay name clicks set exclusive/solo relay view, matching People/Channels interaction semantics.
 - Onboarding section picker performance and layout were improved with lighter guide targets, reduced overlap, and view-specific guidance (Kanban/Calendar now show dedicated guides instead of compose guidance where compose is not present).
 
 ## [1.2.2] - 2026-02-17

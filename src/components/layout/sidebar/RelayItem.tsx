@@ -26,15 +26,15 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
       isKeyboardFocused={isKeyboardFocused}
       className={cn("gap-3 py-1.5", relay.isActive && "bg-sidebar-accent")}
     >
-      {/* Icon - click for exclusive */}
+      {/* Icon - click for toggle */}
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onExclusive();
+          onToggle();
         }}
         className="relative"
-        title={`Show only ${relay.name}`}
-        aria-label={`Show only ${relay.name}`}
+        title={`Toggle ${relay.name}`}
+        aria-label={`Toggle ${relay.name}`}
       >
         <div
           className={cn(
@@ -51,12 +51,12 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
         )}
       </button>
 
-      {/* Name - click for toggle */}
+      {/* Name - click for exclusive */}
       <button
-        onClick={onToggle}
+        onClick={onExclusive}
         className="flex-1 text-left"
-        title={`Toggle ${relay.name}`}
-        aria-label={`Toggle ${relay.name}`}
+        title={`Show only ${relay.name}`}
+        aria-label={`Show only ${relay.name}`}
       >
         <span
           className={cn(

@@ -34,7 +34,7 @@ const desktopStepsBySection: StepMap = {
     {
       id: "filters-relays",
       title: "Relay selection",
-      description: "Use *Feeds* to select which relays are visible. Click a relay name to toggle it, or click its icon for exclusive relay focus.",
+      description: "Use *Feeds* to select which relays are visible. Click a relay icon to toggle it, or click its name for exclusive relay focus.",
       target: '[data-onboarding="relays-section"]',
       requiredAction: "click-target",
       actionPrompt: "Click a relay control to continue.",
