@@ -331,7 +331,7 @@ export function CalendarView({
         desktopLoadingRef.current = true;
         setDesktopMonths((prev) => {
           const sorted = [...prev].sort((a, b) => a.getTime() - b.getTime());
-          const last = sorted[sorted.length - 1] ?? startOfMonth(currentMonth);
+          const last = sorted[sorted.length - 1] ?? startOfMonth(new Date());
           return [...sorted, addMonths(startOfMonth(last), 1)];
         });
         requestAnimationFrame(() => {
@@ -344,7 +344,7 @@ export function CalendarView({
         const previousHeight = scroller.scrollHeight;
         setDesktopMonths((prev) => {
           const sorted = [...prev].sort((a, b) => a.getTime() - b.getTime());
-          const first = sorted[0] ?? startOfMonth(currentMonth);
+          const first = sorted[0] ?? startOfMonth(new Date());
           return [subMonths(startOfMonth(first), 1), ...sorted];
         });
         requestAnimationFrame(() => {
@@ -353,26 +353,11 @@ export function CalendarView({
           desktopLoadingRef.current = false;
         });
       }
-
-      const marker = scroller.scrollTop + 120;
-      let activeMonth = currentMonth;
-      for (const section of desktopMonthSections) {
-        const node = desktopMonthSectionRefs.current[section.key];
-        if (!node) continue;
-        if (node.offsetTop <= marker) {
-          activeMonth = section.month;
-        } else {
-          break;
-        }
-      }
-      if (getMonthKey(activeMonth) !== getMonthKey(currentMonth)) {
-        setCurrentMonth(activeMonth);
-      }
     };
 
     scroller.addEventListener("scroll", onScroll, { passive: true });
     return () => scroller.removeEventListener("scroll", onScroll);
-  }, [currentMonth, desktopMonthSections]);
+  }, []);
 
   const canCompleteTask = (task: Task) => {
     return canUserChangeTaskStatus(task, currentUser);
@@ -621,7 +606,7 @@ export function CalendarView({
           <div
             ref={desktopScrollerRef}
             className={cn(
-              "flex-1 overflow-auto min-w-0 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+              "flex-1 overflow-auto min-w-0 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
               isMobile ? "p-2 space-y-2" : "p-4 space-y-2"
             )}
             data-onboarding="calendar-month-stack"
@@ -634,7 +619,7 @@ export function CalendarView({
                 }}
                 className={cn("space-y-0.5", isMobile ? "pt-1" : "pt-1.5")}
               >
-                <h2 className="sticky top-0 z-10 bg-background/95 backdrop-blur py-1 text-sm font-semibold border-b border-border/50">
+                <h2 className="py-1 text-sm font-semibold text-foreground/90">
                   {format(section.month, "MMMM yyyy")}
                 </h2>
 
