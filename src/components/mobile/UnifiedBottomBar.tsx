@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { getPreferredMentionIdentifier, personMatchesMentionQuery } from "@/lib/mentions";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -244,25 +245,8 @@ export function UnifiedBottomBar({
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
   const activePeopleCount = people.filter(p => p.isSelected).length;
   const hasAtLeastOneTag = (sharedText.match(/#(\w+)/g)?.length || 0) > 0;
-  const mentionHandleForPerson = (person: Person) => {
-    const candidates = [person.name, person.displayName, person.id];
-    for (const candidate of candidates) {
-      const trimmed = (candidate || "").trim();
-      if (!trimmed) continue;
-      if (/^[a-zA-Z0-9_]+$/.test(trimmed)) {
-        return trimmed;
-      }
-    }
-    return person.id;
-  };
   const filteredPeople = people.filter((person) => {
-    const query = mentionFilter.trim().toLowerCase();
-    if (!query) return true;
-    const handle = mentionHandleForPerson(person).toLowerCase();
-    const name = person.name.toLowerCase();
-    const displayName = person.displayName.toLowerCase();
-    const id = person.id.toLowerCase();
-    return handle.includes(query) || name.includes(query) || displayName.includes(query) || id.includes(query);
+    return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
 
   const insertMention = (mentionToken: string) => {
@@ -530,7 +514,7 @@ export function UnifiedBottomBar({
                       e.preventDefault();
                       const selected = filteredPeople[Math.max(activeMentionIndex, 0)] || filteredPeople[0];
                       if (selected) {
-                        insertMention(mentionHandleForPerson(selected));
+                        insertMention(getPreferredMentionIdentifier(selected));
                       }
                       return;
                     }
@@ -566,14 +550,14 @@ export function UnifiedBottomBar({
               {showMentionSuggestions && filteredPeople.length > 0 && (
                 <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[110] w-full py-1">
                   {filteredPeople.map((person, index) => {
-                    const handle = mentionHandleForPerson(person);
+                    const mentionIdentifier = getPreferredMentionIdentifier(person);
                     return (
                       <button
                         key={person.id}
                         type="button"
                         onMouseDown={(e) => {
                           e.preventDefault();
-                          insertMention(handle);
+                          insertMention(mentionIdentifier);
                         }}
                         className={cn(
                           "w-full flex items-center gap-2 px-3 py-2 text-left",
@@ -585,8 +569,8 @@ export function UnifiedBottomBar({
                         ) : (
                           <User className="w-4 h-4 text-primary" />
                         )}
-                        <span className="text-sm">@{handle}</span>
-                        <span className="text-xs text-muted-foreground truncate">({person.displayName})</span>
+                        <span className="text-sm">@{person.name || person.displayName}</span>
+                        <span className="text-xs text-muted-foreground truncate">(@{mentionIdentifier})</span>
                       </button>
                     );
                   })}

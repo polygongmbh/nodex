@@ -43,6 +43,7 @@ import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-s
 import { filterTasks } from "@/lib/task-filtering";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import { isFilterResetStep, isNavigationFocusStep } from "@/lib/onboarding-step-rules";
+import { getPreferredMentionIdentifier, resolveMentionedPubkeys } from "@/lib/mentions";
 import {
   mapPeopleSelection,
   setAllChannelFilters,
@@ -153,6 +154,7 @@ const Index = () => {
             id: user.pubkey,
             name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
             displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
+            nip05: user.profile?.nip05?.trim().toLowerCase(),
             avatar: user.profile?.picture,
             isOnline: true,
             isSelected: prev.find((person) => person.id === user.pubkey)?.isSelected || false,
@@ -488,18 +490,6 @@ const Index = () => {
     toast.success(`Showing only ${person?.displayName || person?.name || "selected user"}`);
   };
 
-  const getMentionHandle = useCallback((person: Person): string => {
-    const candidates = [person.name, person.displayName, person.id];
-    for (const candidate of candidates) {
-      const trimmed = (candidate || "").trim();
-      if (!trimmed) continue;
-      if (/^[a-zA-Z0-9_]+$/.test(trimmed)) {
-        return trimmed;
-      }
-    }
-    return person.id;
-  }, []);
-
   const upsertAndSelectPerson = useCallback((author: Person) => {
     setPeople((prev) => {
       const exists = prev.some((person) => person.id === author.id);
@@ -524,7 +514,7 @@ const Index = () => {
 
   const handleAuthorClick = useCallback((author: Person) => {
     upsertAndSelectPerson(author);
-    const mention = `@${getMentionHandle(author)}`;
+    const mention = `@${getPreferredMentionIdentifier(author)}`;
     setMentionRequest({ mention, id: Date.now() });
 
     if (isMobile) {
@@ -538,7 +528,7 @@ const Index = () => {
       });
     }
     toast.success(`Showing only ${author.displayName || author.name} and tagging ${mention}`);
-  }, [getMentionHandle, isMobile, upsertAndSelectPerson]);
+  }, [isMobile, upsertAndSelectPerson]);
 
   const handleToggleAllPeople = () => {
     const selectedCount = people.filter((person) => person.isSelected).length;
@@ -548,30 +538,7 @@ const Index = () => {
   };
 
   const resolveMentionPubkeys = useCallback((content: string): string[] => {
-    const mentionHandles = extractAssignedMentionsFromContent(content);
-    if (mentionHandles.length === 0) return [];
-
-    const pubkeyPattern = /^[a-f0-9]{64}$/i;
-    const resolved = new Set<string>();
-
-    for (const mentionHandle of mentionHandles) {
-      if (pubkeyPattern.test(mentionHandle)) {
-        resolved.add(mentionHandle.toLowerCase());
-      }
-    }
-
-    for (const person of people) {
-      const personPubkey = person.id.trim().toLowerCase();
-      if (!pubkeyPattern.test(personPubkey)) continue;
-      const aliases = [person.id, person.name, person.displayName]
-        .filter(Boolean)
-        .map((value) => value.trim().toLowerCase());
-      if (mentionHandles.some((mentionHandle) => aliases.includes(mentionHandle))) {
-        resolved.add(personPubkey);
-      }
-    }
-
-    return Array.from(resolved);
+    return resolveMentionedPubkeys(content, people);
   }, [people]);
 
   const handleToggleComplete = (taskId: string) => {
@@ -743,10 +710,11 @@ const Index = () => {
           return {
             id: user.pubkey,
             name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
-            displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
-            avatar: user.profile?.picture,
-            isOnline: true,
-            isSelected: false,
+              displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
+              nip05: user.profile?.nip05?.trim().toLowerCase(),
+              avatar: user.profile?.picture,
+              isOnline: true,
+              isSelected: false,
           };
         }
         return people[0];

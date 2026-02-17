@@ -18,6 +18,7 @@ const people: Person[] = [
     id: "e".repeat(64),
     name: "alice",
     displayName: "Alice",
+    nip05: "alice@example.com",
     avatar: "",
     isOnline: true,
     isSelected: false,
@@ -396,7 +397,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     fireEvent.keyDown(field, { key: "Enter" });
 
-    expect(field.value).toBe("ping @alice ");
-    expect(onSearchChange).toHaveBeenLastCalledWith("ping @alice ");
+    expect(field.value).toBe("ping @alice@example.com ");
+    expect(onSearchChange).toHaveBeenLastCalledWith("ping @alice@example.com ");
   });
 });

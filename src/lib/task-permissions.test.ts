@@ -6,6 +6,7 @@ const user: Person = {
   id: "user-1",
   name: "alice",
   displayName: "Alice",
+  nip05: "alice@example.com",
   avatar: "",
   isOnline: true,
   isSelected: false,
@@ -42,6 +43,10 @@ describe("canUserChangeTaskStatus", () => {
       false
     );
   });
+
+  it("allows assignee by nip05 identifier", () => {
+    expect(canUserChangeTaskStatus({ ...baseTask, mentions: ["alice@example.com"] }, user)).toBe(true);
+  });
 });
 
 describe("extractAssignedMentionsFromContent", () => {
@@ -49,6 +54,12 @@ describe("extractAssignedMentionsFromContent", () => {
     expect(extractAssignedMentionsFromContent("pair with @Alice and @bob and @alice")).toEqual([
       "alice",
       "bob",
+    ]);
+  });
+
+  it("extracts nip05 mentions", () => {
+    expect(extractAssignedMentionsFromContent("pair with @alice@example.com")).toEqual([
+      "alice@example.com",
     ]);
   });
 });

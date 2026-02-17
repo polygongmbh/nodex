@@ -6,6 +6,12 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Mention autocomplete now shows human-friendly usernames while inserting NIP-05 identifiers when available (falling back to pubkeys), and compose preview chips render person mentions before hashtag/channel chips.
+
+### Fixed
+- Publishing now resolves `@` mentions from NIP-05/user aliases to pubkeys more reliably and includes corresponding Nostr `p` tags in posted events.
+
 ## [1.1.0] - 2026-02-16
 
 ### Added

@@ -7,6 +7,11 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
+import {
+  extractMentionIdentifiersFromContent,
+  getPreferredMentionIdentifier,
+  personMatchesMentionQuery,
+} from "@/lib/mentions";
 
 interface TaskComposerProps {
   onSubmit: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
@@ -304,26 +309,13 @@ export function TaskComposer({
   };
 
   const filteredChannels = channels.filter(channel => channel.name.toLowerCase().includes(hashtagFilter));
-  const mentionHandleForPerson = (person: Person) => {
-    const candidates = [person.name, person.displayName, person.id];
-    for (const candidate of candidates) {
-      const trimmed = (candidate || "").trim();
-      if (!trimmed) continue;
-      if (/^[a-zA-Z0-9_]+$/.test(trimmed)) {
-        return trimmed;
-      }
-    }
-    return person.id;
-  };
   const filteredPeople = people.filter((person) => {
-    const query = mentionFilter.trim().toLowerCase();
-    if (!query) return true;
-    const handle = mentionHandleForPerson(person).toLowerCase();
-    const name = person.name.toLowerCase();
-    const displayName = person.displayName.toLowerCase();
-    const id = person.id.toLowerCase();
-    return handle.includes(query) || name.includes(query) || displayName.includes(query) || id.includes(query);
+    return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
+  const parsedMentions = extractMentionIdentifiersFromContent(content);
+  const parsedHashtags = Array.from(
+    new Set((content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase()))
+  );
   const hasAtLeastOneTag = (content.match(/#(\w+)/g)?.length || 0) > 0;
   const submitBlockedReason = !user
     ? "Sign in required"
@@ -383,7 +375,7 @@ export function TaskComposer({
         e.preventDefault();
         const selected = filteredPeople[Math.max(activeSuggestionIndex, 0)] || filteredPeople[0];
         if (selected) {
-          insertMention(mentionHandleForPerson(selected));
+          insertMention(getPreferredMentionIdentifier(selected));
         }
         return;
       }
@@ -537,16 +529,16 @@ export function TaskComposer({
         {showMentionSuggestions && filteredPeople.length > 0 && (
           <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[110] w-64 py-1">
             {filteredPeople.map((person) => {
-              const handle = mentionHandleForPerson(person);
-              const isActive = filteredPeople[activeSuggestionIndex]?.id === person.id;
-              return (
-                <button
-                  key={person.id}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    insertMention(handle);
-                  }}
+                  const mentionIdentifier = getPreferredMentionIdentifier(person);
+                  const isActive = filteredPeople[activeSuggestionIndex]?.id === person.id;
+                  return (
+                    <button
+                      key={person.id}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        insertMention(mentionIdentifier);
+                      }}
                   onMouseEnter={() => {
                     const index = filteredPeople.findIndex((p) => p.id === person.id);
                     setActiveSuggestionIndex(index >= 0 ? index : 0);
@@ -555,20 +547,45 @@ export function TaskComposer({
                     "w-full flex items-center gap-2 px-3 py-2 text-left",
                     isActive ? "bg-muted" : "hover:bg-muted"
                   )}
-                >
+                  >
                   {person.avatar ? (
                     <img src={person.avatar} alt={person.displayName} className="w-4 h-4 rounded-full" />
                   ) : (
                     <User className="w-4 h-4 text-primary" />
                   )}
-                  <span className="text-sm">@{handle}</span>
-                  <span className="text-xs text-muted-foreground truncate">({person.displayName})</span>
+                  <span className="text-sm">@{person.name || person.displayName}</span>
+                  <span className="text-xs text-muted-foreground truncate">(@{mentionIdentifier})</span>
                 </button>
               );
             })}
           </div>
         )}
       </div>
+
+      {showExpandedControls && (parsedMentions.length > 0 || parsedHashtags.length > 0) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {parsedMentions.map((mention) => (
+            <span
+              key={`mention-${mention}`}
+              data-testid="compose-mention-chip"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary"
+            >
+              <AtSign className="w-3 h-3" />
+              {mention}
+            </span>
+          ))}
+          {parsedHashtags.map((tag) => (
+            <span
+              key={`hashtag-${tag}`}
+              data-testid="compose-hashtag-chip"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground"
+            >
+              <Hash className="w-3 h-3" />
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Due date for tasks */}
       {showExpandedControls && taskType === "task" && (

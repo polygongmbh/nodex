@@ -34,6 +34,7 @@ const people: Person[] = [
     id: "f".repeat(64),
     name: "alice",
     displayName: "Alice",
+    nip05: "alice@example.com",
     avatar: "",
     isOnline: true,
     isSelected: false,
@@ -211,7 +212,29 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     fireEvent.keyDown(textarea, { key: "Enter" });
 
-    expect(textarea.value).toBe("Need input from @alice ");
+    expect(textarea.value).toBe("Need input from @alice@example.com ");
+  });
+
+  it("renders parsed mention chips before hashtag chips", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => {}}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    fireEvent.change(textarea, {
+      target: { value: "Pair with @alice@example.com on #backend" },
+    });
+
+    const mentionChip = screen.getByTestId("compose-mention-chip");
+    const hashtagChip = screen.getByTestId("compose-hashtag-chip");
+    const relation = mentionChip.compareDocumentPosition(hashtagChip);
+    expect((relation & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true);
   });
 
   it("expands adaptively when forceExpandSignal changes", () => {

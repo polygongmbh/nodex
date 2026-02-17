@@ -1,9 +1,8 @@
 import type { Person, Task } from "@/types";
+import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 
 export function extractAssignedMentionsFromContent(content: string): string[] {
-  const mentions =
-    content.match(/@([a-zA-Z0-9_]+)/g)?.map((value) => value.slice(1).toLowerCase()) || [];
-  return Array.from(new Set(mentions));
+  return extractMentionIdentifiersFromContent(content);
 }
 
 function getTaskAssignees(task: Task): string[] {
@@ -21,7 +20,7 @@ export function canUserChangeTaskStatus(task: Task, currentUser?: Person): boole
   if (assignees.length === 0) return true;
 
   const userIdentifiers = new Set(
-    [currentUser.id, currentUser.name, currentUser.displayName]
+    [currentUser.id, currentUser.name, currentUser.displayName, currentUser.nip05]
       .filter(Boolean)
       .map((value) => value.toLowerCase())
   );

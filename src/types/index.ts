@@ -21,6 +21,7 @@ export interface Person {
   id: string;
   name: string;
   displayName: string;
+  nip05?: string;
   avatar?: string;
   isOnline: boolean;
   isSelected: boolean;
