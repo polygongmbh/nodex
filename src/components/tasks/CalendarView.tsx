@@ -378,37 +378,16 @@ export function CalendarView({
     const scroller = desktopScrollerRef.current;
     if (!scroller) return;
 
-    let animationFrameId = 0;
-    let queuedDelta = 0;
-
-    const animate = () => {
-      const step = queuedDelta * 0.22;
-      scroller.scrollTop += step;
-      queuedDelta -= step;
-      if (Math.abs(queuedDelta) > 0.4) {
-        animationFrameId = requestAnimationFrame(animate);
-      } else {
-        queuedDelta = 0;
-        animationFrameId = 0;
-      }
-    };
-
     const onWheel = (event: WheelEvent) => {
       if (!event.cancelable) return;
       event.preventDefault();
-      // Dampened wheel motion so month transitions feel less abrupt.
-      queuedDelta += event.deltaY * 0.55;
-      if (!animationFrameId) {
-        animationFrameId = requestAnimationFrame(animate);
-      }
+      // Slow but continuous wheel scrolling without staggered easing jumps.
+      scroller.scrollTop += event.deltaY * 0.42;
     };
 
     scroller.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       scroller.removeEventListener("wheel", onWheel);
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
     };
   }, []);
 
@@ -660,7 +639,7 @@ export function CalendarView({
             ref={desktopScrollerRef}
             className={cn(
               "flex-1 overflow-auto min-w-0 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-              isMobile ? "p-2 space-y-4" : "p-4 space-y-5"
+              isMobile ? "p-2 space-y-2" : "p-4 space-y-2"
             )}
             data-onboarding="calendar-month-stack"
           >
@@ -670,12 +649,9 @@ export function CalendarView({
                 ref={(node) => {
                   desktopMonthSectionRefs.current[section.key] = node;
                 }}
-                className={cn(
-                  "space-y-2 border border-border/60 bg-card/35 shadow-sm",
-                  isMobile ? "rounded-xl p-2" : "rounded-2xl p-3"
-                )}
+                className={cn("space-y-0.5", isMobile ? "pt-1" : "pt-1.5")}
               >
-                <h2 className="sticky top-0 z-10 bg-gradient-to-r from-background via-background/95 to-muted/30 backdrop-blur py-1 text-sm font-semibold border-b border-border/70">
+                <h2 className="sticky top-0 z-10 bg-background/95 backdrop-blur py-1 text-sm font-semibold border-b border-border/50">
                   {format(section.month, "MMMM yyyy")}
                 </h2>
 
@@ -691,12 +667,12 @@ export function CalendarView({
                   ))}
                 </div>
 
-                <div className="space-y-px bg-border/50">
+                <div className="space-y-px bg-border/35">
                   {section.weeks.map((week) => (
                     <div
                       key={week[0]?.toISOString() ?? section.key}
                       className={cn(
-                        "grid gap-px bg-border/50 rounded-lg overflow-hidden",
+                        "grid gap-px bg-border/35",
                         isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
                       )}
                     >
@@ -722,11 +698,10 @@ export function CalendarView({
                               }
                             }}
                             className={cn(
-                              "bg-background/95 transition-all duration-200 text-left flex flex-col relative rounded-lg border",
+                              "bg-background transition-colors duration-150 text-left flex flex-col relative border border-transparent",
                               isMobile ? "min-h-[4.4rem] p-1" : "min-h-[6.2rem] p-1",
-                              isToday(day) && "border-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.3)]",
-                              isSelected ? "bg-primary/20 border-primary/70" : "hover:bg-muted/55",
-                              !isToday(day) && !isSelected && "border-transparent",
+                              isToday(day) && "border-primary/60",
+                              isSelected ? "bg-primary/20 border-primary/70" : "hover:bg-muted/40",
                               !isInDisplayedMonth && "opacity-60"
                             )}
                           >

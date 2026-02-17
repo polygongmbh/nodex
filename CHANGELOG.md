@@ -9,6 +9,7 @@ Upcoming improvements in progress.
 
 ### Changed
 - Calendar view now uses vertically stacked months with dynamic month loading while scrolling (desktop and mobile), shows ISO week numbers, widens the right-side day detail panel on widescreen layouts, and smooths month transitions by removing duplicated boundary weeks.
+- Calendar stacked-month styling is now flatter and continuous (without boxed month cards), with slower, non-staggered wheel scrolling for smoother month-to-month flow.
 - Onboarding section picker performance and layout were improved with lighter guide targets, reduced overlap, and view-specific guidance (Kanban/Calendar now show dedicated guides instead of compose guidance where compose is not present).
 
 ## [1.2.2] - 2026-02-17
