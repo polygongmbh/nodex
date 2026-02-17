@@ -346,13 +346,17 @@ export function ListView({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className={cn(
-            "text-xs px-2 py-1 rounded-full font-medium cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all",
+            "text-[11px] sm:text-xs px-1.5 sm:px-2 py-1 rounded-full font-medium cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all whitespace-nowrap",
             status === "done" ? "bg-primary/10 text-primary" :
             status === "in-progress" ? "bg-amber-500/10 text-amber-600" :
             "bg-muted text-muted-foreground"
           )}>
-            {status === "in-progress" ? "In Progress" : 
-             status === "done" ? "Done" : "To Do"}
+            {status === "in-progress" ? (
+              <>
+                <span className="sm:hidden">Doing</span>
+                <span className="hidden sm:inline">In Progress</span>
+              </>
+            ) : status === "done" ? "Done" : "To Do"}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
@@ -491,13 +495,13 @@ export function ListView({
               <th className="text-left p-3 w-auto min-w-[22rem]">
                 <SortButton field="content">Task</SortButton>
               </th>
-              <th className="text-left p-3 w-32">
+              <th className="text-left p-3 w-24 sm:w-28 md:w-32">
                 <SortButton field="status">Status</SortButton>
               </th>
               <th className="text-left p-3 w-40">
                 <SortButton field="dueDate">Due Date</SortButton>
               </th>
-              <th className="text-left p-3 w-32">
+              <th className="text-left p-3 w-16 sm:w-20 md:w-24">
                 <SortButton field="priority">Priority</SortButton>
               </th>
               <th className="text-left p-3 w-32 md:w-40 lg:w-48 xl:w-64 2xl:w-[26rem]">Tags</th>
