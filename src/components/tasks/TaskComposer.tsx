@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Hash, Calendar, Clock, X, ChevronDown, Zap, AtSign, Flag } from "lucide-react";
+import { Hash, Calendar, Clock, X, Zap, AtSign, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskType, TaskDateType } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -680,7 +680,7 @@ export function TaskComposer({
           }}
           placeholder={taskType === "task" ? t("composer.placeholders.task") : t("composer.placeholders.comment")}
           aria-label={taskType === "task" ? t("composer.placeholders.task") : t("composer.placeholders.comment")}
-          title="Use #channel tags and @mentions in this field"
+          title={t("composer.hints.composeField")}
           className={cn(
             "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
             adaptiveSize && !showExpandedControls
@@ -768,6 +768,7 @@ export function TaskComposer({
               key={`mention-${mention}`}
               data-testid="compose-mention-chip"
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary"
+              title={`${t("composer.labels.mentions")}: @${mention}`}
             >
               <AtSign className="w-3 h-3" />
               {mention}
@@ -904,8 +905,8 @@ export function TaskComposer({
               }, 10);
             }}
             className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-            aria-label="Insert hashtag"
-            title="Insert hashtag and open channel suggestions"
+            aria-label={t("composer.hints.insertHashtag")}
+            title={t("composer.hints.insertHashtagOpen")}
           >
             <Hash className="w-4 h-4 text-primary" />
           </button>
@@ -927,8 +928,8 @@ export function TaskComposer({
               }, 10);
             }}
             className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-            aria-label="Insert mention"
-            title="Insert @mention and open people suggestions"
+            aria-label={t("composer.hints.insertMention")}
+            title={t("composer.hints.insertMentionOpen")}
           >
             <AtSign className="w-4 h-4 text-primary" />
           </button>
@@ -939,11 +940,55 @@ export function TaskComposer({
             <span className="text-xs text-muted-foreground">{submitBlockedReason}</span>
           )}
           <div className="inline-flex rounded-xl overflow-hidden border border-border/40 shadow-sm">
+            {allowComment && (
+              <div
+                data-onboarding="compose-kind"
+                className="inline-flex items-center gap-1 bg-muted/40 border-r border-border/50 p-1"
+              >
+                <select
+                  aria-label={t("composer.labels.kind")}
+                  value={taskType}
+                  onChange={(event) => setTaskType(event.target.value as TaskType)}
+                  className="sr-only"
+                >
+                  <option value="task">{t("composer.labels.task")}</option>
+                  <option value="comment">{t("composer.labels.comment")}</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setTaskType("task")}
+                  aria-label={t("composer.labels.task")}
+                  className={cn(
+                    "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                    taskType === "task"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Hash className="w-3.5 h-3.5" />
+                  <span>{t("composer.labels.task")}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTaskType("comment")}
+                  aria-label={t("composer.labels.comment")}
+                  className={cn(
+                    "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                    taskType === "comment"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <AtSign className="w-3.5 h-3.5" />
+                  <span>{t("composer.labels.comment")}</span>
+                </button>
+              </div>
+            )}
             <button
               onClick={handleSubmit}
               disabled={Boolean(submitBlockedReason)}
-              aria-label={taskType === "task" ? "Create task" : "Add comment"}
-              title={taskType === "task" ? "Create task" : "Add comment"}
+              aria-label={taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
+              title={taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
               className="px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isPublishing && (
@@ -951,21 +996,6 @@ export function TaskComposer({
               )}
               {taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
             </button>
-            {allowComment && (
-              <div className="relative w-9 bg-primary/95 border-l border-primary-foreground/20">
-                <select
-                  data-onboarding="compose-kind"
-                  aria-label={t("composer.labels.kind")}
-                  value={taskType}
-                  onChange={(e) => setTaskType(e.target.value as TaskType)}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                >
-                  <option value="task">Task</option>
-                  <option value="comment">Comment</option>
-                </select>
-                <ChevronDown className="w-3.5 h-3.5 text-primary-foreground absolute inset-0 m-auto pointer-events-none" />
-              </div>
-            )}
           </div>
         </div>
       </div>

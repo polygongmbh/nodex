@@ -440,26 +440,31 @@ export function UnifiedBottomBar({
         <div className="overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex items-center gap-2 pt-1">
           {canOfferComment && (
-            <div className="flex h-8 items-center gap-1 px-1 bg-muted/50 rounded-md shrink-0">
+            <div
+              data-onboarding="compose-kind"
+              className="flex h-8 items-center gap-1 px-1.5 border border-border/60 bg-muted/50 rounded-md shrink-0"
+            >
             <button
               onClick={() => setTaskType("task")}
-              aria-label="Task"
+              aria-label={t("composer.labels.task")}
               className={cn(
-                "h-6 w-6 flex items-center justify-center rounded-sm transition-colors",
+                "h-6 px-2 flex items-center justify-center rounded-sm text-[11px] font-medium gap-1 transition-colors",
                 taskType === "task" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
               )}
             >
               <CheckSquare className="w-3.5 h-3.5" />
+              <span>{t("composer.labels.task")}</span>
             </button>
             <button
               onClick={() => setTaskType("comment")}
-              aria-label="Comment"
+              aria-label={t("composer.labels.comment")}
               className={cn(
-                "h-6 w-6 flex items-center justify-center rounded-sm transition-colors",
+                "h-6 px-2 flex items-center justify-center rounded-sm text-[11px] font-medium gap-1 transition-colors",
                 taskType === "comment" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
               )}
             >
               <MessageSquare className="w-3.5 h-3.5" />
+              <span>{t("composer.labels.comment")}</span>
             </button>
             </div>
           )}
@@ -720,8 +725,8 @@ export function UnifiedBottomBar({
               <button
                 onClick={handleCancel}
                 className="p-3 rounded-lg hover:bg-muted"
-                aria-label="Clear compose"
-                title="Clear compose"
+                aria-label={t("composer.hints.clearCompose")}
+                title={t("composer.hints.clearCompose")}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -730,8 +735,8 @@ export function UnifiedBottomBar({
                   onClick={() => handleSubmit()}
                   disabled={!sharedText.trim() || !hasAtLeastOneTag || hasInvalidRootTaskRelaySelection}
                   className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                  aria-label="Create from current text"
-                  title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : "Create from current text"}
+                  aria-label={t("composer.hints.createFromText")}
+                  title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.hints.createFromText")}
                 >
                   <Send className="w-5 h-5" />
                 </button>
@@ -739,7 +744,7 @@ export function UnifiedBottomBar({
                 <button
                   onClick={onSignInClick}
                   className="p-3 rounded-lg border border-border text-foreground hover:bg-muted"
-                  aria-label="Sign in to create"
+                  aria-label={t("composer.hints.signInToCreate")}
                 >
                   <Zap className="w-5 h-5" />
                 </button>

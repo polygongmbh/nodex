@@ -26,7 +26,20 @@
     "labels": {
       "dateType": "Datumstyp",
       "priority": "Priorität",
-      "kind": "Typ"
+      "kind": "Typ",
+      "task": "Aufgabe",
+      "comment": "Kommentar",
+      "mentions": "Erwähnungen"
+    },
+    "hints": {
+      "composeField": "#channel-Tags und @Erwähnungen in diesem Feld verwenden",
+      "insertHashtag": "Hashtag einfügen",
+      "insertHashtagOpen": "Hashtag einfügen und Kanalvorschläge öffnen",
+      "insertMention": "Erwähnung einfügen",
+      "insertMentionOpen": "@Erwähnung einfügen und Personenvorschläge öffnen",
+      "clearCompose": "Eingabe leeren",
+      "createFromText": "Aus aktuellem Text erstellen",
+      "signInToCreate": "Zum Erstellen anmelden"
     },
     "dates": {
       "setOptional": "{{dateType}}-Datum setzen (optional)",

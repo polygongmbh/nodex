@@ -26,7 +26,20 @@
     "labels": {
       "dateType": "Date type",
       "priority": "Priority",
-      "kind": "Kind"
+      "kind": "Kind",
+      "task": "Task",
+      "comment": "Comment",
+      "mentions": "Mentions"
+    },
+    "hints": {
+      "composeField": "Use #channel tags and @mentions in this field",
+      "insertHashtag": "Insert hashtag",
+      "insertHashtagOpen": "Insert hashtag and open channel suggestions",
+      "insertMention": "Insert mention",
+      "insertMentionOpen": "Insert @mention and open people suggestions",
+      "clearCompose": "Clear compose",
+      "createFromText": "Create from current text",
+      "signInToCreate": "Sign in to create"
     },
     "dates": {
       "setOptional": "Set {{dateType}} date (optional)",
