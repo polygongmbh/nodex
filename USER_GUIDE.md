@@ -69,6 +69,8 @@
 - At least one hashtag is required to post.
 - Task/comment kind changes event behavior.
 - `#tags` and `@mentions` are supported in compose text.
+- Included channel filters automatically prepopulate compose with matching `#channel` tags.
+- Setting a due date on a task makes it appear in Calendar view.
 - On mobile, use the submit button in the combined bottom bar to create.
 
 ### Compose keyboard behavior (desktop)

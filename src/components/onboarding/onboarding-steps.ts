@@ -79,7 +79,7 @@ const desktopStepsBySection: StepMap = {
       id: "compose-input",
       title: "Tags and mentions",
       description:
-        "Use #tags to organize items and @mentions to reference people in the compose box.",
+        "Use #tags to organize items and @mentions to reference people in the compose box. Included channels auto-prepopulate as hashtags, and setting a due date makes task items appear in Calendar view.",
       target: '[data-onboarding="compose-input"]',
       actionPrompt:
         "Power-user hint: Alt+Enter submits as the other kind when no autocomplete is open; with autocomplete open, modifier+Enter can add the selected tag/mention as metadata without inserting token text.",
