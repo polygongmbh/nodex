@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import type { ReactNode } from "react";
 import { TaskItem } from "./TaskItem";
 import type { Task } from "@/types";
+import { makePerson, makeTask } from "@/test/fixtures";
 
 vi.mock("@/hooks/use-nostr-profiles", () => ({
   useNostrProfile: () => ({ profile: null }),
@@ -17,26 +18,18 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   ),
 }));
 
-const baseTask: Task = {
+const baseTask: Task = makeTask({
   id: "t1",
-  author: {
+  author: makePerson({
     id: "me",
     name: "me",
     displayName: "Me",
-    avatar: "",
     isOnline: false,
-    isSelected: false,
-  },
+  }),
   content: "Ship feature #frontend",
   tags: ["frontend"],
-  relays: ["demo"],
-  taskType: "task",
-  timestamp: new Date(),
-  likes: 0,
-  replies: 0,
-  reposts: 0,
   status: "todo",
-};
+});
 
 describe("TaskItem status actions", () => {
   it("cycles status on plain click even when status menu exists", () => {
@@ -107,14 +100,11 @@ describe("TaskItem status actions", () => {
       id: "c1",
       taskType: "comment",
       content: "Looks good",
-      author: {
+      author: makePerson({
         id: "alice-pubkey",
         name: "alice",
         displayName: "Alice",
-        avatar: "",
-        isOnline: true,
-        isSelected: false,
-      },
+      }),
     };
 
     render(

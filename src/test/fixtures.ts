@@ -1,0 +1,51 @@
+import type { Channel, Person, Relay, Task } from "@/types";
+
+const DEFAULT_TIME = new Date("2026-01-01T00:00:00.000Z");
+
+export function makePerson(overrides: Partial<Person> = {}): Person {
+  return {
+    id: "person-id",
+    name: "person",
+    displayName: "Person",
+    avatar: "",
+    isOnline: true,
+    isSelected: false,
+    ...overrides,
+  };
+}
+
+export function makeRelay(overrides: Partial<Relay> = {}): Relay {
+  return {
+    id: "demo",
+    name: "Demo",
+    icon: "D",
+    isActive: true,
+    ...overrides,
+  };
+}
+
+export function makeChannel(overrides: Partial<Channel> = {}): Channel {
+  return {
+    id: "general",
+    name: "general",
+    filterState: "neutral",
+    ...overrides,
+  };
+}
+
+export function makeTask(overrides: Partial<Task> = {}): Task {
+  const author = overrides.author ?? makePerson({ id: "author-id", name: "author", displayName: "Author" });
+  return {
+    id: "task-1",
+    author,
+    content: "Task content #general",
+    tags: ["general"],
+    relays: ["demo"],
+    taskType: "task",
+    timestamp: DEFAULT_TIME,
+    likes: 0,
+    replies: 0,
+    reposts: 0,
+    ...overrides,
+  };
+}

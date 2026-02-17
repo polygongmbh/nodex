@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
+import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
 
 vi.mock("@/lib/nostr/ndk-context", () => ({
   useNDK: () => ({ user: null }),
@@ -25,24 +26,9 @@ const peopleAuthor: Person = {
   isSelected: false,
 };
 
-const tasks: Task[] = [
-  {
-    id: "task-1",
-    author: taskAuthor,
-    content: "Task content #general",
-    tags: ["general"],
-    relays: ["demo"],
-    taskType: "task",
-    timestamp: new Date("2026-01-01T00:00:00.000Z"),
-    likes: 0,
-    replies: 0,
-    reposts: 0,
-    status: "todo",
-  },
-];
-
-const channels: Channel[] = [{ id: "general", name: "general", filterState: "neutral" }];
-const relays: Relay[] = [{ id: "demo", name: "Demo", icon: "D", isActive: true }];
+const tasks: Task[] = [makeTask({ id: "task-1", author: taskAuthor, status: "todo" })];
+const channels: Channel[] = [makeChannel()];
+const relays: Relay[] = [makeRelay()];
 
 describe("FeedView kind:0 author labels", () => {
   it("prefers kind:0 metadata label and uses abbreviated pubkey when name exists", () => {

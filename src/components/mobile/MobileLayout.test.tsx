@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import type { Channel, Person, Relay, Task } from "@/types";
+import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
 
 const ndkMock = {
   user: null as null | {
@@ -40,11 +41,9 @@ vi.mock("@/components/tasks/CalendarView", () => ({
   CalendarView: () => <div data-testid="calendar-view" />,
 }));
 
-const relays: Relay[] = [{ id: "demo", name: "Demo", icon: "D", isActive: true }];
-const channels: Channel[] = [{ id: "general", name: "general", filterState: "neutral" }];
-const people: Person[] = [
-  { id: "me", name: "Me", displayName: "Me", avatar: "", isOnline: true, isSelected: false },
-];
+const relays: Relay[] = [makeRelay()];
+const channels: Channel[] = [makeChannel()];
+const people: Person[] = [makePerson({ id: "me", name: "Me", displayName: "Me" })];
 const tasks: Task[] = [];
 
 describe("MobileLayout auth wiring", () => {
