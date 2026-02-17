@@ -110,6 +110,8 @@ export function useTaskNavigation({
       const target = event.target as HTMLElement;
       if (
         target.tagName === "INPUT" ||
+        target.tagName === "SELECT" ||
+        target.tagName === "OPTION" ||
         target.tagName === "TEXTAREA" ||
         target.isContentEditable
       ) {
