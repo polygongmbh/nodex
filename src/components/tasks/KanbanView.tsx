@@ -442,6 +442,7 @@ export function KanbanView({
                               draggableId={task.id}
                               index={index}
                               isDragDisabled={!canUserChangeTaskStatus(task, currentUser)}
+                              disableInteractiveElementBlocking={canUserChangeTaskStatus(task, currentUser)}
                             >
                               {(provided, snapshot) => (
                                 <div
