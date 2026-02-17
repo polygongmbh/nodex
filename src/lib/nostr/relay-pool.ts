@@ -25,7 +25,7 @@ export interface RelayPoolEvents {
 
 // Extended event with relay source
 export interface NostrEventWithRelay extends NostrEvent {
-  relayUrl: string;
+  relayUrl?: string;
 }
 
 interface ActiveSubscription {

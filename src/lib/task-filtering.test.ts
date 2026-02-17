@@ -51,6 +51,23 @@ describe("filterTasks", () => {
     expect(result.map((task) => task.id)).toEqual(["a"]);
   });
 
+  it("keeps tasks with unknown relay metadata visible under relay filters", () => {
+    const tasks = [
+      buildTask({ id: "known", relays: ["r2"] }),
+      buildTask({ id: "nostr", relays: ["nostr"] }),
+      buildTask({ id: "unknown", relays: ["unknown"] }),
+    ];
+
+    const result = filterTasks({
+      tasks,
+      activeRelayIds: new Set(["r1"]),
+      channels: [],
+      people: [alice, bob],
+    });
+
+    expect(result.map((task) => task.id)).toEqual(["nostr", "unknown"]);
+  });
+
   it("applies excluded and included channel filters", () => {
     const tasks = [
       buildTask({ id: "a", tags: ["general", "release"] }),

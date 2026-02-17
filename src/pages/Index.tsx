@@ -244,7 +244,7 @@ const Index = () => {
         tags: event.tags,
         content: event.content,
         sig: event.sig || "",
-        relayUrl: event.relay?.url || "unknown",
+        relayUrl: event.relay?.url,
       }))
     );
   }, [filteredNostrEvents]);
@@ -873,6 +873,9 @@ const Index = () => {
           )
         )
       : [];
+    const normalizedExtractedTags = Array.from(
+      new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
+    );
     
     let publishSuccess = false;
     let publishedEventId: string | undefined;
@@ -885,8 +888,17 @@ const Index = () => {
           toast.warning("Parent reference is local-only; publishing task without parent link");
         }
         const publishTags = taskType === "task"
-          ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], assigneePubkeys, priority)
-          : mentionPubkeys.map((pubkey) => ["p", pubkey]);
+          ? buildTaskPublishTags(
+              validParentId,
+              selectedRelayUrls[0],
+              assigneePubkeys,
+              priority,
+              normalizedExtractedTags
+            )
+          : [
+              ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
+              ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
+            ];
         const publishParentId = taskType === "comment" && validParentId ? validParentId : undefined;
         const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
         publishSuccess = result.success;

@@ -3,6 +3,7 @@ export function buildTaskPublishTags(
   parentRelayUrl?: string,
   mentionPubkeys: string[] = [],
   priority?: number,
+  channelNames: string[] = [],
 ): string[][] {
   const tags: string[][] = [];
 
@@ -19,6 +20,13 @@ export function buildTaskPublishTags(
 
   if (typeof priority === "number" && Number.isFinite(priority)) {
     tags.push(["priority", String(Math.max(0, Math.min(100, Math.round(priority))))]);
+  }
+
+  const dedupedChannelNames = Array.from(
+    new Set(channelNames.map((name) => name.trim().toLowerCase()).filter(Boolean))
+  );
+  for (const channelName of dedupedChannelNames) {
+    tags.push(["t", channelName]);
   }
 
   return tags;

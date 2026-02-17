@@ -28,7 +28,14 @@ export function filterTasks({
   const includedChannelSet = toLowerSet(includedChannelNames);
   const excludedChannelSet = toLowerSet(excludedChannelNames);
   return tasks.filter((task) => {
-    if (activeRelayIds.size > 0 && !task.relays.some((relayId) => activeRelayIds.has(relayId))) {
+    const hasUnknownRelayMetadata =
+      task.relays.length === 0 ||
+      task.relays.some((relayId) => relayId === "nostr" || relayId === "unknown");
+    if (
+      activeRelayIds.size > 0 &&
+      !hasUnknownRelayMetadata &&
+      !task.relays.some((relayId) => activeRelayIds.has(relayId))
+    ) {
       return false;
     }
 

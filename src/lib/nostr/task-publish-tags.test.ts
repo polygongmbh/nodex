@@ -22,4 +22,33 @@ describe("buildTaskPublishTags", () => {
 
     expect(tags).toEqual([["p", "abcdef"], ["p", "123456"]]);
   });
+
+  it("appends deduplicated lowercase t tags from selected channels", () => {
+    const tags = buildTaskPublishTags(
+      undefined,
+      undefined,
+      [],
+      undefined,
+      ["Backend", "backend", "ops", "  "]
+    );
+
+    expect(tags).toEqual([["t", "backend"], ["t", "ops"]]);
+  });
+
+  it("combines parent, mentions, priority, and channel tags", () => {
+    const tags = buildTaskPublishTags(
+      "task123",
+      "wss://relay.example",
+      ["ALICE"],
+      7,
+      ["release"]
+    );
+
+    expect(tags).toEqual([
+      ["e", "task123", "wss://relay.example", "parent"],
+      ["p", "alice"],
+      ["priority", "7"],
+      ["t", "release"],
+    ]);
+  });
 });
