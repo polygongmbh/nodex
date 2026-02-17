@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef, ReactNode } from "react";
 import NDK, {
   NDKEvent,
   NDKNip07Signer,
@@ -63,6 +63,7 @@ export interface NDKContextValue {
   publishEvent: (kind: NostrEventKind, content: string, tags?: string[][], parentId?: string, relayUrls?: string[]) => Promise<{ success: boolean; eventId?: string }>;
   updateUserProfile: (profile: EditableNostrProfile) => Promise<boolean>;
   needsProfileSetup: boolean;
+  isProfileSyncing: boolean;
   
   // Subscription
   subscribe: (filters: NDKFilter[], onEvent: (event: NDKEvent) => void) => NDKSubscription | null;
@@ -119,6 +120,8 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
   const [relays, setRelays] = useState<NDKRelayStatus[]>([]);
   const [removedRelays, setRemovedRelays] = useState<Set<string>>(new Set());
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
+  const [isProfileSyncing, setIsProfileSyncing] = useState(false);
+  const profileSyncRunRef = useRef(0);
 
   const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
     if (!ndk) return null;
@@ -237,19 +240,6 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
             npub: ndkUser.npub,
           });
           setAuthMethod("extension");
-          // Fetch profile
-          ndkUser.fetchProfile().then(() => {
-            setUser((prev) => prev ? {
-              ...prev,
-              profile: {
-                name: ndkUser.profile?.name,
-                displayName: ndkUser.profile?.displayName,
-                picture: ndkUser.profile?.image,
-                about: ndkUser.profile?.about,
-                nip05: ndkUser.profile?.nip05,
-              },
-            } : null);
-          });
         }).catch(() => {
           localStorage.removeItem(STORAGE_KEY_AUTH);
         });
@@ -303,26 +293,18 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       ndk.signer = signer;
       
       const ndkUser = await signer.user();
-      await ndkUser.fetchProfile();
-      
-      const nip05 = ndkUser.profile?.nip05;
-      let nip05Verified = false;
-      
-      if (nip05) {
-        nip05Verified = await verifyNip05(nip05, ndkUser.pubkey);
-      }
-      
       setUser({
         pubkey: ndkUser.pubkey,
         npub: ndkUser.npub,
-        profile: {
-          name: ndkUser.profile?.name,
-          displayName: ndkUser.profile?.displayName,
-          picture: ndkUser.profile?.image,
-          about: ndkUser.profile?.about,
-          nip05,
-          nip05Verified,
-        },
+        profile: ndkUser.profile
+          ? {
+              name: ndkUser.profile.name,
+              displayName: ndkUser.profile.displayName,
+              picture: ndkUser.profile.image,
+              about: ndkUser.profile.about,
+              nip05: ndkUser.profile.nip05,
+            }
+          : undefined,
       });
       setAuthMethod("extension");
       localStorage.setItem(STORAGE_KEY_AUTH, "extension");
@@ -451,6 +433,8 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
   }, [authMethod]);
 
   const logout = useCallback(() => {
+    profileSyncRunRef.current += 1;
+    setIsProfileSyncing(false);
     if (ndk) {
       ndk.signer = undefined;
     }
@@ -610,42 +594,79 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
   useEffect(() => {
     if (!user?.pubkey) {
       setNeedsProfileSetup(false);
+      setIsProfileSyncing(false);
       return;
     }
 
+    const syncRun = profileSyncRunRef.current + 1;
+    profileSyncRunRef.current = syncRun;
     let cancelled = false;
+    const isStale = () => cancelled || profileSyncRunRef.current !== syncRun;
+
+    setIsProfileSyncing(true);
+    setNeedsProfileSetup(false);
+
     const syncProfile = async () => {
-      const kind0Profile = await fetchLatestKind0Profile(user.pubkey);
-      if (cancelled) return;
-
-      if (kind0Profile) {
-        let nip05Verified = false;
-        if (kind0Profile.nip05) {
-          nip05Verified = await verifyNip05(kind0Profile.nip05, user.pubkey);
+      let signerProfile: NostrUser["profile"] | null = null;
+      if (ndk?.signer) {
+        try {
+          const signerUser = await ndk.signer.user();
+          if (!isStale() && signerUser.pubkey === user.pubkey) {
+            await signerUser.fetchProfile();
+            if (!isStale()) {
+              signerProfile = {
+                name: signerUser.profile?.name,
+                displayName: signerUser.profile?.displayName,
+                picture: signerUser.profile?.image,
+                about: signerUser.profile?.about,
+                nip05: signerUser.profile?.nip05,
+              };
+            }
+          }
+        } catch (error) {
+          console.warn("Profile sync: signer profile fetch failed", error);
         }
-        if (cancelled) return;
-
-        setUser((prev) => prev ? ({
-          ...prev,
-          profile: {
-            ...prev.profile,
-            ...kind0Profile,
-            nip05Verified,
-          },
-        }) : prev);
-        setNeedsProfileSetup(!hasRequiredProfileFields(kind0Profile));
-        return;
       }
 
-      // No kind:0 event found across connected relays.
-      setNeedsProfileSetup(true);
+      const kind0Profile = await fetchLatestKind0Profile(user.pubkey);
+      if (isStale()) return;
+
+      const mergedProfile = {
+        ...(user.profile || {}),
+        ...(signerProfile || {}),
+        ...(kind0Profile || {}),
+      };
+
+      let nip05Verified = false;
+      if (mergedProfile.nip05) {
+        nip05Verified = await verifyNip05(mergedProfile.nip05, user.pubkey);
+      }
+      if (isStale()) return;
+
+      setUser((prev) => {
+        if (!prev || prev.pubkey !== user.pubkey) return prev;
+        return {
+          ...prev,
+          profile: {
+            ...mergedProfile,
+            nip05Verified,
+          },
+        };
+      });
+      setNeedsProfileSetup(!hasRequiredProfileFields(mergedProfile));
+      setIsProfileSyncing(false);
     };
 
-    void syncProfile();
+    void syncProfile().catch((error) => {
+      if (isStale()) return;
+      console.warn("Profile sync failed", error);
+      setNeedsProfileSetup(!(user.profile && hasRequiredProfileFields(user.profile)));
+      setIsProfileSyncing(false);
+    });
     return () => {
       cancelled = true;
     };
-  }, [fetchLatestKind0Profile, user?.pubkey]);
+  }, [ndk, fetchLatestKind0Profile, user?.pubkey]);
 
   const subscribe = useCallback((
     filters: NDKFilter[],
@@ -683,6 +704,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     publishEvent,
     updateUserProfile,
     needsProfileSetup,
+    isProfileSyncing,
     subscribe,
     getGuestPrivateKey,
   }), [
@@ -702,6 +724,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     publishEvent,
     updateUserProfile,
     needsProfileSetup,
+    isProfileSyncing,
     subscribe,
     getGuestPrivateKey,
   ]);

@@ -15,6 +15,7 @@ const ndkMock = {
   logout: vi.fn(),
   getGuestPrivateKey: vi.fn(() => null),
   needsProfileSetup: false,
+  isProfileSyncing: false,
   updateUserProfile: vi.fn(async () => true),
 };
 
@@ -65,15 +66,37 @@ describe("NostrAuthModal", () => {
     };
     ndkMock.authMethod = "extension";
     ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
 
     const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
     expect(screen.getByText("Alice")).toBeInTheDocument();
 
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
+    ndkMock.isProfileSyncing = false;
     rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
 
     expect(screen.getByRole("button", { name: /sign in to post/i })).toBeInTheDocument();
+  });
+
+  it("does not auto-open setup profile dialog while profile sync is in progress", () => {
+    ndkMock.user = {
+      npub: "npub1test",
+      pubkey: "a".repeat(64),
+      profile: { name: "" },
+    };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = true;
+
+    const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    ndkMock.isProfileSyncing = false;
+    rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
 });

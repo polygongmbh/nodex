@@ -338,7 +338,15 @@ interface NostrUserMenuProps {
 }
 
 export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
-  const { user, authMethod, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile } = useNDK();
+  const {
+    user,
+    authMethod,
+    logout,
+    getGuestPrivateKey,
+    needsProfileSetup,
+    isProfileSyncing,
+    updateUserProfile,
+  } = useNDK();
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -409,10 +417,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   };
 
   useEffect(() => {
-    if (user && needsProfileSetup && !isProfileEditorOpen) {
+    if (user && needsProfileSetup && !isProfileSyncing && !isProfileEditorOpen) {
       openProfileEditor();
     }
-  }, [user, needsProfileSetup, isProfileEditorOpen, openProfileEditor]);
+  }, [user, needsProfileSetup, isProfileSyncing, isProfileEditorOpen, openProfileEditor]);
 
   if (!user) {
     return (
