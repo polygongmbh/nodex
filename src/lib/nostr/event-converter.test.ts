@@ -65,6 +65,21 @@ describe("nostrEventToTask", () => {
     expect(task.tags).toContain("bug");
   });
 
+  it("extracts tags from event T tags case-insensitively", () => {
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      tags: [
+        ["T", "backend"],
+        ["t", "ops"],
+      ],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.tags).toContain("backend");
+    expect(task.tags).toContain("ops");
+  });
+
   it("deduplicates tags from content and event tags", () => {
     const event: NostrEventWithRelay = {
       ...baseEvent,
@@ -186,6 +201,20 @@ describe("nostrEventToTask", () => {
     expect(task.mentions).toContain(
       "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
     );
+  });
+
+  it("resolves indexed person references from content into @pubkey mentions", () => {
+    const personPubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      content: "Review with #[0] before merge",
+      tags: [["p", personPubkey]],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.content).toBe(`Review with @${personPubkey} before merge`);
+    expect(task.mentions).toContain(personPubkey);
   });
 });
 

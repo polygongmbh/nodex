@@ -160,6 +160,24 @@ describe("nostr utils", () => {
       const hashtags = extractHashtags(event);
       expect(hashtags).toEqual(["nostr", "bitcoin"]);
     });
+
+    it("should extract hashtags from T tags case-insensitively", () => {
+      const event: NostrEvent = {
+        id: "a".repeat(64),
+        pubkey: "b".repeat(64),
+        created_at: Date.now(),
+        kind: NostrEventKind.TextNote,
+        tags: [
+          ["T", "Platform"],
+          ["t", "Tasks"],
+        ],
+        content: "",
+        sig: "c".repeat(128),
+      };
+
+      const hashtags = extractHashtags(event);
+      expect(hashtags).toEqual(["platform", "tasks"]);
+    });
   });
 
   describe("formatPubkey", () => {

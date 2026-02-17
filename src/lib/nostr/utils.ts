@@ -169,7 +169,7 @@ export function extractReferences(event: NostrEvent): string[] {
  */
 export function extractHashtags(event: NostrEvent): string[] {
   return event.tags
-    .filter((tag) => tag[0] === "t")
+    .filter((tag) => tag[0]?.toLowerCase() === "t")
     .map((tag) => tag[1]?.toLowerCase())
     .filter(Boolean);
 }

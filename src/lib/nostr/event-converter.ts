@@ -52,6 +52,21 @@ function extractHashtags(content: string): string[] {
   if (!matches) return [];
   return [...new Set(matches.map((tag) => tag.slice(1).toLowerCase()))];
 }
+
+// Replace indexed Nostr person references (e.g. #[0]) with @<pubkey> mention tokens.
+function replaceIndexedPersonMentions(content: string, tags: string[][]): string {
+  return content.replace(/#\[(\d+)\]/g, (fullMatch, indexRaw: string) => {
+    const index = Number.parseInt(indexRaw, 10);
+    if (!Number.isInteger(index) || index < 0 || index >= tags.length) {
+      return fullMatch;
+    }
+    const referencedTag = tags[index];
+    if (!referencedTag || referencedTag[0]?.toLowerCase() !== "p" || !referencedTag[1]) {
+      return fullMatch;
+    }
+    return `@${referencedTag[1].toLowerCase()}`;
+  });
+}
 // Import the relay event type
 import type { NostrEventWithRelay } from "./relay-pool";
 
@@ -65,12 +80,14 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     isSelected: false,
   };
 
+  const normalizedContent = replaceIndexedPersonMentions(event.content, event.tags);
+
   // Extract hashtags from content
-  const contentTags = extractHashtags(event.content);
+  const contentTags = extractHashtags(normalizedContent);
 
   // Extract tags from event tags (t tags) - these are the main nostr tags
   const eventTags = event.tags
-    .filter((tag) => tag[0] === "t")
+    .filter((tag) => tag[0]?.toLowerCase() === "t")
     .map((tag) => tag[1].toLowerCase());
 
   // Combine and dedupe tags - prioritize event tags (t tags)
@@ -100,7 +117,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const mentionedPubkeys = event.tags
     .filter((tag) => tag[0]?.toLowerCase() === "p" && tag[1])
     .map((tag) => tag[1].toLowerCase());
-  const mentionedHandles = extractAssignedMentionsFromContent(event.content);
+  const mentionedHandles = extractAssignedMentionsFromContent(normalizedContent);
 
   let dueDate: Date | undefined;
   if (dueTag?.[1]) {
@@ -123,7 +140,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   return {
     id: event.id,
     author,
-    content: event.content,
+    content: normalizedContent,
     tags: allTags,
     relays: [relayId],
     taskType: isTask ? "task" : "comment",
@@ -143,7 +160,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
 // Check if an event has any tags (t tags or hashtags in content)
 export function eventHasTags(event: NostrEvent): boolean {
   // Check for t tags
-  const hasTTags = event.tags.some((tag) => tag[0] === "t" && tag[1]);
+  const hasTTags = event.tags.some((tag) => tag[0]?.toLowerCase() === "t" && tag[1]);
   if (hasTTags) return true;
   
   // Check for hashtags in content
@@ -158,7 +175,7 @@ export function extractAllTags(events: NostrEvent[]): string[] {
   events.forEach((event) => {
     // Extract t tags
     event.tags
-      .filter((tag) => tag[0] === "t" && tag[1])
+      .filter((tag) => tag[0]?.toLowerCase() === "t" && tag[1])
       .forEach((tag) => allTags.add(tag[1].toLowerCase()));
     
     // Extract hashtags from content

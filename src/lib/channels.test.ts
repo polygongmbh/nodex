@@ -12,4 +12,15 @@ describe("deriveChannels", () => {
 
     expect(channels.map((c) => c.name)).toContain("newtag");
   });
+
+  it("counts T tags case-insensitively from nostr events", () => {
+    const channels = deriveChannels(
+      [],
+      [{ tags: [["T", "Backend"]], content: "" }],
+      [],
+      1
+    );
+
+    expect(channels.map((c) => c.name)).toContain("backend");
+  });
 });

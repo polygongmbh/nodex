@@ -139,7 +139,7 @@ const Index = () => {
         return true;
       }
       // Convert NDKEvent to check tags
-      const hasTags = event.tags.some(tag => tag[0] === "t" && tag[1]) ||
+      const hasTags = event.tags.some(tag => tag[0]?.toLowerCase() === "t" && tag[1]) ||
         /#\w+/.test(event.content);
       if (!hasTags) return false;
       // Filter out spam

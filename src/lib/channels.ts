@@ -22,7 +22,7 @@ export function deriveChannels(
 
   nostrEvents.forEach((event) => {
     event.tags
-      .filter((tag) => tag[0] === "t" && tag[1])
+      .filter((tag) => tag[0]?.toLowerCase() === "t" && tag[1])
       .forEach((tag) => {
         const lower = tag[1].toLowerCase();
         tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
