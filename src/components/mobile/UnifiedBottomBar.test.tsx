@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
@@ -107,7 +107,8 @@ describe("UnifiedBottomBar auth gating", () => {
       ["demo"],
       "comment",
       undefined,
-      undefined
+      undefined,
+      []
     );
 
     fireEvent.click(screen.getByRole("button", { name: /comment/i }));
@@ -121,7 +122,8 @@ describe("UnifiedBottomBar auth gating", () => {
       ["demo"],
       "task",
       undefined,
-      undefined
+      undefined,
+      []
     );
   });
 
@@ -155,7 +157,8 @@ describe("UnifiedBottomBar auth gating", () => {
       ["demo"],
       "task",
       undefined,
-      undefined
+      undefined,
+      []
     );
 
     fireEvent.change(composeField, { target: { value: "Ship again #general" } });
@@ -166,7 +169,8 @@ describe("UnifiedBottomBar auth gating", () => {
       ["demo"],
       "task",
       undefined,
-      undefined
+      undefined,
+      []
     );
   });
 
@@ -399,5 +403,46 @@ describe("UnifiedBottomBar auth gating", () => {
 
     expect(field.value).toBe("ping @alice@example.com ");
     expect(onSearchChange).toHaveBeenLastCalledWith("ping @alice@example.com ");
+  });
+
+  it("adds mention tag via modifier+Enter without inserting mention text", async () => {
+    const onSubmit = vi.fn();
+    const onSearchChange = vi.fn();
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={onSearchChange}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general @al", selectionStart: 16 } });
+
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true });
+    await waitFor(() => {
+      expect(field.value).toBe("Ship #general ");
+    });
+    expect(onSearchChange).toHaveBeenLastCalledWith("Ship #general ");
+
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      "Ship #general ",
+      ["general"],
+      ["demo"],
+      "task",
+      undefined,
+      undefined,
+      ["e".repeat(64)]
+    );
   });
 });

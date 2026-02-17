@@ -108,6 +108,7 @@ describe("nostr utils", () => {
         kind: NostrEventKind.TextNote,
         tags: [
           ["p", "user1pubkey"],
+          ["P", "user2pubkey"],
           ["p", "user2pubkey"],
           ["e", "someeventid"],
         ],
@@ -116,7 +117,7 @@ describe("nostr utils", () => {
       };
 
       const mentions = extractMentions(event);
-      expect(mentions).toEqual(["user1pubkey", "user2pubkey"]);
+      expect(mentions).toEqual(["user1pubkey", "user2pubkey", "user2pubkey"]);
     });
   });
 

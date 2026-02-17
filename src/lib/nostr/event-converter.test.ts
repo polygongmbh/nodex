@@ -173,6 +173,7 @@ describe("nostrEventToTask", () => {
       content: "pair with @Alice",
       tags: [
         ["p", "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"],
+        ["P", "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"],
       ],
     };
 
@@ -181,6 +182,9 @@ describe("nostrEventToTask", () => {
     expect(task.mentions).toContain("alice");
     expect(task.mentions).toContain(
       "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+    );
+    expect(task.mentions).toContain(
+      "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
     );
   });
 });

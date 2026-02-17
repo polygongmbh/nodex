@@ -186,7 +186,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         ["demo"],
         "comment",
         undefined,
-        undefined
+        undefined,
+        []
       );
     });
   });
@@ -213,6 +214,46 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.keyDown(textarea, { key: "Enter" });
 
     expect(textarea.value).toBe("Need input from @alice@example.com ");
+  });
+
+  it("adds mention pubkey tags via modifier+Enter without inserting mention text", async () => {
+    const onSubmit = vi.fn();
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const draft = "Ship #backend with @al";
+    fireEvent.change(textarea, {
+      target: { value: draft, selectionStart: draft.length },
+    });
+    textarea.focus();
+    textarea.setSelectionRange(draft.length, draft.length);
+
+    fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
+    await waitFor(() => {
+      expect(textarea.value).toBe("Ship #backend with ");
+    });
+
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship #backend with ",
+        ["backend"],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        ["f".repeat(64)]
+      );
+    });
   });
 
   it("renders parsed mention chips before hashtag chips", () => {

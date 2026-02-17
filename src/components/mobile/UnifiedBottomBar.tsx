@@ -14,7 +14,15 @@ interface UnifiedBottomBarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   // Compose props
-  onSubmit: (content: string, channels: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
+  onSubmit: (
+    content: string,
+    channels: string[],
+    relays: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    explicitMentionPubkeys?: string[]
+  ) => void;
   currentView: ViewType;
   focusedTaskId?: string | null;
   selectedCalendarDate?: Date | null;
@@ -75,6 +83,7 @@ export function UnifiedBottomBar({
   const [activeMentionIndex, setActiveMentionIndex] = useState(0);
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [dueTime, setDueTime] = useState("");
+  const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const cursorPositionRef = useRef(0);
   const prevSearchQueryRef = useRef(searchQuery);
@@ -217,7 +226,15 @@ export function UnifiedBottomBar({
     }
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
-    onSubmit(sharedText, extractedChannels, relayIds, submitType ?? taskType, dueDate, dueTime || undefined);
+    onSubmit(
+      sharedText,
+      extractedChannels,
+      relayIds,
+      submitType ?? taskType,
+      dueDate,
+      dueTime || undefined,
+      explicitMentionPubkeys
+    );
     const hashtagOnlyContent = Array.from(
       new Set((sharedText.match(/#(\w+)/g) || []).map((tag) => tag.toLowerCase()))
     ).join(" ");
@@ -227,6 +244,7 @@ export function UnifiedBottomBar({
     autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
     setDueTime("");
+    setExplicitMentionPubkeys([]);
     setActiveSelector(null);
   };
 
@@ -268,6 +286,46 @@ export function UnifiedBottomBar({
       textarea.setSelectionRange(pos, pos);
       cursorPositionRef.current = pos;
     }, 0);
+  };
+
+  const addMentionTagOnly = (person: Person) => {
+    const normalizedPubkey = person.id.trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/i.test(normalizedPubkey)) {
+      return;
+    }
+
+    const cursorPos = cursorPositionRef.current;
+    const textBeforeCursor = sharedText.slice(0, cursorPos);
+    const mentionStartFromCursor = textBeforeCursor.lastIndexOf("@");
+    const mentionStart = mentionStartFromCursor >= 0 ? mentionStartFromCursor : sharedText.lastIndexOf("@");
+    if (mentionStart < 0) {
+      return;
+    }
+
+    setExplicitMentionPubkeys((previous) =>
+      previous.includes(normalizedPubkey) ? previous : [...previous, normalizedPubkey]
+    );
+
+    let mentionEnd = mentionStart + 1;
+    while (mentionEnd < sharedText.length && !/\s/.test(sharedText[mentionEnd])) {
+      mentionEnd += 1;
+    }
+
+    const newText = (sharedText.slice(0, mentionStart) + sharedText.slice(mentionEnd))
+      .replace(/[ \t]{2,}/g, " ");
+    setSharedText(newText);
+    onSearchChange(newText);
+    setTimeout(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      textarea.setSelectionRange(mentionStart, mentionStart);
+      cursorPositionRef.current = mentionStart;
+    }, 0);
+
+    setShowMentionSuggestions(false);
+    setActiveMentionIndex(0);
+    setMentionFilter("");
   };
 
   return (
@@ -511,6 +569,17 @@ export function UnifiedBottomBar({
                       return;
                     }
                     if (e.key === "Enter" || e.key === "Tab") {
+                      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
+                        const textBeforeCursor = sharedText.slice(0, cursorPositionRef.current);
+                        if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(sharedText)) {
+                          e.preventDefault();
+                          const selected = filteredPeople[Math.max(activeMentionIndex, 0)] || filteredPeople[0];
+                          if (selected) {
+                            addMentionTagOnly(selected);
+                          }
+                          return;
+                        }
+                      }
                       e.preventDefault();
                       const selected = filteredPeople[Math.max(activeMentionIndex, 0)] || filteredPeople[0];
                       if (selected) {

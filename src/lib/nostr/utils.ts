@@ -149,7 +149,7 @@ export function verifyEventId(event: NostrEvent): boolean {
  */
 export function extractMentions(event: NostrEvent): string[] {
   return event.tags
-    .filter((tag) => tag[0] === "p")
+    .filter((tag) => tag[0]?.toLowerCase() === "p")
     .map((tag) => tag[1])
     .filter(Boolean);
 }

@@ -14,7 +14,15 @@ import {
 } from "@/lib/mentions";
 
 interface TaskComposerProps {
-  onSubmit: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string) => void;
+  onSubmit: (
+    content: string,
+    tags: string[],
+    relays: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    explicitMentionPubkeys?: string[]
+  ) => void;
   relays: Relay[];
   channels: Channel[];
   people: Person[];
@@ -106,6 +114,7 @@ export function TaskComposer({
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
   const [isExpanded, setIsExpanded] = useState(
     () => !adaptiveSize || initialContent.trim().length > 0
   );
@@ -287,7 +296,15 @@ export function TaskComposer({
     setIsPublishing(true);
     try {
       await Promise.resolve(
-        onSubmit(content, extractedTags, selectedRelays, submitType ?? taskType, dueDate, dueTime || undefined)
+        onSubmit(
+          content,
+          extractedTags,
+          selectedRelays,
+          submitType ?? taskType,
+          dueDate,
+          dueTime || undefined,
+          explicitMentionPubkeys
+        )
       );
     } finally {
       setIsPublishing(false);
@@ -300,6 +317,7 @@ export function TaskComposer({
     autoManagedChannelsRef.current = new Set(includedChannels);
     setDueDate(undefined);
     setDueTime("");
+    setExplicitMentionPubkeys([]);
     if (adaptiveSize && selectedChannelsContent.trim().length === 0) {
       setIsExpanded(false);
     }
@@ -313,6 +331,11 @@ export function TaskComposer({
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
   const parsedMentions = extractMentionIdentifiersFromContent(content);
+  const explicitMentionIdentifiers = explicitMentionPubkeys.map((pubkey) => {
+    const person = people.find((candidate) => candidate.id.toLowerCase() === pubkey);
+    return person ? getPreferredMentionIdentifier(person) : pubkey;
+  });
+  const parsedMentionChips = Array.from(new Set([...parsedMentions, ...explicitMentionIdentifiers]));
   const parsedHashtags = Array.from(
     new Set((content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase()))
   );
@@ -350,6 +373,18 @@ export function TaskComposer({
         }
         return;
       }
+      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
+        const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
+        const textBeforeCursor = content.slice(0, effectiveCursor);
+        if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(content)) {
+          e.preventDefault();
+          const selected = filteredPeople[Math.max(activeSuggestionIndex, 0)] || filteredPeople[0];
+          if (selected) {
+            addMentionTagOnly(selected);
+          }
+          return;
+        }
+      }
       if (e.key === "Escape") {
         e.preventDefault();
         setShowHashtagSuggestions(false);
@@ -378,6 +413,18 @@ export function TaskComposer({
           insertMention(getPreferredMentionIdentifier(selected));
         }
         return;
+      }
+      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
+        const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
+        const textBeforeCursor = content.slice(0, effectiveCursor);
+        if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(content)) {
+          e.preventDefault();
+          const selected = filteredPeople[Math.max(activeSuggestionIndex, 0)] || filteredPeople[0];
+          if (selected) {
+            addMentionTagOnly(selected);
+          }
+          return;
+        }
       }
       if (e.key === "Escape") {
         e.preventDefault();
@@ -465,6 +512,46 @@ export function TaskComposer({
     setShowHashtagSuggestions(false);
     setActiveSuggestionIndex(0);
     setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const addMentionTagOnly = (person: Person) => {
+    const normalizedPubkey = person.id.trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/i.test(normalizedPubkey)) {
+      return;
+    }
+
+    const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
+    const textBeforeCursor = content.slice(0, effectiveCursor);
+    const mentionStartFromCursor = textBeforeCursor.lastIndexOf("@");
+    const mentionStart = mentionStartFromCursor >= 0 ? mentionStartFromCursor : content.lastIndexOf("@");
+    if (mentionStart < 0) {
+      return;
+    }
+
+    setExplicitMentionPubkeys((previous) =>
+      previous.includes(normalizedPubkey) ? previous : [...previous, normalizedPubkey]
+    );
+
+    let mentionEnd = mentionStart + 1;
+    while (mentionEnd < content.length && !/\s/.test(content[mentionEnd])) {
+      mentionEnd += 1;
+    }
+
+    const nextContent = (content.slice(0, mentionStart) + content.slice(mentionEnd))
+      .replace(/[ \t]{2,}/g, " ");
+    setContent(nextContent);
+    setCursorPosition(mentionStart);
+    setTimeout(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      textarea.setSelectionRange(mentionStart, mentionStart);
+    }, 0);
+
+    setShowMentionSuggestions(false);
+    setShowHashtagSuggestions(false);
+    setMentionFilter("");
+    setActiveSuggestionIndex(0);
   };
 
   const showExpandedControls = !adaptiveSize || isExpanded || content.trim().length > 0;
@@ -562,9 +649,9 @@ export function TaskComposer({
         )}
       </div>
 
-      {showExpandedControls && (parsedMentions.length > 0 || parsedHashtags.length > 0) && (
+      {showExpandedControls && (parsedMentionChips.length > 0 || parsedHashtags.length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5">
-          {parsedMentions.map((mention) => (
+          {parsedMentionChips.map((mention) => (
             <span
               key={`mention-${mention}`}
               data-testid="compose-mention-chip"

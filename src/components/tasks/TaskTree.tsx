@@ -16,7 +16,17 @@ interface TaskTreeProps {
   currentUser?: Person;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string, initialStatus?: "todo" | "in-progress" | "done") => void;
+  onNewTask: (
+    content: string,
+    tags: string[],
+    relays: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    parentId?: string,
+    initialStatus?: "todo" | "in-progress" | "done",
+    explicitMentionPubkeys?: string[]
+  ) => void;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   focusedTaskId?: string | null;
@@ -188,8 +198,26 @@ export function TaskTree({
     onFocusTask?.(currentContextTask.parentId || null);
   };
 
-  const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
-    onNewTask(content, taskTags, taskRelays, taskType, dueDate, dueTime, currentContextId);
+  const handleNewTask = (
+    content: string,
+    taskTags: string[],
+    taskRelays: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    explicitMentionPubkeys?: string[]
+  ) => {
+    onNewTask(
+      content,
+      taskTags,
+      taskRelays,
+      taskType,
+      dueDate,
+      dueTime,
+      currentContextId,
+      undefined,
+      explicitMentionPubkeys
+    );
     setIsComposerExpanded(false);
   };
 

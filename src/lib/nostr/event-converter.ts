@@ -98,7 +98,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const dueTag = event.tags.find((tag) => tag[0] === "due" && tag[1]);
   const dueTimeTag = event.tags.find((tag) => tag[0] === "due_time" && tag[1]);
   const mentionedPubkeys = event.tags
-    .filter((tag) => tag[0] === "p" && tag[1])
+    .filter((tag) => tag[0]?.toLowerCase() === "p" && tag[1])
     .map((tag) => tag[1].toLowerCase());
   const mentionedHandles = extractAssignedMentionsFromContent(event.content);
 

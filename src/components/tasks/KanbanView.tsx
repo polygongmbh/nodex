@@ -25,7 +25,17 @@ interface KanbanViewProps {
   currentUser?: Person;
   searchQuery: string;
   depthMode: KanbanDepthMode;
-  onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string, initialStatus?: TaskStatus) => void;
+  onNewTask: (
+    content: string,
+    tags: string[],
+    relays: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    parentId?: string,
+    initialStatus?: TaskStatus,
+    explicitMentionPubkeys?: string[]
+  ) => void;
   onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
@@ -209,7 +219,15 @@ export function KanbanView({
     }
   };
 
-  const handleNewTask = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
+  const handleNewTask = (
+    content: string,
+    taskTags: string[],
+    taskRelays: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    explicitMentionPubkeys?: string[]
+  ) => {
     onNewTask(
       content,
       taskTags,
@@ -218,7 +236,8 @@ export function KanbanView({
       dueDate,
       dueTime,
       focusedTaskId || undefined,
-      composingColumn || undefined
+      composingColumn || undefined,
+      explicitMentionPubkeys
     );
     setComposingColumn(null);
   };

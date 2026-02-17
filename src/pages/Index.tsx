@@ -647,7 +647,8 @@ const Index = () => {
     dueDate?: Date,
     dueTime?: string,
     parentId?: string,
-    initialStatus?: TaskStatus
+    initialStatus?: TaskStatus,
+    explicitMentionPubkeys: string[] = []
   ) => {
     if (!user) {
       handleOpenAuthModal();
@@ -669,6 +670,16 @@ const Index = () => {
       .filter((url): url is string => Boolean(url));
     
     const shouldPublish = hasNonDemoRelay && selectedRelayUrls.length > 0;
+    const dedupedExplicitMentionPubkeys = Array.from(
+      new Set(
+        explicitMentionPubkeys
+          .map((pubkey) => pubkey.trim().toLowerCase())
+          .filter((pubkey) => /^[a-f0-9]{64}$/i.test(pubkey))
+      )
+    );
+    const mentionPubkeys = Array.from(
+      new Set([...resolveMentionPubkeys(content), ...dedupedExplicitMentionPubkeys])
+    );
     
     let publishSuccess = false;
     let publishedEventId: string | undefined;
@@ -679,7 +690,6 @@ const Index = () => {
       if (taskType === "task" && parentId && !validParentId) {
         toast.warning("Parent reference is local-only; publishing task without parent link");
       }
-      const mentionPubkeys = resolveMentionPubkeys(content);
       const publishTags = taskType === "task"
         ? buildTaskPublishTags(validParentId, selectedRelayUrls[0], mentionPubkeys)
         : mentionPubkeys.map((pubkey) => ["p", pubkey]);
@@ -748,7 +758,9 @@ const Index = () => {
       dueDate,
       dueTime,
       parentId,
-      mentions: extractAssignedMentionsFromContent(content),
+      mentions: Array.from(
+        new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
+      ),
     };
     setLocalTasks((prev) => [newTask, ...prev]);
     

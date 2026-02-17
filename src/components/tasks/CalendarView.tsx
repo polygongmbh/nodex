@@ -27,7 +27,17 @@ interface CalendarViewProps {
   currentUser?: Person;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onNewTask: (content: string, tags: string[], relays: string[], taskType: string, dueDate?: Date, dueTime?: string, parentId?: string, initialStatus?: "todo" | "in-progress" | "done") => void;
+  onNewTask: (
+    content: string,
+    tags: string[],
+    relays: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    parentId?: string,
+    initialStatus?: "todo" | "in-progress" | "done",
+    explicitMentionPubkeys?: string[]
+  ) => void;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   focusedTaskId?: string | null;
@@ -247,10 +257,28 @@ export function CalendarView({
   const firstDayOfMonth = startOfMonth(currentMonth);
   const startPadding = firstDayOfMonth.getDay();
 
-  const handleCreateEvent = (content: string, taskTags: string[], taskRelays: string[], taskType: string, dueDate?: Date, dueTime?: string) => {
+  const handleCreateEvent = (
+    content: string,
+    taskTags: string[],
+    taskRelays: string[],
+    taskType: string,
+    dueDate?: Date,
+    dueTime?: string,
+    explicitMentionPubkeys?: string[]
+  ) => {
     // Use the selected date if no due date was set
     const eventDate = dueDate || selectedDate || new Date();
-    onNewTask(content, taskTags, taskRelays, taskType, eventDate, dueTime, focusedTaskId || undefined);
+    onNewTask(
+      content,
+      taskTags,
+      taskRelays,
+      taskType,
+      eventDate,
+      dueTime,
+      focusedTaskId || undefined,
+      undefined,
+      explicitMentionPubkeys
+    );
     setIsComposingEvent(false);
   };
 
