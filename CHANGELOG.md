@@ -15,6 +15,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Retrieved mention tags now parse case-insensitively (`p`/`P`), and modifier+Enter in `@` autocomplete can add mention pubkey tags without inserting mention text.
 - Modifier+Enter in hashtag autocomplete now adds the selected hashtag as a publish tag without inserting hashtag text into the compose message.
 - Compose autocomplete dropdowns now cap height, scroll internally, and truncate long labels instead of overflowing the view.
+- Task text search now also matches task chips (hashtags/mentions) and posting-user identity fields (username/display name).
 - Retrieved indexed Nostr person references (`#[n]`) now resolve into mention tokens, and uppercase `T` hashtag tags are parsed consistently in filters/channels.
 - Feed and shared task content now render resolved `@mentions` as user-linked labels (for example `@alice` instead of raw pubkeys when profile data is known).
 - Task assignment authority now prefers explicit assignee pubkeys (`p` tags), with task creation defaulting unassigned tasks to the author pubkey.

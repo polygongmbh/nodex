@@ -12,6 +12,7 @@ import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -177,7 +178,7 @@ export function ListView({
         if (!descendantIds.has(task.id)) return false;
       }
 
-      if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (!taskMatchesTextQuery(task, searchQuery)) {
         return false;
       }
       

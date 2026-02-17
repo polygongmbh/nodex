@@ -15,6 +15,7 @@ import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 
 interface KanbanViewProps {
@@ -152,7 +153,7 @@ export function KanbanView({
       }
 
       // Apply search filter
-      if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (!taskMatchesTextQuery(task, searchQuery)) {
         return false;
       }
       

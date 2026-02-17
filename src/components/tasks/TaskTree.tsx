@@ -6,6 +6,7 @@ import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
+import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 
 interface TaskTreeProps {
   tasks: Task[];
@@ -85,7 +86,6 @@ export function TaskTree({
   // Check if a task or any of its descendants matches the filter
   // AND logic: task must have ALL included channels
   const taskMatchesFilter = useCallback((task: Task, query: string, includedChannels: string[], excludedChannels: string[]): boolean => {
-    const queryLower = query.toLowerCase();
     const taskTagsLower = task.tags.map(t => t.toLowerCase());
     
     // Exclude tasks with excluded channels
@@ -93,7 +93,7 @@ export function TaskTree({
       return false;
     }
     
-    const matchesQuery = !query || task.content.toLowerCase().includes(queryLower);
+    const matchesQuery = taskMatchesTextQuery(task, query);
     // AND logic: all included channels must be present
     const matchesChannels = includedChannels.length === 0 || includedChannels.every(c => taskTagsLower.includes(c));
     return matchesQuery && matchesChannels;

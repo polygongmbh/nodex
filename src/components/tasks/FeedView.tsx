@@ -14,6 +14,7 @@ import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { formatAuthorMetaParts } from "@/lib/person-label";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -124,7 +125,7 @@ export function FeedView({
       }
 
       // Apply search filter
-      if (searchQuery && !task.content.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (!taskMatchesTextQuery(task, searchQuery)) {
         return false;
       }
       // Apply channel exclusion filter
