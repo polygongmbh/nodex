@@ -7,6 +7,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 Upcoming improvements in progress.
 
+### Changed
+- In-app and markdown guides now document current compose shortcut behavior, including `Alt+Enter` submit-vs-metadata rules and metadata-only tag/mention autocomplete usage.
+
 ## [1.2.0] - 2026-02-17
 Introduced robust `@` user mentions and smarter cross-view search, with faster compose/autocomplete and cleaner sidebar people relevance.
 

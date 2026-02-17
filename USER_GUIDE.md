@@ -71,5 +71,17 @@
 - `#tags` and `@mentions` are supported in compose text.
 - On mobile, use the submit button in the combined bottom bar to create.
 
+### Compose keyboard behavior (desktop)
+- `Enter` / `Tab` with autocomplete open: insert the highlighted suggestion into text.
+- `Ctrl/Cmd+Enter`: submit as the currently selected kind.
+- `Alt+Enter` with no autocomplete open: submit as the other kind (Task <-> Comment).
+- `Alt/Ctrl/Cmd/Shift+Enter` with hashtag/mention autocomplete open: add the selected tag/mention to publish metadata without inserting token text.
+
+### Search behavior
+- Bottom search matches:
+  - task/comment text,
+  - hashtag and mention chips,
+  - posting user identity (username/display name), including resolved names from cached profile metadata.
+
 ## Notes
 - Nodex is in beta; behavior can evolve as Nostr integrations mature.

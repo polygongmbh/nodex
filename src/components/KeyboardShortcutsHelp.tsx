@@ -61,6 +61,15 @@ const shortcutGroups: ShortcutGroup[] = [
       { key: "?", description: "Show keyboard shortcuts" },
     ],
   },
+  {
+    title: "Compose",
+    shortcuts: [
+      { key: "Ctrl/Cmd + Enter", description: "Submit as current kind" },
+      { key: "Alt + Enter", description: "Submit as opposite kind (when no autocomplete is open)" },
+      { key: "Enter / Tab", description: "Insert highlighted autocomplete suggestion" },
+      { key: "Alt/Ctrl/Cmd/Shift + Enter", description: "Add highlighted tag/mention as publish metadata only (no token text)" },
+    ],
+  },
 ];
 
 interface KeyboardShortcutsHelpProps {
