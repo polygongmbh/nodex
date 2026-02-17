@@ -626,7 +626,7 @@ export function UnifiedBottomBar({
                 rows={1}
               />
               {showMentionSuggestions && filteredPeople.length > 0 && (
-                <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1">
+                <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1 max-h-60 overflow-y-auto overscroll-contain">
                   {filteredPeople.map((person, index) => {
                     const mentionIdentifier = getPreferredMentionIdentifier(person);
                     return (
@@ -648,8 +648,8 @@ export function UnifiedBottomBar({
                           avatarUrl={person.avatar}
                           className="w-4 h-4"
                         />
-                        <span className="text-sm">@{person.name || person.displayName}</span>
-                        <span className="text-xs text-muted-foreground truncate">(@{mentionIdentifier})</span>
+                        <span className="text-sm min-w-0 truncate">@{person.name || person.displayName}</span>
+                        <span className="text-xs text-muted-foreground min-w-0 truncate">(@{mentionIdentifier})</span>
                       </button>
                     );
                   })}

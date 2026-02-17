@@ -661,7 +661,7 @@ export function TaskComposer({
 
         {/* Channel suggestions */}
         {showHashtagSuggestions && filteredChannels.length > 0 && (
-          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-48 py-1">
+          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-48 py-1 max-h-60 overflow-y-auto overscroll-contain">
             {filteredChannels.map((channel) => (
               <button
                 key={channel.id}
@@ -680,13 +680,13 @@ export function TaskComposer({
                 )}
               >
                 <Hash className="w-4 h-4 text-primary" />
-                <span className="text-sm">{channel.name}</span>
+                <span className="text-sm truncate">{channel.name}</span>
               </button>
             ))}
           </div>
         )}
         {showMentionSuggestions && filteredPeople.length > 0 && (
-          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-64 py-1">
+          <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-64 py-1 max-h-60 overflow-y-auto overscroll-contain">
             {filteredPeople.map((person) => {
                   const mentionIdentifier = getPreferredMentionIdentifier(person);
                   const isActive = filteredPeople[activeSuggestionIndex]?.id === person.id;
@@ -713,8 +713,8 @@ export function TaskComposer({
                     avatarUrl={person.avatar}
                     className="w-4 h-4"
                   />
-                  <span className="text-sm">@{person.name || person.displayName}</span>
-                  <span className="text-xs text-muted-foreground truncate">(@{mentionIdentifier})</span>
+                  <span className="text-sm min-w-0 truncate">@{person.name || person.displayName}</span>
+                  <span className="text-xs text-muted-foreground min-w-0 truncate">(@{mentionIdentifier})</span>
                 </button>
               );
             })}
