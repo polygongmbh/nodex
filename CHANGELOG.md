@@ -5,8 +5,10 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+Short summary: Upcoming changes not yet released.
 
 ## [1.2.0] - 2026-02-17
+Short summary: Major compose, mention, and filtering reliability improvements across desktop/mobile views, plus better sidebar people ranking and search behavior.
 
 ### Changed
 - Mention autocomplete now shows human-friendly usernames while inserting NIP-05 identifiers when available (falling back to pubkeys), and compose preview chips render person mentions before hashtag/channel chips.
@@ -32,6 +34,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Enabling people filters no longer crashes on malformed mention/author payloads, and uncaught runtime errors now render a recoverable error screen instead of a blank app.
 
 ## [1.1.0] - 2026-02-16
+Short summary: Introduced the new onboarding flow and unified bottom search/compose experience with improved guide behavior and sidebar controls.
 
 ### Added
 - Onboarding now includes a dedicated search-bar guidance step and improved compose guidance flow with explicit task/comment compose controls.
@@ -50,6 +53,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Sidebar list clipping and scroll behavior were adjusted so trailing entries remain reachable.
 
 ## [1.0.0] - 2026-02-16
+Short summary: Initial stable release with cross-view task workflows, onboarding, Nostr-native compose/filtering, and baseline CI/versioning.
 
 ### Added
 - Interactive onboarding improvements across desktop and mobile, including guided navigation/composition flows with clearer highlights and better step progression.
