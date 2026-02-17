@@ -21,7 +21,7 @@ export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
 
   return (
     <div
-      className="h-full flex items-stretch justify-start gap-1 sm:gap-2 lg:gap-3 min-w-0 overflow-hidden"
+      className="h-full flex items-stretch justify-center gap-1 sm:gap-2 lg:gap-3 min-w-0 overflow-hidden"
       data-onboarding="view-switcher"
       aria-label={t("navigation.aria.viewSwitcher")}
     >
