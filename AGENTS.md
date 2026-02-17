@@ -236,6 +236,7 @@ When asked to create a plan to fix or implement something:
 - ALWAYS write the plan to `plans/` at repo root.
 - NEVER commit plans to git.
 - Use descriptive kebab-case filenames (for example `fix-position-healing.md`).
+- After implementing a plan, delete it.
 - Before deleting untracked text artifacts (for example files in `plans/`), run `git add` on them once without committing so they are recoverable via index/reflog if deletion was a mistake.
 
 ### Prompt Effort Modes
@@ -267,7 +268,7 @@ When asked to create a plan to fix or implement something:
 - Prefer single-line status items when content fits.
 - Avoid repetitive progress boilerplate.
 - Commit reporting format:
-  - `✅ <hash> <type>: <message>`
+  - `✅ <hash> <type>: <message> (+<added> ~<changed> -<removed>)`
 - Status indicators:
   - `✅` success/completed
   - `⚠️` warning/risk/blocker
