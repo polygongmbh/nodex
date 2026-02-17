@@ -197,7 +197,7 @@ export function getOnboardingStepsBySection(isMobile: boolean, view: GuideView =
         {
           id: "calendar-day-panel",
           title: "Day details",
-          description: "Use the right panel to review tasks for the selected date and change their status.",
+          description: "Use the right panel to review tasks for the selected date, change their status, and create a new task/event for that day.",
           target: '[data-onboarding="calendar-day-panel"]',
         },
       ],

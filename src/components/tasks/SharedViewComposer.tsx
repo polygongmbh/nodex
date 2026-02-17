@@ -30,6 +30,7 @@ interface SharedViewComposerProps {
   } | null;
   defaultContent?: string;
   className?: string;
+  allowComment?: boolean;
 }
 
 export function SharedViewComposer({
@@ -49,6 +50,7 @@ export function SharedViewComposer({
   mentionRequest = null,
   defaultContent = "",
   className = "relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0",
+  allowComment = true,
 }: SharedViewComposerProps) {
   if (!visible) return null;
 
@@ -70,6 +72,7 @@ export function SharedViewComposer({
         onExpandedChange={onExpandedChange}
         mentionRequest={mentionRequest}
         defaultContent={defaultContent}
+        allowComment={allowComment}
       />
     </div>
   );

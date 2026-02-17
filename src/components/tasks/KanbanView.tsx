@@ -419,6 +419,7 @@ export function KanbanView({
                         people={people}
                       onCancel={() => setComposingColumn(null)}
                       compact
+                      allowComment={false}
                       defaultContent={(() => {
                         const prefillChannels = new Set<string>();
                         channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));

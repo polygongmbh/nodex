@@ -852,6 +852,7 @@ export function CalendarView({
                     people={people}
                     onCancel={() => setIsComposingEvent(false)}
                     compact
+                    allowComment={false}
                     defaultDueDate={selectedDate}
                     defaultContent={(() => {
                       const prefillChannels = new Set<string>();

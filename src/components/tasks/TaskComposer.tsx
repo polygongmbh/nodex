@@ -44,6 +44,7 @@ interface TaskComposerProps {
     mention: string;
     id: number;
   } | null;
+  allowComment?: boolean;
 }
 
 interface ComposeDraftState {
@@ -86,6 +87,7 @@ export function TaskComposer({
   forceExpanded = false,
   forceExpandSignal,
   mentionRequest = null,
+  allowComment = true,
 }: TaskComposerProps) {
   const { user } = useNDK();
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
@@ -181,6 +183,12 @@ export function TaskComposer({
       textareaRef.current?.focus();
     });
   }, [adaptiveSize, forceExpandSignal]);
+
+  useEffect(() => {
+    if (!allowComment && taskType === "comment") {
+      setTaskType("task");
+    }
+  }, [allowComment, taskType]);
 
   useEffect(() => {
     if (!draftStorageKey) return;
@@ -470,7 +478,11 @@ export function TaskComposer({
 
     if (e.key === "Enter" && e.altKey && !showHashtagSuggestions && !showMentionSuggestions) {
       e.preventDefault();
-      const alternateType: TaskType = taskType === "task" ? "comment" : "task";
+      const alternateType: TaskType = allowComment
+        ? taskType === "task"
+          ? "comment"
+          : "task"
+        : "task";
       handleSubmit(alternateType);
       return;
     }
@@ -899,19 +911,21 @@ export function TaskComposer({
               )}
               {taskType === "task" ? "Create Task" : "Add Comment"}
             </button>
-            <div className="relative w-9 bg-primary/95 border-l border-primary-foreground/20">
-              <select
-                data-onboarding="compose-kind"
-                aria-label="Kind"
-                value={taskType}
-                onChange={(e) => setTaskType(e.target.value as TaskType)}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              >
-                <option value="task">Task</option>
-                <option value="comment">Comment</option>
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-primary-foreground absolute inset-0 m-auto pointer-events-none" />
-            </div>
+            {allowComment && (
+              <div className="relative w-9 bg-primary/95 border-l border-primary-foreground/20">
+                <select
+                  data-onboarding="compose-kind"
+                  aria-label="Kind"
+                  value={taskType}
+                  onChange={(e) => setTaskType(e.target.value as TaskType)}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                >
+                  <option value="task">Task</option>
+                  <option value="comment">Comment</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-primary-foreground absolute inset-0 m-auto pointer-events-none" />
+              </div>
+            )}
           </div>
         </div>
       </div>

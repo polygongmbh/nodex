@@ -178,7 +178,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
-  it("hides comment option in tree view without focused task", () => {
+  it("shows comment option in tree view without focused task", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -197,18 +197,17 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.queryByRole("button", { name: /comment/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /task/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /task/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /comment/i })).toBeInTheDocument();
   });
 
-  it("shows comment option in tree view when task is focused", () => {
+  it("hides comment option in non-feed/tree views", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={() => {}}
         onSubmit={() => {}}
-        currentView="tree"
-        focusedTaskId="abc123"
+        currentView="calendar"
         relays={relays}
         channels={channels}
         people={people}
@@ -220,8 +219,8 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /task/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /comment/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /task/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /comment/i })).not.toBeInTheDocument();
   });
 
   it("prefills due date with today in calendar view", () => {

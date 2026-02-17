@@ -96,7 +96,7 @@ export function UnifiedBottomBar({
   const prevSearchQueryRef = useRef(searchQuery);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const autoManagedChannelsRef = useRef<Set<string>>(new Set());
-  const canOfferComment = currentView === "feed" || (currentView === "tree" && Boolean(focusedTaskId));
+  const canOfferComment = currentView === "feed" || currentView === "tree";
 
   const syncChannelFiltersFromContent = (nextContent: string, previousContent: string) => {
     const endedWithSpace = /\s$/.test(nextContent);
