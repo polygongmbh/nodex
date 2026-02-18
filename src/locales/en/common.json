@@ -2,7 +2,8 @@
   "language": {
     "label": "Language",
     "en": "English",
-    "de": "Deutsch"
+    "de": "Deutsch",
+    "es": "Español"
   },
   "composer": {
     "placeholders": {
@@ -153,7 +154,8 @@
       "openGuide": "Open onboarding guide",
       "guide": "Guide",
       "toggleAll": "Toggle all on/off",
-      "toggleAllFor": "Toggle all {{title}}"
+      "toggleAllFor": "Toggle all {{title}}",
+      "toggleSidebar": "Toggle sidebar"
     },
     "filterStates": {
       "include": "include",

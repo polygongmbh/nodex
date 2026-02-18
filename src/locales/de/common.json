@@ -2,7 +2,8 @@
   "language": {
     "label": "Sprache",
     "en": "English",
-    "de": "Deutsch"
+    "de": "Deutsch",
+    "es": "Español"
   },
   "composer": {
     "placeholders": {
@@ -153,7 +154,8 @@
       "openGuide": "Onboarding-Guide öffnen",
       "guide": "Leitfaden",
       "toggleAll": "Alle ein-/ausschalten",
-      "toggleAllFor": "Alle {{title}} umschalten"
+      "toggleAllFor": "Alle {{title}} umschalten",
+      "toggleSidebar": "Seitenleiste umschalten"
     },
     "filterStates": {
       "include": "einschließen",

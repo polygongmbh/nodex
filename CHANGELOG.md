@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 ### Added
 - Gentle completion feedback: task completion now triggers a subtle celebratory animation and an optional pop sound, with a new sound toggle available in desktop top controls and mobile Manage.
+- Spanish (`es`) language support across the app, including locale resources and runtime language switching.
 
 ### Changed
 - Popups and selector surfaces now use softer enter motion with global reduced-motion fallbacks for accessibility.

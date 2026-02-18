@@ -6,8 +6,9 @@ export function LanguageToggle() {
   const { i18n, t } = useTranslation();
   const current = (SUPPORTED_LANGUAGES.includes(i18n.language as (typeof SUPPORTED_LANGUAGES)[number])
     ? i18n.language
-    : "en") as "en" | "de";
-  const next = current === "en" ? "de" : "en";
+    : "en") as (typeof SUPPORTED_LANGUAGES)[number];
+  const currentIndex = SUPPORTED_LANGUAGES.indexOf(current);
+  const next = SUPPORTED_LANGUAGES[(currentIndex + 1) % SUPPORTED_LANGUAGES.length];
 
   return (
     <button

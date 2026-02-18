@@ -1,0 +1,596 @@
+{
+  "language": {
+    "label": "Idioma",
+    "en": "English",
+    "de": "Deutsch",
+    "es": "Español"
+  },
+  "composer": {
+    "placeholders": {
+      "task": "¿Qué hay que hacer? Usa #tags...",
+      "comment": "Añadir un comentario...",
+      "mobileTask": "Buscar o crear tarea... #tags",
+      "mobileComment": "Buscar o añadir comentario... #tags"
+    },
+    "blocked": {
+      "signin": "Se requiere iniciar sesión",
+      "write": "Escribe primero un mensaje",
+      "tag": "Añade al menos un #canal",
+      "relay": "Selecciona un relay o una tarea padre",
+      "publishing": "Publicando..."
+    },
+    "actions": {
+      "createTask": "Crear tarea",
+      "addComment": "Añadir comentario",
+      "signin": "Iniciar sesión",
+      "sendTask": "Enviar tarea",
+      "sendComment": "Enviar comentario"
+    },
+    "labels": {
+      "dateType": "Tipo de fecha",
+      "priority": "Prioridad",
+      "kind": "Tipo",
+      "task": "Tarea",
+      "comment": "Comentario",
+      "mentions": "Menciones",
+      "date": "Fecha",
+      "priorityShort": "⚑ Prio"
+    },
+    "hints": {
+      "composeField": "Usa etiquetas #canal y @menciones en este campo",
+      "insertHashtag": "Insertar hashtag",
+      "insertHashtagOpen": "Insertar hashtag y abrir sugerencias de canales",
+      "insertMention": "Insertar mención",
+      "insertMentionOpen": "Insertar @mención y abrir sugerencias de personas",
+      "clearCompose": "Limpiar redacción",
+      "createFromText": "Crear desde el texto actual",
+      "signInToCreate": "Inicia sesión para crear",
+      "clearDueDate": "Quitar fecha"
+    },
+    "dates": {
+      "setOptional": "Establecer fecha de {{dateType}} (opcional)",
+      "due": "Vencimiento",
+      "scheduled": "Programada",
+      "start": "Inicio",
+      "end": "Fin",
+      "milestone": "Hito"
+    }
+  },
+  "toasts": {
+    "errors": {
+      "needTag": "Añade al menos un #canal antes de publicar",
+      "needSigninPost": "Se requiere iniciar sesión para publicar",
+      "needSigninModify": "Se requiere iniciar sesión para modificar tareas",
+      "statusRestricted": "Las actualizaciones de estado están restringidas a usuarios asignados",
+      "selectRelayOrParent": "Selecciona un relay o una tarea padre",
+      "publishStatusFailed": "No se pudo publicar la actualización de estado en los relays",
+      "publishDateFailed": "No se pudo publicar la actualización de fecha en el relay",
+      "publishPriorityFailed": "No se pudo publicar la actualización de prioridad en el relay",
+      "taskCreationFailed": "No se pudo crear la tarea. Inténtalo de nuevo.",
+      "publishSavedForRetry": "No se pudo publicar en Nostr; se guardó para reintento",
+      "retryRelayMissing": "Reintento fallido: el relay ya no está configurado",
+      "retryRejectedByRelay": "Reintento fallido: el relay no aceptó la publicación"
+    },
+    "success": {
+      "publishedTask": "Tarea publicada en Nostr y añadida localmente",
+      "publishedComment": "Comentario publicado en Nostr y añadido localmente",
+      "localTask": "Tarea añadida localmente (solo demo)",
+      "localComment": "Comentario añadido localmente (solo demo)",
+      "relayFilterEnabled": "Filtro de relay {{relayName}} activado",
+      "relayFilterDisabled": "Filtro de relay {{relayName}} desactivado",
+      "showingOnlyRelay": "Mostrando solo el relay {{relayName}}",
+      "relayFiltersCleared": "Se borraron todos los filtros de relay",
+      "allRelaysSelected": "Todos los relays seleccionados",
+      "showingOnlyChannel": "Mostrando solo #{{channelName}}",
+      "allChannelsIncluded": "Todos los canales incluidos",
+      "allChannelsReset": "Todos los canales restablecidos",
+      "showingOnlyTag": "Mostrando solo #{{tag}}",
+      "showingOnlyPerson": "Mostrando solo {{personName}}",
+      "selectedUserFallback": "usuario seleccionado",
+      "showingOnlyAuthorAndTagging": "Mostrando solo a {{authorName}} y etiquetando {{mention}}",
+      "noFrequentPeople": "No hay personas frecuentes para seleccionar",
+      "frequentPeopleSelected": "Personas frecuentes seleccionadas",
+      "frequentPeopleDeselected": "Personas frecuentes deseleccionadas"
+    },
+    "warnings": {
+      "parentLocalOnly": "La referencia al padre es solo local; se publicará la tarea sin enlace al padre"
+    }
+  },
+  "listView": {
+    "sort": {
+      "task": "Tarea",
+      "status": "Estado",
+      "dueDate": "Fecha de vencimiento",
+      "priority": "Prioridad",
+      "reset": "Restablecer orden por defecto"
+    },
+    "status": {
+      "todo": "Por hacer",
+      "inProgress": "En progreso",
+      "done": "Hecho",
+      "inProgressShort": "Haciendo"
+    },
+    "dates": {
+      "setDate": "Establecer fecha...",
+      "type": "Tipo"
+    }
+  },
+  "navigation": {
+    "aria": {
+      "viewSwitcher": "Selector de vista",
+      "views": "Vistas de navegación"
+    },
+    "views": {
+      "manage": "Gestionar",
+      "tree": "Árbol",
+      "feed": "Feed",
+      "kanban": "Kanban",
+      "calendar": "Calendario",
+      "list": "Tabla",
+      "upcoming": "Próximas",
+      "switchTo": "Cambiar a la vista {{view}}"
+    },
+    "mobile": {
+      "openGuide": "Abrir guía",
+      "currentViewPosition": "Posición de la vista actual"
+    }
+  },
+  "sidebar": {
+    "tagline": "Plataforma de colaboración",
+    "sections": {
+      "feeds": "Feeds",
+      "channels": "Canales",
+      "people": "Personas"
+    },
+    "hints": {
+      "relays": "Relays",
+      "clickToFilter": "Clic para filtrar"
+    },
+    "actions": {
+      "addRelay": "Añadir relay",
+      "openShortcuts": "Abrir ayuda de atajos de teclado",
+      "shortcuts": "Atajos",
+      "shortcutsTooltip": "Atajos de teclado (?)",
+      "openGuide": "Abrir guía de onboarding",
+      "guide": "Guía",
+      "toggleAll": "Alternar todo",
+      "toggleAllFor": "Alternar todo {{title}}",
+      "toggleSidebar": "Alternar barra lateral"
+    },
+    "filterStates": {
+      "include": "incluir",
+      "exclude": "excluir",
+      "unfiltered": "sin filtrar"
+    },
+    "filters": {
+      "toggleRelay": "Alternar {{name}}",
+      "showOnlyRelay": "Mostrar solo {{name}}",
+      "toggleChannelTo": "Alternar #{{name}} a {{nextState}}",
+      "toggleChannelFilter": "Alternar filtro de #{{name}}",
+      "showOnlyChannel": "Mostrar solo #{{name}}",
+      "togglePerson": "Alternar {{name}}",
+      "showOnlyPerson": "Mostrar solo {{name}}",
+      "selected": "{{name}} seleccionado",
+      "me": "Yo"
+    }
+  },
+  "hints": {
+    "modifiers": {
+      "alt": "Alt",
+      "optionAlt": "Option (Alt)"
+    },
+    "statusToggle": {
+      "todo": "Marcar tarea en progreso. Mantén {{alternateKey}} al hacer clic para seleccionar estado.",
+      "inProgress": "Marcar tarea como hecha. Mantén {{alternateKey}} al hacer clic para seleccionar estado.",
+      "done": "La tarea está hecha. Haz clic para seleccionar estado."
+    }
+  },
+  "breadcrumbs": {
+    "up": "Subir",
+    "goToParent": "Ir a la tarea padre",
+    "allTasks": "Todas las tareas",
+    "showAllTasks": "Mostrar todas las tareas"
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "groups": {
+      "views": "Vistas",
+      "taskNavigation": "Navegación de tareas",
+      "sidebarNavigation": "Navegación lateral",
+      "kanban": "Kanban",
+      "general": "General",
+      "compose": "Redacción"
+    },
+    "items": {
+      "treeView": "Vista de árbol",
+      "feedView": "Vista de feed",
+      "kanbanView": "Vista kanban",
+      "calendarView": "Vista de calendario",
+      "tableView": "Vista de tabla",
+      "moveFocusDown": "Mover foco hacia abajo",
+      "moveFocusUp": "Mover foco hacia arriba",
+      "openSelectTask": "Abrir/seleccionar tarea",
+      "focusSidebarGoBack": "Enfocar barra lateral (arriba) / volver",
+      "jumpFirstTask": "Ir a la primera tarea",
+      "jumpLastTask": "Ir a la última tarea",
+      "clearFocus": "Limpiar foco",
+      "navigateFilters": "Navegar filtros",
+      "toggleSelectedFilter": "Alternar filtro seleccionado",
+      "returnTaskList": "Volver a la lista de tareas",
+      "jumpFirstFilter": "Ir al primer filtro",
+      "jumpLastFilter": "Ir al último filtro",
+      "navigateColumns": "Navegar entre columnas",
+      "navigateWithinColumn": "Navegar dentro de la columna",
+      "moveTaskColumns": "Mover tarea entre columnas",
+      "toggleKeyboardShortcuts": "Alternar atajos de teclado",
+      "submitCurrentKind": "Enviar como tipo actual",
+      "submitOppositeKind": "Enviar como tipo opuesto (cuando no hay autocompletado abierto)",
+      "insertHighlightedSuggestion": "Con autocompletado abierto: insertar sugerencia resaltada",
+      "addMetadataOnly": "Con autocompletado @/# abierto: añadir etiqueta/mención resaltada solo como metadatos de publicación (sin texto del token)"
+    }
+  },
+  "auth": {
+    "modal": {
+      "title": "Iniciar sesión en Nostr",
+      "descriptionChoose": "Elige cómo quieres autenticarte para publicar en relays de Nostr.",
+      "descriptionPrivateKey": "Introduce tu clave privada de Nostr (formato nsec o hex).",
+      "descriptionNostrConnect": "Conéctate con una app firmante usando Nostr Connect (NIP-46).",
+      "browserExtension": "Extensión de navegador",
+      "extensionMobileUnavailable": "Las extensiones no están disponibles en móvil",
+      "extensionSignInHint": "Inicia sesión con Alby, nos2x u otra extensión NIP-07",
+      "extensionMissing": "No se detectó ninguna extensión de Nostr",
+      "signerApp": "App firmante (Nostr Connect)",
+      "signerAppHint": "Conéctate con un firmante móvil usando un enlace bunker://",
+      "privateKey": "Clave privada",
+      "privateKeyHint": "Introduce tu clave privada nsec o hex",
+      "guestIdentity": "Identidad invitada",
+      "guestIdentityHint": "Genera una identidad temporal para probar la publicación",
+      "securityHint": "Tus claves nunca salen de tu dispositivo o app firmante. La firma ocurre localmente o en tu firmante.",
+      "privateKeyPlaceholder": "nsec1... o clave hex",
+      "privateKeyLocalOnly": "Tu clave solo se usa localmente y nunca se envía a ningún servidor.",
+      "back": "Atrás",
+      "signIn": "Iniciar sesión",
+      "signerConnection": "Conexión del firmante",
+      "signerPlaceholder": "bunker://...",
+      "signerHint": "Pega el enlace bunker:// de tu app firmante para conectarte.",
+      "connect": "Conectar",
+      "errors": {
+        "extensionFailed": "No se pudo iniciar sesión con la extensión. Asegúrate de tener una extensión de Nostr (como Alby o nos2x) instalada.",
+        "privateKeyRequired": "Introduce tu clave privada",
+        "privateKeyInvalid": "Clave privada no válida. Revísala e inténtalo de nuevo.",
+        "guestFailed": "No se pudo crear la identidad de invitado.",
+        "signerRequired": "Pega una cadena de conexión bunker://",
+        "signerFailed": "No se pudo conectar. Verifica tu cadena bunker:// e inténtalo de nuevo."
+      },
+      "success": {
+        "extension": "¡Sesión iniciada con extensión de Nostr!",
+        "privateKey": "¡Sesión iniciada con clave privada!",
+        "guest": "¡Sesión iniciada como invitado! Se creó una nueva identidad para ti.",
+        "signer": "¡Conectado a la app firmante!"
+      }
+    },
+    "menu": {
+      "signInToPost": "Inicia sesión para publicar",
+      "signInShort": "Iniciar sesión",
+      "signedInVia": "Sesión iniciada vía {{method}}",
+      "signedInAs": "Sesión iniciada como {{method}}",
+      "editProfile": "Editar perfil",
+      "backupPrivateKey": "Respaldar clave privada",
+      "keepSecret": "Mantener en secreto",
+      "importKeyHint": "Importa esta clave en otros clientes Nostr para acceder a esta identidad.",
+      "signOut": "Cerrar sesión",
+      "profileSetupTitle": "Configura tu perfil",
+      "profileEditTitle": "Editar perfil",
+      "profileDescription": "Tus metadatos de Nostr (`kind:0`) se publicarán en los relays conectados. El nombre es obligatorio.",
+      "copySuccessNsec": "¡Clave privada copiada al portapapeles!",
+      "copySuccessHex": "¡Clave privada (hex) copiada al portapapeles!"
+    }
+  },
+  "onboarding": {
+    "picker": {
+      "helper": "Elige un área resaltada para comenzar su guía.",
+      "close": "Cerrar",
+      "dismiss": "Cerrar selector de secciones de guía",
+      "chooseSection": "Elegir una sección de guía",
+      "startSectionAria": "Iniciar sección de onboarding {{title}}"
+    },
+    "dialog": {
+      "ariaLabel": "Guía de onboarding",
+      "emptyTitle": "No hay pasos de onboarding disponibles",
+      "stepLabel": "Paso {{current}} de {{total}}",
+      "skip": "Omitir",
+      "back": "Atrás",
+      "finish": "Finalizar",
+      "next": "Siguiente"
+    },
+    "sections": {
+      "navigation": {
+        "title": "Navegación",
+        "description": "Usa pestañas de vista y breadcrumbs para moverte entre contextos de tareas."
+      },
+      "filters": {
+        "title": "Filtros",
+        "description": "Usa eficazmente filtros de canales y personas (incluir/excluir)."
+      },
+      "compose": {
+        "title": "Redactar",
+        "description": "Publica tareas/comentarios con #tags y @menciones."
+      },
+      "kanban": {
+        "title": "Kanban",
+        "description": "Usa columnas, carriles de estado y control de profundidad para organizar el trabajo."
+      },
+      "calendar": {
+        "title": "Calendario",
+        "description": "Planifica tareas por fecha y revisa cada día en el panel de detalle."
+      }
+    },
+    "steps": {
+      "navigationSwitcher": {
+        "title": "Cambiar vistas",
+        "description": "Usa el selector de vista para pasar entre Árbol, Feed, Kanban, Calendario y Tabla.",
+        "action": "Haz clic en cualquier pestaña de vista para continuar."
+      },
+      "navigationFocus": {
+        "title": "Abrir contexto de tarea",
+        "description": "Haz clic en una tarea para navegar a su contexto y mostrar la ruta de breadcrumb.",
+        "action": "Haz clic en una tarea para continuar."
+      },
+      "navigationBreadcrumb": {
+        "title": "Usar breadcrumbs",
+        "description": "Usa la fila de breadcrumbs para subir en la jerarquía o saltar entre tareas padre.",
+        "action": "Haz clic en un elemento del breadcrumb para continuar."
+      },
+      "filtersRelays": {
+        "title": "Selección de relay",
+        "description": "Usa *Feeds* para seleccionar qué relays son visibles. Haz clic en el icono de relay para alternarlo, o en su nombre para enfoque exclusivo.",
+        "action": "Haz clic en un control de relay para continuar."
+      },
+      "filtersChannels": {
+        "title": "Filtros de canales",
+        "description": "En *Canales*, haz clic en el nombre de un canal para mostrar solo publicaciones con ese canal. Haz clic en el icono # para alternar neutral -> incluir -> excluir para ese canal. Haz clic en el icono hashtag a la izquierda de *Canales* para restablecer filtros de canal."
+      },
+      "filtersPeople": {
+        "title": "Filtros de personas",
+        "description": "En *Personas*, haz clic en el nombre de una persona para mostrar solo sus publicaciones. Haz clic en el avatar/icono para alternar esa persona. Haz clic en el icono a la izquierda de *Personas* para restablecer filtros de personas."
+      },
+      "filtersSearch": {
+        "title": "Barra de búsqueda",
+        "description": "Usa la barra inferior de búsqueda para acotar tareas visibles por texto en todas las vistas."
+      },
+      "filtersHashtagContent": {
+        "title": "Hashtags en contenido",
+        "description": "Haz clic en un hashtag en una tarea para enfocarte en esa etiqueta. Limpia el filtro para volver a la lista completa.",
+        "action": "Haz clic en un chip de hashtag en un elemento de tarea."
+      },
+      "composeKind": {
+        "title": "Tarea vs comentario",
+        "description": "Usa el selector de tipo para elegir si publicar una tarea o un comentario.",
+        "action": "Enfoca el selector de tipo para continuar."
+      },
+      "composeInput": {
+        "title": "Etiquetas y menciones",
+        "description": "Usa #tags para organizar elementos y @menciones para referenciar personas en el cuadro de redacción. Los canales incluidos se precompletan automáticamente como hashtags. Puedes establecer un tipo de fecha (Vencimiento, Programada, Inicio, Fin o Hito) para que las tareas aparezcan en Calendario; las fechas futuras de Inicio se muestran como no realizables todavía.",
+        "action": "Consejo avanzado: Option (Alt)+Enter envía como el otro tipo cuando no hay autocompletado abierto; con autocompletado abierto, Option/Shift/Cmd/Ctrl+Enter puede añadir la etiqueta/mención seleccionada como metadatos sin insertar texto del token."
+      },
+      "mobileNavigationNav": {
+        "title": "Vistas móviles",
+        "description": "Usa la navegación superior para cambiar entre Árbol, Feed, Lista y Calendario.",
+        "action": "Toca una pestaña de navegación para continuar."
+      },
+      "mobileNavigationFocus": {
+        "title": "Navegar dentro de una tarea",
+        "description": "Toca una tarea para abrir su contexto enfocado y ruta de navegación.",
+        "action": "Toca una tarea para continuar."
+      },
+      "mobileNavigationBreadcrumb": {
+        "title": "Usar breadcrumbs",
+        "description": "Usa la fila de breadcrumbs para subir en la jerarquía o saltar entre tareas padre.",
+        "action": "Toca un elemento del breadcrumb para continuar."
+      },
+      "mobileFiltersOpen": {
+        "title": "Abrir Gestionar",
+        "description": "Toca *Gestionar* en la navegación superior para abrir filtros de relay, canal y personas.",
+        "action": "Toca *Gestionar* para continuar."
+      },
+      "mobileFiltersProperties": {
+        "title": "Propiedades del perfil",
+        "description": "En *Gestionar*, abre el editor de perfil para revisar y establecer campos clave de identidad: nombre, nombre para mostrar, URL de imagen, NIP-05 y texto sobre ti."
+      },
+      "mobileFiltersUse": {
+        "title": "Usar filtros",
+        "description": "En *Gestionar*, toca chips de feed para seleccionar relays, chips de canal para alternar neutral -> incluir -> excluir y chips de personas para alternar filtros de personas. Combina estos controles para acotar la visibilidad antes de redactar."
+      },
+      "mobileComposeCombobox": {
+        "title": "Caja combinada búsqueda/redacción",
+        "description": "Usa la barra inferior combinada para buscar mientras escribes y crear tareas/comentarios desde el mismo texto con el botón de envío.",
+        "action": "Toca la barra combinada para continuar."
+      },
+      "kanbanColumnsStatus": {
+        "title": "Columnas y estado",
+        "description": "Usa las columnas Por hacer, En progreso y Hecho para seguir el estado. Mover una tarea entre columnas cambia su estado.",
+        "action": "Haz clic o arrastra una tarjeta en el tablero para continuar."
+      },
+      "kanbanCreateInColumn": {
+        "title": "Crear en una columna específica",
+        "description": "Usa el botón + en el encabezado de columna para crear una nueva tarea directamente en el estado de esa columna.",
+        "action": "Haz clic en un botón + de columna para continuar."
+      },
+      "kanbanDepth": {
+        "title": "Niveles de profundidad",
+        "description": "Usa Niveles junto a la búsqueda para mostrar tareas de nivel superior, profundidad limitada o solo hojas.",
+        "action": "Abre el selector Niveles para continuar."
+      },
+      "calendarMonths": {
+        "title": "Línea temporal de meses",
+        "description": "Desplázate por meses apilados continuamente para moverte en el tiempo."
+      },
+      "calendarPickDay": {
+        "title": "Elegir un día",
+        "description": "Haz clic en cualquier celda de día para cargar esa fecha en el panel de detalle.",
+        "action": "Haz clic en un día de la cuadrícula de calendario para continuar."
+      },
+      "calendarDayPanel": {
+        "title": "Detalles del día",
+        "description": "Usa el panel derecho para revisar tareas de la fecha seleccionada, cambiar su estado y crear una nueva tarea/evento para ese día."
+      }
+    }
+  },
+  "filters": {
+    "profile": {
+      "title": "Perfil",
+      "notSignedIn": "Sin iniciar sesión",
+      "signedInVia": "Sesión iniciada vía {{method}}",
+      "signedInAs": "Sesión iniciada como {{method}}",
+      "signin": "Iniciar sesión",
+      "signout": "Cerrar sesión",
+      "edit": "Editar",
+      "name": "Nombre *",
+      "displayName": "Nombre para mostrar",
+      "picture": "URL de imagen",
+      "nip05": "NIP-05",
+      "about": "Acerca de",
+      "cancel": "Cancelar",
+      "saving": "Guardando...",
+      "save": "Guardar perfil",
+      "privateKey": "Clave privada (identidad invitada)",
+      "hidePrivateKey": "Ocultar clave privada",
+      "showPrivateKey": "Mostrar clave privada",
+      "copyPrivateKey": "Copiar clave privada",
+      "copiedPrivateKey": "Clave privada copiada al portapapeles",
+      "nameRequired": "El nombre del perfil es obligatorio",
+      "noRelayConnected": "Conéctate al menos a un relay antes de editar el perfil",
+      "presenceTitle": "Compartir estado en vivo",
+      "presenceDescription": "Difunde tu vista actual y tarea activa (NIP-38). Desactívalo por privacidad.",
+      "updated": "Perfil actualizado en relays conectados",
+      "updateFailed": "No se pudo actualizar el perfil. Revisa la conectividad de relay e inténtalo de nuevo."
+    },
+    "feeds": {
+      "title": "Feeds",
+      "placeholder": "wss://relay.example.com",
+      "add": "Añadir",
+      "addAria": "Añadir feed",
+      "remove": "Eliminar",
+      "removeAria": "Eliminar feed {{name}}"
+    },
+    "channels": {
+      "title": "Canales",
+      "cycleHint": "Toca para alternar: neutral -> incluir -> excluir"
+    },
+    "people": {
+      "title": "Personas"
+    },
+    "authMethod": {
+      "extension": "Extensión",
+      "guest": "Invitado",
+      "signer": "Firmante",
+      "privateKey": "Clave privada",
+      "unknown": "Desconocido"
+    }
+  },
+  "search": {
+    "desktop": {
+      "placeholder": "Buscar tareas..."
+    },
+    "kanban": {
+      "topLevel": "Nivel superior",
+      "levels": "{{count}} niveles",
+      "allLevels": "Todos los niveles",
+      "leavesOnly": "Solo hojas"
+    }
+  },
+  "appError": {
+    "title": "Algo salió mal",
+    "description": "La app encontró un error inesperado. Puedes recargar o volver a la vista principal.",
+    "reload": "Recargar app",
+    "goHome": "Ir al inicio",
+    "unexpected": "Error inesperado de la aplicación"
+  },
+  "calendar": {
+    "tabs": {
+      "upcoming": "Próximas",
+      "calendar": "Calendario"
+    },
+    "weekShort": "Sem",
+    "moreTasks": "+{{count}} más",
+    "nav": {
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente"
+    },
+    "actions": {
+      "addEvent": "Añadir evento",
+      "newEventOn": "Nuevo evento el {{date}}"
+    }
+  },
+  "feedback": {
+    "sound": {
+      "on": "Sonido de finalización activado",
+      "off": "Sonido de finalización desactivado"
+    }
+  },
+  "kanban": {
+    "newTaskIn": "Nueva tarea en {{column}}",
+    "hasSubtasks": "Tiene subtareas"
+  },
+  "notFound": {
+    "message": "¡Vaya! Página no encontrada",
+    "goHome": "Volver al inicio",
+    "goHomeTitle": "Ir a la app principal"
+  },
+  "publishQueue": {
+    "failedCount": "{{count}} publicación falló al publicarse",
+    "retry": "Reintentar",
+    "dismiss": "Descartar publicación fallida"
+  },
+  "relay": {
+    "manage": "Gestionar relays ({{connectedCount}}/{{totalCount}})",
+    "managementTitle": "Gestión de relays",
+    "placeholder": "wss://relay.example.com",
+    "noneConfigured": "No hay relays configurados",
+    "connectedSummary": "{{connectedCount}} de {{totalCount}} relays conectados"
+  },
+  "tasks": {
+    "task": "Tarea",
+    "comment": "Comentario",
+    "tags": "Etiquetas",
+    "less": "menos",
+    "readOnly": "Tarea de solo lectura",
+    "completedBy": "Completada por @{{user}}",
+    "focusTaskAria": "{{type}}: {{title}}",
+    "focusTaskTitle": "Enfocar {{type}}",
+    "focusBreadcrumbTitle": "Enfocar tarea: {{title}}",
+    "tagsShowAll": "Mostrar todas las etiquetas",
+    "tagsShowLess": "Mostrar menos etiquetas",
+    "tagsShowMoreAria": "Mostrar {{count}} etiquetas más",
+    "actions": {
+      "setStatus": "Establecer estado",
+      "filterAndMention": "Filtrar y mencionar {{authorName}}",
+      "filterTag": "Filtrar por #{{tag}}",
+      "collapse": "Contraer",
+      "expandAll": "Expandir (todo)",
+      "expandMatchingOnly": "Expandir (solo coincidentes)"
+    },
+    "empty": {
+      "feed": "No hay tareas para mostrar",
+      "notFound": "No se encontraron tareas",
+      "noUpcoming": "No hay tareas próximas",
+      "noneScheduledForDay": "No hay tareas programadas para este día",
+      "selectDay": "Selecciona un día para ver tareas",
+      "matchFilters": "No hay tareas que coincidan con tus filtros",
+      "noSubtasks": "Aún no hay subtareas",
+      "noneYet": "Aún no hay tareas"
+    }
+  },
+  "widgets": {
+    "trending": {
+      "title": "Etiquetas en tendencia",
+      "posts": "{{count}} publicaciones",
+      "showMore": "Mostrar más"
+    },
+    "relayStatus": {
+      "title": "Estado de relays",
+      "noneConnected": "No hay relays conectados",
+      "connected": "conectado"
+    }
+  }
+}

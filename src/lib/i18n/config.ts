@@ -2,8 +2,9 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import enCommon from "@/locales/en/common.json";
 import deCommon from "@/locales/de/common.json";
+import esCommon from "@/locales/es/common.json";
 
-export const SUPPORTED_LANGUAGES = ["en", "de"] as const;
+export const SUPPORTED_LANGUAGES = ["en", "de", "es"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export const DEFAULT_LANGUAGE: SupportedLanguage = "en";
 export const LANGUAGE_STORAGE_KEY = "nodex.language";
@@ -13,6 +14,7 @@ function normalizeLanguage(value?: string | null): SupportedLanguage | undefined
   const lower = value.toLowerCase();
   if (lower.startsWith("en")) return "en";
   if (lower.startsWith("de")) return "de";
+  if (lower.startsWith("es")) return "es";
   return undefined;
 }
 
@@ -35,6 +37,7 @@ if (!i18n.isInitialized) {
       resources: {
         en: { common: enCommon },
         de: { common: deCommon },
+        es: { common: esCommon },
       },
       ns: ["common"],
       defaultNS: "common",
