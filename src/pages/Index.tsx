@@ -62,6 +62,7 @@ import {
   type FailedPublishDraft,
 } from "@/lib/failed-publish-drafts";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
+import { shouldAutoStartOnboarding } from "@/lib/onboarding-autostart";
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
 import { loadPresencePublishingEnabled } from "@/lib/presence-preferences";
@@ -447,6 +448,7 @@ const Index = () => {
 
   // Derive focused task from URL
   const focusedTaskId = urlTaskId || null;
+  const openedWithFocusedTaskRef = useRef(Boolean(urlTaskId));
 
   const isMobile = useIsMobile();
   const currentUser = resolveCurrentUser(people, user);
@@ -484,7 +486,10 @@ const Index = () => {
 
   useEffect(() => {
     const onboardingState = loadOnboardingState();
-    if (!onboardingState.completed) {
+    if (shouldAutoStartOnboarding({
+      onboardingCompleted: onboardingState.completed,
+      openedWithFocusedTask: openedWithFocusedTaskRef.current,
+    })) {
       setOnboardingInitialSection("all");
       setIsOnboardingOpen(true);
     }
