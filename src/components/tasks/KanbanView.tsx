@@ -56,6 +56,7 @@ const columns: { id: TaskStatus; label: string; icon: React.ReactNode; color: st
   { id: "in-progress", label: "In Progress", icon: <CircleDot className="w-4 h-4" />, color: "text-amber-500" },
   { id: "done", label: "Done", icon: <CheckCircle2 className="w-4 h-4" />, color: "text-primary" },
 ];
+const ACTIVE_KANBAN_STATUSES: TaskStatus[] = ["todo", "in-progress"];
 
 export function KanbanView({
   tasks,
@@ -206,8 +207,9 @@ export function KanbanView({
     });
 
     // Keep done column strictly chronological; apply shared priority ordering elsewhere.
-    grouped["todo"] = sortTasks(grouped["todo"], sortContext);
-    grouped["in-progress"] = sortTasks(grouped["in-progress"], sortContext);
+    for (const status of ACTIVE_KANBAN_STATUSES) {
+      grouped[status] = sortTasks(grouped[status], sortContext);
+    }
     grouped["done"] = sortByLatestModified(grouped["done"]);
 
     return grouped;

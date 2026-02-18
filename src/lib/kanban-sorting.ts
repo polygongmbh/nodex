@@ -1,9 +1,10 @@
 import type { Task } from "@/types";
+import { getTaskLatestModifiedMs } from "./taskSorting";
 
 export function sortByLatestModified(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
-    const aTime = (a.lastEditedAt || a.timestamp).getTime();
-    const bTime = (b.lastEditedAt || b.timestamp).getTime();
+    const aTime = getTaskLatestModifiedMs(a);
+    const bTime = getTaskLatestModifiedMs(b);
     return bTime - aTime;
   });
 }

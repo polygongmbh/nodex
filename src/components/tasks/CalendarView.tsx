@@ -199,6 +199,24 @@ export function CalendarView({
     });
   }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, getDescendantIds, people]);
 
+  const tasksByDay = useMemo(() => {
+    const byDay = new Map<string, Task[]>();
+    for (const task of tasksWithDueDates) {
+      if (!task.dueDate) continue;
+      const dayKey = format(startOfDay(task.dueDate), "yyyy-MM-dd");
+      const bucket = byDay.get(dayKey);
+      if (bucket) {
+        bucket.push(task);
+      } else {
+        byDay.set(dayKey, [task]);
+      }
+    }
+    for (const [dayKey, dayTasks] of byDay.entries()) {
+      byDay.set(dayKey, sortTasks(dayTasks, sortContext));
+    }
+    return byDay;
+  }, [tasksWithDueDates, sortContext]);
+
   const desktopMonthSections = useMemo(() => {
     return desktopMonths
       .map((month) => {
@@ -231,9 +249,8 @@ export function CalendarView({
   }, [desktopMonths]);
 
   const getTasksForDay = useCallback((day: Date) => {
-    const dayTasks = tasksWithDueDates.filter(task => task.dueDate && isSameDay(task.dueDate, day));
-    return sortTasks(dayTasks, sortContext);
-  }, [tasksWithDueDates, sortContext]);
+    return tasksByDay.get(format(startOfDay(day), "yyyy-MM-dd")) || [];
+  }, [tasksByDay]);
 
   const selectedDayTasks = useMemo(
     () => (selectedDate ? getTasksForDay(selectedDate) : []),

@@ -66,6 +66,10 @@ function getLatestModifiedMs(task: Task | undefined): number {
   return (task.lastEditedAt || task.timestamp).getTime();
 }
 
+export function getTaskLatestModifiedMs(task: Task): number {
+  return getLatestModifiedMs(task);
+}
+
 function isUpcomingDueDate(dueDate: Date | null): boolean {
   if (!dueDate) return false;
   const today = startOfDay(new Date());
