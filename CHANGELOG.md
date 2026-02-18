@@ -11,10 +11,13 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Changed
 - Latest Nostr feed events are now cached locally and rehydrated on load so recent posts remain visible offline or during relay reconnect windows.
+- Feed/tree cards now render task priority badges (`P<n>`) so parsed priority is visible outside table editing controls.
 
 ### Fixed
 - Failed relay publishes are no longer inserted as normal local tasks/comments, preventing misleading local-only entries after refresh.
 - Profile setup/edit modal no longer auto-opens (or opens from menu) when no relay connection is active.
+- Newly published tasks now persist due dates reliably after reload by routing initial due-date publish events to the known origin relay during create/retry flows.
+- Priority property update notes are now kept in the inbound event pipeline, so edited priorities hydrate correctly after refresh.
 
 ## [1.4.0] - 2026-02-17
 Expanded relay-aware task publishing, priority editing, and English/German localization across key task flows.

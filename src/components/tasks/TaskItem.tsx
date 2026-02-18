@@ -417,8 +417,13 @@ export function TaskItem({
             </div>
           )}
 
-          {(hasTaskMentionChips(task) || task.tags.length > 0) && (
+          {(hasTaskMentionChips(task) || task.tags.length > 0 || (typeof task.priority === "number" && !isComment)) && (
             <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-1.5")}>
+              {typeof task.priority === "number" && !isComment && (
+                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                  P{task.priority}
+                </span>
+              )}
               <TaskMentionChips
                 task={task}
                 people={people}

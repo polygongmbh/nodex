@@ -527,6 +527,14 @@ export function FeedView({
                       </button>
                       <span className="shrink-0">·</span>
                       <span className="shrink-0">{timeLabel}</span>
+                      {!isComment && typeof task.priority === "number" && (
+                        <>
+                          <span className="shrink-0">·</span>
+                          <span className="text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                            P{task.priority}
+                          </span>
+                        </>
+                      )}
                       {isComment && !isMobile && (
                         <>
                           <span className="shrink-0">·</span>

@@ -1,6 +1,11 @@
 import { NostrEvent, NostrEventKind } from "@/lib/nostr/types";
 import { Task, Person } from "@/types";
 import { extractTaskStateTargetId, isTaskStateEventKind, mapTaskStateEventToTaskStatus } from "@/lib/nostr/task-state-events";
+import {
+  extractPriorityTargetTaskId,
+  isPriorityPropertyEvent,
+  parsePriorityTag,
+} from "@/lib/nostr/task-property-events";
 import { parseLinkedTaskDueFromCalendarEvent } from "./task-calendar-events";
 import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 
@@ -51,14 +56,6 @@ function extractHashtags(content: string): string[] {
   const matches = content.match(hashtagRegex);
   if (!matches) return [];
   return [...new Set(matches.map((tag) => tag.slice(1).toLowerCase()))];
-}
-
-function parsePriorityTag(tags: string[][]): number | undefined {
-  const priorityTag = tags.find((tag) => tag[0]?.toLowerCase() === "priority" && tag[1]);
-  if (!priorityTag?.[1]) return undefined;
-  const parsed = Number.parseInt(priorityTag[1], 10);
-  if (!Number.isFinite(parsed)) return undefined;
-  return parsed;
 }
 
 // Replace indexed Nostr person references (e.g. #[0]) with @<pubkey> mention tokens.
@@ -209,9 +206,7 @@ export function extractAllTags(events: NostrEvent[]): string[] {
 // Convert multiple Nostr events to Tasks
 export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
   const isPriorityPropertyNote = (event: NostrEventWithRelay): boolean =>
-    event.kind === NostrEventKind.TextNote &&
-    parsePriorityTag(event.tags) !== undefined &&
-    Boolean(extractTaskStateTargetId(event.tags));
+    isPriorityPropertyEvent(event.kind, event.tags);
 
   const taskEvents = events.filter(
     (event) =>
@@ -301,7 +296,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   const latestPriorityByTaskId = new Map<string, { createdAt: number; priority: number }>();
   for (const propertyEvent of priorityPropertyEvents) {
-    const taskId = extractTaskStateTargetId(propertyEvent.tags);
+    const taskId = extractPriorityTargetTaskId(propertyEvent.tags);
     const priority = parsePriorityTag(propertyEvent.tags);
     if (!taskId || typeof priority !== "number" || !taskMap.has(taskId)) continue;
     const prev = latestPriorityByTaskId.get(taskId);

@@ -39,7 +39,7 @@ import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
-import { buildTaskPriorityUpdateEvent } from "@/lib/nostr/task-property-events";
+import { buildTaskPriorityUpdateEvent, isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import {
   resolveOriginRelayIdForTask,
@@ -162,6 +162,7 @@ const Index = () => {
     return nostrEvents.filter(event => {
       if (event.kind === NostrEventKind.Metadata) return false;
       if (isTaskStateEventKind(event.kind)) return true;
+      if (isPriorityPropertyEvent(event.kind, event.tags)) return true;
       if (
         event.kind === NostrEventKind.CalendarDateBased ||
         event.kind === NostrEventKind.CalendarTimeBased
@@ -757,10 +758,13 @@ const Index = () => {
     taskContent: string,
     dueDate: Date,
     dueTime?: string,
-    dateType: TaskDateType = "due"
+    dateType: TaskDateType = "due",
+    relayUrlsOverride?: string[]
   ) => {
     if (!isNostrEventId(taskId)) return false;
-    const { relayUrls } = resolveTaskOriginRelay(taskId);
+    const relayUrls = relayUrlsOverride && relayUrlsOverride.length > 0
+      ? relayUrlsOverride.slice(0, 1)
+      : resolveTaskOriginRelay(taskId).relayUrls;
     if (relayUrls.length === 0) {
       toast.error(t("toasts.errors.publishDateFailed"));
       return false;
@@ -965,7 +969,8 @@ const Index = () => {
             content,
             dueDate,
             dueTime,
-            dateType
+            dateType,
+            selectedRelayUrls.slice(0, 1)
           );
         }
       } catch (error) {
@@ -1106,7 +1111,8 @@ const Index = () => {
         draft.content,
         dueDate,
         draft.dueTime,
-        draft.dateType || "due"
+        draft.dateType || "due",
+        relayUrls.slice(0, 1)
       );
     }
 
