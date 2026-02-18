@@ -216,8 +216,10 @@ policies:
 - Do not add changelog entries for minor/internal-only changes unless explicitly requested.
 - Keep entries concrete; one entry may summarize closely related commits.
 - In version sections, classify genuinely new end-user capabilities under `### Added` (for example new guides, new flows, new controls), and reserve `### Fixed` for regressions/bugs in previously existing behavior.
+- If a version section has fewer than 4 total change bullets, omit `### Added`/`### Changed`/`### Fixed` subheadings and list bullets directly under the version heading.
 - When a feature is first introduced in the same release, do not add separate changelog bullets for implementation/fix-up iterations that occurred while building it; summarize only the final user-visible outcome.
 - Use semantic version sections (`MAJOR.MINOR.PATCH`) and ISO dates (`YYYY-MM-DD`).
+- For major/minor releases (for example `2.0.0`, `1.7.0`), include a concise update summary line directly under the version heading before any bullet lists/subsections.
 - On release, move grouped entries from `Unreleased` into the new versioned section.
 - Before every push, prune redundant/iteration-level changelog bullets and reclassify genuinely new user-facing capabilities into `### Added` (keeping `### Changed`/`### Fixed` for refinements and regressions).
 
