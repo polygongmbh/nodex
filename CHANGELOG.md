@@ -12,6 +12,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Changed
 - Popups and selector surfaces now use softer enter motion with global reduced-motion fallbacks for accessibility.
 - Localization coverage expanded across task/status controls, calendar/list/kanban labels, relay management, publish-failure banner actions, and related accessibility labels/tooltips.
+- Desktop top-right language control now uses a flag-based dropdown (instead of cycling), and initial app language selection now follows browser/system preferred language order when no saved preference exists.
 
 ## [1.5.1] - 2026-02-18
 

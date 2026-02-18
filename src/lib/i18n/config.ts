@@ -22,8 +22,13 @@ function resolveInitialLanguage(): SupportedLanguage {
   if (typeof window === "undefined") return DEFAULT_LANGUAGE;
   const stored = normalizeLanguage(window.localStorage.getItem(LANGUAGE_STORAGE_KEY));
   if (stored) return stored;
+  const preferredLanguages = window.navigator.languages ?? [];
+  for (const language of preferredLanguages) {
+    const normalized = normalizeLanguage(language);
+    if (normalized) return normalized;
+  }
   const browser = normalizeLanguage(window.navigator.language);
-  return browser || DEFAULT_LANGUAGE;
+  return browser ?? DEFAULT_LANGUAGE;
 }
 
 if (!i18n.isInitialized) {
