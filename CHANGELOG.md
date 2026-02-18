@@ -15,6 +15,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile send actions now provide immediate feedback when posting text without any selected/typed channel tag, instead of silently doing nothing.
 - Mobile Manage view now scrolls correctly within the panel instead of clipping long settings/filter content.
 - After mobile sign-in with no cached profile metadata, the app now redirects to Manage and auto-opens the profile edit pane.
+- Mobile sign-in prompt overlay now correctly covers all mobile UI layers, including the bottom compose bar.
 
 ## [1.4.1] - 2026-02-18
 
