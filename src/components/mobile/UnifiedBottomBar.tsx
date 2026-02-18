@@ -88,6 +88,7 @@ export function UnifiedBottomBar({
   const [sharedText, setSharedText] = useState(() => searchQuery || defaultContent);
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
   const [isBottomBarFocused, setIsBottomBarFocused] = useState(false);
+  const [isBottomBarInteracting, setIsBottomBarInteracting] = useState(false);
   const [isComposeFocused, setIsComposeFocused] = useState(false);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
@@ -400,6 +401,21 @@ export function UnifiedBottomBar({
     }
   }, [canOfferComment, hasComposeText]);
 
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const root = bottomBarRef.current;
+      if (!root) return;
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      setIsBottomBarInteracting(root.contains(target));
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, []);
+
   const insertMention = (mentionToken: string) => {
     const cursorPos = cursorPositionRef.current;
     const textBeforeCursor = sharedText.slice(0, cursorPos);
@@ -422,11 +438,13 @@ export function UnifiedBottomBar({
   };
 
   const canSendTask = hasComposeText && !hasInvalidRootTaskRelaySelection;
-  const canSendComment = hasComposeText;
+  const canSendComment = hasComposeText && hasAtLeastOneTag;
   const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
   const canSubmitFromPrimary = canOfferComment ? (canSendTask || canSendComment) : canSendTask;
   const hasTaskSubmitBlock = taskSubmitBlockedReason !== null;
-  const showInlineTaskSubmitBlock = hasTaskSubmitBlock && (isComposeFocused || (isBottomBarFocused && hasComposeText));
+  const showInlineTaskSubmitBlock = hasTaskSubmitBlock && (
+    isComposeFocused || (hasComposeText && (isBottomBarFocused || isBottomBarInteracting))
+  );
 
   const handlePrimarySend = () => {
     if (!isSignedIn) {

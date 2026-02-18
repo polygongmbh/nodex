@@ -78,7 +78,7 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(onSearchChange).toHaveBeenLastCalledWith("hello #general");
   });
 
-  it("keeps task option disabled when sending without a selected channel tag", () => {
+  it("keeps task and comment options disabled when sending without a selected channel tag", () => {
     const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
     const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
 
@@ -103,8 +103,11 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(field, { target: { value: "Ship update" } });
     fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
     const taskButton = screen.getByRole("button", { name: /^send task$/i });
+    const commentButton = screen.getByRole("button", { name: /^send comment$/i });
     expect(taskButton).toBeDisabled();
+    expect(commentButton).toBeDisabled();
     fireEvent.click(taskButton);
+    fireEvent.click(commentButton);
 
     expect(toastErrorSpy).not.toHaveBeenCalled();
     expect(onSubmit).not.toHaveBeenCalled();
