@@ -712,7 +712,7 @@ export function UnifiedBottomBar({
                     <button
                       onClick={() => handleSubmit("comment")}
                       disabled={!sharedText.trim()}
-                      className="p-3 rounded-lg border border-sky-700 bg-sky-600 text-white hover:bg-sky-500 disabled:opacity-50"
+                      className="p-3 rounded-lg border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       aria-label="Send comment"
                       title={t("composer.labels.comment")}
                     >
