@@ -769,7 +769,7 @@ export function TaskComposer({
         )}
       </div>
 
-      {showExpandedControls && (parsedMentionChips.length > 0 || parsedHashtags.length > 0) && (
+      {showExpandedControls && taskType !== "task" && (parsedMentionChips.length > 0 || parsedHashtags.length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {parsedMentionChips.map((mention) => (
             <span
@@ -823,13 +823,13 @@ export function TaskComposer({
             </select>
           </div>
 
-          <div className="inline-flex min-w-[18rem] items-center gap-2 rounded-xl border border-border/40 bg-muted/40 px-2 py-1.5">
+          <div className="inline-flex min-w-[20rem] items-center gap-2 rounded-xl border border-border/40 bg-muted/40 px-2 py-1.5">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <select
               aria-label={t("composer.labels.dateType")}
               value={dateType}
               onChange={(event) => setDateType(event.target.value as TaskDateType)}
-              className="h-8 w-28 cursor-pointer rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
+              className="h-8 w-24 cursor-pointer rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
             >
               <option value="due">{t("composer.dates.due")}</option>
               <option value="scheduled">{t("composer.dates.scheduled")}</option>
@@ -878,6 +878,28 @@ export function TaskComposer({
               </>
             )}
           </div>
+
+          {parsedMentionChips.map((mention) => (
+            <span
+              key={`mention-task-${mention}`}
+              data-testid="compose-mention-chip"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary"
+              title={`${t("composer.labels.mentions")}: @${mention}`}
+            >
+              <AtSign className="w-3 h-3" />
+              {mention}
+            </span>
+          ))}
+          {parsedHashtags.map((tag) => (
+            <span
+              key={`hashtag-task-${tag}`}
+              data-testid="compose-hashtag-chip"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground"
+            >
+              <Hash className="w-3 h-3" />
+              {tag}
+            </span>
+          ))}
         </div>
       )}
 
