@@ -15,7 +15,7 @@ import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
-import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
+import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -398,15 +398,15 @@ export function ListView({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className={cn(
-            "text-xs sm:text-xs px-1.5 sm:px-2 py-1 rounded-full font-medium cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all whitespace-nowrap",
+            "text-xs px-1.5 sm:px-2 py-1 rounded-full font-medium cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all whitespace-nowrap",
             status === "done" ? "bg-primary/10 text-primary" :
             status === "in-progress" ? "bg-warning/15 text-warning" :
             "bg-muted text-muted-foreground"
           )}>
             {status === "in-progress" ? (
               <>
-                <span className="sm:hidden">{t("listView.status.inProgressShort")}</span>
-                <span className="hidden sm:inline">{t("listView.status.inProgress")}</span>
+                <span className="lg:hidden">{t("listView.status.inProgressShort")}</span>
+                <span className="hidden lg:inline">{t("listView.status.inProgress")}</span>
               </>
             ) : status === "done" ? t("listView.status.done") : t("listView.status.todo")}
           </button>
@@ -454,13 +454,15 @@ export function ListView({
             {task.dueDate ? (
               <>
                 <Calendar className="w-3.5 h-3.5" />
-                <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
+                <span className="hidden 2xl:inline uppercase tracking-wide">
+                  {t(`composer.dates.${task.dateType || "due"}`)}
+                </span>
                 <span>{format(task.dueDate, "MMM d, yyyy")}</span>
                 {task.dueTime && (
-                  <>
+                  <span className="hidden xl:inline-flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
                     <span>{task.dueTime}</span>
-                  </>
+                  </span>
                 )}
               </>
             ) : (
@@ -565,7 +567,7 @@ export function ListView({
         <table className="w-full table-fixed">
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>
-              <th className="text-left p-3 w-10">
+              <th className="text-left p-2 2xl:p-3 w-10">
                 <div className="flex items-center gap-1">
                   {(sortField !== "priority" || sortDirection !== "asc") && (
                     <button
@@ -578,7 +580,7 @@ export function ListView({
                   )}
                 </div>
               </th>
-              <th className="text-left p-3 w-auto min-w-[22rem]">
+              <th className="text-left p-2 2xl:p-3 w-auto min-w-[22rem]">
                 <SortButton field="content">
                   <span className="inline-flex items-center gap-1">
                     <ListTodo className="w-3 h-3 text-muted-foreground" />
@@ -586,7 +588,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className="text-left p-3 w-24 sm:w-28 md:w-32">
+              <th className="hidden 2xl:table-cell text-left p-2 2xl:p-3 2xl:w-28">
                 <SortButton field="status">
                   <span className="inline-flex items-center gap-1">
                     <Activity className="w-3 h-3 text-muted-foreground" />
@@ -594,7 +596,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className="text-left p-3 w-40 md:w-44 lg:w-52 xl:w-72 2xl:w-[20rem]">
+              <th className="text-left p-2 2xl:p-3 w-36 md:w-40 lg:w-44 xl:w-56 2xl:w-[19rem]">
                 <SortButton field="dueDate">
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-muted-foreground" />
@@ -602,7 +604,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className="text-left p-3 w-16 sm:w-20 md:w-24">
+              <th className="text-left p-2 2xl:p-3 w-16 sm:w-20 md:w-24">
                 <SortButton field="priority">
                   <span className="inline-flex items-center gap-1">
                     <Flag className="w-3 h-3 text-muted-foreground" />
@@ -610,7 +612,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className="text-left p-3 w-32 md:w-40 lg:w-48 xl:w-64 2xl:w-[26rem]">
+              <th className="text-left p-2 2xl:p-3 w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]">
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
                   <Tags className="w-3 h-3" />
                   {t("tasks.tags")}
@@ -642,7 +644,7 @@ export function ListView({
                       isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
                     )}
                   >
-                    <td className="p-3">
+                    <td className="p-2 2xl:p-3">
                       <button
                         onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
                         disabled={!canCompleteTask(task)}
@@ -660,7 +662,7 @@ export function ListView({
                         )}
                       </button>
                     </td>
-                    <td className="p-3 min-w-0">
+                    <td className="p-2 2xl:p-3 min-w-0">
                       <div className="space-y-1">
                         {/* Parent context */}
                         {ancestorChain.length > 0 && (
@@ -695,13 +697,13 @@ export function ListView({
                         </p>
                       </div>
                     </td>
-                    <td className="p-3">
+                    <td className="hidden 2xl:table-cell p-2 2xl:p-3">
                       <StatusCell task={task} />
                     </td>
-                    <td className="p-3 w-40 md:w-44 lg:w-52 xl:w-72 2xl:w-[20rem]">
+                    <td className="p-2 2xl:p-3 w-36 md:w-40 lg:w-44 xl:w-56 2xl:w-[19rem]">
                       <DueDateCell task={task} />
                     </td>
-                    <td className="p-3">
+                    <td className="p-2 2xl:p-3">
                       <PriorityCell
                         taskId={task.id}
                         taskContent={task.content}
@@ -709,7 +711,7 @@ export function ListView({
                         onUpdatePriority={onUpdatePriority}
                       />
                     </td>
-                    <td className="p-3 min-w-0">
+                    <td className="p-2 2xl:p-3 min-w-0 w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]">
                       <TagsCell task={task} />
                     </td>
                   </tr>
