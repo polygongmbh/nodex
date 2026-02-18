@@ -5,10 +5,22 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.7.0] - 2026-02-18
+### Added
+- Toasts can now be dismissed by tapping them, and mobile toasts now appear from the top with shorter timeouts.
+
+### Changed
+- Task state transitions now use smoother reorder behavior in Tree view, combining delayed status sorting with animated movement instead of abrupt jumps.
+- Event synchronization now fetches feed history and kind:0 profile metadata exhaustively.
+- Mobile compose now uses a unified send flow with clearer inline posting guidance and validation feedback.
+
 ### Fixed
-- Mobile Manage view now includes a language selector, so language can be changed directly on mobile.
-- iOS mobile browser chrome coloring now follows active app theme while typing (including keyboard-open states), reducing visible color mismatch between compose area and browser-controlled keyboard gap.
-- Desktop profile editor dialog now handles low viewport heights with stable internal scrolling and no longer shows a non-functional top-right close button.
+- Sending now requires meaningful message text beyond hashtags and mentions in both desktop and mobile composers.
+- Mobile Manage now includes language selection controls.
+- Mobile compose/search input handling is more stable during focus and clear interactions, preventing overlap and layout jitter.
+- iOS browser chrome coloring now stays aligned with the active app theme while typing.
+- Desktop profile editor now behaves correctly at low viewport heights and no longer shows a non-functional close affordance.
 
 ## [1.6.0] - 2026-02-18
 ### Added

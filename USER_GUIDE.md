@@ -71,6 +71,7 @@
 
 ## Compose Rules
 - At least one hashtag is required to post.
+- Compose text must include meaningful message content; hashtags/mentions alone are not sufficient.
 - Task/comment kind changes event behavior.
 - `#tags` and `@mentions` are supported in compose text.
 - Included channel filters automatically prepopulate compose with matching `#channel` tags.
