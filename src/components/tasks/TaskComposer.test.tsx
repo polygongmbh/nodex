@@ -236,7 +236,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.getByDisplayValue("#persisted hello")).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/add a comment/i)).toBeInTheDocument();
-    expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice@example.com");
+    expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
   });
 
   it("does not render a cancel action button", () => {

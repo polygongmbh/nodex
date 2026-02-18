@@ -12,6 +12,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
+  getMentionAliases,
   getPreferredMentionIdentifier,
   personMatchesMentionQuery,
 } from "@/lib/mentions";
@@ -394,6 +395,15 @@ export function TaskComposer({
     return person ? getPreferredMentionIdentifier(person) : pubkey;
   });
   const parsedMentionChips = Array.from(new Set([...parsedMentions, ...explicitMentionIdentifiers]));
+  const mentionChipItems = parsedMentionChips.map((identifier) => {
+    const normalized = identifier.trim().toLowerCase();
+    const matchingPerson = people.find((person) => getMentionAliases(person).includes(normalized));
+    const resolvedLabel = (matchingPerson?.name || matchingPerson?.displayName || "").trim();
+    return {
+      identifier,
+      label: resolvedLabel || formatMentionIdentifierForDisplay(identifier),
+    };
+  });
   const parsedHashtags = Array.from(
     new Set([
       ...(content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase()),
@@ -769,17 +779,17 @@ export function TaskComposer({
         )}
       </div>
 
-      {showExpandedControls && taskType !== "task" && (parsedMentionChips.length > 0 || parsedHashtags.length > 0) && (
+      {showExpandedControls && taskType !== "task" && (mentionChipItems.length > 0 || parsedHashtags.length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5">
-          {parsedMentionChips.map((mention) => (
+          {mentionChipItems.map((mention) => (
             <span
-              key={`mention-${mention}`}
+              key={`mention-${mention.identifier}`}
               data-testid="compose-mention-chip"
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary"
-              title={`${t("composer.labels.mentions")}: @${mention}`}
+              title={`${t("composer.labels.mentions")}: @${mention.identifier}`}
             >
               <AtSign className="w-3 h-3" />
-              {mention}
+              {mention.label}
             </span>
           ))}
           {parsedHashtags.map((tag) => (
@@ -879,15 +889,15 @@ export function TaskComposer({
             )}
           </div>
 
-          {parsedMentionChips.map((mention) => (
+          {mentionChipItems.map((mention) => (
             <span
-              key={`mention-task-${mention}`}
+              key={`mention-task-${mention.identifier}`}
               data-testid="compose-mention-chip"
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary"
-              title={`${t("composer.labels.mentions")}: @${mention}`}
+              title={`${t("composer.labels.mentions")}: @${mention.identifier}`}
             >
               <AtSign className="w-3 h-3" />
-              {mention}
+              {mention.label}
             </span>
           ))}
           {parsedHashtags.map((tag) => (
