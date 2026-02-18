@@ -521,7 +521,7 @@ export function UnifiedBottomBar({
           {activeSelector === "date" && (
             <div
               ref={dateScrollerRef}
-              className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:thin] snap-x snap-mandatory"
+              className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
             >
               <div className="w-max min-w-full border-t border-border/60 pt-2 flex gap-3">
                 {inlineDateMonths.map((month) => {
