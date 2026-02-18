@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-02-18
+
 ### Added
 - Failed-publish queue for compose submissions: when relay publish fails, the post is now stored in local storage and surfaced in a red retry banner (desktop/mobile) with explicit retry and dismiss actions.
 

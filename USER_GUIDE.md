@@ -84,6 +84,12 @@
 - Table view supports inline due date/time/date-type editing.
 - Calendar urgency colors shift from yellow (sooner) toward greener tones (farther out).
 
+## Reliability and Sorting
+- If relay publish fails, the post is queued locally in a failed-publish banner with retry/dismiss actions instead of being treated as a normal published task/comment.
+- Latest feed events are cached locally and rehydrated on app load for better offline/reconnect continuity.
+- Edit profile/setup modal does not open when no relay is connected.
+- Non-feed task views use a shared priority order: due-now/overdue, then in-progress, high priority (`50+`), upcoming due, medium priority (`30-49`), no priority, then low priority (`<30`); Kanban `done` stays chronological.
+
 ### Compose keyboard behavior (desktop)
 - `Enter` / `Tab` with autocomplete open: insert the highlighted suggestion into text.
 - `Ctrl/Cmd+Enter`: submit as the currently selected kind.
