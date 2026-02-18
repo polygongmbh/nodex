@@ -797,82 +797,87 @@ export function TaskComposer({
 
       {/* Due date for tasks */}
       {showExpandedControls && taskType === "task" && (
-        <div className="flex items-center gap-2 p-2 bg-muted/40 border border-border/40 rounded-xl">
-          <Flag className="w-4 h-4 text-muted-foreground" />
-          <select
-            aria-label={t("composer.labels.priority")}
-            value={priority === undefined ? "" : String(priority)}
-            onChange={(event) => {
-              const value = event.target.value;
-              if (!value) {
-                setPriority(undefined);
-                return;
-              }
-              const parsed = Number.parseInt(value, 10);
-              setPriority(Number.isFinite(parsed) ? parsed : undefined);
-            }}
-            className="h-7 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
-          >
-            <option value="">{t("composer.labels.priority")}</option>
-            <option value="20">P20</option>
-            <option value="40">P40</option>
-            <option value="60">P60</option>
-            <option value="80">P80</option>
-            <option value="100">P100</option>
-          </select>
-          <Calendar className="w-4 h-4 text-muted-foreground" />
-          <select
-            aria-label={t("composer.labels.dateType")}
-            value={dateType}
-            onChange={(event) => setDateType(event.target.value as TaskDateType)}
-            className="h-7 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
-          >
-            <option value="due">{t("composer.dates.due")}</option>
-            <option value="scheduled">{t("composer.dates.scheduled")}</option>
-            <option value="start">{t("composer.dates.start")}</option>
-            <option value="end">{t("composer.dates.end")}</option>
-            <option value="milestone">{t("composer.dates.milestone")}</option>
-          </select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="text-sm text-muted-foreground hover:text-foreground">
-                {dueDate
-                  ? format(dueDate, "MMM d, yyyy")
-                  : t("composer.dates.setOptional", {
-                      dateType: t(`composer.dates.${dateType}`),
-                    })}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                mode="single"
-                selected={dueDate}
-                onSelect={setDueDate}
-                initialFocus
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-          {dueDate && (
-            <>
-              <Clock className="w-4 h-4 text-muted-foreground ml-2" />
-              <input
-                type="time"
-                value={dueTime}
-                onChange={(e) => setDueTime(e.target.value)}
-                className="text-sm bg-transparent text-foreground focus:outline-none"
-              />
-              <button
-                onClick={() => {
-                  setDueDate(undefined);
-                  setDueTime("");
-                }}
-                className="ml-auto p-1 hover:bg-muted rounded"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </>
-          )}
+        <div className="grid w-full gap-2">
+          <div className="flex w-full items-center gap-2 rounded-xl border border-border/40 bg-muted/40 px-2 py-1.5">
+            <Flag className="h-4 w-4 text-muted-foreground" />
+            <select
+              aria-label={t("composer.labels.priority")}
+              value={priority === undefined ? "" : String(priority)}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (!value) {
+                  setPriority(undefined);
+                  return;
+                }
+                const parsed = Number.parseInt(value, 10);
+                setPriority(Number.isFinite(parsed) ? parsed : undefined);
+              }}
+              className="h-8 w-full cursor-pointer rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
+            >
+              <option value="">{t("composer.labels.priority")}</option>
+              <option value="20">P20</option>
+              <option value="40">P40</option>
+              <option value="60">P60</option>
+              <option value="80">P80</option>
+              <option value="100">P100</option>
+            </select>
+          </div>
+
+          <div className="flex w-full items-center gap-2 rounded-xl border border-border/40 bg-muted/40 px-2 py-1.5">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <select
+              aria-label={t("composer.labels.dateType")}
+              value={dateType}
+              onChange={(event) => setDateType(event.target.value as TaskDateType)}
+              className="h-8 w-28 cursor-pointer rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
+            >
+              <option value="due">{t("composer.dates.due")}</option>
+              <option value="scheduled">{t("composer.dates.scheduled")}</option>
+              <option value="start">{t("composer.dates.start")}</option>
+              <option value="end">{t("composer.dates.end")}</option>
+              <option value="milestone">{t("composer.dates.milestone")}</option>
+            </select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="h-8 flex-1 rounded-md border border-border/50 px-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
+                  {dueDate
+                    ? format(dueDate, "MMM d, yyyy")
+                    : t("composer.dates.setOptional", {
+                        dateType: t(`composer.dates.${dateType}`),
+                      })}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={dueDate}
+                  onSelect={setDueDate}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            {dueDate && (
+              <>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <input
+                  type="time"
+                  value={dueTime}
+                  onChange={(e) => setDueTime(e.target.value)}
+                  className="h-8 w-24 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                />
+                <button
+                  onClick={() => {
+                    setDueDate(undefined);
+                    setDueTime("");
+                  }}
+                  className="rounded-md p-1.5 hover:bg-muted"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
 
