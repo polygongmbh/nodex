@@ -16,6 +16,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile Manage view now scrolls correctly within the panel instead of clipping long settings/filter content.
 - After mobile sign-in with no cached profile metadata for the signed-in user, the app now redirects to Manage and auto-opens the profile edit pane.
 - Mobile sign-in prompt overlay now correctly covers all mobile UI layers, including the bottom compose bar.
+- Mobile profile setup/manage editor no longer flickers between setup/edit states due to repeated profile-sync reruns.
 
 ## [1.4.1] - 2026-02-18
 

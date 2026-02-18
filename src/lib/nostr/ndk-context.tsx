@@ -598,13 +598,13 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       return;
     }
 
+    const baseProfile = user.profile;
     const syncRun = profileSyncRunRef.current + 1;
     profileSyncRunRef.current = syncRun;
     let cancelled = false;
     const isStale = () => cancelled || profileSyncRunRef.current !== syncRun;
 
     setIsProfileSyncing(true);
-    setNeedsProfileSetup(false);
 
     const syncProfile = async () => {
       let signerProfile: NostrUser["profile"] | null = null;
@@ -643,14 +643,25 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       }
       if (isStale()) return;
 
+      const nextProfile = {
+        ...mergedProfile,
+        nip05Verified,
+      };
+
       setUser((prev) => {
         if (!prev || prev.pubkey !== user.pubkey) return prev;
+        const previousProfile = prev.profile;
+        const isUnchanged =
+          previousProfile?.name === nextProfile.name &&
+          previousProfile?.displayName === nextProfile.displayName &&
+          previousProfile?.picture === nextProfile.picture &&
+          previousProfile?.about === nextProfile.about &&
+          previousProfile?.nip05 === nextProfile.nip05 &&
+          previousProfile?.nip05Verified === nextProfile.nip05Verified;
+        if (isUnchanged) return prev;
         return {
           ...prev,
-          profile: {
-            ...mergedProfile,
-            nip05Verified,
-          },
+          profile: nextProfile,
         };
       });
       setNeedsProfileSetup(!hasRequiredProfileFields(mergedProfile));
@@ -660,13 +671,13 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     void syncProfile().catch((error) => {
       if (isStale()) return;
       console.warn("Profile sync failed", error);
-      setNeedsProfileSetup(!(user.profile && hasRequiredProfileFields(user.profile)));
+      setNeedsProfileSetup(!(baseProfile && hasRequiredProfileFields(baseProfile)));
       setIsProfileSyncing(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [ndk, fetchLatestKind0Profile, user?.pubkey, user?.profile]);
+  }, [ndk, fetchLatestKind0Profile, user?.pubkey]);
 
   const subscribe = useCallback((
     filters: NDKFilter[],
