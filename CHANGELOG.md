@@ -12,7 +12,11 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Changed
 - Popups and selector surfaces now use softer enter motion with global reduced-motion fallbacks for accessibility.
 - Localization coverage expanded across task/status controls, calendar/list/kanban labels, relay management, publish-failure banner actions, and related accessibility labels/tooltips.
-- Desktop top-right language control now uses a flag-based dropdown (instead of cycling), and initial app language selection now follows browser/system preferred language order when no saved preference exists.
+- Desktop top-right language control now uses a slimmer borderless/arrowless dropdown trigger with responsive labels (flag-only on smaller desktop widths, shortcode on medium desktop widths with content-fit sizing, full names on larger desktop widths with fixed width), and initial app language selection follows browser/system preferred language order when no saved preference exists.
+- Desktop top-right controls now place the completion sound toggle between language and theme selectors, and hide it on smaller desktop widths.
+- Top-right control styling is now consistent in icon-only modes, including square language trigger sizing and matching hover treatment.
+- Desktop profile dropdown trigger now has a clearer hover/open state, content-fit sizing, and no persistent blue focus ring after defocus.
+- Desktop profile and language dropdown triggers now share the same hover/open styling, and top-right icon hover overlays use a softer (less opaque) accent background.
 
 ## [1.5.1] - 2026-02-18
 

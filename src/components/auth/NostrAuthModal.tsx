@@ -491,7 +491,11 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     <>
       <DropdownMenu onOpenChange={(open) => { if (!open) setShowKey(false); }}>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-full w-full px-2 gap-2 bg-transparent hover:bg-transparent rounded-none justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 w-auto max-w-[14rem] px-2 gap-2 bg-transparent hover:bg-accent/60 hover:text-accent-foreground data-[state=open]:bg-accent/60 data-[state=open]:text-accent-foreground rounded-md justify-end focus-visible:ring-0 focus-visible:ring-offset-0"
+          >
             <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-5 h-5" />
             <span className="text-sm font-medium truncate max-w-[8rem]">{displayName}</span>
             <ChevronDown className="w-4 h-4 text-muted-foreground" />

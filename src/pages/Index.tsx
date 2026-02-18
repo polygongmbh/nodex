@@ -1450,8 +1450,12 @@ const Index = () => {
         </div>
         <div className="h-full flex items-center justify-end gap-2 w-auto pl-2">
           <NostrUserMenu onSignInClick={handleOpenAuthModal} />
-          <CompletionFeedbackToggle enabled={completionSoundEnabled} onToggle={handleToggleCompletionSound} />
           <LanguageToggle />
+          <CompletionFeedbackToggle
+            enabled={completionSoundEnabled}
+            onToggle={handleToggleCompletionSound}
+            className="hidden lg:inline-flex"
+          />
           <ThemeModeToggle />
         </div>
       </div>

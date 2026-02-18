@@ -27,7 +27,7 @@ export function SidebarHeader({ className }: SidebarHeaderProps) {
   const appVersionHint = `Nodex v${APP_VERSION || "0.0.0"}`;
 
   return (
-    <div className={cn("px-2 sm:px-3 lg:px-4 border-b border-sidebar-border flex items-center flex-shrink-0", className)}>
+    <div className={cn("w-36 sm:w-44 lg:w-64 overflow-hidden px-2 sm:px-3 lg:px-4 border-b border-sidebar-border flex items-center flex-shrink-0", className)}>
       <div className="flex items-center gap-2 lg:gap-3">
         <div className="w-7 h-7 sm:w-8 sm:h-8 xl:w-10 xl:h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
           <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 xl:w-5 xl:h-5 text-primary" />
