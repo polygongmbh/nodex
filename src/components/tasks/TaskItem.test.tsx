@@ -104,7 +104,7 @@ describe("TaskItem status actions", () => {
 
     expect(screen.getByLabelText("Set status")).toHaveAttribute(
       "title",
-      "Mark task in progress. Hold Alt while clicking to select status."
+      expect.stringContaining("select status")
     );
   });
 

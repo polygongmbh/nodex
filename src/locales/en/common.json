@@ -120,6 +120,17 @@
       "guide": "Guide"
     }
   },
+  "hints": {
+    "modifiers": {
+      "alt": "Alt",
+      "optionAlt": "Option (Alt)"
+    },
+    "statusToggle": {
+      "todo": "Mark task in progress. Hold {{alternateKey}} while clicking to select status.",
+      "inProgress": "Mark task done. Hold {{alternateKey}} while clicking to select status.",
+      "done": "Task is done. Click to select status."
+    }
+  },
   "breadcrumbs": {
     "up": "Up",
     "goToParent": "Go to parent task",
@@ -255,7 +266,7 @@
       "filtersSearch": { "title": "Search bar", "description": "Use the bottom search bar to narrow visible tasks by text across all views." },
       "filtersHashtagContent": { "title": "Hashtags in content", "description": "Click a hashtag in a task to focus on that tag. Clear the tag filter to return to the full list.", "action": "Click a hashtag chip in a task item." },
       "composeKind": { "title": "Task vs comment", "description": "Use the Kind selector to choose whether to post a task or a comment.", "action": "Focus the kind selector to continue." },
-      "composeInput": { "title": "Tags and mentions", "description": "Use #tags to organize items and @mentions to reference people in the compose box. Included channels auto-prepopulate as hashtags. You can set a date type (Due, Scheduled, Start, End, or Milestone) so tasks appear in Calendar view; future Start dates are shown as not yet doable.", "action": "Power-user hint: Alt+Enter submits as the other kind when no autocomplete is open; with autocomplete open, modifier+Enter can add the selected tag/mention as metadata without inserting token text." },
+      "composeInput": { "title": "Tags and mentions", "description": "Use #tags to organize items and @mentions to reference people in the compose box. Included channels auto-prepopulate as hashtags. You can set a date type (Due, Scheduled, Start, End, or Milestone) so tasks appear in Calendar view; future Start dates are shown as not yet doable.", "action": "Power-user hint: Option (Alt)+Enter submits as the other kind when no autocomplete is open; with autocomplete open, Option/Shift/Cmd/Ctrl+Enter can add the selected tag/mention as metadata without inserting token text." },
       "mobileNavigationNav": { "title": "Mobile views", "description": "Use the top navigation to switch between Tree, Feed, List, and Calendar.", "action": "Tap a navigation tab to continue." },
       "mobileNavigationFocus": { "title": "Navigate into a task", "description": "Tap a task item to open its focused context and navigation path.", "action": "Tap a task item to continue." },
       "mobileNavigationBreadcrumb": { "title": "Use breadcrumbs", "description": "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.", "action": "Tap a breadcrumb item to continue." },

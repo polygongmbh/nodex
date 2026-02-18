@@ -120,6 +120,17 @@
       "guide": "Leitfaden"
     }
   },
+  "hints": {
+    "modifiers": {
+      "alt": "Alt",
+      "optionAlt": "Option (Alt)"
+    },
+    "statusToggle": {
+      "todo": "Aufgabe als in Arbeit markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
+      "inProgress": "Aufgabe als erledigt markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
+      "done": "Aufgabe ist erledigt. Klicke, um den Status auszuwählen."
+    }
+  },
   "breadcrumbs": {
     "up": "Hoch",
     "goToParent": "Zur übergeordneten Aufgabe wechseln",
@@ -255,7 +266,7 @@
       "filtersSearch": { "title": "Suchleiste", "description": "Nutze die untere Suchleiste, um sichtbare Aufgaben in allen Ansichten per Text einzugrenzen." },
       "filtersHashtagContent": { "title": "Hashtags im Inhalt", "description": "Klicke auf einen Hashtag in einer Aufgabe, um auf diesen Tag zu fokussieren. Entferne den Tag-Filter, um zur vollen Liste zurückzukehren.", "action": "Klicke auf ein Hashtag-Chip in einer Aufgabe." },
       "composeKind": { "title": "Aufgabe vs. Kommentar", "description": "Mit der Typ-Auswahl legst du fest, ob du eine Aufgabe oder einen Kommentar veröffentlichst.", "action": "Fokussiere die Typ-Auswahl, um fortzufahren." },
-      "composeInput": { "title": "Tags und Mentions", "description": "Nutze #tags zur Organisation und @mentions für Personenreferenzen im Eingabefeld. Eingeschlossene Kanäle werden automatisch als Hashtags eingefügt. Du kannst einen Datumstyp (Fällig, Geplant, Start, Ende oder Meilenstein) setzen, damit Aufgaben im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.", "action": "Power-User-Hinweis: Alt+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete kann Modifier+Enter den gewählten Tag/Mention nur als Metadaten hinzufügen, ohne Tokentext einzufügen." },
+      "composeInput": { "title": "Tags und Mentions", "description": "Nutze #tags zur Organisation und @mentions für Personenreferenzen im Eingabefeld. Eingeschlossene Kanäle werden automatisch als Hashtags eingefügt. Du kannst einen Datumstyp (Fällig, Geplant, Start, Ende oder Meilenstein) setzen, damit Aufgaben im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.", "action": "Power-User-Hinweis: Option (Alt)+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete kann Option/Umschalt/Cmd/Ctrl+Enter den gewählten Tag/Mention nur als Metadaten hinzufügen, ohne Tokentext einzufügen." },
       "mobileNavigationNav": { "title": "Mobile Ansichten", "description": "Nutze die obere Navigation, um zwischen Hierarchisch, Feed, Tabelle und Kalender zu wechseln.", "action": "Tippe auf einen Navigations-Tab, um fortzufahren." },
       "mobileNavigationFocus": { "title": "In Aufgabe navigieren", "description": "Tippe auf eine Aufgabe, um ihren fokussierten Kontext und den Navigationspfad zu öffnen.", "action": "Tippe auf eine Aufgabe, um fortzufahren." },
       "mobileNavigationBreadcrumb": { "title": "Breadcrumbs nutzen", "description": "Nutze die Breadcrumb-Leiste, um in der Hierarchie nach oben zu gehen oder zwischen Elternaufgaben zu springen.", "action": "Tippe auf ein Breadcrumb-Element, um fortzufahren." },

@@ -32,6 +32,8 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/lib/taskSorting";
+import { useTranslation } from "react-i18next";
+import { isMacOSPlatform } from "@/lib/keyboard-platform";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,10 +99,14 @@ export function CalendarView({
   onHashtagClick,
   onAuthorClick,
 }: CalendarViewProps) {
+  const { t } = useTranslation();
   const getStatusToggleHint = (status?: Task["status"]): string => {
-    if (status === "in-progress") return "Mark task done. Hold Alt while clicking to select status.";
-    if (status === "done") return "Task is done. Click to select status.";
-    return "Mark task in progress. Hold Alt while clicking to select status.";
+    const alternateKey = isMacOSPlatform()
+      ? t("hints.modifiers.optionAlt")
+      : t("hints.modifiers.alt");
+    if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
+    if (status === "done") return t("hints.statusToggle.done");
+    return t("hints.statusToggle.todo", { alternateKey });
   };
 
   const { user } = useNDK();
