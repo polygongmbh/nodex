@@ -1,6 +1,6 @@
 import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw } from "lucide-react";
+import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags } from "lucide-react";
 import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -95,7 +95,7 @@ const PriorityCell = memo(function PriorityCell({
           onUpdatePriority?.(taskId, parsed);
         }
       }}
-      className="text-xs bg-background border border-border rounded px-2 py-1"
+      className="h-7 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
     >
       <option value="">—</option>
       <option value="20">P20</option>
@@ -579,18 +579,43 @@ export function ListView({
                 </div>
               </th>
               <th className="text-left p-3 w-auto min-w-[22rem]">
-                <SortButton field="content">{t("listView.sort.task")}</SortButton>
+                <SortButton field="content">
+                  <span className="inline-flex items-center gap-1">
+                    <ListTodo className="w-3 h-3 text-muted-foreground" />
+                    {t("listView.sort.task")}
+                  </span>
+                </SortButton>
               </th>
               <th className="text-left p-3 w-24 sm:w-28 md:w-32">
-                <SortButton field="status">{t("listView.sort.status")}</SortButton>
+                <SortButton field="status">
+                  <span className="inline-flex items-center gap-1">
+                    <Activity className="w-3 h-3 text-muted-foreground" />
+                    {t("listView.sort.status")}
+                  </span>
+                </SortButton>
               </th>
-              <th className="text-left p-3 w-40 md:w-44 lg:w-52 xl:w-72 2xl:w-[24rem]">
-                <SortButton field="dueDate">{t("listView.sort.dueDate")}</SortButton>
+              <th className="text-left p-3 w-40 md:w-44 lg:w-52 xl:w-72 2xl:w-[20rem]">
+                <SortButton field="dueDate">
+                  <span className="inline-flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-muted-foreground" />
+                    {t("listView.sort.dueDate")}
+                  </span>
+                </SortButton>
               </th>
               <th className="text-left p-3 w-16 sm:w-20 md:w-24">
-                <SortButton field="priority">{t("listView.sort.priority")}</SortButton>
+                <SortButton field="priority">
+                  <span className="inline-flex items-center gap-1">
+                    <Flag className="w-3 h-3 text-muted-foreground" />
+                    {t("listView.sort.priority")}
+                  </span>
+                </SortButton>
               </th>
-              <th className="text-left p-3 w-32 md:w-40 lg:w-48 xl:w-64 2xl:w-[26rem]">Tags</th>
+              <th className="text-left p-3 w-32 md:w-40 lg:w-48 xl:w-64 2xl:w-[26rem]">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                  <Tags className="w-3 h-3" />
+                  Tags
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -673,7 +698,7 @@ export function ListView({
                     <td className="p-3">
                       <StatusCell task={task} />
                     </td>
-                    <td className="p-3 w-40 md:w-44 lg:w-52 xl:w-72 2xl:w-[24rem]">
+                    <td className="p-3 w-40 md:w-44 lg:w-52 xl:w-72 2xl:w-[20rem]">
                       <DueDateCell task={task} />
                     </td>
                     <td className="p-3">

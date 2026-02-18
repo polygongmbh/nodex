@@ -811,7 +811,7 @@ export function TaskComposer({
               const parsed = Number.parseInt(value, 10);
               setPriority(Number.isFinite(parsed) ? parsed : undefined);
             }}
-            className="text-xs bg-background border border-border/50 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+            className="h-7 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
           >
             <option value="">{t("composer.labels.priority")}</option>
             <option value="20">P20</option>
