@@ -638,7 +638,7 @@ export function UnifiedBottomBar({
         <div className="overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex items-center gap-2 pt-1">
           {showInlineTaskSubmitBlock ? (
-            <div className="h-8 inline-flex items-center rounded-md border border-border/70 bg-muted/40 px-2 text-xs text-muted-foreground">
+            <div className="h-8 inline-flex items-center justify-center rounded-md border border-border/70 bg-muted/40 px-2 text-xs leading-none text-muted-foreground">
               {taskSubmitBlockedReason}
             </div>
           ) : !hasTaskSubmitBlock ? (
@@ -766,11 +766,20 @@ export function UnifiedBottomBar({
       </div>
 
       {/* Input Area */}
-      <div className="flex items-end gap-2 p-3">
+      <div className="flex items-stretch gap-2 p-3">
         <div className="flex-1">
-          <div className="flex items-end gap-2">
+          <div className="flex h-[3.3em] items-stretch gap-2 text-sm">
             <div className="flex-1 relative">
-              {!isComposeFocused && !hasComposeText && (
+              {hasComposeText ? (
+                <button
+                  onClick={handleCancel}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted z-10"
+                  aria-label={t("composer.hints.clearCompose")}
+                  title={t("composer.hints.clearCompose")}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              ) : (
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               )}
               <textarea
@@ -849,10 +858,7 @@ export function UnifiedBottomBar({
                   }
                 }}
                 placeholder={t("composer.placeholders.mobileTask")}
-                className={cn(
-                  "flex-1 w-full bg-muted/30 border border-border rounded-lg pr-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px] max-h-32",
-                  !isComposeFocused && !hasComposeText ? "pl-9" : "pl-3"
-                )}
+                className="h-full w-full bg-muted/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm leading-[1.35] resize-none overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden focus:outline-none focus:ring-2 focus:ring-primary/50"
                 rows={1}
               />
               {showMentionSuggestions && filteredPeople.length > 0 && (
@@ -892,23 +898,13 @@ export function UnifiedBottomBar({
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={handleCancel}
-                disabled={!hasComposeText}
-                className="h-10 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-45 disabled:hover:bg-transparent"
-                aria-label={t("composer.hints.clearCompose")}
-                title={t("composer.hints.clearCompose")}
-              >
-                <X className="w-4 h-4" />
-              </button>
-
+            <div className="flex h-full items-stretch gap-1.5">
               <div className="relative">
                 <button
                   onClick={handlePrimarySend}
                   disabled={isSignedIn ? !canSubmitFromPrimary : false}
                   className={cn(
-                    "h-10 w-10 inline-flex items-center justify-center rounded-lg border transition-colors",
+                    "h-full w-11 inline-flex items-center justify-center rounded-lg border transition-colors",
                     isSignedIn
                       ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       : "border-border text-foreground hover:bg-muted"
