@@ -62,6 +62,17 @@ import {
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
+import { loadPresencePublishingEnabled } from "@/lib/presence-preferences";
+import {
+  NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
+  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
+  buildActivePresenceContent,
+  buildOfflinePresenceContent,
+  buildPresenceTags,
+  getPresenceExpirationUnix,
+  isNodexPresenceEvent,
+  parsePresenceContent,
+} from "@/lib/presence-status";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import {
   isFilterResetStep,
@@ -126,6 +137,7 @@ const Index = () => {
       NostrEventKind.Procedure,
       NostrEventKind.CalendarDateBased,
       NostrEventKind.CalendarTimeBased,
+      NostrEventKind.UserStatus,
     ],
     []
   );
@@ -211,6 +223,33 @@ const Index = () => {
     () => mergeKind0EventsWithCache(liveKind0Events, cachedKind0Events),
     [cachedKind0Events, liveKind0Events]
   );
+  const supplementalLatestActivityByAuthor = useMemo(() => {
+    const nowUnix = Math.floor(Date.now() / 1000);
+    const latestByAuthor = new Map<string, number>();
+
+    for (const event of nostrEvents) {
+      if (event.kind === NostrEventKind.Metadata) continue;
+
+      const authorId = event.pubkey?.trim().toLowerCase();
+      if (!authorId) continue;
+
+      if (event.kind === NostrEventKind.UserStatus) {
+        if (!isNodexPresenceEvent(event.tags)) continue;
+        const expirationUnix = getPresenceExpirationUnix(event.tags);
+        if (expirationUnix !== null && expirationUnix < nowUnix) continue;
+        const presence = parsePresenceContent(event.content || "");
+        if (!presence || presence.state !== "active") continue;
+      }
+
+      const timestampMs = (event.created_at || 0) * 1000;
+      const previous = latestByAuthor.get(authorId) ?? Number.NEGATIVE_INFINITY;
+      if (timestampMs > previous) {
+        latestByAuthor.set(authorId, timestampMs);
+      }
+    }
+
+    return latestByAuthor;
+  }, [nostrEvents]);
 
   useEffect(() => {
     const merged = mergeKind0EventsWithCache(liveKind0Events, loadCachedKind0Events());
@@ -252,6 +291,7 @@ const Index = () => {
             nip05: user.profile?.nip05?.trim().toLowerCase(),
             avatar: user.profile?.picture,
             isOnline: true,
+            onlineStatus: "online",
             isSelected: prev.find((person) => person.id === user.pubkey)?.isSelected || false,
           },
         ];
@@ -596,6 +636,7 @@ const Index = () => {
               ...author,
               avatar: author.avatar || "",
               isOnline: author.isOnline ?? true,
+              onlineStatus: author.onlineStatus ?? "online",
               isSelected: false,
             },
           ];
@@ -891,6 +932,7 @@ const Index = () => {
           nip05: user.profile?.nip05?.trim().toLowerCase(),
           avatar: user.profile?.picture,
           isOnline: true,
+          onlineStatus: "online",
           isSelected: false,
         };
       }
@@ -1146,8 +1188,51 @@ const Index = () => {
   );
 
   const sidebarPeople = useMemo(() => {
-    return deriveSidebarPeople(people, allTasks);
-  }, [allTasks, people]);
+    return deriveSidebarPeople(people, allTasks, supplementalLatestActivityByAuthor);
+  }, [allTasks, people, supplementalLatestActivityByAuthor]);
+
+  const lastPublishedPresenceRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.pubkey) {
+      lastPublishedPresenceRef.current = null;
+      return;
+    }
+
+    if (!loadPresencePublishingEnabled()) return;
+
+    const snapshot = `${currentView}:${focusedTaskId || ""}`;
+    if (lastPublishedPresenceRef.current === snapshot) return;
+    lastPublishedPresenceRef.current = snapshot;
+
+    const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS;
+    void publishEvent(
+      NostrEventKind.UserStatus,
+      buildActivePresenceContent(currentView, focusedTaskId),
+      buildPresenceTags(expirationUnix)
+    );
+  }, [currentView, focusedTaskId, publishEvent, user?.pubkey]);
+
+  useEffect(() => {
+    if (!user?.pubkey) return;
+
+    const publishOfflinePresence = () => {
+      if (!loadPresencePublishingEnabled()) return;
+      const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS;
+      void publishEvent(
+        NostrEventKind.UserStatus,
+        buildOfflinePresenceContent(),
+        buildPresenceTags(expirationUnix)
+      );
+    };
+
+    window.addEventListener("pagehide", publishOfflinePresence);
+    window.addEventListener("beforeunload", publishOfflinePresence);
+    return () => {
+      window.removeEventListener("pagehide", publishOfflinePresence);
+      window.removeEventListener("beforeunload", publishOfflinePresence);
+    };
+  }, [publishEvent, user?.pubkey]);
 
   const viewProps = {
     tasks: filteredTasks,

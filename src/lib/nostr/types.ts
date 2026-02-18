@@ -33,6 +33,7 @@ export enum NostrEventKind {
   Procedure = 1639,
   CalendarDateBased = 31922,
   CalendarTimeBased = 31923,
+  UserStatus = 30315,
 }
 
 export interface NostrFilter {

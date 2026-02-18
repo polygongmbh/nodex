@@ -295,6 +295,8 @@
       "copiedPrivateKey": "Private key copied to clipboard",
       "nameRequired": "Profile name is required",
       "noRelayConnected": "Connect to at least one relay before editing profile",
+      "presenceTitle": "Share live status",
+      "presenceDescription": "Broadcast your current view and active task (NIP-38). Disable for privacy.",
       "updated": "Profile updated on connected relays",
       "updateFailed": "Failed to update profile. Check relay connectivity and try again."
     },

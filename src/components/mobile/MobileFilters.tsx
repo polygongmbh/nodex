@@ -10,6 +10,16 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";
 import { useTranslation } from "react-i18next";
+import {
+  loadPresencePublishingEnabled,
+  savePresencePublishingEnabled,
+} from "@/lib/presence-preferences";
+import { NostrEventKind } from "@/lib/nostr/types";
+import {
+  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
+  buildOfflinePresenceContent,
+  buildPresenceTags,
+} from "@/lib/presence-status";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -53,7 +63,7 @@ export function MobileFilters({
     return `${value.slice(0, 10)}…${value.slice(-6)}`;
   };
 
-  const { user, authMethod, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile } = useNDK();
+  const { user, authMethod, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
@@ -63,6 +73,9 @@ export function MobileFilters({
   const [profilePicture, setProfilePicture] = useState("");
   const [profileNip05, setProfileNip05] = useState("");
   const [profileAbout, setProfileAbout] = useState("");
+  const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
+    loadPresencePublishingEnabled()
+  );
 
   const displayName = useMemo(() => {
     if (!user) return t("filters.profile.notSignedIn");
@@ -87,6 +100,7 @@ export function MobileFilters({
     setProfilePicture(user?.profile?.picture || "");
     setProfileNip05(user?.profile?.nip05 || "");
     setProfileAbout(user?.profile?.about || "");
+    setPresencePublishingEnabled(loadPresencePublishingEnabled());
   }, [
     needsProfileSetup,
     user?.profile?.about,
@@ -138,6 +152,19 @@ export function MobileFilters({
       }
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handlePresencePublishingChange = (enabled: boolean) => {
+    setPresencePublishingEnabled(enabled);
+    savePresencePublishingEnabled(enabled);
+    if (!enabled && user?.pubkey) {
+      const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS;
+      void publishEvent(
+        NostrEventKind.UserStatus,
+        buildOfflinePresenceContent(),
+        buildPresenceTags(expirationUnix)
+      );
     }
   };
 
@@ -259,6 +286,19 @@ export function MobileFilters({
                     className="min-h-20"
                   />
                 </div>
+                <label htmlFor="manage-profile-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
+                  <input
+                    id="manage-profile-presence-enabled"
+                    type="checkbox"
+                    checked={presencePublishingEnabled}
+                    onChange={(event) => handlePresencePublishingChange(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-primary"
+                  />
+                  <span className="space-y-0.5">
+                    <span className="block text-xs font-medium">{t("filters.profile.presenceTitle")}</span>
+                    <span className="block text-[11px] text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
+                  </span>
+                </label>
                 <div className="flex items-center justify-end gap-2 pt-1">
                   {!needsProfileSetup && (
                     <button

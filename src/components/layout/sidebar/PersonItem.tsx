@@ -12,6 +12,8 @@ interface PersonItemProps {
 
 export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = false }: PersonItemProps) {
   const personName = person.id === "me" ? "Me" : person.displayName;
+  const onlineStatus = person.onlineStatus ?? (person.isOnline ? "online" : "offline");
+  const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-yellow-400" : null;
 
   return (
     <SidebarFilterRow
@@ -43,8 +45,8 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
           )}
           beamTestId={`sidebar-person-beam-${person.id}`}
         />
-        {person.isOnline && (
-          <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-sidebar" />
+        {statusDotClassName && (
+          <div className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-sidebar", statusDotClassName)} />
         )}
       </button>
       <button

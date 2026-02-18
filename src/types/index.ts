@@ -24,6 +24,7 @@ export interface Person {
   nip05?: string;
   avatar?: string;
   isOnline: boolean;
+  onlineStatus?: "online" | "recent" | "offline";
   isSelected: boolean;
 }
 

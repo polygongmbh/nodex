@@ -20,7 +20,7 @@ describe("deriveSidebarPeople", () => {
       makeTask({ id: "c2", author: carol, timestamp: new Date("2026-02-17T11:57:00.000Z") }),
     ];
 
-    const sidebarPeople = deriveSidebarPeople([alice, bob, carol], tasks, now);
+    const sidebarPeople = deriveSidebarPeople([alice, bob, carol], tasks, new Map(), now);
 
     expect(sidebarPeople.map((person) => person.id)).toEqual(["alice-pk", "bob-pk"]);
     expect(sidebarPeople[0].isSelected).toBe(true);
@@ -40,8 +40,25 @@ describe("deriveSidebarPeople", () => {
       makeTask({ id: "s3", author: stale, timestamp: new Date("2026-02-17T11:45:00.000Z") }),
     ];
 
-    const sidebarPeople = deriveSidebarPeople([recent, stale], tasks, now);
+    const sidebarPeople = deriveSidebarPeople([recent, stale], tasks, new Map(), now);
     expect(sidebarPeople.find((person) => person.id === "recent-pk")?.isOnline).toBe(true);
     expect(sidebarPeople.find((person) => person.id === "stale-pk")?.isOnline).toBe(false);
+    expect(sidebarPeople.find((person) => person.id === "stale-pk")?.onlineStatus).toBe("recent");
+  });
+
+  it("uses NIP-38 activity timestamps for online status", () => {
+    const now = new Date("2026-02-17T12:00:00.000Z");
+    const alice = makePerson({ id: "alice-pk", name: "alice", displayName: "Alice" });
+    const tasks = [
+      makeTask({ id: "a1", author: alice, timestamp: new Date("2026-02-17T10:30:00.000Z") }),
+      makeTask({ id: "a2", author: alice, timestamp: new Date("2026-02-17T10:20:00.000Z") }),
+      makeTask({ id: "a3", author: alice, timestamp: new Date("2026-02-17T10:10:00.000Z") }),
+    ];
+    const presence = new Map([["alice-pk", new Date("2026-02-17T11:58:30.000Z").getTime()]]);
+
+    const sidebarPeople = deriveSidebarPeople([alice], tasks, presence, now);
+
+    expect(sidebarPeople[0].isOnline).toBe(true);
+    expect(sidebarPeople[0].onlineStatus).toBe("online");
   });
 });

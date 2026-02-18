@@ -17,6 +17,11 @@ import {
   mergeKind0Profiles,
   type EditableNostrProfile,
 } from "./profile-metadata";
+import {
+  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
+  buildOfflinePresenceContent,
+  buildPresenceTags,
+} from "@/lib/presence-status";
 
 // Authentication types
 export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | null;
@@ -432,7 +437,32 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     return localStorage.getItem(STORAGE_KEY_NSEC);
   }, [authMethod]);
 
+  const publishPresenceOffline = useCallback(async () => {
+    if (!ndk || !ndk.signer) return;
+
+    try {
+      const event = new NDKEvent(ndk);
+      event.kind = NostrEventKind.UserStatus;
+      event.content = buildOfflinePresenceContent();
+      event.tags = buildPresenceTags(
+        Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
+      );
+      await event.sign();
+
+      const relayUrls = relays.map((relay) => relay.url);
+      const relaySet = NDKRelaySet.fromRelayUrls(
+        relayUrls.length > 0 ? relayUrls : defaultRelays,
+        ndk,
+        true
+      );
+      await event.publish(relaySet);
+    } catch (error) {
+      console.warn("Failed to publish offline presence event during logout", error);
+    }
+  }, [defaultRelays, ndk, relays]);
+
   const logout = useCallback(() => {
+    void publishPresenceOffline();
     profileSyncRunRef.current += 1;
     setIsProfileSyncing(false);
     if (ndk) {
@@ -444,7 +474,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
     localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
     // Keep guest key for potential re-login
-  }, [ndk]);
+  }, [ndk, publishPresenceOffline]);
 
   const addRelay = useCallback((url: string) => {
     if (!ndk) return;

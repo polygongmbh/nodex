@@ -2,6 +2,7 @@ import type { Person, Task } from "@/types";
 
 const DEFAULT_MIN_POSTS = 3;
 const ONLINE_WINDOW_MS = 3 * 60 * 1000;
+const RECENT_WINDOW_MS = 60 * 60 * 1000;
 
 interface SidebarPersonStats {
   count: number;
@@ -11,6 +12,7 @@ interface SidebarPersonStats {
 export function deriveSidebarPeople(
   people: Person[],
   tasks: Task[],
+  latestPresenceByAuthorId: Map<string, number> = new Map(),
   now: Date = new Date(),
   minPosts: number = DEFAULT_MIN_POSTS
 ): Person[] {
@@ -46,12 +48,22 @@ export function deriveSidebarPeople(
         return null;
       }
 
+      const latestPresenceTimestampMs = latestPresenceByAuthorId.get(person.id.trim().toLowerCase());
+      const latestActivityTimestampMs = Math.max(
+        stats.latestTimestampMs,
+        latestPresenceTimestampMs ?? Number.NEGATIVE_INFINITY
+      );
+      const ageMs = nowMs - latestActivityTimestampMs;
+      const onlineStatus: Person["onlineStatus"] =
+        ageMs <= ONLINE_WINDOW_MS ? "online" : ageMs <= RECENT_WINDOW_MS ? "recent" : "offline";
+
       return {
         person: {
           ...person,
-          isOnline: nowMs - stats.latestTimestampMs <= ONLINE_WINDOW_MS,
+          isOnline: onlineStatus === "online",
+          onlineStatus,
         },
-        latestTimestampMs: stats.latestTimestampMs,
+        latestTimestampMs: latestActivityTimestampMs,
       };
     })
     .filter((entry): entry is { person: Person; latestTimestampMs: number } => entry !== null)

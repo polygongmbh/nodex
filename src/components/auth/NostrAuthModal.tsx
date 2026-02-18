@@ -25,6 +25,16 @@ import { cn } from "@/lib/utils";
 import { nip19 } from "nostr-tools";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
+import { NostrEventKind } from "@/lib/nostr/types";
+import {
+  loadPresencePublishingEnabled,
+  savePresencePublishingEnabled,
+} from "@/lib/presence-preferences";
+import {
+  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
+  buildOfflinePresenceContent,
+  buildPresenceTags,
+} from "@/lib/presence-status";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -350,6 +360,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     needsProfileSetup,
     isProfileSyncing,
     updateUserProfile,
+    publishEvent,
   } = useNDK();
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
@@ -359,6 +370,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const [profilePicture, setProfilePicture] = useState("");
   const [profileNip05, setProfileNip05] = useState("");
   const [profileAbout, setProfileAbout] = useState("");
+  const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
+    loadPresencePublishingEnabled()
+  );
 
   const openProfileEditor = useCallback(() => {
     if (!isConnected) {
@@ -370,8 +384,22 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     setProfilePicture(user?.profile?.picture || "");
     setProfileNip05(user?.profile?.nip05 || "");
     setProfileAbout(user?.profile?.about || "");
+    setPresencePublishingEnabled(loadPresencePublishingEnabled());
     setIsProfileEditorOpen(true);
   }, [isConnected, t, user?.profile?.about, user?.profile?.displayName, user?.profile?.name, user?.profile?.nip05, user?.profile?.picture]);
+
+  const handlePresencePublishingChange = useCallback((enabled: boolean) => {
+    setPresencePublishingEnabled(enabled);
+    savePresencePublishingEnabled(enabled);
+    if (!enabled && user?.pubkey) {
+      const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS;
+      void publishEvent(
+        NostrEventKind.UserStatus,
+        buildOfflinePresenceContent(),
+        buildPresenceTags(expirationUnix)
+      );
+    }
+  }, [publishEvent, user?.pubkey]);
 
   const handleSaveProfile = async () => {
     if (!profileName.trim()) {
@@ -586,6 +614,19 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
               <Label htmlFor="profile-about">{t("filters.profile.about")}</Label>
               <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
             </div>
+            <label htmlFor="profile-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-3 py-2">
+              <input
+                id="profile-presence-enabled"
+                type="checkbox"
+                checked={presencePublishingEnabled}
+                onChange={(event) => handlePresencePublishingChange(event.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-primary"
+              />
+              <span className="space-y-0.5">
+                <span className="block text-sm font-medium">{t("filters.profile.presenceTitle")}</span>
+                <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
+              </span>
+            </label>
           </div>
           <div className="sticky bottom-0 flex justify-end gap-2 bg-background/95 pt-2">
             {!needsProfileSetup && (
