@@ -398,9 +398,9 @@ export function ListView({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className={cn(
-            "text-[11px] sm:text-xs px-1.5 sm:px-2 py-1 rounded-full font-medium cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all whitespace-nowrap",
+            "text-xs sm:text-xs px-1.5 sm:px-2 py-1 rounded-full font-medium cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all whitespace-nowrap",
             status === "done" ? "bg-primary/10 text-primary" :
-            status === "in-progress" ? "bg-amber-500/10 text-amber-600" :
+            status === "in-progress" ? "bg-warning/15 text-warning" :
             "bg-muted text-muted-foreground"
           )}>
             {status === "in-progress" ? (
@@ -423,7 +423,7 @@ export function ListView({
             onClick={() => onStatusChange?.(task.id, "in-progress")}
             className={cn(status === "in-progress" && "bg-muted")}
           >
-            <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
+            <CircleDot className="w-4 h-4 mr-2 text-warning" />
             {t("listView.status.inProgress")}
           </DropdownMenuItem>
           <DropdownMenuItem 
@@ -654,7 +654,7 @@ export function ListView({
                         {task.status === "done" ? (
                           <CheckCircle2 className="w-5 h-5 text-primary" />
                         ) : task.status === "in-progress" ? (
-                          <CircleDot className="w-5 h-5 text-amber-500" />
+                          <CircleDot className="w-5 h-5 text-warning" />
                         ) : (
                           <Circle className="w-5 h-5 text-muted-foreground" />
                         )}

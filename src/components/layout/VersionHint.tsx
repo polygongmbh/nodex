@@ -10,7 +10,7 @@ export function VersionHint({ className }: VersionHintProps) {
 
   return (
     <span
-      className={cn("text-[11px] text-muted-foreground/80", className)}
+      className={cn("text-xs text-muted-foreground/80", className)}
       title={`Nodex version ${version}`}
       aria-label={`Nodex version ${version}`}
     >

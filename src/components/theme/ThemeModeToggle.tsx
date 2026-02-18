@@ -18,7 +18,7 @@ export function ThemeModeToggle({ className }: ThemeModeToggleProps) {
   const icon = mode === "auto" ? (
     <span className="relative inline-flex">
       <SunMoon className="h-4 w-4 xl:h-5 xl:w-5" />
-      <span className="absolute -right-1 -bottom-1 rounded-sm bg-primary px-[2px] text-[8px] leading-none font-semibold text-primary-foreground">
+      <span className="absolute -right-1 -bottom-1 rounded-sm bg-primary px-[0.125rem] text-[0.5rem] leading-none font-semibold text-primary-foreground">
         A
       </span>
     </span>

@@ -467,7 +467,7 @@ export function FeedView({
                           {task.status === "done" ? (
                             <CheckCircle2 className={cn("text-primary", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                           ) : task.status === "in-progress" ? (
-                            <CircleDot className={cn("text-amber-500", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                            <CircleDot className={cn("text-warning", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                           ) : (
                             <Circle className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                           )}
@@ -480,7 +480,7 @@ export function FeedView({
                             {t("listView.status.todo")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onStatusChange(task.id, "in-progress")}>
-                            <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
+                            <CircleDot className="w-4 h-4 mr-2 text-warning" />
                             {t("listView.status.inProgress")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>
@@ -559,7 +559,7 @@ export function FeedView({
                       {!isComment && typeof task.priority === "number" && (
                         <>
                           <span className="shrink-0">·</span>
-                          <span className="text-xs bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                          <span className="text-xs bg-warning/15 text-warning px-1.5 py-0.5 rounded">
                             P{task.priority}
                           </span>
                         </>

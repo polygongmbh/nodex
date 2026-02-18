@@ -15,7 +15,7 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
   const { t } = useTranslation();
   const personName = person.id === "me" ? t("sidebar.filters.me") : person.displayName;
   const onlineStatus = person.onlineStatus ?? (person.isOnline ? "online" : "offline");
-  const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-yellow-400" : null;
+  const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-warning" : null;
 
   return (
     <SidebarFilterRow

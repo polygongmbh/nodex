@@ -48,7 +48,7 @@ export function SidebarSection({
           >
             <span className="text-sm font-medium text-sidebar-foreground">{title}</span>
             {hint && (
-              <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-[0.625rem] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
                 ({hint})
               </span>
             )}

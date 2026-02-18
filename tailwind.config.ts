@@ -48,6 +48,12 @@ export default {
         yellow: {
           500: "hsl(var(--yellow-500))",
         },
+        due: {
+          near: "hsl(var(--due-near))",
+          mid: "hsl(var(--due-mid))",
+          far: "hsl(var(--due-far))",
+          distant: "hsl(var(--due-distant))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",

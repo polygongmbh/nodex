@@ -214,15 +214,15 @@ export function getDueDateColorClass(dueDate: Date | undefined, status?: string)
     return "text-warning";
   } else if (daysUntilDue <= 2) {
     // Next few days - yellow
-    return "text-yellow-500";
+    return "text-due-near";
   } else if (daysUntilDue <= 5) {
     // Mid-near horizon - yellow/green transition
-    return "text-lime-500";
+    return "text-due-mid";
   } else if (daysUntilDue <= 14) {
     // Farther out - greener
-    return "text-green-500";
+    return "text-due-far";
   }
   
   // Distant due dates stay green-toned
-  return "text-emerald-500";
+  return "text-due-distant";
 }

@@ -312,7 +312,7 @@ export function TaskItem({
                 {task.status === "done" ? (
                   <CheckCircle2 className="w-5 h-5 text-primary" />
                 ) : task.status === "in-progress" ? (
-                  <CircleDot className="w-5 h-5 text-amber-500" />
+                  <CircleDot className="w-5 h-5 text-warning" />
                 ) : (
                   <Circle className="w-5 h-5 text-muted-foreground" />
                 )}
@@ -337,7 +337,7 @@ export function TaskItem({
                   }}
                   className={cn(task.status === "in-progress" && "bg-muted")}
                 >
-                  <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
+                  <CircleDot className="w-4 h-4 mr-2 text-warning" />
                   {t("listView.status.inProgress")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -460,7 +460,7 @@ export function TaskItem({
           {(hasTaskMentionChips(task) || task.tags.length > 0 || (typeof task.priority === "number" && !isComment)) && (
             <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-1.5")}>
               {typeof task.priority === "number" && !isComment && (
-                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-warning/15 text-warning">
                   P{task.priority}
                 </span>
               )}

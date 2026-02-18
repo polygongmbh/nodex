@@ -32,7 +32,7 @@ export function FailedPublishQueueBanner({
           >
             <div className="min-w-0">
               <p className="truncate text-xs text-foreground">{draft.content}</p>
-              <p className="truncate text-[11px] text-destructive/90">
+              <p className="truncate text-xs text-destructive/90">
                 {draft.tags.map((tag) => `#${tag}`).join(" ")}
               </p>
             </div>
@@ -40,7 +40,7 @@ export function FailedPublishQueueBanner({
               <button
                 type="button"
                 onClick={() => onRetry(draft.id)}
-                className="rounded px-2 py-1 text-[11px] font-medium text-destructive transition-colors hover:bg-destructive/15"
+                className="rounded px-2 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/15"
                 title={t("publishQueue.retry")}
                 aria-label={t("publishQueue.retry")}
               >

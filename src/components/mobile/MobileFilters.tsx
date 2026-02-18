@@ -312,7 +312,7 @@ export function MobileFilters({
                   />
                   <span className="space-y-0.5">
                     <span className="block text-xs font-medium">{t("filters.profile.presenceTitle")}</span>
-                    <span className="block text-[11px] text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
+                    <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
                   </span>
                 </label>
                 <div className="flex items-center justify-end gap-2 pt-1">

@@ -727,7 +727,7 @@ export function UnifiedBottomBar({
             >
               <Radio className="w-4 h-4" />
               {activeRelaysCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activeRelaysCount}
                 </span>
               )}
@@ -741,7 +741,7 @@ export function UnifiedBottomBar({
             >
               <Hash className="w-4 h-4" />
               {activeChannelsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activeChannelsCount}
                 </span>
               )}
@@ -755,7 +755,7 @@ export function UnifiedBottomBar({
             >
               <Users className="w-4 h-4" />
               {activePeopleCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activePeopleCount}
                 </span>
               )}
@@ -768,7 +768,7 @@ export function UnifiedBottomBar({
       {/* Input Area */}
       <div className="flex items-stretch gap-2 p-3">
         <div className="flex-1">
-          <div className="flex h-[3.3em] items-stretch gap-2 text-sm">
+          <div className="flex h-[3.3rem] items-stretch gap-2 text-sm">
             <div className="flex-1 relative">
               {hasComposeText ? (
                 <button

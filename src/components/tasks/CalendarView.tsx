@@ -636,7 +636,7 @@ export function CalendarView({
                                   {task.status === "done" ? (
                                     <CheckCircle2 className="w-4 h-4 text-primary" />
                                   ) : task.status === "in-progress" ? (
-                                    <CircleDot className="w-4 h-4 text-amber-500" />
+                                    <CircleDot className="w-4 h-4 text-warning" />
                                   ) : (
                                     <Circle className="w-4 h-4 text-muted-foreground" />
                                   )}
@@ -649,7 +649,7 @@ export function CalendarView({
                                     {t("listView.status.todo")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => onStatusChange(task.id, "in-progress")}>
-                                    <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
+                                    <CircleDot className="w-4 h-4 mr-2 text-warning" />
                                     {t("listView.status.inProgress")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>
@@ -779,7 +779,7 @@ export function CalendarView({
                                     );
                                   })}
                                   {dayTasks.length > 3 && (
-                                    <span className="text-[6px] text-muted-foreground">+</span>
+                                    <span className="text-[0.375rem] text-muted-foreground">+</span>
                                   )}
                                 </div>
                               ) : (
@@ -790,11 +790,11 @@ export function CalendarView({
                                       <div
                                         key={task.id}
                                         className={cn(
-                                          "text-[10px] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
+                                          "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
                                           task.status === "done"
                                             ? "bg-muted text-muted-foreground line-through"
                                             : task.status === "in-progress"
-                                              ? "bg-amber-500/20 text-amber-700"
+                                              ? "bg-warning/15 text-warning"
                                               : "bg-primary/10"
                                         )}
                                       >
@@ -807,7 +807,7 @@ export function CalendarView({
                                     );
                                   })}
                                   {dayTasks.length > 2 && (
-                                    <span className="text-[10px] text-muted-foreground">
+                                    <span className="text-[0.625rem] text-muted-foreground">
                                       {t("calendar.moreTasks", { count: dayTasks.length - 2 })}
                                     </span>
                                   )}
@@ -1019,7 +1019,7 @@ export function CalendarView({
                                 {task.status === "done" ? (
                                   <CheckCircle2 className="w-4 h-4 text-primary" />
                                 ) : task.status === "in-progress" ? (
-                                  <CircleDot className="w-4 h-4 text-amber-500" />
+                                  <CircleDot className="w-4 h-4 text-warning" />
                                 ) : (
                                   <Circle className="w-4 h-4 text-muted-foreground" />
                                 )}
@@ -1032,7 +1032,7 @@ export function CalendarView({
                                   {t("listView.status.todo")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => onStatusChange(task.id, "in-progress")}>
-                                  <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
+                                  <CircleDot className="w-4 h-4 mr-2 text-warning" />
                                   {t("listView.status.inProgress")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>

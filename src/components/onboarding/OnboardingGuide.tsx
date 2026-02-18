@@ -245,11 +245,11 @@ export function OnboardingGuide({
     const previousBackgroundColor = target.style.backgroundColor;
     const previousBorderRadius = target.style.borderRadius;
 
-    target.style.outline = isBreadcrumbStep ? "3px solid hsl(var(--primary))" : "2px solid hsl(var(--primary))";
-    target.style.outlineOffset = isBreadcrumbStep ? "4px" : "3px";
+    target.style.outline = isBreadcrumbStep ? "0.1875rem solid hsl(var(--primary))" : "0.125rem solid hsl(var(--primary))";
+    target.style.outlineOffset = isBreadcrumbStep ? "0.25rem" : "0.1875rem";
     target.style.boxShadow = isBreadcrumbStep
-      ? "0 0 0 8px hsl(var(--primary) / 0.28)"
-      : "0 0 0 6px hsl(var(--primary) / 0.18)";
+      ? "0 0 0 0.5rem hsl(var(--primary) / 0.28)"
+      : "0 0 0 0.375rem hsl(var(--primary) / 0.18)";
     if (isBreadcrumbStep) {
       target.style.backgroundColor = "hsl(var(--primary) / 0.12)";
       target.style.borderRadius = "0.5rem";
@@ -559,7 +559,7 @@ export function OnboardingGuide({
   const getAnchoredCardStyle = (): React.CSSProperties => {
     if (showSectionPicker) {
       return {
-        width: "min(42rem, calc(100vw - 16px))",
+        width: "min(42rem, calc(100vw - 1rem))",
         left: "50%",
         top: "50%",
         transform: "translate(-50%, -50%)",
@@ -569,7 +569,7 @@ export function OnboardingGuide({
     }
     if (!currentStep || !targetRect) {
       return {
-        width: "min(42rem, calc(100vw - 16px))",
+        width: "min(42rem, calc(100vw - 1rem))",
         left: "50%",
         top: "50%",
         transform: "translate(-50%, -50%)",
@@ -623,7 +623,7 @@ export function OnboardingGuide({
     if (isHashtagContentStep) {
       return {
         width: cardWidth,
-        maxWidth: "calc(100vw - 16px)",
+        maxWidth: "calc(100vw - 1rem)",
         left: clamp(centeredLeft, viewportPadding, maxLeft),
         top: clamp(belowTop, viewportPadding, maxTop),
         position: "fixed",
@@ -657,7 +657,7 @@ export function OnboardingGuide({
 
     return {
       width: cardWidth,
-      maxWidth: "calc(100vw - 16px)",
+      maxWidth: "calc(100vw - 1rem)",
       left: bestCandidate.left,
       top: bestCandidate.top,
       position: "fixed",
@@ -818,7 +818,7 @@ export function OnboardingGuide({
                       {getSectionIcon(section.id)}
                       <span className="min-w-0">
                         <span className="block text-sm font-medium text-foreground">{section.title}</span>
-                        <span className="block text-[11px] text-muted-foreground">
+                        <span className="block text-xs text-muted-foreground">
                           {renderGuideTextWithItalics(section.description)}
                         </span>
                       </span>
@@ -834,7 +834,7 @@ export function OnboardingGuide({
                   key={section.id}
                   onClick={() => handleSectionStart(section.id)}
                   style={getPickerPaneStyle(section.id)}
-                  className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-2 shadow-[0_0_0_1px_hsl(var(--primary)/0.16),0_6px_14px_hsl(var(--background)/0.36)]"
+                  className="absolute z-[125] pointer-events-auto rounded-[999px] border border-primary/55 bg-primary/10 hover:bg-primary/20 transition-colors duration-150 text-left p-2 shadow-[0_0_0_1px_hsl(var(--primary)/0.16),0_0.375rem_0.875rem_hsl(var(--background)/0.36)]"
                   aria-label={t("onboarding.picker.startSectionAria", { title: section.title })}
                   title={`${section.title}: ${section.description}`}
                 >
