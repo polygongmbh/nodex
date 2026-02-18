@@ -1,5 +1,6 @@
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person, TaskDateType, TaskStatus, TaskType } from "@/types";
+import { z } from "zod";
 
 export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts.v1";
 const MAX_FAILED_PUBLISH_DRAFTS = 50;
@@ -26,80 +27,40 @@ export interface FailedPublishDraft {
   publishParentId?: string;
 }
 
-function isPerson(value: unknown): value is Person {
-  if (!value || typeof value !== "object") return false;
-  const person = value as Partial<Person>;
-  return (
-    typeof person.id === "string" &&
-    typeof person.name === "string" &&
-    typeof person.displayName === "string" &&
-    typeof person.isOnline === "boolean" &&
-    typeof person.isSelected === "boolean"
-  );
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
-}
-
-function isTagArray(value: unknown): value is string[][] {
-  return Array.isArray(value) && value.every((entry) => isStringArray(entry));
-}
-
-function isTaskType(value: unknown): value is TaskType {
-  return value === "task" || value === "comment";
-}
-
-function isTaskDateType(value: unknown): value is TaskDateType {
-  return value === "due" || value === "scheduled" || value === "start" || value === "end" || value === "milestone";
-}
-
-function isTaskStatus(value: unknown): value is TaskStatus {
-  return value === "todo" || value === "in-progress" || value === "done";
-}
-
-function normalizeDraft(value: unknown): FailedPublishDraft | null {
-  if (!value || typeof value !== "object") return null;
-  const draft = value as Partial<FailedPublishDraft>;
-  if (
-    typeof draft.id !== "string" ||
-    !isPerson(draft.author) ||
-    typeof draft.content !== "string" ||
-    !isStringArray(draft.tags) ||
-    !isStringArray(draft.relayIds) ||
-    !isStringArray(draft.relayUrls) ||
-    !isTaskType(draft.taskType) ||
-    typeof draft.createdAt !== "string" ||
-    !isStringArray(draft.mentionPubkeys) ||
-    typeof draft.publishKind !== "number" ||
-    !isTagArray(draft.publishTags)
-  ) {
-    return null;
-  }
-
-  return {
-    ...draft,
-    id: draft.id,
-    author: draft.author,
-    content: draft.content,
-    tags: draft.tags,
-    relayIds: draft.relayIds,
-    relayUrls: draft.relayUrls,
-    taskType: draft.taskType,
-    createdAt: draft.createdAt,
-    mentionPubkeys: draft.mentionPubkeys,
-    publishKind: draft.publishKind,
-    publishTags: draft.publishTags,
-    dueDate: typeof draft.dueDate === "string" ? draft.dueDate : undefined,
-    dueTime: typeof draft.dueTime === "string" ? draft.dueTime : undefined,
-    dateType: isTaskDateType(draft.dateType) ? draft.dateType : undefined,
-    parentId: typeof draft.parentId === "string" ? draft.parentId : undefined,
-    initialStatus: isTaskStatus(draft.initialStatus) ? draft.initialStatus : undefined,
-    assigneePubkeys: isStringArray(draft.assigneePubkeys) ? draft.assigneePubkeys : undefined,
-    priority: typeof draft.priority === "number" ? draft.priority : undefined,
-    publishParentId: typeof draft.publishParentId === "string" ? draft.publishParentId : undefined,
-  };
-}
+const taskTypeSchema = z.enum(["task", "comment"] as const);
+const taskDateTypeSchema = z.enum(["due", "scheduled", "start", "end", "milestone"] as const);
+const taskStatusSchema = z.enum(["todo", "in-progress", "done"] as const);
+const personSchema: z.ZodType<Person> = z.object({
+  id: z.string(),
+  name: z.string(),
+  displayName: z.string(),
+  nip05: z.string().optional(),
+  avatar: z.string().optional(),
+  isOnline: z.boolean(),
+  isSelected: z.boolean(),
+});
+const failedPublishDraftSchema: z.ZodType<FailedPublishDraft> = z.object({
+  id: z.string(),
+  author: personSchema,
+  content: z.string(),
+  tags: z.array(z.string()),
+  relayIds: z.array(z.string()),
+  relayUrls: z.array(z.string()),
+  taskType: taskTypeSchema,
+  createdAt: z.string(),
+  dateType: taskDateTypeSchema.optional(),
+  dueDate: z.string().optional(),
+  dueTime: z.string().optional(),
+  parentId: z.string().optional(),
+  initialStatus: taskStatusSchema.optional(),
+  mentionPubkeys: z.array(z.string()),
+  assigneePubkeys: z.array(z.string()).optional(),
+  priority: z.number().finite().optional(),
+  publishKind: z.number().int(),
+  publishTags: z.array(z.array(z.string())),
+  publishParentId: z.string().optional(),
+});
+const failedPublishDraftsSchema = z.array(failedPublishDraftSchema);
 
 function hasLocalStorage(): boolean {
   return typeof window !== "undefined" && Boolean(window.localStorage);
@@ -110,12 +71,9 @@ export function loadFailedPublishDrafts(): FailedPublishDraft[] {
   try {
     const raw = window.localStorage.getItem(FAILED_PUBLISH_DRAFTS_STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((entry) => normalizeDraft(entry))
-      .filter((entry): entry is FailedPublishDraft => Boolean(entry))
-      .slice(0, MAX_FAILED_PUBLISH_DRAFTS);
+    const parsed = failedPublishDraftsSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) return [];
+    return parsed.data.slice(0, MAX_FAILED_PUBLISH_DRAFTS);
   } catch {
     return [];
   }

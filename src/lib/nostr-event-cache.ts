@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache.v1";
 const MAX_CACHED_EVENTS = 500;
 
@@ -16,38 +18,17 @@ function hasLocalStorage(): boolean {
   return typeof window !== "undefined" && Boolean(window.localStorage);
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((entry) => typeof entry === "string");
-}
-
-function isTagArray(value: unknown): value is string[][] {
-  return Array.isArray(value) && value.every((entry) => isStringArray(entry));
-}
-
-function normalizeCachedEvent(value: unknown): CachedNostrEvent | null {
-  if (!value || typeof value !== "object") return null;
-  const event = value as Partial<CachedNostrEvent>;
-  if (
-    typeof event.id !== "string" ||
-    typeof event.pubkey !== "string" ||
-    typeof event.created_at !== "number" ||
-    typeof event.kind !== "number" ||
-    !isTagArray(event.tags) ||
-    typeof event.content !== "string"
-  ) {
-    return null;
-  }
-  return {
-    id: event.id,
-    pubkey: event.pubkey,
-    created_at: event.created_at,
-    kind: event.kind,
-    tags: event.tags,
-    content: event.content,
-    sig: typeof event.sig === "string" ? event.sig : undefined,
-    relayUrl: typeof event.relayUrl === "string" ? event.relayUrl : undefined,
-  };
-}
+const cachedNostrEventSchema: z.ZodType<CachedNostrEvent> = z.object({
+  id: z.string(),
+  pubkey: z.string(),
+  created_at: z.number(),
+  kind: z.number(),
+  tags: z.array(z.array(z.string())),
+  content: z.string(),
+  sig: z.string().optional(),
+  relayUrl: z.string().optional(),
+});
+const cachedNostrEventsSchema = z.array(cachedNostrEventSchema);
 
 function dedupeAndSortEvents(events: CachedNostrEvent[]): CachedNostrEvent[] {
   const byId = new Map<string, CachedNostrEvent>();
@@ -67,13 +48,9 @@ export function loadCachedNostrEvents(): CachedNostrEvent[] {
   try {
     const raw = window.localStorage.getItem(NOSTR_EVENT_CACHE_STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return dedupeAndSortEvents(
-      parsed
-        .map((entry) => normalizeCachedEvent(entry))
-        .filter((entry): entry is CachedNostrEvent => Boolean(entry))
-    );
+    const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) return [];
+    return dedupeAndSortEvents(parsed.data);
   } catch {
     return [];
   }

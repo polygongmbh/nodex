@@ -1,9 +1,12 @@
 import { Channel } from "@/types";
+import { z } from "zod";
 
 const ACTIVE_RELAYS_STORAGE_KEY = "nodex.active-relays.v1";
 const CHANNEL_FILTERS_STORAGE_KEY = "nodex.channel-filters.v1";
 
 type PersistedChannelFilters = Record<string, Channel["filterState"]>;
+const relayIdsSchema = z.array(z.string());
+const persistedChannelFiltersSchema = z.record(z.string(), z.unknown());
 
 export function loadPersistedRelayIds(defaultRelayIds: string[]): Set<string> {
   try {
@@ -12,12 +15,12 @@ export function loadPersistedRelayIds(defaultRelayIds: string[]): Set<string> {
       return new Set(defaultRelayIds);
     }
 
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.some((value) => typeof value !== "string")) {
+    const parsed = relayIdsSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) {
       return new Set(defaultRelayIds);
     }
 
-    return new Set(parsed);
+    return new Set(parsed.data);
   } catch {
     return new Set(defaultRelayIds);
   }
@@ -46,13 +49,13 @@ export function loadPersistedChannelFilters(): Map<string, Channel["filterState"
       return new Map();
     }
 
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    const parsed = persistedChannelFiltersSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) {
       return new Map();
     }
 
     const result = new Map<string, Channel["filterState"]>();
-    Object.entries(parsed as PersistedChannelFilters).forEach(([channelId, state]) => {
+    Object.entries(parsed.data).forEach(([channelId, state]) => {
       if (state === "included" || state === "excluded") {
         result.set(channelId, state);
       }
