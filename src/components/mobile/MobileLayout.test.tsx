@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import type { Channel, Person, Relay, Task } from "@/types";
-import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
+import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 
 const ndkMock = {
   user: null as null | {
@@ -36,7 +36,9 @@ vi.mock("./SwipeIndicator", () => ({
 }));
 
 vi.mock("@/components/tasks/TaskTree", () => ({
-  TaskTree: () => <div data-testid="task-tree" />,
+  TaskTree: ({ searchQuery }: { searchQuery: string }) => (
+    <div data-testid="task-tree" data-search-query={searchQuery} />
+  ),
 }));
 
 vi.mock("@/components/tasks/FeedView", () => ({
@@ -207,5 +209,46 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
     expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
+  });
+
+  it("falls back to showing all tasks when mobile quick filter has no matches", () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = false;
+
+    const sampleTasks: Task[] = [
+      makeTask({ id: "task-1", content: "Ship #general", tags: ["general"] }),
+    ];
+
+    render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={sampleTasks}
+        allTasks={sampleTasks}
+        searchQuery="nomatchquery"
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn={true}
+        currentView="tree"
+        onViewChange={() => {}}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+      />
+    );
+
+    expect(screen.getByTestId("mobile-quick-filter-fallback")).toBeInTheDocument();
+    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
 });

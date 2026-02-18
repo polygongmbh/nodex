@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
@@ -14,6 +14,8 @@ import type { FailedPublishDraft } from "@/lib/failed-publish-drafts";
 import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType } from "@/types";
 import { cn } from "@/lib/utils";
 import { useNDK } from "@/lib/nostr/ndk-context";
+import { taskMatchesTextQuery } from "@/lib/task-text-filter";
+import { useTranslation } from "react-i18next";
 
 interface MobileLayoutProps {
   relays: Relay[];
@@ -108,6 +110,7 @@ export function MobileLayout({
   onRetryFailedPublish,
   onDismissFailedPublish,
 }: MobileLayoutProps) {
+  const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
@@ -207,6 +210,13 @@ export function MobileLayout({
   };
 
   const mobileCurrentView: MobileViewType = showFilters ? "filters" : mobileView;
+  const hasSearchQuery = searchQuery.trim().length > 0;
+  const hasQuickFilterMatch = useMemo(() => {
+    if (!hasSearchQuery) return true;
+    return tasks.some((task) => taskMatchesTextQuery(task, searchQuery, people));
+  }, [hasSearchQuery, tasks, searchQuery, people]);
+  const isQuickFilterFallbackActive = !showFilters && hasSearchQuery && !hasQuickFilterMatch;
+  const effectiveSearchQuery = isQuickFilterFallbackActive ? "" : searchQuery;
 
   const handleMobileSubmit = useCallback((
     content: string,
@@ -250,6 +260,10 @@ export function MobileLayout({
   }, [isSignedIn, needsProfileSetup, hasCachedCurrentUserProfileMetadata]);
 
   const renderView = () => {
+    const effectiveViewProps = {
+      ...viewProps,
+      searchQuery: effectiveSearchQuery,
+    };
     if (showFilters) {
       return (
         <MobileFilters
@@ -271,15 +285,15 @@ export function MobileLayout({
     }
     switch (currentView) {
       case "tree":
-        return <TaskTree {...viewProps} isMobile />;
+        return <TaskTree {...effectiveViewProps} isMobile />;
       case "feed":
-        return <FeedView {...viewProps} isMobile />;
+        return <FeedView {...effectiveViewProps} isMobile />;
       case "list":
-        return <CalendarView {...viewProps} isMobile mobileView="upcoming" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView {...effectiveViewProps} isMobile mobileView="upcoming" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       case "calendar":
-        return <CalendarView {...viewProps} isMobile mobileView="calendar" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView {...effectiveViewProps} isMobile mobileView="calendar" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
-        return <TaskTree {...viewProps} isMobile />;
+        return <TaskTree {...effectiveViewProps} isMobile />;
     }
   };
 
@@ -307,6 +321,11 @@ export function MobileLayout({
         {...swipeHandlers}
       >
         <div className="h-full flex flex-col">
+          {isQuickFilterFallbackActive && (
+            <div className="px-3 pt-2 pb-1 text-[11px] leading-none text-muted-foreground" data-testid="mobile-quick-filter-fallback">
+              {t("tasks.empty.mobileQuickFilterFallback")}
+            </div>
+          )}
           {!showFilters && focusedTaskId && currentView !== "list" && currentView !== "calendar" && (
             <FocusedTaskBreadcrumb
               allTasks={allTasks}

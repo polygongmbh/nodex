@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+### Fixed
+- Mobile quick-filter search now falls back to showing all tasks when there are no matches, with a small in-view indicator explaining the fallback.
 
 ## [1.7.0] - 2026-02-18
 ### Added

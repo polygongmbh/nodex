@@ -576,6 +576,7 @@
       "noUpcoming": "No hay tareas próximas",
       "noneScheduledForDay": "No hay tareas programadas para este día",
       "selectDay": "Selecciona un día para ver tareas",
+      "mobileQuickFilterFallback": "Ninguna tarea coincide con el filtro rápido; se muestran todas las tareas.",
       "matchFilters": "No hay tareas que coincidan con tus filtros",
       "noSubtasks": "Aún no hay subtareas",
       "noneYet": "Aún no hay tareas"

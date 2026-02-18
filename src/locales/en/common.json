@@ -576,6 +576,7 @@
       "noUpcoming": "No upcoming tasks",
       "noneScheduledForDay": "No tasks scheduled for this day",
       "selectDay": "Select a day to view tasks",
+      "mobileQuickFilterFallback": "No tasks match the quick filter, showing all tasks.",
       "matchFilters": "No tasks match your filters",
       "noSubtasks": "No subtasks yet",
       "noneYet": "No tasks yet"

@@ -576,6 +576,7 @@
       "noUpcoming": "Keine anstehenden Aufgaben",
       "noneScheduledForDay": "Keine Aufgaben für diesen Tag geplant",
       "selectDay": "Wähle einen Tag, um Aufgaben anzuzeigen",
+      "mobileQuickFilterFallback": "Keine Aufgaben entsprechen dem Schnellfilter, alle Aufgaben werden angezeigt.",
       "matchFilters": "Keine Aufgaben entsprechen deinen Filtern",
       "noSubtasks": "Noch keine Unteraufgaben",
       "noneYet": "Noch keine Aufgaben"
