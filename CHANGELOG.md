@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Changed
+- Mobile compose priority/date controls now use larger touch targets, and the priority placeholder now includes a flag marker for clearer affordance.
+
 ## [1.5.0] - 2026-02-18
 
 ### Added
