@@ -3,7 +3,6 @@ import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSq
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -49,7 +48,7 @@ interface UnifiedBottomBarProps {
   forceComposeMode?: boolean;
 }
 
-type SelectorType = "relay" | "channel" | "person" | null;
+type SelectorType = "relay" | "channel" | "person" | "date" | null;
 
 const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "building-2": Building2,
@@ -358,7 +357,12 @@ export function UnifiedBottomBar({
     <div className="relative z-[110] border-t border-border bg-background safe-area-bottom" data-onboarding="mobile-combined-box">
       {/* Selector Panel */}
       {activeSelector && (
-        <div className="relative z-[112] border-b border-border p-3 max-h-48 overflow-y-auto">
+        <div
+          className={cn(
+            "relative z-[112] border-b border-border p-3 overflow-y-auto",
+            activeSelector === "date" ? "max-h-[22rem]" : "max-h-48"
+          )}
+        >
           {activeSelector === "relay" && (
             <div className="flex flex-wrap gap-2">
               {relays.map((relay) => {
@@ -434,6 +438,17 @@ export function UnifiedBottomBar({
               })}
             </div>
           )}
+          {activeSelector === "date" && (
+            <div className="rounded-md border border-border bg-background p-1">
+              <CalendarComponent
+                mode="single"
+                selected={dueDate}
+                onSelect={setDueDate}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -464,23 +479,18 @@ export function UnifiedBottomBar({
                   <option value="80">P80</option>
                   <option value="100">P100</option>
                 </select>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="h-8 flex items-center gap-1.5 px-2 rounded-md border border-border hover:bg-muted/60 transition-colors text-xs leading-none">
-                      <Calendar className="w-3.5 h-3.5" />
-                      {dueDate ? format(dueDate, "MMM d") : "Date"}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarComponent
-                      mode="single"
-                      selected={dueDate}
-                      onSelect={setDueDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <button
+                  onClick={() => toggleSelector("date")}
+                  className={cn(
+                    "h-8 flex items-center gap-1.5 px-2 rounded-md border transition-colors text-xs leading-none",
+                    activeSelector === "date"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:bg-muted/60"
+                  )}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  {dueDate ? format(dueDate, "MMM d") : "Date"}
+                </button>
               </div>
               {dueDate && (
                 <div className="flex items-center gap-1">
