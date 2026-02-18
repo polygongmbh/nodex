@@ -18,6 +18,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - After mobile sign-in with no cached profile metadata for the signed-in user, the app now redirects to Manage and auto-opens the profile edit pane.
 - Mobile sign-in prompt overlay now correctly covers all mobile UI layers, including the bottom compose bar.
 - Mobile profile setup/manage editor no longer flickers between setup/edit states due to repeated profile-sync reruns.
+- Mobile Safari now uses the small viewport height (`svh`) for app layout, preventing extra page scroll caused by the floating URL bar.
 
 ## [1.4.1] - 2026-02-18
 
