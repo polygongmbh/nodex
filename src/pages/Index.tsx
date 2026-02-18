@@ -276,24 +276,34 @@ const Index = () => {
     setLoggedInIdentityPriority(rememberLoggedInIdentity(user.pubkey));
   }, [user?.pubkey]);
 
+  const profileCachePayload = useMemo(() => {
+    if (!user?.pubkey || !user?.profile) return null;
+    return {
+      pubkey: user.pubkey,
+      profile: {
+        name: user.profile.name,
+        displayName: user.profile.displayName,
+        about: user.profile.about,
+        picture: user.profile.picture,
+        nip05: user.profile.nip05,
+      },
+    };
+  }, [
+    user?.profile,
+    user?.pubkey,
+  ]);
+
   useEffect(() => {
-    if (!user?.pubkey || !user.profile) return;
-    const nextCached = rememberCachedKind0Profile(user.pubkey, {
-      name: user.profile.name,
-      displayName: user.profile.displayName,
-      about: user.profile.about,
-      picture: user.profile.picture,
-      nip05: user.profile.nip05,
+    if (!profileCachePayload) return;
+    const nextCached = rememberCachedKind0Profile(profileCachePayload.pubkey, {
+      name: profileCachePayload.profile.name,
+      displayName: profileCachePayload.profile.displayName,
+      about: profileCachePayload.profile.about,
+      picture: profileCachePayload.profile.picture,
+      nip05: profileCachePayload.profile.nip05,
     });
     setCachedKind0Events(nextCached);
-  }, [
-    user?.pubkey,
-    user?.profile?.about,
-    user?.profile?.displayName,
-    user?.profile?.name,
-    user?.profile?.nip05,
-    user?.profile?.picture,
-  ]);
+  }, [profileCachePayload]);
 
   useEffect(() => {
     const priorityLookup = new Map(

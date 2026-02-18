@@ -170,6 +170,20 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     });
   }, [ndk]);
 
+  const userProfileSnapshot = useMemo<NostrUser["profile"] | null>(() => {
+    if (!user?.profile) return null;
+    return {
+      name: user.profile.name,
+      displayName: user.profile.displayName,
+      picture: user.profile.picture,
+      about: user.profile.about,
+      nip05: user.profile.nip05,
+      nip05Verified: user.profile.nip05Verified,
+    };
+  }, [
+    user?.profile,
+  ]);
+
   // Initialize NDK
   useEffect(() => {
     const ndkInstance = new NDK({
@@ -628,7 +642,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       return;
     }
 
-    const baseProfile = user.profile;
+    const baseProfile = userProfileSnapshot;
     const syncRun = profileSyncRunRef.current + 1;
     profileSyncRunRef.current = syncRun;
     let cancelled = false;
@@ -662,7 +676,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       if (isStale()) return;
 
       const mergedProfile = {
-        ...(user.profile || {}),
+        ...(userProfileSnapshot || {}),
         ...(signerProfile || {}),
         ...(kind0Profile || {}),
       };
@@ -707,7 +721,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
     return () => {
       cancelled = true;
     };
-  }, [ndk, fetchLatestKind0Profile, user?.pubkey]);
+  }, [ndk, fetchLatestKind0Profile, user?.pubkey, userProfileSnapshot]);
 
   const subscribe = useCallback((
     filters: NDKFilter[],
