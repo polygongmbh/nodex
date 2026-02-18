@@ -595,57 +595,61 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
           setIsProfileEditorOpen(open);
         }}
       >
-        <DialogContent className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-y-auto p-4 sm:max-w-lg sm:p-6">
-          <DialogHeader>
-            <DialogTitle>{needsProfileSetup ? t("auth.menu.profileSetupTitle") : t("auth.menu.profileEditTitle")}</DialogTitle>
-            <DialogDescription>
-              {t("auth.menu.profileDescription")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="profile-name">{t("filters.profile.name")}</Label>
-              <Input id="profile-name" value={profileName} onChange={(e) => setProfileName(e.target.value)} />
+        <DialogContent className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-lg [&>button]:hidden">
+          <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-4 sm:p-6">
+            <DialogHeader className="shrink-0">
+              <DialogTitle>{needsProfileSetup ? t("auth.menu.profileSetupTitle") : t("auth.menu.profileEditTitle")}</DialogTitle>
+              <DialogDescription>
+                {t("auth.menu.profileDescription")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-name">{t("filters.profile.name")}</Label>
+                  <Input id="profile-name" value={profileName} onChange={(e) => setProfileName(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
+                  <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-picture">{t("filters.profile.picture")}</Label>
+                  <Input id="profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-nip05">{t("filters.profile.nip05")}</Label>
+                  <Input id="profile-nip05" value={profileNip05} onChange={(e) => setProfileNip05(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-about">{t("filters.profile.about")}</Label>
+                  <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
+                </div>
+                <label htmlFor="profile-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-3 py-2">
+                  <input
+                    id="profile-presence-enabled"
+                    type="checkbox"
+                    checked={presencePublishingEnabled}
+                    onChange={(event) => handlePresencePublishingChange(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-primary"
+                  />
+                  <span className="space-y-0.5">
+                    <span className="block text-sm font-medium">{t("filters.profile.presenceTitle")}</span>
+                    <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
+                  </span>
+                </label>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
-              <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="profile-picture">{t("filters.profile.picture")}</Label>
-              <Input id="profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="profile-nip05">{t("filters.profile.nip05")}</Label>
-              <Input id="profile-nip05" value={profileNip05} onChange={(e) => setProfileNip05(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="profile-about">{t("filters.profile.about")}</Label>
-              <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
-            </div>
-            <label htmlFor="profile-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-3 py-2">
-              <input
-                id="profile-presence-enabled"
-                type="checkbox"
-                checked={presencePublishingEnabled}
-                onChange={(event) => handlePresencePublishingChange(event.target.checked)}
-                className="mt-0.5 h-4 w-4 accent-primary"
-              />
-              <span className="space-y-0.5">
-                <span className="block text-sm font-medium">{t("filters.profile.presenceTitle")}</span>
-                <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
-              </span>
-            </label>
-          </div>
-          <div className="sticky bottom-0 flex justify-end gap-2 bg-background/95 pt-2">
-            {!needsProfileSetup && (
-              <Button variant="outline" onClick={() => setIsProfileEditorOpen(false)} disabled={isSavingProfile}>
-                {t("filters.profile.cancel")}
+            <div className="mt-3 flex shrink-0 justify-end gap-2 border-t border-border/60 bg-background/95 pt-3">
+              {!needsProfileSetup && (
+                <Button variant="outline" onClick={() => setIsProfileEditorOpen(false)} disabled={isSavingProfile}>
+                  {t("filters.profile.cancel")}
+                </Button>
+              )}
+              <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+                {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
               </Button>
-            )}
-            <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
-              {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
-            </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

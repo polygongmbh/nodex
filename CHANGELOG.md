@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Fixed
 - Mobile Manage view now includes a language selector, so language can be changed directly on mobile.
 - iOS mobile browser chrome coloring now follows active app theme while typing (including keyboard-open states), reducing visible color mismatch between compose area and browser-controlled keyboard gap.
+- Desktop profile editor dialog now handles low viewport heights with stable internal scrolling and no longer shows a non-functional top-right close button.
 
 ## [1.6.0] - 2026-02-18
 ### Added
