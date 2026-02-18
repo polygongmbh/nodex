@@ -16,6 +16,7 @@ import {
   getPreferredMentionIdentifier,
   personMatchesMentionQuery,
 } from "@/lib/mentions";
+import { hasMeaningfulComposerText } from "@/lib/composer-content";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -322,6 +323,7 @@ export function TaskComposer({
 
   const handleSubmit = async (submitType?: TaskType) => {
     if (!content.trim()) return;
+    if (!hasMeaningfulComposerText(content)) return;
     
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1).toLowerCase()) || [];
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
@@ -411,10 +413,11 @@ export function TaskComposer({
     ])
   );
   const hasAtLeastOneTag = ((content.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
+  const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasInvalidRootTaskRelaySelection = taskType === "task" && !parentId && selectedRelays.length !== 1;
   const submitBlockedReason = !user
     ? t("composer.blocked.signin")
-    : !content.trim()
+    : !hasMeaningfulContent
       ? t("composer.blocked.write")
       : !hasAtLeastOneTag
         ? t("composer.blocked.tag")

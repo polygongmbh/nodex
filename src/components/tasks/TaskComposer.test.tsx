@@ -444,6 +444,25 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
   });
 
+  it("blocks submit when composer content has only tags and mentions", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+      target: { value: "#backend @alice@example.com" },
+    });
+
+    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+    expect(screen.getByText("Write a message first")).toBeInTheDocument();
+  });
+
   it("keeps content when submit returns a failure result", async () => {
     const onSubmit = vi.fn(async () => ({ ok: false as const, reason: "relay-selection" as const }));
     render(

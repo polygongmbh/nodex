@@ -115,6 +115,33 @@ describe("UnifiedBottomBar auth gating", () => {
     toastErrorSpy.mockRestore();
   });
 
+  it("disables sending when content has only tags and mentions", () => {
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "#general @alice@example.com" } });
+    const sendButton = screen.getByRole("button", { name: /send task \/ send comment/i });
+    expect(sendButton).toBeDisabled();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it("keeps compose text when submit returns a failure result", async () => {
     const onSubmit = vi.fn(async () => ({ ok: false as const, reason: "relay-selection" as const }));
     render(

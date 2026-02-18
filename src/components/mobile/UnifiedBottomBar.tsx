@@ -12,6 +12,7 @@ import {
   getPreferredMentionIdentifier,
   personMatchesMentionQuery,
 } from "@/lib/mentions";
+import { hasMeaningfulComposerText } from "@/lib/composer-content";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface UnifiedBottomBarProps {
@@ -307,6 +308,7 @@ export function UnifiedBottomBar({
 
   const handleSubmit = async (submitType: "task" | "comment" = "task") => {
     if (!sharedText.trim()) return;
+    if (!hasMeaningfulComposerText(sharedText)) return;
     const extractedChannels = sharedText.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
     if (extractedChannels.length === 0) {
       toast.error(t("toasts.errors.needTag"));
@@ -375,10 +377,11 @@ export function UnifiedBottomBar({
   const activeRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
   const hasInvalidRootTaskRelaySelection = !focusedTaskId && activeRelayIds.length !== 1;
   const hasComposeText = sharedText.trim().length > 0;
+  const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
   const hasAtLeastOneTag = (sharedText.match(/#(\w+)/g)?.length || 0) > 0;
   const taskSubmitBlockedReason = !isSignedIn
     ? t("composer.blocked.signin")
-    : !hasComposeText
+    : !hasMeaningfulComposeText
       ? t("composer.blocked.write")
       : !hasAtLeastOneTag
         ? t("composer.blocked.tag")
@@ -437,8 +440,8 @@ export function UnifiedBottomBar({
     }, 0);
   };
 
-  const canSendTask = hasComposeText && !hasInvalidRootTaskRelaySelection;
-  const canSendComment = hasComposeText && hasAtLeastOneTag;
+  const canSendTask = hasMeaningfulComposeText && !hasInvalidRootTaskRelaySelection;
+  const canSendComment = hasMeaningfulComposeText && hasAtLeastOneTag;
   const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
   const canSubmitFromPrimary = canOfferComment ? (canSendTask || canSendComment) : canSendTask;
   const hasTaskSubmitBlock = taskSubmitBlockedReason !== null;
