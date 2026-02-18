@@ -15,7 +15,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Desktop bottom-dock search now expands to a larger percentage of viewport width on wide screens, improving horizontal input space on large displays.
 - Table view due-date column is now tuned to a 20rem maximum on the widest desktops, improving readability for date type + date/time values without over-allocating space.
 - Table view now shows compact icons in column headers, and dropdown styling is flatter/cleaner across Table/composer controls (including priority and date-type selectors, plus desktop levels dropdown) to better match the surrounding UI.
-- Desktop composer now lays out priority and due-date controls as separate full-width chips with larger click targets, while preserving date-type/date/time behavior.
+- Desktop composer now lays out priority and due-date controls as separate horizontal chips with larger click targets (wrapping when needed), while preserving date-type/date/time behavior.
 
 ### Fixed
 - Mobile compose due-date controls are now split into two rows, and the date-type selector only appears after a date is selected, reducing horizontal overflow that could push nearby actions off-screen.
