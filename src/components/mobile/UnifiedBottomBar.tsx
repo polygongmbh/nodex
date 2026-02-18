@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle, Flag } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -443,7 +443,6 @@ export function UnifiedBottomBar({
         <div className="flex items-center gap-2 pt-1">
           <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
-                <Flag className="w-3.5 h-3.5 text-muted-foreground" />
                 <select
                   aria-label="Priority"
                   value={priority === undefined ? "" : String(priority)}
