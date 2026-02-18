@@ -134,7 +134,7 @@ export function MobileFilters({
   };
 
   return (
-    <ScrollArea className="flex-1" data-onboarding="mobile-filters">
+    <ScrollArea className="h-full" data-onboarding="mobile-filters">
       <div className="p-4 space-y-6">
         <section>
           <div className="flex items-center gap-2">
