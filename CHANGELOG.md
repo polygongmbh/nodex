@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.7.1] - 2026-02-18
 ### Fixed
 - Mobile quick-filter search now falls back to showing all tasks when there are no matches, with a small in-view indicator explaining the fallback.
 - Guide auto-start is now suppressed when opening the app directly into a focused subtask URL.
