@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
+import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Channel, Person, TaskCreateResult, TaskDateType, TaskType } from "@/types";
+import { Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -85,7 +85,6 @@ export function UnifiedBottomBar({
 
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   const [sharedText, setSharedText] = useState(() => searchQuery || defaultContent);
-  const [taskType, setTaskType] = useState<TaskType>("task");
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
@@ -151,16 +150,10 @@ export function UnifiedBottomBar({
   }, [searchQuery]);
 
   useEffect(() => {
-    if (currentView === "calendar" && taskType === "task") {
+    if (currentView === "calendar") {
       setDueDate(selectedCalendarDate || new Date());
     }
-  }, [currentView, taskType, selectedCalendarDate]);
-
-  useEffect(() => {
-    if (!canOfferComment && taskType === "comment") {
-      setTaskType("task");
-    }
-  }, [canOfferComment, taskType]);
+  }, [currentView, selectedCalendarDate]);
 
   useEffect(() => {
     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -228,7 +221,7 @@ export function UnifiedBottomBar({
     prevIncludedChannelsRef.current = [...includedChannels];
   }, [includedChannels]);
 
-  const handleSubmit = async (submitType?: TaskType) => {
+  const handleSubmit = async (submitType: "task" | "comment" = "task") => {
     if (!sharedText.trim()) return;
     const extractedChannels = sharedText.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
     if (extractedChannels.length === 0) {
@@ -237,7 +230,7 @@ export function UnifiedBottomBar({
     }
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
-    if ((submitType ?? taskType) === "task" && !focusedTaskId && relayIds.length !== 1) {
+    if (submitType === "task" && !focusedTaskId && relayIds.length !== 1) {
       toast.error(t("toasts.errors.selectRelayOrParent"));
       return;
     }
@@ -247,7 +240,7 @@ export function UnifiedBottomBar({
         sharedText,
         extractedChannels,
         relayIds,
-        submitType ?? taskType,
+        submitType,
         dueDate,
         dueTime || undefined,
         dateType,
@@ -296,7 +289,7 @@ export function UnifiedBottomBar({
   const activePeopleCount = people.filter(p => p.isSelected).length;
   const hasAtLeastOneTag = (sharedText.match(/#(\w+)/g)?.length || 0) > 0;
   const activeRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
-  const hasInvalidRootTaskRelaySelection = taskType === "task" && !focusedTaskId && activeRelayIds.length !== 1;
+  const hasInvalidRootTaskRelaySelection = !focusedTaskId && activeRelayIds.length !== 1;
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
@@ -449,38 +442,7 @@ export function UnifiedBottomBar({
       <div className="px-3 pt-2">
         <div className="overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex items-center gap-2 pt-1">
-          {canOfferComment && (
-            <div
-              data-onboarding="compose-kind"
-              className="flex h-8 items-center gap-1 px-1.5 border border-border/60 bg-muted/50 rounded-md shrink-0"
-            >
-            <button
-              onClick={() => setTaskType("task")}
-              aria-label={t("composer.labels.task")}
-              className={cn(
-                "h-6 px-2 flex items-center justify-center rounded-sm text-[11px] font-medium gap-1 transition-colors",
-                taskType === "task" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
-              )}
-            >
-              <CheckSquare className="w-3.5 h-3.5" />
-              <span>{t("composer.labels.task")}</span>
-            </button>
-            <button
-              onClick={() => setTaskType("comment")}
-              aria-label={t("composer.labels.comment")}
-              className={cn(
-                "h-6 px-2 flex items-center justify-center rounded-sm text-[11px] font-medium gap-1 transition-colors",
-                taskType === "comment" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
-              )}
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>{t("composer.labels.comment")}</span>
-            </button>
-            </div>
-          )}
-
-          {taskType === "task" && (
-            <div className="flex flex-col gap-1 text-xs text-muted-foreground shrink-0">
+          <div className="flex flex-col gap-1 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
                 <select
                   aria-label="Priority"
@@ -557,7 +519,6 @@ export function UnifiedBottomBar({
                 </div>
               )}
             </div>
-          )}
 
           {/* Filter/Selector Buttons */}
           <div className="flex items-center gap-1 ml-auto shrink-0">
@@ -680,18 +641,14 @@ export function UnifiedBottomBar({
                   }
                   if (e.key === "Enter" && e.altKey) {
                     e.preventDefault();
-                    const alternateType: TaskType =
-                      taskType === "task"
-                        ? (canOfferComment ? "comment" : "task")
-                        : "task";
-                    handleSubmit(alternateType);
+                    handleSubmit(canOfferComment ? "comment" : "task");
                     return;
                   }
                   if (e.key === "Escape") {
                     handleCancel();
                   }
                 }}
-                placeholder={taskType === "task" ? t("composer.placeholders.mobileTask") : t("composer.placeholders.mobileComment")}
+                placeholder={t("composer.placeholders.mobileTask")}
                 className="flex-1 w-full bg-muted/30 border border-border rounded-lg pl-9 pr-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px] max-h-32"
                 rows={1}
               />
@@ -742,15 +699,28 @@ export function UnifiedBottomBar({
                 <X className="w-5 h-5" />
               </button>
               {isSignedIn ? (
-                <button
-                  onClick={() => handleSubmit()}
-                  disabled={!sharedText.trim() || !hasAtLeastOneTag || hasInvalidRootTaskRelaySelection}
-                  className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                  aria-label={t("composer.hints.createFromText")}
-                  title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.hints.createFromText")}
-                >
-                  <Send className="w-5 h-5" />
-                </button>
+                <>
+                  <button
+                    onClick={() => handleSubmit("task")}
+                    disabled={!sharedText.trim() || !hasAtLeastOneTag || hasInvalidRootTaskRelaySelection}
+                    className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    aria-label="Send task"
+                    title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.hints.createFromText")}
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                  {canOfferComment && (
+                    <button
+                      onClick={() => handleSubmit("comment")}
+                      disabled={!sharedText.trim() || !hasAtLeastOneTag}
+                      className="p-3 rounded-lg border border-border text-foreground hover:bg-muted disabled:opacity-50"
+                      aria-label="Send comment"
+                      title={t("composer.labels.comment")}
+                    >
+                      <MessageSquare className="w-5 h-5" />
+                    </button>
+                  )}
+                </>
               ) : (
                 <button
                   onClick={onSignInClick}

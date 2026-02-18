@@ -106,7 +106,7 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(field.value).toBe("Ship #general");
   });
 
-  it("submits as opposite kind on Alt+Enter in compose mode", () => {
+  it("submits as comment on Alt+Enter in compose-capable views", () => {
     const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
 
     render(
@@ -142,22 +142,6 @@ describe("UnifiedBottomBar auth gating", () => {
       undefined
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /comment/i }));
-    const commentField = screen.getByPlaceholderText(/search or add comment/i) as HTMLTextAreaElement;
-    fireEvent.change(commentField, { target: { value: "Reply #general" } });
-
-    fireEvent.keyDown(commentField, { key: "Enter", altKey: true });
-    expect(onSubmit).toHaveBeenLastCalledWith(
-      "Reply #general",
-      ["general"],
-      ["demo"],
-      "task",
-      undefined,
-      undefined,
-      "due",
-      [],
-      undefined
-    );
   });
 
   it("submits current kind on Ctrl+Enter and Cmd+Enter", () => {
@@ -211,7 +195,44 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
-  it("shows comment option in tree view without focused task", () => {
+  it("submits comment when send comment button is tapped", () => {
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(composeField, { target: { value: "Reply #general" } });
+    fireEvent.click(screen.getByRole("button", { name: /send comment/i }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      "Reply #general",
+      ["general"],
+      ["demo"],
+      "comment",
+      undefined,
+      undefined,
+      "due",
+      [],
+      undefined
+    );
+  });
+
+  it("shows task and comment send buttons in tree view", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -230,11 +251,11 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /task/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /comment/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /send task/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /send comment/i })).toBeInTheDocument();
   });
 
-  it("hides comment option in non-feed/tree views", () => {
+  it("hides comment send button in non-feed/tree views", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -252,8 +273,8 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.queryByRole("button", { name: /task/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /comment/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /send task/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /send comment/i })).not.toBeInTheDocument();
   });
 
   it("prefills due date with today in calendar view", () => {
