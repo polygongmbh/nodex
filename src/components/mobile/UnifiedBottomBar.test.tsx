@@ -101,7 +101,8 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship update" } });
-    fireEvent.click(screen.getByRole("button", { name: /send task/i }));
+    fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^send task$/i }));
 
     expect(toastErrorSpy).toHaveBeenCalledTimes(1);
     expect(onSubmit).not.toHaveBeenCalled();
@@ -249,7 +250,8 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Reply #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /send comment/i }));
+    fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^send comment$/i }));
 
     expect(onSubmit).toHaveBeenCalledWith(
       "Reply #general",
@@ -264,7 +266,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
-  it("shows task and comment send buttons in tree view", () => {
+  it("reveals task and comment send options in tree view", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -283,8 +285,16 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /send task/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /send comment/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /send task \/ send comment/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /send task$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^send comment$/i })).not.toBeInTheDocument();
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Reply #general" } });
+    fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
+
+    expect(screen.getByRole("button", { name: /^send task$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^send comment$/i })).toBeInTheDocument();
   });
 
   it("hides comment send button in non-feed/tree views", () => {
@@ -316,6 +326,7 @@ describe("UnifiedBottomBar auth gating", () => {
         onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
+        defaultContent="Ship #general"
         relays={relays}
         channels={channels}
         people={people}
@@ -339,6 +350,7 @@ describe("UnifiedBottomBar auth gating", () => {
         onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
+        defaultContent="Ship #general"
         selectedCalendarDate={new Date()}
         relays={relays}
         channels={channels}
@@ -357,6 +369,7 @@ describe("UnifiedBottomBar auth gating", () => {
         onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
+        defaultContent="Ship #general"
         selectedCalendarDate={nextDay}
         relays={relays}
         channels={channels}

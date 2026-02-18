@@ -16,7 +16,7 @@
       "signin": "Anmeldung erforderlich",
       "write": "Schreibe zuerst eine Nachricht",
       "tag": "Mindestens einen #channel hinzufügen",
-      "relay": "Wähle ein Relay oder eine übergeordnete Aufgabe",
+      "relay": "Wähle ein einzelnes Relay oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
       "publishing": "Wird veröffentlicht..."
     },
     "actions": {
@@ -62,7 +62,7 @@
       "needSigninPost": "Anmeldung zum Veröffentlichen erforderlich",
       "needSigninModify": "Anmeldung zum Ändern von Aufgaben erforderlich",
       "statusRestricted": "Status-Updates sind auf zugewiesene Nutzer beschränkt",
-      "selectRelayOrParent": "Wähle ein Relay oder eine übergeordnete Aufgabe",
+      "selectRelayOrParent": "Wähle ein einzelnes Relay oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
       "publishStatusFailed": "Status-Update konnte nicht an Relays veröffentlicht werden",
       "publishDateFailed": "Datums-Update konnte nicht an Relay veröffentlicht werden",
       "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay veröffentlicht werden",

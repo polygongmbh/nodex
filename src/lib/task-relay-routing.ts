@@ -1,6 +1,6 @@
 import type { Relay, Task, TaskType } from "@/types";
 
-export const RELAY_SELECTION_ERROR_MESSAGE = "Select one relay or a parent task";
+export const RELAY_SELECTION_ERROR_MESSAGE = "Select a single relay or a parent task to create a new task";
 
 function dedupeRelayIds(relayIds: string[]): string[] {
   return Array.from(new Set(relayIds.filter(Boolean)));

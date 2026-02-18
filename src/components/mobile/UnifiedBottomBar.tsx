@@ -108,6 +108,7 @@ export function UnifiedBottomBar({
     const anchor = startOfMonth(new Date());
     return [subMonths(anchor, 1), anchor, addMonths(anchor, 1)];
   });
+  const [showSendOptions, setShowSendOptions] = useState(false);
   const canOfferComment = currentView === "feed" || currentView === "tree";
 
   const syncChannelFiltersFromContent = (nextContent: string, previousContent: string) => {
@@ -353,6 +354,7 @@ export function UnifiedBottomBar({
     setSharedText("");
     onSearchChange("");
     setActiveSelector(null);
+    setShowSendOptions(false);
     setShowMentionSuggestions(false);
     setMentionFilter("");
     setActiveMentionIndex(0);
@@ -368,9 +370,32 @@ export function UnifiedBottomBar({
   const activePeopleCount = people.filter(p => p.isSelected).length;
   const activeRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
   const hasInvalidRootTaskRelaySelection = !focusedTaskId && activeRelayIds.length !== 1;
+  const hasComposeText = sharedText.trim().length > 0;
+  const hasAtLeastOneTag = (sharedText.match(/#(\w+)/g)?.length || 0) > 0;
+  const taskSubmitBlockedReason = !isSignedIn
+    ? t("composer.blocked.signin")
+    : !hasComposeText
+      ? t("composer.blocked.write")
+      : !hasAtLeastOneTag
+        ? t("composer.blocked.tag")
+        : hasInvalidRootTaskRelaySelection
+          ? t("composer.blocked.relay")
+          : null;
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
+
+  useEffect(() => {
+    if (taskSubmitBlockedReason && activeSelector === "date") {
+      setActiveSelector(null);
+    }
+  }, [activeSelector, taskSubmitBlockedReason]);
+
+  useEffect(() => {
+    if (!canOfferComment || !hasComposeText) {
+      setShowSendOptions(false);
+    }
+  }, [canOfferComment, hasComposeText]);
 
   const insertMention = (mentionToken: string) => {
     const cursorPos = cursorPositionRef.current;
@@ -391,6 +416,22 @@ export function UnifiedBottomBar({
       textarea.setSelectionRange(pos, pos);
       cursorPositionRef.current = pos;
     }, 0);
+  };
+
+  const canSendTask = hasComposeText && !hasInvalidRootTaskRelaySelection;
+  const canSendComment = hasComposeText;
+  const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
+
+  const handlePrimarySend = () => {
+    if (!isSignedIn) {
+      onSignInClick();
+      return;
+    }
+    if (canOfferComment) {
+      setShowSendOptions((previous) => !previous);
+      return;
+    }
+    void handleSubmit("task");
   };
 
   const addMentionTagOnly = (person: Person) => {
@@ -557,7 +598,12 @@ export function UnifiedBottomBar({
       <div className="px-3 pt-2">
         <div className="overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex items-center gap-2 pt-1">
-          <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
+          {taskSubmitBlockedReason ? (
+            <div className="h-8 inline-flex items-center rounded-md border border-border/70 bg-muted/40 px-2 text-xs text-muted-foreground">
+              {taskSubmitBlockedReason}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
                 <select
                   aria-label={t("composer.labels.priority")}
@@ -629,6 +675,7 @@ export function UnifiedBottomBar({
                 </div>
               )}
             </div>
+          )}
 
           {/* Filter/Selector Buttons */}
           <div className="flex items-center gap-1 ml-auto shrink-0">
@@ -799,47 +846,77 @@ export function UnifiedBottomBar({
                 </div>
               )}
             </div>
-            <div className="flex gap-1">
-              <button
-                onClick={handleCancel}
-                className="p-3 rounded-lg hover:bg-muted"
-                aria-label={t("composer.hints.clearCompose")}
-                title={t("composer.hints.clearCompose")}
-              >
-                <X className="w-5 h-5" />
-              </button>
-              {isSignedIn ? (
-                <>
-                  <button
-                    onClick={() => handleSubmit("task")}
-                    disabled={!sharedText.trim() || hasInvalidRootTaskRelaySelection}
-                    className="p-3 rounded-lg border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                    aria-label={t("composer.actions.sendTask")}
-                    title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.hints.createFromText")}
-                  >
-                    <CheckSquare className="w-5 h-5" />
-                  </button>
-                  {canOfferComment && (
-                    <button
-                      onClick={() => handleSubmit("comment")}
-                      disabled={!sharedText.trim()}
-                      className="p-3 rounded-lg border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                      aria-label={t("composer.actions.sendComment")}
-                      title={t("composer.labels.comment")}
-                    >
-                      <MessageSquare className="w-5 h-5" />
-                    </button>
-                  )}
-                </>
-              ) : (
+            <div className="flex items-center gap-1">
+              {hasComposeText && (
                 <button
-                  onClick={onSignInClick}
-                  className="p-3 rounded-lg border border-border text-foreground hover:bg-muted"
-                  aria-label={t("composer.hints.signInToCreate")}
+                  onClick={handleCancel}
+                  className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
+                  aria-label={t("composer.hints.clearCompose")}
+                  title={t("composer.hints.clearCompose")}
                 >
-                  <Zap className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
+
+              <div className="relative">
+                <button
+                  onClick={handlePrimarySend}
+                  disabled={isSignedIn ? (canOfferComment ? !canSendComment : !canSendTask) : false}
+                  className={cn(
+                    "h-10 w-10 inline-flex items-center justify-center rounded-lg border transition-colors",
+                    isSignedIn
+                      ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      : "border-border text-foreground hover:bg-muted"
+                  )}
+                  aria-label={isSignedIn ? (canOfferComment ? `${t("composer.actions.sendTask")} / ${t("composer.actions.sendComment")}` : t("composer.actions.sendTask")) : t("composer.hints.signInToCreate")}
+                  title={
+                    !isSignedIn
+                      ? t("composer.hints.signInToCreate")
+                      : canOfferComment
+                        ? `${t("composer.actions.sendTask")} / ${t("composer.actions.sendComment")}`
+                        : hasInvalidRootTaskRelaySelection
+                          ? t("toasts.errors.selectRelayOrParent")
+                          : t("composer.hints.createFromText")
+                  }
+                >
+                  {!isSignedIn ? (
+                    <Zap className="w-5 h-5" />
+                  ) : canOfferComment ? (
+                    <MessageSquare className="w-5 h-5" />
+                  ) : (
+                    <CheckSquare className="w-5 h-5" />
+                  )}
+                </button>
+
+                {showSendOptions && canOpenSendOptions && (
+                  <div className="absolute bottom-full right-0 mb-1.5 flex items-center gap-1 rounded-lg border border-border bg-popover p-1 shadow-lg z-[116]">
+                    <button
+                      onClick={() => {
+                        setShowSendOptions(false);
+                        void handleSubmit("task");
+                      }}
+                      disabled={!canSendTask}
+                      className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      aria-label={t("composer.actions.sendTask")}
+                      title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.actions.sendTask")}
+                    >
+                      <CheckSquare className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowSendOptions(false);
+                        void handleSubmit("comment");
+                      }}
+                      disabled={!canSendComment}
+                      className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      aria-label={t("composer.actions.sendComment")}
+                      title={t("composer.actions.sendComment")}
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -16,7 +16,7 @@
       "signin": "Se requiere iniciar sesión",
       "write": "Escribe primero un mensaje",
       "tag": "Añade al menos un #canal",
-      "relay": "Selecciona un relay o una tarea padre",
+      "relay": "Selecciona un único relay o una tarea padre para crear una nueva tarea",
       "publishing": "Publicando..."
     },
     "actions": {
@@ -62,7 +62,7 @@
       "needSigninPost": "Se requiere iniciar sesión para publicar",
       "needSigninModify": "Se requiere iniciar sesión para modificar tareas",
       "statusRestricted": "Las actualizaciones de estado están restringidas a usuarios asignados",
-      "selectRelayOrParent": "Selecciona un relay o una tarea padre",
+      "selectRelayOrParent": "Selecciona un único relay o una tarea padre para crear una nueva tarea",
       "publishStatusFailed": "No se pudo publicar la actualización de estado en los relays",
       "publishDateFailed": "No se pudo publicar la actualización de fecha en el relay",
       "publishPriorityFailed": "No se pudo publicar la actualización de prioridad en el relay",

@@ -16,7 +16,7 @@
       "signin": "Sign in required",
       "write": "Write a message first",
       "tag": "Add at least one #channel",
-      "relay": "Select one relay or a parent task",
+      "relay": "Select a single relay or a parent task to create a new task",
       "publishing": "Publishing..."
     },
     "actions": {
@@ -62,7 +62,7 @@
       "needSigninPost": "Sign in required to post",
       "needSigninModify": "Sign in required to modify tasks",
       "statusRestricted": "Status updates are restricted to assigned users",
-      "selectRelayOrParent": "Select one relay or a parent task",
+      "selectRelayOrParent": "Select a single relay or a parent task to create a new task",
       "publishStatusFailed": "Failed to publish status update to relays",
       "publishDateFailed": "Failed to publish date update to relay",
       "publishPriorityFailed": "Failed to publish priority update to relay",
