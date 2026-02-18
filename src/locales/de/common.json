@@ -154,6 +154,22 @@
       "guide": "Leitfaden",
       "toggleAll": "Alle ein-/ausschalten",
       "toggleAllFor": "Alle {{title}} umschalten"
+    },
+    "filterStates": {
+      "include": "einschließen",
+      "exclude": "ausschließen",
+      "unfiltered": "ungefiltert"
+    },
+    "filters": {
+      "toggleRelay": "{{name}} umschalten",
+      "showOnlyRelay": "Nur {{name}} anzeigen",
+      "toggleChannelTo": "#{{name}} auf {{nextState}} umschalten",
+      "toggleChannelFilter": "#{{name}}-Filter umschalten",
+      "showOnlyChannel": "Nur #{{name}} anzeigen",
+      "togglePerson": "{{name}} umschalten",
+      "showOnlyPerson": "Nur {{name}} anzeigen",
+      "selected": "{{name}} ausgewählt",
+      "me": "Ich"
     }
   },
   "hints": {

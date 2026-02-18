@@ -2,6 +2,7 @@ import { Building2, Users, Gamepad2, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay } from "@/types";
 import { SidebarFilterRow } from "./SidebarFilterRow";
+import { useTranslation } from "react-i18next";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "building-2": Building2,
@@ -18,6 +19,7 @@ interface RelayItemProps {
 }
 
 export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = false }: RelayItemProps) {
+  const { t } = useTranslation();
   const Icon = iconMap[relay.icon] || Building2;
 
   return (
@@ -33,8 +35,8 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
           onToggle();
         }}
         className="relative"
-        title={`Toggle ${relay.name}`}
-        aria-label={`Toggle ${relay.name}`}
+        title={t("sidebar.filters.toggleRelay", { name: relay.name })}
+        aria-label={t("sidebar.filters.toggleRelay", { name: relay.name })}
       >
         <div
           className={cn(
@@ -55,8 +57,8 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
       <button
         onClick={onExclusive}
         className="flex-1 text-left"
-        title={`Show only ${relay.name}`}
-        aria-label={`Show only ${relay.name}`}
+        title={t("sidebar.filters.showOnlyRelay", { name: relay.name })}
+        aria-label={t("sidebar.filters.showOnlyRelay", { name: relay.name })}
       >
         <span
           className={cn(

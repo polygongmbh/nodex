@@ -154,6 +154,22 @@
       "guide": "Guide",
       "toggleAll": "Toggle all on/off",
       "toggleAllFor": "Toggle all {{title}}"
+    },
+    "filterStates": {
+      "include": "include",
+      "exclude": "exclude",
+      "unfiltered": "unfiltered"
+    },
+    "filters": {
+      "toggleRelay": "Toggle {{name}}",
+      "showOnlyRelay": "Show only {{name}}",
+      "toggleChannelTo": "Toggle #{{name}} to {{nextState}}",
+      "toggleChannelFilter": "Toggle #{{name}} filter",
+      "showOnlyChannel": "Show only #{{name}}",
+      "togglePerson": "Toggle {{name}}",
+      "showOnlyPerson": "Show only {{name}}",
+      "selected": "{{name}} selected",
+      "me": "Me"
     }
   },
   "hints": {

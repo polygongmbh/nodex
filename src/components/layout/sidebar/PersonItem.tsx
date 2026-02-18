@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Person } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { SidebarFilterRow } from "./SidebarFilterRow";
+import { useTranslation } from "react-i18next";
 
 interface PersonItemProps {
   person: Person;
@@ -11,7 +12,8 @@ interface PersonItemProps {
 }
 
 export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = false }: PersonItemProps) {
-  const personName = person.id === "me" ? "Me" : person.displayName;
+  const { t } = useTranslation();
+  const personName = person.id === "me" ? t("sidebar.filters.me") : person.displayName;
   const onlineStatus = person.onlineStatus ?? (person.isOnline ? "online" : "offline");
   const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-yellow-400" : null;
 
@@ -29,8 +31,8 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
           e.stopPropagation();
           onToggle();
         }}
-        title={`Toggle ${personName}`}
-        aria-label={`Toggle ${personName}`}
+        title={t("sidebar.filters.togglePerson", { name: personName })}
+        aria-label={t("sidebar.filters.togglePerson", { name: personName })}
         className="relative rounded-full hover:ring-2 hover:ring-primary/50"
       >
         <UserAvatar
@@ -52,8 +54,8 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
       <button
         onClick={onExclusive}
         className="flex-1 text-left"
-        aria-label={`Show only ${personName}`}
-        title={`Show only ${personName}`}
+        aria-label={t("sidebar.filters.showOnlyPerson", { name: personName })}
+        title={t("sidebar.filters.showOnlyPerson", { name: personName })}
       >
         <span
           className={cn(
@@ -67,7 +69,7 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
       {person.isSelected && (
         <div
           className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
-          aria-label={`${personName} selected`}
+          aria-label={t("sidebar.filters.selected", { name: personName })}
         />
       )}
     </SidebarFilterRow>
