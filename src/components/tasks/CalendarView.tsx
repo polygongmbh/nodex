@@ -97,6 +97,12 @@ export function CalendarView({
   onHashtagClick,
   onAuthorClick,
 }: CalendarViewProps) {
+  const getStatusToggleHint = (status?: Task["status"]): string => {
+    if (status === "in-progress") return "Mark task done. Hold Alt while clicking to select status.";
+    if (status === "done") return "Task is done. Click to select status.";
+    return "Mark task in progress. Hold Alt while clicking to select status.";
+  };
+
   const { user } = useNDK();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [desktopMonths, setDesktopMonths] = useState<Date[]>(() => {
@@ -573,8 +579,12 @@ export function CalendarView({
                                 <button
                                   onClick={(e) => {
                                     if (!canCompleteTask(task)) return;
-                                    const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-                                    if (hasModifier && onStatusChange) {
+                                    if (task.status === "done" && onStatusChange) {
+                                      allowStatusMenuOpen(task.id);
+                                      openStatusMenu(task.id);
+                                      return;
+                                    }
+                                    if (e.altKey && onStatusChange) {
                                       allowStatusMenuOpen(task.id);
                                       openStatusMenu(task.id);
                                       return;
@@ -606,6 +616,7 @@ export function CalendarView({
                                   }}
                                   disabled={!canCompleteTask(task)}
                                   aria-label="Set status"
+                                  title={getStatusToggleHint(task.status)}
                                   className={cn(
                                     "flex-shrink-0 mt-0.5",
                                     canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
@@ -944,8 +955,12 @@ export function CalendarView({
                               <button
                                 onClick={(e) => {
                                   if (!canCompleteTask(task)) return;
-                                  const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-                                  if (hasModifier && onStatusChange) {
+                                  if (task.status === "done" && onStatusChange) {
+                                    allowStatusMenuOpen(task.id);
+                                    openStatusMenu(task.id);
+                                    return;
+                                  }
+                                  if (e.altKey && onStatusChange) {
                                     allowStatusMenuOpen(task.id);
                                     openStatusMenu(task.id);
                                     return;
@@ -977,6 +992,7 @@ export function CalendarView({
                                 }}
                                 disabled={!canCompleteTask(task)}
                                 aria-label="Set status"
+                                title={getStatusToggleHint(task.status)}
                                 className={cn(
                                   "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
                                   canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"

@@ -97,6 +97,12 @@ export function FeedView({
   onAuthorClick,
   mentionRequest = null,
 }: FeedViewProps) {
+  const getStatusToggleHint = (status?: Task["status"]): string => {
+    if (status === "in-progress") return "Mark task done. Hold Alt while clicking to select status.";
+    if (status === "done") return "Task is done. Click to select status.";
+    return "Mark task in progress. Hold Alt while clicking to select status.";
+  };
+
   const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1023px)";
   const truncateMobilePubkey = (value: string): string => {
     if (!isMobile) return value;
@@ -405,8 +411,12 @@ export function FeedView({
                         <button
                           onClick={(e) => {
                             if (!canCompleteTask(task)) return;
-                            const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-                            if (hasModifier && onStatusChange) {
+                            if (task.status === "done" && onStatusChange) {
+                              allowStatusMenuOpen(task.id);
+                              openStatusMenu(task.id);
+                              return;
+                            }
+                            if (e.altKey && onStatusChange) {
                               allowStatusMenuOpen(task.id);
                               openStatusMenu(task.id);
                               return;
@@ -438,6 +448,7 @@ export function FeedView({
                           }}
                           disabled={!canCompleteTask(task)}
                           aria-label="Set status"
+                          title={getStatusToggleHint(task.status)}
                           className={cn(
                             "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
                             canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"

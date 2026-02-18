@@ -67,6 +67,12 @@ export function TaskItem({
   onHashtagClick,
   onAuthorClick,
 }: TaskItemProps) {
+  const getStatusToggleHint = (status?: TaskStatus): string => {
+    if (status === "in-progress") return "Mark task done. Hold Alt while clicking to select status.";
+    if (status === "done") return "Task is done. Click to select status.";
+    return "Mark task in progress. Hold Alt while clicking to select status.";
+  };
+
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const [localFoldState, setLocalFoldState] = useState<FoldState>("matchingOnly");
   
@@ -232,8 +238,12 @@ export function TaskItem({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!canCompleteTask()) return;
-                  const hasModifier = e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
-                  if (hasModifier && onStatusChange) {
+                  if (task.status === "done" && onStatusChange) {
+                    allowStatusMenuOpenRef.current = true;
+                    setStatusMenuOpen(true);
+                    return;
+                  }
+                  if (e.altKey && onStatusChange) {
                     allowStatusMenuOpenRef.current = true;
                     setStatusMenuOpen(true);
                     return;
@@ -264,6 +274,7 @@ export function TaskItem({
                 }}
                 disabled={!canCompleteTask()}
                 aria-label="Set status"
+                title={getStatusToggleHint(task.status)}
                 className={cn(
                   "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
                   canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"

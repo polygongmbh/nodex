@@ -71,6 +71,43 @@ describe("TaskItem status actions", () => {
     expect(onStatusChange).toHaveBeenCalledWith("t1", "done");
   });
 
+  it("does not cycle done tasks on click when status menu is available", () => {
+    const onStatusChange = vi.fn();
+    const onToggleComplete = vi.fn();
+
+    render(
+      <TaskItem
+        task={{ ...baseTask, status: "done" }}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+        onToggleComplete={onToggleComplete}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Set status"));
+
+    expect(onToggleComplete).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it("shows a status hover hint on the task checkbox", () => {
+    render(
+      <TaskItem
+        task={baseTask}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+      />
+    );
+
+    expect(screen.getByLabelText("Set status")).toHaveAttribute(
+      "title",
+      "Mark task in progress. Hold Alt while clicking to select status."
+    );
+  });
+
   it("blocks status changes when task is assigned to another user", () => {
     const onStatusChange = vi.fn();
     const onToggleComplete = vi.fn();
