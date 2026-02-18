@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+### Fixed
+- Mobile Manage view now includes a language selector, so language can be changed directly on mobile.
 
 ## [1.6.0] - 2026-02-18
 ### Added

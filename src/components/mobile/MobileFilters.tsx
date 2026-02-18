@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";
 import { useTranslation } from "react-i18next";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
+import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import {
   loadPresencePublishingEnabled,
   savePresencePublishingEnabled,
@@ -192,6 +193,7 @@ export function MobileFilters({
               <Sparkles className="w-4 h-4 text-primary" />
               {t("navigation.mobile.openGuide")}
             </button>
+            <LanguageToggle />
             <VersionHint className="shrink-0" />
             <CompletionFeedbackToggle
               enabled={completionSoundEnabled}
