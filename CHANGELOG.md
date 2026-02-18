@@ -14,7 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Kanban now visually marks tasks you cannot move/edit as read-only using muted/dashed cards and a compact corner lock icon, so permission-restricted items are clearly distinguishable without consuming card space.
 - Desktop bottom-dock search now expands to a larger percentage of viewport width on wide screens, improving horizontal input space on large displays.
 - Table view due-date column is now tuned to a 20rem maximum on the widest desktops, improving readability for date type + date/time values without over-allocating space.
-- Table view now shows compact icons in column headers, and priority dropdown styling is flatter/cleaner in both Table and composer controls to better match the surrounding UI.
+- Table view now shows compact icons in column headers, and dropdown styling is flatter/cleaner across Table/composer controls (including priority and date-type selectors, plus desktop levels dropdown) to better match the surrounding UI.
 
 ### Fixed
 - Mobile compose due-date controls are now split into two rows, and the date-type selector only appears after a date is selected, reducing horizontal overflow that could push nearby actions off-screen.

@@ -825,7 +825,7 @@ export function TaskComposer({
             aria-label={t("composer.labels.dateType")}
             value={dateType}
             onChange={(event) => setDateType(event.target.value as TaskDateType)}
-            className="text-xs bg-background border border-border/50 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+            className="h-7 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
           >
             <option value="due">{t("composer.dates.due")}</option>
             <option value="scheduled">{t("composer.dates.scheduled")}</option>

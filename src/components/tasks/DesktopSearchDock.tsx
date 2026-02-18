@@ -45,7 +45,7 @@ export function DesktopSearchDock({
           <div className="flex items-center gap-1.5 flex-shrink-0" data-onboarding="kanban-levels">
             <Layers className="w-4 h-4 text-muted-foreground" />
             <Select value={kanbanDepthMode} onValueChange={(v) => onKanbanDepthModeChange(v as KanbanDepthMode)}>
-              <SelectTrigger className="w-[150px] h-8 text-sm bg-muted/60 border-border/50">
+              <SelectTrigger className="w-[150px] h-8 rounded-md border-border/50 bg-transparent text-sm shadow-none focus:ring-1 focus:ring-primary/30">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

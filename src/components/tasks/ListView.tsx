@@ -476,7 +476,7 @@ export function ListView({
                 id={`list-date-type-${task.id}`}
                 value={localDateType}
                 onChange={(event) => setLocalDateType(event.target.value as TaskDateType)}
-                className="text-xs bg-background border border-border rounded px-2 py-1"
+                className="h-7 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
               >
                 <option value="due">Due</option>
                 <option value="scheduled">Scheduled</option>
