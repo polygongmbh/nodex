@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -702,17 +702,17 @@ export function UnifiedBottomBar({
                   <button
                     onClick={() => handleSubmit("task")}
                     disabled={!sharedText.trim() || hasInvalidRootTaskRelaySelection}
-                    className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    className="p-3 rounded-lg border border-emerald-700 bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
                     aria-label="Send task"
                     title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.hints.createFromText")}
                   >
-                    <Send className="w-5 h-5" />
+                    <CheckSquare className="w-5 h-5" />
                   </button>
                   {canOfferComment && (
                     <button
                       onClick={() => handleSubmit("comment")}
                       disabled={!sharedText.trim()}
-                      className="p-3 rounded-lg border border-border text-foreground hover:bg-muted disabled:opacity-50"
+                      className="p-3 rounded-lg border border-sky-700 bg-sky-600 text-white hover:bg-sky-500 disabled:opacity-50"
                       aria-label="Send comment"
                       title={t("composer.labels.comment")}
                     >
