@@ -8,7 +8,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
-import { isMacOSPlatform } from "@/lib/keyboard-platform";
+import {
+  getMetadataOnlyShortcutLabel,
+  getSubmitCurrentKindShortcutLabel,
+  getSubmitOppositeKindShortcutLabel,
+} from "@/lib/keyboard-platform";
 
 interface ShortcutGroup {
   title: string;
@@ -22,7 +26,6 @@ interface KeyboardShortcutsHelpProps {
 
 export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelpProps) {
   const { t } = useTranslation();
-  const isMacOS = isMacOSPlatform();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shortcutGroups: ShortcutGroup[] = [
     {
@@ -73,10 +76,10 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
     {
       title: t("shortcuts.groups.compose"),
       shortcuts: [
-        { key: isMacOS ? "Cmd + Enter" : "Ctrl + Enter", description: t("shortcuts.items.submitCurrentKind") },
-        { key: isMacOS ? "Option + Enter" : "Alt + Enter", description: t("shortcuts.items.submitOppositeKind") },
+        { key: getSubmitCurrentKindShortcutLabel(), description: t("shortcuts.items.submitCurrentKind") },
+        { key: getSubmitOppositeKindShortcutLabel(), description: t("shortcuts.items.submitOppositeKind") },
         { key: "Enter / Tab", description: t("shortcuts.items.insertHighlightedSuggestion") },
-        { key: isMacOS ? "Option/Cmd/Shift + Enter" : "Alt/Ctrl/Shift + Enter", description: t("shortcuts.items.addMetadataOnly") },
+        { key: getMetadataOnlyShortcutLabel(), description: t("shortcuts.items.addMetadataOnly") },
       ],
     },
   ];

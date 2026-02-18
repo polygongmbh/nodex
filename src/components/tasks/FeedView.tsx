@@ -19,7 +19,7 @@ import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill"
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getDueDateColorClass } from "@/lib/taskSorting";
 import { useTranslation } from "react-i18next";
-import { isMacOSPlatform } from "@/lib/keyboard-platform";
+import { getAlternateModifierHintKey } from "@/lib/keyboard-platform";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -101,9 +101,7 @@ export function FeedView({
 }: FeedViewProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: Task["status"]): string => {
-    const alternateKey = isMacOSPlatform()
-      ? t("hints.modifiers.optionAlt")
-      : t("hints.modifiers.alt");
+    const alternateKey = t(getAlternateModifierHintKey());
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
     return t("hints.statusToggle.todo", { alternateKey });

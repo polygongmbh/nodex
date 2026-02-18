@@ -13,7 +13,7 @@ import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
-import { isMacOSPlatform } from "@/lib/keyboard-platform";
+import { getAlternateModifierHintKey } from "@/lib/keyboard-platform";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,9 +71,7 @@ export function TaskItem({
 }: TaskItemProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: TaskStatus): string => {
-    const alternateKey = isMacOSPlatform()
-      ? t("hints.modifiers.optionAlt")
-      : t("hints.modifiers.alt");
+    const alternateKey = t(getAlternateModifierHintKey());
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
     return t("hints.statusToggle.todo", { alternateKey });
