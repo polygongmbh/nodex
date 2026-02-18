@@ -275,6 +275,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
 
     expect(screen.getByText(format(new Date(), "MMM d"))).toBeInTheDocument();
+    expect(screen.getByLabelText(/date type/i)).toBeInTheDocument();
   });
 
   it("updates due date when selected calendar date changes", () => {
@@ -316,6 +317,27 @@ describe("UnifiedBottomBar auth gating", () => {
     );
 
     expect(screen.getByText(format(nextDay, "MMM d"))).toBeInTheDocument();
+  });
+
+  it("hides date type until a due date is selected", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.queryByLabelText(/date type/i)).not.toBeInTheDocument();
   });
 
   it("syncs channel filters when hashtags are completed or removed", () => {

@@ -480,80 +480,82 @@ export function UnifiedBottomBar({
           )}
 
           {taskType === "task" && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-            <select
-              aria-label="Priority"
-              value={priority === undefined ? "" : String(priority)}
-              onChange={(event) => {
-                const value = event.target.value;
-                if (!value) {
-                  setPriority(undefined);
-                  return;
-                }
-                const parsed = Number.parseInt(value, 10);
-                setPriority(Number.isFinite(parsed) ? parsed : undefined);
-              }}
-              className="h-6 rounded-md border border-border bg-background px-1 text-[10px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
-            >
-              <option value="">Prio</option>
-              <option value="20">P20</option>
-              <option value="40">P40</option>
-              <option value="60">P60</option>
-              <option value="80">P80</option>
-              <option value="100">P100</option>
-            </select>
-            <Popover>
-              <PopoverTrigger asChild>
-                <button className="flex items-center gap-1 px-1.5 py-1 rounded-md border border-border hover:bg-muted/60 transition-colors text-[11px] leading-none">
-                  <Calendar className="w-3 h-3" />
-                  {dueDate ? format(dueDate, "MMM d") : "Date"}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-            <select
-              aria-label="Date type"
-              value={dateType}
-              onChange={(event) => setDateType(event.target.value as TaskDateType)}
-              className="h-6 w-[4.5rem] rounded-md border border-border bg-background px-1 text-[10px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
-            >
-              <option value="due">Due</option>
-              <option value="scheduled">Sched</option>
-              <option value="start">Start</option>
-              <option value="end">End</option>
-              <option value="milestone">Mile</option>
-            </select>
-            {dueDate && (
-              <>
-                <div className="flex items-center gap-1 px-1.5 py-1 rounded-md border border-border bg-muted/30">
-                  <Clock className="w-3 h-3" />
-                  <input
-                    type="time"
-                    value={dueTime}
-                    onChange={(e) => setDueTime(e.target.value)}
-                    className="text-[11px] bg-transparent focus:outline-none w-14"
-                  />
-                </div>
-                <button
-                  onClick={() => {
-                    setDueDate(undefined);
-                    setDueTime("");
+            <div className="flex flex-col gap-1 text-xs text-muted-foreground shrink-0">
+              <div className="flex items-center gap-1">
+                <select
+                  aria-label="Priority"
+                  value={priority === undefined ? "" : String(priority)}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (!value) {
+                      setPriority(undefined);
+                      return;
+                    }
+                    const parsed = Number.parseInt(value, 10);
+                    setPriority(Number.isFinite(parsed) ? parsed : undefined);
                   }}
-                  className="p-1 rounded-md hover:bg-muted transition-colors"
-                  aria-label="Clear due date"
+                  className="h-6 rounded-md border border-border bg-background px-1 text-[10px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
                 >
-                  <X className="w-3 h-3" />
-                </button>
-              </>
-            )}
+                  <option value="">Prio</option>
+                  <option value="20">P20</option>
+                  <option value="40">P40</option>
+                  <option value="60">P60</option>
+                  <option value="80">P80</option>
+                  <option value="100">P100</option>
+                </select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-1 px-1.5 py-1 rounded-md border border-border hover:bg-muted/60 transition-colors text-[11px] leading-none">
+                      <Calendar className="w-3 h-3" />
+                      {dueDate ? format(dueDate, "MMM d") : "Date"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={dueDate}
+                      onSelect={setDueDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              {dueDate && (
+                <div className="flex items-center gap-1">
+                  <select
+                    aria-label="Date type"
+                    value={dateType}
+                    onChange={(event) => setDateType(event.target.value as TaskDateType)}
+                    className="h-6 w-[4.5rem] rounded-md border border-border bg-background px-1 text-[10px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+                  >
+                    <option value="due">Due</option>
+                    <option value="scheduled">Sched</option>
+                    <option value="start">Start</option>
+                    <option value="end">End</option>
+                    <option value="milestone">Mile</option>
+                  </select>
+                  <div className="flex items-center gap-1 px-1.5 py-1 rounded-md border border-border bg-muted/30">
+                    <Clock className="w-3 h-3" />
+                    <input
+                      type="time"
+                      value={dueTime}
+                      onChange={(e) => setDueTime(e.target.value)}
+                      className="text-[11px] bg-transparent focus:outline-none w-14"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      setDueDate(undefined);
+                      setDueTime("");
+                    }}
+                    className="p-1 rounded-md hover:bg-muted transition-colors"
+                    aria-label="Clear due date"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
