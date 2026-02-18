@@ -6,7 +6,7 @@
 - Desktop: choose Task or Comment from the compose kind control.
 - Mobile: use the dedicated send actions for task/comment in the bottom bar.
 - Optional: set task priority before posting.
-- Optional: switch UI language (`EN`/`DE`) from the language toggle.
+- Optional: switch UI language (`EN`/`DE`/`ES`) from the language dropdown in the desktop top-right controls.
 
 ## Core Concepts
 - Tasks and comments are Nostr events.
@@ -90,6 +90,7 @@
 ## Reliability and Sorting
 - If relay publish fails, the post is queued locally in a failed-publish banner with retry/dismiss actions instead of being treated as a normal published task/comment.
 - Latest feed events are cached locally and rehydrated on app load for better offline/reconnect continuity.
+- Task state changes now delay status-driven reorder updates slightly to reduce jarring list/table/kanban jumps during completion transitions.
 - Edit profile/setup modal does not open when no relay is connected.
 - Current-user profile metadata is cached locally and reused across sidebar/feed/top-right/profile-edit surfaces when live profile fields are temporarily missing.
 - Presence status is published with NIP-38 updates (unless disabled in profile settings) and clears on sign-out/tab close.

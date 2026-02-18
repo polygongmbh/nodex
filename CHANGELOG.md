@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Changed
 - Popups and selector surfaces now use softer enter motion with global reduced-motion fallbacks for accessibility.
 - Localization coverage expanded across task/status controls, calendar/list/kanban labels, relay management, publish-failure banner actions, and related accessibility labels/tooltips.
+- Desktop top-right controls were refined for consistency and responsiveness.
 - Default language resolution now respects browser/system preferred language order when no saved language preference exists.
 
 ### Fixed
