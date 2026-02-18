@@ -251,25 +251,28 @@ When asked to create a plan to fix or implement something:
 - No prefix: choose a balanced level based on task complexity and risk.
 
 ### Special Commands
+
+#### squash
 - `squash` (or starts with `squash`): inspect recent commits and suggest sensible squashes for repetitive/fixup/tightly related follow-ups.
 - For squash checks, preserve atomic coherent history and do not squash unrelated functional changes.
 - Rewrite only unpushed local history for squash/rebase unless explicitly instructed otherwise.
-- If instructed to `push`:
-  - update user-facing guides before release/push when behavior changed (at minimum `USER_GUIDE.md`, plus in-app guide/shortcuts copy where relevant)
-  - explicitly review and revise `CHANGELOG.md` before release (wording, section classification, redundancy, and user-facing clarity), including pruning repetitive bullets and moving true net-new capabilities into `### Added`
-  - list unpushed commits: `git log origin/<branch>..HEAD --oneline`
-  - provide one high-level summary across all unpushed commits
-  - omit cosmetic-only low-level details unless asked
-  - update `package.json` version semantically based on pending changes
-  - apply semantic bump examples:
-    - patch: `1.4.2 -> 1.4.3` for `fix:` only
-    - minor: `1.4.2 -> 1.5.0` when at least one `feat:` exists and no breaking change exists
-    - major: `1.4.2 -> 2.0.0` for breaking change (`feat!:`/`fix!:` or `BREAKING CHANGE:`)
-  - update `CHANGELOG.md`
-  - create annotated tag matching version (for example `v1.1.0`)
-  - run verification commands appropriate to risk
-  - ask explicit confirmation before pushing
-  - on approval, push branch and tags
+- After squashing, diff current commit to the previous head - there should be no difference, if there is, stop and ask how to proceed.
+
+#### push
+- update user-facing guides before release/push when behavior changed (at minimum `USER_GUIDE.md`, plus in-app guide/shortcuts copy where relevant)
+- explicitly review and revise `CHANGELOG.md` before release (wording, section classification, redundancy, and user-facing clarity), including pruning repetitive bullets and moving true net-new capabilities into `### Added`
+- list unpushed commits: `git log origin/<branch>..HEAD --oneline`
+- provide one high-level summary across all unpushed commits
+- omit cosmetic-only low-level details unless asked
+- update `package.json` version semantically based on pending changes
+- apply semantic bump examples:
+  - patch: `1.4.2 -> 1.4.3` for `fix:` only
+  - minor: `1.4.2 -> 1.5.0` when at least one `feat:` exists and no breaking change exists
+  - major: `1.4.2 -> 2.0.0` for breaking change (`feat!:`/`fix!:` or `BREAKING CHANGE:`)
+- update `CHANGELOG.md`
+- create annotated tag matching version (for example `v1.1.0`)
+- run verification commands appropriate to risk
+- after explicit confirmation, push branch and tags
 
 ### Assistant Response Formatting
 - Keep summaries compact and scannable.
