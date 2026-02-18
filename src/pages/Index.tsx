@@ -13,6 +13,7 @@ import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
+import { useNostrEventCache } from "@/hooks/use-nostr-event-cache";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
@@ -53,11 +54,6 @@ import {
   rememberLoggedInIdentity,
   saveCachedKind0Events,
 } from "@/lib/people-from-kind0";
-import {
-  loadCachedNostrEvents,
-  saveCachedNostrEvents,
-  type CachedNostrEvent,
-} from "@/lib/nostr-event-cache";
 import {
   loadFailedPublishDrafts,
   saveFailedPublishDrafts,
@@ -116,9 +112,28 @@ const Index = () => {
   // Auth modal state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // State for NDK events (hydrated from local cache for offline visibility)
-  const [nostrEvents, setNostrEvents] = useState<CachedNostrEvent[]>(() => loadCachedNostrEvents());
   const [failedPublishDrafts, setFailedPublishDrafts] = useState<FailedPublishDraft[]>(() => loadFailedPublishDrafts());
+
+  const subscribedKinds = useMemo<NostrEventKind[]>(
+    () => [
+      NostrEventKind.TextNote,
+      NostrEventKind.Task,
+      NostrEventKind.Metadata,
+      NostrEventKind.GitStatusOpen,
+      NostrEventKind.GitStatusApplied,
+      NostrEventKind.GitStatusClosed,
+      NostrEventKind.GitStatusDraft,
+      NostrEventKind.Procedure,
+      NostrEventKind.CalendarDateBased,
+      NostrEventKind.CalendarTimeBased,
+    ],
+    []
+  );
+  const nostrEvents = useNostrEventCache({
+    isConnected: isNostrConnected,
+    subscribedKinds,
+    subscribe,
+  });
 
   // Convert relay statuses to app Relay format - combine demo relay with nostr relays
   const relays: Relay[] = useMemo(() => {
@@ -303,62 +318,6 @@ const Index = () => {
       filterState: channelFilterStates.get(channel.id) || "neutral",
     }));
   }, [composeChannels, channelFilterStates]);
-
-  // Subscribe to Nostr events when connected
-  useEffect(() => {
-    if (!isNostrConnected) return;
-
-    // Subscribe to notes, tasks, and task state updates.
-    const subscribedKinds: NostrEventKind[] = [
-      NostrEventKind.TextNote,
-      NostrEventKind.Task,
-      NostrEventKind.Metadata,
-      NostrEventKind.GitStatusOpen,
-      NostrEventKind.GitStatusApplied,
-      NostrEventKind.GitStatusClosed,
-      NostrEventKind.GitStatusDraft,
-      NostrEventKind.Procedure,
-      NostrEventKind.CalendarDateBased,
-      NostrEventKind.CalendarTimeBased,
-    ];
-
-    const subscription = subscribe(
-      [{
-        kinds: subscribedKinds,
-        limit: 200,
-      }],
-      (event) => {
-        const cachedEvent: CachedNostrEvent = {
-          id: event.id || "",
-          pubkey: event.pubkey,
-          created_at: event.created_at || Math.floor(Date.now() / 1000),
-          kind: event.kind,
-          tags: event.tags,
-          content: event.content || "",
-          sig: event.sig || undefined,
-          relayUrl: event.relay?.url,
-        };
-        if (!cachedEvent.id) return;
-        setNostrEvents((prev) => {
-          // Check for duplicates
-          const withoutExisting = prev.filter((e) => e.id !== cachedEvent.id);
-          const newEvents = [cachedEvent, ...withoutExisting].sort(
-            (a, b) => (b.created_at || 0) - (a.created_at || 0)
-          );
-          // Limit to 500 events
-          return newEvents.slice(0, 500);
-        });
-      }
-    );
-
-    return () => {
-      subscription?.stop();
-    };
-  }, [isNostrConnected, subscribe]);
-
-  useEffect(() => {
-    saveCachedNostrEvents(nostrEvents);
-  }, [nostrEvents]);
 
   useEffect(() => {
     saveFailedPublishDrafts(failedPublishDrafts);

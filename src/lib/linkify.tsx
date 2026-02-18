@@ -1,11 +1,12 @@
 import React from "react";
+import LinkifyIt from "linkify-it";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Person } from "@/types";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
 
-const URL_REGEX = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
 const TOKEN_REGEX =
   /(^|[^A-Za-z0-9_])(#([A-Za-z0-9_]+)|@([A-Za-z0-9._-]+(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?))/g;
+const linkify = new LinkifyIt();
 
 function formatPubkeyMention(pubkey: string): string {
   return pubkey.length === 64 ? `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}` : pubkey;
@@ -37,31 +38,45 @@ export function linkifyContent(
   onHashtagClick?: (tag: string) => void,
   options?: LinkifyOptions
 ): React.ReactNode[] {
-  const parts = content.split(URL_REGEX);
-  
+  const matches = linkify.match(content) || [];
+  const parts: Array<{ kind: "text" | "url"; value: string; href?: string }> = [];
+  let lastIndex = 0;
+  for (const match of matches) {
+    if (match.index > lastIndex) {
+      parts.push({ kind: "text", value: content.slice(lastIndex, match.index) });
+    }
+    parts.push({ kind: "url", value: match.text, href: match.url });
+    lastIndex = match.lastIndex;
+  }
+  if (lastIndex < content.length) {
+    parts.push({ kind: "text", value: content.slice(lastIndex) });
+  }
+  if (parts.length === 0) {
+    parts.push({ kind: "text", value: content });
+  }
+
   return parts.flatMap((part, index) => {
-    URL_REGEX.lastIndex = 0;
-    if (URL_REGEX.test(part)) {
+    if (part.kind === "url" && part.href) {
       return [(
         <a
           key={index}
-          href={part}
+          href={part.href}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
           className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`}
         >
-          {part}
+          {part.value}
         </a>
       )];
     }
 
     const nodes: React.ReactNode[] = [];
-    let lastIndex = 0;
+    let tokenCursor = 0;
     TOKEN_REGEX.lastIndex = 0;
     let match: RegExpExecArray | null;
 
-    while ((match = TOKEN_REGEX.exec(part)) !== null) {
+    while ((match = TOKEN_REGEX.exec(part.value)) !== null) {
       const matchIndex = match.index;
       const prefix = match[1] ?? "";
       const token = match[2] ?? "";
@@ -69,8 +84,8 @@ export function linkifyContent(
       const mention = match[4];
       const tokenStart = matchIndex + prefix.length;
 
-      if (tokenStart > lastIndex) {
-        nodes.push(part.slice(lastIndex, tokenStart));
+      if (tokenStart > tokenCursor) {
+        nodes.push(part.value.slice(tokenCursor, tokenStart));
       }
 
       if (token.startsWith("#") && hashtag) {
@@ -125,16 +140,16 @@ export function linkifyContent(
           );
         }
       } else {
-        nodes.push(part.slice(tokenStart, tokenStart + token.length));
+        nodes.push(part.value.slice(tokenStart, tokenStart + token.length));
       }
 
-      lastIndex = tokenStart + token.length;
+      tokenCursor = tokenStart + token.length;
     }
 
-    if (lastIndex < part.length) {
-      nodes.push(part.slice(lastIndex));
+    if (tokenCursor < part.value.length) {
+      nodes.push(part.value.slice(tokenCursor));
     }
 
-    return nodes.length > 0 ? nodes : [part];
+    return nodes.length > 0 ? nodes : [part.value];
   });
 }

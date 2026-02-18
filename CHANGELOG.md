@@ -12,6 +12,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Changed
 - Latest Nostr feed events are now cached locally and rehydrated on load so recent posts remain visible offline or during relay reconnect windows.
 - Feed/tree cards now render task priority badges (`P<n>`) so parsed priority is visible outside table editing controls.
+- Content link parsing now uses `linkify-it` for more robust URL detection around punctuation/edge cases.
+- Nostr feed cache lifecycle now runs through React Query instead of page-local state wiring, reducing cache drift risk.
 
 ### Fixed
 - Failed relay publishes are no longer inserted as normal local tasks/comments, preventing misleading local-only entries after refresh.
