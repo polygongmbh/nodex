@@ -94,7 +94,7 @@ describe("MobileLayout auth wiring", () => {
     expect(onSignInClick).toHaveBeenCalledTimes(1);
   });
 
-  it("redirects to manage view and opens profile editor after sign-in when profile setup is required", async () => {
+  it("redirects to manage view and opens profile editor after sign-in when cached profile metadata is missing", async () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
 
@@ -108,6 +108,7 @@ describe("MobileLayout auth wiring", () => {
         searchQuery=""
         focusedTaskId={null}
         currentUser={people[0]}
+        hasCachedCurrentUserProfileMetadata={false}
         isSignedIn={false}
         currentView="tree"
         onViewChange={() => {}}
@@ -131,7 +132,7 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
 
     ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
-    ndkMock.needsProfileSetup = true;
+    ndkMock.needsProfileSetup = false;
 
     rerender(
       <MobileLayout
@@ -143,6 +144,7 @@ describe("MobileLayout auth wiring", () => {
         searchQuery=""
         focusedTaskId={null}
         currentUser={people[0]}
+        hasCachedCurrentUserProfileMetadata={false}
         isSignedIn={true}
         currentView="tree"
         onViewChange={() => {}}

@@ -24,6 +24,7 @@ interface MobileLayoutProps {
   searchQuery: string;
   focusedTaskId: string | null;
   currentUser?: Person;
+  hasCachedCurrentUserProfileMetadata?: boolean;
   isSignedIn: boolean;
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
@@ -79,6 +80,7 @@ export function MobileLayout({
   searchQuery,
   focusedTaskId,
   currentUser,
+  hasCachedCurrentUserProfileMetadata = true,
   isSignedIn,
   currentView,
   onViewChange,
@@ -235,13 +237,13 @@ export function MobileLayout({
 
   useEffect(() => {
     const justSignedIn = !previousSignedInRef.current && isSignedIn;
-    if (justSignedIn && needsProfileSetup) {
+    if (justSignedIn && (needsProfileSetup || !hasCachedCurrentUserProfileMetadata)) {
       setShowFilters(true);
       setMobileView("filters");
       setProfileEditorOpenSignal((previous) => previous + 1);
     }
     previousSignedInRef.current = isSignedIn;
-  }, [isSignedIn, needsProfileSetup]);
+  }, [isSignedIn, needsProfileSetup, hasCachedCurrentUserProfileMetadata]);
 
   const renderView = () => {
     if (showFilters) {

@@ -358,6 +358,14 @@ const Index = () => {
 
   const isMobile = useIsMobile();
   const currentUser = resolveCurrentUser(people, user);
+  const hasCachedCurrentUserProfileMetadata = useMemo(() => {
+    if (!user?.pubkey) return true;
+    const normalizedPubkey = user.pubkey.trim().toLowerCase();
+    return cachedKind0Events.some((event) => {
+      const eventPubkey = typeof event.pubkey === "string" ? event.pubkey.trim().toLowerCase() : "";
+      return eventPubkey === normalizedPubkey && Boolean(event.content?.trim());
+    });
+  }, [cachedKind0Events, user?.pubkey]);
   const shortcutsHelp = useKeyboardShortcutsHelp();
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
@@ -1197,6 +1205,7 @@ const Index = () => {
           searchQuery={searchQuery}
           focusedTaskId={focusedTaskId}
           currentUser={currentUser}
+          hasCachedCurrentUserProfileMetadata={hasCachedCurrentUserProfileMetadata}
           isSignedIn={Boolean(user)}
           currentView={currentView}
           onViewChange={setCurrentView}
