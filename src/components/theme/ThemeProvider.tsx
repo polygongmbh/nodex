@@ -16,9 +16,29 @@ interface ThemeContextValue {
 const ThemeModeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 const DARK_MEDIA_QUERY = "(prefers-color-scheme: dark)";
+const THEME_COLOR_META_SELECTOR = 'meta[name="theme-color"][data-nodex-theme-color]';
+const THEME_CHROME_COLORS: Record<EffectiveTheme, string> = {
+  light: "#f6f9fc",
+  dark: "#101823",
+};
 
 function getSystemPrefersDark() {
   return window.matchMedia(DARK_MEDIA_QUERY).matches;
+}
+
+function setThemeColorMeta(effectiveTheme: EffectiveTheme) {
+  const head = document.head;
+  if (!head) return;
+
+  let meta = document.querySelector(THEME_COLOR_META_SELECTOR);
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    meta.setAttribute("data-nodex-theme-color", "true");
+    head.appendChild(meta);
+  }
+
+  meta.setAttribute("content", THEME_CHROME_COLORS[effectiveTheme]);
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -45,6 +65,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const root = document.documentElement;
     root.classList.toggle("dark", effectiveTheme === "dark");
     root.style.colorScheme = effectiveTheme;
+    setThemeColorMeta(effectiveTheme);
   }, [effectiveTheme]);
 
   const setMode = useCallback((nextMode: ThemeMode) => {
