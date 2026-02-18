@@ -9,23 +9,21 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [1.5.0] - 2026-02-18
 
 ### Added
-- App presence now publishes NIP-38 `kind:30315` status updates on view/task changes (1-hour expiry), clears status on sign-out/tab close, and uses recent post + status activity for sidebar online indicators (green <=3m, yellow <=1h) with a profile privacy toggle to disable presence publishing.
+- Presence publishing now supports NIP-38 `kind:30315` status updates on view/task changes (1-hour expiry), clears status on sign-out/tab close, and adds a profile privacy toggle to disable presence publishing.
+- Mobile compose now uses dedicated task/comment send actions (instead of a mode toggle), with channel-required feedback before posting.
+- Desktop composer now supports chip-based metadata controls for priority and date handling, including mention/hashtag chips in the same row.
 
 ### Changed
-- Mobile compose now replaces the Task/Comment mode toggle with dedicated send actions: task send is always available, and comment send appears in feed/tree views.
-- Mobile task/comment send actions now share equal visual weight and use clearer icons with consistent action styling for faster recognition.
-- Mobile onboarding now uses more precise Manage/filter highlight targets and adds earlier, more detailed guidance for profile properties and filter controls.
-- Kanban now visually marks tasks you cannot move/edit as read-only using muted/dashed cards and a compact corner lock icon, so permission-restricted items are clearly distinguishable without consuming card space.
+- Mobile onboarding now uses more precise Manage/filter highlight targets and earlier, more detailed filtering/property guidance.
+- Kanban read-only tasks now use clearer permission styling with a compact lock icon.
 - Desktop bottom-dock search now expands to a larger percentage of viewport width on wide screens, improving horizontal input space on large displays.
-- Table view due-date column is now tuned to a 20rem maximum on the widest desktops, improving readability for date type + date/time values without over-allocating space.
-- Table view now shows compact icons in column headers, and dropdown styling is flatter/cleaner across Table/composer controls (including priority and date-type selectors, plus desktop levels dropdown) to better match the surrounding UI.
-- Desktop composer now lays out priority and due-date controls as separate horizontal chips with larger click targets (wrapping when needed), and mention/hashtag chips now flow after them in the same row; date chip width is stabilized while the date-type selector is slimmer.
+- Table view now uses clearer header icons, flatter dropdown styling, and a tuned 20rem due-date column on wide desktops.
 - Compose mention preview chips now resolve known users to usernames (when available) instead of showing raw mention identifiers.
 - Alt/Ctrl/Cmd hint copy is now macOS-aware in guides/shortcut help (Option/Cmd phrasing) and status-toggle hover hints are now fully localized (en/de).
+- German UI copy now prefers "Mitmachen" (instead of "Veröffentlichen") and "Kollaborationsplattform".
 
 ### Fixed
 - Mobile compose due-date controls are now split into two rows, and the date-type selector only appears after a date is selected, reducing horizontal overflow that could push nearby actions off-screen.
-- Mobile send actions now provide immediate feedback when posting text without any selected/typed channel tag, instead of silently doing nothing.
 - Mobile Manage view now scrolls correctly within the panel instead of clipping long settings/filter content.
 - After mobile sign-in with no cached profile metadata for the signed-in user, the app now redirects to Manage and auto-opens the profile edit pane.
 - Mobile sign-in prompt overlay now correctly covers all mobile UI layers, including the bottom compose bar.
@@ -33,9 +31,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile Safari now uses the small viewport height (`svh`) for app layout, preventing extra page scroll caused by the floating URL bar.
 - Table view now shares the same desktop composer draft state as Feed/Tree, so unsent text persists when switching between those views.
 - Task status checkboxes now show clearer hover hints (including Alt-click status selection), and clicking an already-done task now opens the status dropdown instead of cycling state while remaining dismissible via a second click.
-- Signed-in profile metadata is now proactively cached to local kind:0 storage, so profiles from previously used identities remain available across account switches/reloads.
+- Signed-in profile metadata is now proactively cached to local kind:0 storage and reused by top-right/profile-edit surfaces, so current-user identity stays populated across account switches/reloads.
 - Presence activity now respects newer NIP-38 offline updates over older active presence updates, so sign-out clears online status immediately instead of waiting for active-presence expiry.
-- Current-user profile surfaces now consistently reuse cached kind:0 metadata, so top-right identity labels and Manage/Edit profile defaults stay populated even when live profile fields are initially empty.
 
 ## [1.4.1] - 2026-02-18
 

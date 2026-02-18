@@ -219,6 +219,7 @@ policies:
 - When a feature is first introduced in the same release, do not add separate changelog bullets for implementation/fix-up iterations that occurred while building it; summarize only the final user-visible outcome.
 - Use semantic version sections (`MAJOR.MINOR.PATCH`) and ISO dates (`YYYY-MM-DD`).
 - On release, move grouped entries from `Unreleased` into the new versioned section.
+- Before every push, prune redundant/iteration-level changelog bullets and reclassify genuinely new user-facing capabilities into `### Added` (keeping `### Changed`/`### Fixed` for refinements and regressions).
 
 ### Refactoring Cadence
 - After each major milestone, run a cleanup pass for duplication, consistency, complex components, and discovered debt.
@@ -255,7 +256,7 @@ When asked to create a plan to fix or implement something:
 - Rewrite only unpushed local history for squash/rebase unless explicitly instructed otherwise.
 - If instructed to `push`:
   - update user-facing guides before release/push when behavior changed (at minimum `USER_GUIDE.md`, plus in-app guide/shortcuts copy where relevant)
-  - explicitly review and revise `CHANGELOG.md` before release (wording, section classification, redundancy, and user-facing clarity)
+  - explicitly review and revise `CHANGELOG.md` before release (wording, section classification, redundancy, and user-facing clarity), including pruning repetitive bullets and moving true net-new capabilities into `### Added`
   - list unpushed commits: `git log origin/<branch>..HEAD --oneline`
   - provide one high-level summary across all unpushed commits
   - omit cosmetic-only low-level details unless asked
