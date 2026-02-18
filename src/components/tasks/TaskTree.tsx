@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { TaskItem } from "./TaskItem";
@@ -279,6 +279,20 @@ export function TaskTree({
 
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const previousRowPositionsRef = useRef<Map<string, number>>(new Map());
+  const previousTopLevelOrderRef = useRef<string[]>([]);
+  const prefersReducedMotionRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => {
+      prefersReducedMotionRef.current = mediaQuery.matches;
+    };
+    updatePreference();
+    mediaQuery.addEventListener("change", updatePreference);
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
   useEffect(() => {
     if (keyboardFocusedTaskId && scrollContainerRef.current) {
       const element = scrollContainerRef.current.querySelector(
@@ -289,6 +303,77 @@ export function TaskTree({
       }
     }
   }, [keyboardFocusedTaskId]);
+
+  // FLIP animation: animate row position changes instead of snapping on reorder.
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const rows = Array.from(container.querySelectorAll<HTMLElement>(":scope > [data-task-id]"));
+    const nextPositions = new Map<string, number>();
+    const nextOrder: string[] = [];
+    for (const row of rows) {
+      const taskId = row.dataset.taskId;
+      if (!taskId) continue;
+      nextOrder.push(taskId);
+      nextPositions.set(taskId, row.getBoundingClientRect().top);
+    }
+
+    const previousOrder = previousTopLevelOrderRef.current;
+    const previousOrderSet = new Set(previousOrder);
+    const hasSameTaskSet =
+      previousOrder.length === nextOrder.length &&
+      nextOrder.every((taskId) => previousOrderSet.has(taskId));
+    const orderChanged = previousOrder.join("|") !== nextOrder.join("|");
+    const shouldAnimateReorder =
+      !prefersReducedMotionRef.current &&
+      previousOrder.length > 0 &&
+      hasSameTaskSet &&
+      orderChanged;
+
+    const cleanupTimeouts: number[] = [];
+    if (shouldAnimateReorder) {
+      for (const row of rows) {
+        const taskId = row.dataset.taskId;
+        if (!taskId) continue;
+        const previousTop = previousRowPositionsRef.current.get(taskId);
+        const currentTop = nextPositions.get(taskId);
+        if (previousTop === undefined || currentTop === undefined) continue;
+        const deltaY = previousTop - currentTop;
+        if (Math.abs(deltaY) < 1) continue;
+
+        row.style.transition = "none";
+        row.style.transform = `translateY(${deltaY}px)`;
+        row.style.willChange = "transform";
+
+        requestAnimationFrame(() => {
+          row.style.transition = "transform var(--motion-duration-normal) var(--motion-ease-standard)";
+          row.style.transform = "translateY(0)";
+          const cleanup = () => {
+            row.style.transition = "";
+            row.style.transform = "";
+            row.style.willChange = "";
+            row.removeEventListener("transitionend", cleanup);
+          };
+          row.addEventListener("transitionend", cleanup);
+          // Fallback in case transitionend doesn't fire on mobile.
+          const timeoutId = window.setTimeout(cleanup, 280);
+          cleanupTimeouts.push(timeoutId);
+        });
+      }
+    } else {
+      // Prevent stale transforms when rows are inserted/removed.
+      for (const row of rows) {
+        row.style.transition = "";
+        row.style.transform = "";
+        row.style.willChange = "";
+      }
+    }
+
+    previousRowPositionsRef.current = nextPositions;
+    previousTopLevelOrderRef.current = nextOrder;
+    return () => cleanupTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+  }, [visibleTasks]);
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">

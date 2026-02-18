@@ -1,4 +1,4 @@
-import { Task } from "@/types";
+import { Task, TaskStatus } from "@/types";
 import { isToday, isTomorrow, isPast, startOfDay, differenceInDays } from "date-fns";
 
 /**
@@ -20,10 +20,17 @@ export interface SortContext {
   allTasks: Task[];
 }
 
+type SortAwareTask = Task & { sortStatus?: TaskStatus; sortLastEditedAt?: Date };
+
+function getStatusForSort(task: Task | undefined): TaskStatus | undefined {
+  if (!task) return undefined;
+  return (task as SortAwareTask).sortStatus ?? task.status;
+}
+
 // Check if a task or any of its descendants is in-progress
 export function hasInProgressInTree(taskId: string, context: SortContext): boolean {
   const task = context.allTasks.find(t => t.id === taskId);
-  if (task?.status === "in-progress") return true;
+  if (getStatusForSort(task) === "in-progress") return true;
   
   const children = context.childrenMap.get(taskId) || [];
   return children.some(child => hasInProgressInTree(child.id, context));
@@ -63,7 +70,8 @@ export function hasDueTodayOrPastInTree(taskId: string, context: SortContext): b
 
 function getLatestModifiedMs(task: Task | undefined): number {
   if (!task) return Number.NEGATIVE_INFINITY;
-  return (task.lastEditedAt || task.timestamp).getTime();
+  const sortAwareTask = task as SortAwareTask;
+  return (sortAwareTask.sortLastEditedAt || task.lastEditedAt || task.timestamp).getTime();
 }
 
 export function getTaskLatestModifiedMs(task: Task): number {
@@ -144,7 +152,7 @@ export function sortTasks(tasks: Task[], context: SortContext): Task[] {
   };
 
   const getSortTier = (task: Task): number => {
-    const status = task.status || "todo";
+    const status = getStatusForSort(task) || "todo";
     if (status === "done") return 7;
 
     if (dueTodayOrPastInTree(task.id)) return 0;

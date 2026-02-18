@@ -192,6 +192,8 @@ const Index = () => {
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
   const pendingStatusUpdateTimeoutsRef = useRef<Map<string, number>>(new Map());
   const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
+  const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<Record<string, TaskStatus>>({});
+  const [sortModifiedAtHoldByTaskId, setSortModifiedAtHoldByTaskId] = useState<Record<string, string>>({});
 
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
@@ -357,8 +359,17 @@ const Index = () => {
       if (seen.has(task.id)) return false;
       seen.add(task.id);
       return true;
+    }).map((task) => {
+      const sortStatus = sortStatusHoldByTaskId[task.id];
+      const sortLastEditedAtIso = sortModifiedAtHoldByTaskId[task.id];
+      if (!sortStatus && !sortLastEditedAtIso) return task;
+      return {
+        ...task,
+        ...(sortStatus ? { sortStatus } : {}),
+        ...(sortLastEditedAtIso ? { sortLastEditedAt: new Date(sortLastEditedAtIso) } : {}),
+      };
     }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [localTasks, nostrTasks]);
+  }, [localTasks, nostrTasks, sortModifiedAtHoldByTaskId, sortStatusHoldByTaskId]);
 
   // Sidebar channels: most-used tags plus user-posted tags.
   const channels: Channel[] = useMemo(() => {
@@ -766,7 +777,17 @@ const Index = () => {
 
   const scheduleTaskStatusReorderUpdate = useCallback((taskId: string, status: TaskStatus) => {
     clearPendingStatusUpdate(taskId);
+    const existingTask = allTasks.find((task) => task.id === taskId);
+    const currentStatus = pendingTaskStatusesRef.current.get(taskId) ?? existingTask?.status ?? "todo";
     pendingTaskStatusesRef.current.set(taskId, status);
+    setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
+    if (existingTask) {
+      const currentSortDate = existingTask.lastEditedAt || existingTask.timestamp;
+      setSortModifiedAtHoldByTaskId((previous) => ({
+        ...previous,
+        [taskId]: currentSortDate.toISOString(),
+      }));
+    }
 
     const timeoutId = window.setTimeout(() => {
       setLocalTasks((previous) =>
@@ -774,6 +795,16 @@ const Index = () => {
       );
       pendingTaskStatusesRef.current.delete(taskId);
       pendingStatusUpdateTimeoutsRef.current.delete(taskId);
+      setSortStatusHoldByTaskId((previous) => {
+        const next = { ...previous };
+        delete next[taskId];
+        return next;
+      });
+      setSortModifiedAtHoldByTaskId((previous) => {
+        const next = { ...previous };
+        delete next[taskId];
+        return next;
+      });
     }, TASK_STATUS_REORDER_DELAY_MS);
 
     pendingStatusUpdateTimeoutsRef.current.set(taskId, timeoutId);
@@ -788,6 +819,8 @@ const Index = () => {
       }
       pendingTimeouts.clear();
       pendingStatuses.clear();
+      setSortStatusHoldByTaskId({});
+      setSortModifiedAtHoldByTaskId({});
     };
   }, []);
 
