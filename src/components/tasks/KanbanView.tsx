@@ -475,7 +475,7 @@ export function KanbanView({
                                   {...provided.dragHandleProps}
                                   data-task-id={task.id}
                                   className={cn(
-                                    "bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow",
+                                    "relative bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow",
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md",
                                     canChangeStatus ? "cursor-grab active:cursor-grabbing" : "cursor-default border-dashed border-muted-foreground/60 bg-muted/40",
                                     task.status === "done" && "opacity-70",
@@ -484,9 +484,12 @@ export function KanbanView({
                                   )}
                                 >
                                   {!canChangeStatus && (
-                                    <div className="mb-2 inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                                    <div
+                                      className="absolute right-2 top-2 rounded-full bg-muted/80 p-1 text-muted-foreground"
+                                      title="Read-only task"
+                                      aria-label="Read-only task"
+                                    >
                                       <Lock className="h-3 w-3" />
-                                      <span>Read-only</span>
                                     </div>
                                   )}
 
