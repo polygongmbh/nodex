@@ -7,7 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 ### Changed
-- Mobile compose priority/date controls now use larger touch targets, the priority placeholder includes a flag marker, and the inline date picker above the unified bottom bar now shows a horizontally scrollable multi-month strip that uses full panel width.
+- Mobile compose priority/date controls now use larger touch targets, the priority placeholder includes a flag marker, and the inline date picker above the unified bottom bar now uses full-width, infinite-style horizontal month scrolling without arrow navigation.
 
 ## [1.5.0] - 2026-02-18
 

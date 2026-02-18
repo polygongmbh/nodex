@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { addMonths, format, startOfMonth, subMonths } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
@@ -59,6 +59,8 @@ const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> 
   "play-circle": PlayCircle,
 };
 
+const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
+
 export function UnifiedBottomBar({
   searchQuery,
   onSearchChange,
@@ -98,6 +100,14 @@ export function UnifiedBottomBar({
   const prevSearchQueryRef = useRef(searchQuery);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const autoManagedChannelsRef = useRef<Set<string>>(new Set());
+  const dateScrollerRef = useRef<HTMLDivElement | null>(null);
+  const dateMonthRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const dateLoadingRef = useRef(false);
+  const datePrependCompensationRef = useRef<{ previousWidth: number } | null>(null);
+  const [inlineDateMonths, setInlineDateMonths] = useState<Date[]>(() => {
+    const anchor = startOfMonth(new Date());
+    return [subMonths(anchor, 1), anchor, addMonths(anchor, 1)];
+  });
   const canOfferComment = currentView === "feed" || currentView === "tree";
 
   const syncChannelFiltersFromContent = (nextContent: string, previousContent: string) => {
@@ -153,6 +163,76 @@ export function UnifiedBottomBar({
       setDueDate(selectedCalendarDate || new Date());
     }
   }, [currentView, selectedCalendarDate]);
+
+  useEffect(() => {
+    const scroller = dateScrollerRef.current;
+    const pending = datePrependCompensationRef.current;
+    if (!scroller || !pending) return;
+    const addedWidth = scroller.scrollWidth - pending.previousWidth;
+    if (addedWidth > 0) {
+      scroller.scrollLeft += addedWidth;
+    }
+    datePrependCompensationRef.current = null;
+    dateLoadingRef.current = false;
+  }, [inlineDateMonths]);
+
+  useEffect(() => {
+    if (activeSelector !== "date") return;
+    const targetMonth = startOfMonth(dueDate || new Date());
+    const targetMonthTime = targetMonth.getTime();
+    setInlineDateMonths((prev) => {
+      if (prev.some((month) => startOfMonth(month).getTime() === targetMonthTime)) {
+        return prev;
+      }
+      return [...prev, targetMonth].sort((a, b) => a.getTime() - b.getTime());
+    });
+    requestAnimationFrame(() => {
+      const key = getMonthKey(targetMonth);
+      dateMonthRefs.current[key]?.scrollIntoView({
+        behavior: "auto",
+        inline: "center",
+        block: "nearest",
+      });
+    });
+  }, [activeSelector, dueDate]);
+
+  useEffect(() => {
+    const scroller = dateScrollerRef.current;
+    if (!scroller || activeSelector !== "date") return;
+
+    const onScroll = () => {
+      if (dateLoadingRef.current) return;
+      const nearRight = scroller.scrollWidth - (scroller.scrollLeft + scroller.clientWidth) < 260;
+      const nearLeft = scroller.scrollLeft < 160;
+
+      if (nearRight) {
+        dateLoadingRef.current = true;
+        setInlineDateMonths((prev) => {
+          const sorted = [...prev].sort((a, b) => a.getTime() - b.getTime());
+          const last = sorted[sorted.length - 1] ?? startOfMonth(new Date());
+          return [...sorted, addMonths(startOfMonth(last), 1)];
+        });
+        requestAnimationFrame(() => {
+          dateLoadingRef.current = false;
+        });
+      }
+
+      if (nearLeft) {
+        dateLoadingRef.current = true;
+        datePrependCompensationRef.current = { previousWidth: scroller.scrollWidth };
+        setInlineDateMonths((prev) => {
+          const sorted = [...prev].sort((a, b) => a.getTime() - b.getTime());
+          const first = sorted[0] ?? startOfMonth(new Date());
+          return [subMonths(startOfMonth(first), 1), ...sorted];
+        });
+      }
+    };
+
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+    };
+  }, [activeSelector]);
 
   useEffect(() => {
     const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -439,20 +519,34 @@ export function UnifiedBottomBar({
             </div>
           )}
           {activeSelector === "date" && (
-            <div className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:thin]">
-              <div className="w-full border-t border-border/60 pt-2">
-                <CalendarComponent
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
-                  numberOfMonths={6}
-                  initialFocus
-                  className="pointer-events-auto !p-0 w-max"
-                  classNames={{
-                    months: "flex flex-row gap-3 w-max",
-                    month: "space-y-3 min-w-[16.5rem]",
-                  }}
-                />
+            <div
+              ref={dateScrollerRef}
+              className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:thin] snap-x snap-mandatory"
+            >
+              <div className="w-max min-w-full border-t border-border/60 pt-2 flex gap-3">
+                {inlineDateMonths.map((month) => {
+                  const monthKey = getMonthKey(month);
+                  return (
+                    <div
+                      key={monthKey}
+                      ref={(node) => {
+                        dateMonthRefs.current[monthKey] = node;
+                      }}
+                      className="snap-start shrink-0 w-[calc(100vw-2rem)] max-w-[20rem]"
+                    >
+                      <CalendarComponent
+                        mode="single"
+                        selected={dueDate}
+                        onSelect={setDueDate}
+                        month={month}
+                        className="pointer-events-auto !p-0"
+                        classNames={{
+                          nav: "hidden",
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
