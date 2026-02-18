@@ -51,6 +51,7 @@ import {
   loadCachedKind0Events,
   loadLoggedInIdentityPriority,
   mergeKind0EventsWithCache,
+  rememberCachedKind0Profile,
   rememberLoggedInIdentity,
   saveCachedKind0Events,
 } from "@/lib/people-from-kind0";
@@ -261,6 +262,25 @@ const Index = () => {
     if (!user?.pubkey) return;
     setLoggedInIdentityPriority(rememberLoggedInIdentity(user.pubkey));
   }, [user?.pubkey]);
+
+  useEffect(() => {
+    if (!user?.pubkey || !user.profile) return;
+    const nextCached = rememberCachedKind0Profile(user.pubkey, {
+      name: user.profile.name,
+      displayName: user.profile.displayName,
+      about: user.profile.about,
+      picture: user.profile.picture,
+      nip05: user.profile.nip05,
+    });
+    setCachedKind0Events(nextCached);
+  }, [
+    user?.pubkey,
+    user?.profile?.about,
+    user?.profile?.displayName,
+    user?.profile?.name,
+    user?.profile?.nip05,
+    user?.profile?.picture,
+  ]);
 
   useEffect(() => {
     const priorityLookup = new Map(

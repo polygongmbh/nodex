@@ -5,6 +5,7 @@ import {
   loadCachedKind0Events,
   loadLoggedInIdentityPriority,
   mergeKind0EventsWithCache,
+  rememberCachedKind0Profile,
   rememberLoggedInIdentity,
   saveCachedKind0Events,
 } from "./people-from-kind0";
@@ -98,6 +99,22 @@ describe("derivePeopleFromKind0Events", () => {
     expect(loaded).toHaveLength(1);
     expect(loaded[0].pubkey).toBe(pubkey);
     expect(loaded[0].created_at).toBe(42);
+  });
+
+  it("caches signed-in profile snapshots for local reuse", () => {
+    const pubkey = "c".repeat(64);
+    const next = rememberCachedKind0Profile(pubkey, {
+      name: "carol",
+      displayName: "Carol",
+      picture: "https://example.com/carol.png",
+      nip05: "carol@example.com",
+    });
+
+    expect(next.some((event) => event.pubkey === pubkey)).toBe(true);
+    const loaded = loadCachedKind0Events();
+    const cached = loaded.find((event) => event.pubkey === pubkey);
+    expect(cached).toBeDefined();
+    expect(cached?.content).toContain("carol");
   });
 
   it("tracks remembered login identities in recency order", () => {

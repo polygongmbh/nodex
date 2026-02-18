@@ -9,6 +9,14 @@ interface Kind0LikeEvent {
   content: string;
 }
 
+interface CachedProfileSnapshot {
+  name?: string;
+  displayName?: string;
+  about?: string;
+  picture?: string;
+  nip05?: string;
+}
+
 const KIND0_CACHE_STORAGE_KEY = "nodex.kind0.cache.v1";
 const LOGIN_HISTORY_STORAGE_KEY = "nodex.identity.login-history.v1";
 const MAX_CACHED_KIND0_EVENTS = 500;
@@ -80,6 +88,34 @@ export function saveCachedKind0Events(events: Kind0LikeEvent[]): void {
   } catch {
     // Ignore local storage write failures.
   }
+}
+
+export function rememberCachedKind0Profile(pubkey: string, profile: CachedProfileSnapshot): Kind0LikeEvent[] {
+  const normalizedPubkey = normalizePubkey(pubkey);
+  if (!normalizedPubkey) return loadCachedKind0Events();
+
+  const cachedEvents = loadCachedKind0Events();
+  const existingEvent = cachedEvents.find((event) => normalizePubkey(event.pubkey) === normalizedPubkey);
+  const existingProfile = existingEvent ? parseKind0Content(existingEvent.content) : {};
+
+  const merged = {
+    name: (profile.name || existingProfile.name || profile.displayName || existingProfile.displayName || normalizedPubkey.slice(0, 8)).trim(),
+    displayName: (profile.displayName || existingProfile.displayName || "").trim() || undefined,
+    about: (profile.about || existingProfile.about || "").trim() || undefined,
+    picture: (profile.picture || existingProfile.picture || "").trim() || undefined,
+    nip05: (profile.nip05 || existingProfile.nip05 || "").trim() || undefined,
+  };
+
+  const snapshotEvent: Kind0LikeEvent = {
+    kind: NostrEventKind.Metadata,
+    pubkey: normalizedPubkey,
+    created_at: Math.floor(Date.now() / 1000),
+    content: JSON.stringify(merged),
+  };
+
+  const next = mergeKind0EventsWithCache([snapshotEvent], cachedEvents);
+  saveCachedKind0Events(next);
+  return next;
 }
 
 export function loadLoggedInIdentityPriority(): string[] {
