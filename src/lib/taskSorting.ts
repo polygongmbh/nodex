@@ -2,38 +2,22 @@ import { Task } from "@/types";
 import { isToday, isTomorrow, isPast, startOfDay, differenceInDays } from "date-fns";
 
 /**
- * Cumulative sorting for tasks:
- * - Due date urgency (sooner = higher priority)
- * - Status priority: in-progress > todo > done
- * Combined into a single score for sorting
+ * Shared non-feed task ordering:
+ * 1) due today / overdue
+ * 2) in-progress
+ * 3) high priority (50+)
+ * 4) upcoming due dates
+ * 5) medium priority (30-49)
+ * 6) no priority
+ * 7) low priority (<30)
+ * 8) done (kept at bottom)
+ *
+ * Ties break by latest modification time (desc).
  */
 
 export interface SortContext {
   childrenMap: Map<string | undefined, Task[]>;
   allTasks: Task[];
-}
-
-// Get due date urgency score (lower = more urgent, null = least urgent)
-function getDueDateScore(dueDate: Date | undefined): number {
-  if (!dueDate) return 1000; // No due date = lowest priority
-  
-  const today = startOfDay(new Date());
-  const dueDay = startOfDay(dueDate);
-  const daysUntilDue = differenceInDays(dueDay, today);
-  
-  // Overdue tasks get negative scores (more urgent)
-  // Today = 0, tomorrow = 1, etc.
-  return daysUntilDue;
-}
-
-// Get status priority score (lower = higher priority)
-function getStatusScore(status: string | undefined): number {
-  switch (status) {
-    case "in-progress": return 0;
-    case "todo": return 1;
-    case "done": return 2;
-    default: return 1;
-  }
 }
 
 // Check if a task or any of its descendants is in-progress
@@ -77,42 +61,115 @@ export function hasDueTodayOrPastInTree(taskId: string, context: SortContext): b
   return children.some(child => hasDueTodayOrPastInTree(child.id, context));
 }
 
+function getLatestModifiedMs(task: Task | undefined): number {
+  if (!task) return Number.NEGATIVE_INFINITY;
+  return (task.lastEditedAt || task.timestamp).getTime();
+}
+
+function isUpcomingDueDate(dueDate: Date | null): boolean {
+  if (!dueDate) return false;
+  const today = startOfDay(new Date());
+  return startOfDay(dueDate).getTime() > today.getTime();
+}
+
 export function sortTasks(tasks: Task[], context: SortContext): Task[] {
+  const taskById = new Map(context.allTasks.map((task) => [task.id, task] as const));
+  const latestModifiedInTreeCache = new Map<string, number>();
+  const highestPriorityInTreeCache = new Map<string, number | undefined>();
+  const dueTodayOrPastCache = new Map<string, boolean>();
+  const inProgressInTreeCache = new Map<string, boolean>();
+  const earliestDeadlineInTreeCache = new Map<string, Date | null>();
+
+  const latestModifiedInTree = (taskId: string): number => {
+    const cached = latestModifiedInTreeCache.get(taskId);
+    if (cached !== undefined) return cached;
+
+    const currentTask = taskById.get(taskId);
+    let latest = getLatestModifiedMs(currentTask);
+    const children = context.childrenMap.get(taskId) || [];
+    for (const child of children) {
+      latest = Math.max(latest, latestModifiedInTree(child.id));
+    }
+
+    latestModifiedInTreeCache.set(taskId, latest);
+    return latest;
+  };
+
+  const highestPriorityInTree = (taskId: string): number | undefined => {
+    if (highestPriorityInTreeCache.has(taskId)) {
+      return highestPriorityInTreeCache.get(taskId);
+    }
+
+    const currentTask = taskById.get(taskId);
+    let highest = typeof currentTask?.priority === "number" ? currentTask.priority : undefined;
+    const children = context.childrenMap.get(taskId) || [];
+    for (const child of children) {
+      const childPriority = highestPriorityInTree(child.id);
+      if (typeof childPriority === "number") {
+        highest = typeof highest === "number" ? Math.max(highest, childPriority) : childPriority;
+      }
+    }
+
+    highestPriorityInTreeCache.set(taskId, highest);
+    return highest;
+  };
+
+  const dueTodayOrPastInTree = (taskId: string): boolean => {
+    const cached = dueTodayOrPastCache.get(taskId);
+    if (cached !== undefined) return cached;
+    const value = hasDueTodayOrPastInTree(taskId, context);
+    dueTodayOrPastCache.set(taskId, value);
+    return value;
+  };
+
+  const inProgressTree = (taskId: string): boolean => {
+    const cached = inProgressInTreeCache.get(taskId);
+    if (cached !== undefined) return cached;
+    const value = hasInProgressInTree(taskId, context);
+    inProgressInTreeCache.set(taskId, value);
+    return value;
+  };
+
+  const earliestDeadlineInTree = (taskId: string): Date | null => {
+    if (earliestDeadlineInTreeCache.has(taskId)) {
+      return earliestDeadlineInTreeCache.get(taskId) || null;
+    }
+    const value = getEarliestDeadlineInTree(taskId, context);
+    earliestDeadlineInTreeCache.set(taskId, value);
+    return value;
+  };
+
+  const getSortTier = (task: Task): number => {
+    const status = task.status || "todo";
+    if (status === "done") return 7;
+
+    if (dueTodayOrPastInTree(task.id)) return 0;
+
+    const hasInProgress = status === "in-progress" || inProgressTree(task.id);
+    if (hasInProgress) return 1;
+
+    const highestPriority = highestPriorityInTree(task.id);
+    if (typeof highestPriority === "number" && highestPriority >= 50) return 2;
+
+    if (isUpcomingDueDate(earliestDeadlineInTree(task.id))) return 3;
+
+    if (typeof highestPriority === "number" && highestPriority >= 30) return 4;
+    if (typeof highestPriority === "number" && highestPriority < 30) return 6;
+
+    return 5;
+  };
+
   return [...tasks].sort((a, b) => {
-    const aStatus = a.status || "todo";
-    const bStatus = b.status || "todo";
-    
-    // Done tasks always last
-    if (aStatus === "done" && bStatus !== "done") return 1;
-    if (aStatus !== "done" && bStatus === "done") return -1;
-    if (aStatus === "done" && bStatus === "done") return 0;
-    
-    // Get earliest deadline considering tree
-    const aEarliest = getEarliestDeadlineInTree(a.id, context);
-    const bEarliest = getEarliestDeadlineInTree(b.id, context);
-    
-    // Calculate combined scores (due date + status)
-    const aDueDateScore = getDueDateScore(aEarliest || undefined);
-    const bDueDateScore = getDueDateScore(bEarliest || undefined);
-    
-    // Check in-progress status (considering descendants)
-    const aHasInProgress = aStatus === "in-progress" || hasInProgressInTree(a.id, context);
-    const bHasInProgress = bStatus === "in-progress" || hasInProgressInTree(b.id, context);
-    
-    const aStatusScore = aHasInProgress ? 0 : getStatusScore(aStatus);
-    const bStatusScore = bHasInProgress ? 0 : getStatusScore(bStatus);
-    
-    // Primary sort by due date urgency
-    if (aDueDateScore !== bDueDateScore) {
-      return aDueDateScore - bDueDateScore;
-    }
-    
-    // Secondary sort by status priority
-    if (aStatusScore !== bStatusScore) {
-      return aStatusScore - bStatusScore;
-    }
-    
-    return 0;
+    const aTier = getSortTier(a);
+    const bTier = getSortTier(b);
+    if (aTier !== bTier) return aTier - bTier;
+
+    const aLatestModified = latestModifiedInTree(a.id);
+    const bLatestModified = latestModifiedInTree(b.id);
+    if (aLatestModified !== bLatestModified) return bLatestModified - aLatestModified;
+
+    // Keep deterministic order for identical tier/timestamps.
+    return a.id.localeCompare(b.id);
   });
 }
 

@@ -31,6 +31,7 @@ import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
+import { buildChildrenMap, sortTasks, type SortContext } from "@/lib/taskSorting";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,6 +121,8 @@ export function CalendarView({
 
   const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
   const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
+  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
+  const sortContext: SortContext = useMemo(() => ({ childrenMap, allTasks }), [childrenMap, allTasks]);
 
   // Get all descendants of a task
   const getDescendantIds = useCallback((taskId: string): Set<string> => {
@@ -227,11 +230,15 @@ export function CalendarView({
       .sort((a, b) => a.month.getTime() - b.month.getTime());
   }, [desktopMonths]);
 
-  const getTasksForDay = (day: Date) => {
-    return tasksWithDueDates.filter(task => task.dueDate && isSameDay(task.dueDate, day));
-  };
+  const getTasksForDay = useCallback((day: Date) => {
+    const dayTasks = tasksWithDueDates.filter(task => task.dueDate && isSameDay(task.dueDate, day));
+    return sortTasks(dayTasks, sortContext);
+  }, [tasksWithDueDates, sortContext]);
 
-  const selectedDayTasks = selectedDate ? getTasksForDay(selectedDate) : [];
+  const selectedDayTasks = useMemo(
+    () => (selectedDate ? getTasksForDay(selectedDate) : []),
+    [getTasksForDay, selectedDate]
+  );
 
   const alignDesktopScrollToMonth = useCallback(
     (month: Date, behavior: ScrollBehavior = "auto") => {
@@ -253,24 +260,11 @@ export function CalendarView({
     });
   }, []);
 
-  // Chronologically sorted tasks for upcoming feed
+  // Shared task-ordering for upcoming feed groups (non-feed views).
   const upcomingTasks = useMemo(() => {
-    const today = startOfDay(new Date());
-    
-    return [...tasksWithDueDates]
-      .filter(t => t.status !== "done")
-      .sort((a, b) => {
-        const aDate = a.dueDate ? startOfDay(a.dueDate) : null;
-        const bDate = b.dueDate ? startOfDay(b.dueDate) : null;
-        
-        if (!aDate && !bDate) return 0;
-        if (!aDate) return 1;
-        if (!bDate) return -1;
-        
-        // Both have dates - sort chronologically
-        return aDate.getTime() - bDate.getTime();
-      });
-  }, [tasksWithDueDates]);
+    const active = tasksWithDueDates.filter((task) => task.status !== "done");
+    return sortTasks(active, sortContext);
+  }, [tasksWithDueDates, sortContext]);
 
   // Group upcoming tasks by date category
   const groupedUpcoming = useMemo(() => {

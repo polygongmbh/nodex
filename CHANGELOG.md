@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Feed/tree cards now render task priority badges (`P<n>`) so parsed priority is visible outside table editing controls.
 - Content link parsing now uses `linkify-it` for more robust URL detection around punctuation/edge cases.
 - Nostr feed cache lifecycle now runs through React Query instead of page-local state wiring, reducing cache drift risk.
+- Non-feed task views now share a consistent priority order: due-now/overdue first, then in-progress, high priority (`50+`), upcoming due, medium priority (`30-49`), no priority, and low priority (`<30`) with latest modification time as tie-breaker; Kanban `done` remains chronological.
 
 ### Fixed
 - Failed relay publishes are no longer inserted as normal local tasks/comments, preventing misleading local-only entries after refresh.

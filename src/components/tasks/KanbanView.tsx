@@ -205,10 +205,10 @@ export function KanbanView({
       grouped[status].push(task);
     });
 
-    // Sort each column by latest modification.
-    grouped["todo"] = sortByLatestModified(sortTasks(grouped["todo"], sortContext));
-    grouped["in-progress"] = sortByLatestModified(sortTasks(grouped["in-progress"], sortContext));
-    grouped["done"] = sortByLatestModified(sortTasks(grouped["done"], sortContext));
+    // Keep done column strictly chronological; apply shared priority ordering elsewhere.
+    grouped["todo"] = sortTasks(grouped["todo"], sortContext);
+    grouped["in-progress"] = sortTasks(grouped["in-progress"], sortContext);
+    grouped["done"] = sortByLatestModified(grouped["done"]);
 
     return grouped;
   }, [kanbanTasks, sortContext]);
