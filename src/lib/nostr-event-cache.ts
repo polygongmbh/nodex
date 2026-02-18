@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache.v1";
-const MAX_CACHED_EVENTS = 500;
 
 export interface CachedNostrEvent {
   id: string;
@@ -39,8 +38,7 @@ function dedupeAndSortEvents(events: CachedNostrEvent[]): CachedNostrEvent[] {
     }
   }
   return Array.from(byId.values())
-    .sort((left, right) => right.created_at - left.created_at)
-    .slice(0, MAX_CACHED_EVENTS);
+    .sort((left, right) => right.created_at - left.created_at);
 }
 
 export function loadCachedNostrEvents(): CachedNostrEvent[] {

@@ -8,7 +8,6 @@ import {
 } from "@/lib/nostr-event-cache";
 
 export const NOSTR_EVENTS_QUERY_KEY = ["nostr-events-cache"] as const;
-const MAX_CACHED_EVENTS = 500;
 
 interface UseNostrEventCacheParams {
   isConnected: boolean;
@@ -39,8 +38,7 @@ function upsertCachedEvent(
 ): CachedNostrEvent[] {
   const withoutExisting = previous.filter((event) => event.id !== incoming.id);
   return [incoming, ...withoutExisting]
-    .sort((left, right) => right.created_at - left.created_at)
-    .slice(0, MAX_CACHED_EVENTS);
+    .sort((left, right) => right.created_at - left.created_at);
 }
 
 export function useNostrEventCache({
@@ -70,7 +68,7 @@ export function useNostrEventCache({
     if (!isConnected) return;
 
     const subscription = subscribe(
-      [{ kinds: subscribedKinds, limit: 200 }],
+      [{ kinds: subscribedKinds }],
       pushEvent
     );
     return () => subscription?.stop();

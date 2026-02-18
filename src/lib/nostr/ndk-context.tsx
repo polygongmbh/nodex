@@ -154,7 +154,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       };
 
       const subscription = ndk.subscribe(
-        [{ kinds: [NostrEventKind.Metadata], authors: [pubkey], limit: 50 }],
+        [{ kinds: [NostrEventKind.Metadata], authors: [pubkey] }],
         { closeOnEose: true }
       );
 
@@ -166,7 +166,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
       subscription.on("eose", finish);
 
       // Fallback so the UI does not hang if eose never arrives.
-      setTimeout(finish, 3500);
+      setTimeout(finish, 12000);
     });
   }, [ndk]);
 
