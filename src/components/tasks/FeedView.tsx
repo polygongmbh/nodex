@@ -97,7 +97,7 @@ export function FeedView({
   onAuthorClick,
   mentionRequest = null,
 }: FeedViewProps) {
-  const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1279px)";
+  const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1023px)";
   const truncateMobilePubkey = (value: string): string => {
     if (!isMobile) return value;
     if (value.length <= 18) return value;
@@ -514,14 +514,22 @@ export function FeedView({
                         aria-label={`Filter and mention ${authorMeta.primary}`}
                         title={resolvedAuthor.id}
                       >
-                        <span title={authorMeta.primary} className="block truncate">{primaryAuthorLabel}</span>
+                        <span
+                          title={authorMeta.primary}
+                          data-testid={`feed-author-primary-${task.id}`}
+                          className={cn(
+                            "truncate",
+                            isSlimDesktop ? "block" : "inline-block max-w-full align-bottom"
+                          )}
+                        >
+                          {primaryAuthorLabel}
+                        </span>
                         {authorMeta.secondary && !isMobile && (
                           <span
                             data-testid={`feed-author-secondary-${task.id}`}
-                            className="opacity-60"
+                            className={cn("opacity-60", isSlimDesktop ? "block" : "inline")}
                           >
-                            {" "}
-                            ({authorMeta.secondary})
+                            {isSlimDesktop ? `(${authorMeta.secondary})` : ` (${authorMeta.secondary})`}
                           </span>
                         )}
                       </button>

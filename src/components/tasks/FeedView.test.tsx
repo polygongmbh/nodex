@@ -34,7 +34,7 @@ describe("FeedView", () => {
     const matchMediaSpy = vi
       .spyOn(window, "matchMedia")
       .mockImplementation((query: string) => ({
-        matches: query === "(min-width: 768px) and (max-width: 1279px)",
+        matches: query === "(min-width: 768px) and (max-width: 1023px)",
         media: query,
         onchange: null,
         addListener: () => {},
@@ -61,6 +61,45 @@ describe("FeedView", () => {
     await waitFor(() => {
       expect(screen.getByText("0123456789ab…89abcdef")).toBeInTheDocument();
     });
+    matchMediaSpy.mockRestore();
+  });
+
+  it("keeps author metadata inline when desktop is beyond slim breakpoint", async () => {
+    const matchMediaSpy = vi
+      .spyOn(window, "matchMedia")
+      .mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      }));
+
+    render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-author-primary-task-1")).toBeInTheDocument();
+    });
+    // Product contract: once desktop has widened past the slim sidebar layout, author metadata stays inline.
+    expect(screen.getByTestId("feed-author-primary-task-1")).not.toHaveClass("block");
+    // Product contract: secondary identity metadata should remain on the same line in widened desktop layout.
+    expect(screen.getByTestId("feed-author-secondary-task-1")).not.toHaveClass("block");
+
     matchMediaSpy.mockRestore();
   });
 
