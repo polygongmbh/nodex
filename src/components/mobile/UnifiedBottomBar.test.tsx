@@ -78,7 +78,7 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(onSearchChange).toHaveBeenLastCalledWith("hello #general");
   });
 
-  it("shows feedback when sending without a selected channel tag", () => {
+  it("keeps task option disabled when sending without a selected channel tag", () => {
     const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
     const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
 
@@ -102,9 +102,11 @@ describe("UnifiedBottomBar auth gating", () => {
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship update" } });
     fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^send task$/i }));
+    const taskButton = screen.getByRole("button", { name: /^send task$/i });
+    expect(taskButton).toBeDisabled();
+    fireEvent.click(taskButton);
 
-    expect(toastErrorSpy).toHaveBeenCalledTimes(1);
+    expect(toastErrorSpy).not.toHaveBeenCalled();
     expect(onSubmit).not.toHaveBeenCalled();
 
     toastErrorSpy.mockRestore();

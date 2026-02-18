@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -87,6 +87,8 @@ export function UnifiedBottomBar({
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   const [sharedText, setSharedText] = useState(() => searchQuery || defaultContent);
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
+  const [isBottomBarFocused, setIsBottomBarFocused] = useState(false);
+  const [isComposeFocused, setIsComposeFocused] = useState(false);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const [activeMentionIndex, setActiveMentionIndex] = useState(0);
@@ -96,6 +98,7 @@ export function UnifiedBottomBar({
   const [priority, setPriority] = useState<number | undefined>(undefined);
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const bottomBarRef = useRef<HTMLDivElement | null>(null);
   const cursorPositionRef = useRef(0);
   const prevSearchQueryRef = useRef(searchQuery);
   const prevIncludedChannelsRef = useRef<string[]>([]);
@@ -421,6 +424,8 @@ export function UnifiedBottomBar({
   const canSendTask = hasComposeText && !hasInvalidRootTaskRelaySelection;
   const canSendComment = hasComposeText;
   const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
+  const hasTaskSubmitBlock = taskSubmitBlockedReason !== null;
+  const showInlineTaskSubmitBlock = hasTaskSubmitBlock && (hasComposeText || isBottomBarFocused);
 
   const handlePrimarySend = () => {
     if (!isSignedIn) {
@@ -475,7 +480,19 @@ export function UnifiedBottomBar({
   };
 
   return (
-    <div className="relative z-[110] border-t border-border bg-background safe-area-bottom" data-onboarding="mobile-combined-box">
+    <div
+      ref={bottomBarRef}
+      onFocusCapture={() => setIsBottomBarFocused(true)}
+      onBlurCapture={() => {
+        requestAnimationFrame(() => {
+          const root = bottomBarRef.current;
+          const active = document.activeElement;
+          setIsBottomBarFocused(Boolean(root && active instanceof Element && root.contains(active)));
+        });
+      }}
+      className="relative z-[110] border-t border-border bg-background safe-area-bottom"
+      data-onboarding="mobile-combined-box"
+    >
       {/* Selector Panel */}
       {activeSelector && (
         <div
@@ -598,11 +615,11 @@ export function UnifiedBottomBar({
       <div className="px-3 pt-2">
         <div className="overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex items-center gap-2 pt-1">
-          {taskSubmitBlockedReason ? (
+          {showInlineTaskSubmitBlock ? (
             <div className="h-8 inline-flex items-center rounded-md border border-border/70 bg-muted/40 px-2 text-xs text-muted-foreground">
               {taskSubmitBlockedReason}
             </div>
-          ) : (
+          ) : !hasTaskSubmitBlock ? (
             <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
                 <select
@@ -675,7 +692,7 @@ export function UnifiedBottomBar({
                 </div>
               )}
             </div>
-          )}
+          ) : null}
 
           {/* Filter/Selector Buttons */}
           <div className="flex items-center gap-1 ml-auto shrink-0">
@@ -731,11 +748,15 @@ export function UnifiedBottomBar({
         <div className="flex-1">
           <div className="flex items-end gap-2">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              {!isComposeFocused && !hasComposeText && (
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              )}
               <textarea
                 data-onboarding="compose-input"
                 ref={textareaRef}
                 value={sharedText}
+                onFocus={() => setIsComposeFocused(true)}
+                onBlur={() => setIsComposeFocused(false)}
                 onChange={(e) => {
                   const value = e.target.value;
                   cursorPositionRef.current = e.target.selectionStart;
@@ -806,7 +827,10 @@ export function UnifiedBottomBar({
                   }
                 }}
                 placeholder={t("composer.placeholders.mobileTask")}
-                className="flex-1 w-full bg-muted/30 border border-border rounded-lg pl-9 pr-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px] max-h-32"
+                className={cn(
+                  "flex-1 w-full bg-muted/30 border border-border rounded-lg pr-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px] max-h-32",
+                  !isComposeFocused && !hasComposeText ? "pl-9" : "pl-3"
+                )}
                 rows={1}
               />
               {showMentionSuggestions && filteredPeople.length > 0 && (
@@ -847,21 +871,20 @@ export function UnifiedBottomBar({
               )}
             </div>
             <div className="flex items-center gap-1">
-              {hasComposeText && (
-                <button
-                  onClick={handleCancel}
-                  className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
-                  aria-label={t("composer.hints.clearCompose")}
-                  title={t("composer.hints.clearCompose")}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                onClick={handleCancel}
+                disabled={!hasComposeText}
+                className="h-10 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-45 disabled:hover:bg-transparent"
+                aria-label={t("composer.hints.clearCompose")}
+                title={t("composer.hints.clearCompose")}
+              >
+                <X className="w-4 h-4" />
+              </button>
 
               <div className="relative">
                 <button
                   onClick={handlePrimarySend}
-                  disabled={isSignedIn ? (canOfferComment ? !canSendComment : !canSendTask) : false}
+                  disabled={isSignedIn ? (canOfferComment ? !canSendComment : hasTaskSubmitBlock) : false}
                   className={cn(
                     "h-10 w-10 inline-flex items-center justify-center rounded-lg border transition-colors",
                     isSignedIn
@@ -879,13 +902,7 @@ export function UnifiedBottomBar({
                           : t("composer.hints.createFromText")
                   }
                 >
-                  {!isSignedIn ? (
-                    <Zap className="w-5 h-5" />
-                  ) : canOfferComment ? (
-                    <MessageSquare className="w-5 h-5" />
-                  ) : (
-                    <CheckSquare className="w-5 h-5" />
-                  )}
+                  {!isSignedIn ? <Zap className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
                 </button>
 
                 {showSendOptions && canOpenSendOptions && (
@@ -895,7 +912,7 @@ export function UnifiedBottomBar({
                         setShowSendOptions(false);
                         void handleSubmit("task");
                       }}
-                      disabled={!canSendTask}
+                      disabled={hasTaskSubmitBlock}
                       className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       aria-label={t("composer.actions.sendTask")}
                       title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.actions.sendTask")}
