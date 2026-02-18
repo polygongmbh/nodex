@@ -439,8 +439,8 @@ export function UnifiedBottomBar({
       {activeSelector && (
         <div
           className={cn(
-            "relative z-[112] border-b border-border p-3 overflow-y-auto",
-            activeSelector === "date" ? "max-h-[22rem]" : "max-h-48"
+            "relative z-[112] border-b border-border p-3",
+            activeSelector === "date" ? "overflow-y-hidden" : "overflow-y-auto max-h-48"
           )}
         >
           {activeSelector === "relay" && (
@@ -523,7 +523,7 @@ export function UnifiedBottomBar({
               ref={dateScrollerRef}
               className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory"
             >
-              <div className="w-max min-w-full border-t border-border/60 pt-2 flex gap-3">
+              <div className="w-max min-w-full flex gap-3">
                 {inlineDateMonths.map((month) => {
                   const monthKey = getMonthKey(month);
                   return (
