@@ -103,6 +103,7 @@ const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
 const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
+const TASK_STATUS_REORDER_DELAY_MS = 260;
 
 const Index = () => {
   const { t } = useTranslation();
@@ -189,6 +190,8 @@ const Index = () => {
   const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() => loadCompletionSoundEnabled());
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
+  const pendingStatusUpdateTimeoutsRef = useRef<Map<string, number>>(new Map());
+  const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
 
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
@@ -754,6 +757,40 @@ const Index = () => {
     });
   }, []);
 
+  const clearPendingStatusUpdate = useCallback((taskId: string) => {
+    const timeoutId = pendingStatusUpdateTimeoutsRef.current.get(taskId);
+    if (timeoutId === undefined) return;
+    window.clearTimeout(timeoutId);
+    pendingStatusUpdateTimeoutsRef.current.delete(taskId);
+  }, []);
+
+  const scheduleTaskStatusReorderUpdate = useCallback((taskId: string, status: TaskStatus) => {
+    clearPendingStatusUpdate(taskId);
+    pendingTaskStatusesRef.current.set(taskId, status);
+
+    const timeoutId = window.setTimeout(() => {
+      setLocalTasks((previous) =>
+        applyTaskStatusUpdate(previous, allTasks, taskId, status, currentUser?.name)
+      );
+      pendingTaskStatusesRef.current.delete(taskId);
+      pendingStatusUpdateTimeoutsRef.current.delete(taskId);
+    }, TASK_STATUS_REORDER_DELAY_MS);
+
+    pendingStatusUpdateTimeoutsRef.current.set(taskId, timeoutId);
+  }, [allTasks, clearPendingStatusUpdate, currentUser?.name]);
+
+  useEffect(() => {
+    const pendingTimeouts = pendingStatusUpdateTimeoutsRef.current;
+    const pendingStatuses = pendingTaskStatusesRef.current;
+    return () => {
+      for (const timeoutId of pendingTimeouts.values()) {
+        window.clearTimeout(timeoutId);
+      }
+      pendingTimeouts.clear();
+      pendingStatuses.clear();
+    };
+  }, []);
+
   const resolveMentionPubkeys = useCallback((content: string): string[] => {
     return resolveMentionedPubkeys(content, people);
   }, [people]);
@@ -790,10 +827,9 @@ const Index = () => {
       toast.error(t("toasts.errors.statusRestricted"));
       return;
     }
-    const nextStatus = cycleTaskStatus(existingTask.status || "todo");
-    setLocalTasks((prev) =>
-      applyTaskStatusUpdate(prev, allTasks, taskId, nextStatus, currentUser?.name)
-    );
+    const currentStatus = pendingTaskStatusesRef.current.get(taskId) ?? existingTask.status ?? "todo";
+    const nextStatus = cycleTaskStatus(currentStatus);
+    scheduleTaskStatusReorderUpdate(taskId, nextStatus);
     triggerCompletionFeedback(taskId, nextStatus);
     void publishTaskStateUpdate(taskId, nextStatus);
   };
@@ -912,9 +948,7 @@ const Index = () => {
       return;
     }
 
-    setLocalTasks((prev) =>
-      applyTaskStatusUpdate(prev, allTasks, taskId, newStatus, currentUser?.name)
-    );
+    scheduleTaskStatusReorderUpdate(taskId, newStatus);
     triggerCompletionFeedback(taskId, newStatus);
     void publishTaskStateUpdate(taskId, newStatus);
   };
