@@ -15,6 +15,7 @@ interface MobileFiltersProps {
   relays: Relay[];
   channels: Channel[];
   people: Person[];
+  profileEditorOpenSignal?: number;
   onRelayToggle: (id: string) => void;
   onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
@@ -37,6 +38,7 @@ export function MobileFilters({
   relays,
   channels,
   people,
+  profileEditorOpenSignal = 0,
   onRelayToggle,
   onChannelToggle,
   onPersonToggle,
@@ -94,6 +96,12 @@ export function MobileFilters({
     user?.profile?.picture,
     user,
   ]);
+
+  useEffect(() => {
+    if (profileEditorOpenSignal > 0 && user) {
+      setIsProfileEditorOpen(true);
+    }
+  }, [profileEditorOpenSignal, user]);
 
   const handleAddRelay = () => {
     const trimmed = newRelayUrl.trim();

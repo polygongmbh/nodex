@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile compose due-date controls are now split into two rows, and the date-type selector only appears after a date is selected, reducing horizontal overflow that could push nearby actions off-screen.
 - Mobile send actions now provide immediate feedback when posting text without any selected/typed channel tag, instead of silently doing nothing.
 - Mobile Manage view now scrolls correctly within the panel instead of clipping long settings/filter content.
+- After mobile sign-in with no cached profile metadata, the app now redirects to Manage and auto-opens the profile edit pane.
 
 ## [1.4.1] - 2026-02-18
 

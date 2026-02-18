@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import type { Channel, Person, Relay, Task } from "@/types";
@@ -94,11 +94,46 @@ describe("MobileLayout auth wiring", () => {
     expect(onSignInClick).toHaveBeenCalledTimes(1);
   });
 
-  it("does not force manage view or hide compose when profile setup is required", () => {
+  it("redirects to manage view and opens profile editor after sign-in when profile setup is required", async () => {
+    ndkMock.user = null;
+    ndkMock.needsProfileSetup = false;
+
+    const { rerender } = render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn={false}
+        currentView="tree"
+        onViewChange={() => {}}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+      />
+    );
+
+    expect(screen.getByTestId("task-tree")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
+
     ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
     ndkMock.needsProfileSetup = true;
 
-    render(
+    rerender(
       <MobileLayout
         relays={relays}
         channels={channels}
@@ -127,8 +162,11 @@ describe("MobileLayout auth wiring", () => {
       />
     );
 
-    expect(screen.getByTestId("task-tree")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
+      expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
+      expect(document.querySelector("#manage-profile-name")).toBeInTheDocument();
+    });
   });
 
   it("hides unified compose bar when manage view is open", () => {

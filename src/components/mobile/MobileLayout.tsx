@@ -13,6 +13,7 @@ import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import type { FailedPublishDraft } from "@/lib/failed-publish-drafts";
 import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType } from "@/types";
 import { cn } from "@/lib/utils";
+import { useNDK } from "@/lib/nostr/ndk-context";
 
 interface MobileLayoutProps {
   relays: Relay[];
@@ -103,9 +104,12 @@ export function MobileLayout({
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
+  const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
   const [mobileView, setMobileView] = useState<MobileViewType>(
     isPrimaryMobileView(currentView) ? currentView : "tree"
   );
+  const previousSignedInRef = useRef(isSignedIn);
+  const { needsProfileSetup } = useNDK();
 
   // Build default content from active channel filters
   const includedChannels = channels.filter(c => c.filterState === "included");
@@ -229,6 +233,16 @@ export function MobileLayout({
     setMobileView(isPrimaryMobileView(currentView) ? currentView : "tree");
   }, [currentView, showFilters]);
 
+  useEffect(() => {
+    const justSignedIn = !previousSignedInRef.current && isSignedIn;
+    if (justSignedIn && needsProfileSetup) {
+      setShowFilters(true);
+      setMobileView("filters");
+      setProfileEditorOpenSignal((previous) => previous + 1);
+    }
+    previousSignedInRef.current = isSignedIn;
+  }, [isSignedIn, needsProfileSetup]);
+
   const renderView = () => {
     if (showFilters) {
       return (
@@ -236,6 +250,7 @@ export function MobileLayout({
           relays={relays}
           channels={channels}
           people={people}
+          profileEditorOpenSignal={profileEditorOpenSignal}
           onRelayToggle={onRelayToggle}
           onChannelToggle={onChannelToggle}
           onPersonToggle={onPersonToggle}
