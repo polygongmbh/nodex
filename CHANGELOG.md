@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile task/comment send actions now share equal visual weight and use clearer icons with consistent action styling for faster recognition.
 - Mobile onboarding now uses more precise Manage/filter highlight targets and adds earlier, more detailed guidance for profile properties and filter controls.
 - App presence now publishes NIP-38 `kind:30315` status updates on view/task changes (1-hour expiry), clears status on sign-out/tab close, and uses recent post + status activity for sidebar online indicators (green <=3m, yellow <=1h) with a profile privacy toggle to disable presence publishing.
+- Kanban now visually marks tasks you cannot move/edit as read-only (muted, dashed card with lock badge) so permission-restricted items are clearly distinguishable.
 
 ### Fixed
 - Mobile compose due-date controls are now split into two rows, and the date-type selector only appears after a date is selected, reducing horizontal overflow that could push nearby actions off-screen.

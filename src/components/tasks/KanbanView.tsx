@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers } from "lucide-react";
+import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Lock } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, TaskStatus } from "@/types";
 import { TaskComposer } from "./TaskComposer";
@@ -458,14 +458,15 @@ export function KanbanView({
                           const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
                           const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                           const isLockedUntilStart = isTaskLockedUntilStart(task);
+                          const canChangeStatus = canUserChangeTaskStatus(task, currentUser);
                           
                           return (
                             <Draggable
                               key={task.id}
                               draggableId={task.id}
                               index={index}
-                              isDragDisabled={!canUserChangeTaskStatus(task, currentUser)}
-                              disableInteractiveElementBlocking={canUserChangeTaskStatus(task, currentUser)}
+                              isDragDisabled={!canChangeStatus}
+                              disableInteractiveElementBlocking={canChangeStatus}
                             >
                               {(provided, snapshot) => (
                                 <div
@@ -474,13 +475,21 @@ export function KanbanView({
                                   {...provided.dragHandleProps}
                                   data-task-id={task.id}
                                   className={cn(
-                                    "bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-grab active:cursor-grabbing",
+                                    "bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow",
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md",
+                                    canChangeStatus ? "cursor-grab active:cursor-grabbing" : "cursor-default border-dashed border-muted-foreground/60 bg-muted/40",
                                     task.status === "done" && "opacity-70",
                                     isLockedUntilStart && "opacity-50 grayscale",
                                     isKeyboardFocused && !snapshot.isDragging && "ring-2 ring-primary ring-offset-1 ring-offset-background"
                                   )}
                                 >
+                                  {!canChangeStatus && (
+                                    <div className="mb-2 inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground">
+                                      <Lock className="h-3 w-3" />
+                                      <span>Read-only</span>
+                                    </div>
+                                  )}
+
                                   {/* Parent chain for context */}
                                   {ancestorChain.length > 0 && (
                                     <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground mb-2">
