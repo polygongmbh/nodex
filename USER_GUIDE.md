@@ -88,6 +88,15 @@
 - Table view supports inline due date/time/date-type editing.
 - Calendar urgency colors shift from yellow (sooner) toward greener tones (farther out).
 
+## Responsive Breakpoints
+- UI breakpoints follow Tailwind defaults:
+  - `sm`: `>=640px`
+  - `md`: `>=768px`
+  - `lg`: `>=1024px`
+  - `xl`: `>=1280px`
+  - `2xl`: `>=1536px`
+- Components may change visibility, density, and control labels at these breakpoints.
+
 ## Reliability and Sorting
 - If relay publish fails, the post is queued locally in a failed-publish banner with retry/dismiss actions instead of being treated as a normal published task/comment.
 - Latest feed events are cached locally and rehydrated on app load for better offline/reconnect continuity.
