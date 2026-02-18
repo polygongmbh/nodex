@@ -9,6 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Changed
 - Mobile compose now replaces the Task/Comment mode toggle with dedicated send actions: task send is always available, and comment send appears in feed/tree views.
 - Mobile task/comment send actions now share equal visual weight and use clearer icons with consistent action styling for faster recognition.
+- Mobile onboarding now uses more precise Manage/filter highlight targets and adds earlier, more detailed guidance for profile properties and filter controls.
 
 ### Fixed
 - Mobile compose due-date controls are now split into two rows, and the date-type selector only appears after a date is selected, reducing horizontal overflow that could push nearby actions off-screen.

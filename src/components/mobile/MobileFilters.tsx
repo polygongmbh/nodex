@@ -160,7 +160,7 @@ export function MobileFilters({
         </section>
 
         {/* Profile Management */}
-        <section>
+        <section data-onboarding="mobile-filters-profile">
           <div className="flex items-center gap-2 mb-3">
             <User className="w-4 h-4 text-primary" />
             <h2 className="font-semibold text-sm">{t("filters.profile.title")}</h2>
@@ -311,7 +311,7 @@ export function MobileFilters({
         </section>
 
         {/* Relays */}
-        <section>
+        <section data-onboarding="mobile-filters-relays">
           <div className="flex items-center gap-2 mb-3">
             <Radio className="w-4 h-4 text-primary" />
             <h2 className="font-semibold text-sm">{t("filters.feeds.title")}</h2>
@@ -370,7 +370,7 @@ export function MobileFilters({
         </section>
 
         {/* Channels */}
-        <section>
+        <section data-onboarding="mobile-filters-channels">
           <div className="flex items-center gap-2 mb-3">
             <Hash className="w-4 h-4 text-primary" />
             <h2 className="font-semibold text-sm">{t("filters.channels.title")}</h2>
@@ -398,7 +398,7 @@ export function MobileFilters({
         </section>
 
         {/* People */}
-        <section>
+        <section data-onboarding="mobile-filters-people">
           <div className="flex items-center gap-2 mb-3">
             <Users className="w-4 h-4 text-primary" />
             <h2 className="font-semibold text-sm">{t("filters.people.title")}</h2>

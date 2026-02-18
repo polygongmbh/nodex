@@ -30,6 +30,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
         <button
           key={item.id}
           onClick={() => onViewChange(item.id)}
+          data-onboarding={item.id === "filters" ? "mobile-nav-manage" : undefined}
           role="tab"
           aria-selected={currentView === item.id}
           aria-label={t("navigation.views.switchTo", { view: item.label })}

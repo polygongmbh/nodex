@@ -123,15 +123,21 @@ export function getOnboardingStepsBySection(
         id: "mobile-filters-open",
         title: t("onboarding.steps.mobileFiltersOpen.title"),
         description: t("onboarding.steps.mobileFiltersOpen.description"),
-        target: '[aria-label="Switch to Manage view"]',
+        target: '[data-onboarding="mobile-nav-manage"]',
         requiredAction: "click-target",
         actionPrompt: t("onboarding.steps.mobileFiltersOpen.action"),
+      },
+      {
+        id: "mobile-filters-properties",
+        title: t("onboarding.steps.mobileFiltersProperties.title"),
+        description: t("onboarding.steps.mobileFiltersProperties.description"),
+        target: '[data-onboarding="mobile-filters-profile"]',
       },
       {
         id: "mobile-filters-use",
         title: t("onboarding.steps.mobileFiltersUse.title"),
         description: t("onboarding.steps.mobileFiltersUse.description"),
-        target: '[data-onboarding="mobile-filters"]',
+        target: '[data-onboarding="mobile-filters-channels"]',
       },
     ],
     compose: [
