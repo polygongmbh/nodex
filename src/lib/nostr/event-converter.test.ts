@@ -404,6 +404,40 @@ describe("nostrEventsToTasks", () => {
     expect(tasks[0].priority).toBe(90);
     expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000020 * 1000);
   });
+
+  it("hydrates priority from state events carrying priority property tags", () => {
+    const events: NostrEventWithRelay[] = [
+      {
+        id: "task-priority-state",
+        pubkey: "pub1",
+        created_at: 1700000100,
+        kind: NostrEventKind.Task,
+        tags: [["priority", "20"]],
+        content: "State-priority task",
+        sig: "sig1",
+        relayUrl: "wss://relay.test.com",
+      },
+      {
+        id: "state-update-priority",
+        pubkey: "pub1",
+        created_at: 1700000110,
+        kind: NostrEventKind.GitStatusOpen,
+        tags: [
+          ["e", "task-priority-state", "", "property"],
+          ["priority", "70"],
+        ],
+        content: "In Progress",
+        sig: "sig2",
+        relayUrl: "wss://relay.test.com",
+      },
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].id).toBe("task-priority-state");
+    expect(tasks[0].priority).toBe(70);
+    expect(tasks[0].status).toBe("in-progress");
+  });
 });
 
 describe("mergeTasks", () => {

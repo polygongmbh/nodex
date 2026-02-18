@@ -37,4 +37,17 @@ describe("task property event helpers", () => {
     expect(extractPriorityTargetTaskId(tags)).toBe("task123");
     expect(isPriorityPropertyEvent(NostrEventKind.Task, tags)).toBe(false);
   });
+
+  it("detects priority property updates carried on state kinds", () => {
+    const tags = [
+      ["priority", "55"],
+      ["e", "task456", "", "property"],
+    ];
+
+    expect(isPriorityPropertyEvent(NostrEventKind.GitStatusOpen, tags)).toBe(true);
+    expect(isPriorityPropertyEvent(NostrEventKind.GitStatusApplied, tags)).toBe(true);
+    expect(isPriorityPropertyEvent(NostrEventKind.GitStatusClosed, tags)).toBe(true);
+    expect(isPriorityPropertyEvent(NostrEventKind.GitStatusDraft, tags)).toBe(true);
+    expect(isPriorityPropertyEvent(NostrEventKind.Procedure, tags)).toBe(true);
+  });
 });

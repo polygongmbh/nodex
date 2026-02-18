@@ -1,4 +1,5 @@
 import { NostrEventKind } from "./types";
+import { isTaskStateEventKind } from "./task-state-events";
 
 interface TaskPriorityUpdateParams {
   taskEventId: string;
@@ -27,7 +28,8 @@ export function extractPriorityTargetTaskId(tags: string[][]): string | undefine
 }
 
 export function isPriorityPropertyEvent(kind: number, tags: string[][]): boolean {
-  if (kind !== NostrEventKind.TextNote) return false;
+  const supportsPropertyTags = kind === NostrEventKind.TextNote || isTaskStateEventKind(kind);
+  if (!supportsPropertyTags) return false;
   if (parsePriorityTag(tags) === undefined) return false;
   return Boolean(extractPriorityTargetTaskId(tags));
 }

@@ -21,6 +21,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Newly published tasks now persist due dates reliably after reload by routing initial due-date publish events to the known origin relay during create/retry flows.
 - Priority property update notes are now kept in the inbound event pipeline, so edited priorities hydrate correctly after refresh.
 - Feed author identity metadata now stays inline on widened desktop layouts (after the sidebar expands), avoiding unnecessary line breaks between display name and secondary identity text.
+- Priority property tags are now also hydrated when they arrive on task state/property events (`kind:1630/1631/1632/1633/1639`), matching mostr-cli behavior.
 
 ## [1.4.0] - 2026-02-17
 Expanded relay-aware task publishing, priority editing, and English/German localization across key task flows.
