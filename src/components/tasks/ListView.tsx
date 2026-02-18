@@ -137,7 +137,7 @@ export function ListView({
 }: ListViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
-  const COMPOSE_DRAFT_KEY = "nodex.compose-draft.list";
+  const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   
@@ -550,7 +550,7 @@ export function ListView({
         composeChannels={composeChannels}
         people={people}
         onCancel={() => {}}
-        draftStorageKey={COMPOSE_DRAFT_KEY}
+        draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
         onSignInClick={onSignInClick}
         forceExpanded={forceShowComposer}
