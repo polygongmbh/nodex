@@ -287,7 +287,6 @@ export function UnifiedBottomBar({
   const activeRelaysCount = relays.filter(r => r.isActive).length;
   const activeChannelsCount = channels.filter(c => c.filterState !== "neutral").length;
   const activePeopleCount = people.filter(p => p.isSelected).length;
-  const hasAtLeastOneTag = (sharedText.match(/#(\w+)/g)?.length || 0) > 0;
   const activeRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
   const hasInvalidRootTaskRelaySelection = !focusedTaskId && activeRelayIds.length !== 1;
   const filteredPeople = people.filter((person) => {
@@ -702,7 +701,7 @@ export function UnifiedBottomBar({
                 <>
                   <button
                     onClick={() => handleSubmit("task")}
-                    disabled={!sharedText.trim() || !hasAtLeastOneTag || hasInvalidRootTaskRelaySelection}
+                    disabled={!sharedText.trim() || hasInvalidRootTaskRelaySelection}
                     className="p-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     aria-label="Send task"
                     title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.hints.createFromText")}
@@ -712,7 +711,7 @@ export function UnifiedBottomBar({
                   {canOfferComment && (
                     <button
                       onClick={() => handleSubmit("comment")}
-                      disabled={!sharedText.trim() || !hasAtLeastOneTag}
+                      disabled={!sharedText.trim()}
                       className="p-3 rounded-lg border border-border text-foreground hover:bg-muted disabled:opacity-50"
                       aria-label="Send comment"
                       title={t("composer.labels.comment")}

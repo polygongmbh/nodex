@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ### Fixed
 - Mobile compose due-date controls are now split into two rows, and the date-type selector only appears after a date is selected, reducing horizontal overflow that could push nearby actions off-screen.
+- Mobile send actions now provide immediate feedback when posting text without any selected/typed channel tag, instead of silently doing nothing.
 
 ## [1.4.1] - 2026-02-18
 

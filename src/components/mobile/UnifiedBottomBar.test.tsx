@@ -4,6 +4,7 @@ import { useState } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Person, Relay } from "@/types";
 import { addDays, format } from "date-fns";
+import { toast } from "sonner";
 
 const relays: Relay[] = [
   { id: "demo", name: "Demo", icon: "D", isActive: true },
@@ -75,6 +76,37 @@ describe("UnifiedBottomBar auth gating", () => {
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "hello #general" } });
     expect(onSearchChange).toHaveBeenLastCalledWith("hello #general");
+  });
+
+  it("shows feedback when sending without a selected channel tag", () => {
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship update" } });
+    fireEvent.click(screen.getByRole("button", { name: /send task/i }));
+
+    expect(toastErrorSpy).toHaveBeenCalledTimes(1);
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    toastErrorSpy.mockRestore();
   });
 
   it("keeps compose text when submit returns a failure result", async () => {
