@@ -439,14 +439,19 @@ export function UnifiedBottomBar({
             </div>
           )}
           {activeSelector === "date" && (
-            <div className="-mx-3 px-3 overflow-x-auto">
-              <div className="min-w-[19rem] border-t border-border/60 pt-2">
+            <div className="-mx-3 px-3 w-full overflow-x-auto pb-1 [scrollbar-width:thin]">
+              <div className="w-full border-t border-border/60 pt-2">
                 <CalendarComponent
                   mode="single"
                   selected={dueDate}
                   onSelect={setDueDate}
+                  numberOfMonths={6}
                   initialFocus
-                  className="pointer-events-auto !p-0"
+                  className="pointer-events-auto !p-0 w-max"
+                  classNames={{
+                    months: "flex flex-row gap-3 w-max",
+                    month: "space-y-3 min-w-[16.5rem]",
+                  }}
                 />
               </div>
             </div>
