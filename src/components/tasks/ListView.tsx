@@ -584,7 +584,7 @@ export function ListView({
               <th className="text-left p-3 w-24 sm:w-28 md:w-32">
                 <SortButton field="status">{t("listView.sort.status")}</SortButton>
               </th>
-              <th className="text-left p-3 w-40">
+              <th className="text-left p-3 w-40 md:w-44 lg:w-52 xl:w-72 2xl:w-[24rem]">
                 <SortButton field="dueDate">{t("listView.sort.dueDate")}</SortButton>
               </th>
               <th className="text-left p-3 w-16 sm:w-20 md:w-24">
@@ -673,7 +673,7 @@ export function ListView({
                     <td className="p-3">
                       <StatusCell task={task} />
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 w-40 md:w-44 lg:w-52 xl:w-72 2xl:w-[24rem]">
                       <DueDateCell task={task} />
                     </td>
                     <td className="p-3">
