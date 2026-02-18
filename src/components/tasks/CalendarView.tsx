@@ -580,8 +580,14 @@ export function CalendarView({
                                   onClick={(e) => {
                                     if (!canCompleteTask(task)) return;
                                     if (task.status === "done" && onStatusChange) {
-                                      allowStatusMenuOpen(task.id);
-                                      openStatusMenu(task.id);
+                                      const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
+                                      if (isMenuOpen) {
+                                        closeStatusMenu(task.id);
+                                        clearStatusMenuOpenIntent(task.id);
+                                      } else {
+                                        allowStatusMenuOpen(task.id);
+                                        openStatusMenu(task.id);
+                                      }
                                       return;
                                     }
                                     if (e.altKey && onStatusChange) {
@@ -956,8 +962,14 @@ export function CalendarView({
                                 onClick={(e) => {
                                   if (!canCompleteTask(task)) return;
                                   if (task.status === "done" && onStatusChange) {
-                                    allowStatusMenuOpen(task.id);
-                                    openStatusMenu(task.id);
+                                    const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
+                                    if (isMenuOpen) {
+                                      closeStatusMenu(task.id);
+                                      clearStatusMenuOpenIntent(task.id);
+                                    } else {
+                                      allowStatusMenuOpen(task.id);
+                                      openStatusMenu(task.id);
+                                    }
                                     return;
                                   }
                                   if (e.altKey && onStatusChange) {

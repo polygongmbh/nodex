@@ -239,8 +239,13 @@ export function TaskItem({
                   e.stopPropagation();
                   if (!canCompleteTask()) return;
                   if (task.status === "done" && onStatusChange) {
-                    allowStatusMenuOpenRef.current = true;
-                    setStatusMenuOpen(true);
+                    if (statusMenuOpen) {
+                      setStatusMenuOpen(false);
+                      allowStatusMenuOpenRef.current = false;
+                    } else {
+                      allowStatusMenuOpenRef.current = true;
+                      setStatusMenuOpen(true);
+                    }
                     return;
                   }
                   if (e.altKey && onStatusChange) {

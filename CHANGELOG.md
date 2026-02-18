@@ -27,7 +27,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Mobile profile setup/manage editor no longer flickers between setup/edit states due to repeated profile-sync reruns.
 - Mobile Safari now uses the small viewport height (`svh`) for app layout, preventing extra page scroll caused by the floating URL bar.
 - Table view now shares the same desktop composer draft state as Feed/Tree, so unsent text persists when switching between those views.
-- Task status checkboxes now show clearer hover hints (including Alt-click status selection), and clicking an already-done task now opens the status dropdown instead of cycling state.
+- Task status checkboxes now show clearer hover hints (including Alt-click status selection), and clicking an already-done task now opens the status dropdown instead of cycling state while remaining dismissible via a second click.
 
 ## [1.4.1] - 2026-02-18
 
