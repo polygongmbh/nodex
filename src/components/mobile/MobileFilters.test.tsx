@@ -1,19 +1,25 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileFilters } from "./MobileFilters";
 import type { Channel, Person, Relay } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
+
+const ndkMock = {
+  user: {
+    pubkey: "abc123",
+    npub: "npub1abc",
+    profile: { displayName: "Guest User" },
+  },
+  authMethod: "guest",
+  logout: vi.fn(),
+  getGuestPrivateKey: () => "f".repeat(64),
+  needsProfileSetup: false,
+  updateUserProfile: vi.fn(async () => true),
+  publishEvent: vi.fn(async () => ({ success: true })),
+};
 
 vi.mock("@/lib/nostr/ndk-context", () => ({
-  useNDK: () => ({
-    user: {
-      pubkey: "abc123",
-      npub: "npub1abc",
-      profile: { displayName: "Guest User" },
-    },
-    authMethod: "guest",
-    logout: vi.fn(),
-    getGuestPrivateKey: () => "f".repeat(64),
-  }),
+  useNDK: () => ndkMock,
 }));
 
 const relays: Relay[] = [
@@ -36,6 +42,15 @@ const people: Person[] = [
 ];
 
 describe("MobileFilters management view", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    ndkMock.user = {
+      pubkey: "abc123",
+      npub: "npub1abc",
+      profile: { displayName: "Guest User" },
+    };
+  });
+
   it("supports adding a new feed and showing profile controls", () => {
     const onAddRelay = vi.fn();
 
@@ -65,5 +80,42 @@ describe("MobileFilters management view", () => {
     expect(screen.getByText(/^v\d+\.\d+\.\d+$/)).toBeInTheDocument();
     // Keep manage panel height-bound so content scrolls within mobile view.
     expect(document.querySelector('[data-onboarding="mobile-filters"]')).toHaveClass("h-full");
+  });
+
+  it("uses cached kind:0 metadata for current user label when profile is missing", () => {
+    const pubkey = "c".repeat(64);
+    window.localStorage.setItem(
+      "nodex.kind0.cache.v1",
+      JSON.stringify([
+        {
+          kind: NostrEventKind.Metadata,
+          pubkey,
+          created_at: 123,
+          content: JSON.stringify({ name: "Cached Carol" }),
+        },
+      ])
+    );
+    ndkMock.user = {
+      pubkey,
+      npub: "npub1carol",
+      profile: {},
+    };
+
+    render(
+      <MobileFilters
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+      />
+    );
+
+    expect(screen.getByText("Cached Carol")).toBeInTheDocument();
   });
 });

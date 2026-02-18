@@ -31,6 +31,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Task status checkboxes now show clearer hover hints (including Alt-click status selection), and clicking an already-done task now opens the status dropdown instead of cycling state while remaining dismissible via a second click.
 - Signed-in profile metadata is now proactively cached to local kind:0 storage, so profiles from previously used identities remain available across account switches/reloads.
 - Presence activity now respects newer NIP-38 offline updates over older active presence updates, so sign-out clears online status immediately instead of waiting for active-presence expiry.
+- Current-user profile surfaces now consistently reuse cached kind:0 metadata, so top-right identity labels and Manage/Edit profile defaults stay populated even when live profile fields are initially empty.
 
 ## [1.4.1] - 2026-02-18
 

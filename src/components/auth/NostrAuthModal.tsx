@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +35,7 @@ import {
   buildOfflinePresenceContent,
   buildPresenceTags,
 } from "@/lib/presence-status";
+import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -373,20 +374,24 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
     loadPresencePublishingEnabled()
   );
+  const effectiveProfile = useMemo(
+    () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
+    [user?.profile, user?.pubkey]
+  );
 
   const openProfileEditor = useCallback(() => {
     if (!isConnected) {
       toast.error(t("filters.profile.noRelayConnected"));
       return;
     }
-    setProfileName(user?.profile?.name || "");
-    setProfileDisplayName(user?.profile?.displayName || "");
-    setProfilePicture(user?.profile?.picture || "");
-    setProfileNip05(user?.profile?.nip05 || "");
-    setProfileAbout(user?.profile?.about || "");
+    setProfileName(effectiveProfile.name || "");
+    setProfileDisplayName(effectiveProfile.displayName || "");
+    setProfilePicture(effectiveProfile.picture || "");
+    setProfileNip05(effectiveProfile.nip05 || "");
+    setProfileAbout(effectiveProfile.about || "");
     setPresencePublishingEnabled(loadPresencePublishingEnabled());
     setIsProfileEditorOpen(true);
-  }, [isConnected, t, user?.profile?.about, user?.profile?.displayName, user?.profile?.name, user?.profile?.nip05, user?.profile?.picture]);
+  }, [effectiveProfile.about, effectiveProfile.displayName, effectiveProfile.name, effectiveProfile.nip05, effectiveProfile.picture, isConnected, t]);
 
   const handlePresencePublishingChange = useCallback((enabled: boolean) => {
     setPresencePublishingEnabled(enabled);
@@ -473,7 +478,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     );
   }
 
-  const displayName = user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`;
+  const displayName = effectiveProfile.displayName || effectiveProfile.name || `${user.npub.slice(0, 8)}...`;
   const methodLabel = authMethod === "extension"
     ? t("filters.authMethod.extension")
     : authMethod === "guest"
@@ -487,7 +492,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       <DropdownMenu onOpenChange={(open) => { if (!open) setShowKey(false); }}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-full w-full px-2 gap-2 bg-transparent hover:bg-transparent rounded-none justify-end">
-            <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={user.profile?.picture} className="w-5 h-5" />
+            <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-5 h-5" />
             <span className="text-sm font-medium truncate max-w-[8rem]">{displayName}</span>
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
           </Button>
@@ -495,17 +500,17 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         <DropdownMenuContent align="end" className="w-80 p-2">
           <DropdownMenuLabel className="px-2 py-1">
             <div className="flex items-center gap-2">
-              <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={user.profile?.picture} className="w-6 h-6" />
+              <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-6 h-6" />
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-medium truncate">{displayName}</span>
-                  {user.profile?.nip05Verified && (
-                    <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${user.profile.nip05}`}>
+                  {effectiveProfile.nip05Verified && (
+                    <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${effectiveProfile.nip05}`}>
                       <BadgeCheck className="w-3.5 h-3.5" />
                     </span>
                   )}
-                  {user.profile?.nip05 && !user.profile?.nip05Verified && (
-                    <span className="text-xs text-muted-foreground" title={user.profile.nip05}>
+                  {effectiveProfile.nip05 && !effectiveProfile.nip05Verified && (
+                    <span className="text-xs text-muted-foreground" title={effectiveProfile.nip05}>
                       ✓
                     </span>
                   )}

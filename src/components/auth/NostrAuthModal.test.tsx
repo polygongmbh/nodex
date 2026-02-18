@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
 import type { AuthMethod, NostrUser } from "@/lib/nostr/ndk-context";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 const loginWithExtension = vi.fn(() => new Promise<boolean>(() => {}));
 const ndkMock = {
@@ -32,6 +33,15 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 }));
 
 describe("NostrAuthModal", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    ndkMock.isConnected = true;
+    ndkMock.user = null;
+    ndkMock.authMethod = null;
+    ndkMock.needsProfileSetup = false;
+    ndkMock.isProfileSyncing = false;
+  });
+
   it("shows loading indicator only on extension option when extension login starts", async () => {
     Object.assign(window as Window & { nostr?: unknown }, { nostr: {} });
     Object.defineProperty(window, "matchMedia", {
@@ -115,6 +125,31 @@ describe("NostrAuthModal", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     ndkMock.isConnected = true;
+  });
+
+  it("uses cached kind:0 metadata for current user display when profile is missing", () => {
+    const pubkey = "f".repeat(64);
+    window.localStorage.setItem(
+      "nodex.kind0.cache.v1",
+      JSON.stringify([
+        {
+          kind: NostrEventKind.Metadata,
+          pubkey,
+          created_at: 123,
+          content: JSON.stringify({ name: "Cached Alice" }),
+        },
+      ])
+    );
+    ndkMock.user = {
+      npub: "npub1cached",
+      pubkey,
+      profile: {},
+    };
+    ndkMock.authMethod = "extension";
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.getByText("Cached Alice")).toBeInTheDocument();
   });
 
 });

@@ -20,6 +20,7 @@ import {
   buildOfflinePresenceContent,
   buildPresenceTags,
 } from "@/lib/presence-status";
+import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -76,11 +77,15 @@ export function MobileFilters({
   const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
     loadPresencePublishingEnabled()
   );
+  const effectiveProfile = useMemo(
+    () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
+    [user?.profile, user?.pubkey]
+  );
 
   const displayName = useMemo(() => {
     if (!user) return t("filters.profile.notSignedIn");
-    return user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`;
-  }, [user, t]);
+    return effectiveProfile.displayName || effectiveProfile.name || `${user.npub.slice(0, 8)}...`;
+  }, [effectiveProfile.displayName, effectiveProfile.name, t, user]);
 
   const methodLabel = authMethod === "extension"
     ? t("filters.authMethod.extension")
@@ -95,19 +100,19 @@ export function MobileFilters({
   const guestPrivateKey = getGuestPrivateKey();
 
   useEffect(() => {
-    setProfileName(user?.profile?.name || "");
-    setProfileDisplayName(user?.profile?.displayName || "");
-    setProfilePicture(user?.profile?.picture || "");
-    setProfileNip05(user?.profile?.nip05 || "");
-    setProfileAbout(user?.profile?.about || "");
+    setProfileName(effectiveProfile.name || "");
+    setProfileDisplayName(effectiveProfile.displayName || "");
+    setProfilePicture(effectiveProfile.picture || "");
+    setProfileNip05(effectiveProfile.nip05 || "");
+    setProfileAbout(effectiveProfile.about || "");
     setPresencePublishingEnabled(loadPresencePublishingEnabled());
   }, [
+    effectiveProfile.about,
+    effectiveProfile.displayName,
+    effectiveProfile.name,
+    effectiveProfile.nip05,
+    effectiveProfile.picture,
     needsProfileSetup,
-    user?.profile?.about,
-    user?.profile?.displayName,
-    user?.profile?.name,
-    user?.profile?.nip05,
-    user?.profile?.picture,
     user,
   ]);
 
