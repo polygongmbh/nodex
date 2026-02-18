@@ -7,8 +7,10 @@ import { TaskTree } from "@/components/tasks/TaskTree";
 import { FeedView } from "@/components/tasks/FeedView";
 import { CalendarView } from "@/components/tasks/CalendarView";
 import { FocusedTaskBreadcrumb } from "@/components/tasks/FocusedTaskBreadcrumb";
+import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
+import type { FailedPublishDraft } from "@/lib/failed-publish-drafts";
 import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +57,9 @@ interface MobileLayoutProps {
     mention: string;
     id: number;
   } | null;
+  failedPublishDrafts?: FailedPublishDraft[];
+  onRetryFailedPublish?: (draftId: string) => void;
+  onDismissFailedPublish?: (draftId: string) => void;
 }
 
 // Mobile view order for swipe navigation
@@ -92,6 +97,9 @@ export function MobileLayout({
   forceComposeMode = false,
   onAuthorClick,
   mentionRequest = null,
+  failedPublishDrafts = [],
+  onRetryFailedPublish,
+  onDismissFailedPublish,
 }: MobileLayoutProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
@@ -255,6 +263,14 @@ export function MobileLayout({
   return (
     <div className="flex flex-col h-screen bg-background">
       <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} />
+      {onRetryFailedPublish && onDismissFailedPublish && (
+        <FailedPublishQueueBanner
+          drafts={failedPublishDrafts}
+          onRetry={onRetryFailedPublish}
+          onDismiss={onDismissFailedPublish}
+          isMobile
+        />
+      )}
       
       {/* Swipe indicator */}
       <SwipeIndicator 

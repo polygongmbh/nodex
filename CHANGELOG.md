@@ -6,6 +6,16 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+- Failed-publish queue for compose submissions: when relay publish fails, the post is now stored in local storage and surfaced in a red retry banner (desktop/mobile) with explicit retry and dismiss actions.
+
+### Changed
+- Latest Nostr feed events are now cached locally and rehydrated on load so recent posts remain visible offline or during relay reconnect windows.
+
+### Fixed
+- Failed relay publishes are no longer inserted as normal local tasks/comments, preventing misleading local-only entries after refresh.
+- Profile setup/edit modal no longer auto-opens (or opens from menu) when no relay connection is active.
+
 ## [1.4.0] - 2026-02-17
 Expanded relay-aware task publishing, priority editing, and English/German localization across key task flows.
 

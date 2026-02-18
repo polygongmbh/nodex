@@ -344,6 +344,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const {
     user,
     authMethod,
+    isConnected,
     logout,
     getGuestPrivateKey,
     needsProfileSetup,
@@ -360,13 +361,17 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const [profileAbout, setProfileAbout] = useState("");
 
   const openProfileEditor = useCallback(() => {
+    if (!isConnected) {
+      toast.error(t("filters.profile.noRelayConnected"));
+      return;
+    }
     setProfileName(user?.profile?.name || "");
     setProfileDisplayName(user?.profile?.displayName || "");
     setProfilePicture(user?.profile?.picture || "");
     setProfileNip05(user?.profile?.nip05 || "");
     setProfileAbout(user?.profile?.about || "");
     setIsProfileEditorOpen(true);
-  }, [user?.profile?.about, user?.profile?.displayName, user?.profile?.name, user?.profile?.nip05, user?.profile?.picture]);
+  }, [isConnected, t, user?.profile?.about, user?.profile?.displayName, user?.profile?.name, user?.profile?.nip05, user?.profile?.picture]);
 
   const handleSaveProfile = async () => {
     if (!profileName.trim()) {
@@ -420,10 +425,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   };
 
   useEffect(() => {
-    if (user && needsProfileSetup && !isProfileSyncing && !isProfileEditorOpen) {
+    if (user && isConnected && needsProfileSetup && !isProfileSyncing && !isProfileEditorOpen) {
       openProfileEditor();
     }
-  }, [user, needsProfileSetup, isProfileSyncing, isProfileEditorOpen, openProfileEditor]);
+  }, [user, isConnected, needsProfileSetup, isProfileSyncing, isProfileEditorOpen, openProfileEditor]);
 
   if (!user) {
     return (

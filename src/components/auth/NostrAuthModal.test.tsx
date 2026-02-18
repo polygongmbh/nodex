@@ -10,6 +10,7 @@ const ndkMock = {
   loginAsGuest: vi.fn(async () => true),
   loginWithNostrConnect: vi.fn(async () => true),
   isAuthenticating: false,
+  isConnected: true,
   user: null as NostrUser | null,
   authMethod: null as AuthMethod,
   logout: vi.fn(),
@@ -97,6 +98,23 @@ describe("NostrAuthModal", () => {
     rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("does not auto-open setup profile dialog when no relay is connected", () => {
+    ndkMock.user = {
+      npub: "npub1test",
+      pubkey: "a".repeat(64),
+      profile: { name: "" },
+    };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
+    ndkMock.isConnected = false;
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    ndkMock.isConnected = true;
   });
 
 });

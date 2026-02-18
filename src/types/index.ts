@@ -35,7 +35,7 @@ export type TaskCreateFailureReason =
   | "relay-selection"
   | "unexpected-error";
 export type TaskCreateResult =
-  | { ok: true; mode: "published" | "local" }
+  | { ok: true; mode: "published" | "local" | "queued" }
   | { ok: false; reason: TaskCreateFailureReason };
 
 export type TaskStatus = "todo" | "in-progress" | "done";

@@ -6,6 +6,7 @@ import { FeedView } from "@/components/tasks/FeedView";
 import { KanbanView } from "@/components/tasks/KanbanView";
 import { CalendarView } from "@/components/tasks/CalendarView";
 import { ListView } from "@/components/tasks/ListView";
+import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { DesktopSearchDock, type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
@@ -52,6 +53,16 @@ import {
   rememberLoggedInIdentity,
   saveCachedKind0Events,
 } from "@/lib/people-from-kind0";
+import {
+  loadCachedNostrEvents,
+  saveCachedNostrEvents,
+  type CachedNostrEvent,
+} from "@/lib/nostr-event-cache";
+import {
+  loadFailedPublishDrafts,
+  saveFailedPublishDrafts,
+  type FailedPublishDraft,
+} from "@/lib/failed-publish-drafts";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
@@ -71,7 +82,6 @@ import { normalizeTaskType } from "@/lib/task-type";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus } from "@/types";
 import { toast } from "sonner";
-import { NDKEvent } from "@nostr-dev-kit/ndk";
 import { useTranslation } from "react-i18next";
 
 const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
@@ -106,8 +116,9 @@ const Index = () => {
   // Auth modal state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // State for NDK events
-  const [nostrEvents, setNostrEvents] = useState<NDKEvent[]>([]);
+  // State for NDK events (hydrated from local cache for offline visibility)
+  const [nostrEvents, setNostrEvents] = useState<CachedNostrEvent[]>(() => loadCachedNostrEvents());
+  const [failedPublishDrafts, setFailedPublishDrafts] = useState<FailedPublishDraft[]>(() => loadFailedPublishDrafts());
 
   // Convert relay statuses to app Relay format - combine demo relay with nostr relays
   const relays: Relay[] = useMemo(() => {
@@ -238,14 +249,14 @@ const Index = () => {
   const nostrTasks: Task[] = useMemo(() => {
     return nostrEventsToTasks(
       filteredNostrEvents.map((event) => ({
-        id: event.id || "",
+        id: event.id,
         pubkey: event.pubkey,
-        created_at: event.created_at || Math.floor(Date.now() / 1000),
+        created_at: event.created_at,
         kind: event.kind as NostrEventKind,
         tags: event.tags,
         content: event.content,
         sig: event.sig || "",
-        relayUrl: event.relay?.url,
+        relayUrl: event.relayUrl,
       }))
     );
   }, [filteredNostrEvents]);
@@ -316,13 +327,21 @@ const Index = () => {
         limit: 200,
       }],
       (event) => {
+        const cachedEvent: CachedNostrEvent = {
+          id: event.id || "",
+          pubkey: event.pubkey,
+          created_at: event.created_at || Math.floor(Date.now() / 1000),
+          kind: event.kind,
+          tags: event.tags,
+          content: event.content || "",
+          sig: event.sig || undefined,
+          relayUrl: event.relay?.url,
+        };
+        if (!cachedEvent.id) return;
         setNostrEvents((prev) => {
           // Check for duplicates
-          if (prev.some((e) => e.id === event.id)) {
-            return prev;
-          }
-          // Add event and sort by created_at descending
-          const newEvents = [event, ...prev].sort(
+          const withoutExisting = prev.filter((e) => e.id !== cachedEvent.id);
+          const newEvents = [cachedEvent, ...withoutExisting].sort(
             (a, b) => (b.created_at || 0) - (a.created_at || 0)
           );
           // Limit to 500 events
@@ -335,6 +354,14 @@ const Index = () => {
       subscription?.stop();
     };
   }, [isNostrConnected, subscribe]);
+
+  useEffect(() => {
+    saveCachedNostrEvents(nostrEvents);
+  }, [nostrEvents]);
+
+  useEffect(() => {
+    saveFailedPublishDrafts(failedPublishDrafts);
+  }, [failedPublishDrafts]);
 
   useEffect(() => {
     savePersistedRelayIds(activeRelayIds);
@@ -882,8 +909,28 @@ const Index = () => {
       new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
     );
     
+    const createdAt = new Date();
+    const taskAuthor: Person = (() => {
+      if (currentUser) return currentUser;
+      if (user?.pubkey) {
+        return {
+          id: user.pubkey,
+          name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
+          displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
+          nip05: user.profile?.nip05?.trim().toLowerCase(),
+          avatar: user.profile?.picture,
+          isOnline: true,
+          isSelected: false,
+        };
+      }
+      return people[0];
+    })();
+
     let publishSuccess = false;
     let publishedEventId: string | undefined;
+    let publishKind: NostrEventKind = normalizedTaskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
+    let publishTags: string[][] = [];
+    let publishParentId: string | undefined;
     if (shouldPublish) {
       try {
         console.log("Publishing event to relays:", selectedRelayUrls);
@@ -892,7 +939,7 @@ const Index = () => {
         if (normalizedTaskType === "task" && parentId && !validParentId) {
           toast.warning("Parent reference is local-only; publishing task without parent link");
         }
-        const publishTags = normalizedTaskType === "task"
+        publishTags = normalizedTaskType === "task"
           ? buildTaskPublishTags(
               validParentId,
               selectedRelayUrls[0],
@@ -904,7 +951,8 @@ const Index = () => {
               ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
               ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
             ];
-        const publishParentId = normalizedTaskType === "comment" && validParentId ? validParentId : undefined;
+        publishKind = kind;
+        publishParentId = normalizedTaskType === "comment" && validParentId ? validParentId : undefined;
         const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
         publishSuccess = result.success;
         publishedEventId = result.eventId;
@@ -925,60 +973,149 @@ const Index = () => {
         publishSuccess = false;
       }
     }
-    
+
+    if (shouldPublish && !publishSuccess) {
+      const failedDraft: FailedPublishDraft = {
+        id: `failed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+        author: taskAuthor,
+        content,
+        tags: normalizedExtractedTags,
+        relayIds: targetRelayIds,
+        relayUrls: selectedRelayUrls,
+        taskType: normalizedTaskType,
+        createdAt: createdAt.toISOString(),
+        dueDate: dueDate ? dueDate.toISOString() : undefined,
+        dueTime,
+        dateType,
+        parentId,
+        initialStatus,
+        mentionPubkeys,
+        assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
+        priority: normalizedTaskType === "task" ? priority : undefined,
+        publishKind,
+        publishTags,
+        publishParentId,
+      };
+      setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
+      toast.error("Failed to publish to Nostr; saved for retry");
+      return { ok: true, mode: "queued" };
+    }
+
     const effectiveRelayIds = selectedRelayUrls.length > 0
       ? selectedRelayUrls.slice(0, 1).map((url) => getRelayIdFromUrl(url))
       : targetRelayIds;
-    
-    const newTask: Task = {
+
+    const shouldAddAsLocalTask = !shouldPublish || publishSuccess;
+    if (shouldAddAsLocalTask) {
+      const newTask: Task = {
+        id: publishedEventId || Date.now().toString(),
+        author: taskAuthor,
+        content,
+        tags: normalizedExtractedTags,
+        relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
+        taskType: normalizedTaskType,
+        timestamp: createdAt,
+        status: normalizedTaskType === "task" ? (initialStatus || "todo") : undefined,
+        likes: 0,
+        replies: 0,
+        reposts: 0,
+        dueDate,
+        dueTime,
+        dateType,
+        parentId,
+        mentions: Array.from(
+          new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
+        ),
+        assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
+        priority: normalizedTaskType === "task" ? priority : undefined,
+      };
+      setLocalTasks((prev) => [newTask, ...prev]);
+    }
+
+    if (shouldPublish) {
+      toast.success(normalizedTaskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
+      return { ok: true, mode: "published" };
+    }
+
+    toast.success(normalizedTaskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
+    return { ok: true, mode: "local" };
+  };
+
+  const parseStoredDate = useCallback((value?: string): Date | undefined => {
+    if (!value) return undefined;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  }, []);
+
+  const handleRetryFailedPublish = useCallback(async (draftId: string) => {
+    const draft = failedPublishDrafts.find((item) => item.id === draftId);
+    if (!draft) return;
+
+    const relayUrls = draft.relayUrls.length > 0
+      ? draft.relayUrls
+      : resolveRelayUrlsFromIds(draft.relayIds);
+    if (relayUrls.length === 0) {
+      toast.error("Retry failed: relay is no longer configured");
+      return;
+    }
+
+    const result = await publishEvent(
+      draft.publishKind,
+      draft.content,
+      draft.publishTags,
+      draft.publishParentId,
+      relayUrls
+    );
+    if (!result.success) {
+      toast.error("Retry failed: publish was not accepted by relay");
+      return;
+    }
+
+    const publishedEventId = result.eventId;
+    const effectiveRelayIds = relayUrls.slice(0, 1).map((url) => getRelayIdFromUrl(url));
+    const dueDate = parseStoredDate(draft.dueDate);
+    const restoredTask: Task = {
       id: publishedEventId || Date.now().toString(),
-      author: (() => {
-        if (currentUser) return currentUser;
-        if (user?.pubkey) {
-          return {
-            id: user.pubkey,
-            name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
-              displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
-              nip05: user.profile?.nip05?.trim().toLowerCase(),
-              avatar: user.profile?.picture,
-              isOnline: true,
-              isSelected: false,
-          };
-        }
-        return people[0];
-      })(),
-      content,
-      tags: extractedTags,
+      author: draft.author,
+      content: draft.content,
+      tags: draft.tags,
       relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
-      taskType: normalizedTaskType,
-      timestamp: new Date(),
-      status: normalizedTaskType === "task" ? (initialStatus || "todo") : undefined,
+      taskType: draft.taskType,
+      timestamp: parseStoredDate(draft.createdAt) || new Date(),
+      status: draft.taskType === "task" ? (draft.initialStatus || "todo") : undefined,
       likes: 0,
       replies: 0,
       reposts: 0,
       dueDate,
-      dueTime,
-      dateType,
-      parentId,
-      mentions: Array.from(
-        new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
-      ),
-      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
-      priority: normalizedTaskType === "task" ? priority : undefined,
+      dueTime: draft.dueTime,
+      dateType: draft.dateType,
+      parentId: draft.parentId,
+      mentions: draft.mentionPubkeys,
+      assigneePubkeys: draft.taskType === "task" ? draft.assigneePubkeys : undefined,
+      priority: draft.taskType === "task" ? draft.priority : undefined,
     };
-    setLocalTasks((prev) => [newTask, ...prev]);
-    
-    if (shouldPublish) {
-      if (publishSuccess) {
-        toast.success(normalizedTaskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
-      } else {
-        toast.error("Failed to publish to Nostr; added locally");
-      }
-    } else {
-      toast.success(normalizedTaskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
+    setLocalTasks((prev) => [restoredTask, ...prev]);
+    setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
+
+    if (publishedEventId && draft.taskType === "task" && draft.initialStatus) {
+      await publishTaskStateUpdate(publishedEventId, draft.initialStatus, relayUrls.slice(0, 1));
     }
-    return { ok: true, mode: publishSuccess ? "published" : "local" };
-  };
+    if (publishedEventId && draft.taskType === "task" && dueDate) {
+      await publishTaskDueUpdate(
+        publishedEventId,
+        draft.content,
+        dueDate,
+        draft.dueTime,
+        draft.dateType || "due"
+      );
+    }
+
+    toast.success(draft.taskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
+  }, [failedPublishDrafts, parseStoredDate, publishEvent, publishTaskDueUpdate, publishTaskStateUpdate, resolveRelayUrlsFromIds, t]);
+
+  const handleDismissFailedPublish = useCallback((draftId: string) => {
+    setFailedPublishDrafts((prev) => prev.filter((draft) => draft.id !== draftId));
+  }, []);
 
   const handleDueDateChange = useCallback((
     taskId: string,
@@ -1114,6 +1251,9 @@ const Index = () => {
           forceComposeMode={forceShowComposeForGuide}
           onAuthorClick={handleAuthorClick}
           mentionRequest={mentionRequest}
+          failedPublishDrafts={failedPublishDrafts}
+          onRetryFailedPublish={handleRetryFailedPublish}
+          onDismissFailedPublish={handleDismissFailedPublish}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide
@@ -1169,6 +1309,11 @@ const Index = () => {
         onGuideClick={handleOpenGuide}
       />
       <div className="min-w-0 overflow-hidden flex flex-col" {...desktopSwipeHandlers}>
+        <FailedPublishQueueBanner
+          drafts={failedPublishDrafts}
+          onRetry={handleRetryFailedPublish}
+          onDismiss={handleDismissFailedPublish}
+        />
         <div className="min-h-0 flex-1 overflow-hidden">
           {renderView()}
         </div>
