@@ -424,8 +424,9 @@ export function UnifiedBottomBar({
   const canSendTask = hasComposeText && !hasInvalidRootTaskRelaySelection;
   const canSendComment = hasComposeText;
   const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
+  const canSubmitFromPrimary = canOfferComment ? (canSendTask || canSendComment) : canSendTask;
   const hasTaskSubmitBlock = taskSubmitBlockedReason !== null;
-  const showInlineTaskSubmitBlock = hasTaskSubmitBlock && (hasComposeText || isBottomBarFocused);
+  const showInlineTaskSubmitBlock = hasTaskSubmitBlock && (isComposeFocused || (isBottomBarFocused && hasComposeText));
 
   const handlePrimarySend = () => {
     if (!isSignedIn) {
@@ -874,7 +875,7 @@ export function UnifiedBottomBar({
               <button
                 onClick={handleCancel}
                 disabled={!hasComposeText}
-                className="h-10 w-8 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-45 disabled:hover:bg-transparent"
+                className="h-10 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted disabled:opacity-45 disabled:hover:bg-transparent"
                 aria-label={t("composer.hints.clearCompose")}
                 title={t("composer.hints.clearCompose")}
               >
@@ -884,7 +885,7 @@ export function UnifiedBottomBar({
               <div className="relative">
                 <button
                   onClick={handlePrimarySend}
-                  disabled={isSignedIn ? (canOfferComment ? !canSendComment : hasTaskSubmitBlock) : false}
+                  disabled={isSignedIn ? !canSubmitFromPrimary : false}
                   className={cn(
                     "h-10 w-10 inline-flex items-center justify-center rounded-lg border transition-colors",
                     isSignedIn
