@@ -70,9 +70,7 @@ import {
   buildActivePresenceContent,
   buildOfflinePresenceContent,
   buildPresenceTags,
-  getPresenceExpirationUnix,
-  isNodexPresenceEvent,
-  parsePresenceContent,
+  deriveLatestActivePresenceByAuthor,
 } from "@/lib/presence-status";
 import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
 import {
@@ -226,26 +224,29 @@ const Index = () => {
   );
   const supplementalLatestActivityByAuthor = useMemo(() => {
     const nowUnix = Math.floor(Date.now() / 1000);
+    const latestActivePresenceByAuthor = deriveLatestActivePresenceByAuthor(
+      nostrEvents.filter((event) => event.kind === NostrEventKind.UserStatus),
+      nowUnix
+    );
     const latestByAuthor = new Map<string, number>();
 
     for (const event of nostrEvents) {
-      if (event.kind === NostrEventKind.Metadata) continue;
+      if (event.kind === NostrEventKind.Metadata || event.kind === NostrEventKind.UserStatus) continue;
 
       const authorId = event.pubkey?.trim().toLowerCase();
       if (!authorId) continue;
-
-      if (event.kind === NostrEventKind.UserStatus) {
-        if (!isNodexPresenceEvent(event.tags)) continue;
-        const expirationUnix = getPresenceExpirationUnix(event.tags);
-        if (expirationUnix !== null && expirationUnix < nowUnix) continue;
-        const presence = parsePresenceContent(event.content || "");
-        if (!presence || presence.state !== "active") continue;
-      }
 
       const timestampMs = (event.created_at || 0) * 1000;
       const previous = latestByAuthor.get(authorId) ?? Number.NEGATIVE_INFINITY;
       if (timestampMs > previous) {
         latestByAuthor.set(authorId, timestampMs);
+      }
+    }
+
+    for (const [authorId, presenceTimestampMs] of latestActivePresenceByAuthor.entries()) {
+      const previous = latestByAuthor.get(authorId) ?? Number.NEGATIVE_INFINITY;
+      if (presenceTimestampMs > previous) {
+        latestByAuthor.set(authorId, presenceTimestampMs);
       }
     }
 

@@ -56,3 +56,51 @@ export function parsePresenceContent(content: string): PresenceContent | null {
     return null;
   }
 }
+
+interface PresenceLikeEvent {
+  pubkey?: string;
+  created_at?: number;
+  tags: string[][];
+  content?: string;
+}
+
+interface PresenceStateSnapshot {
+  createdAtMs: number;
+  state: PresenceState;
+}
+
+export function deriveLatestActivePresenceByAuthor(
+  events: PresenceLikeEvent[],
+  nowUnix: number
+): Map<string, number> {
+  const latestPresenceByAuthor = new Map<string, PresenceStateSnapshot>();
+
+  for (const event of events) {
+    const authorId = event.pubkey?.trim().toLowerCase();
+    if (!authorId || !isNodexPresenceEvent(event.tags)) continue;
+
+    const expirationUnix = getPresenceExpirationUnix(event.tags);
+    if (expirationUnix !== null && expirationUnix < nowUnix) continue;
+
+    const presence = parsePresenceContent(event.content || "");
+    if (!presence) continue;
+
+    const createdAtMs = (event.created_at || 0) * 1000;
+    const previous = latestPresenceByAuthor.get(authorId);
+    if (!previous || createdAtMs >= previous.createdAtMs) {
+      latestPresenceByAuthor.set(authorId, {
+        createdAtMs,
+        state: presence.state,
+      });
+    }
+  }
+
+  const latestActivePresenceByAuthor = new Map<string, number>();
+  for (const [authorId, snapshot] of latestPresenceByAuthor.entries()) {
+    if (snapshot.state === "active") {
+      latestActivePresenceByAuthor.set(authorId, snapshot.createdAtMs);
+    }
+  }
+
+  return latestActivePresenceByAuthor;
+}

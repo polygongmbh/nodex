@@ -30,6 +30,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Table view now shares the same desktop composer draft state as Feed/Tree, so unsent text persists when switching between those views.
 - Task status checkboxes now show clearer hover hints (including Alt-click status selection), and clicking an already-done task now opens the status dropdown instead of cycling state while remaining dismissible via a second click.
 - Signed-in profile metadata is now proactively cached to local kind:0 storage, so profiles from previously used identities remain available across account switches/reloads.
+- Presence activity now respects newer NIP-38 offline updates over older active presence updates, so sign-out clears online status immediately instead of waiting for active-presence expiry.
 
 ## [1.4.1] - 2026-02-18
 
