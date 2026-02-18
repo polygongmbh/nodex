@@ -30,7 +30,7 @@ export function DesktopSearchDock({
     <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
       <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
       <div className="px-4 py-3 flex items-center gap-3">
-        <div className="relative flex-1 max-w-xl mx-auto">
+        <div className="relative mx-auto w-full flex-1 max-w-xl lg:max-w-[68vw] xl:max-w-[72vw] 2xl:max-w-[76vw]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             data-onboarding="search-bar"
