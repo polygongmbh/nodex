@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle, Flag } from "lucide-react";
+import { Search, Send, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, CheckSquare, MessageSquare, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Relay, Channel, Person, TaskCreateResult, TaskDateType, TaskType } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -480,7 +480,7 @@ export function UnifiedBottomBar({
           )}
 
           {taskType === "task" && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
             <select
               aria-label="Priority"
               value={priority === undefined ? "" : String(priority)}
@@ -493,7 +493,7 @@ export function UnifiedBottomBar({
                 const parsed = Number.parseInt(value, 10);
                 setPriority(Number.isFinite(parsed) ? parsed : undefined);
               }}
-              className="h-7 rounded-md border border-border bg-background px-1.5 text-[11px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+              className="h-6 rounded-md border border-border bg-background px-1 text-[10px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
             >
               <option value="">Prio</option>
               <option value="20">P20</option>
@@ -502,11 +502,10 @@ export function UnifiedBottomBar({
               <option value="80">P80</option>
               <option value="100">P100</option>
             </select>
-            <Flag className="w-3.5 h-3.5" />
             <Popover>
               <PopoverTrigger asChild>
-                <button className="flex items-center gap-1 px-2 py-1.5 rounded-md border border-border hover:bg-muted/60 transition-colors">
-                  <Calendar className="w-3.5 h-3.5" />
+                <button className="flex items-center gap-1 px-1.5 py-1 rounded-md border border-border hover:bg-muted/60 transition-colors text-[11px] leading-none">
+                  <Calendar className="w-3 h-3" />
                   {dueDate ? format(dueDate, "MMM d") : "Date"}
                 </button>
               </PopoverTrigger>
@@ -524,23 +523,23 @@ export function UnifiedBottomBar({
               aria-label="Date type"
               value={dateType}
               onChange={(event) => setDateType(event.target.value as TaskDateType)}
-              className="h-7 rounded-md border border-border bg-background px-1.5 text-[11px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
+              className="h-6 w-[4.5rem] rounded-md border border-border bg-background px-1 text-[10px] text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
             >
               <option value="due">Due</option>
-              <option value="scheduled">Scheduled</option>
+              <option value="scheduled">Sched</option>
               <option value="start">Start</option>
               <option value="end">End</option>
-              <option value="milestone">Milestone</option>
+              <option value="milestone">Mile</option>
             </select>
             {dueDate && (
               <>
-                <div className="flex items-center gap-1 px-2 py-1.5 rounded-md border border-border bg-muted/30">
-                  <Clock className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1 px-1.5 py-1 rounded-md border border-border bg-muted/30">
+                  <Clock className="w-3 h-3" />
                   <input
                     type="time"
                     value={dueTime}
                     onChange={(e) => setDueTime(e.target.value)}
-                    className="text-xs bg-transparent focus:outline-none w-16"
+                    className="text-[11px] bg-transparent focus:outline-none w-14"
                   />
                 </div>
                 <button
@@ -548,10 +547,10 @@ export function UnifiedBottomBar({
                     setDueDate(undefined);
                     setDueTime("");
                   }}
-                  className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                  className="p-1 rounded-md hover:bg-muted transition-colors"
                   aria-label="Clear due date"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               </>
             )}

@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- Mobile compose due-date controls are now more compact (denser spacing and shorter date-type labels), reducing horizontal overflow that could push nearby actions off-screen.
+
 ## [1.4.1] - 2026-02-18
 
 ### Added
