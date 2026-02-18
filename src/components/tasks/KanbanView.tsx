@@ -18,6 +18,7 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
+import { useTranslation } from "react-i18next";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -51,10 +52,10 @@ interface KanbanViewProps {
   onAuthorClick?: (author: Person) => void;
 }
 
-const columns: { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] = [
-  { id: "todo", label: "To Do", icon: <Circle className="w-4 h-4" />, color: "text-muted-foreground" },
-  { id: "in-progress", label: "In Progress", icon: <CircleDot className="w-4 h-4" />, color: "text-amber-500" },
-  { id: "done", label: "Done", icon: <CheckCircle2 className="w-4 h-4" />, color: "text-primary" },
+const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] => [
+  { id: "todo", label: t("listView.status.todo"), icon: <Circle className="w-4 h-4" />, color: "text-muted-foreground" },
+  { id: "in-progress", label: t("listView.status.inProgress"), icon: <CircleDot className="w-4 h-4" />, color: "text-amber-500" },
+  { id: "done", label: t("listView.status.done"), icon: <CheckCircle2 className="w-4 h-4" />, color: "text-primary" },
 ];
 const ACTIVE_KANBAN_STATUSES: TaskStatus[] = ["todo", "in-progress"];
 
@@ -77,7 +78,9 @@ export function KanbanView({
   onHashtagClick,
   onAuthorClick,
 }: KanbanViewProps) {
+  const { t } = useTranslation();
   const { user } = useNDK();
+  const columns = useMemo(() => getColumns((key) => t(key)), [t]);
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
 
@@ -413,7 +416,7 @@ export function KanbanView({
                 {composingColumn === column.id && (
                   <div className="p-3 border-b border-border bg-card/50 flex-shrink-0">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-muted-foreground">New task in {column.label}</span>
+                      <span className="text-xs text-muted-foreground">{t("kanban.newTaskIn", { column: column.label })}</span>
                       <button
                         onClick={() => setComposingColumn(null)}
                         className="p-0.5 rounded hover:bg-muted"
@@ -486,8 +489,8 @@ export function KanbanView({
                                   {!canChangeStatus && (
                                     <div
                                       className="absolute right-2 top-2 rounded-full bg-muted/80 p-1 text-muted-foreground"
-                                      title="Read-only task"
-                                      aria-label="Read-only task"
+                                      title={t("tasks.readOnly")}
+                                      aria-label={t("tasks.readOnly")}
                                     >
                                       <Lock className="h-3 w-3" />
                                     </div>
@@ -502,12 +505,12 @@ export function KanbanView({
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              onFocusTask?.(ancestor.id);
-                                            }}
-                                            className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[80px]`}
-                                            title={`Focus task: ${ancestor.text}`}
-                                            aria-label={`Focus task: ${ancestor.text}`}
-                                          >
+                                            onFocusTask?.(ancestor.id);
+                                          }}
+                                          className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[80px]`}
+                                          title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
+                                          aria-label={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
+                                        >
                                             {ancestor.text}
                                           </button>
                                         </span>
@@ -522,7 +525,7 @@ export function KanbanView({
                                       `text-sm leading-relaxed cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                                       task.status === "done" && "line-through text-muted-foreground"
                                     )}
-                                    title="Focus this task"
+                                    title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
                                   >
                                     {linkifyContent(task.content, onHashtagClick, {
                                       plainHashtags: task.status === "done",
@@ -533,7 +536,7 @@ export function KanbanView({
                                   {hasChildren(task.id) && (
                                     <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
                                       <Layers className="w-3 h-3" />
-                                      <span>Has subtasks</span>
+                                      <span>{t("kanban.hasSubtasks")}</span>
                                     </div>
                                   )}
 

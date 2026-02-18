@@ -2,6 +2,7 @@ import { Radio, Wifi, WifiOff, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { RelayManagement } from "@/components/relay/RelayManagement";
+import { useTranslation } from "react-i18next";
 
 interface RelayStatusWidgetProps {
   relays: NDKRelayStatus[];
@@ -10,6 +11,7 @@ interface RelayStatusWidgetProps {
 }
 
 export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelayStatusWidgetProps) {
+  const { t } = useTranslation();
   const getStatusColor = (status: NDKRelayStatus["status"]) => {
     switch (status) {
       case "connected":
@@ -28,13 +30,13 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2">
           <Radio className="w-5 h-5 text-primary" />
-          <h3 className="font-heading font-semibold text-foreground">Relay Status</h3>
+          <h3 className="font-heading font-semibold text-foreground">{t("widgets.relayStatus.title")}</h3>
         </div>
       </div>
       <div className="p-3 space-y-2">
         {relays.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-2">
-            No relays connected
+            {t("widgets.relayStatus.noneConnected")}
           </p>
         ) : (
           relays.map((relay) => (
@@ -55,7 +57,7 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
               </div>
               {relay.status === "connected" ? (
                 <span className="text-xs text-muted-foreground">
-                  {relay.latency ? `${relay.latency}ms` : "connected"}
+                  {relay.latency ? `${relay.latency}ms` : t("widgets.relayStatus.connected")}
                 </span>
               ) : relay.status === "connecting" ? (
                 <Loader2 className="w-4 h-4 text-warning animate-spin" />

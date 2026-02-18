@@ -2,6 +2,7 @@ import { Task, Person } from "@/types";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface TaskTagChipRowProps {
   task: Task;
@@ -30,6 +31,7 @@ export function TaskTagChipRow({
   onPersonClick,
   stopPropagation = true,
 }: TaskTagChipRowProps) {
+  const { t } = useTranslation();
   const hasMentions = hasTaskMentionChips(task);
   const hasTags = task.tags.length > 0;
   const showAll = showAllTags || expanded;
@@ -52,8 +54,8 @@ export function TaskTagChipRow({
             TASK_INTERACTION_STYLES.hashtagChip,
             tagClassName
           )}
-          aria-label={`Filter to #${tag}`}
-          title={`Filter to #${tag}`}
+          aria-label={t("tasks.actions.filterTag", { tag })}
+          title={t("tasks.actions.filterTag", { tag })}
         >
           #{tag}
         </button>
@@ -66,8 +68,8 @@ export function TaskTagChipRow({
             onToggleExpanded?.(true);
           }}
           className="text-xs text-muted-foreground hover:text-foreground"
-          aria-label={`Show ${hiddenTagCount} more tags`}
-          title="Show all tags"
+          aria-label={t("tasks.tagsShowMoreAria", { count: hiddenTagCount })}
+          title={t("tasks.tagsShowAll")}
         >
           +{hiddenTagCount}
         </button>
@@ -80,10 +82,10 @@ export function TaskTagChipRow({
             onToggleExpanded?.(false);
           }}
           className="text-xs text-muted-foreground hover:text-foreground"
-          aria-label="Show fewer tags"
-          title="Show fewer tags"
+          aria-label={t("tasks.tagsShowLess")}
+          title={t("tasks.tagsShowLess")}
         >
-          less
+          {t("tasks.less")}
         </button>
       )}
       {!hasMentions && !hasTags && <span className="text-xs text-muted-foreground">—</span>}

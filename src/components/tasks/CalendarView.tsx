@@ -523,7 +523,7 @@ export function CalendarView({
               )}
             >
               <List className="w-4 h-4" />
-              Upcoming
+              {t("calendar.tabs.upcoming")}
             </button>
             <button
               onClick={() => setMobileTab("calendar")}
@@ -535,7 +535,7 @@ export function CalendarView({
               )}
             >
               <Grid className="w-4 h-4" />
-              Calendar
+              {t("calendar.tabs.calendar")}
             </button>
           </div>
         )}
@@ -544,7 +544,7 @@ export function CalendarView({
         {isMobile && effectiveMobileTab === "upcoming" && (
           <div className="flex-1 overflow-auto p-3">
             {groupedUpcoming.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No upcoming tasks</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("tasks.empty.noUpcoming")}</p>
             ) : (
               <div className="space-y-4">
                 {groupedUpcoming.map((group) => (
@@ -561,6 +561,7 @@ export function CalendarView({
                         return (
                           <div
                             key={task.id}
+                            data-task-id={task.id}
                             className="flex items-start gap-2 p-2 rounded-lg bg-card border border-border"
                           >
                             <DropdownMenu
@@ -625,7 +626,7 @@ export function CalendarView({
                                     clearStatusMenuOpenIntent(task.id);
                                   }}
                                   disabled={!canCompleteTask(task)}
-                                  aria-label="Set status"
+                                  aria-label={t("tasks.actions.setStatus")}
                                   title={getStatusToggleHint(task.status)}
                                   className={cn(
                                     "flex-shrink-0 mt-0.5",
@@ -645,15 +646,15 @@ export function CalendarView({
                                 <DropdownMenuContent align="start">
                                   <DropdownMenuItem onClick={() => onStatusChange(task.id, "todo")}>
                                     <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                                    To Do
+                                    {t("listView.status.todo")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => onStatusChange(task.id, "in-progress")}>
                                     <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
-                                    In Progress
+                                    {t("listView.status.inProgress")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>
                                     <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                                    Done
+                                    {t("listView.status.done")}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               )}
@@ -715,7 +716,7 @@ export function CalendarView({
                   "grid gap-px mb-0.5",
                   isMobile ? "grid-cols-[1.8rem_repeat(7,minmax(0,1fr))]" : "grid-cols-[2.25rem_repeat(7,minmax(0,1fr))]"
                 )}>
-                  <div className="text-center text-xs font-medium text-muted-foreground py-1">Wk</div>
+                  <div className="text-center text-xs font-medium text-muted-foreground py-1">{t("calendar.weekShort")}</div>
                   {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
                     <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
                       {isMobile ? day[0] : day}
@@ -807,7 +808,7 @@ export function CalendarView({
                                   })}
                                   {dayTasks.length > 2 && (
                                     <span className="text-[10px] text-muted-foreground">
-                                      +{dayTasks.length - 2} more
+                                      {t("calendar.moreTasks", { count: dayTasks.length - 2 })}
                                     </span>
                                   )}
                                 </div>
@@ -840,7 +841,7 @@ export function CalendarView({
                 <button
                   onClick={() => navigateMonth("prev")}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
-                  aria-label="Previous month"
+                  aria-label={t("calendar.nav.previousMonth")}
                   data-onboarding="calendar-month-nav-prev"
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -851,7 +852,7 @@ export function CalendarView({
                 <button
                   onClick={() => navigateMonth("next")}
                   className="p-1.5 rounded hover:bg-muted transition-colors"
-                  aria-label="Next month"
+                  aria-label={t("calendar.nav.nextMonth")}
                   data-onboarding="calendar-month-nav-next"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -867,7 +868,7 @@ export function CalendarView({
                     className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
                   >
                     <Plus className="w-3 h-3" />
-                    Add Event
+                    {t("calendar.actions.addEvent")}
                   </button>
                 )}
               </div>
@@ -878,7 +879,7 @@ export function CalendarView({
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
                       <CalendarPlus className="w-3 h-3" />
-                      New event on {format(selectedDate, "MMM d")}
+                      {t("calendar.actions.newEventOn", { date: format(selectedDate, "MMM d") })}
                     </span>
                     <button
                       onClick={() => setIsComposingEvent(false)}
@@ -907,7 +908,7 @@ export function CalendarView({
               )}
 
               {selectedDayTasks.length === 0 && !isComposingEvent ? (
-                <p className="text-sm text-muted-foreground">No tasks scheduled for this day</p>
+                <p className="text-sm text-muted-foreground">{t("tasks.empty.noneScheduledForDay")}</p>
               ) : (
                 <div className="space-y-2">
                   {selectedDayTasks.map((task) => {
@@ -918,6 +919,7 @@ export function CalendarView({
                     return (
                       <div
                         key={task.id}
+                        data-task-id={task.id}
                         className={cn(
                           "p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card hover:bg-muted/50 transition-colors",
                           task.status === "done" && "opacity-60",
@@ -934,8 +936,8 @@ export function CalendarView({
                                 <button
                                   onClick={() => onFocusTask?.(ancestor.id)}
                                   className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[60px]`}
-                                  title={`Focus task: ${ancestor.text}`}
-                                  aria-label={`Focus task: ${ancestor.text}`}
+                                  title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
+                                  aria-label={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
                                 >
                                   {ancestor.text}
                                 </button>
@@ -1007,7 +1009,7 @@ export function CalendarView({
                                   clearStatusMenuOpenIntent(task.id);
                                 }}
                                 disabled={!canCompleteTask(task)}
-                                aria-label="Set status"
+                                aria-label={t("tasks.actions.setStatus")}
                                 title={getStatusToggleHint(task.status)}
                                 className={cn(
                                   "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
@@ -1027,15 +1029,15 @@ export function CalendarView({
                               <DropdownMenuContent align="start">
                                 <DropdownMenuItem onClick={() => onStatusChange(task.id, "todo")}>
                                   <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                                  To Do
+                                  {t("listView.status.todo")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => onStatusChange(task.id, "in-progress")}>
                                   <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
-                                  In Progress
+                                  {t("listView.status.inProgress")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>
                                   <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                                  Done
+                                  {t("listView.status.done")}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             )}
@@ -1047,7 +1049,7 @@ export function CalendarView({
                                 `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                                 task.status === "done" && "line-through text-muted-foreground"
                               )}
-                              title="Focus this task"
+                              title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
                             >
                               {linkifyContent(task.content, onHashtagClick, {
                                 plainHashtags: task.status === "done",
@@ -1076,8 +1078,8 @@ export function CalendarView({
                                       onHashtagClick?.(tag);
                                     }}
                                     className={`px-1 py-0.5 rounded text-xs ${TASK_INTERACTION_STYLES.hashtagChip}`}
-                                    aria-label={`Filter to #${tag}`}
-                                    title={`Filter to #${tag}`}
+                                    aria-label={t("tasks.actions.filterTag", { tag })}
+                                    title={t("tasks.actions.filterTag", { tag })}
                                   >
                                     #{tag}
                                   </button>
@@ -1093,7 +1095,7 @@ export function CalendarView({
               )}
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">Select a day to view tasks</p>
+            <p className="text-sm text-muted-foreground">{t("tasks.empty.selectDay")}</p>
           )}
         </div>
         )}

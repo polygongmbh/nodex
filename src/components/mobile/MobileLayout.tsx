@@ -52,6 +52,8 @@ interface MobileLayoutProps {
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
   onGuideClick: () => void;
+  completionSoundEnabled?: boolean;
+  onToggleCompletionSound?: () => void;
   onHashtagClick: (tag: string) => void;
   forceComposeMode?: boolean;
   onAuthorClick?: (author: Person) => void;
@@ -96,6 +98,8 @@ export function MobileLayout({
   onRemoveRelay,
   onSignInClick,
   onGuideClick,
+  completionSoundEnabled = true,
+  onToggleCompletionSound = () => {},
   onHashtagClick,
   forceComposeMode = false,
   onAuthorClick,
@@ -260,6 +264,8 @@ export function MobileLayout({
           onRemoveRelay={onRemoveRelay}
           onSignInClick={onSignInClick}
           onGuideClick={onGuideClick}
+          completionSoundEnabled={completionSoundEnabled}
+          onToggleCompletionSound={onToggleCompletionSound}
         />
       );
     }

@@ -8,6 +8,7 @@ import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
+import { useTranslation } from "react-i18next";
 
 interface TaskTreeProps {
   tasks: Task[];
@@ -72,6 +73,7 @@ export function TaskTree({
   onAuthorClick,
   mentionRequest = null,
 }: TaskTreeProps) {
+  const { t } = useTranslation();
   const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
@@ -323,11 +325,11 @@ export function TaskTree({
         {visibleTasks.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             {hasActiveFilters ? (
-              <p>No tasks match your filters</p>
+              <p>{t("tasks.empty.matchFilters")}</p>
             ) : currentContextId ? (
-              <p>No subtasks yet</p>
+              <p>{t("tasks.empty.noSubtasks")}</p>
             ) : (
-              <p>No tasks yet</p>
+              <p>{t("tasks.empty.noneYet")}</p>
             )}
           </div>
         ) : (

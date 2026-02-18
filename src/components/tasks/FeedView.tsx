@@ -330,7 +330,7 @@ export function FeedView({
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto" data-onboarding="task-list">
         {feedTasks.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
-            <p>No tasks to show</p>
+            <p>{t("tasks.empty.feed")}</p>
           </div>
         ) : (
           feedTasks.map((task) => {
@@ -382,8 +382,8 @@ export function FeedView({
                         <button
                           onClick={() => onFocusTask?.(crumb.id)}
                           className={`${TASK_INTERACTION_STYLES.hoverLinkText} cursor-pointer`}
-                          title={`Focus task: ${crumb.text}`}
-                          aria-label={`Focus task: ${crumb.text}`}
+                          title={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
+                          aria-label={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
                         >
                           {crumb.text}
                         </button>
@@ -457,7 +457,7 @@ export function FeedView({
                             clearStatusMenuOpenIntent(task.id);
                           }}
                           disabled={!canCompleteTask(task)}
-                          aria-label="Set status"
+                          aria-label={t("tasks.actions.setStatus")}
                           title={getStatusToggleHint(task.status)}
                           className={cn(
                             "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
@@ -477,15 +477,15 @@ export function FeedView({
                         <DropdownMenuContent align="start">
                           <DropdownMenuItem onClick={() => onStatusChange(task.id, "todo")}>
                             <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                            To Do
+                            {t("listView.status.todo")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onStatusChange(task.id, "in-progress")}>
                             <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
-                            In Progress
+                            {t("listView.status.inProgress")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>
                             <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                            Done
+                            {t("listView.status.done")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       )}
@@ -502,8 +502,8 @@ export function FeedView({
                       onAuthorClick?.(resolvedAuthor);
                     }}
                     className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    aria-label={`Filter and mention ${resolvedAuthor.displayName}`}
-                    title={`Filter and mention ${resolvedAuthor.displayName}`}
+                    aria-label={t("tasks.actions.filterAndMention", { authorName: resolvedAuthor.displayName })}
+                    title={t("tasks.actions.filterAndMention", { authorName: resolvedAuthor.displayName })}
                   >
                     <UserAvatar
                       id={resolvedAuthor.id}
@@ -532,7 +532,7 @@ export function FeedView({
                           "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
                           isMobile && "max-w-[45vw]"
                         )}
-                        aria-label={`Filter and mention ${authorMeta.primary}`}
+                        aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
                         title={resolvedAuthor.id}
                       >
                         <span
@@ -567,7 +567,7 @@ export function FeedView({
                       {isComment && !isMobile && (
                         <>
                           <span className="shrink-0">·</span>
-                          <span className="text-xs bg-muted px-1.5 py-0.5 rounded">comment</span>
+                          <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{t("tasks.comment")}</span>
                         </>
                       )}
                     </div>
@@ -579,7 +579,7 @@ export function FeedView({
                         `text-sm leading-relaxed cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
                         task.status === "done" && "line-through text-muted-foreground"
                       )}
-                      title="Focus this task"
+                      title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
                     >
                       {linkifyContent(task.content, onHashtagClick, {
                         plainHashtags: task.status === "done",

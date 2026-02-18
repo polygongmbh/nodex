@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { MobileViewType } from "./MobileNav";
+import { useTranslation } from "react-i18next";
 
 interface SwipeIndicatorProps {
   views: MobileViewType[];
@@ -8,6 +9,7 @@ interface SwipeIndicatorProps {
 }
 
 export function SwipeIndicator({ views, currentView, showFilters = false }: SwipeIndicatorProps) {
+  const { t } = useTranslation();
   const currentIndex = showFilters ? -1 : views.indexOf(currentView);
   const totalDots = views.length + 1; // +1 for filters
 
@@ -16,7 +18,7 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
       className="flex items-center justify-center gap-1.5 py-2"
       role="status"
       aria-live="polite"
-      aria-label="Current view position"
+      aria-label={t("navigation.mobile.currentViewPosition")}
     >
       {/* Management dot */}
       <div

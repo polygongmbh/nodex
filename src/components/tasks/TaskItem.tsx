@@ -83,8 +83,10 @@ export function TaskItem({
   // If parent is in allVisible state, this child should also be allVisible
   const foldState: FoldState = parentFoldState === "allVisible" ? "allVisible" : localFoldState;
   const prevStatusRef = useRef(task.status);
+  const cheerTimeoutRef = useRef<number | null>(null);
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [isCheering, setIsCheering] = useState(false);
   const statusTriggerPointerDownRef = useRef(false);
   const allowStatusMenuOpenRef = useRef(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
@@ -122,10 +124,25 @@ export function TaskItem({
         setLocalFoldState("matchingOnly");
       } else if (currentStatus === "done") {
         setLocalFoldState("collapsed");
+        setIsCheering(true);
+        if (cheerTimeoutRef.current !== null) {
+          window.clearTimeout(cheerTimeoutRef.current);
+        }
+        cheerTimeoutRef.current = window.setTimeout(() => {
+          setIsCheering(false);
+        }, 700);
       }
       prevStatusRef.current = currentStatus;
     }
   }, [task.status]);
+
+  useEffect(() => {
+    return () => {
+      if (cheerTimeoutRef.current !== null) {
+        window.clearTimeout(cheerTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Get ALL children from allTasks for total counts
   const allChildren = allTasks.filter(t => t.parentId === task.id);
@@ -179,7 +196,7 @@ export function TaskItem({
   const indentStyle = depth > 0 ? { marginLeft: `${depth * 1.5}rem` } : {};
 
   return (
-    <div className={cn(!matchedByFilter && "opacity-50")} data-task-id={task.id}>
+    <div className={cn(!matchedByFilter && "opacity-50", isCheering && "motion-completion-cheer")} data-task-id={task.id}>
       <div
         className={cn(
           "group flex items-start gap-3 py-2.5 px-3 rounded-lg transition-colors cursor-pointer",
@@ -201,15 +218,18 @@ export function TaskItem({
             handleSelect();
           }
         }}
-        aria-label={`${isComment ? 'Comment' : 'Task'}: ${task.content.slice(0, 50)}`}
-        title={`Focus ${isComment ? "comment" : "task"}`}
+        aria-label={t("tasks.focusTaskAria", {
+          type: isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase(),
+          title: task.content.slice(0, 50),
+        })}
+        title={t("tasks.focusTaskTitle", { type: isComment ? t("tasks.comment").toLowerCase() : t("tasks.task").toLowerCase() })}
       >
         {/* Expand/Collapse Toggle - three states */}
         {hasChildren && !isComment ? (
           <button
             onClick={handleToggleExpand}
             className="flex-shrink-0 p-0.5 rounded hover:bg-muted mt-1"
-            title={foldState === "matchingOnly" ? "Collapse" : foldState === "collapsed" ? (allVisibleDiffersFromMatching ? "Expand (all)" : "Expand (matching only)") : "Expand (matching only)"}
+            title={foldState === "matchingOnly" ? t("tasks.actions.collapse") : foldState === "collapsed" ? (allVisibleDiffersFromMatching ? t("tasks.actions.expandAll") : t("tasks.actions.expandMatchingOnly")) : t("tasks.actions.expandMatchingOnly")}
           >
             {foldState === "matchingOnly" ? (
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -282,7 +302,7 @@ export function TaskItem({
                   allowStatusMenuOpenRef.current = false;
                 }}
                 disabled={!canCompleteTask()}
-                aria-label="Set status"
+                aria-label={t("tasks.actions.setStatus")}
                 title={getStatusToggleHint(task.status)}
                 className={cn(
                   "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
@@ -308,7 +328,7 @@ export function TaskItem({
                   className={cn((task.status || "todo") === "todo" && "bg-muted")}
                 >
                   <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                  To Do
+                  {t("listView.status.todo")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {
@@ -318,7 +338,7 @@ export function TaskItem({
                   className={cn(task.status === "in-progress" && "bg-muted")}
                 >
                   <CircleDot className="w-4 h-4 mr-2 text-amber-500" />
-                  In Progress
+                  {t("listView.status.inProgress")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {
@@ -328,7 +348,7 @@ export function TaskItem({
                   className={cn(task.status === "done" && "bg-muted")}
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                  Done
+                  {t("listView.status.done")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             )}
@@ -349,8 +369,8 @@ export function TaskItem({
               onAuthorClick?.(authorPerson);
             }}
             className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-            aria-label={`Filter and mention ${authorName}`}
-            title={`Filter and mention ${authorName}`}
+            aria-label={t("tasks.actions.filterAndMention", { authorName })}
+            title={t("tasks.actions.filterAndMention", { authorName })}
           >
             <UserAvatar
               id={task.author.id}
@@ -376,8 +396,8 @@ export function TaskItem({
                       onAuthorClick?.(authorPerson);
                     }}
                     className="font-medium text-foreground/80 flex items-center gap-1 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
-                    aria-label={`Filter and mention ${authorName}`}
-                    title={`Filter and mention ${authorName}`}
+                    aria-label={t("tasks.actions.filterAndMention", { authorName })}
+                    title={t("tasks.actions.filterAndMention", { authorName })}
                   >
                     {authorName}
                     {authorNip05 && (
@@ -465,8 +485,8 @@ export function TaskItem({
                     onHashtagClick?.(tag);
                   }}
                   className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
-                  aria-label={`Filter to #${tag}`}
-                  title={`Filter to #${tag}`}
+                  aria-label={t("tasks.actions.filterTag", { tag })}
+                  title={t("tasks.actions.filterTag", { tag })}
                 >
                   #{tag}
                 </button>
@@ -478,7 +498,7 @@ export function TaskItem({
           {task.status === "done" && task.completedBy && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
               <CheckSquare className="w-3 h-3" />
-              <span>Completed by @{task.completedBy}</span>
+              <span>{t("tasks.completedBy", { user: task.completedBy })}</span>
             </div>
           )}
         </div>

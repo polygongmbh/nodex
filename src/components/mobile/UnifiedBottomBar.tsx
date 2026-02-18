@@ -328,7 +328,7 @@ export function UnifiedBottomBar({
       ));
     } catch (error) {
       console.error("Mobile task submit failed", error);
-      toast.error("Task creation failed. Please try again.");
+      toast.error(t("toasts.errors.taskCreationFailed"));
       return;
     }
     if (!result.ok) {
@@ -439,7 +439,7 @@ export function UnifiedBottomBar({
       {activeSelector && (
         <div
           className={cn(
-            "relative z-[112] border-b border-border p-3",
+            "motion-selector-panel relative z-[112] border-b border-border p-3",
             activeSelector === "date" ? "overflow-y-hidden" : "overflow-y-auto max-h-48"
           )}
         >
@@ -560,7 +560,7 @@ export function UnifiedBottomBar({
           <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
                 <select
-                  aria-label="Priority"
+                  aria-label={t("composer.labels.priority")}
                   value={priority === undefined ? "" : String(priority)}
                   onChange={(event) => {
                     const value = event.target.value;
@@ -573,7 +573,7 @@ export function UnifiedBottomBar({
                   }}
                   className="h-8 min-w-[4.5rem] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
                 >
-                  <option value="">⚑ Prio</option>
+                  <option value="">{t("composer.labels.priorityShort")}</option>
                   <option value="20">P20</option>
                   <option value="40">P40</option>
                   <option value="60">P60</option>
@@ -590,22 +590,22 @@ export function UnifiedBottomBar({
                   )}
                 >
                   <Calendar className="w-3.5 h-3.5" />
-                  {dueDate ? format(dueDate, "MMM d") : "Date"}
+                  {dueDate ? format(dueDate, "MMM d") : t("composer.labels.date")}
                 </button>
               </div>
               {dueDate && (
                 <div className="flex items-center gap-1">
                   <select
-                    aria-label="Date type"
+                    aria-label={t("composer.labels.dateType")}
                     value={dateType}
                     onChange={(event) => setDateType(event.target.value as TaskDateType)}
                     className="h-8 w-[5.2rem] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
                   >
-                    <option value="due">Due</option>
-                    <option value="scheduled">Sched</option>
-                    <option value="start">Start</option>
-                    <option value="end">End</option>
-                    <option value="milestone">Mile</option>
+                    <option value="due">{t("composer.dates.due")}</option>
+                    <option value="scheduled">{t("composer.dates.scheduled")}</option>
+                    <option value="start">{t("composer.dates.start")}</option>
+                    <option value="end">{t("composer.dates.end")}</option>
+                    <option value="milestone">{t("composer.dates.milestone")}</option>
                   </select>
                   <div className="h-8 flex items-center gap-1.5 px-2 rounded-md border border-border bg-muted/30">
                     <Clock className="w-3.5 h-3.5" />
@@ -622,7 +622,7 @@ export function UnifiedBottomBar({
                       setDueTime("");
                     }}
                     className="h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted transition-colors"
-                    aria-label="Clear due date"
+                    aria-label={t("composer.hints.clearDueDate")}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -763,7 +763,7 @@ export function UnifiedBottomBar({
                 rows={1}
               />
               {showMentionSuggestions && filteredPeople.length > 0 && (
-                <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1 max-h-72 overflow-y-auto overscroll-contain">
+                <div className="motion-selector-panel absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1 max-h-72 overflow-y-auto overscroll-contain">
                   {filteredPeople.map((person, index) => {
                     const mentionIdentifier = getPreferredMentionIdentifier(person);
                     const mentionDisplay = formatMentionIdentifierForDisplay(mentionIdentifier);
@@ -814,7 +814,7 @@ export function UnifiedBottomBar({
                     onClick={() => handleSubmit("task")}
                     disabled={!sharedText.trim() || hasInvalidRootTaskRelaySelection}
                     className="p-3 rounded-lg border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                    aria-label="Send task"
+                    aria-label={t("composer.actions.sendTask")}
                     title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.hints.createFromText")}
                   >
                     <CheckSquare className="w-5 h-5" />
@@ -824,7 +824,7 @@ export function UnifiedBottomBar({
                       onClick={() => handleSubmit("comment")}
                       disabled={!sharedText.trim()}
                       className="p-3 rounded-lg border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                      aria-label="Send comment"
+                      aria-label={t("composer.actions.sendComment")}
                       title={t("composer.labels.comment")}
                     >
                       <MessageSquare className="w-5 h-5" />

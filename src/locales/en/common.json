@@ -21,7 +21,9 @@
     "actions": {
       "createTask": "Create Task",
       "addComment": "Add Comment",
-      "signin": "Sign in"
+      "signin": "Sign in",
+      "sendTask": "Send task",
+      "sendComment": "Send comment"
     },
     "labels": {
       "dateType": "Date type",
@@ -29,7 +31,9 @@
       "kind": "Kind",
       "task": "Task",
       "comment": "Comment",
-      "mentions": "Mentions"
+      "mentions": "Mentions",
+      "date": "Date",
+      "priorityShort": "⚑ Prio"
     },
     "hints": {
       "composeField": "Use #channel tags and @mentions in this field",
@@ -39,7 +43,8 @@
       "insertMentionOpen": "Insert @mention and open people suggestions",
       "clearCompose": "Clear compose",
       "createFromText": "Create from current text",
-      "signInToCreate": "Sign in to create"
+      "signInToCreate": "Sign in to create",
+      "clearDueDate": "Clear due date"
     },
     "dates": {
       "setOptional": "Set {{dateType}} date (optional)",
@@ -59,13 +64,35 @@
       "selectRelayOrParent": "Select one relay or a parent task",
       "publishStatusFailed": "Failed to publish status update to relays",
       "publishDateFailed": "Failed to publish date update to relay",
-      "publishPriorityFailed": "Failed to publish priority update to relay"
+      "publishPriorityFailed": "Failed to publish priority update to relay",
+      "taskCreationFailed": "Task creation failed. Please try again.",
+      "publishSavedForRetry": "Failed to publish to Nostr; saved for retry",
+      "retryRelayMissing": "Retry failed: relay is no longer configured",
+      "retryRejectedByRelay": "Retry failed: publish was not accepted by relay"
     },
     "success": {
       "publishedTask": "Task published to Nostr and added locally",
       "publishedComment": "Comment published to Nostr and added locally",
       "localTask": "Task added locally (demo only)",
-      "localComment": "Comment added locally (demo only)"
+      "localComment": "Comment added locally (demo only)",
+      "relayFilterEnabled": "{{relayName}} relay filter enabled",
+      "relayFilterDisabled": "{{relayName}} relay filter disabled",
+      "showingOnlyRelay": "Showing only {{relayName}} relay",
+      "relayFiltersCleared": "All relay filters cleared",
+      "allRelaysSelected": "All relays selected",
+      "showingOnlyChannel": "Showing only #{{channelName}}",
+      "allChannelsIncluded": "All channels included",
+      "allChannelsReset": "All channels reset",
+      "showingOnlyTag": "Showing only #{{tag}}",
+      "showingOnlyPerson": "Showing only {{personName}}",
+      "selectedUserFallback": "selected user",
+      "showingOnlyAuthorAndTagging": "Showing only {{authorName}} and tagging {{mention}}",
+      "noFrequentPeople": "No frequent people to select",
+      "frequentPeopleSelected": "Frequent people selected",
+      "frequentPeopleDeselected": "Frequent people deselected"
+    },
+    "warnings": {
+      "parentLocalOnly": "Parent reference is local-only; publishing task without parent link"
     }
   },
   "listView": {
@@ -73,12 +100,18 @@
       "task": "Task",
       "status": "Status",
       "dueDate": "Due Date",
-      "priority": "Priority"
+      "priority": "Priority",
+      "reset": "Reset to default sorting"
     },
     "status": {
       "todo": "To Do",
       "inProgress": "In Progress",
-      "done": "Done"
+      "done": "Done",
+      "inProgressShort": "Doing"
+    },
+    "dates": {
+      "setDate": "Set date...",
+      "type": "Type"
     }
   },
   "navigation": {
@@ -97,7 +130,8 @@
       "switchTo": "Switch to {{view}} view"
     },
     "mobile": {
-      "openGuide": "Open Guide"
+      "openGuide": "Open Guide",
+      "currentViewPosition": "Current view position"
     }
   },
   "sidebar": {
@@ -117,7 +151,9 @@
       "shortcuts": "Shortcuts",
       "shortcutsTooltip": "Keyboard shortcuts (?)",
       "openGuide": "Open onboarding guide",
-      "guide": "Guide"
+      "guide": "Guide",
+      "toggleAll": "Toggle all on/off",
+      "toggleAllFor": "Toggle all {{title}}"
     }
   },
   "hints": {
@@ -250,36 +286,136 @@
       "next": "Next"
     },
     "sections": {
-      "navigation": { "title": "Navigation", "description": "Use view tabs and breadcrumbs to move through task contexts." },
-      "filters": { "title": "Filters", "description": "Use include/exclude channel and people filters effectively." },
-      "compose": { "title": "Compose", "description": "Post tasks/comments with #tags and @mentions." },
-      "kanban": { "title": "Kanban", "description": "Use columns, status lanes, and depth controls to organize work." },
-      "calendar": { "title": "Calendar", "description": "Plan tasks by date and review each day in the detail panel." }
+      "navigation": {
+        "title": "Navigation",
+        "description": "Use view tabs and breadcrumbs to move through task contexts."
+      },
+      "filters": {
+        "title": "Filters",
+        "description": "Use include/exclude channel and people filters effectively."
+      },
+      "compose": {
+        "title": "Compose",
+        "description": "Post tasks/comments with #tags and @mentions."
+      },
+      "kanban": {
+        "title": "Kanban",
+        "description": "Use columns, status lanes, and depth controls to organize work."
+      },
+      "calendar": {
+        "title": "Calendar",
+        "description": "Plan tasks by date and review each day in the detail panel."
+      }
     },
     "steps": {
-      "navigationSwitcher": { "title": "Switch views", "description": "Use the view switcher to move between Tree, Feed, Kanban, Calendar, and Table.", "action": "Click any view tab to continue." },
-      "navigationFocus": { "title": "Open task context", "description": "Click a task to navigate into its context and reveal the breadcrumb path.", "action": "Click a task item to continue." },
-      "navigationBreadcrumb": { "title": "Use breadcrumbs", "description": "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.", "action": "Click a breadcrumb item to continue." },
-      "filtersRelays": { "title": "Relay selection", "description": "Use *Feeds* to select which relays are visible. Click a relay icon to toggle it, or click its name for exclusive relay focus.", "action": "Click a relay control to continue." },
-      "filtersChannels": { "title": "Channel filters", "description": "In *Channels*, click a channel name to show only posts with that channel. Click the # icon to cycle neutral -> include -> exclude for that channel. Click the hashtag icon to the left of *Channels* to reset channel filters." },
-      "filtersPeople": { "title": "People filters", "description": "In *People*, click a person name to show only posts from that person. Click the avatar/icon to toggle that person. Click the icon to the left of *People* to reset people filters." },
-      "filtersSearch": { "title": "Search bar", "description": "Use the bottom search bar to narrow visible tasks by text across all views." },
-      "filtersHashtagContent": { "title": "Hashtags in content", "description": "Click a hashtag in a task to focus on that tag. Clear the tag filter to return to the full list.", "action": "Click a hashtag chip in a task item." },
-      "composeKind": { "title": "Task vs comment", "description": "Use the Kind selector to choose whether to post a task or a comment.", "action": "Focus the kind selector to continue." },
-      "composeInput": { "title": "Tags and mentions", "description": "Use #tags to organize items and @mentions to reference people in the compose box. Included channels auto-prepopulate as hashtags. You can set a date type (Due, Scheduled, Start, End, or Milestone) so tasks appear in Calendar view; future Start dates are shown as not yet doable.", "action": "Power-user hint: Option (Alt)+Enter submits as the other kind when no autocomplete is open; with autocomplete open, Option/Shift/Cmd/Ctrl+Enter can add the selected tag/mention as metadata without inserting token text." },
-      "mobileNavigationNav": { "title": "Mobile views", "description": "Use the top navigation to switch between Tree, Feed, List, and Calendar.", "action": "Tap a navigation tab to continue." },
-      "mobileNavigationFocus": { "title": "Navigate into a task", "description": "Tap a task item to open its focused context and navigation path.", "action": "Tap a task item to continue." },
-      "mobileNavigationBreadcrumb": { "title": "Use breadcrumbs", "description": "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.", "action": "Tap a breadcrumb item to continue." },
-      "mobileFiltersOpen": { "title": "Open Manage", "description": "Tap *Manage* in the top navigation to open relay, channel, and people filters.", "action": "Tap *Manage* to continue." },
-      "mobileFiltersProperties": { "title": "Profile properties", "description": "In *Manage*, open the profile editor to review and set your key identity fields: name, display name, picture URL, NIP-05, and about text." },
-      "mobileFiltersUse": { "title": "Use filters", "description": "In *Manage*, tap feed chips to select relays, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters. Combine these controls to narrow timeline visibility before composing." },
-      "mobileComposeCombobox": { "title": "Search/Compose combobox", "description": "Use the combined bottom bar to search as you type and create tasks/comments from the same text using the submit button.", "action": "Tap into the combined bar to continue." },
-      "kanbanColumnsStatus": { "title": "Columns and status", "description": "Use To Do, In Progress, and Done columns to track status. Moving a task between columns changes its status.", "action": "Click or drag a card in the board to continue." },
-      "kanbanCreateInColumn": { "title": "Create in a specific column", "description": "Use the + button in a column header to create a new task directly in that column's status.", "action": "Click a column + button to continue." },
-      "kanbanDepth": { "title": "Depth levels", "description": "Use Levels next to search to show top-level, limited depth, or leaves-only tasks.", "action": "Open the Levels selector to continue." },
-      "calendarMonths": { "title": "Month timeline", "description": "Scroll stacked months continuously to move through time." },
-      "calendarPickDay": { "title": "Pick a day", "description": "Click any day cell to load that date in the detail panel.", "action": "Click a day in the calendar grid to continue." },
-      "calendarDayPanel": { "title": "Day details", "description": "Use the right panel to review tasks for the selected date, change their status, and create a new task/event for that day." }
+      "navigationSwitcher": {
+        "title": "Switch views",
+        "description": "Use the view switcher to move between Tree, Feed, Kanban, Calendar, and Table.",
+        "action": "Click any view tab to continue."
+      },
+      "navigationFocus": {
+        "title": "Open task context",
+        "description": "Click a task to navigate into its context and reveal the breadcrumb path.",
+        "action": "Click a task item to continue."
+      },
+      "navigationBreadcrumb": {
+        "title": "Use breadcrumbs",
+        "description": "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.",
+        "action": "Click a breadcrumb item to continue."
+      },
+      "filtersRelays": {
+        "title": "Relay selection",
+        "description": "Use *Feeds* to select which relays are visible. Click a relay icon to toggle it, or click its name for exclusive relay focus.",
+        "action": "Click a relay control to continue."
+      },
+      "filtersChannels": {
+        "title": "Channel filters",
+        "description": "In *Channels*, click a channel name to show only posts with that channel. Click the # icon to cycle neutral -> include -> exclude for that channel. Click the hashtag icon to the left of *Channels* to reset channel filters."
+      },
+      "filtersPeople": {
+        "title": "People filters",
+        "description": "In *People*, click a person name to show only posts from that person. Click the avatar/icon to toggle that person. Click the icon to the left of *People* to reset people filters."
+      },
+      "filtersSearch": {
+        "title": "Search bar",
+        "description": "Use the bottom search bar to narrow visible tasks by text across all views."
+      },
+      "filtersHashtagContent": {
+        "title": "Hashtags in content",
+        "description": "Click a hashtag in a task to focus on that tag. Clear the tag filter to return to the full list.",
+        "action": "Click a hashtag chip in a task item."
+      },
+      "composeKind": {
+        "title": "Task vs comment",
+        "description": "Use the Kind selector to choose whether to post a task or a comment.",
+        "action": "Focus the kind selector to continue."
+      },
+      "composeInput": {
+        "title": "Tags and mentions",
+        "description": "Use #tags to organize items and @mentions to reference people in the compose box. Included channels auto-prepopulate as hashtags. You can set a date type (Due, Scheduled, Start, End, or Milestone) so tasks appear in Calendar view; future Start dates are shown as not yet doable.",
+        "action": "Power-user hint: Option (Alt)+Enter submits as the other kind when no autocomplete is open; with autocomplete open, Option/Shift/Cmd/Ctrl+Enter can add the selected tag/mention as metadata without inserting token text."
+      },
+      "mobileNavigationNav": {
+        "title": "Mobile views",
+        "description": "Use the top navigation to switch between Tree, Feed, List, and Calendar.",
+        "action": "Tap a navigation tab to continue."
+      },
+      "mobileNavigationFocus": {
+        "title": "Navigate into a task",
+        "description": "Tap a task item to open its focused context and navigation path.",
+        "action": "Tap a task item to continue."
+      },
+      "mobileNavigationBreadcrumb": {
+        "title": "Use breadcrumbs",
+        "description": "Use the breadcrumb row to move up the hierarchy or jump between parent tasks.",
+        "action": "Tap a breadcrumb item to continue."
+      },
+      "mobileFiltersOpen": {
+        "title": "Open Manage",
+        "description": "Tap *Manage* in the top navigation to open relay, channel, and people filters.",
+        "action": "Tap *Manage* to continue."
+      },
+      "mobileFiltersProperties": {
+        "title": "Profile properties",
+        "description": "In *Manage*, open the profile editor to review and set your key identity fields: name, display name, picture URL, NIP-05, and about text."
+      },
+      "mobileFiltersUse": {
+        "title": "Use filters",
+        "description": "In *Manage*, tap feed chips to select relays, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters. Combine these controls to narrow timeline visibility before composing."
+      },
+      "mobileComposeCombobox": {
+        "title": "Search/Compose combobox",
+        "description": "Use the combined bottom bar to search as you type and create tasks/comments from the same text using the submit button.",
+        "action": "Tap into the combined bar to continue."
+      },
+      "kanbanColumnsStatus": {
+        "title": "Columns and status",
+        "description": "Use To Do, In Progress, and Done columns to track status. Moving a task between columns changes its status.",
+        "action": "Click or drag a card in the board to continue."
+      },
+      "kanbanCreateInColumn": {
+        "title": "Create in a specific column",
+        "description": "Use the + button in a column header to create a new task directly in that column's status.",
+        "action": "Click a column + button to continue."
+      },
+      "kanbanDepth": {
+        "title": "Depth levels",
+        "description": "Use Levels next to search to show top-level, limited depth, or leaves-only tasks.",
+        "action": "Open the Levels selector to continue."
+      },
+      "calendarMonths": {
+        "title": "Month timeline",
+        "description": "Scroll stacked months continuously to move through time."
+      },
+      "calendarPickDay": {
+        "title": "Pick a day",
+        "description": "Click any day cell to load that date in the detail panel.",
+        "action": "Click a day in the calendar grid to continue."
+      },
+      "calendarDayPanel": {
+        "title": "Day details",
+        "description": "Use the right panel to review tasks for the selected date, change their status, and create a new task/event for that day."
+      }
     }
   },
   "filters": {
@@ -343,6 +479,100 @@
       "levels": "{{count}} levels",
       "allLevels": "All levels",
       "leavesOnly": "Leaves only"
+    }
+  },
+  "appError": {
+    "title": "Something went wrong",
+    "description": "The app hit an unexpected error. You can reload, or return to the main view.",
+    "reload": "Reload app",
+    "goHome": "Go to home",
+    "unexpected": "Unexpected application error"
+  },
+  "calendar": {
+    "tabs": {
+      "upcoming": "Upcoming",
+      "calendar": "Calendar"
+    },
+    "weekShort": "Wk",
+    "moreTasks": "+{{count}} more",
+    "nav": {
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
+    },
+    "actions": {
+      "addEvent": "Add Event",
+      "newEventOn": "New event on {{date}}"
+    }
+  },
+  "feedback": {
+    "sound": {
+      "on": "Completion sound on",
+      "off": "Completion sound off"
+    }
+  },
+  "kanban": {
+    "newTaskIn": "New task in {{column}}",
+    "hasSubtasks": "Has subtasks"
+  },
+  "notFound": {
+    "message": "Oops! Page not found",
+    "goHome": "Return to Home",
+    "goHomeTitle": "Go to main app"
+  },
+  "publishQueue": {
+    "failedCount": "{{count}} post failed to publish",
+    "retry": "Retry",
+    "dismiss": "Dismiss failed post"
+  },
+  "relay": {
+    "manage": "Manage relays ({{connectedCount}}/{{totalCount}})",
+    "managementTitle": "Relay Management",
+    "placeholder": "wss://relay.example.com",
+    "noneConfigured": "No relays configured",
+    "connectedSummary": "{{connectedCount}} of {{totalCount}} relays connected"
+  },
+  "tasks": {
+    "task": "Task",
+    "comment": "Comment",
+    "tags": "Tags",
+    "less": "less",
+    "readOnly": "Read-only task",
+    "completedBy": "Completed by @{{user}}",
+    "focusTaskAria": "{{type}}: {{title}}",
+    "focusTaskTitle": "Focus {{type}}",
+    "focusBreadcrumbTitle": "Focus task: {{title}}",
+    "tagsShowAll": "Show all tags",
+    "tagsShowLess": "Show fewer tags",
+    "tagsShowMoreAria": "Show {{count}} more tags",
+    "actions": {
+      "setStatus": "Set status",
+      "filterAndMention": "Filter and mention {{authorName}}",
+      "filterTag": "Filter to #{{tag}}",
+      "collapse": "Collapse",
+      "expandAll": "Expand (all)",
+      "expandMatchingOnly": "Expand (matching only)"
+    },
+    "empty": {
+      "feed": "No tasks to show",
+      "notFound": "No tasks found",
+      "noUpcoming": "No upcoming tasks",
+      "noneScheduledForDay": "No tasks scheduled for this day",
+      "selectDay": "Select a day to view tasks",
+      "matchFilters": "No tasks match your filters",
+      "noSubtasks": "No subtasks yet",
+      "noneYet": "No tasks yet"
+    }
+  },
+  "widgets": {
+    "trending": {
+      "title": "Trending Tags",
+      "posts": "{{count}} posts",
+      "showMore": "Show more"
+    },
+    "relayStatus": {
+      "title": "Relay Status",
+      "noneConnected": "No relays connected",
+      "connected": "connected"
     }
   }
 }

@@ -1,4 +1,5 @@
 import { TrendingUp, Hash } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const trendingTags = [
   { tag: "nostr", posts: 2847 },
@@ -9,12 +10,13 @@ const trendingTags = [
 ];
 
 export function TrendingWidget() {
+  const { t } = useTranslation();
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-primary" />
-          <h3 className="font-heading font-semibold text-foreground">Trending Tags</h3>
+          <h3 className="font-heading font-semibold text-foreground">{t("widgets.trending.title")}</h3>
         </div>
       </div>
       <div className="divide-y divide-border">
@@ -31,13 +33,13 @@ export function TrendingWidget() {
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1 ml-6">
-              {posts.toLocaleString()} posts
+              {t("widgets.trending.posts", { count: posts.toLocaleString() })}
             </p>
           </button>
         ))}
       </div>
       <button className="w-full p-3 text-sm text-primary hover:bg-muted/30 transition-colors font-medium">
-        Show more
+        {t("widgets.trending.showMore")}
       </button>
     </div>
   );

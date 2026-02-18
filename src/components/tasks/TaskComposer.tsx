@@ -357,7 +357,7 @@ export function TaskComposer({
       );
     } catch (error) {
       console.error("Task submit failed", error);
-      toast.error("Task creation failed. Please try again.");
+      toast.error(t("toasts.errors.taskCreationFailed"));
       setIsPublishing(false);
       return;
     }

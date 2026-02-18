@@ -21,7 +21,9 @@
     "actions": {
       "createTask": "Aufgabe erstellen",
       "addComment": "Kommentar hinzufügen",
-      "signin": "Anmelden"
+      "signin": "Anmelden",
+      "sendTask": "Aufgabe senden",
+      "sendComment": "Kommentar senden"
     },
     "labels": {
       "dateType": "Datumstyp",
@@ -29,7 +31,9 @@
       "kind": "Typ",
       "task": "Aufgabe",
       "comment": "Kommentar",
-      "mentions": "Erwähnungen"
+      "mentions": "Erwähnungen",
+      "date": "Datum",
+      "priorityShort": "⚑ Prio"
     },
     "hints": {
       "composeField": "#channel-Tags und @Erwähnungen in diesem Feld verwenden",
@@ -39,7 +43,8 @@
       "insertMentionOpen": "@Erwähnung einfügen und Personenvorschläge öffnen",
       "clearCompose": "Eingabe leeren",
       "createFromText": "Aus aktuellem Text erstellen",
-      "signInToCreate": "Zum Erstellen anmelden"
+      "signInToCreate": "Zum Erstellen anmelden",
+      "clearDueDate": "Fälligkeitsdatum entfernen"
     },
     "dates": {
       "setOptional": "{{dateType}}-Datum setzen (optional)",
@@ -59,13 +64,35 @@
       "selectRelayOrParent": "Wähle ein Relay oder eine übergeordnete Aufgabe",
       "publishStatusFailed": "Status-Update konnte nicht an Relays veröffentlicht werden",
       "publishDateFailed": "Datums-Update konnte nicht an Relay veröffentlicht werden",
-      "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay veröffentlicht werden"
+      "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay veröffentlicht werden",
+      "taskCreationFailed": "Aufgabe konnte nicht erstellt werden. Bitte versuche es erneut.",
+      "publishSavedForRetry": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert",
+      "retryRelayMissing": "Erneuter Versuch fehlgeschlagen: Relay ist nicht mehr konfiguriert",
+      "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Relay nicht akzeptiert"
     },
     "success": {
       "publishedTask": "Aufgabe an Nostr veröffentlicht und lokal hinzugefügt",
       "publishedComment": "Kommentar an Nostr veröffentlicht und lokal hinzugefügt",
       "localTask": "Aufgabe lokal hinzugefügt (nur Demo)",
-      "localComment": "Kommentar lokal hinzugefügt (nur Demo)"
+      "localComment": "Kommentar lokal hinzugefügt (nur Demo)",
+      "relayFilterEnabled": "Relay-Filter {{relayName}} aktiviert",
+      "relayFilterDisabled": "Relay-Filter {{relayName}} deaktiviert",
+      "showingOnlyRelay": "Nur Relay {{relayName}} wird angezeigt",
+      "relayFiltersCleared": "Alle Relay-Filter gelöscht",
+      "allRelaysSelected": "Alle Relays ausgewählt",
+      "showingOnlyChannel": "Nur #{{channelName}} wird angezeigt",
+      "allChannelsIncluded": "Alle Kanäle eingeschlossen",
+      "allChannelsReset": "Alle Kanäle zurückgesetzt",
+      "showingOnlyTag": "Nur #{{tag}} wird angezeigt",
+      "showingOnlyPerson": "Nur {{personName}} wird angezeigt",
+      "selectedUserFallback": "ausgewählter Nutzer",
+      "showingOnlyAuthorAndTagging": "Nur {{authorName}} wird angezeigt und {{mention}} wird getaggt",
+      "noFrequentPeople": "Keine häufigen Personen zum Auswählen",
+      "frequentPeopleSelected": "Häufige Personen ausgewählt",
+      "frequentPeopleDeselected": "Häufige Personen abgewählt"
+    },
+    "warnings": {
+      "parentLocalOnly": "Parent-Referenz ist nur lokal; Aufgabe wird ohne Parent-Link veröffentlicht"
     }
   },
   "listView": {
@@ -73,12 +100,18 @@
       "task": "Aufgabe",
       "status": "Status",
       "dueDate": "Datum",
-      "priority": "Priorität"
+      "priority": "Priorität",
+      "reset": "Auf Standardsortierung zurücksetzen"
     },
     "status": {
       "todo": "Offen",
       "inProgress": "In Arbeit",
-      "done": "Erledigt"
+      "done": "Erledigt",
+      "inProgressShort": "Mache"
+    },
+    "dates": {
+      "setDate": "Datum setzen...",
+      "type": "Typ"
     }
   },
   "navigation": {
@@ -97,7 +130,8 @@
       "switchTo": "Zu {{view}}-Ansicht wechseln"
     },
     "mobile": {
-      "openGuide": "Guide öffnen"
+      "openGuide": "Guide öffnen",
+      "currentViewPosition": "Aktuelle Ansichtsposition"
     }
   },
   "sidebar": {
@@ -117,7 +151,9 @@
       "shortcuts": "Tastenkürzel",
       "shortcutsTooltip": "Tastenkürzel (?)",
       "openGuide": "Onboarding-Guide öffnen",
-      "guide": "Leitfaden"
+      "guide": "Leitfaden",
+      "toggleAll": "Alle ein-/ausschalten",
+      "toggleAllFor": "Alle {{title}} umschalten"
     }
   },
   "hints": {
@@ -250,36 +286,136 @@
       "next": "Weiter"
     },
     "sections": {
-      "navigation": { "title": "Navigation", "description": "Nutze Ansichts-Tabs und Breadcrumbs, um zwischen Aufgaben-Kontexten zu wechseln." },
-      "filters": { "title": "Filter", "description": "Nutze Kanal- und Personenfilter mit Ein-/Ausschluss effektiv." },
-      "compose": { "title": "Erstellen", "description": "Veröffentliche Aufgaben/Kommentare mit #tags und @mentions." },
-      "kanban": { "title": "Kanban", "description": "Nutze Spalten, Statusbahnen und Tiefensteuerung zur Organisation der Arbeit." },
-      "calendar": { "title": "Kalender", "description": "Plane Aufgaben nach Datum und prüfe jeden Tag im Detailbereich." }
+      "navigation": {
+        "title": "Navigation",
+        "description": "Nutze Ansichts-Tabs und Breadcrumbs, um zwischen Aufgaben-Kontexten zu wechseln."
+      },
+      "filters": {
+        "title": "Filter",
+        "description": "Nutze Kanal- und Personenfilter mit Ein-/Ausschluss effektiv."
+      },
+      "compose": {
+        "title": "Erstellen",
+        "description": "Veröffentliche Aufgaben/Kommentare mit #tags und @mentions."
+      },
+      "kanban": {
+        "title": "Kanban",
+        "description": "Nutze Spalten, Statusbahnen und Tiefensteuerung zur Organisation der Arbeit."
+      },
+      "calendar": {
+        "title": "Kalender",
+        "description": "Plane Aufgaben nach Datum und prüfe jeden Tag im Detailbereich."
+      }
     },
     "steps": {
-      "navigationSwitcher": { "title": "Ansicht wechseln", "description": "Nutze den Ansichtsumschalter, um zwischen Hierarchisch, Feed, Kanban, Kalender und Tabelle zu wechseln.", "action": "Klicke auf einen Ansichtstab, um fortzufahren." },
-      "navigationFocus": { "title": "Aufgabenkontext öffnen", "description": "Klicke auf eine Aufgabe, um in ihren Kontext zu wechseln und den Breadcrumb-Pfad anzuzeigen.", "action": "Klicke auf eine Aufgabe, um fortzufahren." },
-      "navigationBreadcrumb": { "title": "Breadcrumbs nutzen", "description": "Nutze die Breadcrumb-Leiste, um in der Hierarchie nach oben zu gehen oder zwischen Elternaufgaben zu springen.", "action": "Klicke auf ein Breadcrumb-Element, um fortzufahren." },
-      "filtersRelays": { "title": "Relay-Auswahl", "description": "Nutze *Feeds*, um sichtbare Relays auszuwählen. Klicke auf ein Relay-Icon zum Umschalten oder auf den Namen für exklusiven Fokus.", "action": "Klicke auf ein Relay-Steuerelement, um fortzufahren." },
-      "filtersChannels": { "title": "Kanalfilter", "description": "In *Kanäle* zeigt ein Klick auf den Kanalnamen nur Beiträge mit diesem Kanal. Klicke auf das #-Icon, um neutral -> einschließen -> ausschließen zu wechseln. Klicke auf das Hashtag-Icon links von *Kanäle*, um Kanalfilter zurückzusetzen." },
-      "filtersPeople": { "title": "Personenfilter", "description": "In *Personen* zeigt ein Klick auf einen Namen nur Beiträge dieser Person. Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen." },
-      "filtersSearch": { "title": "Suchleiste", "description": "Nutze die untere Suchleiste, um sichtbare Aufgaben in allen Ansichten per Text einzugrenzen." },
-      "filtersHashtagContent": { "title": "Hashtags im Inhalt", "description": "Klicke auf einen Hashtag in einer Aufgabe, um auf diesen Tag zu fokussieren. Entferne den Tag-Filter, um zur vollen Liste zurückzukehren.", "action": "Klicke auf ein Hashtag-Chip in einer Aufgabe." },
-      "composeKind": { "title": "Aufgabe vs. Kommentar", "description": "Mit der Typ-Auswahl legst du fest, ob du eine Aufgabe oder einen Kommentar veröffentlichst.", "action": "Fokussiere die Typ-Auswahl, um fortzufahren." },
-      "composeInput": { "title": "Tags und Mentions", "description": "Nutze #tags zur Organisation und @mentions für Personenreferenzen im Eingabefeld. Eingeschlossene Kanäle werden automatisch als Hashtags eingefügt. Du kannst einen Datumstyp (Fällig, Geplant, Start, Ende oder Meilenstein) setzen, damit Aufgaben im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.", "action": "Power-User-Hinweis: Option (Alt)+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete kann Option/Umschalt/Cmd/Ctrl+Enter den gewählten Tag/Mention nur als Metadaten hinzufügen, ohne Tokentext einzufügen." },
-      "mobileNavigationNav": { "title": "Mobile Ansichten", "description": "Nutze die obere Navigation, um zwischen Hierarchisch, Feed, Tabelle und Kalender zu wechseln.", "action": "Tippe auf einen Navigations-Tab, um fortzufahren." },
-      "mobileNavigationFocus": { "title": "In Aufgabe navigieren", "description": "Tippe auf eine Aufgabe, um ihren fokussierten Kontext und den Navigationspfad zu öffnen.", "action": "Tippe auf eine Aufgabe, um fortzufahren." },
-      "mobileNavigationBreadcrumb": { "title": "Breadcrumbs nutzen", "description": "Nutze die Breadcrumb-Leiste, um in der Hierarchie nach oben zu gehen oder zwischen Elternaufgaben zu springen.", "action": "Tippe auf ein Breadcrumb-Element, um fortzufahren." },
-      "mobileFiltersOpen": { "title": "Verwalten öffnen", "description": "Tippe in der oberen Navigation auf *Verwalten*, um Relay-, Kanal- und Personenfilter zu öffnen.", "action": "Tippe auf *Verwalten*, um fortzufahren." },
-      "mobileFiltersProperties": { "title": "Profil-Eigenschaften", "description": "Öffne in *Verwalten* den Profil-Editor und pflege die wichtigsten Felder: Name, Anzeigename, Bild-URL, NIP-05 und Über-mich-Text." },
-      "mobileFiltersUse": { "title": "Filter nutzen", "description": "In *Verwalten* kannst du Feed-Chips für Relays wählen, Kanal-Chips durch neutral -> einschließen -> ausschließen schalten und Personen-Chips umschalten. Kombiniere diese Optionen, um die Timeline vor dem Verfassen gezielt einzugrenzen." },
-      "mobileComposeCombobox": { "title": "Suchen/Erstellen-Kombobox", "description": "Nutze die kombinierte untere Leiste, um beim Tippen zu suchen und aus demselben Text Aufgaben/Kommentare über den Senden-Button zu erstellen.", "action": "Tippe in die kombinierte Leiste, um fortzufahren." },
-      "kanbanColumnsStatus": { "title": "Spalten und Status", "description": "Nutze die Spalten Offen, In Arbeit und Erledigt zur Statusverfolgung. Beim Verschieben zwischen Spalten ändert sich der Status.", "action": "Klicke oder ziehe eine Karte im Board, um fortzufahren." },
-      "kanbanCreateInColumn": { "title": "In bestimmter Spalte erstellen", "description": "Nutze den + Button im Spaltenkopf, um eine neue Aufgabe direkt mit dem Status dieser Spalte zu erstellen.", "action": "Klicke einen + Button in einer Spalte, um fortzufahren." },
-      "kanbanDepth": { "title": "Tiefenstufen", "description": "Nutze Levels neben der Suche, um oberste Ebene, begrenzte Tiefe oder nur Blätter anzuzeigen.", "action": "Öffne den Levels-Selektor, um fortzufahren." },
-      "calendarMonths": { "title": "Monats-Zeitleiste", "description": "Scrolle durch gestapelte Monate, um dich kontinuierlich durch die Zeit zu bewegen." },
-      "calendarPickDay": { "title": "Tag auswählen", "description": "Klicke auf eine Tageszelle, um dieses Datum im Detailbereich zu laden.", "action": "Klicke auf einen Tag im Kalendergitter, um fortzufahren." },
-      "calendarDayPanel": { "title": "Tagesdetails", "description": "Nutze den rechten Bereich, um Aufgaben für das gewählte Datum zu prüfen, ihren Status zu ändern und neue Aufgaben/Events für diesen Tag zu erstellen." }
+      "navigationSwitcher": {
+        "title": "Ansicht wechseln",
+        "description": "Nutze den Ansichtsumschalter, um zwischen Hierarchisch, Feed, Kanban, Kalender und Tabelle zu wechseln.",
+        "action": "Klicke auf einen Ansichtstab, um fortzufahren."
+      },
+      "navigationFocus": {
+        "title": "Aufgabenkontext öffnen",
+        "description": "Klicke auf eine Aufgabe, um in ihren Kontext zu wechseln und den Breadcrumb-Pfad anzuzeigen.",
+        "action": "Klicke auf eine Aufgabe, um fortzufahren."
+      },
+      "navigationBreadcrumb": {
+        "title": "Breadcrumbs nutzen",
+        "description": "Nutze die Breadcrumb-Leiste, um in der Hierarchie nach oben zu gehen oder zwischen Elternaufgaben zu springen.",
+        "action": "Klicke auf ein Breadcrumb-Element, um fortzufahren."
+      },
+      "filtersRelays": {
+        "title": "Relay-Auswahl",
+        "description": "Nutze *Feeds*, um sichtbare Relays auszuwählen. Klicke auf ein Relay-Icon zum Umschalten oder auf den Namen für exklusiven Fokus.",
+        "action": "Klicke auf ein Relay-Steuerelement, um fortzufahren."
+      },
+      "filtersChannels": {
+        "title": "Kanalfilter",
+        "description": "In *Kanäle* zeigt ein Klick auf den Kanalnamen nur Beiträge mit diesem Kanal. Klicke auf das #-Icon, um neutral -> einschließen -> ausschließen zu wechseln. Klicke auf das Hashtag-Icon links von *Kanäle*, um Kanalfilter zurückzusetzen."
+      },
+      "filtersPeople": {
+        "title": "Personenfilter",
+        "description": "In *Personen* zeigt ein Klick auf einen Namen nur Beiträge dieser Person. Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen."
+      },
+      "filtersSearch": {
+        "title": "Suchleiste",
+        "description": "Nutze die untere Suchleiste, um sichtbare Aufgaben in allen Ansichten per Text einzugrenzen."
+      },
+      "filtersHashtagContent": {
+        "title": "Hashtags im Inhalt",
+        "description": "Klicke auf einen Hashtag in einer Aufgabe, um auf diesen Tag zu fokussieren. Entferne den Tag-Filter, um zur vollen Liste zurückzukehren.",
+        "action": "Klicke auf ein Hashtag-Chip in einer Aufgabe."
+      },
+      "composeKind": {
+        "title": "Aufgabe vs. Kommentar",
+        "description": "Mit der Typ-Auswahl legst du fest, ob du eine Aufgabe oder einen Kommentar veröffentlichst.",
+        "action": "Fokussiere die Typ-Auswahl, um fortzufahren."
+      },
+      "composeInput": {
+        "title": "Tags und Mentions",
+        "description": "Nutze #tags zur Organisation und @mentions für Personenreferenzen im Eingabefeld. Eingeschlossene Kanäle werden automatisch als Hashtags eingefügt. Du kannst einen Datumstyp (Fällig, Geplant, Start, Ende oder Meilenstein) setzen, damit Aufgaben im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.",
+        "action": "Power-User-Hinweis: Option (Alt)+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete kann Option/Umschalt/Cmd/Ctrl+Enter den gewählten Tag/Mention nur als Metadaten hinzufügen, ohne Tokentext einzufügen."
+      },
+      "mobileNavigationNav": {
+        "title": "Mobile Ansichten",
+        "description": "Nutze die obere Navigation, um zwischen Hierarchisch, Feed, Tabelle und Kalender zu wechseln.",
+        "action": "Tippe auf einen Navigations-Tab, um fortzufahren."
+      },
+      "mobileNavigationFocus": {
+        "title": "In Aufgabe navigieren",
+        "description": "Tippe auf eine Aufgabe, um ihren fokussierten Kontext und den Navigationspfad zu öffnen.",
+        "action": "Tippe auf eine Aufgabe, um fortzufahren."
+      },
+      "mobileNavigationBreadcrumb": {
+        "title": "Breadcrumbs nutzen",
+        "description": "Nutze die Breadcrumb-Leiste, um in der Hierarchie nach oben zu gehen oder zwischen Elternaufgaben zu springen.",
+        "action": "Tippe auf ein Breadcrumb-Element, um fortzufahren."
+      },
+      "mobileFiltersOpen": {
+        "title": "Verwalten öffnen",
+        "description": "Tippe in der oberen Navigation auf *Verwalten*, um Relay-, Kanal- und Personenfilter zu öffnen.",
+        "action": "Tippe auf *Verwalten*, um fortzufahren."
+      },
+      "mobileFiltersProperties": {
+        "title": "Profil-Eigenschaften",
+        "description": "Öffne in *Verwalten* den Profil-Editor und pflege die wichtigsten Felder: Name, Anzeigename, Bild-URL, NIP-05 und Über-mich-Text."
+      },
+      "mobileFiltersUse": {
+        "title": "Filter nutzen",
+        "description": "In *Verwalten* kannst du Feed-Chips für Relays wählen, Kanal-Chips durch neutral -> einschließen -> ausschließen schalten und Personen-Chips umschalten. Kombiniere diese Optionen, um die Timeline vor dem Verfassen gezielt einzugrenzen."
+      },
+      "mobileComposeCombobox": {
+        "title": "Suchen/Erstellen-Kombobox",
+        "description": "Nutze die kombinierte untere Leiste, um beim Tippen zu suchen und aus demselben Text Aufgaben/Kommentare über den Senden-Button zu erstellen.",
+        "action": "Tippe in die kombinierte Leiste, um fortzufahren."
+      },
+      "kanbanColumnsStatus": {
+        "title": "Spalten und Status",
+        "description": "Nutze die Spalten Offen, In Arbeit und Erledigt zur Statusverfolgung. Beim Verschieben zwischen Spalten ändert sich der Status.",
+        "action": "Klicke oder ziehe eine Karte im Board, um fortzufahren."
+      },
+      "kanbanCreateInColumn": {
+        "title": "In bestimmter Spalte erstellen",
+        "description": "Nutze den + Button im Spaltenkopf, um eine neue Aufgabe direkt mit dem Status dieser Spalte zu erstellen.",
+        "action": "Klicke einen + Button in einer Spalte, um fortzufahren."
+      },
+      "kanbanDepth": {
+        "title": "Tiefenstufen",
+        "description": "Nutze Levels neben der Suche, um oberste Ebene, begrenzte Tiefe oder nur Blätter anzuzeigen.",
+        "action": "Öffne den Levels-Selektor, um fortzufahren."
+      },
+      "calendarMonths": {
+        "title": "Monats-Zeitleiste",
+        "description": "Scrolle durch gestapelte Monate, um dich kontinuierlich durch die Zeit zu bewegen."
+      },
+      "calendarPickDay": {
+        "title": "Tag auswählen",
+        "description": "Klicke auf eine Tageszelle, um dieses Datum im Detailbereich zu laden.",
+        "action": "Klicke auf einen Tag im Kalendergitter, um fortzufahren."
+      },
+      "calendarDayPanel": {
+        "title": "Tagesdetails",
+        "description": "Nutze den rechten Bereich, um Aufgaben für das gewählte Datum zu prüfen, ihren Status zu ändern und neue Aufgaben/Events für diesen Tag zu erstellen."
+      }
     }
   },
   "filters": {
@@ -343,6 +479,100 @@
       "levels": "{{count}} Ebenen",
       "allLevels": "Alle Ebenen",
       "leavesOnly": "Nur Blätter"
+    }
+  },
+  "appError": {
+    "title": "Etwas ist schiefgelaufen",
+    "description": "Die App ist auf einen unerwarteten Fehler gestoßen. Du kannst neu laden oder zur Hauptansicht zurückkehren.",
+    "reload": "App neu laden",
+    "goHome": "Zur Startseite",
+    "unexpected": "Unerwarteter Anwendungsfehler"
+  },
+  "calendar": {
+    "tabs": {
+      "upcoming": "Anstehend",
+      "calendar": "Kalender"
+    },
+    "weekShort": "KW",
+    "moreTasks": "+{{count}} mehr",
+    "nav": {
+      "previousMonth": "Vorheriger Monat",
+      "nextMonth": "Nächster Monat"
+    },
+    "actions": {
+      "addEvent": "Ereignis hinzufügen",
+      "newEventOn": "Neues Ereignis am {{date}}"
+    }
+  },
+  "feedback": {
+    "sound": {
+      "on": "Abschlusssound an",
+      "off": "Abschlusssound aus"
+    }
+  },
+  "kanban": {
+    "newTaskIn": "Neue Aufgabe in {{column}}",
+    "hasSubtasks": "Hat Unteraufgaben"
+  },
+  "notFound": {
+    "message": "Ups! Seite nicht gefunden",
+    "goHome": "Zur Startseite",
+    "goHomeTitle": "Zur Haupt-App"
+  },
+  "publishQueue": {
+    "failedCount": "{{count}} Beitrag konnte nicht veröffentlicht werden",
+    "retry": "Erneut versuchen",
+    "dismiss": "Fehlgeschlagenen Beitrag schließen"
+  },
+  "relay": {
+    "manage": "Relays verwalten ({{connectedCount}}/{{totalCount}})",
+    "managementTitle": "Relay-Verwaltung",
+    "placeholder": "wss://relay.example.com",
+    "noneConfigured": "Keine Relays konfiguriert",
+    "connectedSummary": "{{connectedCount}} von {{totalCount}} Relays verbunden"
+  },
+  "tasks": {
+    "task": "Aufgabe",
+    "comment": "Kommentar",
+    "tags": "Tags",
+    "less": "weniger",
+    "readOnly": "Nur-Lese-Aufgabe",
+    "completedBy": "Erledigt von @{{user}}",
+    "focusTaskAria": "{{type}}: {{title}}",
+    "focusTaskTitle": "{{type}} fokussieren",
+    "focusBreadcrumbTitle": "Aufgabe fokussieren: {{title}}",
+    "tagsShowAll": "Alle Tags anzeigen",
+    "tagsShowLess": "Weniger Tags anzeigen",
+    "tagsShowMoreAria": "{{count}} weitere Tags anzeigen",
+    "actions": {
+      "setStatus": "Status setzen",
+      "filterAndMention": "{{authorName}} filtern und erwähnen",
+      "filterTag": "Auf #{{tag}} filtern",
+      "collapse": "Einklappen",
+      "expandAll": "Ausklappen (alle)",
+      "expandMatchingOnly": "Ausklappen (nur Treffer)"
+    },
+    "empty": {
+      "feed": "Keine Aufgaben zum Anzeigen",
+      "notFound": "Keine Aufgaben gefunden",
+      "noUpcoming": "Keine anstehenden Aufgaben",
+      "noneScheduledForDay": "Keine Aufgaben für diesen Tag geplant",
+      "selectDay": "Wähle einen Tag, um Aufgaben anzuzeigen",
+      "matchFilters": "Keine Aufgaben entsprechen deinen Filtern",
+      "noSubtasks": "Noch keine Unteraufgaben",
+      "noneYet": "Noch keine Aufgaben"
+    }
+  },
+  "widgets": {
+    "trending": {
+      "title": "Trend-Tags",
+      "posts": "{{count}} Beiträge",
+      "showMore": "Mehr anzeigen"
+    },
+    "relayStatus": {
+      "title": "Relay-Status",
+      "noneConnected": "Keine Relays verbunden",
+      "connected": "verbunden"
     }
   }
 }

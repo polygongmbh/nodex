@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { NostrRelay } from "@/hooks/use-nostr";
+import { useTranslation } from "react-i18next";
 
 interface RelayManagementProps {
   relays: NostrRelay[];
@@ -25,6 +26,7 @@ export function RelayManagement({
   onRemoveRelay,
   trigger,
 }: RelayManagementProps) {
+  const { t } = useTranslation();
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
@@ -71,7 +73,7 @@ export function RelayManagement({
   const defaultTrigger = (
     <button className="w-full p-3 text-sm text-primary hover:bg-muted/30 transition-colors font-medium border-t border-border flex items-center justify-center gap-2">
       <Radio className="w-4 h-4" />
-      Manage relays ({connectedCount}/{relays.length})
+      {t("relay.manage", { connectedCount, totalCount: relays.length })}
     </button>
   );
 
@@ -84,7 +86,7 @@ export function RelayManagement({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Radio className="w-5 h-5 text-primary" />
-            Relay Management
+            {t("relay.managementTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -92,7 +94,7 @@ export function RelayManagement({
           {/* Add new relay */}
           <div className="flex gap-2">
             <Input
-              placeholder="wss://relay.example.com"
+              placeholder={t("relay.placeholder")}
               value={newRelayUrl}
               onChange={(e) => setNewRelayUrl(e.target.value)}
               onKeyDown={(e) => {
@@ -110,8 +112,8 @@ export function RelayManagement({
           {/* Relay list */}
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {relays.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No relays configured
+                <p className="text-sm text-muted-foreground text-center py-4">
+                {t("relay.noneConfigured")}
               </p>
             ) : (
               relays.map((relay) => (
@@ -160,7 +162,7 @@ export function RelayManagement({
           {/* Status summary */}
           <div className="pt-2 border-t border-border">
             <p className="text-xs text-muted-foreground text-center">
-              {connectedCount} of {relays.length} relays connected
+              {t("relay.connectedSummary", { connectedCount, totalCount: relays.length })}
             </p>
           </div>
         </div>

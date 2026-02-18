@@ -19,6 +19,7 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
+import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { VersionHint } from "@/components/layout/VersionHint";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
@@ -64,6 +65,11 @@ import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-s
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
 import { loadPresencePublishingEnabled } from "@/lib/presence-preferences";
+import {
+  loadCompletionSoundEnabled,
+  saveCompletionSoundEnabled,
+} from "@/lib/completion-feedback-preferences";
+import { playCompletionPopSound } from "@/lib/completion-feedback";
 import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
@@ -180,6 +186,7 @@ const Index = () => {
   const [localTasks, setLocalTasks] = useState<Task[]>(mockTasks);
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() => loadCompletionSoundEnabled());
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
 
@@ -575,22 +582,26 @@ const Index = () => {
       return next;
     });
     const relay = relays.find((r) => r.id === id);
-    toast.success(`${relay?.name} relay filter ${activeRelayIds.has(id) ? "disabled" : "enabled"}`);
+    toast.success(
+      activeRelayIds.has(id)
+        ? t("toasts.success.relayFilterDisabled", { relayName: relay?.name || id })
+        : t("toasts.success.relayFilterEnabled", { relayName: relay?.name || id })
+    );
   };
 
   const handleRelayExclusive = (id: string) => {
     setActiveRelayIds(new Set([id]));
     const relay = relays.find((r) => r.id === id);
-    toast.success(`Showing only ${relay?.name} relay`);
+    toast.success(t("toasts.success.showingOnlyRelay", { relayName: relay?.name || id }));
   };
 
   const handleToggleAllRelays = () => {
     if (activeRelayIds.size === relays.length) {
       setActiveRelayIds(new Set());
-      toast.success("All relay filters cleared");
+      toast.success(t("toasts.success.relayFiltersCleared"));
     } else {
       setActiveRelayIds(new Set(relays.map((r) => r.id)));
-      toast.success("All relays selected");
+      toast.success(t("toasts.success.allRelaysSelected"));
     }
   };
 
@@ -609,13 +620,13 @@ const Index = () => {
   const handleChannelExclusive = (id: string) => {
     setChannelFilterStates(() => setExclusiveChannelFilter(channels, id));
     const channel = channelsWithState.find((c) => c.id === id);
-    toast.success(`Showing only #${channel?.name}`);
+    toast.success(t("toasts.success.showingOnlyChannel", { channelName: channel?.name || id }));
   };
 
   const handleToggleAllChannels = () => {
     const allNeutral = Array.from(channelFilterStates.values()).every((s) => s === "neutral") || channelFilterStates.size === 0;
     setChannelFilterStates(() => setAllChannelFilters(channels, allNeutral ? "included" : "neutral"));
-    toast.success(allNeutral ? "All channels included" : "All channels reset");
+    toast.success(allNeutral ? t("toasts.success.allChannelsIncluded") : t("toasts.success.allChannelsReset"));
   };
 
   const handleHashtagExclusive = useCallback((tag: string) => {
@@ -629,8 +640,8 @@ const Index = () => {
       );
     });
 
-    toast.success(`Showing only #${normalizedTag}`);
-  }, [channels]);
+    toast.success(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
+  }, [channels, t]);
 
   const handlePersonToggle = (id: string) => {
     setPeople((prev) =>
@@ -643,7 +654,11 @@ const Index = () => {
   const handlePersonExclusive = (id: string) => {
     setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === id));
     const person = people.find((p) => p.id === id);
-    toast.success(`Showing only ${person?.displayName || person?.name || "selected user"}`);
+    toast.success(
+      t("toasts.success.showingOnlyPerson", {
+        personName: person?.displayName || person?.name || t("toasts.success.selectedUserFallback"),
+      })
+    );
   };
 
   const upsertAndSelectPerson = useCallback((author: Person) => {
@@ -684,12 +699,17 @@ const Index = () => {
         return `${previous}${separator}${mention} `;
       });
     }
-    toast.success(`Showing only ${author.displayName || author.name} and tagging ${mention}`);
-  }, [isMobile, upsertAndSelectPerson]);
+    toast.success(
+      t("toasts.success.showingOnlyAuthorAndTagging", {
+        authorName: author.displayName || author.name,
+        mention,
+      })
+    );
+  }, [isMobile, t, upsertAndSelectPerson]);
 
   const handleToggleAllPeople = () => {
     if (sidebarPeople.length === 0) {
-      toast.success("No frequent people to select");
+      toast.success(t("toasts.success.noFrequentPeople"));
       return;
     }
     const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
@@ -702,8 +722,37 @@ const Index = () => {
           : person
       )
     );
-    toast.success(shouldSelectAll ? "Frequent people selected" : "Frequent people deselected");
+    toast.success(shouldSelectAll ? t("toasts.success.frequentPeopleSelected") : t("toasts.success.frequentPeopleDeselected"));
   };
+
+  const triggerCompletionCheer = useCallback((taskId: string) => {
+    window.setTimeout(() => {
+      const escapedId = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(taskId) : taskId;
+      const taskElement = document.querySelector(`[data-task-id="${escapedId}"]`) as HTMLElement | null;
+      if (!taskElement) return;
+      taskElement.classList.remove("motion-completion-cheer");
+      // Reflow allows immediate replay when users complete tasks in quick succession.
+      void taskElement.offsetWidth;
+      taskElement.classList.add("motion-completion-cheer");
+      window.setTimeout(() => {
+        taskElement.classList.remove("motion-completion-cheer");
+      }, 700);
+    }, 0);
+  }, []);
+
+  const triggerCompletionFeedback = useCallback((taskId: string, status: "todo" | "in-progress" | "done") => {
+    if (status !== "done") return;
+    triggerCompletionCheer(taskId);
+    playCompletionPopSound(completionSoundEnabled);
+  }, [completionSoundEnabled, triggerCompletionCheer]);
+
+  const handleToggleCompletionSound = useCallback(() => {
+    setCompletionSoundEnabled((previous) => {
+      const next = !previous;
+      saveCompletionSoundEnabled(next);
+      return next;
+    });
+  }, []);
 
   const resolveMentionPubkeys = useCallback((content: string): string[] => {
     return resolveMentionedPubkeys(content, people);
@@ -745,6 +794,7 @@ const Index = () => {
     setLocalTasks((prev) =>
       applyTaskStatusUpdate(prev, allTasks, taskId, nextStatus, currentUser?.name)
     );
+    triggerCompletionFeedback(taskId, nextStatus);
     void publishTaskStateUpdate(taskId, nextStatus);
   };
 
@@ -865,6 +915,7 @@ const Index = () => {
     setLocalTasks((prev) =>
       applyTaskStatusUpdate(prev, allTasks, taskId, newStatus, currentUser?.name)
     );
+    triggerCompletionFeedback(taskId, newStatus);
     void publishTaskStateUpdate(taskId, newStatus);
   };
 
@@ -971,7 +1022,7 @@ const Index = () => {
         const kind = normalizedTaskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
         const validParentId = isNostrEventId(parentId) ? parentId : undefined;
         if (normalizedTaskType === "task" && parentId && !validParentId) {
-          toast.warning("Parent reference is local-only; publishing task without parent link");
+          toast.warning(t("toasts.warnings.parentLocalOnly"));
         }
         publishTags = normalizedTaskType === "task"
           ? buildTaskPublishTags(
@@ -1032,7 +1083,7 @@ const Index = () => {
         publishParentId,
       };
       setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
-      toast.error("Failed to publish to Nostr; saved for retry");
+      toast.error(t("toasts.errors.publishSavedForRetry"));
       return { ok: true, mode: "queued" };
     }
 
@@ -1090,7 +1141,7 @@ const Index = () => {
       ? draft.relayUrls
       : resolveRelayUrlsFromIds(draft.relayIds);
     if (relayUrls.length === 0) {
-      toast.error("Retry failed: relay is no longer configured");
+      toast.error(t("toasts.errors.retryRelayMissing"));
       return;
     }
 
@@ -1102,7 +1153,7 @@ const Index = () => {
       relayUrls
     );
     if (!result.success) {
-      toast.error("Retry failed: publish was not accepted by relay");
+      toast.error(t("toasts.errors.retryRejectedByRelay"));
       return;
     }
 
@@ -1327,6 +1378,8 @@ const Index = () => {
           onRemoveRelay={removeRelay}
           onSignInClick={handleOpenAuthModal}
           onGuideClick={handleOpenGuide}
+          completionSoundEnabled={completionSoundEnabled}
+          onToggleCompletionSound={handleToggleCompletionSound}
           onHashtagClick={handleHashtagExclusive}
           forceComposeMode={forceShowComposeForGuide}
           onAuthorClick={handleAuthorClick}
@@ -1363,6 +1416,7 @@ const Index = () => {
         </div>
         <div className="h-full flex items-center justify-end gap-2 w-auto pl-2">
           <NostrUserMenu onSignInClick={handleOpenAuthModal} />
+          <CompletionFeedbackToggle enabled={completionSoundEnabled} onToggle={handleToggleCompletionSound} />
           <LanguageToggle />
           <ThemeModeToggle />
         </div>

@@ -405,7 +405,7 @@ export function ListView({
           )}>
             {status === "in-progress" ? (
               <>
-                <span className="sm:hidden">Doing</span>
+                <span className="sm:hidden">{t("listView.status.inProgressShort")}</span>
                 <span className="hidden sm:inline">{t("listView.status.inProgress")}</span>
               </>
             ) : status === "done" ? t("listView.status.done") : t("listView.status.todo")}
@@ -464,25 +464,25 @@ export function ListView({
                 )}
               </>
             ) : (
-              <span className="text-muted-foreground">Set date...</span>
+              <span className="text-muted-foreground">{t("listView.dates.setDate")}</span>
             )}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <div className="p-3 space-y-2">
             <div className="flex items-center gap-2">
-              <label className="text-xs text-muted-foreground" htmlFor={`list-date-type-${task.id}`}>Type</label>
+              <label className="text-xs text-muted-foreground" htmlFor={`list-date-type-${task.id}`}>{t("listView.dates.type")}</label>
               <select
                 id={`list-date-type-${task.id}`}
                 value={localDateType}
                 onChange={(event) => setLocalDateType(event.target.value as TaskDateType)}
                 className="h-7 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
               >
-                <option value="due">Due</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="start">Start</option>
-                <option value="end">End</option>
-                <option value="milestone">Milestone</option>
+                <option value="due">{t("composer.dates.due")}</option>
+                <option value="scheduled">{t("composer.dates.scheduled")}</option>
+                <option value="start">{t("composer.dates.start")}</option>
+                <option value="end">{t("composer.dates.end")}</option>
+                <option value="milestone">{t("composer.dates.milestone")}</option>
               </select>
             </div>
             <CalendarComponent
@@ -571,7 +571,7 @@ export function ListView({
                     <button
                       onClick={handleResetSort}
                       className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                      title="Reset to default sorting"
+                      title={t("listView.sort.reset")}
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                     </button>
@@ -613,7 +613,7 @@ export function ListView({
               <th className="text-left p-3 w-32 md:w-40 lg:w-48 xl:w-64 2xl:w-[26rem]">
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
                   <Tags className="w-3 h-3" />
-                  Tags
+                  {t("tasks.tags")}
                 </span>
               </th>
             </tr>
@@ -622,7 +622,7 @@ export function ListView({
             {listTasks.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center text-muted-foreground py-8">
-                  No tasks found
+                  {t("tasks.empty.notFound")}
                 </td>
               </tr>
             ) : (
@@ -671,8 +671,8 @@ export function ListView({
                                 <button
                                   onClick={() => onFocusTask?.(ancestor.id)}
                                   className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[100px]`}
-                                  title={`Focus task: ${ancestor.text}`}
-                                  aria-label={`Focus task: ${ancestor.text}`}
+                                  title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
+                                  aria-label={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
                                 >
                                   {ancestor.text}
                                 </button>
@@ -686,7 +686,7 @@ export function ListView({
                             `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} break-words`,
                             task.status === "done" && "line-through text-muted-foreground"
                           )}
-                          title="Focus this task"
+                          title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
                         >
                           {linkifyContent(task.content, onHashtagClick, {
                             plainHashtags: task.status === "done",

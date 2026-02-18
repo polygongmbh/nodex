@@ -5,6 +5,12 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+### Added
+- Gentle completion feedback: task completion now triggers a subtle celebratory animation and an optional pop sound, with a new sound toggle available in desktop top controls and mobile Manage.
+
+### Changed
+- Popups and selector surfaces now use softer enter motion with global reduced-motion fallbacks for accessibility.
+- Localization coverage expanded across task/status controls, calendar/list/kanban labels, relay management, publish-failure banner actions, and related accessibility labels/tooltips.
 
 ## [1.5.1] - 2026-02-18
 

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";
 import { useTranslation } from "react-i18next";
+import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import {
   loadPresencePublishingEnabled,
   savePresencePublishingEnabled,
@@ -34,6 +35,8 @@ interface MobileFiltersProps {
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
   onGuideClick: () => void;
+  completionSoundEnabled?: boolean;
+  onToggleCompletionSound?: () => void;
 }
 
 const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -57,6 +60,8 @@ export function MobileFilters({
   onRemoveRelay,
   onSignInClick,
   onGuideClick,
+  completionSoundEnabled = true,
+  onToggleCompletionSound = () => {},
 }: MobileFiltersProps) {
   const { t } = useTranslation();
   const truncateMobilePubkey = (value: string): string => {
@@ -188,6 +193,10 @@ export function MobileFilters({
               {t("navigation.mobile.openGuide")}
             </button>
             <VersionHint className="shrink-0" />
+            <CompletionFeedbackToggle
+              enabled={completionSoundEnabled}
+              onToggle={onToggleCompletionSound}
+            />
           </div>
         </section>
 
