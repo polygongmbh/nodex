@@ -3,7 +3,8 @@
 ## Quick Start
 - Sign in from the profile menu to post tasks/comments to relays.
 - Compose a post with at least one `#channel` tag.
-- Choose Task or Comment from the mobile/desktop kind control.
+- Desktop: choose Task or Comment from the compose kind control.
+- Mobile: use the dedicated send actions for task/comment in the bottom bar.
 - Optional: set task priority before posting.
 - Optional: switch UI language (`EN`/`DE`) from the language toggle.
 
@@ -55,7 +56,7 @@
 - *Open Guide* in *Manage* launches onboarding.
 - The bottom bar is a combined search/compose field:
   - typing updates search results live,
-  - submit creates a task/comment from the same text.
+  - send buttons post as task/comment from the same text.
 
 ## Onboarding Guide
 - Open guide from:
@@ -73,11 +74,12 @@
 - Task/comment kind changes event behavior.
 - `#tags` and `@mentions` are supported in compose text.
 - Included channel filters automatically prepopulate compose with matching `#channel` tags.
+- If posting from mobile with no selected/typed channel tag, the app shows immediate feedback instead of silently failing.
 - Task compose supports optional priority selection.
 - Next to the date picker, choose the date type: `Due`, `Scheduled`, `Start`, `End`, or `Milestone`.
 - Date-typed tasks appear in Calendar view.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
-- On mobile, use the submit button in the combined bottom bar to create.
+- On mobile, use the task/comment send actions in the combined bottom bar to create.
 
 ## Table and Calendar Editing
 - Table view supports inline priority editing.
@@ -88,7 +90,13 @@
 - If relay publish fails, the post is queued locally in a failed-publish banner with retry/dismiss actions instead of being treated as a normal published task/comment.
 - Latest feed events are cached locally and rehydrated on app load for better offline/reconnect continuity.
 - Edit profile/setup modal does not open when no relay is connected.
+- Current-user profile metadata is cached locally and reused across sidebar/feed/top-right/profile-edit surfaces when live profile fields are temporarily missing.
+- Presence status is published with NIP-38 updates (unless disabled in profile settings) and clears on sign-out/tab close.
 - Non-feed task views use a shared priority order: due-now/overdue, then in-progress, high priority (`50+`), upcoming due, medium priority (`30-49`), no priority, then low priority (`<30`); Kanban `done` stays chronological.
+
+## Task Permissions
+- Tasks can be modified by tagged users (`p` tags).
+- If no users are tagged, only the creator can modify the task.
 
 ### Compose keyboard behavior (desktop)
 - `Enter` / `Tab` with autocomplete open: insert the highlighted suggestion into text.

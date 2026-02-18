@@ -101,7 +101,7 @@
     }
   },
   "sidebar": {
-    "tagline": "Zusammenarbeitsplattform",
+    "tagline": "Kollaborationsplattform",
     "sections": {
       "feeds": "Feeds",
       "channels": "Kanäle",
@@ -216,7 +216,7 @@
       }
     },
     "menu": {
-      "signInToPost": "Zum Veröffentlichen anmelden",
+      "signInToPost": "Zum Mitmachen anmelden",
       "signInShort": "Anmelden",
       "signedInVia": "Angemeldet über {{method}}",
       "signedInAs": "Angemeldet als {{method}}",
