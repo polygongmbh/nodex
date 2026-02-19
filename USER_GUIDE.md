@@ -18,6 +18,11 @@
 - Use the top view switcher to move between Tree, Feed, Kanban, Calendar, and Table.
 - Click a task to focus on that task context.
 - Use breadcrumb navigation (`All Tasks` / `Up` / parent path) to move through hierarchy.
+- In Kanban, use the Levels dropdown near search to switch hierarchy scope:
+  - `Top-level`: only root tasks (no parent).
+  - `2/3 levels`: include subtasks up to that depth.
+  - `All levels`: full parent/child hierarchy.
+  - `Leaves only`: only end-node tasks with no children.
 
 ## Channel and Tag Filtering
 ### Desktop sidebar channels

@@ -418,8 +418,8 @@
       },
       "kanbanDepth": {
         "title": "Depth levels",
-        "description": "Use Levels next to search to show top-level, limited depth, or leaves-only tasks.",
-        "action": "Open the Levels selector to continue."
+        "description": "Use Levels next to search to switch between parent tasks and executable end nodes: Top-level shows only root tasks, limited levels include subtasks, and Leaves only shows tasks with no children.",
+        "action": "Open Levels and try Top-level, then Leaves only."
       },
       "calendarMonths": {
         "title": "Month timeline",
@@ -494,10 +494,15 @@
       "placeholder": "Search tasks..."
     },
     "kanban": {
+      "depthHint": "Kanban depth filter: switch between root tasks, limited hierarchy depth, or leaf-only tasks",
       "topLevel": "Top-level",
+      "topLevelHint": "Show only root tasks (no parent task)",
       "levels": "{{count}} levels",
+      "levelsHint": "Show tasks up to {{count}} hierarchy levels deep",
       "allLevels": "All levels",
-      "leavesOnly": "Leaves only"
+      "allLevelsHint": "Show all parent and child tasks at every depth",
+      "leavesOnly": "Leaves only",
+      "leavesOnlyHint": "Show only leaf tasks (tasks without children)"
     }
   },
   "appError": {

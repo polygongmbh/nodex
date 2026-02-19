@@ -418,8 +418,8 @@
       },
       "kanbanDepth": {
         "title": "Tiefenstufen",
-        "description": "Nutze Levels neben der Suche, um oberste Ebene, begrenzte Tiefe oder nur Blätter anzuzeigen.",
-        "action": "Öffne den Levels-Selektor, um fortzufahren."
+        "description": "Nutze Levels neben der Suche, um zwischen Elternaufgaben und ausführbaren Endknoten zu wechseln: Oberste Ebene zeigt nur Root-Aufgaben, begrenzte Stufen schließen Unteraufgaben ein und Nur Blätter zeigt Aufgaben ohne Kinder.",
+        "action": "Öffne Levels und probiere erst Oberste Ebene, dann Nur Blätter."
       },
       "calendarMonths": {
         "title": "Monats-Zeitleiste",
@@ -494,10 +494,15 @@
       "placeholder": "Aufgaben suchen..."
     },
     "kanban": {
+      "depthHint": "Kanban-Tiefenfilter: zwischen Root-Aufgaben, begrenzter Hierarchietiefe oder nur Blättern wechseln",
       "topLevel": "Oberste Ebene",
+      "topLevelHint": "Nur Root-Aufgaben anzeigen (ohne übergeordnete Aufgabe)",
       "levels": "{{count}} Ebenen",
+      "levelsHint": "Aufgaben bis zu {{count}} Hierarchieebenen anzeigen",
       "allLevels": "Alle Ebenen",
-      "leavesOnly": "Nur Blätter"
+      "allLevelsHint": "Alle Eltern- und Unteraufgaben über jede Tiefe anzeigen",
+      "leavesOnly": "Nur Blätter",
+      "leavesOnlyHint": "Nur Blattaufgaben anzeigen (Aufgaben ohne Kinder)"
     }
   },
   "appError": {

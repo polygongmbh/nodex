@@ -418,8 +418,8 @@
       },
       "kanbanDepth": {
         "title": "Niveles de profundidad",
-        "description": "Usa Niveles junto a la búsqueda para mostrar tareas de nivel superior, profundidad limitada o solo hojas.",
-        "action": "Abre el selector Niveles para continuar."
+        "description": "Usa Niveles junto a la búsqueda para alternar entre tareas padre y nodos finales ejecutables: Nivel superior muestra solo tareas raíz, los niveles limitados incluyen subtareas y Solo hojas muestra tareas sin hijas.",
+        "action": "Abre Niveles y prueba Nivel superior, luego Solo hojas."
       },
       "calendarMonths": {
         "title": "Línea temporal de meses",
@@ -494,10 +494,15 @@
       "placeholder": "Buscar tareas..."
     },
     "kanban": {
+      "depthHint": "Filtro de profundidad Kanban: alterna entre tareas raíz, profundidad limitada de jerarquía o solo hojas",
       "topLevel": "Nivel superior",
+      "topLevelHint": "Mostrar solo tareas raíz (sin tarea padre)",
       "levels": "{{count}} niveles",
+      "levelsHint": "Mostrar tareas hasta {{count}} niveles de profundidad",
       "allLevels": "Todos los niveles",
-      "leavesOnly": "Solo hojas"
+      "allLevelsHint": "Mostrar todas las tareas padre e hijas en cualquier profundidad",
+      "leavesOnly": "Solo hojas",
+      "leavesOnlyHint": "Mostrar solo tareas hoja (tareas sin hijas)"
     }
   },
   "appError": {

@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Onboarding guide spotlight now keeps the current arrow-target area undimmed instead of greying it out.
+- Kanban guide and user guide now explain tree/leaf depth filtering, and the Kanban Levels dropdown/options now include hover hints.
 
 ## [1.8.1] - 2026-02-19
 - Sidebar footer no longer shows redundant hover popovers for Guide and Shortcuts actions.

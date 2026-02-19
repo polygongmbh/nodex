@@ -45,15 +45,19 @@ export function DesktopSearchDock({
           <div className="flex items-center gap-1.5 flex-shrink-0" data-onboarding="kanban-levels">
             <Layers className="w-4 h-4 text-muted-foreground" />
             <Select value={kanbanDepthMode} onValueChange={(v) => onKanbanDepthModeChange(v as KanbanDepthMode)}>
-              <SelectTrigger className="w-[150px] h-8 rounded-md border-border/50 bg-transparent text-sm shadow-none focus:ring-1 focus:ring-primary/30">
+              <SelectTrigger
+                className="w-[150px] h-8 rounded-md border-border/50 bg-transparent text-sm shadow-none focus:ring-1 focus:ring-primary/30"
+                aria-label={t("search.kanban.depthHint")}
+                title={t("search.kanban.depthHint")}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">{t("search.kanban.topLevel")}</SelectItem>
-                <SelectItem value="2">{t("search.kanban.levels", { count: 2 })}</SelectItem>
-                <SelectItem value="3">{t("search.kanban.levels", { count: 3 })}</SelectItem>
-                <SelectItem value="all">{t("search.kanban.allLevels")}</SelectItem>
-                <SelectItem value="leaves">
+                <SelectItem value="1" title={t("search.kanban.topLevelHint")}>{t("search.kanban.topLevel")}</SelectItem>
+                <SelectItem value="2" title={t("search.kanban.levelsHint", { count: 2 })}>{t("search.kanban.levels", { count: 2 })}</SelectItem>
+                <SelectItem value="3" title={t("search.kanban.levelsHint", { count: 3 })}>{t("search.kanban.levels", { count: 3 })}</SelectItem>
+                <SelectItem value="all" title={t("search.kanban.allLevelsHint")}>{t("search.kanban.allLevels")}</SelectItem>
+                <SelectItem value="leaves" title={t("search.kanban.leavesOnlyHint")}>
                   <span className="flex items-center gap-1">
                     <Leaf className="w-3 h-3" />
                     {t("search.kanban.leavesOnly")}
