@@ -22,6 +22,7 @@ import {
   buildOfflinePresenceContent,
   buildPresenceTags,
 } from "@/lib/presence-status";
+import { buildDeterministicGuestName } from "@/lib/guest-name";
 
 // Authentication types
 export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | null;
@@ -389,7 +390,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
         pubkey: ndkUser.pubkey,
         npub: ndkUser.npub,
         profile: {
-          name: "guest",
+          name: buildDeterministicGuestName(ndkUser.pubkey),
         },
       });
       setAuthMethod("guest");
