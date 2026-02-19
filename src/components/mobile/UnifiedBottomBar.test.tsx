@@ -171,7 +171,7 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(field.value).toBe("Ship #general");
   });
 
-  it("submits as comment on Alt+Enter in compose-capable views", () => {
+  it("submits as comment on Alt+Enter when no hashtag token is being typed", () => {
     const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
 
     render(
@@ -192,11 +192,11 @@ describe("UnifiedBottomBar auth gating", () => {
     );
 
     const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
-    fireEvent.change(composeField, { target: { value: "Ship #general" } });
+    fireEvent.change(composeField, { target: { value: "Ship #general now" } });
 
     fireEvent.keyDown(composeField, { key: "Enter", altKey: true });
     expect(onSubmit).toHaveBeenCalledWith(
-      "Ship #general",
+      "Ship #general now",
       ["general"],
       ["demo"],
       "comment",

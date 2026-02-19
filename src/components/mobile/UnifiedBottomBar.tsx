@@ -397,8 +397,6 @@ export function UnifiedBottomBar({
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
-  const hasKnownChannelName = (tagName: string) =>
-    channels.some((channel) => channel.name.toLowerCase() === tagName.toLowerCase());
 
   useEffect(() => {
     if (taskSubmitBlockedReason && activeSelector === "date") {
@@ -856,7 +854,7 @@ export function UnifiedBottomBar({
                     const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
                     if (hashtagMatch || /#\w*$/.test(textBeforeCursor)) {
                       const tagName = (hashtagMatch?.[1] || "").trim().toLowerCase();
-                      if (tagName && !hasKnownChannelName(tagName)) {
+                      if (tagName) {
                         e.preventDefault();
                         addHashtagTagOnly(tagName);
                         return;
