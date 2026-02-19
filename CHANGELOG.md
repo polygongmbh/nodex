@@ -6,6 +6,10 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.7.3] - 2026-02-19
+- Entire task area is now clickable to focus in Feed, Kanban, and Calendar views.
+- Clicking a hashtag not present in the sidebar now adds it and filters exclusively for it.
+
 ## [1.7.2] - 2026-02-19
 ### Changed
 - Refined table view responsive layout to prioritize task-text readability by reducing metadata pressure across desktop breakpoints.
