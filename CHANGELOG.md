@@ -5,6 +5,9 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.8.0] - 2026-02-19
+Improved guest identity defaults and live profile-name validation for NIP-05 compatibility.
 - Guest sign-in no longer pre-fills the profile display name.
 - Profile username validation now enforces live NIP-05 local-part rules (`a-z`, `0-9`, `.`, `_`, `-`) while typing in desktop and mobile profile editors.
 - Guest usernames are now deterministic, gender-neutral placeholders generated from pubkey (`guest_<word>_<word>`).

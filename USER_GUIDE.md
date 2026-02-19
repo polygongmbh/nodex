@@ -2,6 +2,7 @@
 
 ## Quick Start
 - Sign in from the profile menu to post tasks/comments to relays.
+- Guest sign-in starts with a deterministic placeholder username derived from your pubkey.
 - Compose a post with at least one `#channel` tag.
 - Desktop: choose Task or Comment from the compose kind control.
 - Mobile: use the dedicated send actions for task/comment in the bottom bar.
@@ -71,6 +72,7 @@
 
 ## Compose Rules
 - At least one hashtag is required to post.
+- Profile username (`Name`) follows NIP-05 local-part rules: lowercase `a-z`, digits `0-9`, `.`, `_`, `-`.
 - Compose text must include meaningful message content; hashtags/mentions alone are not sufficient.
 - Task/comment kind changes event behavior.
 - `#tags` and `@mentions` are supported in compose text.
