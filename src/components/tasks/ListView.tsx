@@ -95,7 +95,7 @@ const PriorityCell = memo(function PriorityCell({
           onUpdatePriority?.(taskId, parsed);
         }
       }}
-      className="h-7 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
+      className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
     >
       <option value="">—</option>
       <option value="20">P20</option>
@@ -478,7 +478,7 @@ export function ListView({
                 id={`list-date-type-${task.id}`}
                 value={localDateType}
                 onChange={(event) => setLocalDateType(event.target.value as TaskDateType)}
-                className="h-7 rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
+                className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
               >
                 <option value="due">{t("composer.dates.due")}</option>
                 <option value="scheduled">{t("composer.dates.scheduled")}</option>

@@ -825,7 +825,7 @@ export function TaskComposer({
                 const parsed = Number.parseInt(value, 10);
                 setPriority(Number.isFinite(parsed) ? parsed : undefined);
               }}
-              className="h-8 w-full cursor-pointer rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
+              className="h-8 w-full cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
             >
               <option value="">{t("composer.labels.priority")}</option>
               <option value="20">P20</option>
@@ -842,7 +842,7 @@ export function TaskComposer({
               aria-label={t("composer.labels.dateType")}
               value={dateType}
               onChange={(event) => setDateType(event.target.value as TaskDateType)}
-              className="h-8 w-24 cursor-pointer rounded-md border border-border/50 bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none focus:ring-1 focus:ring-primary/30"
+              className="h-8 w-24 cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
             >
               <option value="due">{t("composer.dates.due")}</option>
               <option value="scheduled">{t("composer.dates.scheduled")}</option>
