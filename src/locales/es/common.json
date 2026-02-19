@@ -42,7 +42,7 @@
       "insertHashtagOpen": "Insertar hashtag y abrir sugerencias de canales",
       "insertMention": "Insertar mención",
       "insertMentionOpen": "Insertar @mención y abrir sugerencias de personas",
-      "clearCompose": "Limpiar redacción",
+      "clearCompose": "Borrar redacción",
       "createFromText": "Crear desde el texto actual",
       "signInToCreate": "Inicia sesión para crear",
       "clearDueDate": "Quitar fecha"
@@ -153,9 +153,9 @@
       "shortcutsTooltip": "Atajos de teclado (?)",
       "openGuide": "Abrir guía de onboarding",
       "guide": "Guía",
-      "toggleAll": "Alternar todo",
-      "toggleAllFor": "Alternar todo {{title}}",
-      "toggleSidebar": "Alternar barra lateral"
+      "toggleAll": "Activar/desactivar todo",
+      "toggleAllFor": "Activar/desactivar todos en {{title}}",
+      "toggleSidebar": "Mostrar/ocultar barra lateral"
     },
     "filterStates": {
       "include": "incluir",
@@ -163,12 +163,12 @@
       "unfiltered": "sin filtrar"
     },
     "filters": {
-      "toggleRelay": "Alternar {{name}}",
+      "toggleRelay": "Activar/desactivar {{name}}",
       "showOnlyRelay": "Mostrar solo {{name}}",
-      "toggleChannelTo": "Alternar #{{name}} a {{nextState}}",
-      "toggleChannelFilter": "Alternar filtro de #{{name}}",
+      "toggleChannelTo": "Cambiar #{{name}} a {{nextState}}",
+      "toggleChannelFilter": "Activar/desactivar filtro de #{{name}}",
       "showOnlyChannel": "Mostrar solo #{{name}}",
-      "togglePerson": "Alternar {{name}}",
+      "togglePerson": "Activar/desactivar {{name}}",
       "showOnlyPerson": "Mostrar solo {{name}}",
       "selected": "{{name}} seleccionado",
       "me": "Yo"
@@ -180,9 +180,9 @@
       "optionAlt": "Option (Alt)"
     },
     "statusToggle": {
-      "todo": "Marcar tarea en progreso. Mantén {{alternateKey}} al hacer clic para seleccionar estado.",
-      "inProgress": "Marcar tarea como hecha. Mantén {{alternateKey}} al hacer clic para seleccionar estado.",
-      "done": "La tarea está hecha. Haz clic para seleccionar estado."
+      "todo": "Marcar tarea en progreso. Mantén {{alternateKey}} al hacer clic para elegir el estado.",
+      "inProgress": "Marcar tarea como hecha. Mantén {{alternateKey}} al hacer clic para elegir el estado.",
+      "done": "La tarea está hecha. Haz clic para elegir el estado."
     }
   },
   "breadcrumbs": {
@@ -213,16 +213,16 @@
       "focusSidebarGoBack": "Enfocar barra lateral (arriba) / volver",
       "jumpFirstTask": "Ir a la primera tarea",
       "jumpLastTask": "Ir a la última tarea",
-      "clearFocus": "Limpiar foco",
+      "clearFocus": "Quitar foco",
       "navigateFilters": "Navegar filtros",
-      "toggleSelectedFilter": "Alternar filtro seleccionado",
+      "toggleSelectedFilter": "Activar/desactivar filtro seleccionado",
       "returnTaskList": "Volver a la lista de tareas",
       "jumpFirstFilter": "Ir al primer filtro",
       "jumpLastFilter": "Ir al último filtro",
       "navigateColumns": "Navegar entre columnas",
       "navigateWithinColumn": "Navegar dentro de la columna",
       "moveTaskColumns": "Mover tarea entre columnas",
-      "toggleKeyboardShortcuts": "Alternar atajos de teclado",
+      "toggleKeyboardShortcuts": "Mostrar/ocultar atajos de teclado",
       "submitCurrentKind": "Enviar como tipo actual",
       "submitOppositeKind": "Enviar como tipo opuesto (cuando no hay autocompletado abierto)",
       "insertHighlightedSuggestion": "Con autocompletado abierto: insertar sugerencia resaltada",
@@ -276,7 +276,7 @@
       "signedInAs": "Sesión iniciada como {{method}}",
       "editProfile": "Editar perfil",
       "backupPrivateKey": "Respaldar clave privada",
-      "keepSecret": "Mantener en secreto",
+      "keepSecret": "No compartir",
       "importKeyHint": "Importa esta clave en otros clientes Nostr para acceder a esta identidad.",
       "signOut": "Cerrar sesión",
       "profileSetupTitle": "Configura tu perfil",
@@ -399,7 +399,7 @@
       },
       "mobileFiltersUse": {
         "title": "Usar filtros",
-        "description": "En *Gestionar*, toca chips de feed para seleccionar relays, chips de canal para alternar neutral -> incluir -> excluir y chips de personas para alternar filtros de personas. Combina estos controles para acotar la visibilidad antes de redactar."
+        "description": "En *Gestionar*, toca chips de feed para seleccionar relays, chips de canal para cambiar entre neutral → incluir → excluir, y chips de personas para activar/desactivar filtros de personas. Combina estos controles para acotar la visibilidad antes de redactar."
       },
       "mobileComposeCombobox": {
         "title": "Caja combinada búsqueda/redacción",
@@ -476,7 +476,7 @@
     },
     "channels": {
       "title": "Canales",
-      "cycleHint": "Toca para alternar: neutral -> incluir -> excluir"
+      "cycleHint": "Toca para cambiar: neutral → incluir → excluir"
     },
     "people": {
       "title": "Personas"
@@ -539,7 +539,7 @@
     "goHomeTitle": "Ir a la app principal"
   },
   "publishQueue": {
-    "failedCount": "{{count}} publicación falló al publicarse",
+    "failedCount": "{{count}} publicación no se pudo enviar",
     "retry": "Reintentar",
     "dismiss": "Descartar publicación fallida"
   },
