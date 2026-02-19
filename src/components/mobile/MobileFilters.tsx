@@ -393,6 +393,7 @@ export function MobileFilters({
           <div className="flex flex-wrap gap-2">
             {relays.map((relay) => {
               const RelayIcon = relayIconMap[relay.icon] || Building2;
+              const isConnectionActive = relay.id === "demo" || relay.connectionStatus === "connected" || !relay.connectionStatus;
               return (
                 <div
                   key={relay.id}
@@ -400,7 +401,8 @@ export function MobileFilters({
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
                     relay.isActive
                       ? "bg-primary/10 border-primary text-primary"
-                      : "border-border hover:bg-muted"
+                      : "border-border hover:bg-muted",
+                    relay.isActive && !isConnectionActive && "bg-warning/10 border-warning/40 text-foreground"
                   )}
                 >
                   <button
@@ -409,6 +411,14 @@ export function MobileFilters({
                   >
                     <RelayIcon className="w-4 h-4" />
                     {relay.name}
+                    <span
+                      className={cn(
+                        "inline-block h-1.5 w-1.5 rounded-full",
+                        isConnectionActive ? "bg-success" : "bg-warning"
+                      )}
+                      title={isConnectionActive ? "connected" : relay.connectionStatus || "disconnected"}
+                      aria-label={isConnectionActive ? "connected" : relay.connectionStatus || "disconnected"}
+                    />
                     {relay.isActive && <Check className="w-3 h-3" />}
                   </button>
                   {relay.url && relay.id !== "demo" && (

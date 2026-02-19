@@ -683,7 +683,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Ship #backend now" },
     });
 
-    expect(screen.getByText("Select a single relay or a parent task to create a new task")).toBeInTheDocument();
+    expect(screen.getByText("Select a single feed or a parent task to create a new task")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
   });
 

@@ -100,7 +100,8 @@
       "undo": "Deshacer"
     },
     "warnings": {
-      "parentLocalOnly": "La referencia al padre es solo local; se publicará la tarea sin enlace al padre"
+      "parentLocalOnly": "La referencia al padre es solo local; se publicará la tarea sin enlace al padre",
+      "disconnectedSelectedFeeds": "Vuelve a conectar los feeds seleccionados antes de modificar o publicar"
     }
   },
   "listView": {

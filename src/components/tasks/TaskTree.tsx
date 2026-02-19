@@ -51,6 +51,7 @@ interface TaskTreeProps {
     mention: string;
     id: number;
   } | null;
+  isInteractionBlocked?: boolean;
 }
 
 export function TaskTree({
@@ -78,6 +79,7 @@ export function TaskTree({
   isPendingPublishTask,
   composeRestoreRequest = null,
   mentionRequest = null,
+  isInteractionBlocked = false,
 }: TaskTreeProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -446,6 +448,7 @@ export function TaskTree({
               onAuthorClick={onAuthorClick}
               onUndoPendingPublish={onUndoPendingPublish}
               isPendingPublishTask={isPendingPublishTask}
+              isInteractionBlocked={isInteractionBlocked}
             />
           ))
         )}

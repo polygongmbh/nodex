@@ -22,6 +22,10 @@ export function notifyTaskCreationFailed(t: TFunction): void {
   toast.error(t("toasts.errors.taskCreationFailed"));
 }
 
+export function notifyDisconnectedSelectedFeeds(t: TFunction): void {
+  toast.warning(t("toasts.warnings.disconnectedSelectedFeeds"), { id: "disconnected-selected-feeds" });
+}
+
 export function notifyPublished(t: TFunction, taskType: TaskType): void {
   toast.success(taskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
 }

@@ -100,7 +100,8 @@
       "undo": "Undo"
     },
     "warnings": {
-      "parentLocalOnly": "Parent reference is local-only; publishing task without parent link"
+      "parentLocalOnly": "Parent reference is local-only; publishing task without parent link",
+      "disconnectedSelectedFeeds": "Reconnect selected feeds before modifying or posting"
     }
   },
   "listView": {

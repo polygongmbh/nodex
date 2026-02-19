@@ -17,8 +17,8 @@ describe("RelayItem", () => {
 
     render(<RelayItem relay={baseRelay} onToggle={onToggle} onExclusive={onExclusive} />);
 
-    const exclusiveButton = screen.getByRole("button", { name: "Show only Main Relay" });
-    const toggleButton = screen.getByRole("button", { name: "Toggle Main Relay" });
+    const exclusiveButton = screen.getByRole("button", { name: "Show only Main Relay feed" });
+    const toggleButton = screen.getByRole("button", { name: "Toggle Main Relay feed" });
 
     fireEvent.click(exclusiveButton);
     fireEvent.click(toggleButton);

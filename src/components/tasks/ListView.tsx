@@ -67,6 +67,8 @@ interface ListViewProps {
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  isInteractionBlocked?: boolean;
+  onInteractionBlocked?: () => void;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -143,6 +145,7 @@ export function ListView({
   forceShowComposer = false,
   composeGuideActivationSignal,
   composeRestoreRequest = null,
+  isInteractionBlocked = false,
 }: ListViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -383,7 +386,7 @@ export function ListView({
   };
 
   const canCompleteTask = (task: Task) => {
-    return Boolean(user) && canUserChangeTaskStatus(task, currentUser);
+    return Boolean(user) && !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
   const focusedTask = focusedTaskId ? allTasks.find((t) => t.id === focusedTaskId) : null;
 

@@ -53,6 +53,8 @@ interface KanbanViewProps {
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  isInteractionBlocked?: boolean;
+  onInteractionBlocked?: () => void;
 }
 
 const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] => [
@@ -83,6 +85,8 @@ export function KanbanView({
   onUndoPendingPublish,
   isPendingPublishTask,
   composeRestoreRequest = null,
+  isInteractionBlocked = false,
+  onInteractionBlocked,
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -229,6 +233,10 @@ export function KanbanView({
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
+    if (isInteractionBlocked) {
+      onInteractionBlocked?.();
+      return;
+    }
     
     const taskId = result.draggableId;
     const newStatus = result.destination.droppableId as TaskStatus;
@@ -297,6 +305,10 @@ export function KanbanView({
 
   // Handle moving task left (to previous column) - preserves focus
   const handleMoveLeft = useCallback(() => {
+    if (isInteractionBlocked) {
+      onInteractionBlocked?.();
+      return;
+    }
     const focusedId = keyboardFocusedTaskIdRef.current;
     if (!focusedId) return;
     const task = kanbanTasks.find(t => t.id === focusedId);
@@ -312,10 +324,14 @@ export function KanbanView({
     
     pendingRefocusRef.current = focusedId;
     onStatusChange?.(focusedId, newStatus);
-  }, [kanbanTasks, currentUser, onStatusChange]);
+  }, [currentUser, isInteractionBlocked, kanbanTasks, onInteractionBlocked, onStatusChange]);
 
   // Handle moving task right (to next column) - preserves focus
   const handleMoveRight = useCallback(() => {
+    if (isInteractionBlocked) {
+      onInteractionBlocked?.();
+      return;
+    }
     const focusedId = keyboardFocusedTaskIdRef.current;
     if (!focusedId) return;
     const task = kanbanTasks.find(t => t.id === focusedId);
@@ -331,7 +347,7 @@ export function KanbanView({
     
     pendingRefocusRef.current = focusedId;
     onStatusChange?.(focusedId, newStatus);
-  }, [kanbanTasks, currentUser, onStatusChange]);
+  }, [currentUser, isInteractionBlocked, kanbanTasks, onInteractionBlocked, onStatusChange]);
 
   // Keyboard navigation - Kanban mode: arrows navigate, Shift+arrows/HJKL move tasks
   const { focusedTaskId: navFocusedTaskId, setFocusByTaskId } = useTaskNavigation({
@@ -410,7 +426,7 @@ export function KanbanView({
                       {tasksByStatus[column.id].length}
                     </span>
                   </div>
-                  {user && (
+                  {user && !isInteractionBlocked && (
                     <button
                       onClick={() => setComposingColumn(column.id)}
                       className="p-1 rounded hover:bg-muted transition-colors"
@@ -465,7 +481,7 @@ export function KanbanView({
                           const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
                           const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                           const isLockedUntilStart = isTaskLockedUntilStart(task);
-                          const canChangeStatus = canUserChangeTaskStatus(task, currentUser);
+                          const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
                           const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
                           
                           return (

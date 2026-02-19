@@ -21,12 +21,17 @@ interface RelayItemProps {
 export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = false }: RelayItemProps) {
   const { t } = useTranslation();
   const Icon = iconMap[relay.icon] || Building2;
+  const isConnectionActive = relay.id === "demo" || relay.connectionStatus === "connected" || !relay.connectionStatus;
 
   return (
     <SidebarFilterRow
       itemId={`relay-${relay.id}`}
       isKeyboardFocused={isKeyboardFocused}
-      className={cn("gap-3 py-1.5", relay.isActive && "bg-sidebar-accent")}
+      className={cn(
+        "gap-3 py-1.5",
+        relay.isActive && "bg-sidebar-accent",
+        relay.isActive && !isConnectionActive && "bg-warning/10"
+      )}
     >
       {/* Icon - click for toggle */}
       <button
@@ -62,11 +67,19 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
       >
         <span
           className={cn(
-            "text-sm transition-colors hover:text-primary",
+            "inline-flex items-center gap-1.5 text-sm transition-colors hover:text-primary",
             relay.isActive ? "text-foreground font-medium" : "text-sidebar-foreground"
           )}
         >
           {relay.name}
+          <span
+            className={cn(
+              "inline-block h-1.5 w-1.5 rounded-full",
+              isConnectionActive ? "bg-success" : "bg-warning"
+            )}
+            title={isConnectionActive ? "connected" : relay.connectionStatus || "disconnected"}
+            aria-label={isConnectionActive ? "connected" : relay.connectionStatus || "disconnected"}
+          />
         </span>
       </button>
 

@@ -77,6 +77,7 @@ interface FeedViewProps {
     mention: string;
     id: number;
   } | null;
+  isInteractionBlocked?: boolean;
 }
 
 export function FeedView({
@@ -104,6 +105,7 @@ export function FeedView({
   isPendingPublishTask,
   composeRestoreRequest = null,
   mentionRequest = null,
+  isInteractionBlocked = false,
 }: FeedViewProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: Task["status"]): string => {
@@ -257,7 +259,7 @@ export function FeedView({
   };
 
   const canCompleteTask = (task: Task) => {
-    return canUserChangeTaskStatus(task, currentUser);
+    return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
 
   const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {

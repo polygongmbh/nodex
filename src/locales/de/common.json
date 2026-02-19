@@ -100,7 +100,8 @@
       "undo": "Rückgängig"
     },
     "warnings": {
-      "parentLocalOnly": "Parent-Referenz ist nur lokal; Aufgabe wird ohne Parent-Link veröffentlicht"
+      "parentLocalOnly": "Parent-Referenz ist nur lokal; Aufgabe wird ohne Parent-Link veröffentlicht",
+      "disconnectedSelectedFeeds": "Verbinde die ausgewählten Feeds wieder, bevor du etwas änderst oder veröffentlichst"
     }
   },
   "listView": {

@@ -69,6 +69,8 @@ interface MobileLayoutProps {
   failedPublishDrafts?: FailedPublishDraft[];
   onRetryFailedPublish?: (draftId: string) => void;
   onDismissFailedPublish?: (draftId: string) => void;
+  isInteractionBlocked?: boolean;
+  onInteractionBlocked?: () => void;
 }
 
 // Mobile view order for swipe navigation
@@ -115,6 +117,8 @@ export function MobileLayout({
   failedPublishDrafts = [],
   onRetryFailedPublish,
   onDismissFailedPublish,
+  isInteractionBlocked = false,
+  onInteractionBlocked,
 }: MobileLayoutProps) {
   const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
@@ -215,6 +219,8 @@ export function MobileLayout({
     onUndoPendingPublish,
     isPendingPublishTask,
     mentionRequest,
+    isInteractionBlocked,
+    onInteractionBlocked,
   };
 
   const mobileCurrentView: MobileViewType = showFilters ? "filters" : mobileView;

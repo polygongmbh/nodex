@@ -47,6 +47,7 @@ interface TaskItemProps {
   onAuthorClick?: (author: Person) => void;
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
+  isInteractionBlocked?: boolean;
 }
 
 export function TaskItem({
@@ -72,6 +73,7 @@ export function TaskItem({
   onAuthorClick,
   onUndoPendingPublish,
   isPendingPublishTask,
+  isInteractionBlocked = false,
 }: TaskItemProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: TaskStatus): string => {
@@ -194,7 +196,7 @@ export function TaskItem({
   };
 
   const canCompleteTask = () => {
-    return canUserChangeTaskStatus(task, currentUser);
+    return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
 
   // Calculate indentation based on depth
