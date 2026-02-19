@@ -461,6 +461,80 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("removes metadata-only hashtag chip when clicked", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const draft = "Ship #brandnew";
+    fireEvent.change(textarea, {
+      target: { value: draft, selectionStart: draft.length },
+    });
+    fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
+
+    await waitFor(() => {
+      expect(textarea.value).toBe("Ship ");
+    });
+    expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("brandnew");
+
+    fireEvent.click(screen.getByTestId("compose-hashtag-chip"));
+    expect(screen.queryByTestId("compose-hashtag-chip")).not.toBeInTheDocument();
+
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("removes metadata-only mention chip when clicked", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const draft = "Ship #backend with @al";
+    fireEvent.change(textarea, {
+      target: { value: draft, selectionStart: draft.length },
+    });
+    fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
+
+    await waitFor(() => {
+      expect(textarea.value).toBe("Ship #backend with ");
+    });
+    expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
+
+    fireEvent.click(screen.getByTestId("compose-mention-chip"));
+    expect(screen.queryByTestId("compose-mention-chip")).not.toBeInTheDocument();
+
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship #backend with ",
+        ["backend"],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined
+      );
+    });
+  });
+
   it("renders parsed mention chips before hashtag chips", () => {
     render(
       <TaskComposer

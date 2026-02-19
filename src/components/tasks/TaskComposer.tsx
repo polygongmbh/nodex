@@ -413,26 +413,51 @@ export function TaskComposer({
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
   const parsedMentions = extractMentionIdentifiersFromContent(content);
-  const explicitMentionIdentifiers = explicitMentionPubkeys.map((pubkey) => {
+  const parsedMentionSet = new Set(parsedMentions.map((identifier) => identifier.trim().toLowerCase()));
+  const explicitMentionItems = explicitMentionPubkeys.map((pubkey) => {
     const person = people.find((candidate) => candidate.id.toLowerCase() === pubkey);
-    return person ? getPreferredMentionIdentifier(person) : pubkey;
+    const identifier = person ? getPreferredMentionIdentifier(person) : pubkey;
+    return {
+      pubkey,
+      identifier,
+      normalizedIdentifier: identifier.trim().toLowerCase(),
+    };
   });
-  const parsedMentionChips = Array.from(new Set([...parsedMentions, ...explicitMentionIdentifiers]));
-  const mentionChipItems = parsedMentionChips.map((identifier) => {
-    const normalized = identifier.trim().toLowerCase();
+  const mentionChipMap = new Map<string, { identifier: string; metadataOnly: boolean; explicitPubkey?: string }>();
+  for (const identifier of parsedMentions) {
+    const normalizedIdentifier = identifier.trim().toLowerCase();
+    if (!normalizedIdentifier) continue;
+    mentionChipMap.set(normalizedIdentifier, {
+      identifier,
+      metadataOnly: false,
+    });
+  }
+  for (const explicitMention of explicitMentionItems) {
+    if (!explicitMention.normalizedIdentifier) continue;
+    if (mentionChipMap.has(explicitMention.normalizedIdentifier)) continue;
+    mentionChipMap.set(explicitMention.normalizedIdentifier, {
+      identifier: explicitMention.identifier,
+      metadataOnly: !parsedMentionSet.has(explicitMention.normalizedIdentifier),
+      explicitPubkey: explicitMention.pubkey,
+    });
+  }
+  const mentionChipItems = Array.from(mentionChipMap.values()).map((chip) => {
+    const normalized = chip.identifier.trim().toLowerCase();
     const matchingPerson = people.find((person) => getMentionAliases(person).includes(normalized));
     const resolvedLabel = (matchingPerson?.name || matchingPerson?.displayName || "").trim();
     return {
-      identifier,
-      label: resolvedLabel || formatMentionIdentifierForDisplay(identifier),
+      ...chip,
+      label: resolvedLabel || formatMentionIdentifierForDisplay(chip.identifier),
     };
   });
-  const parsedHashtags = Array.from(
-    new Set([
-      ...(content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase()),
-      ...explicitTagNames,
-    ])
-  );
+  const parsedHashtags = Array.from(new Set((content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase())));
+  const parsedHashtagSet = new Set(parsedHashtags);
+  const hashtagChipItems = [
+    ...parsedHashtags.map((tag) => ({ tag, metadataOnly: false })),
+    ...explicitTagNames
+      .filter((tag) => !parsedHashtagSet.has(tag))
+      .map((tag) => ({ tag, metadataOnly: true })),
+  ];
   const hasAtLeastOneTag = ((content.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasInvalidRootTaskRelaySelection = taskType === "task" && !parentId && selectedRelays.length !== 1;
@@ -700,6 +725,18 @@ export function TaskComposer({
     setActiveSuggestionIndex(0);
   };
 
+  const removeExplicitHashtag = (tagName: string) => {
+    const normalizedTag = tagName.trim().toLowerCase();
+    if (!normalizedTag) return;
+    setExplicitTagNames((previous) => previous.filter((tag) => tag !== normalizedTag));
+  };
+
+  const removeExplicitMention = (pubkey: string | undefined) => {
+    if (!pubkey) return;
+    const normalizedPubkey = pubkey.trim().toLowerCase();
+    setExplicitMentionPubkeys((previous) => previous.filter((value) => value !== normalizedPubkey));
+  };
+
   const showExpandedControls = !adaptiveSize || isExpanded || content.trim().length > 0;
 
   useEffect(() => {
@@ -809,28 +846,54 @@ export function TaskComposer({
         )}
       </div>
 
-      {showExpandedControls && taskType !== "task" && (mentionChipItems.length > 0 || parsedHashtags.length > 0) && (
+      {showExpandedControls && taskType !== "task" && (mentionChipItems.length > 0 || hashtagChipItems.length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {mentionChipItems.map((mention) => (
-            <span
+            <button
               key={`mention-${mention.identifier}`}
+              type="button"
               data-testid="compose-mention-chip"
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary"
+              onClick={() => removeExplicitMention(mention.explicitPubkey)}
+              className={cn(
+                "group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary",
+                mention.metadataOnly && "cursor-pointer hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+              )}
+              disabled={!mention.metadataOnly}
               title={`${t("composer.labels.mentions")}: @${mention.identifier}`}
             >
-              <AtSign className="w-3 h-3" />
+              {mention.metadataOnly ? (
+                <>
+                  <AtSign className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
+                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
+                </>
+              ) : (
+                <AtSign className="w-3 h-3" />
+              )}
               {mention.label}
-            </span>
+            </button>
           ))}
-          {parsedHashtags.map((tag) => (
-            <span
-              key={`hashtag-${tag}`}
+          {hashtagChipItems.map((tagChip) => (
+            <button
+              key={`hashtag-${tagChip.tag}`}
+              type="button"
               data-testid="compose-hashtag-chip"
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground"
+              onClick={() => removeExplicitHashtag(tagChip.tag)}
+              className={cn(
+                "group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground",
+                tagChip.metadataOnly && "cursor-pointer hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+              )}
+              disabled={!tagChip.metadataOnly}
             >
-              <Hash className="w-3 h-3" />
-              {tag}
-            </span>
+              {tagChip.metadataOnly ? (
+                <>
+                  <Hash className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
+                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
+                </>
+              ) : (
+                <Hash className="w-3 h-3" />
+              )}
+              {tagChip.tag}
+            </button>
           ))}
         </div>
       )}
@@ -920,25 +983,51 @@ export function TaskComposer({
           </div>
 
           {mentionChipItems.map((mention) => (
-            <span
+            <button
               key={`mention-task-${mention.identifier}`}
+              type="button"
               data-testid="compose-mention-chip"
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary"
+              onClick={() => removeExplicitMention(mention.explicitPubkey)}
+              className={cn(
+                "group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary",
+                mention.metadataOnly && "cursor-pointer hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+              )}
+              disabled={!mention.metadataOnly}
               title={`${t("composer.labels.mentions")}: @${mention.identifier}`}
             >
-              <AtSign className="w-3 h-3" />
+              {mention.metadataOnly ? (
+                <>
+                  <AtSign className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
+                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
+                </>
+              ) : (
+                <AtSign className="w-3 h-3" />
+              )}
               {mention.label}
-            </span>
+            </button>
           ))}
-          {parsedHashtags.map((tag) => (
-            <span
-              key={`hashtag-task-${tag}`}
+          {hashtagChipItems.map((tagChip) => (
+            <button
+              key={`hashtag-task-${tagChip.tag}`}
+              type="button"
               data-testid="compose-hashtag-chip"
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground"
+              onClick={() => removeExplicitHashtag(tagChip.tag)}
+              className={cn(
+                "group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground",
+                tagChip.metadataOnly && "cursor-pointer hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+              )}
+              disabled={!tagChip.metadataOnly}
             >
-              <Hash className="w-3 h-3" />
-              {tag}
-            </span>
+              {tagChip.metadataOnly ? (
+                <>
+                  <Hash className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
+                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
+                </>
+              ) : (
+                <Hash className="w-3 h-3" />
+              )}
+              {tagChip.tag}
+            </button>
           ))}
         </div>
       )}
