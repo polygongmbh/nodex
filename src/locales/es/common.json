@@ -49,11 +49,11 @@
     },
     "dates": {
       "setOptional": "Establecer fecha de {{dateType}} (opcional)",
-      "due": "Vencimiento",
-      "scheduled": "Programada",
+      "due": "Limite",
+      "scheduled": "Programado",
       "start": "Inicio",
       "end": "Fin",
-      "milestone": "Hito"
+      "milestone": "Meta"
     }
   },
   "toasts": {
