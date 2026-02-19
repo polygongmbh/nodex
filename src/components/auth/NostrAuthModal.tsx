@@ -36,6 +36,7 @@ import {
   buildPresenceTags,
 } from "@/lib/presence-status";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
+import { isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -406,16 +407,27 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     }
   }, [publishEvent, user?.pubkey]);
 
+  const trimmedProfileName = profileName.trim();
+  const hasTypedProfileName = profileName.length > 0;
+  const showProfileNameRequired = hasTypedProfileName && !trimmedProfileName;
+  const showProfileNameInvalid =
+    Boolean(trimmedProfileName) && !isNip05CompatibleName(trimmedProfileName);
+  const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid;
+
   const handleSaveProfile = async () => {
-    if (!profileName.trim()) {
+    if (!trimmedProfileName) {
       toast.error(t("filters.profile.nameRequired"));
+      return;
+    }
+    if (!isProfileNameValid) {
+      toast.error(t("filters.profile.nameInvalidNip05"));
       return;
     }
 
     setIsSavingProfile(true);
     try {
       const success = await updateUserProfile({
-        name: profileName,
+        name: trimmedProfileName,
         displayName: profileDisplayName || undefined,
         picture: profilePicture || undefined,
         nip05: profileNip05 || undefined,
@@ -607,7 +619,23 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="profile-name">{t("filters.profile.name")}</Label>
-                  <Input id="profile-name" value={profileName} onChange={(e) => setProfileName(e.target.value)} />
+                  <Input
+                    id="profile-name"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    aria-invalid={showProfileNameRequired || showProfileNameInvalid}
+                    aria-describedby={showProfileNameRequired || showProfileNameInvalid ? "profile-name-error" : undefined}
+                  />
+                  {showProfileNameRequired && (
+                    <p id="profile-name-error" className="text-xs text-destructive">
+                      {t("filters.profile.nameRequired")}
+                    </p>
+                  )}
+                  {!showProfileNameRequired && showProfileNameInvalid && (
+                    <p id="profile-name-error" className="text-xs text-destructive">
+                      {t("filters.profile.nameInvalidNip05")}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
@@ -646,7 +674,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   {t("filters.profile.cancel")}
                 </Button>
               )}
-              <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+              <Button onClick={handleSaveProfile} disabled={isSavingProfile || !isProfileNameValid}>
                 {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
               </Button>
             </div>

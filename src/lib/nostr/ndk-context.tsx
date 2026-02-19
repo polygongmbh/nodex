@@ -389,8 +389,7 @@ export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKPro
         pubkey: ndkUser.pubkey,
         npub: ndkUser.npub,
         profile: {
-          name: "Guest",
-          displayName: "Guest User",
+          name: "guest",
         },
       });
       setAuthMethod("guest");

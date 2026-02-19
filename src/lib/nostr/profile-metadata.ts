@@ -11,8 +11,15 @@ export interface Kind0EventCandidate {
   content: string;
 }
 
+const NIP05_NAME_PATTERN = /^[a-z0-9._-]+$/;
+
 export function hasRequiredProfileFields(profile?: Partial<EditableNostrProfile> | null): boolean {
   return Boolean(profile?.name?.trim());
+}
+
+export function isNip05CompatibleName(name?: string | null): boolean {
+  const normalized = name?.trim() || "";
+  return normalized.length > 0 && NIP05_NAME_PATTERN.test(normalized);
 }
 
 export function buildKind0Content(profile: EditableNostrProfile): string {

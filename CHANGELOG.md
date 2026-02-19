@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Guest sign-in no longer pre-fills the profile display name.
+- Profile username validation now enforces live NIP-05 local-part rules (`a-z`, `0-9`, `.`, `_`, `-`) while typing in desktop and mobile profile editors.
 
 ## [1.7.3] - 2026-02-19
 - Entire task area is now clickable to focus in Feed, Kanban, and Calendar views.

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildKind0Content,
   hasRequiredProfileFields,
+  isNip05CompatibleName,
   mergeKind0Profiles,
   parseKind0Content,
 } from "./profile-metadata";
@@ -10,6 +11,14 @@ describe("profile metadata helpers", () => {
   it("requires a non-empty name", () => {
     expect(hasRequiredProfileFields({ name: "  " })).toBe(false);
     expect(hasRequiredProfileFields({ name: "alice" })).toBe(true);
+  });
+
+  it("validates nip05-compatible profile names", () => {
+    expect(isNip05CompatibleName("alice_1")).toBe(true);
+    expect(isNip05CompatibleName("alice.test-user")).toBe(true);
+    expect(isNip05CompatibleName("Alice")).toBe(false);
+    expect(isNip05CompatibleName("alice test")).toBe(false);
+    expect(isNip05CompatibleName("alice@home")).toBe(false);
   });
 
   it("builds kind 0 json with trimmed fields", () => {

@@ -23,6 +23,7 @@ import {
   buildPresenceTags,
 } from "@/lib/presence-status";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
+import { isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -141,15 +142,26 @@ export function MobileFilters({
     toast.success(t("filters.profile.copiedPrivateKey"));
   };
 
+  const trimmedProfileName = profileName.trim();
+  const hasTypedProfileName = profileName.length > 0;
+  const showProfileNameRequired = hasTypedProfileName && !trimmedProfileName;
+  const showProfileNameInvalid =
+    Boolean(trimmedProfileName) && !isNip05CompatibleName(trimmedProfileName);
+  const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid;
+
   const handleSaveProfile = async () => {
-    if (!profileName.trim()) {
+    if (!trimmedProfileName) {
       toast.error(t("filters.profile.nameRequired"));
+      return;
+    }
+    if (!isProfileNameValid) {
+      toast.error(t("filters.profile.nameInvalidNip05"));
       return;
     }
     setIsSavingProfile(true);
     try {
       const success = await updateUserProfile({
-        name: profileName,
+        name: trimmedProfileName,
         displayName: profileDisplayName || undefined,
         picture: profilePicture || undefined,
         nip05: profileNip05 || undefined,
@@ -263,7 +275,19 @@ export function MobileFilters({
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
                     className="h-8"
+                    aria-invalid={showProfileNameRequired || showProfileNameInvalid}
+                    aria-describedby={showProfileNameRequired || showProfileNameInvalid ? "manage-profile-name-error" : undefined}
                   />
+                  {showProfileNameRequired && (
+                    <p id="manage-profile-name-error" className="text-xs text-destructive">
+                      {t("filters.profile.nameRequired")}
+                    </p>
+                  )}
+                  {!showProfileNameRequired && showProfileNameInvalid && (
+                    <p id="manage-profile-name-error" className="text-xs text-destructive">
+                      {t("filters.profile.nameInvalidNip05")}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <label htmlFor="manage-profile-display-name" className="text-xs text-muted-foreground">{t("filters.profile.displayName")}</label>
@@ -328,7 +352,7 @@ export function MobileFilters({
                   <button
                     onClick={handleSaveProfile}
                     className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground"
-                    disabled={isSavingProfile}
+                    disabled={isSavingProfile || !isProfileNameValid}
                   >
                     {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
                   </button>
