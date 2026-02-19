@@ -1,4 +1,4 @@
-import { Search, Layers, Leaf } from "lucide-react";
+import { Search, Layers, Leaf, CircleDot, GitFork, Workflow, Network } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -55,25 +55,25 @@ export function DesktopSearchDock({
               <SelectContent>
                 <SelectItem value="1" title={t("search.kanban.topLevelHint")}>
                   <span className="flex items-center gap-1">
-                    <Layers className="w-3 h-3" />
+                    <CircleDot className="w-3 h-3" />
                     {t("search.kanban.topLevel")}
                   </span>
                 </SelectItem>
                 <SelectItem value="2" title={t("search.kanban.levelsHint", { count: 2 })}>
                   <span className="flex items-center gap-1">
-                    <Layers className="w-3 h-3" />
+                    <GitFork className="w-3 h-3" />
                     {t("search.kanban.levels", { count: 2 })}
                   </span>
                 </SelectItem>
                 <SelectItem value="3" title={t("search.kanban.levelsHint", { count: 3 })}>
                   <span className="flex items-center gap-1">
-                    <Layers className="w-3 h-3" />
+                    <Workflow className="w-3 h-3" />
                     {t("search.kanban.levels", { count: 3 })}
                   </span>
                 </SelectItem>
                 <SelectItem value="all" title={t("search.kanban.allLevelsHint")}>
                   <span className="flex items-center gap-1">
-                    <Layers className="w-3 h-3" />
+                    <Network className="w-3 h-3" />
                     {t("search.kanban.allLevels")}
                   </span>
                 </SelectItem>
