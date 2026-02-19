@@ -782,12 +782,45 @@ export function OnboardingGuide({
 
   if (!isOpen) return null;
 
+  const renderGuideBackdrop = () => {
+    if (showSectionPicker || !targetRect) {
+      return <div className="absolute inset-0 bg-black/30" aria-hidden="true" />;
+    }
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const spotlightPadding = 12;
+    const spotlightLeft = Math.max(0, targetRect.left - spotlightPadding);
+    const spotlightTop = Math.max(0, targetRect.top - spotlightPadding);
+    const spotlightRight = Math.min(viewportWidth, targetRect.right + spotlightPadding);
+    const spotlightBottom = Math.min(viewportHeight, targetRect.bottom + spotlightPadding);
+    const spotlightWidth = Math.max(0, spotlightRight - spotlightLeft);
+    const spotlightHeight = Math.max(0, spotlightBottom - spotlightTop);
+
+    return (
+      <>
+        <div className="absolute left-0 top-0 bg-black/30" style={{ width: "100%", height: spotlightTop }} aria-hidden="true" />
+        <div className="absolute left-0 bg-black/30" style={{ top: spotlightTop, width: spotlightLeft, height: spotlightHeight }} aria-hidden="true" />
+        <div
+          className="absolute bg-black/30"
+          style={{ top: spotlightTop, left: spotlightRight, width: Math.max(0, viewportWidth - spotlightRight), height: spotlightHeight }}
+          aria-hidden="true"
+        />
+        <div
+          className="absolute left-0 bg-black/30"
+          style={{ top: spotlightBottom, width: "100%", height: Math.max(0, viewportHeight - spotlightBottom) }}
+          aria-hidden="true"
+        />
+      </>
+    );
+  };
+
   return (
     <div
       className="fixed inset-0 z-[120] pointer-events-none"
       aria-live="polite"
     >
-      <div className="absolute inset-0 bg-black/30" aria-hidden="true" />
+      {renderGuideBackdrop()}
       {showSectionPicker && (
         <button
           type="button"
