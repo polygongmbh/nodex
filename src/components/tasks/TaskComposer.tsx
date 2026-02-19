@@ -428,20 +428,23 @@ export function TaskComposer({
           : null;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (showHashtagSuggestions && filteredChannels.length > 0) {
-      if (e.key === "ArrowDown") {
+    if (showHashtagSuggestions) {
+      if (filteredChannels.length > 0 && e.key === "ArrowDown") {
         e.preventDefault();
         setActiveSuggestionIndex((prev) => (prev + 1) % filteredChannels.length);
         return;
       }
-      if (e.key === "ArrowUp") {
+      if (filteredChannels.length > 0 && e.key === "ArrowUp") {
         e.preventDefault();
         setActiveSuggestionIndex((prev) => (prev - 1 + filteredChannels.length) % filteredChannels.length);
         return;
       }
       if (
-        e.key === "Tab" ||
-        (e.key === "Enter" && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey)
+        filteredChannels.length > 0 &&
+        (
+          e.key === "Tab" ||
+          (e.key === "Enter" && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey)
+        )
       ) {
         e.preventDefault();
         const selected = filteredChannels[Math.max(activeSuggestionIndex, 0)] || filteredChannels[0];
@@ -453,13 +456,16 @@ export function TaskComposer({
       if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
-        if (/#\w*$/.test(textBeforeCursor) || /#\w*$/.test(content)) {
-          e.preventDefault();
+        const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
+        if (hashtagMatch || /#\w*$/.test(content)) {
           const selected = filteredChannels[Math.max(activeSuggestionIndex, 0)] || filteredChannels[0];
-          if (selected) {
-            addHashtagTagOnly(selected.name);
+          const typedHashtag = (hashtagMatch?.[1] || "").trim().toLowerCase();
+          const metadataTag = selected?.name || typedHashtag;
+          if (metadataTag) {
+            e.preventDefault();
+            addHashtagTagOnly(metadataTag);
+            return;
           }
-          return;
         }
       }
       if (e.key === "Escape") {

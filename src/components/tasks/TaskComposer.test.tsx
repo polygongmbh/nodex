@@ -192,6 +192,48 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("uses Alt+Enter to add a new hashtag tag-only even without suggestions", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const draft = "Ship #brandnew";
+    fireEvent.change(textarea, {
+      target: { value: draft, selectionStart: draft.length },
+    });
+    textarea.focus();
+    textarea.setSelectionRange(draft.length, draft.length);
+
+    fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
+    await waitFor(() => {
+      expect(textarea.value).toBe("Ship ");
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship ",
+        ["brandnew"],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined
+      );
+    });
+  });
+
   it("stays compact in adaptive mode and expands on focus", () => {
     render(
       <TaskComposer
