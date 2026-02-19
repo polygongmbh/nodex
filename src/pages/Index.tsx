@@ -870,6 +870,29 @@ const Index = () => {
     notifyDisconnectedSelectedFeeds(t);
   }, [t]);
 
+  const isInteractionBlocked = !user || hasDisconnectedSelectedRelays;
+
+  const guardInteraction = useCallback((mode: "post" | "modify"): boolean => {
+    if (hasDisconnectedSelectedRelays) {
+      notifyModifyBlockedByDisconnectedFeeds();
+      return true;
+    }
+    if (!user) {
+      handleOpenAuthModal();
+      if (mode === "post") {
+        notifyNeedSigninPost(t);
+      } else {
+        notifyNeedSigninModify(t);
+      }
+      return true;
+    }
+    return false;
+  }, [handleOpenAuthModal, hasDisconnectedSelectedRelays, notifyModifyBlockedByDisconnectedFeeds, t, user]);
+
+  const handleBlockedInteractionAttempt = useCallback(() => {
+    guardInteraction("modify");
+  }, [guardInteraction]);
+
   const resolveTaskOriginRelay = useCallback((taskId: string) => {
     const task = allTasks.find((item) => item.id === taskId);
     const originRelayId = resolveOriginRelayIdForTask(task, DEMO_RELAY_ID);
@@ -883,13 +906,7 @@ const Index = () => {
   }, [allTasks, resolveRelayUrlsFromIds]);
 
   const handleToggleComplete = (taskId: string) => {
-    if (hasDisconnectedSelectedRelays) {
-      notifyModifyBlockedByDisconnectedFeeds();
-      return;
-    }
-    if (!user) {
-      handleOpenAuthModal();
-      notifyNeedSigninModify(t);
+    if (guardInteraction("modify")) {
       return;
     }
 
@@ -1007,13 +1024,7 @@ const Index = () => {
   }, [publishEvent, resolveTaskOriginRelay, t]);
 
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
-    if (hasDisconnectedSelectedRelays) {
-      notifyModifyBlockedByDisconnectedFeeds();
-      return;
-    }
-    if (!user) {
-      handleOpenAuthModal();
-      notifyNeedSigninModify(t);
+    if (guardInteraction("modify")) {
       return;
     }
 
@@ -1074,14 +1085,10 @@ const Index = () => {
     explicitMentionPubkeys: string[] = [],
     priority?: number
   ): Promise<TaskCreateResult> => {
-    if (hasDisconnectedSelectedRelays) {
-      notifyModifyBlockedByDisconnectedFeeds();
-      return { ok: false, reason: "relay-selection" };
-    }
-    if (!user) {
-      handleOpenAuthModal();
-      notifyNeedSigninPost(t);
-      return { ok: false, reason: "not-authenticated" };
+    if (guardInteraction("post")) {
+      return hasDisconnectedSelectedRelays
+        ? { ok: false, reason: "relay-selection" }
+        : { ok: false, reason: "not-authenticated" };
     }
     if (extractedTags.length === 0) {
       notifyNeedTag(t);
@@ -1376,8 +1383,7 @@ const Index = () => {
   }, []);
 
   const handleRetryFailedPublish = useCallback(async (draftId: string) => {
-    if (hasDisconnectedSelectedRelays) {
-      notifyModifyBlockedByDisconnectedFeeds();
+    if (guardInteraction("modify")) {
       return;
     }
     const draft = failedPublishDrafts.find((item) => item.id === draftId);
@@ -1446,8 +1452,7 @@ const Index = () => {
     notifyPublished(t, draft.taskType);
   }, [
     failedPublishDrafts,
-    hasDisconnectedSelectedRelays,
-    notifyModifyBlockedByDisconnectedFeeds,
+    guardInteraction,
     parseStoredDate,
     publishEvent,
     publishTaskDueUpdate,
@@ -1466,13 +1471,7 @@ const Index = () => {
     dueTime?: string,
     dateType: TaskDateType = "due"
   ) => {
-    if (hasDisconnectedSelectedRelays) {
-      notifyModifyBlockedByDisconnectedFeeds();
-      return;
-    }
-    if (!user) {
-      handleOpenAuthModal();
-      notifyNeedSigninModify(t);
+    if (guardInteraction("modify")) {
       return;
     }
     const existingTask = allTasks.find((task) => task.id === taskId);
@@ -1485,16 +1484,10 @@ const Index = () => {
       )
     );
     void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
-  }, [allTasks, handleOpenAuthModal, hasDisconnectedSelectedRelays, notifyModifyBlockedByDisconnectedFeeds, publishTaskDueUpdate, t, user]);
+  }, [allTasks, guardInteraction, publishTaskDueUpdate]);
 
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
-    if (hasDisconnectedSelectedRelays) {
-      notifyModifyBlockedByDisconnectedFeeds();
-      return;
-    }
-    if (!user) {
-      handleOpenAuthModal();
-      notifyNeedSigninModify(t);
+    if (guardInteraction("modify")) {
       return;
     }
     const existingTask = allTasks.find((task) => task.id === taskId);
@@ -1507,7 +1500,7 @@ const Index = () => {
       )
     );
     void publishTaskPriorityUpdate(taskId, priority);
-  }, [allTasks, handleOpenAuthModal, hasDisconnectedSelectedRelays, notifyModifyBlockedByDisconnectedFeeds, publishTaskPriorityUpdate, t, user]);
+  }, [allTasks, guardInteraction, publishTaskPriorityUpdate]);
 
   // Build relays with active state for sidebar display
   const relaysWithActiveState: Relay[] = useMemo(() => {
@@ -1602,8 +1595,8 @@ const Index = () => {
     composeGuideActivationSignal,
     onUpdateDueDate: handleDueDateChange,
     onUpdatePriority: handlePriorityChange,
-    isInteractionBlocked: hasDisconnectedSelectedRelays,
-    onInteractionBlocked: notifyModifyBlockedByDisconnectedFeeds,
+    isInteractionBlocked,
+    onInteractionBlocked: handleBlockedInteractionAttempt,
   };
 
   const renderView = () => {
@@ -1664,8 +1657,8 @@ const Index = () => {
           failedPublishDrafts={failedPublishDrafts}
           onRetryFailedPublish={handleRetryFailedPublish}
           onDismissFailedPublish={handleDismissFailedPublish}
-          isInteractionBlocked={hasDisconnectedSelectedRelays}
-          onInteractionBlocked={notifyModifyBlockedByDisconnectedFeeds}
+          isInteractionBlocked={isInteractionBlocked}
+          onInteractionBlocked={handleBlockedInteractionAttempt}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide
