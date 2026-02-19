@@ -6,6 +6,21 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-02-19
+Improved compose safety and metadata ergonomics, and expanded cross-view task depth controls.
+
+### Added
+- New relay-backed posts can be delayed briefly with an undo action before publish, and undo now restores the full compose draft state.
+- Kanban/Table depth controls now include a `Projects only` mode for root tasks that contain subtasks.
+
+### Changed
+- Included channel filters and selected people filters now populate compose as metadata-only chips instead of injecting hashtag/mention text into the message body.
+- Desktop view order now places Table before Calendar.
+
+### Fixed
+- Metadata-only compose chips now expose a clear hover remove affordance.
+- Table task-edit controls (status/date/priority) are now blocked when signed out, with signed-in guards on publish update handlers.
+
 ## [1.8.3] - 2026-02-19
 - Profile username validation now blocks names that match already-known usernames.
 - Hashtag metadata-only shortcut handling now accepts newly typed tags (desktop and mobile), and mobile `Alt+Enter` applies metadata-only tag insertion while typing hashtag tokens.

@@ -15,7 +15,7 @@
 - Views share the same relay/channel/people filter state.
 
 ## Navigation
-- Use the top view switcher to move between Tree, Feed, Kanban, Calendar, and Table.
+- Use the top view switcher to move between Tree, Feed, Kanban, Table, and Calendar.
 - Click a task to focus on that task context.
 - Use breadcrumb navigation (`All Tasks` / `Up` / parent path) to move through hierarchy.
 - In Kanban, use the Levels dropdown near search to switch hierarchy scope:
@@ -82,7 +82,9 @@
 - Compose text must include meaningful message content; hashtags/mentions alone are not sufficient.
 - Task/comment kind changes event behavior.
 - `#tags` and `@mentions` are supported in compose text.
-- Included channel filters automatically prepopulate compose with matching `#channel` tags.
+- Included channel filters are added to compose as metadata-only hashtag chips (without injecting `#channel` text).
+- Selected people filters are added to compose as metadata-only mention chips.
+- Relay-backed posts can use a short undo-send delay; undo restores the full compose draft state.
 - If posting from mobile with no selected/typed channel tag, the app shows immediate feedback instead of silently failing.
 - Task compose supports optional priority selection.
 - Next to the date picker, choose the date type: `Due`, `Scheduled`, `Start`, `End`, or `Milestone`.
