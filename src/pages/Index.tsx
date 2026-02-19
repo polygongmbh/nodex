@@ -93,6 +93,7 @@ import {
   setExclusiveChannelFilter,
 } from "@/lib/filter-state-utils";
 import { normalizeTaskType } from "@/lib/task-type";
+import { getConfiguredDefaultRelayIds } from "@/lib/default-relays";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus, ComposeRestoreRequest, ComposeRestoreState } from "@/types";
 import { toast } from "sonner";
@@ -180,9 +181,8 @@ const Index = () => {
     }));
   }, [ndkRelays]);
 
-  const TEST_RELAY_ID = "test-nostr-melonion-me";
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
-    loadPersistedRelayIds([TEST_RELAY_ID])
+    loadPersistedRelayIds(getConfiguredDefaultRelayIds())
   );
   const [people, setPeople] = useState<Person[]>([]);
   const [cachedKind0Events, setCachedKind0Events] = useState(() => loadCachedKind0Events());

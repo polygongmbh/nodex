@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Added Docker support (`Dockerfile` + `docker-compose.yml`) to run Nodex with an `rnostr` relay.
+- Default Nostr relays are now env-driven (`VITE_DEFAULT_RELAYS` and/or `VITE_DEFAULT_RELAY_DOMAIN` + protocol/port), removing hardcoded relay URLs from app defaults.
 
 ## [1.9.0] - 2026-02-19
 Improved compose safety and metadata ergonomics, and expanded cross-view task depth controls.

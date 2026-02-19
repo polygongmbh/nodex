@@ -1,0 +1,29 @@
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+ARG VITE_DEFAULT_RELAYS=""
+ARG VITE_DEFAULT_RELAY_DOMAIN=""
+ARG VITE_DEFAULT_RELAY_PROTOCOL=""
+ARG VITE_DEFAULT_RELAY_PORT=""
+
+ENV VITE_DEFAULT_RELAYS=${VITE_DEFAULT_RELAYS}
+ENV VITE_DEFAULT_RELAY_DOMAIN=${VITE_DEFAULT_RELAY_DOMAIN}
+ENV VITE_DEFAULT_RELAY_PROTOCOL=${VITE_DEFAULT_RELAY_PROTOCOL}
+ENV VITE_DEFAULT_RELAY_PORT=${VITE_DEFAULT_RELAY_PORT}
+
+RUN npm run build
+
+FROM nginx:1.27-alpine
+
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

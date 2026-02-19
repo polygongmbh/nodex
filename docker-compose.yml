@@ -1,0 +1,23 @@
+services:
+  rnostr:
+    image: ${RNOSTR_IMAGE:-fiatjaf/rnostr:latest}
+    container_name: nodex-rnostr
+    restart: unless-stopped
+    ports:
+      - "${RNOSTR_WS_PORT:-7447}:7447"
+
+  nodex:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_DEFAULT_RELAYS: ${VITE_DEFAULT_RELAYS:-}
+        VITE_DEFAULT_RELAY_DOMAIN: ${NOSTR_DOMAIN:-localhost}
+        VITE_DEFAULT_RELAY_PROTOCOL: ${NOSTR_RELAY_PROTOCOL:-ws}
+        VITE_DEFAULT_RELAY_PORT: ${RNOSTR_WS_PORT:-7447}
+    container_name: nodex-web
+    restart: unless-stopped
+    depends_on:
+      - rnostr
+    ports:
+      - "${NODEX_HTTP_PORT:-8080}:80"

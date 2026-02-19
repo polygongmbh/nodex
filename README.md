@@ -31,6 +31,22 @@ Build:
 npm run build
 ```
 
+## Docker + rnostr
+Create a local env file and start both services:
+
+```sh
+cp .env.example .env
+docker compose up --build
+```
+
+Key env values:
+- `NOSTR_DOMAIN`: domain or host where the relay is reachable by the browser (for example `localhost`).
+- `NOSTR_RELAY_PROTOCOL`: `ws` or `wss`.
+- `RNOSTR_WS_PORT`: websocket port exposed by `rnostr`.
+- `VITE_DEFAULT_RELAYS`: optional comma-separated relay URLs to include in addition to the domain-derived relay.
+
+Nodex now derives default relays from env only (`VITE_DEFAULT_RELAYS` and/or `VITE_DEFAULT_RELAY_DOMAIN` + protocol/port), with no hardcoded relay URLs in source.
+
 ## Tech Stack
 - Vite
 - TypeScript

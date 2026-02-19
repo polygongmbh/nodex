@@ -8,6 +8,7 @@ import {
   NostrEventWithRelay,
 } from "@/lib/nostr";
 import { signEvent, createUnsignedEvent } from "@/lib/nostr/utils";
+import { getConfiguredDefaultRelays } from "@/lib/default-relays";
 
 export interface NostrRelay {
   url: string;
@@ -33,10 +34,7 @@ export interface UseNostrReturn {
   clearEvents: () => void;
 }
 
-const DEFAULT_RELAYS = [
-  "wss://relay.damus.io",
-  "wss://relay.snort.social",
-];
+const DEFAULT_RELAYS = getConfiguredDefaultRelays();
 
 // Mock pubkey for local development (in production, use NIP-07 extension)
 const MOCK_PUBKEY = "0".repeat(64);

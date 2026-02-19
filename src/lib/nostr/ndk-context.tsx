@@ -23,6 +23,7 @@ import {
   buildPresenceTags,
 } from "@/lib/presence-status";
 import { buildDeterministicGuestName } from "@/lib/guest-name";
+import { getConfiguredDefaultRelays } from "@/lib/default-relays";
 
 // Authentication types
 export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | null;
@@ -80,10 +81,6 @@ export interface NDKContextValue {
 
 const NDKContext = createContext<NDKContextValue | null>(null);
 
-const DEFAULT_RELAYS = [
-  "wss://test.nostr.melonion.me",
-];
-
 // Storage keys
 const STORAGE_KEY_AUTH = "nostr_auth_method";
 const STORAGE_KEY_NSEC = "nostr_guest_nsec";
@@ -118,7 +115,7 @@ interface NDKProviderProps {
   defaultRelays?: string[];
 }
 
-export function NDKProvider({ children, defaultRelays = DEFAULT_RELAYS }: NDKProviderProps) {
+export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRelays() }: NDKProviderProps) {
   const [ndk, setNdk] = useState<NDK | null>(null);
   const [user, setUser] = useState<NostrUser | null>(null);
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
