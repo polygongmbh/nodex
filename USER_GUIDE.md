@@ -52,9 +52,11 @@
 
 ## Feed Filtering and Publishing
 - Feed filter controls determine which items are visible.
+- Feed chips show live connection state; selected disconnected feeds block posting/task edits until reconnected.
 - New root tasks require exactly one selected feed.
 - Subtasks, task-context comments, and task updates publish to the task's origin feed.
 - If only demo/local feed is selected, item is stored locally (demo flow).
+- In Relay Management, use debug utilities to copy relay diagnostics JSON or the configured relay URL list.
 
 ## Mobile Usage
 - The view navigation is at the top.
