@@ -535,6 +535,82 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("adds included channel filters as metadata-only hashtag chips", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    const channelsWithIncluded: Channel[] = [
+      { id: "backend", name: "backend", filterState: "included" },
+      { id: "design", name: "design", filterState: "neutral" },
+    ];
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channelsWithIncluded}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "Ship feature now" } });
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship feature now",
+        ["backend"],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined
+      );
+    });
+
+    expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("backend");
+  });
+
+  it("adds selected people as metadata-only mention chips", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    const selectedPeople: Person[] = [
+      {
+        ...people[0],
+        isSelected: true,
+      },
+    ];
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={selectedPeople}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "Ship #backend now" } });
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship #backend now",
+        ["backend"],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        ["f".repeat(64)],
+        undefined
+      );
+    });
+
+    expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
+  });
+
   it("renders parsed mention chips before hashtag chips", () => {
     render(
       <TaskComposer

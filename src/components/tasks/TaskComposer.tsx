@@ -96,7 +96,14 @@ export function TaskComposer({
 }: TaskComposerProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
-  const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
+  const includedChannels = channels
+    .filter((c) => c.filterState === "included")
+    .map((c) => c.name.trim().toLowerCase())
+    .filter(Boolean);
+  const selectedPeoplePubkeys = people
+    .filter((person) => person.isSelected)
+    .map((person) => person.id.trim().toLowerCase())
+    .filter((value) => /^[a-f0-9]{64}$/i.test(value));
   const initialDraft = draftStorageKey ? readComposeDraft(draftStorageKey) : null;
   const initialContent = initialDraft?.content ?? defaultContent;
   
@@ -156,7 +163,9 @@ export function TaskComposer({
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevIncludedChannelsRef = useRef<string[]>([]);
-  const autoManagedChannelsRef = useRef<Set<string>>(new Set());
+  const prevSelectedPeoplePubkeysRef = useRef<string[]>([]);
+  const autoManagedFilterTagNamesRef = useRef<Set<string>>(new Set());
+  const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
 
   const hasMention = (text: string, mention: string) => {
@@ -256,70 +265,60 @@ export function TaskComposer({
   }, [relays]);
 
   useEffect(() => {
-    const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const hasTag = (text: string, channelName: string) =>
-      new RegExp(`(^|\\s)#${escapeRegex(channelName)}(?=\\s|$)`, "i").test(text);
-    const appendTag = (text: string, channelName: string) =>
-      text + (text && !text.endsWith(" ") ? " " : "") + `#${channelName} `;
-    const removeTag = (text: string, channelName: string) => {
-      const tagPattern = new RegExp(`(^|\\s)#${escapeRegex(channelName)}(?=\\s|$)`, "gi");
-      const suffixHasOnlyTags = (suffix: string) => /^\s*(?:#\w+\s*)*$/.test(suffix);
-
-      let match: RegExpExecArray | null;
-      let updated = text;
-      let removedLengthOffset = 0;
-
-      while ((match = tagPattern.exec(text)) !== null) {
-        const fullMatch = match[0];
-        const leadingWhitespace = match[1] || "";
-        const start = match.index;
-        const end = start + fullMatch.length;
-        const suffix = text.slice(end);
-
-        if (!suffixHasOnlyTags(suffix)) {
-          continue;
-        }
-
-        const adjustedStart = start - removedLengthOffset;
-        const adjustedEnd = end - removedLengthOffset;
-        updated = updated.slice(0, adjustedStart) + leadingWhitespace + updated.slice(adjustedEnd);
-        removedLengthOffset += fullMatch.length - leadingWhitespace.length;
-      }
-
-      return updated.replace(/[ \t]{2,}/g, " ").replace(/^\s+/, "");
-    };
-
     const previous = new Set(prevIncludedChannelsRef.current);
     const next = new Set(includedChannels);
     const added = includedChannels.filter((name) => !previous.has(name));
     const removed = prevIncludedChannelsRef.current.filter((name) => !next.has(name));
 
-    if (added.length === 0 && removed.length === 0) {
-      return;
-    }
+    if (added.length === 0 && removed.length === 0) return;
 
-    setContent((previousContent) => {
-      let updated = previousContent;
-
-      for (const channelName of added) {
-        if (!hasTag(updated, channelName)) {
-          updated = appendTag(updated, channelName);
+    setExplicitTagNames((current) => {
+      const nextTags = [...current];
+      for (const tagName of added) {
+        if (!nextTags.includes(tagName)) {
+          nextTags.push(tagName);
         }
-        autoManagedChannelsRef.current.add(channelName);
+        autoManagedFilterTagNamesRef.current.add(tagName);
       }
-
-      for (const channelName of removed) {
-        if (autoManagedChannelsRef.current.has(channelName)) {
-          updated = removeTag(updated, channelName);
-          autoManagedChannelsRef.current.delete(channelName);
-        }
+      for (const tagName of removed) {
+        if (!autoManagedFilterTagNamesRef.current.has(tagName)) continue;
+        const index = nextTags.indexOf(tagName);
+        if (index >= 0) nextTags.splice(index, 1);
+        autoManagedFilterTagNamesRef.current.delete(tagName);
       }
-
-      return updated;
+      return nextTags;
     });
 
     prevIncludedChannelsRef.current = [...includedChannels];
   }, [includedChannels]);
+
+  useEffect(() => {
+    const previous = new Set(prevSelectedPeoplePubkeysRef.current);
+    const next = new Set(selectedPeoplePubkeys);
+    const added = selectedPeoplePubkeys.filter((pubkey) => !previous.has(pubkey));
+    const removed = prevSelectedPeoplePubkeysRef.current.filter((pubkey) => !next.has(pubkey));
+
+    if (added.length === 0 && removed.length === 0) return;
+
+    setExplicitMentionPubkeys((current) => {
+      const nextMentions = [...current];
+      for (const pubkey of added) {
+        if (!nextMentions.includes(pubkey)) {
+          nextMentions.push(pubkey);
+        }
+        autoManagedFilterMentionPubkeysRef.current.add(pubkey);
+      }
+      for (const pubkey of removed) {
+        if (!autoManagedFilterMentionPubkeysRef.current.has(pubkey)) continue;
+        const index = nextMentions.indexOf(pubkey);
+        if (index >= 0) nextMentions.splice(index, 1);
+        autoManagedFilterMentionPubkeysRef.current.delete(pubkey);
+      }
+      return nextMentions;
+    });
+
+    prevSelectedPeoplePubkeysRef.current = [...selectedPeoplePubkeys];
+  }, [selectedPeoplePubkeys]);
 
   const handleSubmit = async (submitType?: TaskType) => {
     if (!content.trim()) return;
@@ -367,19 +366,18 @@ export function TaskComposer({
     if (!result.ok) {
       return;
     }
-    const selectedChannelsContent = includedChannels.length > 0
-      ? `${includedChannels.map((channelName) => `#${channelName}`).join(" ")} `
-      : "";
-    setContent(selectedChannelsContent);
+    setContent("");
     prevIncludedChannelsRef.current = [...includedChannels];
-    autoManagedChannelsRef.current = new Set(includedChannels);
+    prevSelectedPeoplePubkeysRef.current = [...selectedPeoplePubkeys];
+    autoManagedFilterTagNamesRef.current = new Set(includedChannels);
+    autoManagedFilterMentionPubkeysRef.current = new Set(selectedPeoplePubkeys);
     setDueDate(undefined);
     setDueTime("");
     setDateType("due");
-    setExplicitTagNames([]);
-    setExplicitMentionPubkeys([]);
+    setExplicitTagNames([...includedChannels]);
+    setExplicitMentionPubkeys([...selectedPeoplePubkeys]);
     setPriority(undefined);
-    if (adaptiveSize && selectedChannelsContent.trim().length === 0) {
+    if (adaptiveSize) {
       setIsExpanded(false);
     }
     if (draftStorageKey) {

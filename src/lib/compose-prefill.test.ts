@@ -3,7 +3,7 @@ import { buildComposePrefillFromFiltersAndContext } from "./compose-prefill";
 import { makeChannel } from "@/test/fixtures";
 
 describe("buildComposePrefillFromFiltersAndContext", () => {
-  it("combines included filters and context tags without duplicates", () => {
+  it("uses context tags without duplicates", () => {
     const channels = [
       makeChannel({ id: "alpha", name: "alpha", filterState: "included" }),
       makeChannel({ id: "beta", name: "beta", filterState: "neutral" }),
@@ -11,7 +11,7 @@ describe("buildComposePrefillFromFiltersAndContext", () => {
     ];
 
     expect(buildComposePrefillFromFiltersAndContext(channels, ["gamma", "delta"])).toBe(
-      "#alpha #gamma #delta "
+      "#gamma #delta "
     );
   });
 

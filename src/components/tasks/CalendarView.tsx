@@ -897,12 +897,6 @@ export function CalendarView({
                     compact
                     allowComment={false}
                     defaultDueDate={selectedDate}
-                    defaultContent={(() => {
-                      const prefillChannels = new Set<string>();
-                      channels.filter(c => c.filterState === "included").forEach(c => prefillChannels.add(c.name));
-                      if (prefillChannels.size === 0) return "";
-                      return Array.from(prefillChannels).map(c => `#${c}`).join(" ") + " ";
-                    })()}
                   />
                 </div>
               )}

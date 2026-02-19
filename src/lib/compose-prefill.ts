@@ -5,10 +5,7 @@ export function buildComposePrefillFromFiltersAndContext(
   contextTags: string[] = []
 ): string {
   const prefillChannels = new Set<string>();
-
-  channels
-    .filter((channel) => channel.filterState === "included")
-    .forEach((channel) => prefillChannels.add(channel.name));
+  void channels;
 
   contextTags.forEach((tag) => prefillChannels.add(tag));
 
