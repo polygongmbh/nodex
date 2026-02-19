@@ -1,3 +1,5 @@
+import { ensureRelayProtocol, relayUrlToId as toRelayId, RelayProtocol } from "@/lib/relay-url";
+
 interface DefaultRelayEnv {
   VITE_DEFAULT_RELAYS?: string;
   VITE_DEFAULT_RELAY_DOMAIN?: string;
@@ -5,18 +7,12 @@ interface DefaultRelayEnv {
   VITE_DEFAULT_RELAY_PORT?: string;
 }
 
-function normalizeRelayUrl(raw: string, fallbackProtocol: "ws" | "wss"): string | null {
-  const trimmed = raw.trim().replace(/\/+$/, "");
-  if (!trimmed) return null;
-
-  if (trimmed.startsWith("ws://") || trimmed.startsWith("wss://")) {
-    return trimmed;
-  }
-
-  return `${fallbackProtocol}://${trimmed}`;
+function normalizeRelayUrl(raw: string, fallbackProtocol: RelayProtocol): string | null {
+  const normalized = ensureRelayProtocol(raw, fallbackProtocol);
+  return normalized || null;
 }
 
-function toRelayProtocol(value?: string): "ws" | "wss" {
+function toRelayProtocol(value?: string): RelayProtocol {
   return value?.trim().toLowerCase() === "ws" ? "ws" : "wss";
 }
 
@@ -47,7 +43,7 @@ export function getConfiguredDefaultRelays(): string[] {
 }
 
 export function relayUrlToId(url: string): string {
-  return url.replace(/\/+$/, "").replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-");
+  return toRelayId(url);
 }
 
 export function getConfiguredDefaultRelayIds(): string[] {

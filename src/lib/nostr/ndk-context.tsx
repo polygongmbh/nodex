@@ -24,6 +24,7 @@ import {
 } from "@/lib/presence-status";
 import { buildDeterministicGuestName } from "@/lib/guest-name";
 import { getConfiguredDefaultRelays } from "@/lib/default-relays";
+import { isRelayUrl } from "@/lib/relay-url";
 
 // Authentication types
 export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | null;
@@ -490,7 +491,7 @@ export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRela
   const addRelay = useCallback((url: string) => {
     if (!ndk) return;
     
-    if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
+    if (!isRelayUrl(url)) {
       console.error("Invalid relay URL");
       return;
     }

@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
+import { ensureRelayProtocol, stripRelayProtocol } from "@/lib/relay-url";
 import { useTranslation } from "react-i18next";
 
 interface RelayManagementProps {
@@ -33,10 +34,7 @@ export function RelayManagement({
   const handleAddRelay = () => {
     if (!newRelayUrl.trim()) return;
     
-    let url = newRelayUrl.trim();
-    if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
-      url = `wss://${url}`;
-    }
+    const url = ensureRelayProtocol(newRelayUrl, "wss");
     
     onAddRelay(url);
     setNewRelayUrl("");
@@ -132,7 +130,7 @@ export function RelayManagement({
                   {/* Relay info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-mono truncate text-foreground">
-                      {relay.url.replace("wss://", "").replace("ws://", "")}
+                      {stripRelayProtocol(relay.url)}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       {getStatusIcon(relay.status)}

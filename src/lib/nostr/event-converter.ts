@@ -8,6 +8,7 @@ import {
 } from "@/lib/nostr/task-property-events";
 import { parseLinkedTaskDueFromCalendarEvent } from "./task-calendar-events";
 import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
+import { relayUrlToId, relayUrlToName } from "@/lib/relay-url";
 
 // Spam keywords for basic filtering
 const SPAM_KEYWORDS = [
@@ -31,18 +32,12 @@ export function isSpamContent(content: string): boolean {
 
 // Generate relay ID from URL - must match the ID generation in Index.tsx
 export function getRelayIdFromUrl(url: string): string {
-  return url.replace(/\/+$/, "").replace("wss://", "").replace("ws://", "").replace(/[./]/g, "-");
+  return relayUrlToId(url);
 }
 
 // Generate relay display name from URL - trim common prefixes
 export function getRelayNameFromUrl(url: string): string {
-  const stripped = url.replace("wss://", "").replace("ws://", "");
-  // Remove common prefixes like relay., nostr., etc.
-  return stripped
-    .replace(/^relay\./, "")
-    .replace(/^nostr\./, "")
-    .replace(/^nos\./, "")
-    .split(".")[0];
+  return relayUrlToName(url);
 }
 
 // Generate a display name from pubkey

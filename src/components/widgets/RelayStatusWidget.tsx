@@ -3,6 +3,7 @@ import { Radio, WifiOff, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { RelayManagement } from "@/components/relay/RelayManagement";
+import { stripRelayProtocol } from "@/lib/relay-url";
 import { useTranslation } from "react-i18next";
 
 interface RelayStatusWidgetProps {
@@ -53,7 +54,7 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-foreground truncate font-mono">
-                  {relay.url.replace("wss://", "").replace("ws://", "")}
+                  {stripRelayProtocol(relay.url)}
                 </p>
               </div>
               {relay.status === "connected" ? (
