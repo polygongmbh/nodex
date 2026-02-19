@@ -662,11 +662,22 @@ const Index = () => {
     const normalizedTag = tag.trim().toLowerCase();
     if (!normalizedTag) return;
 
+    const existsInSidebar = channels.some((ch) => ch.name.toLowerCase() === normalizedTag);
+
+    // If the tag isn't in the sidebar yet, add it via postedTags so deriveChannels includes it
+    if (!existsInSidebar) {
+      setPostedTags((prev) => Array.from(new Set([...prev, normalizedTag])));
+    }
+
+    // Use a functional updater that works with the potentially-updated channels list.
+    // Since postedTags triggers a re-derive of channels, we set the filter state
+    // keyed by the normalizedTag id directly.
     setChannelFilterStates(() => {
-      return setExclusiveChannelFilter(
-        channels,
-        channels.find((channel) => channel.name.toLowerCase() === normalizedTag)?.id || ""
-      );
+      const channelId = channels.find((ch) => ch.name.toLowerCase() === normalizedTag)?.id || normalizedTag;
+      const allChannels = existsInSidebar
+        ? channels
+        : [...channels, { id: normalizedTag, name: normalizedTag, filterState: "neutral" as const }];
+      return setExclusiveChannelFilter(allChannels, channelId);
     });
 
     toast.success(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
