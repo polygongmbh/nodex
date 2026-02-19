@@ -1436,7 +1436,7 @@ const Index = () => {
       case "calendar":
         return <CalendarView {...viewProps} />;
       case "list":
-        return <ListView {...viewProps} />;
+        return <ListView {...viewProps} depthMode={kanbanDepthMode} />;
       default:
         return <TaskTree {...viewProps} />;
     }
@@ -1551,7 +1551,7 @@ const Index = () => {
         <DesktopSearchDock
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          showKanbanLevels={currentView === "kanban"}
+          showKanbanLevels={currentView === "kanban" || currentView === "list"}
           kanbanDepthMode={kanbanDepthMode}
           onKanbanDepthModeChange={setKanbanDepthMode}
         />

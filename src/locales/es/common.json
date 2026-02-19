@@ -498,6 +498,8 @@
       "depthHint": "Filtro de profundidad Kanban: tareas raíz, profundidad limitada, todos los niveles o solo hojas (tareas sin subtareas)",
       "topLevel": "Nivel superior",
       "topLevelHint": "Mostrar solo tareas raíz (sin tarea padre)",
+      "projectsOnly": "Solo proyectos",
+      "projectsOnlyHint": "Mostrar solo tareas raíz que contienen subtareas",
       "levels": "{{count}} niveles",
       "levelsHint": "Mostrar tareas hasta {{count}} niveles de profundidad",
       "allLevels": "Todos los niveles",

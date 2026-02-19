@@ -1,4 +1,4 @@
-import { Search, Layers, Leaf, CircleDot, Workflow, Network } from "lucide-react";
+import { Search, Layers, Leaf, CircleDot, Workflow, Network, FolderOpen } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 
-export type KanbanDepthMode = "1" | "2" | "3" | "all" | "leaves";
+export type KanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
 interface DesktopSearchDockProps {
   searchQuery: string;
@@ -57,6 +57,12 @@ export function DesktopSearchDock({
                   <span className="flex items-center gap-1">
                     <CircleDot className="w-3 h-3" />
                     {t("search.kanban.topLevel")}
+                  </span>
+                </SelectItem>
+                <SelectItem value="projects" title={t("search.kanban.projectsOnlyHint")}>
+                  <span className="flex items-center gap-1">
+                    <FolderOpen className="w-3 h-3" />
+                    {t("search.kanban.projectsOnly")}
                   </span>
                 </SelectItem>
                 <SelectItem value="2" title={t("search.kanban.levelsHint", { count: 2 })}>

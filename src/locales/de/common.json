@@ -498,6 +498,8 @@
       "depthHint": "Kanban-Tiefenfilter: Root-Aufgaben, begrenzte Tiefe, alle Ebenen oder nur Blätter (Aufgaben ohne Unteraufgaben)",
       "topLevel": "Oberste Ebene",
       "topLevelHint": "Nur Root-Aufgaben anzeigen (ohne übergeordnete Aufgabe)",
+      "projectsOnly": "Nur Projekte",
+      "projectsOnlyHint": "Nur Root-Aufgaben mit Unteraufgaben anzeigen",
       "levels": "{{count}} Ebenen",
       "levelsHint": "Aufgaben bis zu {{count}} Hierarchieebenen anzeigen",
       "allLevels": "Alle Ebenen",

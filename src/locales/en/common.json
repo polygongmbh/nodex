@@ -498,6 +498,8 @@
       "depthHint": "Kanban depth filter: root tasks, limited-depth tasks, all levels, or leaves only (tasks with no subtasks)",
       "topLevel": "Top-level",
       "topLevelHint": "Show only root tasks (no parent task)",
+      "projectsOnly": "Projects only",
+      "projectsOnlyHint": "Show only root tasks that contain subtasks",
       "levels": "{{count}} levels",
       "levelsHint": "Show tasks up to {{count}} hierarchy levels deep",
       "allLevels": "All levels",

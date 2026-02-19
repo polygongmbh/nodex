@@ -16,6 +16,7 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
+import type { KanbanDepthMode } from "./DesktopSearchDock";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +39,7 @@ interface ListViewProps {
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
+  depthMode?: KanbanDepthMode;
   onSearchChange: (query: string) => void;
   onNewTask: (
     content: string,
@@ -121,6 +123,7 @@ export function ListView({
   people,
   currentUser,
   searchQuery,
+  depthMode = "leaves",
   onNewTask,
   onToggleComplete,
   onStatusChange,
@@ -204,6 +207,16 @@ export function ListView({
     return ids;
   };
 
+  const hasChildren = useCallback((taskId: string): boolean => {
+    return allTasks.some((task) => task.taskType === "task" && task.parentId === taskId);
+  }, [allTasks]);
+
+  const getDepth = useCallback((taskId: string): number => {
+    const task = allTasks.find((candidate) => candidate.id === taskId);
+    if (!task?.parentId) return 1;
+    return 1 + getDepth(task.parentId);
+  }, [allTasks]);
+
   // Get full ancestor chain for a task
   const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
     const chain: { id: string; text: string }[] = [];
@@ -262,6 +275,22 @@ export function ListView({
           return false;
         }
       }
+
+      // Apply shared depth mode (kept in sync with Kanban selector).
+      const depth = focusedTaskId
+        ? getDepth(task.id) - getDepth(focusedTaskId)
+        : getDepth(task.id);
+
+      if (depthMode === "leaves") {
+        return !hasChildren(task.id);
+      }
+      if (depthMode === "projects") {
+        return !task.parentId && hasChildren(task.id);
+      }
+      if (depthMode !== "all") {
+        const maxDepth = parseInt(depthMode);
+        return depth <= maxDepth;
+      }
       
       return true;
     });
@@ -304,7 +333,7 @@ export function ListView({
 
     return filtered;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, sortField, sortDirection, focusedTaskId, sortContext, sortVersion]);
+  }, [allTasks, depthMode, excludedChannels, filteredTaskIds, focusedTaskId, getDepth, hasChildren, includedChannels, searchQuery, sortContext, sortDirection, sortField, sortVersion]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {

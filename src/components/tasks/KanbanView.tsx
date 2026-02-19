@@ -188,6 +188,9 @@ export function KanbanView({
       if (depthMode === "leaves") {
         // Only show leaf tasks (no children)
         return !hasChildren(task.id);
+      } else if (depthMode === "projects") {
+        // Root tasks that act as project containers.
+        return !task.parentId && hasChildren(task.id);
       } else if (depthMode !== "all") {
         const maxDepth = parseInt(depthMode);
         return depth <= maxDepth;
