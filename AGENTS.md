@@ -179,6 +179,7 @@ policies:
   release:
     bump_from_commit_types:
       fix: patch
+      enhance: patch
       feat: minor
       breaking_change: major
 ```
@@ -209,7 +210,7 @@ policies:
 - Make atomic commits that build individually and stay coherent.
 - You may amend commits with corrections if they are not yet pushed.
 - If a commit only fixes the immediately previous local commit, squash it before handoff.
-- Use Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`).
+- Use Conventional Commits (`feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`).
 - Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) changed.
 
 ### Changelog Discipline
@@ -273,7 +274,7 @@ When asked to create a plan to fix or implement something:
 - omit cosmetic-only low-level details unless asked
 - update `package.json` version semantically based on pending changes
 - apply semantic bump examples:
-  - patch: `1.4.2 -> 1.4.3` for `fix:` only
+  - patch: `1.4.2 -> 1.4.3` for `fix:`/`enhance:` only
   - minor: `1.4.2 -> 1.5.0` when at least one `feat:` exists and no breaking change exists
   - major: `1.4.2 -> 2.0.0` for breaking change (`feat!:`/`fix!:` or `BREAKING CHANGE:`)
 - update `CHANGELOG.md`
