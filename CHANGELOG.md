@@ -6,6 +6,16 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.7.2] - 2026-02-19
+### Changed
+- Refined table view responsive layout to prioritize task-text readability by reducing metadata pressure across desktop breakpoints.
+- Composer date/time and priority controls now use tighter sizing for denser desktop composition.
+- Table tags column now scales more smoothly with viewport width and gets an immediate larger allocation at `2xl` while continuing to grow on wider screens.
+
+### Fixed
+- Table date-type labels in the date column now use localized strings instead of hardcoded English labels.
+- Theme token and sizing-unit consistency was improved across UI surfaces by reducing hardcoded color and measurement drift.
+
 ## [1.7.1] - 2026-02-18
 - Mobile quick-filter search now falls back to showing all tasks when there are no matches, with an inline indicator.
 - Guide auto-start is now suppressed when opening the app directly into a focused subtask URL.
