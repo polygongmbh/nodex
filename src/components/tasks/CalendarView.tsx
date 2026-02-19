@@ -917,11 +917,12 @@ export function CalendarView({
                     const isLockedUntilStart = isTaskLockedUntilStart(task);
                    
                     return (
-                      <div
+                        <div
                         key={task.id}
                         data-task-id={task.id}
+                        onClick={() => onFocusTask?.(task.id)}
                         className={cn(
-                          "p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card hover:bg-muted/50 transition-colors",
+                          "p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card hover:bg-muted/50 transition-colors cursor-pointer",
                           task.status === "done" && "opacity-60",
                           isLockedUntilStart && "opacity-50 grayscale"
                         )}
@@ -1044,12 +1045,10 @@ export function CalendarView({
                           </DropdownMenu>
                           <div className="flex-1 min-w-0">
                             <p
-                              onClick={() => onFocusTask?.(task.id)}
                               className={cn(
-                                `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
+                                "text-sm",
                                 task.status === "done" && "line-through text-muted-foreground"
                               )}
-                              title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
                             >
                               {linkifyContent(task.content, onHashtagClick, {
                                 plainHashtags: task.status === "done",

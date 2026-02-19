@@ -365,8 +365,9 @@ export function FeedView({
               <div
                 key={task.id}
                 data-task-id={task.id}
+                onClick={() => onFocusTask?.(task.id)}
                 className={cn(
-                  "border-b border-border p-4 hover:bg-card/50 transition-colors",
+                  "border-b border-border p-4 hover:bg-card/50 transition-colors cursor-pointer",
                   isMobile && "p-3",
                   task.status === "done" && "opacity-60",
                   isLockedUntilStart && "opacity-50 grayscale",
@@ -574,12 +575,10 @@ export function FeedView({
 
                     {/* Clickable content to focus */}
                     <p
-                      onClick={() => onFocusTask?.(task.id)}
                       className={cn(
-                        `text-sm leading-relaxed cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
+                        "text-sm leading-relaxed",
                         task.status === "done" && "line-through text-muted-foreground"
                       )}
-                      title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
                     >
                       {linkifyContent(task.content, onHashtagClick, {
                         plainHashtags: task.status === "done",
