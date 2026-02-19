@@ -811,7 +811,7 @@ export function TaskComposer({
       {/* Due date for tasks */}
       {showExpandedControls && taskType === "task" && (
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex min-w-[5.5rem] items-center gap-2 rounded-xl border border-border/40 bg-muted/40 px-2 py-1.5">
+          <div className="inline-flex min-w-[5.5rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Flag className="h-4 w-4 text-muted-foreground" />
             <select
               aria-label={t("composer.labels.priority")}
@@ -836,7 +836,7 @@ export function TaskComposer({
             </select>
           </div>
 
-          <div className="inline-flex min-w-[20rem] items-center gap-2 rounded-xl border border-border/40 bg-muted/40 px-2 py-1.5">
+          <div className="inline-flex min-w-[20rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <select
               aria-label={t("composer.labels.dateType")}
