@@ -15,8 +15,8 @@ export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
     { id: "tree", label: t("navigation.views.tree"), icon: <GitBranch className="w-4 h-4 xl:w-5 xl:h-5" /> },
     { id: "feed", label: t("navigation.views.feed"), icon: <LayoutList className="w-4 h-4 xl:w-5 xl:h-5" /> },
     { id: "kanban", label: t("navigation.views.kanban"), icon: <Columns3 className="w-4 h-4 xl:w-5 xl:h-5" /> },
-    { id: "calendar", label: t("navigation.views.calendar"), icon: <Calendar className="w-4 h-4 xl:w-5 xl:h-5" /> },
     { id: "list", label: t("navigation.views.list"), icon: <List className="w-4 h-4 xl:w-5 xl:h-5" /> },
+    { id: "calendar", label: t("navigation.views.calendar"), icon: <Calendar className="w-4 h-4 xl:w-5 xl:h-5" /> },
   ];
 
   return (

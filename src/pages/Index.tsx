@@ -98,7 +98,7 @@ import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatu
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
-const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
+const validViews: ViewType[] = ["tree", "feed", "kanban", "list", "calendar"];
 
 // Default Nostr relays - these are managed by NDKProvider in App.tsx
 
