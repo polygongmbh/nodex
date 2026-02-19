@@ -134,6 +134,31 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(textarea.value).toBe("#it ");
   });
 
+  it("prefers prefix hashtag matches over non-prefix matches", () => {
+    const rankingChannels: Channel[] = [
+      { id: "xac", name: "xac", filterState: "neutral" },
+      { id: "accounting", name: "accounting", filterState: "neutral" },
+    ];
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={rankingChannels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: { value: "#ac", selectionStart: 3 },
+    });
+
+    fireEvent.keyDown(textarea, { key: "Enter" });
+
+    expect(textarea.value).toBe("#accounting ");
+  });
+
   it("adds hashtag tags via modifier+Enter without inserting hashtag text", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(

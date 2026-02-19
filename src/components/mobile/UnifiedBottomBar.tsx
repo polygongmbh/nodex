@@ -98,6 +98,7 @@ export function UnifiedBottomBar({
   const [dueTime, setDueTime] = useState("");
   const [dateType, setDateType] = useState<TaskDateType>("due");
   const [priority, setPriority] = useState<number | undefined>(undefined);
+  const [explicitTagNames, setExplicitTagNames] = useState<string[]>([]);
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomBarRef = useRef<HTMLDivElement | null>(null);
@@ -309,8 +310,9 @@ export function UnifiedBottomBar({
   const handleSubmit = async (submitType: "task" | "comment" = "task") => {
     if (!sharedText.trim()) return;
     if (!hasMeaningfulComposerText(sharedText)) return;
-    const extractedChannels = sharedText.match(/#(\w+)/g)?.map(t => t.slice(1)) || [];
-    if (extractedChannels.length === 0) {
+    const extractedChannels = sharedText.match(/#(\w+)/g)?.map((token) => token.slice(1).toLowerCase()) || [];
+    const submitChannels = Array.from(new Set([...extractedChannels, ...explicitTagNames]));
+    if (submitChannels.length === 0) {
       toast.error(t("toasts.errors.needTag"));
       return;
     }
@@ -324,7 +326,7 @@ export function UnifiedBottomBar({
     try {
       result = await Promise.resolve(onSubmit(
         sharedText,
-        extractedChannels,
+        submitChannels,
         relayIds,
         submitType,
         dueDate,
@@ -342,7 +344,10 @@ export function UnifiedBottomBar({
       return;
     }
     const hashtagOnlyContent = Array.from(
-      new Set((sharedText.match(/#(\w+)/g) || []).map((tag) => tag.toLowerCase()))
+      new Set([
+        ...(sharedText.match(/#(\w+)/g) || []).map((tag) => tag.toLowerCase()),
+        ...explicitTagNames.map((tag) => `#${tag.toLowerCase()}`),
+      ])
     ).join(" ");
     setSharedText(hashtagOnlyContent);
     onSearchChange(hashtagOnlyContent);
@@ -352,6 +357,7 @@ export function UnifiedBottomBar({
     setDueTime("");
     setDateType("due");
     setPriority(undefined);
+    setExplicitTagNames([]);
     setExplicitMentionPubkeys([]);
     setActiveSelector(null);
   };
@@ -378,7 +384,7 @@ export function UnifiedBottomBar({
   const hasInvalidRootTaskRelaySelection = !focusedTaskId && activeRelayIds.length !== 1;
   const hasComposeText = sharedText.trim().length > 0;
   const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
-  const hasAtLeastOneTag = (sharedText.match(/#(\w+)/g)?.length || 0) > 0;
+  const hasAtLeastOneTag = ((sharedText.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
   const taskSubmitBlockedReason = !isSignedIn
     ? t("composer.blocked.signin")
     : !hasMeaningfulComposeText
@@ -391,6 +397,8 @@ export function UnifiedBottomBar({
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
+  const hasKnownChannelName = (tagName: string) =>
+    channels.some((channel) => channel.name.toLowerCase() === tagName.toLowerCase());
 
   useEffect(() => {
     if (taskSubmitBlockedReason && activeSelector === "date") {
@@ -499,6 +507,42 @@ export function UnifiedBottomBar({
     setShowMentionSuggestions(false);
     setActiveMentionIndex(0);
     setMentionFilter("");
+  };
+
+  const addHashtagTagOnly = (tagName: string) => {
+    const normalizedTag = tagName.trim().toLowerCase();
+    if (!normalizedTag) {
+      return;
+    }
+
+    setExplicitTagNames((previous) =>
+      previous.includes(normalizedTag) ? previous : [...previous, normalizedTag]
+    );
+
+    const cursorPos = cursorPositionRef.current;
+    const textBeforeCursor = sharedText.slice(0, cursorPos);
+    const hashtagStartFromCursor = textBeforeCursor.lastIndexOf("#");
+    const hashtagStart = hashtagStartFromCursor >= 0 ? hashtagStartFromCursor : sharedText.lastIndexOf("#");
+    if (hashtagStart < 0) {
+      return;
+    }
+
+    let hashtagEnd = hashtagStart + 1;
+    while (hashtagEnd < sharedText.length && !/\s/.test(sharedText[hashtagEnd])) {
+      hashtagEnd += 1;
+    }
+
+    const newText = (sharedText.slice(0, hashtagStart) + sharedText.slice(hashtagEnd))
+      .replace(/[ \t]{2,}/g, " ");
+    setSharedText(newText);
+    onSearchChange(newText);
+    setTimeout(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      textarea.setSelectionRange(hashtagStart, hashtagStart);
+      cursorPositionRef.current = hashtagStart;
+    }, 0);
   };
 
   return (
@@ -806,6 +850,19 @@ export function UnifiedBottomBar({
                   onSearchChange(value);
                 }}
                 onKeyDown={(e) => {
+                  if (e.key === "Enter" && e.altKey) {
+                    const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPositionRef.current;
+                    const textBeforeCursor = sharedText.slice(0, effectiveCursor);
+                    const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
+                    if (hashtagMatch || /#\w*$/.test(textBeforeCursor)) {
+                      const tagName = (hashtagMatch?.[1] || "").trim().toLowerCase();
+                      if (tagName && !hasKnownChannelName(tagName)) {
+                        e.preventDefault();
+                        addHashtagTagOnly(tagName);
+                        return;
+                      }
+                    }
+                  }
                   if (showMentionSuggestions && filteredPeople.length > 0) {
                     if (e.key === "ArrowDown") {
                       e.preventDefault();

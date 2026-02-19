@@ -397,6 +397,10 @@ export function TaskComposer({
       const bExact = bName === normalizedHashtagFilter ? 1 : 0;
       if (aExact !== bExact) return bExact - aExact;
 
+      const aPrefix = aName.startsWith(normalizedHashtagFilter) ? 1 : 0;
+      const bPrefix = bName.startsWith(normalizedHashtagFilter) ? 1 : 0;
+      if (aPrefix !== bPrefix) return bPrefix - aPrefix;
+
       if (aName.length !== bName.length) return aName.length - bName.length;
 
       const aIndex = aName.indexOf(normalizedHashtagFilter);

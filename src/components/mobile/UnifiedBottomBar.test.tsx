@@ -629,4 +629,48 @@ describe("UnifiedBottomBar auth gating", () => {
       undefined
     );
   });
+
+  it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSearchChange = vi.fn();
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={onSearchChange}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const draft = "Ship #brandnew";
+    fireEvent.change(field, { target: { value: draft, selectionStart: draft.length } });
+
+    fireEvent.keyDown(field, { key: "Enter", altKey: true });
+    await waitFor(() => {
+      expect(field.value).toBe("Ship ");
+    });
+    expect(onSearchChange).toHaveBeenLastCalledWith("Ship ");
+
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      "Ship ",
+      ["brandnew"],
+      ["demo"],
+      "task",
+      undefined,
+      undefined,
+      "due",
+      [],
+      undefined
+    );
+  });
 });
