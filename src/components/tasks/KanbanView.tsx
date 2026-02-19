@@ -522,7 +522,7 @@ export function KanbanView({
                                   {/* Content */}
                                   <p
                                     className={cn(
-                                      "text-sm leading-relaxed",
+                                      `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
                                       task.status === "done" && "line-through text-muted-foreground"
                                     )}
                                   >
