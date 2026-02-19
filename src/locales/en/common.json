@@ -566,7 +566,14 @@
     "managementTitle": "Relay Management",
     "placeholder": "wss://relay.example.com",
     "noneConfigured": "No relays configured",
-    "connectedSummary": "{{connectedCount}} of {{totalCount}} relays connected"
+    "connectedSummary": "{{connectedCount}} of {{totalCount}} relays connected",
+    "debugTitle": "Debug utilities",
+    "debugSummary": "connected {{connected}} · connecting {{connecting}} · disconnected {{disconnected}} · error {{error}}",
+    "copyDebug": "Copy diagnostics",
+    "copyUrls": "Copy relay URLs",
+    "debugCopied": "Relay diagnostics copied",
+    "urlsCopied": "Relay URLs copied",
+    "copyFailed": "Could not copy relay debug data"
   },
   "tasks": {
     "task": "Task",

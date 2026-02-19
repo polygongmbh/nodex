@@ -1,8 +1,9 @@
-import { useState, ReactNode } from "react";
-import { Radio, Plus, X, Wifi, WifiOff, Loader2, AlertCircle } from "lucide-react";
+import { useMemo, useState, ReactNode } from "react";
+import { Radio, Plus, X, Wifi, WifiOff, Loader2, AlertCircle, ClipboardList, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,30 @@ export function RelayManagement({
   };
 
   const connectedCount = relays.filter((r) => r.status === "connected").length;
+  const connectingCount = relays.filter((r) => r.status === "connecting").length;
+  const disconnectedCount = relays.filter((r) => r.status === "disconnected").length;
+  const errorCount = relays.filter((r) => r.status === "error").length;
+  const relayUrls = useMemo(() => relays.map((relay) => relay.url).join("\n"), [relays]);
+  const relayDiagnostics = useMemo(() => JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    counts: {
+      total: relays.length,
+      connected: connectedCount,
+      connecting: connectingCount,
+      disconnected: disconnectedCount,
+      error: errorCount,
+    },
+    relays,
+  }, null, 2), [connectedCount, connectingCount, disconnectedCount, errorCount, relays]);
+
+  const copyText = async (value: string, successMessage: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(successMessage);
+    } catch {
+      toast.error(t("relay.copyFailed"));
+    }
+  };
 
   const getStatusIcon = (status: NDKRelayStatus["status"]) => {
     switch (status) {
@@ -158,10 +183,43 @@ export function RelayManagement({
           </div>
 
           {/* Status summary */}
-          <div className="pt-2 border-t border-border">
+          <div className="pt-2 border-t border-border space-y-3">
             <p className="text-xs text-muted-foreground text-center">
               {t("relay.connectedSummary", { connectedCount, totalCount: relays.length })}
             </p>
+            <div className="rounded-md border border-border/60 bg-muted/20 p-2">
+              <p className="text-xs font-medium text-foreground">{t("relay.debugTitle")}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {t("relay.debugSummary", {
+                  connected: connectedCount,
+                  connecting: connectingCount,
+                  disconnected: disconnectedCount,
+                  error: errorCount,
+                })}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => void copyText(relayDiagnostics, t("relay.debugCopied"))}
+                >
+                  <ClipboardList className="mr-1 h-3.5 w-3.5" />
+                  {t("relay.copyDebug")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => void copyText(relayUrls, t("relay.urlsCopied"))}
+                >
+                  <Link2 className="mr-1 h-3.5 w-3.5" />
+                  {t("relay.copyUrls")}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </DialogContent>

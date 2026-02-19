@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Selected feeds now show live connection state in sidebar/mobile feed lists, including a not-active indicator.
 - Task/post mutations are blocked while any selected non-demo feed is disconnected, with warning toasts on blocked attempts.
 - Toast styling now distinguishes `info`, `warning`, and `error` variants more clearly.
+- Relay Management now includes debug utilities to copy relay diagnostics JSON and configured relay URLs.
 
 ## [1.10.0] - 2026-02-19
 Added containerized local relay runtime setup and consolidated internal compose/relay state handling.

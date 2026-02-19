@@ -566,7 +566,14 @@
     "managementTitle": "Gestión de relays",
     "placeholder": "wss://relay.example.com",
     "noneConfigured": "No hay relays configurados",
-    "connectedSummary": "{{connectedCount}} de {{totalCount}} relays conectados"
+    "connectedSummary": "{{connectedCount}} de {{totalCount}} relays conectados",
+    "debugTitle": "Utilidades de depuración",
+    "debugSummary": "conectados {{connected}} · conectando {{connecting}} · desconectados {{disconnected}} · error {{error}}",
+    "copyDebug": "Copiar diagnóstico",
+    "copyUrls": "Copiar URLs de relay",
+    "debugCopied": "Diagnóstico de relays copiado",
+    "urlsCopied": "URLs de relay copiadas",
+    "copyFailed": "No se pudieron copiar los datos de depuración de relay"
   },
   "tasks": {
     "task": "Tarea",
