@@ -16,7 +16,7 @@
       "signin": "Anmeldung erforderlich",
       "write": "Schreibe zuerst eine Nachricht",
       "tag": "Mindestens einen #channel hinzufügen",
-      "relay": "Wähle ein einzelnes Relay oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
+      "relay": "Wähle einen einzelnen Feed oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
       "publishing": "Wird veröffentlicht..."
     },
     "actions": {
@@ -62,14 +62,14 @@
       "needSigninPost": "Anmeldung zum Veröffentlichen erforderlich",
       "needSigninModify": "Anmeldung zum Ändern von Aufgaben erforderlich",
       "statusRestricted": "Status-Updates sind auf zugewiesene Nutzer beschränkt",
-      "selectRelayOrParent": "Wähle ein einzelnes Relay oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
+      "selectRelayOrParent": "Wähle einen einzelnen Feed oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
       "publishStatusFailed": "Status-Update konnte nicht an Relays veröffentlicht werden",
       "publishDateFailed": "Datums-Update konnte nicht an Relay veröffentlicht werden",
       "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay veröffentlicht werden",
       "taskCreationFailed": "Aufgabe konnte nicht erstellt werden. Bitte versuche es erneut.",
       "publishSavedForRetry": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert",
-      "retryRelayMissing": "Erneuter Versuch fehlgeschlagen: Relay ist nicht mehr konfiguriert",
-      "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Relay nicht akzeptiert"
+      "retryRelayMissing": "Erneuter Versuch fehlgeschlagen: Feed ist nicht mehr konfiguriert",
+      "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Feed nicht akzeptiert"
     },
     "success": {
       "publishedTask": "Aufgabe an Nostr veröffentlicht und lokal hinzugefügt",
@@ -77,11 +77,11 @@
       "localTask": "Aufgabe lokal hinzugefügt (nur Demo)",
       "localComment": "Kommentar lokal hinzugefügt (nur Demo)",
       "publishUndone": "Beitrag vor dem Senden zurückgenommen",
-      "relayFilterEnabled": "Relay-Filter {{relayName}} aktiviert",
-      "relayFilterDisabled": "Relay-Filter {{relayName}} deaktiviert",
-      "showingOnlyRelay": "Nur Relay {{relayName}} wird angezeigt",
-      "relayFiltersCleared": "Alle Relay-Filter gelöscht",
-      "allRelaysSelected": "Alle Relays ausgewählt",
+      "relayFilterEnabled": "Feed-Filter {{relayName}} aktiviert",
+      "relayFilterDisabled": "Feed-Filter {{relayName}} deaktiviert",
+      "showingOnlyRelay": "Nur Feed {{relayName}} wird angezeigt",
+      "relayFiltersCleared": "Alle Feed-Filter gelöscht",
+      "allRelaysSelected": "Alle Feeds ausgewählt",
       "showingOnlyChannel": "Nur #{{channelName}} wird angezeigt",
       "allChannelsIncluded": "Alle Kanäle eingeschlossen",
       "allChannelsReset": "Alle Kanäle zurückgesetzt",
@@ -170,8 +170,8 @@
       "unfiltered": "ungefiltert"
     },
     "filters": {
-      "toggleRelay": "{{name}} umschalten",
-      "showOnlyRelay": "Nur {{name}} anzeigen",
+      "toggleRelay": "Feed {{name}} umschalten",
+      "showOnlyRelay": "Nur Feed {{name}} anzeigen",
       "toggleChannelTo": "#{{name}} auf {{nextState}} umschalten",
       "toggleChannelFilter": "#{{name}}-Filter umschalten",
       "showOnlyChannel": "Nur #{{name}} anzeigen",
@@ -288,7 +288,7 @@
       "signOut": "Abmelden",
       "profileSetupTitle": "Profil einrichten",
       "profileEditTitle": "Profil bearbeiten",
-      "profileDescription": "Deine Nostr-Metadaten (`kind:0`) werden auf verbundenen Relays veröffentlicht. Name ist erforderlich.",
+      "profileDescription": "Deine Nostr-Metadaten (`kind:0`) werden auf verbundenen Feeds veröffentlicht. Name ist erforderlich.",
       "copySuccessNsec": "Privatschlüssel in Zwischenablage kopiert!",
       "copySuccessHex": "Privatschlüssel (Hex) in Zwischenablage kopiert!"
     }
@@ -349,9 +349,9 @@
         "action": "Klicke auf ein Breadcrumb-Element, um fortzufahren."
       },
       "filtersRelays": {
-        "title": "Relay-Auswahl",
-        "description": "Nutze *Feeds*, um sichtbare Relays auszuwählen. Klicke auf ein Relay-Icon zum Umschalten oder auf den Namen für exklusiven Fokus.",
-        "action": "Klicke auf ein Relay-Steuerelement, um fortzufahren."
+        "title": "Feed-Auswahl",
+        "description": "Nutze *Feeds*, um sichtbare Feeds auszuwählen. Klicke auf ein Feed-Icon zum Umschalten oder auf den Namen für exklusiven Fokus.",
+        "action": "Klicke auf ein Feed-Steuerelement, um fortzufahren."
       },
       "filtersChannels": {
         "title": "Kanalfilter",
@@ -397,7 +397,7 @@
       },
       "mobileFiltersOpen": {
         "title": "Verwalten öffnen",
-        "description": "Tippe in der oberen Navigation auf *Verwalten*, um Relay-, Kanal- und Personenfilter zu öffnen.",
+        "description": "Tippe in der oberen Navigation auf *Verwalten*, um Feed-, Kanal- und Personenfilter zu öffnen.",
         "action": "Tippe auf *Verwalten*, um fortzufahren."
       },
       "mobileFiltersProperties": {
@@ -406,7 +406,7 @@
       },
       "mobileFiltersUse": {
         "title": "Filter nutzen",
-        "description": "In *Verwalten* kannst du Feed-Chips für Relays wählen, Kanal-Chips durch neutral -> einschließen -> ausschließen schalten und Personen-Chips umschalten. Kombiniere diese Optionen, um die Timeline vor dem Verfassen gezielt einzugrenzen."
+        "description": "In *Verwalten* kannst du Feed-Chips für Feeds wählen, Kanal-Chips durch neutral -> einschließen -> ausschließen schalten und Personen-Chips umschalten. Kombiniere diese Optionen, um die Timeline vor dem Verfassen gezielt einzugrenzen."
       },
       "mobileComposeCombobox": {
         "title": "Suchen/Erstellen-Kombobox",
@@ -468,13 +468,13 @@
       "nameRequired": "Profilname ist erforderlich",
       "nameInvalidNip05": "Der Name muss Kleinbuchstaben, Zahlen, Punkte, Unterstriche oder Bindestriche verwenden",
       "nameTaken": "Dieser Benutzername ist bereits bekannt. Bitte wähle einen anderen.",
-      "noRelayConnected": "Verbinde mindestens ein Relay, bevor du das Profil bearbeitest",
+      "noRelayConnected": "Verbinde mindestens einen Feed, bevor du das Profil bearbeitest",
       "presenceTitle": "Live-Status teilen",
       "presenceDescription": "Aktuelle Ansicht und aktive Aufgabe als NIP-38-Status senden. Für mehr Privatsphäre deaktivieren.",
       "undoSendTitle": "Rückgängig vor dem Senden erlauben",
       "undoSendDescription": "Nostr-Veröffentlichung um ein paar Sekunden verzögern, damit sie im Toast oder auf der Karte rückgängig gemacht werden kann.",
-      "updated": "Profil auf verbundenen Relays aktualisiert",
-      "updateFailed": "Profil konnte nicht aktualisiert werden. Relay-Verbindung prüfen und erneut versuchen."
+      "updated": "Profil auf verbundenen Feeds aktualisiert",
+      "updateFailed": "Profil konnte nicht aktualisiert werden. Feed-Verbindung prüfen und erneut versuchen."
     },
     "feeds": {
       "title": "Feeds",

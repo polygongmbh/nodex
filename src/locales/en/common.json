@@ -16,7 +16,7 @@
       "signin": "Sign in required",
       "write": "Write a message first",
       "tag": "Add at least one #channel",
-      "relay": "Select a single relay or a parent task to create a new task",
+      "relay": "Select a single feed or a parent task to create a new task",
       "publishing": "Publishing..."
     },
     "actions": {
@@ -62,14 +62,14 @@
       "needSigninPost": "Sign in required to post",
       "needSigninModify": "Sign in required to modify tasks",
       "statusRestricted": "Status updates are restricted to assigned users",
-      "selectRelayOrParent": "Select a single relay or a parent task to create a new task",
+      "selectRelayOrParent": "Select a single feed or a parent task to create a new task",
       "publishStatusFailed": "Failed to publish status update to relays",
       "publishDateFailed": "Failed to publish date update to relay",
       "publishPriorityFailed": "Failed to publish priority update to relay",
       "taskCreationFailed": "Task creation failed. Please try again.",
       "publishSavedForRetry": "Failed to publish to Nostr; saved for retry",
-      "retryRelayMissing": "Retry failed: relay is no longer configured",
-      "retryRejectedByRelay": "Retry failed: publish was not accepted by relay"
+      "retryRelayMissing": "Retry failed: feed is no longer configured",
+      "retryRejectedByRelay": "Retry failed: publish was not accepted by feed"
     },
     "success": {
       "publishedTask": "Task published to Nostr and added locally",
@@ -77,11 +77,11 @@
       "localTask": "Task added locally (demo only)",
       "localComment": "Comment added locally (demo only)",
       "publishUndone": "Post canceled before publish",
-      "relayFilterEnabled": "{{relayName}} relay filter enabled",
-      "relayFilterDisabled": "{{relayName}} relay filter disabled",
-      "showingOnlyRelay": "Showing only {{relayName}} relay",
-      "relayFiltersCleared": "All relay filters cleared",
-      "allRelaysSelected": "All relays selected",
+      "relayFilterEnabled": "{{relayName}} feed filter enabled",
+      "relayFilterDisabled": "{{relayName}} feed filter disabled",
+      "showingOnlyRelay": "Showing only {{relayName}} feed",
+      "relayFiltersCleared": "All feed filters cleared",
+      "allRelaysSelected": "All feeds selected",
       "showingOnlyChannel": "Showing only #{{channelName}}",
       "allChannelsIncluded": "All channels included",
       "allChannelsReset": "All channels reset",
@@ -170,8 +170,8 @@
       "unfiltered": "unfiltered"
     },
     "filters": {
-      "toggleRelay": "Toggle {{name}}",
-      "showOnlyRelay": "Show only {{name}}",
+      "toggleRelay": "Toggle {{name}} feed",
+      "showOnlyRelay": "Show only {{name}} feed",
       "toggleChannelTo": "Toggle #{{name}} to {{nextState}}",
       "toggleChannelFilter": "Toggle #{{name}} filter",
       "showOnlyChannel": "Show only #{{name}}",
@@ -288,7 +288,7 @@
       "signOut": "Sign out",
       "profileSetupTitle": "Set up your profile",
       "profileEditTitle": "Edit profile",
-      "profileDescription": "Your Nostr metadata (`kind:0`) will be published to connected relays. Name is required.",
+      "profileDescription": "Your Nostr metadata (`kind:0`) will be published to connected feeds. Name is required.",
       "copySuccessNsec": "Private key copied to clipboard!",
       "copySuccessHex": "Private key (hex) copied to clipboard!"
     }
@@ -349,9 +349,9 @@
         "action": "Click a breadcrumb item to continue."
       },
       "filtersRelays": {
-        "title": "Relay selection",
-        "description": "Use *Feeds* to select which relays are visible. Click a relay icon to toggle it, or click its name for exclusive relay focus.",
-        "action": "Click a relay control to continue."
+        "title": "Feed selection",
+        "description": "Use *Feeds* to select which feeds are visible. Click a feed icon to toggle it, or click its name for exclusive feed focus.",
+        "action": "Click a feed control to continue."
       },
       "filtersChannels": {
         "title": "Channel filters",
@@ -397,7 +397,7 @@
       },
       "mobileFiltersOpen": {
         "title": "Open Manage",
-        "description": "Tap *Manage* in the top navigation to open relay, channel, and people filters.",
+        "description": "Tap *Manage* in the top navigation to open feed, channel, and people filters.",
         "action": "Tap *Manage* to continue."
       },
       "mobileFiltersProperties": {
@@ -406,7 +406,7 @@
       },
       "mobileFiltersUse": {
         "title": "Use filters",
-        "description": "In *Manage*, tap feed chips to select relays, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters. Combine these controls to narrow timeline visibility before composing."
+        "description": "In *Manage*, tap feed chips to select feeds, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters. Combine these controls to narrow timeline visibility before composing."
       },
       "mobileComposeCombobox": {
         "title": "Search/Compose combobox",
@@ -468,13 +468,13 @@
       "nameRequired": "Profile name is required",
       "nameInvalidNip05": "Name must use lowercase letters, numbers, dots, underscores, or hyphens",
       "nameTaken": "This username is already known. Please choose another.",
-      "noRelayConnected": "Connect to at least one relay before editing profile",
+      "noRelayConnected": "Connect to at least one feed before editing profile",
       "presenceTitle": "Share live status",
       "presenceDescription": "Broadcast your current view and active task (NIP-38). Disable for privacy.",
       "undoSendTitle": "Allow undo before sending",
       "undoSendDescription": "Delay Nostr publish by a few seconds so you can undo from the toast or post card.",
-      "updated": "Profile updated on connected relays",
-      "updateFailed": "Failed to update profile. Check relay connectivity and try again."
+      "updated": "Profile updated on connected feeds",
+      "updateFailed": "Failed to update profile. Check feed connectivity and try again."
     },
     "feeds": {
       "title": "Feeds",

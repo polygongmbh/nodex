@@ -1,7 +1,7 @@
 # Nodex User Guide
 
 ## Quick Start
-- Sign in from the profile menu to post tasks/comments to relays.
+- Sign in from the profile menu to post tasks/comments to feeds.
 - Guest sign-in starts with a deterministic placeholder username derived from your pubkey.
 - Compose a post with at least one `#channel` tag.
 - Desktop: choose Task or Comment from the compose kind control.
@@ -12,7 +12,7 @@
 ## Core Concepts
 - Tasks and comments are Nostr events.
 - Channels are hashtag-based labels and filters.
-- Views share the same relay/channel/people filter state.
+- Views share the same feed/channel/people filter state.
 
 ## Navigation
 - Use the top view switcher to move between Tree, Feed, Kanban, Table, and Calendar.
@@ -50,15 +50,15 @@
 - Mobile (Manage view):
   - tap people chips to toggle selected users.
 
-## Relay Filtering and Publishing
-- Relay filter controls determine which items are visible.
-- New root tasks require exactly one selected relay.
-- Subtasks, task-context comments, and task updates publish to the task's origin relay.
-- If only demo/local relay is selected, item is stored locally (demo flow).
+## Feed Filtering and Publishing
+- Feed filter controls determine which items are visible.
+- New root tasks require exactly one selected feed.
+- Subtasks, task-context comments, and task updates publish to the task's origin feed.
+- If only demo/local feed is selected, item is stored locally (demo flow).
 
 ## Mobile Usage
 - The view navigation is at the top.
-- Open *Manage* for relay, channel, people, profile, and guide controls.
+- Open *Manage* for feed, channel, people, profile, and guide controls.
 - *Open Guide* in *Manage* launches onboarding.
 - The bottom bar is a combined search/compose field:
   - typing updates search results live,
@@ -84,7 +84,7 @@
 - `#tags` and `@mentions` are supported in compose text.
 - Included channel filters are added to compose as metadata-only hashtag chips (without injecting `#channel` text).
 - Selected people filters are added to compose as metadata-only mention chips.
-- Relay-backed posts can use a short undo-send delay; undo restores the full compose draft state.
+- Feed-backed posts can use a short undo-send delay; undo restores the full compose draft state.
 - If posting from mobile with no selected/typed channel tag, the app shows immediate feedback instead of silently failing.
 - Task compose supports optional priority selection.
 - Next to the date picker, choose the date type: `Due`, `Scheduled`, `Start`, `End`, or `Milestone`.
@@ -108,10 +108,10 @@
 - Components may change visibility, density, and control labels at these breakpoints.
 
 ## Reliability and Sorting
-- If relay publish fails, the post is queued locally in a failed-publish banner with retry/dismiss actions instead of being treated as a normal published task/comment.
+- If feed publish fails, the post is queued locally in a failed-publish banner with retry/dismiss actions instead of being treated as a normal published task/comment.
 - Latest feed events are cached locally and rehydrated on app load for better offline/reconnect continuity.
 - Task state changes now delay status-driven reorder updates slightly to reduce jarring list/table/kanban jumps during completion transitions.
-- Edit profile/setup modal does not open when no relay is connected.
+- Edit profile/setup modal does not open when no feed is connected.
 - Current-user profile metadata is cached locally and reused across sidebar/feed/top-right/profile-edit surfaces when live profile fields are temporarily missing.
 - Presence status is published with NIP-38 updates (unless disabled in profile settings) and clears on sign-out/tab close.
 - Non-feed task views use a shared priority order: due-now/overdue, then in-progress, high priority (`50+`), upcoming due, medium priority (`30-49`), no priority, then low priority (`<30`); Kanban `done` stays chronological.

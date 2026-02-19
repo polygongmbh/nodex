@@ -16,7 +16,7 @@
       "signin": "Se requiere iniciar sesión",
       "write": "Escribe primero un mensaje",
       "tag": "Añade al menos un #canal",
-      "relay": "Selecciona un único relay o una tarea padre para crear una nueva tarea",
+      "relay": "Selecciona un único feed o una tarea padre para crear una nueva tarea",
       "publishing": "Publicando..."
     },
     "actions": {
@@ -62,14 +62,14 @@
       "needSigninPost": "Se requiere iniciar sesión para publicar",
       "needSigninModify": "Se requiere iniciar sesión para modificar tareas",
       "statusRestricted": "Las actualizaciones de estado están restringidas a usuarios asignados",
-      "selectRelayOrParent": "Selecciona un único relay o una tarea padre para crear una nueva tarea",
+      "selectRelayOrParent": "Selecciona un único feed o una tarea padre para crear una nueva tarea",
       "publishStatusFailed": "No se pudo publicar la actualización de estado en los relays",
       "publishDateFailed": "No se pudo publicar la actualización de fecha en el relay",
       "publishPriorityFailed": "No se pudo publicar la actualización de prioridad en el relay",
       "taskCreationFailed": "No se pudo crear la tarea. Inténtalo de nuevo.",
       "publishSavedForRetry": "No se pudo publicar en Nostr; se guardó para reintento",
-      "retryRelayMissing": "Reintento fallido: el relay ya no está configurado",
-      "retryRejectedByRelay": "Reintento fallido: el relay no aceptó la publicación"
+      "retryRelayMissing": "Reintento fallido: el feed ya no está configurado",
+      "retryRejectedByRelay": "Reintento fallido: el feed no aceptó la publicación"
     },
     "success": {
       "publishedTask": "Tarea publicada en Nostr y añadida localmente",
@@ -77,11 +77,11 @@
       "localTask": "Tarea añadida localmente (solo demo)",
       "localComment": "Comentario añadido localmente (solo demo)",
       "publishUndone": "Publicación cancelada antes de enviar",
-      "relayFilterEnabled": "Filtro de relay {{relayName}} activado",
-      "relayFilterDisabled": "Filtro de relay {{relayName}} desactivado",
-      "showingOnlyRelay": "Mostrando solo el relay {{relayName}}",
-      "relayFiltersCleared": "Se borraron todos los filtros de relay",
-      "allRelaysSelected": "Todos los relays seleccionados",
+      "relayFilterEnabled": "Filtro de feed {{relayName}} activado",
+      "relayFilterDisabled": "Filtro de feed {{relayName}} desactivado",
+      "showingOnlyRelay": "Mostrando solo el feed {{relayName}}",
+      "relayFiltersCleared": "Se borraron todos los filtros de feed",
+      "allRelaysSelected": "Todos los feeds seleccionados",
       "showingOnlyChannel": "Mostrando solo #{{channelName}}",
       "allChannelsIncluded": "Todos los canales incluidos",
       "allChannelsReset": "Todos los canales restablecidos",
@@ -170,8 +170,8 @@
       "unfiltered": "sin filtrar"
     },
     "filters": {
-      "toggleRelay": "Activar/desactivar {{name}}",
-      "showOnlyRelay": "Mostrar solo {{name}}",
+      "toggleRelay": "Activar/desactivar feed {{name}}",
+      "showOnlyRelay": "Mostrar solo feed {{name}}",
       "toggleChannelTo": "Cambiar #{{name}} a {{nextState}}",
       "toggleChannelFilter": "Activar/desactivar filtro de #{{name}}",
       "showOnlyChannel": "Mostrar solo #{{name}}",
@@ -288,7 +288,7 @@
       "signOut": "Cerrar sesión",
       "profileSetupTitle": "Configura tu perfil",
       "profileEditTitle": "Editar perfil",
-      "profileDescription": "Tus metadatos de Nostr (`kind:0`) se publicarán en los relays conectados. El nombre es obligatorio.",
+      "profileDescription": "Tus metadatos de Nostr (`kind:0`) se publicarán en los feeds conectados. El nombre es obligatorio.",
       "copySuccessNsec": "¡Clave privada copiada al portapapeles!",
       "copySuccessHex": "¡Clave privada (hex) copiada al portapapeles!"
     }
@@ -349,9 +349,9 @@
         "action": "Haz clic en un elemento del breadcrumb para continuar."
       },
       "filtersRelays": {
-        "title": "Selección de relay",
-        "description": "Usa *Feeds* para seleccionar qué relays son visibles. Haz clic en el icono de relay para alternarlo, o en su nombre para enfoque exclusivo.",
-        "action": "Haz clic en un control de relay para continuar."
+        "title": "Selección de feed",
+        "description": "Usa *Feeds* para seleccionar qué feeds son visibles. Haz clic en el icono de feed para alternarlo, o en su nombre para enfoque exclusivo.",
+        "action": "Haz clic en un control de feed para continuar."
       },
       "filtersChannels": {
         "title": "Filtros de canales",
@@ -397,7 +397,7 @@
       },
       "mobileFiltersOpen": {
         "title": "Abrir Gestionar",
-        "description": "Toca *Gestionar* en la navegación superior para abrir filtros de relay, canal y personas.",
+        "description": "Toca *Gestionar* en la navegación superior para abrir filtros de feed, canal y personas.",
         "action": "Toca *Gestionar* para continuar."
       },
       "mobileFiltersProperties": {
@@ -406,7 +406,7 @@
       },
       "mobileFiltersUse": {
         "title": "Usar filtros",
-        "description": "En *Gestionar*, toca chips de feed para seleccionar relays, chips de canal para cambiar entre neutral → incluir → excluir, y chips de personas para activar/desactivar filtros de personas. Combina estos controles para acotar la visibilidad antes de redactar."
+        "description": "En *Gestionar*, toca chips de feed para seleccionar feeds, chips de canal para cambiar entre neutral → incluir → excluir, y chips de personas para activar/desactivar filtros de personas. Combina estos controles para acotar la visibilidad antes de redactar."
       },
       "mobileComposeCombobox": {
         "title": "Caja combinada búsqueda/redacción",
@@ -468,13 +468,13 @@
       "nameRequired": "El nombre del perfil es obligatorio",
       "nameInvalidNip05": "El nombre debe usar letras minúsculas, números, puntos, guiones bajos o guiones",
       "nameTaken": "Este nombre de usuario ya es conocido. Elige otro.",
-      "noRelayConnected": "Conéctate al menos a un relay antes de editar el perfil",
+      "noRelayConnected": "Conéctate al menos a un feed antes de editar el perfil",
       "presenceTitle": "Compartir estado en vivo",
       "presenceDescription": "Difunde tu vista actual y tarea activa (NIP-38). Desactívalo por privacidad.",
       "undoSendTitle": "Permitir deshacer antes de enviar",
       "undoSendDescription": "Retrasa unos segundos la publicación en Nostr para poder deshacer desde el toast o la tarjeta.",
-      "updated": "Perfil actualizado en relays conectados",
-      "updateFailed": "No se pudo actualizar el perfil. Revisa la conectividad de relay e inténtalo de nuevo."
+      "updated": "Perfil actualizado en feeds conectados",
+      "updateFailed": "No se pudo actualizar el perfil. Revisa la conectividad de feed e inténtalo de nuevo."
     },
     "feeds": {
       "title": "Feeds",
