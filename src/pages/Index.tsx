@@ -1424,6 +1424,11 @@ const Index = () => {
     dueTime?: string,
     dateType: TaskDateType = "due"
   ) => {
+    if (!user) {
+      handleOpenAuthModal();
+      toast.error(t("toasts.errors.needSigninModify"));
+      return;
+    }
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask || existingTask.taskType !== "task" || !dueDate) return;
     setLocalTasks((prev) =>
@@ -1434,9 +1439,14 @@ const Index = () => {
       )
     );
     void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
-  }, [allTasks, publishTaskDueUpdate]);
+  }, [allTasks, handleOpenAuthModal, publishTaskDueUpdate, t, user]);
 
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
+    if (!user) {
+      handleOpenAuthModal();
+      toast.error(t("toasts.errors.needSigninModify"));
+      return;
+    }
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask || existingTask.taskType !== "task") return;
     setLocalTasks((prev) =>
@@ -1447,7 +1457,7 @@ const Index = () => {
       )
     );
     void publishTaskPriorityUpdate(taskId, priority);
-  }, [allTasks, publishTaskPriorityUpdate]);
+  }, [allTasks, handleOpenAuthModal, publishTaskPriorityUpdate, t, user]);
 
   const effectiveActiveRelayIds = useMemo(
     () => getEffectiveActiveRelayIds(activeRelayIds, relays.map((relay) => relay.id)),

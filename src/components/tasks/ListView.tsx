@@ -75,6 +75,7 @@ interface PriorityCellProps {
   taskId: string;
   taskContent: string;
   priority?: number;
+  editable: boolean;
   onUpdatePriority?: (taskId: string, priority: number) => void;
 }
 
@@ -82,6 +83,7 @@ const PriorityCell = memo(function PriorityCell({
   taskId,
   taskContent,
   priority,
+  editable,
   onUpdatePriority,
 }: PriorityCellProps) {
   const value = typeof priority === "number" ? String(priority) : "";
@@ -89,6 +91,7 @@ const PriorityCell = memo(function PriorityCell({
     <select
       aria-label={`Priority for ${taskContent}`}
       value={value}
+      disabled={!editable}
       onChange={(event) => {
         const next = event.target.value;
         if (!next) return;
@@ -97,7 +100,7 @@ const PriorityCell = memo(function PriorityCell({
           onUpdatePriority?.(taskId, parsed);
         }
       }}
-      className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
+      className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground"
     >
       <option value="">—</option>
       <option value="20">P20</option>
@@ -111,6 +114,7 @@ const PriorityCell = memo(function PriorityCell({
   prev.taskId === next.taskId &&
   prev.taskContent === next.taskContent &&
   prev.priority === next.priority &&
+  prev.editable === next.editable &&
   prev.onUpdatePriority === next.onUpdatePriority
 );
 
@@ -377,7 +381,7 @@ export function ListView({
   };
 
   const canCompleteTask = (task: Task) => {
-    return canUserChangeTaskStatus(task, currentUser);
+    return Boolean(user) && canUserChangeTaskStatus(task, currentUser);
   };
   const focusedTask = focusedTaskId ? allTasks.find((t) => t.id === focusedTaskId) : null;
 
@@ -422,16 +426,31 @@ export function ListView({
   // Editable status cell
   const StatusCell = ({ task }: { task: Task }) => {
     const status = task.status || "todo";
+    const editable = canCompleteTask(task);
+    const statusClassName = cn(
+      "text-xs px-1.5 sm:px-2 py-1 rounded-full font-medium whitespace-nowrap",
+      status === "done" ? "bg-primary/10 text-primary" :
+      status === "in-progress" ? "bg-warning/15 text-warning" :
+      "bg-muted text-muted-foreground"
+    );
+
+    if (!editable) {
+      return (
+        <span className={cn(statusClassName, "opacity-60 cursor-not-allowed")}>
+          {status === "in-progress" ? (
+            <>
+              <span className="lg:hidden">{t("listView.status.inProgressShort")}</span>
+              <span className="hidden lg:inline">{t("listView.status.inProgress")}</span>
+            </>
+          ) : status === "done" ? t("listView.status.done") : t("listView.status.todo")}
+        </span>
+      );
+    }
     
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className={cn(
-            "text-xs px-1.5 sm:px-2 py-1 rounded-full font-medium cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all whitespace-nowrap",
-            status === "done" ? "bg-primary/10 text-primary" :
-            status === "in-progress" ? "bg-warning/15 text-warning" :
-            "bg-muted text-muted-foreground"
-          )}>
+          <button className={cn(statusClassName, "cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all")}>
             {status === "in-progress" ? (
               <>
                 <span className="lg:hidden">{t("listView.status.inProgressShort")}</span>
@@ -472,33 +491,43 @@ export function ListView({
     const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
     const [localDueTime, setLocalDueTime] = useState(task.dueTime || "");
     const [localDateType, setLocalDateType] = useState<TaskDateType>(task.dateType || "due");
+    const editable = canCompleteTask(task);
+    const trigger = (
+      <button
+        disabled={!editable}
+        className={cn(
+          "flex items-center gap-1.5 text-sm px-2 py-1 rounded transition-colors",
+          dueDateColor,
+          editable ? "cursor-pointer hover:bg-muted/50" : "cursor-not-allowed opacity-60"
+        )}
+      >
+        {task.dueDate ? (
+          <>
+            <Calendar className="w-3.5 h-3.5" />
+            <span className="hidden 2xl:inline uppercase tracking-wide">
+              {t(`composer.dates.${task.dateType || "due"}`)}
+            </span>
+            <span>{format(task.dueDate, "MMM d, yyyy")}</span>
+            {task.dueTime && (
+              <span className="hidden xl:inline-flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                <span>{task.dueTime}</span>
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="text-muted-foreground">{t("listView.dates.setDate")}</span>
+        )}
+      </button>
+    );
+
+    if (!editable) {
+      return trigger;
+    }
     
     return (
       <Popover>
-        <PopoverTrigger asChild>
-          <button className={cn(
-            "flex items-center gap-1.5 text-sm cursor-pointer hover:bg-muted/50 px-2 py-1 rounded transition-colors",
-            dueDateColor
-          )}>
-            {task.dueDate ? (
-              <>
-                <Calendar className="w-3.5 h-3.5" />
-                <span className="hidden 2xl:inline uppercase tracking-wide">
-                  {t(`composer.dates.${task.dateType || "due"}`)}
-                </span>
-                <span>{format(task.dueDate, "MMM d, yyyy")}</span>
-                {task.dueTime && (
-                  <span className="hidden xl:inline-flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{task.dueTime}</span>
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="text-muted-foreground">{t("listView.dates.setDate")}</span>
-            )}
-          </button>
-        </PopoverTrigger>
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <div className="p-3 space-y-2">
             <div className="flex items-center gap-2">
@@ -737,6 +766,7 @@ export function ListView({
                         taskId={task.id}
                         taskContent={task.content}
                         priority={task.priority}
+                        editable={canCompleteTask(task)}
                         onUpdatePriority={onUpdatePriority}
                       />
                     </td>
