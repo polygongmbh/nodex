@@ -1,7 +1,7 @@
 import { useEffect, useRef, useMemo, useState } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
-import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
+import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -72,6 +72,7 @@ interface FeedViewProps {
   onAuthorClick?: (author: Person) => void;
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -101,6 +102,7 @@ export function FeedView({
   onAuthorClick,
   onUndoPendingPublish,
   isPendingPublishTask,
+  composeRestoreRequest = null,
   mentionRequest = null,
 }: FeedViewProps) {
   const { t } = useTranslation();
@@ -326,6 +328,7 @@ export function FeedView({
         forceExpanded={forceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         mentionRequest={mentionRequest}
+        composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
       />

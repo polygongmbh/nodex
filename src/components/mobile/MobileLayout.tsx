@@ -11,7 +11,7 @@ import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueB
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import type { FailedPublishDraft } from "@/lib/failed-publish-drafts";
-import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType } from "@/types";
+import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 import { cn } from "@/lib/utils";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
@@ -61,6 +61,7 @@ interface MobileLayoutProps {
   onAuthorClick?: (author: Person) => void;
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -109,6 +110,7 @@ export function MobileLayout({
   onAuthorClick,
   onUndoPendingPublish,
   isPendingPublishTask,
+  composeRestoreRequest = null,
   mentionRequest = null,
   failedPublishDrafts = [],
   onRetryFailedPublish,
@@ -370,6 +372,7 @@ export function MobileLayout({
           isSignedIn={isSignedIn}
           onSignInClick={onSignInClick}
           forceComposeMode={forceComposeMode}
+          composeRestoreRequest={composeRestoreRequest}
         />
       )}
     </div>

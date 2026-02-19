@@ -751,4 +751,39 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
     expect(textarea.value).toBe("Ship #backend now");
   });
+
+  it("restores compose state when restore request changes", () => {
+    const { rerender } = render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    rerender(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        composeRestoreRequest={{
+          id: 1,
+          state: {
+            content: "Recovered content",
+            taskType: "task",
+            explicitTagNames: ["backend"],
+            explicitMentionPubkeys: ["f".repeat(64)],
+          },
+        }}
+      />
+    );
+
+    expect(screen.getByDisplayValue("Recovered content")).toBeInTheDocument();
+    expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("backend");
+    expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
+  });
 });

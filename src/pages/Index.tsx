@@ -94,7 +94,7 @@ import {
 } from "@/lib/filter-state-utils";
 import { normalizeTaskType } from "@/lib/task-type";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
-import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus } from "@/types";
+import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus, ComposeRestoreRequest, ComposeRestoreState } from "@/types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -195,8 +195,9 @@ const Index = () => {
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
   const pendingStatusUpdateTimeoutsRef = useRef<Map<string, number>>(new Map());
   const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
-  const pendingPublishStateRef = useRef<Map<string, { timeoutId: number; toastId: string | number }>>(new Map());
+  const pendingPublishStateRef = useRef<Map<string, { timeoutId: number; toastId: string | number; composeState: ComposeRestoreState }>>(new Map());
   const [pendingPublishTaskIds, setPendingPublishTaskIds] = useState<Set<string>>(new Set());
+  const [composeRestoreRequest, setComposeRestoreRequest] = useState<ComposeRestoreRequest | null>(null);
   const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<Record<string, TaskStatus>>({});
   const [sortModifiedAtHoldByTaskId, setSortModifiedAtHoldByTaskId] = useState<Record<string, string>>({});
 
@@ -1048,7 +1049,12 @@ const Index = () => {
   }, []);
 
   const handleUndoPendingPublish = useCallback((taskId: string) => {
-    if (!pendingPublishStateRef.current.has(taskId)) return;
+    const pending = pendingPublishStateRef.current.get(taskId);
+    if (!pending) return;
+    setComposeRestoreRequest({
+      id: Date.now(),
+      state: pending.composeState,
+    });
     clearPendingPublishTask(taskId);
     setLocalTasks((prev) => prev.filter((task) => task.id !== taskId));
     toast.success(t("toasts.success.publishUndone"));
@@ -1221,6 +1227,23 @@ const Index = () => {
       priority: normalizedTaskType === "task" ? priority : undefined,
     };
 
+    const parsedHashtagsFromContent = new Set(
+      (content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase())
+    );
+    const explicitTagNamesForRestore = normalizedExtractedTags.filter((tag) => !parsedHashtagsFromContent.has(tag));
+    const explicitMentionPubkeysForRestore = dedupedExplicitMentionPubkeys;
+    const composeRestoreState: ComposeRestoreState = {
+      content,
+      taskType: normalizedTaskType,
+      dueDate,
+      dueTime,
+      dateType,
+      explicitTagNames: explicitTagNamesForRestore,
+      explicitMentionPubkeys: explicitMentionPubkeysForRestore,
+      selectedRelays: targetRelayIds,
+      priority,
+    };
+
     if (!shouldPublish) {
       setLocalTasks((prev) => [{ ...baseTask, id: Date.now().toString() }, ...prev]);
       toast.success(normalizedTaskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
@@ -1304,7 +1327,7 @@ const Index = () => {
         },
       });
 
-      pendingPublishStateRef.current.set(pendingTaskId, { timeoutId, toastId });
+      pendingPublishStateRef.current.set(pendingTaskId, { timeoutId, toastId, composeState: composeRestoreState });
       return { ok: true, mode: "published" };
     }
 
@@ -1552,6 +1575,7 @@ const Index = () => {
     onAuthorClick: handleAuthorClick,
     onUndoPendingPublish: handleUndoPendingPublish,
     isPendingPublishTask,
+    composeRestoreRequest,
     mentionRequest,
     composeGuideActivationSignal,
     onUpdateDueDate: handleDueDateChange,
@@ -1611,6 +1635,7 @@ const Index = () => {
           onAuthorClick={handleAuthorClick}
           onUndoPendingPublish={handleUndoPendingPublish}
           isPendingPublishTask={isPendingPublishTask}
+          composeRestoreRequest={composeRestoreRequest}
           mentionRequest={mentionRequest}
           failedPublishDrafts={failedPublishDrafts}
           onRetryFailedPublish={handleRetryFailedPublish}

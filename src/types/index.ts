@@ -41,6 +41,23 @@ export type TaskCreateResult =
 
 export type TaskStatus = "todo" | "in-progress" | "done";
 
+export interface ComposeRestoreState {
+  content: string;
+  taskType: TaskType;
+  dueDate?: Date;
+  dueTime?: string;
+  dateType?: TaskDateType;
+  explicitMentionPubkeys?: string[];
+  explicitTagNames?: string[];
+  selectedRelays?: string[];
+  priority?: number;
+}
+
+export interface ComposeRestoreRequest {
+  id: number;
+  state: ComposeRestoreState;
+}
+
 export interface Task {
   id: string;
   author: Person;

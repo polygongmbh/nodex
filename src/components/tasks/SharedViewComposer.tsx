@@ -1,5 +1,5 @@
 import { TaskComposer } from "./TaskComposer";
-import type { Channel, Person, Relay, TaskCreateResult, TaskDateType } from "@/types";
+import type { Channel, Person, Relay, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 
 interface SharedViewComposerProps {
   visible: boolean;
@@ -32,6 +32,7 @@ interface SharedViewComposerProps {
   defaultContent?: string;
   className?: string;
   allowComment?: boolean;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
 export function SharedViewComposer({
@@ -52,6 +53,7 @@ export function SharedViewComposer({
   defaultContent = "",
   className = "relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0",
   allowComment = true,
+  composeRestoreRequest = null,
 }: SharedViewComposerProps) {
   if (!visible) return null;
 
@@ -74,6 +76,7 @@ export function SharedViewComposer({
         mentionRequest={mentionRequest}
         defaultContent={defaultContent}
         allowComment={allowComment}
+        composeRestoreRequest={composeRestoreRequest}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
+import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -46,6 +46,7 @@ interface TaskTreeProps {
   onAuthorClick?: (author: Person) => void;
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -75,6 +76,7 @@ export function TaskTree({
   onAuthorClick,
   onUndoPendingPublish,
   isPendingPublishTask,
+  composeRestoreRequest = null,
   mentionRequest = null,
 }: TaskTreeProps) {
   const { t } = useTranslation();
@@ -405,6 +407,7 @@ export function TaskTree({
         forceExpandSignal={composeGuideActivationSignal}
         onExpandedChange={setIsComposerExpanded}
         mentionRequest={mentionRequest}
+        composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, currentContextTask?.tags)}
       />

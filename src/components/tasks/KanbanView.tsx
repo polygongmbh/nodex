@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Lock } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, TaskStatus } from "@/types";
+import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, TaskStatus, ComposeRestoreRequest } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
@@ -52,6 +52,7 @@ interface KanbanViewProps {
   onAuthorClick?: (author: Person) => void;
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
 const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] => [
@@ -81,6 +82,7 @@ export function KanbanView({
   onAuthorClick,
   onUndoPendingPublish,
   isPendingPublishTask,
+  composeRestoreRequest = null,
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -439,6 +441,7 @@ export function KanbanView({
                       onCancel={() => setComposingColumn(null)}
                       compact
                       allowComment={false}
+                      composeRestoreRequest={composeRestoreRequest}
                     />
                   </div>
                 )}

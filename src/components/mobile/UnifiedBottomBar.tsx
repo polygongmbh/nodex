@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Channel, Person, TaskCreateResult, TaskDateType } from "@/types";
+import { Relay, Channel, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { addMonths, format, startOfMonth, subMonths } from "date-fns";
@@ -47,6 +47,7 @@ interface UnifiedBottomBarProps {
   isSignedIn: boolean;
   onSignInClick: () => void;
   forceComposeMode?: boolean;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
 type SelectorType = "relay" | "channel" | "person" | "date" | null;
@@ -78,6 +79,7 @@ export function UnifiedBottomBar({
   defaultContent = "",
   isSignedIn,
   onSignInClick,
+  composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
   const { t } = useTranslation();
   const truncateMobilePubkey = (value: string): string => {
@@ -116,6 +118,7 @@ export function UnifiedBottomBar({
   });
   const [showSendOptions, setShowSendOptions] = useState(false);
   const canOfferComment = currentView === "feed" || currentView === "tree";
+  const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
 
   const syncChannelFiltersFromContent = (nextContent: string, previousContent: string) => {
     const endedWithSpace = /\s$/.test(nextContent);
@@ -164,6 +167,39 @@ export function UnifiedBottomBar({
     prevSearchQueryRef.current = searchQuery;
     setSharedText(searchQuery);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (!composeRestoreRequest) return;
+    if (lastAppliedRestoreRequestIdRef.current === composeRestoreRequest.id) return;
+    lastAppliedRestoreRequestIdRef.current = composeRestoreRequest.id;
+    const restoreState = composeRestoreRequest.state;
+    setSharedText(restoreState.content || "");
+    onSearchChange(restoreState.content || "");
+    setDueDate(restoreState.dueDate);
+    setDueTime(restoreState.dueTime || "");
+    setDateType(restoreState.dateType || "due");
+    setPriority(typeof restoreState.priority === "number" ? restoreState.priority : undefined);
+    setExplicitTagNames(
+      (restoreState.explicitTagNames || [])
+        .map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean)
+    );
+    setExplicitMentionPubkeys(
+      (restoreState.explicitMentionPubkeys || [])
+        .map((pubkey) => pubkey.trim().toLowerCase())
+        .filter((pubkey) => /^[a-f0-9]{64}$/i.test(pubkey))
+    );
+    setActiveSelector(null);
+    setShowSendOptions(false);
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      const end = textarea.value.length;
+      textarea.setSelectionRange(end, end);
+      cursorPositionRef.current = end;
+    });
+  }, [composeRestoreRequest, onSearchChange]);
 
   useEffect(() => {
     if (currentView === "calendar") {
