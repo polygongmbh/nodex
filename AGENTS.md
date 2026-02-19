@@ -91,6 +91,7 @@ structure:
 ### Startup Repo Check
 - At the start of work, run `git status --short`.
 - If there are unstaged modifications beyond `package-lock.json`, warn the user before proceeding.
+- Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase`.
 
 ### Protocol Compliance
 - Conform to Nostr protocol standards in https://github.com/nostr-protocol/nips/.
@@ -123,6 +124,8 @@ policies:
   startup:
     must_run:
       - git status --short
+    must_run_before_larger_change:
+      - git pull --rebase
     warn_if_unstaged_beyond:
       - package-lock.json
   commits:
