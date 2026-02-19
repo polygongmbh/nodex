@@ -24,6 +24,7 @@ import {
 } from "@/lib/presence-status";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
+import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -147,7 +148,16 @@ export function MobileFilters({
   const showProfileNameRequired = hasTypedProfileName && !trimmedProfileName;
   const showProfileNameInvalid =
     Boolean(trimmedProfileName) && !isNip05CompatibleName(trimmedProfileName);
-  const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid;
+  const showProfileNameTaken =
+    Boolean(trimmedProfileName) &&
+    !showProfileNameInvalid &&
+    isProfileNameTaken(trimmedProfileName, {
+      currentPubkey: user?.pubkey,
+      additionalKnownNames: people
+        .filter((person) => person.id !== user?.pubkey)
+        .map((person) => person.name),
+    });
+  const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid && !showProfileNameTaken;
 
   const handleSaveProfile = async () => {
     if (!trimmedProfileName) {
@@ -155,7 +165,9 @@ export function MobileFilters({
       return;
     }
     if (!isProfileNameValid) {
-      toast.error(t("filters.profile.nameInvalidNip05"));
+      toast.error(showProfileNameTaken
+        ? t("filters.profile.nameTaken")
+        : t("filters.profile.nameInvalidNip05"));
       return;
     }
     setIsSavingProfile(true);
@@ -275,8 +287,8 @@ export function MobileFilters({
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
                     className="h-8"
-                    aria-invalid={showProfileNameRequired || showProfileNameInvalid}
-                    aria-describedby={showProfileNameRequired || showProfileNameInvalid ? "manage-profile-name-error" : undefined}
+                    aria-invalid={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken}
+                    aria-describedby={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken ? "manage-profile-name-error" : undefined}
                   />
                   {showProfileNameRequired && (
                     <p id="manage-profile-name-error" className="text-xs text-destructive">
@@ -286,6 +298,11 @@ export function MobileFilters({
                   {!showProfileNameRequired && showProfileNameInvalid && (
                     <p id="manage-profile-name-error" className="text-xs text-destructive">
                       {t("filters.profile.nameInvalidNip05")}
+                    </p>
+                  )}
+                  {!showProfileNameRequired && !showProfileNameInvalid && showProfileNameTaken && (
+                    <p id="manage-profile-name-error" className="text-xs text-destructive">
+                      {t("filters.profile.nameTaken")}
                     </p>
                   )}
                 </div>

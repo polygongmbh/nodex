@@ -37,6 +37,7 @@ import {
 } from "@/lib/presence-status";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
+import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -412,7 +413,11 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const showProfileNameRequired = hasTypedProfileName && !trimmedProfileName;
   const showProfileNameInvalid =
     Boolean(trimmedProfileName) && !isNip05CompatibleName(trimmedProfileName);
-  const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid;
+  const showProfileNameTaken =
+    Boolean(trimmedProfileName) &&
+    !showProfileNameInvalid &&
+    isProfileNameTaken(trimmedProfileName, { currentPubkey: user?.pubkey });
+  const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid && !showProfileNameTaken;
 
   const handleSaveProfile = async () => {
     if (!trimmedProfileName) {
@@ -420,7 +425,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       return;
     }
     if (!isProfileNameValid) {
-      toast.error(t("filters.profile.nameInvalidNip05"));
+      toast.error(showProfileNameTaken
+        ? t("filters.profile.nameTaken")
+        : t("filters.profile.nameInvalidNip05"));
       return;
     }
 
@@ -623,8 +630,8 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                     id="profile-name"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
-                    aria-invalid={showProfileNameRequired || showProfileNameInvalid}
-                    aria-describedby={showProfileNameRequired || showProfileNameInvalid ? "profile-name-error" : undefined}
+                    aria-invalid={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken}
+                    aria-describedby={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken ? "profile-name-error" : undefined}
                   />
                   {showProfileNameRequired && (
                     <p id="profile-name-error" className="text-xs text-destructive">
@@ -634,6 +641,11 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   {!showProfileNameRequired && showProfileNameInvalid && (
                     <p id="profile-name-error" className="text-xs text-destructive">
                       {t("filters.profile.nameInvalidNip05")}
+                    </p>
+                  )}
+                  {!showProfileNameRequired && !showProfileNameInvalid && showProfileNameTaken && (
+                    <p id="profile-name-error" className="text-xs text-destructive">
+                      {t("filters.profile.nameTaken")}
                     </p>
                   )}
                 </div>

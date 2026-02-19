@@ -460,6 +460,7 @@
       "copiedPrivateKey": "Clave privada copiada al portapapeles",
       "nameRequired": "El nombre del perfil es obligatorio",
       "nameInvalidNip05": "El nombre debe usar letras minúsculas, números, puntos, guiones bajos o guiones",
+      "nameTaken": "Este nombre de usuario ya es conocido. Elige otro.",
       "noRelayConnected": "Conéctate al menos a un relay antes de editar el perfil",
       "presenceTitle": "Compartir estado en vivo",
       "presenceDescription": "Difunde tu vista actual y tarea activa (NIP-38). Desactívalo por privacidad.",

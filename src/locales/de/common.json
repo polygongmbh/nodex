@@ -460,6 +460,7 @@
       "copiedPrivateKey": "Privater Schlüssel in Zwischenablage kopiert",
       "nameRequired": "Profilname ist erforderlich",
       "nameInvalidNip05": "Der Name muss Kleinbuchstaben, Zahlen, Punkte, Unterstriche oder Bindestriche verwenden",
+      "nameTaken": "Dieser Benutzername ist bereits bekannt. Bitte wähle einen anderen.",
       "noRelayConnected": "Verbinde mindestens ein Relay, bevor du das Profil bearbeitest",
       "presenceTitle": "Live-Status teilen",
       "presenceDescription": "Aktuelle Ansicht und aktive Aufgabe als NIP-38-Status senden. Für mehr Privatsphäre deaktivieren.",

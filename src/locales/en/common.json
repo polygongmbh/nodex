@@ -460,6 +460,7 @@
       "copiedPrivateKey": "Private key copied to clipboard",
       "nameRequired": "Profile name is required",
       "nameInvalidNip05": "Name must use lowercase letters, numbers, dots, underscores, or hyphens",
+      "nameTaken": "This username is already known. Please choose another.",
       "noRelayConnected": "Connect to at least one relay before editing profile",
       "presenceTitle": "Share live status",
       "presenceDescription": "Broadcast your current view and active task (NIP-38). Disable for privacy.",
