@@ -477,10 +477,11 @@ export function KanbanView({
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   data-task-id={task.id}
+                                  onClick={() => onFocusTask?.(task.id)}
                                   className={cn(
-                                    "relative bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow",
+                                    "relative bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer",
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md",
-                                    canChangeStatus ? "cursor-grab active:cursor-grabbing" : "cursor-default border-dashed border-muted-foreground/60 bg-muted/40",
+                                    !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
                                     task.status === "done" && "opacity-70",
                                     isLockedUntilStart && "opacity-50 grayscale",
                                     isKeyboardFocused && !snapshot.isDragging && "ring-2 ring-primary ring-offset-1 ring-offset-background"
@@ -518,14 +519,12 @@ export function KanbanView({
                                     </div>
                                   )}
 
-                                  {/* Content - clickable to focus */}
+                                  {/* Content */}
                                   <p
-                                    onClick={() => onFocusTask?.(task.id)}
                                     className={cn(
-                                      `text-sm leading-relaxed cursor-pointer ${TASK_INTERACTION_STYLES.hoverText}`,
+                                      "text-sm leading-relaxed",
                                       task.status === "done" && "line-through text-muted-foreground"
                                     )}
-                                    title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
                                   >
                                     {linkifyContent(task.content, onHashtagClick, {
                                       plainHashtags: task.status === "done",
