@@ -25,23 +25,8 @@ import { cn } from "@/lib/utils";
 import { nip19 } from "nostr-tools";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
-import { NostrEventKind } from "@/lib/nostr/types";
-import {
-  loadPresencePublishingEnabled,
-  savePresencePublishingEnabled,
-} from "@/lib/presence-preferences";
-import {
-  loadPublishDelayEnabled,
-  savePublishDelayEnabled,
-} from "@/lib/publish-delay-preferences";
-import {
-  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
-  buildOfflinePresenceContent,
-  buildPresenceTags,
-} from "@/lib/presence-status";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
-import { isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
-import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
+import { useProfileEditor } from "@/hooks/use-profile-editor";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -371,98 +356,52 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   } = useNDK();
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileName, setProfileName] = useState("");
-  const [profileDisplayName, setProfileDisplayName] = useState("");
-  const [profilePicture, setProfilePicture] = useState("");
-  const [profileNip05, setProfileNip05] = useState("");
-  const [profileAbout, setProfileAbout] = useState("");
-  const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
-    loadPresencePublishingEnabled()
-  );
-  const [publishDelayEnabled, setPublishDelayEnabled] = useState(() =>
-    loadPublishDelayEnabled()
-  );
   const effectiveProfile = useMemo(
     () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
     [user?.profile, user?.pubkey]
   );
+  const {
+    fields: {
+      profileName,
+      profileDisplayName,
+      profilePicture,
+      profileNip05,
+      profileAbout,
+      presencePublishingEnabled,
+      publishDelayEnabled,
+    },
+    isSavingProfile,
+    validation: {
+      showProfileNameRequired,
+      showProfileNameInvalid,
+      showProfileNameTaken,
+      isProfileNameValid,
+    },
+    setProfileName,
+    setProfileDisplayName,
+    setProfilePicture,
+    setProfileNip05,
+    setProfileAbout,
+    resetFromProfile,
+    handleSaveProfile,
+    handlePresencePublishingChange,
+    handlePublishDelayChange,
+  } = useProfileEditor({
+    userPubkey: user?.pubkey,
+    t,
+    updateUserProfile,
+    publishEvent,
+    onSaved: () => setIsProfileEditorOpen(false),
+  });
 
   const openProfileEditor = useCallback(() => {
     if (!isConnected) {
       toast.error(t("filters.profile.noRelayConnected"));
       return;
     }
-    setProfileName(effectiveProfile.name || "");
-    setProfileDisplayName(effectiveProfile.displayName || "");
-    setProfilePicture(effectiveProfile.picture || "");
-    setProfileNip05(effectiveProfile.nip05 || "");
-    setProfileAbout(effectiveProfile.about || "");
-    setPresencePublishingEnabled(loadPresencePublishingEnabled());
-    setPublishDelayEnabled(loadPublishDelayEnabled());
+    resetFromProfile(effectiveProfile);
     setIsProfileEditorOpen(true);
-  }, [effectiveProfile.about, effectiveProfile.displayName, effectiveProfile.name, effectiveProfile.nip05, effectiveProfile.picture, isConnected, t]);
-
-  const handlePresencePublishingChange = useCallback((enabled: boolean) => {
-    setPresencePublishingEnabled(enabled);
-    savePresencePublishingEnabled(enabled);
-    if (!enabled && user?.pubkey) {
-      const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS;
-      void publishEvent(
-        NostrEventKind.UserStatus,
-        buildOfflinePresenceContent(),
-        buildPresenceTags(expirationUnix)
-      );
-    }
-  }, [publishEvent, user?.pubkey]);
-
-  const handlePublishDelayChange = useCallback((enabled: boolean) => {
-    setPublishDelayEnabled(enabled);
-    savePublishDelayEnabled(enabled);
-  }, []);
-
-  const trimmedProfileName = profileName.trim();
-  const hasTypedProfileName = profileName.length > 0;
-  const showProfileNameRequired = hasTypedProfileName && !trimmedProfileName;
-  const showProfileNameInvalid =
-    Boolean(trimmedProfileName) && !isNip05CompatibleName(trimmedProfileName);
-  const showProfileNameTaken =
-    Boolean(trimmedProfileName) &&
-    !showProfileNameInvalid &&
-    isProfileNameTaken(trimmedProfileName, { currentPubkey: user?.pubkey });
-  const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid && !showProfileNameTaken;
-
-  const handleSaveProfile = async () => {
-    if (!trimmedProfileName) {
-      toast.error(t("filters.profile.nameRequired"));
-      return;
-    }
-    if (!isProfileNameValid) {
-      toast.error(showProfileNameTaken
-        ? t("filters.profile.nameTaken")
-        : t("filters.profile.nameInvalidNip05"));
-      return;
-    }
-
-    setIsSavingProfile(true);
-    try {
-      const success = await updateUserProfile({
-        name: trimmedProfileName,
-        displayName: profileDisplayName || undefined,
-        picture: profilePicture || undefined,
-        nip05: profileNip05 || undefined,
-        about: profileAbout || undefined,
-      });
-      if (success) {
-        toast.success(t("filters.profile.updated"));
-        setIsProfileEditorOpen(false);
-      } else {
-        toast.error(t("filters.profile.updateFailed"));
-      }
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
+  }, [effectiveProfile, isConnected, resetFromProfile, t]);
 
   const handleCopyKey = () => {
     const hexKey = getGuestPrivateKey();

@@ -12,23 +12,8 @@ import { VersionHint } from "@/components/layout/VersionHint";
 import { useTranslation } from "react-i18next";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
-import {
-  loadPresencePublishingEnabled,
-  savePresencePublishingEnabled,
-} from "@/lib/presence-preferences";
-import {
-  loadPublishDelayEnabled,
-  savePublishDelayEnabled,
-} from "@/lib/publish-delay-preferences";
-import { NostrEventKind } from "@/lib/nostr/types";
-import {
-  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
-  buildOfflinePresenceContent,
-  buildPresenceTags,
-} from "@/lib/presence-status";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
-import { isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
-import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
+import { useProfileEditor } from "@/hooks/use-profile-editor";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -80,22 +65,46 @@ export function MobileFilters({
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileName, setProfileName] = useState("");
-  const [profileDisplayName, setProfileDisplayName] = useState("");
-  const [profilePicture, setProfilePicture] = useState("");
-  const [profileNip05, setProfileNip05] = useState("");
-  const [profileAbout, setProfileAbout] = useState("");
-  const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
-    loadPresencePublishingEnabled()
-  );
-  const [publishDelayEnabled, setPublishDelayEnabled] = useState(() =>
-    loadPublishDelayEnabled()
-  );
   const effectiveProfile = useMemo(
     () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
     [user?.profile, user?.pubkey]
   );
+  const {
+    fields: {
+      profileName,
+      profileDisplayName,
+      profilePicture,
+      profileNip05,
+      profileAbout,
+      presencePublishingEnabled,
+      publishDelayEnabled,
+    },
+    isSavingProfile,
+    validation: {
+      showProfileNameRequired,
+      showProfileNameInvalid,
+      showProfileNameTaken,
+      isProfileNameValid,
+    },
+    setProfileName,
+    setProfileDisplayName,
+    setProfilePicture,
+    setProfileNip05,
+    setProfileAbout,
+    resetFromProfile,
+    handleSaveProfile,
+    handlePresencePublishingChange,
+    handlePublishDelayChange,
+  } = useProfileEditor({
+    userPubkey: user?.pubkey,
+    knownProfileNames: people
+      .filter((person) => person.id !== user?.pubkey)
+      .map((person) => person.name),
+    t,
+    updateUserProfile,
+    publishEvent,
+    onSaved: () => setIsProfileEditorOpen(false),
+  });
 
   const displayName = useMemo(() => {
     if (!user) return t("filters.profile.notSignedIn");
@@ -115,20 +124,11 @@ export function MobileFilters({
   const guestPrivateKey = getGuestPrivateKey();
 
   useEffect(() => {
-    setProfileName(effectiveProfile.name || "");
-    setProfileDisplayName(effectiveProfile.displayName || "");
-    setProfilePicture(effectiveProfile.picture || "");
-    setProfileNip05(effectiveProfile.nip05 || "");
-    setProfileAbout(effectiveProfile.about || "");
-    setPresencePublishingEnabled(loadPresencePublishingEnabled());
-    setPublishDelayEnabled(loadPublishDelayEnabled());
+    resetFromProfile(effectiveProfile);
   }, [
-    effectiveProfile.about,
-    effectiveProfile.displayName,
-    effectiveProfile.name,
-    effectiveProfile.nip05,
-    effectiveProfile.picture,
+    effectiveProfile,
     needsProfileSetup,
+    resetFromProfile,
     user,
   ]);
 
@@ -149,71 +149,6 @@ export function MobileFilters({
     if (!guestPrivateKey) return;
     navigator.clipboard.writeText(guestPrivateKey);
     toast.success(t("filters.profile.copiedPrivateKey"));
-  };
-
-  const trimmedProfileName = profileName.trim();
-  const hasTypedProfileName = profileName.length > 0;
-  const showProfileNameRequired = hasTypedProfileName && !trimmedProfileName;
-  const showProfileNameInvalid =
-    Boolean(trimmedProfileName) && !isNip05CompatibleName(trimmedProfileName);
-  const showProfileNameTaken =
-    Boolean(trimmedProfileName) &&
-    !showProfileNameInvalid &&
-    isProfileNameTaken(trimmedProfileName, {
-      currentPubkey: user?.pubkey,
-      additionalKnownNames: people
-        .filter((person) => person.id !== user?.pubkey)
-        .map((person) => person.name),
-    });
-  const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid && !showProfileNameTaken;
-
-  const handleSaveProfile = async () => {
-    if (!trimmedProfileName) {
-      toast.error(t("filters.profile.nameRequired"));
-      return;
-    }
-    if (!isProfileNameValid) {
-      toast.error(showProfileNameTaken
-        ? t("filters.profile.nameTaken")
-        : t("filters.profile.nameInvalidNip05"));
-      return;
-    }
-    setIsSavingProfile(true);
-    try {
-      const success = await updateUserProfile({
-        name: trimmedProfileName,
-        displayName: profileDisplayName || undefined,
-        picture: profilePicture || undefined,
-        nip05: profileNip05 || undefined,
-        about: profileAbout || undefined,
-      });
-      if (success) {
-        toast.success(t("filters.profile.updated"));
-        setIsProfileEditorOpen(false);
-      } else {
-        toast.error(t("filters.profile.updateFailed"));
-      }
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
-
-  const handlePresencePublishingChange = (enabled: boolean) => {
-    setPresencePublishingEnabled(enabled);
-    savePresencePublishingEnabled(enabled);
-    if (!enabled && user?.pubkey) {
-      const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS;
-      void publishEvent(
-        NostrEventKind.UserStatus,
-        buildOfflinePresenceContent(),
-        buildPresenceTags(expirationUnix)
-      );
-    }
-  };
-
-  const handlePublishDelayChange = (enabled: boolean) => {
-    setPublishDelayEnabled(enabled);
-    savePublishDelayEnabled(enabled);
   };
 
   return (
