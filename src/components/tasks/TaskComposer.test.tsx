@@ -108,6 +108,32 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(textarea.value).toBe("#backend ");
   });
 
+  it("prefers shorter hashtag matches in autocomplete ordering", () => {
+    const rankingChannels: Channel[] = [
+      { id: "bitcoin", name: "bitcoin", filterState: "neutral" },
+      { id: "bit", name: "bit", filterState: "neutral" },
+      { id: "it", name: "it", filterState: "neutral" },
+    ];
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={rankingChannels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: { value: "#it", selectionStart: 3 },
+    });
+
+    fireEvent.keyDown(textarea, { key: "Enter" });
+
+    expect(textarea.value).toBe("#it ");
+  });
+
   it("adds hashtag tags via modifier+Enter without inserting hashtag text", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(

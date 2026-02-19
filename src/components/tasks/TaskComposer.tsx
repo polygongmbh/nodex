@@ -387,7 +387,24 @@ export function TaskComposer({
     }
   };
 
-  const filteredChannels = channels.filter(channel => channel.name.toLowerCase().includes(hashtagFilter));
+  const normalizedHashtagFilter = hashtagFilter.trim().toLowerCase();
+  const filteredChannels = channels
+    .filter((channel) => channel.name.toLowerCase().includes(normalizedHashtagFilter))
+    .sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      const aExact = aName === normalizedHashtagFilter ? 1 : 0;
+      const bExact = bName === normalizedHashtagFilter ? 1 : 0;
+      if (aExact !== bExact) return bExact - aExact;
+
+      if (aName.length !== bName.length) return aName.length - bName.length;
+
+      const aIndex = aName.indexOf(normalizedHashtagFilter);
+      const bIndex = bName.indexOf(normalizedHashtagFilter);
+      if (aIndex !== bIndex) return aIndex - bIndex;
+
+      return aName.localeCompare(bName);
+    });
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
