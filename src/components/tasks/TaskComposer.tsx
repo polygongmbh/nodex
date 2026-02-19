@@ -6,7 +6,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
@@ -17,6 +16,7 @@ import {
   personMatchesMentionQuery,
 } from "@/lib/mentions";
 import { hasMeaningfulComposerText } from "@/lib/composer-content";
+import { notifyNeedTag, notifyTaskCreationFailed } from "@/lib/notifications";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -366,7 +366,7 @@ export function TaskComposer({
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1).toLowerCase()) || [];
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
     if (submitTags.length === 0) {
-      toast.error(t("toasts.errors.needTag"));
+      notifyNeedTag(t);
       return;
     }
     
@@ -397,7 +397,7 @@ export function TaskComposer({
       );
     } catch (error) {
       console.error("Task submit failed", error);
-      toast.error(t("toasts.errors.taskCreationFailed"));
+      notifyTaskCreationFailed(t);
       setIsPublishing(false);
       return;
     }

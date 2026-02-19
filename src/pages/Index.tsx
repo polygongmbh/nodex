@@ -92,6 +92,15 @@ import {
 import { normalizeTaskType } from "@/lib/task-type";
 import { getConfiguredDefaultRelayIds } from "@/lib/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
+import {
+  notifyLocalSaved,
+  notifyNeedSigninModify,
+  notifyNeedSigninPost,
+  notifyNeedTag,
+  notifyPublished,
+  notifyPublishSavedForRetry,
+  notifyStatusRestricted,
+} from "@/lib/notifications";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus, ComposeRestoreRequest, ComposeRestoreState } from "@/types";
 import { toast } from "sonner";
@@ -861,14 +870,14 @@ const Index = () => {
   const handleToggleComplete = (taskId: string) => {
     if (!user) {
       handleOpenAuthModal();
-      toast.error(t("toasts.errors.needSigninModify"));
+      notifyNeedSigninModify(t);
       return;
     }
 
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask) return;
     if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-      toast.error(t("toasts.errors.statusRestricted"));
+      notifyStatusRestricted(t);
       return;
     }
     const currentStatus = pendingTaskStatusesRef.current.get(taskId) ?? existingTask.status ?? "todo";
@@ -981,14 +990,14 @@ const Index = () => {
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
     if (!user) {
       handleOpenAuthModal();
-      toast.error(t("toasts.errors.needSigninModify"));
+      notifyNeedSigninModify(t);
       return;
     }
 
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask) return;
     if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-      toast.error(t("toasts.errors.statusRestricted"));
+      notifyStatusRestricted(t);
       return;
     }
 
@@ -1044,11 +1053,11 @@ const Index = () => {
   ): Promise<TaskCreateResult> => {
     if (!user) {
       handleOpenAuthModal();
-      toast.error(t("toasts.errors.needSigninPost"));
+      notifyNeedSigninPost(t);
       return { ok: false, reason: "not-authenticated" };
     }
     if (extractedTags.length === 0) {
-      toast.error(t("toasts.errors.needTag"));
+      notifyNeedTag(t);
       return { ok: false, reason: "missing-tag" };
     }
     const normalizedTaskType = normalizeTaskType(taskType);
@@ -1215,7 +1224,7 @@ const Index = () => {
 
     if (!shouldPublish) {
       setLocalTasks((prev) => [{ ...baseTask, id: Date.now().toString() }, ...prev]);
-      toast.success(normalizedTaskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
+      notifyLocalSaved(t, normalizedTaskType);
       return { ok: true, mode: "local" };
     }
 
@@ -1255,7 +1264,7 @@ const Index = () => {
           const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
           setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
           setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
-          toast.error(t("toasts.errors.publishSavedForRetry"));
+          notifyPublishSavedForRetry(t);
           return;
         }
 
@@ -1285,7 +1294,7 @@ const Index = () => {
               : task
           )
         );
-        toast.success(normalizedTaskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
+        notifyPublished(t, normalizedTaskType);
       }, PUBLISH_UNDO_DELAY_MS);
 
       const toastId = toast(t("toasts.info.pendingPublish", { seconds: Math.floor(PUBLISH_UNDO_DELAY_MS / 1000) }), {
@@ -1304,7 +1313,7 @@ const Index = () => {
     if (!publishResult.success) {
       const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
       setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
-      toast.error(t("toasts.errors.publishSavedForRetry"));
+      notifyPublishSavedForRetry(t);
       return { ok: true, mode: "queued" };
     }
 
@@ -1329,7 +1338,7 @@ const Index = () => {
       },
       ...prev,
     ]);
-    toast.success(normalizedTaskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
+    notifyPublished(t, normalizedTaskType);
     return { ok: true, mode: "published" };
   };
 
@@ -1403,7 +1412,7 @@ const Index = () => {
       );
     }
 
-    toast.success(draft.taskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
+    notifyPublished(t, draft.taskType);
   }, [failedPublishDrafts, parseStoredDate, publishEvent, publishTaskDueUpdate, publishTaskStateUpdate, resolveRelayUrlsFromIds, t]);
 
   const handleDismissFailedPublish = useCallback((draftId: string) => {
@@ -1418,7 +1427,7 @@ const Index = () => {
   ) => {
     if (!user) {
       handleOpenAuthModal();
-      toast.error(t("toasts.errors.needSigninModify"));
+      notifyNeedSigninModify(t);
       return;
     }
     const existingTask = allTasks.find((task) => task.id === taskId);
@@ -1436,7 +1445,7 @@ const Index = () => {
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
     if (!user) {
       handleOpenAuthModal();
-      toast.error(t("toasts.errors.needSigninModify"));
+      notifyNeedSigninModify(t);
       return;
     }
     const existingTask = allTasks.find((task) => task.id === taskId);

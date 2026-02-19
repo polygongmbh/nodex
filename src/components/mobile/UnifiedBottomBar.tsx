@@ -14,6 +14,7 @@ import {
 } from "@/lib/mentions";
 import { hasMeaningfulComposerText } from "@/lib/composer-content";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { notifyNeedTag, notifyTaskCreationFailed } from "@/lib/notifications";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -349,7 +350,7 @@ export function UnifiedBottomBar({
     const extractedChannels = sharedText.match(/#(\w+)/g)?.map((token) => token.slice(1).toLowerCase()) || [];
     const submitChannels = Array.from(new Set([...extractedChannels, ...explicitTagNames]));
     if (submitChannels.length === 0) {
-      toast.error(t("toasts.errors.needTag"));
+      notifyNeedTag(t);
       return;
     }
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
@@ -373,7 +374,7 @@ export function UnifiedBottomBar({
       ));
     } catch (error) {
       console.error("Mobile task submit failed", error);
-      toast.error(t("toasts.errors.taskCreationFailed"));
+      notifyTaskCreationFailed(t);
       return;
     }
     if (!result.ok) {
