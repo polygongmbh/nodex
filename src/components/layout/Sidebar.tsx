@@ -318,45 +318,29 @@ export function Sidebar({
       {/* Footer: utility tiles */}
       <div className="border-t border-sidebar-border flex-shrink-0 p-2">
         {(onShortcutsClick || onGuideClick) && (
-          <TooltipProvider>
-            <div className="flex w-full flex-col gap-1 lg:flex-row lg:gap-2">
-              {onShortcutsClick && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={onShortcutsClick}
-                    className="hidden h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:inline-flex lg:w-auto lg:flex-1"
-                    aria-label={t("sidebar.actions.openShortcuts")}
-                  >
-                    <Keyboard className="w-4 h-4" />
-                    <span className="text-xs font-medium">{t("sidebar.actions.shortcuts")}</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p>{t("sidebar.actions.shortcutsTooltip")}</p>
-                </TooltipContent>
-              </Tooltip>
-              )}
+          <div className="flex w-full flex-col gap-1 lg:flex-row lg:gap-2">
+            {onShortcutsClick && (
+              <button
+                onClick={onShortcutsClick}
+                className="hidden h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:inline-flex lg:w-auto lg:flex-1"
+                aria-label={t("sidebar.actions.openShortcuts")}
+              >
+                <Keyboard className="w-4 h-4" />
+                <span className="text-xs font-medium">{t("sidebar.actions.shortcuts")}</span>
+              </button>
+            )}
 
-              {onGuideClick && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={onGuideClick}
-                    className="inline-flex h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:w-auto lg:flex-1"
-                    aria-label={t("sidebar.actions.openGuide")}
-                  >
-                    <BookOpen className="w-4 h-4" />
-                    <span className="text-xs font-medium">{t("sidebar.actions.guide")}</span>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  <p>{t("sidebar.actions.guide")}</p>
-                </TooltipContent>
-              </Tooltip>
-              )}
-            </div>
-          </TooltipProvider>
+            {onGuideClick && (
+              <button
+                onClick={onGuideClick}
+                className="inline-flex h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:w-auto lg:flex-1"
+                aria-label={t("sidebar.actions.openGuide")}
+              >
+                <BookOpen className="w-4 h-4" />
+                <span className="text-xs font-medium">{t("sidebar.actions.guide")}</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
     </aside>

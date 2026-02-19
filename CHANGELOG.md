@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Sidebar footer no longer shows redundant hover popovers for Guide and Shortcuts actions.
 
 ## [1.8.0] - 2026-02-19
 Improved guest identity defaults and live profile-name validation for NIP-05 compatibility.
