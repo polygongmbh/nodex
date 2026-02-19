@@ -123,6 +123,7 @@
 - `Ctrl/Cmd+Enter`: submit as the currently selected kind.
 - `Alt+Enter` with no autocomplete open: submit as the other kind (Task <-> Comment).
 - `Alt/Ctrl/Cmd/Shift+Enter` with hashtag/mention autocomplete open: add the selected tag/mention to publish metadata without inserting token text.
+- In the mobile combined composer, `Alt+Enter` while typing a hashtag token adds that hashtag as metadata-only, even for new tags.
 
 ### Search behavior
 - Bottom search matches:
