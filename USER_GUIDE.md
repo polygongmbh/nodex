@@ -63,6 +63,7 @@
 - Open guide from:
   - Desktop sidebar: *Guide*
   - Mobile *Manage* view: *Open Guide*
+- Desktop sidebar *Guide* and *Shortcuts* actions are directly labeled and no longer show duplicate hover popovers.
 - Choose area overlay:
   - Navigation
   - Filters
