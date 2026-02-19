@@ -21,8 +21,8 @@
 - In Kanban, use the Levels dropdown near search to switch hierarchy scope:
   - `Top-level`: only root tasks (no parent).
   - `2/3 levels`: include subtasks up to that depth.
-  - `All levels`: full parent/child hierarchy.
-  - `Leaves only`: only end-node tasks with no children.
+  - `All levels`: full parent/subtask hierarchy.
+  - `Leaves only`: only end-node tasks with no subtasks.
 
 ## Channel and Tag Filtering
 ### Desktop sidebar channels
