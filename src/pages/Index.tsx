@@ -28,11 +28,8 @@ import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onbo
 import { nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
-  getEffectiveActiveRelayIds,
   loadPersistedChannelFilters,
-  loadPersistedRelayIds,
   savePersistedChannelFilters,
-  savePersistedRelayIds,
 } from "@/lib/filter-preferences";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
 import { resolveCurrentUser } from "@/lib/current-user";
@@ -94,6 +91,7 @@ import {
 } from "@/lib/filter-state-utils";
 import { normalizeTaskType } from "@/lib/task-type";
 import { getConfiguredDefaultRelayIds } from "@/lib/default-relays";
+import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus, ComposeRestoreRequest, ComposeRestoreState } from "@/types";
 import { toast } from "sonner";
@@ -181,9 +179,18 @@ const Index = () => {
     }));
   }, [ndkRelays]);
 
-  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
-    loadPersistedRelayIds(getConfiguredDefaultRelayIds())
-  );
+  const {
+    activeRelayIds,
+    setActiveRelayIds,
+    effectiveActiveRelayIds,
+    handleRelayToggle,
+    handleRelayExclusive,
+    handleToggleAllRelays,
+  } = useRelayFilterState({
+    relays,
+    t,
+    defaultRelayIds: getConfiguredDefaultRelayIds(),
+  });
   const [people, setPeople] = useState<Person[]>([]);
   const [cachedKind0Events, setCachedKind0Events] = useState(() => loadCachedKind0Events());
   const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
@@ -422,10 +429,6 @@ const Index = () => {
   }, [failedPublishDrafts]);
 
   useEffect(() => {
-    savePersistedRelayIds(activeRelayIds);
-  }, [activeRelayIds]);
-
-  useEffect(() => {
     savePersistedChannelFilters(channelFilterStates);
   }, [channelFilterStates]);
 
@@ -596,7 +599,7 @@ const Index = () => {
     setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
     setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
     setPeople((prev) => mapPeopleSelection(prev, () => false));
-  }, [channels, isMobile, relays, setCurrentView, setFocusedTaskId]);
+  }, [channels, isMobile, relays, setActiveRelayIds, setCurrentView, setFocusedTaskId]);
 
   const forceShowComposeForGuide = shouldForceComposeForGuide({
     isOnboardingOpen,
@@ -615,40 +618,6 @@ const Index = () => {
       setCurrentView("feed");
     }
   }, [currentView, isMobile, setCurrentView]);
-
-  const handleRelayToggle = (id: string) => {
-    setActiveRelayIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-    const relay = relays.find((r) => r.id === id);
-    toast.success(
-      activeRelayIds.has(id)
-        ? t("toasts.success.relayFilterDisabled", { relayName: relay?.name || id })
-        : t("toasts.success.relayFilterEnabled", { relayName: relay?.name || id })
-    );
-  };
-
-  const handleRelayExclusive = (id: string) => {
-    setActiveRelayIds(new Set([id]));
-    const relay = relays.find((r) => r.id === id);
-    toast.success(t("toasts.success.showingOnlyRelay", { relayName: relay?.name || id }));
-  };
-
-  const handleToggleAllRelays = () => {
-    if (activeRelayIds.size === relays.length) {
-      setActiveRelayIds(new Set());
-      toast.success(t("toasts.success.relayFiltersCleared"));
-    } else {
-      setActiveRelayIds(new Set(relays.map((r) => r.id)));
-      toast.success(t("toasts.success.allRelaysSelected"));
-    }
-  };
 
   const handleChannelToggle = (id: string) => {
     setChannelFilterStates((prev) => {
@@ -1481,11 +1450,6 @@ const Index = () => {
     );
     void publishTaskPriorityUpdate(taskId, priority);
   }, [allTasks, handleOpenAuthModal, publishTaskPriorityUpdate, t, user]);
-
-  const effectiveActiveRelayIds = useMemo(
-    () => getEffectiveActiveRelayIds(activeRelayIds, relays.map((relay) => relay.id)),
-    [activeRelayIds, relays]
-  );
 
   // Build relays with active state for sidebar display
   const relaysWithActiveState: Relay[] = useMemo(() => {
