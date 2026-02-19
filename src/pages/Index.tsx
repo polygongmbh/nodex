@@ -66,6 +66,7 @@ import { shouldAutoStartOnboarding } from "@/lib/onboarding-autostart";
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
 import { loadPresencePublishingEnabled } from "@/lib/presence-preferences";
+import { loadPublishDelayEnabled } from "@/lib/publish-delay-preferences";
 import {
   loadCompletionSoundEnabled,
   saveCompletionSoundEnabled,
@@ -105,6 +106,7 @@ const validViews: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
 const DEMO_RELAY_ID = "demo";
 const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 const TASK_STATUS_REORDER_DELAY_MS = 260;
+const PUBLISH_UNDO_DELAY_MS = 5000;
 
 const Index = () => {
   const { t } = useTranslation();
@@ -193,6 +195,8 @@ const Index = () => {
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
   const pendingStatusUpdateTimeoutsRef = useRef<Map<string, number>>(new Map());
   const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
+  const pendingPublishStateRef = useRef<Map<string, { timeoutId: number; toastId: string | number }>>(new Map());
+  const [pendingPublishTaskIds, setPendingPublishTaskIds] = useState<Set<string>>(new Set());
   const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<Record<string, TaskStatus>>({});
   const [sortModifiedAtHoldByTaskId, setSortModifiedAtHoldByTaskId] = useState<Record<string, string>>({});
 
@@ -423,6 +427,17 @@ const Index = () => {
   useEffect(() => {
     savePersistedChannelFilters(channelFilterStates);
   }, [channelFilterStates]);
+
+  useEffect(() => {
+    const pendingPublishState = pendingPublishStateRef.current;
+    return () => {
+      for (const pending of pendingPublishState.values()) {
+        window.clearTimeout(pending.timeoutId);
+        toast.dismiss(pending.toastId);
+      }
+      pendingPublishState.clear();
+    };
+  }, []);
 
   const handleFocusSidebar = useCallback(() => {
     setIsSidebarFocused(true);
@@ -1012,6 +1027,33 @@ const Index = () => {
     void publishTaskStateUpdate(taskId, newStatus);
   };
 
+  const isPendingPublishTask = useCallback((taskId: string) => {
+    return pendingPublishTaskIds.has(taskId);
+  }, [pendingPublishTaskIds]);
+
+  const clearPendingPublishTask = useCallback((taskId: string, options?: { dismissToast?: boolean }) => {
+    const pending = pendingPublishStateRef.current.get(taskId);
+    if (!pending) return;
+    window.clearTimeout(pending.timeoutId);
+    if (options?.dismissToast !== false) {
+      toast.dismiss(pending.toastId);
+    }
+    pendingPublishStateRef.current.delete(taskId);
+    setPendingPublishTaskIds((prev) => {
+      if (!prev.has(taskId)) return prev;
+      const next = new Set(prev);
+      next.delete(taskId);
+      return next;
+    });
+  }, []);
+
+  const handleUndoPendingPublish = useCallback((taskId: string) => {
+    if (!pendingPublishStateRef.current.has(taskId)) return;
+    clearPendingPublishTask(taskId);
+    setLocalTasks((prev) => prev.filter((task) => task.id !== taskId));
+    toast.success(t("toasts.success.publishUndone"));
+  }, [clearPendingPublishTask, t]);
+
   const handleNewTask = async (
     content: string,
     extractedTags: string[],
@@ -1103,43 +1145,134 @@ const Index = () => {
       }
       return people[0];
     })();
+    const publishKind: NostrEventKind = normalizedTaskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
+    const validParentId = isNostrEventId(parentId) ? parentId : undefined;
+    const primaryRelayUrl = selectedRelayUrls[0] ?? "";
+    if (shouldPublish && normalizedTaskType === "task" && parentId && !validParentId) {
+      toast.warning(t("toasts.warnings.parentLocalOnly"));
+    }
+    const publishTags = shouldPublish
+      ? (
+          normalizedTaskType === "task"
+            ? buildTaskPublishTags(
+                validParentId,
+                primaryRelayUrl,
+                assigneePubkeys,
+                priority,
+                normalizedExtractedTags
+              )
+            : [
+                ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
+                ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
+              ]
+        )
+      : [];
+    const publishParentId = shouldPublish && normalizedTaskType === "comment" && validParentId ? validParentId : undefined;
 
-    let publishSuccess = false;
-    let publishedEventId: string | undefined;
-    let publishKind: NostrEventKind = normalizedTaskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
-    let publishTags: string[][] = [];
-    let publishParentId: string | undefined;
-    if (shouldPublish) {
+    const publishFailedDraft = (
+      fallbackKind: NostrEventKind,
+      fallbackTags: string[][],
+      fallbackParentId?: string
+    ): FailedPublishDraft => ({
+      id: `failed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+      author: taskAuthor,
+      content,
+      tags: normalizedExtractedTags,
+      relayIds: targetRelayIds,
+      relayUrls: selectedRelayUrls,
+      taskType: normalizedTaskType,
+      createdAt: createdAt.toISOString(),
+      dueDate: dueDate ? dueDate.toISOString() : undefined,
+      dueTime,
+      dateType,
+      parentId,
+      initialStatus,
+      mentionPubkeys,
+      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
+      priority: normalizedTaskType === "task" ? priority : undefined,
+      publishKind: fallbackKind,
+      publishTags: fallbackTags,
+      publishParentId: fallbackParentId,
+    });
+
+    const effectiveRelayIds = selectedRelayUrls.length > 0
+      ? selectedRelayUrls.slice(0, 1).map((url) => getRelayIdFromUrl(url))
+      : targetRelayIds;
+
+    const baseTask: Omit<Task, "id"> = {
+      author: taskAuthor,
+      content,
+      tags: normalizedExtractedTags,
+      relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
+      taskType: normalizedTaskType,
+      timestamp: createdAt,
+      status: normalizedTaskType === "task" ? (initialStatus || "todo") : undefined,
+      likes: 0,
+      replies: 0,
+      reposts: 0,
+      dueDate,
+      dueTime,
+      dateType,
+      parentId,
+      mentions: Array.from(
+        new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
+      ),
+      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
+      priority: normalizedTaskType === "task" ? priority : undefined,
+    };
+
+    if (!shouldPublish) {
+      setLocalTasks((prev) => [{ ...baseTask, id: Date.now().toString() }, ...prev]);
+      toast.success(normalizedTaskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
+      return { ok: true, mode: "local" };
+    }
+
+    const publishWithMetadata = async () => {
       try {
-        console.log("Publishing event to relays:", selectedRelayUrls);
-        const kind = normalizedTaskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
-        const validParentId = isNostrEventId(parentId) ? parentId : undefined;
-        if (normalizedTaskType === "task" && parentId && !validParentId) {
-          toast.warning(t("toasts.warnings.parentLocalOnly"));
+        const result = await publishEvent(publishKind, content, publishTags, publishParentId, selectedRelayUrls);
+        return { success: result.success, eventId: result.eventId };
+      } catch (error) {
+        console.error("Task publish failed unexpectedly", error);
+        return { success: false, eventId: undefined as string | undefined };
+      }
+    };
+
+    const publishDelayEnabled = loadPublishDelayEnabled();
+    if (publishDelayEnabled) {
+      const pendingTaskId = `pending-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const pendingUntil = new Date(Date.now() + PUBLISH_UNDO_DELAY_MS);
+      setLocalTasks((prev) => [
+        {
+          ...baseTask,
+          id: pendingTaskId,
+          pendingPublishToken: pendingTaskId,
+          pendingPublishUntil: pendingUntil,
+        },
+        ...prev,
+      ]);
+      setPendingPublishTaskIds((prev) => {
+        const next = new Set(prev);
+        next.add(pendingTaskId);
+        return next;
+      });
+
+      const timeoutId = window.setTimeout(async () => {
+        clearPendingPublishTask(pendingTaskId, { dismissToast: true });
+        const publishResult = await publishWithMetadata();
+        if (!publishResult.success) {
+          const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
+          setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
+          setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
+          toast.error(t("toasts.errors.publishSavedForRetry"));
+          return;
         }
-        publishTags = normalizedTaskType === "task"
-          ? buildTaskPublishTags(
-              validParentId,
-              selectedRelayUrls[0],
-              assigneePubkeys,
-              priority,
-              normalizedExtractedTags
-            )
-          : [
-              ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
-              ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
-            ];
-        publishKind = kind;
-        publishParentId = normalizedTaskType === "comment" && validParentId ? validParentId : undefined;
-        const result = await publishEvent(kind, content, publishTags, publishParentId, selectedRelayUrls);
-        publishSuccess = result.success;
-        publishedEventId = result.eventId;
-        if (result.success && normalizedTaskType === "task" && publishedEventId && initialStatus) {
-          await publishTaskStateUpdate(publishedEventId, initialStatus, selectedRelayUrls.slice(0, 1));
+
+        if (publishResult.eventId && normalizedTaskType === "task" && initialStatus) {
+          await publishTaskStateUpdate(publishResult.eventId, initialStatus, selectedRelayUrls.slice(0, 1));
         }
-        if (result.success && normalizedTaskType === "task" && publishedEventId && dueDate) {
+        if (publishResult.eventId && normalizedTaskType === "task" && dueDate) {
           await publishTaskDueUpdate(
-            publishedEventId,
+            publishResult.eventId,
             content,
             dueDate,
             dueTime,
@@ -1147,77 +1280,65 @@ const Index = () => {
             selectedRelayUrls.slice(0, 1)
           );
         }
-      } catch (error) {
-        console.error("Task publish failed unexpectedly", error);
-        publishSuccess = false;
-      }
+
+        setLocalTasks((prev) =>
+          prev.map((task) =>
+            task.id === pendingTaskId
+              ? {
+                  ...task,
+                  id: publishResult.eventId || task.id,
+                  pendingPublishToken: undefined,
+                  pendingPublishUntil: undefined,
+                }
+              : task
+          )
+        );
+        toast.success(normalizedTaskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
+      }, PUBLISH_UNDO_DELAY_MS);
+
+      const toastId = toast(t("toasts.info.pendingPublish", { seconds: Math.floor(PUBLISH_UNDO_DELAY_MS / 1000) }), {
+        duration: PUBLISH_UNDO_DELAY_MS,
+        action: {
+          label: t("toasts.actions.undo"),
+          onClick: () => handleUndoPendingPublish(pendingTaskId),
+        },
+      });
+
+      pendingPublishStateRef.current.set(pendingTaskId, { timeoutId, toastId });
+      return { ok: true, mode: "published" };
     }
 
-    if (shouldPublish && !publishSuccess) {
-      const failedDraft: FailedPublishDraft = {
-        id: `failed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-        author: taskAuthor,
-        content,
-        tags: normalizedExtractedTags,
-        relayIds: targetRelayIds,
-        relayUrls: selectedRelayUrls,
-        taskType: normalizedTaskType,
-        createdAt: createdAt.toISOString(),
-        dueDate: dueDate ? dueDate.toISOString() : undefined,
-        dueTime,
-        dateType,
-        parentId,
-        initialStatus,
-        mentionPubkeys,
-        assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
-        priority: normalizedTaskType === "task" ? priority : undefined,
-        publishKind,
-        publishTags,
-        publishParentId,
-      };
+    const publishResult = await publishWithMetadata();
+    if (!publishResult.success) {
+      const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
       setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
       toast.error(t("toasts.errors.publishSavedForRetry"));
       return { ok: true, mode: "queued" };
     }
 
-    const effectiveRelayIds = selectedRelayUrls.length > 0
-      ? selectedRelayUrls.slice(0, 1).map((url) => getRelayIdFromUrl(url))
-      : targetRelayIds;
-
-    const shouldAddAsLocalTask = !shouldPublish || publishSuccess;
-    if (shouldAddAsLocalTask) {
-      const newTask: Task = {
-        id: publishedEventId || Date.now().toString(),
-        author: taskAuthor,
+    if (publishResult.eventId && normalizedTaskType === "task" && initialStatus) {
+      await publishTaskStateUpdate(publishResult.eventId, initialStatus, selectedRelayUrls.slice(0, 1));
+    }
+    if (publishResult.eventId && normalizedTaskType === "task" && dueDate) {
+      await publishTaskDueUpdate(
+        publishResult.eventId,
         content,
-        tags: normalizedExtractedTags,
-        relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
-        taskType: normalizedTaskType,
-        timestamp: createdAt,
-        status: normalizedTaskType === "task" ? (initialStatus || "todo") : undefined,
-        likes: 0,
-        replies: 0,
-        reposts: 0,
         dueDate,
         dueTime,
         dateType,
-        parentId,
-        mentions: Array.from(
-          new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
-        ),
-        assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
-        priority: normalizedTaskType === "task" ? priority : undefined,
-      };
-      setLocalTasks((prev) => [newTask, ...prev]);
+        selectedRelayUrls.slice(0, 1)
+      );
     }
 
-    if (shouldPublish) {
-      toast.success(normalizedTaskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
-      return { ok: true, mode: "published" };
-    }
-
-    toast.success(normalizedTaskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
-    return { ok: true, mode: "local" };
+    setLocalTasks((prev) => [
+      {
+        ...baseTask,
+        id: publishResult.eventId || Date.now().toString(),
+      },
+      ...prev,
+    ]);
+    toast.success(normalizedTaskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
+    return { ok: true, mode: "published" };
   };
 
   const parseStoredDate = useCallback((value?: string): Date | undefined => {
@@ -1419,6 +1540,8 @@ const Index = () => {
     onHashtagClick: handleHashtagExclusive,
     forceShowComposer: forceShowComposeForGuide,
     onAuthorClick: handleAuthorClick,
+    onUndoPendingPublish: handleUndoPendingPublish,
+    isPendingPublishTask,
     mentionRequest,
     composeGuideActivationSignal,
     onUpdateDueDate: handleDueDateChange,
@@ -1476,6 +1599,8 @@ const Index = () => {
           onHashtagClick={handleHashtagExclusive}
           forceComposeMode={forceShowComposeForGuide}
           onAuthorClick={handleAuthorClick}
+          onUndoPendingPublish={handleUndoPendingPublish}
+          isPendingPublishTask={isPendingPublishTask}
           mentionRequest={mentionRequest}
           failedPublishDrafts={failedPublishDrafts}
           onRetryFailedPublish={handleRetryFailedPublish}

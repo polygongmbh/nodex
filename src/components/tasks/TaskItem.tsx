@@ -45,6 +45,8 @@ interface TaskItemProps {
   isKeyboardFocused?: boolean; // For keyboard navigation highlight
   onHashtagClick?: (tag: string) => void;
   onAuthorClick?: (author: Person) => void;
+  onUndoPendingPublish?: (taskId: string) => void;
+  isPendingPublishTask?: (taskId: string) => boolean;
 }
 
 export function TaskItem({
@@ -68,6 +70,8 @@ export function TaskItem({
   isKeyboardFocused = false,
   onHashtagClick,
   onAuthorClick,
+  onUndoPendingPublish,
+  isPendingPublishTask,
 }: TaskItemProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: TaskStatus): string => {
@@ -168,6 +172,7 @@ export function TaskItem({
   const isComment = task.taskType === "comment";
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+  const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
 
   // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {
@@ -427,6 +432,22 @@ export function TaskItem({
                   </span>
                 </>
               )}
+              {isPendingPublish && (
+                <>
+                  <span>·</span>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onUndoPendingPublish?.(task.id);
+                    }}
+                    className="font-medium text-warning hover:text-warning/80"
+                    title={t("toasts.actions.undo")}
+                  >
+                    {t("toasts.actions.undo")}
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -570,6 +591,8 @@ export function TaskItem({
                       activeRelays={activeRelays}
                       onHashtagClick={onHashtagClick}
                       onAuthorClick={onAuthorClick}
+                      onUndoPendingPublish={onUndoPendingPublish}
+                      isPendingPublishTask={isPendingPublishTask}
                     />
                   );
                 })}
@@ -599,6 +622,8 @@ export function TaskItem({
                       activeRelays={activeRelays}
                       onHashtagClick={onHashtagClick}
                       onAuthorClick={onAuthorClick}
+                      onUndoPendingPublish={onUndoPendingPublish}
+                      isPendingPublishTask={isPendingPublishTask}
                     />
                   );
                 })}

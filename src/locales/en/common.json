@@ -76,6 +76,7 @@
       "publishedComment": "Comment published to Nostr and added locally",
       "localTask": "Task added locally (demo only)",
       "localComment": "Comment added locally (demo only)",
+      "publishUndone": "Post canceled before publish",
       "relayFilterEnabled": "{{relayName}} relay filter enabled",
       "relayFilterDisabled": "{{relayName}} relay filter disabled",
       "showingOnlyRelay": "Showing only {{relayName}} relay",
@@ -91,6 +92,12 @@
       "noFrequentPeople": "No frequent people to select",
       "frequentPeopleSelected": "Frequent people selected",
       "frequentPeopleDeselected": "Frequent people deselected"
+    },
+    "info": {
+      "pendingPublish": "Sending in {{seconds}} seconds"
+    },
+    "actions": {
+      "undo": "Undo"
     },
     "warnings": {
       "parentLocalOnly": "Parent reference is local-only; publishing task without parent link"
@@ -464,6 +471,8 @@
       "noRelayConnected": "Connect to at least one relay before editing profile",
       "presenceTitle": "Share live status",
       "presenceDescription": "Broadcast your current view and active task (NIP-38). Disable for privacy.",
+      "undoSendTitle": "Allow undo before sending",
+      "undoSendDescription": "Delay Nostr publish by a few seconds so you can undo from the toast or post card.",
       "updated": "Profile updated on connected relays",
       "updateFailed": "Failed to update profile. Check relay connectivity and try again."
     },

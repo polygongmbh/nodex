@@ -76,6 +76,7 @@
       "publishedComment": "Comentario publicado en Nostr y añadido localmente",
       "localTask": "Tarea añadida localmente (solo demo)",
       "localComment": "Comentario añadido localmente (solo demo)",
+      "publishUndone": "Publicación cancelada antes de enviar",
       "relayFilterEnabled": "Filtro de relay {{relayName}} activado",
       "relayFilterDisabled": "Filtro de relay {{relayName}} desactivado",
       "showingOnlyRelay": "Mostrando solo el relay {{relayName}}",
@@ -91,6 +92,12 @@
       "noFrequentPeople": "No hay personas frecuentes para seleccionar",
       "frequentPeopleSelected": "Personas frecuentes seleccionadas",
       "frequentPeopleDeselected": "Personas frecuentes deseleccionadas"
+    },
+    "info": {
+      "pendingPublish": "Enviando en {{seconds}} segundos"
+    },
+    "actions": {
+      "undo": "Deshacer"
     },
     "warnings": {
       "parentLocalOnly": "La referencia al padre es solo local; se publicará la tarea sin enlace al padre"
@@ -464,6 +471,8 @@
       "noRelayConnected": "Conéctate al menos a un relay antes de editar el perfil",
       "presenceTitle": "Compartir estado en vivo",
       "presenceDescription": "Difunde tu vista actual y tarea activa (NIP-38). Desactívalo por privacidad.",
+      "undoSendTitle": "Permitir deshacer antes de enviar",
+      "undoSendDescription": "Retrasa unos segundos la publicación en Nostr para poder deshacer desde el toast o la tarjeta.",
       "updated": "Perfil actualizado en relays conectados",
       "updateFailed": "No se pudo actualizar el perfil. Revisa la conectividad de relay e inténtalo de nuevo."
     },

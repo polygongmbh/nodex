@@ -65,6 +65,8 @@ export interface Task {
   mentions?: string[];
   assigneePubkeys?: string[];
   priority?: number;
+  pendingPublishToken?: string;
+  pendingPublishUntil?: Date;
 }
 
 export interface FilterState {

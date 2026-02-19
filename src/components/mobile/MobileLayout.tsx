@@ -59,6 +59,8 @@ interface MobileLayoutProps {
   onHashtagClick: (tag: string) => void;
   forceComposeMode?: boolean;
   onAuthorClick?: (author: Person) => void;
+  onUndoPendingPublish?: (taskId: string) => void;
+  isPendingPublishTask?: (taskId: string) => boolean;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -105,6 +107,8 @@ export function MobileLayout({
   onHashtagClick,
   forceComposeMode = false,
   onAuthorClick,
+  onUndoPendingPublish,
+  isPendingPublishTask,
   mentionRequest = null,
   failedPublishDrafts = [],
   onRetryFailedPublish,
@@ -206,6 +210,8 @@ export function MobileLayout({
     onStatusChange,
     onHashtagClick,
     onAuthorClick,
+    onUndoPendingPublish,
+    isPendingPublishTask,
     mentionRequest,
   };
 

@@ -44,6 +44,8 @@ interface TaskTreeProps {
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   onAuthorClick?: (author: Person) => void;
+  onUndoPendingPublish?: (taskId: string) => void;
+  isPendingPublishTask?: (taskId: string) => boolean;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -71,6 +73,8 @@ export function TaskTree({
   forceShowComposer = false,
   composeGuideActivationSignal,
   onAuthorClick,
+  onUndoPendingPublish,
+  isPendingPublishTask,
   mentionRequest = null,
 }: TaskTreeProps) {
   const { t } = useTranslation();
@@ -437,6 +441,8 @@ export function TaskTree({
               isKeyboardFocused={keyboardFocusedTaskId === task.id}
               onHashtagClick={onHashtagClick}
               onAuthorClick={onAuthorClick}
+              onUndoPendingPublish={onUndoPendingPublish}
+              isPendingPublishTask={isPendingPublishTask}
             />
           ))
         )}

@@ -31,6 +31,10 @@ import {
   savePresencePublishingEnabled,
 } from "@/lib/presence-preferences";
 import {
+  loadPublishDelayEnabled,
+  savePublishDelayEnabled,
+} from "@/lib/publish-delay-preferences";
+import {
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
   buildOfflinePresenceContent,
   buildPresenceTags,
@@ -376,6 +380,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
     loadPresencePublishingEnabled()
   );
+  const [publishDelayEnabled, setPublishDelayEnabled] = useState(() =>
+    loadPublishDelayEnabled()
+  );
   const effectiveProfile = useMemo(
     () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
     [user?.profile, user?.pubkey]
@@ -392,6 +399,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     setProfileNip05(effectiveProfile.nip05 || "");
     setProfileAbout(effectiveProfile.about || "");
     setPresencePublishingEnabled(loadPresencePublishingEnabled());
+    setPublishDelayEnabled(loadPublishDelayEnabled());
     setIsProfileEditorOpen(true);
   }, [effectiveProfile.about, effectiveProfile.displayName, effectiveProfile.name, effectiveProfile.nip05, effectiveProfile.picture, isConnected, t]);
 
@@ -407,6 +415,11 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       );
     }
   }, [publishEvent, user?.pubkey]);
+
+  const handlePublishDelayChange = useCallback((enabled: boolean) => {
+    setPublishDelayEnabled(enabled);
+    savePublishDelayEnabled(enabled);
+  }, []);
 
   const trimmedProfileName = profileName.trim();
   const hasTypedProfileName = profileName.length > 0;
@@ -676,6 +689,19 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   <span className="space-y-0.5">
                     <span className="block text-sm font-medium">{t("filters.profile.presenceTitle")}</span>
                     <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
+                  </span>
+                </label>
+                <label htmlFor="profile-publish-delay-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-3 py-2">
+                  <input
+                    id="profile-publish-delay-enabled"
+                    type="checkbox"
+                    checked={publishDelayEnabled}
+                    onChange={(event) => handlePublishDelayChange(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-primary"
+                  />
+                  <span className="space-y-0.5">
+                    <span className="block text-sm font-medium">{t("filters.profile.undoSendTitle")}</span>
+                    <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
                   </span>
                 </label>
               </div>

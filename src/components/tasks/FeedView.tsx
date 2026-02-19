@@ -70,6 +70,8 @@ interface FeedViewProps {
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   onAuthorClick?: (author: Person) => void;
+  onUndoPendingPublish?: (taskId: string) => void;
+  isPendingPublishTask?: (taskId: string) => boolean;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -97,6 +99,8 @@ export function FeedView({
   forceShowComposer = false,
   composeGuideActivationSignal,
   onAuthorClick,
+  onUndoPendingPublish,
+  isPendingPublishTask,
   mentionRequest = null,
 }: FeedViewProps) {
   const { t } = useTranslation();
@@ -360,6 +364,7 @@ export function FeedView({
               ? formatCompactRelativeTime(task.timestamp)
               : formatDistanceToNow(task.timestamp, { addSuffix: true });
             const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+            const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
 
             return (
               <div
@@ -569,6 +574,22 @@ export function FeedView({
                         <>
                           <span className="shrink-0">·</span>
                           <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{t("tasks.comment")}</span>
+                        </>
+                      )}
+                      {isPendingPublish && (
+                        <>
+                          <span className="shrink-0">·</span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onUndoPendingPublish?.(task.id);
+                            }}
+                            className="text-warning hover:text-warning/80 font-medium"
+                            title={t("toasts.actions.undo")}
+                          >
+                            {t("toasts.actions.undo")}
+                          </button>
                         </>
                       )}
                     </div>

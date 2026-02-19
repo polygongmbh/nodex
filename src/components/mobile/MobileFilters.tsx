@@ -16,6 +16,10 @@ import {
   loadPresencePublishingEnabled,
   savePresencePublishingEnabled,
 } from "@/lib/presence-preferences";
+import {
+  loadPublishDelayEnabled,
+  savePublishDelayEnabled,
+} from "@/lib/publish-delay-preferences";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
@@ -85,6 +89,9 @@ export function MobileFilters({
   const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
     loadPresencePublishingEnabled()
   );
+  const [publishDelayEnabled, setPublishDelayEnabled] = useState(() =>
+    loadPublishDelayEnabled()
+  );
   const effectiveProfile = useMemo(
     () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
     [user?.profile, user?.pubkey]
@@ -114,6 +121,7 @@ export function MobileFilters({
     setProfileNip05(effectiveProfile.nip05 || "");
     setProfileAbout(effectiveProfile.about || "");
     setPresencePublishingEnabled(loadPresencePublishingEnabled());
+    setPublishDelayEnabled(loadPublishDelayEnabled());
   }, [
     effectiveProfile.about,
     effectiveProfile.displayName,
@@ -201,6 +209,11 @@ export function MobileFilters({
         buildPresenceTags(expirationUnix)
       );
     }
+  };
+
+  const handlePublishDelayChange = (enabled: boolean) => {
+    setPublishDelayEnabled(enabled);
+    savePublishDelayEnabled(enabled);
   };
 
   return (
@@ -354,6 +367,19 @@ export function MobileFilters({
                   <span className="space-y-0.5">
                     <span className="block text-xs font-medium">{t("filters.profile.presenceTitle")}</span>
                     <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
+                  </span>
+                </label>
+                <label htmlFor="manage-profile-publish-delay-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
+                  <input
+                    id="manage-profile-publish-delay-enabled"
+                    type="checkbox"
+                    checked={publishDelayEnabled}
+                    onChange={(event) => handlePublishDelayChange(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-primary"
+                  />
+                  <span className="space-y-0.5">
+                    <span className="block text-xs font-medium">{t("filters.profile.undoSendTitle")}</span>
+                    <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
                   </span>
                 </label>
                 <div className="flex items-center justify-end gap-2 pt-1">

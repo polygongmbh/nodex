@@ -76,6 +76,7 @@
       "publishedComment": "Kommentar an Nostr veröffentlicht und lokal hinzugefügt",
       "localTask": "Aufgabe lokal hinzugefügt (nur Demo)",
       "localComment": "Kommentar lokal hinzugefügt (nur Demo)",
+      "publishUndone": "Beitrag vor dem Senden zurückgenommen",
       "relayFilterEnabled": "Relay-Filter {{relayName}} aktiviert",
       "relayFilterDisabled": "Relay-Filter {{relayName}} deaktiviert",
       "showingOnlyRelay": "Nur Relay {{relayName}} wird angezeigt",
@@ -91,6 +92,12 @@
       "noFrequentPeople": "Keine häufigen Personen zum Auswählen",
       "frequentPeopleSelected": "Häufige Personen ausgewählt",
       "frequentPeopleDeselected": "Häufige Personen abgewählt"
+    },
+    "info": {
+      "pendingPublish": "Wird in {{seconds}} Sekunden gesendet"
+    },
+    "actions": {
+      "undo": "Rückgängig"
     },
     "warnings": {
       "parentLocalOnly": "Parent-Referenz ist nur lokal; Aufgabe wird ohne Parent-Link veröffentlicht"
@@ -464,6 +471,8 @@
       "noRelayConnected": "Verbinde mindestens ein Relay, bevor du das Profil bearbeitest",
       "presenceTitle": "Live-Status teilen",
       "presenceDescription": "Aktuelle Ansicht und aktive Aufgabe als NIP-38-Status senden. Für mehr Privatsphäre deaktivieren.",
+      "undoSendTitle": "Rückgängig vor dem Senden erlauben",
+      "undoSendDescription": "Nostr-Veröffentlichung um ein paar Sekunden verzögern, damit sie im Toast oder auf der Karte rückgängig gemacht werden kann.",
       "updated": "Profil auf verbundenen Relays aktualisiert",
       "updateFailed": "Profil konnte nicht aktualisiert werden. Relay-Verbindung prüfen und erneut versuchen."
     },

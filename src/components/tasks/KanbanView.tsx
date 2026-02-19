@@ -50,6 +50,8 @@ interface KanbanViewProps {
   onFocusSidebar?: () => void;
   onHashtagClick?: (tag: string) => void;
   onAuthorClick?: (author: Person) => void;
+  onUndoPendingPublish?: (taskId: string) => void;
+  isPendingPublishTask?: (taskId: string) => boolean;
 }
 
 const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] => [
@@ -77,6 +79,8 @@ export function KanbanView({
   onFocusSidebar,
   onHashtagClick,
   onAuthorClick,
+  onUndoPendingPublish,
+  isPendingPublishTask,
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -465,6 +469,7 @@ export function KanbanView({
                           const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                           const isLockedUntilStart = isTaskLockedUntilStart(task);
                           const canChangeStatus = canUserChangeTaskStatus(task, currentUser);
+                          const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
                           
                           return (
                             <Draggable
@@ -534,6 +539,21 @@ export function KanbanView({
                                       people,
                                     })}
                                   </p>
+                                  {isPendingPublish && (
+                                    <div className="mt-2">
+                                      <button
+                                        type="button"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          onUndoPendingPublish?.(task.id);
+                                        }}
+                                        className="text-xs font-medium text-warning hover:text-warning/80"
+                                        title={t("toasts.actions.undo")}
+                                      >
+                                        {t("toasts.actions.undo")}
+                                      </button>
+                                    </div>
+                                  )}
                                   {/* Children indicator */}
                                   {hasChildren(task.id) && (
                                     <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
