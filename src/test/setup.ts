@@ -1,6 +1,47 @@
 import "@testing-library/jest-dom";
 import "@/lib/i18n/config";
 
+function installStorageFallbackIfNeeded(): void {
+  const candidate = (window as Window & { localStorage?: unknown }).localStorage as Partial<Storage> | undefined;
+  const hasUsableStorage =
+    Boolean(candidate) &&
+    typeof candidate?.getItem === "function" &&
+    typeof candidate?.setItem === "function" &&
+    typeof candidate?.removeItem === "function" &&
+    typeof candidate?.clear === "function";
+
+  if (hasUsableStorage) return;
+
+  const store = new Map<string, string>();
+  const fallbackStorage: Storage = {
+    get length() {
+      return store.size;
+    },
+    clear() {
+      store.clear();
+    },
+    getItem(key: string) {
+      return store.has(key) ? store.get(key)! : null;
+    },
+    key(index: number) {
+      return Array.from(store.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      store.delete(key);
+    },
+    setItem(key: string, value: string) {
+      store.set(key, String(value));
+    },
+  };
+
+  Object.defineProperty(window, "localStorage", {
+    configurable: true,
+    value: fallbackStorage,
+  });
+}
+
+installStorageFallbackIfNeeded();
+
 // Mock matchMedia for tests
 Object.defineProperty(window, "matchMedia", {
   writable: true,
