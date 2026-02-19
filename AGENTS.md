@@ -264,6 +264,8 @@ When asked to create a plan to fix or implement something:
 - After squashing, diff current commit to the previous head - there should be no difference, if there is, stop and ask how to proceed.
 
 #### push
+- `push` (or starts with `push`) is a special command and MUST run this full release workflow; do not shortcut directly to `git push` unless the user explicitly asks to bypass the routine.
+- if no release/push prep changes are needed, still run the checklist, report results, and ask for explicit confirmation before any network push.
 - update user-facing guides before release/push when behavior changed (at minimum `USER_GUIDE.md`, plus in-app guide/shortcuts copy where relevant)
 - explicitly review and revise `CHANGELOG.md` before release (wording, section classification, redundancy, and user-facing clarity), including pruning repetitive bullets and moving true net-new capabilities into `### Added`
 - list unpushed commits: `git log origin/<branch>..HEAD --oneline`
