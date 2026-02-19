@@ -10,11 +10,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { NostrRelay } from "@/hooks/use-nostr";
+import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { useTranslation } from "react-i18next";
 
 interface RelayManagementProps {
-  relays: NostrRelay[];
+  relays: NDKRelayStatus[];
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
   trigger?: ReactNode;
@@ -44,7 +44,7 @@ export function RelayManagement({
 
   const connectedCount = relays.filter((r) => r.status === "connected").length;
 
-  const getStatusIcon = (status: NostrRelay["status"]) => {
+  const getStatusIcon = (status: NDKRelayStatus["status"]) => {
     switch (status) {
       case "connected":
         return <Wifi className="w-4 h-4 text-success" />;
@@ -57,7 +57,7 @@ export function RelayManagement({
     }
   };
 
-  const getStatusColor = (status: NostrRelay["status"]) => {
+  const getStatusColor = (status: NDKRelayStatus["status"]) => {
     switch (status) {
       case "connected":
         return "bg-success";

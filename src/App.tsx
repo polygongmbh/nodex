@@ -5,17 +5,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { NDKProvider } from "@/lib/nostr/ndk-context";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { getConfiguredDefaultRelays } from "@/lib/default-relays";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
-const DEFAULT_NOSTR_RELAYS = getConfiguredDefaultRelays();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <NDKProvider defaultRelays={DEFAULT_NOSTR_RELAYS}>
+      <NDKProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
