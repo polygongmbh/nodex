@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -111,6 +112,9 @@ export function RelayManagement({
             <Radio className="w-5 h-5 text-primary" />
             {t("relay.managementTitle")}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("relay.managementDescription")}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">

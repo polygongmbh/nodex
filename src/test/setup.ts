@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import "@/lib/i18n/config";
+import { beforeAll, afterAll, vi } from "vitest";
 
 function installStorageFallbackIfNeeded(): void {
   const candidate = (window as Window & { localStorage?: unknown }).localStorage as Partial<Storage> | undefined;
@@ -97,4 +98,25 @@ class MockWebSocket {
 Object.defineProperty(window, "WebSocket", {
   writable: true,
   value: MockWebSocket,
+});
+
+const originalConsoleError = console.error;
+const shouldSuppressConsoleError = (value: unknown): boolean => {
+  if (typeof value !== "string") return false;
+  return (
+    value.includes("not wrapped in act") ||
+    value.includes("Task submit failed") ||
+    value.includes("network down")
+  );
+};
+
+beforeAll(() => {
+  vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+    if (args.some(shouldSuppressConsoleError)) return;
+    originalConsoleError(...args);
+  });
+});
+
+afterAll(() => {
+  vi.restoreAllMocks();
 });

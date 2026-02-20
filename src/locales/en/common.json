@@ -564,6 +564,7 @@
   "relay": {
     "manage": "Manage relays ({{connectedCount}}/{{totalCount}})",
     "managementTitle": "Relay Management",
+    "managementDescription": "View relay status, add or remove relays, and copy debug diagnostics.",
     "placeholder": "wss://relay.example.com",
     "noneConfigured": "No relays configured",
     "connectedSummary": "{{connectedCount}} of {{totalCount}} relays connected",

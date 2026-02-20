@@ -564,6 +564,7 @@
   "relay": {
     "manage": "Gestionar relays ({{connectedCount}}/{{totalCount}})",
     "managementTitle": "Gestión de relays",
+    "managementDescription": "Ver estado de relays, añadir o quitar relays y copiar diagnósticos de depuración.",
     "placeholder": "wss://relay.example.com",
     "noneConfigured": "No hay relays configurados",
     "connectedSummary": "{{connectedCount}} de {{totalCount}} relays conectados",
