@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.10.2] - 2026-02-20
+- Removed recurring development warning noise across tests/build (invalid test worker Node flags, missing relay dialog description warning, and known third-party build warning noise) while keeping existing behavior unchanged.
+
 ## [1.10.1] - 2026-02-20
 - Selected feeds now show live connection state in sidebar/mobile feed lists, including a not-active indicator.
 - Posting and task mutations are blocked while any selected non-demo feed is disconnected, with warning toasts on blocked attempts.
