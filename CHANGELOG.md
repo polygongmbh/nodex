@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Relays that repeatedly fail initial websocket handshakes are now auto-paused in the NDK pool and marked `error` in feed status, reducing repeated Firefox console spam (including repeated `__cf_bm` invalid-domain warnings) from unreachable relays.
 
 ## [1.12.0] - 2026-02-22
 Improved mobile routing persistence, refined interaction motion, and added reusable saved filter presets in the sidebar.
