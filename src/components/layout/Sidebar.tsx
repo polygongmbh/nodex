@@ -301,6 +301,7 @@ export function Sidebar({
           isExpanded={expandedSections.people}
           onToggle={() => toggleSection("people")}
           onIconClick={onToggleAllPeople}
+          hint={t("sidebar.hints.clickToFilter")}
         >
           {people.map((person) => (
             <PersonItem
