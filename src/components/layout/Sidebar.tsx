@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
 import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
@@ -10,6 +10,7 @@ import { RelayManagement } from "@/components/relay/RelayManagement";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { cn } from "@/lib/utils";
 import { APP_VERSION } from "@/lib/app-version";
+import { buildCollapsedPreviewItems } from "@/lib/sidebar-collapsed-preview";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -97,11 +98,39 @@ export function Sidebar({
   onGuideClick,
 }: SidebarProps) {
   const { t } = useTranslation();
+  const COLLAPSED_PREVIEW_LIMIT = 3;
   const [expandedSections, setExpandedSections] = useState({
     feeds: true,
     channels: true,
     people: true,
   });
+
+  const collapsedPreviewChannelIds = useMemo(
+    () =>
+      new Set(
+        buildCollapsedPreviewItems(
+          [...channels].sort((a, b) => {
+            const usageDiff = (b.usageCount ?? 0) - (a.usageCount ?? 0);
+            if (usageDiff !== 0) return usageDiff;
+            return a.name.localeCompare(b.name);
+          }),
+          (channel) => channel.filterState !== "neutral",
+          COLLAPSED_PREVIEW_LIMIT
+        ).map((channel) => channel.id)
+      ),
+    [channels]
+  );
+  const collapsedPreviewPersonIds = useMemo(
+    () =>
+      new Set(
+        buildCollapsedPreviewItems(
+          people,
+          (person) => person.isSelected,
+          COLLAPSED_PREVIEW_LIMIT
+        ).map((person) => person.id)
+      ),
+    [people]
+  );
 
   // Build a flat list of all focusable items
   const getFocusableItems = useCallback(() => {
@@ -111,12 +140,20 @@ export function Sidebar({
     }
     if (expandedSections.channels) {
       channels.forEach(c => items.push({ type: 'channel', id: c.id }));
+    } else {
+      channels
+        .filter((channel) => collapsedPreviewChannelIds.has(channel.id))
+        .forEach((channel) => items.push({ type: "channel", id: channel.id }));
     }
     if (expandedSections.people) {
       people.forEach(p => items.push({ type: 'person', id: p.id }));
+    } else {
+      people
+        .filter((person) => collapsedPreviewPersonIds.has(person.id))
+        .forEach((person) => items.push({ type: "person", id: person.id }));
     }
     return items;
-  }, [relays, channels, people, expandedSections]);
+  }, [relays, channels, people, expandedSections, collapsedPreviewChannelIds, collapsedPreviewPersonIds]);
 
   const [focusedItemIndex, setFocusedItemIndex] = useState(0);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -284,6 +321,7 @@ export function Sidebar({
           isExpanded={expandedSections.channels}
           onToggle={() => toggleSection("channels")}
           onIconClick={onToggleAllChannels}
+          collapsedMaxHeightClass="max-h-[2000px]"
           action={
             <ChannelMatchModeToggle
               mode={channelMatchMode}
@@ -300,6 +338,7 @@ export function Sidebar({
               onToggle={() => onChannelToggle(channel.id)}
               onExclusive={() => onChannelExclusive(channel.id)}
               isKeyboardFocused={focusedItem?.type === 'channel' && focusedItem?.id === channel.id}
+              className={!expandedSections.channels && !collapsedPreviewChannelIds.has(channel.id) ? "hidden" : undefined}
             />
           ))}
         </SidebarSection>
@@ -313,6 +352,7 @@ export function Sidebar({
           isExpanded={expandedSections.people}
           onToggle={() => toggleSection("people")}
           onIconClick={onToggleAllPeople}
+          collapsedMaxHeightClass="max-h-[2000px]"
         >
           {people.map((person) => (
             <PersonItem
@@ -321,6 +361,7 @@ export function Sidebar({
               onToggle={() => onPersonToggle(person.id)}
               onExclusive={() => onPersonExclusive(person.id)}
               isKeyboardFocused={focusedItem?.type === 'person' && focusedItem?.id === person.id}
+              className={!expandedSections.people && !collapsedPreviewPersonIds.has(person.id) ? "hidden" : undefined}
             />
           ))}
         </SidebarSection>

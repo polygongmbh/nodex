@@ -12,6 +12,7 @@ export interface Channel {
   id: string;
   name: string;
   color?: string;
+  usageCount?: number;
   filterState: 'included' | 'excluded' | 'neutral';
 }
 

@@ -46,9 +46,10 @@ export function deriveChannels(
   return Array.from(tagCounts.entries())
     .filter(([name, count]) => count >= minCount || forceInclude.has(name))
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([name]) => ({
+    .map(([name, count]) => ({
       id: name,
       name,
+      usageCount: count,
       filterState: "neutral" as const,
     }));
 }

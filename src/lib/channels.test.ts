@@ -23,4 +23,19 @@ describe("deriveChannels", () => {
 
     expect(channels.map((c) => c.name)).toContain("backend");
   });
+
+  it("attaches usage counts for ranking decisions", () => {
+    const channels = deriveChannels(
+      [{ tags: ["alpha", "alpha", "beta"] }],
+      [{ tags: [["t", "alpha"]], content: "#beta" }],
+      [],
+      1
+    );
+
+    const alpha = channels.find((channel) => channel.name === "alpha");
+    const beta = channels.find((channel) => channel.name === "beta");
+
+    expect(alpha?.usageCount).toBe(3);
+    expect(beta?.usageCount).toBe(2);
+  });
 });

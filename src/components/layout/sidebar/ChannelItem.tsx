@@ -9,9 +9,16 @@ interface ChannelItemProps {
   onToggle: () => void;
   onExclusive: () => void;
   isKeyboardFocused?: boolean;
+  className?: string;
 }
 
-export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused = false }: ChannelItemProps) {
+export function ChannelItem({
+  channel,
+  onToggle,
+  onExclusive,
+  isKeyboardFocused = false,
+  className,
+}: ChannelItemProps) {
   const { t } = useTranslation();
   const nextFilterStateLabel =
     channel.filterState === "neutral"
@@ -24,7 +31,7 @@ export function ChannelItem({ channel, onToggle, onExclusive, isKeyboardFocused 
     <SidebarFilterRow
       itemId={`channel-${channel.id}`}
       isKeyboardFocused={isKeyboardFocused}
-      className="gap-2 py-1"
+      className={cn("gap-2 py-1", className)}
     >
       {/* Icon - click for toggle */}
       <button

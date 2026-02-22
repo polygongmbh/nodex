@@ -11,6 +11,7 @@ export interface SidebarSectionProps {
   onIconClick?: () => void;
   hint?: string;
   action?: React.ReactNode;
+  collapsedMaxHeightClass?: string;
   children: React.ReactNode;
 }
 
@@ -22,6 +23,7 @@ export function SidebarSection({
   onIconClick,
   hint,
   action,
+  collapsedMaxHeightClass = "max-h-0",
   children,
 }: SidebarSectionProps) {
   const { t } = useTranslation();
@@ -85,7 +87,7 @@ export function SidebarSection({
       <div
         className={cn(
           "overflow-hidden transition-all duration-200",
-          isExpanded ? "max-h-[2000px]" : "max-h-0"
+          isExpanded ? "max-h-[2000px]" : collapsedMaxHeightClass
         )}
       >
         <div className="py-0">

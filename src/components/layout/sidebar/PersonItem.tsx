@@ -9,9 +9,16 @@ interface PersonItemProps {
   onToggle: () => void;
   onExclusive: () => void;
   isKeyboardFocused?: boolean;
+  className?: string;
 }
 
-export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = false }: PersonItemProps) {
+export function PersonItem({
+  person,
+  onToggle,
+  onExclusive,
+  isKeyboardFocused = false,
+  className,
+}: PersonItemProps) {
   const { t } = useTranslation();
   const personName = person.id === "me" ? t("sidebar.filters.me") : person.displayName;
   const onlineStatus = person.onlineStatus ?? (person.isOnline ? "online" : "offline");
@@ -23,7 +30,8 @@ export function PersonItem({ person, onToggle, onExclusive, isKeyboardFocused = 
       isKeyboardFocused={isKeyboardFocused}
       className={cn(
         "gap-3 py-1.5",
-        person.isSelected && "bg-sidebar-accent/80 border-l-2 border-l-primary pl-[1.625rem]"
+        person.isSelected && "bg-sidebar-accent/80 border-l-2 border-l-primary pl-[1.625rem]",
+        className
       )}
     >
       <button
