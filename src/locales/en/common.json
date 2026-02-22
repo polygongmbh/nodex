@@ -54,6 +54,18 @@
       "start": "Start",
       "end": "End",
       "milestone": "Milestone"
+    },
+    "savedFilters": {
+      "actions": {
+        "saveCurrent": "Save current",
+        "rename": "Rename",
+        "delete": "Delete",
+        "menu": "Saved filter options"
+      },
+      "prompts": {
+        "save": "Name this filter preset",
+        "rename": "Rename this filter preset"
+      }
     }
   },
   "toasts": {

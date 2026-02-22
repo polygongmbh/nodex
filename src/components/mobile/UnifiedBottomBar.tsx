@@ -1,7 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Channel, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
+import {
+  Relay,
+  Channel,
+  Person,
+  TaskCreateResult,
+  TaskDateType,
+  ComposeRestoreRequest,
+  SavedFilterController,
+} from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { addMonths, format, startOfMonth, subMonths } from "date-fns";
@@ -56,6 +64,7 @@ interface UnifiedBottomBarProps {
   onSignInClick: () => void;
   forceComposeMode?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  savedFilters?: SavedFilterController;
 }
 
 type SelectorType = "relay" | "channel" | "person" | "date" | null;
@@ -88,8 +97,10 @@ export function UnifiedBottomBar({
   isSignedIn,
   onSignInClick,
   composeRestoreRequest = null,
+  savedFilters,
 }: UnifiedBottomBarProps) {
   const { t } = useTranslation();
+  void savedFilters;
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;

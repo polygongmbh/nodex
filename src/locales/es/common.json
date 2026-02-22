@@ -54,6 +54,18 @@
       "start": "Inicio",
       "end": "Fin",
       "milestone": "Meta"
+    },
+    "savedFilters": {
+      "actions": {
+        "saveCurrent": "Guardar actual",
+        "rename": "Renombrar",
+        "delete": "Eliminar",
+        "menu": "Opciones de filtros guardados"
+      },
+      "prompts": {
+        "save": "Nombre para este preset de filtros",
+        "rename": "Renombrar este preset de filtros"
+      }
     }
   },
   "toasts": {

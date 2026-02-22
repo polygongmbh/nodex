@@ -1,13 +1,23 @@
 import { useState, useRef, useEffect } from "react";
 import { Hash, Calendar, Clock, X, Zap, AtSign, Flag } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Relay, Channel, Person, TaskType, TaskDateType, TaskCreateResult, ComposeRestoreRequest } from "@/types";
+import {
+  Relay,
+  Channel,
+  Person,
+  TaskType,
+  TaskDateType,
+  TaskCreateResult,
+  ComposeRestoreRequest,
+  SavedFilterController,
+} from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { SavedFilterPresetRow } from "./SavedFilterPresetRow";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
@@ -57,6 +67,7 @@ interface TaskComposerProps {
   } | null;
   allowComment?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  savedFilters?: SavedFilterController;
 }
 
 interface ComposeDraftState {
@@ -102,6 +113,7 @@ export function TaskComposer({
   mentionRequest = null,
   allowComment = true,
   composeRestoreRequest = null,
+  savedFilters,
 }: TaskComposerProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -962,9 +974,16 @@ export function TaskComposer({
         </div>
       )}
 
+      {showExpandedControls && (
+        <SavedFilterPresetRow
+          savedFilters={savedFilters}
+          className={cn(adaptiveSize && "motion-ink-stagger [--stagger-index:1]")}
+        />
+      )}
+
       {/* Due date for tasks */}
       {showExpandedControls && taskType === "task" && (
-        <div className={cn("flex flex-wrap items-center gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:1]")}>
+        <div className={cn("flex flex-wrap items-center gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <div className="inline-flex min-w-[5.5rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Flag className="h-4 w-4 text-muted-foreground" />
             <select
@@ -1098,7 +1117,7 @@ export function TaskComposer({
 
       {/* Sign in prompt for posting */}
       {showExpandedControls && !user && (
-        <div className={cn("flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded-xl", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
+        <div className={cn("flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded-xl", adaptiveSize && "motion-ink-stagger [--stagger-index:3]")}>
           <Zap className="w-4 h-4 text-primary" />
           <span className="text-sm text-muted-foreground flex-1">
             {t("composer.blocked.signin")}
@@ -1116,7 +1135,7 @@ export function TaskComposer({
 
       {/* Actions */}
       {showExpandedControls && (
-      <div className={cn("flex items-center justify-between", adaptiveSize && "motion-ink-reveal motion-ink-stagger [--stagger-index:3]")}>
+      <div className={cn("flex items-center justify-between", adaptiveSize && "motion-ink-reveal motion-ink-stagger [--stagger-index:4]")}>
         <div className="flex items-center gap-2">
           <button
             onClick={() => {

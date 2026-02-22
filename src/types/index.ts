@@ -98,6 +98,31 @@ export interface FilterState {
   searchQuery: string;
 }
 
+export interface SavedFilterConfiguration {
+  id: string;
+  name: string;
+  relayIds: string[];
+  channelStates: Record<string, "included" | "excluded">;
+  selectedPeopleIds: string[];
+  channelMatchMode: ChannelMatchMode;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SavedFilterState {
+  activeConfigurationId: string | null;
+  configurations: SavedFilterConfiguration[];
+}
+
+export interface SavedFilterController {
+  configurations: SavedFilterConfiguration[];
+  activeConfigurationId: string | null;
+  onApplyConfiguration: (id: string) => void;
+  onSaveCurrentConfiguration: (name: string) => void;
+  onRenameConfiguration: (id: string, name: string) => void;
+  onDeleteConfiguration: (id: string) => void;
+}
+
 // Legacy aliases for compatibility
 export type { FilterState as TagFilterState };
 

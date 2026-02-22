@@ -1,7 +1,17 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
-import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
+import {
+  Task,
+  Relay,
+  Channel,
+  ChannelMatchMode,
+  Person,
+  TaskCreateResult,
+  TaskDateType,
+  ComposeRestoreRequest,
+  SavedFilterController,
+} from "@/types";
 import {
   format,
   startOfMonth,
@@ -76,6 +86,7 @@ interface CalendarViewProps {
   onHashtagClick?: (tag: string) => void;
   onAuthorClick?: (author: Person) => void;
   composeRestoreRequest?: ComposeRestoreRequest | null;
+  savedFilters?: SavedFilterController;
 }
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
@@ -102,6 +113,7 @@ export function CalendarView({
   onHashtagClick,
   onAuthorClick,
   composeRestoreRequest = null,
+  savedFilters,
 }: CalendarViewProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: Task["status"]): string => {
@@ -863,6 +875,7 @@ export function CalendarView({
                     allowComment={false}
                     defaultDueDate={selectedDate}
                     composeRestoreRequest={composeRestoreRequest}
+                    savedFilters={savedFilters}
                   />
                 </div>
               )}

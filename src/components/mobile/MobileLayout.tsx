@@ -11,7 +11,17 @@ import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueB
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import type { FailedPublishDraft } from "@/lib/failed-publish-drafts";
-import { Relay, Channel, ChannelMatchMode, Person, Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
+import {
+  Relay,
+  Channel,
+  ChannelMatchMode,
+  Person,
+  Task,
+  TaskCreateResult,
+  TaskDateType,
+  ComposeRestoreRequest,
+  SavedFilterController,
+} from "@/types";
 import { cn } from "@/lib/utils";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
@@ -77,6 +87,7 @@ interface MobileLayoutProps {
   activeOnboardingStepId?: string | null;
   isManageRouteActive?: boolean;
   onManageRouteChange?: (isActive: boolean) => void;
+  savedFilters?: SavedFilterController;
 }
 
 // Mobile view order for swipe navigation
@@ -131,6 +142,7 @@ export function MobileLayout({
   activeOnboardingStepId = null,
   isManageRouteActive = false,
   onManageRouteChange = () => {},
+  savedFilters,
 }: MobileLayoutProps) {
   const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
@@ -247,6 +259,7 @@ export function MobileLayout({
     mentionRequest,
     isInteractionBlocked,
     onInteractionBlocked,
+    savedFilters,
   };
 
   const mobileCurrentView: MobileViewType = showFilters ? "filters" : mobileView;
@@ -436,6 +449,7 @@ export function MobileLayout({
           onSignInClick={onSignInClick}
           forceComposeMode={forceComposeMode}
           composeRestoreRequest={composeRestoreRequest}
+          savedFilters={savedFilters}
         />
       )}
     </div>

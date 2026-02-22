@@ -2,7 +2,18 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Lock } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, TaskStatus, ComposeRestoreRequest } from "@/types";
+import {
+  Task,
+  Relay,
+  Channel,
+  ChannelMatchMode,
+  Person,
+  TaskCreateResult,
+  TaskDateType,
+  TaskStatus,
+  ComposeRestoreRequest,
+  SavedFilterController,
+} from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
@@ -56,6 +67,7 @@ interface KanbanViewProps {
   composeRestoreRequest?: ComposeRestoreRequest | null;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
+  savedFilters?: SavedFilterController;
 }
 
 const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] => [
@@ -89,6 +101,7 @@ export function KanbanView({
   composeRestoreRequest = null,
   isInteractionBlocked = false,
   onInteractionBlocked,
+  savedFilters,
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -425,6 +438,7 @@ export function KanbanView({
                       compact
                       allowComment={false}
                       composeRestoreRequest={composeRestoreRequest}
+                      savedFilters={savedFilters}
                     />
                   </div>
                 )}
