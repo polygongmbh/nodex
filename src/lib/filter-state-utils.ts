@@ -27,6 +27,26 @@ export function setExclusiveChannelFilter(
   );
 }
 
+export function shouldToggleOffExclusiveChannel(
+  channels: Channel[],
+  channelFilterStates: Map<string, Channel["filterState"]>,
+  targetChannelId: string
+): boolean {
+  let includedCount = 0;
+  let targetIncluded = false;
+
+  for (const channel of channels) {
+    const state = channelFilterStates.get(channel.id) || "neutral";
+    if (state !== "included") continue;
+    includedCount += 1;
+    if (channel.id === targetChannelId) {
+      targetIncluded = true;
+    }
+  }
+
+  return targetIncluded && includedCount === 1;
+}
+
 export function mapPeopleSelection(
   people: Person[],
   isSelectedFor: (person: Person) => boolean
@@ -35,4 +55,22 @@ export function mapPeopleSelection(
     ...person,
     isSelected: isSelectedFor(person),
   }));
+}
+
+export function shouldToggleOffExclusivePerson(
+  people: Person[],
+  targetPersonId: string
+): boolean {
+  let selectedCount = 0;
+  let targetSelected = false;
+
+  for (const person of people) {
+    if (!person.isSelected) continue;
+    selectedCount += 1;
+    if (person.id === targetPersonId) {
+      targetSelected = true;
+    }
+  }
+
+  return targetSelected && selectedCount === 1;
 }

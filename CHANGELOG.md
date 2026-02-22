@@ -13,6 +13,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Improved onboarding target highlighting to wait for delayed mobile UI transitions before applying spotlight/arrow positioning.
 - Autocomplete selections now support `Alt/Option+Click` with the same metadata-only behavior as `Alt/Option+Enter`.
 - Fixed `Alt/Option+Click` handling to apply at click time across composer dropdowns, preventing plain text insertion in browsers where modifier state is unreliable on `mousedown`.
+- Sidebar channel/person label exclusive clicks now toggle off when that item is already the only active filter.
 
 ## [1.10.2] - 2026-02-20
 - Removed recurring development warning noise across tests/build (invalid test worker Node flags, missing relay dialog description warning, and known third-party build warning noise) while keeping existing behavior unchanged.

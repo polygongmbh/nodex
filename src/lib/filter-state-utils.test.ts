@@ -5,6 +5,8 @@ import {
   mapPeopleSelection,
   setAllChannelFilters,
   setExclusiveChannelFilter,
+  shouldToggleOffExclusiveChannel,
+  shouldToggleOffExclusivePerson,
 } from "./filter-state-utils";
 
 const channels: Channel[] = [
@@ -37,9 +39,24 @@ describe("filter-state-utils", () => {
     expect(map.get("release")).toBe("included");
   });
 
+  it("detects when exclusive channel click should toggle off", () => {
+    const states = new Map<string, Channel["filterState"]>([
+      ["general", "included"],
+      ["release", "neutral"],
+    ]);
+    expect(shouldToggleOffExclusiveChannel(channels, states, "general")).toBe(true);
+    expect(shouldToggleOffExclusiveChannel(channels, states, "release")).toBe(false);
+  });
+
   it("maps people selection via callback", () => {
     const result = mapPeopleSelection(people, (person) => person.id === "bob");
     expect(result.find((person) => person.id === "alice")?.isSelected).toBe(false);
     expect(result.find((person) => person.id === "bob")?.isSelected).toBe(true);
+  });
+
+  it("detects when exclusive person click should toggle off", () => {
+    const selectedPeople = mapPeopleSelection(people, (person) => person.id === "alice");
+    expect(shouldToggleOffExclusivePerson(selectedPeople, "alice")).toBe(true);
+    expect(shouldToggleOffExclusivePerson(selectedPeople, "bob")).toBe(false);
   });
 });

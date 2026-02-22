@@ -86,6 +86,8 @@ import {
 import { getPreferredMentionIdentifier, resolveMentionedPubkeys } from "@/lib/mentions";
 import {
   mapPeopleSelection,
+  shouldToggleOffExclusiveChannel,
+  shouldToggleOffExclusivePerson,
   setAllChannelFilters,
   setExclusiveChannelFilter,
 } from "@/lib/filter-state-utils";
@@ -646,6 +648,15 @@ const Index = () => {
   };
 
   const handleChannelExclusive = (id: string) => {
+    const shouldToggleOff = shouldToggleOffExclusiveChannel(channels, channelFilterStates, id);
+    if (shouldToggleOff) {
+      setChannelFilterStates((prev) => {
+        const next = new Map(prev);
+        next.set(id, "neutral");
+        return next;
+      });
+      return;
+    }
     setChannelFilterStates(() => setExclusiveChannelFilter(channels, id));
     const channel = channelsWithState.find((c) => c.id === id);
     toast.success(t("toasts.success.showingOnlyChannel", { channelName: channel?.name || id }));
@@ -691,6 +702,10 @@ const Index = () => {
   };
 
   const handlePersonExclusive = (id: string) => {
+    if (shouldToggleOffExclusivePerson(people, id)) {
+      setPeople((prev) => mapPeopleSelection(prev, () => false));
+      return;
+    }
     setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === id));
     const person = people.find((p) => p.id === id);
     toast.success(
