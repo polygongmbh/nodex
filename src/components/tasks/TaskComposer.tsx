@@ -821,9 +821,10 @@ export function TaskComposer({
               <button
                 key={channel.id}
                 type="button"
-                onMouseDown={(e) => {
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => {
                   e.preventDefault();
-                  if (e.altKey) {
+                  if (e.altKey || e.getModifierState("Alt")) {
                     addHashtagTagOnly(channel.name);
                     return;
                   }
@@ -854,9 +855,10 @@ export function TaskComposer({
                     <button
                       key={person.id}
                       type="button"
-                      onMouseDown={(e) => {
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
                         e.preventDefault();
-                        if (e.altKey) {
+                        if (e.altKey || e.getModifierState("Alt")) {
                           addMentionTagOnly(person);
                           return;
                         }

@@ -962,8 +962,13 @@ export function UnifiedBottomBar({
                       <button
                         key={person.id}
                         type="button"
-                        onMouseDown={(e) => {
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={(e) => {
                           e.preventDefault();
+                          if (e.altKey || e.getModifierState("Alt")) {
+                            addMentionTagOnly(person);
+                            return;
+                          }
                           insertMention(mentionIdentifier);
                         }}
                         className={cn(

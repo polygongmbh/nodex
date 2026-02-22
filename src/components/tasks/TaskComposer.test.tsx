@@ -265,7 +265,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     const hashtagOption = screen.getByText("backend").closest("button");
     expect(hashtagOption).toBeTruthy();
-    fireEvent.mouseDown(hashtagOption!, { altKey: true });
+    fireEvent.click(hashtagOption!, { altKey: true });
 
     await waitFor(() => {
       expect(textarea.value).toBe("Ship ");
@@ -528,7 +528,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     const mentionOption = screen.getByText("@alice").closest("button");
     expect(mentionOption).toBeTruthy();
-    fireEvent.mouseDown(mentionOption!, { altKey: true });
+    fireEvent.click(mentionOption!, { altKey: true });
 
     await waitFor(() => {
       expect(textarea.value).toBe("Ship #backend with ");

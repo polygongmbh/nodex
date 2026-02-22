@@ -630,6 +630,52 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
+  it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSearchChange = vi.fn();
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={onSearchChange}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general @al", selectionStart: 16 } });
+
+    const mentionOption = screen.getByText("@alice").closest("button");
+    expect(mentionOption).toBeTruthy();
+    fireEvent.click(mentionOption!, { altKey: true });
+
+    await waitFor(() => {
+      expect(field.value).toBe("Ship #general ");
+    });
+    expect(onSearchChange).toHaveBeenLastCalledWith("Ship #general ");
+
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      "Ship #general ",
+      ["general"],
+      ["demo"],
+      "task",
+      undefined,
+      undefined,
+      "due",
+      ["e".repeat(64)],
+      undefined
+    );
+  });
+
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
     const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
     const onSearchChange = vi.fn();
