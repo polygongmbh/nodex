@@ -251,4 +251,122 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.getByTestId("mobile-quick-filter-fallback")).toBeInTheDocument();
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
+
+  it("opens Manage and unfolds profile editor on mobile onboarding step 5", async () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = false;
+
+    render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn
+        currentView="tree"
+        onViewChange={() => {}}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+        isOnboardingOpen
+        activeOnboardingStepId="mobile-filters-properties"
+      />
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
+      expect(document.querySelector("#manage-profile-name")).toBeInTheDocument();
+    });
+  });
+
+  it("switches to feed on mobile onboarding step 7", async () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = false;
+    const onViewChange = vi.fn();
+
+    const { rerender } = render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn
+        currentView="tree"
+        onViewChange={onViewChange}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+        isOnboardingOpen
+        activeOnboardingStepId="mobile-filters-properties"
+      />
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
+    });
+
+    rerender(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn
+        currentView="tree"
+        onViewChange={onViewChange}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+        isOnboardingOpen
+        activeOnboardingStepId="mobile-compose-combobox"
+      />
+    );
+
+    await waitFor(() => {
+      expect(onViewChange).toHaveBeenCalledWith("feed");
+      expect(document.querySelector('[data-onboarding="mobile-filters"]')).not.toBeInTheDocument();
+    });
+  });
 });

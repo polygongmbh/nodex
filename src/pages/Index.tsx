@@ -1662,6 +1662,8 @@ const Index = () => {
           onDismissFailedPublish={handleDismissFailedPublish}
           isInteractionBlocked={isInteractionBlocked}
           onInteractionBlocked={handleBlockedInteractionAttempt}
+          isOnboardingOpen={isOnboardingOpen && !isAuthModalOpen}
+          activeOnboardingStepId={activeOnboardingStepId}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide

@@ -71,6 +71,8 @@ interface MobileLayoutProps {
   onDismissFailedPublish?: (draftId: string) => void;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
+  isOnboardingOpen?: boolean;
+  activeOnboardingStepId?: string | null;
 }
 
 // Mobile view order for swipe navigation
@@ -119,6 +121,8 @@ export function MobileLayout({
   onDismissFailedPublish,
   isInteractionBlocked = false,
   onInteractionBlocked,
+  isOnboardingOpen = false,
+  activeOnboardingStepId = null,
 }: MobileLayoutProps) {
   const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
@@ -128,6 +132,7 @@ export function MobileLayout({
     isPrimaryMobileView(currentView) ? currentView : "tree"
   );
   const previousSignedInRef = useRef(isSignedIn);
+  const lastHandledGuideStepIdRef = useRef<string | null>(null);
   const { needsProfileSetup } = useNDK();
 
   // Build default content from active channel filters
@@ -262,6 +267,30 @@ export function MobileLayout({
     if (showFilters) return;
     setMobileView(isPrimaryMobileView(currentView) ? currentView : "tree");
   }, [currentView, showFilters]);
+
+  useEffect(() => {
+    if (!isOnboardingOpen || !activeOnboardingStepId) {
+      lastHandledGuideStepIdRef.current = null;
+      return;
+    }
+    if (lastHandledGuideStepIdRef.current === activeOnboardingStepId) {
+      return;
+    }
+    lastHandledGuideStepIdRef.current = activeOnboardingStepId;
+
+    if (activeOnboardingStepId === "mobile-filters-properties") {
+      setShowFilters(true);
+      setMobileView("filters");
+      setProfileEditorOpenSignal((previous) => previous + 1);
+      return;
+    }
+
+    if (activeOnboardingStepId === "mobile-compose-combobox") {
+      setShowFilters(false);
+      setMobileView("feed");
+      onViewChange("feed");
+    }
+  }, [activeOnboardingStepId, isOnboardingOpen, onViewChange]);
 
   useEffect(() => {
     const justSignedIn = !previousSignedInRef.current && isSignedIn;
