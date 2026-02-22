@@ -123,12 +123,14 @@
 
 ## Reliability and Sorting
 - If feed publish fails, the post is queued locally in a failed-publish banner with retry/dismiss actions instead of being treated as a normal published task/comment.
+- Relays with repeated initial websocket handshake failures are auto-paused and shown with `error` status until explicitly re-enabled.
 - Latest feed events are cached locally and rehydrated on app load for better offline/reconnect continuity.
 - Task state changes now delay status-driven reorder updates slightly to reduce jarring list/table/kanban jumps during completion transitions.
 - Edit profile/setup modal does not open when no feed is connected.
 - Current-user profile metadata is cached locally and reused across sidebar/feed/top-right/profile-edit surfaces when live profile fields are temporarily missing.
 - Presence status is published with NIP-38 updates (unless disabled in profile settings) and clears on sign-out/tab close.
 - Non-feed task views use a shared priority order: due-now/overdue, then in-progress, high priority (`50+`), upcoming due, medium priority (`30-49`), no priority, then low priority (`<30`); Kanban `done` stays chronological.
+- Feeds section folding uses measured-height collapse animation for smoother repeated expand/collapse.
 
 ## Task Permissions
 - Tasks can be modified by tagged users (`p` tags).

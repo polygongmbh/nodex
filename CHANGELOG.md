@@ -5,6 +5,9 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.12.1] - 2026-02-22
+Improved relay failure handling and refined sidebar fold animation smoothness.
 - Relays that repeatedly fail initial websocket handshakes are now auto-paused in the NDK pool and marked `error` in feed status, reducing repeated Firefox console spam (including repeated `__cf_bm` invalid-domain warnings) from unreachable relays.
 - Feeds sidebar folding now uses measured-height collapse motion (instead of large max-height scaling), reducing jank during repeated expand/collapse.
 
