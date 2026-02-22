@@ -1,7 +1,7 @@
 import { useEffect, useRef, useMemo, useState } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
-import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
+import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -20,6 +20,7 @@ import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getDueDateColorClass } from "@/lib/taskSorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
+import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +42,7 @@ interface FeedViewProps {
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  channelMatchMode?: ChannelMatchMode;
   composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
@@ -85,6 +87,7 @@ export function FeedView({
   allTasks,
   relays,
   channels,
+  channelMatchMode = "and",
   composeChannels,
   people,
   currentUser,
@@ -129,8 +132,10 @@ export function FeedView({
   const { user } = useNDK();
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
-  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
-  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
+  const { included: includedChannels, excluded: excludedChannels } = useMemo(
+    () => getIncludedExcludedChannelNames(channels),
+    [channels]
+  );
 
   useEffect(() => {
     if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
@@ -188,19 +193,8 @@ export function FeedView({
       if (!taskMatchesTextQuery(task, searchQuery, people)) {
         return false;
       }
-      // Apply channel exclusion filter
-      if (excludedChannels.length > 0) {
-        const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (taskTagsLower.some(t => excludedChannels.includes(t))) {
-          return false;
-        }
-      }
-      // Apply channel inclusion filter - AND logic: must have ALL included channels
-      if (includedChannels.length > 0) {
-        const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (!includedChannels.every(c => taskTagsLower.includes(c))) {
-          return false;
-        }
+      if (!taskMatchesChannelFilters(task.tags, includedChannels, excludedChannels, channelMatchMode)) {
+        return false;
       }
       
       return true;

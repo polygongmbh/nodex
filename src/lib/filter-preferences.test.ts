@@ -1,8 +1,10 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import {
   getEffectiveActiveRelayIds,
+  loadPersistedChannelMatchMode,
   loadPersistedChannelFilters,
   loadPersistedRelayIds,
+  savePersistedChannelMatchMode,
   savePersistedChannelFilters,
   savePersistedRelayIds,
 } from "./filter-preferences";
@@ -88,5 +90,23 @@ describe("filter preferences persistence", () => {
     expect(getEffectiveActiveRelayIds(activeRelayIds, availableRelayIds)).toEqual(
       new Set(["demo", "relay-b"])
     );
+  });
+
+  it("loads persisted channel match mode", () => {
+    localStorage.setItem("nodex.channel-match-mode.v1", JSON.stringify("or"));
+
+    expect(loadPersistedChannelMatchMode()).toBe("or");
+  });
+
+  it("falls back to and for invalid channel match mode payloads", () => {
+    localStorage.setItem("nodex.channel-match-mode.v1", JSON.stringify("invalid"));
+
+    expect(loadPersistedChannelMatchMode()).toBe("and");
+  });
+
+  it("saves channel match mode", () => {
+    savePersistedChannelMatchMode("or");
+
+    expect(localStorage.getItem("nodex.channel-match-mode.v1")).toBe(JSON.stringify("or"));
   });
 });

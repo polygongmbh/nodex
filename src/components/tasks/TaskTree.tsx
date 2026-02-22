@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
+import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -9,12 +9,14 @@ import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { useTranslation } from "react-i18next";
+import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
 
 interface TaskTreeProps {
   tasks: Task[];
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  channelMatchMode?: ChannelMatchMode;
   composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
@@ -59,6 +61,7 @@ export function TaskTree({
   allTasks,
   relays,
   channels,
+  channelMatchMode = "and",
   composeChannels,
   people,
   currentUser,
@@ -96,21 +99,17 @@ export function TaskTree({
     allTasks,
   }), [childrenMap, allTasks]);
 
+  const { included: includedChannels, excluded: excludedChannels } = useMemo(
+    () => getIncludedExcludedChannelNames(channels),
+    [channels]
+  );
+
   // Check if a task or any of its descendants matches the filter
-  // AND logic: task must have ALL included channels
-  const taskMatchesFilter = useCallback((task: Task, query: string, includedChannels: string[], excludedChannels: string[]): boolean => {
-    const taskTagsLower = task.tags.map(t => t.toLowerCase());
-    
-    // Exclude tasks with excluded channels
-    if (excludedChannels.length > 0 && taskTagsLower.some(t => excludedChannels.includes(t))) {
-      return false;
-    }
-    
+  const taskMatchesFilter = useCallback((task: Task, query: string, included: string[], excluded: string[]): boolean => {
     const matchesQuery = taskMatchesTextQuery(task, query, people);
-    // AND logic: all included channels must be present
-    const matchesChannels = includedChannels.length === 0 || includedChannels.every(c => taskTagsLower.includes(c));
+    const matchesChannels = taskMatchesChannelFilters(task.tags, included, excluded, channelMatchMode);
     return matchesQuery && matchesChannels;
-  }, [people]);
+  }, [channelMatchMode, people]);
 
   // Find all tasks that directly match the filter
   const getDirectlyMatchingTasks = useCallback((query: string, includedChannels: string[], excludedChannels: string[]): Set<string> => {
@@ -157,8 +156,6 @@ export function TaskTree({
     return ancestors;
   }, [allTasks]);
 
-  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
-  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
   const hasActiveFilters = searchQuery.trim() !== "" || includedChannels.length > 0 || excludedChannels.length > 0;
 
   // Compute matching tasks once

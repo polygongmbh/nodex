@@ -1,7 +1,7 @@
 import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags } from "lucide-react";
-import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
+import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
@@ -17,6 +17,7 @@ import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
+import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +36,7 @@ interface ListViewProps {
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  channelMatchMode?: ChannelMatchMode;
   composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
@@ -126,6 +128,7 @@ export function ListView({
   allTasks,
   relays,
   channels,
+  channelMatchMode = "and",
   composeChannels,
   people,
   currentUser,
@@ -161,8 +164,10 @@ export function ListView({
   const prevSearchRef = useRef(searchQuery);
   const prevFocusedRef = useRef(focusedTaskId);
 
-  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
-  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
+  const { included: includedChannels, excluded: excludedChannels } = useMemo(
+    () => getIncludedExcludedChannelNames(channels),
+    [channels]
+  );
 
   // Detect filter/view changes (not status changes) to trigger re-sort
   useEffect(() => {
@@ -269,20 +274,8 @@ export function ListView({
         return false;
       }
       
-      // Apply channel exclusion filter
-      if (excludedChannels.length > 0) {
-        const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (taskTagsLower.some(t => excludedChannels.includes(t))) {
-          return false;
-        }
-      }
-      
-      // Apply channel inclusion filter - AND logic: must have ALL included channels
-      if (includedChannels.length > 0) {
-        const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (!includedChannels.every(c => taskTagsLower.includes(c))) {
-          return false;
-        }
+      if (!taskMatchesChannelFilters(task.tags, includedChannels, excludedChannels, channelMatchMode)) {
+        return false;
       }
 
       // Apply shared depth mode (kept in sync with Kanban selector).
@@ -342,7 +335,23 @@ export function ListView({
 
     return filtered;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTasks, depthMode, excludedChannels, filteredTaskIds, focusedTaskId, getDepth, hasChildren, includedChannels, searchQuery, sortContext, sortDirection, sortField, sortVersion]);
+  }, [
+    allTasks,
+    channelMatchMode,
+    depthMode,
+    excludedChannels,
+    filteredTaskIds,
+    focusedTaskId,
+    getDepth,
+    hasChildren,
+    includedChannels,
+    people,
+    searchQuery,
+    sortContext,
+    sortDirection,
+    sortField,
+    sortVersion,
+  ]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {

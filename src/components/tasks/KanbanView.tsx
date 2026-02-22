@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Lock } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, TaskStatus, ComposeRestoreRequest } from "@/types";
+import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, TaskStatus, ComposeRestoreRequest } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { linkifyContent } from "@/lib/linkify";
@@ -19,12 +19,14 @@ import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
+import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
 
 interface KanbanViewProps {
   tasks: Task[];
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  channelMatchMode?: ChannelMatchMode;
   composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
@@ -69,6 +71,7 @@ export function KanbanView({
   allTasks,
   relays,
   channels,
+  channelMatchMode = "and",
   composeChannels,
   people,
   currentUser,
@@ -94,8 +97,10 @@ export function KanbanView({
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
 
-  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
-  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
+  const { included: includedChannels, excluded: excludedChannels } = useMemo(
+    () => getIncludedExcludedChannelNames(channels),
+    [channels]
+  );
 
   // Build children map
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
@@ -174,20 +179,8 @@ export function KanbanView({
         return false;
       }
       
-      // Apply channel exclusion filter
-      if (excludedChannels.length > 0) {
-        const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (taskTagsLower.some(t => excludedChannels.includes(t))) {
-          return false;
-        }
-      }
-      
-      // Apply channel inclusion filter - AND logic: must have ALL included channels
-      if (includedChannels.length > 0) {
-        const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (!includedChannels.every(c => taskTagsLower.includes(c))) {
-          return false;
-        }
+      if (!taskMatchesChannelFilters(task.tags, includedChannels, excludedChannels, channelMatchMode)) {
+        return false;
       }
       
       // Apply depth mode
@@ -208,7 +201,20 @@ export function KanbanView({
 
       return true;
     });
-  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, depthMode, getDescendantIds, getDepth, hasChildren, people]);
+  }, [
+    allTasks,
+    channelMatchMode,
+    depthMode,
+    excludedChannels,
+    filteredTaskIds,
+    focusedTaskId,
+    getDescendantIds,
+    getDepth,
+    hasChildren,
+    includedChannels,
+    people,
+    searchQuery,
+  ]);
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {

@@ -483,7 +483,10 @@
     },
     "channels": {
       "title": "Canales",
-      "cycleHint": "Toca para cambiar: neutral → incluir → excluir"
+      "cycleHint": "Toca para cambiar: neutral → incluir → excluir",
+      "matchMode": "Modo de coincidencia de canales incluidos",
+      "modeAnd": "Y",
+      "modeOr": "O"
     },
     "people": {
       "title": "Personas"

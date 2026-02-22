@@ -11,7 +11,7 @@ import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueB
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import type { FailedPublishDraft } from "@/lib/failed-publish-drafts";
-import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
+import { Relay, Channel, ChannelMatchMode, Person, Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 import { cn } from "@/lib/utils";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 interface MobileLayoutProps {
   relays: Relay[];
   channels: Channel[];
+  channelMatchMode?: ChannelMatchMode;
   people: Person[];
   tasks: Task[];
   allTasks: Task[];
@@ -50,6 +51,7 @@ interface MobileLayoutProps {
   onRelayToggle: (id: string) => void;
   onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
+  onChannelMatchModeChange?: (mode: ChannelMatchMode) => void;
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
@@ -85,6 +87,7 @@ const isPrimaryMobileView = (view: ViewType): view is "tree" | "feed" | "list" |
 export function MobileLayout({
   relays,
   channels,
+  channelMatchMode = "and",
   people,
   tasks,
   allTasks,
@@ -103,6 +106,7 @@ export function MobileLayout({
   onRelayToggle,
   onChannelToggle,
   onPersonToggle,
+  onChannelMatchModeChange = () => {},
   onAddRelay,
   onRemoveRelay,
   onSignInClick,
@@ -210,6 +214,7 @@ export function MobileLayout({
     allTasks,
     relays,
     channels,
+    channelMatchMode,
     people,
     currentUser,
     searchQuery,
@@ -312,11 +317,13 @@ export function MobileLayout({
         <MobileFilters
           relays={relays}
           channels={channels}
+          channelMatchMode={channelMatchMode}
           people={people}
           profileEditorOpenSignal={profileEditorOpenSignal}
           onRelayToggle={onRelayToggle}
           onChannelToggle={onChannelToggle}
           onPersonToggle={onPersonToggle}
+          onChannelMatchModeChange={onChannelMatchModeChange}
           onAddRelay={onAddRelay}
           onRemoveRelay={onRemoveRelay}
           onSignInClick={onSignInClick}

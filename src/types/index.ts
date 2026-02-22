@@ -15,6 +15,8 @@ export interface Channel {
   filterState: 'included' | 'excluded' | 'neutral';
 }
 
+export type ChannelMatchMode = "and" | "or";
+
 // Legacy alias for compatibility
 export type Tag = Channel;
 

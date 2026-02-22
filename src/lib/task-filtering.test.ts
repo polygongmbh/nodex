@@ -46,6 +46,7 @@ describe("filterTasks", () => {
       activeRelayIds: new Set(["r1"]),
       channels: [],
       people: [alice, bob],
+      channelMatchMode: "and",
     });
 
     expect(result.map((task) => task.id)).toEqual(["a"]);
@@ -63,6 +64,7 @@ describe("filterTasks", () => {
       activeRelayIds: new Set(["r1"]),
       channels: [],
       people: [alice, bob],
+      channelMatchMode: "and",
     });
 
     expect(result.map((task) => task.id)).toEqual(["nostr", "unknown"]);
@@ -84,6 +86,7 @@ describe("filterTasks", () => {
       activeRelayIds: new Set(),
       channels,
       people: [alice, bob],
+      channelMatchMode: "and",
     });
 
     expect(result.map((task) => task.id)).toEqual(["a"]);
@@ -100,6 +103,7 @@ describe("filterTasks", () => {
       activeRelayIds: new Set(),
       channels: [],
       people: [alice, bob],
+      channelMatchMode: "and",
     });
     expect(result).toHaveLength(1);
   });
@@ -117,8 +121,33 @@ describe("filterTasks", () => {
       activeRelayIds: new Set(),
       channels: [],
       people: [alice, selectedBob],
+      channelMatchMode: "and",
     });
 
     expect(result.map((task) => task.id)).toEqual(["author", "mention"]);
+  });
+
+  it("matches any included channel when mode is or", () => {
+    const tasks = [
+      buildTask({ id: "a", tags: ["general"] }),
+      buildTask({ id: "b", tags: ["release"] }),
+      buildTask({ id: "c", tags: ["ops"] }),
+      buildTask({ id: "d", tags: ["general", "blocked"] }),
+    ];
+    const channels: Channel[] = [
+      { id: "general", name: "general", filterState: "included" },
+      { id: "release", name: "release", filterState: "included" },
+      { id: "blocked", name: "blocked", filterState: "excluded" },
+    ];
+
+    const result = filterTasks({
+      tasks,
+      activeRelayIds: new Set(),
+      channels,
+      people: [alice, bob],
+      channelMatchMode: "or",
+    });
+
+    expect(result.map((task) => task.id)).toEqual(["a", "b"]);
   });
 });

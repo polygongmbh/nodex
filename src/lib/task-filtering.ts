@@ -1,15 +1,13 @@
-import type { Channel, Person, Task } from "@/types";
+import type { Channel, ChannelMatchMode, Person, Task } from "@/types";
 import { taskMatchesSelectedPeople } from "@/lib/person-filter";
+import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
 
 interface FilterTasksParams {
   tasks: Task[];
   activeRelayIds: Set<string>;
   channels: Channel[];
   people: Person[];
-}
-
-function toLowerSet(values: string[]): Set<string> {
-  return new Set(values.map((value) => value.toLowerCase()));
+  channelMatchMode: ChannelMatchMode;
 }
 
 export function filterTasks({
@@ -17,16 +15,10 @@ export function filterTasks({
   activeRelayIds,
   channels,
   people,
+  channelMatchMode,
 }: FilterTasksParams): Task[] {
   const selectedPeople = people.filter((person) => person.isSelected);
-  const includedChannelNames = channels
-    .filter((channel) => channel.filterState === "included")
-    .map((channel) => channel.name);
-  const excludedChannelNames = channels
-    .filter((channel) => channel.filterState === "excluded")
-    .map((channel) => channel.name);
-  const includedChannelSet = toLowerSet(includedChannelNames);
-  const excludedChannelSet = toLowerSet(excludedChannelNames);
+  const { included, excluded } = getIncludedExcludedChannelNames(channels);
   return tasks.filter((task) => {
     const hasUnknownRelayMetadata =
       task.relays.length === 0 ||
@@ -43,20 +35,8 @@ export function filterTasks({
       return false;
     }
 
-    if (excludedChannelSet.size > 0) {
-      const taskTags = task.tags.map((tag) => tag.toLowerCase());
-      if (taskTags.some((tag) => excludedChannelSet.has(tag))) {
-        return false;
-      }
-    }
-
-    if (includedChannelSet.size > 0) {
-      const taskTagSet = toLowerSet(task.tags);
-      for (const includedChannel of includedChannelSet) {
-        if (!taskTagSet.has(includedChannel)) {
-          return false;
-        }
-      }
+    if (!taskMatchesChannelFilters(task.tags, included, excluded, channelMatchMode)) {
+      return false;
     }
 
     return true;

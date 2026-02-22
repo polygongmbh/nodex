@@ -1,12 +1,14 @@
-import { Channel } from "@/types";
+import { Channel, ChannelMatchMode } from "@/types";
 import { z } from "zod";
 
 const ACTIVE_RELAYS_STORAGE_KEY = "nodex.active-relays.v1";
 const CHANNEL_FILTERS_STORAGE_KEY = "nodex.channel-filters.v1";
+const CHANNEL_MATCH_MODE_STORAGE_KEY = "nodex.channel-match-mode.v1";
 
 type PersistedChannelFilters = Record<string, Channel["filterState"]>;
 const relayIdsSchema = z.array(z.string());
 const persistedChannelFiltersSchema = z.record(z.string(), z.unknown());
+const channelMatchModeSchema = z.enum(["and", "or"]);
 
 export function loadPersistedRelayIds(defaultRelayIds: string[]): Set<string> {
   try {
@@ -78,6 +80,32 @@ export function savePersistedChannelFilters(
       }
     });
     localStorage.setItem(CHANNEL_FILTERS_STORAGE_KEY, JSON.stringify(persisted));
+  } catch {
+    // Ignore storage failures and keep runtime behavior intact.
+  }
+}
+
+export function loadPersistedChannelMatchMode(): ChannelMatchMode {
+  try {
+    const raw = localStorage.getItem(CHANNEL_MATCH_MODE_STORAGE_KEY);
+    if (!raw) {
+      return "and";
+    }
+
+    const parsed = channelMatchModeSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) {
+      return "and";
+    }
+
+    return parsed.data;
+  } catch {
+    return "and";
+  }
+}
+
+export function savePersistedChannelMatchMode(mode: ChannelMatchMode): void {
+  try {
+    localStorage.setItem(CHANNEL_MATCH_MODE_STORAGE_KEY, JSON.stringify(mode));
   } catch {
     // Ignore storage failures and keep runtime behavior intact.
   }

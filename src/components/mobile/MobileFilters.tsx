@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown } from "lucide-react";
-import { Relay, Channel, Person } from "@/types";
+import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -12,17 +12,20 @@ import { VersionHint } from "@/components/layout/VersionHint";
 import { useTranslation } from "react-i18next";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
+import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 
 interface MobileFiltersProps {
   relays: Relay[];
   channels: Channel[];
+  channelMatchMode?: ChannelMatchMode;
   people: Person[];
   profileEditorOpenSignal?: number;
   onRelayToggle: (id: string) => void;
   onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
+  onChannelMatchModeChange?: (mode: ChannelMatchMode) => void;
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
@@ -43,11 +46,13 @@ const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> 
 export function MobileFilters({
   relays,
   channels,
+  channelMatchMode = "and",
   people,
   profileEditorOpenSignal = 0,
   onRelayToggle,
   onChannelToggle,
   onPersonToggle,
+  onChannelMatchModeChange = () => {},
   onAddRelay,
   onRemoveRelay,
   onSignInClick,
@@ -442,6 +447,12 @@ export function MobileFilters({
           <div className="flex items-center gap-2 mb-3">
             <Hash className="w-4 h-4 text-primary" />
             <h2 className="font-semibold text-sm">{t("filters.channels.title")}</h2>
+            <ChannelMatchModeToggle
+              mode={channelMatchMode}
+              onChange={onChannelMatchModeChange}
+              size="mobile"
+              className="ml-auto"
+            />
             <span className="text-xs text-muted-foreground ml-1">{t("filters.channels.cycleHint")}</span>
           </div>
           <div className="flex flex-wrap gap-2">

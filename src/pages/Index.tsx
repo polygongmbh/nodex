@@ -28,7 +28,9 @@ import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onbo
 import { nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
+  loadPersistedChannelMatchMode,
   loadPersistedChannelFilters,
+  savePersistedChannelMatchMode,
   savePersistedChannelFilters,
 } from "@/lib/filter-preferences";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
@@ -105,7 +107,18 @@ import {
   notifyStatusRestricted,
 } from "@/lib/notifications";
 import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
-import { Relay, Channel, Person, Task, TaskCreateResult, TaskDateType, TaskStatus, ComposeRestoreRequest, ComposeRestoreState } from "@/types";
+import {
+  Relay,
+  Channel,
+  ChannelMatchMode,
+  Person,
+  Task,
+  TaskCreateResult,
+  TaskDateType,
+  TaskStatus,
+  ComposeRestoreRequest,
+  ComposeRestoreState,
+} from "@/types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -421,6 +434,9 @@ const Index = () => {
   const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
     () => loadPersistedChannelFilters()
   );
+  const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>(
+    () => loadPersistedChannelMatchMode()
+  );
 
   // Merge dynamic channels with persisted filter states
   const channelsWithState: Channel[] = useMemo(() => {
@@ -444,6 +460,10 @@ const Index = () => {
   useEffect(() => {
     savePersistedChannelFilters(channelFilterStates);
   }, [channelFilterStates]);
+
+  useEffect(() => {
+    savePersistedChannelMatchMode(channelMatchMode);
+  }, [channelMatchMode]);
 
   useEffect(() => {
     const pendingPublishState = pendingPublishStateRef.current;
@@ -666,6 +686,10 @@ const Index = () => {
     const allNeutral = Array.from(channelFilterStates.values()).every((s) => s === "neutral") || channelFilterStates.size === 0;
     setChannelFilterStates(() => setAllChannelFilters(channels, allNeutral ? "included" : "neutral"));
     toast.success(allNeutral ? t("toasts.success.allChannelsIncluded") : t("toasts.success.allChannelsReset"));
+  };
+
+  const handleChannelMatchModeChange = (mode: ChannelMatchMode) => {
+    setChannelMatchMode(mode);
   };
 
   const handleHashtagExclusive = useCallback((tag: string) => {
@@ -1535,8 +1559,9 @@ const Index = () => {
         activeRelayIds: effectiveActiveRelayIds,
         channels: channelsWithState,
         people,
+        channelMatchMode,
       }),
-    [allTasks, channelsWithState, effectiveActiveRelayIds, people]
+    [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, people]
   );
 
   const sidebarPeople = useMemo(() => {
@@ -1591,6 +1616,7 @@ const Index = () => {
     allTasks: allTasks,
     relays: relaysWithActiveState,
     channels: channelsWithState,
+    channelMatchMode,
     composeChannels: composeChannelsWithState,
     people,
     currentUser,
@@ -1641,6 +1667,7 @@ const Index = () => {
         <MobileLayout
           relays={relaysWithActiveState}
           channels={channelsWithState}
+          channelMatchMode={channelMatchMode}
           people={people}
           tasks={filteredTasks}
           allTasks={allTasks}
@@ -1659,6 +1686,7 @@ const Index = () => {
           onRelayToggle={handleRelayToggle}
           onChannelToggle={handleChannelToggle}
           onPersonToggle={handlePersonToggle}
+          onChannelMatchModeChange={handleChannelMatchModeChange}
           onAddRelay={addRelay}
           onRemoveRelay={removeRelay}
           onSignInClick={handleOpenAuthModal}
@@ -1721,6 +1749,7 @@ const Index = () => {
       <Sidebar
         relays={relaysWithActiveState}
         channels={channelsWithState}
+        channelMatchMode={channelMatchMode}
         people={sidebarPeople}
         nostrRelays={nostrRelays}
         onRelayToggle={handleRelayToggle}
@@ -1731,6 +1760,7 @@ const Index = () => {
         onPersonExclusive={handlePersonExclusive}
         onToggleAllRelays={handleToggleAllRelays}
         onToggleAllChannels={handleToggleAllChannels}
+        onChannelMatchModeChange={handleChannelMatchModeChange}
         onToggleAllPeople={handleToggleAllPeople}
         onAddRelay={addRelay}
         onRemoveRelay={removeRelay}

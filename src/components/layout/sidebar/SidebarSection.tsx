@@ -69,7 +69,7 @@ export function SidebarSection({
         </div>
         <div className="flex items-center gap-1">
           {action && (
-            <div onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center self-center" onClick={(event) => event.stopPropagation()}>
               {action}
             </div>
           )}

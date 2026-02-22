@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
-import { Relay, Channel, Person } from "@/types";
+import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
+import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { RelayManagement } from "@/components/relay/RelayManagement";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ export function SidebarHeader({ className }: SidebarHeaderProps) {
 interface SidebarProps {
   relays: Relay[];
   channels: Channel[];
+  channelMatchMode?: ChannelMatchMode;
   people: Person[];
   nostrRelays: NDKRelayStatus[];
   onRelayToggle: (id: string) => void;
@@ -61,6 +63,7 @@ interface SidebarProps {
   onPersonExclusive: (id: string) => void;
   onToggleAllRelays: () => void;
   onToggleAllChannels: () => void;
+  onChannelMatchModeChange?: (mode: ChannelMatchMode) => void;
   onToggleAllPeople: () => void;
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
@@ -73,6 +76,7 @@ interface SidebarProps {
 export function Sidebar({
   relays,
   channels,
+  channelMatchMode = "and",
   people,
   nostrRelays,
   onRelayToggle,
@@ -83,6 +87,7 @@ export function Sidebar({
   onPersonExclusive,
   onToggleAllRelays,
   onToggleAllChannels,
+  onChannelMatchModeChange = () => {},
   onToggleAllPeople,
   onAddRelay,
   onRemoveRelay,
@@ -279,7 +284,14 @@ export function Sidebar({
           isExpanded={expandedSections.channels}
           onToggle={() => toggleSection("channels")}
           onIconClick={onToggleAllChannels}
-          hint={t("sidebar.hints.clickToFilter")}
+          action={
+            <ChannelMatchModeToggle
+              mode={channelMatchMode}
+              onChange={onChannelMatchModeChange}
+              size="sidebar"
+              className="ml-1 mr-1"
+            />
+          }
         >
           {channels.map((channel) => (
             <ChannelItem
@@ -301,7 +313,6 @@ export function Sidebar({
           isExpanded={expandedSections.people}
           onToggle={() => toggleSection("people")}
           onIconClick={onToggleAllPeople}
-          hint={t("sidebar.hints.clickToFilter")}
         >
           {people.map((person) => (
             <PersonItem

@@ -118,4 +118,29 @@ describe("MobileFilters management view", () => {
 
     expect(screen.getByText("Cached Carol")).toBeInTheDocument();
   });
+
+  it("allows switching channel include match mode", () => {
+    const onChannelMatchModeChange = vi.fn();
+
+    render(
+      <MobileFilters
+        relays={relays}
+        channels={channels}
+        channelMatchMode="and"
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onChannelMatchModeChange={onChannelMatchModeChange}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /included channel match mode/i }));
+
+    expect(onChannelMatchModeChange).toHaveBeenCalledWith("or");
+  });
 });

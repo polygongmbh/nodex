@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Added a global Channels include mode toggle (`AND`/`OR`) in desktop and mobile filters; excluded channels still always hide matching tasks.
 
 ## [1.10.4] - 2026-02-22
 - Clarified and standardized compose shortcut behavior so metadata-only autocomplete uses `Alt/Option` only, while `Cmd/Ctrl+Enter` consistently submits.

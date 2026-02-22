@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
-import { Task, Relay, Channel, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
+import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
 import {
   format,
   startOfMonth,
@@ -34,6 +34,7 @@ import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/lib/taskSorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
+import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +47,7 @@ interface CalendarViewProps {
   allTasks: Task[];
   relays: Relay[];
   channels: Channel[];
+  channelMatchMode?: ChannelMatchMode;
   composeChannels?: Channel[];
   people: Person[];
   currentUser?: Person;
@@ -84,6 +86,7 @@ export function CalendarView({
   allTasks,
   relays,
   channels,
+  channelMatchMode = "and",
   composeChannels,
   people,
   currentUser,
@@ -131,8 +134,10 @@ export function CalendarView({
   const loadingCooldownUntilRef = useRef(0);
   const syncMonthRafIdRef = useRef<number | null>(null);
 
-  const includedChannels = channels.filter(c => c.filterState === "included").map(c => c.name.toLowerCase());
-  const excludedChannels = channels.filter(c => c.filterState === "excluded").map(c => c.name.toLowerCase());
+  const { included: includedChannels, excluded: excludedChannels } = useMemo(
+    () => getIncludedExcludedChannelNames(channels),
+    [channels]
+  );
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
   const sortContext: SortContext = useMemo(() => ({ childrenMap, allTasks }), [childrenMap, allTasks]);
 
@@ -191,25 +196,23 @@ export function CalendarView({
         return false;
       }
       
-      // Apply channel exclusion filter
-      if (excludedChannels.length > 0) {
-        const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (taskTagsLower.some(t => excludedChannels.includes(t))) {
-          return false;
-        }
-      }
-      
-      // Apply channel inclusion filter - AND logic: must have ALL included channels
-      if (includedChannels.length > 0) {
-        const taskTagsLower = task.tags.map(t => t.toLowerCase());
-        if (!includedChannels.every(c => taskTagsLower.includes(c))) {
-          return false;
-        }
+      if (!taskMatchesChannelFilters(task.tags, includedChannels, excludedChannels, channelMatchMode)) {
+        return false;
       }
       
       return true;
     });
-  }, [allTasks, filteredTaskIds, searchQuery, includedChannels, excludedChannels, focusedTaskId, getDescendantIds, people]);
+  }, [
+    allTasks,
+    channelMatchMode,
+    excludedChannels,
+    filteredTaskIds,
+    focusedTaskId,
+    getDescendantIds,
+    includedChannels,
+    people,
+    searchQuery,
+  ]);
 
   const tasksByDay = useMemo(() => {
     const byDay = new Map<string, Task[]>();
