@@ -1,4 +1,5 @@
 import type { Relay, Task, TaskType } from "@/types";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 export const RELAY_SELECTION_ERROR_MESSAGE = "Select a single relay or a parent task to create a new task";
 
@@ -24,10 +25,20 @@ export function resolveRelaySelectionForSubmission(params: {
   const normalizedSelectedRelayIds = dedupeRelayIds(selectedRelayIds).filter((relayId) =>
     availableRelayIds.has(relayId)
   );
+  nostrDevLog("routing", "Evaluating relay selection for submission", {
+    taskType,
+    selectedRelayIds,
+    normalizedSelectedRelayIds,
+    hasParentTask: Boolean(parentTask),
+  });
 
   if (parentTask) {
     const parentOriginRelayId = resolveOriginRelayIdForTask(parentTask, demoRelayId);
     if (parentOriginRelayId) {
+      nostrDevLog("routing", "Using parent task origin relay for submission", {
+        parentTaskId: parentTask.id,
+        parentOriginRelayId,
+      });
       return { relayIds: [parentOriginRelayId] };
     }
   }
@@ -35,6 +46,10 @@ export function resolveRelaySelectionForSubmission(params: {
   if (taskType === "task") {
     const selectedNonDemoRelays = normalizedSelectedRelayIds.filter((relayId) => relayId !== demoRelayId);
     if (selectedNonDemoRelays.length !== 1) {
+      nostrDevLog("routing", "Task submission rejected due to invalid non-demo relay count", {
+        selectedNonDemoRelays,
+        count: selectedNonDemoRelays.length,
+      });
       return { relayIds: normalizedSelectedRelayIds, error: RELAY_SELECTION_ERROR_MESSAGE };
     }
     return { relayIds: [selectedNonDemoRelays[0]] };

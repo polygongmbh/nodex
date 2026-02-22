@@ -98,6 +98,7 @@ import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } fro
 import { normalizeTaskType } from "@/lib/task-type";
 import { getConfiguredDefaultRelayIds } from "@/lib/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import {
   notifyDisconnectedSelectedFeeds,
   notifyLocalSaved,
@@ -1122,10 +1123,15 @@ const Index = () => {
   }, [people]);
 
   const resolveRelayUrlsFromIds = useCallback((relayIds: string[]) => {
-    return relays
+    const resolvedRelayUrls = relays
       .filter((relay) => relayIds.includes(relay.id))
       .map((relay) => relay.url)
       .filter((url): url is string => Boolean(url));
+    nostrDevLog("routing", "Resolved relay IDs to relay URLs", {
+      relayIds,
+      resolvedRelayUrls,
+    });
+    return resolvedRelayUrls;
   }, [relays]);
 
   const hasDisconnectedSelectedRelays = useMemo(() => {
@@ -1168,11 +1174,18 @@ const Index = () => {
     const task = allTasks.find((item) => item.id === taskId);
     const originRelayId = resolveOriginRelayIdForTask(task, DEMO_RELAY_ID);
     if (!originRelayId) {
+      nostrDevLog("routing", "No origin relay found for task", { taskId });
       return { relayId: undefined, relayUrls: [] as string[] };
     }
+    const relayUrls = resolveRelayUrlsFromIds([originRelayId]);
+    nostrDevLog("routing", "Resolved task origin relay", {
+      taskId,
+      originRelayId,
+      relayUrls,
+    });
     return {
       relayId: originRelayId,
-      relayUrls: resolveRelayUrlsFromIds([originRelayId]),
+      relayUrls,
     };
   }, [allTasks, resolveRelayUrlsFromIds]);
 
@@ -1201,6 +1214,7 @@ const Index = () => {
   ) => {
     if (!isNostrEventId(taskId)) {
       console.info("Skipping state publish: task id is not a Nostr event id", { taskId });
+      nostrDevLog("publish-state", "Skipping publish for non-Nostr task id", { taskId, status });
       return;
     }
 
@@ -1210,8 +1224,10 @@ const Index = () => {
 
     if (relayUrls.length === 0) {
       console.info("Skipping state publish: no non-demo relay mapped for task", taskId);
+      nostrDevLog("publish-state", "Skipping publish due to empty relay mapping", { taskId, status });
       return;
     }
+    nostrDevLog("publish-state", "Publishing task status update", { taskId, status, relayUrls });
 
     const mapped = mapTaskStatusToStateEvent(status);
     const result = await publishEvent(
@@ -1242,8 +1258,17 @@ const Index = () => {
       : resolveTaskOriginRelay(taskId).relayUrls;
     if (relayUrls.length === 0) {
       toast.error(t("toasts.errors.publishDateFailed"));
+      nostrDevLog("publish-date", "Unable to publish due date update: no relay mapping", {
+        taskId,
+        dateType,
+      });
       return false;
     }
+    nostrDevLog("publish-date", "Publishing task due date update", {
+      taskId,
+      relayUrls,
+      dateType,
+    });
     const relayUrl = relayUrls[0];
     const calendarEvent = buildLinkedTaskCalendarEvent({
       taskEventId: taskId,
@@ -1272,8 +1297,17 @@ const Index = () => {
     const { relayUrls } = resolveTaskOriginRelay(taskId);
     if (relayUrls.length === 0) {
       toast.error(t("toasts.errors.publishPriorityFailed"));
+      nostrDevLog("publish-priority", "Unable to publish priority update: no relay mapping", {
+        taskId,
+        priority,
+      });
       return false;
     }
+    nostrDevLog("publish-priority", "Publishing task priority update", {
+      taskId,
+      priority,
+      relayUrls,
+    });
     const relayUrl = relayUrls[0];
     const priorityEvent = buildTaskPriorityUpdateEvent({
       taskEventId: taskId,
@@ -1382,12 +1416,26 @@ const Index = () => {
     });
     if (resolvedRelaySelection.error) {
       toast.error(resolvedRelaySelection.error || t("toasts.errors.selectRelayOrParent"));
+      nostrDevLog("routing", "Relay selection rejected for submission", {
+        taskType: normalizedTaskType,
+        requestedRelayIds,
+        parentId: parentId || null,
+        error: resolvedRelaySelection.error,
+      });
       return { ok: false, reason: "relay-selection" };
     }
     const targetRelayIds = resolvedRelaySelection.relayIds;
     const hasNonDemoRelay = targetRelayIds.some((id) => id !== DEMO_RELAY_ID);
 
     const selectedRelayUrls = resolveRelayUrlsFromIds(targetRelayIds);
+    nostrDevLog("routing", "Resolved relay selection for submission", {
+      taskType: normalizedTaskType,
+      requestedRelayIds,
+      targetRelayIds,
+      selectedRelayUrls,
+      hasNonDemoRelay,
+      parentId: parentId || null,
+    });
     
     const shouldPublish = hasNonDemoRelay && selectedRelayUrls.length > 0;
     const dedupedExplicitMentionPubkeys = Array.from(
@@ -1534,11 +1582,28 @@ const Index = () => {
     }
 
     const publishWithMetadata = async () => {
+      nostrDevLog("publish", "Submitting publish request", {
+        kind: publishKind,
+        parentId: publishParentId || null,
+        relayUrls: selectedRelayUrls,
+        tagCount: publishTags.length,
+      });
       try {
         const result = await publishEvent(publishKind, content, publishTags, publishParentId, selectedRelayUrls);
+        nostrDevLog("publish", "Publish request completed", {
+          kind: publishKind,
+          success: result.success,
+          eventId: result.eventId || null,
+          relayUrls: selectedRelayUrls,
+        });
         return { success: result.success, eventId: result.eventId };
       } catch (error) {
         console.error("Task publish failed unexpectedly", error);
+        nostrDevLog("publish", "Publish request threw an exception", {
+          kind: publishKind,
+          relayUrls: selectedRelayUrls,
+          error: error instanceof Error ? error.message : String(error),
+        });
         return { success: false, eventId: undefined as string | undefined };
       }
     };
@@ -1611,6 +1676,11 @@ const Index = () => {
       });
 
       pendingPublishStateRef.current.set(pendingTaskId, { timeoutId, toastId, composeState: composeRestoreState });
+      nostrDevLog("publish", "Queued publish with undo delay", {
+        pendingTaskId,
+        delayMs: PUBLISH_UNDO_DELAY_MS,
+        relayUrls: selectedRelayUrls,
+      });
       return { ok: true, mode: "published" };
     }
 

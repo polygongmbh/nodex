@@ -25,6 +25,7 @@ import {
 import { buildDeterministicGuestName } from "@/lib/guest-name";
 import { getConfiguredDefaultRelays } from "@/lib/default-relays";
 import { isRelayUrl } from "@/lib/relay-url";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 // Authentication types
 export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | null;
@@ -190,6 +191,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
   // Initialize NDK
   useEffect(() => {
+    nostrDevLog("provider", "Initializing NDK provider", {
+      configuredDefaultRelays: resolvedDefaultRelays,
+    });
     const ndkInstance = new NDK({
       explicitRelayUrls: resolvedDefaultRelays,
     });
@@ -199,6 +203,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     ndkInstance.pool.on("relay:connect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
+      nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
       setRemovedRelays((removed) => {
         if (removed.has(normalized)) return removed;
         setRelays((prev) => {
@@ -216,6 +221,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
+      nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
       setRemovedRelays((removed) => {
         if (removed.has(normalized)) return removed;
         setRelays((prev) =>
@@ -229,10 +235,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     // Initialize relay states
     setRelays(resolvedDefaultRelays.map((url) => ({ url, status: "connecting" })));
+    nostrDevLog("relay", "Relay state initialized as connecting", {
+      relayUrls: resolvedDefaultRelays,
+    });
 
     // Connect
     ndkInstance.connect().then(() => {
-      console.log("NDK connected to relays");
+      nostrDevLog("provider", "NDK connected to relay pool");
     });
 
     setNdk(ndkInstance);
@@ -503,6 +512,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       console.error("Invalid relay URL");
       return;
     }
+    nostrDevLog("relay", "Adding relay and initiating connection", { relayUrl: url });
 
     // Add to relays state
     setRelays((prev) => {
@@ -524,6 +534,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     // Mark as intentionally removed so disconnect events don't re-add it
     setRemovedRelays((prev) => new Set(prev).add(normalized));
     setRelays((prev) => prev.filter((r) => normalizeUrl(r.url) !== normalized));
+    nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
     
     const relay = ndk.pool.getRelay(url);
     if (relay) {
@@ -573,8 +584,16 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       const urls = (relayUrls && relayUrls.length > 0)
         ? relayUrls
         : relays.map((r) => r.url);
+      const targetRelayUrls = urls.length > 0 ? urls : resolvedDefaultRelays;
+      nostrDevLog("publish", "Preparing publish relay set", {
+        kind,
+        eventTagCount: eventTags.length,
+        parentId: parentId || null,
+        reason: relayUrls && relayUrls.length > 0 ? "explicit relay override" : "active relays fallback",
+        targetRelayUrls,
+      });
       const relaySet = NDKRelaySet.fromRelayUrls(
-        urls.length > 0 ? urls : resolvedDefaultRelays,
+        targetRelayUrls,
         ndk,
         true
       );
@@ -586,7 +605,12 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         return { success: false, eventId: event.id };
       }
       
-      console.log("Event published:", event.id, "to", Array.from(publishedTo).map((r) => r.url));
+      const publishedRelayUrls = Array.from(publishedTo).map((r) => r.url);
+      nostrDevLog("publish", "Event published", {
+        eventId: event.id,
+        kind,
+        publishedRelayUrls,
+      });
       return { success: true, eventId: event.id };
     } catch (error) {
       console.error("Failed to publish event:", error);
@@ -734,10 +758,19 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     onEvent: (event: NDKEvent) => void
   ): NDKSubscription | null => {
     if (!ndk) return null;
+    nostrDevLog("subscribe", "Creating subscription", {
+      filterCount: filters.length,
+      filters,
+    });
 
     const subscription = ndk.subscribe(filters, { closeOnEose: false });
     
     subscription.on("event", (event: NDKEvent) => {
+      nostrDevLog("subscribe", "Received event from subscription", {
+        eventId: event.id,
+        kind: event.kind,
+        pubkey: event.pubkey,
+      });
       onEvent(event);
     });
 
