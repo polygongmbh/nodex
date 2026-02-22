@@ -17,6 +17,13 @@ import {
 } from "@/lib/mentions";
 import { hasMeaningfulComposerText } from "@/lib/composer-content";
 import { notifyNeedTag, notifyTaskCreationFailed } from "@/lib/notifications";
+import {
+  isAlternateSubmitKey,
+  isAutocompleteAcceptKey,
+  isMetadataOnlyAutocompleteClick,
+  isMetadataOnlyAutocompleteKey,
+  isPrimarySubmitKey,
+} from "@/lib/composer-shortcuts";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -522,13 +529,7 @@ export function TaskComposer({
         setActiveSuggestionIndex((prev) => (prev - 1 + filteredChannels.length) % filteredChannels.length);
         return;
       }
-      if (
-        filteredChannels.length > 0 &&
-        (
-          e.key === "Tab" ||
-          (e.key === "Enter" && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey)
-        )
-      ) {
+      if (filteredChannels.length > 0 && isAutocompleteAcceptKey(e)) {
         e.preventDefault();
         const selected = filteredChannels[Math.max(activeSuggestionIndex, 0)] || filteredChannels[0];
         if (selected) {
@@ -536,7 +537,7 @@ export function TaskComposer({
         }
         return;
       }
-      if (e.key === "Enter" && (e.altKey || e.getModifierState("Alt"))) {
+      if (isMetadataOnlyAutocompleteKey(e)) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
         const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
@@ -569,10 +570,7 @@ export function TaskComposer({
         setActiveSuggestionIndex((prev) => (prev - 1 + filteredPeople.length) % filteredPeople.length);
         return;
       }
-      if (
-        e.key === "Tab" ||
-        (e.key === "Enter" && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey)
-      ) {
+      if (isAutocompleteAcceptKey(e)) {
         e.preventDefault();
         const selected = filteredPeople[Math.max(activeSuggestionIndex, 0)] || filteredPeople[0];
         if (selected) {
@@ -580,7 +578,7 @@ export function TaskComposer({
         }
         return;
       }
-      if (e.key === "Enter" && (e.altKey || e.getModifierState("Alt"))) {
+      if (isMetadataOnlyAutocompleteKey(e)) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
         if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(content)) {
@@ -600,7 +598,7 @@ export function TaskComposer({
       }
     }
 
-    if (e.key === "Enter" && e.altKey && !showHashtagSuggestions && !showMentionSuggestions) {
+    if (isAlternateSubmitKey(e) && !showHashtagSuggestions && !showMentionSuggestions) {
       e.preventDefault();
       const alternateType: TaskType = allowComment
         ? taskType === "task"
@@ -610,7 +608,7 @@ export function TaskComposer({
       handleSubmit(alternateType);
       return;
     }
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    if (isPrimarySubmitKey(e)) {
       e.preventDefault();
       handleSubmit();
       return;
@@ -824,7 +822,7 @@ export function TaskComposer({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (e.altKey || e.getModifierState("Alt")) {
+                  if (isMetadataOnlyAutocompleteClick(e)) {
                     addHashtagTagOnly(channel.name);
                     return;
                   }
@@ -858,7 +856,7 @@ export function TaskComposer({
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={(e) => {
                         e.preventDefault();
-                        if (e.altKey || e.getModifierState("Alt")) {
+                        if (isMetadataOnlyAutocompleteClick(e)) {
                           addMentionTagOnly(person);
                           return;
                         }

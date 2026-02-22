@@ -15,6 +15,13 @@ import {
 import { hasMeaningfulComposerText } from "@/lib/composer-content";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { notifyNeedTag, notifyTaskCreationFailed } from "@/lib/notifications";
+import {
+  isAlternateSubmitKey,
+  isAutocompleteAcceptKey,
+  isMetadataOnlyAutocompleteClick,
+  isMetadataOnlyAutocompleteKey,
+  isPrimarySubmitKey,
+} from "@/lib/composer-shortcuts";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -885,7 +892,7 @@ export function UnifiedBottomBar({
                   onSearchChange(value);
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && e.altKey) {
+                  if (isMetadataOnlyAutocompleteKey(e)) {
                     const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPositionRef.current;
                     const textBeforeCursor = sharedText.slice(0, effectiveCursor);
                     const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
@@ -909,7 +916,7 @@ export function UnifiedBottomBar({
                       setActiveMentionIndex((prev) => (prev - 1 + filteredPeople.length) % filteredPeople.length);
                       return;
                     }
-                    if (e.key === "Tab" || (e.key === "Enter" && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey)) {
+                    if (isAutocompleteAcceptKey(e)) {
                       e.preventDefault();
                       const selected = filteredPeople[Math.max(activeMentionIndex, 0)] || filteredPeople[0];
                       if (selected) {
@@ -917,7 +924,7 @@ export function UnifiedBottomBar({
                       }
                       return;
                     }
-                    if (e.key === "Enter" && (e.altKey || e.getModifierState("Alt"))) {
+                    if (isMetadataOnlyAutocompleteKey(e)) {
                         const textBeforeCursor = sharedText.slice(0, cursorPositionRef.current);
                         if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(sharedText)) {
                           e.preventDefault();
@@ -935,12 +942,12 @@ export function UnifiedBottomBar({
                       return;
                     }
                   }
-                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                  if (isPrimarySubmitKey(e)) {
                     e.preventDefault();
                     handleSubmit();
                     return;
                   }
-                  if (e.key === "Enter" && e.altKey) {
+                  if (isAlternateSubmitKey(e)) {
                     e.preventDefault();
                     handleSubmit(canOfferComment ? "comment" : "task");
                     return;
@@ -965,7 +972,7 @@ export function UnifiedBottomBar({
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={(e) => {
                           e.preventDefault();
-                          if (e.altKey || e.getModifierState("Alt")) {
+                          if (isMetadataOnlyAutocompleteClick(e)) {
                             addMentionTagOnly(person);
                             return;
                           }
