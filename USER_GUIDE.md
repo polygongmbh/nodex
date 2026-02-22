@@ -63,6 +63,13 @@
 - If only demo/local feed is selected, item is stored locally (demo flow).
 - In Relay Management, use debug utilities to copy relay diagnostics JSON or the configured relay URL list.
 
+## Saved Filter Presets
+- In composer, click `Save current` to store the active filter combination.
+- Presets capture selected feeds, channel states, selected people, and Channels `AND/OR` mode.
+- Click a preset chip to apply it.
+- Click the active preset chip again to clear the active preset and reset filters to defaults.
+- Use the preset chip menu to rename or delete a saved preset.
+
 ## Mobile Usage
 - The view navigation is at the top.
 - Open *Manage* for feed, channel, people, profile, and guide controls.
