@@ -243,6 +243,51 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("uses Alt+Click on hashtag autocomplete option to add tag-only", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const draft = "Ship #ba";
+    fireEvent.change(textarea, {
+      target: { value: draft, selectionStart: draft.length },
+    });
+    textarea.focus();
+    textarea.setSelectionRange(draft.length, draft.length);
+
+    const hashtagOption = screen.getByText("backend").closest("button");
+    expect(hashtagOption).toBeTruthy();
+    fireEvent.mouseDown(hashtagOption!, { altKey: true });
+
+    await waitFor(() => {
+      expect(textarea.value).toBe("Ship ");
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship ",
+        ["backend"],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined
+      );
+    });
+  });
+
   it("uses Alt+Enter to add a new hashtag tag-only even without suggestions", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
@@ -446,6 +491,51 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship #backend with ",
+        ["backend"],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        ["f".repeat(64)],
+        undefined
+      );
+    });
+  });
+
+  it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const draft = "Ship #backend with @al";
+    fireEvent.change(textarea, {
+      target: { value: draft, selectionStart: draft.length },
+    });
+    textarea.focus();
+    textarea.setSelectionRange(draft.length, draft.length);
+
+    const mentionOption = screen.getByText("@alice").closest("button");
+    expect(mentionOption).toBeTruthy();
+    fireEvent.mouseDown(mentionOption!, { altKey: true });
+
+    await waitFor(() => {
+      expect(textarea.value).toBe("Ship #backend with ");
+    });
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(
         "Ship #backend with ",

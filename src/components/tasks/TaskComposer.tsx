@@ -823,6 +823,10 @@ export function TaskComposer({
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
+                  if (e.altKey) {
+                    addHashtagTagOnly(channel.name);
+                    return;
+                  }
                   insertHashtag(channel.name);
                 }}
                 onMouseEnter={() => {
@@ -852,6 +856,10 @@ export function TaskComposer({
                       type="button"
                       onMouseDown={(e) => {
                         e.preventDefault();
+                        if (e.altKey) {
+                          addMentionTagOnly(person);
+                          return;
+                        }
                         insertMention(mentionIdentifier);
                       }}
                   onMouseEnter={() => {
