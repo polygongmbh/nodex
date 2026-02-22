@@ -493,6 +493,7 @@ const Index = () => {
   const shortcutsHelp = useKeyboardShortcutsHelp();
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
+  const [onboardingManualStart, setOnboardingManualStart] = useState(false);
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
   const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
@@ -509,6 +510,7 @@ const Index = () => {
   const handleOpenGuide = useCallback(() => {
     const initialSectionForOpen: OnboardingInitialSection =
       isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
+    setOnboardingManualStart(true);
     setOnboardingInitialSection(initialSectionForOpen);
     setActiveOnboardingSection(null);
     setIsOnboardingOpen(true);
@@ -520,6 +522,7 @@ const Index = () => {
       onboardingCompleted: onboardingState.completed,
       openedWithFocusedTask: openedWithFocusedTaskRef.current,
     })) {
+      setOnboardingManualStart(false);
       setOnboardingInitialSection("all");
       setIsOnboardingOpen(true);
     }
@@ -1664,6 +1667,7 @@ const Index = () => {
         <OnboardingGuide
           isOpen={isOnboardingOpen && !isAuthModalOpen}
           isMobile={isMobile}
+          manualStart={onboardingManualStart}
           currentView={currentView}
           uiContextKey={`${currentView}:${focusedTaskId || ""}`}
           initialSection={onboardingInitialSection}
@@ -1745,6 +1749,7 @@ const Index = () => {
       <OnboardingGuide
         isOpen={isOnboardingOpen && !isAuthModalOpen}
         isMobile={isMobile}
+        manualStart={onboardingManualStart}
         currentView={currentView}
         uiContextKey={`${currentView}:${focusedTaskId || ""}`}
         initialSection={onboardingInitialSection}

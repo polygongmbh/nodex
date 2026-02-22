@@ -482,6 +482,41 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
   });
 
+  it("keeps skip and next immediately available for mobile manual starts without section picker", () => {
+    const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+      navigation: [
+        {
+          id: "navigation-required",
+          title: "Navigation required",
+          description: "Needs click",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+      ],
+      filters: [],
+      compose: [],
+    };
+
+    render(
+      <div>
+        <div data-onboarding="task-list">Task list</div>
+        <OnboardingGuide
+          isOpen
+          isMobile
+          manualStart
+          initialSection="all"
+          sections={sections}
+          stepsBySection={stepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    expect(screen.getByRole("button", { name: "Skip" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Finish" })).toBeEnabled();
+  });
+
   it("keeps Next immediately enabled after navigating back to a required-action step", () => {
     vi.useFakeTimers();
     render(

@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 interface OnboardingGuideProps {
   isOpen: boolean;
   isMobile?: boolean;
+  manualStart?: boolean;
   currentView?: "tree" | "feed" | "kanban" | "calendar" | "list";
   uiContextKey?: string;
   initialSection: OnboardingInitialSection;
@@ -62,6 +63,7 @@ function renderGuideTextWithItalics(text: string) {
 export function OnboardingGuide({
   isOpen,
   isMobile = false,
+  manualStart = false,
   currentView = "tree",
   uiContextKey,
   initialSection,
@@ -79,7 +81,7 @@ export function OnboardingGuide({
   const [interactionSatisfied, setInteractionSatisfied] = useState(false);
   const [interactionTimedOut, setInteractionTimedOut] = useState(false);
   const [skipDelayElapsed, setSkipDelayElapsed] = useState(false);
-  const [isManualSession, setIsManualSession] = useState(false);
+  const [isManualSession, setIsManualSession] = useState(Boolean(manualStart || initialSection === null));
   const [manualSelectedSection, setManualSelectedSection] = useState<OnboardingSectionId | null>(null);
   const [pickerRects, setPickerRects] = useState<Partial<Record<OnboardingSectionId, RectBox>>>({});
   const [pickerMeasuredOnce, setPickerMeasuredOnce] = useState(false);
@@ -172,7 +174,7 @@ export function OnboardingGuide({
 
   useEffect(() => {
     if (!isOpen) return;
-    setIsManualSession(initialSection === null);
+    setIsManualSession(Boolean(manualStart || initialSection === null));
     setManualSelectedSection(null);
     manualSelectedSectionRef.current = null;
     setActiveSection(initialSection);
@@ -186,7 +188,7 @@ export function OnboardingGuide({
     previousStepIdRef.current = null;
     backUnlockedStepIdsRef.current.clear();
     setPickerMeasuredOnce(false);
-  }, [isOpen, initialSection]);
+  }, [isOpen, initialSection, manualStart]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -413,7 +415,7 @@ export function OnboardingGuide({
   const nextDisabled = isManualSession
     ? false
     : Boolean(currentStep?.requiredAction && !interactionSatisfied && !interactionTimedOut && !isBackUnlockedStep);
-  const skipDisabled = stepIndex === 0 && !skipDelayElapsed;
+  const skipDisabled = !isManualSession && stepIndex === 0 && !skipDelayElapsed;
 
   useEffect(() => {
     if (!isOpen) return;

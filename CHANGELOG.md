@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Fixed relay connection retries to use progressively longer Fibonacci backoff intervals, reducing repeated reconnect spam during relay outages.
 - Fixed `NDKProvider` relay initialization to avoid recreating relay connections on rerenders, preventing duplicate websocket churn and mobile UI stalls.
 - Improved success toast contrast by reducing transparency of green toast backgrounds.
+- Fixed mobile manual guide starts to keep `Skip` and `Next` available immediately, even when opening directly into all-steps mode.
 
 ## [1.10.2] - 2026-02-20
 - Removed recurring development warning noise across tests/build (invalid test worker Node flags, missing relay dialog description warning, and known third-party build warning noise) while keeping existing behavior unchanged.
