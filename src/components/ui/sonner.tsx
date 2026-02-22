@@ -48,7 +48,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           toast:
             "group toast cursor-pointer group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
           success:
-            "group-[.toaster]:border-success/40 group-[.toaster]:bg-success/10 group-[.toaster]:text-success-foreground",
+            "group-[.toaster]:border-success/60 group-[.toaster]:bg-success/25 group-[.toaster]:text-success-foreground",
           info:
             "group-[.toaster]:border-primary/35 group-[.toaster]:bg-primary/10 group-[.toaster]:text-foreground",
           warning:
