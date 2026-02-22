@@ -807,11 +807,6 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     const subscription = ndk.subscribe(filters, { closeOnEose: false });
     
     subscription.on("event", (event: NDKEvent) => {
-      nostrDevLog("subscribe", "Received event from subscription", {
-        eventId: event.id,
-        kind: event.kind,
-        pubkey: event.pubkey,
-      });
       onEvent(event);
     });
 
