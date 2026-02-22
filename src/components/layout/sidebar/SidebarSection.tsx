@@ -89,7 +89,7 @@ export function SidebarSection({
           "origin-top overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-out",
           isExpanded
             ? "max-h-[2000px] opacity-100 translate-y-0 scale-y-100 motion-sidebar-fold-open"
-            : `${collapsedMaxHeightClass} opacity-60 -translate-y-1 scale-y-[0.98] motion-sidebar-fold-close`
+            : `${collapsedMaxHeightClass} opacity-100 -translate-y-1 scale-y-[0.98] motion-sidebar-fold-close`
         )}
       >
         <div className="py-0">
