@@ -29,12 +29,11 @@ import { getAuthorColor } from "@/lib/author-color";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/lib/taskSorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
-import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
+import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -134,25 +133,8 @@ export function CalendarView({
   const loadingCooldownUntilRef = useRef(0);
   const syncMonthRafIdRef = useRef<number | null>(null);
 
-  const { included: includedChannels, excluded: excludedChannels } = useMemo(
-    () => getIncludedExcludedChannelNames(channels),
-    [channels]
-  );
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
   const sortContext: SortContext = useMemo(() => ({ childrenMap, allTasks }), [childrenMap, allTasks]);
-
-  // Get all descendants of a task
-  const getDescendantIds = useCallback((taskId: string): Set<string> => {
-    const ids = new Set<string>();
-    const addDescendants = (id: string) => {
-      allTasks.filter(t => t.parentId === id).forEach(child => {
-        ids.add(child.id);
-        addDescendants(child.id);
-      });
-    };
-    addDescendants(taskId);
-    return ids;
-  }, [allTasks]);
 
   // Get full ancestor chain for a task
   const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
@@ -175,43 +157,21 @@ export function CalendarView({
     return chain;
   }, [allTasks]);
 
-  // Get tasks with due dates
-  // Use pre-filtered tasks from Index (relay/person filtering already applied)
-  const filteredTaskIds = useMemo(() => new Set(tasks.map(t => t.id)), [tasks]);
+  const filteredTaskCandidates = useTaskViewFiltering({
+    allTasks,
+    tasks,
+    focusedTaskId,
+    searchQuery,
+    people,
+    channels,
+    channelMatchMode,
+    taskPredicate: (task) => Boolean(task.dueDate) && task.taskType === "task",
+  });
   
   const tasksWithDueDates = useMemo(() => {
-    return allTasks.filter(task => {
-      if (!task.dueDate || task.taskType !== "task") return false;
-
-      // Must be in pre-filtered tasks (relay/person filtering already applied)
-      if (!filteredTaskIds.has(task.id)) return false;
-
-      // If focused on a task, only show descendants
-      if (focusedTaskId) {
-        const descendantIds = getDescendantIds(focusedTaskId);
-        if (!descendantIds.has(task.id)) return false;
-      }
-
-      if (!taskMatchesTextQuery(task, searchQuery, people)) {
-        return false;
-      }
-      
-      if (!taskMatchesChannelFilters(task.tags, includedChannels, excludedChannels, channelMatchMode)) {
-        return false;
-      }
-      
-      return true;
-    });
+    return filteredTaskCandidates.filter((task) => Boolean(task.dueDate));
   }, [
-    allTasks,
-    channelMatchMode,
-    excludedChannels,
-    filteredTaskIds,
-    focusedTaskId,
-    getDescendantIds,
-    includedChannels,
-    people,
-    searchQuery,
+    filteredTaskCandidates,
   ]);
 
   const tasksByDay = useMemo(() => {

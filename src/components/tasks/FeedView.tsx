@@ -14,13 +14,12 @@ import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { formatAuthorMetaParts } from "@/lib/person-label";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getDueDateColorClass } from "@/lib/taskSorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
-import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
+import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -132,10 +131,6 @@ export function FeedView({
   const { user } = useNDK();
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
-  const { included: includedChannels, excluded: excludedChannels } = useMemo(
-    () => getIncludedExcludedChannelNames(channels),
-    [channels]
-  );
 
   useEffect(() => {
     if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
@@ -159,47 +154,20 @@ export function FeedView({
     return () => mediaQuery.removeListener(handleMediaQueryChange);
   }, [isMobile]);
 
-  // Get all descendants of a task
-  const getDescendantIds = (taskId: string): Set<string> => {
-    const ids = new Set<string>();
-    const addDescendants = (id: string) => {
-      allTasks.filter(t => t.parentId === id).forEach(child => {
-        ids.add(child.id);
-        addDescendants(child.id);
-      });
-    };
-    addDescendants(taskId);
-    return ids;
-  };
-
-  // Flatten and filter all tasks chronologically
-  // Use pre-filtered tasks from Index, then apply local filters
-  const filteredTaskIds = new Set(tasks.map(t => t.id));
-  
-  const feedTasks = allTasks
-    .filter(task => {
-      // Must be in pre-filtered tasks (relay/person filtering already applied)
-      if (!filteredTaskIds.has(task.id)) return false;
-
-      // If focused on a task, only show that task and its descendants
-      if (focusedTaskId) {
-        if (task.id !== focusedTaskId) {
-          const descendantIds = getDescendantIds(focusedTaskId);
-          if (!descendantIds.has(task.id)) return false;
-        }
-      }
-
-      // Apply search filter
-      if (!taskMatchesTextQuery(task, searchQuery, people)) {
-        return false;
-      }
-      if (!taskMatchesChannelFilters(task.tags, includedChannels, excludedChannels, channelMatchMode)) {
-        return false;
-      }
-      
-      return true;
-    })
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  const filteredFeedTasks = useTaskViewFiltering({
+    allTasks,
+    tasks,
+    focusedTaskId,
+    includeFocusedTask: true,
+    searchQuery,
+    people,
+    channels,
+    channelMatchMode,
+  });
+  const feedTasks = useMemo(
+    () => [...filteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
+    [filteredFeedTasks]
+  );
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => feedTasks.map(t => t.id), [feedTasks]);

@@ -13,11 +13,10 @@ import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
-import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
+import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -164,11 +163,6 @@ export function ListView({
   const prevSearchRef = useRef(searchQuery);
   const prevFocusedRef = useRef(focusedTaskId);
 
-  const { included: includedChannels, excluded: excludedChannels } = useMemo(
-    () => getIncludedExcludedChannelNames(channels),
-    [channels]
-  );
-
   // Detect filter/view changes (not status changes) to trigger re-sort
   useEffect(() => {
     const taskIdsSnapshot = tasks.map(t => t.id).sort().join(",");
@@ -208,19 +202,6 @@ export function ListView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortVersion]);
 
-  // Get all descendants of a task
-  const getDescendantIds = (taskId: string): Set<string> => {
-    const ids = new Set<string>();
-    const addDescendants = (id: string) => {
-      allTasks.filter(t => t.parentId === id).forEach(child => {
-        ids.add(child.id);
-        addDescendants(child.id);
-      });
-    };
-    addDescendants(taskId);
-    return ids;
-  };
-
   const hasChildren = useCallback((taskId: string): boolean => {
     return allTasks.some((task) => task.taskType === "task" && task.parentId === taskId);
   }, [allTasks]);
@@ -252,32 +233,20 @@ export function ListView({
     return chain;
   }, [allTasks]);
 
-  // Get only task-type items
-  // Use pre-filtered tasks from Index (relay/person filtering already applied)
-  const filteredTaskIds = useMemo(() => new Set(tasks.map(t => t.id)), [tasks]);
+  const filteredTaskCandidates = useTaskViewFiltering({
+    allTasks,
+    tasks,
+    focusedTaskId,
+    searchQuery,
+    people,
+    channels,
+    channelMatchMode,
+    taskPredicate: (task) => task.taskType === "task",
+  });
   
   // Stable sorted list - only re-sort when sortVersion changes
   const listTasks = useMemo(() => {
-    let filtered = allTasks.filter(task => {
-      if (task.taskType !== "task") return false;
-
-      // Must be in pre-filtered tasks (relay/person filtering already applied)
-      if (!filteredTaskIds.has(task.id)) return false;
-
-      // If focused on a task, only show descendants
-      if (focusedTaskId) {
-        const descendantIds = getDescendantIds(focusedTaskId);
-        if (!descendantIds.has(task.id)) return false;
-      }
-
-      if (!taskMatchesTextQuery(task, searchQuery, people)) {
-        return false;
-      }
-      
-      if (!taskMatchesChannelFilters(task.tags, includedChannels, excludedChannels, channelMatchMode)) {
-        return false;
-      }
-
+    let filtered = filteredTaskCandidates.filter((task) => {
       // Apply shared depth mode (kept in sync with Kanban selector).
       const depth = focusedTaskId
         ? getDepth(task.id) - getDepth(focusedTaskId)
@@ -336,17 +305,11 @@ export function ListView({
     return filtered;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    allTasks,
-    channelMatchMode,
     depthMode,
-    excludedChannels,
-    filteredTaskIds,
+    filteredTaskCandidates,
     focusedTaskId,
     getDepth,
     hasChildren,
-    includedChannels,
-    people,
-    searchQuery,
     sortContext,
     sortDirection,
     sortField,

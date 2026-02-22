@@ -15,11 +15,10 @@ import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
-import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
+import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -97,11 +96,6 @@ export function KanbanView({
   const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
 
-  const { included: includedChannels, excluded: excludedChannels } = useMemo(
-    () => getIncludedExcludedChannelNames(channels),
-    [channels]
-  );
-
   // Build children map
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
 
@@ -109,19 +103,6 @@ export function KanbanView({
     childrenMap,
     allTasks,
   }), [childrenMap, allTasks]);
-
-  // Get all descendants of a task
-  const getDescendantIds = useCallback((taskId: string): Set<string> => {
-    const ids = new Set<string>();
-    const addDescendants = (id: string) => {
-      (childrenMap.get(id) || []).forEach(child => {
-        ids.add(child.id);
-        addDescendants(child.id);
-      });
-    };
-    addDescendants(taskId);
-    return ids;
-  }, [childrenMap]);
 
   // Check if task has children
   const hasChildren = useCallback((taskId: string): boolean => {
@@ -157,32 +138,19 @@ export function KanbanView({
     return chain;
   }, [allTasks]);
 
-  // Get only task-type items, filtered by depth mode
-  // Use pre-filtered tasks from Index (relay/person filtering already applied)
-  const filteredTaskIds = useMemo(() => new Set(tasks.map(t => t.id)), [tasks]);
+  const filteredTaskCandidates = useTaskViewFiltering({
+    allTasks,
+    tasks,
+    focusedTaskId,
+    searchQuery,
+    people,
+    channels,
+    channelMatchMode,
+    taskPredicate: (task) => task.taskType === "task",
+  });
   
   const kanbanTasks = useMemo(() => {
-    return allTasks.filter(task => {
-      if (task.taskType !== "task") return false;
-
-      // Must be in pre-filtered tasks (relay/person filtering already applied)
-      if (!filteredTaskIds.has(task.id)) return false;
-
-      // If focused on a task, only show descendants
-      if (focusedTaskId) {
-        const descendantIds = getDescendantIds(focusedTaskId);
-        if (!descendantIds.has(task.id)) return false;
-      }
-
-      // Apply search filter
-      if (!taskMatchesTextQuery(task, searchQuery, people)) {
-        return false;
-      }
-      
-      if (!taskMatchesChannelFilters(task.tags, includedChannels, excludedChannels, channelMatchMode)) {
-        return false;
-      }
-      
+    return filteredTaskCandidates.filter((task) => {
       // Apply depth mode
       const depth = focusedTaskId 
         ? getDepth(task.id) - getDepth(focusedTaskId)
@@ -202,18 +170,11 @@ export function KanbanView({
       return true;
     });
   }, [
-    allTasks,
-    channelMatchMode,
     depthMode,
-    excludedChannels,
-    filteredTaskIds,
+    filteredTaskCandidates,
     focusedTaskId,
-    getDescendantIds,
     getDepth,
     hasChildren,
-    includedChannels,
-    people,
-    searchQuery,
   ]);
 
   const tasksByStatus = useMemo(() => {
