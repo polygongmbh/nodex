@@ -157,6 +157,35 @@ describe("NostrRelayPool", () => {
 
       expect(pool.getRelayStatus()).toHaveLength(0);
     });
+
+    it("should reconnect forever with fibonacci backoff intervals", () => {
+      vi.useFakeTimers();
+      try {
+        const pool = new NostrRelayPool({ reconnectInterval: 100, maxReconnectAttempts: 1 });
+        pool.connect("wss://relay.example.com");
+
+        const ws1 = MockWebSocket.getLatest();
+        expect(MockWebSocket.instances).toHaveLength(1);
+        ws1?.simulateError();
+
+        vi.advanceTimersByTime(100);
+        expect(MockWebSocket.instances).toHaveLength(2);
+
+        const ws2 = MockWebSocket.getLatest();
+        ws2?.simulateError();
+        vi.advanceTimersByTime(100);
+        expect(MockWebSocket.instances).toHaveLength(3);
+
+        const ws3 = MockWebSocket.getLatest();
+        ws3?.simulateError();
+        vi.advanceTimersByTime(199);
+        expect(MockWebSocket.instances).toHaveLength(3);
+        vi.advanceTimersByTime(1);
+        expect(MockWebSocket.instances).toHaveLength(4);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   describe("subscriptions", () => {

@@ -69,18 +69,26 @@ export class NostrRelayPool {
    * Connect to a relay
    */
   connect(url: string): void {
-    if (this.relays.has(url)) {
-      const relay = this.relays.get(url)!;
+    const existingRelay = this.relays.get(url);
+    if (existingRelay) {
+      const relay = existingRelay;
       if (relay.status === "connected" || relay.status === "connecting") {
         return;
       }
     }
 
-    const relaySocket: RelaySocket = {
+    const relaySocket: RelaySocket = existingRelay || {
       ws: null,
       status: "connecting",
       reconnectAttempts: 0,
     };
+    relaySocket.status = "connecting";
+    relaySocket.ws = null;
+
+    if (relaySocket.reconnectTimeout) {
+      clearTimeout(relaySocket.reconnectTimeout);
+      relaySocket.reconnectTimeout = undefined;
+    }
 
     this.relays.set(url, relaySocket);
 
@@ -99,6 +107,7 @@ export class NostrRelayPool {
         clearTimeout(connectionTimeout);
         relaySocket.status = "connected";
         relaySocket.reconnectAttempts = 0;
+        relaySocket.reconnectTimeout = undefined;
         this.events.onConnect?.(url);
 
         // Resubscribe to active subscriptions
@@ -382,14 +391,29 @@ export class NostrRelayPool {
     const relay = this.relays.get(url);
     if (!relay) return;
 
-    if (relay.reconnectAttempts >= this.config.maxReconnectAttempts) {
+    if (relay.reconnectTimeout) {
       return;
     }
+    const fibMultiplier = this.getFibonacci(Math.max(1, relay.reconnectAttempts + 1));
+    const reconnectDelay = this.config.reconnectInterval * fibMultiplier;
 
     relay.reconnectTimeout = setTimeout(() => {
+      relay.reconnectTimeout = undefined;
       relay.reconnectAttempts++;
       this.connect(url);
-    }, this.config.reconnectInterval);
+    }, reconnectDelay);
+  }
+
+  private getFibonacci(index: number): number {
+    if (index <= 2) return 1;
+    let prev = 1;
+    let curr = 1;
+    for (let i = 3; i <= index; i++) {
+      const next = prev + curr;
+      prev = curr;
+      curr = next;
+    }
+    return curr;
   }
 }
 

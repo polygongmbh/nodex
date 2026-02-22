@@ -116,7 +116,12 @@ interface NDKProviderProps {
   defaultRelays?: string[];
 }
 
-export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRelays() }: NDKProviderProps) {
+export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
+  const defaultRelaysKey = useMemo(() => (defaultRelays || []).join(","), [defaultRelays]);
+  const resolvedDefaultRelays = useMemo(
+    () => defaultRelays || getConfiguredDefaultRelays(),
+    [defaultRelaysKey, defaultRelays]
+  );
   const [ndk, setNdk] = useState<NDK | null>(null);
   const [user, setUser] = useState<NostrUser | null>(null);
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
@@ -186,7 +191,7 @@ export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRela
   // Initialize NDK
   useEffect(() => {
     const ndkInstance = new NDK({
-      explicitRelayUrls: defaultRelays,
+      explicitRelayUrls: resolvedDefaultRelays,
     });
 
     // Set up relay event handlers
@@ -223,7 +228,7 @@ export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRela
     });
 
     // Initialize relay states
-    setRelays(defaultRelays.map((url) => ({ url, status: "connecting" })));
+    setRelays(resolvedDefaultRelays.map((url) => ({ url, status: "connecting" })));
 
     // Connect
     ndkInstance.connect().then(() => {
@@ -293,9 +298,12 @@ export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRela
     }
 
     return () => {
+      ndkInstance.pool.relays.forEach((relay) => {
+        relay.disconnect();
+      });
       ndkInstance.pool.removeAllListeners();
     };
-  }, [defaultRelays]);
+  }, [defaultRelaysKey, resolvedDefaultRelays]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -463,7 +471,7 @@ export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRela
 
       const relayUrls = relays.map((relay) => relay.url);
       const relaySet = NDKRelaySet.fromRelayUrls(
-        relayUrls.length > 0 ? relayUrls : defaultRelays,
+        relayUrls.length > 0 ? relayUrls : resolvedDefaultRelays,
         ndk,
         true
       );
@@ -471,7 +479,7 @@ export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRela
     } catch (error) {
       console.warn("Failed to publish offline presence event during logout", error);
     }
-  }, [defaultRelays, ndk, relays]);
+  }, [resolvedDefaultRelays, ndk, relays]);
 
   const logout = useCallback(() => {
     void publishPresenceOffline();
@@ -566,7 +574,7 @@ export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRela
         ? relayUrls
         : relays.map((r) => r.url);
       const relaySet = NDKRelaySet.fromRelayUrls(
-        urls.length > 0 ? urls : defaultRelays,
+        urls.length > 0 ? urls : resolvedDefaultRelays,
         ndk,
         true
       );
@@ -584,7 +592,7 @@ export function NDKProvider({ children, defaultRelays = getConfiguredDefaultRela
       console.error("Failed to publish event:", error);
       return { success: false };
     }
-  }, [ndk, relays, defaultRelays]);
+  }, [ndk, relays, resolvedDefaultRelays]);
 
   const updateUserProfile = useCallback(async (profile: EditableNostrProfile): Promise<boolean> => {
     if (!hasRequiredProfileFields(profile)) {
