@@ -78,6 +78,7 @@ export function OnboardingGuide({
   const [activeSection, setActiveSection] = useState<OnboardingInitialSection>(initialSection);
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [resolvedTarget, setResolvedTarget] = useState<HTMLElement | null>(null);
   const [interactionSatisfied, setInteractionSatisfied] = useState(false);
   const [interactionTimedOut, setInteractionTimedOut] = useState(false);
   const [skipDelayElapsed, setSkipDelayElapsed] = useState(false);
@@ -225,7 +226,59 @@ export function OnboardingGuide({
 
     setInteractionTimedOut(false);
     setInteractionSatisfied(!step.requiredAction);
+    setResolvedTarget(null);
+    setTargetRect(null);
   }, [activeSection, activeSteps, isOpen, stepIndex]);
+
+  useEffect(() => {
+    if (!isOpen || !activeSection || activeSteps.length === 0) return;
+
+    const current = activeSteps[stepIndex];
+    if (!current?.target) {
+      setResolvedTarget(null);
+      setTargetRect(null);
+      return;
+    }
+
+    const resolveTarget = () => {
+      const target = getBestVisibleTarget(current.target!);
+      if (!target) return false;
+      setResolvedTarget((prev) => (prev === target ? prev : target));
+      setTargetRect(target.getBoundingClientRect());
+      return true;
+    };
+
+    if (resolveTarget()) return;
+
+    const intervalId = window.setInterval(() => {
+      if (resolveTarget()) {
+        window.clearInterval(intervalId);
+      }
+    }, 120);
+    const timeoutId = window.setTimeout(() => {
+      window.clearInterval(intervalId);
+    }, 5000);
+
+    let observer: MutationObserver | null = null;
+    if (typeof MutationObserver !== "undefined") {
+      observer = new MutationObserver(() => {
+        if (resolveTarget()) {
+          window.clearInterval(intervalId);
+        }
+      });
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+      });
+    }
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.clearTimeout(timeoutId);
+      observer?.disconnect();
+    };
+  }, [activeSection, activeSteps, getBestVisibleTarget, isOpen, stepIndex]);
 
   useEffect(() => {
     if (!isOpen || !activeSection || activeSteps.length === 0) return;
@@ -233,11 +286,11 @@ export function OnboardingGuide({
     const current = activeSteps[stepIndex];
     if (!current) return;
 
-    const target = current.target ? getBestVisibleTarget(current.target) : null;
-    if (!target) {
+    if (!resolvedTarget || !document.contains(resolvedTarget)) {
       setTargetRect(null);
       return;
     }
+    const target = resolvedTarget;
 
     const isBreadcrumbStep = isNavigationBreadcrumbStep(current.id);
     const previousOutline = target.style.outline;
@@ -307,7 +360,7 @@ export function OnboardingGuide({
       target.style.backgroundColor = previousBackgroundColor;
       target.style.borderRadius = previousBorderRadius;
     };
-  }, [activeSection, activeSteps, getBestVisibleTarget, interactionSatisfied, isOpen, stepIndex, uiContextKey]);
+  }, [activeSection, activeSteps, interactionSatisfied, isOpen, resolvedTarget, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;

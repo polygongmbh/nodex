@@ -79,6 +79,56 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
+  it("waits for delayed target mount before rendering highlight", async () => {
+    const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+    HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRect() {
+      return {
+        x: 0,
+        y: 0,
+        width: 320,
+        height: 40,
+        top: 0,
+        left: 0,
+        right: 320,
+        bottom: 40,
+        toJSON: () => ({}),
+      } as DOMRect;
+    };
+
+    const { rerender } = render(
+      <OnboardingGuide
+        isOpen
+        initialSection="navigation"
+        sections={sections}
+        stepsBySection={baseStepsBySection}
+        onClose={vi.fn()}
+        onComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByTestId("onboarding-target-arrow")).not.toBeInTheDocument();
+
+    rerender(
+      <div>
+        <div data-onboarding="task-list">Task list</div>
+        <OnboardingGuide
+          isOpen
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={baseStepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("onboarding-target-arrow")).toBeInTheDocument();
+    });
+
+    HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+  });
+
   it("auto-advances to next step when breadcrumb row is no longer visible", () => {
     vi.useFakeTimers();
     const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;

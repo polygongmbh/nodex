@@ -10,6 +10,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Improved success toast contrast by reducing transparency of green toast backgrounds.
 - Fixed mobile manual guide starts to keep `Skip` and `Next` available immediately, even when opening directly into all-steps mode.
 - Updated mobile onboarding automation so step 5 opens the Manage profile editor and step 7 switches back to Feed.
+- Improved onboarding target highlighting to wait for delayed mobile UI transitions before applying spotlight/arrow positioning.
 
 ## [1.10.2] - 2026-02-20
 - Removed recurring development warning noise across tests/build (invalid test worker Node flags, missing relay dialog description warning, and known third-party build warning noise) while keeping existing behavior unchanged.
