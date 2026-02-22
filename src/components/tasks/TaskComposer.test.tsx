@@ -243,7 +243,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
-  it("uses Alt+Click on hashtag autocomplete option to add tag-only", async () => {
+  it("uses modifier+Click on hashtag autocomplete option to add tag-only", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
@@ -265,7 +265,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     const hashtagOption = screen.getByText("backend").closest("button");
     expect(hashtagOption).toBeTruthy();
-    fireEvent.click(hashtagOption!, { altKey: true });
+    fireEvent.click(hashtagOption!, { ctrlKey: true });
 
     await waitFor(() => {
       expect(textarea.value).toBe("Ship ");
@@ -506,7 +506,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
-  it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
+  it("uses modifier+Click on mention autocomplete option to add mention tag-only", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
@@ -528,7 +528,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     const mentionOption = screen.getByText("@alice").closest("button");
     expect(mentionOption).toBeTruthy();
-    fireEvent.click(mentionOption!, { altKey: true });
+    fireEvent.click(mentionOption!, { metaKey: true });
 
     await waitFor(() => {
       expect(textarea.value).toBe("Ship #backend with ");

@@ -610,7 +610,7 @@ describe("UnifiedBottomBar auth gating", () => {
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general @al", selectionStart: 16 } });
 
-    fireEvent.keyDown(field, { key: "Enter", metaKey: true });
+    fireEvent.keyDown(field, { key: "Enter", altKey: true });
     await waitFor(() => {
       expect(field.value).toBe("Ship #general ");
     });
@@ -630,7 +630,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
-  it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
+  it("uses modifier+Click on mention autocomplete option to add mention tag-only", async () => {
     const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
     const onSearchChange = vi.fn();
     render(
@@ -655,7 +655,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const mentionOption = screen.getByText("@alice").closest("button");
     expect(mentionOption).toBeTruthy();
-    fireEvent.click(mentionOption!, { altKey: true });
+    fireEvent.click(mentionOption!, { shiftKey: true });
 
     await waitFor(() => {
       expect(field.value).toBe("Ship #general ");

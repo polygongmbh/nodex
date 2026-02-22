@@ -775,6 +775,15 @@ export function TaskComposer({
   };
 
   const showExpandedControls = !adaptiveSize || isExpanded || content.trim().length > 0;
+  const hasModifierKey = (event: Pick<React.KeyboardEvent | React.MouseEvent, "altKey" | "ctrlKey" | "metaKey" | "shiftKey" | "getModifierState">): boolean =>
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.shiftKey ||
+    event.getModifierState("Alt") ||
+    event.getModifierState("Control") ||
+    event.getModifierState("Meta") ||
+    event.getModifierState("Shift");
 
   useEffect(() => {
     if (showExpandedControls) return;
@@ -824,7 +833,7 @@ export function TaskComposer({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (e.altKey || e.getModifierState("Alt")) {
+                  if (hasModifierKey(e)) {
                     addHashtagTagOnly(channel.name);
                     return;
                   }
@@ -858,7 +867,7 @@ export function TaskComposer({
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={(e) => {
                         e.preventDefault();
-                        if (e.altKey || e.getModifierState("Alt")) {
+                        if (hasModifierKey(e)) {
                           addMentionTagOnly(person);
                           return;
                         }
