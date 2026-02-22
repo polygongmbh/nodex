@@ -5,6 +5,9 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.12.0] - 2026-02-22
+Improved mobile routing persistence, refined interaction motion, and added reusable saved filter presets in the sidebar.
 - Mobile Manage now uses a dedicated `/manage` route on phone layouts, so reloading preserves the active Manage screen instead of dropping back to task views.
 - Added a playful motion pass across toasts, filters, onboarding focus, composer interactions, autocomplete highlights, sidebar folds, and completion confetti-lite, with reduced-motion safeguards.
 - Added saved filter presets in the desktop sidebar so current relay/channel/people selections (including Channels `AND/OR` mode) can be saved, re-applied, renamed, and deleted.
