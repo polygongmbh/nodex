@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Updated shortcut/onboarding copy to use platform-specific `Option`/`Alt` labels from code and generic "any modifier key" wording for metadata-only autocomplete actions.
 
 ## [1.10.3] - 2026-02-22
 ### Changed

@@ -127,9 +127,9 @@
 ### Compose keyboard behavior (desktop)
 - `Enter` / `Tab` with autocomplete open: insert the highlighted suggestion into text.
 - `Ctrl/Cmd+Enter`: submit as the currently selected kind.
-- `Alt+Enter` with no autocomplete open: submit as the other kind (Task <-> Comment).
-- `Alt/Ctrl/Cmd/Shift+Enter` with hashtag/mention autocomplete open: add the selected tag/mention to publish metadata without inserting token text.
-- `Alt+Click` on a hashtag/mention autocomplete option: add that selected tag/mention as publish metadata only (no token text insertion).
+- `Option+Enter` (macOS) / `Alt+Enter` (other platforms) with no autocomplete open: submit as the other kind (Task <-> Comment).
+- With hashtag/mention autocomplete open, use `any modifier key + Enter` to add the selected tag/mention as publish metadata only (no token text insertion).
+- With hashtag/mention autocomplete open, use `any modifier key + click` on an option to add publish metadata only (no token text insertion).
 - In the mobile combined composer, `Alt+Enter` while typing a hashtag token adds that hashtag as metadata-only, even for new tags.
 
 ### Search behavior

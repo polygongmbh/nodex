@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import { OnboardingSectionId, OnboardingStep } from "./onboarding-types";
+import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 
 type StepMap = Record<OnboardingSectionId, OnboardingStep[]>;
 type GuideView = "tree" | "feed" | "kanban" | "calendar" | "list";
@@ -9,6 +10,8 @@ export function getOnboardingStepsBySection(
   view: GuideView = "tree",
   t: TFunction
 ): StepMap {
+  const alternateModifier = getAlternateModifierLabel();
+
   const desktopStepsBySection: StepMap = {
     navigation: [
       {
@@ -86,7 +89,7 @@ export function getOnboardingStepsBySection(
         title: t("onboarding.steps.composeInput.title"),
         description: t("onboarding.steps.composeInput.description"),
         target: '[data-onboarding="compose-input"]',
-        actionPrompt: t("onboarding.steps.composeInput.action"),
+        actionPrompt: t("onboarding.steps.composeInput.action", { alternateModifier }),
       },
     ],
   };

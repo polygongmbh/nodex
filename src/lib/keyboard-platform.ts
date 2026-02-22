@@ -5,8 +5,8 @@ export function isMacOSPlatform(): boolean {
   return /(mac|iphone|ipad|ipod)/i.test(`${platform} ${userAgent}`);
 }
 
-export function getAlternateModifierHintKey(): "hints.modifiers.alt" | "hints.modifiers.optionAlt" {
-  return isMacOSPlatform() ? "hints.modifiers.optionAlt" : "hints.modifiers.alt";
+export function getAlternateModifierLabel(): string {
+  return isMacOSPlatform() ? "Option" : "Alt";
 }
 
 export function getSubmitCurrentKindShortcutLabel(): string {
@@ -14,9 +14,9 @@ export function getSubmitCurrentKindShortcutLabel(): string {
 }
 
 export function getSubmitOppositeKindShortcutLabel(): string {
-  return isMacOSPlatform() ? "Option + Enter" : "Alt + Enter";
+  return `${getAlternateModifierLabel()} + Enter`;
 }
 
 export function getMetadataOnlyShortcutLabel(): string {
-  return isMacOSPlatform() ? "Option/Cmd/Shift + Enter" : "Alt/Ctrl/Shift + Enter";
+  return "Any modifier + Enter / Click";
 }

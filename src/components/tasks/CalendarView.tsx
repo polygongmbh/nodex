@@ -33,7 +33,7 @@ import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { buildChildrenMap, sortTasks, type SortContext } from "@/lib/taskSorting";
 import { useTranslation } from "react-i18next";
-import { getAlternateModifierHintKey } from "@/lib/keyboard-platform";
+import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,7 +103,7 @@ export function CalendarView({
 }: CalendarViewProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: Task["status"]): string => {
-    const alternateKey = t(getAlternateModifierHintKey());
+    const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
     return t("hints.statusToggle.todo", { alternateKey });
