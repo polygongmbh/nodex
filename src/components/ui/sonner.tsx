@@ -46,16 +46,16 @@ const Toaster = ({ ...props }: ToasterProps) => {
         closeButton: true,
         classNames: {
           toast:
-            "group toast cursor-pointer group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
+            "group toast cursor-pointer group-[.toaster]:bg-card/95 group-[.toaster]:text-foreground group-[.toaster]:border-border/80 group-[.toaster]:shadow-2xl group-[.toaster]:backdrop-blur-md",
           success:
-            "group-[.toaster]:border-success/60 group-[.toaster]:bg-success/25 group-[.toaster]:text-success-foreground",
+            "group-[.toaster]:border-success/85 group-[.toaster]:bg-success/40 group-[.toaster]:text-success-foreground",
           info:
-            "group-[.toaster]:border-primary/35 group-[.toaster]:bg-primary/10 group-[.toaster]:text-foreground",
+            "group-[.toaster]:border-primary/65 group-[.toaster]:bg-primary/30 group-[.toaster]:text-foreground",
           warning:
-            "group-[.toaster]:border-warning/50 group-[.toaster]:bg-warning/15 group-[.toaster]:text-foreground",
+            "group-[.toaster]:border-warning/70 group-[.toaster]:bg-warning/30 group-[.toaster]:text-foreground",
           error:
-            "group-[.toaster]:border-destructive/50 group-[.toaster]:bg-destructive/10 group-[.toaster]:text-destructive",
-          description: "group-[.toast]:text-muted-foreground",
+            "group-[.toaster]:border-destructive/75 group-[.toaster]:bg-destructive/25 group-[.toaster]:text-foreground",
+          description: "group-[.toast]:text-foreground/90",
           actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
