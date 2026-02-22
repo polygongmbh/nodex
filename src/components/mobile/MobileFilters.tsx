@@ -405,7 +405,7 @@ export function MobileFilters({
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
                     relay.isActive
-                      ? "bg-primary/10 border-primary text-primary"
+                      ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                       : "border-border hover:bg-muted",
                     relay.isActive && !isConnectionActive && "bg-warning/10 border-warning/40 text-foreground"
                   )}
@@ -462,8 +462,8 @@ export function MobileFilters({
                 onClick={() => onChannelToggle(channel.id)}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors border",
-                  channel.filterState === "included" && "bg-success/10 border-success text-success",
-                  channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive",
+                  channel.filterState === "included" && "bg-success/10 border-success text-success motion-filter-pop",
+                  channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive motion-filter-pop-alt",
                   channel.filterState === "neutral" && "border-border hover:bg-muted"
                 )}
               >
@@ -493,7 +493,7 @@ export function MobileFilters({
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
                     person.isSelected
-                      ? "bg-primary/10 border-primary text-primary"
+                      ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                       : "border-border hover:bg-muted"
                   )}
                 >

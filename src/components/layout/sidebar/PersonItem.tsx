@@ -50,7 +50,7 @@ export function PersonItem({
           className={cn(
             "w-7 h-7 transition-colors",
             person.isSelected
-              ? "ring-2 ring-primary/50"
+              ? "ring-2 ring-primary/50 motion-filter-pop"
               : "group-hover:opacity-90"
           )}
           beamTestId={`sidebar-person-beam-${person.id}`}

@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Mobile Manage now uses a dedicated `/manage` route on phone layouts, so reloading preserves the active Manage screen instead of dropping back to task views.
+- Added a playful motion pass across toasts, filters, onboarding focus, composer interactions, autocomplete highlights, sidebar folds, and completion confetti-lite, with reduced-motion safeguards.
 
 ## [1.11.0] - 2026-02-22
 Expanded channel filtering controls with global include match mode and improved collapsed sidebar visibility.

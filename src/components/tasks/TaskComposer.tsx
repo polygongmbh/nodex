@@ -145,6 +145,7 @@ export function TaskComposer({
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSendLaunching, setIsSendLaunching] = useState(false);
   const [explicitTagNames, setExplicitTagNames] = useState<string[]>(() => {
     if (!initialDraft?.explicitTagNames || !Array.isArray(initialDraft.explicitTagNames)) {
       return [];
@@ -171,6 +172,7 @@ export function TaskComposer({
     () => !adaptiveSize || initialContent.trim().length > 0
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const sendLaunchTimeoutRef = useRef<number | null>(null);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const prevSelectedPeoplePubkeysRef = useRef<string[]>([]);
   const autoManagedFilterTagNamesRef = useRef<Set<string>>(new Set());
@@ -182,6 +184,15 @@ export function TaskComposer({
     const escaped = mention.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp(`(^|\\s)${escaped}(?=\\s|$)`, "i").test(text);
   };
+
+  useEffect(() => {
+    return () => {
+      if (sendLaunchTimeoutRef.current !== null) {
+        window.clearTimeout(sendLaunchTimeoutRef.current);
+        sendLaunchTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!adaptiveSize) {
@@ -412,6 +423,14 @@ export function TaskComposer({
     if (!result.ok) {
       return;
     }
+    setIsSendLaunching(true);
+    if (sendLaunchTimeoutRef.current !== null) {
+      window.clearTimeout(sendLaunchTimeoutRef.current);
+    }
+    sendLaunchTimeoutRef.current = window.setTimeout(() => {
+      setIsSendLaunching(false);
+      sendLaunchTimeoutRef.current = null;
+    }, 260);
     setContent("");
     prevIncludedChannelsRef.current = [...includedChannels];
     prevSelectedPeoplePubkeysRef.current = [...selectedPeoplePubkeys];
@@ -834,7 +853,7 @@ export function TaskComposer({
                 }}
                 className={cn(
                   "w-full flex items-center gap-2 px-3 py-2 text-left",
-                  filteredChannels[activeSuggestionIndex]?.id === channel.id ? "bg-muted" : "hover:bg-muted"
+                  filteredChannels[activeSuggestionIndex]?.id === channel.id ? "bg-muted motion-magnet-active" : "hover:bg-muted"
                 )}
               >
                 <Hash className="w-4 h-4 text-primary" />
@@ -868,7 +887,7 @@ export function TaskComposer({
                   }}
                   className={cn(
                     "w-full flex items-center gap-2 px-3 py-2 text-left",
-                    isActive ? "bg-muted" : "hover:bg-muted"
+                    isActive ? "bg-muted motion-magnet-active" : "hover:bg-muted"
                   )}
                   >
                   <UserAvatar
@@ -892,7 +911,7 @@ export function TaskComposer({
       </div>
 
       {showExpandedControls && taskType !== "task" && (mentionChipItems.length > 0 || hashtagChipItems.length > 0) && (
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className={cn("flex flex-wrap items-center gap-1.5", adaptiveSize && "motion-ink-stagger [--stagger-index:0]")}>
           {mentionChipItems.map((mention) => (
             <button
               key={`mention-${mention.identifier}`}
@@ -945,7 +964,7 @@ export function TaskComposer({
 
       {/* Due date for tasks */}
       {showExpandedControls && taskType === "task" && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={cn("flex flex-wrap items-center gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:1]")}>
           <div className="inline-flex min-w-[5.5rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Flag className="h-4 w-4 text-muted-foreground" />
             <select
@@ -1079,7 +1098,7 @@ export function TaskComposer({
 
       {/* Sign in prompt for posting */}
       {showExpandedControls && !user && (
-        <div className="flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded-xl">
+        <div className={cn("flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded-xl", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <Zap className="w-4 h-4 text-primary" />
           <span className="text-sm text-muted-foreground flex-1">
             {t("composer.blocked.signin")}
@@ -1097,7 +1116,7 @@ export function TaskComposer({
 
       {/* Actions */}
       {showExpandedControls && (
-      <div className="flex items-center justify-between">
+      <div className={cn("flex items-center justify-between", adaptiveSize && "motion-ink-reveal motion-ink-stagger [--stagger-index:3]")}>
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
@@ -1198,7 +1217,10 @@ export function TaskComposer({
               disabled={Boolean(submitBlockedReason)}
               aria-label={taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
               title={taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
-              className="px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className={cn(
+                "px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2",
+                isSendLaunching && "motion-send-launch"
+              )}
             >
               {isPublishing && (
                 <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />

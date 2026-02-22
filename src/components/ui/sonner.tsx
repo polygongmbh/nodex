@@ -46,7 +46,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         closeButton: true,
         classNames: {
           toast:
-            "group toast cursor-pointer group-[.toaster]:bg-card group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-2xl group-[.toaster]:ring-1 group-[.toaster]:ring-black/10 dark:group-[.toaster]:ring-white/10",
+            "group toast motion-toast-in cursor-pointer group-[.toaster]:bg-card group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-2xl group-[.toaster]:ring-1 group-[.toaster]:ring-black/10 dark:group-[.toaster]:ring-white/10",
           success:
             "group-[.toaster]:border-success/90 group-[.toaster]:bg-success/55 group-[.toaster]:text-success-foreground",
           info:

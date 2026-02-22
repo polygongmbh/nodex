@@ -125,8 +125,10 @@ export function UnifiedBottomBar({
     return [subMonths(anchor, 1), anchor, addMonths(anchor, 1)];
   });
   const [showSendOptions, setShowSendOptions] = useState(false);
+  const [isSendLaunching, setIsSendLaunching] = useState(false);
   const canOfferComment = currentView === "feed" || currentView === "tree";
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
+  const sendLaunchTimeoutRef = useRef<number | null>(null);
 
   const syncChannelFiltersFromContent = (nextContent: string, previousContent: string) => {
     const endedWithSpace = /\s$/.test(nextContent);
@@ -169,6 +171,15 @@ export function UnifiedBottomBar({
       }
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (sendLaunchTimeoutRef.current !== null) {
+        window.clearTimeout(sendLaunchTimeoutRef.current);
+        sendLaunchTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (prevSearchQueryRef.current === searchQuery) return;
@@ -387,6 +398,14 @@ export function UnifiedBottomBar({
     if (!result.ok) {
       return;
     }
+    setIsSendLaunching(true);
+    if (sendLaunchTimeoutRef.current !== null) {
+      window.clearTimeout(sendLaunchTimeoutRef.current);
+    }
+    sendLaunchTimeoutRef.current = window.setTimeout(() => {
+      setIsSendLaunching(false);
+      sendLaunchTimeoutRef.current = null;
+    }, 260);
     const hashtagOnlyContent = Array.from(
       new Set([
         ...(sharedText.match(/#(\w+)/g) || []).map((tag) => tag.toLowerCase()),
@@ -620,7 +639,7 @@ export function UnifiedBottomBar({
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors",
                       relay.isActive
-                        ? "bg-primary/10 border-primary text-primary"
+                        ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                         : "border-border"
                     )}
                   >
@@ -640,8 +659,8 @@ export function UnifiedBottomBar({
                   onClick={() => onChannelToggle(channel.id)}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors",
-                    channel.filterState === "included" && "bg-success/10 border-success text-success",
-                    channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive",
+                    channel.filterState === "included" && "bg-success/10 border-success text-success motion-filter-pop",
+                    channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive motion-filter-pop-alt",
                     channel.filterState === "neutral" && "border-border"
                   )}
                 >
@@ -665,7 +684,7 @@ export function UnifiedBottomBar({
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors",
                       person.isSelected
-                        ? "bg-primary/10 border-primary text-primary"
+                        ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                         : "border-border"
                     )}
                   >
@@ -980,7 +999,7 @@ export function UnifiedBottomBar({
                         }}
                         className={cn(
                           "w-full flex items-center gap-2 px-3 py-2 text-left",
-                          activeMentionIndex === index ? "bg-muted" : "hover:bg-muted"
+                          activeMentionIndex === index ? "bg-muted motion-magnet-active" : "hover:bg-muted"
                         )}
                       >
                         <UserAvatar
@@ -1024,7 +1043,9 @@ export function UnifiedBottomBar({
                           : t("composer.hints.createFromText")
                   }
                 >
-                  {!isSignedIn ? <Zap className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
+                  <span className={cn(isSendLaunching && "motion-send-launch")}>
+                    {!isSignedIn ? <Zap className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
+                  </span>
                 </button>
 
                 {showSendOptions && canOpenSendOptions && (

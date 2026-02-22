@@ -47,7 +47,7 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
           className={cn(
             "w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:ring-2 hover:ring-primary/50",
             relay.isActive
-              ? "bg-primary/20 text-primary"
+              ? "bg-primary/20 text-primary motion-filter-pop"
               : "bg-muted/50 text-muted-foreground group-hover:text-sidebar-foreground"
           )}
         >

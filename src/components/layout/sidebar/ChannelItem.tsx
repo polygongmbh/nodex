@@ -46,8 +46,8 @@ export function ChannelItem({
         <Hash
           className={cn(
             "w-4 h-4 transition-colors",
-            channel.filterState === "included" && "text-channel-included",
-            channel.filterState === "excluded" && "text-channel-excluded",
+            channel.filterState === "included" && "text-channel-included motion-filter-pop",
+            channel.filterState === "excluded" && "text-channel-excluded motion-filter-pop-alt",
             channel.filterState === "neutral" && "text-channel-neutral group-hover:text-sidebar-foreground"
           )}
         />
