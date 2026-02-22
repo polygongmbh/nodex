@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Increased Sonner toast contrast (default plus success/info/warning/error variants and action buttons) so countdown/undo toasts are easier to read.
 - Clarified shortcut/onboarding copy and behavior so metadata-only autocomplete uses `Alt/Option` only, while `Cmd/Ctrl+Enter` continues to submit.
 
 ## [1.10.3] - 2026-02-22

@@ -46,18 +46,20 @@ const Toaster = ({ ...props }: ToasterProps) => {
         closeButton: true,
         classNames: {
           toast:
-            "group toast cursor-pointer group-[.toaster]:bg-card/95 group-[.toaster]:text-foreground group-[.toaster]:border-border/80 group-[.toaster]:shadow-2xl group-[.toaster]:backdrop-blur-md",
+            "group toast cursor-pointer group-[.toaster]:bg-card group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-2xl group-[.toaster]:ring-1 group-[.toaster]:ring-black/10 dark:group-[.toaster]:ring-white/10",
           success:
-            "group-[.toaster]:border-success/85 group-[.toaster]:bg-success/40 group-[.toaster]:text-success-foreground",
+            "group-[.toaster]:border-success/90 group-[.toaster]:bg-success/55 group-[.toaster]:text-success-foreground",
           info:
-            "group-[.toaster]:border-primary/65 group-[.toaster]:bg-primary/30 group-[.toaster]:text-foreground",
+            "group-[.toaster]:border-primary/80 group-[.toaster]:bg-primary/55 group-[.toaster]:text-primary-foreground",
           warning:
-            "group-[.toaster]:border-warning/70 group-[.toaster]:bg-warning/30 group-[.toaster]:text-foreground",
+            "group-[.toaster]:border-warning/85 group-[.toaster]:bg-warning/55 group-[.toaster]:text-warning-foreground",
           error:
-            "group-[.toaster]:border-destructive/75 group-[.toaster]:bg-destructive/25 group-[.toaster]:text-foreground",
-          description: "group-[.toast]:text-foreground/90",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group-[.toaster]:border-destructive/85 group-[.toaster]:bg-destructive/55 group-[.toaster]:text-destructive-foreground",
+          description: "group-[.toast]:text-current/90",
+          actionButton:
+            "group-[.toast]:bg-foreground group-[.toast]:text-background group-[.toast]:border group-[.toast]:border-foreground/20",
+          cancelButton:
+            "group-[.toast]:bg-background/90 group-[.toast]:text-foreground group-[.toast]:border group-[.toast]:border-foreground/20",
         },
       }}
       {...props}
