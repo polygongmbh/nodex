@@ -75,6 +75,8 @@ interface MobileLayoutProps {
   onInteractionBlocked?: () => void;
   isOnboardingOpen?: boolean;
   activeOnboardingStepId?: string | null;
+  isManageRouteActive?: boolean;
+  onManageRouteChange?: (isActive: boolean) => void;
 }
 
 // Mobile view order for swipe navigation
@@ -127,6 +129,8 @@ export function MobileLayout({
   onInteractionBlocked,
   isOnboardingOpen = false,
   activeOnboardingStepId = null,
+  isManageRouteActive = false,
+  onManageRouteChange = () => {},
 }: MobileLayoutProps) {
   const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
@@ -143,22 +147,34 @@ export function MobileLayout({
   const includedChannels = channels.filter(c => c.filterState === "included");
   const defaultContent = includedChannels.map(c => `#${c.name}`).join(" ");
 
+  const openManageView = useCallback(() => {
+    setShowFilters(true);
+    setMobileView("filters");
+    onManageRouteChange(true);
+  }, [onManageRouteChange]);
+
+  const closeManageView = useCallback((nextView?: ViewType) => {
+    setShowFilters(false);
+    if (nextView) {
+      setMobileView(nextView);
+      onViewChange(nextView);
+    }
+    onManageRouteChange(false);
+  }, [onManageRouteChange, onViewChange]);
+
   const handleMobileViewChange = useCallback((view: MobileViewType) => {
     if (view === "filters") {
-      setShowFilters(true);
-      setMobileView("filters");
+      openManageView();
       return;
     }
 
-    setShowFilters(false);
-    setMobileView(view);
-    onViewChange(view);
-  }, [onViewChange]);
+    closeManageView(view);
+  }, [closeManageView, openManageView]);
 
   // Swipe navigation handlers
   const handleSwipeLeft = useCallback(() => {
     if (showFilters) {
-      setShowFilters(false);
+      closeManageView();
       return;
     }
     const currentIndex = mobileViews.indexOf(mobileView);
@@ -166,7 +182,7 @@ export function MobileLayout({
       const nextView = mobileViews[currentIndex + 1];
       handleMobileViewChange(nextView);
     }
-  }, [mobileView, showFilters, handleMobileViewChange]);
+  }, [mobileView, showFilters, handleMobileViewChange, closeManageView]);
 
   const handleSwipeRight = useCallback(() => {
     const currentIndex = mobileViews.indexOf(mobileView);
@@ -174,9 +190,9 @@ export function MobileLayout({
       const prevView = mobileViews[currentIndex - 1];
       handleMobileViewChange(prevView);
     } else if (currentIndex === 0) {
-      setShowFilters(true);
+      openManageView();
     }
-  }, [mobileView, handleMobileViewChange]);
+  }, [mobileView, handleMobileViewChange, openManageView]);
 
   // Swipe animation state
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
@@ -274,6 +290,15 @@ export function MobileLayout({
   }, [currentView, showFilters]);
 
   useEffect(() => {
+    if (isManageRouteActive) {
+      setShowFilters(true);
+      setMobileView("filters");
+      return;
+    }
+    setShowFilters(false);
+  }, [isManageRouteActive]);
+
+  useEffect(() => {
     if (!isOnboardingOpen || !activeOnboardingStepId) {
       lastHandledGuideStepIdRef.current = null;
       return;
@@ -284,28 +309,24 @@ export function MobileLayout({
     lastHandledGuideStepIdRef.current = activeOnboardingStepId;
 
     if (activeOnboardingStepId === "mobile-filters-properties") {
-      setShowFilters(true);
-      setMobileView("filters");
+      openManageView();
       setProfileEditorOpenSignal((previous) => previous + 1);
       return;
     }
 
     if (activeOnboardingStepId === "mobile-compose-combobox") {
-      setShowFilters(false);
-      setMobileView("feed");
-      onViewChange("feed");
+      closeManageView("feed");
     }
-  }, [activeOnboardingStepId, isOnboardingOpen, onViewChange]);
+  }, [activeOnboardingStepId, isOnboardingOpen, closeManageView, openManageView]);
 
   useEffect(() => {
     const justSignedIn = !previousSignedInRef.current && isSignedIn;
     if (justSignedIn && (needsProfileSetup || !hasCachedCurrentUserProfileMetadata)) {
-      setShowFilters(true);
-      setMobileView("filters");
+      openManageView();
       setProfileEditorOpenSignal((previous) => previous + 1);
     }
     previousSignedInRef.current = isSignedIn;
-  }, [isSignedIn, needsProfileSetup, hasCachedCurrentUserProfileMetadata]);
+  }, [isSignedIn, needsProfileSetup, hasCachedCurrentUserProfileMetadata, openManageView]);
 
   const renderView = () => {
     const effectiveViewProps = {

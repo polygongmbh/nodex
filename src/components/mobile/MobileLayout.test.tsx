@@ -211,6 +211,83 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
   });
 
+  it("syncs manage route state when opening manage view", () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = false;
+    const onManageRouteChange = vi.fn();
+
+    render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn={true}
+        currentView="tree"
+        onViewChange={() => {}}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+        onManageRouteChange={onManageRouteChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
+    expect(onManageRouteChange).toHaveBeenCalledWith(true);
+  });
+
+  it("restores manage panel from route state", () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = false;
+
+    render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn={true}
+        currentView="tree"
+        onViewChange={() => {}}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+        isManageRouteActive
+      />
+    );
+
+    expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
+    expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
+  });
+
   it("falls back to showing all tasks when mobile quick filter has no matches", () => {
     ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
     ndkMock.needsProfileSetup = false;

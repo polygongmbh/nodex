@@ -123,6 +123,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
 const validViews: ViewType[] = ["tree", "feed", "kanban", "list", "calendar"];
+const MOBILE_MANAGE_ROUTE = "manage";
 
 // Default Nostr relays - these are managed by NDKProvider in App.tsx
 
@@ -136,6 +137,7 @@ const Index = () => {
   const { t } = useTranslation();
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
+  const isManageRouteActive = urlView === MOBILE_MANAGE_ROUTE;
 
   // Derive current view from URL
   const currentView: ViewType = validViews.includes(urlView as ViewType) 
@@ -565,6 +567,18 @@ const Index = () => {
       navigate(`/${newView}`);
     }
   }, [navigate, focusedTaskId]);
+
+  const setManageRouteActive = useCallback((isActive: boolean) => {
+    if (isActive) {
+      navigate(`/${MOBILE_MANAGE_ROUTE}`);
+      return;
+    }
+    if (focusedTaskId) {
+      navigate(`/${currentView}/${focusedTaskId}`);
+      return;
+    }
+    navigate(`/${currentView}`);
+  }, [currentView, focusedTaskId, navigate]);
 
   const handleDesktopSwipeLeft = useCallback(() => {
     const currentIndex = validViews.indexOf(currentView);
@@ -1707,6 +1721,8 @@ const Index = () => {
           onInteractionBlocked={handleBlockedInteractionAttempt}
           isOnboardingOpen={isOnboardingOpen && !isAuthModalOpen}
           activeOnboardingStepId={activeOnboardingStepId}
+          isManageRouteActive={isManageRouteActive}
+          onManageRouteChange={setManageRouteActive}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingGuide
