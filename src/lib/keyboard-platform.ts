@@ -18,5 +18,6 @@ export function getSubmitOppositeKindShortcutLabel(): string {
 }
 
 export function getMetadataOnlyShortcutLabel(): string {
-  return "Any modifier + Enter / Click";
+  const alternateModifier = getAlternateModifierLabel();
+  return `${alternateModifier} + Enter / Click`;
 }

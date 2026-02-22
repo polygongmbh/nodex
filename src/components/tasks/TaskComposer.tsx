@@ -536,7 +536,7 @@ export function TaskComposer({
         }
         return;
       }
-      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
+      if (e.key === "Enter" && (e.altKey || e.getModifierState("Alt"))) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
         const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
@@ -580,7 +580,7 @@ export function TaskComposer({
         }
         return;
       }
-      if (e.key === "Enter" && (e.altKey || e.metaKey || e.ctrlKey || e.shiftKey)) {
+      if (e.key === "Enter" && (e.altKey || e.getModifierState("Alt"))) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
         if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(content)) {
@@ -775,15 +775,6 @@ export function TaskComposer({
   };
 
   const showExpandedControls = !adaptiveSize || isExpanded || content.trim().length > 0;
-  const hasModifierKey = (event: Pick<React.KeyboardEvent | React.MouseEvent, "altKey" | "ctrlKey" | "metaKey" | "shiftKey" | "getModifierState">): boolean =>
-    event.altKey ||
-    event.ctrlKey ||
-    event.metaKey ||
-    event.shiftKey ||
-    event.getModifierState("Alt") ||
-    event.getModifierState("Control") ||
-    event.getModifierState("Meta") ||
-    event.getModifierState("Shift");
 
   useEffect(() => {
     if (showExpandedControls) return;
@@ -833,7 +824,7 @@ export function TaskComposer({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.preventDefault();
-                  if (hasModifierKey(e)) {
+                  if (e.altKey || e.getModifierState("Alt")) {
                     addHashtagTagOnly(channel.name);
                     return;
                   }
@@ -867,7 +858,7 @@ export function TaskComposer({
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={(e) => {
                         e.preventDefault();
-                        if (hasModifierKey(e)) {
+                        if (e.altKey || e.getModifierState("Alt")) {
                           addMentionTagOnly(person);
                           return;
                         }

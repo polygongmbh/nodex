@@ -587,7 +587,7 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(screen.queryByText("@alice")).not.toBeInTheDocument();
   });
 
-  it("adds mention tag via modifier+Enter without inserting mention text", async () => {
+  it("adds mention tag via Alt+Enter without inserting mention text", async () => {
     const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
     const onSearchChange = vi.fn();
     render(
@@ -630,7 +630,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
-  it("uses modifier+Click on mention autocomplete option to add mention tag-only", async () => {
+  it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
     const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
     const onSearchChange = vi.fn();
     render(
@@ -655,7 +655,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const mentionOption = screen.getByText("@alice").closest("button");
     expect(mentionOption).toBeTruthy();
-    fireEvent.click(mentionOption!, { shiftKey: true });
+    fireEvent.click(mentionOption!, { altKey: true });
 
     await waitFor(() => {
       expect(field.value).toBe("Ship #general ");
@@ -674,6 +674,37 @@ describe("UnifiedBottomBar auth gating", () => {
       ["e".repeat(64)],
       undefined
     );
+  });
+
+  it("submits on Cmd/Ctrl+Enter even when mention autocomplete is open", async () => {
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    const draft = "Ship #general @al";
+    fireEvent.change(field, { target: { value: draft, selectionStart: draft.length } });
+
+    fireEvent.keyDown(field, { key: "Enter", metaKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalled();
+    });
+    expect(onSubmit.mock.calls[0][0]).toContain("@al");
   });
 
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {

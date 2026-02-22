@@ -83,15 +83,6 @@ export function UnifiedBottomBar({
   composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
   const { t } = useTranslation();
-  const hasModifierKey = (event: Pick<React.KeyboardEvent | React.MouseEvent, "altKey" | "ctrlKey" | "metaKey" | "shiftKey" | "getModifierState">): boolean =>
-    event.altKey ||
-    event.ctrlKey ||
-    event.metaKey ||
-    event.shiftKey ||
-    event.getModifierState("Alt") ||
-    event.getModifierState("Control") ||
-    event.getModifierState("Meta") ||
-    event.getModifierState("Shift");
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;
@@ -918,8 +909,15 @@ export function UnifiedBottomBar({
                       setActiveMentionIndex((prev) => (prev - 1 + filteredPeople.length) % filteredPeople.length);
                       return;
                     }
-                    if (e.key === "Enter" || e.key === "Tab") {
-                      if (e.key === "Enter" && hasModifierKey(e)) {
+                    if (e.key === "Tab" || (e.key === "Enter" && !e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey)) {
+                      e.preventDefault();
+                      const selected = filteredPeople[Math.max(activeMentionIndex, 0)] || filteredPeople[0];
+                      if (selected) {
+                        insertMention(getPreferredMentionIdentifier(selected));
+                      }
+                      return;
+                    }
+                    if (e.key === "Enter" && (e.altKey || e.getModifierState("Alt"))) {
                         const textBeforeCursor = sharedText.slice(0, cursorPositionRef.current);
                         if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(sharedText)) {
                           e.preventDefault();
@@ -929,13 +927,6 @@ export function UnifiedBottomBar({
                           }
                           return;
                         }
-                      }
-                      e.preventDefault();
-                      const selected = filteredPeople[Math.max(activeMentionIndex, 0)] || filteredPeople[0];
-                      if (selected) {
-                        insertMention(getPreferredMentionIdentifier(selected));
-                      }
-                      return;
                     }
                     if (e.key === "Escape") {
                       e.preventDefault();
@@ -974,7 +965,7 @@ export function UnifiedBottomBar({
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={(e) => {
                           e.preventDefault();
-                          if (hasModifierKey(e)) {
+                          if (e.altKey || e.getModifierState("Alt")) {
                             addMentionTagOnly(person);
                             return;
                           }

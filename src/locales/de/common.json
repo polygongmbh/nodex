@@ -230,7 +230,7 @@
       "submitCurrentKind": "Als aktuellen Typ senden",
       "submitOppositeKind": "Als anderen Typ senden (wenn kein Autocomplete offen ist)",
       "insertHighlightedSuggestion": "Bei offenem Autocomplete: markierten Vorschlag einfügen",
-      "addMetadataOnly": "Bei offenem @/#-Autocomplete: markierten Tag/Mention nur als Veröffentlichungs-Metadaten hinzufügen (beliebige Modifikatortaste + Enter oder Klick, ohne Tokentext)"
+      "addMetadataOnly": "Bei offenem @/#-Autocomplete: markierten Tag/Mention nur als Veröffentlichungs-Metadaten hinzufügen (ohne Tokentext)"
     }
   },
   "auth": {
@@ -375,7 +375,7 @@
       "composeInput": {
         "title": "Tags und Mentions",
         "description": "Nutze #tags zur Organisation und @mentions für Personenreferenzen im Eingabefeld. Eingeschlossene Kanäle werden automatisch als Hashtags eingefügt. Du kannst einen Datumstyp (Fällig, Geplant, Start, Ende oder Meilenstein) setzen, damit Aufgaben im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.",
-        "action": "Power-User-Hinweis: {{alternateModifier}}+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete fügt eine beliebige Modifikatortaste + Enter oder Klick den gewählten Tag/Mention nur als Metadaten hinzu, ohne Tokentext einzufügen."
+        "action": "Power-User-Hinweis: {{alternateModifier}}+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete fügt {{alternateModifier}}+Enter oder {{alternateModifier}}+Klick den gewählten Tag/Mention nur als Metadaten hinzu, ohne Tokentext einzufügen."
       },
       "mobileNavigationNav": {
         "title": "Mobile Ansichten",

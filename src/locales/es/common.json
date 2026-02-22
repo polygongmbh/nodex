@@ -230,7 +230,7 @@
       "submitCurrentKind": "Enviar como tipo actual",
       "submitOppositeKind": "Enviar como tipo opuesto (cuando no hay autocompletado abierto)",
       "insertHighlightedSuggestion": "Con autocompletado abierto: insertar sugerencia resaltada",
-      "addMetadataOnly": "Con autocompletado @/# abierto: añadir etiqueta/mención resaltada solo como metadatos de publicación (cualquier tecla modificadora + Enter o clic, sin texto del token)"
+      "addMetadataOnly": "Con autocompletado @/# abierto: añadir etiqueta/mención resaltada solo como metadatos de publicación (sin texto del token)"
     }
   },
   "auth": {
@@ -375,7 +375,7 @@
       "composeInput": {
         "title": "Etiquetas y menciones",
         "description": "Usa #tags para organizar elementos y @menciones para referenciar personas en el cuadro de redacción. Los canales incluidos se precompletan automáticamente como hashtags. Puedes establecer un tipo de fecha (Vencimiento, Programada, Inicio, Fin o Hito) para que las tareas aparezcan en Calendario; las fechas futuras de Inicio se muestran como no realizables todavía.",
-        "action": "Consejo avanzado: {{alternateModifier}}+Enter envía como el otro tipo cuando no hay autocompletado abierto; con autocompletado abierto, usa cualquier tecla modificadora + Enter o clic para añadir la etiqueta/mención seleccionada como metadatos sin insertar texto del token."
+        "action": "Consejo avanzado: {{alternateModifier}}+Enter envía como el otro tipo cuando no hay autocompletado abierto; con autocompletado abierto, usa {{alternateModifier}}+Enter o {{alternateModifier}}+clic para añadir la etiqueta/mención seleccionada como metadatos sin insertar texto del token."
       },
       "mobileNavigationNav": {
         "title": "Vistas móviles",

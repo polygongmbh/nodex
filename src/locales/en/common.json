@@ -230,7 +230,7 @@
       "submitCurrentKind": "Submit as current kind",
       "submitOppositeKind": "Submit as opposite kind (when no autocomplete is open)",
       "insertHighlightedSuggestion": "With autocomplete open: insert highlighted suggestion",
-      "addMetadataOnly": "With @/# autocomplete open: add highlighted tag/mention as publish metadata only (any modifier key + Enter or click, no token text)"
+      "addMetadataOnly": "With @/# autocomplete open: add highlighted tag/mention as publish metadata only (no token text)"
     }
   },
   "auth": {
@@ -375,7 +375,7 @@
       "composeInput": {
         "title": "Tags and mentions",
         "description": "Use #tags to organize items and @mentions to reference people in the compose box. Included channels auto-prepopulate as hashtags. You can set a date type (Due, Scheduled, Start, End, or Milestone) so tasks appear in Calendar view; future Start dates are shown as not yet doable.",
-        "action": "Power-user hint: {{alternateModifier}}+Enter submits as the other kind when no autocomplete is open; with autocomplete open, use any modifier key + Enter or click to add the selected tag/mention as metadata without inserting token text."
+        "action": "Power-user hint: {{alternateModifier}}+Enter submits as the other kind when no autocomplete is open; with autocomplete open, use {{alternateModifier}}+Enter or {{alternateModifier}}+click to add the selected tag/mention as metadata without inserting token text."
       },
       "mobileNavigationNav": {
         "title": "Mobile views",

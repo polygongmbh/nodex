@@ -159,7 +159,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(textarea.value).toBe("#accounting ");
   });
 
-  it("adds hashtag tags via modifier+Enter without inserting hashtag text", async () => {
+  it("adds hashtag tags via Alt+Enter without inserting hashtag text", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
@@ -179,7 +179,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     textarea.focus();
     textarea.setSelectionRange(draft.length, draft.length);
 
-    fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
+    fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
     await waitFor(() => {
       expect(textarea.value).toBe("Ship ");
     });
@@ -243,7 +243,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
-  it("uses modifier+Click on hashtag autocomplete option to add tag-only", async () => {
+  it("uses Alt+Click on hashtag autocomplete option to add tag-only", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
@@ -265,7 +265,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     const hashtagOption = screen.getByText("backend").closest("button");
     expect(hashtagOption).toBeTruthy();
-    fireEvent.click(hashtagOption!, { ctrlKey: true });
+    fireEvent.click(hashtagOption!, { altKey: true });
 
     await waitFor(() => {
       expect(textarea.value).toBe("Ship ");
@@ -464,7 +464,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(textarea.value).toBe("Need input from @alice@example.com ");
   });
 
-  it("adds mention pubkey tags via modifier+Enter without inserting mention text", async () => {
+  it("adds mention pubkey tags via Alt+Enter without inserting mention text", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
@@ -484,7 +484,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     textarea.focus();
     textarea.setSelectionRange(draft.length, draft.length);
 
-    fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
+    fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
     await waitFor(() => {
       expect(textarea.value).toBe("Ship #backend with ");
     });
@@ -506,7 +506,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
-  it("uses modifier+Click on mention autocomplete option to add mention tag-only", async () => {
+  it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
       <TaskComposer
@@ -528,7 +528,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     const mentionOption = screen.getByText("@alice").closest("button");
     expect(mentionOption).toBeTruthy();
-    fireEvent.click(mentionOption!, { metaKey: true });
+    fireEvent.click(mentionOption!, { altKey: true });
 
     await waitFor(() => {
       expect(textarea.value).toBe("Ship #backend with ");
@@ -549,6 +549,32 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined
       );
     });
+  });
+
+  it("submits on Cmd/Ctrl+Enter even when mention autocomplete is open", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const draft = "Ship #backend with @al";
+    fireEvent.change(textarea, {
+      target: { value: draft, selectionStart: draft.length },
+    });
+
+    fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalled();
+    });
+    expect(onSubmit.mock.calls[0][0]).toContain("@al");
   });
 
   it("removes metadata-only hashtag chip when clicked", async () => {
@@ -599,7 +625,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
     });
-    fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
+    fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
 
     await waitFor(() => {
       expect(textarea.value).toBe("Ship #backend with ");
