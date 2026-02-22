@@ -284,6 +284,7 @@ export function Sidebar({
           title={t("sidebar.sections.feeds")}
           icon={Radio}
           isExpanded={expandedSections.feeds}
+          animationMode="fullCollapse"
           onToggle={() => toggleSection("feeds")}
           onIconClick={onToggleAllRelays}
           hint={t("sidebar.hints.relays")}

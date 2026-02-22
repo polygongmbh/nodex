@@ -1,7 +1,9 @@
-import type { KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { ChevronDown, ChevronRight, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+
+type SidebarSectionAnimationMode = "previewCollapse" | "fullCollapse";
 
 export interface SidebarSectionProps {
   title: string;
@@ -12,6 +14,7 @@ export interface SidebarSectionProps {
   hint?: string;
   action?: React.ReactNode;
   collapsedMaxHeightClass?: string;
+  animationMode?: SidebarSectionAnimationMode;
   children: React.ReactNode;
 }
 
@@ -24,9 +27,12 @@ export function SidebarSection({
   hint,
   action,
   collapsedMaxHeightClass = "max-h-0",
+  animationMode = "previewCollapse",
   children,
 }: SidebarSectionProps) {
   const { t } = useTranslation();
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [contentHeight, setContentHeight] = useState(0);
   const toggleLabel = `${isExpanded ? t("tasks.actions.collapse") : t("tasks.actions.expandAll")} ${title}`;
 
   const handleHeaderKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -35,6 +41,23 @@ export function SidebarSection({
       onToggle();
     }
   };
+
+  useEffect(() => {
+    if (animationMode !== "fullCollapse") return;
+    const content = contentRef.current;
+    if (!content) return;
+
+    const measureHeight = () => {
+      setContentHeight(content.scrollHeight);
+    };
+
+    measureHeight();
+
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => measureHeight());
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [animationMode, children, isExpanded]);
 
   return (
     <div className="mb-3">
@@ -86,13 +109,23 @@ export function SidebarSection({
       </div>
       <div
         className={cn(
-          "origin-top overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-out",
-          isExpanded
-            ? "max-h-[2000px] opacity-100 translate-y-0 scale-y-100 motion-sidebar-fold-open"
-            : `${collapsedMaxHeightClass} opacity-100 -translate-y-1 scale-y-[0.98] motion-sidebar-fold-close`
+          animationMode === "fullCollapse"
+            ? cn(
+                "origin-top overflow-hidden will-change-[height] transition-[height,opacity,transform] duration-300 ease-out",
+                isExpanded
+                  ? "opacity-100 translate-y-0 motion-sidebar-fold-open"
+                  : "opacity-100 -translate-y-0.5 motion-sidebar-fold-close"
+              )
+            : cn(
+                "origin-top overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-out",
+                isExpanded
+                  ? "max-h-[2000px] opacity-100 translate-y-0 scale-y-100 motion-sidebar-fold-open"
+                  : `${collapsedMaxHeightClass} opacity-100 -translate-y-1 scale-y-[0.98] motion-sidebar-fold-close`
+              )
         )}
+        style={animationMode === "fullCollapse" ? { height: isExpanded ? `${contentHeight}px` : "0px" } : undefined}
       >
-        <div className="py-0">
+        <div ref={contentRef} className="py-0">
           {children}
         </div>
       </div>

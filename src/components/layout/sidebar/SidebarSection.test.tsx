@@ -48,4 +48,36 @@ describe("SidebarSection", () => {
     expect(onActionClick).toHaveBeenCalledTimes(1);
     expect(onToggle).not.toHaveBeenCalled();
   });
+
+  it("uses measured height animation for full-collapse mode", () => {
+    const originalScrollHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollHeight");
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get: () => 144,
+    });
+
+    try {
+      render(
+        <SidebarSection
+          title="Feeds"
+          icon={Hash}
+          isExpanded
+          animationMode="fullCollapse"
+          onToggle={vi.fn()}
+        >
+          <div>Relay Content</div>
+        </SidebarSection>
+      );
+
+      const outerContainer = screen.getByText("Relay Content").parentElement?.parentElement as HTMLElement;
+      expect(outerContainer.style.height).toBe("144px");
+    } finally {
+      if (originalScrollHeight) {
+        Object.defineProperty(HTMLElement.prototype, "scrollHeight", originalScrollHeight);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        delete (HTMLElement.prototype as { scrollHeight?: number }).scrollHeight;
+      }
+    }
+  });
 });
