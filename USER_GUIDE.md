@@ -30,6 +30,9 @@
   - `neutral` -> `included` -> `excluded` -> `neutral`
 - Click a channel name to show only that channel (`included`) and reset other channels to `neutral`.
 - Click the same channel name again while it is the only included channel to clear that exclusive channel filter.
+- Use the `AND/OR` toggle in the Channels header to control how included channels match:
+  - `AND`: items must contain every included channel.
+  - `OR`: items must contain at least one included channel.
 - Click the Channels section header icon (next to the section title) to toggle all channels:
   - if all are neutral -> set all to included
   - otherwise -> reset all to neutral
@@ -40,9 +43,9 @@
   - all other channels -> `neutral`
 
 ### Filter logic
-- Included channels use AND logic:
-  - an item must contain all included channels to be visible.
+- Included channels respect the Channels match mode toggle (`AND` or `OR`).
 - Excluded channels hide items containing any excluded channel.
+- When Channels/People are collapsed in the desktop sidebar, selected filters stay visible alongside a compact preview of recent top entries.
 
 ## People Filtering
 - Desktop:

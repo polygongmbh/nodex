@@ -5,6 +5,9 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.11.0] - 2026-02-22
+Expanded channel filtering controls with global include match mode and improved collapsed sidebar visibility.
 - Added a global Channels include mode toggle (`AND`/`OR`) in desktop and mobile filters; excluded channels still always hide matching tasks.
 - Collapsed Channels and People sidebar sections now keep selected filters visible and show a small preview of top entries.
 
