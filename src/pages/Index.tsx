@@ -1870,7 +1870,6 @@ const Index = () => {
     onUpdatePriority: handlePriorityChange,
     isInteractionBlocked,
     onInteractionBlocked: handleBlockedInteractionAttempt,
-    savedFilters: savedFilterController,
   };
 
   const renderView = () => {
@@ -1930,7 +1929,6 @@ const Index = () => {
           isPendingPublishTask={isPendingPublishTask}
           composeRestoreRequest={composeRestoreRequest}
           mentionRequest={mentionRequest}
-          savedFilters={savedFilterController}
           failedPublishDrafts={failedPublishDrafts}
           onRetryFailedPublish={handleRetryFailedPublish}
           onDismissFailedPublish={handleDismissFailedPublish}
@@ -2001,6 +1999,7 @@ const Index = () => {
         onFocusTasks={handleFocusTasks}
         onShortcutsClick={shortcutsHelp.open}
         onGuideClick={handleOpenGuide}
+        savedFilters={savedFilterController}
       />
       <div className="min-w-0 overflow-hidden flex flex-col" {...desktopSwipeHandlers}>
         <FailedPublishQueueBanner

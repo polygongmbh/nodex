@@ -12,7 +12,6 @@ import {
   TaskDateType,
   TaskStatus,
   ComposeRestoreRequest,
-  SavedFilterController,
 } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -67,7 +66,6 @@ interface KanbanViewProps {
   composeRestoreRequest?: ComposeRestoreRequest | null;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
-  savedFilters?: SavedFilterController;
 }
 
 const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] => [
@@ -101,7 +99,6 @@ export function KanbanView({
   composeRestoreRequest = null,
   isInteractionBlocked = false,
   onInteractionBlocked,
-  savedFilters,
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -438,7 +435,6 @@ export function KanbanView({
                       compact
                       allowComment={false}
                       composeRestoreRequest={composeRestoreRequest}
-                      savedFilters={savedFilters}
                     />
                   </div>
                 )}

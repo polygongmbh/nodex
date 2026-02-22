@@ -10,7 +10,6 @@ import {
   TaskCreateResult,
   TaskDateType,
   ComposeRestoreRequest,
-  SavedFilterController,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -80,7 +79,6 @@ interface ListViewProps {
   composeRestoreRequest?: ComposeRestoreRequest | null;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
-  savedFilters?: SavedFilterController;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -159,7 +157,6 @@ export function ListView({
   composeGuideActivationSignal,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
-  savedFilters,
 }: ListViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -605,7 +602,6 @@ export function ListView({
         forceExpanded={forceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         composeRestoreRequest={composeRestoreRequest}
-        savedFilters={savedFilters}
         className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
         allowComment={false}

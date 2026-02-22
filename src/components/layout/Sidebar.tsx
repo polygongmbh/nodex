@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
-import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
+import { Relay, Channel, ChannelMatchMode, Person, SavedFilterController } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
+import { SavedFilterPresetRow } from "@/components/tasks/SavedFilterPresetRow";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { RelayManagement } from "@/components/relay/RelayManagement";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
@@ -72,6 +73,7 @@ interface SidebarProps {
   onFocusTasks?: () => void;
   onShortcutsClick?: () => void;
   onGuideClick?: () => void;
+  savedFilters?: SavedFilterController;
 }
 
 export function Sidebar({
@@ -96,6 +98,7 @@ export function Sidebar({
   onFocusTasks,
   onShortcutsClick,
   onGuideClick,
+  savedFilters,
 }: SidebarProps) {
   const { t } = useTranslation();
   const COLLAPSED_PREVIEW_LIMIT = 3;
@@ -270,6 +273,11 @@ export function Sidebar({
     >
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto scrollbar-thin py-1.5 pb-3">
+        {savedFilters && (
+          <div className="px-2 sm:px-2.5 lg:px-3 pb-2">
+            <SavedFilterPresetRow savedFilters={savedFilters} />
+          </div>
+        )}
         {/* Feeds/Relays */}
         <div data-onboarding="relays-section">
         <SidebarSection

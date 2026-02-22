@@ -10,7 +10,6 @@ import {
   TaskCreateResult,
   TaskDateType,
   ComposeRestoreRequest,
-  SavedFilterController,
 } from "@/types";
 import {
   format,
@@ -86,7 +85,6 @@ interface CalendarViewProps {
   onHashtagClick?: (tag: string) => void;
   onAuthorClick?: (author: Person) => void;
   composeRestoreRequest?: ComposeRestoreRequest | null;
-  savedFilters?: SavedFilterController;
 }
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
@@ -113,7 +111,6 @@ export function CalendarView({
   onHashtagClick,
   onAuthorClick,
   composeRestoreRequest = null,
-  savedFilters,
 }: CalendarViewProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: Task["status"]): string => {
@@ -875,7 +872,6 @@ export function CalendarView({
                     allowComment={false}
                     defaultDueDate={selectedDate}
                     composeRestoreRequest={composeRestoreRequest}
-                    savedFilters={savedFilters}
                   />
                 </div>
               )}

@@ -8,7 +8,6 @@ import {
   TaskCreateResult,
   TaskDateType,
   ComposeRestoreRequest,
-  SavedFilterController,
 } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -64,7 +63,6 @@ interface UnifiedBottomBarProps {
   onSignInClick: () => void;
   forceComposeMode?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
-  savedFilters?: SavedFilterController;
 }
 
 type SelectorType = "relay" | "channel" | "person" | "date" | null;
@@ -97,10 +95,8 @@ export function UnifiedBottomBar({
   isSignedIn,
   onSignInClick,
   composeRestoreRequest = null,
-  savedFilters,
 }: UnifiedBottomBarProps) {
   const { t } = useTranslation();
-  void savedFilters;
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;

@@ -9,7 +9,6 @@ import {
   TaskDateType,
   TaskCreateResult,
   ComposeRestoreRequest,
-  SavedFilterController,
 } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -17,7 +16,6 @@ import { format } from "date-fns";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { useTranslation } from "react-i18next";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { SavedFilterPresetRow } from "./SavedFilterPresetRow";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
@@ -67,7 +65,6 @@ interface TaskComposerProps {
   } | null;
   allowComment?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
-  savedFilters?: SavedFilterController;
 }
 
 interface ComposeDraftState {
@@ -113,7 +110,6 @@ export function TaskComposer({
   mentionRequest = null,
   allowComment = true,
   composeRestoreRequest = null,
-  savedFilters,
 }: TaskComposerProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -972,13 +968,6 @@ export function TaskComposer({
             </button>
           ))}
         </div>
-      )}
-
-      {showExpandedControls && (
-        <SavedFilterPresetRow
-          savedFilters={savedFilters}
-          className={cn(adaptiveSize && "motion-ink-stagger [--stagger-index:1]")}
-        />
       )}
 
       {/* Due date for tasks */}

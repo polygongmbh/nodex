@@ -6,7 +6,6 @@ import type {
   TaskCreateResult,
   TaskDateType,
   ComposeRestoreRequest,
-  SavedFilterController,
 } from "@/types";
 
 interface SharedViewComposerProps {
@@ -41,7 +40,6 @@ interface SharedViewComposerProps {
   className?: string;
   allowComment?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
-  savedFilters?: SavedFilterController;
 }
 
 export function SharedViewComposer({
@@ -63,7 +61,6 @@ export function SharedViewComposer({
   className = "relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0",
   allowComment = true,
   composeRestoreRequest = null,
-  savedFilters,
 }: SharedViewComposerProps) {
   if (!visible) return null;
 
@@ -87,7 +84,6 @@ export function SharedViewComposer({
         defaultContent={defaultContent}
         allowComment={allowComment}
         composeRestoreRequest={composeRestoreRequest}
-        savedFilters={savedFilters}
       />
     </div>
   );
