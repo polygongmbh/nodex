@@ -5,17 +5,19 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Sidebar Channels and People headers now share the same foldout behavior: full-row click to expand/collapse plus matching "Click to filter" hover hint text.
-- Fixed relay connection retries to use progressively longer Fibonacci backoff intervals, reducing repeated reconnect spam during relay outages.
-- Fixed `NDKProvider` relay initialization to avoid recreating relay connections on rerenders, preventing duplicate websocket churn and mobile UI stalls.
-- Improved success toast contrast by reducing transparency of green toast backgrounds.
-- Fixed mobile manual guide starts to keep `Skip` and `Next` available immediately, even when opening directly into all-steps mode.
-- Updated mobile onboarding automation so step 5 opens the Manage profile editor and step 7 switches back to Feed.
-- Improved onboarding target highlighting to wait for delayed mobile UI transitions before applying spotlight/arrow positioning.
-- Autocomplete selections now support `Alt/Option+Click` with the same metadata-only behavior as `Alt/Option+Enter`.
-- Fixed `Alt/Option+Click` handling to apply at click time across composer dropdowns, preventing plain text insertion in browsers where modifier state is unreliable on `mousedown`.
-- Sidebar channel/person label exclusive clicks now toggle off when that item is already the only active filter.
-- Increased toast opacity/contrast (base surface and success/info/warning/error variants) for better visibility.
+
+## [1.10.3] - 2026-02-22
+### Changed
+- Sidebar Channels and People headers now share the same foldout behavior: full-row click to expand/collapse with matching "Click to filter" hover hints.
+- Toast surfaces now use higher opacity (including success/info/warning/error variants) for better readability.
+- Mobile onboarding automation now opens Manage profile setup at step 5 and returns to Feed at step 7, with spotlight targeting delayed until UI transitions settle.
+- Mobile manual guide starts now keep `Skip` and `Next` controls available immediately, including all-steps mode.
+- Autocomplete metadata-only selection now supports `Alt/Option+Click` in addition to `Alt/Option+Enter`.
+
+### Fixed
+- Sidebar exclusive channel/person label clicks now toggle off when that filter is already the only active selection.
+- Composer autocomplete `Alt/Option+Click` handling now resolves on click to avoid token text insertion on browsers that do not preserve modifier state during `mousedown`.
+- Relay reconnect retries now use Fibonacci backoff and `NDKProvider` relay initialization no longer recreates relay connections on rerenders, reducing websocket churn.
 
 ## [1.10.2] - 2026-02-20
 - Removed recurring development warning noise across tests/build (invalid test worker Node flags, missing relay dialog description warning, and known third-party build warning noise) while keeping existing behavior unchanged.

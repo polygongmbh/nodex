@@ -234,7 +234,7 @@
       "submitCurrentKind": "Als aktuellen Typ senden",
       "submitOppositeKind": "Als anderen Typ senden (wenn kein Autocomplete offen ist)",
       "insertHighlightedSuggestion": "Bei offenem Autocomplete: markierten Vorschlag einfügen",
-      "addMetadataOnly": "Bei offenem @/#-Autocomplete: markierten Tag/Mention nur als Veröffentlichungs-Metadaten hinzufügen (ohne Tokentext)"
+      "addMetadataOnly": "Bei offenem @/#-Autocomplete: markierten Tag/Mention nur als Veröffentlichungs-Metadaten hinzufügen (Option/Alt+Klick oder Option/Alt/Cmd/Ctrl/Umschalt+Enter, ohne Tokentext)"
     }
   },
   "auth": {
@@ -356,11 +356,11 @@
       },
       "filtersChannels": {
         "title": "Kanalfilter",
-        "description": "In *Kanäle* zeigt ein Klick auf den Kanalnamen nur Beiträge mit diesem Kanal. Klicke auf das #-Icon, um neutral -> einschließen -> ausschließen zu wechseln. Klicke auf das Hashtag-Icon links von *Kanäle*, um Kanalfilter zurückzusetzen."
+        "description": "In *Kanäle* zeigt ein Klick auf den Kanalnamen nur Beiträge mit diesem Kanal (erneut klicken beendet den Exklusivmodus). Klicke auf das #-Icon, um neutral -> einschließen -> ausschließen zu wechseln. Klicke auf das Hashtag-Icon links von *Kanäle*, um Kanalfilter zurückzusetzen."
       },
       "filtersPeople": {
         "title": "Personenfilter",
-        "description": "In *Personen* zeigt ein Klick auf einen Namen nur Beiträge dieser Person. Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen."
+        "description": "In *Personen* zeigt ein Klick auf einen Namen nur Beiträge dieser Person (erneut klicken beendet den Exklusivmodus). Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen."
       },
       "filtersSearch": {
         "title": "Suchleiste",
@@ -379,7 +379,7 @@
       "composeInput": {
         "title": "Tags und Mentions",
         "description": "Nutze #tags zur Organisation und @mentions für Personenreferenzen im Eingabefeld. Eingeschlossene Kanäle werden automatisch als Hashtags eingefügt. Du kannst einen Datumstyp (Fällig, Geplant, Start, Ende oder Meilenstein) setzen, damit Aufgaben im Kalender erscheinen; zukünftige Startdaten gelten als noch nicht machbar.",
-        "action": "Power-User-Hinweis: Option (Alt)+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete kann Option/Umschalt/Cmd/Ctrl+Enter den gewählten Tag/Mention nur als Metadaten hinzufügen, ohne Tokentext einzufügen."
+        "action": "Power-User-Hinweis: Option (Alt)+Enter sendet als anderen Typ, wenn kein Autocomplete offen ist; bei offenem Autocomplete fügt Option/Alt+Klick oder Option/Umschalt/Cmd/Ctrl+Enter den gewählten Tag/Mention nur als Metadaten hinzu, ohne Tokentext einzufügen."
       },
       "mobileNavigationNav": {
         "title": "Mobile Ansichten",

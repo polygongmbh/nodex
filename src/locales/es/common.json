@@ -234,7 +234,7 @@
       "submitCurrentKind": "Enviar como tipo actual",
       "submitOppositeKind": "Enviar como tipo opuesto (cuando no hay autocompletado abierto)",
       "insertHighlightedSuggestion": "Con autocompletado abierto: insertar sugerencia resaltada",
-      "addMetadataOnly": "Con autocompletado @/# abierto: añadir etiqueta/mención resaltada solo como metadatos de publicación (sin texto del token)"
+      "addMetadataOnly": "Con autocompletado @/# abierto: añadir etiqueta/mención resaltada solo como metadatos de publicación (Option/Alt+clic o Option/Alt/Cmd/Ctrl/Shift+Enter, sin texto del token)"
     }
   },
   "auth": {
@@ -356,11 +356,11 @@
       },
       "filtersChannels": {
         "title": "Filtros de canales",
-        "description": "En *Canales*, haz clic en el nombre de un canal para mostrar solo publicaciones con ese canal. Haz clic en el icono # para alternar neutral -> incluir -> excluir para ese canal. Haz clic en el icono hashtag a la izquierda de *Canales* para restablecer filtros de canal."
+        "description": "En *Canales*, haz clic en el nombre de un canal para mostrar solo publicaciones con ese canal (haz clic otra vez para salir del modo exclusivo). Haz clic en el icono # para alternar neutral -> incluir -> excluir para ese canal. Haz clic en el icono hashtag a la izquierda de *Canales* para restablecer filtros de canal."
       },
       "filtersPeople": {
         "title": "Filtros de personas",
-        "description": "En *Personas*, haz clic en el nombre de una persona para mostrar solo sus publicaciones. Haz clic en el avatar/icono para alternar esa persona. Haz clic en el icono a la izquierda de *Personas* para restablecer filtros de personas."
+        "description": "En *Personas*, haz clic en el nombre de una persona para mostrar solo sus publicaciones (haz clic otra vez para salir del modo exclusivo). Haz clic en el avatar/icono para alternar esa persona. Haz clic en el icono a la izquierda de *Personas* para restablecer filtros de personas."
       },
       "filtersSearch": {
         "title": "Barra de búsqueda",
@@ -379,7 +379,7 @@
       "composeInput": {
         "title": "Etiquetas y menciones",
         "description": "Usa #tags para organizar elementos y @menciones para referenciar personas en el cuadro de redacción. Los canales incluidos se precompletan automáticamente como hashtags. Puedes establecer un tipo de fecha (Vencimiento, Programada, Inicio, Fin o Hito) para que las tareas aparezcan en Calendario; las fechas futuras de Inicio se muestran como no realizables todavía.",
-        "action": "Consejo avanzado: Option (Alt)+Enter envía como el otro tipo cuando no hay autocompletado abierto; con autocompletado abierto, Option/Shift/Cmd/Ctrl+Enter puede añadir la etiqueta/mención seleccionada como metadatos sin insertar texto del token."
+        "action": "Consejo avanzado: Option (Alt)+Enter envía como el otro tipo cuando no hay autocompletado abierto; con autocompletado abierto, usa Option/Alt+clic o Option/Shift/Cmd/Ctrl+Enter para añadir la etiqueta/mención seleccionada como metadatos sin insertar texto del token."
       },
       "mobileNavigationNav": {
         "title": "Vistas móviles",

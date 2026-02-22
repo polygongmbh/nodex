@@ -26,9 +26,10 @@
 
 ## Channel and Tag Filtering
 ### Desktop sidebar channels
-- Click a channel name to cycle filter state:
+- Click the `#` icon next to a channel to cycle filter state:
   - `neutral` -> `included` -> `excluded` -> `neutral`
-- Click the `#` icon next to a channel to show only that channel (`included`) and reset other channels to `neutral`.
+- Click a channel name to show only that channel (`included`) and reset other channels to `neutral`.
+- Click the same channel name again while it is the only included channel to clear that exclusive channel filter.
 - Click the Channels section header icon (next to the section title) to toggle all channels:
   - if all are neutral -> set all to included
   - otherwise -> reset all to neutral
@@ -45,8 +46,9 @@
 
 ## People Filtering
 - Desktop:
-  - click person name to toggle.
-  - click person avatar/icon for exclusive person filter.
+  - click person avatar/icon to toggle that person.
+  - click person name for exclusive person filter.
+  - click the same person name again while it is the only selected person to clear the exclusive people filter.
 - Mobile (Manage view):
   - tap people chips to toggle selected users.
 
@@ -127,6 +129,7 @@
 - `Ctrl/Cmd+Enter`: submit as the currently selected kind.
 - `Alt+Enter` with no autocomplete open: submit as the other kind (Task <-> Comment).
 - `Alt/Ctrl/Cmd/Shift+Enter` with hashtag/mention autocomplete open: add the selected tag/mention to publish metadata without inserting token text.
+- `Alt+Click` on a hashtag/mention autocomplete option: add that selected tag/mention as publish metadata only (no token text insertion).
 - In the mobile combined composer, `Alt+Enter` while typing a hashtag token adds that hashtag as metadata-only, even for new tags.
 
 ### Search behavior
