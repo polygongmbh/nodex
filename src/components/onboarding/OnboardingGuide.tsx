@@ -953,7 +953,7 @@ export function OnboardingGuide({
               className="absolute z-[129] pointer-events-none"
               style={getTargetArrowStyle()}
             >
-              <div className="rounded-full bg-primary text-primary-foreground shadow-md p-1.5 motion-guide-heartbeat">
+              <div className="rounded-full bg-primary text-primary-foreground shadow-md p-1.5 animate-bounce">
                 <ArrowDown className="w-4 h-4" />
               </div>
             </div>
