@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Hash, Calendar, Clock, X, Zap, AtSign, Flag } from "lucide-react";
+import { Hash, Calendar, Clock, X, AtSign, Flag, CheckSquare, MessageSquare, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -1107,15 +1107,16 @@ export function TaskComposer({
       {/* Sign in prompt for posting */}
       {showExpandedControls && !user && (
         <div className={cn("flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded-xl", adaptiveSize && "motion-ink-stagger [--stagger-index:3]")}>
-          <Zap className="w-4 h-4 text-primary" />
+          <LogIn className="w-4 h-4 text-primary" />
           <span className="text-sm text-muted-foreground flex-1">
             {t("composer.blocked.signin")}
           </span>
           {onSignInClick && (
             <button
               onClick={onSignInClick}
-              className="text-sm text-primary hover:underline"
+              className="text-sm text-primary hover:underline inline-flex items-center gap-1"
             >
+              <LogIn className="w-3.5 h-3.5" />
               {t("composer.actions.signin")}
             </button>
           )}
@@ -1201,7 +1202,7 @@ export function TaskComposer({
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Hash className="w-3.5 h-3.5" />
+                  <CheckSquare className="w-3.5 h-3.5" />
                   <span>{t("composer.labels.task")}</span>
                 </button>
                 <button
@@ -1215,7 +1216,7 @@ export function TaskComposer({
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <AtSign className="w-3.5 h-3.5" />
+                  <MessageSquare className="w-3.5 h-3.5" />
                   <span>{t("composer.labels.comment")}</span>
                 </button>
               </div>
@@ -1233,6 +1234,7 @@ export function TaskComposer({
               {isPublishing && (
                 <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               )}
+              {taskType === "task" ? <CheckSquare className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
               {taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
             </button>
           </div>

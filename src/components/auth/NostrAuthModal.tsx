@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -442,7 +442,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         onClick={onSignInClick}
         className="h-full px-2 gap-2 text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent rounded-none whitespace-nowrap"
       >
-        <Zap className="w-4 h-4" />
+        <LogIn className="w-4 h-4" />
         <span className="hidden xl:inline">{t("auth.menu.signInToPost")}</span>
         <span className="xl:hidden">{t("auth.menu.signInShort")}</span>
       </Button>

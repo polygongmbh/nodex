@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, Zap, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -1051,7 +1051,7 @@ export function UnifiedBottomBar({
                   }
                 >
                   <span className={cn(isSendLaunching && "motion-send-launch")}>
-                    {!isSignedIn ? <Zap className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
+                    {!isSignedIn ? <LogIn className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
                   </span>
                 </button>
 
