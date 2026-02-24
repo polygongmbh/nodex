@@ -180,8 +180,11 @@ policies:
     bump_from_commit_types:
       fix: patch
       enhance: patch
-      feat: minor
+      feat: patch_default_minor_if_substantial
       breaking_change: major
+    minor_requires:
+      - multiple_feats
+      - significant_scope_or_impact
 ```
 
 ## General Workflow Policies
@@ -275,7 +278,8 @@ When asked to create a plan to fix or implement something:
 - update `package.json` version semantically based on pending changes
 - apply semantic bump examples:
   - patch: `1.4.2 -> 1.4.3` for `fix:`/`enhance:` only
-  - minor: `1.4.2 -> 1.5.0` when at least one `feat:` exists and no breaking change exists
+  - patch: `1.4.2 -> 1.4.3` for small/single `feat:` changes that are not substantial
+  - minor: `1.4.2 -> 1.5.0` when there are multiple/broader `feat:` changes or otherwise significant user-facing scope, and no breaking change exists
   - major: `1.4.2 -> 2.0.0` for breaking change (`feat!:`/`fix!:` or `BREAKING CHANGE:`)
 - update `CHANGELOG.md`
 - create annotated tag matching version (for example `v1.1.0`)
