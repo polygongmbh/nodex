@@ -563,8 +563,12 @@ const Index = () => {
   const handleOpenGuide = useCallback(() => {
     const initialSectionForOpen: OnboardingInitialSection =
       isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
-    queueOnboardingIntro(true, initialSectionForOpen);
-  }, [isMobile, queueOnboardingIntro]);
+    setOnboardingManualStart(true);
+    setOnboardingInitialSection(initialSectionForOpen);
+    setActiveOnboardingSection(null);
+    setIsOnboardingIntroOpen(false);
+    setIsOnboardingOpen(true);
+  }, [isMobile]);
 
   useEffect(() => {
     const onboardingState = loadOnboardingState();

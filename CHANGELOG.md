@@ -5,7 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Added an onboarding intro popover before the guide starts, with a brief Nodex overview and direct actions to either start the tour or sign in.
+- Added an onboarding intro popover before auto-start guide sessions, with a brief Nodex overview and direct actions to either start the tour or sign in.
 - Standardized task/comment and sign-in icons across desktop and mobile compose/sign-in controls.
 
 ## [1.12.1] - 2026-02-22
