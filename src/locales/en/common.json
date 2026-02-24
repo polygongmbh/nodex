@@ -303,6 +303,14 @@
     }
   },
   "onboarding": {
+    "intro": {
+      "ariaLabel": "Welcome to Nodex",
+      "title": "Welcome to Nodex",
+      "description": "Nodex is a Nostr-native workspace for tasks and discussions.",
+      "features": "Use channels, people filters, and relay controls to shape your feed while composing tasks and comments in one flow.",
+      "startTour": "Start the Tour",
+      "signIn": "Sign in"
+    },
     "picker": {
       "helper": "Pick one highlighted area to begin its guide.",
       "close": "Close",

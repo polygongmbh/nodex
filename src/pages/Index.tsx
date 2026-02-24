@@ -21,6 +21,7 @@ import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
+import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
 import { VersionHint } from "@/components/layout/VersionHint";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
@@ -499,11 +500,13 @@ const Index = () => {
   }, []);
 
   const handleOpenAuthModal = useCallback(() => {
+    setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(false);
     setIsAuthModalOpen(true);
   }, []);
 
   const handleCloseGuide = useCallback(() => {
+    setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(false);
     setActiveOnboardingSection(null);
   }, []);
@@ -528,6 +531,7 @@ const Index = () => {
   }, [cachedKind0Events, user?.pubkey]);
   const shortcutsHelp = useKeyboardShortcutsHelp();
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isOnboardingIntroOpen, setIsOnboardingIntroOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
   const [onboardingManualStart, setOnboardingManualStart] = useState(false);
   const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
@@ -543,14 +547,24 @@ const Index = () => {
     [currentView, isMobile, t]
   );
 
+  const queueOnboardingIntro = useCallback((manualStart: boolean, initialSection: OnboardingInitialSection) => {
+    setOnboardingManualStart(manualStart);
+    setOnboardingInitialSection(initialSection);
+    setActiveOnboardingSection(null);
+    setIsOnboardingOpen(false);
+    setIsOnboardingIntroOpen(true);
+  }, []);
+
+  const handleStartOnboardingTour = useCallback(() => {
+    setIsOnboardingIntroOpen(false);
+    setIsOnboardingOpen(true);
+  }, []);
+
   const handleOpenGuide = useCallback(() => {
     const initialSectionForOpen: OnboardingInitialSection =
       isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
-    setOnboardingManualStart(true);
-    setOnboardingInitialSection(initialSectionForOpen);
-    setActiveOnboardingSection(null);
-    setIsOnboardingOpen(true);
-  }, [isMobile]);
+    queueOnboardingIntro(true, initialSectionForOpen);
+  }, [isMobile, queueOnboardingIntro]);
 
   useEffect(() => {
     const onboardingState = loadOnboardingState();
@@ -558,11 +572,9 @@ const Index = () => {
       onboardingCompleted: onboardingState.completed,
       openedWithFocusedTask: openedWithFocusedTaskRef.current,
     })) {
-      setOnboardingManualStart(false);
-      setOnboardingInitialSection("all");
-      setIsOnboardingOpen(true);
+      queueOnboardingIntro(false, "all");
     }
-  }, []);
+  }, [queueOnboardingIntro]);
 
   useEffect(() => {
     if (!isOnboardingOpen) {
@@ -2010,6 +2022,11 @@ const Index = () => {
           onManageRouteChange={setManageRouteActive}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        <OnboardingIntroPopover
+          isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
+          onStartTour={handleStartOnboardingTour}
+          onSignIn={handleOpenAuthModal}
+        />
         <OnboardingGuide
           isOpen={isOnboardingOpen && !isAuthModalOpen}
           isMobile={isMobile}
@@ -2095,6 +2112,11 @@ const Index = () => {
       
       {/* Nostr Auth Modal */}
       <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <OnboardingIntroPopover
+        isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
+        onStartTour={handleStartOnboardingTour}
+        onSignIn={handleOpenAuthModal}
+      />
       <OnboardingGuide
         isOpen={isOnboardingOpen && !isAuthModalOpen}
         isMobile={isMobile}

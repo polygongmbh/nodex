@@ -303,6 +303,14 @@
     }
   },
   "onboarding": {
+    "intro": {
+      "ariaLabel": "Bienvenido a Nodex",
+      "title": "Bienvenido a Nodex",
+      "description": "Nodex es un espacio de trabajo nativo de Nostr para tareas y conversaciones.",
+      "features": "Usa canales, filtros de personas y controles de feeds para moldear tu vista mientras publicas tareas y comentarios en un solo flujo.",
+      "startTour": "Iniciar tour",
+      "signIn": "Iniciar sesión"
+    },
     "picker": {
       "helper": "Elige un área resaltada para comenzar su guía.",
       "close": "Cerrar",
