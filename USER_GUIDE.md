@@ -73,12 +73,14 @@
 ## Mobile Usage
 - The view navigation is at the top.
 - Open *Manage* for feed, channel, people, profile, and guide controls.
-- *Open Guide* in *Manage* launches onboarding.
+- *Open Guide* in *Manage* launches onboarding for signed-out users.
 - The bottom bar is a combined search/compose field:
   - typing updates search results live,
   - send buttons post as task/comment from the same text.
 
 ## Onboarding Guide
+- Onboarding is available only while signed out.
+- Signed-out auto-start onboarding opens with a short Welcome popover first.
 - Open guide from:
   - Desktop sidebar: *Guide*
   - Mobile *Manage* view: *Open Guide*

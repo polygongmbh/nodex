@@ -5,7 +5,11 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Added an onboarding intro popover before auto-start guide sessions for signed-out users, with a brief Nodex overview and direct actions to either start the tour or sign in; signed-in users no longer see onboarding guide flows.
+
+## [1.13.0] - 2026-02-24
+Refined onboarding availability for signed-out users and unified compose/sign-in iconography.
+- Added an onboarding intro popover before auto-start guide sessions for signed-out users, with direct actions to either start the tour or sign in.
+- Signed-in users no longer see onboarding guide flows.
 - Standardized task/comment and sign-in icons across desktop and mobile compose/sign-in controls.
 
 ## [1.12.1] - 2026-02-22
