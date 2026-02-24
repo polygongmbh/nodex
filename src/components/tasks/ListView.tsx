@@ -26,6 +26,7 @@ import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill"
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
+import { filterTasksByDepthMode } from "@/lib/depth-mode-filter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -255,24 +256,12 @@ export function ListView({
   
   // Stable sorted list - only re-sort when sortVersion changes
   const listTasks = useMemo(() => {
-    let filtered = filteredTaskCandidates.filter((task) => {
-      // Apply shared depth mode (kept in sync with Kanban selector).
-      const depth = focusedTaskId
-        ? getDepth(task.id) - getDepth(focusedTaskId)
-        : getDepth(task.id);
-
-      if (depthMode === "leaves") {
-        return !hasChildren(task.id);
-      }
-      if (depthMode === "projects") {
-        return !task.parentId && hasChildren(task.id);
-      }
-      if (depthMode !== "all") {
-        const maxDepth = parseInt(depthMode);
-        return depth <= maxDepth;
-      }
-      
-      return true;
+    let filtered = filterTasksByDepthMode({
+      tasks: filteredTaskCandidates,
+      depthMode,
+      focusedTaskId,
+      getDepth,
+      hasChildren,
     });
 
     // Use priority sort by default

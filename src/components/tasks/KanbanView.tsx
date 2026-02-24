@@ -29,6 +29,7 @@ import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
+import { filterTasksByDepthMode } from "@/lib/depth-mode-filter";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -160,24 +161,12 @@ export function KanbanView({
   });
   
   const kanbanTasks = useMemo(() => {
-    return filteredTaskCandidates.filter((task) => {
-      // Apply depth mode
-      const depth = focusedTaskId 
-        ? getDepth(task.id) - getDepth(focusedTaskId)
-        : getDepth(task.id);
-      
-      if (depthMode === "leaves") {
-        // Only show leaf tasks (no children)
-        return !hasChildren(task.id);
-      } else if (depthMode === "projects") {
-        // Root tasks that act as project containers.
-        return !task.parentId && hasChildren(task.id);
-      } else if (depthMode !== "all") {
-        const maxDepth = parseInt(depthMode);
-        return depth <= maxDepth;
-      }
-
-      return true;
+    return filterTasksByDepthMode({
+      tasks: filteredTaskCandidates,
+      depthMode,
+      focusedTaskId,
+      getDepth,
+      hasChildren,
     });
   }, [
     depthMode,
