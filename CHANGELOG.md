@@ -6,7 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-## [1.13.0] - 2026-02-24
+## [1.12.2] - 2026-02-24
 Refined onboarding availability for signed-out users and unified compose/sign-in iconography.
 - Added an onboarding intro popover before auto-start guide sessions for signed-out users, with direct actions to either start the tour or sign in.
 - Signed-in users no longer see onboarding guide flows.
