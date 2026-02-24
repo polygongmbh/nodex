@@ -547,12 +547,16 @@ const Index = () => {
     [currentView, isMobile, t]
   );
 
-  const queueOnboardingIntro = useCallback((manualStart: boolean, initialSection: OnboardingInitialSection) => {
+  const queueOnboardingIntro = useCallback((
+    manualStart: boolean,
+    initialSection: OnboardingInitialSection,
+    showIntro = true
+  ) => {
     setOnboardingManualStart(manualStart);
     setOnboardingInitialSection(initialSection);
     setActiveOnboardingSection(null);
-    setIsOnboardingOpen(false);
-    setIsOnboardingIntroOpen(true);
+    setIsOnboardingIntroOpen(showIntro);
+    setIsOnboardingOpen(!showIntro);
   }, []);
 
   const handleStartOnboardingTour = useCallback(() => {
@@ -561,6 +565,7 @@ const Index = () => {
   }, []);
 
   const handleOpenGuide = useCallback(() => {
+    if (user) return;
     const initialSectionForOpen: OnboardingInitialSection =
       isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
     setOnboardingManualStart(true);
@@ -568,17 +573,24 @@ const Index = () => {
     setActiveOnboardingSection(null);
     setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(true);
-  }, [isMobile]);
+  }, [isMobile, user]);
 
   useEffect(() => {
     const onboardingState = loadOnboardingState();
     if (shouldAutoStartOnboarding({
       onboardingCompleted: onboardingState.completed,
       openedWithFocusedTask: openedWithFocusedTaskRef.current,
-    })) {
-      queueOnboardingIntro(false, "all");
+    }) && !user) {
+      queueOnboardingIntro(false, "all", !user);
     }
-  }, [queueOnboardingIntro]);
+  }, [queueOnboardingIntro, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    setIsOnboardingIntroOpen(false);
+    setIsOnboardingOpen(false);
+    setActiveOnboardingSection(null);
+  }, [user]);
 
   useEffect(() => {
     if (!isOnboardingOpen) {
@@ -2027,12 +2039,12 @@ const Index = () => {
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingIntroPopover
-          isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
+          isOpen={!user && isOnboardingIntroOpen && !isAuthModalOpen}
           onStartTour={handleStartOnboardingTour}
           onSignIn={handleOpenAuthModal}
         />
         <OnboardingGuide
-          isOpen={isOnboardingOpen && !isAuthModalOpen}
+          isOpen={!user && isOnboardingOpen && !isAuthModalOpen}
           isMobile={isMobile}
           manualStart={onboardingManualStart}
           currentView={currentView}
@@ -2117,12 +2129,12 @@ const Index = () => {
       {/* Nostr Auth Modal */}
       <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <OnboardingIntroPopover
-        isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
+        isOpen={!user && isOnboardingIntroOpen && !isAuthModalOpen}
         onStartTour={handleStartOnboardingTour}
         onSignIn={handleOpenAuthModal}
       />
       <OnboardingGuide
-        isOpen={isOnboardingOpen && !isAuthModalOpen}
+        isOpen={!user && isOnboardingOpen && !isAuthModalOpen}
         isMobile={isMobile}
         manualStart={onboardingManualStart}
         currentView={currentView}
