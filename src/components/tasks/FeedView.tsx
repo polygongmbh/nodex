@@ -10,6 +10,7 @@ import {
   TaskCreateResult,
   TaskDateType,
   ComposeRestoreRequest,
+  PublishedAttachment,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -29,6 +30,7 @@ import { getDueDateColorClass } from "@/lib/taskSorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
+import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,7 +69,8 @@ interface FeedViewProps {
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -212,7 +215,8 @@ export function FeedView({
     dueTime?: string,
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ): Promise<TaskCreateResult> => {
     return Promise.resolve(onNewTask(
       content,
@@ -225,7 +229,8 @@ export function FeedView({
       focusedTaskId || undefined,
       undefined,
       explicitMentionPubkeys,
-      priority
+      priority,
+      attachments
     ));
   };
 
@@ -583,6 +588,7 @@ export function FeedView({
                         onMentionClick: onAuthorClick,
                       })}
                     </p>
+                    <TaskAttachmentList attachments={task.attachments} />
 
                     {/* Due date */}
                     {task.dueDate && (

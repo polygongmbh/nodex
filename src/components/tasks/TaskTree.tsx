@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest } from "@/types";
+import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -33,7 +33,8 @@ interface TaskTreeProps {
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -219,7 +220,8 @@ export function TaskTree({
     dueTime?: string,
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ): Promise<TaskCreateResult> => {
     const result = await Promise.resolve(onNewTask(
       content,
@@ -232,7 +234,8 @@ export function TaskTree({
       currentContextId,
       undefined,
       explicitMentionPubkeys,
-      priority
+      priority,
+      attachments
     ));
     if (result.ok) {
       setIsComposerExpanded(false);

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, ImagePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -8,6 +8,8 @@ import {
   TaskCreateResult,
   TaskDateType,
   ComposeRestoreRequest,
+  ComposeAttachment,
+  PublishedAttachment,
 } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -29,6 +31,7 @@ import {
   isMetadataOnlyAutocompleteKey,
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
+import { uploadAttachment } from "@/lib/nostr/attachment-upload";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -44,7 +47,8 @@ interface UnifiedBottomBarProps {
     dueTime?: string,
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   currentView: ViewType;
   focusedTaskId?: string | null;
@@ -117,7 +121,11 @@ export function UnifiedBottomBar({
   const [priority, setPriority] = useState<number | undefined>(undefined);
   const [explicitTagNames, setExplicitTagNames] = useState<string[]>([]);
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const attachmentFileRef = useRef<Record<string, File>>({});
   const bottomBarRef = useRef<HTMLDivElement | null>(null);
   const cursorPositionRef = useRef(0);
   const prevSearchQueryRef = useRef(searchQuery);
@@ -205,6 +213,15 @@ export function UnifiedBottomBar({
     setDueTime(restoreState.dueTime || "");
     setDateType(restoreState.dateType || "due");
     setPriority(typeof restoreState.priority === "number" ? restoreState.priority : undefined);
+    setAttachments(
+      (restoreState.attachments || []).map((attachment, index) => ({
+        id: `restore-${composeRestoreRequest.id}-${index}`,
+        fileName: attachment.name || attachment.url,
+        status: "uploaded",
+        source: "url",
+        ...attachment,
+      }))
+    );
     setExplicitTagNames(
       (restoreState.explicitTagNames || [])
         .map((tag) => tag.trim().toLowerCase())
@@ -378,6 +395,18 @@ export function UnifiedBottomBar({
       notifyNeedTag(t);
       return;
     }
+    const uploadedAttachments: PublishedAttachment[] = attachments
+      .filter((attachment) => attachment.status === "uploaded" && attachment.url)
+      .map((attachment) => ({
+        url: attachment.url,
+        mimeType: attachment.mimeType,
+        sha256: attachment.sha256,
+        size: attachment.size,
+        dimensions: attachment.dimensions,
+        blurhash: attachment.blurhash,
+        alt: attachment.alt,
+        name: attachment.name || attachment.fileName,
+      }));
     const activeRelayIds = relays.filter(r => r.isActive).map(r => r.id);
     const relayIds = activeRelayIds.length > 0 ? activeRelayIds : [relays[0]?.id].filter(Boolean);
     if (submitType === "task" && !focusedTaskId && relayIds.length !== 1) {
@@ -395,7 +424,8 @@ export function UnifiedBottomBar({
         dueTime || undefined,
         dateType,
         explicitMentionPubkeys,
-        priority
+        priority,
+        uploadedAttachments
       ));
     } catch (error) {
       console.error("Mobile task submit failed", error);
@@ -429,7 +459,86 @@ export function UnifiedBottomBar({
     setPriority(undefined);
     setExplicitTagNames([]);
     setExplicitMentionPubkeys([]);
+    setAttachments([]);
+    attachmentFileRef.current = {};
     setActiveSelector(null);
+  };
+
+  const handleAttachmentUpload = async (file: File, id: string) => {
+    try {
+      const uploaded = await uploadAttachment(file);
+      setAttachments((previous) =>
+        previous.map((attachment) =>
+          attachment.id === id
+            ? {
+                ...attachment,
+                ...uploaded,
+                fileName: attachment.fileName || uploaded.name || file.name,
+                status: "uploaded",
+                source: "upload",
+              }
+            : attachment
+        )
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      setAttachments((previous) =>
+        previous.map((attachment) =>
+          attachment.id === id
+            ? {
+                ...attachment,
+                status: "failed",
+                error: message,
+              }
+            : attachment
+        )
+      );
+    }
+  };
+
+  const queueSelectedFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const now = Date.now().toString(36);
+    const nextEntries: ComposeAttachment[] = Array.from(files).map((file, index) => {
+      const id = `mobile-file-${now}-${index}-${Math.random().toString(36).slice(2, 8)}`;
+      attachmentFileRef.current[id] = file;
+      return {
+        id,
+        fileName: file.name,
+        mimeType: file.type || undefined,
+        size: file.size,
+        status: "uploading",
+        source: "upload",
+      };
+    });
+    setAttachments((previous) => [...previous, ...nextEntries]);
+    for (const entry of nextEntries) {
+      const file = attachmentFileRef.current[entry.id];
+      if (!file) continue;
+      void handleAttachmentUpload(file, entry.id);
+    }
+  };
+
+  const retryAttachmentUpload = (attachmentId: string) => {
+    const file = attachmentFileRef.current[attachmentId];
+    if (!file) return;
+    setAttachments((previous) =>
+      previous.map((attachment) =>
+        attachment.id === attachmentId
+          ? {
+              ...attachment,
+              status: "uploading",
+              error: undefined,
+            }
+          : attachment
+      )
+    );
+    void handleAttachmentUpload(file, attachmentId);
+  };
+
+  const removeAttachment = (attachmentId: string) => {
+    delete attachmentFileRef.current[attachmentId];
+    setAttachments((previous) => previous.filter((attachment) => attachment.id !== attachmentId));
   };
 
   const handleCancel = () => {
@@ -440,6 +549,8 @@ export function UnifiedBottomBar({
     setShowMentionSuggestions(false);
     setMentionFilter("");
     setActiveMentionIndex(0);
+    setAttachments([]);
+    attachmentFileRef.current = {};
   };
 
   const toggleSelector = (type: SelectorType) => {
@@ -455,12 +566,18 @@ export function UnifiedBottomBar({
   const hasComposeText = sharedText.trim().length > 0;
   const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
   const hasAtLeastOneTag = ((sharedText.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
+  const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
+  const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
   const taskSubmitBlockedReason = !isSignedIn
     ? t("composer.blocked.signin")
-    : !hasMeaningfulComposeText
-      ? t("composer.blocked.write")
-      : !hasAtLeastOneTag
-        ? t("composer.blocked.tag")
+    : hasPendingAttachmentUploads
+      ? "Wait for attachments to finish uploading"
+      : hasFailedAttachmentUploads
+        ? "Retry or remove failed attachments"
+      : !hasMeaningfulComposeText
+        ? t("composer.blocked.write")
+        : !hasAtLeastOneTag
+          ? t("composer.blocked.tag")
         : hasInvalidRootTaskRelaySelection
           ? t("composer.blocked.relay")
           : null;
@@ -516,8 +633,8 @@ export function UnifiedBottomBar({
     }, 0);
   };
 
-  const canSendTask = hasMeaningfulComposeText && !hasInvalidRootTaskRelaySelection;
-  const canSendComment = hasMeaningfulComposeText && hasAtLeastOneTag;
+  const canSendTask = hasMeaningfulComposeText && !hasInvalidRootTaskRelaySelection && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
+  const canSendComment = hasMeaningfulComposeText && hasAtLeastOneTag && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
   const canSubmitFromPrimary = canOfferComment ? (canSendTask || canSendComment) : canSendTask;
   const hasTaskSubmitBlock = taskSubmitBlockedReason !== null;
@@ -877,6 +994,68 @@ export function UnifiedBottomBar({
         </div>
       </div>
 
+      {attachments.length > 0 && (
+        <div className="px-3 pb-2 space-y-1.5">
+          {attachments.map((attachment) => (
+            <div key={attachment.id} className="rounded border border-border/60 bg-muted/30 px-2 py-1 text-xs">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate">{attachment.fileName || attachment.name || attachment.url}</span>
+                <div className="flex items-center gap-1">
+                  {attachment.status === "uploading" && (
+                    <span className="text-muted-foreground">Uploading…</span>
+                  )}
+                  {attachment.status === "failed" && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => retryAttachmentUpload(attachment.id)}
+                        className="rounded px-1 py-0.5 hover:bg-muted"
+                      >
+                        Retry
+                      </button>
+                      <span className="text-destructive">Failed</span>
+                    </>
+                  )}
+                  {attachment.status === "uploaded" && (
+                    <span className="text-emerald-600">Ready</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(attachment.id)}
+                    className="rounded p-0.5 hover:bg-muted"
+                    aria-label="Remove attachment"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+              {attachment.status === "uploaded" && attachment.mimeType?.startsWith("image/") && (
+                <input
+                  type="text"
+                  value={attachment.alt || ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setAttachments((previous) =>
+                      previous.map((item) =>
+                        item.id === attachment.id
+                          ? {
+                              ...item,
+                              alt: value,
+                            }
+                          : item
+                      )
+                    );
+                  }}
+                  className="mt-1 h-7 w-full rounded border border-border/50 bg-background px-2 text-xs"
+                  placeholder="Alt text (optional)"
+                  aria-label="Attachment alt text"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="flex items-stretch gap-2 p-3">
         <div className="flex-1">
@@ -1029,6 +1208,26 @@ export function UnifiedBottomBar({
               )}
             </div>
             <div className="flex h-full items-stretch gap-1.5">
+              <div className="flex flex-col gap-1">
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className="h-[1.55rem] w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                  aria-label="Add image attachment"
+                  title="Add image attachment"
+                >
+                  <ImagePlus className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-[1.55rem] w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                  aria-label="Add file attachment"
+                  title="Add file attachment"
+                >
+                  <Paperclip className="w-3.5 h-3.5" />
+                </button>
+              </div>
               <div className="relative">
                 <button
                   onClick={handlePrimarySend}
@@ -1088,6 +1287,27 @@ export function UnifiedBottomBar({
           </div>
         </div>
       </div>
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          queueSelectedFiles(event.target.files);
+          event.currentTarget.value = "";
+        }}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          queueSelectedFiles(event.target.files);
+          event.currentTarget.value = "";
+        }}
+      />
     </div>
   );
 }

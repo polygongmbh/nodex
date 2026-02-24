@@ -45,6 +45,26 @@ export type TaskCreateResult =
 
 export type TaskStatus = "todo" | "in-progress" | "done";
 
+export interface PublishedAttachment {
+  url: string;
+  mimeType?: string;
+  sha256?: string;
+  size?: number;
+  dimensions?: string;
+  blurhash?: string;
+  alt?: string;
+  name?: string;
+}
+
+export interface ComposeAttachment extends PublishedAttachment {
+  id: string;
+  fileName: string;
+  status: "uploading" | "uploaded" | "failed";
+  progress?: number;
+  error?: string;
+  source: "upload" | "url";
+}
+
 export interface ComposeRestoreState {
   content: string;
   taskType: TaskType;
@@ -55,6 +75,7 @@ export interface ComposeRestoreState {
   explicitTagNames?: string[];
   selectedRelays?: string[];
   priority?: number;
+  attachments?: PublishedAttachment[];
 }
 
 export interface ComposeRestoreRequest {
@@ -86,6 +107,7 @@ export interface Task {
   mentions?: string[];
   assigneePubkeys?: string[];
   priority?: number;
+  attachments?: PublishedAttachment[];
   pendingPublishToken?: string;
   pendingPublishUntil?: Date;
 }

@@ -1,5 +1,5 @@
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { Person, TaskDateType, TaskStatus, TaskType } from "@/types";
+import type { Person, PublishedAttachment, TaskDateType, TaskStatus, TaskType } from "@/types";
 import { z } from "zod";
 
 export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts.v1";
@@ -22,6 +22,7 @@ export interface FailedPublishDraft {
   mentionPubkeys: string[];
   assigneePubkeys?: string[];
   priority?: number;
+  attachments?: PublishedAttachment[];
   publishKind: NostrEventKind;
   publishTags: string[][];
   publishParentId?: string;
@@ -56,6 +57,18 @@ const failedPublishDraftSchema: z.ZodType<FailedPublishDraft> = z.object({
   mentionPubkeys: z.array(z.string()),
   assigneePubkeys: z.array(z.string()).optional(),
   priority: z.number().finite().optional(),
+  attachments: z.array(
+    z.object({
+      url: z.string(),
+      mimeType: z.string().optional(),
+      sha256: z.string().optional(),
+      size: z.number().finite().optional(),
+      dimensions: z.string().optional(),
+      blurhash: z.string().optional(),
+      alt: z.string().optional(),
+      name: z.string().optional(),
+    })
+  ).optional(),
   publishKind: z.number().int(),
   publishTags: z.array(z.array(z.string())),
   publishParentId: z.string().optional(),

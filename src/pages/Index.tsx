@@ -45,6 +45,11 @@ import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
 import { buildTaskPriorityUpdateEvent, isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import {
+  buildImetaTag,
+  extractEmbeddableAttachmentsFromContent,
+  normalizePublishedAttachments,
+} from "@/lib/attachments";
+import {
   resolveOriginRelayIdForTask,
   resolveRelaySelectionForSubmission,
 } from "@/lib/task-relay-routing";
@@ -122,6 +127,7 @@ import {
   TaskStatus,
   ComposeRestoreRequest,
   ComposeRestoreState,
+  PublishedAttachment,
   SavedFilterController,
   SavedFilterConfiguration,
   SavedFilterState,
@@ -1416,7 +1422,8 @@ const Index = () => {
     parentId?: string,
     initialStatus?: TaskStatus,
     explicitMentionPubkeys: string[] = [],
-    priority?: number
+    priority?: number,
+    attachments: PublishedAttachment[] = []
   ): Promise<TaskCreateResult> => {
     if (guardInteraction("post")) {
       return hasDisconnectedSelectedRelays
@@ -1492,6 +1499,11 @@ const Index = () => {
     const normalizedExtractedTags = Array.from(
       new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
     );
+    const contentDerivedAttachments = extractEmbeddableAttachmentsFromContent(content);
+    const normalizedAttachments = normalizePublishedAttachments([
+      ...attachments,
+      ...contentDerivedAttachments,
+    ]);
     
     const createdAt = new Date();
     const taskAuthor: Person = (() => {
@@ -1524,11 +1536,13 @@ const Index = () => {
                 primaryRelayUrl,
                 assigneePubkeys,
                 priority,
-                normalizedExtractedTags
+                normalizedExtractedTags,
+                normalizedAttachments
               )
             : [
                 ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
                 ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
+                ...normalizedAttachments.map((attachment) => buildImetaTag(attachment)),
               ]
         )
       : [];
@@ -1555,6 +1569,7 @@ const Index = () => {
       mentionPubkeys,
       assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
+      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
       publishKind: fallbackKind,
       publishTags: fallbackTags,
       publishParentId: fallbackParentId,
@@ -1584,6 +1599,7 @@ const Index = () => {
       ),
       assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
+      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
     };
 
     const parsedHashtagsFromContent = new Set(
@@ -1601,6 +1617,7 @@ const Index = () => {
       explicitMentionPubkeys: explicitMentionPubkeysForRestore,
       selectedRelays: targetRelayIds,
       priority,
+      attachments: normalizedAttachments,
     };
 
     if (!shouldPublish) {
@@ -1800,6 +1817,7 @@ const Index = () => {
       mentions: draft.mentionPubkeys,
       assigneePubkeys: draft.taskType === "task" ? draft.assigneePubkeys : undefined,
       priority: draft.taskType === "task" ? draft.priority : undefined,
+      attachments: draft.attachments,
     };
     setLocalTasks((prev) => [restoredTask, ...prev]);
     setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));

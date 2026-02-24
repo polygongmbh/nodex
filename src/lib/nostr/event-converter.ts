@@ -9,6 +9,11 @@ import {
 import { parseLinkedTaskDueFromCalendarEvent } from "./task-calendar-events";
 import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 import { relayUrlToId, relayUrlToName } from "@/lib/relay-url";
+import {
+  extractEmbeddableAttachmentsFromContent,
+  normalizePublishedAttachments,
+  parseImetaTag,
+} from "@/lib/attachments";
 
 // Spam keywords for basic filtering
 const SPAM_KEYWORDS = [
@@ -120,6 +125,11 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     .map((tag) => tag[1].toLowerCase());
   const mentionedHandles = extractAssignedMentionsFromContent(normalizedContent);
   const priority = parsePriorityTag(event.tags);
+  const imetaAttachments = event.tags
+    .map((tag) => parseImetaTag(tag))
+    .filter((attachment): attachment is NonNullable<typeof attachment> => Boolean(attachment));
+  const contentAttachments = extractEmbeddableAttachmentsFromContent(normalizedContent);
+  const attachments = normalizePublishedAttachments([...imetaAttachments, ...contentAttachments]);
 
   let dueDate: Date | undefined;
   if (dueTag?.[1]) {
@@ -166,6 +176,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles])),
     assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
     priority,
+    attachments: attachments.length > 0 ? attachments : undefined,
   };
 }
 

@@ -14,6 +14,7 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
+import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -464,6 +465,7 @@ export function TaskItem({
               onMentionClick: onAuthorClick,
             })}
           </p>
+          <TaskAttachmentList attachments={task.attachments} />
 
           {/* Due date */}
           {task.dueDate && (

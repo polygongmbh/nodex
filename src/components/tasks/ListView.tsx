@@ -10,6 +10,7 @@ import {
   TaskCreateResult,
   TaskDateType,
   ComposeRestoreRequest,
+  PublishedAttachment,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -24,6 +25,7 @@ import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
+import { TaskAttachmentList } from "./TaskAttachmentList";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import { filterTasksByDepthMode } from "@/lib/depth-mode-filter";
@@ -63,7 +65,8 @@ interface ListViewProps {
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -338,7 +341,8 @@ export function ListView({
     dueTime?: string,
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ): Promise<TaskCreateResult> => {
     return Promise.resolve(onNewTask(
       content,
@@ -351,7 +355,8 @@ export function ListView({
       focusedTaskId || undefined,
       undefined,
       explicitMentionPubkeys,
-      priority
+      priority,
+      attachments
     ));
   };
 
@@ -729,6 +734,7 @@ export function ListView({
                             people,
                           })}
                         </p>
+                        <TaskAttachmentList attachments={task.attachments} className="space-y-1" />
                       </div>
                     </td>
                     <td className="hidden 2xl:table-cell p-2 2xl:p-3">

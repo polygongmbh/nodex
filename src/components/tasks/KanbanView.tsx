@@ -12,6 +12,7 @@ import {
   TaskDateType,
   TaskStatus,
   ComposeRestoreRequest,
+  PublishedAttachment,
 } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -30,6 +31,7 @@ import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import { filterTasksByDepthMode } from "@/lib/depth-mode-filter";
+import { TaskAttachmentList } from "./TaskAttachmentList";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -53,7 +55,8 @@ interface KanbanViewProps {
     parentId?: string,
     initialStatus?: TaskStatus,
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
@@ -226,7 +229,8 @@ export function KanbanView({
     dueTime?: string,
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ): Promise<TaskCreateResult> => {
     const result = await Promise.resolve(onNewTask(
       content,
@@ -239,7 +243,8 @@ export function KanbanView({
       focusedTaskId || undefined,
       composingColumn || undefined,
       explicitMentionPubkeys,
-      priority
+      priority,
+      attachments
     ));
     if (result.ok) {
       setComposingColumn(null);
@@ -518,6 +523,7 @@ export function KanbanView({
                                       people,
                                     })}
                                   </p>
+                                  <TaskAttachmentList attachments={task.attachments} />
                                   {isPendingPublish && (
                                     <div className="mt-2">
                                       <button

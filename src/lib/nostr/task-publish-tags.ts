@@ -1,9 +1,13 @@
+import { buildImetaTag, normalizePublishedAttachments } from "@/lib/attachments";
+import type { PublishedAttachment } from "@/types";
+
 export function buildTaskPublishTags(
   parentId?: string,
   parentRelayUrl?: string,
   mentionPubkeys: string[] = [],
   priority?: number,
   channelNames: string[] = [],
+  attachments: PublishedAttachment[] = [],
 ): string[][] {
   const tags: string[][] = [];
 
@@ -27,6 +31,11 @@ export function buildTaskPublishTags(
   );
   for (const channelName of dedupedChannelNames) {
     tags.push(["t", channelName]);
+  }
+
+  const normalizedAttachments = normalizePublishedAttachments(attachments);
+  for (const attachment of normalizedAttachments) {
+    tags.push(buildImetaTag(attachment));
   }
 
   return tags;

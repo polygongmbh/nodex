@@ -220,6 +220,48 @@ describe("nostrEventToTask", () => {
     ]);
   });
 
+  it("extracts imeta attachment metadata and deduplicates content URLs", () => {
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      content: "Screenshot: https://cdn.example.com/mock.png",
+      tags: [[
+        "imeta",
+        "url https://cdn.example.com/mock.png",
+        "m image/png",
+        "x hash123",
+        "size 42",
+      ]],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.attachments).toEqual([
+      {
+        url: "https://cdn.example.com/mock.png",
+        mimeType: "image/png",
+        sha256: "hash123",
+        size: 42,
+      },
+    ]);
+  });
+
+  it("creates attachment candidates from direct content URLs", () => {
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      content: "See https://files.example.com/report.pdf",
+      tags: [],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.attachments).toEqual([
+      {
+        url: "https://files.example.com/report.pdf",
+        mimeType: "application/pdf",
+      },
+    ]);
+  });
+
   it("resolves indexed person references from content into @pubkey mentions", () => {
     const personPubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const event: NostrEventWithRelay = {

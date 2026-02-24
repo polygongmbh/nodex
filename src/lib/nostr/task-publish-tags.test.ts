@@ -51,4 +51,39 @@ describe("buildTaskPublishTags", () => {
       ["t", "release"],
     ]);
   });
+
+  it("appends normalized imeta tags for attachments", () => {
+    const tags = buildTaskPublishTags(
+      undefined,
+      undefined,
+      [],
+      undefined,
+      [],
+      [
+        {
+          url: "https://cdn.example.com/path/image.png",
+          mimeType: "image/png",
+          sha256: "abc123",
+          size: 12,
+          dimensions: "10x10",
+          alt: "Example image",
+        },
+        {
+          url: "https://cdn.example.com/path/image.png",
+        },
+      ]
+    );
+
+    expect(tags).toEqual([
+      [
+        "imeta",
+        "url https://cdn.example.com/path/image.png",
+        "m image/png",
+        "x abc123",
+        "size 12",
+        "dim 10x10",
+        "alt Example image",
+      ],
+    ]);
+  });
 });

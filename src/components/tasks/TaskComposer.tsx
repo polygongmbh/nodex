@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Hash, Calendar, Clock, X, AtSign, Flag, CheckSquare, MessageSquare, LogIn } from "lucide-react";
+import { Hash, Calendar, Clock, X, AtSign, Flag, CheckSquare, MessageSquare, LogIn, ImagePlus, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -9,6 +9,8 @@ import {
   TaskDateType,
   TaskCreateResult,
   ComposeRestoreRequest,
+  ComposeAttachment,
+  PublishedAttachment,
 } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -32,6 +34,7 @@ import {
   isMetadataOnlyAutocompleteKey,
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
+import { uploadAttachment } from "@/lib/nostr/attachment-upload";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -43,7 +46,8 @@ interface TaskComposerProps {
     dueTime?: string,
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   relays: Relay[];
   channels: Channel[];
@@ -77,6 +81,7 @@ interface ComposeDraftState {
   explicitMentionPubkeys?: string[];
   explicitTagNames?: string[];
   priority?: number;
+  attachments?: PublishedAttachment[];
 }
 
 function readComposeDraft(key: string): ComposeDraftState | null {
@@ -176,10 +181,23 @@ export function TaskComposer({
     if (typeof initialDraft?.priority !== "number") return undefined;
     return Number.isFinite(initialDraft.priority) ? initialDraft.priority : undefined;
   });
+  const [attachments, setAttachments] = useState<ComposeAttachment[]>(() => {
+    const initial = initialDraft?.attachments || [];
+    return initial.map((attachment, index) => ({
+      id: `draft-${index}-${Date.now().toString(36)}`,
+      fileName: attachment.name || attachment.url,
+      status: "uploaded",
+      source: "url",
+      ...attachment,
+    }));
+  });
   const [isExpanded, setIsExpanded] = useState(
     () => !adaptiveSize || initialContent.trim().length > 0
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentFileRef = useRef<Record<string, File>>({});
   const sendLaunchTimeoutRef = useRef<number | null>(null);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const prevSelectedPeoplePubkeysRef = useRef<string[]>([]);
@@ -249,6 +267,15 @@ export function TaskComposer({
     setDueTime(restoreState.dueTime || "");
     setDateType(restoreState.dateType || "due");
     setPriority(typeof restoreState.priority === "number" ? restoreState.priority : undefined);
+    setAttachments(
+      (restoreState.attachments || []).map((attachment, index) => ({
+        id: `restore-${composeRestoreRequest.id}-${index}`,
+        fileName: attachment.name || attachment.url,
+        status: "uploaded",
+        source: "url",
+        ...attachment,
+      }))
+    );
     setExplicitTagNames(
       (restoreState.explicitTagNames || [])
         .map((tag) => tag.trim().toLowerCase())
@@ -289,12 +316,24 @@ export function TaskComposer({
           explicitTagNames,
           explicitMentionPubkeys,
           priority,
+          attachments: attachments
+            .filter((attachment) => attachment.status === "uploaded" && attachment.url)
+            .map((attachment) => ({
+              url: attachment.url,
+              mimeType: attachment.mimeType,
+              sha256: attachment.sha256,
+              size: attachment.size,
+              dimensions: attachment.dimensions,
+              blurhash: attachment.blurhash,
+              alt: attachment.alt,
+              name: attachment.name || attachment.fileName,
+            })),
         } satisfies ComposeDraftState)
       );
     } catch {
       // Ignore persistence errors.
     }
-  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, priority, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, priority, attachments, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -322,6 +361,84 @@ export function TaskComposer({
       textarea.setSelectionRange(end, end);
     });
   }, [mentionRequest, adaptiveSize]);
+
+  const handleAttachmentUpload = async (file: File, id: string) => {
+    try {
+      const uploaded = await uploadAttachment(file);
+      setAttachments((previous) =>
+        previous.map((attachment) =>
+          attachment.id === id
+            ? {
+                ...attachment,
+                ...uploaded,
+                fileName: attachment.fileName || uploaded.name || file.name,
+                status: "uploaded",
+                source: "upload",
+              }
+            : attachment
+        )
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      setAttachments((previous) =>
+        previous.map((attachment) =>
+          attachment.id === id
+            ? {
+                ...attachment,
+                status: "failed",
+                error: message,
+              }
+            : attachment
+        )
+      );
+    }
+  };
+
+  const queueSelectedFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const now = Date.now().toString(36);
+    const nextEntries: ComposeAttachment[] = Array.from(files).map((file, index) => {
+      const id = `file-${now}-${index}-${Math.random().toString(36).slice(2, 8)}`;
+      attachmentFileRef.current[id] = file;
+      return {
+        id,
+        fileName: file.name,
+        mimeType: file.type || undefined,
+        size: file.size,
+        status: "uploading",
+        source: "upload",
+      };
+    });
+    setAttachments((previous) => [...previous, ...nextEntries]);
+    for (const entry of nextEntries) {
+      const file = attachmentFileRef.current[entry.id];
+      if (!file) continue;
+      void handleAttachmentUpload(file, entry.id);
+    }
+  };
+
+  const retryAttachmentUpload = (attachmentId: string) => {
+    const file = attachmentFileRef.current[attachmentId];
+    if (!file) return;
+    setAttachments((previous) =>
+      previous.map((attachment) =>
+        attachment.id === attachmentId
+          ? {
+              ...attachment,
+              status: "uploading",
+              error: undefined,
+            }
+          : attachment
+      )
+    );
+    void handleAttachmentUpload(file, attachmentId);
+  };
+
+  const removeAttachment = (attachmentId: string) => {
+    delete attachmentFileRef.current[attachmentId];
+    setAttachments((previous) => previous.filter((attachment) => attachment.id !== attachmentId));
+  };
 
   // Keep selected publish targets aligned with currently active relay filters.
   useEffect(() => {
@@ -395,6 +512,18 @@ export function TaskComposer({
       notifyNeedTag(t);
       return;
     }
+    const uploadedAttachments: PublishedAttachment[] = attachments
+      .filter((attachment) => attachment.status === "uploaded" && attachment.url)
+      .map((attachment) => ({
+        url: attachment.url,
+        mimeType: attachment.mimeType,
+        sha256: attachment.sha256,
+        size: attachment.size,
+        dimensions: attachment.dimensions,
+        blurhash: attachment.blurhash,
+        alt: attachment.alt,
+        name: attachment.name || attachment.fileName,
+      }));
     
     // Require authentication for any posting action (including demo-only local posts).
     if (!user) {
@@ -418,7 +547,8 @@ export function TaskComposer({
           dueTime || undefined,
           dateType,
           explicitMentionPubkeys,
-          priority
+          priority,
+          uploadedAttachments
         )
       );
     } catch (error) {
@@ -450,6 +580,8 @@ export function TaskComposer({
     setExplicitTagNames([...includedChannels]);
     setExplicitMentionPubkeys([...selectedPeoplePubkeys]);
     setPriority(undefined);
+    setAttachments([]);
+    attachmentFileRef.current = {};
     if (adaptiveSize) {
       setIsExpanded(false);
     }
@@ -531,9 +663,15 @@ export function TaskComposer({
   ];
   const hasAtLeastOneTag = ((content.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
+  const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
+  const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
   const hasInvalidRootTaskRelaySelection = taskType === "task" && !parentId && selectedRelays.length !== 1;
   const submitBlockedReason = !user
     ? t("composer.blocked.signin")
+    : hasPendingAttachmentUploads
+      ? "Wait for attachments to finish uploading"
+      : hasFailedAttachmentUploads
+        ? "Retry or remove failed attachments"
     : !hasMeaningfulContent
       ? t("composer.blocked.write")
       : !hasAtLeastOneTag
@@ -970,6 +1108,71 @@ export function TaskComposer({
         </div>
       )}
 
+      {showExpandedControls && attachments.length > 0 && (
+        <div className="space-y-2">
+          {attachments.map((attachment) => (
+            <div
+              key={attachment.id}
+              className="rounded-md border border-border/60 bg-muted/30 px-2 py-1.5 text-xs"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate">{attachment.fileName || attachment.name || attachment.url}</span>
+                <div className="flex items-center gap-1">
+                  {attachment.status === "uploading" && (
+                    <span className="text-muted-foreground">Uploading…</span>
+                  )}
+                  {attachment.status === "failed" && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => retryAttachmentUpload(attachment.id)}
+                        className="rounded px-1.5 py-0.5 text-foreground hover:bg-muted"
+                      >
+                        Retry
+                      </button>
+                      <span className="text-destructive">Failed</span>
+                    </>
+                  )}
+                  {attachment.status === "uploaded" && (
+                    <span className="text-emerald-600">Ready</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(attachment.id)}
+                    className="rounded p-0.5 hover:bg-muted"
+                    aria-label="Remove attachment"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+              {attachment.status === "uploaded" && attachment.mimeType?.startsWith("image/") && (
+                <input
+                  type="text"
+                  value={attachment.alt || ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setAttachments((previous) =>
+                      previous.map((item) =>
+                        item.id === attachment.id
+                          ? {
+                              ...item,
+                              alt: value,
+                            }
+                          : item
+                      )
+                    );
+                  }}
+                  className="mt-1 h-7 w-full rounded border border-border/50 bg-background px-2 text-xs"
+                  placeholder="Alt text (optional)"
+                  aria-label="Attachment alt text"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Due date for tasks */}
       {showExpandedControls && taskType === "task" && (
         <div className={cn("flex flex-wrap items-center gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
@@ -1170,6 +1373,24 @@ export function TaskComposer({
           >
             <AtSign className="w-4 h-4 text-primary" />
           </button>
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+            aria-label="Add image attachment"
+            title="Add image attachment"
+          >
+            <ImagePlus className="w-4 h-4 text-primary" />
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+            aria-label="Add file attachment"
+            title="Add file attachment"
+          >
+            <Paperclip className="w-4 h-4 text-primary" />
+          </button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -1241,6 +1462,27 @@ export function TaskComposer({
         </div>
       </div>
       )}
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          queueSelectedFiles(event.target.files);
+          event.currentTarget.value = "";
+        }}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          queueSelectedFiles(event.target.files);
+          event.currentTarget.value = "";
+        }}
+      />
     </div>
   );
 }

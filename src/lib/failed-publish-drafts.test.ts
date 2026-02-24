@@ -29,6 +29,13 @@ const sampleDraft: FailedPublishDraft = {
   mentionPubkeys: ["f".repeat(64)],
   assigneePubkeys: ["f".repeat(64)],
   priority: 2,
+  attachments: [
+    {
+      url: "https://cdn.example.com/report.pdf",
+      mimeType: "application/pdf",
+      size: 512,
+    },
+  ],
   publishKind: NostrEventKind.Task,
   publishTags: [["t", "go"]],
 };

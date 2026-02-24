@@ -196,7 +196,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         [],
-        undefined
+        undefined,
+        []
       );
     });
   });
@@ -238,7 +239,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         [],
-        undefined
+        undefined,
+        []
       );
     });
   });
@@ -283,7 +285,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         [],
-        undefined
+        undefined,
+        []
       );
     });
   });
@@ -325,7 +328,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         [],
-        undefined
+        undefined,
+        []
       );
     });
   });
@@ -435,7 +439,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         [],
-        undefined
+        undefined,
+        []
       );
     });
   });
@@ -501,7 +506,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         ["f".repeat(64)],
-        undefined
+        undefined,
+        []
       );
     });
   });
@@ -546,7 +552,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         ["f".repeat(64)],
-        undefined
+        undefined,
+        []
       );
     });
   });
@@ -646,7 +653,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         [],
-        undefined
+        undefined,
+        []
       );
     });
   });
@@ -681,7 +689,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         [],
-        undefined
+        undefined,
+        []
       );
     });
 
@@ -720,7 +729,8 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         "due",
         ["f".repeat(64)],
-        undefined
+        undefined,
+        []
       );
     });
 

@@ -10,6 +10,7 @@ import {
   TaskCreateResult,
   TaskDateType,
   ComposeRestoreRequest,
+  PublishedAttachment,
 } from "@/types";
 import {
   format,
@@ -43,6 +44,7 @@ import { buildChildrenMap, sortTasks, type SortContext } from "@/lib/taskSorting
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
+import { TaskAttachmentList } from "./TaskAttachmentList";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,7 +74,8 @@ interface CalendarViewProps {
     parentId?: string,
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -435,7 +438,8 @@ export function CalendarView({
     dueTime?: string,
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
-    priority?: number
+    priority?: number,
+    attachments?: PublishedAttachment[]
   ): Promise<TaskCreateResult> => {
     // Use the selected date if no due date was set
     const eventDate = dueDate || selectedDate || new Date();
@@ -450,7 +454,8 @@ export function CalendarView({
       focusedTaskId || undefined,
       undefined,
       explicitMentionPubkeys,
-      priority
+      priority,
+      attachments
     ));
     if (result.ok) {
       setIsComposingEvent(false);
@@ -1024,6 +1029,7 @@ export function CalendarView({
                                 people,
                               })}
                             </p>
+                            <TaskAttachmentList attachments={task.attachments} className="mt-1.5 space-y-1" />
                             {task.dueTime && (
                               <div className="flex items-center gap-2 text-xs mt-1">
                                 <span
