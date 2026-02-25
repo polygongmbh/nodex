@@ -12,6 +12,7 @@ import {
   PublishedAttachment,
 } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
+import { useNDK } from "@/lib/nostr/ndk-context";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { addMonths, format, startOfMonth, subMonths } from "date-fns";
 import { toast } from "sonner";
@@ -101,6 +102,7 @@ export function UnifiedBottomBar({
   composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
   const { t } = useTranslation();
+  const { createHttpAuthHeader } = useNDK();
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;
@@ -467,7 +469,9 @@ export function UnifiedBottomBar({
 
   const handleAttachmentUpload = async (file: File, id: string) => {
     try {
-      const uploaded = await uploadAttachment(file);
+      const uploaded = await uploadAttachment(file, {
+        getAuthHeader: (url, method) => createHttpAuthHeader(url, method),
+      });
       setAttachments((previous) =>
         previous.map((attachment) =>
           attachment.id === id

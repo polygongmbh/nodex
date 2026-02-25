@@ -117,7 +117,7 @@ export function TaskComposer({
   composeRestoreRequest = null,
 }: TaskComposerProps) {
   const { t } = useTranslation();
-  const { user } = useNDK();
+  const { user, createHttpAuthHeader } = useNDK();
   const includedChannels = channels
     .filter((c) => c.filterState === "included")
     .map((c) => c.name.trim().toLowerCase())
@@ -365,7 +365,9 @@ export function TaskComposer({
 
   const handleAttachmentUpload = async (file: File, id: string) => {
     try {
-      const uploaded = await uploadAttachment(file);
+      const uploaded = await uploadAttachment(file, {
+        getAuthHeader: (url, method) => createHttpAuthHeader(url, method),
+      });
       setAttachments((previous) =>
         previous.map((attachment) =>
           attachment.id === id

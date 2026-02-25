@@ -24,6 +24,7 @@ export enum NostrEventKind {
   ChannelMessage = 42,
   ChannelHideMessage = 43,
   ChannelMuteUser = 44,
+  HttpAuth = 27235,
   // Task-related kinds
   Task = 1621,
   GitStatusOpen = 1630,

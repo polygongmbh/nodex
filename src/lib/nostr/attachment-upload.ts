@@ -15,6 +15,11 @@ interface NIP96UploadResponse {
 const DEFAULT_UPLOAD_URL = import.meta.env.VITE_NIP96_UPLOAD_URL as string | undefined;
 const DEBUG_ATTACHMENTS = String(import.meta.env.VITE_DEBUG_ATTACHMENTS || "").toLowerCase() === "true";
 
+export interface UploadAttachmentOptions {
+  uploadUrl?: string;
+  getAuthHeader?: (url: string, method: "POST") => Promise<string | null> | string | null;
+}
+
 export function isAttachmentUploadConfigured(uploadUrl: string = DEFAULT_UPLOAD_URL || ""): boolean {
   return uploadUrl.trim().length > 0;
 }
@@ -65,7 +70,14 @@ async function detectImageDimensions(file: File): Promise<string | undefined> {
   }
 }
 
-export async function uploadAttachment(file: File, uploadUrl: string = DEFAULT_UPLOAD_URL || ""): Promise<PublishedAttachment> {
+export async function uploadAttachment(
+  file: File,
+  optionsOrUploadUrl: UploadAttachmentOptions | string = DEFAULT_UPLOAD_URL || ""
+): Promise<PublishedAttachment> {
+  const options: UploadAttachmentOptions = typeof optionsOrUploadUrl === "string"
+    ? { uploadUrl: optionsOrUploadUrl }
+    : optionsOrUploadUrl;
+  const uploadUrl = (options.uploadUrl ?? DEFAULT_UPLOAD_URL ?? "").trim();
   debugLog("Upload requested", {
     fileName: file.name,
     mimeType: file.type || null,
@@ -83,11 +95,32 @@ export async function uploadAttachment(file: File, uploadUrl: string = DEFAULT_U
 
   const formData = new FormData();
   formData.append("file", file, file.name);
+  const requestHeaders = new Headers();
+  if (options.getAuthHeader) {
+    try {
+      const authHeader = await options.getAuthHeader(uploadUrl, "POST");
+      if (authHeader) {
+        requestHeaders.set("Authorization", authHeader);
+      }
+    } catch (error) {
+      console.warn("[attachments] Failed to generate upload auth header", {
+        fileName: file.name,
+        uploadUrl,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  const hasAuthorization = requestHeaders.has("Authorization");
+  debugLog("Upload auth evaluation complete", {
+    fileName: file.name,
+    hasAuthorization,
+  });
 
   let response: Response;
   try {
     response = await fetch(uploadUrl, {
       method: "POST",
+      headers: requestHeaders,
       body: formData,
     });
   } catch (error) {

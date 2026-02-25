@@ -6,6 +6,12 @@ import type { Channel, Person, Relay } from "@/types";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 
+vi.mock("@/lib/nostr/ndk-context", () => ({
+  useNDK: () => ({
+    createHttpAuthHeader: vi.fn(async () => null),
+  }),
+}));
+
 const relays: Relay[] = [
   { id: "demo", name: "Demo", icon: "D", isActive: true },
 ];

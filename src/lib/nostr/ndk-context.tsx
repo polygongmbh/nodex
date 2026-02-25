@@ -70,6 +70,7 @@ export interface NDKContextValue {
   
   // Event publishing
   publishEvent: (kind: NostrEventKind, content: string, tags?: string[][], parentId?: string, relayUrls?: string[]) => Promise<{ success: boolean; eventId?: string }>;
+  createHttpAuthHeader: (url: string, method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE") => Promise<string | null>;
   updateUserProfile: (profile: EditableNostrProfile) => Promise<boolean>;
   needsProfileSetup: boolean;
   isProfileSyncing: boolean;
@@ -93,6 +94,16 @@ type WindowWithNostr = Window & { nostr?: unknown };
 
 const hasNostrExtension = (): boolean =>
   typeof window !== "undefined" && Boolean((window as WindowWithNostr).nostr);
+
+function encodeBase64(value: string): string {
+  if (typeof btoa === "function") {
+    return btoa(value);
+  }
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(value, "utf8").toString("base64");
+  }
+  throw new Error("No base64 encoder available");
+}
 
 // NIP-05 verification helper
 async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
@@ -122,7 +133,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const defaultRelaysKey = useMemo(() => (defaultRelays || []).join(","), [defaultRelays]);
   const resolvedDefaultRelays = useMemo(
     () => defaultRelays || getConfiguredDefaultRelays(),
-    [defaultRelaysKey, defaultRelays]
+    [defaultRelays]
   );
   const [ndk, setNdk] = useState<NDK | null>(null);
   const [user, setUser] = useState<NostrUser | null>(null);
@@ -659,6 +670,40 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
   }, [ndk, relays, resolvedDefaultRelays]);
 
+  const createHttpAuthHeader = useCallback(async (
+    url: string,
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+  ): Promise<string | null> => {
+    if (!ndk || !ndk.signer) {
+      return null;
+    }
+
+    try {
+      const authEvent = new NDKEvent(ndk);
+      authEvent.kind = NostrEventKind.HttpAuth;
+      authEvent.content = "";
+      authEvent.tags = [
+        ["u", url],
+        ["method", method.toUpperCase()],
+      ];
+      await authEvent.sign();
+
+      const serialized = JSON.stringify({
+        id: authEvent.id,
+        pubkey: authEvent.pubkey,
+        created_at: authEvent.created_at,
+        kind: authEvent.kind,
+        tags: authEvent.tags,
+        content: authEvent.content,
+        sig: authEvent.sig,
+      });
+      return `Nostr ${encodeBase64(serialized)}`;
+    } catch (error) {
+      console.warn("Failed to create NIP-98 auth header", error);
+      return null;
+    }
+  }, [ndk]);
+
   const updateUserProfile = useCallback(async (profile: EditableNostrProfile): Promise<boolean> => {
     if (!hasRequiredProfileFields(profile)) {
       console.warn("Profile update rejected: missing required name");
@@ -832,6 +877,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     addRelay,
     removeRelay,
     publishEvent,
+    createHttpAuthHeader,
     updateUserProfile,
     needsProfileSetup,
     isProfileSyncing,
@@ -852,6 +898,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     addRelay,
     removeRelay,
     publishEvent,
+    createHttpAuthHeader,
     updateUserProfile,
     needsProfileSetup,
     isProfileSyncing,

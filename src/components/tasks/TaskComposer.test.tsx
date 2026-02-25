@@ -7,7 +7,7 @@ import { toast } from "sonner";
 let mockUser: { id: string } | null = { id: "me" };
 
 vi.mock("@/lib/nostr/ndk-context", () => ({
-  useNDK: () => ({ user: mockUser }),
+  useNDK: () => ({ user: mockUser, createHttpAuthHeader: vi.fn(async () => null) }),
 }));
 
 vi.mock("sonner", () => ({
