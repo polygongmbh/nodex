@@ -5,6 +5,8 @@ type ImageCaptionPipeline = (input: string, options?: Record<string, unknown>) =
 const TRANSFORMERS_ESM_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/+esm";
 const DEFAULT_CAPTION_MODEL_ID = "Xenova/vit-gpt2-image-captioning";
 const MAX_CAPTION_CHARS = 160;
+const MODEL_IMPORT_TIMEOUT_MS = 30000;
+const MODEL_INIT_TIMEOUT_MS = 120000;
 const CAPTION_INFERENCE_TIMEOUT_MS = 45000;
 
 let imageCaptionPipelinePromise: Promise<ImageCaptionPipeline | null> | null = null;
@@ -83,12 +85,30 @@ async function loadImageCaptionPipeline(): Promise<ImageCaptionPipeline | null> 
         modelId: getCaptionModelId(),
         source: "cdn-jsdelivr",
       });
-      const transformersModule = await import(/* @vite-ignore */ TRANSFORMERS_ESM_URL);
+      featureDebugLog("auto-caption", "Importing transformers runtime module", {
+        timeoutMs: MODEL_IMPORT_TIMEOUT_MS,
+      });
+      const transformersModule = await withTimeout(
+        import(/* @vite-ignore */ TRANSFORMERS_ESM_URL),
+        MODEL_IMPORT_TIMEOUT_MS,
+        "Local caption runtime import timed out"
+      );
+      featureDebugLog("auto-caption", "Transformers runtime imported", {
+        modelId: getCaptionModelId(),
+      });
       if (transformersModule?.env) {
         transformersModule.env.allowLocalModels = false;
         transformersModule.env.useBrowserCache = true;
       }
-      const pipeline = await transformersModule.pipeline("image-to-text", getCaptionModelId());
+      featureDebugLog("auto-caption", "Initializing caption pipeline", {
+        modelId: getCaptionModelId(),
+        timeoutMs: MODEL_INIT_TIMEOUT_MS,
+      });
+      const pipeline = await withTimeout(
+        transformersModule.pipeline("image-to-text", getCaptionModelId()),
+        MODEL_INIT_TIMEOUT_MS,
+        "Local caption model initialization timed out"
+      );
       featureDebugLog("auto-caption", "Local image caption model ready", {
         modelId: getCaptionModelId(),
       });
