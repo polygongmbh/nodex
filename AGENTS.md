@@ -105,7 +105,7 @@ structure:
 - Keep logs structured and minimal.
 - Never log secrets, private keys, tokens, or sensitive user data.
 - Prefer `console.warn`/`console.error` for actionable issues; avoid noisy debug logs in normal flows.
-- Every distinctly new user-facing feature must include opt-in debug logs (for example behind env/localStorage flags) so behavior can be diagnosed without adding ad-hoc instrumentation later.
+- Every distinctly new user-facing feature must include debug logs that are enabled by default in debug/dev builds (no manual DevTools/localStorage toggle required), while staying restricted in normal production builds unless explicitly enabled via build-time debug flags.
 - Use toasts for significant outcomes:
   - success toast for completed user actions
   - error toast for failures with clear next-step guidance where possible

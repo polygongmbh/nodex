@@ -1,15 +1,10 @@
 type FeatureDebugPayload = Record<string, unknown> | undefined;
 
+const IS_DEV = import.meta.env.DEV;
 const DEBUG_FEATURES_ENV = String(import.meta.env.VITE_DEBUG_FEATURES || "").toLowerCase() === "true";
 
 function shouldDebugFeatures(): boolean {
-  if (DEBUG_FEATURES_ENV) return true;
-  if (typeof window === "undefined") return false;
-  try {
-    return window.localStorage.getItem("nodex.debug.features") === "true";
-  } catch {
-    return false;
-  }
+  return IS_DEV || DEBUG_FEATURES_ENV;
 }
 
 export function featureDebugLog(scope: string, message: string, payload?: FeatureDebugPayload): void {
