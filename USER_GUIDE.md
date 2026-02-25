@@ -72,6 +72,7 @@
 
 ## Mobile Usage
 - The view navigation is at the top.
+- Top-bar view buttons switch directly between task views; they do not close/reopen Manage unless Manage is currently open.
 - Open *Manage* for feed, channel, people, profile, and guide controls.
 - *Open Guide* in *Manage* launches onboarding for signed-out users.
 - The bottom bar is a combined search/compose field:
