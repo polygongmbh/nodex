@@ -24,6 +24,12 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 vi.mock("./MobileNav", () => ({
   MobileNav: ({ onViewChange }: { onViewChange: (view: "tree" | "feed" | "list" | "calendar" | "filters") => void }) => (
     <div data-testid="mobile-nav">
+      <button onClick={() => onViewChange("feed")} aria-label="Switch to feed view">
+        Feed
+      </button>
+      <button onClick={() => onViewChange("tree")} aria-label="Switch to tree view">
+        Tree
+      </button>
       <button onClick={() => onViewChange("filters")} aria-label="Switch to Manage view">
         Manage
       </button>
@@ -444,6 +450,79 @@ describe("MobileLayout auth wiring", () => {
     await waitFor(() => {
       expect(onViewChange).toHaveBeenCalledWith("feed");
       expect(document.querySelector('[data-onboarding="mobile-filters"]')).not.toBeInTheDocument();
+    });
+  });
+
+  it("uses currentView as the source of truth for rendered mobile view", async () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = false;
+    const onViewChange = vi.fn();
+
+    const { rerender } = render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn
+        currentView="tree"
+        onViewChange={onViewChange}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+      />
+    );
+
+    expect(screen.getByTestId("task-tree")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /switch to feed view/i }));
+    expect(onViewChange).toHaveBeenCalledWith("feed");
+    expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
+
+    rerender(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn
+        currentView="feed"
+        onViewChange={onViewChange}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-view")).toBeInTheDocument();
     });
   });
 });

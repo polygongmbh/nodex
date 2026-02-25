@@ -147,12 +147,10 @@ export function MobileLayout({
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
-  const [mobileView, setMobileView] = useState<MobileViewType>(
-    isPrimaryMobileView(currentView) ? currentView : "tree"
-  );
   const previousSignedInRef = useRef(isSignedIn);
   const lastHandledGuideStepIdRef = useRef<string | null>(null);
   const { needsProfileSetup } = useNDK();
+  const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView) ? currentView : "tree";
 
   // Build default content from active channel filters
   const includedChannels = channels.filter(c => c.filterState === "included");
@@ -160,14 +158,12 @@ export function MobileLayout({
 
   const openManageView = useCallback(() => {
     setShowFilters(true);
-    setMobileView("filters");
     onManageRouteChange(true);
   }, [onManageRouteChange]);
 
   const closeManageView = useCallback((nextView?: ViewType) => {
     setShowFilters(false);
     if (nextView) {
-      setMobileView(nextView);
       onViewChange(nextView);
     }
     onManageRouteChange(false);
@@ -188,22 +184,22 @@ export function MobileLayout({
       closeManageView();
       return;
     }
-    const currentIndex = mobileViews.indexOf(mobileView);
+    const currentIndex = mobileViews.indexOf(activePrimaryView);
     if (currentIndex < mobileViews.length - 1) {
       const nextView = mobileViews[currentIndex + 1];
       handleMobileViewChange(nextView);
     }
-  }, [mobileView, showFilters, handleMobileViewChange, closeManageView]);
+  }, [activePrimaryView, showFilters, handleMobileViewChange, closeManageView]);
 
   const handleSwipeRight = useCallback(() => {
-    const currentIndex = mobileViews.indexOf(mobileView);
+    const currentIndex = mobileViews.indexOf(activePrimaryView);
     if (currentIndex > 0) {
       const prevView = mobileViews[currentIndex - 1];
       handleMobileViewChange(prevView);
     } else if (currentIndex === 0) {
       openManageView();
     }
-  }, [mobileView, handleMobileViewChange, openManageView]);
+  }, [activePrimaryView, handleMobileViewChange, openManageView]);
 
   // Swipe animation state
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
@@ -260,7 +256,7 @@ export function MobileLayout({
     onInteractionBlocked,
   };
 
-  const mobileCurrentView: MobileViewType = showFilters ? "filters" : mobileView;
+  const mobileCurrentView: MobileViewType = showFilters ? "filters" : activePrimaryView;
   const hasSearchQuery = searchQuery.trim().length > 0;
   const hasQuickFilterMatch = useMemo(() => {
     if (!hasSearchQuery) return true;
@@ -298,14 +294,8 @@ export function MobileLayout({
   }, [onNewTask, focusedTaskId]);
 
   useEffect(() => {
-    if (showFilters) return;
-    setMobileView(isPrimaryMobileView(currentView) ? currentView : "tree");
-  }, [currentView, showFilters]);
-
-  useEffect(() => {
     if (isManageRouteActive) {
       setShowFilters(true);
-      setMobileView("filters");
       return;
     }
     setShowFilters(false);
@@ -367,7 +357,7 @@ export function MobileLayout({
         />
       );
     }
-    switch (currentView) {
+    switch (activePrimaryView) {
       case "tree":
         return <TaskTree {...effectiveViewProps} isMobile />;
       case "feed":
@@ -410,7 +400,7 @@ export function MobileLayout({
               {t("tasks.empty.mobileQuickFilterFallback")}
             </div>
           )}
-          {!showFilters && focusedTaskId && currentView !== "list" && currentView !== "calendar" && (
+          {!showFilters && focusedTaskId && activePrimaryView !== "list" && activePrimaryView !== "calendar" && (
             <FocusedTaskBreadcrumb
               allTasks={allTasks}
               focusedTaskId={focusedTaskId}
@@ -435,9 +425,9 @@ export function MobileLayout({
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
           onSubmit={handleMobileSubmit}
-          currentView={currentView}
+          currentView={activePrimaryView}
           focusedTaskId={focusedTaskId}
-          selectedCalendarDate={currentView === "calendar" ? selectedCalendarDate : null}
+          selectedCalendarDate={activePrimaryView === "calendar" ? selectedCalendarDate : null}
           relays={relays}
           channels={channels}
           people={people}

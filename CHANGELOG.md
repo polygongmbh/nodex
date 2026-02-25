@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Mobile layout now uses route `currentView` as the single source of truth for tab/swipe rendering, fixing broken mobile view switching state mismatches.
 - Added receive-path parsing for Blossom/NIP-94-style attachment metadata tags, including hash-based metadata enrichment for Blossom content URLs and top-level `url` tag attachment extraction.
 - iOS composer attachment inputs now differentiate image vs file actions more clearly by routing the file button to a non-image file picker.
 
