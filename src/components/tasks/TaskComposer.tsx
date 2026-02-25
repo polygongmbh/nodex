@@ -380,6 +380,12 @@ export function TaskComposer({
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Upload failed";
+      console.warn("[composer] Attachment upload failed", {
+        fileName: file.name,
+        size: file.size,
+        mimeType: file.type || null,
+        error: message,
+      });
       setAttachments((previous) =>
         previous.map((attachment) =>
           attachment.id === id
@@ -1146,6 +1152,9 @@ export function TaskComposer({
                   </button>
                 </div>
               </div>
+              {attachment.status === "failed" && attachment.error && (
+                <p className="mt-1 text-[11px] text-destructive">{attachment.error}</p>
+              )}
               {attachment.status === "uploaded" && attachment.mimeType?.startsWith("image/") && (
                 <input
                   type="text"

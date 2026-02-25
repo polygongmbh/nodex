@@ -13,6 +13,26 @@ interface NIP96UploadResponse {
 }
 
 const DEFAULT_UPLOAD_URL = import.meta.env.VITE_NIP96_UPLOAD_URL as string | undefined;
+const DEBUG_ATTACHMENTS = String(import.meta.env.VITE_DEBUG_ATTACHMENTS || "").toLowerCase() === "true";
+
+function shouldDebugAttachmentUploads(): boolean {
+  if (DEBUG_ATTACHMENTS) return true;
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem("nodex.debug.attachments") === "true";
+  } catch {
+    return false;
+  }
+}
+
+function debugLog(message: string, payload?: Record<string, unknown>) {
+  if (!shouldDebugAttachmentUploads()) return;
+  if (payload) {
+    console.info("[attachments]", message, payload);
+    return;
+  }
+  console.info("[attachments]", message);
+}
 
 function parseNip94Tags(tags: string[][]): PublishedAttachment | null {
   const asImeta = ["imeta", ...tags.filter((tag) => tag.length >= 2).map((tag) => `${tag[0]} ${tag[1]}`)];
@@ -42,19 +62,53 @@ async function detectImageDimensions(file: File): Promise<string | undefined> {
 }
 
 export async function uploadAttachment(file: File, uploadUrl: string = DEFAULT_UPLOAD_URL || ""): Promise<PublishedAttachment> {
+  debugLog("Upload requested", {
+    fileName: file.name,
+    mimeType: file.type || null,
+    size: file.size,
+    configuredUploadUrl: uploadUrl || null,
+  });
+
   if (!uploadUrl) {
+    console.warn("[attachments] Upload aborted: missing VITE_NIP96_UPLOAD_URL", {
+      fileName: file.name,
+      size: file.size,
+    });
     throw new Error("Attachment upload URL is not configured (VITE_NIP96_UPLOAD_URL)");
   }
 
   const formData = new FormData();
   formData.append("file", file, file.name);
 
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    body: formData,
-  });
+  let response: Response;
+  try {
+    response = await fetch(uploadUrl, {
+      method: "POST",
+      body: formData,
+    });
+  } catch (error) {
+    console.error("[attachments] Upload request failed before response", {
+      fileName: file.name,
+      uploadUrl,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw new Error("Upload request failed (network/CORS)");
+  }
 
   if (!response.ok) {
+    let bodyPreview = "";
+    try {
+      bodyPreview = (await response.clone().text()).slice(0, 300);
+    } catch {
+      bodyPreview = "";
+    }
+    console.warn("[attachments] Upload endpoint responded with error", {
+      fileName: file.name,
+      uploadUrl,
+      status: response.status,
+      statusText: response.statusText,
+      bodyPreview,
+    });
     throw new Error(`Upload failed (${response.status})`);
   }
 
@@ -62,6 +116,11 @@ export async function uploadAttachment(file: File, uploadUrl: string = DEFAULT_U
   try {
     payload = (await response.json()) as NIP96UploadResponse;
   } catch {
+    console.warn("[attachments] Upload response JSON parsing failed", {
+      fileName: file.name,
+      uploadUrl,
+      contentType: response.headers.get("content-type"),
+    });
     throw new Error("Upload response was not valid JSON");
   }
 
@@ -81,6 +140,12 @@ export async function uploadAttachment(file: File, uploadUrl: string = DEFAULT_U
   }
 
   if (!attachment) {
+    console.warn("[attachments] Upload response missing attachment URL", {
+      fileName: file.name,
+      uploadUrl,
+      payloadStatus: payload.status || null,
+      payloadMessage: payload.message || null,
+    });
     throw new Error(payload.message || "Upload response did not include a file URL");
   }
 
@@ -99,6 +164,13 @@ export async function uploadAttachment(file: File, uploadUrl: string = DEFAULT_U
   if (!attachment.name) {
     attachment.name = file.name;
   }
+
+  debugLog("Upload succeeded", {
+    fileName: file.name,
+    resolvedUrl: attachment.url,
+    mimeType: attachment.mimeType || null,
+    size: attachment.size ?? null,
+  });
 
   return attachment;
 }
