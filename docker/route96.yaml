@@ -1,0 +1,19 @@
+# Route96 configuration template used by docker-compose.upload.yml.
+# Verify keys against the Route96 release you deploy.
+
+host: 0.0.0.0
+port: 8096
+
+# Public URL used in upload responses.
+# For local development this is typically http://localhost:8096
+public_url: http://localhost:8096
+
+# Storage path inside container.
+storage_path: /data
+
+# MySQL DSN for the companion route96-db service.
+# Update credentials if you change ROUTE96_DATABASE_* env vars.
+database_url: route96:route96@tcp(route96-db:3306)/route96
+
+# Start without auth in local dev; tighten for production.
+require_nip98_auth: false

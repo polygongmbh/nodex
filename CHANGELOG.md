@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - When depth mode is set to `Projects only` and no project containers match, Kanban/Table now fall back to showing all levels instead of an empty result.
 - Standalone embeddable URLs on their own line now render as embeds (replacing the raw URL text) without duplicate attachment chips, and task/comment content preserves multiline formatting with basic markdown rendering and tighter spacing around embeds.
 - Added image/file attachment controls in desktop and mobile composers with NIP-92 `imeta` publish tags, plus automatic inline rendering for direct image/file URLs in task content across views.
+- Switched default managed upload endpoint to `nostr.build`, passed `VITE_NIP96_UPLOAD_URL` into Docker build args, and added an optional `docker-compose.upload.yml` Route96 stack for self-hosted uploads.
 
 ## [1.12.2] - 2026-02-24
 Refined onboarding availability for signed-out users and unified compose/sign-in iconography.

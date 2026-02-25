@@ -44,8 +44,25 @@ Key env values:
 - `NOSTR_RELAY_PROTOCOL`: `ws` or `wss`.
 - `RNOSTR_WS_PORT`: websocket port exposed by `rnostr`.
 - `VITE_DEFAULT_RELAYS`: optional comma-separated relay URLs to include in addition to the domain-derived relay.
+- `VITE_NIP96_UPLOAD_URL`: NIP-96 upload endpoint used by attachment buttons.
 
 Nodex now derives default relays from env only (`VITE_DEFAULT_RELAYS` and/or `VITE_DEFAULT_RELAY_DOMAIN` + protocol/port), with no hardcoded relay URLs in source.
+
+## Attachment Upload Setup
+Nodex attachment uploads use a NIP-96-compatible HTTP endpoint.
+
+Public endpoint option:
+- `VITE_NIP96_UPLOAD_URL=https://nostr.build/api/v2/upload/files`
+- Some public providers may return `401` depending on policy/rate limits.
+
+Self-hosted option:
+- Use the included Route96 compose overlay:
+```sh
+docker compose -f docker-compose.yml -f docker-compose.upload.yml --profile upload up --build
+```
+- Default local upload URL:
+  - `VITE_NIP96_UPLOAD_URL=http://localhost:8096/api/v1/upload`
+- Route96 template config is in `docker/route96.yaml` and may require adjustments for your Route96 version/deployment policy.
 
 ## Tech Stack
 - Vite

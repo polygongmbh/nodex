@@ -15,6 +15,7 @@ services:
         VITE_DEFAULT_RELAY_DOMAIN: ${NOSTR_DOMAIN:-localhost}
         VITE_DEFAULT_RELAY_PROTOCOL: ${NOSTR_RELAY_PROTOCOL:-ws}
         VITE_DEFAULT_RELAY_PORT: ${RNOSTR_WS_PORT:-7447}
+        VITE_NIP96_UPLOAD_URL: ${VITE_NIP96_UPLOAD_URL:-}
     container_name: nodex-web
     restart: unless-stopped
     depends_on:
