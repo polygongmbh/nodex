@@ -34,7 +34,7 @@ import {
   isMetadataOnlyAutocompleteKey,
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
-import { uploadAttachment } from "@/lib/nostr/attachment-upload";
+import { isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -194,6 +194,7 @@ export function TaskComposer({
   const [isExpanded, setIsExpanded] = useState(
     () => !adaptiveSize || initialContent.trim().length > 0
   );
+  const uploadEnabled = isAttachmentUploadConfigured();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1382,24 +1383,28 @@ export function TaskComposer({
           >
             <AtSign className="w-4 h-4 text-primary" />
           </button>
-          <button
-            type="button"
-            onClick={() => imageInputRef.current?.click()}
-            className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-            aria-label="Add image attachment"
-            title="Add image attachment"
-          >
-            <ImagePlus className="w-4 h-4 text-primary" />
-          </button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-            aria-label="Add file attachment"
-            title="Add file attachment"
-          >
-            <Paperclip className="w-4 h-4 text-primary" />
-          </button>
+          {uploadEnabled && (
+            <>
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+                aria-label="Add image attachment"
+                title="Add image attachment"
+              >
+                <ImagePlus className="w-4 h-4 text-primary" />
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+                aria-label="Add file attachment"
+                title="Add file attachment"
+              >
+                <Paperclip className="w-4 h-4 text-primary" />
+              </button>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -1471,27 +1476,31 @@ export function TaskComposer({
         </div>
       </div>
       )}
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={(event) => {
-          queueSelectedFiles(event.target.files);
-          event.currentTarget.value = "";
-        }}
-      />
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={(event) => {
-          queueSelectedFiles(event.target.files);
-          event.currentTarget.value = "";
-        }}
-      />
+      {uploadEnabled && (
+        <>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              queueSelectedFiles(event.target.files);
+              event.currentTarget.value = "";
+            }}
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              queueSelectedFiles(event.target.files);
+              event.currentTarget.value = "";
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

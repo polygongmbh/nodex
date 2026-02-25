@@ -31,7 +31,7 @@ import {
   isMetadataOnlyAutocompleteKey,
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
-import { uploadAttachment } from "@/lib/nostr/attachment-upload";
+import { isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -141,6 +141,7 @@ export function UnifiedBottomBar({
   });
   const [showSendOptions, setShowSendOptions] = useState(false);
   const [isSendLaunching, setIsSendLaunching] = useState(false);
+  const uploadEnabled = isAttachmentUploadConfigured();
   const canOfferComment = currentView === "feed" || currentView === "tree";
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
@@ -1217,26 +1218,28 @@ export function UnifiedBottomBar({
               )}
             </div>
             <div className="flex h-full items-stretch gap-1.5">
-              <div className="flex flex-col gap-1">
-                <button
-                  type="button"
-                  onClick={() => imageInputRef.current?.click()}
-                  className="h-[1.55rem] w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-                  aria-label="Add image attachment"
-                  title="Add image attachment"
-                >
-                  <ImagePlus className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-[1.55rem] w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-                  aria-label="Add file attachment"
-                  title="Add file attachment"
-                >
-                  <Paperclip className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              {uploadEnabled && (
+                <div className="flex flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    className="h-[1.55rem] w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                    aria-label="Add image attachment"
+                    title="Add image attachment"
+                  >
+                    <ImagePlus className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-[1.55rem] w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                    aria-label="Add file attachment"
+                    title="Add file attachment"
+                  >
+                    <Paperclip className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
               <div className="relative">
                 <button
                   onClick={handlePrimarySend}
@@ -1296,27 +1299,31 @@ export function UnifiedBottomBar({
           </div>
         </div>
       </div>
-      <input
-        ref={imageInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={(event) => {
-          queueSelectedFiles(event.target.files);
-          event.currentTarget.value = "";
-        }}
-      />
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        className="hidden"
-        onChange={(event) => {
-          queueSelectedFiles(event.target.files);
-          event.currentTarget.value = "";
-        }}
-      />
+      {uploadEnabled && (
+        <>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              queueSelectedFiles(event.target.files);
+              event.currentTarget.value = "";
+            }}
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              queueSelectedFiles(event.target.files);
+              event.currentTarget.value = "";
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

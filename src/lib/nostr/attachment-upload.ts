@@ -15,6 +15,10 @@ interface NIP96UploadResponse {
 const DEFAULT_UPLOAD_URL = import.meta.env.VITE_NIP96_UPLOAD_URL as string | undefined;
 const DEBUG_ATTACHMENTS = String(import.meta.env.VITE_DEBUG_ATTACHMENTS || "").toLowerCase() === "true";
 
+export function isAttachmentUploadConfigured(uploadUrl: string = DEFAULT_UPLOAD_URL || ""): boolean {
+  return uploadUrl.trim().length > 0;
+}
+
 function shouldDebugAttachmentUploads(): boolean {
   if (DEBUG_ATTACHMENTS) return true;
   if (typeof window === "undefined") return false;
@@ -69,7 +73,7 @@ export async function uploadAttachment(file: File, uploadUrl: string = DEFAULT_U
     configuredUploadUrl: uploadUrl || null,
   });
 
-  if (!uploadUrl) {
+  if (!isAttachmentUploadConfigured(uploadUrl)) {
     console.warn("[attachments] Upload aborted: missing VITE_NIP96_UPLOAD_URL", {
       fileName: file.name,
       size: file.size,
