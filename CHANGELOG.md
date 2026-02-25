@@ -5,23 +5,23 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Local image auto-captioning now uses explicit capability gating, configurable init/inference timeouts, and one-time failure guidance so unsupported or slow devices fail fast while keeping manual alt-text entry available.
-- Non-profile behavior toggles (live presence, undo-send delay, and local auto-caption) were moved out of profile identity editors into app-preferences controls in desktop user menu and mobile Manage.
+- Local image auto-caption now checks device capability up front, times out more cleanly on slow/unsupported devices, and keeps manual alt-text entry available when auto-caption is unavailable.
+- App behavior toggles (live presence, undo-send delay, and local auto-caption) were moved from profile identity editing into app preferences in the desktop user menu and mobile Manage.
 
 ## [1.14.0] - 2026-02-25
 Added local image captioning support and an in-app changelog viewer, while improving relay status reliability.
-- Profile settings now include an opt-in toggle for local tiny-model image caption inference, with a one-time model download data-usage hint.
-- Clicking the in-app version label now opens a prettified changelog dialog with release summaries and grouped change bullets parsed from `CHANGELOG.md`.
-- Relay UI status now periodically reconciles with live NDK pool connection states to avoid stale `disconnected` indicators that could block posting until reload.
-- Opted-in image attachments now run on-device caption inference and auto-fill alt text when local model inference succeeds.
+- Added an opt-in profile setting for local on-device image captions, including a one-time model download data-usage hint.
+- Clicking the in-app version label now opens a formatted changelog dialog with release summaries and grouped bullets.
+- Improved relay connection status reliability so feeds are less likely to appear disconnected until a page reload.
+- When enabled, image attachments can now auto-fill alt text from on-device caption inference.
 
 ## [1.13.1] - 2026-02-25
-- Mobile layout now uses route `currentView` as the single source of truth for tab/swipe rendering, and top-bar view switching no longer gets overridden by manage-route closes.
-- Added receive-path parsing for Blossom/NIP-94-style attachment metadata tags, including hash-based metadata enrichment for Blossom content URLs and top-level `url` tag attachment extraction.
-- Updated app shell viewport sizing to use dynamic viewport units (`dvh/svh`) with safe-area bottom handling to reduce iOS Safari floating URL bar overflow/scrollbar issues.
-- Composer now uses a single `Attach` action across platforms and enforces a client-side per-file upload limit (default 100 MB, configurable via `VITE_NIP96_MAX_UPLOAD_BYTES`).
-- Mobile composer state (including attachment chips) now persists when opening and closing Manage view.
-- Tree view now only offers comment posting when a parent task is focused, so comments are posted into a visible context.
+- Fixed mobile tab/swipe view syncing so top-bar switches stay consistent when opening and closing Manage.
+- Improved incoming Blossom/NIP-94 attachment handling, including hash-metadata matching for Blossom URLs.
+- Reduced iOS Safari extra-scroll issues by using dynamic viewport sizing with safe-area handling.
+- Unified composer attachments into a single `Attach` action and added a client-side per-file upload limit (default 100 MB, configurable).
+- Mobile composer draft state (including attachment chips) now persists when toggling Manage.
+- Tree view now only allows comment posting when a parent task is focused.
 
 ## [1.13.0] - 2026-02-25
 Expanded attachment publishing and embed behavior, with managed/self-hosted upload options and NIP-98 auth for protected NIP-96 servers.
