@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { uploadAttachment } from "./attachment-upload";
+import { getAttachmentMaxFileSizeBytes, uploadAttachment } from "./attachment-upload";
 
 if (typeof File !== "undefined" && typeof File.prototype.arrayBuffer !== "function") {
   Object.defineProperty(File.prototype, "arrayBuffer", {
@@ -117,5 +117,24 @@ describe("uploadAttachment NIP-98 integration", () => {
     });
 
     expect(uploaded.url).toBe("https://cdn.example.com/from-data.pdf");
+  });
+
+  it("rejects files that exceed configured maximum upload size", async () => {
+    (import.meta.env as Record<string, string>).VITE_NIP96_MAX_UPLOAD_BYTES = "10";
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const file = new File(["hello world"], "too-big.txt", { type: "text/plain" });
+
+    await expect(
+      uploadAttachment(file, {
+        uploadUrl: "https://upload.example.com/api/v1/upload",
+      })
+    ).rejects.toThrow("File exceeds maximum upload size of 1 MB");
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("defaults to a 100 MB max upload size when env is unset", () => {
+    delete (import.meta.env as Record<string, string>).VITE_NIP96_MAX_UPLOAD_BYTES;
+    expect(getAttachmentMaxFileSizeBytes()).toBe(100 * 1024 * 1024);
   });
 });

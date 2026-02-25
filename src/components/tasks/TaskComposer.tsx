@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Hash, Calendar, Clock, X, AtSign, Flag, CheckSquare, MessageSquare, LogIn, ImagePlus, Paperclip } from "lucide-react";
+import { Hash, Calendar, Clock, X, AtSign, Flag, CheckSquare, MessageSquare, LogIn, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -34,8 +34,7 @@ import {
   isMetadataOnlyAutocompleteKey,
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
-import { isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
-import { getAttachmentPickerMode, NON_IMAGE_ATTACHMENT_ACCEPT } from "@/lib/attachment-file-picker";
+import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -196,11 +195,8 @@ export function TaskComposer({
     () => !adaptiveSize || initialContent.trim().length > 0
   );
   const uploadEnabled = isAttachmentUploadConfigured();
-  const attachmentPickerMode = getAttachmentPickerMode();
-  const showSeparateAttachmentButtons = attachmentPickerMode === "separate";
-  const fileAttachmentAccept = showSeparateAttachmentButtons ? NON_IMAGE_ATTACHMENT_ACCEPT : undefined;
+  const attachmentMaxFileSizeBytes = getAttachmentMaxFileSizeBytes();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachmentFileRef = useRef<Record<string, File>>({});
   const sendLaunchTimeoutRef = useRef<number | null>(null);
@@ -410,8 +406,17 @@ export function TaskComposer({
   const queueSelectedFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
+    const selectedFiles = Array.from(files);
+    const validFiles = selectedFiles.filter((file) => {
+      if (file.size <= attachmentMaxFileSizeBytes) return true;
+      const maxSizeMb = Math.max(1, Math.ceil(attachmentMaxFileSizeBytes / (1024 * 1024)));
+      toast.error(`Attachment "${file.name}" exceeds the ${maxSizeMb} MB limit.`);
+      return false;
+    });
+    if (validFiles.length === 0) return;
+
     const now = Date.now().toString(36);
-    const nextEntries: ComposeAttachment[] = Array.from(files).map((file, index) => {
+    const nextEntries: ComposeAttachment[] = validFiles.map((file, index) => {
       const id = `file-${now}-${index}-${Math.random().toString(36).slice(2, 8)}`;
       attachmentFileRef.current[id] = file;
       return {
@@ -1391,23 +1396,12 @@ export function TaskComposer({
           </button>
           {uploadEnabled && (
             <>
-              {showSeparateAttachmentButtons && (
-                <button
-                  type="button"
-                  onClick={() => imageInputRef.current?.click()}
-                  className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-                  aria-label="Add image attachment"
-                  title="Add image attachment"
-                >
-                  <ImagePlus className="w-4 h-4 text-primary" />
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-                aria-label={showSeparateAttachmentButtons ? "Add file attachment" : "Add attachment"}
-                title={showSeparateAttachmentButtons ? "Add file attachment" : "Add attachment"}
+                aria-label="Add attachment"
+                title="Add attachment"
               >
                 <Paperclip className="w-4 h-4 text-primary" />
               </button>
@@ -1486,23 +1480,9 @@ export function TaskComposer({
       )}
       {uploadEnabled && (
         <>
-          {showSeparateAttachmentButtons && (
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(event) => {
-                queueSelectedFiles(event.target.files);
-                event.currentTarget.value = "";
-              }}
-            />
-          )}
           <input
             ref={fileInputRef}
             type="file"
-            accept={fileAttachmentAccept}
             multiple
             className="hidden"
             onChange={(event) => {

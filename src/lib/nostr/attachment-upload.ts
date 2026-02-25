@@ -22,10 +22,17 @@ interface NIP96UploadResponse {
 
 const DEFAULT_UPLOAD_URL = import.meta.env.VITE_NIP96_UPLOAD_URL as string | undefined;
 const DEBUG_ATTACHMENTS = String(import.meta.env.VITE_DEBUG_ATTACHMENTS || "").toLowerCase() === "true";
+const DEFAULT_MAX_ATTACHMENT_SIZE_BYTES = 100 * 1024 * 1024;
 
 export interface UploadAttachmentOptions {
   uploadUrl?: string;
   getAuthHeader?: (url: string, method: "POST") => Promise<string | null> | string | null;
+}
+
+export function getAttachmentMaxFileSizeBytes(): number {
+  const raw = Number(import.meta.env.VITE_NIP96_MAX_UPLOAD_BYTES);
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return DEFAULT_MAX_ATTACHMENT_SIZE_BYTES;
 }
 
 export function isAttachmentUploadConfigured(uploadUrl: string = DEFAULT_UPLOAD_URL || ""): boolean {
@@ -146,12 +153,19 @@ export async function uploadAttachment(
     ? { uploadUrl: optionsOrUploadUrl }
     : optionsOrUploadUrl;
   const uploadUrl = (options.uploadUrl ?? DEFAULT_UPLOAD_URL ?? "").trim();
+  const maxFileSizeBytes = getAttachmentMaxFileSizeBytes();
   debugLog("Upload requested", {
     fileName: file.name,
     mimeType: file.type || null,
     size: file.size,
     configuredUploadUrl: uploadUrl || null,
+    maxFileSizeBytes,
   });
+
+  if (file.size > maxFileSizeBytes) {
+    const maxSizeMb = Math.max(1, Math.ceil(maxFileSizeBytes / (1024 * 1024)));
+    throw new Error(`File exceeds maximum upload size of ${maxSizeMb} MB`);
+  }
 
   if (!isAttachmentUploadConfigured(uploadUrl)) {
     console.warn("[attachments] Upload aborted: missing VITE_NIP96_UPLOAD_URL", {
