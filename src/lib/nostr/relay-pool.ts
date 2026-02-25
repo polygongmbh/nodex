@@ -42,8 +42,11 @@ interface RelaySocket {
   ws: WebSocket | null;
   status: RelayStatus;
   reconnectAttempts: number;
+  connectedAt?: number;
   reconnectTimeout?: ReturnType<typeof setTimeout>;
 }
+
+const STABLE_CONNECTION_RESET_MS = 30_000;
 
 export class NostrRelayPool {
   private relays: Map<string, RelaySocket> = new Map();
@@ -106,7 +109,7 @@ export class NostrRelayPool {
       ws.onopen = () => {
         clearTimeout(connectionTimeout);
         relaySocket.status = "connected";
-        relaySocket.reconnectAttempts = 0;
+        relaySocket.connectedAt = Date.now();
         relaySocket.reconnectTimeout = undefined;
         this.events.onConnect?.(url);
 
@@ -120,6 +123,7 @@ export class NostrRelayPool {
 
       ws.onclose = () => {
         clearTimeout(connectionTimeout);
+        this.maybeResetReconnectAttempts(relaySocket);
         relaySocket.status = "disconnected";
         this.events.onDisconnect?.(url);
         this.scheduleReconnect(url);
@@ -381,6 +385,7 @@ export class NostrRelayPool {
   private handleError(url: string, error: string): void {
     const relay = this.relays.get(url);
     if (relay) {
+      this.maybeResetReconnectAttempts(relay);
       relay.status = "error";
     }
     this.events.onError?.(url, error);
@@ -414,6 +419,15 @@ export class NostrRelayPool {
       curr = next;
     }
     return curr;
+  }
+
+  private maybeResetReconnectAttempts(relay: RelaySocket): void {
+    const connectedAt = relay.connectedAt;
+    relay.connectedAt = undefined;
+    if (typeof connectedAt !== "number") return;
+    if (Date.now() - connectedAt >= STABLE_CONNECTION_RESET_MS) {
+      relay.reconnectAttempts = 0;
+    }
   }
 }
 
