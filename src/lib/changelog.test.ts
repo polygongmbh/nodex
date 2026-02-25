@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseChangelog } from "./changelog";
+import { getDisplayableChangelog, parseChangelog } from "./changelog";
 
 describe("parseChangelog", () => {
   it("parses releases, summaries, sections, and bullets", () => {
@@ -33,5 +33,18 @@ Release summary line.
         { title: "Fixed", items: ["Third"] },
       ],
     });
+  });
+
+  it("omits empty Unreleased from display list", () => {
+    const parsed = parseChangelog(`
+# Changelog
+
+## [Unreleased]
+
+## [1.2.3] - 2026-02-25
+- Shipped
+`);
+
+    expect(getDisplayableChangelog(parsed).map((release) => release.version)).toEqual(["1.2.3"]);
   });
 });

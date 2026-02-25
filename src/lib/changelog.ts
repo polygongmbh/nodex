@@ -78,4 +78,16 @@ export function parseChangelog(markdown: string): ChangelogRelease[] {
   }));
 }
 
-export const APP_CHANGELOG = parseChangelog(changelogRaw);
+function releaseHasVisibleContent(release: ChangelogRelease): boolean {
+  if (release.summary?.trim()) return true;
+  return release.sections.some((section) => section.items.length > 0);
+}
+
+export function getDisplayableChangelog(releases: ChangelogRelease[]): ChangelogRelease[] {
+  return releases.filter((release) => {
+    if (release.version.toLowerCase() !== "unreleased") return true;
+    return releaseHasVisibleContent(release);
+  });
+}
+
+export const APP_CHANGELOG = getDisplayableChangelog(parseChangelog(changelogRaw));
