@@ -17,6 +17,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   extractMentionIdentifiersFromContent,
@@ -37,7 +38,7 @@ import {
 import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
 import { loadAutoCaptionEnabled } from "@/lib/auto-caption-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
-import { generateLocalImageCaption } from "@/lib/local-image-caption";
+import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -390,11 +391,14 @@ export function TaskComposer({
           fileName: file.name,
         });
         void (async () => {
-          const caption = await generateLocalImageCaption(file);
-          if (!caption) {
+          const result = await generateLocalImageCaption(file);
+          if (!result.caption) {
+            notifyAutoCaptionFailureOnce(result);
             featureDebugLog("auto-caption", "No caption generated for uploaded image attachment", {
               attachmentId: id,
               fileName: file.name,
+              status: result.status,
+              reason: result.reason || result.error || null,
             });
             return;
           }
@@ -403,7 +407,7 @@ export function TaskComposer({
               attachment.id === id && !attachment.alt
                 ? {
                     ...attachment,
-                    alt: caption,
+                    alt: result.caption!,
                   }
                 : attachment
             )

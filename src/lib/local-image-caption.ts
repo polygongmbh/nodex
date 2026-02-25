@@ -1,15 +1,137 @@
 import { featureDebugLog } from "@/lib/feature-debug";
+import { toast } from "sonner";
 
 type ImageCaptionPipeline = (input: string, options?: Record<string, unknown>) => Promise<unknown>;
+type LocalCaptionPhase = "runtime-import" | "model-init" | "inference";
 
 const TRANSFORMERS_ESM_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/+esm";
 const DEFAULT_CAPTION_MODEL_ID = "Xenova/vit-gpt2-image-captioning";
 const MAX_CAPTION_CHARS = 160;
 const MODEL_IMPORT_TIMEOUT_MS = 30000;
-const MODEL_INIT_TIMEOUT_MS = 120000;
-const CAPTION_INFERENCE_TIMEOUT_MS = 45000;
+const DEFAULT_MODEL_INIT_TIMEOUT_MS = 25000;
+const DEFAULT_CAPTION_INFERENCE_TIMEOUT_MS = 20000;
 
-let imageCaptionPipelinePromise: Promise<ImageCaptionPipeline | null> | null = null;
+let imageCaptionPipelinePromise: Promise<ImageCaptionPipeline> | null = null;
+let cachedInitializationFailure: { status: LocalImageCaptionStatus; error: string } | null = null;
+const notifiedFailureKeys = new Set<string>();
+
+const DEFAULT_EXPERIMENTAL_ENABLED = true;
+const DEFAULT_REQUIRE_WEBGPU = false;
+
+export type LocalImageCaptionStatus =
+  | "unsupported"
+  | "initialization_timeout"
+  | "initialization_error"
+  | "inference_timeout"
+  | "inference_error"
+  | "success"
+  | "empty_result";
+
+export interface LocalImageCaptionResult {
+  status: LocalImageCaptionStatus;
+  caption: string | null;
+  reason?: string;
+  error?: string;
+}
+
+export interface LocalCaptionPolicy {
+  experimentalEnabled: boolean;
+  requireWebGpu: boolean;
+  modelInitTimeoutMs: number;
+  inferenceTimeoutMs: number;
+}
+
+interface LocalCaptionCapabilities {
+  hasWindow: boolean;
+  hasFileReader: boolean;
+  hasWebAssembly: boolean;
+  hasWebGpu: boolean;
+  isSecureContext: boolean;
+}
+
+class LocalCaptionTimeoutError extends Error {
+  readonly phase: LocalCaptionPhase;
+
+  constructor(message: string, phase: LocalCaptionPhase) {
+    super(message);
+    this.name = "LocalCaptionTimeoutError";
+    this.phase = phase;
+  }
+}
+
+function parseBooleanFlag(value: unknown, fallback: boolean): boolean {
+  if (typeof value !== "string") return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (["true", "1", "yes", "on"].includes(normalized)) return true;
+  if (["false", "0", "no", "off"].includes(normalized)) return false;
+  return fallback;
+}
+
+function parsePositiveInt(value: unknown, fallback: number): number {
+  if (typeof value !== "string" || !value.trim()) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
+export function resolveLocalCaptionPolicy(env: Record<string, unknown> = import.meta.env): LocalCaptionPolicy {
+  return {
+    experimentalEnabled: parseBooleanFlag(env.VITE_LOCAL_CAPTION_EXPERIMENTAL, DEFAULT_EXPERIMENTAL_ENABLED),
+    requireWebGpu: parseBooleanFlag(env.VITE_LOCAL_CAPTION_REQUIRE_WEBGPU, DEFAULT_REQUIRE_WEBGPU),
+    modelInitTimeoutMs: parsePositiveInt(env.VITE_LOCAL_CAPTION_INIT_TIMEOUT_MS, DEFAULT_MODEL_INIT_TIMEOUT_MS),
+    inferenceTimeoutMs: parsePositiveInt(env.VITE_LOCAL_CAPTION_INFER_TIMEOUT_MS, DEFAULT_CAPTION_INFERENCE_TIMEOUT_MS),
+  };
+}
+
+function detectLocalCaptionCapabilities(): LocalCaptionCapabilities {
+  const hasWindow = typeof window !== "undefined";
+  const hasNavigator = typeof navigator !== "undefined";
+  const secureContext = hasWindow ? window.isSecureContext : false;
+  return {
+    hasWindow,
+    hasFileReader: hasWindow && typeof window.FileReader !== "undefined",
+    hasWebAssembly: hasWindow && typeof window.WebAssembly !== "undefined",
+    hasWebGpu: hasNavigator && "gpu" in navigator,
+    isSecureContext: secureContext,
+  };
+}
+
+export function resolveLocalCaptionSupport(
+  policy: LocalCaptionPolicy,
+  capabilities: LocalCaptionCapabilities
+): { supported: boolean; reason: string | null } {
+  if (!policy.experimentalEnabled) return { supported: false, reason: "experimental_disabled" };
+  if (!capabilities.hasWindow) return { supported: false, reason: "non_browser" };
+  if (!capabilities.hasWebAssembly) return { supported: false, reason: "webassembly_unavailable" };
+  if (!capabilities.hasFileReader) return { supported: false, reason: "filereader_unavailable" };
+  if (!capabilities.isSecureContext) return { supported: false, reason: "insecure_context" };
+  if (policy.requireWebGpu && !capabilities.hasWebGpu) return { supported: false, reason: "webgpu_required" };
+  return { supported: true, reason: null };
+}
+
+function mapInferenceFailureMessage(result: LocalImageCaptionResult): string | null {
+  switch (result.status) {
+    case "unsupported":
+      return "Auto-caption is experimental and unsupported in this browser/device.";
+    case "initialization_timeout":
+    case "inference_timeout":
+      return "Caption generation timed out. You can still enter alt text manually.";
+    case "initialization_error":
+    case "inference_error":
+      return "Caption generation failed on this device. You can still enter alt text manually.";
+    default:
+      return null;
+  }
+}
+
+export function notifyAutoCaptionFailureOnce(result: LocalImageCaptionResult): void {
+  const message = mapInferenceFailureMessage(result);
+  if (!message) return;
+  const dedupeKey = `${result.status}:${result.reason || result.error || "unknown"}`;
+  if (notifiedFailureKeys.has(dedupeKey)) return;
+  notifiedFailureKeys.add(dedupeKey);
+  toast.warning(message);
+}
 
 function getCaptionModelId(): string {
   const configured = String(import.meta.env.VITE_LOCAL_CAPTION_MODEL_ID || "").trim();
@@ -62,10 +184,15 @@ async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string,
+  phase: LocalCaptionPhase
+): Promise<T> {
   let timeoutId: number | undefined;
   const timeoutPromise = new Promise<T>((_, reject) => {
-    timeoutId = window.setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+    timeoutId = window.setTimeout(() => reject(new LocalCaptionTimeoutError(timeoutMessage, phase)), timeoutMs);
   });
   try {
     return await Promise.race([promise, timeoutPromise]);
@@ -76,66 +203,121 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMes
   }
 }
 
-async function loadImageCaptionPipeline(): Promise<ImageCaptionPipeline | null> {
-  if (imageCaptionPipelinePromise) return imageCaptionPipelinePromise;
-
-  imageCaptionPipelinePromise = (async () => {
-    try {
-      featureDebugLog("auto-caption", "Loading local image caption model", {
-        modelId: getCaptionModelId(),
-        source: "cdn-jsdelivr",
-      });
-      featureDebugLog("auto-caption", "Importing transformers runtime module", {
-        timeoutMs: MODEL_IMPORT_TIMEOUT_MS,
-      });
-      const transformersModule = await withTimeout(
-        import(/* @vite-ignore */ TRANSFORMERS_ESM_URL),
-        MODEL_IMPORT_TIMEOUT_MS,
-        "Local caption runtime import timed out"
-      );
-      featureDebugLog("auto-caption", "Transformers runtime imported", {
-        modelId: getCaptionModelId(),
-      });
-      if (transformersModule?.env) {
-        transformersModule.env.allowLocalModels = false;
-        transformersModule.env.useBrowserCache = true;
-      }
-      featureDebugLog("auto-caption", "Initializing caption pipeline", {
-        modelId: getCaptionModelId(),
-        timeoutMs: MODEL_INIT_TIMEOUT_MS,
-      });
-      const pipeline = await withTimeout(
-        transformersModule.pipeline("image-to-text", getCaptionModelId()),
-        MODEL_INIT_TIMEOUT_MS,
-        "Local caption model initialization timed out"
-      );
-      featureDebugLog("auto-caption", "Local image caption model ready", {
-        modelId: getCaptionModelId(),
-      });
-      return pipeline as ImageCaptionPipeline;
-    } catch (error) {
-      console.warn("[auto-caption] Local image caption model failed to initialize", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      featureDebugLog("auto-caption", "Local model initialization failed", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return null;
-    }
-  })();
-
-  return imageCaptionPipelinePromise;
+function classifyInitializationFailure(error: unknown): { status: LocalImageCaptionStatus; message: string } {
+  if (error instanceof LocalCaptionTimeoutError) {
+    return { status: "initialization_timeout", message: error.message };
+  }
+  if (error instanceof Error) {
+    return { status: "initialization_error", message: error.message };
+  }
+  return { status: "initialization_error", message: String(error) };
 }
 
-export async function generateLocalImageCaption(file: File): Promise<string | null> {
-  if (!file.type.startsWith("image/")) return null;
+function classifyInferenceFailure(error: unknown): { status: LocalImageCaptionStatus; message: string } {
+  if (error instanceof LocalCaptionTimeoutError) {
+    return { status: "inference_timeout", message: error.message };
+  }
+  if (error instanceof Error) {
+    return { status: "inference_error", message: error.message };
+  }
+  return { status: "inference_error", message: String(error) };
+}
+
+async function loadImageCaptionPipeline(policy: LocalCaptionPolicy): Promise<ImageCaptionPipeline | null> {
+  if (imageCaptionPipelinePromise) return imageCaptionPipelinePromise;
+  if (cachedInitializationFailure) return null;
+
+  imageCaptionPipelinePromise = (async () => {
+    featureDebugLog("auto-caption", "Loading local image caption model", {
+      modelId: getCaptionModelId(),
+      source: "cdn-jsdelivr",
+      initTimeoutMs: policy.modelInitTimeoutMs,
+    });
+    featureDebugLog("auto-caption", "Importing transformers runtime module", {
+      timeoutMs: MODEL_IMPORT_TIMEOUT_MS,
+    });
+    const transformersModule = await withTimeout(
+      import(/* @vite-ignore */ TRANSFORMERS_ESM_URL),
+      MODEL_IMPORT_TIMEOUT_MS,
+      "Local caption runtime import timed out",
+      "runtime-import"
+    );
+    featureDebugLog("auto-caption", "Transformers runtime imported", {
+      modelId: getCaptionModelId(),
+    });
+    if (transformersModule?.env) {
+      transformersModule.env.allowLocalModels = false;
+      transformersModule.env.useBrowserCache = true;
+    }
+    featureDebugLog("auto-caption", "Initializing caption pipeline", {
+      modelId: getCaptionModelId(),
+      timeoutMs: policy.modelInitTimeoutMs,
+    });
+    const pipeline = await withTimeout(
+      transformersModule.pipeline("image-to-text", getCaptionModelId()),
+      policy.modelInitTimeoutMs,
+      "Local caption model initialization timed out",
+      "model-init"
+    );
+    featureDebugLog("auto-caption", "Local image caption model ready", {
+      modelId: getCaptionModelId(),
+    });
+    return pipeline as ImageCaptionPipeline;
+  })();
+
+  try {
+    return await imageCaptionPipelinePromise;
+  } catch (error) {
+    const classification = classifyInitializationFailure(error);
+    cachedInitializationFailure = {
+      status: classification.status,
+      error: classification.message,
+    };
+    imageCaptionPipelinePromise = null;
+    console.warn("[auto-caption] Local image caption model failed to initialize", {
+      error: classification.message,
+      status: classification.status,
+    });
+    featureDebugLog("auto-caption", "Local model initialization failed", {
+      error: classification.message,
+      status: classification.status,
+    });
+    return null;
+  }
+}
+
+export async function generateLocalImageCaption(file: File): Promise<LocalImageCaptionResult> {
+  if (!file.type.startsWith("image/")) return { status: "empty_result", caption: null };
+  const policy = resolveLocalCaptionPolicy();
+  const capabilities = detectLocalCaptionCapabilities();
+  const support = resolveLocalCaptionSupport(policy, capabilities);
+  if (!support.supported) {
+    featureDebugLog("auto-caption", "Local caption inference skipped by capability gate", {
+      reason: support.reason,
+      policy,
+      capabilities,
+    });
+    return { status: "unsupported", caption: null, reason: support.reason || undefined };
+  }
+
   featureDebugLog("auto-caption", "Starting local caption inference", {
     fileName: file.name,
     size: file.size,
     mimeType: file.type || null,
+    policy,
   });
-  const pipeline = await loadImageCaptionPipeline();
-  if (!pipeline) return null;
+  const pipeline = await loadImageCaptionPipeline(policy);
+  if (!pipeline) {
+    const initializationFailure = cachedInitializationFailure;
+    if (initializationFailure) {
+      return {
+        status: initializationFailure.status,
+        caption: null,
+        error: initializationFailure.error,
+      };
+    }
+    return { status: "initialization_error", caption: null, error: "Caption pipeline unavailable" };
+  }
 
   try {
     const dataUrl = await fileToDataUrl(file);
@@ -145,14 +327,15 @@ export async function generateLocalImageCaption(file: File): Promise<string | nu
     });
     featureDebugLog("auto-caption", "Invoking caption pipeline", {
       fileName: file.name,
-      timeoutMs: CAPTION_INFERENCE_TIMEOUT_MS,
+      timeoutMs: policy.inferenceTimeoutMs,
     });
     const result = await withTimeout(
       pipeline(dataUrl, {
         max_new_tokens: 24,
       }),
-      CAPTION_INFERENCE_TIMEOUT_MS,
-      "Local caption inference timed out"
+      policy.inferenceTimeoutMs,
+      "Local caption inference timed out",
+      "inference"
     );
     const caption = extractCaptionFromInference(result);
     if (!caption) {
@@ -160,23 +343,31 @@ export async function generateLocalImageCaption(file: File): Promise<string | nu
         fileName: file.name,
         resultType: Array.isArray(result) ? "array" : typeof result,
       });
+      return { status: "empty_result", caption: null };
     }
     featureDebugLog("auto-caption", "Local inference completed", {
       fileName: file.name,
       generated: Boolean(caption),
     });
-    return caption;
+    return { status: "success", caption };
   } catch (error) {
+    const classification = classifyInferenceFailure(error);
     console.warn("[auto-caption] Local image caption inference failed", {
       fileName: file.name,
       size: file.size,
       mimeType: file.type || null,
-      error: error instanceof Error ? error.message : String(error),
+      error: classification.message,
+      status: classification.status,
     });
     featureDebugLog("auto-caption", "Local inference failed", {
       fileName: file.name,
-      error: error instanceof Error ? error.message : String(error),
+      error: classification.message,
+      status: classification.status,
     });
-    return null;
+    return {
+      status: classification.status,
+      caption: null,
+      error: classification.message,
+    };
   }
 }

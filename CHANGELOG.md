@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Local image auto-captioning now uses explicit capability gating, configurable init/inference timeouts, and one-time failure guidance so unsupported or slow devices fail fast while keeping manual alt-text entry available.
+- Non-profile behavior toggles (live presence, undo-send delay, and local auto-caption) were moved out of profile identity editors into app-preferences controls in desktop user menu and mobile Manage.
 
 ## [1.14.0] - 2026-02-25
 Added local image captioning support and an in-app changelog viewer, while improving relay status reliability.

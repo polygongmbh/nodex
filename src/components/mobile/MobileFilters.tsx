@@ -298,45 +298,6 @@ export function MobileFilters({
                     className="min-h-20"
                   />
                 </div>
-                <label htmlFor="manage-profile-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
-                  <input
-                    id="manage-profile-presence-enabled"
-                    type="checkbox"
-                    checked={presencePublishingEnabled}
-                    onChange={(event) => handlePresencePublishingChange(event.target.checked)}
-                    className="mt-0.5 h-4 w-4 accent-primary"
-                  />
-                  <span className="space-y-0.5">
-                    <span className="block text-xs font-medium">{t("filters.profile.presenceTitle")}</span>
-                    <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
-                  </span>
-                </label>
-                <label htmlFor="manage-profile-publish-delay-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
-                  <input
-                    id="manage-profile-publish-delay-enabled"
-                    type="checkbox"
-                    checked={publishDelayEnabled}
-                    onChange={(event) => handlePublishDelayChange(event.target.checked)}
-                    className="mt-0.5 h-4 w-4 accent-primary"
-                  />
-                  <span className="space-y-0.5">
-                    <span className="block text-xs font-medium">{t("filters.profile.undoSendTitle")}</span>
-                    <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
-                  </span>
-                </label>
-                <label htmlFor="manage-profile-auto-caption-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
-                  <input
-                    id="manage-profile-auto-caption-enabled"
-                    type="checkbox"
-                    checked={autoCaptionEnabled}
-                    onChange={(event) => handleAutoCaptionChange(event.target.checked)}
-                    className="mt-0.5 h-4 w-4 accent-primary"
-                  />
-                  <span className="space-y-0.5">
-                    <span className="block text-xs font-medium">{t("filters.profile.autoCaptionTitle")}</span>
-                    <span className="block text-xs text-muted-foreground">{t("filters.profile.autoCaptionDescription")}</span>
-                  </span>
-                </label>
                 <div className="flex items-center justify-end gap-2 pt-1">
                   {!needsProfileSetup && (
                     <button
@@ -387,6 +348,56 @@ export function MobileFilters({
             )}
           </div>
         </section>
+
+        {user && (
+          <section data-onboarding="mobile-filters-preferences">
+            <div className="flex items-center gap-2 mb-3">
+              <User className="w-4 h-4 text-primary" />
+              <h2 className="font-semibold text-sm">{t("filters.profile.appPreferencesTitle")}</h2>
+            </div>
+            <div className="space-y-2 rounded-lg border border-border p-3">
+              <label htmlFor="manage-preference-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
+                <input
+                  id="manage-preference-presence-enabled"
+                  type="checkbox"
+                  checked={presencePublishingEnabled}
+                  onChange={(event) => handlePresencePublishingChange(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-primary"
+                />
+                <span className="space-y-0.5">
+                  <span className="block text-xs font-medium">{t("filters.profile.presenceTitle")}</span>
+                  <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
+                </span>
+              </label>
+              <label htmlFor="manage-preference-publish-delay-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
+                <input
+                  id="manage-preference-publish-delay-enabled"
+                  type="checkbox"
+                  checked={publishDelayEnabled}
+                  onChange={(event) => handlePublishDelayChange(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-primary"
+                />
+                <span className="space-y-0.5">
+                  <span className="block text-xs font-medium">{t("filters.profile.undoSendTitle")}</span>
+                  <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
+                </span>
+              </label>
+              <label htmlFor="manage-preference-auto-caption-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
+                <input
+                  id="manage-preference-auto-caption-enabled"
+                  type="checkbox"
+                  checked={autoCaptionEnabled}
+                  onChange={(event) => handleAutoCaptionChange(event.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-primary"
+                />
+                <span className="space-y-0.5">
+                  <span className="block text-xs font-medium">{t("filters.profile.autoCaptionTitle")}</span>
+                  <span className="block text-xs text-muted-foreground">{t("filters.profile.autoCaptionDescription")}</span>
+                </span>
+              </label>
+            </div>
+          </section>
+        )}
 
         {/* Relays */}
         <section data-onboarding="mobile-filters-relays">

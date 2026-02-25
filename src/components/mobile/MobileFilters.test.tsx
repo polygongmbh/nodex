@@ -143,4 +143,30 @@ describe("MobileFilters management view", () => {
 
     expect(onChannelMatchModeChange).toHaveBeenCalledWith("or");
   });
+
+  it("renders app preferences outside the profile editor card", () => {
+    render(
+      <MobileFilters
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /edit/i }));
+    expect(screen.getByText(/app preferences/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/share live status/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/allow undo before sending/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/enable local image captions/i)).toBeInTheDocument();
+    expect(document.getElementById("manage-profile-presence-enabled")).toBeNull();
+    expect(document.getElementById("manage-profile-publish-delay-enabled")).toBeNull();
+    expect(document.getElementById("manage-profile-auto-caption-enabled")).toBeNull();
+  });
 });

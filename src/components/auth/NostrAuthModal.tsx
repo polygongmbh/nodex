@@ -510,6 +510,48 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             <User className="w-4 h-4 mr-2" />
             {t("auth.menu.editProfile")}
           </DropdownMenuItem>
+          <div className="px-2 py-2 space-y-2" onClick={(event) => event.stopPropagation()}>
+            <p className="text-xs font-medium text-muted-foreground">{t("auth.menu.appPreferences")}</p>
+            <label htmlFor="menu-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
+              <input
+                id="menu-presence-enabled"
+                type="checkbox"
+                checked={presencePublishingEnabled}
+                onChange={(event) => handlePresencePublishingChange(event.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-primary"
+              />
+              <span className="space-y-0.5">
+                <span className="block text-xs font-medium">{t("filters.profile.presenceTitle")}</span>
+                <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
+              </span>
+            </label>
+            <label htmlFor="menu-publish-delay-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
+              <input
+                id="menu-publish-delay-enabled"
+                type="checkbox"
+                checked={publishDelayEnabled}
+                onChange={(event) => handlePublishDelayChange(event.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-primary"
+              />
+              <span className="space-y-0.5">
+                <span className="block text-xs font-medium">{t("filters.profile.undoSendTitle")}</span>
+                <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
+              </span>
+            </label>
+            <label htmlFor="menu-auto-caption-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
+              <input
+                id="menu-auto-caption-enabled"
+                type="checkbox"
+                checked={autoCaptionEnabled}
+                onChange={(event) => handleAutoCaptionChange(event.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-primary"
+              />
+              <span className="space-y-0.5">
+                <span className="block text-xs font-medium">{t("filters.profile.autoCaptionTitle")}</span>
+                <span className="block text-xs text-muted-foreground">{t("filters.profile.autoCaptionDescription")}</span>
+              </span>
+            </label>
+          </div>
           {authMethod === "guest" && (
             <div className="px-2 py-2 space-y-2">
               <div className="flex items-center justify-between">
@@ -619,45 +661,6 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   <Label htmlFor="profile-about">{t("filters.profile.about")}</Label>
                   <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
                 </div>
-                <label htmlFor="profile-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-3 py-2">
-                  <input
-                    id="profile-presence-enabled"
-                    type="checkbox"
-                    checked={presencePublishingEnabled}
-                    onChange={(event) => handlePresencePublishingChange(event.target.checked)}
-                    className="mt-0.5 h-4 w-4 accent-primary"
-                  />
-                  <span className="space-y-0.5">
-                    <span className="block text-sm font-medium">{t("filters.profile.presenceTitle")}</span>
-                    <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
-                  </span>
-                </label>
-                <label htmlFor="profile-publish-delay-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-3 py-2">
-                  <input
-                    id="profile-publish-delay-enabled"
-                    type="checkbox"
-                    checked={publishDelayEnabled}
-                    onChange={(event) => handlePublishDelayChange(event.target.checked)}
-                    className="mt-0.5 h-4 w-4 accent-primary"
-                  />
-                  <span className="space-y-0.5">
-                    <span className="block text-sm font-medium">{t("filters.profile.undoSendTitle")}</span>
-                    <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
-                  </span>
-                </label>
-                <label htmlFor="profile-auto-caption-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-3 py-2">
-                  <input
-                    id="profile-auto-caption-enabled"
-                    type="checkbox"
-                    checked={autoCaptionEnabled}
-                    onChange={(event) => handleAutoCaptionChange(event.target.checked)}
-                    className="mt-0.5 h-4 w-4 accent-primary"
-                  />
-                  <span className="space-y-0.5">
-                    <span className="block text-sm font-medium">{t("filters.profile.autoCaptionTitle")}</span>
-                    <span className="block text-xs text-muted-foreground">{t("filters.profile.autoCaptionDescription")}</span>
-                  </span>
-                </label>
               </div>
             </div>
             <div className="mt-3 flex shrink-0 justify-end gap-2 border-t border-border/60 bg-background/95 pt-3">

@@ -152,4 +152,23 @@ describe("NostrAuthModal", () => {
     expect(screen.getByText("Cached Alice")).toBeInTheDocument();
   });
 
+  it("keeps auto-opened profile setup dialog focused on identity fields", () => {
+    ndkMock.user = {
+      npub: "npub1test",
+      pubkey: "a".repeat(64),
+      profile: { name: "" },
+    };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(document.getElementById("profile-name")).toBeInTheDocument();
+    expect(document.getElementById("profile-presence-enabled")).toBeNull();
+    expect(document.getElementById("profile-publish-delay-enabled")).toBeNull();
+    expect(document.getElementById("profile-auto-caption-enabled")).toBeNull();
+  });
+
 });
