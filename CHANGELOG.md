@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Profile settings now include an opt-in toggle for local tiny-model image caption inference, with a one-time model download data-usage hint.
+- Clicking the in-app version label now opens a prettified changelog dialog with release summaries and grouped change bullets parsed from `CHANGELOG.md`.
 - Relay UI status now periodically reconciles with live NDK pool connection states to avoid stale `disconnected` indicators that could block posting until reload.
 - Opted-in image attachments now run on-device caption inference and auto-fill alt text when local model inference succeeds.
 
