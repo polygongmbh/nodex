@@ -75,7 +75,6 @@ describe("SidebarSection", () => {
       if (originalScrollHeight) {
         Object.defineProperty(HTMLElement.prototype, "scrollHeight", originalScrollHeight);
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete (HTMLElement.prototype as { scrollHeight?: number }).scrollHeight;
       }
     }
