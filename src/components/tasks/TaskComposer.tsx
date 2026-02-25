@@ -35,6 +35,7 @@ import {
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
 import { isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
+import { NON_IMAGE_ATTACHMENT_ACCEPT, shouldPreferNonImageFilePickerOnIOS } from "@/lib/attachment-file-picker";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -195,6 +196,7 @@ export function TaskComposer({
     () => !adaptiveSize || initialContent.trim().length > 0
   );
   const uploadEnabled = isAttachmentUploadConfigured();
+  const fileAttachmentAccept = shouldPreferNonImageFilePickerOnIOS() ? NON_IMAGE_ATTACHMENT_ACCEPT : undefined;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1494,6 +1496,7 @@ export function TaskComposer({
           <input
             ref={fileInputRef}
             type="file"
+            accept={fileAttachmentAccept}
             multiple
             className="hidden"
             onChange={(event) => {

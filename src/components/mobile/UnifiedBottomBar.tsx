@@ -33,6 +33,7 @@ import {
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
 import { isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
+import { NON_IMAGE_ATTACHMENT_ACCEPT, shouldPreferNonImageFilePickerOnIOS } from "@/lib/attachment-file-picker";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -144,6 +145,7 @@ export function UnifiedBottomBar({
   const [showSendOptions, setShowSendOptions] = useState(false);
   const [isSendLaunching, setIsSendLaunching] = useState(false);
   const uploadEnabled = isAttachmentUploadConfigured();
+  const fileAttachmentAccept = shouldPreferNonImageFilePickerOnIOS() ? NON_IMAGE_ATTACHMENT_ACCEPT : undefined;
   const canOfferComment = currentView === "feed" || currentView === "tree";
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
@@ -1319,6 +1321,7 @@ export function UnifiedBottomBar({
           <input
             ref={fileInputRef}
             type="file"
+            accept={fileAttachmentAccept}
             multiple
             className="hidden"
             onChange={(event) => {
