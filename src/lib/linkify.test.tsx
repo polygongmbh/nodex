@@ -16,7 +16,7 @@ describe("linkifyContent interaction styles", () => {
   it("parses hashtags and URLs and triggers hashtag filtering", () => {
     const onHashtagClick = vi.fn();
 
-    render(<p>{linkifyContent("Ship #frontend https://example.com", onHashtagClick)}</p>);
+    render(<div>{linkifyContent("Ship #frontend https://example.com", onHashtagClick)}</div>);
 
     const hashtag = screen.getByRole("button", { name: "Filter by #frontend" });
     const url = screen.getByRole("link", { name: "https://example.com" });
@@ -29,7 +29,7 @@ describe("linkifyContent interaction styles", () => {
   });
 
   it("renders plain hashtags when plainHashtags is enabled", () => {
-    render(<p>{linkifyContent("Ship #frontend", vi.fn(), { plainHashtags: true })}</p>);
+    render(<div>{linkifyContent("Ship #frontend", vi.fn(), { plainHashtags: true })}</div>);
 
     const hashtag = screen.getByRole("button", { name: "Filter by #frontend" });
     expect(hashtag).toBeInTheDocument();
@@ -39,12 +39,12 @@ describe("linkifyContent interaction styles", () => {
     const onMentionClick = vi.fn();
 
     render(
-      <p>
+      <div>
         {linkifyContent(`Assign to @${alice.id}`, undefined, {
           people: [alice],
           onMentionClick,
         })}
-      </p>
+      </div>
     );
 
     const mention = screen.getByRole("button", { name: "Open user alice" });
@@ -56,13 +56,30 @@ describe("linkifyContent interaction styles", () => {
 
   it("keeps original mention token as hover title after resolving display label", () => {
     render(
-      <p>
+      <div>
         {linkifyContent("Assign to @alice@example.com", undefined, {
           people: [alice],
         })}
-      </p>
+      </div>
     );
 
     expect(screen.getByText("@alice")).toHaveAttribute("title", "@alice@example.com");
+  });
+
+  it("replaces a standalone embeddable URL line with an embed", () => {
+    render(<div>{linkifyContent("https://youtu.be/dQw4w9WgXcQ")}</div>);
+
+    expect(screen.queryByRole("link", { name: "https://youtu.be/dQw4w9WgXcQ" })).not.toBeInTheDocument();
+    expect(screen.getByTitle("Embedded video")).toBeInTheDocument();
+  });
+
+  it("preserves multiline rendering and basic markdown formatting", () => {
+    render(<div>{linkifyContent("first line\n**bold** and *italic* and `code`")}</div>);
+
+    const bold = screen.getByText("bold");
+    expect(bold.tagName).toBe("STRONG");
+    expect(bold.parentElement).toHaveTextContent("first line");
+    expect(screen.getByText("italic").tagName).toBe("EM");
+    expect(screen.getByText("code").tagName).toBe("CODE");
   });
 });

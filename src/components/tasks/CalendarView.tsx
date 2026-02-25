@@ -1018,9 +1018,9 @@ export function CalendarView({
                             )}
                           </DropdownMenu>
                           <div className="flex-1 min-w-0">
-                            <p
+                            <div
                               className={cn(
-                                "text-sm",
+                                "text-sm whitespace-pre-wrap",
                                 task.status === "done" && "line-through text-muted-foreground"
                               )}
                             >
@@ -1028,7 +1028,7 @@ export function CalendarView({
                                 plainHashtags: task.status === "done",
                                 people,
                               })}
-                            </p>
+                            </div>
                             <TaskAttachmentList attachments={task.attachments} className="mt-1.5 space-y-1" />
                             {task.dueTime && (
                               <div className="flex items-center gap-2 text-xs mt-1">

@@ -455,8 +455,8 @@ export function TaskItem({
           )}
 
           {/* Task content */}
-          <p className={cn(
-            `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
+          <div className={cn(
+            `text-sm leading-relaxed whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText}`,
             task.status === "done" && "line-through text-muted-foreground"
           )}>
             {linkifyContent(task.content, onHashtagClick, {
@@ -464,7 +464,7 @@ export function TaskItem({
               people,
               onMentionClick: onAuthorClick,
             })}
-          </p>
+          </div>
           <TaskAttachmentList attachments={task.attachments} />
 
           {/* Due date */}

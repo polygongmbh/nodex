@@ -576,9 +576,9 @@ export function FeedView({
                     </div>
 
                     {/* Clickable content to focus */}
-                    <p
+                    <div
                       className={cn(
-                        `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
+                        `text-sm leading-relaxed whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText}`,
                         task.status === "done" && "line-through text-muted-foreground"
                       )}
                     >
@@ -587,7 +587,7 @@ export function FeedView({
                         people,
                         onMentionClick: onAuthorClick,
                       })}
-                    </p>
+                    </div>
                     <TaskAttachmentList attachments={task.attachments} />
 
                     {/* Due date */}

@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - When depth mode is set to `Projects only` and no project containers match, Kanban/Table now fall back to showing all levels instead of an empty result.
+- Standalone embeddable URLs on their own line now render as embeds (replacing the raw URL text), and task/comment content now preserves multiline formatting with basic markdown rendering.
 - Added image/file attachment controls in desktop and mobile composers with NIP-92 `imeta` publish tags, plus automatic inline rendering for direct image/file URLs in task content across views.
 
 ## [1.12.2] - 2026-02-24

@@ -3,9 +3,11 @@ import LinkifyIt from "linkify-it";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Person } from "@/types";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
+import { guessMimeTypeFromUrl, isSafeHttpUrl } from "@/lib/attachments";
 
 const TOKEN_REGEX =
   /(^|[^A-Za-z0-9_])(#([A-Za-z0-9_]+)|@([A-Za-z0-9._-]+(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?))/g;
+const MARKDOWN_INLINE_REGEX = /(\[[^\]]+\]\((https?:\/\/[^\s)]+)\)|\*\*([^*]+)\*\*|`([^`]+)`|\*([^*\n]+)\*)/g;
 const linkify = new LinkifyIt();
 
 function formatPubkeyMention(pubkey: string): string {
@@ -33,123 +35,391 @@ interface LinkifyOptions {
   onMentionClick?: (person: Person) => void;
 }
 
+const IMAGE_MIME_PREFIX = "image/";
+const VIDEO_MIME_PREFIX = "video/";
+const AUDIO_MIME_PREFIX = "audio/";
+const VIDEO_EXTENSIONS = new Set(["mp4", "webm", "ogg", "mov"]);
+const AUDIO_EXTENSIONS = new Set(["mp3", "wav", "ogg", "m4a"]);
+
+function getUrlExtension(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const fileName = parsed.pathname.split("/").pop() || "";
+    const dot = fileName.lastIndexOf(".");
+    if (dot < 0 || dot >= fileName.length - 1) return null;
+    return fileName.slice(dot + 1).toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function getYouTubeEmbedUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    if (host === "youtu.be") {
+      const id = parsed.pathname.split("/").filter(Boolean)[0];
+      return id ? `https://www.youtube.com/embed/${id}` : null;
+    }
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (parsed.pathname === "/watch") {
+        const id = parsed.searchParams.get("v");
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+      if (parsed.pathname.startsWith("/shorts/")) {
+        const id = parsed.pathname.split("/")[2];
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+      if (parsed.pathname.startsWith("/embed/")) {
+        const id = parsed.pathname.split("/")[2];
+        return id ? `https://www.youtube.com/embed/${id}` : null;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function renderStandaloneEmbed(url: string, key: string): React.ReactNode | null {
+  if (!isSafeHttpUrl(url)) return null;
+
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(url);
+  if (youtubeEmbedUrl) {
+    return (
+      <div key={key} className="my-2 max-w-xl overflow-hidden rounded-md border border-border/60 bg-muted/20">
+        <iframe
+          src={youtubeEmbedUrl}
+          title="Embedded video"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="aspect-video w-full"
+        />
+      </div>
+    );
+  }
+
+  const mimeType = guessMimeTypeFromUrl(url)?.toLowerCase();
+  const ext = getUrlExtension(url);
+  const isImage = Boolean(mimeType?.startsWith(IMAGE_MIME_PREFIX));
+  const isVideo = Boolean(mimeType?.startsWith(VIDEO_MIME_PREFIX)) || Boolean(ext && VIDEO_EXTENSIONS.has(ext));
+  const isAudio = Boolean(mimeType?.startsWith(AUDIO_MIME_PREFIX)) || Boolean(ext && AUDIO_EXTENSIONS.has(ext));
+
+  if (isImage) {
+    return (
+      <a
+        key={key}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(event) => event.stopPropagation()}
+        className="my-2 block max-w-sm"
+      >
+        <img
+          src={url}
+          alt="Embedded attachment"
+          loading="lazy"
+          className="max-h-64 w-auto rounded-md border border-border/60 bg-muted/30 object-contain"
+        />
+      </a>
+    );
+  }
+
+  if (isVideo) {
+    return (
+      <video
+        key={key}
+        controls
+        preload="metadata"
+        onClick={(event) => event.stopPropagation()}
+        className="my-2 max-h-72 w-full max-w-xl rounded-md border border-border/60 bg-muted/30"
+      >
+        <source src={url} type={mimeType || undefined} />
+      </video>
+    );
+  }
+
+  if (isAudio) {
+    return (
+      <audio
+        key={key}
+        controls
+        preload="metadata"
+        onClick={(event) => event.stopPropagation()}
+        className="my-2 w-full max-w-xl"
+      >
+        <source src={url} type={mimeType || undefined} />
+      </audio>
+    );
+  }
+
+  return null;
+}
+
+function isStandaloneUrlLine(value: string): string | null {
+  const line = value.trim();
+  if (!line) return null;
+  const matches = linkify.match(line) || [];
+  if (matches.length !== 1) return null;
+  const match = matches[0];
+  if (match.index !== 0 || match.lastIndex !== line.length || !match.url) return null;
+  return match.url;
+}
+
+function renderTokenizedText(
+  value: string,
+  baseKey: string,
+  onHashtagClick?: (tag: string) => void,
+  options?: LinkifyOptions
+): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let tokenCursor = 0;
+  TOKEN_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = TOKEN_REGEX.exec(value)) !== null) {
+    const matchIndex = match.index;
+    const prefix = match[1] ?? "";
+    const token = match[2] ?? "";
+    const hashtag = match[3];
+    const mention = match[4];
+    const tokenStart = matchIndex + prefix.length;
+
+    if (tokenStart > tokenCursor) {
+      nodes.push(value.slice(tokenCursor, tokenStart));
+    }
+
+    if (token.startsWith("#") && hashtag) {
+      nodes.push(
+        <button
+          key={`${baseKey}-tag-${tokenStart}-${token}`}
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onHashtagClick?.(hashtag);
+          }}
+          className={options?.plainHashtags ? "" : TASK_INTERACTION_STYLES.inlineLink}
+          data-onboarding="content-hashtag"
+          aria-label={`Filter by #${hashtag}`}
+          title={`Filter to #${hashtag}`}
+        >
+          #{hashtag}
+        </button>
+      );
+    } else if (token.startsWith("@") && mention) {
+      const mentionIdentifier = normalizeMentionIdentifier(mention);
+      const resolvedPerson = resolveMentionPerson(mentionIdentifier, options?.people);
+      const mentionLabel = resolvedPerson?.name
+        || resolvedPerson?.displayName
+        || formatPubkeyMention(mentionIdentifier);
+
+      if (resolvedPerson && options?.onMentionClick) {
+        nodes.push(
+          <button
+            key={`${baseKey}-mention-${tokenStart}-${token}`}
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              options.onMentionClick?.(resolvedPerson);
+            }}
+            className={TASK_INTERACTION_STYLES.inlineLink}
+            aria-label={`Open user ${mentionLabel}`}
+            title={token}
+          >
+            @{mentionLabel}
+          </button>
+        );
+      } else {
+        nodes.push(
+          <span
+            key={`${baseKey}-mention-${tokenStart}-${token}`}
+            className={TASK_INTERACTION_STYLES.inlineLink}
+            title={token}
+          >
+            @{mentionLabel}
+          </span>
+        );
+      }
+    } else {
+      nodes.push(value.slice(tokenStart, tokenStart + token.length));
+    }
+
+    tokenCursor = tokenStart + token.length;
+  }
+
+  if (tokenCursor < value.length) {
+    nodes.push(value.slice(tokenCursor));
+  }
+
+  return nodes.length > 0 ? nodes : [value];
+}
+
+function renderAutoLinkedText(
+  value: string,
+  baseKey: string,
+  onHashtagClick?: (tag: string) => void,
+  options?: LinkifyOptions
+): React.ReactNode[] {
+  const matches = linkify.match(value) || [];
+  if (matches.length === 0) {
+    return renderTokenizedText(value, `${baseKey}-plain`, onHashtagClick, options);
+  }
+
+  const nodes: React.ReactNode[] = [];
+  let lastIndex = 0;
+  for (const match of matches) {
+    if (match.index > lastIndex) {
+      nodes.push(
+        ...renderTokenizedText(
+          value.slice(lastIndex, match.index),
+          `${baseKey}-text-${lastIndex}`,
+          onHashtagClick,
+          options
+        )
+      );
+    }
+
+    nodes.push(
+      <a
+        key={`${baseKey}-url-${match.index}`}
+        href={match.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(event) => event.stopPropagation()}
+        className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`}
+      >
+        {match.text}
+      </a>
+    );
+    lastIndex = match.lastIndex;
+  }
+
+  if (lastIndex < value.length) {
+    nodes.push(
+      ...renderTokenizedText(
+        value.slice(lastIndex),
+        `${baseKey}-tail-${lastIndex}`,
+        onHashtagClick,
+        options
+      )
+    );
+  }
+
+  return nodes;
+}
+
+function renderMarkdownLine(
+  value: string,
+  baseKey: string,
+  onHashtagClick?: (tag: string) => void,
+  options?: LinkifyOptions
+): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+  MARKDOWN_INLINE_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = MARKDOWN_INLINE_REGEX.exec(value)) !== null) {
+    if (match.index > cursor) {
+      nodes.push(
+        ...renderAutoLinkedText(
+          value.slice(cursor, match.index),
+          `${baseKey}-seg-${cursor}`,
+          onHashtagClick,
+          options
+        )
+      );
+    }
+
+    const full = match[0] || "";
+    const markdownUrl = match[2];
+    const boldText = match[3];
+    const codeText = match[4];
+    const italicText = match[5];
+
+    if (full.startsWith("[") && markdownUrl) {
+      const labelEnd = full.indexOf("](");
+      const label = labelEnd > 0 ? full.slice(1, labelEnd) : markdownUrl;
+      nodes.push(
+        <a
+          key={`${baseKey}-md-link-${match.index}`}
+          href={markdownUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`}
+        >
+          {label}
+        </a>
+      );
+    } else if (typeof boldText === "string") {
+      nodes.push(
+        <strong key={`${baseKey}-md-bold-${match.index}`}>
+          {renderAutoLinkedText(boldText, `${baseKey}-bold-${match.index}`, onHashtagClick, options)}
+        </strong>
+      );
+    } else if (typeof codeText === "string") {
+      nodes.push(
+        <code
+          key={`${baseKey}-md-code-${match.index}`}
+          className="rounded bg-muted/60 px-1 py-0.5 text-[0.92em] font-mono"
+        >
+          {codeText}
+        </code>
+      );
+    } else if (typeof italicText === "string") {
+      nodes.push(
+        <em key={`${baseKey}-md-italic-${match.index}`}>
+          {renderAutoLinkedText(italicText, `${baseKey}-italic-${match.index}`, onHashtagClick, options)}
+        </em>
+      );
+    } else {
+      nodes.push(full);
+    }
+
+    cursor = match.index + full.length;
+  }
+
+  if (cursor < value.length) {
+    nodes.push(
+      ...renderAutoLinkedText(
+        value.slice(cursor),
+        `${baseKey}-tail-${cursor}`,
+        onHashtagClick,
+        options
+      )
+    );
+  }
+
+  return nodes;
+}
+
 export function linkifyContent(
   content: string,
   onHashtagClick?: (tag: string) => void,
   options?: LinkifyOptions
 ): React.ReactNode[] {
-  const matches = linkify.match(content) || [];
-  const parts: Array<{ kind: "text" | "url"; value: string; href?: string }> = [];
-  let lastIndex = 0;
-  for (const match of matches) {
-    if (match.index > lastIndex) {
-      parts.push({ kind: "text", value: content.slice(lastIndex, match.index) });
-    }
-    parts.push({ kind: "url", value: match.text, href: match.url });
-    lastIndex = match.lastIndex;
-  }
-  if (lastIndex < content.length) {
-    parts.push({ kind: "text", value: content.slice(lastIndex) });
-  }
-  if (parts.length === 0) {
-    parts.push({ kind: "text", value: content });
-  }
+  const lines = content.split(/\r?\n/);
+  const nodes: React.ReactNode[] = [];
 
-  return parts.flatMap((part, index) => {
-    if (part.kind === "url" && part.href) {
-      return [(
-        <a
-          key={index}
-          href={part.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`}
-        >
-          {part.value}
-        </a>
-      )];
+  for (let index = 0; index < lines.length; index += 1) {
+    if (index > 0) {
+      nodes.push(<br key={`line-break-${index}`} />);
     }
 
-    const nodes: React.ReactNode[] = [];
-    let tokenCursor = 0;
-    TOKEN_REGEX.lastIndex = 0;
-    let match: RegExpExecArray | null;
-
-    while ((match = TOKEN_REGEX.exec(part.value)) !== null) {
-      const matchIndex = match.index;
-      const prefix = match[1] ?? "";
-      const token = match[2] ?? "";
-      const hashtag = match[3];
-      const mention = match[4];
-      const tokenStart = matchIndex + prefix.length;
-
-      if (tokenStart > tokenCursor) {
-        nodes.push(part.value.slice(tokenCursor, tokenStart));
+    const line = lines[index];
+    const standaloneUrl = isStandaloneUrlLine(line);
+    if (standaloneUrl) {
+      const embedNode = renderStandaloneEmbed(standaloneUrl, `embed-${index}`);
+      if (embedNode) {
+        nodes.push(embedNode);
+        continue;
       }
-
-      if (token.startsWith("#") && hashtag) {
-        nodes.push(
-          <button
-            key={`${index}-${tokenStart}-${token}`}
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onHashtagClick?.(hashtag);
-            }}
-            className={options?.plainHashtags ? "" : TASK_INTERACTION_STYLES.inlineLink}
-            data-onboarding="content-hashtag"
-            aria-label={`Filter by #${hashtag}`}
-            title={`Filter to #${hashtag}`}
-          >
-            #{hashtag}
-          </button>
-        );
-      } else if (token.startsWith("@") && mention) {
-        const mentionIdentifier = normalizeMentionIdentifier(mention);
-        const resolvedPerson = resolveMentionPerson(mentionIdentifier, options?.people);
-        const mentionLabel = resolvedPerson?.name
-          || resolvedPerson?.displayName
-          || formatPubkeyMention(mentionIdentifier);
-
-        if (resolvedPerson && options?.onMentionClick) {
-          nodes.push(
-            <button
-              key={`${index}-${tokenStart}-${token}`}
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                options.onMentionClick?.(resolvedPerson);
-              }}
-              className={TASK_INTERACTION_STYLES.inlineLink}
-              aria-label={`Open user ${mentionLabel}`}
-              title={token}
-            >
-              @{mentionLabel}
-            </button>
-          );
-        } else {
-          nodes.push(
-            <span
-              key={`${index}-${tokenStart}-${token}`}
-              className={TASK_INTERACTION_STYLES.inlineLink}
-              title={token}
-            >
-              @{mentionLabel}
-            </span>
-          );
-        }
-      } else {
-        nodes.push(part.value.slice(tokenStart, tokenStart + token.length));
-      }
-
-      tokenCursor = tokenStart + token.length;
     }
 
-    if (tokenCursor < part.value.length) {
-      nodes.push(part.value.slice(tokenCursor));
-    }
+    nodes.push(...renderMarkdownLine(line, `line-${index}`, onHashtagClick, options));
+  }
 
-    return nodes.length > 0 ? nodes : [part.value];
-  });
+  return nodes;
 }

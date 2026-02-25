@@ -512,9 +512,9 @@ export function KanbanView({
                                   )}
 
                                   {/* Content */}
-                                  <p
+                                  <div
                                     className={cn(
-                                      `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
+                                      `text-sm leading-relaxed whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText}`,
                                       task.status === "done" && "line-through text-muted-foreground"
                                     )}
                                   >
@@ -522,7 +522,7 @@ export function KanbanView({
                                       plainHashtags: task.status === "done",
                                       people,
                                     })}
-                                  </p>
+                                  </div>
                                   <TaskAttachmentList attachments={task.attachments} />
                                   {isPendingPublish && (
                                     <div className="mt-2">

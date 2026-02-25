@@ -721,10 +721,10 @@ export function ListView({
                             ))}
                           </div>
                         )}
-                        <p
+                        <div
                           onClick={() => onFocusTask?.(task.id)}
                           className={cn(
-                            `text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} break-words`,
+                            `text-sm cursor-pointer whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText} break-words`,
                             task.status === "done" && "line-through text-muted-foreground"
                           )}
                           title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
@@ -733,7 +733,7 @@ export function ListView({
                             plainHashtags: task.status === "done",
                             people,
                           })}
-                        </p>
+                        </div>
                         <TaskAttachmentList attachments={task.attachments} className="space-y-1" />
                       </div>
                     </td>
