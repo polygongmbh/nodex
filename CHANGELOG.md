@@ -5,6 +5,9 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.14.0] - 2026-02-25
+Added local image captioning support and an in-app changelog viewer, while improving relay status reliability.
 - Profile settings now include an opt-in toggle for local tiny-model image caption inference, with a one-time model download data-usage hint.
 - Clicking the in-app version label now opens a prettified changelog dialog with release summaries and grouped change bullets parsed from `CHANGELOG.md`.
 - Relay UI status now periodically reconciles with live NDK pool connection states to avoid stale `disconnected` indicators that could block posting until reload.
