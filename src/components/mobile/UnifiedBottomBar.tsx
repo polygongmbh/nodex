@@ -885,6 +885,17 @@ export function UnifiedBottomBar({
       <div className="px-3 pt-2">
         <div className="overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex items-center gap-2 pt-1">
+          {uploadEnabled && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+              aria-label="Add attachment"
+              title="Add attachment"
+            >
+              <Paperclip className="w-3.5 h-3.5" />
+            </button>
+          )}
           {showInlineTaskSubmitBlock ? (
             <div className="h-8 inline-flex items-center justify-center rounded-md border border-border/70 bg-muted/40 px-2 text-xs leading-none text-muted-foreground">
               {taskSubmitBlockedReason}
@@ -1187,17 +1198,6 @@ export function UnifiedBottomBar({
                 className="h-full w-full bg-muted/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm leading-[1.35] resize-none overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden focus:outline-none focus:ring-2 focus:ring-primary/50"
                 rows={1}
               />
-              {uploadEnabled && (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute -top-7 left-0 h-[1.45rem] w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted"
-                  aria-label="Add attachment"
-                  title="Add attachment"
-                >
-                  <Paperclip className="w-3.5 h-3.5" />
-                </button>
-              )}
               {showMentionSuggestions && filteredPeople.length > 0 && (
                 <div className="motion-selector-panel absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1 max-h-72 overflow-y-auto overscroll-contain">
                   {filteredPeople.map((person, index) => {

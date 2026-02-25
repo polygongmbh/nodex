@@ -7,7 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 - Mobile layout now uses route `currentView` as the single source of truth for tab/swipe rendering, fixing broken mobile view switching state mismatches.
 - Added receive-path parsing for Blossom/NIP-94-style attachment metadata tags, including hash-based metadata enrichment for Blossom content URLs and top-level `url` tag attachment extraction.
-- Composer now uses a single `Attach` action across platforms, moves the mobile attach control to the top-left above the compose text field, and enforces a client-side per-file upload limit (default 100 MB, configurable via `VITE_NIP96_MAX_UPLOAD_BYTES`).
+- Composer now uses a single `Attach` action across platforms, places the mobile attach control in the controls row (left of the inline hint/metadata controls), and enforces a client-side per-file upload limit (default 100 MB, configurable via `VITE_NIP96_MAX_UPLOAD_BYTES`).
 
 ## [1.13.0] - 2026-02-25
 Expanded attachment publishing and embed behavior, with managed/self-hosted upload options and NIP-98 auth for protected NIP-96 servers.
