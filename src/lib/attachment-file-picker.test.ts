@@ -94,6 +94,16 @@ describe("attachment file picker helpers", () => {
     expect(getAttachmentPickerMode()).toBe("separate");
   });
 
+  it("uses unified picker mode on macOS desktop browsers", () => {
+    mockNavigator({
+      platform: "MacIntel",
+      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+      maxTouchPoints: 0,
+    });
+
+    expect(getAttachmentPickerMode()).toBe("unified");
+  });
+
   it("uses unified picker mode on Android mobile browsers", () => {
     mockNavigator({
       platform: "Linux armv8l",

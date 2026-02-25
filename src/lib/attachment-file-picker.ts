@@ -1,6 +1,6 @@
 const IOS_DEVICE_REGEX = /iPad|iPhone|iPod/i;
 const MOBILE_USER_AGENT_REGEX = /Android|webOS|BlackBerry|IEMobile|Opera Mini|Mobile/i;
-const DESKTOP_PLATFORM_REGEX = /Win|Mac|Linux|X11|CrOS/i;
+const DESKTOP_PLATFORM_REGEX = /Win|Linux|X11|CrOS/i;
 
 export type AttachmentPickerMode = "separate" | "unified";
 
