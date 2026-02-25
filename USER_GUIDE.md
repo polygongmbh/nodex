@@ -105,6 +105,7 @@
 - Task compose supports optional priority selection.
 - Desktop and mobile composers include `image` and `file` attachment buttons; uploaded files are published as attachment metadata (`imeta`) and shown inline in task views.
 - Direct `http/https` image and file URLs typed in content are auto-detected and rendered as embeds/attachment links.
+- Some NIP-96 upload services require NIP-98 authorization; Nodex signs upload requests from the active Nostr signer when needed.
 - Next to the date picker, choose the date type: `Due`, `Scheduled`, `Start`, `End`, or `Milestone`.
 - On mobile, the inline date picker above the bottom bar scrolls horizontally through months (infinite-style strip) without month arrow controls.
 - Date-typed tasks appear in Calendar view.
