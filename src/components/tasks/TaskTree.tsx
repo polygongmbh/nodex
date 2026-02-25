@@ -412,6 +412,7 @@ export function TaskTree({
         composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, currentContextTask?.tags)}
+        allowComment={Boolean(currentContextId)}
       />
 
       {/* Task List */}

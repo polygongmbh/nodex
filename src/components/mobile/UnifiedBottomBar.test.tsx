@@ -338,7 +338,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
-  it("reveals task and comment send options in tree view", () => {
+  it("does not offer comment send options in tree view without a focused parent", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -346,6 +346,30 @@ describe("UnifiedBottomBar auth gating", () => {
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="tree"
         focusedTaskId={null}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /send task/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /send task \/ send comment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^send comment$/i })).not.toBeInTheDocument();
+  });
+
+  it("reveals task and comment send options in tree view when a focused parent exists", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="tree"
+        focusedTaskId="parent-1"
         relays={relays}
         channels={channels}
         people={people}

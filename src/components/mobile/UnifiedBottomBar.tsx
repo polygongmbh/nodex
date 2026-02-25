@@ -144,7 +144,7 @@ export function UnifiedBottomBar({
   const [isSendLaunching, setIsSendLaunching] = useState(false);
   const uploadEnabled = isAttachmentUploadConfigured();
   const attachmentMaxFileSizeBytes = getAttachmentMaxFileSizeBytes();
-  const canOfferComment = currentView === "feed" || currentView === "tree";
+  const canOfferComment = currentView === "feed" || (currentView === "tree" && Boolean(focusedTaskId));
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
 
