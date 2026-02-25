@@ -14,7 +14,7 @@ import {
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import { linkifyContent } from "@/lib/linkify";
+import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -671,6 +671,13 @@ export function ListView({
                 const ancestorChain = getAncestorChain(task.id);
                 const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                 const isLockedUntilStart = isTaskLockedUntilStart(task);
+                const standaloneEmbedUrls = new Set(
+                  getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
+                );
+                const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
+                  const normalizedUrl = attachment.url?.trim().toLowerCase();
+                  return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
+                });
                 
                 return (
                   <tr
@@ -734,7 +741,7 @@ export function ListView({
                             people,
                           })}
                         </div>
-                        <TaskAttachmentList attachments={task.attachments} className="space-y-1" />
+                        <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} className="space-y-1" />
                       </div>
                     </td>
                     <td className="hidden 2xl:table-cell p-2 2xl:p-3">

@@ -16,7 +16,7 @@ import {
 } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import { linkifyContent } from "@/lib/linkify";
+import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -454,6 +454,13 @@ export function KanbanView({
                           const isLockedUntilStart = isTaskLockedUntilStart(task);
                           const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
                           const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
+                          const standaloneEmbedUrls = new Set(
+                            getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
+                          );
+                          const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
+                            const normalizedUrl = attachment.url?.trim().toLowerCase();
+                            return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
+                          });
                           
                           return (
                             <Draggable
@@ -523,7 +530,7 @@ export function KanbanView({
                                       people,
                                     })}
                                   </div>
-                                  <TaskAttachmentList attachments={task.attachments} />
+                                  <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} />
                                   {isPendingPublish && (
                                     <div className="mt-2">
                                       <button

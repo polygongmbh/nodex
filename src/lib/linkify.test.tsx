@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import { linkifyContent } from "./linkify";
+import { getStandaloneEmbeddableUrls, linkifyContent } from "./linkify";
 import type { Person } from "@/types";
 
 const alice: Person = {
@@ -81,5 +81,21 @@ describe("linkifyContent interaction styles", () => {
     expect(bold.parentElement).toHaveTextContent("first line");
     expect(screen.getByText("italic").tagName).toBe("EM");
     expect(screen.getByText("code").tagName).toBe("CODE");
+  });
+
+  it("returns standalone embeddable urls only", () => {
+    const urls = getStandaloneEmbeddableUrls(
+      [
+        "intro text",
+        "https://youtu.be/dQw4w9WgXcQ",
+        "https://example.com",
+        "https://example.com/photo.png",
+      ].join("\n")
+    );
+
+    expect(urls).toEqual([
+      "https://youtu.be/dQw4w9WgXcQ",
+      "https://example.com/photo.png",
+    ]);
   });
 });

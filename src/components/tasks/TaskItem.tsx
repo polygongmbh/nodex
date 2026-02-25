@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { linkifyContent } from "@/lib/linkify";
+import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { sortTasks, buildChildrenMap, getDueDateColorClass } from "@/lib/taskSorting";
 import { useNostrProfile } from "@/hooks/use-nostr-profiles";
@@ -176,6 +176,13 @@ export function TaskItem({
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
+  const standaloneEmbedUrls = new Set(
+    getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
+  );
+  const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
+    const normalizedUrl = attachment.url?.trim().toLowerCase();
+    return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
+  });
 
   // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {
@@ -465,7 +472,7 @@ export function TaskItem({
               onMentionClick: onAuthorClick,
             })}
           </div>
-          <TaskAttachmentList attachments={task.attachments} />
+          <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} />
 
           {/* Due date */}
           {task.dueDate && (

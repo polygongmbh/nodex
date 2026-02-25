@@ -81,13 +81,27 @@ function getYouTubeEmbedUrl(url: string): string | null {
   }
 }
 
+function isEmbeddableUrl(url: string): boolean {
+  if (!isSafeHttpUrl(url)) return false;
+
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(url);
+  if (youtubeEmbedUrl) return true;
+
+  const mimeType = guessMimeTypeFromUrl(url)?.toLowerCase();
+  const ext = getUrlExtension(url);
+  const isImage = Boolean(mimeType?.startsWith(IMAGE_MIME_PREFIX));
+  const isVideo = Boolean(mimeType?.startsWith(VIDEO_MIME_PREFIX)) || Boolean(ext && VIDEO_EXTENSIONS.has(ext));
+  const isAudio = Boolean(mimeType?.startsWith(AUDIO_MIME_PREFIX)) || Boolean(ext && AUDIO_EXTENSIONS.has(ext));
+  return isImage || isVideo || isAudio;
+}
+
 function renderStandaloneEmbed(url: string, key: string): React.ReactNode | null {
   if (!isSafeHttpUrl(url)) return null;
 
   const youtubeEmbedUrl = getYouTubeEmbedUrl(url);
   if (youtubeEmbedUrl) {
     return (
-      <div key={key} className="my-2 max-w-xl overflow-hidden rounded-md border border-border/60 bg-muted/20">
+      <div key={key} className="max-w-xl overflow-hidden rounded-md border border-border/60 bg-muted/20">
         <iframe
           src={youtubeEmbedUrl}
           title="Embedded video"
@@ -114,7 +128,7 @@ function renderStandaloneEmbed(url: string, key: string): React.ReactNode | null
         target="_blank"
         rel="noopener noreferrer"
         onClick={(event) => event.stopPropagation()}
-        className="my-2 block max-w-sm"
+        className="block max-w-sm"
       >
         <img
           src={url}
@@ -133,7 +147,7 @@ function renderStandaloneEmbed(url: string, key: string): React.ReactNode | null
         controls
         preload="metadata"
         onClick={(event) => event.stopPropagation()}
-        className="my-2 max-h-72 w-full max-w-xl rounded-md border border-border/60 bg-muted/30"
+        className="max-h-72 w-full max-w-xl rounded-md border border-border/60 bg-muted/30"
       >
         <source src={url} type={mimeType || undefined} />
       </video>
@@ -147,7 +161,7 @@ function renderStandaloneEmbed(url: string, key: string): React.ReactNode | null
         controls
         preload="metadata"
         onClick={(event) => event.stopPropagation()}
-        className="my-2 w-full max-w-xl"
+        className="w-full max-w-xl"
       >
         <source src={url} type={mimeType || undefined} />
       </audio>
@@ -165,6 +179,24 @@ function isStandaloneUrlLine(value: string): string | null {
   const match = matches[0];
   if (match.index !== 0 || match.lastIndex !== line.length || !match.url) return null;
   return match.url;
+}
+
+function getStandaloneEmbeddableUrlForLine(value: string): string | null {
+  const standaloneUrl = isStandaloneUrlLine(value);
+  if (!standaloneUrl) return null;
+  return isEmbeddableUrl(standaloneUrl) ? standaloneUrl : null;
+}
+
+export function getStandaloneEmbeddableUrls(content: string): string[] {
+  const urls = new Set<string>();
+  const lines = content.split(/\r?\n/);
+  for (const line of lines) {
+    const url = getStandaloneEmbeddableUrlForLine(line);
+    if (url) {
+      urls.add(url);
+    }
+  }
+  return [...urls];
 }
 
 function renderTokenizedText(
@@ -402,14 +434,19 @@ export function linkifyContent(
 ): React.ReactNode[] {
   const lines = content.split(/\r?\n/);
   const nodes: React.ReactNode[] = [];
+  const standaloneEmbedsByLine = lines.map((line) => getStandaloneEmbeddableUrlForLine(line));
 
   for (let index = 0; index < lines.length; index += 1) {
     if (index > 0) {
-      nodes.push(<br key={`line-break-${index}`} />);
+      const prevIsEmbed = Boolean(standaloneEmbedsByLine[index - 1]);
+      const currentIsEmbed = Boolean(standaloneEmbedsByLine[index]);
+      if (!prevIsEmbed && !currentIsEmbed) {
+        nodes.push(<br key={`line-break-${index}`} />);
+      }
     }
 
     const line = lines[index];
-    const standaloneUrl = isStandaloneUrlLine(line);
+    const standaloneUrl = standaloneEmbedsByLine[index];
     if (standaloneUrl) {
       const embedNode = renderStandaloneEmbed(standaloneUrl, `embed-${index}`);
       if (embedNode) {

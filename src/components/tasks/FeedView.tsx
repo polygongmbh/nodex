@@ -15,7 +15,7 @@ import {
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { linkifyContent } from "@/lib/linkify";
+import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -346,6 +346,13 @@ export function FeedView({
               : formatDistanceToNow(task.timestamp, { addSuffix: true });
             const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
             const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
+            const standaloneEmbedUrls = new Set(
+              getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
+            );
+            const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
+              const normalizedUrl = attachment.url?.trim().toLowerCase();
+              return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
+            });
 
             return (
               <div
@@ -588,7 +595,7 @@ export function FeedView({
                         onMentionClick: onAuthorClick,
                       })}
                     </div>
-                    <TaskAttachmentList attachments={task.attachments} />
+                    <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} />
 
                     {/* Due date */}
                     {task.dueDate && (

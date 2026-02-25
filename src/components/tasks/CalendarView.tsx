@@ -31,7 +31,7 @@ import {
   getISOWeek,
 } from "date-fns";
 import { cn } from "@/lib/utils";
-import { linkifyContent } from "@/lib/linkify";
+import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -889,6 +889,13 @@ export function CalendarView({
                     const ancestorChain = getAncestorChain(task.id);
                     const authorColor = getAuthorColor(task.author);
                     const isLockedUntilStart = isTaskLockedUntilStart(task);
+                    const standaloneEmbedUrls = new Set(
+                      getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
+                    );
+                    const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
+                      const normalizedUrl = attachment.url?.trim().toLowerCase();
+                      return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
+                    });
                    
                     return (
                         <div
@@ -1029,7 +1036,7 @@ export function CalendarView({
                                 people,
                               })}
                             </div>
-                            <TaskAttachmentList attachments={task.attachments} className="mt-1.5 space-y-1" />
+                            <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} className="mt-1.5 space-y-1" />
                             {task.dueTime && (
                               <div className="flex items-center gap-2 text-xs mt-1">
                                 <span
