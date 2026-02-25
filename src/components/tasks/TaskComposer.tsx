@@ -37,6 +37,7 @@ import {
 import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
 import { loadAutoCaptionEnabled } from "@/lib/auto-caption-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
+import { generateLocalImageCaption } from "@/lib/local-image-caption";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -383,6 +384,26 @@ export function TaskComposer({
             : attachment
         )
       );
+      if (file.type.startsWith("image/") && loadAutoCaptionEnabled()) {
+        void (async () => {
+          const caption = await generateLocalImageCaption(file);
+          if (!caption) return;
+          setAttachments((previous) =>
+            previous.map((attachment) =>
+              attachment.id === id && !attachment.alt
+                ? {
+                    ...attachment,
+                    alt: caption,
+                  }
+                : attachment
+            )
+          );
+          featureDebugLog("auto-caption", "Applied generated image caption", {
+            attachmentId: id,
+            fileName: file.name,
+          });
+        })();
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Upload failed";
       console.warn("[composer] Attachment upload failed", {

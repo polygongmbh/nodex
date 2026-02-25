@@ -35,6 +35,7 @@ import {
 import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
 import { loadAutoCaptionEnabled } from "@/lib/auto-caption-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
+import { generateLocalImageCaption } from "@/lib/local-image-caption";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -487,6 +488,26 @@ export function UnifiedBottomBar({
             : attachment
         )
       );
+      if (file.type.startsWith("image/") && loadAutoCaptionEnabled()) {
+        void (async () => {
+          const caption = await generateLocalImageCaption(file);
+          if (!caption) return;
+          setAttachments((previous) =>
+            previous.map((attachment) =>
+              attachment.id === id && !attachment.alt
+                ? {
+                    ...attachment,
+                    alt: caption,
+                  }
+                : attachment
+            )
+          );
+          featureDebugLog("auto-caption", "Applied generated image caption on mobile", {
+            attachmentId: id,
+            fileName: file.name,
+          });
+        })();
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Upload failed";
       console.warn("[mobile-composer] Attachment upload failed", {

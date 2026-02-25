@@ -491,7 +491,7 @@
       "undoSendTitle": "Allow undo before sending",
       "undoSendDescription": "Delay Nostr publish by a few seconds so you can undo from the toast or post card.",
       "autoCaptionTitle": "Enable local image captions (tiny model)",
-      "autoCaptionDescription": "Generate image alt text on this device. One-time model download may use about 15-30 MB.",
+      "autoCaptionDescription": "Generate image alt text on this device. One-time model download may use roughly 30-80 MB.",
       "updated": "Profile updated on connected feeds",
       "updateFailed": "Failed to update profile. Check feed connectivity and try again."
     },

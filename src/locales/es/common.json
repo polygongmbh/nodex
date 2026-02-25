@@ -491,7 +491,7 @@
       "undoSendTitle": "Permitir deshacer antes de enviar",
       "undoSendDescription": "Retrasa unos segundos la publicación en Nostr para poder deshacer desde el toast o la tarjeta.",
       "autoCaptionTitle": "Activar subtítulos locales para imágenes (modelo pequeño)",
-      "autoCaptionDescription": "Genera texto alternativo en este dispositivo. La descarga única del modelo puede usar unos 15-30 MB.",
+      "autoCaptionDescription": "Genera texto alternativo en este dispositivo. La descarga única del modelo puede usar aproximadamente 30-80 MB.",
       "updated": "Perfil actualizado en feeds conectados",
       "updateFailed": "No se pudo actualizar el perfil. Revisa la conectividad de feed e inténtalo de nuevo."
     },
