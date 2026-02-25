@@ -21,14 +21,42 @@ function normalizeCaption(caption: string): string {
   return clipped.charAt(0).toUpperCase() + clipped.slice(1);
 }
 
+function extractGeneratedText(value: unknown): string | null {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const extracted = extractGeneratedText(item);
+      if (extracted) return extracted;
+    }
+    return null;
+  }
+  if (value && typeof value === "object") {
+    const generated = (value as { generated_text?: unknown }).generated_text;
+    if (typeof generated === "string") return generated;
+  }
+  return null;
+}
+
 export function extractCaptionFromInference(result: unknown): string | null {
-  if (!Array.isArray(result) || result.length === 0) return null;
-  const first = result[0];
-  if (!first || typeof first !== "object") return null;
-  const generated = (first as { generated_text?: unknown }).generated_text;
+  const generated = extractGeneratedText(result);
   if (typeof generated !== "string") return null;
   const normalized = normalizeCaption(generated);
   return normalized || null;
+}
+
+async function fileToDataUrl(file: File): Promise<string> {
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error("Failed to convert file to data URL"));
+    };
+    reader.onerror = () => reject(reader.error || new Error("Failed to read file for local caption inference"));
+    reader.readAsDataURL(file);
+  });
 }
 
 async function loadImageCaptionPipeline(): Promise<ImageCaptionPipeline | null> {
@@ -69,12 +97,18 @@ export async function generateLocalImageCaption(file: File): Promise<string | nu
   const pipeline = await loadImageCaptionPipeline();
   if (!pipeline) return null;
 
-  const objectUrl = URL.createObjectURL(file);
   try {
-    const result = await pipeline(objectUrl, {
+    const dataUrl = await fileToDataUrl(file);
+    const result = await pipeline(dataUrl, {
       max_new_tokens: 24,
     });
     const caption = extractCaptionFromInference(result);
+    if (!caption) {
+      featureDebugLog("auto-caption", "Inference returned no usable caption text", {
+        fileName: file.name,
+        resultType: Array.isArray(result) ? "array" : typeof result,
+      });
+    }
     featureDebugLog("auto-caption", "Local inference completed", {
       fileName: file.name,
       generated: Boolean(caption),
@@ -92,7 +126,5 @@ export async function generateLocalImageCaption(file: File): Promise<string | nu
       error: error instanceof Error ? error.message : String(error),
     });
     return null;
-  } finally {
-    URL.revokeObjectURL(objectUrl);
   }
 }
