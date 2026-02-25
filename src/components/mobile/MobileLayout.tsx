@@ -174,9 +174,12 @@ export function MobileLayout({
       openManageView();
       return;
     }
-
-    closeManageView(view);
-  }, [closeManageView, openManageView]);
+    if (showFilters) {
+      closeManageView(view);
+      return;
+    }
+    onViewChange(view);
+  }, [closeManageView, onViewChange, openManageView, showFilters]);
 
   // Swipe navigation handlers
   const handleSwipeLeft = useCallback(() => {

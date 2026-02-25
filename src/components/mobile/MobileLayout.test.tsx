@@ -525,4 +525,46 @@ describe("MobileLayout auth wiring", () => {
       expect(screen.getByTestId("feed-view")).toBeInTheDocument();
     });
   });
+
+  it("switches top-bar views without closing manage route when not in manage", () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = false;
+    const onViewChange = vi.fn();
+    const onManageRouteChange = vi.fn();
+
+    render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn
+        currentView="tree"
+        onViewChange={onViewChange}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+        onManageRouteChange={onManageRouteChange}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /switch to feed view/i }));
+
+    expect(onViewChange).toHaveBeenCalledWith("feed");
+    expect(onManageRouteChange).not.toHaveBeenCalledWith(false);
+  });
 });
