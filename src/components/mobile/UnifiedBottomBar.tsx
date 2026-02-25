@@ -535,7 +535,7 @@ export function UnifiedBottomBar({
     const selectedFiles = Array.from(files);
     const imageFiles = selectedFiles.filter((file) => file.type.startsWith("image/"));
     if (imageFiles.length > 0 && loadAutoCaptionEnabled()) {
-      featureDebugLog("auto-caption", "Mobile image attachments queued with auto-caption enabled (inference not yet wired)", {
+      featureDebugLog("auto-caption", "Mobile image attachments queued for local caption inference", {
         imageCount: imageFiles.length,
       });
     }

@@ -432,7 +432,7 @@ export function TaskComposer({
     const selectedFiles = Array.from(files);
     const imageFiles = selectedFiles.filter((file) => file.type.startsWith("image/"));
     if (imageFiles.length > 0 && loadAutoCaptionEnabled()) {
-      featureDebugLog("auto-caption", "Image attachments queued with auto-caption enabled (inference not yet wired)", {
+      featureDebugLog("auto-caption", "Image attachments queued for local caption inference", {
         imageCount: imageFiles.length,
       });
     }
