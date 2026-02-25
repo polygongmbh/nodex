@@ -375,7 +375,7 @@ export function MobileLayout({
   };
 
   return (
-    <div className="flex flex-col h-screen h-[100svh] bg-background overflow-hidden">
+    <div className="flex flex-col app-shell-height bg-background overflow-hidden">
       <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} />
       {onRetryFailedPublish && onDismissFailedPublish && (
         <FailedPublishQueueBanner

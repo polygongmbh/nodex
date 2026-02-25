@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 - Mobile layout now uses route `currentView` as the single source of truth for tab/swipe rendering, fixing broken mobile view switching state mismatches.
 - Added receive-path parsing for Blossom/NIP-94-style attachment metadata tags, including hash-based metadata enrichment for Blossom content URLs and top-level `url` tag attachment extraction.
+- Updated app shell viewport sizing to use dynamic viewport units (`dvh/svh`) with safe-area bottom handling to reduce iOS Safari floating URL bar overflow/scrollbar issues.
 - Composer now uses a single `Attach` action across platforms and enforces a client-side per-file upload limit (default 100 MB, configurable via `VITE_NIP96_MAX_UPLOAD_BYTES`).
 - Mobile composer state (including attachment chips) now persists when opening and closing Manage view.
 - Tree view now only offers comment posting when a parent task is focused, so comments are posted into a visible context.
