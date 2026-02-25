@@ -423,7 +423,7 @@ export function MobileLayout({
         </div>
       </main>
       
-      {!showFilters && (
+      <div hidden={showFilters} data-testid="mobile-compose-bar">
         <UnifiedBottomBar
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
@@ -443,7 +443,7 @@ export function MobileLayout({
           forceComposeMode={forceComposeMode}
           composeRestoreRequest={composeRestoreRequest}
         />
-      )}
+      </div>
     </div>
   );
 }

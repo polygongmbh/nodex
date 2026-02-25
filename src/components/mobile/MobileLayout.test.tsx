@@ -173,7 +173,7 @@ describe("MobileLayout auth wiring", () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
       expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
       expect(document.querySelector("#manage-profile-name")).toBeInTheDocument();
     });
@@ -212,9 +212,9 @@ describe("MobileLayout auth wiring", () => {
       />
     );
 
-    expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
-    expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
   });
 
   it("syncs manage route state when opening manage view", () => {
@@ -290,8 +290,49 @@ describe("MobileLayout auth wiring", () => {
       />
     );
 
-    expect(screen.queryByPlaceholderText(/search or create task/i)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
     expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
+  });
+
+  it("preserves compose draft text when opening and closing manage view", () => {
+    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    ndkMock.needsProfileSetup = false;
+
+    render(
+      <MobileLayout
+        relays={relays}
+        channels={channels}
+        people={people}
+        tasks={tasks}
+        allTasks={tasks}
+        searchQuery=""
+        focusedTaskId={null}
+        currentUser={people[0]}
+        isSignedIn={true}
+        currentView="tree"
+        onViewChange={() => {}}
+        onSearchChange={() => {}}
+        onNewTask={() => ({ ok: true, mode: "local" })}
+        onToggleComplete={() => {}}
+        onStatusChange={() => {}}
+        onFocusTask={() => {}}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onSignInClick={() => {}}
+        onGuideClick={() => {}}
+        onHashtagClick={() => {}}
+      />
+    );
+
+    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(composeField, { target: { value: "Draft with #general" } });
+    fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
+    fireEvent.click(screen.getByRole("button", { name: /switch to tree view/i }));
+
+    expect(screen.getByPlaceholderText(/search or create task/i)).toHaveValue("Draft with #general");
   });
 
   it("falls back to showing all tasks when mobile quick filter has no matches", () => {
