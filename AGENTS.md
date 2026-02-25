@@ -282,6 +282,7 @@ When asked to create a plan to fix or implement something:
   - patch: `1.4.2 -> 1.4.3` for small/single `feat:` changes that are not substantial
   - minor: `1.4.2 -> 1.5.0` when there are multiple/broader `feat:` changes or otherwise significant user-facing scope, and no breaking change exists
   - major: `1.4.2 -> 2.0.0` for breaking change (`feat!:`/`fix!:` or `BREAKING CHANGE:`)
+- when bumping a patch/minor version, include a short explicit rationale in release/push notes (for example: "patch for fixes only" or "minor for broader user-facing feature scope")
 - update `CHANGELOG.md`
 - create annotated tag matching version (for example `v1.1.0`)
 - run verification commands appropriate to risk
