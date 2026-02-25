@@ -35,7 +35,7 @@ import {
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
 import { isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
-import { NON_IMAGE_ATTACHMENT_ACCEPT, shouldPreferNonImageFilePickerOnIOS } from "@/lib/attachment-file-picker";
+import { getAttachmentPickerMode, NON_IMAGE_ATTACHMENT_ACCEPT } from "@/lib/attachment-file-picker";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -196,7 +196,9 @@ export function TaskComposer({
     () => !adaptiveSize || initialContent.trim().length > 0
   );
   const uploadEnabled = isAttachmentUploadConfigured();
-  const fileAttachmentAccept = shouldPreferNonImageFilePickerOnIOS() ? NON_IMAGE_ATTACHMENT_ACCEPT : undefined;
+  const attachmentPickerMode = getAttachmentPickerMode();
+  const showSeparateAttachmentButtons = attachmentPickerMode === "separate";
+  const fileAttachmentAccept = showSeparateAttachmentButtons ? NON_IMAGE_ATTACHMENT_ACCEPT : undefined;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1389,21 +1391,23 @@ export function TaskComposer({
           </button>
           {uploadEnabled && (
             <>
-              <button
-                type="button"
-                onClick={() => imageInputRef.current?.click()}
-                className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-                aria-label="Add image attachment"
-                title="Add image attachment"
-              >
-                <ImagePlus className="w-4 h-4 text-primary" />
-              </button>
+              {showSeparateAttachmentButtons && (
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+                  aria-label="Add image attachment"
+                  title="Add image attachment"
+                >
+                  <ImagePlus className="w-4 h-4 text-primary" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-                aria-label="Add file attachment"
-                title="Add file attachment"
+                aria-label={showSeparateAttachmentButtons ? "Add file attachment" : "Add attachment"}
+                title={showSeparateAttachmentButtons ? "Add file attachment" : "Add attachment"}
               >
                 <Paperclip className="w-4 h-4 text-primary" />
               </button>
@@ -1482,17 +1486,19 @@ export function TaskComposer({
       )}
       {uploadEnabled && (
         <>
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(event) => {
-              queueSelectedFiles(event.target.files);
-              event.currentTarget.value = "";
-            }}
-          />
+          {showSeparateAttachmentButtons && (
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(event) => {
+                queueSelectedFiles(event.target.files);
+                event.currentTarget.value = "";
+              }}
+            />
+          )}
           <input
             ref={fileInputRef}
             type="file"

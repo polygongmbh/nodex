@@ -3,6 +3,8 @@ import { beforeEach, describe, it, expect, vi } from "vitest";
 import { TaskComposer } from "./TaskComposer";
 import type { Channel, Relay, Person, TaskCreateResult } from "@/types";
 import { toast } from "sonner";
+import * as attachmentUpload from "@/lib/nostr/attachment-upload";
+import * as attachmentFilePicker from "@/lib/attachment-file-picker";
 
 let mockUser: { id: string } | null = { id: "me" };
 
@@ -60,12 +62,50 @@ const people: Person[] = [
 ];
 
 const successfulCreateResult: TaskCreateResult = { ok: true, mode: "local" };
+const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
+const attachmentPickerModeSpy = vi.spyOn(attachmentFilePicker, "getAttachmentPickerMode");
 
 describe("TaskComposer hashtag autocomplete", () => {
   beforeEach(() => {
     mockUser = { id: "me" };
     vi.mocked(toast.error).mockClear();
     vi.mocked(toast.success).mockClear();
+    attachmentUploadEnabledSpy.mockReturnValue(true);
+    attachmentPickerModeSpy.mockReturnValue("separate");
+  });
+
+  it("shows unified attachment action on platforms using unified picker mode", () => {
+    attachmentPickerModeSpy.mockReturnValue("unified");
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /add attachment/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add image attachment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add file attachment/i })).not.toBeInTheDocument();
+  });
+
+  it("shows separate image and file attachment actions on separate picker platforms", () => {
+    attachmentPickerModeSpy.mockReturnValue("separate");
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /add image attachment/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add file attachment/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add attachment/i })).not.toBeInTheDocument();
   });
 
   it("keeps task submit label when signed out and disabled", () => {

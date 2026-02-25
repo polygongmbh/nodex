@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Person, Relay } from "@/types";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
+import * as attachmentUpload from "@/lib/nostr/attachment-upload";
+import * as attachmentFilePicker from "@/lib/attachment-file-picker";
 
 vi.mock("@/lib/nostr/ndk-context", () => ({
   useNDK: () => ({
@@ -32,7 +34,65 @@ const people: Person[] = [
   },
 ];
 
+const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
+const attachmentPickerModeSpy = vi.spyOn(attachmentFilePicker, "getAttachmentPickerMode");
+
 describe("UnifiedBottomBar auth gating", () => {
+  beforeEach(() => {
+    attachmentUploadEnabledSpy.mockReturnValue(true);
+    attachmentPickerModeSpy.mockReturnValue("separate");
+  });
+
+  it("shows unified attachment action on platforms using unified picker mode", () => {
+    attachmentPickerModeSpy.mockReturnValue("unified");
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /add attachment/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add image attachment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add file attachment/i })).not.toBeInTheDocument();
+  });
+
+  it("shows separate image and file attachment actions on separate picker platforms", () => {
+    attachmentPickerModeSpy.mockReturnValue("separate");
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /add image attachment/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add file attachment/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add attachment/i })).not.toBeInTheDocument();
+  });
+
   it("opens sign-in when create is tapped while signed out", () => {
     const onSignInClick = vi.fn();
 

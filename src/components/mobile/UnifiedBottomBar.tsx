@@ -33,7 +33,7 @@ import {
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
 import { isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
-import { NON_IMAGE_ATTACHMENT_ACCEPT, shouldPreferNonImageFilePickerOnIOS } from "@/lib/attachment-file-picker";
+import { getAttachmentPickerMode, NON_IMAGE_ATTACHMENT_ACCEPT } from "@/lib/attachment-file-picker";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -145,7 +145,9 @@ export function UnifiedBottomBar({
   const [showSendOptions, setShowSendOptions] = useState(false);
   const [isSendLaunching, setIsSendLaunching] = useState(false);
   const uploadEnabled = isAttachmentUploadConfigured();
-  const fileAttachmentAccept = shouldPreferNonImageFilePickerOnIOS() ? NON_IMAGE_ATTACHMENT_ACCEPT : undefined;
+  const attachmentPickerMode = getAttachmentPickerMode();
+  const showSeparateAttachmentButtons = attachmentPickerMode === "separate";
+  const fileAttachmentAccept = showSeparateAttachmentButtons ? NON_IMAGE_ATTACHMENT_ACCEPT : undefined;
   const canOfferComment = currentView === "feed" || currentView === "tree";
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
@@ -1226,21 +1228,23 @@ export function UnifiedBottomBar({
             <div className="flex h-full items-stretch gap-1.5">
               {uploadEnabled && (
                 <div className="flex flex-col gap-1">
-                  <button
-                    type="button"
-                    onClick={() => imageInputRef.current?.click()}
-                    className="h-[1.55rem] w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-                    aria-label="Add image attachment"
-                    title="Add image attachment"
-                  >
-                    <ImagePlus className="w-3.5 h-3.5" />
-                  </button>
+                  {showSeparateAttachmentButtons && (
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      className="h-[1.55rem] w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                      aria-label="Add image attachment"
+                      title="Add image attachment"
+                    >
+                      <ImagePlus className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="h-[1.55rem] w-8 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
-                    aria-label="Add file attachment"
-                    title="Add file attachment"
+                    aria-label={showSeparateAttachmentButtons ? "Add file attachment" : "Add attachment"}
+                    title={showSeparateAttachmentButtons ? "Add file attachment" : "Add attachment"}
                   >
                     <Paperclip className="w-3.5 h-3.5" />
                   </button>
@@ -1307,17 +1311,19 @@ export function UnifiedBottomBar({
       </div>
       {uploadEnabled && (
         <>
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(event) => {
-              queueSelectedFiles(event.target.files);
-              event.currentTarget.value = "";
-            }}
-          />
+          {showSeparateAttachmentButtons && (
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(event) => {
+                queueSelectedFiles(event.target.files);
+                event.currentTarget.value = "";
+              }}
+            />
+          )}
           <input
             ref={fileInputRef}
             type="file"

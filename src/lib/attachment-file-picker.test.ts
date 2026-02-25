@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  getAttachmentPickerMode,
   NON_IMAGE_ATTACHMENT_ACCEPT,
   shouldPreferNonImageFilePickerOnIOS,
 } from "@/lib/attachment-file-picker";
@@ -81,5 +82,35 @@ describe("attachment file picker helpers", () => {
     });
 
     expect(shouldPreferNonImageFilePickerOnIOS()).toBe(false);
+  });
+
+  it("uses separate pickers on desktop platforms", () => {
+    mockNavigator({
+      platform: "Win32",
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+      maxTouchPoints: 0,
+    });
+
+    expect(getAttachmentPickerMode()).toBe("separate");
+  });
+
+  it("uses unified picker mode on Android mobile browsers", () => {
+    mockNavigator({
+      platform: "Linux armv8l",
+      userAgent: "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36",
+      maxTouchPoints: 5,
+    });
+
+    expect(getAttachmentPickerMode()).toBe("unified");
+  });
+
+  it("uses unified picker mode for unknown mobile-like agents", () => {
+    mockNavigator({
+      platform: "",
+      userAgent: "Mozilla/5.0 (Mobile; rv:124.0) Gecko/124.0 Firefox/124.0",
+      maxTouchPoints: 5,
+    });
+
+    expect(getAttachmentPickerMode()).toBe("unified");
   });
 });

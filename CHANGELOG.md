@@ -7,7 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 - Mobile layout now uses route `currentView` as the single source of truth for tab/swipe rendering, fixing broken mobile view switching state mismatches.
 - Added receive-path parsing for Blossom/NIP-94-style attachment metadata tags, including hash-based metadata enrichment for Blossom content URLs and top-level `url` tag attachment extraction.
-- iOS composer attachment inputs now differentiate image vs file actions more clearly by routing the file button to a non-image file picker.
+- Composer attachment controls now adapt by platform: iOS/desktop use separate image and file actions with non-image filtering for files, while uncertain mobile platforms fall back to a single unified attach action.
 
 ## [1.13.0] - 2026-02-25
 Expanded attachment publishing and embed behavior, with managed/self-hosted upload options and NIP-98 auth for protected NIP-96 servers.
