@@ -65,4 +65,57 @@ describe("uploadAttachment NIP-98 integration", () => {
     const headers = new Headers(requestInit.headers);
     expect(headers.has("Authorization")).toBe(false);
   });
+
+  it("accepts stringified nip94_event payloads", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          status: "success",
+          message: "Upload successful.",
+          nip94_event: JSON.stringify({
+            tags: [
+              ["url", "https://cdn.example.com/from-nip94.jpg"],
+              ["m", "image/jpeg"],
+            ],
+          }),
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }
+      )
+    );
+
+    const file = new File(["hello"], "from-nip94.jpg", { type: "image/jpeg" });
+    const uploaded = await uploadAttachment(file, {
+      uploadUrl: "https://upload.example.com/api/v1/upload",
+      getAuthHeader: async () => "Nostr abc123",
+    });
+
+    expect(uploaded.url).toBe("https://cdn.example.com/from-nip94.jpg");
+    expect(uploaded.mimeType).toBe("image/jpeg");
+  });
+
+  it("accepts nested data URL payloads", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          status: "success",
+          message: "Upload successful.",
+          data: [{ url: "https://cdn.example.com/from-data.pdf" }],
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }
+      )
+    );
+
+    const file = new File(["hello"], "from-data.pdf", { type: "application/pdf" });
+    const uploaded = await uploadAttachment(file, {
+      uploadUrl: "https://upload.example.com/api/v1/upload",
+    });
+
+    expect(uploaded.url).toBe("https://cdn.example.com/from-data.pdf");
+  });
 });

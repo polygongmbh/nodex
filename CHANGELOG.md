@@ -10,6 +10,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Added image/file attachment controls in desktop and mobile composers with NIP-92 `imeta` publish tags, plus automatic inline rendering for direct image/file URLs in task content across views.
 - Switched default managed upload endpoint to `nostr.build`, passed `VITE_NIP96_UPLOAD_URL` into Docker build args, and added an optional `docker-compose.upload.yml` Route96 stack for self-hosted uploads.
 - Added NIP-98 HTTP auth signing for attachment uploads so NIP-96 servers that require authenticated `Authorization: Nostr ...` requests can accept composer image/file uploads.
+- Fixed attachment uploads being marked `Failed` when providers returned successful responses with URLs in alternate NIP-96 payload shapes (such as stringified `nip94_event` or nested `data` URLs).
 
 ## [1.12.2] - 2026-02-24
 Refined onboarding availability for signed-out users and unified compose/sign-in iconography.

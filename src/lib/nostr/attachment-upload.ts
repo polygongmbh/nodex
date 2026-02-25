@@ -7,9 +7,17 @@ interface NIP96UploadResponse {
   status?: string;
   message?: string;
   url?: string;
+  download_url?: string;
+  media_url?: string;
+  file_url?: string;
+  processing_url?: string;
+  data?: unknown;
   nip94_event?: {
     tags?: string[][];
-  };
+  } | string;
+  nip94event?: {
+    tags?: string[][];
+  } | string;
 }
 
 const DEFAULT_UPLOAD_URL = import.meta.env.VITE_NIP96_UPLOAD_URL as string | undefined;
@@ -43,9 +51,69 @@ function debugLog(message: string, payload?: Record<string, unknown>) {
   console.info("[attachments]", message);
 }
 
-function parseNip94Tags(tags: string[][]): PublishedAttachment | null {
-  const asImeta = ["imeta", ...tags.filter((tag) => tag.length >= 2).map((tag) => `${tag[0]} ${tag[1]}`)];
+function parseNip94Tags(tags: unknown): PublishedAttachment | null {
+  if (!Array.isArray(tags)) return null;
+  const normalized = tags
+    .map((tag) => {
+      if (Array.isArray(tag) && tag.length >= 2) {
+        return `${String(tag[0])} ${String(tag[1])}`;
+      }
+      if (typeof tag === "string") {
+        return tag;
+      }
+      return "";
+    })
+    .filter((tag) => tag.length > 0);
+  if (normalized.length === 0) return null;
+  const asImeta = ["imeta", ...normalized];
   return parseImetaTag(asImeta);
+}
+
+function parseNip94EventTags(payload: NIP96UploadResponse): unknown {
+  const candidate = payload.nip94_event ?? payload.nip94event;
+  if (!candidate) return null;
+  if (typeof candidate === "string") {
+    try {
+      const parsed = JSON.parse(candidate) as { tags?: unknown };
+      return parsed.tags ?? null;
+    } catch {
+      return null;
+    }
+  }
+  return candidate.tags ?? null;
+}
+
+function pickUrlFromUploadResponse(payload: NIP96UploadResponse): string | undefined {
+  const directCandidates = [
+    payload.url,
+    payload.download_url,
+    payload.media_url,
+    payload.file_url,
+  ];
+  for (const value of directCandidates) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+
+  const data = payload.data as
+    | { url?: unknown; download_url?: unknown; media_url?: unknown; file_url?: unknown }
+    | Array<{ url?: unknown; download_url?: unknown; media_url?: unknown; file_url?: unknown }>
+    | undefined;
+  if (Array.isArray(data) && data.length > 0) {
+    const entry = data[0];
+    const arrayCandidate = entry?.url ?? entry?.download_url ?? entry?.media_url ?? entry?.file_url;
+    if (typeof arrayCandidate === "string" && arrayCandidate.trim().length > 0) {
+      return arrayCandidate.trim();
+    }
+  } else if (data && typeof data === "object") {
+    const objectCandidate = data.url ?? data.download_url ?? data.media_url ?? data.file_url;
+    if (typeof objectCandidate === "string" && objectCandidate.trim().length > 0) {
+      return objectCandidate.trim();
+    }
+  }
+
+  return undefined;
 }
 
 async function hashFileSha256(file: File): Promise<string> {
@@ -162,14 +230,15 @@ export async function uploadAttachment(
   }
 
   let attachment: PublishedAttachment | null = null;
-  const tags = payload.nip94_event?.tags;
-  if (tags && Array.isArray(tags)) {
+  const tags = parseNip94EventTags(payload);
+  if (tags) {
     attachment = parseNip94Tags(tags);
   }
 
-  if (!attachment && payload.url) {
+  const extractedUrl = pickUrlFromUploadResponse(payload);
+  if (!attachment && extractedUrl) {
     attachment = {
-      url: payload.url,
+      url: extractedUrl,
       mimeType: file.type || undefined,
       size: file.size,
       name: file.name,
