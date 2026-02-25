@@ -490,6 +490,8 @@
       "presenceDescription": "Broadcast your current view and active task (NIP-38). Disable for privacy.",
       "undoSendTitle": "Allow undo before sending",
       "undoSendDescription": "Delay Nostr publish by a few seconds so you can undo from the toast or post card.",
+      "autoCaptionTitle": "Enable local image captions (tiny model)",
+      "autoCaptionDescription": "Generate image alt text on this device. One-time model download may use about 15-30 MB.",
       "updated": "Profile updated on connected feeds",
       "updateFailed": "Failed to update profile. Check feed connectivity and try again."
     },

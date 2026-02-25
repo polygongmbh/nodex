@@ -83,6 +83,7 @@ export function MobileFilters({
       profileAbout,
       presencePublishingEnabled,
       publishDelayEnabled,
+      autoCaptionEnabled,
     },
     isSavingProfile,
     validation: {
@@ -100,6 +101,7 @@ export function MobileFilters({
     handleSaveProfile,
     handlePresencePublishingChange,
     handlePublishDelayChange,
+    handleAutoCaptionChange,
   } = useProfileEditor({
     userPubkey: user?.pubkey,
     knownProfileNames: people
@@ -320,6 +322,19 @@ export function MobileFilters({
                   <span className="space-y-0.5">
                     <span className="block text-xs font-medium">{t("filters.profile.undoSendTitle")}</span>
                     <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
+                  </span>
+                </label>
+                <label htmlFor="manage-profile-auto-caption-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
+                  <input
+                    id="manage-profile-auto-caption-enabled"
+                    type="checkbox"
+                    checked={autoCaptionEnabled}
+                    onChange={(event) => handleAutoCaptionChange(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-primary"
+                  />
+                  <span className="space-y-0.5">
+                    <span className="block text-xs font-medium">{t("filters.profile.autoCaptionTitle")}</span>
+                    <span className="block text-xs text-muted-foreground">{t("filters.profile.autoCaptionDescription")}</span>
                   </span>
                 </label>
                 <div className="flex items-center justify-end gap-2 pt-1">

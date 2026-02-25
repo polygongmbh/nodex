@@ -369,6 +369,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       profileAbout,
       presencePublishingEnabled,
       publishDelayEnabled,
+      autoCaptionEnabled,
     },
     isSavingProfile,
     validation: {
@@ -386,6 +387,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     handleSaveProfile,
     handlePresencePublishingChange,
     handlePublishDelayChange,
+    handleAutoCaptionChange,
   } = useProfileEditor({
     userPubkey: user?.pubkey,
     t,
@@ -641,6 +643,19 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   <span className="space-y-0.5">
                     <span className="block text-sm font-medium">{t("filters.profile.undoSendTitle")}</span>
                     <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
+                  </span>
+                </label>
+                <label htmlFor="profile-auto-caption-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-3 py-2">
+                  <input
+                    id="profile-auto-caption-enabled"
+                    type="checkbox"
+                    checked={autoCaptionEnabled}
+                    onChange={(event) => handleAutoCaptionChange(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-primary"
+                  />
+                  <span className="space-y-0.5">
+                    <span className="block text-sm font-medium">{t("filters.profile.autoCaptionTitle")}</span>
+                    <span className="block text-xs text-muted-foreground">{t("filters.profile.autoCaptionDescription")}</span>
                   </span>
                 </label>
               </div>

@@ -15,6 +15,10 @@ import {
   loadPublishDelayEnabled,
   savePublishDelayEnabled,
 } from "@/lib/publish-delay-preferences";
+import {
+  loadAutoCaptionEnabled,
+  saveAutoCaptionEnabled,
+} from "@/lib/auto-caption-preferences";
 import { EditableNostrProfile, isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
 import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
 
@@ -55,6 +59,9 @@ export function useProfileEditor({
   const [publishDelayEnabled, setPublishDelayEnabled] = useState(() =>
     loadPublishDelayEnabled()
   );
+  const [autoCaptionEnabled, setAutoCaptionEnabled] = useState(() =>
+    loadAutoCaptionEnabled()
+  );
 
   const trimmedProfileName = profileName.trim();
   const hasTypedProfileName = profileName.length > 0;
@@ -78,6 +85,7 @@ export function useProfileEditor({
     setProfileAbout(profile.about || "");
     setPresencePublishingEnabled(loadPresencePublishingEnabled());
     setPublishDelayEnabled(loadPublishDelayEnabled());
+    setAutoCaptionEnabled(loadAutoCaptionEnabled());
   };
 
   const handlePresencePublishingChange = (enabled: boolean) => {
@@ -96,6 +104,11 @@ export function useProfileEditor({
   const handlePublishDelayChange = (enabled: boolean) => {
     setPublishDelayEnabled(enabled);
     savePublishDelayEnabled(enabled);
+  };
+
+  const handleAutoCaptionChange = (enabled: boolean) => {
+    setAutoCaptionEnabled(enabled);
+    saveAutoCaptionEnabled(enabled);
   };
 
   const handleSaveProfile = async () => {
@@ -139,6 +152,7 @@ export function useProfileEditor({
       profileAbout,
       presencePublishingEnabled,
       publishDelayEnabled,
+      autoCaptionEnabled,
     }),
     [
       profileAbout,
@@ -148,6 +162,7 @@ export function useProfileEditor({
       profilePicture,
       presencePublishingEnabled,
       publishDelayEnabled,
+      autoCaptionEnabled,
     ]
   );
 
@@ -169,5 +184,6 @@ export function useProfileEditor({
     handleSaveProfile,
     handlePresencePublishingChange,
     handlePublishDelayChange,
+    handleAutoCaptionChange,
   };
 }

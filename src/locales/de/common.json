@@ -490,6 +490,8 @@
       "presenceDescription": "Aktuelle Ansicht und aktive Aufgabe als NIP-38-Status senden. Für mehr Privatsphäre deaktivieren.",
       "undoSendTitle": "Rückgängig vor dem Senden erlauben",
       "undoSendDescription": "Nostr-Veröffentlichung um ein paar Sekunden verzögern, damit sie im Toast oder auf der Karte rückgängig gemacht werden kann.",
+      "autoCaptionTitle": "Lokale Bildbeschriftungen aktivieren (kleines Modell)",
+      "autoCaptionDescription": "Erzeugt Alt-Text auf diesem Gerät. Ein einmaliger Modelldownload kann etwa 15-30 MB verbrauchen.",
       "updated": "Profil auf verbundenen Feeds aktualisiert",
       "updateFailed": "Profil konnte nicht aktualisiert werden. Feed-Verbindung prüfen und erneut versuchen."
     },

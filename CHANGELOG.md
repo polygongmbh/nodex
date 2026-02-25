@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Profile settings now include an opt-in toggle for local tiny-model image caption inference, with a one-time model download data-usage hint.
 
 ## [1.13.1] - 2026-02-25
 - Mobile layout now uses route `currentView` as the single source of truth for tab/swipe rendering, and top-bar view switching no longer gets overridden by manage-route closes.
