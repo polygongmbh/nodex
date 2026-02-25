@@ -5,6 +5,7 @@ type ImageCaptionPipeline = (input: string, options?: Record<string, unknown>) =
 const TRANSFORMERS_ESM_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/+esm";
 const DEFAULT_CAPTION_MODEL_ID = "Xenova/vit-gpt2-image-captioning";
 const MAX_CAPTION_CHARS = 160;
+const CAPTION_INFERENCE_TIMEOUT_MS = 45000;
 
 let imageCaptionPipelinePromise: Promise<ImageCaptionPipeline | null> | null = null;
 
@@ -59,6 +60,20 @@ async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+  let timeoutId: number | undefined;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId);
+    }
+  }
+}
+
 async function loadImageCaptionPipeline(): Promise<ImageCaptionPipeline | null> {
   if (imageCaptionPipelinePromise) return imageCaptionPipelinePromise;
 
@@ -94,14 +109,31 @@ async function loadImageCaptionPipeline(): Promise<ImageCaptionPipeline | null> 
 
 export async function generateLocalImageCaption(file: File): Promise<string | null> {
   if (!file.type.startsWith("image/")) return null;
+  featureDebugLog("auto-caption", "Starting local caption inference", {
+    fileName: file.name,
+    size: file.size,
+    mimeType: file.type || null,
+  });
   const pipeline = await loadImageCaptionPipeline();
   if (!pipeline) return null;
 
   try {
     const dataUrl = await fileToDataUrl(file);
-    const result = await pipeline(dataUrl, {
-      max_new_tokens: 24,
+    featureDebugLog("auto-caption", "Image converted to data URL for caption inference", {
+      fileName: file.name,
+      dataUrlLength: dataUrl.length,
     });
+    featureDebugLog("auto-caption", "Invoking caption pipeline", {
+      fileName: file.name,
+      timeoutMs: CAPTION_INFERENCE_TIMEOUT_MS,
+    });
+    const result = await withTimeout(
+      pipeline(dataUrl, {
+        max_new_tokens: 24,
+      }),
+      CAPTION_INFERENCE_TIMEOUT_MS,
+      "Local caption inference timed out"
+    );
     const caption = extractCaptionFromInference(result);
     if (!caption) {
       featureDebugLog("auto-caption", "Inference returned no usable caption text", {

@@ -489,9 +489,19 @@ export function UnifiedBottomBar({
         )
       );
       if (file.type.startsWith("image/") && loadAutoCaptionEnabled()) {
+        featureDebugLog("auto-caption", "Starting mobile post-upload caption generation for image attachment", {
+          attachmentId: id,
+          fileName: file.name,
+        });
         void (async () => {
           const caption = await generateLocalImageCaption(file);
-          if (!caption) return;
+          if (!caption) {
+            featureDebugLog("auto-caption", "No caption generated for uploaded mobile image attachment", {
+              attachmentId: id,
+              fileName: file.name,
+            });
+            return;
+          }
           setAttachments((previous) =>
             previous.map((attachment) =>
               attachment.id === id && !attachment.alt
