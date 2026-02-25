@@ -21,6 +21,7 @@ import {
 } from "@/lib/auto-caption-preferences";
 import { EditableNostrProfile, isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
 import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
+import { featureDebugLog } from "@/lib/feature-debug";
 
 interface ProfileEditorSnapshot {
   name?: string;
@@ -109,6 +110,10 @@ export function useProfileEditor({
   const handleAutoCaptionChange = (enabled: boolean) => {
     setAutoCaptionEnabled(enabled);
     saveAutoCaptionEnabled(enabled);
+    featureDebugLog("auto-caption", "Profile auto-caption preference changed", {
+      enabled,
+      userPubkey: userPubkey || null,
+    });
   };
 
   const handleSaveProfile = async () => {

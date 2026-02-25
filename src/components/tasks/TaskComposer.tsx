@@ -35,6 +35,8 @@ import {
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
 import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
+import { loadAutoCaptionEnabled } from "@/lib/auto-caption-preferences";
+import { featureDebugLog } from "@/lib/feature-debug";
 
 interface TaskComposerProps {
   onSubmit: (
@@ -407,6 +409,12 @@ export function TaskComposer({
     if (!files || files.length === 0) return;
 
     const selectedFiles = Array.from(files);
+    const imageFiles = selectedFiles.filter((file) => file.type.startsWith("image/"));
+    if (imageFiles.length > 0 && loadAutoCaptionEnabled()) {
+      featureDebugLog("auto-caption", "Image attachments queued with auto-caption enabled (inference not yet wired)", {
+        imageCount: imageFiles.length,
+      });
+    }
     const validFiles = selectedFiles.filter((file) => {
       if (file.size <= attachmentMaxFileSizeBytes) return true;
       const maxSizeMb = Math.max(1, Math.ceil(attachmentMaxFileSizeBytes / (1024 * 1024)));

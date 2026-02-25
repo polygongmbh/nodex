@@ -9,3 +9,5 @@ export function saveAutoCaptionEnabled(enabled: boolean): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY_AUTO_CAPTION_ENABLED, enabled ? "true" : "false");
 }
+
+export { STORAGE_KEY_AUTO_CAPTION_ENABLED };
