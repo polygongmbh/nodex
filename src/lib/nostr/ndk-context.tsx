@@ -7,6 +7,7 @@ import NDK, {
   NDKRelaySet,
   NDKUser,
   NDKRelay,
+  NDKRelayStatus as NativeNDKRelayStatus,
   NDKFilter,
   NDKSubscription,
 } from "@nostr-dev-kit/ndk";
@@ -90,6 +91,7 @@ const STORAGE_KEY_NSEC = "nostr_guest_nsec";
 const STORAGE_KEY_NIP46_BUNKER = "nostr_nip46_bunker";
 const STORAGE_KEY_NIP46_LOCAL_NSEC = "nostr_nip46_local_nsec";
 const MAX_INITIAL_CONNECT_FAILURES = 5;
+const RELAY_STATUS_RECONCILE_INTERVAL_MS = 5000;
 type WindowWithNostr = Window & { nostr?: unknown };
 
 const hasNostrExtension = (): boolean =>
@@ -121,6 +123,24 @@ async function verifyNip05(nip05: string, pubkey: string): Promise<boolean> {
     return registeredPubkey === pubkey;
   } catch {
     return false;
+  }
+}
+
+function mapNativeRelayStatus(status: NativeNDKRelayStatus): NDKRelayStatus["status"] {
+  switch (status) {
+    case NativeNDKRelayStatus.CONNECTED:
+    case NativeNDKRelayStatus.AUTH_REQUESTED:
+    case NativeNDKRelayStatus.AUTHENTICATING:
+    case NativeNDKRelayStatus.AUTHENTICATED:
+      return "connected";
+    case NativeNDKRelayStatus.CONNECTING:
+    case NativeNDKRelayStatus.RECONNECTING:
+    case NativeNDKRelayStatus.FLAPPING:
+      return "connecting";
+    case NativeNDKRelayStatus.DISCONNECTING:
+    case NativeNDKRelayStatus.DISCONNECTED:
+    default:
+      return "disconnected";
   }
 }
 
@@ -215,6 +235,27 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     // Set up relay event handlers
     const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
+    const syncRelayStatusesFromPool = () => {
+      setRelays((prev) => {
+        const nextByUrl = new Map(prev.map((entry) => [normalizeUrl(entry.url), entry]));
+        ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
+          const normalized = normalizeUrl(relay.url);
+          if (relayAutoPausedRef.current.has(normalized)) {
+            nextByUrl.set(normalized, { url: normalized, status: "error" });
+            return;
+          }
+          nextByUrl.set(normalized, {
+            url: normalized,
+            status: mapNativeRelayStatus(relay.status),
+          });
+        });
+        return Array.from(nextByUrl.values());
+      });
+    };
+
+    ndkInstance.pool.on("relay:connecting", () => {
+      syncRelayStatusesFromPool();
+    });
 
     ndkInstance.pool.on("relay:connect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
@@ -282,7 +323,12 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     // Connect
     ndkInstance.connect().then(() => {
       nostrDevLog("provider", "NDK connected to relay pool");
+      syncRelayStatusesFromPool();
     });
+    const reconcileIntervalId = window.setInterval(
+      syncRelayStatusesFromPool,
+      RELAY_STATUS_RECONCILE_INTERVAL_MS
+    );
 
     setNdk(ndkInstance);
 
@@ -347,6 +393,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
 
     return () => {
+      window.clearInterval(reconcileIntervalId);
       ndkInstance.pool.relays.forEach((relay) => {
         relay.disconnect();
       });
