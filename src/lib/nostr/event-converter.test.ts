@@ -262,6 +262,52 @@ describe("nostrEventToTask", () => {
     ]);
   });
 
+  it("extracts attachments from NIP-94 top-level url tags", () => {
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      content: "shared file",
+      tags: [
+        ["url", "https://cdn.example.com/manual.pdf"],
+        ["m", "application/pdf"],
+        ["x", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"],
+        ["size", "9001"],
+      ],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.attachments).toContainEqual({
+      url: "https://cdn.example.com/manual.pdf",
+      mimeType: "application/pdf",
+      sha256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      size: 9001,
+    });
+  });
+
+  it("enriches blossom content URLs with NIP-94 hash metadata", () => {
+    const sha = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      content: `See https://cdn.blossom.example/${sha}`,
+      tags: [
+        ["x", sha],
+        ["m", "image/webp"],
+        ["size", "321"],
+      ],
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.attachments).toEqual([
+      {
+        url: `https://cdn.blossom.example/${sha}`,
+        mimeType: "image/webp",
+        sha256: sha,
+        size: 321,
+      },
+    ]);
+  });
+
   it("resolves indexed person references from content into @pubkey mentions", () => {
     const personPubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const event: NostrEventWithRelay = {

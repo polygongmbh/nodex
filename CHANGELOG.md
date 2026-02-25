@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Added receive-path parsing for Blossom/NIP-94-style attachment metadata tags, including hash-based metadata enrichment for Blossom content URLs and top-level `url` tag attachment extraction.
 
 ## [1.13.0] - 2026-02-25
 Expanded attachment publishing and embed behavior, with managed/self-hosted upload options and NIP-98 auth for protected NIP-96 servers.

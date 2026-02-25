@@ -25,6 +25,10 @@ const FILE_MIME_BY_EXTENSION: Record<string, string> = {
   mov: "video/quicktime",
 };
 
+const SHA256_HEX_REGEX = /([a-fA-F0-9]{64})(?:$|[^a-fA-F0-9])/;
+
+type AttachmentMetadataCandidate = Omit<PublishedAttachment, "url"> & { url?: string };
+
 export function isSafeHttpUrl(value: string): boolean {
   try {
     const parsed = new URL(value);
@@ -61,6 +65,19 @@ export function guessMimeTypeFromUrl(url: string): string | undefined {
   const ext = getUrlPathExtension(url);
   if (!ext) return undefined;
   return FILE_MIME_BY_EXTENSION[ext];
+}
+
+export function extractSha256FromUrl(url: string): string | undefined {
+  try {
+    const parsed = new URL(url);
+    const pathname = parsed.pathname;
+    const withSentinel = `${pathname}/`;
+    const match = withSentinel.match(SHA256_HEX_REGEX);
+    if (!match?.[1]) return undefined;
+    return match[1].toLowerCase();
+  } catch {
+    return undefined;
+  }
 }
 
 export function isImageAttachment(attachment: Pick<PublishedAttachment, "url" | "mimeType">): boolean {
@@ -154,6 +171,65 @@ export function parseImetaTag(tag: string[]): PublishedAttachment | null {
     alt,
     name,
   };
+}
+
+function applyAttachmentMetadataField(candidate: AttachmentMetadataCandidate, key: string, value: string): void {
+  if (key === "url" && isSafeHttpUrl(value)) candidate.url = value;
+  if (key === "m") candidate.mimeType = value;
+  if (key === "x") candidate.sha256 = value.toLowerCase();
+  if (key === "size") {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed)) candidate.size = parsed;
+  }
+  if (key === "dim") candidate.dimensions = value;
+  if (key === "blurhash") candidate.blurhash = value;
+  if (key === "alt") candidate.alt = value;
+  if (key === "name") candidate.name = value;
+}
+
+export function parseNip94AttachmentMetadataTags(tags: string[][]): AttachmentMetadataCandidate[] {
+  const candidates: AttachmentMetadataCandidate[] = [];
+  let current: AttachmentMetadataCandidate | null = null;
+
+  const ensureCurrent = (): AttachmentMetadataCandidate => {
+    if (!current) {
+      current = {};
+      candidates.push(current);
+    }
+    return current;
+  };
+
+  for (const tag of tags) {
+    const key = tag[0]?.toLowerCase();
+    const rawValue = tag[1];
+    const value = typeof rawValue === "string" ? rawValue.trim() : "";
+    if (!key || !value) continue;
+    if (!["url", "m", "x", "size", "dim", "blurhash", "alt", "name"].includes(key)) continue;
+
+    if (key === "url") {
+      current = {};
+      candidates.push(current);
+      applyAttachmentMetadataField(current, key, value);
+      continue;
+    }
+
+    if (key === "x") {
+      const normalized = value.toLowerCase();
+      const isHex64 = /^[a-f0-9]{64}$/.test(normalized);
+      if (!isHex64) continue;
+      if (!current || current.sha256) {
+        current = {};
+        candidates.push(current);
+      }
+      applyAttachmentMetadataField(current, key, normalized);
+      continue;
+    }
+
+    const target = ensureCurrent();
+    applyAttachmentMetadataField(target, key, value);
+  }
+
+  return candidates;
 }
 
 export function buildImetaTag(attachment: PublishedAttachment): string[] {

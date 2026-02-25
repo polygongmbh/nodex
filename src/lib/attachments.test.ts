@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildImetaTag,
+  extractSha256FromUrl,
   extractEmbeddableAttachmentsFromContent,
   extractUrlsFromContent,
   guessMimeTypeFromUrl,
@@ -8,6 +9,7 @@ import {
   isSafeHttpUrl,
   normalizePublishedAttachments,
   parseImetaTag,
+  parseNip94AttachmentMetadataTags,
 } from "@/lib/attachments";
 
 describe("attachments helpers", () => {
@@ -66,5 +68,33 @@ describe("attachments helpers", () => {
   it("detects image attachments", () => {
     expect(isImageAttachment({ url: "https://a.com/cat.png" })).toBe(true);
     expect(isImageAttachment({ url: "https://a.com/file.pdf", mimeType: "application/pdf" })).toBe(false);
+  });
+
+  it("extracts blossom-style sha256 from URL path", () => {
+    const sha = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    expect(extractSha256FromUrl(`https://blossom.example/${sha}`)).toBe(sha);
+    expect(extractSha256FromUrl("https://a.com/file.png")).toBeUndefined();
+  });
+
+  it("parses NIP-94/BUD top-level attachment metadata tags", () => {
+    expect(
+      parseNip94AttachmentMetadataTags([
+        ["x", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"],
+        ["m", "image/png"],
+        ["size", "512"],
+        ["url", "https://cdn.example.com/cat.png"],
+        ["alt", "Cat"],
+      ])
+    ).toEqual([
+      {
+        sha256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        mimeType: "image/png",
+        size: 512,
+      },
+      {
+        url: "https://cdn.example.com/cat.png",
+        alt: "Cat",
+      },
+    ]);
   });
 });

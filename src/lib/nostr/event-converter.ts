@@ -10,9 +10,11 @@ import { parseLinkedTaskDueFromCalendarEvent } from "./task-calendar-events";
 import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 import { relayUrlToId, relayUrlToName } from "@/lib/relay-url";
 import {
+  extractSha256FromUrl,
   extractEmbeddableAttachmentsFromContent,
   normalizePublishedAttachments,
   parseImetaTag,
+  parseNip94AttachmentMetadataTags,
 } from "@/lib/attachments";
 
 // Spam keywords for basic filtering
@@ -128,8 +130,33 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const imetaAttachments = event.tags
     .map((tag) => parseImetaTag(tag))
     .filter((attachment): attachment is NonNullable<typeof attachment> => Boolean(attachment));
-  const contentAttachments = extractEmbeddableAttachmentsFromContent(normalizedContent);
-  const attachments = normalizePublishedAttachments([...imetaAttachments, ...contentAttachments]);
+  const nip94LikeAttachments = parseNip94AttachmentMetadataTags(event.tags);
+  const nip94ByUrl = new Map(
+    nip94LikeAttachments
+      .filter((attachment): attachment is typeof attachment & { url: string } => Boolean(attachment.url))
+      .map((attachment) => [attachment.url.toLowerCase(), attachment])
+  );
+  const nip94BySha = new Map(
+    nip94LikeAttachments
+      .filter((attachment): attachment is typeof attachment & { sha256: string } => Boolean(attachment.sha256))
+      .map((attachment) => [attachment.sha256.toLowerCase(), attachment])
+  );
+  const contentAttachments = extractEmbeddableAttachmentsFromContent(normalizedContent).map((attachment) => {
+    const byUrl = nip94ByUrl.get(attachment.url.toLowerCase());
+    const hashFromUrl = extractSha256FromUrl(attachment.url);
+    const bySha = hashFromUrl ? nip94BySha.get(hashFromUrl) : undefined;
+    return {
+      ...attachment,
+      ...bySha,
+      ...byUrl,
+      url: attachment.url,
+    };
+  });
+  const attachments = normalizePublishedAttachments([
+    ...imetaAttachments,
+    ...nip94LikeAttachments.filter((attachment): attachment is typeof attachment & { url: string } => Boolean(attachment.url)),
+    ...contentAttachments,
+  ]);
 
   let dueDate: Date | undefined;
   if (dueTag?.[1]) {
