@@ -33,10 +33,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={(mode === "auto" ? "system" : mode) as ToasterProps["theme"]}
-      className="toaster group"
       position={isMobile ? "top-center" : "bottom-right"}
+      richColors
       closeButton
-      expand={false}
       visibleToasts={2}
       offset={12}
       mobileOffset={{ top: 12, left: 12, right: 12 }}
@@ -44,22 +43,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
         duration: isMobile ? 1800 : 2800,
         dismissible: true,
         closeButton: true,
-        classNames: {
-          toast:
-            "group toast motion-toast-in cursor-pointer group-[.toaster]:bg-card group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-2xl group-[.toaster]:ring-1 group-[.toaster]:ring-black/10 dark:group-[.toaster]:ring-white/10",
-          success:
-            "group-[.toaster]:border-success/90 group-[.toaster]:bg-success/55 group-[.toaster]:text-success-foreground",
-          info:
-            "group-[.toaster]:border-primary/80 group-[.toaster]:bg-primary/55 group-[.toaster]:text-primary-foreground",
-          warning:
-            "group-[.toaster]:border-warning/85 group-[.toaster]:bg-warning/55 group-[.toaster]:text-warning-foreground",
-          error:
-            "group-[.toaster]:border-destructive/85 group-[.toaster]:bg-destructive/55 group-[.toaster]:text-destructive-foreground",
-          description: "group-[.toast]:text-current/90",
-          actionButton:
-            "group-[.toast]:bg-foreground group-[.toast]:text-background group-[.toast]:border group-[.toast]:border-foreground/20",
-          cancelButton:
-            "group-[.toast]:bg-background/90 group-[.toast]:text-foreground group-[.toast]:border group-[.toast]:border-foreground/20",
+        actionButtonStyle: {
+          background: "hsl(var(--primary))",
+          color: "hsl(var(--primary-foreground))",
+          border: "1px solid hsl(var(--primary) / 0.35)",
         },
       }}
       {...props}
