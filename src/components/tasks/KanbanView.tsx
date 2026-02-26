@@ -32,6 +32,8 @@ import { useTranslation } from "react-i18next";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import { filterTasksByDepthMode } from "@/lib/depth-mode-filter";
 import { TaskAttachmentList } from "./TaskAttachmentList";
+import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
+import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -199,6 +201,21 @@ export function KanbanView({
 
     return grouped;
   }, [kanbanTasks, sortContext]);
+  const orderedKanbanTasks = useMemo(
+    () => [...tasksByStatus["todo"], ...tasksByStatus["in-progress"], ...tasksByStatus["done"]],
+    [tasksByStatus]
+  );
+  const {
+    mediaItems,
+    activeMediaIndex,
+    activeMediaItem,
+    activePostMediaIndex,
+    activePostMediaCount,
+    openTaskMedia,
+    goToPreviousMedia,
+    goToNextMedia,
+    closeMediaPreview,
+  } = useTaskMediaPreview(orderedKanbanTasks);
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -457,6 +474,12 @@ export function KanbanView({
                           const standaloneEmbedUrls = new Set(
                             getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
                           );
+                          const mediaCaptionByUrl = new Map<string, string>();
+                          for (const attachment of task.attachments || []) {
+                            const normalizedUrl = attachment.url?.trim().toLowerCase();
+                            const caption = attachment.alt?.trim() || attachment.name?.trim();
+                            if (normalizedUrl && caption) mediaCaptionByUrl.set(normalizedUrl, caption);
+                          }
                           const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
                             const normalizedUrl = attachment.url?.trim().toLowerCase();
                             return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
@@ -528,9 +551,14 @@ export function KanbanView({
                                     {linkifyContent(task.content, onHashtagClick, {
                                       plainHashtags: task.status === "done",
                                       people,
+                                      onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
+                                      getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
                                     })}
                                   </div>
-                                  <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} />
+                                  <TaskAttachmentList
+                                    attachments={attachmentsWithoutInlineEmbeds}
+                                    onMediaClick={(url) => openTaskMedia(task.id, url)}
+                                  />
                                   {isPendingPublish && (
                                     <div className="mt-2">
                                       <button
@@ -595,6 +623,20 @@ export function KanbanView({
           </div>
         </DragDropContext>
       </div>
+      <TaskMediaLightbox
+        open={activeMediaIndex !== null}
+        mediaItem={activeMediaItem}
+        mediaCount={mediaItems.length}
+        mediaIndex={activeMediaIndex ?? 0}
+        postMediaIndex={activePostMediaIndex}
+        postMediaCount={activePostMediaCount}
+        onOpenChange={(open) => {
+          if (!open) closeMediaPreview();
+        }}
+        onPrevious={goToPreviousMedia}
+        onNext={goToNextMedia}
+        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+      />
 
     </main>
   );

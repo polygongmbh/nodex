@@ -33,6 +33,8 @@ interface LinkifyOptions {
   plainHashtags?: boolean;
   people?: Person[];
   onMentionClick?: (person: Person) => void;
+  onStandaloneMediaClick?: (url: string) => void;
+  getStandaloneMediaCaption?: (url: string) => string | undefined;
 }
 
 const IMAGE_MIME_PREFIX = "image/";
@@ -81,27 +83,41 @@ function getYouTubeEmbedUrl(url: string): string | null {
   }
 }
 
-function isEmbeddableUrl(url: string): boolean {
-  if (!isSafeHttpUrl(url)) return false;
+function getEmbeddableMediaKind(url: string): "image" | "video" | "audio" | null {
+  if (!isSafeHttpUrl(url)) return null;
 
   const youtubeEmbedUrl = getYouTubeEmbedUrl(url);
-  if (youtubeEmbedUrl) return true;
+  if (youtubeEmbedUrl) return "video";
 
   const mimeType = guessMimeTypeFromUrl(url)?.toLowerCase();
   const ext = getUrlExtension(url);
   const isImage = Boolean(mimeType?.startsWith(IMAGE_MIME_PREFIX));
   const isVideo = Boolean(mimeType?.startsWith(VIDEO_MIME_PREFIX)) || Boolean(ext && VIDEO_EXTENSIONS.has(ext));
   const isAudio = Boolean(mimeType?.startsWith(AUDIO_MIME_PREFIX)) || Boolean(ext && AUDIO_EXTENSIONS.has(ext));
-  return isImage || isVideo || isAudio;
+
+  if (isImage) return "image";
+  if (isVideo) return "video";
+  if (isAudio) return "audio";
+  return null;
 }
 
-function renderStandaloneEmbed(url: string, key: string): React.ReactNode | null {
+function isEmbeddableUrl(url: string): boolean {
+  if (!isSafeHttpUrl(url)) return false;
+
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(url);
+  if (youtubeEmbedUrl) return true;
+
+  return getEmbeddableMediaKind(url) !== null;
+}
+
+function renderStandaloneEmbed(url: string, key: string, options?: LinkifyOptions): React.ReactNode | null {
   if (!isSafeHttpUrl(url)) return null;
+  const caption = options?.getStandaloneMediaCaption?.(url) || "";
 
   const youtubeEmbedUrl = getYouTubeEmbedUrl(url);
   if (youtubeEmbedUrl) {
     return (
-      <div key={key} className="max-w-xl overflow-hidden rounded-md border border-border/60 bg-muted/20">
+      <div key={key} className="max-w-xl overflow-hidden rounded-md border border-border/60 bg-muted/20 group">
         <iframe
           src={youtubeEmbedUrl}
           title="Embedded video"
@@ -110,61 +126,87 @@ function renderStandaloneEmbed(url: string, key: string): React.ReactNode | null
           allowFullScreen
           className="aspect-video w-full"
         />
+        {caption ? (
+          <div className="px-2 py-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+            <p className="truncate" title={caption}>{caption}</p>
+          </div>
+        ) : null}
       </div>
     );
   }
 
-  const mimeType = guessMimeTypeFromUrl(url)?.toLowerCase();
-  const ext = getUrlExtension(url);
-  const isImage = Boolean(mimeType?.startsWith(IMAGE_MIME_PREFIX));
-  const isVideo = Boolean(mimeType?.startsWith(VIDEO_MIME_PREFIX)) || Boolean(ext && VIDEO_EXTENSIONS.has(ext));
-  const isAudio = Boolean(mimeType?.startsWith(AUDIO_MIME_PREFIX)) || Boolean(ext && AUDIO_EXTENSIONS.has(ext));
+  const mediaKind = getEmbeddableMediaKind(url);
 
-  if (isImage) {
+  if (mediaKind === "image") {
+    const handlePreviewClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+      options?.onStandaloneMediaClick?.(url);
+    };
     return (
-      <a
+      <button
         key={key}
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(event) => event.stopPropagation()}
-        className="block max-w-sm"
+        type="button"
+        onClick={handlePreviewClick}
+        className="group relative block max-w-sm"
       >
         <img
           src={url}
-          alt="Embedded attachment"
+          alt={caption || "Embedded attachment"}
           loading="lazy"
           className="max-h-64 w-auto rounded-md border border-border/60 bg-muted/30 object-contain"
         />
-      </a>
+        {caption ? (
+          <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded bg-background/85 px-2 py-1 text-left text-xs text-foreground opacity-0 transition-opacity group-hover:opacity-100">
+            <p className="truncate" title={caption}>{caption}</p>
+          </div>
+        ) : null}
+      </button>
     );
   }
 
-  if (isVideo) {
+  if (mediaKind === "video") {
     return (
-      <video
-        key={key}
-        controls
-        preload="metadata"
-        onClick={(event) => event.stopPropagation()}
-        className="max-h-72 w-full max-w-xl rounded-md border border-border/60 bg-muted/30"
-      >
-        <source src={url} type={mimeType || undefined} />
-      </video>
+      <div key={key} className="group relative max-w-xl">
+        <video
+          controls
+          preload="metadata"
+          onClick={(event) => {
+            event.stopPropagation();
+            options?.onStandaloneMediaClick?.(url);
+          }}
+          className="max-h-72 w-full rounded-md border border-border/60 bg-muted/30"
+        >
+          <source src={url} type={guessMimeTypeFromUrl(url) || undefined} />
+        </video>
+        {caption ? (
+          <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded bg-background/85 px-2 py-1 text-left text-xs text-foreground opacity-0 transition-opacity group-hover:opacity-100">
+            <p className="truncate" title={caption}>{caption}</p>
+          </div>
+        ) : null}
+      </div>
     );
   }
 
-  if (isAudio) {
+  if (mediaKind === "audio") {
     return (
-      <audio
-        key={key}
-        controls
-        preload="metadata"
-        onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-xl"
-      >
-        <source src={url} type={mimeType || undefined} />
-      </audio>
+      <div key={key} className="w-full max-w-xl">
+        <audio
+          controls
+          preload="metadata"
+          onClick={(event) => {
+            event.stopPropagation();
+            options?.onStandaloneMediaClick?.(url);
+          }}
+          className="w-full"
+        >
+          <source src={url} type={guessMimeTypeFromUrl(url) || undefined} />
+        </audio>
+        {caption ? (
+          <p className="mt-1 truncate text-xs text-muted-foreground" title={caption}>
+            {caption}
+          </p>
+        ) : null}
+      </div>
     );
   }
 
@@ -448,7 +490,7 @@ export function linkifyContent(
     const line = lines[index];
     const standaloneUrl = standaloneEmbedsByLine[index];
     if (standaloneUrl) {
-      const embedNode = renderStandaloneEmbed(standaloneUrl, `embed-${index}`);
+      const embedNode = renderStandaloneEmbed(standaloneUrl, `embed-${index}`, options);
       if (embedNode) {
         nodes.push(embedNode);
         continue;

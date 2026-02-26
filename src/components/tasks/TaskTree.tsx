@@ -10,6 +10,8 @@ import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { useTranslation } from "react-i18next";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
+import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
+import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 
 interface TaskTreeProps {
   tasks: Task[];
@@ -89,6 +91,17 @@ export function TaskTree({
   const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
+  const {
+    mediaItems,
+    activeMediaIndex,
+    activeMediaItem,
+    activePostMediaIndex,
+    activePostMediaCount,
+    openTaskMedia,
+    goToPreviousMedia,
+    goToNextMedia,
+    closeMediaPreview,
+  } = useTaskMediaPreview(tasks);
 
   const currentContextId = focusedTaskId || null;
 
@@ -450,10 +463,25 @@ export function TaskTree({
               onUndoPendingPublish={onUndoPendingPublish}
               isPendingPublishTask={isPendingPublishTask}
               isInteractionBlocked={isInteractionBlocked}
+              onMediaClick={openTaskMedia}
             />
           ))
         )}
       </div>
+      <TaskMediaLightbox
+        open={activeMediaIndex !== null}
+        mediaItem={activeMediaItem}
+        mediaCount={mediaItems.length}
+        mediaIndex={activeMediaIndex ?? 0}
+        postMediaIndex={activePostMediaIndex}
+        postMediaCount={activePostMediaCount}
+        onOpenChange={(open) => {
+          if (!open) closeMediaPreview();
+        }}
+        onPrevious={goToPreviousMedia}
+        onNext={goToNextMedia}
+        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+      />
 
     </main>
   );

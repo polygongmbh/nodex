@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Local image auto-caption now checks device capability up front, times out more cleanly on slow/unsupported devices, and keeps manual alt-text entry available when auto-caption is unavailable.
 - Enabling local auto-caption now preloads the on-device model with a progress toast, and caption generation now shows in-flight progress feedback with duration-aware debug logs.
 - App behavior toggles (live presence, undo-send delay, and local auto-caption) were moved from profile identity editing into app preferences in the desktop user menu and mobile Manage.
+- Inline media now shows attachment alt/caption on hover and opens a cross-post preview with non-wrapping navigation, per-post media indexing, and a direct link to the source post.
 
 ## [1.14.0] - 2026-02-25
 Added local image captioning support and an in-app changelog viewer, while improving relay status reliability.

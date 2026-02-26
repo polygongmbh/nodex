@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task, Person, TaskStatus, Relay } from "@/types";
@@ -49,6 +49,7 @@ interface TaskItemProps {
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
+  onMediaClick?: (taskId: string, url: string) => void;
 }
 
 export function TaskItem({
@@ -75,6 +76,7 @@ export function TaskItem({
   onUndoPendingPublish,
   isPendingPublishTask,
   isInteractionBlocked = false,
+  onMediaClick,
 }: TaskItemProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: TaskStatus): string => {
@@ -179,6 +181,18 @@ export function TaskItem({
   const standaloneEmbedUrls = new Set(
     getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
   );
+  const mediaCaptionByUrl = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const attachment of task.attachments || []) {
+      const normalizedUrl = attachment.url?.trim().toLowerCase();
+      if (!normalizedUrl) continue;
+      const caption = attachment.alt?.trim() || attachment.name?.trim();
+      if (caption) {
+        map.set(normalizedUrl, caption);
+      }
+    }
+    return map;
+  }, [task.attachments]);
   const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
     const normalizedUrl = attachment.url?.trim().toLowerCase();
     return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
@@ -470,9 +484,14 @@ export function TaskItem({
               plainHashtags: task.status === "done",
               people,
               onMentionClick: onAuthorClick,
+              onStandaloneMediaClick: (url) => onMediaClick?.(task.id, url),
+              getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
             })}
           </div>
-          <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} />
+          <TaskAttachmentList
+            attachments={attachmentsWithoutInlineEmbeds}
+            onMediaClick={(url) => onMediaClick?.(task.id, url)}
+          />
 
           {/* Due date */}
           {task.dueDate && (
@@ -604,6 +623,7 @@ export function TaskItem({
                       onAuthorClick={onAuthorClick}
                       onUndoPendingPublish={onUndoPendingPublish}
                       isPendingPublishTask={isPendingPublishTask}
+                      onMediaClick={onMediaClick}
                     />
                   );
                 })}
@@ -635,6 +655,7 @@ export function TaskItem({
                       onAuthorClick={onAuthorClick}
                       onUndoPendingPublish={onUndoPendingPublish}
                       isPendingPublishTask={isPendingPublishTask}
+                      onMediaClick={onMediaClick}
                     />
                   );
                 })}

@@ -26,6 +26,8 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { TaskAttachmentList } from "./TaskAttachmentList";
+import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
+import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import { filterTasksByDepthMode } from "@/lib/depth-mode-filter";
@@ -316,6 +318,17 @@ export function ListView({
     sortField,
     sortVersion,
   ]);
+  const {
+    mediaItems,
+    activeMediaIndex,
+    activeMediaItem,
+    activePostMediaIndex,
+    activePostMediaCount,
+    openTaskMedia,
+    goToPreviousMedia,
+    goToNextMedia,
+    closeMediaPreview,
+  } = useTaskMediaPreview(listTasks);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -674,6 +687,12 @@ export function ListView({
                 const standaloneEmbedUrls = new Set(
                   getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
                 );
+                const mediaCaptionByUrl = new Map<string, string>();
+                for (const attachment of task.attachments || []) {
+                  const normalizedUrl = attachment.url?.trim().toLowerCase();
+                  const caption = attachment.alt?.trim() || attachment.name?.trim();
+                  if (normalizedUrl && caption) mediaCaptionByUrl.set(normalizedUrl, caption);
+                }
                 const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
                   const normalizedUrl = attachment.url?.trim().toLowerCase();
                   return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
@@ -739,9 +758,15 @@ export function ListView({
                           {linkifyContent(task.content, onHashtagClick, {
                             plainHashtags: task.status === "done",
                             people,
+                            onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
+                            getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
                           })}
                         </div>
-                        <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} className="space-y-1" />
+                        <TaskAttachmentList
+                          attachments={attachmentsWithoutInlineEmbeds}
+                          className="space-y-1"
+                          onMediaClick={(url) => openTaskMedia(task.id, url)}
+                        />
                       </div>
                     </td>
                     <td className="hidden 2xl:table-cell p-2 2xl:p-3">
@@ -769,6 +794,20 @@ export function ListView({
           </tbody>
         </table>
       </div>
+      <TaskMediaLightbox
+        open={activeMediaIndex !== null}
+        mediaItem={activeMediaItem}
+        mediaCount={mediaItems.length}
+        mediaIndex={activeMediaIndex ?? 0}
+        postMediaIndex={activePostMediaIndex}
+        postMediaCount={activePostMediaCount}
+        onOpenChange={(open) => {
+          if (!open) closeMediaPreview();
+        }}
+        onPrevious={goToPreviousMedia}
+        onNext={goToNextMedia}
+        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+      />
 
     </main>
   );

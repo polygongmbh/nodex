@@ -37,6 +37,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
+import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -180,6 +182,17 @@ export function FeedView({
     () => [...filteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
     [filteredFeedTasks]
   );
+  const {
+    mediaItems,
+    activeMediaIndex,
+    activeMediaItem,
+    activePostMediaIndex,
+    activePostMediaCount,
+    openTaskMedia,
+    goToPreviousMedia,
+    goToNextMedia,
+    closeMediaPreview,
+  } = useTaskMediaPreview(feedTasks);
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => feedTasks.map(t => t.id), [feedTasks]);
@@ -349,6 +362,14 @@ export function FeedView({
             const standaloneEmbedUrls = new Set(
               getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
             );
+            const mediaCaptionByUrl = new Map<string, string>();
+            for (const attachment of task.attachments || []) {
+              const normalizedUrl = attachment.url?.trim().toLowerCase();
+              const caption = attachment.alt?.trim() || attachment.name?.trim();
+              if (normalizedUrl && caption) {
+                mediaCaptionByUrl.set(normalizedUrl, caption);
+              }
+            }
             const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
               const normalizedUrl = attachment.url?.trim().toLowerCase();
               return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
@@ -593,9 +614,14 @@ export function FeedView({
                         plainHashtags: task.status === "done",
                         people,
                         onMentionClick: onAuthorClick,
+                        onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
+                        getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
                       })}
                     </div>
-                    <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} />
+                    <TaskAttachmentList
+                      attachments={attachmentsWithoutInlineEmbeds}
+                      onMediaClick={(url) => openTaskMedia(task.id, url)}
+                    />
 
                     {/* Due date */}
                     {task.dueDate && (
@@ -645,6 +671,20 @@ export function FeedView({
           })
         )}
       </div>
+      <TaskMediaLightbox
+        open={activeMediaIndex !== null}
+        mediaItem={activeMediaItem}
+        mediaCount={mediaItems.length}
+        mediaIndex={activeMediaIndex ?? 0}
+        postMediaIndex={activePostMediaIndex}
+        postMediaCount={activePostMediaCount}
+        onOpenChange={(open) => {
+          if (!open) closeMediaPreview();
+        }}
+        onPrevious={goToPreviousMedia}
+        onNext={goToNextMedia}
+        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+      />
 
     </main>
   );

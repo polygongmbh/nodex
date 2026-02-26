@@ -45,6 +45,8 @@ import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import { TaskAttachmentList } from "./TaskAttachmentList";
+import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
+import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -243,6 +245,17 @@ export function CalendarView({
     () => (selectedDate ? getTasksForDay(selectedDate) : []),
     [getTasksForDay, selectedDate]
   );
+  const {
+    mediaItems,
+    activeMediaIndex,
+    activeMediaItem,
+    activePostMediaIndex,
+    activePostMediaCount,
+    openTaskMedia,
+    goToPreviousMedia,
+    goToNextMedia,
+    closeMediaPreview,
+  } = useTaskMediaPreview(selectedDayTasks);
 
   const alignDesktopScrollToMonth = useCallback(
     (month: Date, behavior: ScrollBehavior = "auto") => {
@@ -889,6 +902,14 @@ export function CalendarView({
                     const ancestorChain = getAncestorChain(task.id);
                     const authorColor = getAuthorColor(task.author);
                     const isLockedUntilStart = isTaskLockedUntilStart(task);
+                    const mediaCaptionByUrl = new Map(
+                      (task.attachments || [])
+                        .filter((attachment) => Boolean(attachment.url))
+                        .map((attachment) => [
+                          attachment.url.trim().toLowerCase(),
+                          attachment.alt || attachment.name || attachment.url,
+                        ])
+                    );
                     const standaloneEmbedUrls = new Set(
                       getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
                     );
@@ -1034,9 +1055,16 @@ export function CalendarView({
                               {linkifyContent(task.content, onHashtagClick, {
                                 plainHashtags: task.status === "done",
                                 people,
+                                onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
+                                getStandaloneMediaCaption: (url) =>
+                                  mediaCaptionByUrl.get(url.trim().toLowerCase()),
                               })}
                             </div>
-                            <TaskAttachmentList attachments={attachmentsWithoutInlineEmbeds} className="mt-1.5 space-y-1" />
+                            <TaskAttachmentList
+                              attachments={attachmentsWithoutInlineEmbeds}
+                              className="mt-1.5 space-y-1"
+                              onMediaClick={(url) => openTaskMedia(task.id, url)}
+                            />
                             {task.dueTime && (
                               <div className="flex items-center gap-2 text-xs mt-1">
                                 <span
@@ -1081,6 +1109,21 @@ export function CalendarView({
         </div>
         )}
       </div>
+
+      <TaskMediaLightbox
+        open={activeMediaIndex !== null}
+        mediaItem={activeMediaItem}
+        mediaCount={mediaItems.length}
+        mediaIndex={activeMediaIndex ?? 0}
+        postMediaIndex={activePostMediaIndex}
+        postMediaCount={activePostMediaCount}
+        onOpenChange={(open) => {
+          if (!open) closeMediaPreview();
+        }}
+        onPrevious={goToPreviousMedia}
+        onNext={goToNextMedia}
+        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+      />
 
     </main>
   );
