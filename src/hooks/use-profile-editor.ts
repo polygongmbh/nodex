@@ -19,6 +19,7 @@ import {
   loadAutoCaptionEnabled,
   saveAutoCaptionEnabled,
 } from "@/lib/auto-caption-preferences";
+import { preloadLocalImageCaptionModel } from "@/lib/local-image-caption";
 import { EditableNostrProfile, isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
 import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
 import { featureDebugLog } from "@/lib/feature-debug";
@@ -114,6 +115,9 @@ export function useProfileEditor({
       enabled,
       userPubkey: userPubkey || null,
     });
+    if (enabled) {
+      void preloadLocalImageCaptionModel();
+    }
   };
 
   const handleSaveProfile = async () => {

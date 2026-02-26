@@ -3,6 +3,13 @@ import { toast } from "sonner";
 
 type ImageCaptionPipeline = (input: string, options?: Record<string, unknown>) => Promise<unknown>;
 type LocalCaptionPhase = "runtime-import" | "model-init" | "inference";
+type TransformersProgressPayload = {
+  status?: string;
+  file?: string;
+  progress?: number;
+  loaded?: number;
+  total?: number;
+};
 
 const TRANSFORMERS_ESM_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6/+esm";
 const DEFAULT_CAPTION_MODEL_ID = "Xenova/vit-gpt2-image-captioning";
@@ -14,6 +21,7 @@ const DEFAULT_CAPTION_INFERENCE_TIMEOUT_MS = 20000;
 let imageCaptionPipelinePromise: Promise<ImageCaptionPipeline> | null = null;
 let cachedInitializationFailure: { status: LocalImageCaptionStatus; error: string } | null = null;
 const notifiedFailureKeys = new Set<string>();
+let isCaptionModelReady = false;
 
 const DEFAULT_EXPERIMENTAL_ENABLED = true;
 const DEFAULT_REQUIRE_WEBGPU = false;
@@ -32,6 +40,10 @@ export interface LocalImageCaptionResult {
   caption: string | null;
   reason?: string;
   error?: string;
+}
+
+interface LoadPipelineOptions {
+  onModelProgress?: (progress: TransformersProgressPayload) => void;
 }
 
 export interface LocalCaptionPolicy {
@@ -138,6 +150,33 @@ function getCaptionModelId(): string {
   return configured || DEFAULT_CAPTION_MODEL_ID;
 }
 
+function getNowMs(): number {
+  if (typeof performance !== "undefined" && typeof performance.now === "function") {
+    return performance.now();
+  }
+  return Date.now();
+}
+
+function formatDurationMs(durationMs: number): number {
+  return Number(Math.max(0, durationMs).toFixed(1));
+}
+
+function resolveProgressPercent(progress: TransformersProgressPayload): number | null {
+  if (typeof progress.progress === "number" && Number.isFinite(progress.progress)) {
+    return progress.progress <= 1 ? Math.round(progress.progress * 100) : Math.round(progress.progress);
+  }
+  if (
+    typeof progress.loaded === "number" &&
+    Number.isFinite(progress.loaded) &&
+    typeof progress.total === "number" &&
+    Number.isFinite(progress.total) &&
+    progress.total > 0
+  ) {
+    return Math.round((progress.loaded / progress.total) * 100);
+  }
+  return null;
+}
+
 function normalizeCaption(caption: string): string {
   const normalizedWhitespace = caption.replace(/\s+/g, " ").trim();
   const withoutTrailingPeriod = normalizedWhitespace.replace(/\.+$/, "");
@@ -223,9 +262,13 @@ function classifyInferenceFailure(error: unknown): { status: LocalImageCaptionSt
   return { status: "inference_error", message: String(error) };
 }
 
-async function loadImageCaptionPipeline(policy: LocalCaptionPolicy): Promise<ImageCaptionPipeline | null> {
+async function loadImageCaptionPipeline(
+  policy: LocalCaptionPolicy,
+  options: LoadPipelineOptions = {}
+): Promise<ImageCaptionPipeline | null> {
   if (imageCaptionPipelinePromise) return imageCaptionPipelinePromise;
   if (cachedInitializationFailure) return null;
+  const loadStartedAt = getNowMs();
 
   imageCaptionPipelinePromise = (async () => {
     featureDebugLog("auto-caption", "Loading local image caption model", {
@@ -236,6 +279,7 @@ async function loadImageCaptionPipeline(policy: LocalCaptionPolicy): Promise<Ima
     featureDebugLog("auto-caption", "Importing transformers runtime module", {
       timeoutMs: MODEL_IMPORT_TIMEOUT_MS,
     });
+    const runtimeImportStartedAt = getNowMs();
     const transformersModule = await withTimeout(
       import(/* @vite-ignore */ TRANSFORMERS_ESM_URL),
       MODEL_IMPORT_TIMEOUT_MS,
@@ -244,6 +288,7 @@ async function loadImageCaptionPipeline(policy: LocalCaptionPolicy): Promise<Ima
     );
     featureDebugLog("auto-caption", "Transformers runtime imported", {
       modelId: getCaptionModelId(),
+      importDurationMs: formatDurationMs(getNowMs() - runtimeImportStartedAt),
     });
     if (transformersModule?.env) {
       transformersModule.env.allowLocalModels = false;
@@ -253,15 +298,23 @@ async function loadImageCaptionPipeline(policy: LocalCaptionPolicy): Promise<Ima
       modelId: getCaptionModelId(),
       timeoutMs: policy.modelInitTimeoutMs,
     });
+    const modelInitStartedAt = getNowMs();
     const pipeline = await withTimeout(
-      transformersModule.pipeline("image-to-text", getCaptionModelId()),
+      transformersModule.pipeline("image-to-text", getCaptionModelId(), {
+        progress_callback: (progress: TransformersProgressPayload) => {
+          options.onModelProgress?.(progress);
+        },
+      }),
       policy.modelInitTimeoutMs,
       "Local caption model initialization timed out",
       "model-init"
     );
     featureDebugLog("auto-caption", "Local image caption model ready", {
       modelId: getCaptionModelId(),
+      modelInitDurationMs: formatDurationMs(getNowMs() - modelInitStartedAt),
+      totalLoadDurationMs: formatDurationMs(getNowMs() - loadStartedAt),
     });
+    isCaptionModelReady = true;
     return pipeline as ImageCaptionPipeline;
   })();
 
@@ -277,17 +330,87 @@ async function loadImageCaptionPipeline(policy: LocalCaptionPolicy): Promise<Ima
     console.warn("[auto-caption] Local image caption model failed to initialize", {
       error: classification.message,
       status: classification.status,
+      durationMs: formatDurationMs(getNowMs() - loadStartedAt),
     });
     featureDebugLog("auto-caption", "Local model initialization failed", {
       error: classification.message,
       status: classification.status,
+      durationMs: formatDurationMs(getNowMs() - loadStartedAt),
     });
     return null;
   }
 }
 
+export async function preloadLocalImageCaptionModel(): Promise<LocalImageCaptionResult> {
+  if (isCaptionModelReady) {
+    featureDebugLog("auto-caption", "Model preload skipped because model is already ready");
+    return { status: "success", caption: null };
+  }
+
+  const toastId = "auto-caption-model-download";
+  const policy = resolveLocalCaptionPolicy();
+  const capabilities = detectLocalCaptionCapabilities();
+  const support = resolveLocalCaptionSupport(policy, capabilities);
+  if (!support.supported) {
+    const result: LocalImageCaptionResult = {
+      status: "unsupported",
+      caption: null,
+      reason: support.reason || undefined,
+    };
+    notifyAutoCaptionFailureOnce(result);
+    return result;
+  }
+
+  toast.loading("Preparing local caption model...", { id: toastId });
+  let lastProgressBucket = -1;
+  const preloadStartedAt = getNowMs();
+  const pipeline = await loadImageCaptionPipeline(policy, {
+    onModelProgress: (progress) => {
+      const percent = resolveProgressPercent(progress);
+      if (percent !== null) {
+        const bucket = Math.floor(percent / 5);
+        if (bucket === lastProgressBucket) return;
+        lastProgressBucket = bucket;
+        toast.loading(`Downloading local caption model... ${Math.max(0, Math.min(100, percent))}%`, { id: toastId });
+      }
+      featureDebugLog("auto-caption", "Caption model download progress", {
+        status: progress.status || null,
+        file: progress.file || null,
+        progressPercent: percent,
+      });
+    },
+  });
+
+  if (!pipeline) {
+    const result: LocalImageCaptionResult = cachedInitializationFailure
+      ? {
+          status: cachedInitializationFailure.status,
+          caption: null,
+          error: cachedInitializationFailure.error,
+        }
+      : {
+          status: "initialization_error",
+          caption: null,
+          error: "Caption model unavailable",
+        };
+    notifyAutoCaptionFailureOnce(result);
+    toast.error("Local caption model download failed.", { id: toastId });
+    return result;
+  }
+
+  toast.success("Local caption model ready.", { id: toastId });
+  featureDebugLog("auto-caption", "Local caption model preload completed", {
+    durationMs: formatDurationMs(getNowMs() - preloadStartedAt),
+  });
+  return { status: "success", caption: null };
+}
+
 export async function generateLocalImageCaption(file: File): Promise<LocalImageCaptionResult> {
   if (!file.type.startsWith("image/")) return { status: "empty_result", caption: null };
+  const inferenceStartedAt = getNowMs();
+  const toastId = `auto-caption-generate-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  toast.loading(`Generating caption for ${file.name}...`, { id: toastId });
+
   const policy = resolveLocalCaptionPolicy();
   const capabilities = detectLocalCaptionCapabilities();
   const support = resolveLocalCaptionSupport(policy, capabilities);
@@ -297,6 +420,7 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
       policy,
       capabilities,
     });
+    toast.dismiss(toastId);
     return { status: "unsupported", caption: null, reason: support.reason || undefined };
   }
 
@@ -310,25 +434,32 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
   if (!pipeline) {
     const initializationFailure = cachedInitializationFailure;
     if (initializationFailure) {
+      toast.dismiss(toastId);
       return {
         status: initializationFailure.status,
         caption: null,
         error: initializationFailure.error,
       };
     }
+    toast.dismiss(toastId);
     return { status: "initialization_error", caption: null, error: "Caption pipeline unavailable" };
   }
 
   try {
+    toast.loading(`Preparing image for captioning: ${file.name}...`, { id: toastId });
+    const imageReadStartedAt = getNowMs();
     const dataUrl = await fileToDataUrl(file);
     featureDebugLog("auto-caption", "Image converted to data URL for caption inference", {
       fileName: file.name,
       dataUrlLength: dataUrl.length,
+      imageReadDurationMs: formatDurationMs(getNowMs() - imageReadStartedAt),
     });
     featureDebugLog("auto-caption", "Invoking caption pipeline", {
       fileName: file.name,
       timeoutMs: policy.inferenceTimeoutMs,
     });
+    toast.loading(`Generating caption with local model: ${file.name}...`, { id: toastId });
+    const modelInferenceStartedAt = getNowMs();
     const result = await withTimeout(
       pipeline(dataUrl, {
         max_new_tokens: 24,
@@ -343,12 +474,16 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
         fileName: file.name,
         resultType: Array.isArray(result) ? "array" : typeof result,
       });
+      toast.dismiss(toastId);
       return { status: "empty_result", caption: null };
     }
     featureDebugLog("auto-caption", "Local inference completed", {
       fileName: file.name,
       generated: Boolean(caption),
+      inferenceDurationMs: formatDurationMs(getNowMs() - modelInferenceStartedAt),
+      totalDurationMs: formatDurationMs(getNowMs() - inferenceStartedAt),
     });
+    toast.success(`Caption generated for ${file.name}.`, { id: toastId });
     return { status: "success", caption };
   } catch (error) {
     const classification = classifyInferenceFailure(error);
@@ -363,7 +498,9 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
       fileName: file.name,
       error: classification.message,
       status: classification.status,
+      durationMs: formatDurationMs(getNowMs() - inferenceStartedAt),
     });
+    toast.dismiss(toastId);
     return {
       status: classification.status,
       caption: null,
