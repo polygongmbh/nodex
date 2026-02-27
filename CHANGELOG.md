@@ -5,11 +5,15 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.15.0] - 2026-02-27
+Expanded media preview workflows and refined toast behavior with native Sonner styling.
 - Local image auto-caption now checks device capability up front, times out more cleanly on slow/unsupported devices, and keeps manual alt-text entry available when auto-caption is unavailable.
 - Enabling local auto-caption now preloads the on-device model with a progress toast, and caption generation now shows in-flight progress feedback with duration-aware debug logs.
 - App behavior toggles (live presence, undo-send delay, and local auto-caption) were moved from profile identity editing into app preferences in the desktop user menu and mobile Manage.
 - Inline media now shows attachment alt/caption on hover and opens a cross-post preview with non-wrapping navigation, per-post media indexing, and a direct link to the source post.
 - Media preview now supports keyboard navigation (`←/→` and `h/l` for media, `↑/↓` and `k/j` for previous/next post, and `Enter` to jump to the current media's post).
+- Toasts now use Sonner-native styling with rich color variants, filter confirmations use neutral default toasts, and publish undo cancellation uses an informational toast.
 - Comment submissions from the desktop composer now preserve `comment` kind on button click instead of falling back to task publish.
 
 ## [1.14.0] - 2026-02-25

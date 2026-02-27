@@ -251,9 +251,9 @@ When asked to create a plan to fix or implement something:
 - Use descriptive kebab-case filenames (for example `fix-position-healing.md`).
 - After implementing a plan, you MUST delete the plan file before handoff/final response.
 - Before deleting untracked text artifacts (for example files in `plans/`), run this sequence so there is a recoverable hash reference:
-  - `git add <file>`
+  - `git add -f <file>`
   - `git stash push -m \"archive <file>\" -- <file>`
-  - `git stash drop` (drop only after confirming the stash entry exists)
+  - `git stash drop`
 
 ### Prompt Effort Modes
 - `quick`: minimize testing/refactoring, run focused checks only, defer broader cleanup unless requested.

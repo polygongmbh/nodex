@@ -102,6 +102,7 @@
 - `#tags` and `@mentions` are supported in compose text.
 - Included channel filters are added to compose as metadata-only hashtag chips (without injecting `#channel` text).
 - Selected people filters are added to compose as metadata-only mention chips.
+- Filter/relay confirmation messages use neutral toasts; canceling a delayed publish shows an informational toast.
 - Feed-backed posts can use a short undo-send delay; undo restores the full compose draft state.
 - If posting from mobile with no selected/typed channel tag, the app shows immediate feedback instead of silently failing.
 - Task compose supports optional priority selection.
