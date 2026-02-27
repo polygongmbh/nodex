@@ -1408,7 +1408,7 @@ const Index = () => {
     });
     clearPendingPublishTask(taskId);
     setLocalTasks((prev) => prev.filter((task) => task.id !== taskId));
-    toast.success(t("toasts.success.publishUndone"));
+    toast.info(t("toasts.success.publishUndone"));
   }, [clearPendingPublishTask, t]);
 
   const handleNewTask = async (
