@@ -191,6 +191,8 @@ export function FeedView({
     openTaskMedia,
     goToPreviousMedia,
     goToNextMedia,
+    goToPreviousPost,
+    goToNextPost,
     closeMediaPreview,
   } = useTaskMediaPreview(feedTasks);
 
@@ -683,6 +685,8 @@ export function FeedView({
         }}
         onPrevious={goToPreviousMedia}
         onNext={goToNextMedia}
+        onPreviousPost={goToPreviousPost}
+        onNextPost={goToNextPost}
         onOpenTask={(taskId) => onFocusTask?.(taskId)}
       />
 

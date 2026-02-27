@@ -11,6 +11,8 @@ interface UseTaskMediaPreviewResult {
   openTaskMedia: (taskId: string, url: string) => void;
   goToPreviousMedia: () => void;
   goToNextMedia: () => void;
+  goToPreviousPost: () => void;
+  goToNextPost: () => void;
   closeMediaPreview: () => void;
 }
 
@@ -51,6 +53,17 @@ export function useTaskMediaPreview(orderedTasks: Task[]): UseTaskMediaPreviewRe
   const activeTaskIndices = activeMediaItem ? (postMediaIndices.get(activeMediaItem.taskId) || []) : [];
   const activePostMediaIndex = activeMediaIndex !== null ? activeTaskIndices.indexOf(activeMediaIndex) : -1;
   const activePostMediaCount = activeTaskIndices.length;
+  const taskIdsWithMedia = useMemo(() => {
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    mediaItems.forEach((item) => {
+      if (seen.has(item.taskId)) return;
+      seen.add(item.taskId);
+      ids.push(item.taskId);
+    });
+    return ids;
+  }, [mediaItems]);
+  const activeTaskIndex = activeMediaItem ? taskIdsWithMedia.indexOf(activeMediaItem.taskId) : -1;
 
   const openTaskMedia = (taskId: string, url: string) => {
     const key = `${taskId}::${normalizeUrl(url)}`;
@@ -75,6 +88,26 @@ export function useTaskMediaPreview(orderedTasks: Task[]): UseTaskMediaPreviewRe
     setActiveMediaIndex(activeMediaIndex + 1);
   };
 
+  const goToPreviousPost = () => {
+    if (activeMediaIndex === null || activeTaskIndex <= 0) return;
+    const targetTaskId = taskIdsWithMedia[activeTaskIndex - 1];
+    if (!targetTaskId) return;
+    const targetPostIndices = postMediaIndices.get(targetTaskId) || [];
+    if (targetPostIndices.length === 0) return;
+    const targetPostOffset = activePostMediaIndex < 0 ? 0 : Math.min(activePostMediaIndex, targetPostIndices.length - 1);
+    setActiveMediaIndex(targetPostIndices[targetPostOffset]);
+  };
+
+  const goToNextPost = () => {
+    if (activeMediaIndex === null || activeTaskIndex < 0 || activeTaskIndex >= taskIdsWithMedia.length - 1) return;
+    const targetTaskId = taskIdsWithMedia[activeTaskIndex + 1];
+    if (!targetTaskId) return;
+    const targetPostIndices = postMediaIndices.get(targetTaskId) || [];
+    if (targetPostIndices.length === 0) return;
+    const targetPostOffset = activePostMediaIndex < 0 ? 0 : Math.min(activePostMediaIndex, targetPostIndices.length - 1);
+    setActiveMediaIndex(targetPostIndices[targetPostOffset]);
+  };
+
   return {
     mediaItems,
     activeMediaIndex,
@@ -84,6 +117,8 @@ export function useTaskMediaPreview(orderedTasks: Task[]): UseTaskMediaPreviewRe
     openTaskMedia,
     goToPreviousMedia,
     goToNextMedia,
+    goToPreviousPost,
+    goToNextPost,
     closeMediaPreview,
   };
 }

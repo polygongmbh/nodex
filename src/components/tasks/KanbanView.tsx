@@ -214,6 +214,8 @@ export function KanbanView({
     openTaskMedia,
     goToPreviousMedia,
     goToNextMedia,
+    goToPreviousPost,
+    goToNextPost,
     closeMediaPreview,
   } = useTaskMediaPreview(orderedKanbanTasks);
 
@@ -635,6 +637,8 @@ export function KanbanView({
         }}
         onPrevious={goToPreviousMedia}
         onNext={goToNextMedia}
+        onPreviousPost={goToPreviousPost}
+        onNextPost={goToNextPost}
         onOpenTask={(taskId) => onFocusTask?.(taskId)}
       />
 

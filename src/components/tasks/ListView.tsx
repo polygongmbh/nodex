@@ -327,6 +327,8 @@ export function ListView({
     openTaskMedia,
     goToPreviousMedia,
     goToNextMedia,
+    goToPreviousPost,
+    goToNextPost,
     closeMediaPreview,
   } = useTaskMediaPreview(listTasks);
 
@@ -806,6 +808,8 @@ export function ListView({
         }}
         onPrevious={goToPreviousMedia}
         onNext={goToNextMedia}
+        onPreviousPost={goToPreviousPost}
+        onNextPost={goToNextPost}
         onOpenTask={(taskId) => onFocusTask?.(taskId)}
       />
 

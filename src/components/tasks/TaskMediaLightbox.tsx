@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,8 @@ interface TaskMediaLightboxProps {
   onOpenChange: (open: boolean) => void;
   onPrevious: () => void;
   onNext: () => void;
+  onPreviousPost?: () => void;
+  onNextPost?: () => void;
   onOpenTask?: (taskId: string) => void;
 }
 
@@ -31,6 +33,8 @@ export function TaskMediaLightbox({
   onOpenChange,
   onPrevious,
   onNext,
+  onPreviousPost,
+  onNextPost,
   onOpenTask,
 }: TaskMediaLightboxProps) {
   const previewAreaRef = useRef<HTMLDivElement | null>(null);
@@ -82,6 +86,63 @@ export function TaskMediaLightbox({
       window.removeEventListener("resize", update);
     };
   }, [open, mediaItem, syncOverlayBounds]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "SELECT" ||
+        target.tagName === "OPTION" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+
+      if (event.key === "ArrowLeft" || key === "h") {
+        event.preventDefault();
+        onPrevious();
+        return;
+      }
+
+      if (event.key === "ArrowRight" || key === "l") {
+        event.preventDefault();
+        onNext();
+        return;
+      }
+
+      if (event.key === "ArrowUp" || key === "k") {
+        event.preventDefault();
+        onPreviousPost?.();
+        return;
+      }
+
+      if (event.key === "ArrowDown" || key === "j") {
+        event.preventDefault();
+        onNextPost?.();
+        return;
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        if (!mediaItem) return;
+        onOpenTask?.(mediaItem.taskId);
+        onOpenChange(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, mediaItem, onPrevious, onNext, onPreviousPost, onNextPost, onOpenTask, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

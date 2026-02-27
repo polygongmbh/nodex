@@ -123,6 +123,11 @@ export function useTaskNavigation({
         return;
       }
 
+      // Pause task-list navigation while any modal dialog is open.
+      if (document.querySelector('[role="dialog"][data-state="open"]')) {
+        return;
+      }
+
       if (taskIds.length === 0) return;
 
       const key = event.key.toLowerCase();

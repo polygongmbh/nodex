@@ -254,6 +254,8 @@ export function CalendarView({
     openTaskMedia,
     goToPreviousMedia,
     goToNextMedia,
+    goToPreviousPost,
+    goToNextPost,
     closeMediaPreview,
   } = useTaskMediaPreview(selectedDayTasks);
 
@@ -1122,6 +1124,8 @@ export function CalendarView({
         }}
         onPrevious={goToPreviousMedia}
         onNext={goToNextMedia}
+        onPreviousPost={goToPreviousPost}
+        onNextPost={goToNextPost}
         onOpenTask={(taskId) => onFocusTask?.(taskId)}
       />
 

@@ -100,6 +100,8 @@ export function TaskTree({
     openTaskMedia,
     goToPreviousMedia,
     goToNextMedia,
+    goToPreviousPost,
+    goToNextPost,
     closeMediaPreview,
   } = useTaskMediaPreview(tasks);
 
@@ -480,6 +482,8 @@ export function TaskTree({
         }}
         onPrevious={goToPreviousMedia}
         onNext={goToNextMedia}
+        onPreviousPost={goToPreviousPost}
+        onNextPost={goToNextPost}
         onOpenTask={(taskId) => onFocusTask?.(taskId)}
       />
 
