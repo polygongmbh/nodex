@@ -781,13 +781,13 @@ const Index = () => {
     }
     setChannelFilterStates(() => setExclusiveChannelFilter(channels, id));
     const channel = channelsWithState.find((c) => c.id === id);
-    toast.success(t("toasts.success.showingOnlyChannel", { channelName: channel?.name || id }));
+    toast(t("toasts.success.showingOnlyChannel", { channelName: channel?.name || id }));
   };
 
   const handleToggleAllChannels = () => {
     const allNeutral = Array.from(channelFilterStates.values()).every((s) => s === "neutral") || channelFilterStates.size === 0;
     setChannelFilterStates(() => setAllChannelFilters(channels, allNeutral ? "included" : "neutral"));
-    toast.success(allNeutral ? t("toasts.success.allChannelsIncluded") : t("toasts.success.allChannelsReset"));
+    toast(allNeutral ? t("toasts.success.allChannelsIncluded") : t("toasts.success.allChannelsReset"));
   };
 
   const handleChannelMatchModeChange = (mode: ChannelMatchMode) => {
@@ -928,7 +928,7 @@ const Index = () => {
       return setExclusiveChannelFilter(allChannels, channelId);
     });
 
-    toast.success(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
+    toast(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
   }, [channels, t]);
 
   const handlePersonToggle = (id: string) => {
@@ -946,7 +946,7 @@ const Index = () => {
     }
     setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === id));
     const person = people.find((p) => p.id === id);
-    toast.success(
+    toast(
       t("toasts.success.showingOnlyPerson", {
         personName: person?.displayName || person?.name || t("toasts.success.selectedUserFallback"),
       })
@@ -991,7 +991,7 @@ const Index = () => {
         return `${previous}${separator}${mention} `;
       });
     }
-    toast.success(
+    toast(
       t("toasts.success.showingOnlyAuthorAndTagging", {
         authorName: author.displayName || author.name,
         mention,
@@ -1001,7 +1001,7 @@ const Index = () => {
 
   const handleToggleAllPeople = () => {
     if (sidebarPeople.length === 0) {
-      toast.success(t("toasts.success.noFrequentPeople"));
+      toast(t("toasts.success.noFrequentPeople"));
       return;
     }
     const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
@@ -1014,7 +1014,7 @@ const Index = () => {
           : person
       )
     );
-    toast.success(shouldSelectAll ? t("toasts.success.frequentPeopleSelected") : t("toasts.success.frequentPeopleDeselected"));
+    toast(shouldSelectAll ? t("toasts.success.frequentPeopleSelected") : t("toasts.success.frequentPeopleDeselected"));
   };
 
   const triggerCompletionCheer = useCallback((taskId: string) => {
