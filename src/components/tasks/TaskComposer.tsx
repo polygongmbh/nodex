@@ -563,9 +563,17 @@ export function TaskComposer({
     prevSelectedPeoplePubkeysRef.current = [...selectedPeoplePubkeys];
   }, [selectedPeoplePubkeys]);
 
-  const handleSubmit = async (submitType?: TaskType) => {
+  const resolveSubmitType = (value: unknown): TaskType => {
+    if (value === "task" || value === "comment") {
+      return value;
+    }
+    return taskType;
+  };
+
+  const handleSubmit = async (submitType?: unknown) => {
     if (!content.trim()) return;
     if (!hasMeaningfulComposerText(content)) return;
+    const effectiveTaskType = resolveSubmitType(submitType);
     
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1).toLowerCase()) || [];
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
@@ -603,7 +611,7 @@ export function TaskComposer({
           content,
           submitTags,
           selectedRelays,
-          submitType ?? taskType,
+          effectiveTaskType,
           dueDate,
           dueTime || undefined,
           dateType,
@@ -1502,7 +1510,9 @@ export function TaskComposer({
               </div>
             )}
             <button
-              onClick={handleSubmit}
+              onClick={() => {
+                void handleSubmit();
+              }}
               disabled={Boolean(submitBlockedReason)}
               aria-label={taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
               title={taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}

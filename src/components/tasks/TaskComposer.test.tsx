@@ -464,6 +464,42 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("submits as comment when kind is switched and submit button is clicked", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+
+    const textarea = screen.getByPlaceholderText(/add a comment/i);
+    fireEvent.change(textarea, { target: { value: "Looks good #backend" } });
+    fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Looks good #backend",
+        ["backend"],
+        ["demo"],
+        "comment",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined,
+        []
+      );
+    });
+  });
+
   it("supports @mention autocomplete via keyboard selection", () => {
     render(
       <TaskComposer
