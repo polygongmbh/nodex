@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildLinkedTaskCalendarEvent,
   parseLinkedTaskDueFromCalendarEvent,
-} from "./task-calendar-events";
+} from "./nip52-task-calendar-events";
 import { NostrEventKind } from "./types";
 
 describe("task calendar event helpers", () => {

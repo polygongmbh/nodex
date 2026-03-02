@@ -5,7 +5,7 @@ import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Person, Relay } from "@/types";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
-import * as attachmentUpload from "@/lib/nostr/attachment-upload";
+import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 
 vi.mock("@/lib/nostr/ndk-context", () => ({
   useNDK: () => ({

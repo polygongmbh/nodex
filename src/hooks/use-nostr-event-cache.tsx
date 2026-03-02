@@ -5,7 +5,7 @@ import {
   loadCachedNostrEvents,
   saveCachedNostrEvents,
   type CachedNostrEvent,
-} from "@/lib/nostr-event-cache";
+} from "@/lib/nostr/event-cache";
 
 export const NOSTR_EVENTS_QUERY_KEY = ["nostr-events-cache"] as const;
 

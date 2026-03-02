@@ -5,7 +5,7 @@ import {
   loadCachedNostrEvents,
   saveCachedNostrEvents,
   type CachedNostrEvent,
-} from "./nostr-event-cache";
+} from "./event-cache";
 
 const eventA: CachedNostrEvent = {
   id: "a",

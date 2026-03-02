@@ -41,7 +41,7 @@ import { canUserChangeTaskStatus, extractAssignedMentionsFromContent } from "@/l
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
-import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/task-calendar-events";
+import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/nip52-task-calendar-events";
 import { buildTaskPriorityUpdateEvent, isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import {
@@ -52,7 +52,7 @@ import {
 import {
   resolveOriginRelayIdForTask,
   resolveRelaySelectionForSubmission,
-} from "@/lib/task-relay-routing";
+} from "@/lib/nostr/task-relay-routing";
 import {
   derivePeopleFromKind0Events,
   loadCachedKind0Events,
@@ -61,7 +61,7 @@ import {
   rememberCachedKind0Profile,
   rememberLoggedInIdentity,
   saveCachedKind0Events,
-} from "@/lib/people-from-kind0";
+} from "@/lib/nostr/people-from-kind0";
 import {
   loadFailedPublishDrafts,
   saveFailedPublishDrafts,
@@ -102,7 +102,7 @@ import {
 } from "@/lib/filter-state-utils";
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
 import { normalizeTaskType } from "@/lib/task-type";
-import { getConfiguredDefaultRelayIds } from "@/lib/default-relays";
+import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import {

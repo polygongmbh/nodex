@@ -10,6 +10,10 @@ export interface NostrEvent {
   sig: string;
 }
 
+export interface NostrEventWithRelay extends NostrEvent {
+  relayUrl?: string;
+}
+
 export enum NostrEventKind {
   Metadata = 0,
   TextNote = 1,
@@ -25,6 +29,7 @@ export enum NostrEventKind {
   ChannelHideMessage = 43,
   ChannelMuteUser = 44,
   HttpAuth = 27235,
+  Auth = 22242, // NIP-42 Authentication
   // Task-related kinds
   Task = 1621,
   GitStatusOpen = 1630,

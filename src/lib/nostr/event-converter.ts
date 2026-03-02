@@ -1,4 +1,4 @@
-import { NostrEvent, NostrEventKind } from "@/lib/nostr/types";
+import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { Task, Person } from "@/types";
 import { extractTaskStateTargetId, isTaskStateEventKind, mapTaskStateEventToTaskStatus } from "@/lib/nostr/task-state-events";
 import {
@@ -6,9 +6,9 @@ import {
   isPriorityPropertyEvent,
   parsePriorityTag,
 } from "@/lib/nostr/task-property-events";
-import { parseLinkedTaskDueFromCalendarEvent } from "./task-calendar-events";
+import { parseLinkedTaskDueFromCalendarEvent } from "./nip52-task-calendar-events";
 import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
-import { relayUrlToId, relayUrlToName } from "@/lib/relay-url";
+import { relayUrlToId, relayUrlToName } from "@/lib/nostr/relay-url";
 import {
   extractSha256FromUrl,
   extractEmbeddableAttachmentsFromContent,
@@ -74,9 +74,6 @@ function replaceIndexedPersonMentions(content: string, tags: string[][]): string
     return `@${referencedTag[1].toLowerCase()}`;
   });
 }
-// Import the relay event type
-import type { NostrEventWithRelay } from "./relay-pool";
-
 // Convert Nostr event to Task
 export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const author: Person = {

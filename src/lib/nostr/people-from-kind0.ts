@@ -1,6 +1,6 @@
 import type { Person } from "@/types";
-import { parseKind0Content } from "./nostr/profile-metadata";
-import { NostrEventKind } from "./nostr/types";
+import { parseKind0Content } from "./profile-metadata";
+import { NostrEventKind } from "./types";
 
 interface Kind0LikeEvent {
   kind: number;

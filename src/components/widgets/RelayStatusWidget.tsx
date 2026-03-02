@@ -3,7 +3,7 @@ import { Radio, WifiOff, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { RelayManagement } from "@/components/relay/RelayManagement";
-import { stripRelayProtocol } from "@/lib/relay-url";
+import { stripRelayProtocol } from "@/lib/nostr/relay-url";
 import { useTranslation } from "react-i18next";
 
 interface RelayStatusWidgetProps {

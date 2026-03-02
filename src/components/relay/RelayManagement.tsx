@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
-import { ensureRelayProtocol, stripRelayProtocol } from "@/lib/relay-url";
+import { ensureRelayProtocol, stripRelayProtocol } from "@/lib/nostr/relay-url";
 import { useTranslation } from "react-i18next";
 
 interface RelayManagementProps {

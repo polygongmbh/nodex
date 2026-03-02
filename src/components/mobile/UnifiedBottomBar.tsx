@@ -32,7 +32,7 @@ import {
   isMetadataOnlyAutocompleteKey,
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
-import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/attachment-upload";
+import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/nip96-attachment-upload";
 import { loadAutoCaptionEnabled } from "@/lib/auto-caption-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";

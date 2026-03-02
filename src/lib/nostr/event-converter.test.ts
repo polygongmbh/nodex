@@ -1,8 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Task } from "@/types";
 import { nostrEventToTask, nostrEventsToTasks, mergeTasks, eventHasTags, extractAllTags, isSpamContent } from "./event-converter";
-import { NostrEvent, NostrEventKind } from "./types";
-import type { NostrEventWithRelay } from "./relay-pool";
+import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "./types";
 
 describe("nostrEventToTask", () => {
   const baseEvent: NostrEventWithRelay = {

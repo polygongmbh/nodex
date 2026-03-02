@@ -9,7 +9,7 @@ import {
   rememberLoggedInIdentity,
   saveCachedKind0Events,
 } from "./people-from-kind0";
-import { NostrEventKind } from "./nostr/types";
+import { NostrEventKind } from "./types";
 
 const prevPeople: Person[] = [
   {

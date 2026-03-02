@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getAttachmentMaxFileSizeBytes, uploadAttachment } from "./attachment-upload";
+import { getAttachmentMaxFileSizeBytes, uploadAttachment } from "./nip96-attachment-upload";
 
 if (typeof File !== "undefined" && typeof File.prototype.arrayBuffer !== "function") {
   Object.defineProperty(File.prototype, "arrayBuffer", {

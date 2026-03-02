@@ -3,7 +3,7 @@ import { beforeEach, describe, it, expect, vi } from "vitest";
 import { TaskComposer } from "./TaskComposer";
 import type { Channel, Relay, Person, TaskCreateResult } from "@/types";
 import { toast } from "sonner";
-import * as attachmentUpload from "@/lib/nostr/attachment-upload";
+import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 
 let mockUser: { id: string } | null = { id: "me" };
 

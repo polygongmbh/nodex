@@ -1,4 +1,4 @@
-import { loadCachedKind0Events } from "@/lib/people-from-kind0";
+import { loadCachedKind0Events } from "@/lib/nostr/people-from-kind0";
 import { parseKind0Content } from "@/lib/nostr/profile-metadata";
 
 interface ProfileNameUniquenessOptions {
