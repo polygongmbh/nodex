@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Fixed NIP-42 relay authentication to use standards-compliant `kind:22242` challenge/relay tags with signed relay-policy responses.
+- Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
+
 ## [1.15.0] - 2026-02-27
 Expanded media preview workflows and refined toast behavior with native Sonner styling.
 - Local image auto-caption now checks device capability up front, times out more cleanly on slow/unsupported devices, and keeps manual alt-text entry available when auto-caption is unavailable.

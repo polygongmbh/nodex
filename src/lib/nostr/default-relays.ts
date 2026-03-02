@@ -1,4 +1,4 @@
-import { ensureRelayProtocol, relayUrlToId as toRelayId, RelayProtocol } from "@/lib/relay-url";
+import { ensureRelayProtocol, relayUrlToId as toRelayId, RelayProtocol } from "@/lib/nostr/relay-url";
 
 interface DefaultRelayEnv {
   VITE_DEFAULT_RELAYS?: string;
