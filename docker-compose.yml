@@ -1,10 +1,12 @@
 services:
   rnostr:
-    image: ${RNOSTR_IMAGE:-fiatjaf/rnostr:latest}
+    image: rnostr/rnostr:latest
     container_name: nodex-rnostr
     restart: unless-stopped
     ports:
       - "${RNOSTR_WS_PORT:-7447}:7447"
+    volumes:
+      - ./docker/data/rnostr:/rnostr
 
   nodex:
     build:
@@ -22,3 +24,30 @@ services:
       - rnostr
     ports:
       - "${NODEX_HTTP_PORT:-8080}:80"
+
+  route96-db:
+    profiles: ["upload"]
+    image: mysql:8.0
+    container_name: nodex-route96-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${ROUTE96_DATABASE:-route96}
+      MYSQL_USER: ${ROUTE96_DATABASE_USER:-route96}
+      MYSQL_PASSWORD: ${ROUTE96_DATABASE_PASSWORD:-route96}
+      MYSQL_ROOT_PASSWORD: ${ROUTE96_DATABASE_ROOT_PASSWORD:-route96root}
+    volumes:
+      - ./docker/data/route96/mysql:/var/lib/mysql
+
+  route96:
+    profiles: ["upload"]
+    image: ${ROUTE96_IMAGE:-voidic/route96:latest}
+    container_name: nodex-route96
+    restart: unless-stopped
+    depends_on:
+      - route96-db
+    ports:
+      - "${ROUTE96_HTTP_PORT:-8096}:8096"
+    volumes:
+      - ./docker/route96.yaml:/route96.yaml:ro
+      - ./docker/data/route96/uploads:/data
+    command: ["/app/route96", "-config", "/route96.yaml"]
