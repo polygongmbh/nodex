@@ -12,6 +12,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Feed listing composer now auto-fills NIP-99 title/summary from content until those fields are edited manually, strips hashtag/mention tokens from defaults, defaults listing currency to EUR with input autocomplete, and normalizes additional NIP-99 metadata aliases for better cross-client interoperability.
 - Fixed NIP-42 relay authentication to use standards-compliant `kind:22242` challenge/relay tags with signed relay-policy responses.
 - Fixed relay status so `verification failed` is only shown when a relay explicitly rejects read subscriptions (for example `CLOSED ... auth-required`), not merely when auth policy handling fails while signed out.
+- Fixed relay status oscillation after signed-out reload by treating NDK auth-challenge states as connected transport, so healthy relays no longer flip `connected -> connecting`.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
 ## [1.15.0] - 2026-02-27
