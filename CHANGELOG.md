@@ -22,6 +22,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Fixed Relay Management capability details showing `unknown` by preserving NIP-11 metadata when mapping provider relay state into the page-level relay list.
 - After sign-in, auth-capable relays (from NIP-11 `supported_nips`) are now retried automatically, clearing stale verification-failed state and forcing reconnect so blocked reads can be fetched again.
 - Relay state now differentiates read rejection vs write rejection: read-rejected relays stay red, write-rejected/read-only relays render blue, connecting stays yellow, and stale read-rejected state is cleared on successful reads/auth recovery.
+- Relay write-state now updates on publish outcomes: failed/partial publishes mark impacted relays as read-only (write-rejected), and later successful publishes clear that state per relay.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
 ## [1.15.0] - 2026-02-27
