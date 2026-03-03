@@ -42,6 +42,7 @@ import {
 import { verifyNip05 } from "../nip05-verify";
 import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "../nip42-relay-auth-policy";
 import { createNip98AuthHeader } from "../nip98-http-auth";
+import { isAuthRequiredCloseReason, shouldSetVerificationFailedStatus } from "./relay-verification";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
@@ -49,7 +50,6 @@ export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./c
 const NDKContext = createContext<NDKContextValue | null>(null);
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
 type RelayOperation = "read" | "write" | "unknown";
-const AUTH_FAILURE_REASON_PATTERN = /(auth-required|not authorized|pubkey not in whitelist|blocked:\s*not authorized)/i;
 
 export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const defaultRelaysKey = useMemo(() => (defaultRelays || []).join(","), [defaultRelays]);
@@ -129,16 +129,23 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     toast.success(i18n.t("toasts.success.relayVerificationUnknown", { relayUrl }));
   }, [shouldShowRelayVerificationToast]);
 
-  const markRelayVerificationFailure = useCallback((relayUrl: string, operation: RelayOperation) => {
+  const markRelayVerificationFailure = useCallback((
+    relayUrl: string,
+    operation: RelayOperation,
+    options?: { setStatus?: boolean }
+  ) => {
+    const shouldSetStatus = options?.setStatus ?? false;
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
-    setRelays((previous) =>
-      previous.map((relay) => {
-        if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
-        if (relay.status === "connection-error") return relay;
-        return { ...relay, status: "verification-failed" };
-      })
-    );
+    if (shouldSetStatus) {
+      setRelays((previous) =>
+        previous.map((relay) => {
+          if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
+          if (relay.status === "connection-error") return relay;
+          return { ...relay, status: "verification-failed" };
+        })
+      );
+    }
     if (!shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
       return;
     }
@@ -167,7 +174,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       return;
     }
     if (event.outcome === "failed") {
-      markRelayVerificationFailure(event.relayUrl, event.operation);
+      markRelayVerificationFailure(event.relayUrl, event.operation, {
+        setStatus: shouldSetVerificationFailedStatus("auth-policy", event.operation),
+      });
     }
   }, [markRelayVerificationFailure, resolveRelayVerificationOperation]);
 
@@ -906,12 +915,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       onEvent(event);
     });
     subscription.on("closed", (relay: NDKRelay, reason: string) => {
-      if (!AUTH_FAILURE_REASON_PATTERN.test(reason || "")) return;
+      if (!isAuthRequiredCloseReason(reason || "")) return;
       nostrDevLog("relay", "Relay closed subscription due to auth failure", {
         relayUrl: relay.url,
         reason,
       });
-      markRelayVerificationFailure(relay.url, "read");
+      markRelayVerificationFailure(relay.url, "read", {
+        setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),
+      });
     });
     let finished = false;
     const finishRead = () => {
