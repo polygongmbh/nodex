@@ -29,3 +29,11 @@ export function shouldRetryAuthAfterReadRejection(params: {
   if (!params.lastRetryAt) return true;
   return (params.now - params.lastRetryAt) >= cooldownMs;
 }
+
+export function shouldRetryNip42AfterSignIn(relay: {
+  nip11?: {
+    supportsNip42?: boolean;
+  };
+}): boolean {
+  return relay.nip11?.supportsNip42 === true;
+}

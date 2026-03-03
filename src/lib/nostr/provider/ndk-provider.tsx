@@ -44,6 +44,7 @@ import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "../nip4
 import { createNip98AuthHeader } from "../nip98-http-auth";
 import {
   isAuthRequiredCloseReason,
+  shouldRetryNip42AfterSignIn,
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
@@ -219,6 +220,39 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       supportsNip42: info.supportsNip42,
     });
   }, []);
+
+  const retryNip42RelaysAfterSignIn = useCallback(() => {
+    if (!ndk) return;
+    const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
+    const relayUrlsToRetry = relays
+      .filter((relay) => shouldRetryNip42AfterSignIn(relay))
+      .map((relay) => normalizeUrl(relay.url));
+
+    if (relayUrlsToRetry.length === 0) return;
+
+    const retrySet = new Set(relayUrlsToRetry);
+    nostrDevLog("relay", "Retrying NIP-42 auth-capable relays after sign in", {
+      relayUrls: relayUrlsToRetry,
+    });
+
+    setRelays((previous) =>
+      previous.map((relay) =>
+        retrySet.has(normalizeUrl(relay.url))
+          ? { ...relay, status: "connecting" }
+          : relay
+      )
+    );
+
+    relayUrlsToRetry.forEach((relayUrl) => {
+      relayAutoPausedRef.current.delete(relayUrl);
+      relayInitialFailureCountsRef.current.delete(relayUrl);
+      relayAuthRetryHistoryRef.current.delete(relayUrl);
+      pendingRelayVerificationRef.current.delete(relayUrl);
+      const relay = ndk.pool.getRelay(relayUrl, true);
+      relay?.disconnect();
+      relay?.connect();
+    });
+  }, [ndk, relays]);
 
   const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
     if (!ndk) return null;
@@ -538,6 +572,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       setAuthMethod("extension");
       localStorage.setItem(STORAGE_KEY_AUTH, "extension");
+      retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
       console.error("Extension login failed:", error);
@@ -545,7 +580,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk]);
+  }, [ndk, retryNip42RelaysAfterSignIn]);
 
   const loginWithPrivateKey = useCallback(async (nsecOrHex: string): Promise<boolean> => {
     if (!ndk) return false;
@@ -564,6 +599,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       setAuthMethod("privateKey");
       localStorage.setItem(STORAGE_KEY_AUTH, "privateKey");
       // Don't store private key for security
+      retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
       console.error("Private key login failed:", error);
@@ -571,7 +607,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk]);
+  }, [ndk, retryNip42RelaysAfterSignIn]);
 
   const loginAsGuest = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -605,6 +641,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       setAuthMethod("guest");
       localStorage.setItem(STORAGE_KEY_AUTH, "guest");
+      retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
       console.error("Guest login failed:", error);
@@ -612,7 +649,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk]);
+  }, [ndk, retryNip42RelaysAfterSignIn]);
 
   const loginWithNostrConnect = useCallback(async (bunkerUrl: string): Promise<boolean> => {
     if (!ndk) return false;
@@ -647,6 +684,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       if (signer.localSigner?.privateKey) {
         localStorage.setItem(STORAGE_KEY_NIP46_LOCAL_NSEC, signer.localSigner.privateKey);
       }
+      retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
       console.error("Nostr Connect login failed:", error);
@@ -654,7 +692,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk]);
+  }, [ndk, retryNip42RelaysAfterSignIn]);
 
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
