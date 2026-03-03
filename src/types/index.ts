@@ -92,11 +92,20 @@ export interface PublishedAttachment {
   url: string;
   mimeType?: string;
   sha256?: string;
+  originalSha256?: string;
   size?: number;
   dimensions?: string;
   blurhash?: string;
   alt?: string;
   name?: string;
+  thumbnailUrl?: string;
+  previewImageUrl?: string;
+  summary?: string;
+  service?: string;
+  magnet?: string;
+  infohash?: string;
+  fallbackUrls?: string[];
+  extra?: Record<string, string>;
 }
 
 export interface ComposeAttachment extends PublishedAttachment {

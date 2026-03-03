@@ -28,6 +28,24 @@ const FILE_MIME_BY_EXTENSION: Record<string, string> = {
 const SHA256_HEX_REGEX = /([a-fA-F0-9]{64})(?:$|[^a-fA-F0-9])/;
 
 type AttachmentMetadataCandidate = Omit<PublishedAttachment, "url"> & { url?: string };
+const SUPPORTED_NIP94_KEYS = new Set([
+  "url",
+  "m",
+  "x",
+  "ox",
+  "size",
+  "dim",
+  "blurhash",
+  "alt",
+  "name",
+  "thumb",
+  "image",
+  "summary",
+  "service",
+  "magnet",
+  "i",
+  "fallback",
+]);
 
 export function isSafeHttpUrl(value: string): boolean {
   try {
@@ -101,10 +119,19 @@ export function normalizePublishedAttachments(attachments: PublishedAttachment[]
       url,
       mimeType: attachment.mimeType?.trim(),
       sha256: attachment.sha256?.trim(),
+      originalSha256: attachment.originalSha256?.trim(),
       blurhash: attachment.blurhash?.trim(),
       dimensions: attachment.dimensions?.trim(),
       alt: attachment.alt?.trim(),
       name: attachment.name?.trim(),
+      thumbnailUrl: attachment.thumbnailUrl?.trim(),
+      previewImageUrl: attachment.previewImageUrl?.trim(),
+      summary: attachment.summary?.trim(),
+      service: attachment.service?.trim(),
+      magnet: attachment.magnet?.trim(),
+      infohash: attachment.infohash?.trim(),
+      fallbackUrls: attachment.fallbackUrls?.map((value) => value.trim()).filter(Boolean),
+      extra: attachment.extra,
     });
   }
   return normalized;
@@ -126,11 +153,20 @@ export function parseImetaTag(tag: string[]): PublishedAttachment | null {
   let url = "";
   let mimeType: string | undefined;
   let sha256: string | undefined;
+  let originalSha256: string | undefined;
   let size: number | undefined;
   let dimensions: string | undefined;
   let blurhash: string | undefined;
   let alt: string | undefined;
   let name: string | undefined;
+  let thumbnailUrl: string | undefined;
+  let previewImageUrl: string | undefined;
+  let summary: string | undefined;
+  let service: string | undefined;
+  let magnet: string | undefined;
+  let infohash: string | undefined;
+  const fallbackUrls: string[] = [];
+  const extra: Record<string, string> = {};
 
   for (let index = 1; index < tag.length; index += 1) {
     const value = (tag[index] || "").trim();
@@ -150,6 +186,7 @@ export function parseImetaTag(tag: string[]): PublishedAttachment | null {
     if (key === "url") url = payload;
     if (key === "m") mimeType = payload;
     if (key === "x") sha256 = payload;
+    if (key === "ox") originalSha256 = payload;
     if (key === "size") {
       const parsed = Number.parseInt(payload, 10);
       if (Number.isFinite(parsed)) size = parsed;
@@ -158,6 +195,14 @@ export function parseImetaTag(tag: string[]): PublishedAttachment | null {
     if (key === "blurhash") blurhash = payload;
     if (key === "alt") alt = payload;
     if (key === "name") name = payload;
+    if (key === "thumb" && isSafeHttpUrl(payload)) thumbnailUrl = payload;
+    if (key === "image" && isSafeHttpUrl(payload)) previewImageUrl = payload;
+    if (key === "summary") summary = payload;
+    if (key === "service") service = payload;
+    if (key === "magnet") magnet = payload;
+    if (key === "i") infohash = payload;
+    if (key === "fallback" && isSafeHttpUrl(payload)) fallbackUrls.push(payload);
+    if (!SUPPORTED_NIP94_KEYS.has(key)) extra[key] = payload;
   }
 
   if (!url || !isSafeHttpUrl(url)) return null;
@@ -165,11 +210,20 @@ export function parseImetaTag(tag: string[]): PublishedAttachment | null {
     url,
     mimeType,
     sha256,
+    originalSha256,
     size,
     dimensions,
     blurhash,
     alt,
     name,
+    thumbnailUrl,
+    previewImageUrl,
+    summary,
+    service,
+    magnet,
+    infohash,
+    fallbackUrls: fallbackUrls.length > 0 ? fallbackUrls : undefined,
+    extra: Object.keys(extra).length > 0 ? extra : undefined,
   };
 }
 
@@ -177,6 +231,7 @@ function applyAttachmentMetadataField(candidate: AttachmentMetadataCandidate, ke
   if (key === "url" && isSafeHttpUrl(value)) candidate.url = value;
   if (key === "m") candidate.mimeType = value;
   if (key === "x") candidate.sha256 = value.toLowerCase();
+  if (key === "ox") candidate.originalSha256 = value.toLowerCase();
   if (key === "size") {
     const parsed = Number.parseInt(value, 10);
     if (Number.isFinite(parsed)) candidate.size = parsed;
@@ -185,6 +240,16 @@ function applyAttachmentMetadataField(candidate: AttachmentMetadataCandidate, ke
   if (key === "blurhash") candidate.blurhash = value;
   if (key === "alt") candidate.alt = value;
   if (key === "name") candidate.name = value;
+  if (key === "thumb" && isSafeHttpUrl(value)) candidate.thumbnailUrl = value;
+  if (key === "image" && isSafeHttpUrl(value)) candidate.previewImageUrl = value;
+  if (key === "summary") candidate.summary = value;
+  if (key === "service") candidate.service = value;
+  if (key === "magnet") candidate.magnet = value;
+  if (key === "i") candidate.infohash = value;
+  if (key === "fallback" && isSafeHttpUrl(value)) {
+    const previous = candidate.fallbackUrls || [];
+    candidate.fallbackUrls = [...previous, value];
+  }
 }
 
 export function parseNip94AttachmentMetadataTags(tags: string[][]): AttachmentMetadataCandidate[] {
@@ -204,7 +269,7 @@ export function parseNip94AttachmentMetadataTags(tags: string[][]): AttachmentMe
     const rawValue = tag[1];
     const value = typeof rawValue === "string" ? rawValue.trim() : "";
     if (!key || !value) continue;
-    if (!["url", "m", "x", "size", "dim", "blurhash", "alt", "name"].includes(key)) continue;
+    if (!SUPPORTED_NIP94_KEYS.has(key)) continue;
 
     if (key === "url") {
       current = {};
@@ -236,6 +301,7 @@ export function buildImetaTag(attachment: PublishedAttachment): string[] {
   const tag = ["imeta", `url ${attachment.url}`];
   if (attachment.mimeType) tag.push(`m ${attachment.mimeType}`);
   if (attachment.sha256) tag.push(`x ${attachment.sha256}`);
+  if (attachment.originalSha256) tag.push(`ox ${attachment.originalSha256}`);
   if (typeof attachment.size === "number" && Number.isFinite(attachment.size)) {
     tag.push(`size ${Math.max(0, Math.round(attachment.size))}`);
   }
@@ -243,5 +309,26 @@ export function buildImetaTag(attachment: PublishedAttachment): string[] {
   if (attachment.blurhash) tag.push(`blurhash ${attachment.blurhash}`);
   if (attachment.alt) tag.push(`alt ${attachment.alt}`);
   if (attachment.name) tag.push(`name ${attachment.name}`);
-  return tag;
+  if (attachment.thumbnailUrl) tag.push(`thumb ${attachment.thumbnailUrl}`);
+  if (attachment.previewImageUrl) tag.push(`image ${attachment.previewImageUrl}`);
+  if (attachment.summary) tag.push(`summary ${attachment.summary}`);
+  if (attachment.service) tag.push(`service ${attachment.service}`);
+  if (attachment.magnet) tag.push(`magnet ${attachment.magnet}`);
+  if (attachment.infohash) tag.push(`i ${attachment.infohash}`);
+  (attachment.fallbackUrls || []).forEach((fallbackUrl) => {
+    if (isSafeHttpUrl(fallbackUrl)) {
+      tag.push(`fallback ${fallbackUrl}`);
+    }
+  });
+  if (attachment.extra) {
+    Object.entries(attachment.extra).forEach(([key, value]) => {
+      const normalizedKey = key.trim().toLowerCase();
+      const normalizedValue = value.trim();
+      if (!normalizedKey || !normalizedValue) return;
+      if (SUPPORTED_NIP94_KEYS.has(normalizedKey)) return;
+      tag.push(`${normalizedKey} ${normalizedValue}`);
+    });
+  }
+  // NIP-92 requires url plus at least one additional field.
+  return tag.length > 2 ? tag : [];
 }

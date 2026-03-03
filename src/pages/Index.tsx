@@ -1468,7 +1468,9 @@ const Index = () => {
       feedMessageType: existing.feedMessageType,
       hashtags: existing.tags,
       mentionPubkeys: (existing.mentions || []).filter((mention) => /^[a-f0-9]{64}$/i.test(mention)),
-      attachmentTags: (existing.attachments || []).map((attachment) => buildImetaTag(attachment)),
+      attachmentTags: (existing.attachments || [])
+        .map((attachment) => buildImetaTag(attachment))
+        .filter((tag) => tag.length > 0),
       fallbackTitle: existing.content.slice(0, 80),
       identifierSeed: existing.nip99.identifier || existing.id,
       statusOverride: status,
@@ -1706,7 +1708,9 @@ const Index = () => {
                   feedMessageType,
                   hashtags: normalizedExtractedTags,
                   mentionPubkeys,
-                  attachmentTags: normalizedAttachments.map((attachment) => buildImetaTag(attachment)),
+                  attachmentTags: normalizedAttachments
+                    .map((attachment) => buildImetaTag(attachment))
+                    .filter((tag) => tag.length > 0),
                   fallbackTitle: content.slice(0, 80),
                   statusOverride: (nip99?.status || "active") as Nip99ListingStatus,
                   locationGeohash: normalizedLocationGeohash,
@@ -1714,7 +1718,9 @@ const Index = () => {
               : [
                   ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
                   ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
-                  ...normalizedAttachments.map((attachment) => buildImetaTag(attachment)),
+                  ...normalizedAttachments
+                    .map((attachment) => buildImetaTag(attachment))
+                    .filter((tag) => tag.length > 0),
                   ...((normalizedLocationGeohash ? [["g", normalizedLocationGeohash]] : []) as string[][]),
                 ]
         )

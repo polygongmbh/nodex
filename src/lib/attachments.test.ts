@@ -49,20 +49,41 @@ describe("attachments helpers", () => {
       "url https://a.com/cat.jpg",
       "m image/jpeg",
       "x hash",
+      "ox oldhash",
       "size 123",
       "alt Cat",
+      "thumb https://a.com/thumb.jpg",
+      "image https://a.com/preview.jpg",
+      "summary Nice cat",
+      "service blossom",
+      "magnet magnet:?xt=urn:btih:abc",
+      "i abc",
+      "fallback https://cdn.a.com/cat.jpg",
     ]);
     expect(parsed).toEqual({
       url: "https://a.com/cat.jpg",
       mimeType: "image/jpeg",
       sha256: "hash",
+      originalSha256: "oldhash",
       size: 123,
       alt: "Cat",
       dimensions: undefined,
       blurhash: undefined,
       name: undefined,
+      thumbnailUrl: "https://a.com/thumb.jpg",
+      previewImageUrl: "https://a.com/preview.jpg",
+      summary: "Nice cat",
+      service: "blossom",
+      magnet: "magnet:?xt=urn:btih:abc",
+      infohash: "abc",
+      fallbackUrls: ["https://cdn.a.com/cat.jpg"],
+      extra: undefined,
     });
     expect(buildImetaTag(parsed || { url: "https://a.com/cat.jpg" })).toContain("url https://a.com/cat.jpg");
+  });
+
+  it("omits imeta tags that only contain url", () => {
+    expect(buildImetaTag({ url: "https://a.com/cat.jpg" })).toEqual([]);
   });
 
   it("detects image attachments", () => {
