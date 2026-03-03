@@ -2074,6 +2074,16 @@ const Index = () => {
     }));
   }, [relays, effectiveActiveRelayIds]);
 
+  const visibleFailedPublishDrafts = useMemo(() => {
+    return failedPublishDrafts.filter((draft) => {
+      const targetRelayIds = draft.relayIds.length > 0
+        ? draft.relayIds
+        : draft.relayUrls.map((url) => getRelayIdFromUrl(url));
+      if (targetRelayIds.length === 0) return true;
+      return targetRelayIds.some((relayId) => effectiveActiveRelayIds.has(relayId));
+    });
+  }, [effectiveActiveRelayIds, failedPublishDrafts]);
+
   const filteredTasks = useMemo(
     () =>
       filterTasks({
@@ -2223,7 +2233,7 @@ const Index = () => {
           isPendingPublishTask={isPendingPublishTask}
           composeRestoreRequest={composeRestoreRequest}
           mentionRequest={mentionRequest}
-          failedPublishDrafts={failedPublishDrafts}
+          failedPublishDrafts={visibleFailedPublishDrafts}
           onRetryFailedPublish={handleRetryFailedPublish}
           onDismissFailedPublish={handleDismissFailedPublish}
           isInteractionBlocked={isInteractionBlocked}
@@ -2302,7 +2312,7 @@ const Index = () => {
       />
       <div className="min-w-0 overflow-hidden flex flex-col" {...desktopSwipeHandlers}>
         <FailedPublishQueueBanner
-          drafts={failedPublishDrafts}
+          drafts={visibleFailedPublishDrafts}
           onRetry={handleRetryFailedPublish}
           onDismiss={handleDismissFailedPublish}
         />
