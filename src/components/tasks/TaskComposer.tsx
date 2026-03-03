@@ -10,6 +10,8 @@ import {
   MessageSquare,
   Package,
   HandHelping,
+  LocateFixed,
+  MapPin,
   LogIn,
   Paperclip,
 } from "lucide-react";
@@ -55,6 +57,7 @@ import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAtta
 import { loadAutoCaptionEnabled } from "@/lib/auto-caption-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
+import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/lib/nostr/geohash-location";
 
 interface TaskComposerProps {
   onSubmit: ComposerSubmit;
@@ -96,6 +99,7 @@ interface ComposeDraftState {
   priority?: number;
   attachments?: PublishedAttachment[];
   nip99?: Nip99Metadata;
+  locationGeohash?: string;
 }
 
 const NIP99_TITLE_MAX_LENGTH = 80;
@@ -219,6 +223,7 @@ export function TaskComposer({
   const [mentionFilter, setMentionFilter] = useState("");
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
+  const [isComposerFocused, setIsComposerFocused] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSendLaunching, setIsSendLaunching] = useState(false);
   const [explicitTagNames, setExplicitTagNames] = useState<string[]>(() => {
@@ -254,6 +259,10 @@ export function TaskComposer({
     }));
   });
   const [nip99, setNip99] = useState<Nip99Metadata>(() => ({ ...(initialDraft?.nip99 || {}) }));
+  const [locationGeohash, setLocationGeohash] = useState<string | undefined>(() => normalizeGeohash(initialDraft?.locationGeohash));
+  const [showLocationControls, setShowLocationControls] = useState<boolean>(
+    () => Boolean(normalizeGeohash(initialDraft?.locationGeohash))
+  );
   const [isNip99TitleTouched, setIsNip99TitleTouched] = useState(
     () => Boolean(initialDraft?.nip99?.title?.trim())
   );
@@ -349,6 +358,9 @@ export function TaskComposer({
     setDateType(restoreState.dateType || "due");
     setPriority(typeof restoreState.priority === "number" ? restoreState.priority : undefined);
     setNip99({ ...(restoreState.nip99 || {}) });
+    const restoredGeohash = normalizeGeohash(restoreState.locationGeohash);
+    setLocationGeohash(restoredGeohash);
+    setShowLocationControls(Boolean(restoredGeohash));
     setIsNip99TitleTouched(Boolean(restoreState.nip99?.title?.trim()));
     setIsNip99SummaryTouched(Boolean(restoreState.nip99?.summary?.trim()));
     setAttachments(
@@ -402,6 +414,7 @@ export function TaskComposer({
           explicitMentionPubkeys,
           priority,
           nip99,
+          locationGeohash,
           attachments: attachments
             .filter((attachment) => attachment.status === "uploaded" && attachment.url)
             .map((attachment) => ({
@@ -419,7 +432,7 @@ export function TaskComposer({
     } catch {
       // Ignore persistence errors.
     }
-  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, priority, nip99, attachments, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -659,6 +672,24 @@ export function TaskComposer({
     setNip99((previous) => ({ ...previous, ...patch }));
   };
 
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error(t("toasts.errors.locationUnavailable"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const geohash = encodeGeohash(position.coords.latitude, position.coords.longitude, DEFAULT_GEOHASH_PRECISION);
+        setLocationGeohash(geohash);
+        toast.success(t("toasts.success.locationCaptured", { geohash }));
+      },
+      () => {
+        toast.error(t("toasts.errors.locationCaptureFailed"));
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
   useEffect(() => {
     if (taskType !== "offer" && taskType !== "request") return;
     const autoFilled = deriveNip99AutofillFromContent(content);
@@ -728,20 +759,36 @@ export function TaskComposer({
     setIsPublishing(true);
     let result: TaskCreateResult;
     try {
+      const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
       result = await Promise.resolve(
-        onSubmit(
-          content,
-          submitTags,
-          selectedRelays,
-          effectiveTaskType,
-          dueDate,
-          dueTime || undefined,
-          dateType,
-          explicitMentionPubkeys,
-          priority,
-          uploadedAttachments,
-          listingMetadata
-        )
+        normalizedLocationGeohash
+          ? onSubmit(
+              content,
+              submitTags,
+              selectedRelays,
+              effectiveTaskType,
+              dueDate,
+              dueTime || undefined,
+              dateType,
+              explicitMentionPubkeys,
+              priority,
+              uploadedAttachments,
+              listingMetadata,
+              normalizedLocationGeohash
+            )
+          : onSubmit(
+              content,
+              submitTags,
+              selectedRelays,
+              effectiveTaskType,
+              dueDate,
+              dueTime || undefined,
+              dateType,
+              explicitMentionPubkeys,
+              priority,
+              uploadedAttachments,
+              listingMetadata
+            )
       );
     } catch (error) {
       console.error("Task submit failed", error);
@@ -772,6 +819,8 @@ export function TaskComposer({
     setExplicitTagNames([...includedChannels]);
     setExplicitMentionPubkeys([...selectedPeoplePubkeys]);
     setPriority(undefined);
+    setLocationGeohash(undefined);
+    setShowLocationControls(false);
     setNip99({});
     setIsNip99TitleTouched(false);
     setIsNip99SummaryTouched(false);
@@ -993,22 +1042,52 @@ export function TaskComposer({
     const textBeforeCursor = newContent.slice(0, cursorPos);
     const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
     const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
-
     if (hashtagMatch) {
       setHashtagFilter(hashtagMatch[1].toLowerCase());
       setShowHashtagSuggestions(true);
       setShowMentionSuggestions(false);
       setActiveSuggestionIndex(0);
-    } else if (mentionMatch) {
+      return;
+    }
+    if (mentionMatch) {
       setMentionFilter((mentionMatch[1] || "").toLowerCase());
       setShowMentionSuggestions(true);
       setShowHashtagSuggestions(false);
       setActiveSuggestionIndex(0);
-    } else {
+      return;
+    }
+    setShowHashtagSuggestions(false);
+    setShowMentionSuggestions(false);
+    setActiveSuggestionIndex(0);
+  };
+
+  const updateAutocompleteFromCursor = (textValue: string, nextCursorPosition: number, focused: boolean) => {
+    if (!focused) {
       setShowHashtagSuggestions(false);
       setShowMentionSuggestions(false);
       setActiveSuggestionIndex(0);
+      return;
     }
+    const textBeforeCursor = textValue.slice(0, nextCursorPosition);
+    const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
+    const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
+    if (hashtagMatch) {
+      setHashtagFilter(hashtagMatch[1].toLowerCase());
+      setShowHashtagSuggestions(true);
+      setShowMentionSuggestions(false);
+      setActiveSuggestionIndex(0);
+      return;
+    }
+    if (mentionMatch) {
+      setMentionFilter((mentionMatch[1] || "").toLowerCase());
+      setShowMentionSuggestions(true);
+      setShowHashtagSuggestions(false);
+      setActiveSuggestionIndex(0);
+      return;
+    }
+    setShowHashtagSuggestions(false);
+    setShowMentionSuggestions(false);
+    setActiveSuggestionIndex(0);
   };
 
   const insertHashtag = (tagName: string) => {
@@ -1143,20 +1222,36 @@ export function TaskComposer({
 
   return (
     <div
-      className={cn("space-y-3", compact && "space-y-2", adaptiveSize && !showExpandedControls && "space-y-1")}
+      className={cn("flex flex-col gap-3", compact && "gap-2", adaptiveSize && !showExpandedControls && "gap-1")}
       data-onboarding="focused-compose"
     >
-      <div className="relative">
+      <div className="relative order-1">
         <textarea
           data-onboarding="compose-input"
           ref={textareaRef}
           value={content}
           onChange={handleContentChange}
           onKeyDown={handleKeyDown}
+          onSelect={(event) => {
+            const target = event.currentTarget;
+            const nextCursor = target.selectionStart ?? 0;
+            setCursorPosition(nextCursor);
+            updateAutocompleteFromCursor(target.value, nextCursor, isComposerFocused);
+          }}
           onFocus={() => {
+            setIsComposerFocused(true);
             if (adaptiveSize && !isExpanded) {
               setIsExpanded(true);
             }
+            const textarea = textareaRef.current;
+            if (!textarea) return;
+            const nextCursor = textarea.selectionStart ?? 0;
+            setCursorPosition(nextCursor);
+            updateAutocompleteFromCursor(textarea.value, nextCursor, true);
+          }}
+          onBlur={() => {
+            setIsComposerFocused(false);
+            updateAutocompleteFromCursor(content, cursorPosition, false);
           }}
           aria-label={
             taskType === "task"
@@ -1176,7 +1271,6 @@ export function TaskComposer({
                   ? t("composer.placeholders.request")
                   : t("composer.placeholders.comment")
           }
-          title={t("composer.hints.composeField")}
           className={cn(
             "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
             adaptiveSize && !showExpandedControls
@@ -1267,8 +1361,8 @@ export function TaskComposer({
         )}
       </div>
 
-      {showExpandedControls && taskType !== "task" && (mentionChipItems.length > 0 || hashtagChipItems.length > 0) && (
-        <div className={cn("flex flex-wrap items-center gap-1.5", adaptiveSize && "motion-ink-stagger [--stagger-index:0]")}>
+      {showExpandedControls && (mentionChipItems.length > 0 || hashtagChipItems.length > 0 || Boolean(submitBlockedReason && user)) && (
+        <div className={cn("order-2 flex flex-wrap items-center gap-1.5", adaptiveSize && "motion-ink-stagger [--stagger-index:0]")}>
           {mentionChipItems.map((mention) => (
             <button
               key={`mention-${mention.identifier}`}
@@ -1316,11 +1410,14 @@ export function TaskComposer({
               {tagChip.tag}
             </button>
           ))}
+          {submitBlockedReason && user && (
+            <span className="ml-auto text-xs text-muted-foreground sm:text-right">{submitBlockedReason}</span>
+          )}
         </div>
       )}
 
       {showExpandedControls && attachments.length > 0 && (
-        <div className="space-y-2">
+        <div className="order-3 space-y-2">
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
@@ -1387,9 +1484,43 @@ export function TaskComposer({
         </div>
       )}
 
+      {showExpandedControls && (showLocationControls || Boolean(locationGeohash)) && (
+        <div className={cn("order-5 flex flex-wrap items-center gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:1]")}>
+          <button
+            type="button"
+            onClick={useCurrentLocation}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/50 bg-background px-2 text-xs hover:bg-muted/60"
+          >
+            <LocateFixed className="h-3.5 w-3.5" />
+            {t("composer.actions.useCurrentLocation")}
+          </button>
+          <div className="inline-flex min-w-[14rem] items-center gap-1.5 rounded-md border border-border/50 bg-background px-2">
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              value={locationGeohash || ""}
+              onChange={(event) => setLocationGeohash(normalizeGeohash(event.target.value) || event.target.value.trim().toLowerCase())}
+              placeholder={t("composer.placeholders.geohash")}
+              aria-label={t("composer.placeholders.geohash")}
+              className="h-8 w-full bg-transparent text-xs focus:outline-none"
+            />
+            {locationGeohash && (
+              <button
+                type="button"
+                onClick={() => setLocationGeohash(undefined)}
+                className="rounded p-0.5 hover:bg-muted"
+                aria-label={t("composer.actions.clearLocation")}
+                title={t("composer.actions.clearLocation")}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Due date for tasks */}
       {showExpandedControls && taskType === "task" && (
-        <div className={cn("flex flex-wrap items-center gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
+        <div className={cn("order-6 flex flex-wrap items-center gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <div className="inline-flex min-w-[5.5rem] items-center gap-2 rounded-xl bg-muted/40 px-2 py-1.5">
             <Flag className="h-4 w-4 text-muted-foreground" />
             <select
@@ -1471,58 +1602,11 @@ export function TaskComposer({
             )}
           </div>
 
-          {mentionChipItems.map((mention) => (
-            <button
-              key={`mention-task-${mention.identifier}`}
-              type="button"
-              data-testid="compose-mention-chip"
-              onClick={() => removeExplicitMention(mention.explicitPubkey)}
-              className={cn(
-                "group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary",
-                mention.metadataOnly && "cursor-pointer hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
-              )}
-              disabled={!mention.metadataOnly}
-              title={`${t("composer.labels.mentions")}: @${mention.identifier}`}
-            >
-              {mention.metadataOnly ? (
-                <>
-                  <AtSign className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
-                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
-                </>
-              ) : (
-                <AtSign className="w-3 h-3" />
-              )}
-              {mention.label}
-            </button>
-          ))}
-          {hashtagChipItems.map((tagChip) => (
-            <button
-              key={`hashtag-task-${tagChip.tag}`}
-              type="button"
-              data-testid="compose-hashtag-chip"
-              onClick={() => removeExplicitHashtag(tagChip.tag)}
-              className={cn(
-                "group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground",
-                tagChip.metadataOnly && "cursor-pointer hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
-              )}
-              disabled={!tagChip.metadataOnly}
-            >
-              {tagChip.metadataOnly ? (
-                <>
-                  <Hash className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
-                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
-                </>
-              ) : (
-                <Hash className="w-3 h-3" />
-              )}
-              {tagChip.tag}
-            </button>
-          ))}
         </div>
       )}
 
       {showExpandedControls && (taskType === "offer" || taskType === "request") && (
-        <div className={cn("flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
+        <div className={cn("order-6 flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <input
             value={nip99.title || ""}
             onChange={(event) => {
@@ -1596,28 +1680,9 @@ export function TaskComposer({
         </div>
       )}
 
-      {/* Sign in prompt for posting */}
-      {showExpandedControls && !user && (
-        <div className={cn("flex items-center gap-2 p-2 bg-primary/10 border border-primary/20 rounded-xl", adaptiveSize && "motion-ink-stagger [--stagger-index:3]")}>
-          <LogIn className="w-4 h-4 text-primary" />
-          <span className="text-sm text-muted-foreground flex-1">
-            {t("composer.blocked.signin")}
-          </span>
-          {onSignInClick && (
-            <button
-              onClick={onSignInClick}
-              className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              {t("composer.actions.signin")}
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Actions */}
       {showExpandedControls && (
-      <div className={cn("flex items-center justify-between", adaptiveSize && "motion-ink-reveal motion-ink-stagger [--stagger-index:4]")}>
+      <div className={cn("order-4 flex flex-wrap items-center justify-between gap-2", adaptiveSize && "motion-ink-reveal motion-ink-stagger [--stagger-index:4]")}>
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
@@ -1663,25 +1728,34 @@ export function TaskComposer({
             <AtSign className="w-4 h-4 text-primary" />
           </button>
           {uploadEnabled && (
-            <>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-                aria-label="Add attachment"
-                title="Add attachment"
-              >
-                <Paperclip className="w-4 h-4 text-primary" />
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+              aria-label="Add attachment"
+              title="Add attachment"
+            >
+              <Paperclip className="w-4 h-4 text-primary" />
+            </button>
           )}
+          <button
+            type="button"
+            onClick={() => setShowLocationControls((previous) => !previous)}
+            className={cn(
+              "p-2 rounded-xl transition-colors",
+              showLocationControls || Boolean(locationGeohash)
+                ? "bg-primary/20 text-primary"
+                : "hover:bg-muted/70"
+            )}
+            aria-label={t("composer.actions.location")}
+            title={t("composer.actions.location")}
+          >
+            <MapPin className="w-4 h-4 text-primary" />
+          </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          {submitBlockedReason && (
-            <span className="text-xs text-muted-foreground">{submitBlockedReason}</span>
-          )}
-          <div className="inline-flex rounded-xl overflow-hidden border border-border/40 shadow-sm">
+        <div className="ml-auto flex min-w-0 flex-col gap-1 sm:items-end">
+          <div className="inline-flex self-end rounded-xl overflow-hidden border border-border/40 shadow-sm">
             {allowComment && (
               <div
                 data-onboarding="compose-kind"
@@ -1774,9 +1848,23 @@ export function TaskComposer({
                   ? <CheckSquare className="w-4 h-4" />
                   : taskType === "offer"
                     ? <Package className="w-4 h-4" />
-                    : taskType === "request"
-                      ? <HandHelping className="w-4 h-4" />
-                      : <MessageSquare className="w-4 h-4" />;
+                  : taskType === "request"
+                    ? <HandHelping className="w-4 h-4" />
+                    : <MessageSquare className="w-4 h-4" />;
+              if (!user) {
+                return (
+                  <button
+                    type="button"
+                    onClick={onSignInClick}
+                    className="min-w-[12.5rem] px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 flex items-center justify-center gap-2"
+                    aria-label={t("composer.actions.signin")}
+                    title={t("composer.blocked.signin")}
+                  >
+                    <LogIn className="w-4 h-4" />
+                    {t("composer.actions.signin")}
+                  </button>
+                );
+              }
               return (
             <button
               onClick={() => {
@@ -1786,7 +1874,7 @@ export function TaskComposer({
               aria-label={submitActionLabel}
               title={submitActionLabel}
               className={cn(
-                "px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2",
+                "min-w-[12.5rem] px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2",
                 isSendLaunching && "motion-send-launch"
               )}
             >
