@@ -199,6 +199,20 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       return;
     }
     relayInfoRef.current.set(normalizedRelayUrl, info);
+    setRelays((previous) =>
+      previous.map((relay) =>
+        relay.url.replace(/\/+$/, "") === normalizedRelayUrl
+          ? {
+              ...relay,
+              nip11: {
+                authRequired: info.authRequired,
+                supportsNip42: info.supportsNip42,
+                checkedAt: Date.now(),
+              },
+            }
+          : relay
+      )
+    );
     nostrDevLog("relay", "Relay NIP-11 info loaded", {
       relayUrl: normalizedRelayUrl,
       authRequired: info.authRequired,
@@ -282,13 +296,19 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         const nextByUrl = new Map(prev.map((entry) => [normalizeUrl(entry.url), entry]));
         ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
           const normalized = normalizeUrl(relay.url);
-          const previousStatus = nextByUrl.get(normalized)?.status;
+          const previousEntry = nextByUrl.get(normalized);
+          const previousStatus = previousEntry?.status;
           if (relayAutoPausedRef.current.has(normalized)) {
-            nextByUrl.set(normalized, { url: normalized, status: "connection-error" });
+            nextByUrl.set(normalized, {
+              ...previousEntry,
+              url: normalized,
+              status: "connection-error",
+            });
             return;
           }
           const mappedStatus = mapNativeRelayStatus(relay.status);
           nextByUrl.set(normalized, {
+            ...previousEntry,
             url: normalized,
             status: previousStatus === "verification-failed" && mappedStatus === "connected"
               ? "verification-failed"
@@ -332,7 +352,18 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
                 : r
             );
           }
-          return [...prev, { url: normalized, status: "connected" }];
+          const info = relayInfoRef.current.get(normalized);
+          return [...prev, {
+            url: normalized,
+            status: "connected",
+            nip11: info
+              ? {
+                  authRequired: info.authRequired,
+                  supportsNip42: info.supportsNip42,
+                  checkedAt: Date.now(),
+                }
+              : undefined,
+          }];
         });
         return removed;
       });
@@ -375,7 +406,21 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
 
     // Initialize relay states
-    setRelays(resolvedDefaultRelays.map((url) => ({ url, status: "connecting" })));
+    setRelays(resolvedDefaultRelays.map((url) => {
+      const normalizedUrl = url.replace(/\/+$/, "");
+      const info = relayInfoRef.current.get(normalizedUrl);
+      return {
+        url,
+        status: "connecting",
+        nip11: info
+          ? {
+              authRequired: info.authRequired,
+              supportsNip42: info.supportsNip42,
+              checkedAt: Date.now(),
+            }
+          : undefined,
+      };
+    }));
     nostrDevLog("relay", "Relay state initialized as connecting", {
       relayUrls: resolvedDefaultRelays,
     });
@@ -677,7 +722,18 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           normalizeUrl(r.url) === normalized ? { ...r, url: normalized, status: "connecting" } : r
         );
       }
-      return [...prev, { url: normalized, status: "connecting" }];
+      const info = relayInfoRef.current.get(normalized);
+      return [...prev, {
+        url: normalized,
+        status: "connecting",
+        nip11: info
+          ? {
+              authRequired: info.authRequired,
+              supportsNip42: info.supportsNip42,
+              checkedAt: Date.now(),
+            }
+          : undefined,
+      }];
     });
 
     // Connect via NDK

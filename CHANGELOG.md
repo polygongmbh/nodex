@@ -17,6 +17,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Routed profile (`kind:0`) lookups through provider-managed subscriptions so `CLOSED ... auth-required` responses participate in NIP-42 retry/status handling instead of bypassing auth recovery.
 - Added initial NIP-11 relay info probing (HTTP/S info endpoint derived from relay URL) during relay startup/add so auth requirements and NIP-42 support are known earlier for diagnostics and auth flow handling.
 - Fixed false-positive relay verification failure toasts by only surfacing read failures on explicit relay read rejection signals, not on auth-policy/inference failures alone.
+- Relay Management now surfaces per-relay NIP-11 capabilities (auth required, NIP-42 support, last check) in an expandable details view and uses these capabilities for more precise status labels.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
 ## [1.15.0] - 2026-02-27

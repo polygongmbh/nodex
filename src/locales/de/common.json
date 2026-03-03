@@ -613,8 +613,25 @@
     "debugTitle": "Debug-Werkzeuge",
     "debugSummary": "verbunden {{connected}} · verbindet {{connecting}} · getrennt {{disconnected}} · Verbindung {{connectionError}} · Verifizierung {{verificationFailed}}",
     "status": {
+      "connected": "verbunden",
+      "connecting": "verbindet",
+      "disconnected": "getrennt",
       "connectionError": "Verbindungsproblem",
-      "verificationFailed": "Verifizierung fehlgeschlagen"
+      "verificationFailed": "Verifizierung fehlgeschlagen",
+      "connectedAuthRequired": "verbunden (Auth erforderlich)",
+      "connectingAuthRequired": "verbindet (Auth erforderlich)",
+      "verificationFailedAuthRequired": "Verifizierung fehlgeschlagen (Auth erforderlich)"
+    },
+    "details": {
+      "show": "Relay-Details anzeigen",
+      "hide": "Relay-Details ausblenden",
+      "title": "Relay-Fähigkeiten",
+      "authRequired": "Auth erforderlich",
+      "supportsNip42": "Unterstützt NIP-42",
+      "nip11Checked": "NIP-11 geprüft",
+      "yes": "ja",
+      "no": "nein",
+      "unknown": "unbekannt"
     },
     "copyDebug": "Diagnose kopieren",
     "copyUrls": "Relay-URLs kopieren",

@@ -613,8 +613,25 @@
     "debugTitle": "Debug utilities",
     "debugSummary": "connected {{connected}} · connecting {{connecting}} · disconnected {{disconnected}} · connection {{connectionError}} · verification {{verificationFailed}}",
     "status": {
+      "connected": "connected",
+      "connecting": "connecting",
+      "disconnected": "disconnected",
       "connectionError": "connection issue",
-      "verificationFailed": "verification failed"
+      "verificationFailed": "verification failed",
+      "connectedAuthRequired": "connected (auth required)",
+      "connectingAuthRequired": "connecting (auth required)",
+      "verificationFailedAuthRequired": "verification failed (auth required)"
+    },
+    "details": {
+      "show": "Show relay details",
+      "hide": "Hide relay details",
+      "title": "Relay capabilities",
+      "authRequired": "Auth required",
+      "supportsNip42": "Supports NIP-42",
+      "nip11Checked": "NIP-11 checked",
+      "yes": "yes",
+      "no": "no",
+      "unknown": "unknown"
     },
     "copyDebug": "Copy diagnostics",
     "copyUrls": "Copy relay URLs",
