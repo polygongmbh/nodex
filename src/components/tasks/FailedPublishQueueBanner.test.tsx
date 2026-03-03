@@ -65,4 +65,30 @@ describe("FailedPublishQueueBanner", () => {
     expect(screen.getByText("2 post failed to publish")).toBeInTheDocument();
     expect(screen.getByText("hidden one")).toBeInTheDocument();
   });
+
+  it("does not crash when rerendering from non-empty to empty drafts", () => {
+    const drafts: FailedPublishDraft[] = [
+      { ...baseDraft, id: "1", content: "selected one" },
+    ];
+
+    const view = render(
+      <FailedPublishQueueBanner
+        drafts={drafts}
+        selectedFeedDrafts={drafts}
+        onRetry={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("1 post failed to publish")).toBeInTheDocument();
+    view.rerender(
+      <FailedPublishQueueBanner
+        drafts={[]}
+        selectedFeedDrafts={[]}
+        onRetry={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    );
+    expect(screen.queryByText("1 post failed to publish")).not.toBeInTheDocument();
+  });
 });
