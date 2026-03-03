@@ -33,6 +33,7 @@ export interface Person {
 }
 
 export type TaskType = "task" | "comment";
+export type FeedMessageType = "offer" | "request";
 export type TaskDateType = "due" | "scheduled" | "start" | "end" | "milestone";
 export type TaskCreateFailureReason =
   | "not-authenticated"
@@ -90,6 +91,7 @@ export interface Task {
   tags: string[];
   relays: string[];
   taskType: TaskType;
+  feedMessageType?: FeedMessageType;
   timestamp: Date;
   likes: number;
   replies: number;

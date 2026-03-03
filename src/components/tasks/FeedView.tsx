@@ -336,6 +336,12 @@ export function FeedView({
           feedTasks.map((task) => {
             const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
             const isComment = task.taskType === "comment";
+            const feedMessageLabel =
+              task.feedMessageType === "offer"
+                ? "Offer"
+                : task.feedMessageType === "request"
+                  ? "Request"
+                  : t("tasks.comment");
             const breadcrumb = getParentBreadcrumb(task);
             const isKeyboardFocused = keyboardFocusedTaskId === task.id;
             const isLockedUntilStart = isTaskLockedUntilStart(task);
@@ -584,7 +590,7 @@ export function FeedView({
                       {isComment && !isMobile && (
                         <>
                           <span className="shrink-0">·</span>
-                          <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{t("tasks.comment")}</span>
+                          <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{feedMessageLabel}</span>
                         </>
                       )}
                       {isPendingPublish && (

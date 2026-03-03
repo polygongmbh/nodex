@@ -37,6 +37,34 @@ describe("nostrEventToTask", () => {
     expect(task.status).toBe("todo");
   });
 
+  it("converts NIP-99 classified listings to feed offer messages by default", () => {
+    const listingEvent: NostrEventWithRelay = {
+      ...baseEvent,
+      kind: NostrEventKind.ClassifiedListing,
+      tags: [["title", "Bike for sale"]],
+      content: "Road bike, great condition",
+    };
+
+    const task = nostrEventToTask(listingEvent);
+
+    expect(task.taskType).toBe("comment");
+    expect(task.feedMessageType).toBe("offer");
+  });
+
+  it("classifies NIP-99 listings as request messages when tagged as request", () => {
+    const listingEvent: NostrEventWithRelay = {
+      ...baseEvent,
+      kind: NostrEventKind.ClassifiedListing,
+      tags: [["type", "request"]],
+      content: "Looking for a bike mechanic",
+    };
+
+    const task = nostrEventToTask(listingEvent);
+
+    expect(task.taskType).toBe("comment");
+    expect(task.feedMessageType).toBe("request");
+  });
+
   it("extracts hashtags from content", () => {
     const event: NostrEventWithRelay = {
       ...baseEvent,
@@ -345,13 +373,25 @@ describe("nostrEventsToTasks", () => {
         sig: "sig2",
         relayUrl: "wss://relay.test.com",
       },
+      {
+        id: "3",
+        pubkey: "pub3",
+        created_at: 1700000002,
+        kind: NostrEventKind.ClassifiedListing,
+        tags: [["type", "request"]],
+        content: "Need help moving a couch",
+        sig: "sig3",
+        relayUrl: "wss://relay.test.com",
+      },
     ];
     
     const tasks = nostrEventsToTasks(events);
     
-    expect(tasks).toHaveLength(2);
+    expect(tasks).toHaveLength(3);
     expect(tasks[0].id).toBe("1");
     expect(tasks[1].id).toBe("2");
+    expect(tasks[2].id).toBe("3");
+    expect(tasks[2].feedMessageType).toBe("request");
   });
 
   it("applies latest state-event update to task status", () => {
