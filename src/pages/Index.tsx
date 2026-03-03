@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarHeader } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
@@ -13,7 +14,7 @@ import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
-import { useNostrEventCache } from "@/hooks/use-nostr-event-cache";
+import { NOSTR_EVENTS_QUERY_KEY, useNostrEventCache } from "@/hooks/use-nostr-event-cache";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
@@ -107,6 +108,7 @@ import { normalizeGeohash } from "@/lib/nostr/geohash-location";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { removeCachedNostrEventById, type CachedNostrEvent } from "@/lib/nostr/event-cache";
 import {
   notifyDisconnectedSelectedFeeds,
   notifyLocalSaved,
@@ -150,10 +152,20 @@ const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 const PUBLISH_UNDO_DELAY_MS = 5000;
 
+function buildPendingPublishDedupKey(task: Task): string {
+  const authorId = task.author.id?.trim().toLowerCase() || "";
+  const normalizedContent = task.content.trim();
+  const normalizedTags = [...task.tags].map((tag) => tag.trim().toLowerCase()).sort().join(",");
+  const feedMessageType = task.feedMessageType || "";
+  const parentId = task.parentId || "";
+  return `${authorId}|${task.taskType}|${feedMessageType}|${parentId}|${normalizedTags}|${normalizedContent}`;
+}
+
 const Index = () => {
   const { t } = useTranslation();
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isManageRouteActive = urlView === MOBILE_MANAGE_ROUTE;
 
   // Derive current view from URL
@@ -423,7 +435,12 @@ const Index = () => {
 
   // Combine local tasks with Nostr tasks
   const allTasks = useMemo(() => {
-    const combined = [...localTasks, ...nostrTasks];
+    const nostrTaskDedupKeys = new Set(nostrTasks.map((task) => buildPendingPublishDedupKey(task)));
+    const localTasksForMerge = localTasks.filter((task) => {
+      if (!task.pendingPublishToken) return true;
+      return !nostrTaskDedupKeys.has(buildPendingPublishDedupKey(task));
+    });
+    const combined = [...localTasksForMerge, ...nostrTasks];
     const byId = new Map<string, Task>();
     const byListingReplaceableKey = new Map<string, Task>();
     const getListingReplaceableKey = (task: Task): string | null => {
@@ -1504,6 +1521,16 @@ const Index = () => {
     toast.info(t("toasts.success.publishUndone"));
   }, [clearPendingPublishTask, t]);
 
+  const removeCachedFailedPublishEvent = useCallback((eventId?: string) => {
+    const normalizedEventId = (eventId || "").trim();
+    if (!normalizedEventId) return;
+    queryClient.setQueryData<CachedNostrEvent[]>(
+      NOSTR_EVENTS_QUERY_KEY,
+      (previous = []) => previous.filter((event) => event.id !== normalizedEventId)
+    );
+    removeCachedNostrEventById(normalizedEventId);
+  }, [queryClient]);
+
   const handleNewTask = async (
     content: string,
     extractedTags: string[],
@@ -1804,6 +1831,7 @@ const Index = () => {
         clearPendingPublishTask(pendingTaskId, { dismissToast: true });
         const publishResult = await publishWithMetadata();
         if (!publishResult.success) {
+          removeCachedFailedPublishEvent(publishResult.eventId);
           const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
           setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
           setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
@@ -1859,6 +1887,7 @@ const Index = () => {
 
     const publishResult = await publishWithMetadata();
     if (!publishResult.success) {
+      removeCachedFailedPublishEvent(publishResult.eventId);
       const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
       setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
       notifyPublishSavedForRetry(t);
