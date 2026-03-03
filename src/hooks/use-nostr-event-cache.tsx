@@ -6,6 +6,7 @@ import {
   saveCachedNostrEvents,
   type CachedNostrEvent,
 } from "@/lib/nostr/event-cache";
+import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/nostr/replaceable-events";
 
 export const NOSTR_EVENTS_QUERY_KEY = ["nostr-events-cache"] as const;
 
@@ -36,9 +37,16 @@ function upsertCachedEvent(
   previous: CachedNostrEvent[],
   incoming: CachedNostrEvent
 ): CachedNostrEvent[] {
-  const withoutExisting = previous.filter((event) => event.id !== incoming.id);
-  return [incoming, ...withoutExisting]
-    .sort((left, right) => right.created_at - left.created_at);
+  if (isParameterizedReplaceableKind(incoming.kind) && getReplaceableEventKey(incoming) === null) {
+    return previous;
+  }
+  const incomingReplaceableKey = getReplaceableEventKey(incoming);
+  const withoutExisting = previous.filter((event) => {
+    if (event.id === incoming.id) return false;
+    if (!incomingReplaceableKey) return true;
+    return getReplaceableEventKey(event) !== incomingReplaceableKey;
+  });
+  return [incoming, ...withoutExisting].sort((left, right) => right.created_at - left.created_at);
 }
 
 export function useNostrEventCache({

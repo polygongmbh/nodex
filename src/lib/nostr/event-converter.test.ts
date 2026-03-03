@@ -348,6 +348,16 @@ describe("nostrEventToTask", () => {
     expect(task.content).toBe(`Review with @${personPubkey} before merge`);
     expect(task.mentions).toContain(personPubkey);
   });
+
+  it("extracts geohash location from g tag", () => {
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      tags: [["g", "u4pruyd"]],
+    };
+
+    const task = nostrEventToTask(event);
+    expect(task.locationGeohash).toBe("u4pruyd");
+  });
 });
 
 describe("nostrEventsToTasks", () => {
@@ -378,7 +388,7 @@ describe("nostrEventsToTasks", () => {
         pubkey: "pub3",
         created_at: 1700000002,
         kind: NostrEventKind.ClassifiedListing,
-        tags: [["type", "request"]],
+        tags: [["d", "listing-3"], ["type", "request"]],
         content: "Need help moving a couch",
         sig: "sig3",
         relayUrl: "wss://relay.test.com",
@@ -564,6 +574,83 @@ describe("nostrEventsToTasks", () => {
     expect(tasks[0].id).toBe("task-priority-state");
     expect(tasks[0].priority).toBe(70);
     expect(tasks[0].status).toBe("in-progress");
+  });
+
+  it("keeps only latest parameterized replaceable listing revision", () => {
+    const events: NostrEventWithRelay[] = [
+      {
+        id: "listing-old",
+        pubkey: "pub-listing",
+        created_at: 1700000200,
+        kind: NostrEventKind.ClassifiedListing,
+        tags: [["d", "listing-1"], ["status", "active"]],
+        content: "Old listing",
+        sig: "sig1",
+        relayUrl: "wss://relay.test.com",
+      },
+      {
+        id: "listing-new",
+        pubkey: "pub-listing",
+        created_at: 1700000300,
+        kind: NostrEventKind.ClassifiedListing,
+        tags: [["d", "listing-1"], ["status", "sold"]],
+        content: "New listing",
+        sig: "sig2",
+        relayUrl: "wss://relay.test.com",
+      },
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].id).toBe("listing-new");
+    expect(tasks[0].nip99?.status).toBe("sold");
+  });
+
+  it("discards invalid parameterized replaceable events missing d", () => {
+    const events: NostrEventWithRelay[] = [
+      {
+        id: "listing-invalid",
+        pubkey: "pub-listing",
+        created_at: 1700000200,
+        kind: NostrEventKind.ClassifiedListing,
+        tags: [["status", "active"]],
+        content: "Invalid listing",
+        sig: "sig1",
+        relayUrl: "wss://relay.test.com",
+      },
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toEqual([]);
+  });
+
+  it("breaks replaceable listing timestamp ties with lexical event id", () => {
+    const events: NostrEventWithRelay[] = [
+      {
+        id: "listing-a",
+        pubkey: "pub-listing",
+        created_at: 1700000400,
+        kind: NostrEventKind.ClassifiedListing,
+        tags: [["d", "listing-tie"]],
+        content: "Older lexical id",
+        sig: "sig1",
+        relayUrl: "wss://relay.test.com",
+      },
+      {
+        id: "listing-b",
+        pubkey: "pub-listing",
+        created_at: 1700000400,
+        kind: NostrEventKind.ClassifiedListing,
+        tags: [["d", "listing-tie"]],
+        content: "Newer lexical id",
+        sig: "sig2",
+        relayUrl: "wss://relay.test.com",
+      },
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].id).toBe("listing-b");
   });
 });
 

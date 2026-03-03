@@ -1,4 +1,5 @@
 import type { FeedMessageType, Nip99ListingStatus, Nip99Metadata } from "@/types";
+import { buildGeohashTag } from "@/lib/nostr/geohash-location";
 
 export interface Nip99PublishTagParams {
   metadata?: Nip99Metadata;
@@ -9,6 +10,7 @@ export interface Nip99PublishTagParams {
   fallbackTitle?: string;
   identifierSeed?: string;
   statusOverride?: Nip99ListingStatus;
+  locationGeohash?: string;
 }
 
 function clean(value: string | undefined): string | undefined {
@@ -69,6 +71,7 @@ export function buildNip99PublishTags({
   fallbackTitle,
   identifierSeed,
   statusOverride,
+  locationGeohash,
 }: Nip99PublishTagParams): string[][] {
   const identifier =
     clean(metadata?.identifier) ||
@@ -99,6 +102,8 @@ export function buildNip99PublishTags({
   if (price) tags.push(["price", price, currency || "EUR", frequency || ""]);
   if (currency) tags.push(["currency", currency]);
   if (frequency) tags.push(["frequency", frequency]);
+  const geohashTag = buildGeohashTag(locationGeohash);
+  if (geohashTag) tags.push(geohashTag);
 
   return [...tags, ...attachmentTags];
 }

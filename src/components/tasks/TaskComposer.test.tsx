@@ -87,7 +87,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.queryByRole("button", { name: /add file attachment/i })).not.toBeInTheDocument();
   });
 
-  it("keeps task submit label when signed out and disabled", () => {
+  it("replaces submit action with sign in when signed out", () => {
     mockUser = null;
     render(
       <TaskComposer
@@ -99,8 +99,8 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
-    expect(screen.queryByText("Sign in to post")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /create task/i })).not.toBeInTheDocument();
   });
 
   it("shows offer/request kind options only when feed message types are enabled", () => {
@@ -346,6 +346,36 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.keyDown(textarea, { key: "Enter" });
 
     expect(textarea.value).toBe("#accounting ");
+  });
+
+  it("hides autocomplete on blur or cursor move, and restores when refocused at unfinished token", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: { value: "Ship #ba", selectionStart: 8 },
+    });
+    expect(screen.getByText("backend")).toBeInTheDocument();
+
+    textarea.setSelectionRange(2, 2);
+    fireEvent.select(textarea);
+    expect(screen.queryByText("backend")).not.toBeInTheDocument();
+
+    fireEvent.blur(textarea);
+    expect(screen.queryByText("backend")).not.toBeInTheDocument();
+
+    fireEvent.focus(textarea);
+    textarea.setSelectionRange(8, 8);
+    fireEvent.select(textarea);
+    expect(screen.getByText("backend")).toBeInTheDocument();
   });
 
   it("adds hashtag tags via Alt+Enter without inserting hashtag text", async () => {
