@@ -96,7 +96,7 @@ export function buildNip99PublishTags({
 
   if (summary) tags.push(["summary", summary]);
   if (location) tags.push(["location", location]);
-  if (price) tags.push(["price", price, currency || "USD", frequency || ""]);
+  if (price) tags.push(["price", price, currency || "EUR", frequency || ""]);
   if (currency) tags.push(["currency", currency]);
   if (frequency) tags.push(["frequency", frequency]);
 

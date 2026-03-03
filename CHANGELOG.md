@@ -9,7 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Feed now recognizes NIP-99 classified listings (`kind:30402`) as feed-only message types and labels them as `Offer`/`Request` based on listing metadata.
 - Feed composer now includes `Offer` and `Request` message type options and publishes them as NIP-99 classified listings with matching `type` tags.
 - Feed composer now exposes common NIP-99 listing tags (title, summary, location, price/currency/frequency, and status), and original listing authors can toggle listing `active/sold` state from the feed icon.
-- Feed listing composer now auto-fills NIP-99 title/summary from content until those fields are edited manually, strips hashtag/mention tokens from defaults, and normalizes additional NIP-99 metadata aliases for better cross-client interoperability.
+- Feed listing composer now auto-fills NIP-99 title/summary from content until those fields are edited manually, strips hashtag/mention tokens from defaults, defaults listing currency to EUR with input autocomplete, and normalizes additional NIP-99 metadata aliases for better cross-client interoperability.
 - Fixed NIP-42 relay authentication to use standards-compliant `kind:22242` challenge/relay tags with signed relay-policy responses.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
