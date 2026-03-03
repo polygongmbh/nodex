@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { isAuthRequiredCloseReason, shouldSetVerificationFailedStatus } from "./relay-verification";
+import {
+  AUTH_RETRY_COOLDOWN_MS,
+  isAuthRequiredCloseReason,
+  shouldRetryAuthAfterReadRejection,
+  shouldSetVerificationFailedStatus,
+} from "./relay-verification";
 
 describe("isAuthRequiredCloseReason", () => {
   it("matches auth-required close reasons", () => {
@@ -19,5 +24,46 @@ describe("shouldSetVerificationFailedStatus", () => {
     expect(shouldSetVerificationFailedStatus("auth-policy", "write")).toBe(false);
     expect(shouldSetVerificationFailedStatus("auth-policy", "unknown")).toBe(false);
     expect(shouldSetVerificationFailedStatus("subscription-closed", "write")).toBe(false);
+  });
+});
+
+describe("shouldRetryAuthAfterReadRejection", () => {
+  it("retries when signer exists, no auth challenge was observed, and cooldown passed", () => {
+    expect(shouldRetryAuthAfterReadRejection({
+      hasSigner: true,
+      hadPendingAuthChallenge: false,
+      lastRetryAt: undefined,
+      now: 1000,
+    })).toBe(true);
+  });
+
+  it("does not retry when signed out or a challenge already exists", () => {
+    expect(shouldRetryAuthAfterReadRejection({
+      hasSigner: false,
+      hadPendingAuthChallenge: false,
+      lastRetryAt: undefined,
+      now: 1000,
+    })).toBe(false);
+    expect(shouldRetryAuthAfterReadRejection({
+      hasSigner: true,
+      hadPendingAuthChallenge: true,
+      lastRetryAt: undefined,
+      now: 1000,
+    })).toBe(false);
+  });
+
+  it("throttles retries by cooldown", () => {
+    expect(shouldRetryAuthAfterReadRejection({
+      hasSigner: true,
+      hadPendingAuthChallenge: false,
+      lastRetryAt: 1000,
+      now: 1000 + AUTH_RETRY_COOLDOWN_MS - 1,
+    })).toBe(false);
+    expect(shouldRetryAuthAfterReadRejection({
+      hasSigner: true,
+      hadPendingAuthChallenge: false,
+      lastRetryAt: 1000,
+      now: 1000 + AUTH_RETRY_COOLDOWN_MS,
+    })).toBe(true);
   });
 });
