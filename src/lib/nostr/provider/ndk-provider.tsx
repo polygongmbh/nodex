@@ -39,6 +39,7 @@ import {
   MAX_INITIAL_CONNECT_FAILURES,
   RELAY_STATUS_RECONCILE_INTERVAL_MS,
 } from "./relay-status";
+import { waitForNostrExtensionAvailability } from "./session-restore";
 import { verifyNip05 } from "../nip05-verify";
 import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "../nip42-relay-auth-policy";
 import { createNip98AuthHeader } from "../nip98-http-auth";
@@ -314,6 +315,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
   // Initialize NDK
   useEffect(() => {
+    let disposed = false;
     nostrDevLog("provider", "Initializing NDK provider", {
       configuredDefaultRelays: resolvedDefaultRelays,
     });
@@ -465,6 +467,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     setNdk(ndkInstance);
 
     // Try to restore session
+    let extensionRestoreController: AbortController | undefined;
     const savedAuthMethod = localStorage.getItem(STORAGE_KEY_AUTH) as AuthMethod;
     if (savedAuthMethod === "guest") {
       const savedNsec = localStorage.getItem(STORAGE_KEY_NSEC);
@@ -472,6 +475,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         const signer = new NDKPrivateKeySigner(savedNsec);
         ndkInstance.signer = signer;
         signer.user().then((ndkUser) => {
+          if (disposed) return;
           setUser({
             pubkey: ndkUser.pubkey,
             npub: ndkUser.npub,
@@ -480,20 +484,41 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         });
       }
     } else if (savedAuthMethod === "extension") {
-      // Check if extension is available
-      if (hasNostrExtension()) {
+      extensionRestoreController = new AbortController();
+      void (async () => {
+        const availableImmediately = hasNostrExtension();
+        nostrDevLog("auth", "Attempting extension session restore", {
+          immediateAvailability: availableImmediately,
+        });
+
+        const isExtensionAvailable = availableImmediately
+          ? true
+          : await waitForNostrExtensionAvailability({ signal: extensionRestoreController.signal });
+
+        if (!isExtensionAvailable) {
+          nostrDevLog("auth", "Extension restore failed: extension unavailable after wait window");
+          localStorage.removeItem(STORAGE_KEY_AUTH);
+          return;
+        }
+
         const signer = new NDKNip07Signer();
         ndkInstance.signer = signer;
-        signer.user().then((ndkUser) => {
+        try {
+          const ndkUser = await signer.user();
+          if (disposed) return;
           setUser({
             pubkey: ndkUser.pubkey,
             npub: ndkUser.npub,
           });
           setAuthMethod("extension");
-        }).catch(() => {
+          nostrDevLog("auth", "Extension session restored", { pubkey: ndkUser.pubkey });
+        } catch (error) {
+          nostrDevLog("auth", "Extension restore failed while resolving signer user", {
+            error: error instanceof Error ? error.message : String(error),
+          });
           localStorage.removeItem(STORAGE_KEY_AUTH);
-        });
-      }
+        }
+      })();
     } else if (savedAuthMethod === "nostrConnect") {
       const bunkerUrl = localStorage.getItem(STORAGE_KEY_NIP46_BUNKER);
       const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
@@ -503,7 +528,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         const signer = NDKNip46Signer.bunker(ndkInstance, bunkerUrl, localKey);
         ndkInstance.signer = signer;
         signer.blockUntilReady().then(async (ndkUser: NDKUser) => {
+          if (disposed) return;
           await ndkUser.fetchProfile();
+          if (disposed) return;
           setUser({
             pubkey: ndkUser.pubkey,
             npub: ndkUser.npub,
@@ -517,6 +544,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           });
           setAuthMethod("nostrConnect");
         }).catch(() => {
+          if (disposed) return;
           localStorage.removeItem(STORAGE_KEY_AUTH);
           localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
           localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
@@ -535,6 +563,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     );
 
     return () => {
+      disposed = true;
+      extensionRestoreController?.abort();
       window.clearInterval(reconcileIntervalId);
       ndkInstance.pool.relays.forEach((relay) => {
         relay.disconnect();

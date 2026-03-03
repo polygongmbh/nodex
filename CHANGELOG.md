@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Fixed relay status so `verification failed` is only shown when a relay explicitly rejects read subscriptions (for example `CLOSED ... auth-required`), not merely when auth policy handling fails while signed out.
 - Fixed relay status oscillation after signed-out reload by treating NDK auth-challenge states as connected transport, so healthy relays no longer flip `connected -> connecting`.
 - Improved NIP-42 recovery when a relay rejects reads without first issuing an AUTH challenge by retrying relay connection (throttled) when a signer is present, and restored signer setup before initial connect to reduce auth race conditions on reload.
+- Fixed extension sign-in session restore after reload by waiting for delayed `window.nostr` injection (`nostr#initialized` + bounded retry window) before invalidating saved extension auth state.
 - Routed profile (`kind:0`) lookups through provider-managed subscriptions so `CLOSED ... auth-required` responses participate in NIP-42 retry/status handling instead of bypassing auth recovery.
 - Added initial NIP-11 relay info probing (HTTP/S info endpoint derived from relay URL) during relay startup/add so auth requirements and NIP-42 support are known earlier for diagnostics and auth flow handling.
 - Fixed false-positive relay verification failure toasts by only surfacing read failures on explicit relay read rejection signals, not on auth-policy/inference failures alone.
