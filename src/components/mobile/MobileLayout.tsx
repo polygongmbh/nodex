@@ -73,6 +73,7 @@ interface MobileLayoutProps {
   onRetryFailedPublish?: (draftId: string) => void;
   onRepostFailedPublish?: (draftId: string) => void;
   onDismissFailedPublish?: (draftId: string) => void;
+  onDismissAllFailedPublish?: () => void;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
   isOnboardingOpen?: boolean;
@@ -129,6 +130,7 @@ export function MobileLayout({
   onRetryFailedPublish,
   onRepostFailedPublish,
   onDismissFailedPublish,
+  onDismissAllFailedPublish,
   isInteractionBlocked = false,
   onInteractionBlocked,
   isOnboardingOpen = false,
@@ -381,6 +383,7 @@ export function MobileLayout({
           onRetry={onRetryFailedPublish}
           onRepost={onRepostFailedPublish}
           onDismiss={onDismissFailedPublish}
+          onDismissAll={onDismissAllFailedPublish}
           isMobile
         />
       )}

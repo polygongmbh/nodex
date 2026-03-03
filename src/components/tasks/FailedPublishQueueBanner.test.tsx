@@ -91,4 +91,24 @@ describe("FailedPublishQueueBanner", () => {
     );
     expect(screen.queryByText("1 post failed to publish")).not.toBeInTheDocument();
   });
+
+  it("renders dismiss all action and fires callback once", () => {
+    const onDismissAll = vi.fn();
+    const drafts: FailedPublishDraft[] = [
+      { ...baseDraft, id: "1", content: "selected one" },
+      { ...baseDraft, id: "2", content: "hidden one" },
+    ];
+    render(
+      <FailedPublishQueueBanner
+        drafts={drafts}
+        selectedFeedDrafts={drafts}
+        onRetry={vi.fn()}
+        onDismiss={vi.fn()}
+        onDismissAll={onDismissAll}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss all" }));
+    expect(onDismissAll).toHaveBeenCalledTimes(1);
+  });
 });

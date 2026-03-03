@@ -607,6 +607,7 @@
     "scopeSelected": "Selected feeds",
     "scopeAll": "All failed",
     "hiddenCount": "{{count}} hidden",
+    "dismissAll": "Dismiss all",
     "dismiss": "Dismiss failed post"
   },
   "relay": {
