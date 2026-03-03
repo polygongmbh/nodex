@@ -22,6 +22,37 @@ const channels: Channel[] = [makeChannel()];
 const relays: Relay[] = [makeRelay()];
 
 describe("FeedView", () => {
+  it("focuses breadcrumb target without bubbling card focus", () => {
+    const root = makeTask({ id: "root", content: "Root task #general", author, status: "todo" });
+    const child = makeTask({
+      id: "child",
+      parentId: "root",
+      content: "Child task #general",
+      author,
+      status: "todo",
+    });
+    const onFocusTask = vi.fn();
+
+    render(
+      <FeedView
+        tasks={[child]}
+        allTasks={[root, child]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        onFocusTask={onFocusTask}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /focus task: root task #general/i }));
+    expect(onFocusTask).toHaveBeenCalledWith("root");
+    expect(onFocusTask).not.toHaveBeenCalledWith("child");
+  });
+
   it("shortens fallback pubkey label on slim desktop widths", async () => {
     const pubkeyOnlyAuthor: Person = {
       id: author.id,
