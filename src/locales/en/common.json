@@ -611,16 +611,19 @@
     "noneConfigured": "No relays configured",
     "connectedSummary": "{{connectedCount}} of {{totalCount}} relays connected",
     "debugTitle": "Debug utilities",
-    "debugSummary": "connected {{connected}} · connecting {{connecting}} · disconnected {{disconnected}} · connection {{connectionError}} · verification {{verificationFailed}}",
+    "debugSummary": "connected {{connected}} · read-only {{readOnly}} · connecting {{connecting}} · disconnected {{disconnected}} · connection {{connectionError}} · read-rejected {{verificationFailed}}",
     "status": {
       "connected": "connected",
+      "readOnly": "read only",
       "connecting": "connecting",
       "disconnected": "disconnected",
       "connectionError": "connection issue",
-      "verificationFailed": "verification failed",
+      "verificationFailed": "read rejected",
+      "readRejected": "read rejected",
       "connectedAuthRequired": "connected (auth required)",
       "connectingAuthRequired": "connecting (auth required)",
-      "verificationFailedAuthRequired": "verification failed (auth required)"
+      "verificationFailedAuthRequired": "read rejected (auth required)",
+      "readRejectedAuthRequired": "read rejected (auth required)"
     },
     "details": {
       "show": "Show relay details",
@@ -681,7 +684,8 @@
     "relayStatus": {
       "title": "Relay Status",
       "noneConnected": "No relays connected",
-      "connected": "connected"
+      "connected": "connected",
+      "readOnly": "read only"
     }
   }
 }

@@ -3,7 +3,7 @@ export interface Relay {
   name: string;
   icon: string;
   isActive: boolean;
-  connectionStatus?: "connected" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
+  connectionStatus?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   url?: string;
   postCount?: number;
 }

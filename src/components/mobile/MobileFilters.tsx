@@ -428,10 +428,12 @@ export function MobileFilters({
               const isConnectionActive = resolvedConnectionStatus === "connected";
               const connectionDotClass = (() => {
                 switch (resolvedConnectionStatus) {
+                  case "read-only":
+                    return "bg-sky-500";
                   case "connecting":
                     return "bg-sky-500";
                   case "verification-failed":
-                    return "bg-amber-500";
+                    return "bg-destructive";
                   case "connection-error":
                     return "bg-destructive";
                   case "disconnected":

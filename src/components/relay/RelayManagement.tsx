@@ -57,6 +57,7 @@ export function RelayManagement({
   };
 
   const connectedCount = relays.filter((r) => r.status === "connected").length;
+  const readOnlyCount = relays.filter((r) => r.status === "read-only").length;
   const connectingCount = relays.filter((r) => r.status === "connecting").length;
   const disconnectedCount = relays.filter((r) => r.status === "disconnected").length;
   const connectionErrorCount = relays.filter((r) => r.status === "connection-error").length;
@@ -67,13 +68,14 @@ export function RelayManagement({
     counts: {
       total: relays.length,
       connected: connectedCount,
+      readOnly: readOnlyCount,
       connecting: connectingCount,
       disconnected: disconnectedCount,
       connectionError: connectionErrorCount,
       verificationFailed: verificationFailedCount,
     },
     relays,
-  }, null, 2), [connectedCount, connectingCount, connectionErrorCount, disconnectedCount, relays, verificationFailedCount]);
+  }, null, 2), [connectedCount, connectingCount, connectionErrorCount, disconnectedCount, readOnlyCount, relays, verificationFailedCount]);
 
   const copyText = async (value: string, successMessage: string) => {
     try {
@@ -90,10 +92,12 @@ export function RelayManagement({
         return <Wifi className="w-4 h-4 text-success" />;
       case "connecting":
         return <Loader2 className="w-4 h-4 text-sky-500 animate-spin" />;
+      case "read-only":
+        return <AlertCircle className="w-4 h-4 text-sky-500" />;
       case "connection-error":
         return <AlertCircle className="w-4 h-4 text-destructive" />;
       case "verification-failed":
-        return <AlertCircle className="w-4 h-4 text-amber-500" />;
+        return <AlertCircle className="w-4 h-4 text-destructive" />;
       default:
         return <WifiOff className="w-4 h-4 text-slate-400" />;
     }
@@ -105,10 +109,12 @@ export function RelayManagement({
         return "bg-success";
       case "connecting":
         return "bg-sky-500 animate-pulse";
+      case "read-only":
+        return "bg-sky-500";
       case "connection-error":
         return "bg-destructive";
       case "verification-failed":
-        return "bg-amber-500";
+        return "bg-destructive";
       default:
         return "bg-slate-400";
     }
@@ -120,8 +126,10 @@ export function RelayManagement({
       case "connection-error":
         return t("relay.status.connectionError");
       case "verification-failed":
-        if (nip11?.authRequired) return t("relay.status.verificationFailedAuthRequired");
-        return t("relay.status.verificationFailed");
+        if (nip11?.authRequired) return t("relay.status.readRejectedAuthRequired");
+        return t("relay.status.readRejected");
+      case "read-only":
+        return t("relay.status.readOnly");
       case "connected":
         if (nip11?.authRequired) return t("relay.status.connectedAuthRequired");
         return t("relay.status.connected");
@@ -295,6 +303,7 @@ export function RelayManagement({
               <p className="mt-1 text-[11px] text-muted-foreground">
                 {t("relay.debugSummary", {
                   connected: connectedCount,
+                  readOnly: readOnlyCount,
                   connecting: connectingCount,
                   disconnected: disconnectedCount,
                   connectionError: connectionErrorCount,
