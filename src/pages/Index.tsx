@@ -103,6 +103,7 @@ import {
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
 import { normalizeComposerMessageType } from "@/lib/task-type";
 import { buildNip99PublishTags, type Nip99ListingStatus } from "@/lib/nostr/nip99-metadata";
+import { normalizeGeohash } from "@/lib/nostr/geohash-location";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
@@ -144,6 +145,7 @@ const MOBILE_MANAGE_ROUTE = "manage";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
+const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
 const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 const PUBLISH_UNDO_DELAY_MS = 5000;
@@ -422,13 +424,35 @@ const Index = () => {
   // Combine local tasks with Nostr tasks
   const allTasks = useMemo(() => {
     const combined = [...localTasks, ...nostrTasks];
-    // Remove duplicates by id
-    const seen = new Set<string>();
-    return combined.filter((task) => {
-      if (seen.has(task.id)) return false;
-      seen.add(task.id);
-      return true;
-    }).map((task) => {
+    const byId = new Map<string, Task>();
+    const byListingReplaceableKey = new Map<string, Task>();
+    const getListingReplaceableKey = (task: Task): string | null => {
+      if (!task.feedMessageType) return null;
+      const identifier = task.nip99?.identifier?.trim();
+      const authorPubkey = task.author.id?.trim().toLowerCase();
+      if (!identifier || !authorPubkey) return null;
+      return `${LISTING_EVENT_KIND}:${authorPubkey}:${identifier}`;
+    };
+
+    for (const task of combined) {
+      const listingReplaceableKey = getListingReplaceableKey(task);
+      if (!listingReplaceableKey) {
+        if (!byId.has(task.id)) {
+          byId.set(task.id, task);
+        }
+        continue;
+      }
+      const existing = byListingReplaceableKey.get(listingReplaceableKey);
+      if (
+        !existing ||
+        task.timestamp.getTime() > existing.timestamp.getTime() ||
+        (task.timestamp.getTime() === existing.timestamp.getTime() && task.id > existing.id)
+      ) {
+        byListingReplaceableKey.set(listingReplaceableKey, task);
+      }
+    }
+
+    return [...byId.values(), ...byListingReplaceableKey.values()].map((task) => {
       const sortStatus = sortStatusHoldByTaskId[task.id];
       const sortLastEditedAtIso = sortModifiedAtHoldByTaskId[task.id];
       if (!sortStatus && !sortLastEditedAtIso) return task;
@@ -575,7 +599,6 @@ const Index = () => {
   }, []);
 
   const handleOpenGuide = useCallback(() => {
-    if (user) return;
     const initialSectionForOpen: OnboardingInitialSection =
       isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
     setOnboardingManualStart(true);
@@ -583,7 +606,7 @@ const Index = () => {
     setActiveOnboardingSection(null);
     setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(true);
-  }, [isMobile, user]);
+  }, [isMobile]);
 
   useEffect(() => {
     const onboardingState = loadOnboardingState();
@@ -1388,13 +1411,23 @@ const Index = () => {
     const existing = allTasks.find((task) => task.id === taskId);
     if (!existing?.feedMessageType || !existing.nip99) return;
     if (!currentUser?.id || currentUser.id.toLowerCase() !== existing.author.id.toLowerCase()) return;
+    const previousStatus = existing.nip99.status;
+    const replaceableKey = `${LISTING_EVENT_KIND}:${existing.author.id.toLowerCase()}:${existing.nip99.identifier || existing.id}`;
 
     setLocalTasks((prev) => {
       const nextNip99 = { ...(existing.nip99 || {}), status };
-      if (prev.some((task) => task.id === taskId)) {
-        return prev.map((task) => (task.id === taskId ? { ...task, nip99: nextNip99, lastEditedAt: new Date() } : task));
-      }
-      return [{ ...existing, nip99: nextNip99, lastEditedAt: new Date() }, ...prev];
+      const matchesListing = (task: Task) =>
+        task.id === taskId ||
+        (task.feedMessageType &&
+          `${LISTING_EVENT_KIND}:${task.author.id.toLowerCase()}:${task.nip99?.identifier || task.id}` === replaceableKey);
+      let touched = false;
+      const next = prev.map((task) => {
+        if (!matchesListing(task)) return task;
+        touched = true;
+        return { ...task, nip99: nextNip99, lastEditedAt: new Date() };
+      });
+      if (touched) return next;
+      return [{ ...existing, nip99: nextNip99, lastEditedAt: new Date() }, ...next];
     });
 
     if (!isNostrEventId(existing.id)) return;
@@ -1413,6 +1446,7 @@ const Index = () => {
       fallbackTitle: existing.content.slice(0, 80),
       identifierSeed: existing.nip99.identifier || existing.id,
       statusOverride: status,
+      locationGeohash: existing.locationGeohash,
     });
 
     void publishEvent(
@@ -1424,6 +1458,16 @@ const Index = () => {
     ).then((result) => {
       if (!result.success) {
         toast.error("Failed to publish listing status update to relay");
+        setLocalTasks((prev) => prev.map((task) => {
+          if (!task.feedMessageType) return task;
+          const taskReplaceableKey = `${LISTING_EVENT_KIND}:${task.author.id.toLowerCase()}:${task.nip99?.identifier || task.id}`;
+          if (taskReplaceableKey !== replaceableKey) return task;
+          return {
+            ...task,
+            nip99: { ...(task.nip99 || {}), status: previousStatus || "active" },
+            lastEditedAt: new Date(),
+          };
+        }));
       }
     });
   }, [allTasks, currentUser?.id, guardInteraction, publishEvent, resolveTaskOriginRelay]);
@@ -1473,7 +1517,8 @@ const Index = () => {
     explicitMentionPubkeys: string[] = [],
     priority?: number,
     attachments: PublishedAttachment[] = [],
-    nip99?: Nip99Metadata
+    nip99?: Nip99Metadata,
+    locationGeohash?: string
   ): Promise<TaskCreateResult> => {
     if (guardInteraction("post")) {
       return hasDisconnectedSelectedRelays
@@ -1555,6 +1600,7 @@ const Index = () => {
     const normalizedExtractedTags = Array.from(
       new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
     );
+    const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
     const contentDerivedAttachments = extractEmbeddableAttachmentsFromContent(content);
     const normalizedAttachments = normalizePublishedAttachments([
       ...attachments,
@@ -1598,7 +1644,8 @@ const Index = () => {
                 assigneePubkeys,
                 priority,
                 normalizedExtractedTags,
-                normalizedAttachments
+                normalizedAttachments,
+                normalizedLocationGeohash
               )
             : feedMessageType
               ? buildNip99PublishTags({
@@ -1609,11 +1656,13 @@ const Index = () => {
                   attachmentTags: normalizedAttachments.map((attachment) => buildImetaTag(attachment)),
                   fallbackTitle: content.slice(0, 80),
                   statusOverride: (nip99?.status || "active") as Nip99ListingStatus,
+                  locationGeohash: normalizedLocationGeohash,
                 })
               : [
                   ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
                   ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
                   ...normalizedAttachments.map((attachment) => buildImetaTag(attachment)),
+                  ...((normalizedLocationGeohash ? [["g", normalizedLocationGeohash]] : []) as string[][]),
                 ]
         )
       : [];
@@ -1641,6 +1690,7 @@ const Index = () => {
       mentionPubkeys,
       assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
+      locationGeohash: normalizedLocationGeohash,
       attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
       publishKind: fallbackKind,
       publishTags: fallbackTags,
@@ -1673,6 +1723,7 @@ const Index = () => {
       priority: normalizedTaskType === "task" ? priority : undefined,
       feedMessageType,
       nip99: feedMessageType ? nip99 : undefined,
+      locationGeohash: normalizedLocationGeohash,
       attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
     };
 
@@ -1693,6 +1744,7 @@ const Index = () => {
       selectedRelays: targetRelayIds,
       priority,
       nip99,
+      locationGeohash: normalizedLocationGeohash,
       attachments: normalizedAttachments,
     };
 
@@ -1893,6 +1945,7 @@ const Index = () => {
       mentions: draft.mentionPubkeys,
       assigneePubkeys: draft.taskType === "task" ? draft.assigneePubkeys : undefined,
       priority: draft.taskType === "task" ? draft.priority : undefined,
+      locationGeohash: draft.locationGeohash,
       attachments: draft.attachments,
     };
     setLocalTasks((prev) => [restoredTask, ...prev]);
@@ -2134,12 +2187,12 @@ const Index = () => {
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         <OnboardingIntroPopover
-          isOpen={!user && isOnboardingIntroOpen && !isAuthModalOpen}
+          isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
           onStartTour={handleStartOnboardingTour}
           onSignIn={handleOpenAuthModal}
         />
         <OnboardingGuide
-          isOpen={!user && isOnboardingOpen && !isAuthModalOpen}
+          isOpen={isOnboardingOpen && !isAuthModalOpen}
           isMobile={isMobile}
           manualStart={onboardingManualStart}
           currentView={currentView}
@@ -2224,12 +2277,12 @@ const Index = () => {
       {/* Nostr Auth Modal */}
       <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <OnboardingIntroPopover
-        isOpen={!user && isOnboardingIntroOpen && !isAuthModalOpen}
+        isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
         onStartTour={handleStartOnboardingTour}
         onSignIn={handleOpenAuthModal}
       />
       <OnboardingGuide
-        isOpen={!user && isOnboardingOpen && !isAuthModalOpen}
+        isOpen={isOnboardingOpen && !isAuthModalOpen}
         isMobile={isMobile}
         manualStart={onboardingManualStart}
         currentView={currentView}
