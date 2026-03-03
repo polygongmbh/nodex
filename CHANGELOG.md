@@ -16,6 +16,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Improved NIP-42 recovery when a relay rejects reads without first issuing an AUTH challenge by retrying relay connection (throttled) when a signer is present, and restored signer setup before initial connect to reduce auth race conditions on reload.
 - Routed profile (`kind:0`) lookups through provider-managed subscriptions so `CLOSED ... auth-required` responses participate in NIP-42 retry/status handling instead of bypassing auth recovery.
 - Added initial NIP-11 relay info probing (HTTP/S info endpoint derived from relay URL) during relay startup/add so auth requirements and NIP-42 support are known earlier for diagnostics and auth flow handling.
+- Fixed false-positive relay verification failure toasts by only surfacing read failures on explicit relay read rejection signals, not on auth-policy/inference failures alone.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
 ## [1.15.0] - 2026-02-27
