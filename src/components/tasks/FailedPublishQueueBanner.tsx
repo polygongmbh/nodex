@@ -1,10 +1,12 @@
 import { RotateCcw, XCircle } from "lucide-react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { FailedPublishDraft } from "@/lib/failed-publish-drafts";
 import { useTranslation } from "react-i18next";
 
 interface FailedPublishQueueBannerProps {
   drafts: FailedPublishDraft[];
+  selectedFeedDrafts?: FailedPublishDraft[];
   onRetry: (draftId: string) => void;
   onRepost?: (draftId: string) => void;
   onDismiss: (draftId: string) => void;
@@ -13,6 +15,7 @@ interface FailedPublishQueueBannerProps {
 
 export function FailedPublishQueueBanner({
   drafts,
+  selectedFeedDrafts,
   onRetry,
   onRepost,
   onDismiss,
@@ -20,12 +23,49 @@ export function FailedPublishQueueBanner({
 }: FailedPublishQueueBannerProps) {
   const { t } = useTranslation();
   if (drafts.length === 0) return null;
-  const visibleDrafts = drafts.slice(0, 4);
+  const [scope, setScope] = useState<"selected" | "all">("selected");
+  const scopedSelectedDrafts = selectedFeedDrafts ?? drafts;
+  const hasScopeToggle = selectedFeedDrafts !== undefined;
+  const activeDrafts = useMemo(
+    () => (scope === "all" ? drafts : scopedSelectedDrafts),
+    [drafts, scope, scopedSelectedDrafts]
+  );
+  const hiddenCount = Math.max(0, drafts.length - scopedSelectedDrafts.length);
+  const visibleDrafts = activeDrafts.slice(0, 4);
   return (
     <div className={cn("border-b border-destructive/40 bg-destructive/10", isMobile ? "px-3 py-2" : "px-4 py-2")}>
       <p className="text-xs font-medium text-destructive">
-        {t("publishQueue.failedCount", { count: drafts.length })}
+        {t("publishQueue.failedCount", { count: activeDrafts.length })}
       </p>
+      {hasScopeToggle && (
+        <div className="mt-1 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setScope("selected")}
+            className={cn(
+              "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+              scope === "selected" ? "bg-destructive/20 text-destructive" : "text-destructive/80 hover:bg-destructive/10"
+            )}
+          >
+            {t("publishQueue.scopeSelected")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setScope("all")}
+            className={cn(
+              "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+              scope === "all" ? "bg-destructive/20 text-destructive" : "text-destructive/80 hover:bg-destructive/10"
+            )}
+          >
+            {t("publishQueue.scopeAll")}
+          </button>
+          {scope === "selected" && hiddenCount > 0 && (
+            <span className="text-[11px] text-destructive/80">
+              {t("publishQueue.hiddenCount", { count: hiddenCount })}
+            </span>
+          )}
+        </div>
+      )}
       <div className="mt-2 space-y-2">
         {visibleDrafts.map((draft) => (
           <div

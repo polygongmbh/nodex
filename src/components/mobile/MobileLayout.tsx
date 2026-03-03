@@ -69,6 +69,7 @@ interface MobileLayoutProps {
     id: number;
   } | null;
   failedPublishDrafts?: FailedPublishDraft[];
+  visibleFailedPublishDrafts?: FailedPublishDraft[];
   onRetryFailedPublish?: (draftId: string) => void;
   onRepostFailedPublish?: (draftId: string) => void;
   onDismissFailedPublish?: (draftId: string) => void;
@@ -124,6 +125,7 @@ export function MobileLayout({
   composeRestoreRequest = null,
   mentionRequest = null,
   failedPublishDrafts = [],
+  visibleFailedPublishDrafts,
   onRetryFailedPublish,
   onRepostFailedPublish,
   onDismissFailedPublish,
@@ -375,6 +377,7 @@ export function MobileLayout({
       {onRetryFailedPublish && onDismissFailedPublish && (
         <FailedPublishQueueBanner
           drafts={failedPublishDrafts}
+          selectedFeedDrafts={visibleFailedPublishDrafts}
           onRetry={onRetryFailedPublish}
           onRepost={onRepostFailedPublish}
           onDismiss={onDismissFailedPublish}

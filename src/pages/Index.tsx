@@ -2245,7 +2245,8 @@ const Index = () => {
           isPendingPublishTask={isPendingPublishTask}
           composeRestoreRequest={composeRestoreRequest}
           mentionRequest={mentionRequest}
-          failedPublishDrafts={visibleFailedPublishDrafts}
+          failedPublishDrafts={failedPublishDrafts}
+          visibleFailedPublishDrafts={visibleFailedPublishDrafts}
           onRetryFailedPublish={handleRetryFailedPublish}
           onRepostFailedPublish={handleRepostFailedPublish}
           onDismissFailedPublish={handleDismissFailedPublish}
@@ -2325,7 +2326,8 @@ const Index = () => {
       />
       <div className="min-w-0 overflow-hidden flex flex-col" {...desktopSwipeHandlers}>
         <FailedPublishQueueBanner
-          drafts={visibleFailedPublishDrafts}
+          drafts={failedPublishDrafts}
+          selectedFeedDrafts={visibleFailedPublishDrafts}
           onRetry={handleRetryFailedPublish}
           onRepost={handleRepostFailedPublish}
           onDismiss={handleDismissFailedPublish}

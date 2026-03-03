@@ -602,6 +602,9 @@
     "failedCount": "{{count}} post failed to publish",
     "retry": "Retry",
     "repost": "Repost",
+    "scopeSelected": "Selected feeds",
+    "scopeAll": "All failed",
+    "hiddenCount": "{{count}} hidden",
     "dismiss": "Dismiss failed post"
   },
   "relay": {
