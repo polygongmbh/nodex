@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 interface FailedPublishQueueBannerProps {
   drafts: FailedPublishDraft[];
   onRetry: (draftId: string) => void;
+  onRepost?: (draftId: string) => void;
   onDismiss: (draftId: string) => void;
   isMobile?: boolean;
 }
@@ -13,6 +14,7 @@ interface FailedPublishQueueBannerProps {
 export function FailedPublishQueueBanner({
   drafts,
   onRetry,
+  onRepost,
   onDismiss,
   isMobile = false,
 }: FailedPublishQueueBannerProps) {
@@ -49,6 +51,17 @@ export function FailedPublishQueueBanner({
                   {t("publishQueue.retry")}
                 </span>
               </button>
+              {onRepost && (
+                <button
+                  type="button"
+                  onClick={() => onRepost(draft.id)}
+                  className="rounded px-2 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/15"
+                  title={t("publishQueue.repost")}
+                  aria-label={t("publishQueue.repost")}
+                >
+                  {t("publishQueue.repost")}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => onDismiss(draft.id)}

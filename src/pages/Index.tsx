@@ -1944,16 +1944,17 @@ const Index = () => {
     return Number.isNaN(parsed.getTime()) ? undefined : parsed;
   }, []);
 
-  const handleRetryFailedPublish = useCallback(async (draftId: string) => {
+  const publishFailedDraft = useCallback(async (
+    draftId: string,
+    resolveRelayUrls: (draft: FailedPublishDraft) => string[]
+  ) => {
     if (guardInteraction("modify")) {
       return;
     }
     const draft = failedPublishDrafts.find((item) => item.id === draftId);
     if (!draft) return;
 
-    const relayUrls = draft.relayUrls.length > 0
-      ? draft.relayUrls
-      : resolveRelayUrlsFromIds(draft.relayIds);
+    const relayUrls = resolveRelayUrls(draft);
     if (relayUrls.length === 0) {
       toast.error(t("toasts.errors.retryRelayMissing"));
       return;
@@ -2021,9 +2022,20 @@ const Index = () => {
     publishEvent,
     publishTaskDueUpdate,
     publishTaskStateUpdate,
-    resolveRelayUrlsFromIds,
     t,
   ]);
+
+  const handleRetryFailedPublish = useCallback(async (draftId: string) => {
+    await publishFailedDraft(draftId, (draft) =>
+      draft.relayUrls.length > 0
+        ? draft.relayUrls
+        : resolveRelayUrlsFromIds(draft.relayIds)
+    );
+  }, [publishFailedDraft, resolveRelayUrlsFromIds]);
+
+  const handleRepostFailedPublish = useCallback(async (draftId: string) => {
+    await publishFailedDraft(draftId, () => resolveRelayUrlsFromIds(Array.from(effectiveActiveRelayIds)));
+  }, [effectiveActiveRelayIds, publishFailedDraft, resolveRelayUrlsFromIds]);
 
   const handleDismissFailedPublish = useCallback((draftId: string) => {
     setFailedPublishDrafts((prev) => prev.filter((draft) => draft.id !== draftId));
@@ -2235,6 +2247,7 @@ const Index = () => {
           mentionRequest={mentionRequest}
           failedPublishDrafts={visibleFailedPublishDrafts}
           onRetryFailedPublish={handleRetryFailedPublish}
+          onRepostFailedPublish={handleRepostFailedPublish}
           onDismissFailedPublish={handleDismissFailedPublish}
           isInteractionBlocked={isInteractionBlocked}
           onInteractionBlocked={handleBlockedInteractionAttempt}
@@ -2314,6 +2327,7 @@ const Index = () => {
         <FailedPublishQueueBanner
           drafts={visibleFailedPublishDrafts}
           onRetry={handleRetryFailedPublish}
+          onRepost={handleRepostFailedPublish}
           onDismiss={handleDismissFailedPublish}
         />
         <div className="min-h-0 flex-1 overflow-hidden">
