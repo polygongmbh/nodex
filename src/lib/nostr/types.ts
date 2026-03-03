@@ -37,6 +37,8 @@ export enum NostrEventKind {
   GitStatusClosed = 1632,
   GitStatusDraft = 1633,
   Procedure = 1639,
+  ClassifiedListing = 30402,
+  ClassifiedListingDraft = 30403,
   CalendarDateBased = 31922,
   CalendarTimeBased = 31923,
   UserStatus = 30315,

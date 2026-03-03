@@ -1,5 +1,5 @@
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
-import { Task, Person } from "@/types";
+import { Task, Person, type FeedMessageType } from "@/types";
 import { extractTaskStateTargetId, isTaskStateEventKind, mapTaskStateEventToTaskStatus } from "@/lib/nostr/task-state-events";
 import {
   extractPriorityTargetTaskId,
@@ -74,6 +74,30 @@ function replaceIndexedPersonMentions(content: string, tags: string[][]): string
     return `@${referencedTag[1].toLowerCase()}`;
   });
 }
+
+function getFeedMessageType(event: NostrEventWithRelay): FeedMessageType | undefined {
+  if (event.kind !== NostrEventKind.ClassifiedListing) return undefined;
+
+  const typeTagValue = event.tags
+    .find((tag) => tag[0]?.toLowerCase() === "type" && tag[1])
+    ?.[1]
+    ?.trim()
+    .toLowerCase();
+  if (typeTagValue === "offer" || typeTagValue === "request") {
+    return typeTagValue;
+  }
+
+  const tTagValues = new Set(
+    event.tags
+      .filter((tag) => tag[0]?.toLowerCase() === "t" && tag[1])
+      .map((tag) => tag[1].trim().toLowerCase())
+  );
+  if (tTagValues.has("request")) return "request";
+
+  // NIP-99 listings default to offers when no explicit request marker is provided.
+  return "offer";
+}
+
 // Convert Nostr event to Task
 export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const author: Person = {
@@ -99,6 +123,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
 
   // Determine task type from kind
   const isTask = event.kind === NostrEventKind.Task;
+  const feedMessageType = getFeedMessageType(event);
 
   // Extract status from tags for kind 1621
   let status: "todo" | "in-progress" | "done" = "todo";
@@ -187,6 +212,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     tags: allTags,
     relays: [relayId],
     taskType: isTask ? "task" : "comment",
+    feedMessageType,
     timestamp: new Date(event.created_at * 1000),
     lastEditedAt: new Date(event.created_at * 1000),
     likes: 0,
@@ -240,7 +266,11 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   const taskEvents = events.filter(
     (event) =>
-      (event.kind === NostrEventKind.Task || event.kind === NostrEventKind.TextNote) &&
+      (
+        event.kind === NostrEventKind.Task ||
+        event.kind === NostrEventKind.TextNote ||
+        event.kind === NostrEventKind.ClassifiedListing
+      ) &&
       !isPriorityPropertyNote(event)
   );
   const stateEvents = events.filter((event) => isTaskStateEventKind(event.kind));

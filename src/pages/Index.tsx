@@ -183,6 +183,7 @@ const Index = () => {
       NostrEventKind.GitStatusClosed,
       NostrEventKind.GitStatusDraft,
       NostrEventKind.Procedure,
+      NostrEventKind.ClassifiedListing,
       NostrEventKind.CalendarDateBased,
       NostrEventKind.CalendarTimeBased,
       NostrEventKind.UserStatus,
@@ -256,6 +257,7 @@ const Index = () => {
       if (event.kind === NostrEventKind.Metadata) return false;
       if (isTaskStateEventKind(event.kind)) return true;
       if (isPriorityPropertyEvent(event.kind, event.tags)) return true;
+      if (event.kind === NostrEventKind.ClassifiedListing) return true;
       if (
         event.kind === NostrEventKind.CalendarDateBased ||
         event.kind === NostrEventKind.CalendarTimeBased
