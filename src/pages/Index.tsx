@@ -218,7 +218,7 @@ const Index = () => {
       id: getRelayIdFromUrl(r.url),
       name: getRelayNameFromUrl(r.url),
       icon: "radio",
-      isActive: r.status === "connected",
+      isActive: r.status === "connected" || r.status === "read-only",
       connectionStatus: r.status,
       url: r.url,
       postCount: undefined,

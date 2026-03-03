@@ -611,16 +611,19 @@
     "noneConfigured": "No hay relays configurados",
     "connectedSummary": "{{connectedCount}} de {{totalCount}} relays conectados",
     "debugTitle": "Utilidades de depuración",
-    "debugSummary": "conectados {{connected}} · conectando {{connecting}} · desconectados {{disconnected}} · conexión {{connectionError}} · verificación {{verificationFailed}}",
+    "debugSummary": "conectados {{connected}} · solo lectura {{readOnly}} · conectando {{connecting}} · desconectados {{disconnected}} · conexión {{connectionError}} · lectura rechazada {{verificationFailed}}",
     "status": {
       "connected": "conectado",
+      "readOnly": "solo lectura",
       "connecting": "conectando",
       "disconnected": "desconectado",
       "connectionError": "problema de conexión",
-      "verificationFailed": "verificación fallida",
+      "verificationFailed": "lectura rechazada",
+      "readRejected": "lectura rechazada",
       "connectedAuthRequired": "conectado (auth requerida)",
       "connectingAuthRequired": "conectando (auth requerida)",
-      "verificationFailedAuthRequired": "verificación fallida (auth requerida)"
+      "verificationFailedAuthRequired": "lectura rechazada (auth requerida)",
+      "readRejectedAuthRequired": "lectura rechazada (auth requerida)"
     },
     "details": {
       "show": "Mostrar detalles del relay",
@@ -681,7 +684,8 @@
     "relayStatus": {
       "title": "Estado de relays",
       "noneConnected": "No hay relays conectados",
-      "connected": "conectado"
+      "connected": "conectado",
+      "readOnly": "solo lectura"
     }
   }
 }

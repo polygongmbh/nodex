@@ -18,12 +18,14 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
     switch (status) {
       case "connected":
         return "bg-success";
+      case "read-only":
+        return "bg-sky-500";
       case "connecting":
         return "bg-sky-500 animate-pulse";
       case "connection-error":
         return "bg-destructive";
       case "verification-failed":
-        return "bg-amber-500";
+        return "bg-destructive";
       default:
         return "bg-slate-400";
     }
@@ -63,12 +65,16 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
                 <span className="text-xs text-muted-foreground">
                   {relay.latency ? `${relay.latency}ms` : t("widgets.relayStatus.connected")}
                 </span>
+              ) : relay.status === "read-only" ? (
+                <span className="text-xs text-sky-500">
+                  {t("widgets.relayStatus.readOnly")}
+                </span>
               ) : relay.status === "connecting" ? (
                 <Loader2 className="w-4 h-4 text-sky-500 animate-spin" />
               ) : relay.status === "connection-error" ? (
                 <AlertCircle className="w-4 h-4 text-destructive" />
               ) : relay.status === "verification-failed" ? (
-                <AlertCircle className="w-4 h-4 text-amber-500" />
+                <AlertCircle className="w-4 h-4 text-destructive" />
               ) : (
                 <WifiOff className="w-4 h-4 text-slate-400" />
               )}

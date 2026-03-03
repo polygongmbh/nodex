@@ -40,7 +40,7 @@ describe("RelayManagement", () => {
     expect(vi.mocked(toast.success)).toHaveBeenCalled();
   });
 
-  it("shows distinct labels for connection issues and verification failures", () => {
+  it("shows distinct labels for connection issues and read rejections", () => {
     render(
       <RelayManagement
         relays={[
@@ -54,7 +54,7 @@ describe("RelayManagement", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
     expect(screen.getByText("connection issue")).toBeInTheDocument();
-    expect(screen.getByText("verification failed")).toBeInTheDocument();
+    expect(screen.getByText("read rejected")).toBeInTheDocument();
   });
 
   it("shows relay capability details from nip11 metadata", () => {
