@@ -70,6 +70,25 @@ describe("filterTasks", () => {
     expect(result.map((task) => task.id)).toEqual(["nostr", "unknown"]);
   });
 
+  it("hides unknown relay metadata tasks after live hydration", () => {
+    const tasks = [
+      buildTask({ id: "known", relays: ["r1"] }),
+      buildTask({ id: "nostr", relays: ["nostr"] }),
+      buildTask({ id: "unknown", relays: ["unknown"] }),
+    ];
+
+    const result = filterTasks({
+      tasks,
+      activeRelayIds: new Set(["r1"]),
+      channels: [],
+      people: [alice, bob],
+      channelMatchMode: "and",
+      allowUnknownRelayMetadata: false,
+    });
+
+    expect(result.map((task) => task.id)).toEqual(["known"]);
+  });
+
   it("applies excluded and included channel filters", () => {
     const tasks = [
       buildTask({ id: "a", tags: ["general", "release"] }),

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
 import {
@@ -9,15 +9,40 @@ import {
 import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/nostr/replaceable-events";
 
 export const NOSTR_EVENTS_QUERY_KEY = ["nostr-events-cache"] as const;
+const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;
+const DEMO_RELAY_ID = "demo";
 
 interface UseNostrEventCacheParams {
   isConnected: boolean;
   subscribedKinds: number[];
+  activeRelayIds: Set<string>;
   subscribe: (
     filters: NDKFilter[],
     onEvent: (event: NDKEvent) => void,
     options?: { closeOnEose?: boolean }
   ) => NDKSubscription | null;
+}
+
+interface UseNostrEventCacheResult {
+  events: CachedNostrEvent[];
+  feedScopeKey: string;
+  hasLiveHydratedScope: boolean;
+}
+
+export function buildFeedScopeKey(activeRelayIds: Set<string>): string {
+  const keys = Array.from(
+    new Set(
+      Array.from(activeRelayIds)
+        .map((value) => value.trim().toLowerCase())
+        .filter((value) => Boolean(value) && value !== DEMO_RELAY_ID)
+    )
+  ).sort();
+  if (keys.length === 0) return "all";
+  return keys.join(",");
+}
+
+export function getNostrEventsQueryKey(feedScopeKey: string): readonly [...typeof NOSTR_EVENTS_QUERY_KEY, string] {
+  return [...NOSTR_EVENTS_QUERY_KEY, feedScopeKey] as const;
 }
 
 function toCachedEvent(event: NDKEvent): CachedNostrEvent | null {
@@ -53,39 +78,74 @@ function upsertCachedEvent(
 export function useNostrEventCache({
   isConnected,
   subscribedKinds,
+  activeRelayIds,
   subscribe,
-}: UseNostrEventCacheParams): CachedNostrEvent[] {
+}: UseNostrEventCacheParams): UseNostrEventCacheResult {
   const queryClient = useQueryClient();
+  const [hasLiveHydratedScope, setHasLiveHydratedScope] = useState(false);
+  const feedScopeKey = useMemo(() => buildFeedScopeKey(activeRelayIds), [activeRelayIds]);
+  const queryKey = useMemo(() => getNostrEventsQueryKey(feedScopeKey), [feedScopeKey]);
+  const hasFinalizedBootstrapRef = useRef(false);
+
+  useEffect(() => {
+    hasFinalizedBootstrapRef.current = false;
+    setHasLiveHydratedScope(false);
+  }, [feedScopeKey]);
+
   const { data: nostrEvents = [] } = useQuery({
-    queryKey: NOSTR_EVENTS_QUERY_KEY,
-    queryFn: () => loadCachedNostrEvents(),
-    initialData: loadCachedNostrEvents,
+    queryKey,
+    queryFn: () => loadCachedNostrEvents(feedScopeKey),
+    initialData: () => loadCachedNostrEvents(feedScopeKey),
     staleTime: Infinity,
     gcTime: Infinity,
   });
 
+  const finalizeBootstrapScope = useCallback(() => {
+    if (hasFinalizedBootstrapRef.current) return;
+    hasFinalizedBootstrapRef.current = true;
+    setHasLiveHydratedScope(true);
+    queryClient.setQueryData<CachedNostrEvent[]>(
+      queryKey,
+      (previous = []) => previous.filter((event) => Boolean(event.relayUrl?.trim()))
+    );
+  }, [queryClient, queryKey]);
+
   const pushEvent = useCallback((event: NDKEvent) => {
     const cachedEvent = toCachedEvent(event);
     if (!cachedEvent) return;
+    finalizeBootstrapScope();
     queryClient.setQueryData<CachedNostrEvent[]>(
-      NOSTR_EVENTS_QUERY_KEY,
+      queryKey,
       (previous = []) => upsertCachedEvent(previous, cachedEvent)
     );
-  }, [queryClient]);
+  }, [finalizeBootstrapScope, queryClient, queryKey]);
 
   useEffect(() => {
     if (!isConnected) return;
+    const timeoutId = window.setTimeout(() => {
+      finalizeBootstrapScope();
+    }, CACHE_BOOTSTRAP_MAX_AGE_MS);
 
     const subscription = subscribe(
       [{ kinds: subscribedKinds }],
-      pushEvent
+      pushEvent,
+      { closeOnEose: true }
     );
-    return () => subscription?.stop();
-  }, [isConnected, pushEvent, subscribe, subscribedKinds]);
+    subscription?.on("eose", finalizeBootstrapScope);
+    subscription?.on("close", finalizeBootstrapScope);
+    return () => {
+      window.clearTimeout(timeoutId);
+      subscription?.stop();
+    };
+  }, [finalizeBootstrapScope, isConnected, pushEvent, subscribe, subscribedKinds]);
 
   useEffect(() => {
-    saveCachedNostrEvents(nostrEvents);
-  }, [nostrEvents]);
+    saveCachedNostrEvents(nostrEvents, feedScopeKey);
+  }, [feedScopeKey, nostrEvents]);
 
-  return nostrEvents;
+  return {
+    events: nostrEvents,
+    feedScopeKey,
+    hasLiveHydratedScope,
+  };
 }

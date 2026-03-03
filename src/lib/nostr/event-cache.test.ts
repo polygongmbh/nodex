@@ -123,4 +123,22 @@ describe("nostr event cache", () => {
     const loaded = loadCachedNostrEvents();
     expect(loaded.map((event) => event.id)).toEqual(["a"]);
   });
+
+  it("stores and reads cache entries per feed scope", () => {
+    saveCachedNostrEvents([eventA], "relay-a");
+    saveCachedNostrEvents([eventB], "relay-b");
+
+    expect(loadCachedNostrEvents("relay-a").map((event) => event.id)).toEqual(["a"]);
+    expect(loadCachedNostrEvents("relay-b").map((event) => event.id)).toEqual(["b"]);
+  });
+
+  it("removes matching cached ids across scoped caches", () => {
+    saveCachedNostrEvents([eventA, eventB], "relay-a");
+    saveCachedNostrEvents([eventB], "relay-b");
+
+    removeCachedNostrEventById("b");
+
+    expect(loadCachedNostrEvents("relay-a").map((event) => event.id)).toEqual(["a"]);
+    expect(loadCachedNostrEvents("relay-b")).toEqual([]);
+  });
 });

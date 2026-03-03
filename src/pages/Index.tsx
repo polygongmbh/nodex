@@ -206,12 +206,6 @@ const Index = () => {
     ],
     []
   );
-  const nostrEvents = useNostrEventCache({
-    isConnected: isNostrConnected,
-    subscribedKinds,
-    subscribe,
-  });
-
   // Convert relay statuses to app Relay format - combine demo relay with nostr relays
   const relays: Relay[] = useMemo(() => {
     const nostrRelayItems = ndkRelays.map((r) => ({
@@ -249,6 +243,15 @@ const Index = () => {
     relays,
     t,
     defaultRelayIds: getConfiguredDefaultRelayIds(),
+  });
+  const {
+    events: nostrEvents,
+    hasLiveHydratedScope: hasLiveHydratedRelayScope,
+  } = useNostrEventCache({
+    isConnected: isNostrConnected,
+    subscribedKinds,
+    activeRelayIds: effectiveActiveRelayIds,
+    subscribe,
   });
   const [people, setPeople] = useState<Person[]>([]);
   const [cachedKind0Events, setCachedKind0Events] = useState(() => loadCachedKind0Events());
@@ -1533,9 +1536,9 @@ const Index = () => {
       next.add(normalizedEventId);
       return next;
     });
-    queryClient.setQueryData<CachedNostrEvent[]>(
-      NOSTR_EVENTS_QUERY_KEY,
-      (previous = []) => previous.filter((event) => event.id !== normalizedEventId)
+    queryClient.setQueriesData<CachedNostrEvent[]>(
+      { queryKey: NOSTR_EVENTS_QUERY_KEY },
+      (previous) => (previous || []).filter((event) => event.id !== normalizedEventId)
     );
     removeCachedNostrEventById(normalizedEventId);
   }, [queryClient]);
@@ -1543,9 +1546,9 @@ const Index = () => {
   useEffect(() => {
     if (suppressedNostrEventIds.size === 0) return;
     const blockedIds = new Set(suppressedNostrEventIds);
-    queryClient.setQueryData<CachedNostrEvent[]>(
-      NOSTR_EVENTS_QUERY_KEY,
-      (previous = []) => previous.filter((event) => !blockedIds.has(event.id))
+    queryClient.setQueriesData<CachedNostrEvent[]>(
+      { queryKey: NOSTR_EVENTS_QUERY_KEY },
+      (previous) => (previous || []).filter((event) => !blockedIds.has(event.id))
     );
     blockedIds.forEach((eventId) => removeCachedNostrEventById(eventId));
   }, [queryClient, suppressedNostrEventIds]);
@@ -2116,8 +2119,9 @@ const Index = () => {
         channels: channelsWithState,
         people,
         channelMatchMode,
+        allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
       }),
-    [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, people]
+    [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
   );
 
   const sidebarPeople = useMemo(() => {
