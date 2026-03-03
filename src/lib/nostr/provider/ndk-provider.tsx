@@ -139,9 +139,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const markRelayVerificationFailure = useCallback((
     relayUrl: string,
     operation: RelayOperation,
-    options?: { setStatus?: boolean }
+    options?: { setStatus?: boolean; showToast?: boolean }
   ) => {
     const shouldSetStatus = options?.setStatus ?? false;
+    const shouldShowToast = options?.showToast ?? true;
     const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
     if (shouldSetStatus) {
@@ -153,7 +154,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         })
       );
     }
-    if (!shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
+    if (!shouldShowToast || !shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
       return;
     }
     if (operation === "read") {
@@ -183,6 +184,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     if (event.outcome === "failed") {
       markRelayVerificationFailure(event.relayUrl, event.operation, {
         setStatus: shouldSetVerificationFailedStatus("auth-policy", event.operation),
+        showToast: false,
       });
     }
   }, [markRelayVerificationFailure, resolveRelayVerificationOperation]);
@@ -966,6 +968,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       }
       markRelayVerificationFailure(relay.url, "read", {
         setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),
+        showToast: true,
       });
     });
     let finished = false;
