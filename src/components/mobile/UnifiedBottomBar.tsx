@@ -10,6 +10,7 @@ import {
   ComposeRestoreRequest,
   ComposeAttachment,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useNDK } from "@/lib/nostr/ndk-context";
@@ -52,7 +53,8 @@ interface UnifiedBottomBarProps {
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   currentView: ViewType;
   focusedTaskId?: string | null;

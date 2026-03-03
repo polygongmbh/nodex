@@ -102,6 +102,7 @@ import {
 } from "@/lib/filter-state-utils";
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
 import { normalizeComposerMessageType } from "@/lib/task-type";
+import { buildNip99PublishTags, type Nip99ListingStatus } from "@/lib/nostr/nip99-metadata";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
@@ -128,6 +129,7 @@ import {
   ComposeRestoreRequest,
   ComposeRestoreState,
   PublishedAttachment,
+  Nip99Metadata,
   SavedFilterController,
   SavedFilterConfiguration,
   SavedFilterState,
@@ -1381,6 +1383,51 @@ const Index = () => {
     void publishTaskStateUpdate(taskId, newStatus);
   };
 
+  const handleListingStatusChange = useCallback((taskId: string, status: Nip99ListingStatus) => {
+    if (guardInteraction("modify")) return;
+    const existing = allTasks.find((task) => task.id === taskId);
+    if (!existing?.feedMessageType || !existing.nip99) return;
+    if (!currentUser?.id || currentUser.id.toLowerCase() !== existing.author.id.toLowerCase()) return;
+
+    setLocalTasks((prev) => {
+      const nextNip99 = { ...(existing.nip99 || {}), status };
+      if (prev.some((task) => task.id === taskId)) {
+        return prev.map((task) => (task.id === taskId ? { ...task, nip99: nextNip99, lastEditedAt: new Date() } : task));
+      }
+      return [{ ...existing, nip99: nextNip99, lastEditedAt: new Date() }, ...prev];
+    });
+
+    if (!isNostrEventId(existing.id)) return;
+    const { relayUrls } = resolveTaskOriginRelay(existing.id);
+    if (relayUrls.length === 0) {
+      toast.error("Failed to publish listing status update to relay");
+      return;
+    }
+
+    const publishTags = buildNip99PublishTags({
+      metadata: { ...existing.nip99, status },
+      feedMessageType: existing.feedMessageType,
+      hashtags: existing.tags,
+      mentionPubkeys: (existing.mentions || []).filter((mention) => /^[a-f0-9]{64}$/i.test(mention)),
+      attachmentTags: (existing.attachments || []).map((attachment) => buildImetaTag(attachment)),
+      fallbackTitle: existing.content.slice(0, 80),
+      identifierSeed: existing.nip99.identifier || existing.id,
+      statusOverride: status,
+    });
+
+    void publishEvent(
+      NostrEventKind.ClassifiedListing,
+      existing.content,
+      publishTags,
+      undefined,
+      relayUrls.slice(0, 1)
+    ).then((result) => {
+      if (!result.success) {
+        toast.error("Failed to publish listing status update to relay");
+      }
+    });
+  }, [allTasks, currentUser?.id, guardInteraction, publishEvent, resolveTaskOriginRelay]);
+
   const isPendingPublishTask = useCallback((taskId: string) => {
     return pendingPublishTaskIds.has(taskId);
   }, [pendingPublishTaskIds]);
@@ -1425,7 +1472,8 @@ const Index = () => {
     initialStatus?: TaskStatus,
     explicitMentionPubkeys: string[] = [],
     priority?: number,
-    attachments: PublishedAttachment[] = []
+    attachments: PublishedAttachment[] = [],
+    nip99?: Nip99Metadata
   ): Promise<TaskCreateResult> => {
     if (guardInteraction("post")) {
       return hasDisconnectedSelectedRelays
@@ -1552,12 +1600,21 @@ const Index = () => {
                 normalizedExtractedTags,
                 normalizedAttachments
               )
-            : [
-                ...(feedMessageType ? [["type", feedMessageType] as string[]] : []),
-                ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
-                ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
-                ...normalizedAttachments.map((attachment) => buildImetaTag(attachment)),
-              ]
+            : feedMessageType
+              ? buildNip99PublishTags({
+                  metadata: nip99,
+                  feedMessageType,
+                  hashtags: normalizedExtractedTags,
+                  mentionPubkeys,
+                  attachmentTags: normalizedAttachments.map((attachment) => buildImetaTag(attachment)),
+                  fallbackTitle: content.slice(0, 80),
+                  statusOverride: (nip99?.status || "active") as Nip99ListingStatus,
+                })
+              : [
+                  ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
+                  ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
+                  ...normalizedAttachments.map((attachment) => buildImetaTag(attachment)),
+                ]
         )
       : [];
     const publishParentId =
@@ -1615,6 +1672,7 @@ const Index = () => {
       assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
       feedMessageType,
+      nip99: feedMessageType ? nip99 : undefined,
       attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
     };
 
@@ -1634,6 +1692,7 @@ const Index = () => {
       explicitMentionPubkeys: explicitMentionPubkeysForRestore,
       selectedRelays: targetRelayIds,
       priority,
+      nip99,
       attachments: normalizedAttachments,
     };
 
@@ -1989,6 +2048,7 @@ const Index = () => {
     focusedTaskId,
     onFocusTask: setFocusedTaskId,
     onStatusChange: handleStatusChange,
+    onListingStatusChange: handleListingStatusChange,
     onFocusSidebar: handleFocusSidebar,
     onSignInClick: handleOpenAuthModal,
     onHashtagClick: handleHashtagExclusive,

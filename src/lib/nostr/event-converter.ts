@@ -9,6 +9,7 @@ import {
 import { parseLinkedTaskDueFromCalendarEvent } from "./nip52-task-calendar-events";
 import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 import { relayUrlToId, relayUrlToName } from "@/lib/nostr/relay-url";
+import { parseNip99MetadataFromTags } from "@/lib/nostr/nip99-metadata";
 import {
   extractSha256FromUrl,
   extractEmbeddableAttachmentsFromContent,
@@ -124,6 +125,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   // Determine task type from kind
   const isTask = event.kind === NostrEventKind.Task;
   const feedMessageType = getFeedMessageType(event);
+  const nip99 = feedMessageType ? parseNip99MetadataFromTags(event.tags) : undefined;
 
   // Extract status from tags for kind 1621
   let status: "todo" | "in-progress" | "done" = "todo";
@@ -213,6 +215,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     relays: [relayId],
     taskType: isTask ? "task" : "comment",
     feedMessageType,
+    nip99,
     timestamp: new Date(event.created_at * 1000),
     lastEditedAt: new Date(event.created_at * 1000),
     likes: 0,

@@ -13,6 +13,7 @@ import {
   TaskStatus,
   ComposeRestoreRequest,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -58,7 +59,8 @@ interface KanbanViewProps {
     initialStatus?: TaskStatus,
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
@@ -249,7 +251,8 @@ export function KanbanView({
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ): Promise<TaskCreateResult> => {
     const result = await Promise.resolve(onNewTask(
       content,
@@ -263,7 +266,8 @@ export function KanbanView({
       composingColumn || undefined,
       explicitMentionPubkeys,
       priority,
-      attachments
+      attachments,
+      nip99
     ));
     if (result.ok) {
       setComposingColumn(null);

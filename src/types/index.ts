@@ -34,6 +34,18 @@ export interface Person {
 
 export type TaskType = "task" | "comment";
 export type FeedMessageType = "offer" | "request";
+export type Nip99ListingStatus = "active" | "sold";
+export interface Nip99Metadata {
+  identifier?: string;
+  title?: string;
+  summary?: string;
+  location?: string;
+  price?: string;
+  currency?: string;
+  frequency?: string;
+  status?: Nip99ListingStatus;
+  publishedAt?: string;
+}
 export type TaskDateType = "due" | "scheduled" | "start" | "end" | "milestone";
 export type TaskCreateFailureReason =
   | "not-authenticated"
@@ -43,6 +55,21 @@ export type TaskCreateFailureReason =
 export type TaskCreateResult =
   | { ok: true; mode: "published" | "local" | "queued" }
   | { ok: false; reason: TaskCreateFailureReason };
+export type OnNewTask = (
+  content: string,
+  tags: string[],
+  relays: string[],
+  taskType: string,
+  dueDate?: Date,
+  dueTime?: string,
+  dateType?: TaskDateType,
+  parentId?: string,
+  initialStatus?: "todo" | "in-progress" | "done",
+  explicitMentionPubkeys?: string[],
+  priority?: number,
+  attachments?: PublishedAttachment[],
+  nip99?: Nip99Metadata
+) => Promise<TaskCreateResult> | TaskCreateResult;
 
 export type TaskStatus = "todo" | "in-progress" | "done";
 
@@ -70,6 +97,7 @@ export interface ComposeRestoreState {
   content: string;
   taskType: TaskType;
   messageType?: TaskType | FeedMessageType;
+  nip99?: Nip99Metadata;
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
@@ -93,6 +121,7 @@ export interface Task {
   relays: string[];
   taskType: TaskType;
   feedMessageType?: FeedMessageType;
+  nip99?: Nip99Metadata;
   timestamp: Date;
   likes: number;
   replies: number;
@@ -113,6 +142,26 @@ export interface Task {
   attachments?: PublishedAttachment[];
   pendingPublishToken?: string;
   pendingPublishUntil?: Date;
+}
+
+export interface SharedTaskViewContext {
+  tasks: Task[];
+  allTasks: Task[];
+  relays: Relay[];
+  channels: Channel[];
+  channelMatchMode?: ChannelMatchMode;
+  composeChannels?: Channel[];
+  people: Person[];
+  currentUser?: Person;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  onNewTask: OnNewTask;
+  onToggleComplete: (taskId: string) => void;
+  focusedTaskId?: string | null;
+  onFocusTask?: (taskId: string | null) => void;
+  onHashtagClick?: (tag: string) => void;
+  onAuthorClick?: (author: Person) => void;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
 export interface FilterState {

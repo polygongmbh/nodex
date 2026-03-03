@@ -19,6 +19,7 @@ import {
   Channel,
   Person,
   FeedMessageType,
+  Nip99Metadata,
   TaskType,
   TaskDateType,
   TaskCreateResult,
@@ -65,7 +66,8 @@ interface TaskComposerProps {
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   relays: Relay[];
   channels: Channel[];
@@ -104,6 +106,7 @@ interface ComposeDraftState {
   explicitTagNames?: string[];
   priority?: number;
   attachments?: PublishedAttachment[];
+  nip99?: Nip99Metadata;
 }
 
 function readComposeDraft(key: string): ComposeDraftState | null {
@@ -219,6 +222,7 @@ export function TaskComposer({
       ...attachment,
     }));
   });
+  const [nip99, setNip99] = useState<Nip99Metadata>(() => ({ ...(initialDraft?.nip99 || {}) }));
   const [isExpanded, setIsExpanded] = useState(
     () => !adaptiveSize || initialContent.trim().length > 0
   );
@@ -307,6 +311,7 @@ export function TaskComposer({
     setDueTime(restoreState.dueTime || "");
     setDateType(restoreState.dateType || "due");
     setPriority(typeof restoreState.priority === "number" ? restoreState.priority : undefined);
+    setNip99({ ...(restoreState.nip99 || {}) });
     setAttachments(
       (restoreState.attachments || []).map((attachment, index) => ({
         id: `restore-${composeRestoreRequest.id}-${index}`,
@@ -357,6 +362,7 @@ export function TaskComposer({
           explicitTagNames,
           explicitMentionPubkeys,
           priority,
+          nip99,
           attachments: attachments
             .filter((attachment) => attachment.status === "uploaded" && attachment.url)
             .map((attachment) => ({
@@ -374,7 +380,7 @@ export function TaskComposer({
     } catch {
       // Ignore persistence errors.
     }
-  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, priority, attachments, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, priority, nip99, attachments, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -610,6 +616,10 @@ export function TaskComposer({
     return taskType;
   };
 
+  const updateNip99 = (patch: Partial<Nip99Metadata>) => {
+    setNip99((previous) => ({ ...previous, ...patch }));
+  };
+
   const handleSubmit = async (submitType?: unknown) => {
     if (!content.trim()) return;
     if (!hasMeaningfulComposerText(content)) return;
@@ -621,6 +631,20 @@ export function TaskComposer({
       notifyNeedTag(t);
       return;
     }
+    const listingMetadata =
+      effectiveTaskType === "offer" || effectiveTaskType === "request"
+        ? {
+            identifier: nip99.identifier?.trim() || undefined,
+            title: nip99.title?.trim() || undefined,
+            summary: nip99.summary?.trim() || undefined,
+            location: nip99.location?.trim() || undefined,
+            price: nip99.price?.trim() || undefined,
+            currency: nip99.currency?.trim() || undefined,
+            frequency: nip99.frequency?.trim() || undefined,
+            status: nip99.status || "active",
+            publishedAt: nip99.publishedAt,
+          }
+        : undefined;
     const uploadedAttachments: PublishedAttachment[] = attachments
       .filter((attachment) => attachment.status === "uploaded" && attachment.url)
       .map((attachment) => ({
@@ -657,7 +681,8 @@ export function TaskComposer({
           dateType,
           explicitMentionPubkeys,
           priority,
-          uploadedAttachments
+          uploadedAttachments,
+          listingMetadata
         )
       );
     } catch (error) {
@@ -689,6 +714,7 @@ export function TaskComposer({
     setExplicitTagNames([...includedChannels]);
     setExplicitMentionPubkeys([...selectedPeoplePubkeys]);
     setPriority(undefined);
+    setNip99({});
     setAttachments([]);
     attachmentFileRef.current = {};
     if (adaptiveSize) {
@@ -775,6 +801,8 @@ export function TaskComposer({
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
   const hasInvalidRootTaskRelaySelection = taskType === "task" && !parentId && selectedRelays.length !== 1;
+  const hasMissingNip99Title =
+    (taskType === "offer" || taskType === "request") && !(nip99.title && nip99.title.trim());
   const submitBlockedReason = !user
     ? t("composer.blocked.signin")
     : hasPendingAttachmentUploads
@@ -783,8 +811,10 @@ export function TaskComposer({
         ? "Retry or remove failed attachments"
     : !hasMeaningfulContent
       ? t("composer.blocked.write")
-      : !hasAtLeastOneTag
-        ? t("composer.blocked.tag")
+    : !hasAtLeastOneTag
+      ? t("composer.blocked.tag")
+      : hasMissingNip99Title
+        ? "Add a listing title"
         : hasInvalidRootTaskRelaySelection
           ? t("composer.blocked.relay")
         : isPublishing
@@ -1432,6 +1462,69 @@ export function TaskComposer({
               {tagChip.tag}
             </button>
           ))}
+        </div>
+      )}
+
+      {showExpandedControls && (taskType === "offer" || taskType === "request") && (
+        <div className={cn("flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
+          <input
+            value={nip99.title || ""}
+            onChange={(event) => updateNip99({ title: event.target.value })}
+            placeholder="Listing title"
+            aria-label="Listing title"
+            className="h-8 min-w-[12rem] flex-1 rounded-md border border-border/50 bg-background px-2 text-xs"
+          />
+          <input
+            value={nip99.location || ""}
+            onChange={(event) => updateNip99({ location: event.target.value })}
+            placeholder="Location"
+            aria-label="Location"
+            className="h-8 min-w-[8rem] rounded-md border border-border/50 bg-background px-2 text-xs"
+          />
+          <input
+            value={nip99.price || ""}
+            onChange={(event) => updateNip99({ price: event.target.value })}
+            placeholder="Price"
+            aria-label="Price"
+            className="h-8 w-20 rounded-md border border-border/50 bg-background px-2 text-xs"
+          />
+          <input
+            value={nip99.currency || "USD"}
+            onChange={(event) => updateNip99({ currency: event.target.value.toUpperCase() })}
+            placeholder="Currency"
+            aria-label="Currency"
+            className="h-8 w-20 rounded-md border border-border/50 bg-background px-2 text-xs"
+            maxLength={8}
+          />
+          <select
+            value={nip99.frequency || ""}
+            onChange={(event) => updateNip99({ frequency: event.target.value || undefined })}
+            aria-label="Price frequency"
+            className="h-8 min-w-[6.5rem] rounded-md border border-border/50 bg-background px-2 text-xs"
+          >
+            <option value="">One-time</option>
+            <option value="hour">hour</option>
+            <option value="day">day</option>
+            <option value="week">week</option>
+            <option value="month">month</option>
+            <option value="year">year</option>
+          </select>
+          <select
+            value={nip99.status || "active"}
+            onChange={(event) => updateNip99({ status: event.target.value as Nip99Metadata["status"] })}
+            aria-label="Listing status"
+            className="h-8 min-w-[6rem] rounded-md border border-border/50 bg-background px-2 text-xs"
+          >
+            <option value="active">Active</option>
+            <option value="sold">Sold</option>
+          </select>
+          <input
+            value={nip99.summary || ""}
+            onChange={(event) => updateNip99({ summary: event.target.value })}
+            placeholder="Summary"
+            aria-label="Summary"
+            className="h-8 min-w-[12rem] flex-[2] rounded-md border border-border/50 bg-background px-2 text-xs"
+          />
         </div>
       )}
 

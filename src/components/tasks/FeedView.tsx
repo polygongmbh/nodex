@@ -9,8 +9,10 @@ import {
   Person,
   TaskCreateResult,
   TaskDateType,
+  Nip99ListingStatus,
   ComposeRestoreRequest,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -72,10 +74,12 @@ interface FeedViewProps {
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
+  onListingStatusChange?: (taskId: string, status: Nip99ListingStatus) => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
@@ -108,6 +112,7 @@ export function FeedView({
   onNewTask,
   onToggleComplete,
   onStatusChange,
+  onListingStatusChange,
   focusedTaskId,
   onFocusTask,
   onFocusSidebar,
@@ -231,7 +236,8 @@ export function FeedView({
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ): Promise<TaskCreateResult> => {
     return Promise.resolve(onNewTask(
       content,
@@ -245,7 +251,8 @@ export function FeedView({
       undefined,
       explicitMentionPubkeys,
       priority,
-      attachments
+      attachments,
+      nip99
     ));
   };
 
@@ -337,6 +344,8 @@ export function FeedView({
           feedTasks.map((task) => {
             const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
             const isComment = task.taskType === "comment";
+            const isListing = Boolean(task.feedMessageType);
+            const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
             const feedMessageLabel =
               task.feedMessageType === "offer"
                 ? "Offer"
@@ -368,6 +377,11 @@ export function FeedView({
               : formatDistanceToNow(task.timestamp, { addSuffix: true });
             const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
             const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
+            const canUpdateListingStatus =
+              Boolean(onListingStatusChange) &&
+              !isInteractionBlocked &&
+              isListing &&
+              Boolean(currentUser?.id && currentUser.id.toLowerCase() === task.author.id.toLowerCase());
             const standaloneEmbedUrls = new Set(
               getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
             );
@@ -515,10 +529,46 @@ export function FeedView({
                       )}
                     </DropdownMenu>
                   ) : (
-                    task.feedMessageType === "offer" ? (
-                      <Package className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                    ) : task.feedMessageType === "request" ? (
-                      <HandHelping className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                    isListing ? (
+                      <button
+                        type="button"
+                        disabled={!canUpdateListingStatus}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (!canUpdateListingStatus || !onListingStatusChange) return;
+                          onListingStatusChange(task.id, listingStatus === "sold" ? "active" : "sold");
+                        }}
+                        title={
+                          canUpdateListingStatus
+                            ? listingStatus === "sold"
+                              ? "Mark listing active"
+                              : "Mark listing sold"
+                            : listingStatus === "sold"
+                              ? "Listing sold"
+                              : "Listing active"
+                        }
+                        aria-label={listingStatus === "sold" ? "Listing sold" : "Listing active"}
+                        className={cn(
+                          "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                          canUpdateListingStatus ? "hover:bg-muted cursor-pointer" : "cursor-default"
+                        )}
+                      >
+                        {task.feedMessageType === "offer" ? (
+                          <Package
+                            className={cn(
+                              listingStatus === "sold" ? "text-primary" : "text-muted-foreground",
+                              isMobile ? "w-4 h-4" : "w-5 h-5"
+                            )}
+                          />
+                        ) : (
+                          <HandHelping
+                            className={cn(
+                              listingStatus === "sold" ? "text-primary" : "text-muted-foreground",
+                              isMobile ? "w-4 h-4" : "w-5 h-5"
+                            )}
+                          />
+                        )}
+                      </button>
                     ) : (
                       <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                     )
@@ -599,6 +649,18 @@ export function FeedView({
                         <>
                           <span className="shrink-0">·</span>
                           <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{feedMessageLabel}</span>
+                          {isListing && (
+                            <span
+                              className={cn(
+                                "text-xs px-1.5 py-0.5 rounded",
+                                listingStatus === "sold"
+                                  ? "bg-primary/15 text-primary"
+                                  : "bg-muted text-muted-foreground"
+                              )}
+                            >
+                              {listingStatus}
+                            </span>
+                          )}
                         </>
                       )}
                       {isPendingPublish && (
