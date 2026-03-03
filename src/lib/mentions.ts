@@ -80,6 +80,47 @@ export function resolveMentionedPubkeys(content: string, people: Person[]): stri
   return Array.from(resolved);
 }
 
+interface ResolveMentionedPubkeysAsyncOptions {
+  resolveNip05: (identifier: string) => Promise<string | null>;
+}
+
+export async function resolveMentionedPubkeysAsync(
+  content: string,
+  people: Person[],
+  options: ResolveMentionedPubkeysAsyncOptions
+): Promise<string[]> {
+  const mentionIdentifiers = extractMentionIdentifiersFromContent(content);
+  if (mentionIdentifiers.length === 0) return [];
+
+  const resolved = new Set(resolveMentionedPubkeys(content, people));
+  const unresolvedNip05 = mentionIdentifiers.filter((identifier) => {
+    if (!NIP05_PATTERN.test(identifier)) return false;
+    return true;
+  });
+
+  if (unresolvedNip05.length === 0) {
+    return Array.from(resolved);
+  }
+
+  const lookupResults = await Promise.all(
+    unresolvedNip05.map(async (identifier) => {
+      try {
+        return await options.resolveNip05(identifier);
+      } catch {
+        return null;
+      }
+    })
+  );
+  lookupResults.forEach((pubkey) => {
+    const normalized = normalizeMentionIdentifier(pubkey || "");
+    if (PUBKEY_PATTERN.test(normalized)) {
+      resolved.add(normalized);
+    }
+  });
+
+  return Array.from(resolved);
+}
+
 export function formatMentionIdentifierForDisplay(identifier: string): string {
   const normalized = normalizeMentionIdentifier(identifier);
   if (PUBKEY_PATTERN.test(normalized) || NPUB_PATTERN.test(normalized)) {
