@@ -25,6 +25,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Relay write-state now updates on publish outcomes: failed/partial publishes mark impacted relays as read-only (write-rejected), and later successful publishes clear that state per relay.
 - Failed publish retry banners are now feed-scoped: drafts are only shown when their target relay(s) are in the currently selected feeds, while retries still publish to the original relay targets.
 - Failed publish queue now includes a `Repost` action that republishes the draft to currently selected feed relays, while `Retry` continues targeting the original relay set.
+- Failed publish queue now supports `Selected feeds` vs `All failed` scopes with a hidden-count indicator, so reposting to other relays is possible without losing feed-focused visibility.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
 ## [1.15.0] - 2026-02-27
