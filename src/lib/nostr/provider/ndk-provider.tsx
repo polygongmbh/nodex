@@ -519,26 +519,33 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     setNdk(ndkInstance);
 
-    // Try to restore session
+    // Restore session first, then connect so protected REQs don't race ahead of signer readiness.
     let extensionRestoreController: AbortController | undefined;
-    const savedAuthMethod = localStorage.getItem(STORAGE_KEY_AUTH) as AuthMethod;
-    if (savedAuthMethod === "guest") {
-      const savedNsec = localStorage.getItem(STORAGE_KEY_NSEC);
-      if (savedNsec) {
-        const signer = new NDKPrivateKeySigner(savedNsec);
-        ndkInstance.signer = signer;
-        signer.user().then((ndkUser) => {
+    let reconcileIntervalId: number | undefined;
+    const restoreSession = async (): Promise<void> => {
+      const savedAuthMethod = localStorage.getItem(STORAGE_KEY_AUTH) as AuthMethod;
+      if (savedAuthMethod === "guest") {
+        const savedNsec = localStorage.getItem(STORAGE_KEY_NSEC);
+        if (!savedNsec) return;
+        try {
+          const signer = new NDKPrivateKeySigner(savedNsec);
+          ndkInstance.signer = signer;
+          const ndkUser = await signer.user();
           if (disposed) return;
           setUser({
             pubkey: ndkUser.pubkey,
             npub: ndkUser.npub,
           });
           setAuthMethod("guest");
-        });
+        } catch {
+          if (disposed) return;
+          localStorage.removeItem(STORAGE_KEY_AUTH);
+        }
+        return;
       }
-    } else if (savedAuthMethod === "extension") {
-      extensionRestoreController = new AbortController();
-      void (async () => {
+
+      if (savedAuthMethod === "extension") {
+        extensionRestoreController = new AbortController();
         const availableImmediately = hasNostrExtension();
         nostrDevLog("auth", "Attempting extension session restore", {
           immediateAvailability: availableImmediately,
@@ -549,6 +556,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           : await waitForNostrExtensionAvailability({ signal: extensionRestoreController.signal });
 
         if (!isExtensionAvailable) {
+          if (disposed) return;
           nostrDevLog("auth", "Extension restore failed: extension unavailable after wait window");
           localStorage.removeItem(STORAGE_KEY_AUTH);
           return;
@@ -566,21 +574,26 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           setAuthMethod("extension");
           nostrDevLog("auth", "Extension session restored", { pubkey: ndkUser.pubkey });
         } catch (error) {
+          if (disposed) return;
           nostrDevLog("auth", "Extension restore failed while resolving signer user", {
             error: error instanceof Error ? error.message : String(error),
           });
           localStorage.removeItem(STORAGE_KEY_AUTH);
         }
-      })();
-    } else if (savedAuthMethod === "nostrConnect") {
-      const bunkerUrl = localStorage.getItem(STORAGE_KEY_NIP46_BUNKER);
-      const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
-      if (!bunkerUrl) {
-        localStorage.removeItem(STORAGE_KEY_AUTH);
-      } else {
+        return;
+      }
+
+      if (savedAuthMethod === "nostrConnect") {
+        const bunkerUrl = localStorage.getItem(STORAGE_KEY_NIP46_BUNKER);
+        const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
+        if (!bunkerUrl) {
+          localStorage.removeItem(STORAGE_KEY_AUTH);
+          return;
+        }
         const signer = NDKNip46Signer.bunker(ndkInstance, bunkerUrl, localKey);
         ndkInstance.signer = signer;
-        signer.blockUntilReady().then(async (ndkUser: NDKUser) => {
+        try {
+          const ndkUser: NDKUser = await signer.blockUntilReady();
           if (disposed) return;
           await ndkUser.fetchProfile();
           if (disposed) return;
@@ -596,29 +609,34 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
             },
           });
           setAuthMethod("nostrConnect");
-        }).catch(() => {
+        } catch {
           if (disposed) return;
           localStorage.removeItem(STORAGE_KEY_AUTH);
           localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
           localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
-        });
+        }
       }
-    }
+    };
 
-    // Connect after signer restore attempt so NIP-42 can authenticate immediately when possible.
-    ndkInstance.connect().then(() => {
-      nostrDevLog("provider", "NDK connected to relay pool");
-      syncRelayStatusesFromPool();
-    });
-    const reconcileIntervalId = window.setInterval(
-      syncRelayStatusesFromPool,
-      RELAY_STATUS_RECONCILE_INTERVAL_MS
-    );
+    void (async () => {
+      await restoreSession();
+      if (disposed) return;
+      ndkInstance.connect().then(() => {
+        nostrDevLog("provider", "NDK connected to relay pool");
+        syncRelayStatusesFromPool();
+      });
+      reconcileIntervalId = window.setInterval(
+        syncRelayStatusesFromPool,
+        RELAY_STATUS_RECONCILE_INTERVAL_MS
+      );
+    })();
 
     return () => {
       disposed = true;
       extensionRestoreController?.abort();
-      window.clearInterval(reconcileIntervalId);
+      if (typeof reconcileIntervalId === "number") {
+        window.clearInterval(reconcileIntervalId);
+      }
       ndkInstance.pool.relays.forEach((relay) => {
         relay.disconnect();
       });
