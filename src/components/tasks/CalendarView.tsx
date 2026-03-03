@@ -11,6 +11,7 @@ import {
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 import {
   format,
@@ -77,7 +78,8 @@ interface CalendarViewProps {
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -454,7 +456,8 @@ export function CalendarView({
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ): Promise<TaskCreateResult> => {
     // Use the selected date if no due date was set
     const eventDate = dueDate || selectedDate || new Date();
@@ -470,7 +473,8 @@ export function CalendarView({
       undefined,
       explicitMentionPubkeys,
       priority,
-      attachments
+      attachments,
+      nip99
     ));
     if (result.ok) {
       setIsComposingEvent(false);

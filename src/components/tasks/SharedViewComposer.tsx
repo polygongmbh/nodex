@@ -7,6 +7,7 @@ import type {
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 
 interface SharedViewComposerProps {
@@ -25,7 +26,8 @@ interface SharedViewComposerProps {
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onCancel?: () => void;
   draftStorageKey: string;

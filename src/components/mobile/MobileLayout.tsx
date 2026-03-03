@@ -21,6 +21,7 @@ import {
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { useNDK } from "@/lib/nostr/ndk-context";
@@ -54,7 +55,8 @@ interface MobileLayoutProps {
     initialStatus?: "todo" | "in-progress" | "done",
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange: (taskId: string, status: "todo" | "in-progress" | "done") => void;
@@ -278,7 +280,8 @@ export function MobileLayout({
     dateType?: TaskDateType,
     explicitMentionPubkeys?: string[],
     priority?: number,
-    attachments?: PublishedAttachment[]
+    attachments?: PublishedAttachment[],
+    nip99?: Nip99Metadata
   ): Promise<TaskCreateResult> => {
     return Promise.resolve(onNewTask(
       content,
@@ -292,7 +295,8 @@ export function MobileLayout({
       undefined,
       explicitMentionPubkeys,
       priority,
-      attachments
+      attachments,
+      nip99
     ));
   }, [onNewTask, focusedTaskId]);
 
