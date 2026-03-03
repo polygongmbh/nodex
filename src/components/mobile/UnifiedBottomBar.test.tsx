@@ -241,7 +241,8 @@ describe("UnifiedBottomBar auth gating", () => {
       "due",
       [],
       undefined,
-      []
+      [],
+      undefined
     );
 
   });
@@ -280,7 +281,8 @@ describe("UnifiedBottomBar auth gating", () => {
       "due",
       [],
       undefined,
-      []
+      [],
+      undefined
     );
 
     fireEvent.change(composeField, { target: { value: "Ship again #general" } });
@@ -295,7 +297,8 @@ describe("UnifiedBottomBar auth gating", () => {
       "due",
       [],
       undefined,
-      []
+      [],
+      undefined
     );
   });
 
@@ -334,7 +337,55 @@ describe("UnifiedBottomBar auth gating", () => {
       "due",
       [],
       undefined,
-      []
+      [],
+      undefined
+    );
+  });
+
+  it("shows offer/request options in feed view and submits listing metadata", async () => {
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(composeField, { target: { value: "Need help #general" } });
+    fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
+
+    expect(screen.getByRole("button", { name: /post offer/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /post request/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /post request/i }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      "Need help #general",
+      ["general"],
+      ["demo"],
+      "request",
+      undefined,
+      undefined,
+      "due",
+      [],
+      undefined,
+      [],
+      {
+        title: "Need help",
+        status: "active",
+      }
     );
   });
 
@@ -691,7 +742,8 @@ describe("UnifiedBottomBar auth gating", () => {
       "due",
       ["e".repeat(64)],
       undefined,
-      []
+      [],
+      undefined
     );
   });
 
@@ -738,7 +790,8 @@ describe("UnifiedBottomBar auth gating", () => {
       "due",
       ["e".repeat(64)],
       undefined,
-      []
+      [],
+      undefined
     );
   });
 
@@ -814,7 +867,8 @@ describe("UnifiedBottomBar auth gating", () => {
       "due",
       [],
       undefined,
-      []
+      [],
+      undefined
     );
   });
 });

@@ -10,6 +10,8 @@ import { parseLinkedTaskDueFromCalendarEvent } from "./nip52-task-calendar-event
 import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 import { relayUrlToId, relayUrlToName } from "@/lib/nostr/relay-url";
 import { parseNip99MetadataFromTags } from "@/lib/nostr/nip99-metadata";
+import { parseFirstGeohashTag } from "@/lib/nostr/geohash-location";
+import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/nostr/replaceable-events";
 import {
   extractSha256FromUrl,
   extractEmbeddableAttachmentsFromContent,
@@ -126,6 +128,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const isTask = event.kind === NostrEventKind.Task;
   const feedMessageType = getFeedMessageType(event);
   const nip99 = feedMessageType ? parseNip99MetadataFromTags(event.tags) : undefined;
+  const locationGeohash = parseFirstGeohashTag(event.tags);
 
   // Extract status from tags for kind 1621
   let status: "todo" | "in-progress" | "done" = "todo";
@@ -216,6 +219,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     taskType: isTask ? "task" : "comment",
     feedMessageType,
     nip99,
+    locationGeohash,
     timestamp: new Date(event.created_at * 1000),
     lastEditedAt: new Date(event.created_at * 1000),
     likes: 0,
@@ -267,7 +271,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
   const isPriorityPropertyNote = (event: NostrEventWithRelay): boolean =>
     isPriorityPropertyEvent(event.kind, event.tags);
 
-  const taskEvents = events.filter(
+  const rawTaskEvents = events.filter(
     (event) =>
       (
         event.kind === NostrEventKind.Task ||
@@ -276,6 +280,28 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
       ) &&
       !isPriorityPropertyNote(event)
   );
+  const taskEventsById = new Map<string, NostrEventWithRelay>();
+  const replaceableTaskEvents = new Map<string, NostrEventWithRelay>();
+  for (const event of rawTaskEvents) {
+    // Parameterized replaceable events missing "d" are invalid and ignored.
+    if (isParameterizedReplaceableKind(event.kind) && getReplaceableEventKey(event) === null) {
+      continue;
+    }
+    const replaceableKey = getReplaceableEventKey(event);
+    if (!replaceableKey) {
+      taskEventsById.set(event.id, event);
+      continue;
+    }
+    const existing = replaceableTaskEvents.get(replaceableKey);
+    if (
+      !existing ||
+      event.created_at > existing.created_at ||
+      (event.created_at === existing.created_at && event.id > existing.id)
+    ) {
+      replaceableTaskEvents.set(replaceableKey, event);
+    }
+  }
+  const taskEvents = [...taskEventsById.values(), ...replaceableTaskEvents.values()];
   const stateEvents = events.filter((event) => isTaskStateEventKind(event.kind));
   const priorityPropertyEvents = events.filter(isPriorityPropertyNote);
   const calendarEvents = events.filter(

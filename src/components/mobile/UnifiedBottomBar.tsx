@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, LocateFixed, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -12,6 +12,7 @@ import {
   ComposeAttachment,
   PublishedAttachment,
   Nip99Metadata,
+  FeedMessageType,
 } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useNDK } from "@/lib/nostr/ndk-context";
@@ -38,6 +39,7 @@ import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAtta
 import { loadAutoCaptionEnabled } from "@/lib/auto-caption-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
+import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/lib/nostr/geohash-location";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -64,7 +66,7 @@ interface UnifiedBottomBarProps {
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
-type SelectorType = "relay" | "channel" | "person" | "date" | null;
+type SelectorType = "relay" | "channel" | "person" | "date" | "location" | null;
 
 const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "building-2": Building2,
@@ -76,6 +78,25 @@ const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> 
 };
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
+const NIP99_TITLE_MAX_LENGTH = 80;
+
+function normalizeListingTextFromContent(content: string): string {
+  return content
+    .replace(/(^|\s)#\w+/g, " ")
+    .replace(/(^|\s)@[^\s]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncateWordSafe(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  const truncated = value.slice(0, maxLength).trim();
+  const lastSpace = truncated.lastIndexOf(" ");
+  if (lastSpace >= Math.floor(maxLength * 0.6)) {
+    return truncated.slice(0, lastSpace).trim();
+  }
+  return truncated;
+}
 
 export function UnifiedBottomBar({
   searchQuery,
@@ -118,6 +139,7 @@ export function UnifiedBottomBar({
   const [explicitTagNames, setExplicitTagNames] = useState<string[]>([]);
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
+  const [locationGeohash, setLocationGeohash] = useState<string | undefined>();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const attachmentFileRef = useRef<Record<string, File>>({});
@@ -229,6 +251,7 @@ export function UnifiedBottomBar({
         .map((pubkey) => pubkey.trim().toLowerCase())
         .filter((pubkey) => /^[a-f0-9]{64}$/i.test(pubkey))
     );
+    setLocationGeohash(normalizeGeohash(restoreState.locationGeohash));
     setActiveSelector(null);
     setShowSendOptions(false);
     requestAnimationFrame(() => {
@@ -383,7 +406,7 @@ export function UnifiedBottomBar({
     prevIncludedChannelsRef.current = [...includedChannels];
   }, [includedChannels]);
 
-  const handleSubmit = async (submitType: "task" | "comment" = "task") => {
+  const handleSubmit = async (submitType: "task" | "comment" | FeedMessageType = "task") => {
     if (!sharedText.trim()) return;
     if (!hasMeaningfulComposerText(sharedText)) return;
     const extractedChannels = sharedText.match(/#(\w+)/g)?.map((token) => token.slice(1).toLowerCase()) || [];
@@ -410,20 +433,47 @@ export function UnifiedBottomBar({
       toast.error(t("toasts.errors.selectRelayOrParent"));
       return;
     }
+    const listingMetadata: Nip99Metadata | undefined =
+      submitType === "offer" || submitType === "request"
+        ? {
+            title: truncateWordSafe(normalizeListingTextFromContent(sharedText), NIP99_TITLE_MAX_LENGTH) || "Listing",
+            status: "active",
+          }
+        : undefined;
+
     let result: TaskCreateResult;
     try {
-      result = await Promise.resolve(onSubmit(
-        sharedText,
-        submitChannels,
-        relayIds,
-        submitType,
-        dueDate,
-        dueTime || undefined,
-        dateType,
-        explicitMentionPubkeys,
-        priority,
-        uploadedAttachments
-      ));
+      const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
+      result = await Promise.resolve(
+        normalizedLocationGeohash
+          ? onSubmit(
+              sharedText,
+              submitChannels,
+              relayIds,
+              submitType,
+              dueDate,
+              dueTime || undefined,
+              dateType,
+              explicitMentionPubkeys,
+              priority,
+              uploadedAttachments,
+              listingMetadata,
+              normalizedLocationGeohash
+            )
+          : onSubmit(
+              sharedText,
+              submitChannels,
+              relayIds,
+              submitType,
+              dueDate,
+              dueTime || undefined,
+              dateType,
+              explicitMentionPubkeys,
+              priority,
+              uploadedAttachments,
+              listingMetadata
+            )
+      );
     } catch (error) {
       console.error("Mobile task submit failed", error);
       notifyTaskCreationFailed(t);
@@ -454,6 +504,7 @@ export function UnifiedBottomBar({
     setDueTime("");
     setDateType("due");
     setPriority(undefined);
+    setLocationGeohash(undefined);
     setExplicitTagNames([]);
     setExplicitMentionPubkeys([]);
     setAttachments([]);
@@ -602,6 +653,7 @@ export function UnifiedBottomBar({
     setMentionFilter("");
     setActiveMentionIndex(0);
     setAttachments([]);
+    setLocationGeohash(undefined);
     attachmentFileRef.current = {};
   };
 
@@ -638,7 +690,7 @@ export function UnifiedBottomBar({
   }).slice(0, 8);
 
   useEffect(() => {
-    if (taskSubmitBlockedReason && activeSelector === "date") {
+    if (taskSubmitBlockedReason && (activeSelector === "date" || activeSelector === "location")) {
       setActiveSelector(null);
     }
   }, [activeSelector, taskSubmitBlockedReason]);
@@ -687,6 +739,7 @@ export function UnifiedBottomBar({
 
   const canSendTask = hasMeaningfulComposeText && !hasInvalidRootTaskRelaySelection && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canSendComment = hasMeaningfulComposeText && hasAtLeastOneTag && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
+  const canSendListing = hasMeaningfulComposeText && hasAtLeastOneTag && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
   const canSubmitFromPrimary = canOfferComment ? (canSendTask || canSendComment) : canSendTask;
   const hasTaskSubmitBlock = taskSubmitBlockedReason !== null;
@@ -704,6 +757,24 @@ export function UnifiedBottomBar({
       return;
     }
     void handleSubmit("task");
+  };
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error(t("toasts.errors.locationUnavailable"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const geohash = encodeGeohash(position.coords.latitude, position.coords.longitude, DEFAULT_GEOHASH_PRECISION);
+        setLocationGeohash(geohash);
+        toast.success(t("toasts.success.locationCaptured", { geohash }));
+      },
+      () => {
+        toast.error(t("toasts.errors.locationCaptureFailed"));
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+    );
   };
 
   const addMentionTagOnly = (person: Person) => {
@@ -911,6 +982,39 @@ export function UnifiedBottomBar({
               </div>
             </div>
           )}
+          {activeSelector === "location" && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={useCurrentLocation}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/50 bg-background px-2 text-xs hover:bg-muted/60"
+                >
+                  <LocateFixed className="h-3.5 w-3.5" />
+                  {t("composer.actions.useCurrentLocation")}
+                </button>
+                {locationGeohash && (
+                  <button
+                    type="button"
+                    onClick={() => setLocationGeohash(undefined)}
+                    className="h-8 inline-flex items-center rounded-md border border-border/50 bg-background px-2 text-xs hover:bg-muted/60"
+                  >
+                    {t("composer.actions.clearLocation")}
+                  </button>
+                )}
+              </div>
+              <div className="inline-flex w-full items-center gap-1.5 rounded-md border border-border/50 bg-background px-2">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                <input
+                  value={locationGeohash || ""}
+                  onChange={(event) => setLocationGeohash(normalizeGeohash(event.target.value) || event.target.value.trim().toLowerCase())}
+                  placeholder={t("composer.placeholders.geohash")}
+                  aria-label={t("composer.placeholders.geohash")}
+                  className="h-8 w-full bg-transparent text-xs focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1051,6 +1155,19 @@ export function UnifiedBottomBar({
                   {activePeopleCount}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => toggleSelector("location")}
+              className={cn(
+                "relative p-2 rounded-md transition-colors",
+                activeSelector === "location" || locationGeohash
+                  ? "bg-primary/20 text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              aria-label={t("composer.actions.location")}
+              title={t("composer.actions.location")}
+            >
+              <MapPin className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -1326,6 +1443,34 @@ export function UnifiedBottomBar({
                     >
                       <MessageSquare className="w-4 h-4" />
                     </button>
+                    {currentView === "feed" && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setShowSendOptions(false);
+                            void handleSubmit("offer");
+                          }}
+                          disabled={!canSendListing}
+                          className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                          aria-label={t("composer.actions.postOffer")}
+                          title={t("composer.actions.postOffer")}
+                        >
+                          <Package className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowSendOptions(false);
+                            void handleSubmit("request");
+                          }}
+                          disabled={!canSendListing}
+                          className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                          aria-label={t("composer.actions.postRequest")}
+                          title={t("composer.actions.postRequest")}
+                        >
+                          <HandHelping className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

@@ -64,4 +64,19 @@ describe("nip99 metadata normalization", () => {
 
     expect(tags).toContainEqual(["price", "30", "EUR", ""]);
   });
+
+  it("adds g tag when location geohash is provided", () => {
+    const tags = buildNip99PublishTags({
+      feedMessageType: "offer",
+      hashtags: [],
+      mentionPubkeys: [],
+      metadata: {
+        identifier: "listing-4",
+        title: "Chair",
+      },
+      locationGeohash: "U4PRUYD",
+    });
+
+    expect(tags).toContainEqual(["g", "u4pruyd"]);
+  });
 });

@@ -268,7 +268,8 @@ export function MobileLayout({
     explicitMentionPubkeys?: string[],
     priority?: number,
     attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
+    nip99?: Nip99Metadata,
+    locationGeohash?: string
   ): Promise<TaskCreateResult> => {
     return Promise.resolve(onNewTask(
       content,
@@ -283,7 +284,8 @@ export function MobileLayout({
       explicitMentionPubkeys,
       priority,
       attachments,
-      nip99
+      nip99,
+      locationGeohash
     ));
   }, [onNewTask, focusedTaskId]);
 

@@ -22,6 +22,7 @@ export interface FailedPublishDraft {
   mentionPubkeys: string[];
   assigneePubkeys?: string[];
   priority?: number;
+  locationGeohash?: string;
   attachments?: PublishedAttachment[];
   publishKind: NostrEventKind;
   publishTags: string[][];
@@ -57,6 +58,7 @@ const failedPublishDraftSchema: z.ZodType<FailedPublishDraft> = z.object({
   mentionPubkeys: z.array(z.string()),
   assigneePubkeys: z.array(z.string()).optional(),
   priority: z.number().finite().optional(),
+  locationGeohash: z.string().optional(),
   attachments: z.array(
     z.object({
       url: z.string(),

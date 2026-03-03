@@ -111,6 +111,8 @@ describe("MobileLayout submit wiring", () => {
       undefined,
       ["a".repeat(64)],
       undefined,
+      undefined,
+      undefined,
       undefined
     );
   });

@@ -1,4 +1,5 @@
 import { buildImetaTag, normalizePublishedAttachments } from "@/lib/attachments";
+import { buildGeohashTag } from "@/lib/nostr/geohash-location";
 import type { PublishedAttachment } from "@/types";
 
 export function buildTaskPublishTags(
@@ -8,6 +9,7 @@ export function buildTaskPublishTags(
   priority?: number,
   channelNames: string[] = [],
   attachments: PublishedAttachment[] = [],
+  locationGeohash?: string,
 ): string[][] {
   const tags: string[][] = [];
 
@@ -36,6 +38,11 @@ export function buildTaskPublishTags(
   const normalizedAttachments = normalizePublishedAttachments(attachments);
   for (const attachment of normalizedAttachments) {
     tags.push(buildImetaTag(attachment));
+  }
+
+  const geohashTag = buildGeohashTag(locationGeohash);
+  if (geohashTag) {
+    tags.push(geohashTag);
   }
 
   return tags;

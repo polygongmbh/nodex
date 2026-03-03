@@ -52,6 +52,20 @@ describe("buildTaskPublishTags", () => {
     ]);
   });
 
+  it("appends geohash g tag when location is valid", () => {
+    const tags = buildTaskPublishTags(
+      undefined,
+      undefined,
+      [],
+      undefined,
+      [],
+      [],
+      "U4PRUYD"
+    );
+
+    expect(tags).toEqual([["g", "u4pruyd"]]);
+  });
+
   it("appends normalized imeta tags for attachments", () => {
     const tags = buildTaskPublishTags(
       undefined,
