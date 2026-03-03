@@ -71,6 +71,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayVerificationReadOpsRef = useRef(0);
   const relayVerificationWriteOpsRef = useRef(0);
   const relayVerificationToastHistoryRef = useRef<Map<string, number>>(new Map());
+  const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
 
   const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
     const hasRead = relayVerificationReadOpsRef.current > 0;
@@ -112,6 +113,21 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     return true;
   }, []);
 
+  const markRelayVerificationSuccess = useCallback((relayUrl: string, operation: RelayOperation) => {
+    if (!shouldShowRelayVerificationToast(relayUrl, operation, "verified")) {
+      return;
+    }
+    if (operation === "read") {
+      toast.success(i18n.t("toasts.success.relayVerificationRead", { relayUrl }));
+      return;
+    }
+    if (operation === "write") {
+      toast.success(i18n.t("toasts.success.relayVerificationWrite", { relayUrl }));
+      return;
+    }
+    toast.success(i18n.t("toasts.success.relayVerificationUnknown", { relayUrl }));
+  }, [shouldShowRelayVerificationToast]);
+
   const notifyRelayVerificationEvent = useCallback((incoming: RelayVerificationEvent) => {
     const operation = incoming.operation === "unknown"
       ? resolveRelayVerificationOperation()
@@ -121,10 +137,15 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     nostrDevLog("relay", "Relay verification event", event);
 
     if (event.outcome === "required") {
+      pendingRelayVerificationRef.current.set(event.relayUrl.replace(/\/+$/, ""), {
+        operation: event.operation,
+        requestedAt: Date.now(),
+      });
       return;
     }
     if (event.outcome === "failed") {
       const normalizedRelayUrl = event.relayUrl.replace(/\/+$/, "");
+      pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
       setRelays((previous) =>
         previous.map((relay) => {
           if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
@@ -132,28 +153,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           return { ...relay, status: "verification-failed" };
         })
       );
-    } else if (event.outcome === "verified") {
-      const normalizedRelayUrl = event.relayUrl.replace(/\/+$/, "");
-      setRelays((previous) =>
-        previous.map((relay) =>
-          relay.url.replace(/\/+$/, "") === normalizedRelayUrl && relay.status === "verification-failed"
-            ? { ...relay, status: "connected" }
-            : relay
-        )
-      );
     }
     if (!shouldShowRelayVerificationToast(event.relayUrl, event.operation, event.outcome)) {
-      return;
-    }
-
-    if (event.outcome === "verified") {
-      if (event.operation === "read") {
-        toast.success(i18n.t("toasts.success.relayVerificationRead", { relayUrl: event.relayUrl }));
-      } else if (event.operation === "write") {
-        toast.success(i18n.t("toasts.success.relayVerificationWrite", { relayUrl: event.relayUrl }));
-      } else {
-        toast.success(i18n.t("toasts.success.relayVerificationUnknown", { relayUrl: event.relayUrl }));
-      }
       return;
     }
 
@@ -269,6 +270,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);
       relayAutoPausedRef.current.delete(normalized);
+      const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
+      if (pendingVerification) {
+        pendingRelayVerificationRef.current.delete(normalized);
+        markRelayVerificationSuccess(normalized, pendingVerification.operation);
+      }
       setRemovedRelays((removed) => {
         if (removed.has(normalized)) return removed;
         setRelays((prev) => {
@@ -405,7 +411,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       ndkInstance.pool.removeAllListeners();
     };
-  }, [defaultRelaysKey, notifyRelayVerificationEvent, resolvedDefaultRelays]);
+  }, [defaultRelaysKey, markRelayVerificationSuccess, notifyRelayVerificationEvent, resolvedDefaultRelays]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -660,6 +666,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       return { success: false };
     }
 
+    let signedEventId: string | undefined;
     try {
       beginRelayOperation("write");
       const event = new NDKEvent(ndk);
@@ -686,6 +693,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       event.tags = eventTags;
       
       await event.sign();
+      signedEventId = event.id;
       
       const urls = (relayUrls && relayUrls.length > 0)
         ? relayUrls
@@ -720,7 +728,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       return { success: true, eventId: event.id };
     } catch (error) {
       console.error("Failed to publish event:", error);
-      return { success: false };
+      return { success: false, eventId: signedEventId };
     } finally {
       endRelayOperation("write");
     }

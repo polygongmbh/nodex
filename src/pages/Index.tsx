@@ -1539,6 +1539,16 @@ const Index = () => {
     removeCachedNostrEventById(normalizedEventId);
   }, [queryClient]);
 
+  useEffect(() => {
+    if (suppressedNostrEventIds.size === 0) return;
+    const blockedIds = new Set(suppressedNostrEventIds);
+    queryClient.setQueryData<CachedNostrEvent[]>(
+      NOSTR_EVENTS_QUERY_KEY,
+      (previous = []) => previous.filter((event) => !blockedIds.has(event.id))
+    );
+    blockedIds.forEach((eventId) => removeCachedNostrEventById(eventId));
+  }, [queryClient, suppressedNostrEventIds]);
+
   const handleNewTask = async (
     content: string,
     extractedTags: string[],
