@@ -22,7 +22,6 @@ export function FailedPublishQueueBanner({
   isMobile = false,
 }: FailedPublishQueueBannerProps) {
   const { t } = useTranslation();
-  if (drafts.length === 0) return null;
   const [scope, setScope] = useState<"selected" | "all">("selected");
   const scopedSelectedDrafts = selectedFeedDrafts ?? drafts;
   const hasScopeToggle = selectedFeedDrafts !== undefined;
@@ -31,6 +30,7 @@ export function FailedPublishQueueBanner({
     [drafts, scope, scopedSelectedDrafts]
   );
   const hiddenCount = Math.max(0, drafts.length - scopedSelectedDrafts.length);
+  if (drafts.length === 0) return null;
   const visibleDrafts = activeDrafts.slice(0, 4);
   return (
     <div className={cn("border-b border-destructive/40 bg-destructive/10", isMobile ? "px-3 py-2" : "px-4 py-2")}>
