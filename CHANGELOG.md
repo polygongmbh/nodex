@@ -19,6 +19,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Fixed false-positive relay verification failure toasts by only surfacing read failures on explicit relay read rejection signals, not on auth-policy/inference failures alone.
 - Relay Management now surfaces per-relay NIP-11 capabilities (auth required, NIP-42 support, last check) in an expandable details view and uses these capabilities for more precise status labels.
 - Fixed Relay Management capability details showing `unknown` by preserving NIP-11 metadata when mapping provider relay state into the page-level relay list.
+- After sign-in, auth-capable relays (from NIP-11 `supported_nips`) are now retried automatically, clearing stale verification-failed state and forcing reconnect so blocked reads can be fetched again.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
 ## [1.15.0] - 2026-02-27

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTH_RETRY_COOLDOWN_MS,
   isAuthRequiredCloseReason,
+  shouldRetryNip42AfterSignIn,
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
@@ -65,5 +66,17 @@ describe("shouldRetryAuthAfterReadRejection", () => {
       lastRetryAt: 1000,
       now: 1000 + AUTH_RETRY_COOLDOWN_MS,
     })).toBe(true);
+  });
+});
+
+describe("shouldRetryNip42AfterSignIn", () => {
+  it("retries only for relays that advertise NIP-42 support", () => {
+    expect(shouldRetryNip42AfterSignIn({
+      nip11: { supportsNip42: true },
+    })).toBe(true);
+    expect(shouldRetryNip42AfterSignIn({
+      nip11: { supportsNip42: false },
+    })).toBe(false);
+    expect(shouldRetryNip42AfterSignIn({})).toBe(false);
   });
 });
