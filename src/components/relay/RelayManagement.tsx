@@ -75,13 +75,13 @@ export function RelayManagement({
       case "connected":
         return <Wifi className="w-4 h-4 text-success" />;
       case "connecting":
-        return <Loader2 className="w-4 h-4 text-warning animate-spin" />;
+        return <Loader2 className="w-4 h-4 text-sky-500 animate-spin" />;
       case "connection-error":
         return <AlertCircle className="w-4 h-4 text-destructive" />;
       case "verification-failed":
-        return <AlertCircle className="w-4 h-4 text-warning" />;
+        return <AlertCircle className="w-4 h-4 text-amber-500" />;
       default:
-        return <WifiOff className="w-4 h-4 text-muted-foreground" />;
+        return <WifiOff className="w-4 h-4 text-slate-400" />;
     }
   };
 
@@ -90,13 +90,13 @@ export function RelayManagement({
       case "connected":
         return "bg-success";
       case "connecting":
-        return "bg-warning animate-pulse";
+        return "bg-sky-500 animate-pulse";
       case "connection-error":
         return "bg-destructive";
       case "verification-failed":
-        return "bg-warning";
+        return "bg-amber-500";
       default:
-        return "bg-muted-foreground";
+        return "bg-slate-400";
     }
   };
 

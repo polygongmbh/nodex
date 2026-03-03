@@ -19,13 +19,13 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
       case "connected":
         return "bg-success";
       case "connecting":
-        return "bg-warning animate-pulse";
+        return "bg-sky-500 animate-pulse";
       case "connection-error":
         return "bg-destructive";
       case "verification-failed":
-        return "bg-warning";
+        return "bg-amber-500";
       default:
-        return "bg-muted-foreground";
+        return "bg-slate-400";
     }
   };
 
@@ -64,13 +64,13 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
                   {relay.latency ? `${relay.latency}ms` : t("widgets.relayStatus.connected")}
                 </span>
               ) : relay.status === "connecting" ? (
-                <Loader2 className="w-4 h-4 text-warning animate-spin" />
+                <Loader2 className="w-4 h-4 text-sky-500 animate-spin" />
               ) : relay.status === "connection-error" ? (
                 <AlertCircle className="w-4 h-4 text-destructive" />
               ) : relay.status === "verification-failed" ? (
-                <AlertCircle className="w-4 h-4 text-warning" />
+                <AlertCircle className="w-4 h-4 text-amber-500" />
               ) : (
-                <WifiOff className="w-4 h-4 text-muted-foreground" />
+                <WifiOff className="w-4 h-4 text-slate-400" />
               )}
             </div>
           ))
