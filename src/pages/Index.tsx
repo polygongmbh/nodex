@@ -234,6 +234,7 @@ const Index = () => {
       url: r.url,
       status: r.status,
       latency: r.latency,
+      nip11: r.nip11,
     }));
   }, [ndkRelays]);
 
