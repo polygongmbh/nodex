@@ -601,6 +601,7 @@
   "publishQueue": {
     "failedCount": "{{count}} publicación no se pudo enviar",
     "retry": "Reintentar",
+    "repost": "Republicar",
     "dismiss": "Descartar publicación fallida"
   },
   "relay": {

@@ -70,6 +70,7 @@ interface MobileLayoutProps {
   } | null;
   failedPublishDrafts?: FailedPublishDraft[];
   onRetryFailedPublish?: (draftId: string) => void;
+  onRepostFailedPublish?: (draftId: string) => void;
   onDismissFailedPublish?: (draftId: string) => void;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
@@ -124,6 +125,7 @@ export function MobileLayout({
   mentionRequest = null,
   failedPublishDrafts = [],
   onRetryFailedPublish,
+  onRepostFailedPublish,
   onDismissFailedPublish,
   isInteractionBlocked = false,
   onInteractionBlocked,
@@ -374,6 +376,7 @@ export function MobileLayout({
         <FailedPublishQueueBanner
           drafts={failedPublishDrafts}
           onRetry={onRetryFailedPublish}
+          onRepost={onRepostFailedPublish}
           onDismiss={onDismissFailedPublish}
           isMobile
         />

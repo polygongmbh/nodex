@@ -601,6 +601,7 @@
   "publishQueue": {
     "failedCount": "{{count}} Beitrag konnte nicht veröffentlicht werden",
     "retry": "Erneut versuchen",
+    "repost": "Neu auf Feed posten",
     "dismiss": "Fehlgeschlagenen Beitrag schließen"
   },
   "relay": {

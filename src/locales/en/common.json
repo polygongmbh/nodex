@@ -601,6 +601,7 @@
   "publishQueue": {
     "failedCount": "{{count}} post failed to publish",
     "retry": "Retry",
+    "repost": "Repost",
     "dismiss": "Dismiss failed post"
   },
   "relay": {
