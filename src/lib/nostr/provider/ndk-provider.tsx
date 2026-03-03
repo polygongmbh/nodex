@@ -47,6 +47,7 @@ import {
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
+import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
@@ -78,6 +79,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayVerificationToastHistoryRef = useRef<Map<string, number>>(new Map());
   const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
+  const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
 
   const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
     const hasRead = relayVerificationReadOpsRef.current > 0;
@@ -184,6 +186,23 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
     }
   }, [markRelayVerificationFailure, resolveRelayVerificationOperation]);
+
+  const probeRelayInfo = useCallback(async (relayUrl: string) => {
+    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const info = await fetchRelayInfo(normalizedRelayUrl);
+    if (!info) {
+      nostrDevLog("relay", "Relay NIP-11 info unavailable", {
+        relayUrl: normalizedRelayUrl,
+      });
+      return;
+    }
+    relayInfoRef.current.set(normalizedRelayUrl, info);
+    nostrDevLog("relay", "Relay NIP-11 info loaded", {
+      relayUrl: normalizedRelayUrl,
+      authRequired: info.authRequired,
+      supportsNip42: info.supportsNip42,
+    });
+  }, []);
 
   const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
     if (!ndk) return null;
@@ -358,6 +377,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     nostrDevLog("relay", "Relay state initialized as connecting", {
       relayUrls: resolvedDefaultRelays,
     });
+    resolvedDefaultRelays.forEach((relayUrl) => {
+      void probeRelayInfo(relayUrl);
+    });
 
     setNdk(ndkInstance);
 
@@ -438,7 +460,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       ndkInstance.pool.removeAllListeners();
     };
-  }, [defaultRelaysKey, markRelayVerificationSuccess, notifyRelayVerificationEvent, resolvedDefaultRelays]);
+  }, [defaultRelaysKey, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolvedDefaultRelays]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -644,6 +666,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayConnectedOnceRef.current.delete(normalized);
     relayAutoPausedRef.current.delete(normalized);
     nostrDevLog("relay", "Adding relay and initiating connection", { relayUrl: normalized });
+    void probeRelayInfo(normalized);
 
     // Add to relays state
     setRelays((prev) => {
@@ -658,7 +681,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     // Connect via NDK
     const relay = ndk.pool.getRelay(normalized, true);
     relay?.connect();
-  }, [ndk]);
+  }, [ndk, probeRelayInfo]);
 
   const removeRelay = useCallback((url: string) => {
     if (!ndk) return;
