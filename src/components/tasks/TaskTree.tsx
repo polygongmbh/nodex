@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Task, Relay, Channel, ChannelMatchMode, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, Nip99Metadata } from "@/types";
+import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -13,46 +13,16 @@ import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/li
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 
-interface TaskTreeProps {
-  tasks: Task[];
-  allTasks: Task[];
-  relays: Relay[];
-  channels: Channel[];
-  channelMatchMode?: ChannelMatchMode;
-  composeChannels?: Channel[];
-  people: Person[];
-  currentUser?: Person;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onNewTask: (
-    content: string,
-    tags: string[],
-    relays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    parentId?: string,
-    initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ) => Promise<TaskCreateResult> | TaskCreateResult;
+interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
-  focusedTaskId?: string | null;
-  onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
   onSignInClick?: () => void;
-  onHashtagClick?: (tag: string) => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
-  onAuthorClick?: (author: Person) => void;
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
   mentionRequest?: {
     mention: string;
     id: number;

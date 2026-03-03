@@ -3,15 +3,11 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags } from "lucide-react";
 import {
   Task,
-  Relay,
-  Channel,
-  ChannelMatchMode,
-  Person,
   TaskCreateResult,
+  SharedTaskViewContext,
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
-  Nip99Metadata,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -45,46 +41,16 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
-interface ListViewProps {
-  tasks: Task[];
-  allTasks: Task[];
-  relays: Relay[];
-  channels: Channel[];
-  channelMatchMode?: ChannelMatchMode;
-  composeChannels?: Channel[];
-  people: Person[];
-  currentUser?: Person;
-  searchQuery: string;
+interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
-  onSearchChange: (query: string) => void;
-  onNewTask: (
-    content: string,
-    tags: string[],
-    relays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    parentId?: string,
-    initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
   onUpdatePriority?: (taskId: string, priority: number) => void;
-  focusedTaskId?: string | null;
-  onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
-  onHashtagClick?: (tag: string) => void;
-  onAuthorClick?: (author: Person) => void;
   onSignInClick?: () => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
 }

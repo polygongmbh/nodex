@@ -8,6 +8,8 @@ import {
   ChannelMatchMode,
   Person,
   TaskCreateResult,
+  OnNewTask,
+  SharedTaskViewContext,
   TaskDateType,
   Nip99ListingStatus,
   ComposeRestoreRequest,
@@ -51,47 +53,17 @@ function formatCompactRelativeTime(date: Date): string {
   return format(date, "MMM d");
 }
 
-interface FeedViewProps {
-  tasks: Task[];
-  allTasks: Task[];
-  relays: Relay[];
-  channels: Channel[];
-  channelMatchMode?: ChannelMatchMode;
-  composeChannels?: Channel[];
-  people: Person[];
-  currentUser?: Person;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onNewTask: (
-    content: string,
-    tags: string[],
-    relays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    parentId?: string,
-    initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ) => Promise<TaskCreateResult> | TaskCreateResult;
+interface FeedViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   onListingStatusChange?: (taskId: string, status: Nip99ListingStatus) => void;
-  focusedTaskId?: string | null;
-  onFocusTask?: (taskId: string | null) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
   onSignInClick?: () => void;
-  onHashtagClick?: (tag: string) => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
-  onAuthorClick?: (author: Person) => void;
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
   mentionRequest?: {
     mention: string;
     id: number;

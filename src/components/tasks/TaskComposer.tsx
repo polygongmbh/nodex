@@ -23,6 +23,7 @@ import {
   TaskType,
   TaskDateType,
   TaskCreateResult,
+  ComposerSubmit,
   ComposeRestoreRequest,
   ComposeAttachment,
   PublishedAttachment,
@@ -56,19 +57,7 @@ import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 
 interface TaskComposerProps {
-  onSubmit: (
-    content: string,
-    tags: string[],
-    relays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ) => Promise<TaskCreateResult> | TaskCreateResult;
+  onSubmit: ComposerSubmit;
   relays: Relay[];
   channels: Channel[];
   people: Person[];

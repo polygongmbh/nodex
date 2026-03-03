@@ -4,16 +4,12 @@ import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Lock
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import {
   Task,
-  Relay,
-  Channel,
-  ChannelMatchMode,
-  Person,
   TaskCreateResult,
   TaskDateType,
   TaskStatus,
+  SharedTaskViewContext,
   ComposeRestoreRequest,
   PublishedAttachment,
-  Nip99Metadata,
 } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -36,42 +32,13 @@ import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 
-interface KanbanViewProps {
-  tasks: Task[];
-  allTasks: Task[];
-  relays: Relay[];
-  channels: Channel[];
-  channelMatchMode?: ChannelMatchMode;
-  composeChannels?: Channel[];
-  people: Person[];
-  currentUser?: Person;
-  searchQuery: string;
+interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
-  onNewTask: (
-    content: string,
-    tags: string[],
-    relays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    parentId?: string,
-    initialStatus?: TaskStatus,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ) => Promise<TaskCreateResult> | TaskCreateResult;
   onToggleComplete: (taskId: string) => void;
-  focusedTaskId?: string | null;
-  onFocusTask?: (taskId: string | null) => void;
   onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
   onFocusSidebar?: () => void;
-  onHashtagClick?: (tag: string) => void;
-  onAuthorClick?: (author: Person) => void;
   onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
 }
