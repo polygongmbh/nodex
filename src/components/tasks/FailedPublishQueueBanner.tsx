@@ -10,6 +10,7 @@ interface FailedPublishQueueBannerProps {
   onRetry: (draftId: string) => void;
   onRepost?: (draftId: string) => void;
   onDismiss: (draftId: string) => void;
+  onDismissAll?: () => void;
   isMobile?: boolean;
 }
 
@@ -19,6 +20,7 @@ export function FailedPublishQueueBanner({
   onRetry,
   onRepost,
   onDismiss,
+  onDismissAll,
   isMobile = false,
 }: FailedPublishQueueBannerProps) {
   const { t } = useTranslation();
@@ -34,9 +36,22 @@ export function FailedPublishQueueBanner({
   const visibleDrafts = activeDrafts.slice(0, 4);
   return (
     <div className={cn("border-b border-destructive/40 bg-destructive/10", isMobile ? "px-3 py-2" : "px-4 py-2")}>
-      <p className="text-xs font-medium text-destructive">
-        {t("publishQueue.failedCount", { count: activeDrafts.length })}
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-destructive">
+          {t("publishQueue.failedCount", { count: activeDrafts.length })}
+        </p>
+        {onDismissAll && activeDrafts.length > 0 && (
+          <button
+            type="button"
+            onClick={onDismissAll}
+            className="rounded px-2 py-0.5 text-[11px] font-medium text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
+            title={t("publishQueue.dismissAll")}
+            aria-label={t("publishQueue.dismissAll")}
+          >
+            {t("publishQueue.dismissAll")}
+          </button>
+        )}
+      </div>
       {hasScopeToggle && (
         <div className="mt-1 flex items-center gap-1">
           <button

@@ -607,6 +607,7 @@
     "scopeSelected": "Feeds seleccionados",
     "scopeAll": "Todas fallidas",
     "hiddenCount": "{{count}} ocultas",
+    "dismissAll": "Descartar todas",
     "dismiss": "Descartar publicación fallida"
   },
   "relay": {

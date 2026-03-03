@@ -2041,6 +2041,10 @@ const Index = () => {
     setFailedPublishDrafts((prev) => prev.filter((draft) => draft.id !== draftId));
   }, []);
 
+  const handleDismissAllFailedPublish = useCallback(() => {
+    setFailedPublishDrafts([]);
+  }, []);
+
   const handleDueDateChange = useCallback((
     taskId: string,
     dueDate: Date | undefined,
@@ -2250,6 +2254,7 @@ const Index = () => {
           onRetryFailedPublish={handleRetryFailedPublish}
           onRepostFailedPublish={handleRepostFailedPublish}
           onDismissFailedPublish={handleDismissFailedPublish}
+          onDismissAllFailedPublish={handleDismissAllFailedPublish}
           isInteractionBlocked={isInteractionBlocked}
           onInteractionBlocked={handleBlockedInteractionAttempt}
           isOnboardingOpen={isOnboardingOpen && !isAuthModalOpen}
@@ -2331,6 +2336,7 @@ const Index = () => {
           onRetry={handleRetryFailedPublish}
           onRepost={handleRepostFailedPublish}
           onDismiss={handleDismissFailedPublish}
+          onDismissAll={handleDismissAllFailedPublish}
         />
         <div className="min-h-0 flex-1 overflow-hidden">
           {renderView()}

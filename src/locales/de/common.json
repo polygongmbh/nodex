@@ -607,6 +607,7 @@
     "scopeSelected": "Ausgewählte Feeds",
     "scopeAll": "Alle fehlgeschlagenen",
     "hiddenCount": "{{count}} ausgeblendet",
+    "dismissAll": "Alle schließen",
     "dismiss": "Fehlgeschlagenen Beitrag schließen"
   },
   "relay": {
