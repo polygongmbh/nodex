@@ -549,7 +549,8 @@ export function FeedView({
                     <div
                       className={cn(
                         "flex items-center min-w-0 text-muted-foreground mb-1",
-                        isMobile ? "gap-1 text-xs whitespace-nowrap" : "gap-2 text-sm"
+                        isMobile ? "gap-1 text-xs" : "gap-2 text-sm",
+                        "flex-wrap"
                       )}
                     >
                       <button
@@ -616,6 +617,51 @@ export function FeedView({
                           </button>
                         </>
                       )}
+                      {task.dueDate && (
+                        <>
+                          <span className="shrink-0">·</span>
+                          <span className={cn("inline-flex items-center gap-1", dueDateColor)}>
+                            <Calendar className="w-3 h-3" />
+                            <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
+                            <span>{format(task.dueDate, "MMM d, yyyy")}</span>
+                            {task.dueTime && (
+                              <>
+                                <Clock className="w-3 h-3 ml-1" />
+                                <span>{task.dueTime}</span>
+                              </>
+                            )}
+                          </span>
+                        </>
+                      )}
+                      {(hasTaskMentionChips(task) || task.tags.length > 0) && (
+                        <>
+                          <span className="shrink-0">·</span>
+                          <span className="inline-flex flex-wrap items-center gap-1">
+                            <TaskMentionChips
+                              task={task}
+                              people={people}
+                              onPersonClick={onAuthorClick}
+                              inline
+                            />
+                            {task.tags.map((tag) => (
+                              <button
+                                key={tag}
+                                data-onboarding="content-hashtag"
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  onHashtagClick?.(tag);
+                                }}
+                                className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
+                                aria-label={`Filter to #${tag}`}
+                                title={`Filter to #${tag}`}
+                              >
+                                #{tag}
+                              </button>
+                            ))}
+                          </span>
+                        </>
+                      )}
                     </div>
 
                     {/* Clickable content to focus */}
@@ -637,48 +683,6 @@ export function FeedView({
                       attachments={attachmentsWithoutInlineEmbeds}
                       onMediaClick={(url) => openTaskMedia(task.id, url)}
                     />
-
-                    {/* Due date */}
-                    {task.dueDate && (
-                      <div className={cn("flex items-center gap-2 text-xs mt-2", dueDateColor)}>
-                        <Calendar className="w-3 h-3" />
-                        <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-                        <span>{format(task.dueDate, "MMM d, yyyy")}</span>
-                        {task.dueTime && (
-                          <>
-                            <Clock className="w-3 h-3 ml-1" />
-                            <span>{task.dueTime}</span>
-                          </>
-                        )}
-                      </div>
-                    )}
-
-                    {(hasTaskMentionChips(task) || task.tags.length > 0) && (
-                      <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-2")}>
-                        <TaskMentionChips
-                          task={task}
-                          people={people}
-                          onPersonClick={onAuthorClick}
-                          inline
-                        />
-                        {task.tags.map((tag) => (
-                          <button
-                            key={tag}
-                            data-onboarding="content-hashtag"
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onHashtagClick?.(tag);
-                            }}
-                            className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
-                            aria-label={`Filter to #${tag}`}
-                            title={`Filter to #${tag}`}
-                          >
-                            #{tag}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
