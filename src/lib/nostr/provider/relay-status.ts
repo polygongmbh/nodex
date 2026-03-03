@@ -7,10 +7,11 @@ export const RELAY_STATUS_RECONCILE_INTERVAL_MS = 5000;
 export function mapNativeRelayStatus(status: NativeNDKRelayStatus): NDKRelayStatus["status"] {
   switch (status) {
     case NativeNDKRelayStatus.CONNECTED:
-    case NativeNDKRelayStatus.AUTH_REQUESTED:
-    case NativeNDKRelayStatus.AUTHENTICATING:
     case NativeNDKRelayStatus.AUTHENTICATED:
       return "connected";
+    case NativeNDKRelayStatus.AUTH_REQUESTED:
+    case NativeNDKRelayStatus.AUTHENTICATING:
+      return "connecting";
     case NativeNDKRelayStatus.CONNECTING:
     case NativeNDKRelayStatus.RECONNECTING:
     case NativeNDKRelayStatus.FLAPPING:

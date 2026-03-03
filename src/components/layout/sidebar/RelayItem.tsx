@@ -21,7 +21,22 @@ interface RelayItemProps {
 export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = false }: RelayItemProps) {
   const { t } = useTranslation();
   const Icon = iconMap[relay.icon] || Building2;
-  const isConnectionActive = relay.id === "demo" || relay.connectionStatus === "connected" || !relay.connectionStatus;
+  const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
+  const isConnectionActive = resolvedConnectionStatus === "connected";
+  const connectionDotClass = (() => {
+    switch (resolvedConnectionStatus) {
+      case "connecting":
+        return "bg-sky-500";
+      case "verification-failed":
+        return "bg-amber-500";
+      case "connection-error":
+        return "bg-destructive";
+      case "disconnected":
+        return "bg-slate-400";
+      default:
+        return "bg-success";
+    }
+  })();
 
   return (
     <SidebarFilterRow
@@ -75,10 +90,10 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
           <span
             className={cn(
               "inline-block h-1.5 w-1.5 rounded-full",
-              isConnectionActive ? "bg-success" : "bg-warning"
+              connectionDotClass
             )}
-            title={isConnectionActive ? "connected" : relay.connectionStatus || "disconnected"}
-            aria-label={isConnectionActive ? "connected" : relay.connectionStatus || "disconnected"}
+            title={resolvedConnectionStatus}
+            aria-label={resolvedConnectionStatus}
           />
         </span>
       </button>
