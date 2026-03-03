@@ -263,6 +263,7 @@ const Index = () => {
   const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
   const pendingPublishStateRef = useRef<Map<string, { timeoutId: number; toastId: string | number; composeState: ComposeRestoreState }>>(new Map());
   const [pendingPublishTaskIds, setPendingPublishTaskIds] = useState<Set<string>>(new Set());
+  const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
   const [composeRestoreRequest, setComposeRestoreRequest] = useState<ComposeRestoreRequest | null>(null);
   const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<Record<string, TaskStatus>>({});
   const [sortModifiedAtHoldByTaskId, setSortModifiedAtHoldByTaskId] = useState<Record<string, string>>({});
@@ -270,6 +271,7 @@ const Index = () => {
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
     return nostrEvents.filter(event => {
+      if (suppressedNostrEventIds.has(event.id)) return false;
       if (event.kind === NostrEventKind.Metadata) return false;
       if (isTaskStateEventKind(event.kind)) return true;
       if (isPriorityPropertyEvent(event.kind, event.tags)) return true;
@@ -288,7 +290,7 @@ const Index = () => {
       if (isSpamContent(event.content)) return false;
       return true;
     });
-  }, [nostrEvents]);
+  }, [nostrEvents, suppressedNostrEventIds]);
 
   const liveKind0Events = useMemo(
     () =>
@@ -1521,9 +1523,15 @@ const Index = () => {
     toast.info(t("toasts.success.publishUndone"));
   }, [clearPendingPublishTask, t]);
 
-  const removeCachedFailedPublishEvent = useCallback((eventId?: string) => {
+  const suppressFailedPublishEvent = useCallback((eventId?: string) => {
     const normalizedEventId = (eventId || "").trim();
     if (!normalizedEventId) return;
+    setSuppressedNostrEventIds((previous) => {
+      if (previous.has(normalizedEventId)) return previous;
+      const next = new Set(previous);
+      next.add(normalizedEventId);
+      return next;
+    });
     queryClient.setQueryData<CachedNostrEvent[]>(
       NOSTR_EVENTS_QUERY_KEY,
       (previous = []) => previous.filter((event) => event.id !== normalizedEventId)
@@ -1831,7 +1839,7 @@ const Index = () => {
         clearPendingPublishTask(pendingTaskId, { dismissToast: true });
         const publishResult = await publishWithMetadata();
         if (!publishResult.success) {
-          removeCachedFailedPublishEvent(publishResult.eventId);
+          suppressFailedPublishEvent(publishResult.eventId);
           const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
           setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
           setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
@@ -1887,7 +1895,7 @@ const Index = () => {
 
     const publishResult = await publishWithMetadata();
     if (!publishResult.success) {
-      removeCachedFailedPublishEvent(publishResult.eventId);
+      suppressFailedPublishEvent(publishResult.eventId);
       const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
       setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
       notifyPublishSavedForRetry(t);
