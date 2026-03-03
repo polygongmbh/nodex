@@ -41,6 +41,7 @@ interface SharedViewComposerProps {
   defaultContent?: string;
   className?: string;
   allowComment?: boolean;
+  allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
@@ -62,6 +63,7 @@ export function SharedViewComposer({
   defaultContent = "",
   className = "relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0",
   allowComment = true,
+  allowFeedMessageTypes = false,
   composeRestoreRequest = null,
 }: SharedViewComposerProps) {
   if (!visible) return null;
@@ -85,6 +87,7 @@ export function SharedViewComposer({
         mentionRequest={mentionRequest}
         defaultContent={defaultContent}
         allowComment={allowComment}
+        allowFeedMessageTypes={allowFeedMessageTypes}
         composeRestoreRequest={composeRestoreRequest}
       />
     </div>

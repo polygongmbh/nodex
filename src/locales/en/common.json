@@ -9,6 +9,8 @@
     "placeholders": {
       "task": "What needs to be done? Use #tags...",
       "comment": "Add a comment...",
+      "offer": "Post an offer...",
+      "request": "Post a request...",
       "mobileTask": "Search or create task... #tags",
       "mobileComment": "Search or add comment... #tags"
     },
@@ -22,6 +24,8 @@
     "actions": {
       "createTask": "Create Task",
       "addComment": "Add Comment",
+      "postOffer": "Post Offer",
+      "postRequest": "Post Request",
       "signin": "Sign in",
       "sendTask": "Send task",
       "sendComment": "Send comment"
@@ -32,6 +36,8 @@
       "kind": "Kind",
       "task": "Task",
       "comment": "Comment",
+      "offer": "Offer",
+      "request": "Request",
       "mentions": "Mentions",
       "date": "Date",
       "priorityShort": "⚑ Prio"

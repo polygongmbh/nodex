@@ -5,6 +5,7 @@ import {
   Relay,
   Channel,
   Person,
+  FeedMessageType,
   TaskType,
   TaskDateType,
   TaskCreateResult,
@@ -72,12 +73,16 @@ interface TaskComposerProps {
     id: number;
   } | null;
   allowComment?: boolean;
+  allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
+
+type ComposerMessageType = TaskType | FeedMessageType;
 
 interface ComposeDraftState {
   content?: string;
   taskType?: TaskType;
+  messageType?: ComposerMessageType;
   dueDate?: string;
   dueTime?: string;
   dateType?: TaskDateType;
@@ -118,6 +123,7 @@ export function TaskComposer({
   forceExpandSignal,
   mentionRequest = null,
   allowComment = true,
+  allowFeedMessageTypes = false,
   composeRestoreRequest = null,
 }: TaskComposerProps) {
   const { t } = useTranslation();
@@ -134,9 +140,14 @@ export function TaskComposer({
   const initialContent = initialDraft?.content ?? defaultContent;
   
   const [content, setContent] = useState(initialContent);
-  const [taskType, setTaskType] = useState<TaskType>(
-    initialDraft?.taskType === "comment" ? "comment" : "task"
-  );
+  const [taskType, setTaskType] = useState<ComposerMessageType>(() => {
+    const draftMessageType = initialDraft?.messageType;
+    if (draftMessageType === "task" || draftMessageType === "comment") return draftMessageType;
+    if (allowFeedMessageTypes && (draftMessageType === "offer" || draftMessageType === "request")) {
+      return draftMessageType;
+    }
+    return initialDraft?.taskType === "comment" ? "comment" : "task";
+  });
   const [selectedRelays, setSelectedRelays] = useState<string[]>(() => {
     if (initialDraft?.selectedRelays && Array.isArray(initialDraft.selectedRelays)) {
       return initialDraft.selectedRelays.filter((id): id is string => typeof id === "string");
@@ -256,7 +267,7 @@ export function TaskComposer({
   }, [adaptiveSize, forceExpandSignal]);
 
   useEffect(() => {
-    if (!allowComment && taskType === "comment") {
+    if (!allowComment && taskType !== "task") {
       setTaskType("task");
     }
   }, [allowComment, taskType]);
@@ -267,7 +278,18 @@ export function TaskComposer({
     lastAppliedRestoreRequestIdRef.current = composeRestoreRequest.id;
     const restoreState = composeRestoreRequest.state;
     setContent(restoreState.content || "");
-    setTaskType(allowComment && restoreState.taskType === "comment" ? "comment" : "task");
+    const requestedMessageType = restoreState.messageType;
+    const restoredTaskType = allowComment && restoreState.taskType === "comment" ? "comment" : "task";
+    if (!allowComment) {
+      setTaskType("task");
+    } else if (
+      allowFeedMessageTypes &&
+      (requestedMessageType === "offer" || requestedMessageType === "request")
+    ) {
+      setTaskType(requestedMessageType);
+    } else {
+      setTaskType(restoredTaskType);
+    }
     setDueDate(restoreState.dueDate);
     setDueTime(restoreState.dueTime || "");
     setDateType(restoreState.dateType || "due");
@@ -304,7 +326,7 @@ export function TaskComposer({
       const end = textarea.value.length;
       textarea.setSelectionRange(end, end);
     });
-  }, [adaptiveSize, allowComment, composeRestoreRequest]);
+  }, [adaptiveSize, allowComment, allowFeedMessageTypes, composeRestoreRequest]);
 
   useEffect(() => {
     if (!draftStorageKey) return;
@@ -314,6 +336,7 @@ export function TaskComposer({
         JSON.stringify({
           content,
           taskType,
+          messageType: taskType,
           dueDate: dueDate ? dueDate.toISOString() : undefined,
           dueTime,
           dateType,
@@ -563,8 +586,12 @@ export function TaskComposer({
     prevSelectedPeoplePubkeysRef.current = [...selectedPeoplePubkeys];
   }, [selectedPeoplePubkeys]);
 
-  const resolveSubmitType = (value: unknown): TaskType => {
-    if (value === "task" || value === "comment") {
+  const resolveSubmitType = (value: unknown): ComposerMessageType => {
+    if (
+      value === "task" ||
+      value === "comment" ||
+      (allowFeedMessageTypes && (value === "offer" || value === "request"))
+    ) {
       return value;
     }
     return taskType;
@@ -834,7 +861,7 @@ export function TaskComposer({
 
     if (isAlternateSubmitKey(e) && !showHashtagSuggestions && !showMentionSuggestions) {
       e.preventDefault();
-      const alternateType: TaskType = allowComment
+      const alternateType: ComposerMessageType = allowComment
         ? taskType === "task"
           ? "comment"
           : "task"
@@ -1032,8 +1059,24 @@ export function TaskComposer({
               setIsExpanded(true);
             }
           }}
-          placeholder={taskType === "task" ? t("composer.placeholders.task") : t("composer.placeholders.comment")}
-          aria-label={taskType === "task" ? t("composer.placeholders.task") : t("composer.placeholders.comment")}
+          aria-label={
+            taskType === "task"
+              ? t("composer.placeholders.task")
+              : taskType === "offer"
+                ? t("composer.placeholders.offer")
+                : taskType === "request"
+                  ? t("composer.placeholders.request")
+                  : t("composer.placeholders.comment")
+          }
+          placeholder={
+            taskType === "task"
+              ? t("composer.placeholders.task")
+              : taskType === "offer"
+                ? t("composer.placeholders.offer")
+                : taskType === "request"
+                  ? t("composer.placeholders.request")
+                  : t("composer.placeholders.comment")
+          }
           title={t("composer.hints.composeField")}
           className={cn(
             "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
@@ -1473,11 +1516,13 @@ export function TaskComposer({
                 <select
                   aria-label={t("composer.labels.kind")}
                   value={taskType}
-                  onChange={(event) => setTaskType(event.target.value as TaskType)}
+                  onChange={(event) => setTaskType(event.target.value as ComposerMessageType)}
                   className="sr-only"
                 >
                   <option value="task">{t("composer.labels.task")}</option>
                   <option value="comment">{t("composer.labels.comment")}</option>
+                  {allowFeedMessageTypes && <option value="offer">{t("composer.labels.offer")}</option>}
+                  {allowFeedMessageTypes && <option value="request">{t("composer.labels.request")}</option>}
                 </select>
                 <button
                   type="button"
@@ -1507,15 +1552,57 @@ export function TaskComposer({
                   <MessageSquare className="w-3.5 h-3.5" />
                   <span>{t("composer.labels.comment")}</span>
                 </button>
+                {allowFeedMessageTypes && (
+                  <button
+                    type="button"
+                    onClick={() => setTaskType("offer")}
+                    aria-label={t("composer.labels.offer")}
+                    className={cn(
+                      "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                      taskType === "offer"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>{t("composer.labels.offer")}</span>
+                  </button>
+                )}
+                {allowFeedMessageTypes && (
+                  <button
+                    type="button"
+                    onClick={() => setTaskType("request")}
+                    aria-label={t("composer.labels.request")}
+                    className={cn(
+                      "h-8 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+                      taskType === "request"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>{t("composer.labels.request")}</span>
+                  </button>
+                )}
               </div>
             )}
+            {(() => {
+              const submitActionLabel =
+                taskType === "task"
+                  ? t("composer.actions.createTask")
+                  : taskType === "offer"
+                    ? t("composer.actions.postOffer")
+                    : taskType === "request"
+                      ? t("composer.actions.postRequest")
+                      : t("composer.actions.addComment");
+              return (
             <button
               onClick={() => {
                 void handleSubmit();
               }}
               disabled={Boolean(submitBlockedReason)}
-              aria-label={taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
-              title={taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
+              aria-label={submitActionLabel}
+              title={submitActionLabel}
               className={cn(
                 "px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2",
                 isSendLaunching && "motion-send-launch"
@@ -1525,8 +1612,10 @@ export function TaskComposer({
                 <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               )}
               {taskType === "task" ? <CheckSquare className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
-              {taskType === "task" ? t("composer.actions.createTask") : t("composer.actions.addComment")}
+              {submitActionLabel}
             </button>
+              );
+            })()}
           </div>
         </div>
       </div>

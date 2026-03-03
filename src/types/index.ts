@@ -69,6 +69,7 @@ export interface ComposeAttachment extends PublishedAttachment {
 export interface ComposeRestoreState {
   content: string;
   taskType: TaskType;
+  messageType?: TaskType | FeedMessageType;
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;

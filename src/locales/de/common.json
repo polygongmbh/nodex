@@ -9,6 +9,8 @@
     "placeholders": {
       "task": "Was muss erledigt werden? Nutze #tags...",
       "comment": "Kommentar hinzufügen...",
+      "offer": "Angebot posten...",
+      "request": "Gesuch posten...",
       "mobileTask": "Suchen oder Aufgabe erstellen... #tags",
       "mobileComment": "Suchen oder Kommentar hinzufügen... #tags"
     },
@@ -22,6 +24,8 @@
     "actions": {
       "createTask": "Aufgabe erstellen",
       "addComment": "Kommentar hinzufügen",
+      "postOffer": "Angebot posten",
+      "postRequest": "Gesuch posten",
       "signin": "Anmelden",
       "sendTask": "Aufgabe senden",
       "sendComment": "Kommentar senden"
@@ -32,6 +36,8 @@
       "kind": "Typ",
       "task": "Aufgabe",
       "comment": "Kommentar",
+      "offer": "Angebot",
+      "request": "Gesuch",
       "mentions": "Erwähnungen",
       "date": "Datum",
       "priorityShort": "⚑ Prio"
