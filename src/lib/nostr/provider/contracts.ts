@@ -20,7 +20,7 @@ export interface NostrUser {
 
 export interface NDKRelayStatus {
   url: string;
-  status: "connected" | "connecting" | "disconnected" | "error";
+  status: "connected" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   latency?: number;
 }
 

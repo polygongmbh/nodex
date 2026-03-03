@@ -39,4 +39,21 @@ describe("RelayManagement", () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
     expect(vi.mocked(toast.success)).toHaveBeenCalled();
   });
+
+  it("shows distinct labels for connection issues and verification failures", () => {
+    render(
+      <RelayManagement
+        relays={[
+          { url: "wss://relay.one", status: "connection-error" },
+          { url: "wss://relay.two", status: "verification-failed" },
+        ]}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    expect(screen.getByText("connection issue")).toBeInTheDocument();
+    expect(screen.getByText("verification failed")).toBeInTheDocument();
+  });
 });

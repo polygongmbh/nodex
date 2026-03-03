@@ -12,7 +12,8 @@
       "offer": "Angebot posten...",
       "request": "Gesuch posten...",
       "mobileTask": "Suchen oder Aufgabe erstellen... #tags",
-      "mobileComment": "Suchen oder Kommentar hinzufügen... #tags"
+      "mobileComment": "Suchen oder Kommentar hinzufügen... #tags",
+      "geohash": "Geohash eingeben (z. B. u4pruyd)"
     },
     "blocked": {
       "signin": "Anmeldung erforderlich",
@@ -28,7 +29,10 @@
       "postRequest": "Gesuch posten",
       "signin": "Anmelden",
       "sendTask": "Aufgabe senden",
-      "sendComment": "Kommentar senden"
+      "sendComment": "Kommentar senden",
+      "useCurrentLocation": "Aktuellen Standort verwenden",
+      "clearLocation": "Standort entfernen",
+      "location": "Standort"
     },
     "labels": {
       "dateType": "Datumstyp",
@@ -87,7 +91,12 @@
       "taskCreationFailed": "Aufgabe konnte nicht erstellt werden. Bitte versuche es erneut.",
       "publishSavedForRetry": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert",
       "retryRelayMissing": "Erneuter Versuch fehlgeschlagen: Feed ist nicht mehr konfiguriert",
-      "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Feed nicht akzeptiert"
+      "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Feed nicht akzeptiert",
+      "locationUnavailable": "Standortdienste sind auf diesem Gerät nicht verfügbar",
+      "locationCaptureFailed": "Aktueller Standort konnte nicht ermittelt werden",
+      "relayVerificationReadFailed": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
+      "relayVerificationWriteFailed": "Relay-Verifizierung fürs Veröffentlichen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
+      "relayVerificationUnknownFailed": "Relay-Verifizierung auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen."
     },
     "success": {
       "publishedTask": "Aufgabe an Nostr veröffentlicht und lokal hinzugefügt",
@@ -109,7 +118,11 @@
       "showingOnlyAuthorAndTagging": "Nur {{authorName}} wird angezeigt und {{mention}} wird getaggt",
       "noFrequentPeople": "Keine häufigen Personen zum Auswählen",
       "frequentPeopleSelected": "Häufige Personen ausgewählt",
-      "frequentPeopleDeselected": "Häufige Personen abgewählt"
+      "frequentPeopleDeselected": "Häufige Personen abgewählt",
+      "locationCaptured": "Standort auf {{geohash}} gesetzt",
+      "relayVerificationRead": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} erfolgreich",
+      "relayVerificationWrite": "Relay-Verifizierung fürs Veröffentlichen auf {{relayUrl}} erfolgreich",
+      "relayVerificationUnknown": "Relay-Verifizierung auf {{relayUrl}} erfolgreich"
     },
     "info": {
       "pendingPublish": "Wird in {{seconds}} Sekunden gesendet"
@@ -598,7 +611,11 @@
     "noneConfigured": "Keine Relays konfiguriert",
     "connectedSummary": "{{connectedCount}} von {{totalCount}} Relays verbunden",
     "debugTitle": "Debug-Werkzeuge",
-    "debugSummary": "verbunden {{connected}} · verbindet {{connecting}} · getrennt {{disconnected}} · Fehler {{error}}",
+    "debugSummary": "verbunden {{connected}} · verbindet {{connecting}} · getrennt {{disconnected}} · Verbindung {{connectionError}} · Verifizierung {{verificationFailed}}",
+    "status": {
+      "connectionError": "Verbindungsproblem",
+      "verificationFailed": "Verifizierung fehlgeschlagen"
+    },
     "copyDebug": "Diagnose kopieren",
     "copyUrls": "Relay-URLs kopieren",
     "debugCopied": "Relay-Diagnose kopiert",

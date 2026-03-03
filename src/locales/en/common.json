@@ -12,7 +12,8 @@
       "offer": "Post an offer...",
       "request": "Post a request...",
       "mobileTask": "Search or create task... #tags",
-      "mobileComment": "Search or add comment... #tags"
+      "mobileComment": "Search or add comment... #tags",
+      "geohash": "Enter geohash (e.g. u4pruyd)"
     },
     "blocked": {
       "signin": "Sign in required",
@@ -28,7 +29,10 @@
       "postRequest": "Post Request",
       "signin": "Sign in",
       "sendTask": "Send task",
-      "sendComment": "Send comment"
+      "sendComment": "Send comment",
+      "useCurrentLocation": "Use current location",
+      "clearLocation": "Clear location",
+      "location": "Location"
     },
     "labels": {
       "dateType": "Date type",
@@ -87,7 +91,12 @@
       "taskCreationFailed": "Task creation failed. Please try again.",
       "publishSavedForRetry": "Failed to publish to Nostr; saved for retry",
       "retryRelayMissing": "Retry failed: feed is no longer configured",
-      "retryRejectedByRelay": "Retry failed: publish was not accepted by feed"
+      "retryRejectedByRelay": "Retry failed: publish was not accepted by feed",
+      "locationUnavailable": "Location services are unavailable on this device",
+      "locationCaptureFailed": "Unable to capture your current location",
+      "relayVerificationReadFailed": "Relay verification failed for reading on {{relayUrl}}. Check signer access and relay permissions.",
+      "relayVerificationWriteFailed": "Relay verification failed for publishing on {{relayUrl}}. Check signer access and relay permissions.",
+      "relayVerificationUnknownFailed": "Relay verification failed on {{relayUrl}}. Check signer access and relay permissions."
     },
     "success": {
       "publishedTask": "Task published to Nostr and added locally",
@@ -109,7 +118,11 @@
       "showingOnlyAuthorAndTagging": "Showing only {{authorName}} and tagging {{mention}}",
       "noFrequentPeople": "No frequent people to select",
       "frequentPeopleSelected": "Frequent people selected",
-      "frequentPeopleDeselected": "Frequent people deselected"
+      "frequentPeopleDeselected": "Frequent people deselected",
+      "locationCaptured": "Location set to {{geohash}}",
+      "relayVerificationRead": "Relay verification succeeded for reading on {{relayUrl}}",
+      "relayVerificationWrite": "Relay verification succeeded for publishing on {{relayUrl}}",
+      "relayVerificationUnknown": "Relay verification succeeded on {{relayUrl}}"
     },
     "info": {
       "pendingPublish": "Sending in {{seconds}} seconds"
@@ -598,7 +611,11 @@
     "noneConfigured": "No relays configured",
     "connectedSummary": "{{connectedCount}} of {{totalCount}} relays connected",
     "debugTitle": "Debug utilities",
-    "debugSummary": "connected {{connected}} · connecting {{connecting}} · disconnected {{disconnected}} · error {{error}}",
+    "debugSummary": "connected {{connected}} · connecting {{connecting}} · disconnected {{disconnected}} · connection {{connectionError}} · verification {{verificationFailed}}",
+    "status": {
+      "connectionError": "connection issue",
+      "verificationFailed": "verification failed"
+    },
     "copyDebug": "Copy diagnostics",
     "copyUrls": "Copy relay URLs",
     "debugCopied": "Relay diagnostics copied",

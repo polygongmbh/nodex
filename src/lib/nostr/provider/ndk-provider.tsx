@@ -40,11 +40,15 @@ import {
   RELAY_STATUS_RECONCILE_INTERVAL_MS,
 } from "./relay-status";
 import { verifyNip05 } from "../nip05-verify";
-import { createRelayNip42AuthPolicy } from "../nip42-relay-auth-policy";
+import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "../nip42-relay-auth-policy";
 import { createNip98AuthHeader } from "../nip98-http-auth";
+import i18n from "@/lib/i18n/config";
+import { toast } from "sonner";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
+const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
+type RelayOperation = "read" | "write" | "unknown";
 
 export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const defaultRelaysKey = useMemo(() => (defaultRelays || []).join(","), [defaultRelays]);
@@ -64,6 +68,103 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayInitialFailureCountsRef = useRef<Map<string, number>>(new Map());
   const relayConnectedOnceRef = useRef<Set<string>>(new Set());
   const relayAutoPausedRef = useRef<Set<string>>(new Set());
+  const relayVerificationReadOpsRef = useRef(0);
+  const relayVerificationWriteOpsRef = useRef(0);
+  const relayVerificationToastHistoryRef = useRef<Map<string, number>>(new Map());
+
+  const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
+    const hasRead = relayVerificationReadOpsRef.current > 0;
+    const hasWrite = relayVerificationWriteOpsRef.current > 0;
+    if (hasRead && hasWrite) return "unknown";
+    if (hasWrite) return "write";
+    if (hasRead) return "read";
+    return "unknown";
+  }, []);
+
+  const beginRelayOperation = useCallback((operation: Exclude<RelayOperation, "unknown">) => {
+    if (operation === "read") {
+      relayVerificationReadOpsRef.current += 1;
+      return;
+    }
+    relayVerificationWriteOpsRef.current += 1;
+  }, []);
+
+  const endRelayOperation = useCallback((operation: Exclude<RelayOperation, "unknown">) => {
+    if (operation === "read") {
+      relayVerificationReadOpsRef.current = Math.max(0, relayVerificationReadOpsRef.current - 1);
+      return;
+    }
+    relayVerificationWriteOpsRef.current = Math.max(0, relayVerificationWriteOpsRef.current - 1);
+  }, []);
+
+  const shouldShowRelayVerificationToast = useCallback((
+    relayUrl: string,
+    operation: RelayOperation,
+    outcome: RelayVerificationEvent["outcome"]
+  ): boolean => {
+    const now = Date.now();
+    const key = `${relayUrl}|${operation}|${outcome}`;
+    const previousShownAt = relayVerificationToastHistoryRef.current.get(key) ?? 0;
+    if (now - previousShownAt < RELAY_VERIFICATION_TOAST_DEDUPE_MS) {
+      return false;
+    }
+    relayVerificationToastHistoryRef.current.set(key, now);
+    return true;
+  }, []);
+
+  const notifyRelayVerificationEvent = useCallback((incoming: RelayVerificationEvent) => {
+    const operation = incoming.operation === "unknown"
+      ? resolveRelayVerificationOperation()
+      : incoming.operation;
+    const event = { ...incoming, operation };
+
+    nostrDevLog("relay", "Relay verification event", event);
+
+    if (event.outcome === "required") {
+      return;
+    }
+    if (event.outcome === "failed") {
+      const normalizedRelayUrl = event.relayUrl.replace(/\/+$/, "");
+      setRelays((previous) =>
+        previous.map((relay) => {
+          if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
+          if (relay.status === "connection-error") return relay;
+          return { ...relay, status: "verification-failed" };
+        })
+      );
+    } else if (event.outcome === "verified") {
+      const normalizedRelayUrl = event.relayUrl.replace(/\/+$/, "");
+      setRelays((previous) =>
+        previous.map((relay) =>
+          relay.url.replace(/\/+$/, "") === normalizedRelayUrl && relay.status === "verification-failed"
+            ? { ...relay, status: "connected" }
+            : relay
+        )
+      );
+    }
+    if (!shouldShowRelayVerificationToast(event.relayUrl, event.operation, event.outcome)) {
+      return;
+    }
+
+    if (event.outcome === "verified") {
+      if (event.operation === "read") {
+        toast.success(i18n.t("toasts.success.relayVerificationRead", { relayUrl: event.relayUrl }));
+      } else if (event.operation === "write") {
+        toast.success(i18n.t("toasts.success.relayVerificationWrite", { relayUrl: event.relayUrl }));
+      } else {
+        toast.success(i18n.t("toasts.success.relayVerificationUnknown", { relayUrl: event.relayUrl }));
+      }
+      return;
+    }
+
+    if (event.operation === "read") {
+      toast.error(i18n.t("toasts.errors.relayVerificationReadFailed", { relayUrl: event.relayUrl }));
+    } else if (event.operation === "write") {
+      toast.error(i18n.t("toasts.errors.relayVerificationWriteFailed", { relayUrl: event.relayUrl }));
+    } else {
+      toast.error(i18n.t("toasts.errors.relayVerificationUnknownFailed", { relayUrl: event.relayUrl }));
+    }
+  }, [resolveRelayVerificationOperation, shouldShowRelayVerificationToast]);
 
   const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
     if (!ndk) return null;
@@ -75,6 +176,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       const finish = () => {
         if (settled) return;
         settled = true;
+        endRelayOperation("read");
         subscription.stop();
         if (candidates.length === 0) {
           resolve(null);
@@ -90,6 +192,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         });
       };
 
+      beginRelayOperation("read");
       const subscription = ndk.subscribe(
         [{ kinds: [NostrEventKind.Metadata], authors: [pubkey] }],
         { closeOnEose: true }
@@ -105,7 +208,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       // Fallback so the UI does not hang if eose never arrives.
       setTimeout(finish, 12000);
     });
-  }, [ndk]);
+  }, [beginRelayOperation, endRelayOperation, ndk]);
 
   const userProfileSnapshot = useMemo<NostrUser["profile"] | null>(() => {
     if (!user?.profile) return null;
@@ -130,7 +233,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       explicitRelayUrls: resolvedDefaultRelays,
     });
 
-    ndkInstance.relayAuthDefaultPolicy = createRelayNip42AuthPolicy(ndkInstance);
+    ndkInstance.relayAuthDefaultPolicy = createRelayNip42AuthPolicy(ndkInstance, notifyRelayVerificationEvent);
 
     // Set up relay event handlers
     const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
@@ -139,13 +242,17 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         const nextByUrl = new Map(prev.map((entry) => [normalizeUrl(entry.url), entry]));
         ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
           const normalized = normalizeUrl(relay.url);
+          const previousStatus = nextByUrl.get(normalized)?.status;
           if (relayAutoPausedRef.current.has(normalized)) {
-            nextByUrl.set(normalized, { url: normalized, status: "error" });
+            nextByUrl.set(normalized, { url: normalized, status: "connection-error" });
             return;
           }
+          const mappedStatus = mapNativeRelayStatus(relay.status);
           nextByUrl.set(normalized, {
             url: normalized,
-            status: mapNativeRelayStatus(relay.status),
+            status: previousStatus === "verification-failed" && mappedStatus === "connected"
+              ? "verification-failed"
+              : mappedStatus,
           });
         });
         return Array.from(nextByUrl.values());
@@ -201,7 +308,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       relayAutoPausedRef.current.add(normalized);
       setRelays((prev) =>
         prev.map((entry) =>
-          normalizeUrl(entry.url) === normalized ? { ...entry, status: "error" } : entry
+          normalizeUrl(entry.url) === normalized ? { ...entry, status: "connection-error" } : entry
         )
       );
       console.warn("Relay auto-paused after repeated failed connection attempts", {
@@ -298,7 +405,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       ndkInstance.pool.removeAllListeners();
     };
-  }, [defaultRelaysKey, resolvedDefaultRelays]);
+  }, [defaultRelaysKey, notifyRelayVerificationEvent, resolvedDefaultRelays]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -554,6 +661,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
 
     try {
+      beginRelayOperation("write");
       const event = new NDKEvent(ndk);
       event.kind = kind;
       event.content = content;
@@ -613,8 +721,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } catch (error) {
       console.error("Failed to publish event:", error);
       return { success: false };
+    } finally {
+      endRelayOperation("write");
     }
-  }, [ndk, relays, resolvedDefaultRelays]);
+  }, [beginRelayOperation, endRelayOperation, ndk, relays, resolvedDefaultRelays]);
 
   const createHttpAuthHeader = useCallback(async (
     url: string,
@@ -768,14 +878,23 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       filters,
     });
 
+    beginRelayOperation("read");
     const subscription = ndk.subscribe(filters, { closeOnEose: false });
     
     subscription.on("event", (event: NDKEvent) => {
       onEvent(event);
     });
+    let finished = false;
+    const finishRead = () => {
+      if (finished) return;
+      finished = true;
+      endRelayOperation("read");
+    };
+    subscription.on("eose", finishRead);
+    subscription.on("close", finishRead);
 
     return subscription;
-  }, [ndk]);
+  }, [beginRelayOperation, endRelayOperation, ndk]);
 
   const isConnected = useMemo(() => {
     return relays.some((r) => r.status === "connected");
