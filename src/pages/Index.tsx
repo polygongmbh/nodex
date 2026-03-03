@@ -93,7 +93,8 @@ import {
   isNavigationFocusStep,
   shouldForceFeedAndResetFiltersOnStep,
 } from "@/lib/onboarding-step-rules";
-import { getPreferredMentionIdentifier, resolveMentionedPubkeys } from "@/lib/mentions";
+import { getPreferredMentionIdentifier, resolveMentionedPubkeysAsync } from "@/lib/mentions";
+import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import {
   mapPeopleSelection,
   shouldToggleOffExclusiveChannel,
@@ -1202,8 +1203,10 @@ const Index = () => {
     };
   }, []);
 
-  const resolveMentionPubkeys = useCallback((content: string): string[] => {
-    return resolveMentionedPubkeys(content, people);
+  const resolveMentionPubkeys = useCallback(async (content: string): Promise<string[]> => {
+    return resolveMentionedPubkeysAsync(content, people, {
+      resolveNip05: resolveNip05Identifier,
+    });
   }, [people]);
 
   const resolveRelayUrlsFromIds = useCallback((relayIds: string[]) => {
@@ -1630,8 +1633,9 @@ const Index = () => {
           .filter((pubkey) => /^[a-f0-9]{64}$/i.test(pubkey))
       )
     );
+    const resolvedMentionPubkeys = await resolveMentionPubkeys(content);
     const mentionPubkeys = Array.from(
-      new Set([...resolveMentionPubkeys(content), ...dedupedExplicitMentionPubkeys])
+      new Set([...resolvedMentionPubkeys, ...dedupedExplicitMentionPubkeys])
     );
     const defaultAuthorAssignee =
       normalizedTaskType === "task" && /^[a-f0-9]{64}$/i.test(user.pubkey)

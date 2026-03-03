@@ -6,6 +6,7 @@ import {
   getPreferredMentionIdentifier,
   personMatchesMentionQuery,
   resolveMentionedPubkeys,
+  resolveMentionedPubkeysAsync,
 } from "./mentions";
 
 const alice: Person = {
@@ -50,6 +51,19 @@ describe("mentions", () => {
       [alice, bob]
     );
     expect(resolved).toEqual([pubkeyMention, "a".repeat(64), "b".repeat(64)]);
+  });
+
+  it("resolves unresolved NIP-05 mentions via async lookup", async () => {
+    const resolved = await resolveMentionedPubkeysAsync(
+      "@carol@example.com @bob",
+      [bob],
+      {
+        resolveNip05: async (identifier) =>
+          identifier === "carol@example.com" ? "c".repeat(64) : null,
+      }
+    );
+
+    expect(resolved).toEqual(["b".repeat(64), "c".repeat(64)]);
   });
 
   it("truncates pubkey-like identifiers for compact display", () => {
