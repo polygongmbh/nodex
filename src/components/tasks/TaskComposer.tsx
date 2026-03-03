@@ -100,6 +100,7 @@ interface ComposeDraftState {
 
 const NIP99_TITLE_MAX_LENGTH = 80;
 const NIP99_SUMMARY_MAX_LENGTH = 160;
+const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
 
 function normalizeListingTextFromContent(content: string): string {
   return content
@@ -1547,13 +1548,19 @@ export function TaskComposer({
             className="h-8 w-20 rounded-md border border-border/50 bg-background px-2 text-xs"
           />
           <input
-            value={nip99.currency || "USD"}
+            value={nip99.currency || "EUR"}
             onChange={(event) => updateNip99({ currency: event.target.value.toUpperCase() })}
             placeholder="Currency"
             aria-label="Currency"
+            list="nip99-currency-suggestions"
             className="h-8 w-20 rounded-md border border-border/50 bg-background px-2 text-xs"
             maxLength={8}
           />
+          <datalist id="nip99-currency-suggestions">
+            {COMMON_NIP99_CURRENCY_CODES.map((code) => (
+              <option key={code} value={code} />
+            ))}
+          </datalist>
           <select
             value={nip99.frequency || ""}
             onChange={(event) => updateNip99({ frequency: event.target.value || undefined })}

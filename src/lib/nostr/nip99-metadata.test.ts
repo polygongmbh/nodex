@@ -49,4 +49,19 @@ describe("nip99 metadata normalization", () => {
     expect(tags).toContainEqual(["currency", "USD"]);
     expect(tags).toContainEqual(["frequency", "month"]);
   });
+
+  it("defaults price currency to EUR when omitted", () => {
+    const tags = buildNip99PublishTags({
+      feedMessageType: "offer",
+      hashtags: [],
+      mentionPubkeys: [],
+      metadata: {
+        identifier: "listing-3",
+        title: "Desk lamp",
+        price: "30",
+      },
+    });
+
+    expect(tags).toContainEqual(["price", "30", "EUR", ""]);
+  });
 });

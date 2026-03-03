@@ -181,6 +181,25 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("defaults currency field to EUR with currency autocomplete suggestions", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        allowFeedMessageTypes
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Offer" }));
+    const currencyInput = screen.getByLabelText("Currency");
+    expect(currencyInput).toHaveValue("EUR");
+    expect(currencyInput).toHaveAttribute("list", "nip99-currency-suggestions");
+    expect(screen.getByDisplayValue("EUR")).toBeInTheDocument();
+  });
+
   it("autofills listing title from content and strips tags by default", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     render(
