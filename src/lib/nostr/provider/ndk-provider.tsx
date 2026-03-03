@@ -42,7 +42,11 @@ import {
 import { verifyNip05 } from "../nip05-verify";
 import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "../nip42-relay-auth-policy";
 import { createNip98AuthHeader } from "../nip98-http-auth";
-import { isAuthRequiredCloseReason, shouldSetVerificationFailedStatus } from "./relay-verification";
+import {
+  isAuthRequiredCloseReason,
+  shouldRetryAuthAfterReadRejection,
+  shouldSetVerificationFailedStatus,
+} from "./relay-verification";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
@@ -73,6 +77,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayVerificationWriteOpsRef = useRef(0);
   const relayVerificationToastHistoryRef = useRef<Map<string, number>>(new Map());
   const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
+  const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
 
   const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
     const hasRead = relayVerificationReadOpsRef.current > 0;
@@ -354,16 +359,6 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       relayUrls: resolvedDefaultRelays,
     });
 
-    // Connect
-    ndkInstance.connect().then(() => {
-      nostrDevLog("provider", "NDK connected to relay pool");
-      syncRelayStatusesFromPool();
-    });
-    const reconcileIntervalId = window.setInterval(
-      syncRelayStatusesFromPool,
-      RELAY_STATUS_RECONCILE_INTERVAL_MS
-    );
-
     setNdk(ndkInstance);
 
     // Try to restore session
@@ -425,6 +420,16 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         });
       }
     }
+
+    // Connect after signer restore attempt so NIP-42 can authenticate immediately when possible.
+    ndkInstance.connect().then(() => {
+      nostrDevLog("provider", "NDK connected to relay pool");
+      syncRelayStatusesFromPool();
+    });
+    const reconcileIntervalId = window.setInterval(
+      syncRelayStatusesFromPool,
+      RELAY_STATUS_RECONCILE_INTERVAL_MS
+    );
 
     return () => {
       window.clearInterval(reconcileIntervalId);
@@ -920,6 +925,21 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         relayUrl: relay.url,
         reason,
       });
+      const normalizedRelayUrl = relay.url.replace(/\/+$/, "");
+      const shouldRetry = shouldRetryAuthAfterReadRejection({
+        hasSigner: Boolean(ndk.signer),
+        hadPendingAuthChallenge: pendingRelayVerificationRef.current.has(normalizedRelayUrl),
+        lastRetryAt: relayAuthRetryHistoryRef.current.get(normalizedRelayUrl),
+        now: Date.now(),
+      });
+      if (shouldRetry) {
+        relayAuthRetryHistoryRef.current.set(normalizedRelayUrl, Date.now());
+        nostrDevLog("relay", "Retrying relay connection to trigger NIP-42 auth challenge", {
+          relayUrl: normalizedRelayUrl,
+        });
+        relay.disconnect();
+        relay.connect();
+      }
       markRelayVerificationFailure(relay.url, "read", {
         setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),
       });
