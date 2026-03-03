@@ -1,5 +1,18 @@
 import { useState, useRef, useEffect } from "react";
-import { Hash, Calendar, Clock, X, AtSign, Flag, CheckSquare, MessageSquare, LogIn, Paperclip } from "lucide-react";
+import {
+  Hash,
+  Calendar,
+  Clock,
+  X,
+  AtSign,
+  Flag,
+  CheckSquare,
+  MessageSquare,
+  Package,
+  HandHelping,
+  LogIn,
+  Paperclip,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -1564,7 +1577,7 @@ export function TaskComposer({
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <MessageSquare className="w-3.5 h-3.5" />
+                    <Package className="w-3.5 h-3.5" />
                     <span>{t("composer.labels.offer")}</span>
                   </button>
                 )}
@@ -1580,7 +1593,7 @@ export function TaskComposer({
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    <MessageSquare className="w-3.5 h-3.5" />
+                    <HandHelping className="w-3.5 h-3.5" />
                     <span>{t("composer.labels.request")}</span>
                   </button>
                 )}
@@ -1595,6 +1608,14 @@ export function TaskComposer({
                     : taskType === "request"
                       ? t("composer.actions.postRequest")
                       : t("composer.actions.addComment");
+              const submitActionIcon =
+                taskType === "task"
+                  ? <CheckSquare className="w-4 h-4" />
+                  : taskType === "offer"
+                    ? <Package className="w-4 h-4" />
+                    : taskType === "request"
+                      ? <HandHelping className="w-4 h-4" />
+                      : <MessageSquare className="w-4 h-4" />;
               return (
             <button
               onClick={() => {
@@ -1611,7 +1632,7 @@ export function TaskComposer({
               {isPublishing && (
                 <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               )}
-              {taskType === "task" ? <CheckSquare className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+              {submitActionIcon}
               {submitActionLabel}
             </button>
               );

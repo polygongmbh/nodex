@@ -1,6 +1,6 @@
 import { useEffect, useRef, useMemo, useState } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Circle, CircleDot, CheckCircle2, MessageSquare, Calendar, Clock } from "lucide-react";
+import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import {
   Task,
   Relay,
@@ -515,7 +515,13 @@ export function FeedView({
                       )}
                     </DropdownMenu>
                   ) : (
-                    <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                    task.feedMessageType === "offer" ? (
+                      <Package className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                    ) : task.feedMessageType === "request" ? (
+                      <HandHelping className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                    ) : (
+                      <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                    )
                   )}
 
                   {/* Avatar */}
