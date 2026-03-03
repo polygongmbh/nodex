@@ -45,7 +45,8 @@ export function RelayManagement({
   const connectedCount = relays.filter((r) => r.status === "connected").length;
   const connectingCount = relays.filter((r) => r.status === "connecting").length;
   const disconnectedCount = relays.filter((r) => r.status === "disconnected").length;
-  const errorCount = relays.filter((r) => r.status === "error").length;
+  const connectionErrorCount = relays.filter((r) => r.status === "connection-error").length;
+  const verificationFailedCount = relays.filter((r) => r.status === "verification-failed").length;
   const relayUrls = useMemo(() => relays.map((relay) => relay.url).join("\n"), [relays]);
   const relayDiagnostics = useMemo(() => JSON.stringify({
     generatedAt: new Date().toISOString(),
@@ -54,10 +55,11 @@ export function RelayManagement({
       connected: connectedCount,
       connecting: connectingCount,
       disconnected: disconnectedCount,
-      error: errorCount,
+      connectionError: connectionErrorCount,
+      verificationFailed: verificationFailedCount,
     },
     relays,
-  }, null, 2), [connectedCount, connectingCount, disconnectedCount, errorCount, relays]);
+  }, null, 2), [connectedCount, connectingCount, connectionErrorCount, disconnectedCount, relays, verificationFailedCount]);
 
   const copyText = async (value: string, successMessage: string) => {
     try {
@@ -74,8 +76,10 @@ export function RelayManagement({
         return <Wifi className="w-4 h-4 text-success" />;
       case "connecting":
         return <Loader2 className="w-4 h-4 text-warning animate-spin" />;
-      case "error":
+      case "connection-error":
         return <AlertCircle className="w-4 h-4 text-destructive" />;
+      case "verification-failed":
+        return <AlertCircle className="w-4 h-4 text-warning" />;
       default:
         return <WifiOff className="w-4 h-4 text-muted-foreground" />;
     }
@@ -87,10 +91,23 @@ export function RelayManagement({
         return "bg-success";
       case "connecting":
         return "bg-warning animate-pulse";
-      case "error":
+      case "connection-error":
         return "bg-destructive";
+      case "verification-failed":
+        return "bg-warning";
       default:
         return "bg-muted-foreground";
+    }
+  };
+
+  const getStatusLabel = (status: NDKRelayStatus["status"]) => {
+    switch (status) {
+      case "connection-error":
+        return t("relay.status.connectionError");
+      case "verification-failed":
+        return t("relay.status.verificationFailed");
+      default:
+        return status;
     }
   };
 
@@ -164,7 +181,7 @@ export function RelayManagement({
                     <div className="flex items-center gap-2 mt-0.5">
                       {getStatusIcon(relay.status)}
                       <span className="text-xs text-muted-foreground capitalize">
-                        {relay.status}
+                        {getStatusLabel(relay.status)}
                         {relay.status === "connected" && relay.latency && (
                           <span className="ml-1">({relay.latency}ms)</span>
                         )}
@@ -198,7 +215,8 @@ export function RelayManagement({
                   connected: connectedCount,
                   connecting: connectingCount,
                   disconnected: disconnectedCount,
-                  error: errorCount,
+                  connectionError: connectionErrorCount,
+                  verificationFailed: verificationFailedCount,
                 })}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">

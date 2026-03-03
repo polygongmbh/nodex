@@ -3,7 +3,7 @@ export interface Relay {
   name: string;
   icon: string;
   isActive: boolean;
-  connectionStatus?: "connected" | "connecting" | "disconnected" | "error";
+  connectionStatus?: "connected" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   url?: string;
   postCount?: number;
 }
@@ -68,7 +68,8 @@ export type OnNewTask = (
   explicitMentionPubkeys?: string[],
   priority?: number,
   attachments?: PublishedAttachment[],
-  nip99?: Nip99Metadata
+  nip99?: Nip99Metadata,
+  locationGeohash?: string
 ) => Promise<TaskCreateResult> | TaskCreateResult;
 export type ComposerSubmit = (
   content: string,
@@ -81,7 +82,8 @@ export type ComposerSubmit = (
   explicitMentionPubkeys?: string[],
   priority?: number,
   attachments?: PublishedAttachment[],
-  nip99?: Nip99Metadata
+  nip99?: Nip99Metadata,
+  locationGeohash?: string
 ) => Promise<TaskCreateResult> | TaskCreateResult;
 
 export type TaskStatus = "todo" | "in-progress" | "done";
@@ -111,6 +113,7 @@ export interface ComposeRestoreState {
   taskType: TaskType;
   messageType?: TaskType | FeedMessageType;
   nip99?: Nip99Metadata;
+  locationGeohash?: string;
   dueDate?: Date;
   dueTime?: string;
   dateType?: TaskDateType;
@@ -135,6 +138,7 @@ export interface Task {
   taskType: TaskType;
   feedMessageType?: FeedMessageType;
   nip99?: Nip99Metadata;
+  locationGeohash?: string;
   timestamp: Date;
   likes: number;
   replies: number;

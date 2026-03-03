@@ -20,8 +20,10 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
         return "bg-success";
       case "connecting":
         return "bg-warning animate-pulse";
-      case "error":
+      case "connection-error":
         return "bg-destructive";
+      case "verification-failed":
+        return "bg-warning";
       default:
         return "bg-muted-foreground";
     }
@@ -63,8 +65,10 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
                 </span>
               ) : relay.status === "connecting" ? (
                 <Loader2 className="w-4 h-4 text-warning animate-spin" />
-              ) : relay.status === "error" ? (
+              ) : relay.status === "connection-error" ? (
                 <AlertCircle className="w-4 h-4 text-destructive" />
+              ) : relay.status === "verification-failed" ? (
+                <AlertCircle className="w-4 h-4 text-warning" />
               ) : (
                 <WifiOff className="w-4 h-4 text-muted-foreground" />
               )}

@@ -12,7 +12,8 @@
       "offer": "Publicar una oferta...",
       "request": "Publicar una solicitud...",
       "mobileTask": "Buscar o crear tarea... #tags",
-      "mobileComment": "Buscar o añadir comentario... #tags"
+      "mobileComment": "Buscar o añadir comentario... #tags",
+      "geohash": "Introducir geohash (p. ej. u4pruyd)"
     },
     "blocked": {
       "signin": "Se requiere iniciar sesión",
@@ -28,7 +29,10 @@
       "postRequest": "Publicar solicitud",
       "signin": "Iniciar sesión",
       "sendTask": "Enviar tarea",
-      "sendComment": "Enviar comentario"
+      "sendComment": "Enviar comentario",
+      "useCurrentLocation": "Usar ubicación actual",
+      "clearLocation": "Quitar ubicación",
+      "location": "Ubicación"
     },
     "labels": {
       "dateType": "Tipo de fecha",
@@ -87,7 +91,12 @@
       "taskCreationFailed": "No se pudo crear la tarea. Inténtalo de nuevo.",
       "publishSavedForRetry": "No se pudo publicar en Nostr; se guardó para reintento",
       "retryRelayMissing": "Reintento fallido: el feed ya no está configurado",
-      "retryRejectedByRelay": "Reintento fallido: el feed no aceptó la publicación"
+      "retryRejectedByRelay": "Reintento fallido: el feed no aceptó la publicación",
+      "locationUnavailable": "Los servicios de ubicación no están disponibles en este dispositivo",
+      "locationCaptureFailed": "No se pudo obtener tu ubicación actual",
+      "relayVerificationReadFailed": "La verificación del relay para lectura falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
+      "relayVerificationWriteFailed": "La verificación del relay para publicación falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
+      "relayVerificationUnknownFailed": "La verificación del relay falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay."
     },
     "success": {
       "publishedTask": "Tarea publicada en Nostr y añadida localmente",
@@ -109,7 +118,11 @@
       "showingOnlyAuthorAndTagging": "Mostrando solo a {{authorName}} y etiquetando {{mention}}",
       "noFrequentPeople": "No hay personas frecuentes para seleccionar",
       "frequentPeopleSelected": "Personas frecuentes seleccionadas",
-      "frequentPeopleDeselected": "Personas frecuentes deseleccionadas"
+      "frequentPeopleDeselected": "Personas frecuentes deseleccionadas",
+      "locationCaptured": "Ubicación establecida en {{geohash}}",
+      "relayVerificationRead": "Verificación del relay para lectura completada en {{relayUrl}}",
+      "relayVerificationWrite": "Verificación del relay para publicación completada en {{relayUrl}}",
+      "relayVerificationUnknown": "Verificación del relay completada en {{relayUrl}}"
     },
     "info": {
       "pendingPublish": "Enviando en {{seconds}} segundos"
@@ -598,7 +611,11 @@
     "noneConfigured": "No hay relays configurados",
     "connectedSummary": "{{connectedCount}} de {{totalCount}} relays conectados",
     "debugTitle": "Utilidades de depuración",
-    "debugSummary": "conectados {{connected}} · conectando {{connecting}} · desconectados {{disconnected}} · error {{error}}",
+    "debugSummary": "conectados {{connected}} · conectando {{connecting}} · desconectados {{disconnected}} · conexión {{connectionError}} · verificación {{verificationFailed}}",
+    "status": {
+      "connectionError": "problema de conexión",
+      "verificationFailed": "verificación fallida"
+    },
     "copyDebug": "Copiar diagnóstico",
     "copyUrls": "Copiar URLs de relay",
     "debugCopied": "Diagnóstico de relays copiado",
