@@ -18,6 +18,7 @@ import {
   Person,
   Task,
   TaskCreateResult,
+  OnNewTask,
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
@@ -43,21 +44,7 @@ interface MobileLayoutProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
   onSearchChange: (query: string) => void;
-  onNewTask: (
-    content: string,
-    tags: string[],
-    relays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    parentId?: string,
-    initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ) => Promise<TaskCreateResult> | TaskCreateResult;
+  onNewTask: OnNewTask;
   onToggleComplete: (taskId: string) => void;
   onStatusChange: (taskId: string, status: "todo" | "in-progress" | "done") => void;
   onFocusTask: (taskId: string | null) => void;

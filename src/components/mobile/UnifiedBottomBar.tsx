@@ -6,6 +6,7 @@ import {
   Channel,
   Person,
   TaskCreateResult,
+  ComposerSubmit,
   TaskDateType,
   ComposeRestoreRequest,
   ComposeAttachment,
@@ -43,19 +44,7 @@ interface UnifiedBottomBarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   // Compose props
-  onSubmit: (
-    content: string,
-    channels: string[],
-    relays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ) => Promise<TaskCreateResult> | TaskCreateResult;
+  onSubmit: ComposerSubmit;
   currentView: ViewType;
   focusedTaskId?: string | null;
   selectedCalendarDate?: Date | null;

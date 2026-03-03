@@ -3,15 +3,11 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import {
   Task,
-  Relay,
-  Channel,
-  ChannelMatchMode,
-  Person,
   TaskCreateResult,
+  SharedTaskViewContext,
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
-  Nip99Metadata,
 } from "@/types";
 import {
   format,
@@ -55,43 +51,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface CalendarViewProps {
-  tasks: Task[];
-  allTasks: Task[];
-  relays: Relay[];
-  channels: Channel[];
-  channelMatchMode?: ChannelMatchMode;
-  composeChannels?: Channel[];
-  people: Person[];
-  currentUser?: Person;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onNewTask: (
-    content: string,
-    tags: string[],
-    relays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    parentId?: string,
-    initialStatus?: "todo" | "in-progress" | "done",
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ) => Promise<TaskCreateResult> | TaskCreateResult;
+interface CalendarViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
-  focusedTaskId?: string | null;
-  onFocusTask?: (taskId: string | null) => void;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
   mobileView?: "calendar" | "upcoming";
-  onHashtagClick?: (tag: string) => void;
-  onAuthorClick?: (author: Person) => void;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");

@@ -70,6 +70,19 @@ export type OnNewTask = (
   attachments?: PublishedAttachment[],
   nip99?: Nip99Metadata
 ) => Promise<TaskCreateResult> | TaskCreateResult;
+export type ComposerSubmit = (
+  content: string,
+  tags: string[],
+  relays: string[],
+  taskType: string,
+  dueDate?: Date,
+  dueTime?: string,
+  dateType?: TaskDateType,
+  explicitMentionPubkeys?: string[],
+  priority?: number,
+  attachments?: PublishedAttachment[],
+  nip99?: Nip99Metadata
+) => Promise<TaskCreateResult> | TaskCreateResult;
 
 export type TaskStatus = "todo" | "in-progress" | "done";
 

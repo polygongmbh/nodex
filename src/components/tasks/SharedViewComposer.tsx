@@ -3,11 +3,8 @@ import type {
   Channel,
   Person,
   Relay,
-  TaskCreateResult,
-  TaskDateType,
+  ComposerSubmit,
   ComposeRestoreRequest,
-  PublishedAttachment,
-  Nip99Metadata,
 } from "@/types";
 
 interface SharedViewComposerProps {
@@ -16,19 +13,7 @@ interface SharedViewComposerProps {
   channels: Channel[];
   composeChannels?: Channel[];
   people: Person[];
-  onSubmit: (
-    content: string,
-    tags: string[],
-    relays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ) => Promise<TaskCreateResult> | TaskCreateResult;
+  onSubmit: ComposerSubmit;
   onCancel?: () => void;
   draftStorageKey: string;
   parentId?: string;
