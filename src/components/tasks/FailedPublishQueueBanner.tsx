@@ -83,8 +83,8 @@ export function FailedPublishQueueBanner({
                 type="button"
                 onClick={() => onRetry(draft.id)}
                 className="rounded px-2 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/15"
-                title={t("publishQueue.retry")}
-                aria-label={t("publishQueue.retry")}
+                title={t("publishQueue.retryHint")}
+                aria-label={t("publishQueue.retryHint")}
               >
                 <span className="inline-flex items-center gap-1">
                   <RotateCcw className="h-3 w-3" />
@@ -96,8 +96,8 @@ export function FailedPublishQueueBanner({
                   type="button"
                   onClick={() => onRepost(draft.id)}
                   className="rounded px-2 py-1 text-xs font-medium text-destructive transition-colors hover:bg-destructive/15"
-                  title={t("publishQueue.repost")}
-                  aria-label={t("publishQueue.repost")}
+                  title={t("publishQueue.repostHint")}
+                  aria-label={t("publishQueue.repostHint")}
                 >
                   {t("publishQueue.repost")}
                 </button>

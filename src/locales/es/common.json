@@ -601,7 +601,9 @@
   "publishQueue": {
     "failedCount": "{{count}} publicación no se pudo enviar",
     "retry": "Reintentar",
+    "retryHint": "Reintentar en los relays de destino originales",
     "repost": "Republicar",
+    "repostHint": "Republicar en los relays de feeds seleccionados actualmente",
     "scopeSelected": "Feeds seleccionados",
     "scopeAll": "Todas fallidas",
     "hiddenCount": "{{count}} ocultas",

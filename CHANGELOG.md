@@ -6,26 +6,11 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-- Feed now recognizes NIP-99 classified listings (`kind:30402`) as feed-only message types and labels them as `Offer`/`Request` based on listing metadata.
-- Feed composer now includes `Offer` and `Request` message type options and publishes them as NIP-99 classified listings with matching `type` tags.
-- Feed composer now exposes common NIP-99 listing tags (title, summary, location, price/currency/frequency, and status), and original listing authors can toggle listing `active/sold` state from the feed icon.
-- Feed listing composer now auto-fills NIP-99 title/summary from content until those fields are edited manually, strips hashtag/mention tokens from defaults, defaults listing currency to EUR with input autocomplete, and normalizes additional NIP-99 metadata aliases for better cross-client interoperability.
-- Fixed NIP-42 relay authentication to use standards-compliant `kind:22242` challenge/relay tags with signed relay-policy responses.
-- Fixed relay status so `verification failed` is only shown when a relay explicitly rejects read subscriptions (for example `CLOSED ... auth-required`), not merely when auth policy handling fails while signed out.
-- Fixed relay status oscillation after signed-out reload by treating NDK auth-challenge states as connected transport, so healthy relays no longer flip `connected -> connecting`.
-- Improved NIP-42 recovery when a relay rejects reads without first issuing an AUTH challenge by retrying relay connection (throttled) when a signer is present, and restored signer setup before initial connect to reduce auth race conditions on reload.
-- Fixed extension sign-in session restore after reload by waiting for delayed `window.nostr` injection (`nostr#initialized` + bounded retry window) before invalidating saved extension auth state.
-- Routed profile (`kind:0`) lookups through provider-managed subscriptions so `CLOSED ... auth-required` responses participate in NIP-42 retry/status handling instead of bypassing auth recovery.
-- Added initial NIP-11 relay info probing (HTTP/S info endpoint derived from relay URL) during relay startup/add so auth requirements and NIP-42 support are known earlier for diagnostics and auth flow handling.
-- Fixed false-positive relay verification failure toasts by only surfacing read failures on explicit relay read rejection signals, not on auth-policy/inference failures alone.
-- Relay Management now surfaces per-relay NIP-11 capabilities (auth required, NIP-42 support, last check) in an expandable details view and uses these capabilities for more precise status labels.
-- Fixed Relay Management capability details showing `unknown` by preserving NIP-11 metadata when mapping provider relay state into the page-level relay list.
-- After sign-in, auth-capable relays (from NIP-11 `supported_nips`) are now retried automatically, clearing stale verification-failed state and forcing reconnect so blocked reads can be fetched again.
-- Relay state now differentiates read rejection vs write rejection: read-rejected relays stay red, write-rejected/read-only relays render blue, connecting stays yellow, and stale read-rejected state is cleared on successful reads/auth recovery.
-- Relay write-state now updates on publish outcomes: failed/partial publishes mark impacted relays as read-only (write-rejected), and later successful publishes clear that state per relay.
-- Failed publish retry banners are now feed-scoped: drafts are only shown when their target relay(s) are in the currently selected feeds, while retries still publish to the original relay targets.
-- Failed publish queue now includes a `Repost` action that republishes the draft to currently selected feed relays, while `Retry` continues targeting the original relay set.
-- Failed publish queue now supports `Selected feeds` vs `All failed` scopes with a hidden-count indicator, so reposting to other relays is possible without losing feed-focused visibility.
+- Feed now supports NIP-99 listings end to end: `Offer`/`Request` type publishing (`kind:30402`), feed labeling, common listing metadata fields, active/sold status toggles, and auto-filled title/summary defaults with metadata normalization.
+- Relay auth/reliability was overhauled around NIP-42 and NIP-11: standards-compliant auth events (`kind:22242`), improved signed-out/session-restore behavior, auth-required recovery/retry flows, and reduced false-positive verification errors.
+- Relay status now reflects capabilities and outcomes more precisely: NIP-11 capability details in Relay Management, read-rejected vs read-only state differentiation, stable connecting behavior, and post-sign-in/auth success status healing.
+- Relay write/read state now updates from real outcomes: publish failures/partials mark write rejection, later confirms clear it, and read rejection only applies on explicit read denial.
+- Failed publish handling now supports both feed focus and recovery flexibility: scoped visibility by selected feeds, an all-failures scope with hidden-count indicator, original-target `Retry`, selected-feed `Repost`, and explicit hover hints for both actions.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
 ## [1.15.0] - 2026-02-27

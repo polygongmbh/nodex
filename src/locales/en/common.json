@@ -601,7 +601,9 @@
   "publishQueue": {
     "failedCount": "{{count}} post failed to publish",
     "retry": "Retry",
+    "retryHint": "Retry on original relay targets",
     "repost": "Repost",
+    "repostHint": "Repost to currently selected feed relays",
     "scopeSelected": "Selected feeds",
     "scopeAll": "All failed",
     "hiddenCount": "{{count}} hidden",
