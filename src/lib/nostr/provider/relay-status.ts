@@ -8,10 +8,9 @@ export function mapNativeRelayStatus(status: NativeNDKRelayStatus): NDKRelayStat
   switch (status) {
     case NativeNDKRelayStatus.CONNECTED:
     case NativeNDKRelayStatus.AUTHENTICATED:
-      return "connected";
     case NativeNDKRelayStatus.AUTH_REQUESTED:
     case NativeNDKRelayStatus.AUTHENTICATING:
-      return "connecting";
+      return "connected";
     case NativeNDKRelayStatus.CONNECTING:
     case NativeNDKRelayStatus.RECONNECTING:
     case NativeNDKRelayStatus.FLAPPING:

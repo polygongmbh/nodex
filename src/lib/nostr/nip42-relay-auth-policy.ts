@@ -17,7 +17,7 @@ export function createRelayNip42AuthPolicy(
     const relayUrl = relay.url;
     onVerificationEvent?.({ relayUrl, operation: "unknown", outcome: "required" });
     if (!ndk.signer) {
-      console.warn("NIP-42: Relay requested auth without an active signer", { relayUrl: relay.url });
+      nostrDevLog("relay", "NIP-42 auth requested without active signer", { relayUrl: relay.url });
       onVerificationEvent?.({
         relayUrl,
         operation: "unknown",
