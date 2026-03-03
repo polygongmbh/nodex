@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Fixed relay status so `verification failed` is only shown when a relay explicitly rejects read subscriptions (for example `CLOSED ... auth-required`), not merely when auth policy handling fails while signed out.
 - Fixed relay status oscillation after signed-out reload by treating NDK auth-challenge states as connected transport, so healthy relays no longer flip `connected -> connecting`.
 - Improved NIP-42 recovery when a relay rejects reads without first issuing an AUTH challenge by retrying relay connection (throttled) when a signer is present, and restored signer setup before initial connect to reduce auth race conditions on reload.
+- Routed profile (`kind:0`) lookups through provider-managed subscriptions so `CLOSED ... auth-required` responses participate in NIP-42 retry/status handling instead of bypassing auth recovery.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
 ## [1.15.0] - 2026-02-27

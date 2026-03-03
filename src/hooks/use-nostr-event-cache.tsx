@@ -15,7 +15,8 @@ interface UseNostrEventCacheParams {
   subscribedKinds: number[];
   subscribe: (
     filters: NDKFilter[],
-    onEvent: (event: NDKEvent) => void
+    onEvent: (event: NDKEvent) => void,
+    options?: { closeOnEose?: boolean }
   ) => NDKSubscription | null;
 }
 

@@ -905,7 +905,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
   const subscribe = useCallback((
     filters: NDKFilter[],
-    onEvent: (event: NDKEvent) => void
+    onEvent: (event: NDKEvent) => void,
+    options?: { closeOnEose?: boolean }
   ): NDKSubscription | null => {
     if (!ndk) return null;
     nostrDevLog("subscribe", "Creating subscription", {
@@ -914,7 +915,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
 
     beginRelayOperation("read");
-    const subscription = ndk.subscribe(filters, { closeOnEose: false });
+    const subscription = ndk.subscribe(filters, { closeOnEose: options?.closeOnEose ?? false });
     
     subscription.on("event", (event: NDKEvent) => {
       onEvent(event);

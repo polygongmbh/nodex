@@ -11,7 +11,7 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 describe("useNostrProfile stability", () => {
   beforeEach(() => {
     mockUseNDK.mockReset();
-    mockUseNDK.mockReturnValue({ ndk: null });
+    mockUseNDK.mockReturnValue({ ndk: null, subscribe: vi.fn() });
   });
 
   afterEach(() => {
@@ -61,9 +61,8 @@ describe("useNostrProfile stability", () => {
     });
 
     mockUseNDK.mockReturnValue({
-      ndk: {
-        subscribe,
-      },
+      ndk: {},
+      subscribe,
     });
 
     let renderCount = 0;

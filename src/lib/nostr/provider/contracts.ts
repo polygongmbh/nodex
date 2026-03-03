@@ -52,7 +52,11 @@ export interface NDKContextValue {
   updateUserProfile: (profile: EditableNostrProfile) => Promise<boolean>;
   needsProfileSetup: boolean;
   isProfileSyncing: boolean;
-  subscribe: (filters: NDKFilter[], onEvent: (event: NDKEvent) => void) => NDKSubscription | null;
+  subscribe: (
+    filters: NDKFilter[],
+    onEvent: (event: NDKEvent) => void,
+    options?: { closeOnEose?: boolean }
+  ) => NDKSubscription | null;
   getGuestPrivateKey: () => string | null;
 }
 

@@ -53,7 +53,7 @@ function profileMapEquals(a: ProfileCache, b: ProfileCache): boolean {
 }
 
 export function useNostrProfiles(pubkeys: string[]) {
-  const { ndk } = useNDK();
+  const { ndk, subscribe } = useNDK();
   const [profiles, setProfiles] = useState<ProfileCache>({});
   const [loading, setLoading] = useState(false);
   const pubkeysKey = useMemo(() => buildPubkeysKey(pubkeys), [pubkeys]);
@@ -105,9 +105,7 @@ export function useNostrProfiles(pubkeys: string[]) {
       authors: missingPubkeys,
     };
     
-    const sub = ndk.subscribe([filter], { closeOnEose: true });
-    
-    sub.on("event", (event: NDKEvent) => {
+    const onProfileEvent = (event: NDKEvent) => {
       try {
         const content = JSON.parse(event.content);
         const profile: NostrProfile = {
@@ -132,7 +130,13 @@ export function useNostrProfiles(pubkeys: string[]) {
         console.error("Failed to parse profile event:", e);
         pendingRequests.delete(event.pubkey);
       }
-    });
+    };
+    const sub = subscribe([filter], onProfileEvent, { closeOnEose: true });
+    if (!sub) {
+      missingPubkeys.forEach(pk => pendingRequests.delete(pk));
+      setLoading(false);
+      return;
+    }
     
     sub.on("eose", () => {
       // Mark remaining as not found (use default placeholder)
@@ -154,7 +158,7 @@ export function useNostrProfiles(pubkeys: string[]) {
     return () => {
       sub?.stop();
     };
-  }, [ndk, pubkeysKey, normalizedPubkeys]);
+  }, [ndk, normalizedPubkeys, subscribe]);
 
   // Get profile for a specific pubkey
   const getProfile = useCallback((pubkey: string): NostrProfile | null => {
