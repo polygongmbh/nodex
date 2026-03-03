@@ -37,7 +37,10 @@ export function buildTaskPublishTags(
 
   const normalizedAttachments = normalizePublishedAttachments(attachments);
   for (const attachment of normalizedAttachments) {
-    tags.push(buildImetaTag(attachment));
+    const imetaTag = buildImetaTag(attachment);
+    if (imetaTag.length > 0) {
+      tags.push(imetaTag);
+    }
   }
 
   const geohashTag = buildGeohashTag(locationGeohash);
