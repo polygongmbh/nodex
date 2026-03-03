@@ -392,7 +392,10 @@ export function FeedView({
                       <span key={crumb.id} className="flex items-center gap-1">
                         {i > 0 && <span>/</span>}
                         <button
-                          onClick={() => onFocusTask?.(crumb.id)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onFocusTask?.(crumb.id);
+                          }}
                           className={`${TASK_INTERACTION_STYLES.hoverLinkText} cursor-pointer`}
                           title={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
                           aria-label={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}

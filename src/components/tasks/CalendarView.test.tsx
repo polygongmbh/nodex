@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CalendarView } from "./CalendarView";
 import type { Channel, Person, Relay, Task } from "@/types";
@@ -33,6 +33,53 @@ const people: Person[] = [
 const tasks: Task[] = [];
 
 describe("CalendarView responsiveness", () => {
+  it("focuses ancestor from day-card breadcrumb without selecting current card task", () => {
+    const root: Task = {
+      id: "root",
+      author: people[0],
+      content: "Root task #general",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "task",
+      timestamp: new Date("2026-02-17T09:00:00.000Z"),
+      likes: 0,
+      replies: 0,
+      reposts: 0,
+      status: "todo",
+      dueDate: new Date("2026-02-18T10:00:00.000Z"),
+    };
+    const child: Task = {
+      ...root,
+      id: "child",
+      content: "Child task #general",
+      parentId: "root",
+      timestamp: new Date("2026-02-17T10:00:00.000Z"),
+    };
+    const onFocusTask = vi.fn();
+
+    render(
+      <CalendarView
+        tasks={[child]}
+        allTasks={[root, child]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        onFocusTask={onFocusTask}
+        isMobile
+        mobileView="calendar"
+        selectedDate={new Date("2026-02-18T10:00:00.000Z")}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /focus task: root/i }));
+    expect(onFocusTask).toHaveBeenCalledWith("root");
+    expect(onFocusTask).not.toHaveBeenCalledWith("child");
+  });
+
   it("shows week numbers and stacked month sections on desktop", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-02-17T10:00:00.000Z"));

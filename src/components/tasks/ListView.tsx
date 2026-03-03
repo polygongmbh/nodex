@@ -708,7 +708,10 @@ export function ListView({
                               <span key={ancestor.id} className="flex items-center gap-1">
                                 {i > 0 && <span className="text-muted-foreground/50">›</span>}
                                 <button
-                                  onClick={() => onFocusTask?.(ancestor.id)}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    onFocusTask?.(ancestor.id);
+                                  }}
                                   className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[100px]`}
                                   title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
                                   aria-label={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}

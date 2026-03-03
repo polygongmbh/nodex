@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ListView } from "./ListView";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
@@ -11,6 +11,36 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 }));
 
 describe("ListView priority control", () => {
+  it("focuses ancestor from breadcrumb without selecting current row task", () => {
+    mockUser = { id: "me" };
+    const root = makeTask({ id: "root", content: "Root task #general", status: "todo" });
+    const child = makeTask({ id: "child", parentId: "root", content: "Child task #general", status: "todo" });
+    const relays = [makeRelay()];
+    const channels = [makeChannel()];
+    const people = [makePerson({ id: root.author.id, name: root.author.name, displayName: root.author.displayName })];
+    const onFocusTask = vi.fn();
+
+    render(
+      <ListView
+        tasks={[child]}
+        allTasks={[root, child]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        currentUser={people[0]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={vi.fn()}
+        onFocusTask={onFocusTask}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /focus task: root task #general/i }));
+    expect(onFocusTask).toHaveBeenCalledWith("root");
+    expect(onFocusTask).not.toHaveBeenCalledWith("child");
+  });
+
   it("keeps priority select focused across unrelated parent rerenders", () => {
     mockUser = { id: "me" };
     const task = makeTask({
