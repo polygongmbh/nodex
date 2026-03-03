@@ -2,6 +2,7 @@ import { z } from "zod";
 import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/nostr/replaceable-events";
 
 export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache.v1";
+export const NOSTR_EVENT_CACHE_SCOPE_PREFIX = `${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope:`;
 
 export interface CachedNostrEvent {
   id: string;
@@ -16,6 +17,32 @@ export interface CachedNostrEvent {
 
 function hasLocalStorage(): boolean {
   return typeof window !== "undefined" && Boolean(window.localStorage);
+}
+
+function normalizeCacheScope(scopeKey?: string): string {
+  const normalized = (scopeKey || "").trim();
+  return normalized || "global";
+}
+
+function getScopedCacheStorageKey(scopeKey?: string): string {
+  const normalizedScope = normalizeCacheScope(scopeKey);
+  if (normalizedScope === "global") {
+    return NOSTR_EVENT_CACHE_STORAGE_KEY;
+  }
+  return `${NOSTR_EVENT_CACHE_SCOPE_PREFIX}${normalizedScope}`;
+}
+
+function listKnownCacheStorageKeys(): string[] {
+  if (!hasLocalStorage()) return [];
+  const keys = new Set<string>([NOSTR_EVENT_CACHE_STORAGE_KEY]);
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (!key) continue;
+    if (key.startsWith(NOSTR_EVENT_CACHE_SCOPE_PREFIX)) {
+      keys.add(key);
+    }
+  }
+  return Array.from(keys);
 }
 
 const cachedNostrEventSchema: z.ZodType<CachedNostrEvent> = z.object({
@@ -63,10 +90,10 @@ function dedupeAndSortEvents(events: CachedNostrEvent[]): CachedNostrEvent[] {
   return [...nonReplaceable, ...replaceable].sort((left, right) => right.created_at - left.created_at);
 }
 
-export function loadCachedNostrEvents(): CachedNostrEvent[] {
+export function loadCachedNostrEvents(scopeKey?: string): CachedNostrEvent[] {
   if (!hasLocalStorage()) return [];
   try {
-    const raw = window.localStorage.getItem(NOSTR_EVENT_CACHE_STORAGE_KEY);
+    const raw = window.localStorage.getItem(getScopedCacheStorageKey(scopeKey));
     if (!raw) return [];
     const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return [];
@@ -76,11 +103,12 @@ export function loadCachedNostrEvents(): CachedNostrEvent[] {
   }
 }
 
-export function saveCachedNostrEvents(events: CachedNostrEvent[]): void {
+export function saveCachedNostrEvents(events: CachedNostrEvent[], scopeKey?: string): void {
   if (!hasLocalStorage()) return;
   try {
+    const storageKey = getScopedCacheStorageKey(scopeKey);
     window.localStorage.setItem(
-      NOSTR_EVENT_CACHE_STORAGE_KEY,
+      storageKey,
       JSON.stringify(dedupeAndSortEvents(events))
     );
   } catch {
@@ -92,8 +120,18 @@ export function removeCachedNostrEventById(eventId: string): void {
   if (!hasLocalStorage()) return;
   const normalizedId = eventId.trim();
   if (!normalizedId) return;
-  const existing = loadCachedNostrEvents();
-  const next = existing.filter((event) => event.id !== normalizedId);
-  if (next.length === existing.length) return;
-  saveCachedNostrEvents(next);
+  const storageKeys = listKnownCacheStorageKeys();
+  storageKeys.forEach((storageKey) => {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
+      if (!parsed.success) return;
+      const next = dedupeAndSortEvents(parsed.data).filter((event) => event.id !== normalizedId);
+      if (next.length === parsed.data.length) return;
+      window.localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      // Ignore malformed cache payloads and continue.
+    }
+  });
 }

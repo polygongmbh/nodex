@@ -8,6 +8,7 @@ interface FilterTasksParams {
   channels: Channel[];
   people: Person[];
   channelMatchMode: ChannelMatchMode;
+  allowUnknownRelayMetadata?: boolean;
 }
 
 export function filterTasks({
@@ -16,6 +17,7 @@ export function filterTasks({
   channels,
   people,
   channelMatchMode,
+  allowUnknownRelayMetadata = true,
 }: FilterTasksParams): Task[] {
   const selectedPeople = people.filter((person) => person.isSelected);
   const { included, excluded } = getIncludedExcludedChannelNames(channels);
@@ -25,7 +27,7 @@ export function filterTasks({
       task.relays.some((relayId) => relayId === "nostr" || relayId === "unknown");
     if (
       activeRelayIds.size > 0 &&
-      !hasUnknownRelayMetadata &&
+      (!allowUnknownRelayMetadata || !hasUnknownRelayMetadata) &&
       !task.relays.some((relayId) => activeRelayIds.has(relayId))
     ) {
       return false;
