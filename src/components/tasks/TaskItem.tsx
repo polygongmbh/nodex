@@ -457,20 +457,17 @@ export function TaskItem({
                 </>
               )}
               {isPendingPublish && (
-                <>
-                  <span>·</span>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onUndoPendingPublish?.(task.id);
-                    }}
-                    className="font-medium text-warning hover:text-warning/80"
-                    title={t("toasts.actions.undo")}
-                  >
-                    {t("toasts.actions.undo")}
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onUndoPendingPublish?.(task.id);
+                  }}
+                  className="ml-auto shrink-0 font-medium text-warning hover:text-warning/80"
+                  title={t("toasts.actions.undo")}
+                >
+                  {t("toasts.actions.undo")}
+                </button>
               )}
             </div>
           )}
@@ -508,7 +505,7 @@ export function TaskItem({
             </div>
           )}
 
-          {(hasTaskMentionChips(task) || task.tags.length > 0 || (typeof task.priority === "number" && !isComment)) && (
+          {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash || (typeof task.priority === "number" && !isComment)) && (
             <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-1.5")}>
               {typeof task.priority === "number" && !isComment && (
                 <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-warning/15 text-warning">
@@ -524,6 +521,11 @@ export function TaskItem({
               {activeRelays.length > 1 && task.relays.length > 0 && (
                 <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
                   {activeRelays.find(r => task.relays.includes(r.id))?.name || task.relays[0]}
+                </span>
+              )}
+              {task.locationGeohash && (
+                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+                  {`📍 ${task.locationGeohash}`}
                 </span>
               )}
               {task.tags.map((tag) => (

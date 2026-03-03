@@ -318,6 +318,8 @@ export function FeedView({
             const isComment = task.taskType === "comment";
             const isListing = Boolean(task.feedMessageType);
             const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
+            const isSoldListing = isListing && listingStatus === "sold";
+            const isCompletedVisual = task.status === "done" || isSoldListing;
             const feedMessageLabel =
               task.feedMessageType === "offer"
                 ? "Offer"
@@ -378,7 +380,7 @@ export function FeedView({
                 className={cn(
                   "border-b border-border p-4 hover:bg-card/50 transition-colors cursor-pointer",
                   isMobile && "p-3",
-                  task.status === "done" && "opacity-60",
+                  isCompletedVisual && "opacity-60",
                   isLockedUntilStart && "opacity-50 grayscale",
                   isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
                 )}
@@ -528,14 +530,14 @@ export function FeedView({
                         {task.feedMessageType === "offer" ? (
                           <Package
                             className={cn(
-                              listingStatus === "sold" ? "text-primary" : "text-muted-foreground",
+                              listingStatus === "sold" ? "text-muted-foreground" : "text-muted-foreground",
                               isMobile ? "w-4 h-4" : "w-5 h-5"
                             )}
                           />
                         ) : (
                           <HandHelping
                             className={cn(
-                              listingStatus === "sold" ? "text-primary" : "text-muted-foreground",
+                              listingStatus === "sold" ? "text-muted-foreground" : "text-muted-foreground",
                               isMobile ? "w-4 h-4" : "w-5 h-5"
                             )}
                           />
@@ -626,29 +628,13 @@ export function FeedView({
                               className={cn(
                                 "text-xs px-1.5 py-0.5 rounded",
                                 listingStatus === "sold"
-                                  ? "bg-primary/15 text-primary"
+                                  ? "bg-muted text-muted-foreground line-through"
                                   : "bg-muted text-muted-foreground"
                               )}
                             >
                               {listingStatus}
                             </span>
                           )}
-                        </>
-                      )}
-                      {isPendingPublish && (
-                        <>
-                          <span className="shrink-0">·</span>
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onUndoPendingPublish?.(task.id);
-                            }}
-                            className="text-warning hover:text-warning/80 font-medium"
-                            title={t("toasts.actions.undo")}
-                          >
-                            {t("toasts.actions.undo")}
-                          </button>
                         </>
                       )}
                       {task.dueDate && (
@@ -667,7 +653,7 @@ export function FeedView({
                           </span>
                         </>
                       )}
-                      {(hasTaskMentionChips(task) || task.tags.length > 0) && (
+                      {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash) && (
                         <>
                           <span className="shrink-0">·</span>
                           <span className="inline-flex flex-wrap items-center gap-1">
@@ -677,6 +663,11 @@ export function FeedView({
                               onPersonClick={onAuthorClick}
                               inline
                             />
+                            {task.locationGeohash && (
+                              <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
+                                {`📍 ${task.locationGeohash}`}
+                              </span>
+                            )}
                             {task.tags.map((tag) => (
                               <button
                                 key={tag}
@@ -696,17 +687,30 @@ export function FeedView({
                           </span>
                         </>
                       )}
+                      {isPendingPublish && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onUndoPendingPublish?.(task.id);
+                          }}
+                          className="ml-auto shrink-0 text-warning hover:text-warning/80 font-medium"
+                          title={t("toasts.actions.undo")}
+                        >
+                          {t("toasts.actions.undo")}
+                        </button>
+                      )}
                     </div>
 
                     {/* Clickable content to focus */}
                     <div
                       className={cn(
                         `text-sm leading-relaxed whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText}`,
-                        task.status === "done" && "line-through text-muted-foreground"
+                        isCompletedVisual && "line-through text-muted-foreground"
                       )}
                     >
                       {linkifyContent(task.content, onHashtagClick, {
-                        plainHashtags: task.status === "done",
+                        plainHashtags: isCompletedVisual,
                         people,
                         onMentionClick: onAuthorClick,
                         onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
