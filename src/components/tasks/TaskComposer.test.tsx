@@ -103,6 +103,70 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.queryByText("Sign in to post")).not.toBeInTheDocument();
   });
 
+  it("shows offer/request kind options only when feed message types are enabled", () => {
+    const { rerender } = render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /offer/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /request/i })).not.toBeInTheDocument();
+
+    rerender(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        allowFeedMessageTypes
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Offer" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Request" })).toBeInTheDocument();
+  });
+
+  it("submits request kind when selected in feed mode", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        allowFeedMessageTypes
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Request" }));
+    fireEvent.change(screen.getByLabelText("Post a request..."), {
+      target: { value: "Need a designer #design" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Post Request" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Need a designer #design",
+        ["design"],
+        ["demo"],
+        "request",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined,
+        []
+      );
+    });
+  });
+
   it("supports keyboard selection with Enter", () => {
     render(
       <TaskComposer

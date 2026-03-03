@@ -9,6 +9,8 @@
     "placeholders": {
       "task": "¿Qué hay que hacer? Usa #tags...",
       "comment": "Añadir un comentario...",
+      "offer": "Publicar una oferta...",
+      "request": "Publicar una solicitud...",
       "mobileTask": "Buscar o crear tarea... #tags",
       "mobileComment": "Buscar o añadir comentario... #tags"
     },
@@ -22,6 +24,8 @@
     "actions": {
       "createTask": "Crear tarea",
       "addComment": "Añadir comentario",
+      "postOffer": "Publicar oferta",
+      "postRequest": "Publicar solicitud",
       "signin": "Iniciar sesión",
       "sendTask": "Enviar tarea",
       "sendComment": "Enviar comentario"
@@ -32,6 +36,8 @@
       "kind": "Tipo",
       "task": "Tarea",
       "comment": "Comentario",
+      "offer": "Oferta",
+      "request": "Solicitud",
       "mentions": "Menciones",
       "date": "Fecha",
       "priorityShort": "⚑ Prio"

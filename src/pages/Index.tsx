@@ -101,7 +101,7 @@ import {
   setExclusiveChannelFilter,
 } from "@/lib/filter-state-utils";
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
-import { normalizeTaskType } from "@/lib/task-type";
+import { normalizeComposerMessageType } from "@/lib/task-type";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
@@ -1436,14 +1436,20 @@ const Index = () => {
       notifyNeedTag(t);
       return { ok: false, reason: "missing-tag" };
     }
-    const normalizedTaskType = normalizeTaskType(taskType);
-    if (normalizedTaskType !== taskType) {
+    const normalizedMessageType = normalizeComposerMessageType(taskType);
+    if (normalizedMessageType !== taskType) {
       console.warn("Unexpected taskType payload; defaulting to task", { taskType });
     }
+    const normalizedTaskType: TaskType = normalizedMessageType === "task" ? "task" : "comment";
+    const feedMessageType: Task["feedMessageType"] =
+      normalizedMessageType === "offer" || normalizedMessageType === "request"
+        ? normalizedMessageType
+        : undefined;
     setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
 
     const requestedRelayIds = relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID];
-    const parentTask = parentId ? allTasks.find((task) => task.id === parentId) : undefined;
+    const submissionParentId = feedMessageType ? undefined : parentId;
+    const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
     const resolvedRelaySelection = resolveRelaySelectionForSubmission({
       taskType: normalizedTaskType,
       selectedRelayIds: requestedRelayIds,
@@ -1524,8 +1530,13 @@ const Index = () => {
       }
       return people[0];
     })();
-    const publishKind: NostrEventKind = normalizedTaskType === "task" ? NostrEventKind.Task : NostrEventKind.TextNote;
-    const validParentId = isNostrEventId(parentId) ? parentId : undefined;
+    const publishKind: NostrEventKind =
+      normalizedMessageType === "task"
+        ? NostrEventKind.Task
+        : normalizedMessageType === "offer" || normalizedMessageType === "request"
+          ? NostrEventKind.ClassifiedListing
+          : NostrEventKind.TextNote;
+    const validParentId = isNostrEventId(submissionParentId) ? submissionParentId : undefined;
     const primaryRelayUrl = selectedRelayUrls[0] ?? "";
     if (shouldPublish && normalizedTaskType === "task" && parentId && !validParentId) {
       toast.warning(t("toasts.warnings.parentLocalOnly"));
@@ -1542,13 +1553,15 @@ const Index = () => {
                 normalizedAttachments
               )
             : [
+                ...(feedMessageType ? [["type", feedMessageType] as string[]] : []),
                 ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
                 ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
                 ...normalizedAttachments.map((attachment) => buildImetaTag(attachment)),
               ]
         )
       : [];
-    const publishParentId = shouldPublish && normalizedTaskType === "comment" && validParentId ? validParentId : undefined;
+    const publishParentId =
+      shouldPublish && normalizedMessageType === "comment" && validParentId ? validParentId : undefined;
 
     const publishFailedDraft = (
       fallbackKind: NostrEventKind,
@@ -1566,7 +1579,7 @@ const Index = () => {
       dueDate: dueDate ? dueDate.toISOString() : undefined,
       dueTime,
       dateType,
-      parentId,
+      parentId: submissionParentId,
       initialStatus,
       mentionPubkeys,
       assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
@@ -1601,6 +1614,7 @@ const Index = () => {
       ),
       assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
+      feedMessageType,
       attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
     };
 
@@ -1612,6 +1626,7 @@ const Index = () => {
     const composeRestoreState: ComposeRestoreState = {
       content,
       taskType: normalizedTaskType,
+      messageType: normalizedMessageType,
       dueDate,
       dueTime,
       dateType,

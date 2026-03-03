@@ -324,6 +324,7 @@ export function FeedView({
         composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
+        allowFeedMessageTypes
       />
 
       {/* Feed List */}
