@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/nostr/replaceable-events";
 
 export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache.v1";
 
@@ -30,15 +31,36 @@ const cachedNostrEventSchema: z.ZodType<CachedNostrEvent> = z.object({
 const cachedNostrEventsSchema = z.array(cachedNostrEventSchema);
 
 function dedupeAndSortEvents(events: CachedNostrEvent[]): CachedNostrEvent[] {
+  const filtered = events.filter((event) => {
+    if (!isParameterizedReplaceableKind(event.kind)) return true;
+    // Parameterized replaceable events without "d" are invalid.
+    return getReplaceableEventKey(event) !== null;
+  });
   const byId = new Map<string, CachedNostrEvent>();
-  for (const event of events) {
+  for (const event of filtered) {
     const existing = byId.get(event.id);
     if (!existing || event.created_at >= existing.created_at) {
       byId.set(event.id, event);
     }
   }
-  return Array.from(byId.values())
-    .sort((left, right) => right.created_at - left.created_at);
+  const byReplaceable = new Map<string, CachedNostrEvent>();
+  for (const event of byId.values()) {
+    const replaceableKey = getReplaceableEventKey(event);
+    if (!replaceableKey) continue;
+    const existing = byReplaceable.get(replaceableKey);
+    if (
+      !existing ||
+      event.created_at > existing.created_at ||
+      (event.created_at === existing.created_at && event.id > existing.id)
+    ) {
+      byReplaceable.set(replaceableKey, event);
+    }
+  }
+
+  const nonReplaceable = Array.from(byId.values()).filter((event) => getReplaceableEventKey(event) === null);
+  const replaceable = Array.from(byReplaceable.values());
+
+  return [...nonReplaceable, ...replaceable].sort((left, right) => right.created_at - left.created_at);
 }
 
 export function loadCachedNostrEvents(): CachedNostrEvent[] {
@@ -64,4 +86,14 @@ export function saveCachedNostrEvents(events: CachedNostrEvent[]): void {
   } catch {
     // Ignore persistence errors and continue.
   }
+}
+
+export function removeCachedNostrEventById(eventId: string): void {
+  if (!hasLocalStorage()) return;
+  const normalizedId = eventId.trim();
+  if (!normalizedId) return;
+  const existing = loadCachedNostrEvents();
+  const next = existing.filter((event) => event.id !== normalizedId);
+  if (next.length === existing.length) return;
+  saveCachedNostrEvents(next);
 }
