@@ -18,16 +18,18 @@ const Toaster = ({ ...props }: ToasterProps) => {
   }, []);
 
   useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
+    const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      const toastElement = target.closest("[data-sonner-toast]");
+      const toastElement = target?.closest("[data-sonner-toast]");
       if (!toastElement) return;
+      const hasSelection = Boolean(window.getSelection?.()?.toString().trim());
+      if (hasSelection) return;
       toast.dismiss();
     };
 
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
   }, []);
 
   return (
@@ -36,6 +38,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       position={isMobile ? "top-center" : "bottom-right"}
       richColors
       closeButton
+      swipeDirections={[]}
       visibleToasts={2}
       offset={12}
       mobileOffset={{ top: 12, left: 12, right: 12 }}
@@ -43,6 +46,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
         duration: isMobile ? 1800 : 2800,
         dismissible: true,
         closeButton: true,
+        style: {
+          userSelect: "text",
+          WebkitUserSelect: "text",
+          touchAction: "auto",
+        },
         actionButtonStyle: {
           background: "hsl(var(--primary))",
           color: "hsl(var(--primary-foreground))",
