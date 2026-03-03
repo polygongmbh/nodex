@@ -1968,6 +1968,13 @@ const Index = () => {
       relayUrls
     );
     if (!result.success) {
+      if (result.eventId) {
+        nostrDevLog("publish", "Suppressing retry-failed event from cache and feed", {
+          draftId,
+          eventId: result.eventId,
+        });
+      }
+      suppressFailedPublishEvent(result.eventId);
       toast.error(t("toasts.errors.retryRejectedByRelay"));
       return;
     }
@@ -2022,6 +2029,7 @@ const Index = () => {
     publishEvent,
     publishTaskDueUpdate,
     publishTaskStateUpdate,
+    suppressFailedPublishEvent,
     t,
   ]);
 
