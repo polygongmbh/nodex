@@ -56,4 +56,32 @@ describe("RelayManagement", () => {
     expect(screen.getByText("connection issue")).toBeInTheDocument();
     expect(screen.getByText("verification failed")).toBeInTheDocument();
   });
+
+  it("shows relay capability details from nip11 metadata", () => {
+    render(
+      <RelayManagement
+        relays={[
+          {
+            url: "wss://relay.one",
+            status: "connected",
+            nip11: {
+              authRequired: true,
+              supportsNip42: true,
+              checkedAt: 1700000000000,
+            },
+          },
+        ]}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    fireEvent.click(screen.getByRole("button", { name: /show relay details/i }));
+
+    expect(screen.getByText("Relay capabilities")).toBeInTheDocument();
+    expect(screen.getByText("Auth required")).toBeInTheDocument();
+    expect(screen.getAllByText("yes").length).toBeGreaterThan(0);
+    expect(screen.getByText("connected (auth required)")).toBeInTheDocument();
+  });
 });

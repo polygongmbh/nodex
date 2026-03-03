@@ -22,6 +22,11 @@ export interface NDKRelayStatus {
   url: string;
   status: "connected" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   latency?: number;
+  nip11?: {
+    authRequired: boolean;
+    supportsNip42: boolean;
+    checkedAt: number;
+  };
 }
 
 export interface NDKContextValue {

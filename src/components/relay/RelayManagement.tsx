@@ -1,5 +1,18 @@
 import { useMemo, useState, ReactNode } from "react";
-import { Radio, Plus, X, Wifi, WifiOff, Loader2, AlertCircle, ClipboardList, Link2 } from "lucide-react";
+import {
+  Radio,
+  Plus,
+  X,
+  Wifi,
+  WifiOff,
+  Loader2,
+  AlertCircle,
+  ClipboardList,
+  Link2,
+  ChevronDown,
+  ShieldCheck,
+  ShieldAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -32,6 +45,7 @@ export function RelayManagement({
   const { t } = useTranslation();
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedRelayUrl, setExpandedRelayUrl] = useState<string | null>(null);
 
   const handleAddRelay = () => {
     if (!newRelayUrl.trim()) return;
@@ -100,15 +114,31 @@ export function RelayManagement({
     }
   };
 
-  const getStatusLabel = (status: NDKRelayStatus["status"]) => {
+  const getStatusLabel = (relay: NDKRelayStatus) => {
+    const { status, nip11 } = relay;
     switch (status) {
       case "connection-error":
         return t("relay.status.connectionError");
       case "verification-failed":
+        if (nip11?.authRequired) return t("relay.status.verificationFailedAuthRequired");
         return t("relay.status.verificationFailed");
+      case "connected":
+        if (nip11?.authRequired) return t("relay.status.connectedAuthRequired");
+        return t("relay.status.connected");
+      case "connecting":
+        if (nip11?.authRequired) return t("relay.status.connectingAuthRequired");
+        return t("relay.status.connecting");
+      case "disconnected":
+        return t("relay.status.disconnected");
       default:
         return status;
     }
+  };
+
+  const getCapabilityLabel = (value: boolean | undefined): string => {
+    if (value === true) return t("relay.details.yes");
+    if (value === false) return t("relay.details.no");
+    return t("relay.details.unknown");
   };
 
   const defaultTrigger = (
@@ -163,41 +193,93 @@ export function RelayManagement({
               relays.map((relay) => (
                 <div
                   key={relay.url}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+                  className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors space-y-2"
                 >
-                  {/* Status indicator */}
-                  <div
-                    className={cn(
-                      "w-2.5 h-2.5 rounded-full flex-shrink-0",
-                      getStatusColor(relay.status)
-                    )}
-                  />
+                  <div className="flex items-center gap-3">
+                    {/* Status indicator */}
+                    <div
+                      className={cn(
+                        "w-2.5 h-2.5 rounded-full flex-shrink-0",
+                        getStatusColor(relay.status)
+                      )}
+                    />
 
-                  {/* Relay info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-mono truncate text-foreground">
-                      {stripRelayProtocol(relay.url)}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {getStatusIcon(relay.status)}
-                      <span className="text-xs text-muted-foreground capitalize">
-                        {getStatusLabel(relay.status)}
-                        {relay.status === "connected" && relay.latency && (
-                          <span className="ml-1">({relay.latency}ms)</span>
-                        )}
-                      </span>
+                    {/* Relay info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-mono truncate text-foreground">
+                        {stripRelayProtocol(relay.url)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {getStatusIcon(relay.status)}
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {getStatusLabel(relay)}
+                          {relay.status === "connected" && relay.latency && (
+                            <span className="ml-1">({relay.latency}ms)</span>
+                          )}
+                        </span>
+                      </div>
                     </div>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={() =>
+                        setExpandedRelayUrl((current) => (current === relay.url ? null : relay.url))
+                      }
+                      aria-label={
+                        expandedRelayUrl === relay.url
+                          ? t("relay.details.hide")
+                          : t("relay.details.show")
+                      }
+                    >
+                      <ChevronDown
+                        className={cn(
+                          "w-4 h-4 transition-transform",
+                          expandedRelayUrl === relay.url ? "rotate-180" : "rotate-0"
+                        )}
+                      />
+                    </Button>
+
+                    {/* Remove button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => onRemoveRelay(relay.url)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
 
-                  {/* Remove button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => onRemoveRelay(relay.url)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                  {expandedRelayUrl === relay.url && (
+                    <div className="rounded-md border border-border/60 bg-background/40 p-2 text-xs space-y-2">
+                      <div className="flex items-center gap-1.5 text-foreground">
+                        {relay.nip11?.authRequired ? (
+                          <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
+                        ) : (
+                          <ShieldCheck className="h-3.5 w-3.5 text-success" />
+                        )}
+                        <span className="font-medium">{t("relay.details.title")}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 text-muted-foreground">
+                        <span>{t("relay.details.authRequired")}</span>
+                        <span className="text-foreground">
+                          {getCapabilityLabel(relay.nip11?.authRequired)}
+                        </span>
+                        <span>{t("relay.details.supportsNip42")}</span>
+                        <span className="text-foreground">
+                          {getCapabilityLabel(relay.nip11?.supportsNip42)}
+                        </span>
+                        <span>{t("relay.details.nip11Checked")}</span>
+                        <span className="text-foreground">
+                          {relay.nip11?.checkedAt
+                            ? new Date(relay.nip11.checkedAt).toLocaleTimeString()
+                            : t("relay.details.unknown")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))
             )}

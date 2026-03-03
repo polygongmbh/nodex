@@ -613,8 +613,25 @@
     "debugTitle": "Utilidades de depuración",
     "debugSummary": "conectados {{connected}} · conectando {{connecting}} · desconectados {{disconnected}} · conexión {{connectionError}} · verificación {{verificationFailed}}",
     "status": {
+      "connected": "conectado",
+      "connecting": "conectando",
+      "disconnected": "desconectado",
       "connectionError": "problema de conexión",
-      "verificationFailed": "verificación fallida"
+      "verificationFailed": "verificación fallida",
+      "connectedAuthRequired": "conectado (auth requerida)",
+      "connectingAuthRequired": "conectando (auth requerida)",
+      "verificationFailedAuthRequired": "verificación fallida (auth requerida)"
+    },
+    "details": {
+      "show": "Mostrar detalles del relay",
+      "hide": "Ocultar detalles del relay",
+      "title": "Capacidades del relay",
+      "authRequired": "Auth requerida",
+      "supportsNip42": "Soporta NIP-42",
+      "nip11Checked": "NIP-11 comprobado",
+      "yes": "sí",
+      "no": "no",
+      "unknown": "desconocido"
     },
     "copyDebug": "Copiar diagnóstico",
     "copyUrls": "Copiar URLs de relay",
