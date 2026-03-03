@@ -98,6 +98,47 @@ interface ComposeDraftState {
   nip99?: Nip99Metadata;
 }
 
+const NIP99_TITLE_MAX_LENGTH = 80;
+const NIP99_SUMMARY_MAX_LENGTH = 160;
+
+function normalizeListingTextFromContent(content: string): string {
+  return content
+    .replace(/(^|\s)#\w+/g, " ")
+    .replace(/(^|\s)@[^\s]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function truncateWordSafe(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  const truncated = value.slice(0, maxLength).trim();
+  const lastSpace = truncated.lastIndexOf(" ");
+  if (lastSpace >= Math.floor(maxLength * 0.6)) {
+    return truncated.slice(0, lastSpace).trim();
+  }
+  return truncated;
+}
+
+function deriveNip99AutofillFromContent(content: string): Pick<Nip99Metadata, "title" | "summary"> {
+  const normalized = normalizeListingTextFromContent(content);
+  if (!normalized) {
+    return { title: undefined, summary: undefined };
+  }
+  if (normalized.length <= NIP99_TITLE_MAX_LENGTH) {
+    return { title: normalized, summary: undefined };
+  }
+  if (normalized.length <= NIP99_SUMMARY_MAX_LENGTH) {
+    return {
+      title: truncateWordSafe(normalized, NIP99_TITLE_MAX_LENGTH),
+      summary: normalized,
+    };
+  }
+  return {
+    title: truncateWordSafe(normalized, NIP99_TITLE_MAX_LENGTH),
+    summary: truncateWordSafe(normalized, NIP99_SUMMARY_MAX_LENGTH),
+  };
+}
+
 function readComposeDraft(key: string): ComposeDraftState | null {
   try {
     const raw = localStorage.getItem(key);
@@ -212,6 +253,12 @@ export function TaskComposer({
     }));
   });
   const [nip99, setNip99] = useState<Nip99Metadata>(() => ({ ...(initialDraft?.nip99 || {}) }));
+  const [isNip99TitleTouched, setIsNip99TitleTouched] = useState(
+    () => Boolean(initialDraft?.nip99?.title?.trim())
+  );
+  const [isNip99SummaryTouched, setIsNip99SummaryTouched] = useState(
+    () => Boolean(initialDraft?.nip99?.summary?.trim())
+  );
   const [isExpanded, setIsExpanded] = useState(
     () => !adaptiveSize || initialContent.trim().length > 0
   );
@@ -301,6 +348,8 @@ export function TaskComposer({
     setDateType(restoreState.dateType || "due");
     setPriority(typeof restoreState.priority === "number" ? restoreState.priority : undefined);
     setNip99({ ...(restoreState.nip99 || {}) });
+    setIsNip99TitleTouched(Boolean(restoreState.nip99?.title?.trim()));
+    setIsNip99SummaryTouched(Boolean(restoreState.nip99?.summary?.trim()));
     setAttachments(
       (restoreState.attachments || []).map((attachment, index) => ({
         id: `restore-${composeRestoreRequest.id}-${index}`,
@@ -609,6 +658,24 @@ export function TaskComposer({
     setNip99((previous) => ({ ...previous, ...patch }));
   };
 
+  useEffect(() => {
+    if (taskType !== "offer" && taskType !== "request") return;
+    const autoFilled = deriveNip99AutofillFromContent(content);
+    setNip99((previous) => {
+      let changed = false;
+      const next = { ...previous };
+      if (!isNip99TitleTouched && next.title !== autoFilled.title) {
+        next.title = autoFilled.title;
+        changed = true;
+      }
+      if (!isNip99SummaryTouched && next.summary !== autoFilled.summary) {
+        next.summary = autoFilled.summary;
+        changed = true;
+      }
+      return changed ? next : previous;
+    });
+  }, [content, isNip99SummaryTouched, isNip99TitleTouched, taskType]);
+
   const handleSubmit = async (submitType?: unknown) => {
     if (!content.trim()) return;
     if (!hasMeaningfulComposerText(content)) return;
@@ -623,6 +690,7 @@ export function TaskComposer({
     const listingMetadata =
       effectiveTaskType === "offer" || effectiveTaskType === "request"
         ? {
+            ...deriveNip99AutofillFromContent(content),
             identifier: nip99.identifier?.trim() || undefined,
             title: nip99.title?.trim() || undefined,
             summary: nip99.summary?.trim() || undefined,
@@ -704,6 +772,8 @@ export function TaskComposer({
     setExplicitMentionPubkeys([...selectedPeoplePubkeys]);
     setPriority(undefined);
     setNip99({});
+    setIsNip99TitleTouched(false);
+    setIsNip99SummaryTouched(false);
     setAttachments([]);
     attachmentFileRef.current = {};
     if (adaptiveSize) {
@@ -790,8 +860,6 @@ export function TaskComposer({
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
   const hasInvalidRootTaskRelaySelection = taskType === "task" && !parentId && selectedRelays.length !== 1;
-  const hasMissingNip99Title =
-    (taskType === "offer" || taskType === "request") && !(nip99.title && nip99.title.trim());
   const submitBlockedReason = !user
     ? t("composer.blocked.signin")
     : hasPendingAttachmentUploads
@@ -802,9 +870,7 @@ export function TaskComposer({
       ? t("composer.blocked.write")
     : !hasAtLeastOneTag
       ? t("composer.blocked.tag")
-      : hasMissingNip99Title
-        ? "Add a listing title"
-        : hasInvalidRootTaskRelaySelection
+      : hasInvalidRootTaskRelaySelection
           ? t("composer.blocked.relay")
         : isPublishing
           ? t("composer.blocked.publishing")
@@ -1458,7 +1524,10 @@ export function TaskComposer({
         <div className={cn("flex flex-wrap items-end gap-2", adaptiveSize && "motion-ink-stagger [--stagger-index:2]")}>
           <input
             value={nip99.title || ""}
-            onChange={(event) => updateNip99({ title: event.target.value })}
+            onChange={(event) => {
+              setIsNip99TitleTouched(true);
+              updateNip99({ title: event.target.value });
+            }}
             placeholder="Listing title"
             aria-label="Listing title"
             className="h-8 min-w-[12rem] flex-1 rounded-md border border-border/50 bg-background px-2 text-xs"
@@ -1509,7 +1578,10 @@ export function TaskComposer({
           </select>
           <input
             value={nip99.summary || ""}
-            onChange={(event) => updateNip99({ summary: event.target.value })}
+            onChange={(event) => {
+              setIsNip99SummaryTouched(true);
+              updateNip99({ summary: event.target.value });
+            }}
             placeholder="Summary"
             aria-label="Summary"
             className="h-8 min-w-[12rem] flex-[2] rounded-md border border-border/50 bg-background px-2 text-xs"

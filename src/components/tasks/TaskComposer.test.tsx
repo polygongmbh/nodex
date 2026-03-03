@@ -181,6 +181,79 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("autofills listing title from content and strips tags by default", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        allowFeedMessageTypes
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Offer" }));
+    fireEvent.change(screen.getByLabelText("Post an offer..."), {
+      target: { value: "Selling mountain bike @alice@example.com #bikes" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Post Offer" }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Selling mountain bike @alice@example.com #bikes",
+        ["bikes"],
+        ["demo"],
+        "offer",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined,
+        [],
+        {
+          identifier: undefined,
+          title: "Selling mountain bike",
+          summary: undefined,
+          location: undefined,
+          price: undefined,
+          currency: undefined,
+          frequency: undefined,
+          status: "active",
+          publishedAt: undefined,
+        }
+      );
+    });
+  });
+
+  it("stops title autofill once the listing title is edited manually", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        allowFeedMessageTypes
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Offer" }));
+    fireEvent.change(screen.getByLabelText("Post an offer..."), {
+      target: { value: "First listing headline #bikes" },
+    });
+    const titleInput = screen.getByLabelText("Listing title") as HTMLInputElement;
+    expect(titleInput.value).toBe("First listing headline");
+
+    fireEvent.change(titleInput, { target: { value: "Custom manual title" } });
+    fireEvent.change(screen.getByLabelText("Post an offer..."), {
+      target: { value: "Changed body text #bikes" },
+    });
+
+    expect((screen.getByLabelText("Listing title") as HTMLInputElement).value).toBe("Custom manual title");
+  });
+
   it("supports keyboard selection with Enter", () => {
     render(
       <TaskComposer
