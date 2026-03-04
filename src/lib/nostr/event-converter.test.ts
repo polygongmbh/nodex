@@ -700,6 +700,20 @@ describe("mergeTasks", () => {
     expect(merged[1].id).toBe("3");
     expect(merged[2].id).toBe("1");
   });
+
+  it("merges relay ids when duplicate task ids are merged", () => {
+    const existing = [
+      { id: "same", relays: ["relay-a"], timestamp: new Date(1000) },
+    ] as Pick<Task, "id" | "relays" | "timestamp">[] as Task[];
+    const incoming = [
+      { id: "same", relays: ["relay-b"], timestamp: new Date(2000) },
+    ] as Pick<Task, "id" | "relays" | "timestamp">[] as Task[];
+
+    const merged = mergeTasks(existing, incoming);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0].relays).toEqual(["relay-a", "relay-b"]);
+  });
 });
 
 describe("eventHasTags", () => {

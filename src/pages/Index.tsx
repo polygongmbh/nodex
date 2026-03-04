@@ -23,7 +23,7 @@ import { VersionHint } from "@/components/layout/VersionHint";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
 import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
-import { nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
+import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
   loadPersistedChannelMatchMode,
@@ -480,16 +480,23 @@ const Index = () => {
       if (!task.pendingPublishToken) return true;
       return !nostrTaskDedupKeys.has(buildPendingPublishDedupKey(task));
     });
-    const combined = [...localTasksForMerge, ...nostrTasks];
+    const combined = mergeTasks(localTasksForMerge, nostrTasks);
     const byId = new Map<string, Task>();
     const byListingReplaceableKey = new Map<string, Task>();
 
     for (const task of combined) {
       const listingReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
       if (!listingReplaceableKey) {
-        if (!byId.has(task.id)) {
+        const existing = byId.get(task.id);
+        if (!existing) {
           byId.set(task.id, task);
+          continue;
         }
+        const mergedRelays = Array.from(new Set([...existing.relays, ...task.relays]));
+        byId.set(task.id, {
+          ...(existing.timestamp.getTime() >= task.timestamp.getTime() ? existing : task),
+          relays: mergedRelays,
+        });
         continue;
       }
       const existing = byListingReplaceableKey.get(listingReplaceableKey);
