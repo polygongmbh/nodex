@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - When no default relays are configured via env and no relay list is persisted, startup now probes host-derived relay candidates (`base.`, `feed.`, `nostr.`, `tasks.`) based on the current domain and auto-connects only to reachable relays.
+- After sign-in, complementary relay enrichment now prefers NIP-65 (`kind:10002`) relay lists and only falls back to verified NIP-05 relay hints when no NIP-65 relay list is available.
 
 ## [1.16.2] - 2026-03-04
 - Top-level comments/offers/requests now preserve selected relay targets, and published post metadata records only relays that actually acknowledged publish while root tasks/threaded comments remain single-origin routed.

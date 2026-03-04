@@ -42,7 +42,7 @@ import {
   RELAY_STATUS_RECONCILE_INTERVAL_MS,
 } from "./relay-status";
 import { waitForNostrExtensionAvailability } from "./session-restore";
-import { verifyNip05 } from "../nip05-verify";
+import { resolveVerifiedNip05RelayUrls, verifyNip05 } from "../nip05-verify";
 import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "../nip42-relay-auth-policy";
 import { createNip98AuthHeader } from "../nip98-http-auth";
 import {
@@ -56,6 +56,7 @@ import {
   extractRelayRejectionReason,
 } from "./relay-error";
 import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
+import { extractRelayUrlsFromNip65Tags, selectComplementaryRelayUrls } from "../relay-enrichment";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
@@ -97,6 +98,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
+  const complementaryRelaySyncKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (persistedRelayUrls && persistedRelayUrls.length > 0) {
@@ -401,6 +403,44 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
       // Fallback so the UI does not hang if eose never arrives.
       setTimeout(finish, 12000);
+    });
+  }, [beginRelayOperation, endRelayOperation, ndk]);
+
+  const fetchLatestNip65RelayUrls = useCallback(async (pubkey: string): Promise<string[]> => {
+    if (!ndk) return [];
+
+    return await new Promise((resolve) => {
+      const candidates: { createdAt: number; tags: string[][] }[] = [];
+      let settled = false;
+
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        endRelayOperation("read");
+        subscription.stop();
+        if (candidates.length === 0) {
+          resolve([]);
+          return;
+        }
+        candidates.sort((a, b) => b.createdAt - a.createdAt);
+        resolve(extractRelayUrlsFromNip65Tags(candidates[0].tags));
+      };
+
+      beginRelayOperation("read");
+      const subscription = ndk.subscribe(
+        [{ kinds: [10002], authors: [pubkey], limit: 1 }],
+        { closeOnEose: true }
+      );
+
+      subscription.on("event", (event: NDKEvent) => {
+        if (Array.isArray(event.tags)) {
+          candidates.push({ createdAt: event.created_at || 0, tags: event.tags as string[][] });
+        }
+      });
+      subscription.on("eose", finish);
+
+      // Fallback so the UI does not hang if eose never arrives.
+      setTimeout(finish, 6000);
     });
   }, [beginRelayOperation, endRelayOperation, ndk]);
 
@@ -932,6 +972,61 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     const relay = ndk.pool.getRelay(normalized, true);
     relay?.connect();
   }, [ndk, probeRelayInfo]);
+
+  useEffect(() => {
+    if (!user?.pubkey || !ndk) return;
+
+    const normalizedNip05 = user.profile?.nip05?.trim().toLowerCase() || "";
+    const syncKey = `${user.pubkey}|${normalizedNip05}`;
+    if (complementaryRelaySyncKeyRef.current === syncKey) return;
+    complementaryRelaySyncKeyRef.current = syncKey;
+
+    let cancelled = false;
+    void (async () => {
+      const nip65RelayUrls = await fetchLatestNip65RelayUrls(user.pubkey);
+      if (cancelled) return;
+
+      const nip05RelayUrls = nip65RelayUrls.length === 0 && normalizedNip05
+        ? await resolveVerifiedNip05RelayUrls(normalizedNip05, user.pubkey)
+        : [];
+      if (cancelled) return;
+
+      const relaySelection = selectComplementaryRelayUrls({
+        nip65RelayUrls,
+        nip05RelayUrls,
+      });
+      if (relaySelection.relayUrls.length === 0) {
+        nostrDevLog("relay", "No complementary relays discovered from profile sources", {
+          pubkey: user.pubkey,
+          hasNip65: nip65RelayUrls.length > 0,
+          nip05Checked: nip65RelayUrls.length === 0 && Boolean(normalizedNip05),
+        });
+        return;
+      }
+
+      const existingRelayUrls = new Set(relays.map((relay) => relay.url.replace(/\/+$/, "")));
+      const newRelayUrls = relaySelection.relayUrls.filter((relayUrl) => !existingRelayUrls.has(relayUrl.replace(/\/+$/, "")));
+      if (newRelayUrls.length === 0) {
+        nostrDevLog("relay", "Complementary relay discovery found no new relays", {
+          pubkey: user.pubkey,
+          source: relaySelection.source,
+          candidateCount: relaySelection.relayUrls.length,
+        });
+        return;
+      }
+
+      newRelayUrls.forEach((relayUrl) => addRelay(relayUrl));
+      nostrDevLog("relay", "Added complementary relays from profile sources", {
+        pubkey: user.pubkey,
+        source: relaySelection.source,
+        addedRelayUrls: newRelayUrls,
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [addRelay, fetchLatestNip65RelayUrls, ndk, relays, user?.profile?.nip05, user?.pubkey]);
 
   const removeRelay = useCallback((url: string) => {
     if (!ndk) return;
