@@ -2188,6 +2188,14 @@ const Index = () => {
     });
   }, [effectiveActiveRelayIds, failedPublishDrafts]);
 
+  const selectedPublishableRelayIds = useMemo(
+    () =>
+      relays
+        .filter((relay) => effectiveActiveRelayIds.has(relay.id) && Boolean(relay.url))
+        .map((relay) => relay.id),
+    [effectiveActiveRelayIds, relays]
+  );
+
   const filteredTasks = useMemo(
     () =>
       filterTasks({
@@ -2340,6 +2348,7 @@ const Index = () => {
           mentionRequest={mentionRequest}
           failedPublishDrafts={failedPublishDrafts}
           visibleFailedPublishDrafts={visibleFailedPublishDrafts}
+          selectedPublishableRelayIds={selectedPublishableRelayIds}
           onRetryFailedPublish={handleRetryFailedPublish}
           onRepostFailedPublish={handleRepostFailedPublish}
           onDismissFailedPublish={handleDismissFailedPublish}
@@ -2425,6 +2434,7 @@ const Index = () => {
           selectedFeedDrafts={visibleFailedPublishDrafts}
           onRetry={handleRetryFailedPublish}
           onRepost={handleRepostFailedPublish}
+          selectedRelayIds={selectedPublishableRelayIds}
           onDismiss={handleDismissFailedPublish}
           onDismissAll={handleDismissAllFailedPublish}
         />

@@ -111,4 +111,64 @@ describe("FailedPublishQueueBanner", () => {
     fireEvent.click(screen.getByRole("button", { name: "Dismiss all" }));
     expect(onDismissAll).toHaveBeenCalledTimes(1);
   });
+
+  it("enables retry only with selected original relays and repost only with selected non-original relays", () => {
+    const drafts: FailedPublishDraft[] = [
+      { ...baseDraft, id: "1", relayIds: ["relay-a"], relayUrls: ["wss://relay.a"] },
+    ];
+
+    const view = render(
+      <FailedPublishQueueBanner
+        drafts={drafts}
+        selectedFeedDrafts={drafts}
+        selectedRelayIds={["relay-a"]}
+        onRetry={vi.fn()}
+        onRepost={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Retry on original relay targets" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Repost to currently selected feed relays" })).toBeDisabled();
+
+    view.rerender(
+      <FailedPublishQueueBanner
+        drafts={drafts}
+        selectedFeedDrafts={drafts}
+        selectedRelayIds={["relay-b"]}
+        onRetry={vi.fn()}
+        onRepost={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "Retry on original relay targets" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Repost to currently selected feed relays" })).toBeEnabled();
+  });
+
+  it("shows retry progress state while retry is in flight", () => {
+    let resolveRetry: (() => void) | undefined;
+    const onRetry = vi.fn(() => new Promise<void>((resolve) => {
+      resolveRetry = resolve;
+    }));
+    const drafts: FailedPublishDraft[] = [{ ...baseDraft, id: "1", relayIds: ["relay-a"] }];
+
+    render(
+      <FailedPublishQueueBanner
+        drafts={drafts}
+        selectedFeedDrafts={drafts}
+        selectedRelayIds={["relay-a"]}
+        onRetry={onRetry}
+        onRepost={vi.fn()}
+        onDismiss={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Retry on original relay targets" }));
+
+    expect(screen.getByText("Retrying...")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry on original relay targets" })).toBeDisabled();
+
+    resolveRetry?.();
+  });
 });
