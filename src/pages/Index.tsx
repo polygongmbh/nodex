@@ -1,12 +1,8 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { Suspense, lazy, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarHeader } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
-import { FeedView } from "@/components/tasks/FeedView";
-import { KanbanView } from "@/components/tasks/KanbanView";
-import { CalendarView } from "@/components/tasks/CalendarView";
-import { ListView } from "@/components/tasks/ListView";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { DesktopSearchDock, type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
@@ -160,6 +156,18 @@ const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 const PUBLISH_UNDO_DELAY_MS = 5000;
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
+const FeedView = lazy(() =>
+  import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
+);
+const KanbanView = lazy(() =>
+  import("@/components/tasks/KanbanView").then((module) => ({ default: module.KanbanView }))
+);
+const CalendarView = lazy(() =>
+  import("@/components/tasks/CalendarView").then((module) => ({ default: module.CalendarView }))
+);
+const ListView = lazy(() =>
+  import("@/components/tasks/ListView").then((module) => ({ default: module.ListView }))
+);
 
 function buildPendingPublishDedupKey(task: Task): string {
   const authorId = task.author.id?.trim().toLowerCase() || "";
@@ -2297,17 +2305,34 @@ const Index = () => {
   };
 
   const renderView = () => {
+    const viewFallback = <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading view...</div>;
     switch (currentView) {
       case "tree":
         return <TaskTree {...viewProps} />;
       case "feed":
-        return <FeedView {...viewProps} />;
+        return (
+          <Suspense fallback={viewFallback}>
+            <FeedView {...viewProps} />
+          </Suspense>
+        );
       case "kanban":
-        return <KanbanView {...viewProps} depthMode={kanbanDepthMode} />;
+        return (
+          <Suspense fallback={viewFallback}>
+            <KanbanView {...viewProps} depthMode={kanbanDepthMode} />
+          </Suspense>
+        );
       case "calendar":
-        return <CalendarView {...viewProps} />;
+        return (
+          <Suspense fallback={viewFallback}>
+            <CalendarView {...viewProps} />
+          </Suspense>
+        );
       case "list":
-        return <ListView {...viewProps} depthMode={kanbanDepthMode} />;
+        return (
+          <Suspense fallback={viewFallback}>
+            <ListView {...viewProps} depthMode={kanbanDepthMode} />
+          </Suspense>
+        );
       default:
         return <TaskTree {...viewProps} />;
     }
