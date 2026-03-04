@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { resolveDefaultRelayUrls, relayUrlToId } from "./default-relays";
+import { describe, expect, it, vi } from "vitest";
+import {
+  relayUrlToId,
+  resolveDefaultRelayUrls,
+  resolveDefaultRelayUrlsWithDomainFallback,
+} from "./default-relays";
 
 describe("default relay env resolution", () => {
   it("returns an empty list when no relay env values are provided", () => {
@@ -22,6 +26,43 @@ describe("default relay env resolution", () => {
         VITE_DEFAULT_RELAY_PORT: "7447",
       })
     ).toEqual(["ws://nostr.example.com:7447"]);
+  });
+
+  it("falls back to host-derived relay candidates and keeps only available relays", async () => {
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.linkenfels.de");
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({}, {
+        hostname: "nodex.linkenfels.de",
+        probeRelay,
+      })
+    ).resolves.toEqual(["wss://feed.linkenfels.de"]);
+    expect(probeRelay).toHaveBeenCalledTimes(4);
+  });
+
+  it("falls back by prefixing the current host when no subdomain exists", async () => {
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://nostr.nodex.nexus");
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({}, {
+        hostname: "nodex.nexus",
+        probeRelay,
+      })
+    ).resolves.toEqual(["wss://nostr.nodex.nexus"]);
+  });
+
+  it("prefers explicit relay env values without probing host-derived candidates", async () => {
+    const probeRelay = vi.fn(async () => true);
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({
+        VITE_DEFAULT_RELAYS: "wss://relay.example.com",
+      }, {
+        hostname: "nodex.linkenfels.de",
+        probeRelay,
+      })
+    ).resolves.toEqual(["wss://relay.example.com"]);
+    expect(probeRelay).not.toHaveBeenCalled();
   });
 
   it("generates relay ids compatible with existing relay id format", () => {

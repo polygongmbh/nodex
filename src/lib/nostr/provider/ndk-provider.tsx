@@ -23,7 +23,7 @@ import {
   buildPresenceTags,
 } from "@/lib/presence-status";
 import { buildDeterministicGuestName } from "@/lib/guest-name";
-import { getConfiguredDefaultRelays } from "@/lib/nostr/default-relays";
+import { getConfiguredDefaultRelays, getConfiguredDefaultRelaysWithFallback } from "@/lib/nostr/default-relays";
 import { isRelayUrl } from "@/lib/nostr/relay-url";
 import { nostrDevLog } from "../dev-logs";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
@@ -66,14 +66,17 @@ const RELAY_PUBLISH_TIMEOUT_MS = 3000;
 type RelayOperation = "read" | "write" | "unknown";
 
 export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
+  const persistedRelayUrls = useMemo(() => loadPersistedRelayUrls(), []);
   const configuredDefaultRelays = useMemo(
     () => defaultRelays || getConfiguredDefaultRelays(),
     [defaultRelays]
   );
-  const resolvedDefaultRelays = useMemo(() => {
-    const persisted = loadPersistedRelayUrls();
-    return persisted ?? configuredDefaultRelays;
-  }, [configuredDefaultRelays]);
+  const [resolvedDefaultRelays, setResolvedDefaultRelays] = useState<string[]>(
+    () => persistedRelayUrls ?? configuredDefaultRelays
+  );
+  const [isResolvingDefaultRelays, setIsResolvingDefaultRelays] = useState(
+    () => !persistedRelayUrls && configuredDefaultRelays.length === 0
+  );
   const [ndk, setNdk] = useState<NDK | null>(null);
   const [user, setUser] = useState<NostrUser | null>(null);
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
@@ -94,6 +97,41 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
+
+  useEffect(() => {
+    if (persistedRelayUrls && persistedRelayUrls.length > 0) {
+      setResolvedDefaultRelays(persistedRelayUrls);
+      setIsResolvingDefaultRelays(false);
+      return;
+    }
+
+    if (configuredDefaultRelays.length > 0) {
+      setResolvedDefaultRelays(configuredDefaultRelays);
+      setIsResolvingDefaultRelays(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsResolvingDefaultRelays(true);
+    void (async () => {
+      const discoveredRelayUrls = await getConfiguredDefaultRelaysWithFallback();
+      if (cancelled) return;
+      setResolvedDefaultRelays(discoveredRelayUrls);
+      setIsResolvingDefaultRelays(false);
+      if (discoveredRelayUrls.length > 0) {
+        nostrDevLog("relay", "Resolved default relays from current host", {
+          hostname: window.location.hostname,
+          relayUrls: discoveredRelayUrls,
+        });
+        return;
+      }
+      console.warn("No default relays configured and no host-derived relay was reachable");
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [configuredDefaultRelays, persistedRelayUrls]);
 
   const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
     const hasRead = relayVerificationReadOpsRef.current > 0;
@@ -382,6 +420,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
   // Initialize NDK
   useEffect(() => {
+    if (isResolvingDefaultRelays) return;
+
     let disposed = false;
     nostrDevLog("provider", "Initializing NDK provider", {
       configuredDefaultRelays: resolvedDefaultRelays,
@@ -649,7 +689,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       ndkInstance.pool.removeAllListeners();
     };
-  }, [markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays]);
+  }, [isResolvingDefaultRelays, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
