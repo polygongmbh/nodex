@@ -253,6 +253,16 @@ const Index = () => {
     relays,
     t,
     defaultRelayIds: getConfiguredDefaultRelayIds(),
+    onRelayEnabled: (relay) => {
+      if (
+        relay.id !== DEMO_RELAY_ID &&
+        relay.url &&
+        relay.connectionStatus &&
+        relay.connectionStatus !== "connected"
+      ) {
+        reconnectRelay(relay.url);
+      }
+    },
   });
   const {
     events: nostrEvents,
