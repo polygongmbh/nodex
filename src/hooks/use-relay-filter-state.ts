@@ -47,8 +47,11 @@ export function useRelayFilterState({ relays, t, defaultRelayIds, onRelayEnabled
   };
 
   const handleRelayExclusive = (id: string) => {
-    setActiveRelayIds(new Set([id]));
     const relay = relays.find((r) => r.id === id);
+    setActiveRelayIds(new Set([id]));
+    if (relay) {
+      onRelayEnabled?.(relay);
+    }
     toast(t("toasts.success.showingOnlyRelay", { relayName: relay?.name || id }));
   };
 
@@ -58,6 +61,11 @@ export function useRelayFilterState({ relays, t, defaultRelayIds, onRelayEnabled
         toast(t("toasts.success.relayFiltersCleared"));
         return new Set();
       }
+      relays.forEach((relay) => {
+        if (!prev.has(relay.id)) {
+          onRelayEnabled?.(relay);
+        }
+      });
       toast(t("toasts.success.allRelaysSelected"));
       return new Set(relays.map((r) => r.id));
     });
