@@ -645,6 +645,7 @@
     },
     "copyDebug": "Copy diagnostics",
     "copyUrls": "Copy relay URLs",
+    "reconnect": "Reconnect relay",
     "debugCopied": "Relay diagnostics copied",
     "urlsCopied": "Relay URLs copied",
     "copyFailed": "Could not copy relay debug data"

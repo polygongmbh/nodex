@@ -645,6 +645,7 @@
     },
     "copyDebug": "Diagnose kopieren",
     "copyUrls": "Relay-URLs kopieren",
+    "reconnect": "Relay neu verbinden",
     "debugCopied": "Relay-Diagnose kopiert",
     "urlsCopied": "Relay-URLs kopiert",
     "copyFailed": "Relay-Debugdaten konnten nicht kopiert werden"

@@ -188,6 +188,7 @@ const Index = () => {
     isConnected: isNostrConnected,
     addRelay,
     removeRelay,
+    reconnectRelay,
     subscribe,
     publishEvent,
     user,
@@ -2397,6 +2398,7 @@ const Index = () => {
         onToggleAllPeople={handleToggleAllPeople}
         onAddRelay={addRelay}
         onRemoveRelay={removeRelay}
+        onReconnectRelay={reconnectRelay}
         isFocused={isSidebarFocused}
         onFocusTasks={handleFocusTasks}
         onShortcutsClick={shortcutsHelp.open}

@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Relay Management now includes a per-relay `Reconnect` action to force a fresh connection attempt without removing and re-adding the relay.
+- Relay status no longer sticks in `read only` on generic publish failures; that state is now reserved for explicit write rejection/auth-required outcomes.
 
 ## [1.16.0] - 2026-03-04
 Expanded NIP-99 feed support, strengthened relay/auth reliability, and improved failed-publish recovery and channel predictability.

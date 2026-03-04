@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ShieldCheck,
   ShieldAlert,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ interface RelayManagementProps {
   relays: NDKRelayStatus[];
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
+  onReconnectRelay?: (url: string) => void;
   trigger?: ReactNode;
 }
 
@@ -40,6 +42,7 @@ export function RelayManagement({
   relays,
   onAddRelay,
   onRemoveRelay,
+  onReconnectRelay,
   trigger,
 }: RelayManagementProps) {
   const { t } = useTranslation();
@@ -250,6 +253,18 @@ export function RelayManagement({
                     </Button>
 
                     {/* Remove button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => onReconnectRelay?.(relay.url)}
+                      aria-label={t("relay.reconnect")}
+                      title={t("relay.reconnect")}
+                      disabled={relay.status === "connecting"}
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </Button>
+
                     <Button
                       variant="ghost"
                       size="icon"
