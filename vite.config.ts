@@ -60,6 +60,28 @@ export default defineConfig(({ mode }) => {
       // Keep build output warnings focused on app-controlled issues.
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes("node_modules")) return undefined;
+            if (id.includes("@nostr-dev-kit") || id.includes("nostr-tools")) {
+              return "nostr-vendor";
+            }
+            if (id.includes("@radix-ui") || id.includes("lucide-react")) {
+              return "ui-vendor";
+            }
+            if (
+              id.includes("react-router-dom") ||
+              id.includes("@tanstack/react-query") ||
+              id.includes("react-dom")
+            ) {
+              return "app-vendor";
+            }
+            if (id.includes("date-fns") || id.includes("i18next") || id.includes("react-i18next")) {
+              return "intl-vendor";
+            }
+            return undefined;
+          },
+        },
         onwarn(warning: RollupLog, warn) {
           if (
             warning.code === "EVAL" &&
