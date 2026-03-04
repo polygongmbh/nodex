@@ -7,7 +7,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/lib/taskSorting";
-import { useNostrProfile } from "@/hooks/use-nostr-profiles";
+import type { NostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
@@ -51,6 +51,7 @@ interface TaskItemProps {
   isInteractionBlocked?: boolean;
   onMediaClick?: (taskId: string, url: string) => void;
   sortContext?: SortContext;
+  authorProfiles?: Record<string, NostrProfile>;
 }
 
 export function TaskItem({
@@ -79,6 +80,7 @@ export function TaskItem({
   isInteractionBlocked = false,
   onMediaClick,
   sortContext,
+  authorProfiles,
 }: TaskItemProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: TaskStatus): string => {
@@ -102,9 +104,8 @@ export function TaskItem({
   const allowStatusMenuOpenRef = useRef(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   
-  // Fetch author profile from Nostr (only if author.id looks like a pubkey)
   const isPubkey = task.author.id.length === 64 && /^[a-f0-9]+$/.test(task.author.id);
-  const { profile: nostrProfile } = useNostrProfile(isPubkey ? task.author.id : null);
+  const nostrProfile = isPubkey ? authorProfiles?.[task.author.id] : undefined;
   
   // Use Nostr profile if available, fallback to task author
   const authorName = nostrProfile?.displayName || nostrProfile?.name || task.author.displayName;
@@ -627,6 +628,7 @@ export function TaskItem({
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
                       sortContext={sortContext}
+                      authorProfiles={authorProfiles}
                     />
                   );
                 })}
@@ -660,6 +662,7 @@ export function TaskItem({
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
                       sortContext={sortContext}
+                      authorProfiles={authorProfiles}
                     />
                   );
                 })}

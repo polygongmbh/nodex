@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
+import { useNostrProfiles } from "@/hooks/use-nostr-profiles";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -266,6 +267,14 @@ export function TaskTree({
     return ids;
   }, [visibleTasks]);
 
+  const visibleAuthorPubkeys = useMemo(() => {
+    const pubkeys = allTasks
+      .map((task) => task.author.id)
+      .filter((authorId) => authorId.length === 64 && /^[a-f0-9]+$/i.test(authorId));
+    return Array.from(new Set(pubkeys));
+  }, [allTasks]);
+  const { profiles: authorProfiles } = useNostrProfiles(visibleAuthorPubkeys);
+
   // Task navigation with keyboard
   const { focusedTaskId: keyboardFocusedTaskId } = useTaskNavigation({
     taskIds: flattenedTaskIds,
@@ -442,6 +451,7 @@ export function TaskTree({
               isInteractionBlocked={isInteractionBlocked}
               onMediaClick={openTaskMedia}
               sortContext={sortContext}
+              authorProfiles={authorProfiles}
             />
           ))
         )}
