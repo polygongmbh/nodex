@@ -135,7 +135,8 @@
     },
     "warnings": {
       "parentLocalOnly": "Parent reference is local-only; publishing task without parent link",
-      "disconnectedSelectedFeeds": "Reconnect selected feeds before modifying or posting"
+      "disconnectedSelectedFeeds": "Reconnect selected feeds before modifying or posting",
+      "partialPublish": "Published to {{publishedCount}} of {{targetCount}} selected feeds"
     }
   },
   "listView": {

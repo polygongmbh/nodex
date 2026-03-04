@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { toast } from "sonner";
-import { notifyPublishSavedForRetry } from "./notifications";
+import { notifyPartialPublish, notifyPublishSavedForRetry } from "./notifications";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -39,6 +39,19 @@ describe("notifyPublishSavedForRetry", () => {
     });
     expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
       'toasts.errors.publishSavedForRetryWithRelayReason:{"relayUrl":"wss://relay.example.com","reason":"auth-required: whitelist"}'
+    );
+  });
+});
+
+describe("notifyPartialPublish", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("shows warning toast with publish counts", () => {
+    notifyPartialPublish(t, { publishedCount: 1, targetCount: 3 });
+    expect(vi.mocked(toast.warning)).toHaveBeenCalledWith(
+      'toasts.warnings.partialPublish:{"publishedCount":1,"targetCount":3}'
     );
   });
 });

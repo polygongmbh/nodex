@@ -135,7 +135,8 @@
     },
     "warnings": {
       "parentLocalOnly": "Parent-Referenz ist nur lokal; Aufgabe wird ohne Parent-Link veröffentlicht",
-      "disconnectedSelectedFeeds": "Verbinde die ausgewählten Feeds wieder, bevor du etwas änderst oder veröffentlichst"
+      "disconnectedSelectedFeeds": "Verbinde die ausgewählten Feeds wieder, bevor du etwas änderst oder veröffentlichst",
+      "partialPublish": "Veröffentlicht auf {{publishedCount}} von {{targetCount}} ausgewählten Feeds"
     }
   },
   "listView": {

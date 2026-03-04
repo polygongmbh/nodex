@@ -119,6 +119,7 @@ import {
   notifyNeedSigninModify,
   notifyNeedSigninPost,
   notifyNeedTag,
+  notifyPartialPublish,
   notifyPublished,
   notifyPublishSavedForRetry,
   notifyStatusRestricted,
@@ -1837,6 +1838,18 @@ const Index = () => {
       const ids = publishedRelayUrls.map((url) => getRelayIdFromUrl(url)).filter(Boolean);
       return ids.length > 0 ? ids : (effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID]);
     };
+    const notifyIfPartialPublish = (publishedRelayUrls?: string[]) => {
+      const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
+      const targetCount = new Set(selectedRelayUrls.map(normalizeUrl)).size;
+      const publishedCount = new Set((publishedRelayUrls || []).map(normalizeUrl)).size;
+      if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
+        notifyPartialPublish(t, { publishedCount, targetCount });
+        nostrDevLog("publish", "Partial publish acknowledged by subset of target relays", {
+          targetRelayUrls: selectedRelayUrls,
+          publishedRelayUrls: publishedRelayUrls || [],
+        });
+      }
+    };
 
     const baseTask: Omit<Task, "id"> = {
       author: taskAuthor,
@@ -2001,6 +2014,7 @@ const Index = () => {
               : task
           )
         );
+        notifyIfPartialPublish(publishResult.publishedRelayUrls);
         notifyPublished(t, normalizedTaskType);
       }, PUBLISH_UNDO_DELAY_MS);
 
@@ -2065,6 +2079,7 @@ const Index = () => {
       },
       ...prev,
     ]);
+    notifyIfPartialPublish(publishResult.publishedRelayUrls);
     notifyPublished(t, normalizedTaskType);
     return { ok: true, mode: "published" };
   };
@@ -2115,6 +2130,17 @@ const Index = () => {
     }
 
     const publishedEventId = result.eventId;
+    const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
+    const targetCount = new Set(relayUrls.map(normalizeUrl)).size;
+    const publishedCount = new Set((result.publishedRelayUrls || []).map(normalizeUrl)).size;
+    if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
+      notifyPartialPublish(t, { publishedCount, targetCount });
+      nostrDevLog("publish", "Partial publish acknowledged by subset of retry relay targets", {
+        draftId,
+        relayUrls,
+        publishedRelayUrls: result.publishedRelayUrls || [],
+      });
+    }
     const effectiveRelayIds = (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
       ? result.publishedRelayUrls
       : relayUrls

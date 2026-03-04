@@ -39,6 +39,10 @@ interface PublishRetryToastOptions {
   reason?: string;
 }
 
+export function notifyPartialPublish(t: TFunction, options: { publishedCount: number; targetCount: number }): void {
+  toast.warning(t("toasts.warnings.partialPublish", options));
+}
+
 export function notifyPublishSavedForRetry(t: TFunction, options: PublishRetryToastOptions = {}): void {
   const { relayUrl, reason } = options;
   if (relayUrl && reason) {
