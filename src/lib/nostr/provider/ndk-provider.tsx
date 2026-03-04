@@ -903,6 +903,31 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
   }, [ndk]);
 
+  const reconnectRelay = useCallback((url: string) => {
+    if (!ndk) return;
+    const normalized = url.replace(/\/+$/, "");
+    relayInitialFailureCountsRef.current.delete(normalized);
+    relayConnectedOnceRef.current.delete(normalized);
+    relayAutoPausedRef.current.delete(normalized);
+    relayReadRejectedRef.current.delete(normalized);
+    relayWriteRejectedRef.current.delete(normalized);
+    pendingRelayVerificationRef.current.delete(normalized);
+    relayAuthRetryHistoryRef.current.delete(normalized);
+    nostrDevLog("relay", "Manual relay reconnect requested", { relayUrl: normalized });
+
+    setRelays((previous) =>
+      previous.map((relay) =>
+        relay.url.replace(/\/+$/, "") === normalized
+          ? { ...relay, status: "connecting" }
+          : relay
+      )
+    );
+
+    const relay = ndk.pool.getRelay(normalized, true);
+    relay?.disconnect();
+    relay?.connect();
+  }, [ndk]);
+
   const publishEvent = useCallback(async (
     kind: NostrEventKind,
     content: string,
@@ -917,7 +942,6 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     let signedEventId: string | undefined;
     let targetRelayUrls: string[] = [];
-    let attemptedPublish = false;
     try {
       beginRelayOperation("write");
       const event = new NDKEvent(ndk);
@@ -963,28 +987,16 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         true
       );
       
-      attemptedPublish = true;
       const publishedTo = await event.publish(relaySet);
       
       if (publishedTo.size === 0) {
-        targetRelayUrls.forEach((relayUrl) => {
-          markRelayWriteOutcome(relayUrl, false);
-        });
         console.warn("Event publish completed but no relays confirmed receipt");
         return { success: false, eventId: event.id };
       }
       
       const publishedRelayUrls = Array.from(publishedTo).map((r) => r.url);
-      const publishedRelayUrlSet = new Set(
-        publishedRelayUrls.map((relayUrl) => relayUrl.replace(/\/+$/, ""))
-      );
       publishedRelayUrls.forEach((relayUrl) => {
         markRelayWriteOutcome(relayUrl, true);
-      });
-      targetRelayUrls.forEach((relayUrl) => {
-        if (!publishedRelayUrlSet.has(relayUrl.replace(/\/+$/, ""))) {
-          markRelayWriteOutcome(relayUrl, false);
-        }
       });
       nostrDevLog("publish", "Event published", {
         eventId: event.id,
@@ -1001,10 +1013,6 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
             setStatus: true,
             showToast: false,
           });
-        });
-      } else if (attemptedPublish) {
-        targetRelayUrls.forEach((relayUrl) => {
-          markRelayWriteOutcome(relayUrl, false);
         });
       }
       return { success: false, eventId: signedEventId };
@@ -1231,6 +1239,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     logout,
     addRelay,
     removeRelay,
+    reconnectRelay,
     publishEvent,
     createHttpAuthHeader,
     updateUserProfile,
@@ -1253,6 +1262,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     logout,
     addRelay,
     removeRelay,
+    reconnectRelay,
     publishEvent,
     createHttpAuthHeader,
     updateUserProfile,

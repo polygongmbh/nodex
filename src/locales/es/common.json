@@ -645,6 +645,7 @@
     },
     "copyDebug": "Copiar diagnóstico",
     "copyUrls": "Copiar URLs de relay",
+    "reconnect": "Reconectar relay",
     "debugCopied": "Diagnóstico de relays copiado",
     "urlsCopied": "URLs de relay copiadas",
     "copyFailed": "No se pudieron copiar los datos de depuración de relay"

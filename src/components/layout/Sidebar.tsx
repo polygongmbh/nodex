@@ -69,6 +69,7 @@ interface SidebarProps {
   onToggleAllPeople: () => void;
   onAddRelay: (url: string) => void;
   onRemoveRelay: (url: string) => void;
+  onReconnectRelay?: (url: string) => void;
   isFocused?: boolean;
   onFocusTasks?: () => void;
   onShortcutsClick?: () => void;
@@ -94,6 +95,7 @@ export function Sidebar({
   onToggleAllPeople,
   onAddRelay,
   onRemoveRelay,
+  onReconnectRelay,
   isFocused = false,
   onFocusTasks,
   onShortcutsClick,
@@ -295,6 +297,7 @@ export function Sidebar({
                   relays={nostrRelays}
                   onAddRelay={onAddRelay}
                   onRemoveRelay={onRemoveRelay}
+                  onReconnectRelay={onReconnectRelay}
                   trigger={
                     <TooltipTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground">

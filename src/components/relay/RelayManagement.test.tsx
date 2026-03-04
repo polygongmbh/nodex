@@ -84,4 +84,24 @@ describe("RelayManagement", () => {
     expect(screen.getAllByText("yes").length).toBeGreaterThan(0);
     expect(screen.getByText("connected (auth required)")).toBeInTheDocument();
   });
+
+  it("allows reconnecting an individual relay from the management panel", () => {
+    const onReconnectRelay = vi.fn();
+
+    render(
+      <RelayManagement
+        relays={[
+          { url: "wss://relay.one", status: "read-only" },
+        ]}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+        onReconnectRelay={onReconnectRelay}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    fireEvent.click(screen.getByRole("button", { name: /reconnect relay/i }));
+
+    expect(onReconnectRelay).toHaveBeenCalledWith("wss://relay.one");
+  });
 });
