@@ -49,6 +49,7 @@ import {
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
+import { extractRelayUrlsFromErrorMessage } from "./relay-error";
 import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
@@ -1008,11 +1009,18 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       console.error("Failed to publish event:", error);
       const errorMessage = error instanceof Error ? error.message : String(error || "");
       if (isAuthRequiredCloseReason(errorMessage)) {
-        targetRelayUrls.forEach((relayUrl) => {
+        const normalizedTargets = new Set(targetRelayUrls.map((relayUrl) => relayUrl.replace(/\/+$/, "")));
+        const failedRelayUrls = extractRelayUrlsFromErrorMessage(errorMessage)
+          .filter((relayUrl) => normalizedTargets.has(relayUrl));
+        failedRelayUrls.forEach((relayUrl) => {
           markRelayVerificationFailure(relayUrl, "write", {
             setStatus: true,
             showToast: false,
           });
+        });
+        nostrDevLog("relay", "Publish auth-required failure scope", {
+          targetRelayUrls,
+          failedRelayUrls,
         });
       }
       return { success: false, eventId: signedEventId };
