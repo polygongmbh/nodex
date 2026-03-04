@@ -441,6 +441,7 @@ export function TaskTree({
               isPendingPublishTask={isPendingPublishTask}
               isInteractionBlocked={isInteractionBlocked}
               onMediaClick={openTaskMedia}
+              sortContext={sortContext}
             />
           ))
         )}

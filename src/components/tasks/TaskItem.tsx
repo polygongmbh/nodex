@@ -6,7 +6,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
-import { sortTasks, buildChildrenMap, getDueDateColorClass } from "@/lib/taskSorting";
+import { sortTasks, type SortContext, getDueDateColorClass } from "@/lib/taskSorting";
 import { useNostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
@@ -50,6 +50,7 @@ interface TaskItemProps {
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   onMediaClick?: (taskId: string, url: string) => void;
+  sortContext?: SortContext;
 }
 
 export function TaskItem({
@@ -77,6 +78,7 @@ export function TaskItem({
   isPendingPublishTask,
   isInteractionBlocked = false,
   onMediaClick,
+  sortContext,
 }: TaskItemProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: TaskStatus): string => {
@@ -588,12 +590,10 @@ export function TaskItem({
               }
             }
             
-            // Build context for sorting subtasks
-            const childrenMap = buildChildrenMap(allTasks);
-            const sortContext = { childrenMap, allTasks };
-            
-            // Sort subtasks using the same sorting logic as top-level tasks
-            const sortedTasksToShow = sortTasks(tasksToShow, sortContext);
+            const sortedTasksToShow =
+              foldState === "allVisible" && sortContext
+                ? sortTasks(tasksToShow, sortContext)
+                : tasksToShow;
             
             return (
               <>
@@ -626,6 +626,7 @@ export function TaskItem({
                       onUndoPendingPublish={onUndoPendingPublish}
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
+                      sortContext={sortContext}
                     />
                   );
                 })}
@@ -658,6 +659,7 @@ export function TaskItem({
                       onUndoPendingPublish={onUndoPendingPublish}
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
+                      sortContext={sortContext}
                     />
                   );
                 })}
