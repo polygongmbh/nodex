@@ -13,6 +13,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Failed-publish queue actions are now scope-aware (`Retry` only when selected feeds include an original relay target, `Repost` only when a different selected feed exists) and show in-progress action state while retry/repost runs.
 - Queued post failure toasts now include relay rejection detail when available, including single-relay URL context for clearer publish diagnostics.
 - Relay rejection reason extraction now reads nested NDK publish error payloads (including inner `OK` tuples), fixing missing reason text in queued publish toasts.
+- Relay rejection parsing now explicitly handles NDK `NDKPublishError.errors` map payloads (including non-enumerable class fields), fixing missing relay URL/reason in single-relay publish failures.
 
 ## [1.16.0] - 2026-03-04
 Expanded NIP-99 feed support, strengthened relay/auth reliability, and improved failed-publish recovery and channel predictability.

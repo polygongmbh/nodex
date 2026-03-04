@@ -27,11 +27,29 @@ function isObjectLike(value: unknown): value is Record<string, unknown> {
 
 function collectStringLeaves(value: unknown, seen = new WeakSet<object>()): string[] {
   if (typeof value === "string") return [value];
-  if (!isObjectLike(value)) return [];
+  if (!isObjectLike(value)) return [String(value)];
   if (seen.has(value)) return [];
   seen.add(value);
 
-  const values = Array.isArray(value) ? value : Object.values(value);
+  if (value instanceof Map) {
+    return [...value.entries()].flatMap(([key, mapValue]) => [
+      ...collectStringLeaves(key, seen),
+      ...collectStringLeaves(mapValue, seen),
+    ]);
+  }
+
+  if (value instanceof Set) {
+    return [...value.values()].flatMap((entry) => collectStringLeaves(entry, seen));
+  }
+
+  const ownValues = Reflect.ownKeys(value).map((key) => {
+    try {
+      return (value as Record<PropertyKey, unknown>)[key];
+    } catch {
+      return undefined;
+    }
+  });
+  const values = Array.isArray(value) ? [...value, ...ownValues] : ownValues;
   return values.flatMap((entry) => collectStringLeaves(entry, seen));
 }
 
@@ -51,22 +69,34 @@ function collectOkTupleReasons(value: unknown, seen = new WeakSet<object>()): st
     return [...directReason, ...value.flatMap((entry) => collectOkTupleReasons(entry, seen))];
   }
 
-  return Object.values(value).flatMap((entry) => collectOkTupleReasons(entry, seen));
+  if (value instanceof Map) {
+    return [...value.entries()].flatMap(([key, mapValue]) => [
+      ...collectOkTupleReasons(key, seen),
+      ...collectOkTupleReasons(mapValue, seen),
+    ]);
+  }
+
+  if (value instanceof Set) {
+    return [...value.values()].flatMap((entry) => collectOkTupleReasons(entry, seen));
+  }
+
+  const values = Reflect.ownKeys(value).map((key) => {
+    try {
+      return (value as Record<PropertyKey, unknown>)[key];
+    } catch {
+      return undefined;
+    }
+  });
+  return values.flatMap((entry) => collectOkTupleReasons(entry, seen));
 }
 
 export function extractRelayUrlsFromError(error: unknown): string[] {
   const directMessage = extractErrorMessage(error);
   const fromDirectMessage = extractRelayUrlsFromErrorMessage(directMessage);
   if (fromDirectMessage.length > 0) return fromDirectMessage;
-  if (typeof error === "object" && error !== null) {
-    try {
-      const serialized = JSON.stringify(error);
-      return extractRelayUrlsFromErrorMessage(serialized);
-    } catch {
-      return [];
-    }
-  }
-  return [];
+  const leafCandidates = collectStringLeaves(error);
+  const merged = leafCandidates.flatMap((candidate) => extractRelayUrlsFromErrorMessage(candidate));
+  return Array.from(new Set(merged.map((url) => url.replace(/\/+$/, ""))));
 }
 
 export function extractRelayRejectionReason(error: unknown): string | undefined {

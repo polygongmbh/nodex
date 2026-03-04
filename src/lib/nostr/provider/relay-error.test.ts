@@ -53,4 +53,25 @@ describe("extractRelayUrlsFromErrorMessage", () => {
 
     expect(reason).toBe("auth-required: event author pubkey not in whitelist");
   });
+
+  it("extracts relay URL and rejection reason from NDKPublishError-like map payloads", () => {
+    const relay = { url: "wss://relay.example.com" };
+    const relayError = new Error(
+      '["OK","68dd30...",false,"auth-required: event author pubkey not in whitelist"]'
+    );
+    const publishError = new Error("Not enough relays received the event (0 published, 1 required)") as Error & {
+      errors?: Map<{ url: string }, Error>;
+    };
+    Object.defineProperty(publishError, "errors", {
+      value: new Map([[relay, relayError]]),
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    });
+
+    expect(extractRelayUrlsFromError(publishError)).toEqual(["wss://relay.example.com"]);
+    expect(extractRelayRejectionReason(publishError)).toBe(
+      "auth-required: event author pubkey not in whitelist"
+    );
+  });
 });
