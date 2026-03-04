@@ -42,4 +42,15 @@ describe("extractRelayUrlsFromErrorMessage", () => {
 
     expect(reason).toBe("auth-required: event author pubkey not in whitelist");
   });
+
+  it("extracts rejection reason from nested OK tuple payloads", () => {
+    const reason = extractRelayRejectionReason({
+      message: "Not enough relays received the event (0 published, 1 required)",
+      relayErrors: {
+        "wss://relay.example.com": ["OK", "68dd30...", false, "auth-required: event author pubkey not in whitelist"],
+      },
+    });
+
+    expect(reason).toBe("auth-required: event author pubkey not in whitelist");
+  });
 });

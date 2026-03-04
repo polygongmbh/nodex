@@ -21,6 +21,39 @@ function extractErrorMessage(error: unknown): string {
   return String(error || "");
 }
 
+function isObjectLike(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function collectStringLeaves(value: unknown, seen = new WeakSet<object>()): string[] {
+  if (typeof value === "string") return [value];
+  if (!isObjectLike(value)) return [];
+  if (seen.has(value)) return [];
+  seen.add(value);
+
+  const values = Array.isArray(value) ? value : Object.values(value);
+  return values.flatMap((entry) => collectStringLeaves(entry, seen));
+}
+
+function collectOkTupleReasons(value: unknown, seen = new WeakSet<object>()): string[] {
+  if (!isObjectLike(value)) return [];
+  if (seen.has(value)) return [];
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    const directReason =
+      value.length >= 4 &&
+      value[0] === "OK" &&
+      value[2] === false &&
+      typeof value[3] === "string"
+        ? [value[3]]
+        : [];
+    return [...directReason, ...value.flatMap((entry) => collectOkTupleReasons(entry, seen))];
+  }
+
+  return Object.values(value).flatMap((entry) => collectOkTupleReasons(entry, seen));
+}
+
 export function extractRelayUrlsFromError(error: unknown): string[] {
   const directMessage = extractErrorMessage(error);
   const fromDirectMessage = extractRelayUrlsFromErrorMessage(directMessage);
@@ -37,14 +70,17 @@ export function extractRelayUrlsFromError(error: unknown): string[] {
 }
 
 export function extractRelayRejectionReason(error: unknown): string | undefined {
-  const message = extractErrorMessage(error);
-  if (!message) return undefined;
+  const tupleReason = collectOkTupleReasons(error)[0];
+  if (tupleReason) return tupleReason;
 
-  const okMatch = message.match(OK_REJECTION_PATTERN);
-  if (okMatch?.[1]) return okMatch[1];
-
-  const authMatch = message.match(AUTH_REQUIRED_REASON_PATTERN);
-  if (authMatch?.[1]) return authMatch[1];
+  const candidates = [extractErrorMessage(error), ...collectStringLeaves(error)];
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const okMatch = candidate.match(OK_REJECTION_PATTERN);
+    if (okMatch?.[1]) return okMatch[1];
+    const authMatch = candidate.match(AUTH_REQUIRED_REASON_PATTERN);
+    if (authMatch?.[1]) return authMatch[1];
+  }
 
   return undefined;
 }
