@@ -62,6 +62,7 @@ export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./c
 
 const NDKContext = createContext<NDKContextValue | null>(null);
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
+const RELAY_PUBLISH_TIMEOUT_MS = 1000;
 type RelayOperation = "read" | "write" | "unknown";
 
 export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
@@ -1004,7 +1005,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         true
       );
       
-      const publishedTo = await event.publish(relaySet);
+      const publishedTo = await event.publish(relaySet, RELAY_PUBLISH_TIMEOUT_MS, 1);
       
       if (publishedTo.size === 0) {
         console.warn("Event publish completed but no relays confirmed receipt");
