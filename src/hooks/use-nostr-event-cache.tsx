@@ -10,6 +10,7 @@ import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/no
 
 export const NOSTR_EVENTS_QUERY_KEY = ["nostr-events-cache"] as const;
 const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;
+const CACHE_PERSIST_DEBOUNCE_MS = 750;
 const DEMO_RELAY_ID = "demo";
 
 interface UseNostrEventCacheParams {
@@ -86,6 +87,7 @@ export function useNostrEventCache({
   const feedScopeKey = useMemo(() => buildFeedScopeKey(activeRelayIds), [activeRelayIds]);
   const queryKey = useMemo(() => getNostrEventsQueryKey(feedScopeKey), [feedScopeKey]);
   const hasFinalizedBootstrapRef = useRef(false);
+  const persistTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     hasFinalizedBootstrapRef.current = false;
@@ -140,7 +142,29 @@ export function useNostrEventCache({
   }, [finalizeBootstrapScope, isConnected, pushEvent, subscribe, subscribedKinds]);
 
   useEffect(() => {
-    saveCachedNostrEvents(nostrEvents, feedScopeKey);
+    if (typeof window === "undefined") {
+      saveCachedNostrEvents(nostrEvents, feedScopeKey);
+      return;
+    }
+
+    const flushPersist = () => {
+      if (persistTimerRef.current !== null) {
+        window.clearTimeout(persistTimerRef.current);
+        persistTimerRef.current = null;
+      }
+      saveCachedNostrEvents(nostrEvents, feedScopeKey);
+    };
+
+    persistTimerRef.current = window.setTimeout(flushPersist, CACHE_PERSIST_DEBOUNCE_MS);
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "hidden") return;
+      flushPersist();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      flushPersist();
+    };
   }, [feedScopeKey, nostrEvents]);
 
   return {
