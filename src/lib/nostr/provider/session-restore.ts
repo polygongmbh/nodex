@@ -20,8 +20,6 @@ export function waitForNostrExtensionAvailability(
 
   return new Promise((resolve) => {
     let settled = false;
-    let timeoutId: number | undefined;
-    let intervalId: number | undefined;
 
     const finish = (available: boolean) => {
       if (settled) return;
@@ -52,8 +50,8 @@ export function waitForNostrExtensionAvailability(
     };
 
     window.addEventListener("nostr#initialized", handleInitialized as EventListener);
-    intervalId = window.setInterval(checkExtension, pollIntervalMs);
-    timeoutId = window.setTimeout(() => finish(hasNostrExtension()), timeoutMs);
+    const intervalId = window.setInterval(checkExtension, pollIntervalMs);
+    const timeoutId = window.setTimeout(() => finish(hasNostrExtension()), timeoutMs);
     options.signal?.addEventListener("abort", handleAbort, { once: true });
   });
 }

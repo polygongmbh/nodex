@@ -6,11 +6,15 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-03-04
+Expanded NIP-99 feed support, strengthened relay/auth reliability, and improved failed-publish recovery and channel predictability.
 - Feed now supports NIP-99 listings end to end: `Offer`/`Request` type publishing (`kind:30402`), feed labeling, common listing metadata fields, active/sold status toggles, and auto-filled title/summary defaults with metadata normalization.
 - Relay auth/reliability was overhauled around NIP-42 and NIP-11: standards-compliant auth events (`kind:22242`), improved signed-out/session-restore behavior (including restore-before-connect startup ordering), auth-required recovery/retry flows, and reduced false-positive verification errors.
 - Relay status now reflects capabilities and outcomes more precisely: NIP-11 capability details in Relay Management, read-rejected vs read-only state differentiation, stable connecting behavior, and post-sign-in/auth success status healing.
 - Relay write/read state now updates from real outcomes: publish failures/partials mark write rejection, later confirms clear it, and read rejection only applies on explicit read denial.
 - Failed publish handling now supports both feed focus and recovery flexibility: scoped visibility by selected feeds, an all-failures scope with hidden-count indicator, original-target `Retry`, selected-feed `Repost`, and explicit hover hints for both actions.
+- Sidebar channel seeding now uses feed-scoped frecency to select visible channels while keeping the visible set alphabetically ordered for stable scanning.
+- Updated page title branding from `Collaboration Platform` to `Organic Collaboration`.
 - Refactored Nostr internals to remove the unused custom relay pool and rely on NDK-native relay/auth handling.
 
 ## [1.15.0] - 2026-02-27
