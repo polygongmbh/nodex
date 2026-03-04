@@ -29,6 +29,8 @@ import { nostrDevLog } from "../dev-logs";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
 import {
   hasNostrExtension,
+  loadPersistedRelayUrls,
+  savePersistedRelayUrls,
   STORAGE_KEY_AUTH,
   STORAGE_KEY_NIP46_BUNKER,
   STORAGE_KEY_NIP46_LOCAL_NSEC,
@@ -60,17 +62,20 @@ const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
 type RelayOperation = "read" | "write" | "unknown";
 
 export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
-  const defaultRelaysKey = useMemo(() => (defaultRelays || []).join(","), [defaultRelays]);
-  const resolvedDefaultRelays = useMemo(
+  const configuredDefaultRelays = useMemo(
     () => defaultRelays || getConfiguredDefaultRelays(),
     [defaultRelays]
   );
+  const resolvedDefaultRelays = useMemo(() => {
+    const persisted = loadPersistedRelayUrls();
+    return persisted ?? configuredDefaultRelays;
+  }, [configuredDefaultRelays]);
   const [ndk, setNdk] = useState<NDK | null>(null);
   const [user, setUser] = useState<NostrUser | null>(null);
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [relays, setRelays] = useState<NDKRelayStatus[]>([]);
-  const [removedRelays, setRemovedRelays] = useState<Set<string>>(new Set());
+  const removedRelaysRef = useRef<Set<string>>(new Set());
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
   const [isProfileSyncing, setIsProfileSyncing] = useState(false);
   const profileSyncRunRef = useRef(0);
@@ -390,6 +395,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         const nextByUrl = new Map(prev.map((entry) => [normalizeUrl(entry.url), entry]));
         ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
           const normalized = normalizeUrl(relay.url);
+          if (removedRelaysRef.current.has(normalized)) return;
           const previousEntry = nextByUrl.get(normalized);
           if (relayAutoPausedRef.current.has(normalized)) {
             nextByUrl.set(normalized, {
@@ -427,50 +433,45 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         pendingRelayVerificationRef.current.delete(normalized);
         markRelayVerificationSuccess(normalized, pendingVerification.operation);
       }
-      setRemovedRelays((removed) => {
-        if (removed.has(normalized)) return removed;
-        setRelays((prev) => {
-          const existing = prev.find((r) => normalizeUrl(r.url) === normalized);
-          if (existing) {
-            return prev.map((r) =>
-              normalizeUrl(r.url) === normalized
-                ? {
-                    ...r,
-                    url: normalized,
-                    status: resolveConnectedRelayStatus(normalized),
-                  }
-                : r
-            );
-          }
-          const info = relayInfoRef.current.get(normalized);
-          return [...prev, {
-            url: normalized,
-            status: resolveConnectedRelayStatus(normalized),
-            nip11: info
+      if (removedRelaysRef.current.has(normalized)) return;
+      setRelays((prev) => {
+        const existing = prev.find((r) => normalizeUrl(r.url) === normalized);
+        if (existing) {
+          return prev.map((r) =>
+            normalizeUrl(r.url) === normalized
               ? {
-                  authRequired: info.authRequired,
-                  supportsNip42: info.supportsNip42,
-                  checkedAt: Date.now(),
+                  ...r,
+                  url: normalized,
+                  status: resolveConnectedRelayStatus(normalized),
                 }
-              : undefined,
-          }];
-        });
-        return removed;
+              : r
+          );
+        }
+        const info = relayInfoRef.current.get(normalized);
+        return [...prev, {
+          url: normalized,
+          status: resolveConnectedRelayStatus(normalized),
+          nip11: info
+            ? {
+                authRequired: info.authRequired,
+                supportsNip42: info.supportsNip42,
+                checkedAt: Date.now(),
+              }
+            : undefined,
+        }];
       });
     });
 
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
-      setRemovedRelays((removed) => {
-        if (removed.has(normalized)) return removed;
+      if (!removedRelaysRef.current.has(normalized)) {
         setRelays((prev) =>
           prev.map((r) =>
             normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
           )
         );
-        return removed;
-      });
+      }
 
       if (relayConnectedOnceRef.current.has(normalized)) return;
       if (relayAutoPausedRef.current.has(normalized)) return;
@@ -496,6 +497,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
 
     // Initialize relay states
+    removedRelaysRef.current.clear();
     setRelays(resolvedDefaultRelays.map((url) => {
       const normalizedUrl = url.replace(/\/+$/, "");
       const info = relayInfoRef.current.get(normalizedUrl);
@@ -643,7 +645,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       ndkInstance.pool.removeAllListeners();
     };
-  }, [defaultRelaysKey, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays]);
+  }, [markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -849,6 +851,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
     const normalizeUrl = (u: string) => u.replace(/\/+$/, "");
     const normalized = normalizeUrl(url);
+    removedRelaysRef.current.delete(normalized);
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
     relayAutoPausedRef.current.delete(normalized);
@@ -857,13 +860,16 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     // Add to relays state
     setRelays((prev) => {
+      let next: NDKRelayStatus[];
       if (prev.some((r) => normalizeUrl(r.url) === normalized)) {
-        return prev.map((r) =>
+        next = prev.map((r) =>
           normalizeUrl(r.url) === normalized ? { ...r, url: normalized, status: "connecting" } : r
         );
+        savePersistedRelayUrls(next.map((relay) => relay.url));
+        return next;
       }
       const info = relayInfoRef.current.get(normalized);
-      return [...prev, {
+      next = [...prev, {
         url: normalized,
         status: "connecting",
         nip11: info
@@ -874,6 +880,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
             }
           : undefined,
       }];
+      savePersistedRelayUrls(next.map((relay) => relay.url));
+      return next;
     });
 
     // Connect via NDK
@@ -888,8 +896,12 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     const normalized = normalizeUrl(url);
 
     // Mark as intentionally removed so disconnect events don't re-add it
-    setRemovedRelays((prev) => new Set(prev).add(normalized));
-    setRelays((prev) => prev.filter((r) => normalizeUrl(r.url) !== normalized));
+    removedRelaysRef.current.add(normalized);
+    setRelays((prev) => {
+      const next = prev.filter((r) => normalizeUrl(r.url) !== normalized);
+      savePersistedRelayUrls(next.map((relay) => relay.url));
+      return next;
+    });
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
     relayAutoPausedRef.current.delete(normalized);
@@ -897,16 +909,17 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayWriteRejectedRef.current.delete(normalized);
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
     
-    const relay = ndk.pool.getRelay(url);
+    const relay = ndk.pool.getRelay(normalized);
     if (relay) {
       relay.disconnect();
-      ndk.pool.removeRelay(url);
+      ndk.pool.removeRelay(normalized);
     }
   }, [ndk]);
 
   const reconnectRelay = useCallback((url: string) => {
     if (!ndk) return;
     const normalized = url.replace(/\/+$/, "");
+    removedRelaysRef.current.delete(normalized);
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
     relayAutoPausedRef.current.delete(normalized);
