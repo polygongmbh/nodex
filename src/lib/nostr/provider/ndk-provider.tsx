@@ -51,7 +51,10 @@ import {
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
-import { extractRelayUrlsFromErrorMessage } from "./relay-error";
+import {
+  extractRelayRejectionReason,
+  extractRelayUrlsFromError,
+} from "./relay-error";
 import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
@@ -948,7 +951,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     tags: string[][] = [],
     parentId?: string,
     relayUrls?: string[]
-  ): Promise<{ success: boolean; eventId?: string }> => {
+  ): Promise<{ success: boolean; eventId?: string; rejectionReason?: string }> => {
     if (!ndk || !ndk.signer) {
       console.error("Not authenticated or NDK not ready");
       return { success: false };
@@ -1021,10 +1024,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } catch (error) {
       console.error("Failed to publish event:", error);
       const errorMessage = error instanceof Error ? error.message : String(error || "");
+      const rejectionReason = extractRelayRejectionReason(error);
       if (isAuthRequiredCloseReason(errorMessage)) {
         const normalizedTargets = new Set(targetRelayUrls.map((relayUrl) => relayUrl.replace(/\/+$/, "")));
-        const failedRelayUrls = extractRelayUrlsFromErrorMessage(errorMessage)
+        const failedRelayUrls = extractRelayUrlsFromError(error)
           .filter((relayUrl) => normalizedTargets.has(relayUrl));
+        if (failedRelayUrls.length === 0 && targetRelayUrls.length === 1) {
+          failedRelayUrls.push(targetRelayUrls[0].replace(/\/+$/, ""));
+        }
         failedRelayUrls.forEach((relayUrl) => {
           markRelayVerificationFailure(relayUrl, "write", {
             setStatus: true,
@@ -1034,9 +1041,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         nostrDevLog("relay", "Publish auth-required failure scope", {
           targetRelayUrls,
           failedRelayUrls,
+          rejectionReason,
         });
       }
-      return { success: false, eventId: signedEventId };
+      return { success: false, eventId: signedEventId, rejectionReason };
     } finally {
       endRelayOperation("write");
     }

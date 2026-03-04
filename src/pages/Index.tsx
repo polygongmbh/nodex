@@ -2051,7 +2051,11 @@ const Index = () => {
         });
       }
       suppressFailedPublishEvent(result.eventId);
-      toast.error(t("toasts.errors.retryRejectedByRelay"));
+      if (result.rejectionReason) {
+        toast.error(t("toasts.errors.retryRejectedByRelayWithReason", { reason: result.rejectionReason }));
+      } else {
+        toast.error(t("toasts.errors.retryRejectedByRelay"));
+      }
       return;
     }
 

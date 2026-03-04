@@ -92,6 +92,7 @@
       "publishSavedForRetry": "Failed to publish to Nostr; saved for retry",
       "retryRelayMissing": "Retry failed: feed is no longer configured",
       "retryRejectedByRelay": "Retry failed: publish was not accepted by feed",
+      "retryRejectedByRelayWithReason": "Retry failed: publish was not accepted by feed ({{reason}})",
       "locationUnavailable": "Location services are unavailable on this device",
       "locationCaptureFailed": "Unable to capture your current location",
       "relayVerificationReadFailed": "Relay verification failed for reading on {{relayUrl}}. Check signer access and relay permissions.",
