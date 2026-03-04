@@ -90,6 +90,8 @@
       "publishPriorityFailed": "Failed to publish priority update to relay",
       "taskCreationFailed": "Task creation failed. Please try again.",
       "publishSavedForRetry": "Failed to publish to Nostr; saved for retry",
+      "publishSavedForRetryWithReason": "Failed to publish to Nostr; saved for retry ({{reason}})",
+      "publishSavedForRetryWithRelayReason": "Failed to publish to {{relayUrl}}; saved for retry ({{reason}})",
       "retryRelayMissing": "Retry failed: feed is no longer configured",
       "retryRejectedByRelay": "Retry failed: publish was not accepted by feed",
       "retryRejectedByRelayWithReason": "Retry failed: publish was not accepted by feed ({{reason}})",

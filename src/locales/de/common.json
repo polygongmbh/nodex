@@ -90,6 +90,8 @@
       "publishPriorityFailed": "Prioritäts-Update konnte nicht an Relay veröffentlicht werden",
       "taskCreationFailed": "Aufgabe konnte nicht erstellt werden. Bitte versuche es erneut.",
       "publishSavedForRetry": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert",
+      "publishSavedForRetryWithReason": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert ({{reason}})",
+      "publishSavedForRetryWithRelayReason": "Veröffentlichung auf {{relayUrl}} fehlgeschlagen; für erneuten Versuch gespeichert ({{reason}})",
       "retryRelayMissing": "Erneuter Versuch fehlgeschlagen: Feed ist nicht mehr konfiguriert",
       "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Feed nicht akzeptiert",
       "retryRejectedByRelayWithReason": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Feed nicht akzeptiert ({{reason}})",

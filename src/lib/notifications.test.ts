@@ -1,0 +1,44 @@
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { toast } from "sonner";
+import { notifyPublishSavedForRetry } from "./notifications";
+
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    warning: vi.fn(),
+    success: vi.fn(),
+  },
+}));
+
+const t = ((key: string, params?: Record<string, unknown>) => {
+  if (!params) return key;
+  return `${key}:${JSON.stringify(params)}`;
+}) as never;
+
+describe("notifyPublishSavedForRetry", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("uses generic toast when no reason is provided", () => {
+    notifyPublishSavedForRetry(t);
+    expect(vi.mocked(toast.error)).toHaveBeenCalledWith("toasts.errors.publishSavedForRetry");
+  });
+
+  it("uses reason toast when rejection reason exists", () => {
+    notifyPublishSavedForRetry(t, { reason: "auth-required: whitelist" });
+    expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
+      'toasts.errors.publishSavedForRetryWithReason:{"reason":"auth-required: whitelist"}'
+    );
+  });
+
+  it("uses relay+reason toast when single relay is known", () => {
+    notifyPublishSavedForRetry(t, {
+      relayUrl: "wss://relay.example.com",
+      reason: "auth-required: whitelist",
+    });
+    expect(vi.mocked(toast.error)).toHaveBeenCalledWith(
+      'toasts.errors.publishSavedForRetryWithRelayReason:{"relayUrl":"wss://relay.example.com","reason":"auth-required: whitelist"}'
+    );
+  });
+});

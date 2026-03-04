@@ -90,6 +90,8 @@
       "publishPriorityFailed": "No se pudo publicar la actualización de prioridad en el relay",
       "taskCreationFailed": "No se pudo crear la tarea. Inténtalo de nuevo.",
       "publishSavedForRetry": "No se pudo publicar en Nostr; se guardó para reintento",
+      "publishSavedForRetryWithReason": "No se pudo publicar en Nostr; se guardó para reintento ({{reason}})",
+      "publishSavedForRetryWithRelayReason": "No se pudo publicar en {{relayUrl}}; se guardó para reintento ({{reason}})",
       "retryRelayMissing": "Reintento fallido: el feed ya no está configurado",
       "retryRejectedByRelay": "Reintento fallido: el feed no aceptó la publicación",
       "retryRejectedByRelayWithReason": "Reintento fallido: el feed no aceptó la publicación ({{reason}})",

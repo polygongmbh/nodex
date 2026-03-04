@@ -1889,9 +1889,10 @@ const Index = () => {
           kind: publishKind,
           success: result.success,
           eventId: result.eventId || null,
+          rejectionReason: result.rejectionReason || null,
           relayUrls: selectedRelayUrls,
         });
-        return { success: result.success, eventId: result.eventId };
+        return { success: result.success, eventId: result.eventId, rejectionReason: result.rejectionReason };
       } catch (error) {
         console.error("Task publish failed unexpectedly", error);
         nostrDevLog("publish", "Publish request threw an exception", {
@@ -1899,7 +1900,7 @@ const Index = () => {
           relayUrls: selectedRelayUrls,
           error: error instanceof Error ? error.message : String(error),
         });
-        return { success: false, eventId: undefined as string | undefined };
+        return { success: false, eventId: undefined as string | undefined, rejectionReason: undefined as string | undefined };
       }
     };
 
@@ -1930,7 +1931,10 @@ const Index = () => {
           const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
           setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
           setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
-          notifyPublishSavedForRetry(t);
+          notifyPublishSavedForRetry(t, {
+            relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
+            reason: publishResult.rejectionReason,
+          });
           return;
         }
 
@@ -1985,7 +1989,10 @@ const Index = () => {
       suppressFailedPublishEvent(publishResult.eventId);
       const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
       setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
-      notifyPublishSavedForRetry(t);
+      notifyPublishSavedForRetry(t, {
+        relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
+        reason: publishResult.rejectionReason,
+      });
       return { ok: true, mode: "queued" };
     }
 
