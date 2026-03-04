@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Enabling a non-green relay from sidebar feed filters now triggers an automatic reconnect attempt.
 - Auth-required publish rejections now mark the affected relay `read only` again (including single-target fallback when relay URL is omitted) and retry toasts now include relay rejection reason text when available.
 - Failed-publish queue actions are now scope-aware (`Retry` only when selected feeds include an original relay target, `Repost` only when a different selected feed exists) and show in-progress action state while retry/repost runs.
+- Queued post failure toasts now include relay rejection detail when available, including single-relay URL context for clearer publish diagnostics.
 
 ## [1.16.0] - 2026-03-04
 Expanded NIP-99 feed support, strengthened relay/auth reliability, and improved failed-publish recovery and channel predictability.

@@ -34,6 +34,20 @@ export function notifyLocalSaved(t: TFunction, taskType: TaskType): void {
   toast.success(taskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
 }
 
-export function notifyPublishSavedForRetry(t: TFunction): void {
+interface PublishRetryToastOptions {
+  relayUrl?: string;
+  reason?: string;
+}
+
+export function notifyPublishSavedForRetry(t: TFunction, options: PublishRetryToastOptions = {}): void {
+  const { relayUrl, reason } = options;
+  if (relayUrl && reason) {
+    toast.error(t("toasts.errors.publishSavedForRetryWithRelayReason", { relayUrl, reason }));
+    return;
+  }
+  if (reason) {
+    toast.error(t("toasts.errors.publishSavedForRetryWithReason", { reason }));
+    return;
+  }
   toast.error(t("toasts.errors.publishSavedForRetry"));
 }
