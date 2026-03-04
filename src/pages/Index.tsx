@@ -35,6 +35,13 @@ import {
   savePersistedChannelMatchMode,
   savePersistedChannelFilters,
 } from "@/lib/filter-preferences";
+import {
+  getChannelFrecencyScores,
+  loadChannelFrecencyState,
+  recordChannelInteraction,
+  saveChannelFrecencyState,
+  type ChannelFrecencyState,
+} from "@/lib/channel-frecency";
 import { loadSavedFilterState, saveSavedFilterState } from "@/lib/saved-filter-configurations";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
 import { resolveCurrentUser } from "@/lib/current-user";
@@ -152,6 +159,7 @@ const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
 const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 const PUBLISH_UNDO_DELAY_MS = 5000;
+const INITIAL_CHANNEL_SEED_LIMIT = 16;
 
 function buildPendingPublishDedupKey(task: Task): string {
   const authorId = task.author.id?.trim().toLowerCase() || "";
@@ -259,6 +267,9 @@ const Index = () => {
   const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
   const [localTasks, setLocalTasks] = useState<Task[]>(mockTasks);
   const [postedTags, setPostedTags] = useState<string[]>([]);
+  const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
+    () => loadChannelFrecencyState()
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() => loadCompletionSoundEnabled());
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
@@ -488,10 +499,38 @@ const Index = () => {
     }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [localTasks, nostrTasks, sortModifiedAtHoldByTaskId, sortStatusHoldByTaskId]);
 
-  // Sidebar channels: most-used tags plus user-posted tags.
+  const personalizedChannelScores = useMemo(
+    () => getChannelFrecencyScores(channelFrecencyState),
+    [channelFrecencyState]
+  );
+
+  const scopedLocalTasksForChannels = useMemo(
+    () =>
+      localTasks.filter((task) =>
+        task.relays.length === 0 ||
+        task.relays.some((relayId) => effectiveActiveRelayIds.has(relayId))
+      ),
+    [effectiveActiveRelayIds, localTasks]
+  );
+
+  const scopedNostrEventsForChannels = useMemo(
+    () =>
+      filteredNostrEvents.filter((event) => {
+        if (!event.relayUrl) return false;
+        const relayId = getRelayIdFromUrl(event.relayUrl);
+        return effectiveActiveRelayIds.has(relayId);
+      }),
+    [effectiveActiveRelayIds, filteredNostrEvents]
+  );
+
+  // Sidebar channels: selected-feed scoped, personalized, and dampened by usage.
   const channels: Channel[] = useMemo(() => {
-    return deriveChannels(localTasks, filteredNostrEvents, postedTags, 6);
-  }, [localTasks, filteredNostrEvents, postedTags]);
+    return deriveChannels(scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, {
+      minCount: 6,
+      personalizeScores: personalizedChannelScores,
+      maxCount: INITIAL_CHANNEL_SEED_LIMIT,
+    });
+  }, [scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, personalizedChannelScores]);
 
   // Compose autocomplete channels: all known tags.
   const composeChannels: Channel[] = useMemo(() => {
@@ -529,6 +568,10 @@ const Index = () => {
   useEffect(() => {
     savePersistedChannelFilters(channelFilterStates);
   }, [channelFilterStates]);
+
+  useEffect(() => {
+    saveChannelFrecencyState(channelFrecencyState);
+  }, [channelFrecencyState]);
 
   useEffect(() => {
     savePersistedChannelMatchMode(channelMatchMode);
@@ -808,7 +851,12 @@ const Index = () => {
     }
   }, [currentView, isMobile, setCurrentView]);
 
+  const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
+    setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
+  }, []);
+
   const handleChannelToggle = (id: string) => {
+    bumpChannelFrecency(id, 1.25);
     setChannelFilterStates((prev) => {
       const newMap = new Map(prev);
       const currentState = newMap.get(id) || "neutral";
@@ -821,6 +869,7 @@ const Index = () => {
   };
 
   const handleChannelExclusive = (id: string) => {
+    bumpChannelFrecency(id, 1.6);
     const shouldToggleOff = shouldToggleOffExclusiveChannel(channels, channelFilterStates, id);
     if (shouldToggleOff) {
       setChannelFilterStates((prev) => {
@@ -960,6 +1009,7 @@ const Index = () => {
   const handleHashtagExclusive = useCallback((tag: string) => {
     const normalizedTag = tag.trim().toLowerCase();
     if (!normalizedTag) return;
+    bumpChannelFrecency(normalizedTag, 1.9);
 
     const existsInSidebar = channels.some((ch) => ch.name.toLowerCase() === normalizedTag);
 
@@ -980,7 +1030,7 @@ const Index = () => {
     });
 
     toast(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
-  }, [channels, t]);
+  }, [bumpChannelFrecency, channels, t]);
 
   const handlePersonToggle = (id: string) => {
     setPeople((prev) =>
@@ -1593,6 +1643,7 @@ const Index = () => {
         ? normalizedMessageType
         : undefined;
     setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
+    extractedTags.forEach((tag) => bumpChannelFrecency(tag, 1.1));
 
     const requestedRelayIds = relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID];
     const submissionParentId = feedMessageType ? undefined : parentId;

@@ -38,4 +38,32 @@ describe("deriveChannels", () => {
     expect(alpha?.usageCount).toBe(3);
     expect(beta?.usageCount).toBe(2);
   });
+
+  it("prioritizes personalized channels with dampened frecency", () => {
+    const channels = deriveChannels(
+      [{ tags: ["alpha", "alpha", "beta"] }],
+      [{ tags: [["t", "beta"]], content: "" }],
+      [],
+      {
+        minCount: 1,
+        personalizeScores: new Map([
+          ["beta", 8],
+          ["alpha", 1],
+        ]),
+      }
+    );
+
+    expect(channels[0]?.name).toBe("beta");
+  });
+
+  it("caps initial channel list when maxCount is provided", () => {
+    const channels = deriveChannels(
+      [{ tags: ["alpha", "beta", "gamma"] }],
+      [],
+      [],
+      { minCount: 1, maxCount: 2 }
+    );
+
+    expect(channels).toHaveLength(2);
+  });
 });
