@@ -5,6 +5,9 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.16.1] - 2026-03-04
+Stabilized relay failure handling and publish feedback, while improving relay controls and profile hint visibility.
 - Relay Management now includes a per-relay `Reconnect` action to force a fresh connection attempt without removing and re-adding the relay.
 - Relay status no longer sticks in `read only` on generic publish failures; that state is now reserved for explicit write rejection/auth-required outcomes.
 - Relay list edits are now persisted locally, and manually removed relays no longer reappear as disconnected entries after background relay reconciliation.
