@@ -66,4 +66,20 @@ describe("deriveChannels", () => {
 
     expect(channels).toHaveLength(2);
   });
+
+  it("sorts visible channels alphabetically after score-based selection", () => {
+    const channels = deriveChannels(
+      [{ tags: ["zeta", "zeta", "alpha", "beta"] }],
+      [],
+      [],
+      {
+        minCount: 1,
+        maxCount: 2,
+        sortVisibleAlphabetically: true,
+      }
+    );
+
+    expect(channels.map((channel) => channel.name)).toEqual(["alpha", "zeta"]);
+    expect(channels.find((channel) => channel.name === "zeta")?.usageCount).toBe(2);
+  });
 });

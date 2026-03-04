@@ -529,6 +529,7 @@ const Index = () => {
       minCount: 6,
       personalizeScores: personalizedChannelScores,
       maxCount: INITIAL_CHANNEL_SEED_LIMIT,
+      sortVisibleAlphabetically: true,
     });
   }, [scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, personalizedChannelScores]);
 
