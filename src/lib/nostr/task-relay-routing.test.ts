@@ -69,6 +69,16 @@ describe("resolveRelaySelectionForSubmission", () => {
     expect(result.relayIds).toEqual(["relay-a"]);
   });
 
+  it("keeps all selected relays for top-level comments", () => {
+    const result = resolveRelaySelectionForSubmission({
+      taskType: "comment",
+      selectedRelayIds: ["relay-a", "relay-b"],
+      relays,
+      demoRelayId: "demo",
+    });
+    expect(result.relayIds).toEqual(["relay-a", "relay-b"]);
+  });
+
   it("routes child task and comment submissions to parent origin relay", () => {
     const parent = makeTask({ relays: ["relay-b"] });
     const taskResult = resolveRelaySelectionForSubmission({

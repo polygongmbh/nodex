@@ -1819,9 +1819,9 @@ const Index = () => {
       publishParentId: fallbackParentId,
     });
 
-    const effectiveRelayIds = selectedRelayUrls.length > 0
-      ? selectedRelayUrls.slice(0, 1).map((url) => getRelayIdFromUrl(url))
-      : targetRelayIds;
+    const effectiveRelayIds = targetRelayIds.length > 0
+      ? targetRelayIds
+      : selectedRelayUrls.map((url) => getRelayIdFromUrl(url));
 
     const baseTask: Omit<Task, "id"> = {
       author: taskAuthor,
@@ -2067,7 +2067,7 @@ const Index = () => {
     }
 
     const publishedEventId = result.eventId;
-    const effectiveRelayIds = relayUrls.slice(0, 1).map((url) => getRelayIdFromUrl(url));
+    const effectiveRelayIds = relayUrls.map((url) => getRelayIdFromUrl(url));
     const dueDate = parseStoredDate(draft.dueDate);
     const restoredTask: Task = {
       id: publishedEventId || Date.now().toString(),
