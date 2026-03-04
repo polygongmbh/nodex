@@ -9,6 +9,7 @@ interface DeriveChannelsOptions {
   minCount?: number;
   personalizeScores?: Map<string, number>;
   maxCount?: number;
+  sortVisibleAlphabetically?: boolean;
 }
 
 function resolveDeriveOptions(minCountOrOptions: number | DeriveChannelsOptions = 6): Required<DeriveChannelsOptions> {
@@ -17,12 +18,14 @@ function resolveDeriveOptions(minCountOrOptions: number | DeriveChannelsOptions 
       minCount: minCountOrOptions,
       personalizeScores: new Map(),
       maxCount: Number.POSITIVE_INFINITY,
+      sortVisibleAlphabetically: false,
     };
   }
   return {
     minCount: minCountOrOptions.minCount ?? 6,
     personalizeScores: minCountOrOptions.personalizeScores ?? new Map(),
     maxCount: minCountOrOptions.maxCount ?? Number.POSITIVE_INFINITY,
+    sortVisibleAlphabetically: minCountOrOptions.sortVisibleAlphabetically ?? false,
   };
 }
 
@@ -65,7 +68,7 @@ export function deriveChannels(
     }
   });
 
-  return Array.from(tagCounts.entries())
+  const selected = Array.from(tagCounts.entries())
     .filter(([name, count]) =>
       count >= options.minCount ||
       forceInclude.has(name) ||
@@ -85,8 +88,13 @@ export function deriveChannels(
       if (countA !== countB) return countB - countA;
       return nameA.localeCompare(nameB);
     })
-    .slice(0, options.maxCount)
-    .map(([name, count]) => ({
+    .slice(0, options.maxCount);
+
+  if (options.sortVisibleAlphabetically) {
+    selected.sort(([nameA], [nameB]) => nameA.localeCompare(nameB));
+  }
+
+  return selected.map(([name, count]) => ({
       id: name,
       name,
       usageCount: count,
