@@ -54,7 +54,6 @@ import {
 } from "./relay-verification";
 import {
   extractRelayRejectionReason,
-  extractRelayUrlsFromError,
 } from "./relay-error";
 import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
 import i18n from "@/lib/i18n/config";
@@ -63,7 +62,7 @@ export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./c
 
 const NDKContext = createContext<NDKContextValue | null>(null);
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
-const RELAY_PUBLISH_TIMEOUT_MS = 1000;
+const RELAY_PUBLISH_TIMEOUT_MS = 3000;
 type RelayOperation = "read" | "write" | "unknown";
 
 export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
@@ -989,10 +988,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       await event.sign();
       signedEventId = event.id;
       
+      const normalizeRelayUrl = (url: string) => url.trim().replace(/\/+$/, "");
       const urls = (relayUrls && relayUrls.length > 0)
         ? relayUrls
         : relays.map((r) => r.url);
-      targetRelayUrls = urls.length > 0 ? urls : resolvedDefaultRelays;
+      targetRelayUrls = Array.from(
+        new Set((urls.length > 0 ? urls : resolvedDefaultRelays).map(normalizeRelayUrl).filter(Boolean))
+      );
       nostrDevLog("publish", "Preparing publish relay set", {
         kind,
         eventTagCount: eventTags.length,
@@ -1000,26 +1002,50 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         reason: relayUrls && relayUrls.length > 0 ? "explicit relay override" : "active relays fallback",
         targetRelayUrls,
       });
-      const relaySet = NDKRelaySet.fromRelayUrls(
-        targetRelayUrls,
-        ndk,
-        true
-      );
-      
-      const publishedTo = await event.publish(relaySet, RELAY_PUBLISH_TIMEOUT_MS, 1);
-      
-      if (publishedTo.size === 0) {
-        console.warn("Event publish completed but no relays confirmed receipt");
-        return { success: false, eventId: event.id };
+      const publishedRelayUrlSet = new Set<string>();
+      let rejectionReason: string | undefined;
+
+      for (const relayUrl of targetRelayUrls) {
+        try {
+          const relaySet = NDKRelaySet.fromRelayUrls([relayUrl], ndk, true);
+          const publishedTo = await event.publish(relaySet, RELAY_PUBLISH_TIMEOUT_MS, 1);
+          Array.from(publishedTo)
+            .map((relay) => normalizeRelayUrl(relay.url))
+            .filter(Boolean)
+            .forEach((url) => publishedRelayUrlSet.add(url));
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error || "");
+          const extractedReason = extractRelayRejectionReason(error);
+          if (!rejectionReason && extractedReason) {
+            rejectionReason = extractedReason;
+          }
+          if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason: extractedReason })) {
+            markRelayVerificationFailure(relayUrl, "write", {
+              setStatus: true,
+              showToast: false,
+            });
+          }
+          nostrDevLog("publish", "Relay publish attempt failed", {
+            relayUrl,
+            rejectionReason: extractedReason || null,
+            error: errorMessage,
+          });
+        }
       }
-      
-      const publishedRelayUrls = Array.from(publishedTo).map((r) => r.url);
+
+      const publishedRelayUrls = Array.from(publishedRelayUrlSet);
+      if (publishedRelayUrls.length === 0) {
+        console.warn("Event publish completed but no relays confirmed receipt");
+        return { success: false, eventId: event.id, rejectionReason };
+      }
+
       publishedRelayUrls.forEach((relayUrl) => {
         markRelayWriteOutcome(relayUrl, true);
       });
       nostrDevLog("publish", "Event published", {
         eventId: event.id,
         kind,
+        targetRelayUrls,
         publishedRelayUrls,
       });
       return { success: true, eventId: event.id, publishedRelayUrls };
@@ -1028,11 +1054,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       const errorMessage = error instanceof Error ? error.message : String(error || "");
       const rejectionReason = extractRelayRejectionReason(error);
       if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason })) {
-        const normalizedTargets = new Set(targetRelayUrls.map((relayUrl) => relayUrl.replace(/\/+$/, "")));
-        const failedRelayUrls = extractRelayUrlsFromError(error)
-          .filter((relayUrl) => normalizedTargets.has(relayUrl));
-        if (failedRelayUrls.length === 0 && targetRelayUrls.length === 1) {
-          failedRelayUrls.push(targetRelayUrls[0].replace(/\/+$/, ""));
+        const failedRelayUrls = [...targetRelayUrls];
+        if (failedRelayUrls.length === 0 && relayUrls && relayUrls.length === 1) {
+          failedRelayUrls.push(relayUrls[0].replace(/\/+$/, ""));
         }
         failedRelayUrls.forEach((relayUrl) => {
           markRelayVerificationFailure(relayUrl, "write", {

@@ -12,6 +12,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Load/resize performance improved via sorting-path optimizations, batched task author profile lookups, debounced Nostr event-cache persistence, and desktop lazy-loading/vendor chunk splitting for task views.
 - Relay-scoped feed visibility now preserves multi-relay attribution for the same Nostr event ID, so posts seen on multiple relays remain visible when filtering by any of those relays.
 - Root comments now keep merged relay attribution when local optimistic state and fetched Nostr state share the same event ID, preventing relay filter visibility from collapsing to a single acknowledged relay.
+- Multi-relay publish now executes per-target relay attempts (with longer per-relay timeout) instead of first-ack short-circuiting, improving delivery reliability for posts/comments selected to multiple relays.
 
 ## [1.16.1] - 2026-03-04
 Stabilized relay failure handling and publish feedback, while improving relay controls and profile hint visibility.
