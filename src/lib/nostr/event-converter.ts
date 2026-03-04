@@ -50,6 +50,18 @@ export function getRelayNameFromUrl(url: string): string {
   return relayUrlToName(url);
 }
 
+function getRelayIdsFromEvent(event: NostrEventWithRelay): string[] {
+  const relayUrls = [
+    ...(event.relayUrls || []),
+    ...(event.relayUrl ? [event.relayUrl] : []),
+  ]
+    .map((url) => url.trim().replace(/\/+$/, ""))
+    .filter((url) => Boolean(url));
+  const relayIds = Array.from(new Set(relayUrls.map((url) => getRelayIdFromUrl(url))));
+  if (relayIds.length === 0) return ["nostr"];
+  return relayIds;
+}
+
 // Generate a display name from pubkey
 function getDisplayNameFromPubkey(pubkey: string): string {
   return `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`;
@@ -207,15 +219,12 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     return dueTag ? "due" : undefined;
   })();
 
-  // Generate relay ID from URL - use the attached relayUrl
-  const relayId = event.relayUrl ? getRelayIdFromUrl(event.relayUrl) : "nostr";
-
   return {
     id: event.id,
     author,
     content: normalizedContent,
     tags: allTags,
-    relays: [relayId],
+    relays: getRelayIdsFromEvent(event),
     taskType: isTask ? "task" : "comment",
     feedMessageType,
     nip99,

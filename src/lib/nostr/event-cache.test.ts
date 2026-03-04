@@ -54,6 +54,25 @@ describe("nostr event cache", () => {
     expect(loaded[0].created_at).toBe(999);
   });
 
+  it("merges relay attribution when the same event id is seen on multiple relays", () => {
+    saveCachedNostrEvents([
+      { ...eventA, relayUrl: "wss://relay.a/" },
+      { ...eventA, relayUrl: "wss://relay.b" },
+    ]);
+    const loaded = loadCachedNostrEvents();
+
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].relayUrls).toEqual(["wss://relay.a", "wss://relay.b"]);
+  });
+
+  it("normalizes legacy relayUrl values into relayUrls when loading", () => {
+    saveCachedNostrEvents([{ ...eventA, relayUrl: "wss://relay.a/" }]);
+    const loaded = loadCachedNostrEvents();
+
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].relayUrls).toEqual(["wss://relay.a"]);
+  });
+
   it("keeps only the latest revision for parameterized replaceable events", () => {
     const oldListing: CachedNostrEvent = {
       id: "listing-old",

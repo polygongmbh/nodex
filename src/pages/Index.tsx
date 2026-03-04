@@ -468,6 +468,7 @@ const Index = () => {
         content: event.content,
         sig: event.sig || "",
         relayUrl: event.relayUrl,
+        relayUrls: event.relayUrls,
       }))
     );
   }, [filteredNostrEvents]);
@@ -530,9 +531,14 @@ const Index = () => {
   const scopedNostrEventsForChannels = useMemo(
     () =>
       filteredNostrEvents.filter((event) => {
-        if (!event.relayUrl) return false;
-        const relayId = getRelayIdFromUrl(event.relayUrl);
-        return effectiveActiveRelayIds.has(relayId);
+        const relayUrls = [
+          ...(event.relayUrls || []),
+          ...(event.relayUrl ? [event.relayUrl] : []),
+        ]
+          .map((url) => url.trim().replace(/\/+$/, ""))
+          .filter((url) => Boolean(url));
+        if (relayUrls.length === 0) return false;
+        return relayUrls.some((relayUrl) => effectiveActiveRelayIds.has(getRelayIdFromUrl(relayUrl)));
       }),
     [effectiveActiveRelayIds, filteredNostrEvents]
   );

@@ -192,6 +192,16 @@ describe("nostrEventToTask", () => {
     expect(task.relays).toContain("relay-test-com");
   });
 
+  it("maps relay IDs from relayUrls when event is seen on multiple relays", () => {
+    const task = nostrEventToTask({
+      ...baseEvent,
+      relayUrl: undefined,
+      relayUrls: ["wss://relay.a/", "wss://relay.b", "wss://relay.a"],
+    });
+
+    expect(task.relays).toEqual(["relay-a", "relay-b"]);
+  });
+
   it("extracts due date and due time from tags", () => {
     const dueSeconds = 1773964800; // 2026-03-20T00:00:00.000Z
     const event: NostrEventWithRelay = {

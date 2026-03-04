@@ -48,6 +48,8 @@ export function getNostrEventsQueryKey(feedScopeKey: string): readonly [...typeo
 
 function toCachedEvent(event: NDKEvent): CachedNostrEvent | null {
   if (!event.id) return null;
+  const relayUrl = event.relay?.url?.trim().replace(/\/+$/, "");
+  const relayUrls = relayUrl ? [relayUrl] : undefined;
   return {
     id: event.id,
     pubkey: event.pubkey,
@@ -56,8 +58,19 @@ function toCachedEvent(event: NDKEvent): CachedNostrEvent | null {
     tags: event.tags,
     content: event.content || "",
     sig: event.sig || undefined,
-    relayUrl: event.relay?.url,
+    relayUrl,
+    relayUrls,
   };
+}
+
+function getRelayUrls(event: CachedNostrEvent): string[] {
+  const urls = [
+    ...(event.relayUrls || []),
+    ...(event.relayUrl ? [event.relayUrl] : []),
+  ]
+    .map((url) => url.trim().replace(/\/+$/, ""))
+    .filter((url) => Boolean(url));
+  return Array.from(new Set(urls)).sort();
 }
 
 function upsertCachedEvent(
@@ -67,13 +80,22 @@ function upsertCachedEvent(
   if (isParameterizedReplaceableKind(incoming.kind) && getReplaceableEventKey(incoming) === null) {
     return previous;
   }
-  const incomingReplaceableKey = getReplaceableEventKey(incoming);
+  const previousWithSameId = previous.find((event) => event.id === incoming.id);
+  const mergedRelayUrls = previousWithSameId
+    ? Array.from(new Set([...getRelayUrls(previousWithSameId), ...getRelayUrls(incoming)])).sort()
+    : getRelayUrls(incoming);
+  const normalizedIncoming: CachedNostrEvent = {
+    ...incoming,
+    relayUrl: mergedRelayUrls[0],
+    relayUrls: mergedRelayUrls.length > 0 ? mergedRelayUrls : undefined,
+  };
+  const incomingReplaceableKey = getReplaceableEventKey(normalizedIncoming);
   const withoutExisting = previous.filter((event) => {
-    if (event.id === incoming.id) return false;
+    if (event.id === normalizedIncoming.id) return false;
     if (!incomingReplaceableKey) return true;
     return getReplaceableEventKey(event) !== incomingReplaceableKey;
   });
-  return [incoming, ...withoutExisting].sort((left, right) => right.created_at - left.created_at);
+  return [normalizedIncoming, ...withoutExisting].sort((left, right) => right.created_at - left.created_at);
 }
 
 export function useNostrEventCache({
@@ -108,7 +130,7 @@ export function useNostrEventCache({
     setHasLiveHydratedScope(true);
     queryClient.setQueryData<CachedNostrEvent[]>(
       queryKey,
-      (previous = []) => previous.filter((event) => Boolean(event.relayUrl?.trim()))
+      (previous = []) => previous.filter((event) => getRelayUrls(event).length > 0)
     );
   }, [queryClient, queryKey]);
 

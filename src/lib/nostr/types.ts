@@ -12,6 +12,7 @@ export interface NostrEvent {
 
 export interface NostrEventWithRelay extends NostrEvent {
   relayUrl?: string;
+  relayUrls?: string[];
 }
 
 export enum NostrEventKind {

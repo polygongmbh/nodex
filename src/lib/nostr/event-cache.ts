@@ -13,6 +13,7 @@ export interface CachedNostrEvent {
   content: string;
   sig?: string;
   relayUrl?: string;
+  relayUrls?: string[];
 }
 
 function hasLocalStorage(): boolean {
@@ -54,11 +55,37 @@ const cachedNostrEventSchema: z.ZodType<CachedNostrEvent> = z.object({
   content: z.string(),
   sig: z.string().optional(),
   relayUrl: z.string().optional(),
+  relayUrls: z.array(z.string()).optional(),
 });
 const cachedNostrEventsSchema = z.array(cachedNostrEventSchema);
 
+function normalizeRelayUrl(url: string): string {
+  return url.trim().replace(/\/+$/, "");
+}
+
+function getRelayUrls(event: CachedNostrEvent): string[] {
+  const urls = [
+    ...(event.relayUrls || []),
+    ...(event.relayUrl ? [event.relayUrl] : []),
+  ]
+    .map(normalizeRelayUrl)
+    .filter((url) => Boolean(url));
+  return Array.from(new Set(urls)).sort();
+}
+
+function withNormalizedRelayUrls(event: CachedNostrEvent): CachedNostrEvent {
+  const relayUrls = getRelayUrls(event);
+  return {
+    ...event,
+    relayUrl: relayUrls[0],
+    relayUrls: relayUrls.length > 0 ? relayUrls : undefined,
+  };
+}
+
 function dedupeAndSortEvents(events: CachedNostrEvent[]): CachedNostrEvent[] {
-  const filtered = events.filter((event) => {
+  const filtered = events
+    .map(withNormalizedRelayUrls)
+    .filter((event) => {
     if (!isParameterizedReplaceableKind(event.kind)) return true;
     // Parameterized replaceable events without "d" are invalid.
     return getReplaceableEventKey(event) !== null;
@@ -66,9 +93,17 @@ function dedupeAndSortEvents(events: CachedNostrEvent[]): CachedNostrEvent[] {
   const byId = new Map<string, CachedNostrEvent>();
   for (const event of filtered) {
     const existing = byId.get(event.id);
-    if (!existing || event.created_at >= existing.created_at) {
+    if (!existing) {
       byId.set(event.id, event);
+      continue;
     }
+    const mergedRelayUrls = Array.from(new Set([...getRelayUrls(existing), ...getRelayUrls(event)])).sort();
+    const winner = event.created_at >= existing.created_at ? event : existing;
+    byId.set(event.id, {
+      ...winner,
+      relayUrl: mergedRelayUrls[0],
+      relayUrls: mergedRelayUrls.length > 0 ? mergedRelayUrls : undefined,
+    });
   }
   const byReplaceable = new Map<string, CachedNostrEvent>();
   for (const event of byId.values()) {
