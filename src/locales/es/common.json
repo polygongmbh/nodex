@@ -310,6 +310,7 @@
     "menu": {
       "signInToPost": "Inicia sesión para publicar",
       "signInShort": "Iniciar sesión",
+      "profileHint": "Perfil: {{name}} ({{pubkey}})",
       "signedInVia": "Sesión iniciada vía {{method}}",
       "signedInAs": "Sesión iniciada como {{method}}",
       "editProfile": "Editar perfil",

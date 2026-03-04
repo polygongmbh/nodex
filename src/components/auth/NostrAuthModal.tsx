@@ -452,6 +452,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   }
 
   const displayName = effectiveProfile.displayName || effectiveProfile.name || `${user.npub.slice(0, 8)}...`;
+  const profileTriggerHint = t("auth.menu.profileHint", {
+    name: displayName,
+    pubkey: user.pubkey,
+  });
   const methodLabel = authMethod === "extension"
     ? t("filters.authMethod.extension")
     : authMethod === "guest"
@@ -468,6 +472,8 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             variant="ghost"
             size="sm"
             className="h-9 w-auto max-w-[14rem] px-2 gap-2 bg-transparent hover:bg-accent/60 hover:text-accent-foreground data-[state=open]:bg-accent/60 data-[state=open]:text-accent-foreground rounded-md justify-end focus-visible:ring-0 focus-visible:ring-offset-0"
+            title={profileTriggerHint}
+            aria-label={profileTriggerHint}
           >
             <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-5 h-5" />
             <span className="text-sm font-medium truncate max-w-[8rem]">{displayName}</span>

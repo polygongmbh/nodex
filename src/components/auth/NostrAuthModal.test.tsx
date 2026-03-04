@@ -171,4 +171,18 @@ describe("NostrAuthModal", () => {
     expect(document.getElementById("profile-auto-caption-enabled")).toBeNull();
   });
 
+  it("adds a profile trigger hint including the logged-in pubkey", () => {
+    ndkMock.user = {
+      npub: "npub1hint",
+      pubkey: "b".repeat(64),
+      profile: { name: "Hint User" },
+    };
+    ndkMock.authMethod = "extension";
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    const profileTrigger = screen.getByRole("button", { name: /profile: hint user/i });
+    expect(profileTrigger).toHaveAttribute("title", expect.stringContaining("b".repeat(64)));
+  });
+
 });

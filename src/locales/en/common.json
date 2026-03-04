@@ -310,6 +310,7 @@
     "menu": {
       "signInToPost": "Sign in to post",
       "signInShort": "Sign in",
+      "profileHint": "Profile: {{name}} ({{pubkey}})",
       "signedInVia": "Signed in via {{method}}",
       "signedInAs": "Signed in as {{method}}",
       "editProfile": "Edit profile",

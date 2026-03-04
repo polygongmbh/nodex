@@ -310,6 +310,7 @@
     "menu": {
       "signInToPost": "Zum Mitmachen anmelden",
       "signInShort": "Anmelden",
+      "profileHint": "Profil: {{name}} ({{pubkey}})",
       "signedInVia": "Angemeldet über {{method}}",
       "signedInAs": "Angemeldet als {{method}}",
       "editProfile": "Profil bearbeiten",
