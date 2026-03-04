@@ -47,6 +47,7 @@ import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "../nip4
 import { createNip98AuthHeader } from "../nip98-http-auth";
 import {
   isAuthRequiredCloseReason,
+  shouldMarkRelayReadOnlyAfterPublishReject,
   shouldRetryNip42AfterSignIn,
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
@@ -1026,7 +1027,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       console.error("Failed to publish event:", error);
       const errorMessage = error instanceof Error ? error.message : String(error || "");
       const rejectionReason = extractRelayRejectionReason(error);
-      if (isAuthRequiredCloseReason(errorMessage)) {
+      if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason })) {
         const normalizedTargets = new Set(targetRelayUrls.map((relayUrl) => relayUrl.replace(/\/+$/, "")));
         const failedRelayUrls = extractRelayUrlsFromError(error)
           .filter((relayUrl) => normalizedTargets.has(relayUrl));
@@ -1039,7 +1040,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
             showToast: false,
           });
         });
-        nostrDevLog("relay", "Publish auth-required failure scope", {
+        nostrDevLog("relay", "Publish write-rejection failure scope", {
           targetRelayUrls,
           failedRelayUrls,
           rejectionReason,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTH_RETRY_COOLDOWN_MS,
   isAuthRequiredCloseReason,
+  shouldMarkRelayReadOnlyAfterPublishReject,
   shouldRetryNip42AfterSignIn,
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
@@ -25,6 +26,34 @@ describe("shouldSetVerificationFailedStatus", () => {
     expect(shouldSetVerificationFailedStatus("auth-policy", "write")).toBe(false);
     expect(shouldSetVerificationFailedStatus("auth-policy", "unknown")).toBe(false);
     expect(shouldSetVerificationFailedStatus("subscription-closed", "write")).toBe(false);
+  });
+});
+
+describe("shouldMarkRelayReadOnlyAfterPublishReject", () => {
+  it("marks read-only for auth-required close reasons", () => {
+    expect(shouldMarkRelayReadOnlyAfterPublishReject({
+      errorMessage: "auth-required: pubkey not in whitelist",
+    })).toBe(true);
+  });
+
+  it("marks read-only for explicit rejection reasons", () => {
+    expect(shouldMarkRelayReadOnlyAfterPublishReject({
+      errorMessage: "publish rejected",
+      rejectionReason: "permission denied",
+    })).toBe(true);
+  });
+
+  it("marks read-only for NIP-01 OK false envelope failures", () => {
+    expect(shouldMarkRelayReadOnlyAfterPublishReject({
+      errorMessage: '["OK","68dd30...",false,"blocked by policy"]',
+    })).toBe(true);
+  });
+
+  it("does not mark read-only for unrelated transient failures", () => {
+    expect(shouldMarkRelayReadOnlyAfterPublishReject({
+      errorMessage: "network timeout",
+      rejectionReason: "temporary upstream timeout",
+    })).toBe(false);
   });
 });
 

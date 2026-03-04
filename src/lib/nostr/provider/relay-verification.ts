@@ -3,10 +3,21 @@ import type { RelayVerificationEvent } from "../nip42-relay-auth-policy";
 export type RelayVerificationFailureSource = "auth-policy" | "subscription-closed";
 
 const AUTH_REQUIRED_CLOSE_REASON_PATTERN = /(auth-required|not authorized|pubkey not in whitelist|blocked:\s*not authorized)/i;
+const WRITE_REJECT_REASON_PATTERN = /(auth-required|not authorized|pubkey not in whitelist|blocked:\s*not authorized|write\s*denied|permission\s*denied|forbidden)/i;
+const OK_REJECT_ENVELOPE_PATTERN = /\[\s*"OK"\s*,\s*"[^"]*"\s*,\s*false\s*,/i;
 export const AUTH_RETRY_COOLDOWN_MS = 10000;
 
 export function isAuthRequiredCloseReason(reason: string): boolean {
   return AUTH_REQUIRED_CLOSE_REASON_PATTERN.test(reason);
+}
+
+export function shouldMarkRelayReadOnlyAfterPublishReject(params: {
+  errorMessage: string;
+  rejectionReason?: string;
+}): boolean {
+  if (isAuthRequiredCloseReason(params.errorMessage)) return true;
+  if (params.rejectionReason && WRITE_REJECT_REASON_PATTERN.test(params.rejectionReason)) return true;
+  return OK_REJECT_ENVELOPE_PATTERN.test(params.errorMessage);
 }
 
 export function shouldSetVerificationFailedStatus(
