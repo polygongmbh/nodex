@@ -12,9 +12,10 @@ interface UseRelayFilterStateOptions {
   relays: Relay[];
   t: TFunction;
   defaultRelayIds: string[];
+  onRelayEnabled?: (relay: Relay) => void;
 }
 
-export function useRelayFilterState({ relays, t, defaultRelayIds }: UseRelayFilterStateOptions) {
+export function useRelayFilterState({ relays, t, defaultRelayIds, onRelayEnabled }: UseRelayFilterStateOptions) {
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
     loadPersistedRelayIds(defaultRelayIds)
   );
@@ -32,6 +33,9 @@ export function useRelayFilterState({ relays, t, defaultRelayIds }: UseRelayFilt
         next.delete(id);
       } else {
         next.add(id);
+        if (relay) {
+          onRelayEnabled?.(relay);
+        }
       }
       toast(
         isEnabled

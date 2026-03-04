@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Relay Management now includes a per-relay `Reconnect` action to force a fresh connection attempt without removing and re-adding the relay.
 - Relay status no longer sticks in `read only` on generic publish failures; that state is now reserved for explicit write rejection/auth-required outcomes.
 - Relay list edits are now persisted locally, and manually removed relays no longer reappear as disconnected entries after background relay reconciliation.
+- Enabling a non-green relay from sidebar feed filters now triggers an automatic reconnect attempt.
 
 ## [1.16.0] - 2026-03-04
 Expanded NIP-99 feed support, strengthened relay/auth reliability, and improved failed-publish recovery and channel predictability.
