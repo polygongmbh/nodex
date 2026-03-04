@@ -59,6 +59,8 @@
 ## Feed Filtering and Publishing
 - Feed filter controls determine which items are visible.
 - Feed chips show live connection state; selected disconnected feeds block posting/task edits until reconnected.
+- Selecting a disconnected feed (toggle, exclusive-select, or select-all) triggers an automatic reconnect attempt.
+- If no feeds are selected, channel suggestions/chips behave like all feeds are selected (channel list does not collapse to empty).
 - New root tasks require exactly one selected feed.
 - Subtasks, task-context comments, and task updates publish to the task's origin feed.
 - If only demo/local feed is selected, item is stored locally (demo flow).

@@ -5,16 +5,16 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Top-level comments/offers/requests now preserve selected relay targets, and published post metadata now records only relays that actually acknowledged the publish (while root tasks and threaded comments remain single-relay routed).
-- Relay write rejections now mark affected relays `read only` for explicit publish denials (including NIP-01 `OK false` payloads), improving relay-state feedback after failed posts.
-- Publish success now warns when only a subset of selected relays accepted the event, so partial multi-relay publishes are visible immediately.
-- Feed deduplication for NIP-99 listings now falls back to event ID when `d` is missing, preventing duplicate active/sold entries for the same listing during status updates.
-- Load/resize performance improved via sorting-path optimizations, batched task author profile lookups, debounced Nostr event-cache persistence, and desktop lazy-loading/vendor chunk splitting for task views.
-- Relay-scoped feed visibility now preserves multi-relay attribution for the same Nostr event ID, so posts seen on multiple relays remain visible when filtering by any of those relays.
-- Root comments now keep merged relay attribution when local optimistic state and fetched Nostr state share the same event ID, preventing relay filter visibility from collapsing to a single acknowledged relay.
-- Multi-relay publish now executes per-target relay attempts (with longer per-relay timeout) instead of first-ack short-circuiting, improving delivery reliability for posts/comments selected to multiple relays.
-- Selecting a disconnected relay feed now triggers a reconnect attempt consistently across toggle, exclusive-select, and select-all feed actions.
-- Clearing feed selection now keeps sidebar channels populated using all available feeds for channel derivation, matching the all-feeds scope instead of showing an empty channel list.
+
+## [1.16.2] - 2026-03-04
+- Top-level comments/offers/requests now preserve selected relay targets, and published post metadata records only relays that actually acknowledged publish while root tasks/threaded comments remain single-origin routed.
+- Multi-relay publish now runs per-target relay attempts (instead of first-ack short-circuiting) with a longer per-relay timeout, improving delivery reliability.
+- Relay-scoped visibility now preserves multi-relay attribution for the same event ID (including root comments during local+fetched merge), so relay filters no longer collapse items to a single acknowledged relay.
+- Relay write rejections now mark affected relays `read only` only for explicit publish denials (including NIP-01 `OK false`), and partial publish success now warns when only a subset of selected relays accepted the event.
+- Selecting disconnected feeds now consistently triggers reconnect attempts across toggle, exclusive-select, and select-all actions.
+- Clearing feed selection now keeps sidebar channels populated using all feeds for channel derivation, matching all-feeds scope instead of showing an empty channel list.
+- Feed deduplication for NIP-99 listings now falls back to event ID when `d` is missing, preventing duplicate active/sold entries during status updates.
+- Load/resize performance improved via sorting-path optimizations, batched task-author profile lookups, debounced Nostr cache persistence, and desktop lazy-loading/vendor chunk splitting for task views.
 
 ## [1.16.1] - 2026-03-04
 Stabilized relay failure handling and publish feedback, while improving relay controls and profile hint visibility.
