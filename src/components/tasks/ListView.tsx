@@ -174,34 +174,36 @@ export function ListView({
 
   // Build children map for sorting context - memoize based on sortVersion to prevent re-sorting on status changes
   const sortContextRef = useRef<SortContext | null>(null);
+  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
   
   const sortContext: SortContext = useMemo(() => {
     const childrenMap = buildChildrenMap(allTasks);
     sortContextRef.current = {
       childrenMap,
       allTasks,
+      taskById,
     };
     return sortContextRef.current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortVersion]);
+  }, [sortVersion, taskById]);
 
   const hasChildren = useCallback((taskId: string): boolean => {
     return allTasks.some((task) => task.taskType === "task" && task.parentId === taskId);
   }, [allTasks]);
 
   const getDepth = useCallback((taskId: string): number => {
-    const task = allTasks.find((candidate) => candidate.id === taskId);
+    const task = taskById.get(taskId);
     if (!task?.parentId) return 1;
     return 1 + getDepth(task.parentId);
-  }, [allTasks]);
+  }, [taskById]);
 
   // Get full ancestor chain for a task
   const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
     const chain: { id: string; text: string }[] = [];
-    let current = allTasks.find(t => t.id === taskId);
+    let current = taskById.get(taskId);
     
     while (current?.parentId) {
-      const parent = allTasks.find(t => t.id === current!.parentId);
+      const parent = taskById.get(current.parentId);
       if (parent) {
         chain.unshift({
           id: parent.id,
@@ -214,7 +216,7 @@ export function ListView({
     }
     
     return chain;
-  }, [allTasks]);
+  }, [taskById]);
 
   const filteredTaskCandidates = useTaskViewFiltering({
     allTasks,

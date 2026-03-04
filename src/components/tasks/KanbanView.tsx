@@ -83,11 +83,13 @@ export function KanbanView({
 
   // Build children map
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
+  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
 
   const sortContext: SortContext = useMemo(() => ({
     childrenMap,
     allTasks,
-  }), [childrenMap, allTasks]);
+    taskById,
+  }), [childrenMap, allTasks, taskById]);
 
   // Check if task has children
   const hasChildren = useCallback((taskId: string): boolean => {
@@ -97,18 +99,18 @@ export function KanbanView({
 
   // Get depth of task from root
   const getDepth = useCallback((taskId: string): number => {
-    const task = allTasks.find(t => t.id === taskId);
+    const task = taskById.get(taskId);
     if (!task?.parentId) return 1;
     return 1 + getDepth(task.parentId);
-  }, [allTasks]);
+  }, [taskById]);
 
   // Get full ancestor chain for a task
   const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
     const chain: { id: string; text: string }[] = [];
-    let current = allTasks.find(t => t.id === taskId);
+    let current = taskById.get(taskId);
     
     while (current?.parentId) {
-      const parent = allTasks.find(t => t.id === current!.parentId);
+      const parent = taskById.get(current.parentId);
       if (parent) {
         chain.unshift({
           id: parent.id,
@@ -121,7 +123,7 @@ export function KanbanView({
     }
     
     return chain;
-  }, [allTasks]);
+  }, [taskById]);
 
   const filteredTaskCandidates = useTaskViewFiltering({
     allTasks,

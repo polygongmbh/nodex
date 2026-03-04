@@ -18,6 +18,7 @@ import { isToday, isTomorrow, isPast, startOfDay, differenceInDays } from "date-
 export interface SortContext {
   childrenMap: Map<string | undefined, Task[]>;
   allTasks: Task[];
+  taskById?: Map<string, Task>;
 }
 
 type SortAwareTask = Task & { sortStatus?: TaskStatus; sortLastEditedAt?: Date };
@@ -27,9 +28,14 @@ function getStatusForSort(task: Task | undefined): TaskStatus | undefined {
   return (task as SortAwareTask).sortStatus ?? task.status;
 }
 
+function getTaskById(taskId: string, context: SortContext): Task | undefined {
+  if (context.taskById) return context.taskById.get(taskId);
+  return context.allTasks.find((task) => task.id === taskId);
+}
+
 // Check if a task or any of its descendants is in-progress
 export function hasInProgressInTree(taskId: string, context: SortContext): boolean {
-  const task = context.allTasks.find(t => t.id === taskId);
+  const task = getTaskById(taskId, context);
   if (getStatusForSort(task) === "in-progress") return true;
   
   const children = context.childrenMap.get(taskId) || [];
@@ -38,7 +44,7 @@ export function hasInProgressInTree(taskId: string, context: SortContext): boole
 
 // Get the earliest deadline in a task tree (task + descendants)
 export function getEarliestDeadlineInTree(taskId: string, context: SortContext): Date | null {
-  const task = context.allTasks.find(t => t.id === taskId);
+  const task = getTaskById(taskId, context);
   let earliest: Date | null = task?.dueDate || null;
   
   const children = context.childrenMap.get(taskId) || [];
@@ -56,7 +62,7 @@ export function getEarliestDeadlineInTree(taskId: string, context: SortContext):
 
 // Check if task or any descendant is due today or past
 export function hasDueTodayOrPastInTree(taskId: string, context: SortContext): boolean {
-  const task = context.allTasks.find(t => t.id === taskId);
+  const task = getTaskById(taskId, context);
   if (task?.dueDate) {
     const dueDay = startOfDay(task.dueDate);
     if (isToday(dueDay) || isPast(dueDay)) {
@@ -85,7 +91,7 @@ function isUpcomingDueDate(dueDate: Date | null): boolean {
 }
 
 export function sortTasks(tasks: Task[], context: SortContext): Task[] {
-  const taskById = new Map(context.allTasks.map((task) => [task.id, task] as const));
+  const taskById = context.taskById ?? new Map(context.allTasks.map((task) => [task.id, task] as const));
   const latestModifiedInTreeCache = new Map<string, number>();
   const highestPriorityInTreeCache = new Map<string, number | undefined>();
   const dueTodayOrPastCache = new Map<string, boolean>();

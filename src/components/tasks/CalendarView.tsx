@@ -116,15 +116,19 @@ export function CalendarView({
   const syncMonthRafIdRef = useRef<number | null>(null);
 
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const sortContext: SortContext = useMemo(() => ({ childrenMap, allTasks }), [childrenMap, allTasks]);
+  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const sortContext: SortContext = useMemo(
+    () => ({ childrenMap, allTasks, taskById }),
+    [childrenMap, allTasks, taskById]
+  );
 
   // Get full ancestor chain for a task
   const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
     const chain: { id: string; text: string }[] = [];
-    let current = allTasks.find(t => t.id === taskId);
+    let current = taskById.get(taskId);
     
     while (current?.parentId) {
-      const parent = allTasks.find(t => t.id === current!.parentId);
+      const parent = taskById.get(current.parentId);
       if (parent) {
         chain.unshift({
           id: parent.id,
@@ -137,7 +141,7 @@ export function CalendarView({
     }
     
     return chain;
-  }, [allTasks]);
+  }, [taskById]);
 
   const filteredTaskCandidates = useTaskViewFiltering({
     allTasks,

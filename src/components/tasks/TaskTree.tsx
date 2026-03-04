@@ -80,11 +80,13 @@ export function TaskTree({
 
   // Build a map of task ID to children
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
+  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
 
   const sortContext: SortContext = useMemo(() => ({
     childrenMap,
     allTasks,
-  }), [childrenMap, allTasks]);
+    taskById,
+  }), [childrenMap, allTasks, taskById]);
 
   const { included: includedChannels, excluded: excludedChannels } = useMemo(
     () => getIncludedExcludedChannelNames(channels),
@@ -132,7 +134,7 @@ export function TaskTree({
     const ancestors = new Set<string>();
     
     const findAncestors = (taskId: string) => {
-      const task = allTasks.find(t => t.id === taskId);
+      const task = taskById.get(taskId);
       if (task?.parentId) {
         ancestors.add(task.parentId);
         findAncestors(task.parentId);
@@ -141,7 +143,7 @@ export function TaskTree({
     
     matchingIds.forEach(id => findAncestors(id));
     return ancestors;
-  }, [allTasks]);
+  }, [taskById]);
 
   const hasActiveFilters = searchQuery.trim() !== "" || includedChannels.length > 0 || excludedChannels.length > 0;
 
@@ -184,7 +186,7 @@ export function TaskTree({
     return sortTasks(rootTasks, sortContext);
   }, [currentContextId, childrenMap, hasActiveFilters, allVisibleIds, sortContext, tasks]);
 
-  const currentContextTask = currentContextId ? allTasks.find(t => t.id === currentContextId) : null;
+  const currentContextTask = currentContextId ? taskById.get(currentContextId) || null : null;
   const handleSelectTask = (taskId: string) => {
     onFocusTask?.(taskId);
   };
