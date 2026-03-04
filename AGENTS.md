@@ -249,6 +249,7 @@ When asked to create a plan to fix or implement something:
 - ALWAYS write the plan to `plans/` at repo root.
 - NEVER commit plans to git.
 - Use descriptive kebab-case filenames (for example `fix-position-healing.md`).
+- When implementing a plan, use elaborated commit messages that detail the concrete changes made for each step.
 - After implementing a plan, you MUST delete the plan file before handoff/final response.
 - Before deleting untracked text artifacts (for example files in `plans/`), run this sequence so there is a recoverable hash reference:
   - `git add -f <file>`
@@ -264,6 +265,7 @@ When asked to create a plan to fix or implement something:
 
 #### squash
 - `squash` (or starts with `squash`): inspect recent commits and suggest sensible squashes for repetitive/fixup/tightly related follow-ups.
+- Before any squash/rebase execution, list each squash candidate with its original commit message and intended target commit message.
 - For squash checks, preserve atomic coherent history and do not squash unrelated functional changes.
 - Rewrite only unpushed local history for squash/rebase unless explicitly instructed otherwise.
 - After squashing, diff current commit to the previous head - there should be no difference, if there is, stop and ask how to proceed.
