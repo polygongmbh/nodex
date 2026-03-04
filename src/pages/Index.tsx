@@ -108,6 +108,7 @@ import {
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
 import { normalizeComposerMessageType } from "@/lib/task-type";
 import { buildNip99PublishTags, type Nip99ListingStatus } from "@/lib/nostr/nip99-metadata";
+import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
 import { normalizeGeohash } from "@/lib/nostr/geohash-location";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
@@ -481,16 +482,9 @@ const Index = () => {
     const combined = [...localTasksForMerge, ...nostrTasks];
     const byId = new Map<string, Task>();
     const byListingReplaceableKey = new Map<string, Task>();
-    const getListingReplaceableKey = (task: Task): string | null => {
-      if (!task.feedMessageType) return null;
-      const identifier = task.nip99?.identifier?.trim();
-      const authorPubkey = task.author.id?.trim().toLowerCase();
-      if (!identifier || !authorPubkey) return null;
-      return `${LISTING_EVENT_KIND}:${authorPubkey}:${identifier}`;
-    };
 
     for (const task of combined) {
-      const listingReplaceableKey = getListingReplaceableKey(task);
+      const listingReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
       if (!listingReplaceableKey) {
         if (!byId.has(task.id)) {
           byId.set(task.id, task);
@@ -1509,14 +1503,14 @@ const Index = () => {
     if (!existing?.feedMessageType || !existing.nip99) return;
     if (!currentUser?.id || currentUser.id.toLowerCase() !== existing.author.id.toLowerCase()) return;
     const previousStatus = existing.nip99.status;
-    const replaceableKey = `${LISTING_EVENT_KIND}:${existing.author.id.toLowerCase()}:${existing.nip99.identifier || existing.id}`;
+    const replaceableKey = getListingReplaceableKey(existing, LISTING_EVENT_KIND);
+    if (!replaceableKey) return;
 
     setLocalTasks((prev) => {
       const nextNip99 = { ...(existing.nip99 || {}), status };
       const matchesListing = (task: Task) =>
         task.id === taskId ||
-        (task.feedMessageType &&
-          `${LISTING_EVENT_KIND}:${task.author.id.toLowerCase()}:${task.nip99?.identifier || task.id}` === replaceableKey);
+        getListingReplaceableKey(task, LISTING_EVENT_KIND) === replaceableKey;
       let touched = false;
       const next = prev.map((task) => {
         if (!matchesListing(task)) return task;
@@ -1558,8 +1552,7 @@ const Index = () => {
       if (!result.success) {
         toast.error("Failed to publish listing status update to relay");
         setLocalTasks((prev) => prev.map((task) => {
-          if (!task.feedMessageType) return task;
-          const taskReplaceableKey = `${LISTING_EVENT_KIND}:${task.author.id.toLowerCase()}:${task.nip99?.identifier || task.id}`;
+          const taskReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
           if (taskReplaceableKey !== replaceableKey) return task;
           return {
             ...task,
