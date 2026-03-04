@@ -602,9 +602,13 @@
   "publishQueue": {
     "failedCount": "{{count}} Beitrag konnte nicht veröffentlicht werden",
     "retry": "Erneut versuchen",
+    "retrying": "Wird erneut versucht...",
     "retryHint": "Erneut auf den ursprünglichen Relay-Zielen veröffentlichen",
+    "retryUnavailable": "Wähle einen ursprünglichen Feed, um den erneuten Versuch zu aktivieren",
     "repost": "Neu auf Feed posten",
+    "reposting": "Wird neu gepostet...",
     "repostHint": "Auf aktuell ausgewählten Feed-Relays neu veröffentlichen",
+    "repostUnavailable": "Wähle einen anderen Feed, um Neu posten zu aktivieren",
     "scopeSelected": "Ausgewählte Feeds",
     "scopeAll": "Alle fehlgeschlagenen",
     "hiddenCount": "{{count}} ausgeblendet",
