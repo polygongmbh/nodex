@@ -5,7 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Top-level comments/offers/requests now preserve and reuse all selected relay targets (while root tasks and threaded comments remain single-relay routed).
+- Top-level comments/offers/requests now preserve selected relay targets, and published post metadata now records only relays that actually acknowledged the publish (while root tasks and threaded comments remain single-relay routed).
 - Relay write rejections now mark affected relays `read only` for explicit publish denials (including NIP-01 `OK false` payloads), improving relay-state feedback after failed posts.
 - Load/resize performance improved via sorting-path optimizations, batched task author profile lookups, debounced Nostr event-cache persistence, and desktop lazy-loading/vendor chunk splitting for task views.
 

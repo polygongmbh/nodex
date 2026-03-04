@@ -1830,6 +1830,13 @@ const Index = () => {
     const effectiveRelayIds = targetRelayIds.length > 0
       ? targetRelayIds
       : selectedRelayUrls.map((url) => getRelayIdFromUrl(url));
+    const resolvePublishedRelayIds = (publishedRelayUrls?: string[]): string[] => {
+      if (!publishedRelayUrls || publishedRelayUrls.length === 0) {
+        return effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID];
+      }
+      const ids = publishedRelayUrls.map((url) => getRelayIdFromUrl(url)).filter(Boolean);
+      return ids.length > 0 ? ids : (effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID]);
+    };
 
     const baseTask: Omit<Task, "id"> = {
       author: taskAuthor,
@@ -1898,9 +1905,15 @@ const Index = () => {
           success: result.success,
           eventId: result.eventId || null,
           rejectionReason: result.rejectionReason || null,
+          publishedRelayUrls: result.publishedRelayUrls || [],
           relayUrls: selectedRelayUrls,
         });
-        return { success: result.success, eventId: result.eventId, rejectionReason: result.rejectionReason };
+        return {
+          success: result.success,
+          eventId: result.eventId,
+          rejectionReason: result.rejectionReason,
+          publishedRelayUrls: result.publishedRelayUrls,
+        };
       } catch (error) {
         console.error("Task publish failed unexpectedly", error);
         nostrDevLog("publish", "Publish request threw an exception", {
@@ -1908,7 +1921,12 @@ const Index = () => {
           relayUrls: selectedRelayUrls,
           error: error instanceof Error ? error.message : String(error),
         });
-        return { success: false, eventId: undefined as string | undefined, rejectionReason: undefined as string | undefined };
+        return {
+          success: false,
+          eventId: undefined as string | undefined,
+          rejectionReason: undefined as string | undefined,
+          publishedRelayUrls: undefined as string[] | undefined,
+        };
       }
     };
 
@@ -1947,7 +1965,14 @@ const Index = () => {
         }
 
         if (publishResult.eventId && normalizedTaskType === "task" && initialStatus) {
-          await publishTaskStateUpdate(publishResult.eventId, initialStatus, selectedRelayUrls.slice(0, 1));
+          await publishTaskStateUpdate(
+            publishResult.eventId,
+            initialStatus,
+            (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
+              ? publishResult.publishedRelayUrls
+              : selectedRelayUrls
+            ).slice(0, 1)
+          );
         }
         if (publishResult.eventId && normalizedTaskType === "task" && dueDate) {
           await publishTaskDueUpdate(
@@ -1956,7 +1981,10 @@ const Index = () => {
             dueDate,
             dueTime,
             dateType,
-            selectedRelayUrls.slice(0, 1)
+            (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
+              ? publishResult.publishedRelayUrls
+              : selectedRelayUrls
+            ).slice(0, 1)
           );
         }
 
@@ -1966,6 +1994,7 @@ const Index = () => {
               ? {
                   ...task,
                   id: publishResult.eventId || task.id,
+                  relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
                   pendingPublishToken: undefined,
                   pendingPublishUntil: undefined,
                 }
@@ -2005,7 +2034,14 @@ const Index = () => {
     }
 
     if (publishResult.eventId && normalizedTaskType === "task" && initialStatus) {
-      await publishTaskStateUpdate(publishResult.eventId, initialStatus, selectedRelayUrls.slice(0, 1));
+      await publishTaskStateUpdate(
+        publishResult.eventId,
+        initialStatus,
+        (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
+          ? publishResult.publishedRelayUrls
+          : selectedRelayUrls
+        ).slice(0, 1)
+      );
     }
     if (publishResult.eventId && normalizedTaskType === "task" && dueDate) {
       await publishTaskDueUpdate(
@@ -2014,7 +2050,10 @@ const Index = () => {
         dueDate,
         dueTime,
         dateType,
-        selectedRelayUrls.slice(0, 1)
+        (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
+          ? publishResult.publishedRelayUrls
+          : selectedRelayUrls
+        ).slice(0, 1)
       );
     }
 
@@ -2022,6 +2061,7 @@ const Index = () => {
       {
         ...baseTask,
         id: publishResult.eventId || Date.now().toString(),
+        relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
       },
       ...prev,
     ]);
@@ -2075,7 +2115,10 @@ const Index = () => {
     }
 
     const publishedEventId = result.eventId;
-    const effectiveRelayIds = relayUrls.map((url) => getRelayIdFromUrl(url));
+    const effectiveRelayIds = (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
+      ? result.publishedRelayUrls
+      : relayUrls
+    ).map((url) => getRelayIdFromUrl(url));
     const dueDate = parseStoredDate(draft.dueDate);
     const restoredTask: Task = {
       id: publishedEventId || Date.now().toString(),
@@ -2103,7 +2146,14 @@ const Index = () => {
     setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
 
     if (publishedEventId && draft.taskType === "task" && draft.initialStatus) {
-      await publishTaskStateUpdate(publishedEventId, draft.initialStatus, relayUrls.slice(0, 1));
+      await publishTaskStateUpdate(
+        publishedEventId,
+        draft.initialStatus,
+        (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
+          ? result.publishedRelayUrls
+          : relayUrls
+        ).slice(0, 1)
+      );
     }
     if (publishedEventId && draft.taskType === "task" && dueDate) {
       await publishTaskDueUpdate(
@@ -2112,7 +2162,10 @@ const Index = () => {
         dueDate,
         draft.dueTime,
         draft.dateType || "due",
-        relayUrls.slice(0, 1)
+        (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
+          ? result.publishedRelayUrls
+          : relayUrls
+        ).slice(0, 1)
       );
     }
 

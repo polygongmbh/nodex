@@ -953,7 +953,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     tags: string[][] = [],
     parentId?: string,
     relayUrls?: string[]
-  ): Promise<{ success: boolean; eventId?: string; rejectionReason?: string }> => {
+  ): Promise<{ success: boolean; eventId?: string; rejectionReason?: string; publishedRelayUrls?: string[] }> => {
     if (!ndk || !ndk.signer) {
       console.error("Not authenticated or NDK not ready");
       return { success: false };
@@ -1022,7 +1022,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         kind,
         publishedRelayUrls,
       });
-      return { success: true, eventId: event.id };
+      return { success: true, eventId: event.id, publishedRelayUrls };
     } catch (error) {
       console.error("Failed to publish event:", error);
       const errorMessage = error instanceof Error ? error.message : String(error || "");
