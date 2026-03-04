@@ -114,6 +114,7 @@ import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { removeCachedNostrEventById, type CachedNostrEvent } from "@/lib/nostr/event-cache";
+import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import {
   notifyDisconnectedSelectedFeeds,
   notifyLocalSaved,
@@ -528,16 +529,26 @@ const Index = () => {
 
   const scopedLocalTasksForChannels = useMemo(
     () =>
-      localTasks.filter((task) =>
-        task.relays.length === 0 ||
-        task.relays.some((relayId) => effectiveActiveRelayIds.has(relayId))
-      ),
-    [effectiveActiveRelayIds, localTasks]
+      {
+        const channelRelayScopeIds = resolveChannelRelayScopeIds(
+          effectiveActiveRelayIds,
+          relays.map((relay) => relay.id)
+        );
+        return localTasks.filter((task) =>
+          task.relays.length === 0 ||
+          task.relays.some((relayId) => channelRelayScopeIds.has(relayId))
+        );
+      },
+    [effectiveActiveRelayIds, localTasks, relays]
   );
 
   const scopedNostrEventsForChannels = useMemo(
-    () =>
-      filteredNostrEvents.filter((event) => {
+    () => {
+      const channelRelayScopeIds = resolveChannelRelayScopeIds(
+        effectiveActiveRelayIds,
+        relays.map((relay) => relay.id)
+      );
+      return filteredNostrEvents.filter((event) => {
         const relayUrls = [
           ...(event.relayUrls || []),
           ...(event.relayUrl ? [event.relayUrl] : []),
@@ -545,9 +556,10 @@ const Index = () => {
           .map((url) => url.trim().replace(/\/+$/, ""))
           .filter((url) => Boolean(url));
         if (relayUrls.length === 0) return false;
-        return relayUrls.some((relayUrl) => effectiveActiveRelayIds.has(getRelayIdFromUrl(relayUrl)));
-      }),
-    [effectiveActiveRelayIds, filteredNostrEvents]
+        return relayUrls.some((relayUrl) => channelRelayScopeIds.has(getRelayIdFromUrl(relayUrl)));
+      });
+    },
+    [effectiveActiveRelayIds, filteredNostrEvents, relays]
   );
 
   // Sidebar channels: selected-feed scoped, personalized, and dampened by usage.
