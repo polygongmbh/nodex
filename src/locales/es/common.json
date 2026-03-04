@@ -92,6 +92,7 @@
       "publishSavedForRetry": "No se pudo publicar en Nostr; se guardó para reintento",
       "retryRelayMissing": "Reintento fallido: el feed ya no está configurado",
       "retryRejectedByRelay": "Reintento fallido: el feed no aceptó la publicación",
+      "retryRejectedByRelayWithReason": "Reintento fallido: el feed no aceptó la publicación ({{reason}})",
       "locationUnavailable": "Los servicios de ubicación no están disponibles en este dispositivo",
       "locationCaptureFailed": "No se pudo obtener tu ubicación actual",
       "relayVerificationReadFailed": "La verificación del relay para lectura falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",

@@ -92,6 +92,7 @@
       "publishSavedForRetry": "Veröffentlichung auf Nostr fehlgeschlagen; für erneuten Versuch gespeichert",
       "retryRelayMissing": "Erneuter Versuch fehlgeschlagen: Feed ist nicht mehr konfiguriert",
       "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Feed nicht akzeptiert",
+      "retryRejectedByRelayWithReason": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Feed nicht akzeptiert ({{reason}})",
       "locationUnavailable": "Standortdienste sind auf diesem Gerät nicht verfügbar",
       "locationCaptureFailed": "Aktueller Standort konnte nicht ermittelt werden",
       "relayVerificationReadFailed": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",

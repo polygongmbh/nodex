@@ -50,7 +50,7 @@ export interface NDKContextValue {
     tags?: string[][],
     parentId?: string,
     relayUrls?: string[]
-  ) => Promise<{ success: boolean; eventId?: string }>;
+  ) => Promise<{ success: boolean; eventId?: string; rejectionReason?: string }>;
   createHttpAuthHeader: (
     url: string,
     method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
