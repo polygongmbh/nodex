@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, LocateFixed, MapPin } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -66,7 +66,7 @@ interface UnifiedBottomBarProps {
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
-type SelectorType = "relay" | "channel" | "person" | "date" | "location" | null;
+type SelectorType = "relay" | "channel" | "person" | "date" | null;
 
 const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "building-2": Building2,
@@ -690,7 +690,7 @@ export function UnifiedBottomBar({
   }).slice(0, 8);
 
   useEffect(() => {
-    if (taskSubmitBlockedReason && (activeSelector === "date" || activeSelector === "location")) {
+    if (taskSubmitBlockedReason && activeSelector === "date") {
       setActiveSelector(null);
     }
   }, [activeSelector, taskSubmitBlockedReason]);
@@ -760,7 +760,9 @@ export function UnifiedBottomBar({
   };
 
   const useCurrentLocation = () => {
+    featureDebugLog("compose-location", "Attempting mobile location capture");
     if (!navigator.geolocation) {
+      featureDebugLog("compose-location", "Mobile location capture unavailable: geolocation API missing");
       toast.error(t("toasts.errors.locationUnavailable"));
       return;
     }
@@ -768,9 +770,11 @@ export function UnifiedBottomBar({
       (position) => {
         const geohash = encodeGeohash(position.coords.latitude, position.coords.longitude, DEFAULT_GEOHASH_PRECISION);
         setLocationGeohash(geohash);
+        featureDebugLog("compose-location", "Mobile location capture succeeded", { geohash });
         toast.success(t("toasts.success.locationCaptured", { geohash }));
       },
       () => {
+        featureDebugLog("compose-location", "Mobile location capture failed");
         toast.error(t("toasts.errors.locationCaptureFailed"));
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
@@ -982,39 +986,6 @@ export function UnifiedBottomBar({
               </div>
             </div>
           )}
-          {activeSelector === "location" && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={useCurrentLocation}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/50 bg-background px-2 text-xs hover:bg-muted/60"
-                >
-                  <LocateFixed className="h-3.5 w-3.5" />
-                  {t("composer.actions.useCurrentLocation")}
-                </button>
-                {locationGeohash && (
-                  <button
-                    type="button"
-                    onClick={() => setLocationGeohash(undefined)}
-                    className="h-8 inline-flex items-center rounded-md border border-border/50 bg-background px-2 text-xs hover:bg-muted/60"
-                  >
-                    {t("composer.actions.clearLocation")}
-                  </button>
-                )}
-              </div>
-              <div className="inline-flex w-full items-center gap-1.5 rounded-md border border-border/50 bg-background px-2">
-                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                <input
-                  value={locationGeohash || ""}
-                  onChange={(event) => setLocationGeohash(normalizeGeohash(event.target.value) || event.target.value.trim().toLowerCase())}
-                  placeholder={t("composer.placeholders.geohash")}
-                  aria-label={t("composer.placeholders.geohash")}
-                  className="h-8 w-full bg-transparent text-xs focus:outline-none"
-                />
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -1157,10 +1128,10 @@ export function UnifiedBottomBar({
               )}
             </button>
             <button
-              onClick={() => toggleSelector("location")}
+              onClick={useCurrentLocation}
               className={cn(
                 "relative p-2 rounded-md transition-colors",
-                activeSelector === "location" || locationGeohash
+                locationGeohash
                   ? "bg-primary/20 text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
