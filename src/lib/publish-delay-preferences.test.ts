@@ -6,8 +6,8 @@ describe("publish-delay-preferences", () => {
     window.localStorage.clear();
   });
 
-  it("defaults to enabled when nothing is stored", () => {
-    expect(loadPublishDelayEnabled()).toBe(true);
+  it("defaults to disabled when nothing is stored", () => {
+    expect(loadPublishDelayEnabled()).toBe(false);
   });
 
   it("persists explicit opt-out", () => {

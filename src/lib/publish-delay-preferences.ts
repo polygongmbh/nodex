@@ -1,9 +1,9 @@
 const STORAGE_KEY_PUBLISH_DELAY_ENABLED = "nodex_publish_delay_enabled";
 
 export function loadPublishDelayEnabled(): boolean {
-  if (typeof window === "undefined") return true;
+  if (typeof window === "undefined") return false;
   const stored = window.localStorage.getItem(STORAGE_KEY_PUBLISH_DELAY_ENABLED);
-  if (stored === null) return true;
+  if (stored === null) return false;
   return stored !== "false";
 }
 
