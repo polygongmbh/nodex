@@ -7,9 +7,11 @@ function dedupeRelayIds(relayIds: string[]): string[] {
   return Array.from(new Set(relayIds.filter(Boolean)));
 }
 
-export function resolveOriginRelayIdForTask(task: Task | undefined, demoRelayId: string): string | undefined {
+export function resolveOriginRelayIdForTask(task: Task | undefined, demoRelayId?: string): string | undefined {
   if (!task || task.relays.length === 0) return undefined;
-  const nonDemoRelay = task.relays.find((relayId) => relayId !== demoRelayId);
+  const nonDemoRelay = demoRelayId
+    ? task.relays.find((relayId) => relayId !== demoRelayId)
+    : task.relays[0];
   return nonDemoRelay || task.relays[0];
 }
 
@@ -18,7 +20,7 @@ export function resolveRelaySelectionForSubmission(params: {
   selectedRelayIds: string[];
   relays: Relay[];
   parentTask?: Task;
-  demoRelayId: string;
+  demoRelayId?: string;
 }): { relayIds: string[]; error?: string } {
   const { taskType, selectedRelayIds, relays, parentTask, demoRelayId } = params;
   const availableRelayIds = new Set(relays.map((relay) => relay.id));
@@ -44,7 +46,9 @@ export function resolveRelaySelectionForSubmission(params: {
   }
 
   if (taskType === "task") {
-    const selectedNonDemoRelays = normalizedSelectedRelayIds.filter((relayId) => relayId !== demoRelayId);
+    const selectedNonDemoRelays = demoRelayId
+      ? normalizedSelectedRelayIds.filter((relayId) => relayId !== demoRelayId)
+      : normalizedSelectedRelayIds;
     if (selectedNonDemoRelays.length !== 1) {
       nostrDevLog("routing", "Task submission rejected due to invalid non-demo relay count", {
         selectedNonDemoRelays,
@@ -56,6 +60,8 @@ export function resolveRelaySelectionForSubmission(params: {
   }
 
   return {
-    relayIds: normalizedSelectedRelayIds.length > 0 ? normalizedSelectedRelayIds : [demoRelayId],
+    relayIds: normalizedSelectedRelayIds.length > 0
+      ? normalizedSelectedRelayIds
+      : (demoRelayId ? [demoRelayId] : []),
   };
 }

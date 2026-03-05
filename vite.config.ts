@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
   const defaultRelayDomain = (env.VITE_DEFAULT_RELAY_DOMAIN || "").trim();
   const defaultRelayProtocol = (env.VITE_DEFAULT_RELAY_PROTOCOL || "").trim() || "wss";
   const defaultRelayPort = (env.VITE_DEFAULT_RELAY_PORT || "").trim();
+  const demoFeedEnabled = String(env.VITE_ENABLE_DEMO_FEED || "").toLowerCase() === "true";
   const debugAttachmentsEnabled = String(env.VITE_DEBUG_ATTACHMENTS || "").toLowerCase() === "true";
   const hasUploadUrl = Boolean(uploadUrl);
   const hasRelayList = defaultRelayList.length > 0;
@@ -29,6 +30,7 @@ export default defineConfig(({ mode }) => {
     defaultRelayDomainConfigured: hasRelayDomain,
     defaultRelayProtocol,
     defaultRelayPortConfigured: Boolean(defaultRelayPort),
+    demoFeedEnabled,
     relaySource: hasRelayList ? "VITE_DEFAULT_RELAYS" : hasRelayDomain ? "VITE_DEFAULT_RELAY_DOMAIN" : "fallback",
   });
 

@@ -115,6 +115,7 @@ import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { removeCachedNostrEventById, type CachedNostrEvent } from "@/lib/nostr/event-cache";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
+import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import {
   notifyDisconnectedSelectedFeeds,
   notifyLocalSaved,
@@ -154,6 +155,7 @@ const MOBILE_MANAGE_ROUTE = "manage";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
+const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
 const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 const TASK_STATUS_REORDER_DELAY_MS = 260;
@@ -238,10 +240,18 @@ const Index = () => {
       url: r.url,
       postCount: undefined,
     }));
-    
+
+    if (!DEMO_FEED_ENABLED) return nostrRelayItems;
+
     // Include demo relay
     return [...demoRelays, ...nostrRelayItems];
   }, [ndkRelays]);
+
+  const defaultRelayIds = useMemo(() => {
+    const configuredRelayIds = getConfiguredDefaultRelayIds();
+    if (!DEMO_FEED_ENABLED) return configuredRelayIds;
+    return Array.from(new Set([DEMO_RELAY_ID, ...configuredRelayIds]));
+  }, []);
 
   // Convert NDK relays to the format expected by sidebar/widgets
   const nostrRelays = useMemo(() => {
@@ -263,7 +273,7 @@ const Index = () => {
   } = useRelayFilterState({
     relays,
     t,
-    defaultRelayIds: getConfiguredDefaultRelayIds(),
+    defaultRelayIds,
     onRelayEnabled: (relay) => {
       if (
         relay.id !== DEMO_RELAY_ID &&
@@ -287,7 +297,7 @@ const Index = () => {
   const [people, setPeople] = useState<Person[]>([]);
   const [cachedKind0Events, setCachedKind0Events] = useState(() => loadCachedKind0Events());
   const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
-  const [localTasks, setLocalTasks] = useState<Task[]>(mockTasks);
+  const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? mockTasks : []));
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
     () => loadChannelFrecencyState()
@@ -1349,7 +1359,7 @@ const Index = () => {
 
   const resolveTaskOriginRelay = useCallback((taskId: string) => {
     const task = allTasks.find((item) => item.id === taskId);
-    const originRelayId = resolveOriginRelayIdForTask(task, DEMO_RELAY_ID);
+    const originRelayId = resolveOriginRelayIdForTask(task, DEMO_FEED_ENABLED ? DEMO_RELAY_ID : undefined);
     if (!originRelayId) {
       nostrDevLog("routing", "No origin relay found for task", { taskId });
       return { relayId: undefined, relayUrls: [] as string[] };
@@ -1684,7 +1694,9 @@ const Index = () => {
     setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
     extractedTags.forEach((tag) => bumpChannelFrecency(tag, 1.1));
 
-    const requestedRelayIds = relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID];
+    const requestedRelayIds = relayIds.length > 0
+      ? relayIds
+      : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []);
     const submissionParentId = feedMessageType ? undefined : parentId;
     const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
     const resolvedRelaySelection = resolveRelaySelectionForSubmission({
@@ -1692,7 +1704,7 @@ const Index = () => {
       selectedRelayIds: requestedRelayIds,
       relays,
       parentTask,
-      demoRelayId: DEMO_RELAY_ID,
+      demoRelayId: DEMO_FEED_ENABLED ? DEMO_RELAY_ID : undefined,
     });
     if (resolvedRelaySelection.error) {
       toast.error(resolvedRelaySelection.error || t("toasts.errors.selectRelayOrParent"));
@@ -1705,7 +1717,9 @@ const Index = () => {
       return { ok: false, reason: "relay-selection" };
     }
     const targetRelayIds = resolvedRelaySelection.relayIds;
-    const hasNonDemoRelay = targetRelayIds.some((id) => id !== DEMO_RELAY_ID);
+    const hasNonDemoRelay = DEMO_FEED_ENABLED
+      ? targetRelayIds.some((id) => id !== DEMO_RELAY_ID)
+      : targetRelayIds.length > 0;
 
     const selectedRelayUrls = resolveRelayUrlsFromIds(targetRelayIds);
     nostrDevLog("routing", "Resolved relay selection for submission", {
@@ -1851,10 +1865,15 @@ const Index = () => {
       : selectedRelayUrls.map((url) => getRelayIdFromUrl(url));
     const resolvePublishedRelayIds = (publishedRelayUrls?: string[]): string[] => {
       if (!publishedRelayUrls || publishedRelayUrls.length === 0) {
-        return effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID];
+        return effectiveRelayIds.length > 0
+          ? effectiveRelayIds
+          : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []);
       }
       const ids = publishedRelayUrls.map((url) => getRelayIdFromUrl(url)).filter(Boolean);
-      return ids.length > 0 ? ids : (effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID]);
+      if (ids.length > 0) return ids;
+      return effectiveRelayIds.length > 0
+        ? effectiveRelayIds
+        : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []);
     };
     const notifyIfPartialPublish = (publishedRelayUrls?: string[]) => {
       const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
@@ -1873,7 +1892,9 @@ const Index = () => {
       author: taskAuthor,
       content,
       tags: normalizedExtractedTags,
-      relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
+      relays: effectiveRelayIds.length > 0
+        ? effectiveRelayIds
+        : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []),
       taskType: normalizedTaskType,
       timestamp: createdAt,
       status: normalizedTaskType === "task" ? (initialStatus || "todo") : undefined,
@@ -2169,7 +2190,9 @@ const Index = () => {
       author: draft.author,
       content: draft.content,
       tags: draft.tags,
-      relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
+      relays: effectiveRelayIds.length > 0
+        ? effectiveRelayIds
+        : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []),
       taskType: draft.taskType,
       timestamp: parseStoredDate(draft.createdAt) || new Date(),
       status: draft.taskType === "task" ? (draft.initialStatus || "todo") : undefined,
