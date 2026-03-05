@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Task/comment location chips now resolve geohashes to rough coordinates in-chip and open the mapped location directly in a map app/browser when tapped.
 
 ## [1.16.3] - 2026-03-05
 Refined relay bootstrapping defaults and mobile compose location flow while reducing default demo noise.

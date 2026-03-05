@@ -35,6 +35,7 @@ import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
+import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -667,9 +668,10 @@ export function FeedView({
                               inline
                             />
                             {task.locationGeohash && (
-                              <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
-                                {`📍 ${task.locationGeohash}`}
-                              </span>
+                              <TaskLocationChip
+                                geohash={task.locationGeohash}
+                                className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
+                              />
                             )}
                             {task.tags.map((tag) => (
                               <button

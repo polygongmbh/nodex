@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -527,9 +528,10 @@ export function TaskItem({
                 </span>
               )}
               {task.locationGeohash && (
-                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
-                  {`📍 ${task.locationGeohash}`}
-                </span>
+                <TaskLocationChip
+                  geohash={task.locationGeohash}
+                  className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
+                />
               )}
               {task.tags.map((tag) => (
                 <button
