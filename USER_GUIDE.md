@@ -58,6 +58,9 @@
 
 ## Feed Filtering and Publishing
 - Feed filter controls determine which items are visible.
+- If no default relays are configured and no relay list is stored yet, Nodex probes host-derived relay candidates (`base.`, `feed.`, `nostr.`, `tasks.`) from the current domain and auto-connects only to reachable relays.
+- After sign-in, relay enrichment prefers relays from your NIP-65 relay list (`kind:10002`) and only falls back to verified NIP-05 relay hints when needed.
+- The demo feed is hidden by default and can be explicitly enabled with `VITE_ENABLE_DEMO_FEED=true`.
 - Feed chips show live connection state; selected disconnected feeds block posting/task edits until reconnected.
 - Selecting a disconnected feed (toggle, exclusive-select, or select-all) triggers an automatic reconnect attempt.
 - If no feeds are selected, channel suggestions/chips behave like all feeds are selected (channel list does not collapse to empty).
@@ -115,6 +118,7 @@
 - Profile settings include an experimental opt-in toggle for local on-device image caption inference; when enabled, successful attachment inference can auto-fill image alt text.
 - Next to the date picker, choose the date type: `Due`, `Scheduled`, `Start`, `End`, or `Milestone`.
 - On mobile, the inline date picker above the bottom bar scrolls horizontally through months (infinite-style strip) without month arrow controls.
+- On mobile, tapping the location button captures and attaches current device location directly (when location permission is granted) instead of opening a separate location menu.
 - Date-typed tasks appear in Calendar view.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
 - On mobile, use the task/comment send actions in the combined bottom bar to create.

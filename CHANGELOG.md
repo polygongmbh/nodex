@@ -5,6 +5,9 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.17.0] - 2026-03-05
+Refined relay bootstrapping defaults and mobile compose location flow while reducing default demo noise.
 - When no default relays are configured via env and no relay list is persisted, startup now probes host-derived relay candidates (`base.`, `feed.`, `nostr.`, `tasks.`) based on the current domain and auto-connects only to reachable relays.
 - After sign-in, complementary relay enrichment now prefers NIP-65 (`kind:10002`) relay lists and only falls back to verified NIP-05 relay hints when no NIP-65 relay list is available.
 - The demo feed relay and seeded demo tasks are now hidden by default and can be explicitly enabled with `VITE_ENABLE_DEMO_FEED=true`.
