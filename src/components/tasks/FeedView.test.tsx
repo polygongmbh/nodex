@@ -4,6 +4,7 @@ import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
 import { formatAuthorMetaLabel } from "@/lib/person-label";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
+import i18n from "@/lib/i18n/config";
 
 vi.mock("@/lib/nostr/ndk-context", () => ({
   useNDK: () => ({ user: null }),
@@ -412,6 +413,46 @@ describe("FeedView", () => {
     );
 
     expect(screen.getAllByText("In Progress")).toHaveLength(1);
+  });
+
+  it("omits english default in-progress description when ui language is german", async () => {
+    await i18n.changeLanguage("de");
+    try {
+      const taskWithStateUpdate = makeTask({
+        id: "task-state-dedupe-german",
+        author,
+        content: "Task state update test #test",
+        status: "todo",
+        stateUpdates: [
+          {
+            id: "state-dedupe-german",
+            status: "in-progress",
+            statusDescription: "In Progress",
+            timestamp: new Date(Date.now() - 5 * 60 * 1000),
+            authorPubkey: author.id,
+          },
+        ],
+      });
+
+      render(
+        <FeedView
+          tasks={[taskWithStateUpdate]}
+          allTasks={[taskWithStateUpdate]}
+          relays={relays}
+          channels={channels}
+          people={[author]}
+          searchQuery=""
+          onSearchChange={vi.fn()}
+          onNewTask={vi.fn()}
+          onToggleComplete={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText("In Arbeit")).toBeInTheDocument();
+      expect(screen.queryByText("In Progress")).not.toBeInTheDocument();
+    } finally {
+      await i18n.changeLanguage("en");
+    }
   });
 
 });

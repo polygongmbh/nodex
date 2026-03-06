@@ -367,8 +367,12 @@ export function FeedView({
               const taskSummary = task.content.slice(0, 40) + (task.content.length > 40 ? "..." : "");
               const stateLabel = getStateLabel(update.status);
               const statusDescription = update.statusDescription?.trim();
+              const isDefaultInProgressDescription =
+                update.status === "in-progress" &&
+                normalizeLabelText(statusDescription) === normalizeLabelText("In Progress");
               const showStatusDescription =
                 Boolean(statusDescription) &&
+                !isDefaultInProgressDescription &&
                 normalizeLabelText(statusDescription) !== normalizeLabelText(stateLabel);
 
               return (
