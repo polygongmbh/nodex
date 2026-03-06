@@ -11,6 +11,8 @@ import NDK, {
   NDKSubscription,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "../types";
+import { NoasClient } from "../noas-client";
+import { privateKeyHexToNsec } from "../nip49-utils";
 import {
   buildKind0Content,
   hasRequiredProfileFields,
@@ -35,6 +37,7 @@ import {
   STORAGE_KEY_NIP46_BUNKER,
   STORAGE_KEY_NIP46_LOCAL_NSEC,
   STORAGE_KEY_NSEC,
+  STORAGE_KEY_NOAS_USERNAME,
 } from "./storage";
 import {
   mapNativeRelayStatus,
@@ -802,49 +805,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
   }, [ndk, retryNip42RelaysAfterSignIn]);
 
-  const getGuestPrivateKey = useCallback((): string | null => {
-    if (authMethod !== "guest") return null;
-    return localStorage.getItem(STORAGE_KEY_NSEC);
-  }, [authMethod]);
 
-  const publishPresenceOffline = useCallback(async () => {
-    if (!ndk || !ndk.signer) return;
-
-    try {
-      const event = new NDKEvent(ndk);
-      event.kind = NostrEventKind.UserStatus;
-      event.content = buildOfflinePresenceContent();
-      event.tags = buildPresenceTags(
-        Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
-      );
-      await event.sign();
-
-      const relayUrls = relays.map((relay) => relay.url);
-      const relaySet = NDKRelaySet.fromRelayUrls(
-        relayUrls.length > 0 ? relayUrls : resolvedDefaultRelays,
-        ndk,
-        true
-      );
-      await event.publish(relaySet);
-    } catch (error) {
-      console.warn("Failed to publish offline presence event during logout", error);
-    }
-  }, [resolvedDefaultRelays, ndk, relays]);
-
-  const logout = useCallback(() => {
-    void publishPresenceOffline();
-    profileSyncRunRef.current += 1;
-    setIsProfileSyncing(false);
-    if (ndk) {
-      ndk.signer = undefined;
-    }
-    setUser(null);
-    setAuthMethod(null);
-    localStorage.removeItem(STORAGE_KEY_AUTH);
-    localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
-    localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
-    // Keep guest key for potential re-login
-  }, [ndk, publishPresenceOffline]);
 
   const addRelay = useCallback((url: string) => {
     if (!ndk) return;
@@ -891,7 +852,189 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     // Connect via NDK
     const relay = ndk.pool.getRelay(normalized, true);
     relay?.connect();
-  }, [ndk, probeRelayInfo]);
+
+    // Set up relay event listeners
+    relay?.on("connect", () => {
+      nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
+      setRelays((prev) =>
+        prev.map((r) =>
+          normalizeUrl(r.url) === normalized ? { ...r, status: "connected" } : r
+        )
+      );
+    });
+
+    relay?.on("disconnect", () => {
+      nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
+      setRelays((prev) =>
+        prev.map((r) =>
+          normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
+        )
+      );
+    });
+
+    relay?.on("notice", (notice) => {
+      console.warn("Relay notice:", notice, "from", normalized);
+    });
+
+    relay?.on("auth", (challenge) => {
+      nostrDevLog("relay", "Relay auth challenge", { relayUrl: normalized, challenge });
+      beginRelayOperation("read");
+      pendingRelayVerificationRef.current.set(normalized, {
+        operation: "read",
+        requestedAt: Date.now(),
+      });
+    });
+  }, [ndk, probeRelayInfo, beginRelayOperation, relays]);
+
+  const loginWithNoas = useCallback(async (username: string, password: string): Promise<boolean> => {
+    if (!ndk) return false;
+
+    const noasApiUrl = import.meta.env.VITE_NOAS_API_URL;
+    const noasNip05Domain = import.meta.env.VITE_NOAS_NIP05_DOMAIN;
+
+    if (!noasApiUrl || !noasNip05Domain) {
+      console.error("Noas configuration missing");
+      return false;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const noasClient = new NoasClient(noasApiUrl, noasNip05Domain);
+      const signInResponse = await noasClient.signIn(username, password);
+
+      if (!signInResponse.success || !signInResponse.encryptedPrivateKey || !signInResponse.publicKey) {
+        console.error("Noas sign-in failed:", signInResponse.error);
+        return false;
+      }
+
+      // Decrypt the NIP-49 encrypted private key using the user's password
+      let decryptedPrivateKey: string;
+      let signer: NDKPrivateKeySigner | null = null;
+      try {
+        decryptedPrivateKey = await noasClient.decryptPrivateKey(signInResponse.encryptedPrivateKey, password);
+        console.log('DEBUG: Decrypted private key length:', decryptedPrivateKey.length);
+        
+        // Convert hex key to nsec format for better compatibility with NDK
+        const nsecKey = privateKeyHexToNsec(decryptedPrivateKey);
+        console.log('DEBUG: NSEC key:', nsecKey);
+        console.log('DEBUG: NSEC key length:', nsecKey.length);
+        
+        signer = new NDKPrivateKeySigner(nsecKey);
+        console.log('DEBUG: Signer created:', signer);
+        ndk.signer = signer;
+      } catch (decryptionError) {
+        console.error('Failed to decrypt private key:', decryptionError);
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      // Check if signer was created successfully
+      if (!signer) {
+        console.error('Signer was not created during decryption');
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      console.log('DEBUG: About to call signer.user()');
+      console.log('DEBUG: Signer object:', signer);
+      const ndkUser = await signer.user();
+      await ndkUser.fetchProfile();
+
+      // Get profile picture if available
+      let profilePicture: string | undefined;
+      const pictureResponse = await noasClient.getProfilePicture(signInResponse.publicKey);
+      if (pictureResponse.profilePicture && pictureResponse.profilePictureType) {
+        const blob = new Blob([pictureResponse.profilePicture], { type: pictureResponse.profilePictureType });
+        profilePicture = URL.createObjectURL(blob);
+      }
+
+      // Get NIP-05 verification
+      const nip05Response = await noasClient.getNip05Verification(username);
+      const nip05Verified = nip05Response.names?.[username] === signInResponse.publicKey;
+
+      setUser({
+        pubkey: ndkUser.pubkey,
+        npub: ndkUser.npub,
+        profile: {
+          name: ndkUser.profile?.name || username,
+          displayName: ndkUser.profile?.displayName || username,
+          picture: profilePicture || ndkUser.profile?.image,
+          about: ndkUser.profile?.about,
+          nip05: noasClient.getNip05Identifier(username),
+          nip05Verified,
+        },
+      });
+
+      // Store Noas session information
+      setAuthMethod("noas");
+      localStorage.setItem(STORAGE_KEY_AUTH, "noas");
+      localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
+      
+      // Store relays if provided
+      if (signInResponse.relays && signInResponse.relays.length > 0) {
+        const relaySet = new Set([...resolvedDefaultRelays, ...signInResponse.relays]);
+        signInResponse.relays.forEach((relayUrl) => {
+          if (isRelayUrl(relayUrl)) {
+            addRelay(relayUrl);
+          }
+        });
+      }
+
+      retryNip42RelaysAfterSignIn();
+      return true;
+    } catch (error) {
+      console.error("Noas login failed:", error);
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays, addRelay]);
+
+  const getGuestPrivateKey = useCallback((): string | null => {
+    if (authMethod !== "guest") return null;
+    return localStorage.getItem(STORAGE_KEY_NSEC);
+  }, [authMethod]);
+
+  const publishPresenceOffline = useCallback(async () => {
+    if (!ndk || !ndk.signer) return;
+
+    try {
+      const event = new NDKEvent(ndk);
+      event.kind = NostrEventKind.UserStatus;
+      event.content = buildOfflinePresenceContent();
+      event.tags = buildPresenceTags(
+        Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
+      );
+      await event.sign();
+
+      const relayUrls = relays.map((relay) => relay.url);
+      const relaySet = NDKRelaySet.fromRelayUrls(
+        relayUrls.length > 0 ? relayUrls : resolvedDefaultRelays,
+        ndk,
+        true
+      );
+      await event.publish(relaySet);
+    } catch (error) {
+      console.warn("Failed to publish offline presence event during logout", error);
+    }
+  }, [resolvedDefaultRelays, ndk, relays]);
+
+  const logout = useCallback(() => {
+    void publishPresenceOffline();
+    profileSyncRunRef.current += 1;
+    setIsProfileSyncing(false);
+    if (ndk) {
+      ndk.signer = undefined;
+    }
+    setUser(null);
+    setAuthMethod(null);
+    localStorage.removeItem(STORAGE_KEY_AUTH);
+    localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
+    localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
+    // Keep guest key for potential re-login
+  }, [ndk, publishPresenceOffline]);
+
+
 
   const removeRelay = useCallback((url: string) => {
     if (!ndk) return;
@@ -1291,6 +1434,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     loginWithPrivateKey,
     loginAsGuest,
     loginWithNostrConnect,
+    loginWithNoas,
     logout,
     addRelay,
     removeRelay,
@@ -1314,6 +1458,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     loginWithPrivateKey,
     loginAsGuest,
     loginWithNostrConnect,
+    loginWithNoas,
     logout,
     addRelay,
     removeRelay,
