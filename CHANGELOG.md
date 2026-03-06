@@ -5,8 +5,14 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Subtask submissions now inherit parent task hashtags when no explicit hashtags are provided, avoiding unnecessary compose blocking while preserving tag-scoped publishing.
-- Focused breadcrumb rows no longer stretch short task labels across available width; labels now stay content-sized while long labels still truncate.
+
+## [1.17.0] - 2026-03-06
+Promoted Feed-first navigation defaults, improved publish/filter ergonomics, and refined breadcrumb/status presentation across locales.
+- Feed is now the first/default task view across routing, desktop/mobile view switchers, swipe order, and numeric view shortcuts (`1` now opens Feed).
+- Host-fallback relay discovery was hardened with deterministic probe ordering, short-term probe caching, more robust persisted relay recovery, and cleaner runtime diagnostics.
+- Clicking an already-sole active feed now toggles it off, and state-update cards now avoid localized duplicate labels while formatting custom status text as `State: detail`.
+- Subtask/subitem posting now falls back to parent hashtags when no explicit tags are provided, including mobile compose parity for parent-focused sends.
+- Focused breadcrumb rows no longer stretch short task labels across available width, while long labels continue truncating safely.
 
 ## [1.16.5] - 2026-03-06
 - Relay connections now auto-attempt reconnect when returning to a previously inactive tab (visibility/focus/online resume), improving recovery after idle background periods.
