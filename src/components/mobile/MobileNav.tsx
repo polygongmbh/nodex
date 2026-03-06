@@ -14,8 +14,8 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   const { t } = useTranslation();
   const navItems: { id: MobileViewType; label: string; icon: React.ReactNode }[] = [
     { id: "filters", label: t("navigation.views.manage"), icon: <Filter className="w-5 h-5" /> },
-    { id: "tree", label: t("navigation.views.tree"), icon: <GitBranch className="w-5 h-5" /> },
     { id: "feed", label: t("navigation.views.feed"), icon: <LayoutList className="w-5 h-5" /> },
+    { id: "tree", label: t("navigation.views.tree"), icon: <GitBranch className="w-5 h-5" /> },
     { id: "list", label: t("navigation.views.upcoming"), icon: <List className="w-5 h-5" /> },
     { id: "calendar", label: t("navigation.views.calendar"), icon: <Calendar className="w-5 h-5" /> },
   ];

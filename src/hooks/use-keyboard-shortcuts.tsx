@@ -6,7 +6,7 @@ interface UseKeyboardShortcutsOptions {
   enabled?: boolean;
 }
 
-const viewOrder: ViewType[] = ["tree", "feed", "kanban", "calendar", "list"];
+const viewOrder: ViewType[] = ["feed", "tree", "kanban", "calendar", "list"];
 
 export function useKeyboardShortcuts({
   onViewChange,

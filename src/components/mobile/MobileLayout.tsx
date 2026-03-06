@@ -84,10 +84,10 @@ interface MobileLayoutProps {
 }
 
 // Mobile view order for swipe navigation
-const mobileViews: MobileViewType[] = ["tree", "feed", "list", "calendar"];
+const mobileViews: MobileViewType[] = ["feed", "tree", "list", "calendar"];
 
-const isPrimaryMobileView = (view: ViewType): view is "tree" | "feed" | "list" | "calendar" => {
-  return view === "tree" || view === "feed" || view === "list" || view === "calendar";
+const isPrimaryMobileView = (view: ViewType): view is "feed" | "tree" | "list" | "calendar" => {
+  return view === "feed" || view === "tree" || view === "list" || view === "calendar";
 };
 
 export function MobileLayout({
@@ -147,7 +147,7 @@ export function MobileLayout({
   const previousSignedInRef = useRef(isSignedIn);
   const lastHandledGuideStepIdRef = useRef<string | null>(null);
   const { needsProfileSetup } = useNDK();
-  const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView) ? currentView : "tree";
+  const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView) ? currentView : "feed";
 
   // Build default content from active channel filters
   const includedChannels = channels.filter(c => c.filterState === "included");

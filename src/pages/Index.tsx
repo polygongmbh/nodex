@@ -147,7 +147,7 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
-const validViews: ViewType[] = ["tree", "feed", "kanban", "list", "calendar"];
+const validViews: ViewType[] = ["feed", "tree", "kanban", "list", "calendar"];
 const MOBILE_MANAGE_ROUTE = "manage";
 
 // Default Nostr relays - these are managed by NDKProvider in App.tsx
@@ -192,7 +192,7 @@ const Index = () => {
   // Derive current view from URL
   const currentView: ViewType = validViews.includes(urlView as ViewType) 
     ? (urlView as ViewType) 
-    : "tree";
+    : "feed";
 
   // NDK Nostr integration
   const { 
