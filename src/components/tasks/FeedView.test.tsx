@@ -260,11 +260,12 @@ describe("FeedView", () => {
     expect(screen.getByText("alice")).toBeInTheDocument();
   });
 
-  it("renders task state updates as compact subitems", () => {
+  it("renders task state updates as standalone compact feed items with task breadcrumb context", () => {
     const taskWithStateUpdates = makeTask({
       id: "task-state",
       author,
-      status: "in-progress",
+      content: "Reconnect relays after resume #infra",
+      status: "todo",
       stateUpdates: [
         {
           id: "state-2",
@@ -297,9 +298,12 @@ describe("FeedView", () => {
       />
     );
 
-    expect(screen.getByText("Working on relay reconnect")).toBeInTheDocument();
-    expect(screen.getByText("Unblocked")).toBeInTheDocument();
-    expect(screen.getAllByTestId("feed-state-update-task-state")).toHaveLength(2);
+    expect(screen.getByText(/working on relay reconnect/i)).toBeInTheDocument();
+    expect(screen.getByText(/unblocked/i)).toBeInTheDocument();
+    expect(screen.getAllByTestId(/feed-state-entry-/)).toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", { name: /focus task: reconnect relays after resume #infra/i })
+    ).toHaveLength(2);
   });
 
 });

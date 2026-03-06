@@ -15,6 +15,7 @@ import {
   ComposeRestoreRequest,
   PublishedAttachment,
   Nip99Metadata,
+  TaskStateUpdate,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -71,6 +72,10 @@ interface FeedViewProps extends SharedTaskViewContext {
   } | null;
   isInteractionBlocked?: boolean;
 }
+
+type FeedEntry =
+  | { type: "task"; id: string; timestamp: Date; task: Task }
+  | { type: "state-update"; id: string; timestamp: Date; task: Task; update: TaskStateUpdate };
 
 export function FeedView({
   tasks,
@@ -160,6 +165,22 @@ export function FeedView({
     () => [...filteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
     [filteredFeedTasks]
   );
+  const feedEntries = useMemo<FeedEntry[]>(() => {
+    const entries: FeedEntry[] = [];
+    for (const task of feedTasks) {
+      entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
+      for (const update of task.stateUpdates || []) {
+        entries.push({
+          type: "state-update",
+          id: `${task.id}-state-${update.id}`,
+          timestamp: update.timestamp,
+          task,
+          update,
+        });
+      }
+    }
+    return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }, [feedTasks]);
   const {
     mediaItems,
     activeMediaIndex,
@@ -318,13 +339,85 @@ export function FeedView({
 
       {/* Feed List */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto" data-onboarding="task-list">
-        {feedTasks.length === 0 ? (
+        {feedEntries.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             <p>{t("tasks.empty.feed")}</p>
           </div>
         ) : (
-          feedTasks.map((task) => {
-            const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
+          feedEntries.map((entry) => {
+            if (entry.type === "state-update") {
+              const { task, update } = entry;
+              const resolvedUpdateAuthor =
+                people.find((person) => person.id.toLowerCase() === update.authorPubkey.toLowerCase()) || task.author;
+              const updateAuthorMeta = formatAuthorMetaParts({
+                personId: resolvedUpdateAuthor.id,
+                displayName: resolvedUpdateAuthor.displayName,
+                username: resolvedUpdateAuthor.name,
+              });
+              const updateTimeLabel = isMobile
+                ? formatCompactRelativeTime(update.timestamp)
+                : formatDistanceToNow(update.timestamp, { addSuffix: true });
+              const taskSummary = task.content.slice(0, 40) + (task.content.length > 40 ? "..." : "");
+
+              return (
+                <div
+                  key={entry.id}
+                  data-testid={`feed-state-entry-${update.id}`}
+                  onClick={() => onFocusTask?.(task.id)}
+                  className={cn(
+                    "border-b border-border px-4 py-2.5 hover:bg-card/50 transition-colors cursor-pointer",
+                    isMobile && "px-3 py-2"
+                  )}
+                >
+                  <div className="flex items-start gap-2.5">
+                    {update.status === "done" ? (
+                      <CheckCircle2 className={cn("mt-0.5 text-primary flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                    ) : update.status === "in-progress" ? (
+                      <CircleDot className={cn("mt-0.5 text-warning flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                    ) : (
+                      <Circle className={cn("mt-0.5 text-muted-foreground flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] text-muted-foreground mb-1 inline-flex items-center gap-1 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onFocusTask?.(task.id);
+                          }}
+                          className={`${TASK_INTERACTION_STYLES.hoverLinkText} font-medium`}
+                          title={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
+                          aria-label={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
+                        >
+                          {taskSummary}
+                        </button>
+                        <span>·</span>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onAuthorClick?.(resolvedUpdateAuthor);
+                          }}
+                          className="hover:text-foreground"
+                          aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
+                          title={resolvedUpdateAuthor.id}
+                        >
+                          {updateAuthorMeta.primary}
+                        </button>
+                        <span>·</span>
+                        <span>{updateTimeLabel}</span>
+                      </div>
+                      <div className="text-xs text-foreground/90">
+                        <span className="font-medium">{getStateLabel(update.status)}</span>
+                        {update.statusDescription && <span>{`: ${update.statusDescription}`}</span>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            const task = entry.task;
             const isComment = task.taskType === "comment";
             const isListing = Boolean(task.feedMessageType);
             const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
@@ -381,7 +474,6 @@ export function FeedView({
               const normalizedUrl = attachment.url?.trim().toLowerCase();
               return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
             });
-            const recentStateUpdates = (task.stateUpdates || []).slice(0, 3);
 
             return (
               <div
@@ -736,33 +828,6 @@ export function FeedView({
                       attachments={attachmentsWithoutInlineEmbeds}
                       onMediaClick={(url) => openTaskMedia(task.id, url)}
                     />
-                    {recentStateUpdates.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {recentStateUpdates.map((update) => (
-                          <div
-                            key={update.id}
-                            data-testid={`feed-state-update-${task.id}`}
-                            className="text-xs text-muted-foreground bg-muted/40 rounded px-2 py-1"
-                          >
-                            <span className="inline-flex items-center gap-1">
-                              {update.status === "done" ? (
-                                <CheckCircle2 className="w-3 h-3 text-primary" />
-                              ) : update.status === "in-progress" ? (
-                                <CircleDot className="w-3 h-3 text-warning" />
-                              ) : (
-                                <Circle className="w-3 h-3 text-muted-foreground" />
-                              )}
-                              <span>{getStateLabel(update.status)}</span>
-                              <span>·</span>
-                              <span>{formatCompactRelativeTime(update.timestamp)}</span>
-                            </span>
-                            {update.statusDescription && (
-                              <span className="ml-1">{update.statusDescription}</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
