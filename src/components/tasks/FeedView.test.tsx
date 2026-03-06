@@ -53,6 +53,35 @@ describe("FeedView", () => {
     expect(onFocusTask).not.toHaveBeenCalledWith("child");
   });
 
+  it("renders breadcrumb buttons as single-line left-aligned truncating labels", () => {
+    const root = makeTask({ id: "root", content: "Root breadcrumb label that should not wrap", author, status: "todo" });
+    const child = makeTask({
+      id: "child",
+      parentId: "root",
+      content: "Child task #general",
+      author,
+      status: "todo",
+    });
+
+    render(
+      <FeedView
+        tasks={[child]}
+        allTasks={[root, child]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    const breadcrumbButton = screen.getByRole("button", { name: /focus task: root breadcrumb label that should not wrap/i });
+    // Product contract: feed breadcrumbs must remain left-aligned and single-line when labels are long.
+    expect(breadcrumbButton).toHaveClass("truncate", "whitespace-nowrap", "text-left");
+  });
+
   it("shortens fallback pubkey label on slim desktop widths", async () => {
     const pubkeyOnlyAuthor: Person = {
       id: author.id,

@@ -494,8 +494,12 @@ export function FeedView({
                 data-task-id={task.id}
                 onClick={() => onFocusTask?.(task.id)}
                 className={cn(
-                  "border-b border-border p-4 hover:bg-card/50 transition-colors cursor-pointer",
-                  isMobile && "p-3",
+                  "border-b border-border hover:bg-card/50 transition-colors cursor-pointer",
+                  isMobile
+                    ? "p-3"
+                    : breadcrumb.length > 0
+                      ? "px-4 pb-4 pt-2.5"
+                      : "p-4",
                   isCompletedVisual && "opacity-60",
                   isLockedUntilStart && "opacity-50 grayscale",
                   isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
@@ -503,16 +507,19 @@ export function FeedView({
               >
                 {/* Parent breadcrumb - clickable */}
                 {breadcrumb.length > 0 && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                  <div className="mb-1.5 flex min-w-0 items-center gap-1 overflow-hidden text-xs text-muted-foreground">
                     {breadcrumb.map((crumb, i) => (
-                      <span key={crumb.id} className="flex items-center gap-1">
+                      <span key={crumb.id} className="flex min-w-0 items-center gap-1">
                         {i > 0 && <span>/</span>}
                         <button
                           onClick={(event) => {
                             event.stopPropagation();
                             onFocusTask?.(crumb.id);
                           }}
-                          className={`${TASK_INTERACTION_STYLES.hoverLinkText} cursor-pointer`}
+                          className={cn(
+                            TASK_INTERACTION_STYLES.hoverLinkText,
+                            "min-w-0 max-w-full cursor-pointer truncate whitespace-nowrap text-left"
+                          )}
                           title={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
                           aria-label={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
                         >
