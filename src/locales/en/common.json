@@ -269,6 +269,16 @@
     }
   },
   "auth": {
+    "noas": {
+      "signInTitle": "Sign in with Noas",
+      "description": "Sign in with your Noas account username and password",
+      "footerText": "Your keys are encrypted and never leave your device"
+    },
+    "errors": {
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "invalidCredentials": "Invalid username or password"
+    },
     "modal": {
       "title": "Sign in to Nostr",
       "descriptionChoose": "Choose how you want to authenticate to post to Nostr relays.",
@@ -280,6 +290,8 @@
       "extensionMissing": "No Nostr extension detected",
       "signerApp": "Signer App (Nostr Connect)",
       "signerAppHint": "Connect with a mobile signer using a bunker:// link",
+      "noasAuth": "Noas Authentication",
+      "noasAuthHint": "Sign in with your Noas account username and password",
       "privateKey": "Private Key",
       "privateKeyHint": "Enter your nsec or hex private key",
       "guestIdentity": "Guest Identity",
@@ -299,13 +311,15 @@
         "privateKeyInvalid": "Invalid private key. Please check and try again.",
         "guestFailed": "Failed to create guest identity.",
         "signerRequired": "Please paste a bunker:// connection string",
-        "signerFailed": "Failed to connect. Verify your bunker:// string and try again."
+        "signerFailed": "Failed to connect. Verify your bunker:// string and try again.",
+        "noasFailed": "Noas sign-in failed. Please check your username and password."
       },
       "success": {
         "extension": "Signed in with Nostr extension!",
         "privateKey": "Signed in with private key!",
         "guest": "Signed in as guest! A new identity was created for you.",
-        "signer": "Connected to signer app!"
+        "signer": "Connected to signer app!",
+        "noas": "Signed in with Noas!"
       }
     },
     "menu": {
