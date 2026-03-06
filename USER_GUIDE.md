@@ -120,6 +120,7 @@
 - On mobile, the inline date picker above the bottom bar scrolls horizontally through months (infinite-style strip) without month arrow controls.
 - On mobile, tapping the location button captures and attaches current device location directly (when location permission is granted) instead of opening a separate location menu.
 - Task location chips now show an approximate coordinate region; tapping a location chip opens the location in your map app/browser.
+- When a task status control is disabled, hovering it explains why edits are blocked (for example assigned owner, task owner, sign-in required, or temporary interaction lock).
 - Date-typed tasks appear in Calendar view.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
 - On mobile, use the task/comment send actions in the combined bottom bar to create.
