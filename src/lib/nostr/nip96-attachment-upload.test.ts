@@ -3,8 +3,14 @@ import { getAttachmentMaxFileSizeBytes, uploadAttachment } from "./nip96-attachm
 
 if (typeof File !== "undefined" && typeof File.prototype.arrayBuffer !== "function") {
   Object.defineProperty(File.prototype, "arrayBuffer", {
-    value: function arrayBuffer(this: Blob) {
-      return new Response(this).arrayBuffer();
+    value: function arrayBuffer(this: Blob): Promise<ArrayBuffer> {
+      if (typeof Blob !== "undefined" && typeof Blob.prototype.arrayBuffer === "function") {
+        return Blob.prototype.arrayBuffer.call(this);
+      }
+      if (typeof this.text === "function") {
+        return this.text().then((value) => new TextEncoder().encode(value).buffer);
+      }
+      return Promise.resolve(new ArrayBuffer(0));
     },
   });
 }
