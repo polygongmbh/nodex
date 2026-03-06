@@ -365,52 +365,51 @@ export function FeedView({
                   data-testid={`feed-state-entry-${update.id}`}
                   onClick={() => onFocusTask?.(task.id)}
                   className={cn(
-                    "border-b border-border px-4 py-2.5 hover:bg-card/50 transition-colors cursor-pointer",
-                    isMobile && "px-3 py-2"
+                    "border-b border-border px-4 py-1.5 hover:bg-card/50 transition-colors cursor-pointer",
+                    isMobile && "px-3 py-1.5"
                   )}
                 >
-                  <div className="flex items-start gap-2.5">
+                  <div className="flex items-center gap-2 min-w-0">
                     {update.status === "done" ? (
-                      <CheckCircle2 className={cn("mt-0.5 text-primary flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                      <CheckCircle2 className={cn("text-primary flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
                     ) : update.status === "in-progress" ? (
-                      <CircleDot className={cn("mt-0.5 text-warning flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                      <CircleDot className={cn("text-warning flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
                     ) : (
-                      <Circle className={cn("mt-0.5 text-muted-foreground flex-shrink-0", isMobile ? "w-3.5 h-3.5" : "w-4 h-4")} />
+                      <Circle className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
                     )}
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[11px] text-muted-foreground mb-1 inline-flex items-center gap-1 flex-wrap">
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onFocusTask?.(task.id);
-                          }}
-                          className={`${TASK_INTERACTION_STYLES.hoverLinkText} font-medium`}
-                          title={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
-                          aria-label={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
-                        >
-                          {taskSummary}
-                        </button>
-                        <span>·</span>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onAuthorClick?.(resolvedUpdateAuthor);
-                          }}
-                          className="hover:text-foreground"
-                          aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
-                          title={resolvedUpdateAuthor.id}
-                        >
-                          {updateAuthorMeta.primary}
-                        </button>
-                        <span>·</span>
-                        <span>{updateTimeLabel}</span>
-                      </div>
-                      <div className="text-xs text-foreground/90">
-                        <span className="font-medium">{getStateLabel(update.status)}</span>
-                        {update.statusDescription && <span>{`: ${update.statusDescription}`}</span>}
-                      </div>
+                    <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-1 overflow-hidden whitespace-nowrap">
+                      <span className="font-medium text-foreground">{getStateLabel(update.status)}</span>
+                      {update.statusDescription && (
+                        <span className="truncate">{` ${update.statusDescription}`}</span>
+                      )}
+                      <span className="shrink-0">·</span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onFocusTask?.(task.id);
+                        }}
+                        className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "font-medium shrink-0")}
+                        title={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
+                        aria-label={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
+                      >
+                        {taskSummary}
+                      </button>
+                      <span className="shrink-0">·</span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onAuthorClick?.(resolvedUpdateAuthor);
+                        }}
+                        className="hover:text-foreground shrink-0"
+                        aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
+                        title={resolvedUpdateAuthor.id}
+                      >
+                        {updateAuthorMeta.primary}
+                      </button>
+                      <span className="shrink-0">·</span>
+                      <span className="shrink-0">{updateTimeLabel}</span>
                     </div>
                   </div>
                 </div>
