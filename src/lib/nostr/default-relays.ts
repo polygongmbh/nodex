@@ -7,7 +7,7 @@ interface DefaultRelayEnv {
   VITE_DEFAULT_RELAY_PORT?: string;
 }
 
-const HOST_DERIVED_RELAY_PREFIXES = ["base", "feed", "nostr", "tasks"] as const;
+const HOST_DERIVED_RELAY_PREFIXES = ["nostr", "feed", "tasks", "base"] as const;
 const DEFAULT_RELAY_PROBE_TIMEOUT_MS = 1200;
 
 function normalizeRelayUrl(raw: string, fallbackProtocol: RelayProtocol): string | null {

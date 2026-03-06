@@ -38,6 +38,10 @@ describe("default relay env resolution", () => {
       })
     ).resolves.toEqual(["wss://feed.linkenfels.de"]);
     expect(probeRelay).toHaveBeenCalledTimes(4);
+    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.linkenfels.de");
+    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.linkenfels.de");
+    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.linkenfels.de");
+    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.linkenfels.de");
   });
 
   it("falls back by prefixing the current host when no subdomain exists", async () => {
@@ -49,6 +53,11 @@ describe("default relay env resolution", () => {
         probeRelay,
       })
     ).resolves.toEqual(["wss://nostr.nodex.nexus"]);
+    expect(probeRelay).toHaveBeenCalledTimes(4);
+    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.nodex.nexus");
+    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.nodex.nexus");
+    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.nodex.nexus");
+    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.nodex.nexus");
   });
 
   it("prefers explicit relay env values without probing host-derived candidates", async () => {

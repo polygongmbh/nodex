@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [1.16.5] - 2026-03-06
 - Relay connections now auto-attempt reconnect when returning to a previously inactive tab (visibility/focus/online resume), improving recovery after idle background periods.
+- Startup host fallback relay discovery now probes host-derived relay candidates in deterministic order (`nostr.`, `feed.`, `tasks.`, `base.`), while still auto-connecting only to reachable relays.
 - Feed view now renders task state changes as standalone compact timeline items with the referenced task shown as breadcrumb context.
 - Desktop search now shows an inline clear (`x`) control whenever a query is present, allowing one-click reset.
 - Desktop bottom search dock now keeps spacing in a single responsive padding layer and places the version hint inline in the dock row to avoid overlap.
