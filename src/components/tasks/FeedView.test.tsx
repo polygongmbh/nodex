@@ -157,6 +157,10 @@ describe("FeedView", () => {
     expect(
       screen.getByText((_, element) => element?.textContent === expectedLabel)
     ).toBeInTheDocument();
+    expect(screen.getByTitle(/task created at/i)).toHaveAttribute(
+      "title",
+      expect.stringMatching(/task created at .*\d{2}:\d{2}:\d{2}/i)
+    );
   });
 
   it("hides secondary author metadata on mobile for a denser header row", () => {
@@ -301,6 +305,7 @@ describe("FeedView", () => {
     expect(screen.getByText(/working on relay reconnect/i)).toBeInTheDocument();
     expect(screen.getByText(/unblocked/i)).toBeInTheDocument();
     expect(screen.getAllByTestId(/feed-state-entry-/)).toHaveLength(2);
+    expect(screen.getAllByTitle(/status updated at/i)).toHaveLength(2);
     expect(
       screen.getAllByRole("button", { name: /focus task: reconnect relays after resume #infra/i })
     ).toHaveLength(2);

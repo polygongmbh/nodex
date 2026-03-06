@@ -233,4 +233,28 @@ describe("TaskItem status actions", () => {
 
     expect(onAuthorClick).toHaveBeenCalledWith(commentTask.author);
   });
+
+  it("shows a precise hover timestamp for comment created time", () => {
+    const commentTask: Task = {
+      ...baseTask,
+      id: "c2",
+      taskType: "comment",
+      content: "Precise time test",
+      timestamp: new Date("2026-03-01T23:57:11.000Z"),
+    };
+
+    render(
+      <TaskItem
+        task={commentTask}
+        filteredChildren={[]}
+        allTasks={[commentTask]}
+        currentUser={baseTask.author}
+      />
+    );
+
+    expect(screen.getByTitle(/comment created at/i)).toHaveAttribute(
+      "title",
+      expect.stringMatching(/comment created at .*\d{2}:\d{2}:\d{2}/i)
+    );
+  });
 });

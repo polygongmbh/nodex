@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
+import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -420,7 +421,9 @@ export function FeedView({
                         {updateAuthorMeta.primary}
                       </button>
                       <span className="shrink-0">·</span>
-                      <span className="shrink-0">{updateTimeLabel}</span>
+                      <span className="shrink-0" title={getStatusUpdatedTooltip(update.timestamp)}>
+                        {updateTimeLabel}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -726,7 +729,12 @@ export function FeedView({
                         )}
                       </button>
                       <span className="shrink-0">·</span>
-                      <span className="shrink-0">{timeLabel}</span>
+                      <span
+                        className="shrink-0"
+                        title={isComment ? getCommentCreatedTooltip(task.timestamp) : getTaskCreatedTooltip(task.timestamp)}
+                      >
+                        {timeLabel}
+                      </span>
                       {!isComment && typeof task.priority === "number" && (
                         <>
                           <span className="shrink-0">·</span>

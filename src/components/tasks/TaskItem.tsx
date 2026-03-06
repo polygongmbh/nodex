@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
+import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -441,7 +442,7 @@ export function TaskItem({
                     )}
                   </button>
                   <span>·</span>
-                  <span>{timeAgo}</span>
+                  <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>
                 </>
               )}
               {!isComment && allTaskChildren.length > 0 && (
