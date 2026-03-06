@@ -1399,7 +1399,6 @@ const Index = () => {
     relayUrlsOverride?: string[]
   ) => {
     if (!isNostrEventId(taskId)) {
-      console.info("Skipping state publish: task id is not a Nostr event id", { taskId });
       nostrDevLog("publish-state", "Skipping publish for non-Nostr task id", { taskId, status });
       return;
     }
@@ -1409,7 +1408,6 @@ const Index = () => {
       : resolveTaskOriginRelay(taskId).relayUrls;
 
     if (relayUrls.length === 0) {
-      console.info("Skipping state publish: no non-demo relay mapped for task", taskId);
       nostrDevLog("publish-state", "Skipping publish due to empty relay mapping", { taskId, status });
       return;
     }

@@ -52,10 +52,10 @@ function shouldDebugAttachmentUploads(): boolean {
 function debugLog(message: string, payload?: Record<string, unknown>) {
   if (!shouldDebugAttachmentUploads()) return;
   if (payload) {
-    console.info("[attachments]", message, payload);
+    console.debug("[attachments]", message, payload);
     return;
   }
-  console.info("[attachments]", message);
+  console.debug("[attachments]", message);
 }
 
 function parseNip94Tags(tags: unknown): PublishedAttachment | null {

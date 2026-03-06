@@ -539,7 +539,6 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     ndkInstance.pool.on("relay:connect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
-      console.info("[relay] Connected relay", { relayUrl: normalized });
       nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);

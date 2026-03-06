@@ -203,7 +203,10 @@ export async function resolveDefaultRelayUrlsWithDomainFallback(
     const logKey = `${hostname}|${resolvedRelayUrls.slice().sort().join(",")}`;
     if (logKey !== lastDiscoveryLogKey) {
       lastDiscoveryLogKey = logKey;
-      console.info("[relay] Host-derived relays discovered", { hostname, relays: resolvedRelayUrls });
+      nostrDevLog("relay-discovery", "Host-derived relays discovered", {
+        hostname,
+        relayUrls: resolvedRelayUrls,
+      });
     }
   }
   writeHostFallbackCache(hostname, protocol, resolvedRelayUrls);
