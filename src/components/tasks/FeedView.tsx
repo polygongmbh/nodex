@@ -278,7 +278,7 @@ export function FeedView({
       if (parent) {
         breadcrumb.unshift({
           id: parent.id,
-          text: parent.content.slice(0, 20) + (parent.content.length > 20 ? "..." : "")
+          text: parent.content
         });
         current = parent;
       } else {

@@ -65,4 +65,24 @@ describe("FocusedTaskBreadcrumb", () => {
     expect(onFocusTask).toHaveBeenNthCalledWith(4, "leaf");
     expect(onFocusTask).toHaveBeenNthCalledWith(5, "middle");
   });
+
+  it("does not pre-abbreviate long breadcrumb labels", () => {
+    const longContent = "Task delegated to @averylongusername with enough room to display";
+    const longTask: Task = {
+      ...baseTask,
+      id: "long",
+      content: longContent,
+      parentId: "root",
+    };
+
+    render(
+      <FocusedTaskBreadcrumb
+        allTasks={[baseTask, longTask]}
+        focusedTaskId="long"
+        onFocusTask={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: longContent })).toBeInTheDocument();
+  });
 });

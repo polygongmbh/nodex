@@ -84,14 +84,13 @@ export function FocusedTaskBreadcrumb({
             <button
               onClick={() => onFocusTask?.(task.id)}
               className={cn(
-                "truncate max-w-[220px] rounded px-1.5 py-0.5 transition-colors hover:text-foreground hover:bg-background/70",
+                "truncate rounded px-1.5 py-0.5 transition-colors hover:text-foreground hover:bg-background/70",
                 index === path.length - 1 && "text-foreground font-semibold"
               )}
               type="button"
               title={task.content}
             >
-              {task.content.slice(0, 80)}
-              {task.content.length > 80 ? "..." : ""}
+              {task.content}
             </button>
           </span>
         ))}
