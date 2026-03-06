@@ -306,4 +306,38 @@ describe("FeedView", () => {
     ).toHaveLength(2);
   });
 
+  it("does not duplicate state label when status description matches it", () => {
+    const taskWithStateUpdate = makeTask({
+      id: "task-state-dedupe",
+      author,
+      content: "Task state update test #test",
+      status: "todo",
+      stateUpdates: [
+        {
+          id: "state-dedupe",
+          status: "in-progress",
+          statusDescription: "In Progress",
+          timestamp: new Date(Date.now() - 5 * 60 * 1000),
+          authorPubkey: author.id,
+        },
+      ],
+    });
+
+    render(
+      <FeedView
+        tasks={[taskWithStateUpdate]}
+        allTasks={[taskWithStateUpdate]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText("In Progress")).toHaveLength(1);
+  });
+
 });

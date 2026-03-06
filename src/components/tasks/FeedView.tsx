@@ -262,6 +262,12 @@ export function FeedView({
     if (status === "in-progress") return t("listView.status.inProgress");
     return t("listView.status.todo");
   };
+  const normalizeLabelText = (value?: string) =>
+    (value || "")
+      .toLowerCase()
+      .replace(/[-_]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
   const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {
     const breadcrumb: { id: string; text: string }[] = [];
@@ -358,6 +364,11 @@ export function FeedView({
                 ? formatCompactRelativeTime(update.timestamp)
                 : formatDistanceToNow(update.timestamp, { addSuffix: true });
               const taskSummary = task.content.slice(0, 40) + (task.content.length > 40 ? "..." : "");
+              const stateLabel = getStateLabel(update.status);
+              const statusDescription = update.statusDescription?.trim();
+              const showStatusDescription =
+                Boolean(statusDescription) &&
+                normalizeLabelText(statusDescription) !== normalizeLabelText(stateLabel);
 
               return (
                 <div
@@ -378,9 +389,9 @@ export function FeedView({
                       <Circle className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
                     )}
                     <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-1 overflow-hidden whitespace-nowrap">
-                      <span className="font-medium text-foreground">{getStateLabel(update.status)}</span>
-                      {update.statusDescription && (
-                        <span className="truncate">{` ${update.statusDescription}`}</span>
+                      <span>{stateLabel}</span>
+                      {showStatusDescription && (
+                        <span className="truncate">{` ${statusDescription}`}</span>
                       )}
                       <span className="shrink-0">·</span>
                       <button
@@ -389,7 +400,7 @@ export function FeedView({
                           event.stopPropagation();
                           onFocusTask?.(task.id);
                         }}
-                        className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "font-medium shrink-0")}
+                        className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "font-semibold text-foreground shrink-0")}
                         title={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
                         aria-label={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
                       >
