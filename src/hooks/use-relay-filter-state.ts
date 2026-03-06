@@ -64,11 +64,18 @@ export function useRelayFilterState({ relays, t, defaultRelayIds, onRelayEnabled
 
   const handleRelayExclusive = (id: string) => {
     const relay = relays.find((r) => r.id === id);
-    setActiveRelayIds(new Set([id]));
-    if (relay) {
-      onRelayEnabled?.(relay);
-    }
-    toast(t("toasts.success.showingOnlyRelay", { relayName: relay?.name || id }));
+    setActiveRelayIds((prev) => {
+      if (prev.size === 1 && prev.has(id)) {
+        toast(t("toasts.success.relayFilterDisabled", { relayName: relay?.name || id }));
+        return new Set();
+      }
+
+      if (relay) {
+        onRelayEnabled?.(relay);
+      }
+      toast(t("toasts.success.showingOnlyRelay", { relayName: relay?.name || id }));
+      return new Set([id]);
+    });
   };
 
   const handleToggleAllRelays = () => {

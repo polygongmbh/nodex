@@ -79,6 +79,16 @@ describe("useRelayFilterState", () => {
     expect(onRelayEnabled).toHaveBeenCalledWith(relays[0]);
   });
 
+  it("clears relay filters when selecting the same exclusive relay twice", () => {
+    render(<Harness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Exclusive" }));
+    expect(screen.getByTestId("active-relay-ids").textContent).toBe("relay-one");
+
+    fireEvent.click(screen.getByRole("button", { name: "Exclusive" }));
+    expect(screen.getByTestId("active-relay-ids").textContent).toBe("");
+  });
+
   it("calls onRelayEnabled for relays newly selected by select-all", () => {
     const onRelayEnabled = vi.fn();
 
