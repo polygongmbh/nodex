@@ -260,4 +260,46 @@ describe("FeedView", () => {
     expect(screen.getByText("alice")).toBeInTheDocument();
   });
 
+  it("renders task state updates as compact subitems", () => {
+    const taskWithStateUpdates = makeTask({
+      id: "task-state",
+      author,
+      status: "in-progress",
+      stateUpdates: [
+        {
+          id: "state-2",
+          status: "in-progress",
+          statusDescription: "Working on relay reconnect",
+          timestamp: new Date(Date.now() - 5 * 60 * 1000),
+          authorPubkey: author.id,
+        },
+        {
+          id: "state-1",
+          status: "todo",
+          statusDescription: "Unblocked",
+          timestamp: new Date(Date.now() - 20 * 60 * 1000),
+          authorPubkey: author.id,
+        },
+      ],
+    });
+
+    render(
+      <FeedView
+        tasks={[taskWithStateUpdates]}
+        allTasks={[taskWithStateUpdates]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Working on relay reconnect")).toBeInTheDocument();
+    expect(screen.getByText("Unblocked")).toBeInTheDocument();
+    expect(screen.getAllByTestId("feed-state-update-task-state")).toHaveLength(2);
+  });
+
 });

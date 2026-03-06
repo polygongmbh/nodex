@@ -452,6 +452,17 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].status).toBe("in-progress");
     expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000002 * 1000);
+    expect(tasks[0].stateUpdates).toEqual([
+      expect.objectContaining({
+        id: "state-new",
+        status: "in-progress",
+        statusDescription: "In Progress",
+      }),
+      expect.objectContaining({
+        id: "state-old",
+        status: "done",
+      }),
+    ]);
   });
 
   it("hydrates task due date/time from linked calendar events", () => {

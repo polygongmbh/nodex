@@ -236,6 +236,11 @@ export function FeedView({
     if (canCompleteTask(task)) return getStatusToggleHint(task.status);
     return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || getStatusToggleHint(task.status);
   };
+  const getStateLabel = (status: Task["status"]) => {
+    if (status === "done") return t("listView.status.done");
+    if (status === "in-progress") return t("listView.status.inProgress");
+    return t("listView.status.todo");
+  };
 
   const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {
     const breadcrumb: { id: string; text: string }[] = [];
@@ -376,6 +381,7 @@ export function FeedView({
               const normalizedUrl = attachment.url?.trim().toLowerCase();
               return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
             });
+            const recentStateUpdates = (task.stateUpdates || []).slice(0, 3);
 
             return (
               <div
@@ -730,6 +736,33 @@ export function FeedView({
                       attachments={attachmentsWithoutInlineEmbeds}
                       onMediaClick={(url) => openTaskMedia(task.id, url)}
                     />
+                    {recentStateUpdates.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {recentStateUpdates.map((update) => (
+                          <div
+                            key={update.id}
+                            data-testid={`feed-state-update-${task.id}`}
+                            className="text-xs text-muted-foreground bg-muted/40 rounded px-2 py-1"
+                          >
+                            <span className="inline-flex items-center gap-1">
+                              {update.status === "done" ? (
+                                <CheckCircle2 className="w-3 h-3 text-primary" />
+                              ) : update.status === "in-progress" ? (
+                                <CircleDot className="w-3 h-3 text-warning" />
+                              ) : (
+                                <Circle className="w-3 h-3 text-muted-foreground" />
+                              )}
+                              <span>{getStateLabel(update.status)}</span>
+                              <span>·</span>
+                              <span>{formatCompactRelativeTime(update.timestamp)}</span>
+                            </span>
+                            {update.statusDescription && (
+                              <span className="ml-1">{update.statusDescription}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

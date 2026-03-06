@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Relay connections now auto-attempt reconnect when returning to a previously inactive tab (visibility/focus/online resume), improving recovery after idle background periods.
+- Feed view now renders task state changes as compact subitems under their parent task so status progress appears inline in timeline context.
 
 ## [1.16.4] - 2026-03-06
 - Task/comment location chips now resolve geohashes to rough coordinates in-chip and open the mapped location directly in a map app/browser when tapped.

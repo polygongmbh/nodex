@@ -1,5 +1,5 @@
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
-import { Task, Person, type FeedMessageType } from "@/types";
+import { Task, Person, type FeedMessageType, type TaskStateUpdate } from "@/types";
 import { extractTaskStateTargetId, isTaskStateEventKind, mapTaskStateEventToTaskStatus } from "@/lib/nostr/task-state-events";
 import {
   extractPriorityTargetTaskId,
@@ -330,6 +330,7 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
     string,
     { createdAt: number; status: Task["status"]; statusDescription?: string }
   >();
+  const stateUpdatesByTaskId = new Map<string, TaskStateUpdate[]>();
 
   for (const stateEvent of stateEvents) {
     const targetTaskId = extractTaskStateTargetId(stateEvent.tags);
@@ -345,15 +346,29 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
         statusDescription: mapped.statusDescription,
       });
     }
+
+    const existingUpdates = stateUpdatesByTaskId.get(targetTaskId) || [];
+    existingUpdates.push({
+      id: stateEvent.id,
+      status: mapped.status,
+      statusDescription: mapped.statusDescription,
+      timestamp: new Date(stateEvent.created_at * 1000),
+      authorPubkey: stateEvent.pubkey,
+    });
+    stateUpdatesByTaskId.set(targetTaskId, existingUpdates);
   }
 
   for (const [taskId, state] of latestStateByTaskId.entries()) {
     const task = taskMap.get(taskId);
     if (!task) continue;
+    const stateUpdates = (stateUpdatesByTaskId.get(taskId) || []).sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+    );
     taskMap.set(taskId, {
       ...task,
       status: state.status,
       statusDescription: state.statusDescription,
+      stateUpdates,
       lastEditedAt: new Date(state.createdAt * 1000),
     });
   }

@@ -88,6 +88,14 @@ export type ComposerSubmit = (
 
 export type TaskStatus = "todo" | "in-progress" | "done";
 
+export interface TaskStateUpdate {
+  id: string;
+  status: TaskStatus;
+  statusDescription?: string;
+  timestamp: Date;
+  authorPubkey: string;
+}
+
 export interface PublishedAttachment {
   url: string;
   mimeType?: string;
@@ -157,6 +165,7 @@ export interface Task {
   isReposted?: boolean;
   status?: TaskStatus;
   statusDescription?: string;
+  stateUpdates?: TaskStateUpdate[];
   completedBy?: string;
   dueDate?: Date;
   dueTime?: string;
