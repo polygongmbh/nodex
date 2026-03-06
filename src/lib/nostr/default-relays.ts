@@ -9,6 +9,13 @@ interface DefaultRelayEnv {
 
 const HOST_DERIVED_RELAY_PREFIXES = ["nostr", "feed", "tasks", "base"] as const;
 const DEFAULT_RELAY_PROBE_TIMEOUT_MS = 1200;
+const HOST_FALLBACK_CACHE_TTL_MS = 30 * 60 * 1000;
+const HOST_FALLBACK_CACHE_KEY_PREFIX = "nodex.default-relay-fallback.v1";
+
+interface HostFallbackCacheEntry {
+  checkedAt: number;
+  relayUrls: string[];
+}
 
 function normalizeRelayUrl(raw: string, fallbackProtocol: RelayProtocol): string | null {
   const normalized = ensureRelayProtocol(raw, fallbackProtocol);
@@ -52,6 +59,43 @@ function getHostDerivedRelayCandidates(hostname: string, protocol: RelayProtocol
 
   const targetBase = labels.length >= 3 ? labels.slice(1).join(".") : normalizedHostname;
   return HOST_DERIVED_RELAY_PREFIXES.map((prefix) => `${protocol}://${prefix}.${targetBase}`);
+}
+
+function getHostFallbackCacheKey(hostname: string, protocol: RelayProtocol): string {
+  return `${HOST_FALLBACK_CACHE_KEY_PREFIX}:${protocol}:${hostname}`;
+}
+
+function readHostFallbackCache(hostname: string, protocol: RelayProtocol): string[] | null {
+  if (typeof window === "undefined" || !window.localStorage) return null;
+  const key = getHostFallbackCacheKey(hostname, protocol);
+  const raw = window.localStorage.getItem(key);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as HostFallbackCacheEntry;
+    const checkedAt = typeof parsed.checkedAt === "number" ? parsed.checkedAt : 0;
+    const relayUrls = Array.isArray(parsed.relayUrls)
+      ? parsed.relayUrls.filter((value): value is string => typeof value === "string" && value.length > 0)
+      : [];
+    if (!checkedAt || Date.now() - checkedAt > HOST_FALLBACK_CACHE_TTL_MS) {
+      window.localStorage.removeItem(key);
+      return null;
+    }
+    return relayUrls;
+  } catch {
+    window.localStorage.removeItem(key);
+    return null;
+  }
+}
+
+function writeHostFallbackCache(hostname: string, protocol: RelayProtocol, relayUrls: string[]): void {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  const key = getHostFallbackCacheKey(hostname, protocol);
+  const payload: HostFallbackCacheEntry = {
+    checkedAt: Date.now(),
+    relayUrls,
+  };
+  window.localStorage.setItem(key, JSON.stringify(payload));
 }
 
 async function probeRelayAvailability(relayUrl: string, timeoutMs: number): Promise<boolean> {
@@ -107,14 +151,22 @@ export async function resolveDefaultRelayUrlsWithDomainFallback(
   if (typeof window === "undefined") return [];
 
   const protocol = toRelayProtocol(env.VITE_DEFAULT_RELAY_PROTOCOL);
-  const hostname = options?.hostname ?? window.location.hostname;
+  const hostname = (options?.hostname ?? window.location.hostname).trim().toLowerCase().replace(/\.$/, "");
   const candidates = getHostDerivedRelayCandidates(hostname, protocol);
   if (candidates.length === 0) return [];
+
+  const cachedRelayUrls = readHostFallbackCache(hostname, protocol);
+  if (cachedRelayUrls) {
+    const cachedSet = new Set(cachedRelayUrls);
+    return candidates.filter((relayUrl) => cachedSet.has(relayUrl));
+  }
 
   const probeTimeoutMs = options?.probeTimeoutMs ?? DEFAULT_RELAY_PROBE_TIMEOUT_MS;
   const probe = options?.probeRelay ?? ((relayUrl: string) => probeRelayAvailability(relayUrl, probeTimeoutMs));
   const probed = await Promise.all(candidates.map(async (relayUrl) => (await probe(relayUrl)) ? relayUrl : null));
-  return probed.filter((value): value is string => Boolean(value));
+  const resolvedRelayUrls = probed.filter((value): value is string => Boolean(value));
+  writeHostFallbackCache(hostname, protocol, resolvedRelayUrls);
+  return resolvedRelayUrls;
 }
 
 export function getConfiguredDefaultRelays(): string[] {

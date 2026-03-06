@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   relayUrlToId,
   resolveDefaultRelayUrls,
@@ -6,6 +6,10 @@ import {
 } from "./default-relays";
 
 describe("default relay env resolution", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it("returns an empty list when no relay env values are provided", () => {
     expect(resolveDefaultRelayUrls({})).toEqual([]);
   });
@@ -29,35 +33,55 @@ describe("default relay env resolution", () => {
   });
 
   it("falls back to host-derived relay candidates and keeps only available relays", async () => {
-    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.linkenfels.de");
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.example.test");
 
     await expect(
       resolveDefaultRelayUrlsWithDomainFallback({}, {
-        hostname: "nodex.linkenfels.de",
+        hostname: "app.example.test",
         probeRelay,
       })
-    ).resolves.toEqual(["wss://feed.linkenfels.de"]);
+    ).resolves.toEqual(["wss://feed.example.test"]);
     expect(probeRelay).toHaveBeenCalledTimes(4);
-    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.linkenfels.de");
-    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.linkenfels.de");
-    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.linkenfels.de");
-    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.linkenfels.de");
+    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.example.test");
   });
 
   it("falls back by prefixing the current host when no subdomain exists", async () => {
-    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://nostr.nodex.nexus");
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://nostr.project.test");
 
     await expect(
       resolveDefaultRelayUrlsWithDomainFallback({}, {
-        hostname: "nodex.nexus",
+        hostname: "project.test",
         probeRelay,
       })
-    ).resolves.toEqual(["wss://nostr.nodex.nexus"]);
+    ).resolves.toEqual(["wss://nostr.project.test"]);
     expect(probeRelay).toHaveBeenCalledTimes(4);
-    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.nodex.nexus");
-    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.nodex.nexus");
-    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.nodex.nexus");
-    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.nodex.nexus");
+    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.project.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.project.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.project.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.project.test");
+  });
+
+  it("reuses recent fallback probe results from cache and skips re-probing", async () => {
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.example.test");
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({}, {
+        hostname: "app.example.test",
+        probeRelay,
+      })
+    ).resolves.toEqual(["wss://feed.example.test"]);
+    expect(probeRelay).toHaveBeenCalledTimes(4);
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({}, {
+        hostname: "app.example.test",
+        probeRelay,
+      })
+    ).resolves.toEqual(["wss://feed.example.test"]);
+    expect(probeRelay).toHaveBeenCalledTimes(4);
   });
 
   it("prefers explicit relay env values without probing host-derived candidates", async () => {
@@ -67,7 +91,7 @@ describe("default relay env resolution", () => {
       resolveDefaultRelayUrlsWithDomainFallback({
         VITE_DEFAULT_RELAYS: "wss://relay.example.com",
       }, {
-        hostname: "nodex.linkenfels.de",
+        hostname: "app.example.test",
         probeRelay,
       })
     ).resolves.toEqual(["wss://relay.example.com"]);
