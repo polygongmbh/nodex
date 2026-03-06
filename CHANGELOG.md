@@ -11,7 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Feed view now renders task state changes as standalone compact timeline items with the referenced task shown as breadcrumb context.
 - Desktop search now shows an inline clear (`x`) control whenever a query is present, allowing one-click reset.
 - Desktop bottom search dock now keeps spacing in a single responsive padding layer and places the version hint inline in the dock row to avoid overlap.
-- Breadcrumb labels no longer pre-abbreviate task text, now stay left-aligned on a single line, keep intrinsic sizing in page breadcrumbs, and use compact capped widths in task-card breadcrumbs before truncating.
+- Breadcrumb labels no longer pre-abbreviate task text, now stay left-aligned on a single line, share available width evenly in constrained page breadcrumbs, and use compact capped widths in task-card breadcrumbs before truncating.
 
 ## [1.16.4] - 2026-03-06
 - Task/comment location chips now resolve geohashes to rough coordinates in-chip and open the mapped location directly in a map app/browser when tapped.

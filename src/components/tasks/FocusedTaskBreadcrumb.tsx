@@ -79,12 +79,12 @@ export function FocusedTaskBreadcrumb({
           {t("breadcrumbs.allTasks")}
         </button>
         {path.map((task, index) => (
-          <span key={task.id} className="inline-flex min-w-0 items-center gap-1">
+          <span key={task.id} className="flex min-w-0 flex-1 basis-0 items-center gap-1">
             <span className="shrink-0 text-foreground/50">/</span>
             <button
               onClick={() => onFocusTask?.(task.id)}
               className={cn(
-                "max-w-full truncate rounded px-1.5 py-0.5 text-left transition-colors hover:text-foreground hover:bg-background/70",
+                "w-full max-w-full truncate rounded px-1.5 py-0.5 text-left transition-colors hover:text-foreground hover:bg-background/70",
                 index === path.length - 1 && "text-foreground font-semibold"
               )}
               type="button"
