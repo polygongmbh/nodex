@@ -10,6 +10,7 @@ const ndkMock = {
   loginWithPrivateKey: vi.fn(async () => true),
   loginAsGuest: vi.fn(async () => true),
   loginWithNostrConnect: vi.fn(async () => true),
+  loginWithNoas: vi.fn(async () => true),
   isAuthenticating: false,
   isConnected: true,
   user: null as NostrUser | null,
