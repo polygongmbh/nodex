@@ -18,6 +18,7 @@
 - Use the top view switcher to move between Tree, Feed, Kanban, Table, and Calendar.
 - Click a task to focus on that task context.
 - Use breadcrumb navigation (`All Tasks` / `Up` / parent path) to move through hierarchy.
+- Breadcrumb paths in page headers and feed cards stay single-line, left-aligned, and evenly distribute width across levels before truncating.
 - In Kanban, use the Levels dropdown near search to switch hierarchy scope:
   - `Top-level`: only root tasks (no parent).
   - `2/3 levels`: include subtasks up to that depth.

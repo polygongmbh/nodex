@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [1.16.5] - 2026-03-06
 - Relay connections now auto-attempt reconnect when returning to a previously inactive tab (visibility/focus/online resume), improving recovery after idle background periods.
 - Feed view now renders task state changes as standalone compact timeline items with the referenced task shown as breadcrumb context.
 - Desktop search now shows an inline clear (`x`) control whenever a query is present, allowing one-click reset.
