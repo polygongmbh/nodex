@@ -19,7 +19,6 @@ import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
-import { VersionHint } from "@/components/layout/VersionHint";
 import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
 import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
 import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
@@ -2627,7 +2626,6 @@ const Index = () => {
         onActiveSectionChange={handleOnboardingActiveSectionChange}
         onStepChange={handleOnboardingStepChange}
       />
-      <VersionHint className="fixed bottom-2 right-3 z-20 rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60" />
     </div>
   );
 };

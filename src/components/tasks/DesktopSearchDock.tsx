@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { VersionHint } from "@/components/layout/VersionHint";
 import { useTranslation } from "react-i18next";
 
 export type KanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
@@ -29,8 +30,8 @@ export function DesktopSearchDock({
   return (
     <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
       <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-      <div className="px-4 py-3 flex items-center gap-3">
-        <div className="relative mx-auto w-full flex-1 max-w-xl lg:max-w-[68vw] xl:max-w-[72vw] 2xl:max-w-[76vw]">
+      <div className="px-2 sm:px-3 lg:px-4 py-3 flex items-center gap-2 sm:gap-3">
+        <div className="relative min-w-0 flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             data-onboarding="search-bar"
@@ -104,6 +105,7 @@ export function DesktopSearchDock({
             </Select>
           </div>
         )}
+        <VersionHint className="flex-shrink-0 rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60" />
       </div>
     </div>
   );
