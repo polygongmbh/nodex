@@ -27,14 +27,15 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
+import { NoasAuthForm } from "./NoasAuthForm";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type AuthStep = "choose" | "privateKey" | "nostrConnect";
-type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | null;
+type AuthStep = "choose" | "privateKey" | "nostrConnect" | "noas";
+type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | "noas" | null;
 type WindowWithNostr = Window & { nostr?: unknown };
 
 const hasNostrExtension = (): boolean =>
@@ -47,6 +48,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     loginWithPrivateKey, 
     loginAsGuest,
     loginWithNostrConnect,
+    loginWithNoas,
     isAuthenticating 
   } = useNDK();
   
@@ -134,6 +136,24 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     }
   };
 
+  const handleNoasLogin = async (username: string, password: string) => {
+    setError(null);
+    setPendingAuthMethod("noas");
+    try {
+      const success = await loginWithNoas(username, password);
+      if (success) {
+        toast.success(t("auth.modal.success.noas") || "Signed in with Noas");
+        onClose();
+        return true;
+      } else {
+        setError(t("auth.modal.errors.noasFailed") || "Noas sign-in failed");
+        return false;
+      }
+    } finally {
+      setPendingAuthMethod(null);
+    }
+  };
+
   const handleClose = () => {
     setStep("choose");
     setPrivateKey("");
@@ -214,6 +234,28 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
               </div>
             </button>
 
+            {/* Noas Authentication */}
+            {import.meta.env.VITE_NOAS_API_URL && (
+              <button
+                onClick={() => setStep("noas")}
+                disabled={isAuthenticating}
+                className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <LogIn className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium">{t("auth.modal.noasAuth") || "Noas Authentication"}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {t("auth.modal.noasAuthHint") || "Sign in with username and password"}
+                  </div>
+                </div>
+                {pendingAuthMethod === "noas" && (
+                  <Loader2 data-testid="auth-loader-noas" className="w-4 h-4 animate-spin" />
+                )}
+              </button>
+            )}
+
             {/* Private Key */}
             <button
               onClick={() => setStep("privateKey")}
@@ -293,6 +335,13 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
               </Button>
             </div>
           </div>
+        ) : step === "noas" ? (
+          <NoasAuthForm
+            onLogin={handleNoasLogin}
+            onBack={() => setStep("choose")}
+            isLoading={isAuthenticating}
+            error={error || undefined}
+          />
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
