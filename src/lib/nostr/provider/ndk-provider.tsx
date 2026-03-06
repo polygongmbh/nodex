@@ -64,6 +64,7 @@ export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./c
 const NDKContext = createContext<NDKContextValue | null>(null);
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
 const RELAY_PUBLISH_TIMEOUT_MS = 3000;
+const RELAY_RESUME_RECONNECT_COOLDOWN_MS = 5000;
 type RelayOperation = "read" | "write" | "unknown";
 
 export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
@@ -99,6 +100,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
   const complementaryRelaySyncKeyRef = useRef<string | null>(null);
+  const lastResumeReconnectAtRef = useRef(0);
 
   useEffect(() => {
     if (persistedRelayUrls && persistedRelayUrls.length > 0) {
@@ -1080,6 +1082,60 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relay?.disconnect();
     relay?.connect();
   }, [ndk]);
+
+  const reconnectInactiveRelaysAfterResume = useCallback((reason: "visibility" | "focus" | "online") => {
+    if (!ndk) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+
+    const now = Date.now();
+    if (now - lastResumeReconnectAtRef.current < RELAY_RESUME_RECONNECT_COOLDOWN_MS) {
+      return;
+    }
+
+    const targets = relays
+      .filter((relay) =>
+        relay.status === "disconnected" ||
+        relay.status === "connection-error" ||
+        relay.status === "verification-failed"
+      )
+      .map((relay) => relay.url);
+
+    if (targets.length === 0) return;
+    lastResumeReconnectAtRef.current = now;
+
+    nostrDevLog("relay", "Auto reconnecting relays after tab resume", {
+      reason,
+      relayUrls: targets,
+    });
+
+    for (const url of targets) {
+      reconnectRelay(url);
+    }
+  }, [ndk, reconnectRelay, relays]);
+
+  useEffect(() => {
+    if (!ndk) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      reconnectInactiveRelaysAfterResume("visibility");
+    };
+    const handleFocus = () => {
+      reconnectInactiveRelaysAfterResume("focus");
+    };
+    const handleOnline = () => {
+      reconnectInactiveRelaysAfterResume("online");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("online", handleOnline);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [ndk, reconnectInactiveRelaysAfterResume]);
 
   const publishEvent = useCallback(async (
     kind: NostrEventKind,
