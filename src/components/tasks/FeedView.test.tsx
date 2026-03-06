@@ -373,6 +373,7 @@ describe("FeedView", () => {
     );
 
     expect(screen.getByText(/working on relay reconnect/i)).toBeInTheDocument();
+    expect(screen.getByTestId("feed-state-entry-state-2")).toHaveTextContent(/in progress:\s*working on relay reconnect/i);
     expect(screen.getByText(/unblocked/i)).toBeInTheDocument();
     expect(screen.getAllByTestId(/feed-state-entry-/)).toHaveLength(2);
     expect(screen.getAllByTitle(/status updated at/i)).toHaveLength(2);

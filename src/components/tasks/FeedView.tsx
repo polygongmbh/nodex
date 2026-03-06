@@ -396,7 +396,7 @@ export function FeedView({
                     <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-1 overflow-hidden whitespace-nowrap">
                       <span>{stateLabel}</span>
                       {showStatusDescription && (
-                        <span className="truncate">{` ${statusDescription}`}</span>
+                        <span className="truncate">{`: ${statusDescription}`}</span>
                       )}
                       <span className="shrink-0">·</span>
                       <button
