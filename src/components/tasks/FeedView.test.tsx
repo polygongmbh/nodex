@@ -82,7 +82,7 @@ describe("FeedView", () => {
     expect(breadcrumbButton).toHaveClass("truncate", "whitespace-nowrap", "text-left");
   });
 
-  it("distributes multi-level task-card breadcrumbs evenly", () => {
+  it("uses tighter capped widths for multi-level task-card breadcrumbs", () => {
     const root = makeTask({ id: "root", content: "Root breadcrumb", author, status: "todo" });
     const middle = makeTask({
       id: "middle",
@@ -115,11 +115,11 @@ describe("FeedView", () => {
 
     const rootButton = screen.getByRole("button", { name: /focus task: root breadcrumb/i });
     const middleButton = screen.getByRole("button", { name: /focus task: middle breadcrumb/i });
-    // Product contract: multi-level task-card breadcrumbs should share width evenly.
-    expect(rootButton.parentElement).toHaveClass("basis-0", "flex-1", "min-w-0");
-    expect(middleButton.parentElement).toHaveClass("basis-0", "flex-1", "min-w-0");
-    expect(rootButton).toHaveClass("w-full", "truncate");
-    expect(middleButton).toHaveClass("w-full", "truncate");
+    // Product contract: multi-level task-card breadcrumbs should keep compact, capped per-element widths.
+    expect(rootButton.parentElement).not.toHaveClass("flex-1");
+    expect(middleButton.parentElement).not.toHaveClass("flex-1");
+    expect(rootButton).toHaveClass("max-w-[18rem]", "sm:max-w-[22rem]", "truncate");
+    expect(middleButton).toHaveClass("max-w-[18rem]", "sm:max-w-[22rem]", "truncate");
   });
 
   it("shortens fallback pubkey label on slim desktop widths", async () => {

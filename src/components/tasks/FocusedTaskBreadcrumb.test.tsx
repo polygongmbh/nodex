@@ -86,7 +86,7 @@ describe("FocusedTaskBreadcrumb", () => {
     expect(screen.getByRole("button", { name: longContent })).toBeInTheDocument();
   });
 
-  it("distributes multi-level breadcrumb width evenly with single-line truncation", () => {
+  it("keeps global breadcrumb labels intrinsic-width with single-line truncation", () => {
     const middle: Task = {
       ...baseTask,
       id: "middle",
@@ -110,8 +110,10 @@ describe("FocusedTaskBreadcrumb", () => {
 
     const middleButton = screen.getByRole("button", { name: middle.content });
     const leafButton = screen.getByRole("button", { name: leaf.content });
-    // Product contract: each path segment gets balanced width and truncates on a single line.
-    expect(middleButton).toHaveClass("w-full", "truncate", "text-left");
-    expect(leafButton).toHaveClass("w-full", "truncate", "text-left");
+    // Product contract: global breadcrumb items should size to content and truncate only when constrained.
+    expect(middleButton).toHaveClass("max-w-full", "truncate", "text-left");
+    expect(leafButton).toHaveClass("max-w-full", "truncate", "text-left");
+    expect(middleButton.parentElement).not.toHaveClass("flex-1");
+    expect(leafButton.parentElement).not.toHaveClass("flex-1");
   });
 });
