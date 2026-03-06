@@ -715,7 +715,7 @@ export function TaskComposer({
     
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1).toLowerCase()) || [];
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
-    if (submitTags.length === 0) {
+    if (submitTags.length === 0 && !parentId) {
       notifyNeedTag(t);
       return;
     }
@@ -906,6 +906,7 @@ export function TaskComposer({
       .map((tag) => ({ tag, metadataOnly: true })),
   ];
   const hasAtLeastOneTag = ((content.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
+  const canInheritParentTags = Boolean(parentId);
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
@@ -918,7 +919,7 @@ export function TaskComposer({
         ? "Retry or remove failed attachments"
     : !hasMeaningfulContent
       ? t("composer.blocked.write")
-    : !hasAtLeastOneTag
+    : !hasAtLeastOneTag && !canInheritParentTags
       ? t("composer.blocked.tag")
       : hasInvalidRootTaskRelaySelection
           ? t("composer.blocked.relay")

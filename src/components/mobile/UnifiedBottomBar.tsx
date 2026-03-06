@@ -411,7 +411,7 @@ export function UnifiedBottomBar({
     if (!hasMeaningfulComposerText(sharedText)) return;
     const extractedChannels = sharedText.match(/#(\w+)/g)?.map((token) => token.slice(1).toLowerCase()) || [];
     const submitChannels = Array.from(new Set([...extractedChannels, ...explicitTagNames]));
-    if (submitChannels.length === 0) {
+    if (submitChannels.length === 0 && !focusedTaskId) {
       notifyNeedTag(t);
       return;
     }
@@ -670,6 +670,7 @@ export function UnifiedBottomBar({
   const hasComposeText = sharedText.trim().length > 0;
   const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
   const hasAtLeastOneTag = ((sharedText.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
+  const canInheritParentTags = Boolean(focusedTaskId);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
   const taskSubmitBlockedReason = !isSignedIn
@@ -680,7 +681,7 @@ export function UnifiedBottomBar({
         ? "Retry or remove failed attachments"
       : !hasMeaningfulComposeText
         ? t("composer.blocked.write")
-        : !hasAtLeastOneTag
+        : !hasAtLeastOneTag && !canInheritParentTags
           ? t("composer.blocked.tag")
         : hasInvalidRootTaskRelaySelection
           ? t("composer.blocked.relay")
@@ -738,8 +739,8 @@ export function UnifiedBottomBar({
   };
 
   const canSendTask = hasMeaningfulComposeText && !hasInvalidRootTaskRelaySelection && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
-  const canSendComment = hasMeaningfulComposeText && hasAtLeastOneTag && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
-  const canSendListing = hasMeaningfulComposeText && hasAtLeastOneTag && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
+  const canSendComment = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
+  const canSendListing = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
   const canSubmitFromPrimary = canOfferComment ? (canSendTask || canSendComment) : canSendTask;
   const hasTaskSubmitBlock = taskSubmitBlockedReason !== null;

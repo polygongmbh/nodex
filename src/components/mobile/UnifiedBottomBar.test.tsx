@@ -201,6 +201,48 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it("allows focused-subtask send without explicit tags", async () => {
+    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="tree"
+        focusedTaskId="parent-task"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Follow-up details for parent task" } });
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Follow-up details for parent task",
+        [],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined,
+        [],
+        undefined
+      );
+    });
+  });
+
   it("keeps compose text when submit returns a failure result", async () => {
     const onSubmit = vi.fn(async () => ({ ok: false as const, reason: "relay-selection" as const }));
     render(

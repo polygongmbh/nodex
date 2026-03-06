@@ -1098,6 +1098,41 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByText("Write a message first")).toBeInTheDocument();
   });
 
+  it("allows parent-scoped submit without explicit tags", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={multiRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        parentId="parent-task"
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+      target: { value: "Follow-up update for this thread" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Follow-up update for this thread",
+        [],
+        ["relay-a", "relay-b"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined,
+        [],
+        undefined
+      );
+    });
+  });
+
   it("keeps content when submit returns a failure result", async () => {
     const onSubmit = vi.fn(async () => ({ ok: false as const, reason: "relay-selection" as const }));
     render(

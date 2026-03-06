@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Subtask submissions now inherit parent task hashtags when no explicit hashtags are provided, avoiding unnecessary compose blocking while preserving tag-scoped publishing.
 
 ## [1.16.5] - 2026-03-06
 - Relay connections now auto-attempt reconnect when returning to a previously inactive tab (visibility/focus/online resume), improving recovery after idle background periods.

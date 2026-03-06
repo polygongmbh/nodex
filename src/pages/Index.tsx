@@ -114,6 +114,7 @@ import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { removeCachedNostrEventById, type CachedNostrEvent } from "@/lib/nostr/event-cache";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
+import { resolveSubmissionTags } from "@/lib/submission-tags";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import {
   notifyDisconnectedSelectedFeeds,
@@ -1675,10 +1676,6 @@ const Index = () => {
         ? { ok: false, reason: "relay-selection" }
         : { ok: false, reason: "not-authenticated" };
     }
-    if (extractedTags.length === 0) {
-      notifyNeedTag(t);
-      return { ok: false, reason: "missing-tag" };
-    }
     const normalizedMessageType = normalizeComposerMessageType(taskType);
     if (normalizedMessageType !== taskType) {
       console.warn("Unexpected taskType payload; defaulting to task", { taskType });
@@ -1688,14 +1685,23 @@ const Index = () => {
       normalizedMessageType === "offer" || normalizedMessageType === "request"
         ? normalizedMessageType
         : undefined;
-    setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
-    extractedTags.forEach((tag) => bumpChannelFrecency(tag, 1.1));
 
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []);
     const submissionParentId = feedMessageType ? undefined : parentId;
     const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
+    const normalizedExtractedTags = Array.from(
+      new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
+    );
+    const { submissionTags: resolvedSubmissionTags } = resolveSubmissionTags(normalizedExtractedTags, parentTask);
+    if (resolvedSubmissionTags.length === 0) {
+      notifyNeedTag(t);
+      return { ok: false, reason: "missing-tag" };
+    }
+    setPostedTags((prev) => Array.from(new Set([...prev, ...resolvedSubmissionTags])));
+    resolvedSubmissionTags.forEach((tag) => bumpChannelFrecency(tag, 1.1));
+
     const resolvedRelaySelection = resolveRelaySelectionForSubmission({
       taskType: normalizedTaskType,
       selectedRelayIds: requestedRelayIds,
@@ -1753,9 +1759,6 @@ const Index = () => {
           )
         )
       : [];
-    const normalizedExtractedTags = Array.from(
-      new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
-    );
     const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
     const contentDerivedAttachments = extractEmbeddableAttachmentsFromContent(content);
     const normalizedAttachments = normalizePublishedAttachments([
@@ -1799,7 +1802,7 @@ const Index = () => {
                 primaryRelayUrl,
                 assigneePubkeys,
                 priority,
-                normalizedExtractedTags,
+                resolvedSubmissionTags,
                 normalizedAttachments,
                 normalizedLocationGeohash
               )
@@ -1807,7 +1810,7 @@ const Index = () => {
               ? buildNip99PublishTags({
                   metadata: nip99,
                   feedMessageType,
-                  hashtags: normalizedExtractedTags,
+                  hashtags: resolvedSubmissionTags,
                   mentionPubkeys,
                   attachmentTags: normalizedAttachments
                     .map((attachment) => buildImetaTag(attachment))
@@ -1818,7 +1821,7 @@ const Index = () => {
                 })
               : [
                   ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
-                  ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
+                  ...resolvedSubmissionTags.map((tag) => ["t", tag] as string[]),
                   ...normalizedAttachments
                     .map((attachment) => buildImetaTag(attachment))
                     .filter((tag) => tag.length > 0),
@@ -1837,7 +1840,7 @@ const Index = () => {
       id: `failed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       author: taskAuthor,
       content,
-      tags: normalizedExtractedTags,
+      tags: resolvedSubmissionTags,
       relayIds: targetRelayIds,
       relayUrls: selectedRelayUrls,
       taskType: normalizedTaskType,
@@ -1888,7 +1891,7 @@ const Index = () => {
     const baseTask: Omit<Task, "id"> = {
       author: taskAuthor,
       content,
-      tags: normalizedExtractedTags,
+      tags: resolvedSubmissionTags,
       relays: effectiveRelayIds.length > 0
         ? effectiveRelayIds
         : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []),
