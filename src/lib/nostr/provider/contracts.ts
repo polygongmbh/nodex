@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type { EditableNostrProfile } from "../profile-metadata";
 import { NostrEventKind } from "../types";
 
-export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | null;
+export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | "noas" | null;
 
 export interface NostrUser {
   pubkey: string;
@@ -40,6 +40,7 @@ export interface NDKContextValue {
   loginWithPrivateKey: (nsecOrHex: string) => Promise<boolean>;
   loginAsGuest: () => Promise<boolean>;
   loginWithNostrConnect: (bunkerUrl: string) => Promise<boolean>;
+  loginWithNoas: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   addRelay: (url: string) => void;
   removeRelay: (url: string) => void;
