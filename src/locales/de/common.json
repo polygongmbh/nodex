@@ -549,7 +549,8 @@
   },
   "search": {
     "desktop": {
-      "placeholder": "Aufgaben suchen..."
+      "placeholder": "Aufgaben suchen...",
+      "clear": "Suche löschen"
     },
     "kanban": {
       "depthHint": "Kanban-Tiefenfilter: Root-Aufgaben, begrenzte Tiefe, alle Ebenen oder nur Blätter (Aufgaben ohne Unteraufgaben)",

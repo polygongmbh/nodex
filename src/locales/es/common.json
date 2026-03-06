@@ -549,7 +549,8 @@
   },
   "search": {
     "desktop": {
-      "placeholder": "Buscar tareas..."
+      "placeholder": "Buscar tareas...",
+      "clear": "Borrar búsqueda"
     },
     "kanban": {
       "depthHint": "Filtro de profundidad Kanban: tareas raíz, profundidad limitada, todos los niveles o solo hojas (tareas sin subtareas)",

@@ -549,7 +549,8 @@
   },
   "search": {
     "desktop": {
-      "placeholder": "Search tasks..."
+      "placeholder": "Search tasks...",
+      "clear": "Clear search"
     },
     "kanban": {
       "depthHint": "Kanban depth filter: root tasks, limited-depth tasks, all levels, or leaves only (tasks with no subtasks)",
