@@ -48,6 +48,22 @@ describe("default relay env resolution", () => {
     expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.example.test");
   });
 
+  it("probes all prefixes even when the first candidate succeeds", async () => {
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://nostr.example.test");
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({}, {
+        hostname: "app.example.test",
+        probeRelay,
+      })
+    ).resolves.toEqual(["wss://nostr.example.test"]);
+    expect(probeRelay).toHaveBeenCalledTimes(4);
+    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.example.test");
+  });
+
   it("falls back by prefixing the current host when no subdomain exists", async () => {
     const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://nostr.project.test");
 
@@ -82,6 +98,45 @@ describe("default relay env resolution", () => {
       })
     ).resolves.toEqual(["wss://feed.example.test"]);
     expect(probeRelay).toHaveBeenCalledTimes(4);
+  });
+
+  it("ignores stale cached relays when none match current host candidates", async () => {
+    window.localStorage.setItem(
+      "nodex.default-relay-fallback.v1:wss:app.example.test",
+      JSON.stringify({
+        checkedAt: Date.now(),
+        relayUrls: ["wss://feed.other.test"],
+      })
+    );
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.example.test");
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({}, {
+        hostname: "app.example.test",
+        probeRelay,
+      })
+    ).resolves.toEqual(["wss://feed.example.test"]);
+    expect(probeRelay).toHaveBeenCalledTimes(4);
+  });
+
+  it("does not cache empty fallback probe results", async () => {
+    const probeRelay = vi.fn(async () => false);
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({}, {
+        hostname: "app.example.test",
+        probeRelay,
+      })
+    ).resolves.toEqual([]);
+    expect(probeRelay).toHaveBeenCalledTimes(4);
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({}, {
+        hostname: "app.example.test",
+        probeRelay,
+      })
+    ).resolves.toEqual([]);
+    expect(probeRelay).toHaveBeenCalledTimes(8);
   });
 
   it("prefers explicit relay env values without probing host-derived candidates", async () => {

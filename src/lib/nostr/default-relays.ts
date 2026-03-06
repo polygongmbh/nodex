@@ -1,4 +1,5 @@
 import { ensureRelayProtocol, relayUrlToId as toRelayId, RelayProtocol } from "@/lib/nostr/relay-url";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 interface DefaultRelayEnv {
   VITE_DEFAULT_RELAYS?: string;
@@ -9,8 +10,9 @@ interface DefaultRelayEnv {
 
 const HOST_DERIVED_RELAY_PREFIXES = ["nostr", "feed", "tasks", "base"] as const;
 const DEFAULT_RELAY_PROBE_TIMEOUT_MS = 1200;
-const HOST_FALLBACK_CACHE_TTL_MS = 30 * 60 * 1000;
+const HOST_FALLBACK_SUCCESS_CACHE_TTL_MS = 30 * 60 * 1000;
 const HOST_FALLBACK_CACHE_KEY_PREFIX = "nodex.default-relay-fallback.v1";
+let lastDiscoveryLogKey: string | null = null;
 
 interface HostFallbackCacheEntry {
   checkedAt: number;
@@ -77,7 +79,7 @@ function readHostFallbackCache(hostname: string, protocol: RelayProtocol): strin
     const relayUrls = Array.isArray(parsed.relayUrls)
       ? parsed.relayUrls.filter((value): value is string => typeof value === "string" && value.length > 0)
       : [];
-    if (!checkedAt || Date.now() - checkedAt > HOST_FALLBACK_CACHE_TTL_MS) {
+    if (!checkedAt || Date.now() - checkedAt > HOST_FALLBACK_SUCCESS_CACHE_TTL_MS) {
       window.localStorage.removeItem(key);
       return null;
     }
@@ -90,6 +92,7 @@ function readHostFallbackCache(hostname: string, protocol: RelayProtocol): strin
 
 function writeHostFallbackCache(hostname: string, protocol: RelayProtocol, relayUrls: string[]): void {
   if (typeof window === "undefined" || !window.localStorage) return;
+  if (relayUrls.length === 0) return;
   const key = getHostFallbackCacheKey(hostname, protocol);
   const payload: HostFallbackCacheEntry = {
     checkedAt: Date.now(),
@@ -105,33 +108,33 @@ async function probeRelayAvailability(relayUrl: string, timeoutMs: number): Prom
   return await new Promise<boolean>((resolve) => {
     let settled = false;
     const socket = new WebSocketCtor(relayUrl);
-    const timeoutId = window.setTimeout(() => {
+    const finalize = (available: boolean) => {
       if (settled) return;
       settled = true;
-      socket.close();
-      resolve(false);
+      window.clearTimeout(timeoutId);
+      socket.onopen = null;
+      socket.onerror = null;
+      socket.onclose = null;
+      resolve(available);
+    };
+    const timeoutId = window.setTimeout(() => {
+      // Avoid forcing close() on in-flight handshakes; Firefox surfaces this as
+      // "connection interrupted while page was loading", which is noisy for fallback probing.
+      finalize(false);
     }, timeoutMs);
 
     socket.onopen = () => {
       if (settled) return;
-      settled = true;
-      window.clearTimeout(timeoutId);
       socket.close();
-      resolve(true);
+      finalize(true);
     };
 
     socket.onerror = () => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timeoutId);
-      resolve(false);
+      finalize(false);
     };
 
     socket.onclose = () => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timeoutId);
-      resolve(false);
+      finalize(false);
     };
   });
 }
@@ -153,18 +156,56 @@ export async function resolveDefaultRelayUrlsWithDomainFallback(
   const protocol = toRelayProtocol(env.VITE_DEFAULT_RELAY_PROTOCOL);
   const hostname = (options?.hostname ?? window.location.hostname).trim().toLowerCase().replace(/\.$/, "");
   const candidates = getHostDerivedRelayCandidates(hostname, protocol);
+  nostrDevLog("relay-discovery", "Resolved host fallback candidates", {
+    hostname,
+    protocol,
+    candidates,
+  });
   if (candidates.length === 0) return [];
 
   const cachedRelayUrls = readHostFallbackCache(hostname, protocol);
-  if (cachedRelayUrls) {
+  if (cachedRelayUrls && cachedRelayUrls.length > 0) {
     const cachedSet = new Set(cachedRelayUrls);
-    return candidates.filter((relayUrl) => cachedSet.has(relayUrl));
+    const cachedCandidates = candidates.filter((relayUrl) => cachedSet.has(relayUrl));
+    if (cachedCandidates.length === 0) {
+      nostrDevLog("relay-discovery", "Ignoring stale host fallback cache with no matching candidates", {
+        hostname,
+        protocol,
+        cachedRelayUrls,
+        candidates,
+      });
+    } else {
+      nostrDevLog("relay-discovery", "Using cached host fallback relays", {
+        hostname,
+        protocol,
+        relayUrls: cachedCandidates,
+      });
+      return cachedCandidates;
+    }
   }
 
   const probeTimeoutMs = options?.probeTimeoutMs ?? DEFAULT_RELAY_PROBE_TIMEOUT_MS;
   const probe = options?.probeRelay ?? ((relayUrl: string) => probeRelayAvailability(relayUrl, probeTimeoutMs));
+  nostrDevLog("relay-discovery", "Probing host fallback relay candidates", {
+    hostname,
+    protocol,
+    probeTimeoutMs,
+    candidates,
+  });
   const probed = await Promise.all(candidates.map(async (relayUrl) => (await probe(relayUrl)) ? relayUrl : null));
   const resolvedRelayUrls = probed.filter((value): value is string => Boolean(value));
+  nostrDevLog("relay-discovery", "Host fallback probe completed", {
+    hostname,
+    protocol,
+    resolvedRelayUrls,
+  });
+  if (resolvedRelayUrls.length > 0) {
+    const logKey = `${hostname}|${resolvedRelayUrls.slice().sort().join(",")}`;
+    if (logKey !== lastDiscoveryLogKey) {
+      lastDiscoveryLogKey = logKey;
+      console.info("[relay] Host-derived relays discovered", { hostname, relays: resolvedRelayUrls });
+    }
+  }
   writeHostFallbackCache(hostname, protocol, resolvedRelayUrls);
   return resolvedRelayUrls;
 }

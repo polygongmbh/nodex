@@ -9,7 +9,12 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [1.16.5] - 2026-03-06
 - Relay connections now auto-attempt reconnect when returning to a previously inactive tab (visibility/focus/online resume), improving recovery after idle background periods.
 - Startup host fallback relay discovery now probes host-derived relay candidates in deterministic order (`nostr.`, `feed.`, `tasks.`, `base.`), while still auto-connecting only to reachable relays.
-- Host-fallback probe results are now cached for 30 minutes per host/protocol so repeated page loads do not repeatedly trigger the same failed WebSocket probe attempts.
+- Successful host-fallback probe results are now cached for 30 minutes per host/protocol so discovered relays reconnect quickly on repeat loads.
+- Host-fallback WebSocket probe timeout handling no longer force-closes in-flight sockets, reducing Firefox "connection interrupted while page was loading" console noise during fallback discovery.
+- Host-fallback cache now ignores stale cached relay URLs that no longer match current host-derived candidates, preventing empty relay lists when valid probes should run.
+- Feed filter state now auto-initializes to currently available relays when persisted relay IDs do not match discovered relays, so newly discovered feeds are immediately active and usable.
+- NDK provider now mirrors resolved default/discovered relay URLs into relay state immediately, so discovered feeds show in the sidebar even before relay-pool status events arrive.
+- Successful host-fallback relay discoveries are now persisted into relay storage and automatically reused on subsequent app loads.
 - Feed view now renders task state changes as standalone compact timeline items with the referenced task shown as breadcrumb context.
 - Desktop search now shows an inline clear (`x`) control whenever a query is present, allowing one-click reset.
 - Desktop bottom search dock now keeps spacing in a single responsive padding layer and places the version hint inline in the dock row to avoid overlap.

@@ -74,10 +74,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     [defaultRelays]
   );
   const [resolvedDefaultRelays, setResolvedDefaultRelays] = useState<string[]>(
-    () => persistedRelayUrls ?? configuredDefaultRelays
+    () => {
+      if (persistedRelayUrls && persistedRelayUrls.length > 0) return persistedRelayUrls;
+      if (configuredDefaultRelays.length > 0) return configuredDefaultRelays;
+      return [];
+    }
   );
   const [isResolvingDefaultRelays, setIsResolvingDefaultRelays] = useState(
-    () => !persistedRelayUrls && configuredDefaultRelays.length === 0
+    () => (!persistedRelayUrls || persistedRelayUrls.length === 0) && configuredDefaultRelays.length === 0
   );
   const [ndk, setNdk] = useState<NDK | null>(null);
   const [user, setUser] = useState<NostrUser | null>(null);
@@ -103,6 +107,30 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const lastResumeReconnectAtRef = useRef(0);
 
   useEffect(() => {
+    if (resolvedDefaultRelays.length === 0) return;
+    setRelays((previous) => {
+      const nextByUrl = new Map(previous.map((entry) => [entry.url.replace(/\/+$/, ""), entry]));
+      resolvedDefaultRelays.forEach((relayUrl) => {
+        const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+        if (nextByUrl.has(normalizedRelayUrl)) return;
+        const info = relayInfoRef.current.get(normalizedRelayUrl);
+        nextByUrl.set(normalizedRelayUrl, {
+          url: normalizedRelayUrl,
+          status: "connecting",
+          nip11: info
+            ? {
+                authRequired: info.authRequired,
+                supportsNip42: info.supportsNip42,
+                checkedAt: Date.now(),
+              }
+            : undefined,
+        });
+      });
+      return Array.from(nextByUrl.values());
+    });
+  }, [resolvedDefaultRelays]);
+
+  useEffect(() => {
     if (persistedRelayUrls && persistedRelayUrls.length > 0) {
       setResolvedDefaultRelays(persistedRelayUrls);
       setIsResolvingDefaultRelays(false);
@@ -123,6 +151,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       setResolvedDefaultRelays(discoveredRelayUrls);
       setIsResolvingDefaultRelays(false);
       if (discoveredRelayUrls.length > 0) {
+        savePersistedRelayUrls(discoveredRelayUrls);
         nostrDevLog("relay", "Resolved default relays from current host", {
           hostname: window.location.hostname,
           relayUrls: discoveredRelayUrls,
@@ -510,6 +539,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     ndkInstance.pool.on("relay:connect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
+      console.info("[relay] Connected relay", { relayUrl: normalized });
       nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);
@@ -534,7 +564,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           );
         }
         const info = relayInfoRef.current.get(normalized);
-        return [...prev, {
+        const next = [...prev, {
           url: normalized,
           status: resolveConnectedRelayStatus(normalized),
           nip11: info
@@ -545,6 +575,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
               }
             : undefined,
         }];
+        savePersistedRelayUrls(next.map((entry) => entry.url));
+        return next;
       });
     });
 
@@ -1474,7 +1506,26 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const contextValue: NDKContextValue = useMemo(() => ({
     ndk,
     isConnected,
-    relays,
+    relays: (() => {
+      if (resolvedDefaultRelays.length === 0) return relays;
+      const byUrl = new Map(relays.map((entry) => [entry.url.replace(/\/+$/, ""), entry]));
+      resolvedDefaultRelays.forEach((relayUrl) => {
+        const normalized = relayUrl.replace(/\/+$/, "");
+        if (byUrl.has(normalized)) return;
+        byUrl.set(normalized, {
+          url: normalized,
+          status: "connecting",
+          nip11: relayInfoRef.current.get(normalized)
+            ? {
+                authRequired: relayInfoRef.current.get(normalized)?.authRequired ?? false,
+                supportsNip42: relayInfoRef.current.get(normalized)?.supportsNip42 ?? false,
+                checkedAt: Date.now(),
+              }
+            : undefined,
+        });
+      });
+      return Array.from(byUrl.values());
+    })(),
     user,
     authMethod,
     isAuthenticating,
@@ -1498,6 +1549,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     ndk,
     isConnected,
     relays,
+    resolvedDefaultRelays,
     user,
     authMethod,
     isAuthenticating,
