@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Subtask submissions now inherit parent task hashtags when no explicit hashtags are provided, avoiding unnecessary compose blocking while preserving tag-scoped publishing.
+- Focused breadcrumb rows no longer stretch short task labels across available width; labels now stay content-sized while long labels still truncate.
 
 ## [1.16.5] - 2026-03-06
 - Relay connections now auto-attempt reconnect when returning to a previously inactive tab (visibility/focus/online resume), improving recovery after idle background periods.
