@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Task/comment location chips now resolve geohashes to rough coordinates in-chip and open the mapped location directly in a map app/browser when tapped.
+- Disabled task status checkboxes now explain why editing is unavailable (for example assigned user or blocked editing) via hover title text.
 
 ## [1.16.3] - 2026-03-05
 Refined relay bootstrapping defaults and mobile compose location flow while reducing default demo noise.

@@ -9,7 +9,7 @@ import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/lib/taskSorting";
 import type { NostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
-import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
@@ -224,6 +224,7 @@ export function TaskItem({
   const canCompleteTask = () => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
+  const statusBlockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
 
   // Calculate indentation based on depth
   const indentStyle = depth > 0 ? { marginLeft: `${depth * 1.5}rem` } : {};
@@ -336,7 +337,7 @@ export function TaskItem({
                 }}
                 disabled={!canCompleteTask()}
                 aria-label={t("tasks.actions.setStatus")}
-                title={getStatusToggleHint(task.status)}
+                title={canCompleteTask() ? getStatusToggleHint(task.status) : (statusBlockedReason || getStatusToggleHint(task.status))}
                 className={cn(
                   "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
                   canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"

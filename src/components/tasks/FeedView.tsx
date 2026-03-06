@@ -25,7 +25,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
-import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";
 import { formatAuthorMetaParts } from "@/lib/person-label";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
@@ -231,6 +231,10 @@ export function FeedView({
 
   const canCompleteTask = (task: Task) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+  };
+  const getStatusButtonTitle = (task: Task) => {
+    if (canCompleteTask(task)) return getStatusToggleHint(task.status);
+    return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || getStatusToggleHint(task.status);
   };
 
   const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {
@@ -474,7 +478,7 @@ export function FeedView({
                           }}
                           disabled={!canCompleteTask(task)}
                           aria-label={t("tasks.actions.setStatus")}
-                          title={getStatusToggleHint(task.status)}
+                          title={getStatusButtonTitle(task)}
                           className={cn(
                             "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
                             canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"

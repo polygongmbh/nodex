@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
@@ -349,6 +349,10 @@ export function ListView({
 
   const canCompleteTask = (task: Task) => {
     return Boolean(user) && !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+  };
+  const getStatusButtonTitle = (task: Task) => {
+    if (canCompleteTask(task)) return t("tasks.actions.setStatus");
+    return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || t("tasks.actions.setStatus");
   };
   const focusedTask = focusedTaskId ? allTasks.find((t) => t.id === focusedTaskId) : null;
 
@@ -687,6 +691,7 @@ export function ListView({
                       <button
                         onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
                         disabled={!canCompleteTask(task)}
+                        title={getStatusButtonTitle(task)}
                         className={cn(
                           "p-0.5 rounded transition-colors",
                           canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
