@@ -85,4 +85,33 @@ describe("FocusedTaskBreadcrumb", () => {
 
     expect(screen.getByRole("button", { name: longContent })).toBeInTheDocument();
   });
+
+  it("distributes multi-level breadcrumb width evenly with single-line truncation", () => {
+    const middle: Task = {
+      ...baseTask,
+      id: "middle",
+      content: "A very long middle task label that should truncate",
+      parentId: "root",
+    };
+    const leaf: Task = {
+      ...baseTask,
+      id: "leaf",
+      content: "A very long leaf task label that should truncate too",
+      parentId: "middle",
+    };
+
+    render(
+      <FocusedTaskBreadcrumb
+        allTasks={[baseTask, middle, leaf]}
+        focusedTaskId="leaf"
+        onFocusTask={vi.fn()}
+      />
+    );
+
+    const middleButton = screen.getByRole("button", { name: middle.content });
+    const leafButton = screen.getByRole("button", { name: leaf.content });
+    // Product contract: each path segment gets balanced width and truncates on a single line.
+    expect(middleButton).toHaveClass("w-full", "truncate", "text-left");
+    expect(leafButton).toHaveClass("w-full", "truncate", "text-left");
+  });
 });
