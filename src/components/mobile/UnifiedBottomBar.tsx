@@ -1086,17 +1086,17 @@ export function UnifiedBottomBar({
           ) : null}
 
           {/* Filter/Selector Buttons */}
-          <div className="flex items-center gap-1 ml-auto shrink-0">
+          <div className="flex items-center gap-0.5 ml-auto shrink-0">
             <button
               onClick={() => toggleSelector("relay")}
               className={cn(
-                "relative p-2 rounded-md transition-colors",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "relay" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Radio className="w-4 h-4" />
               {activeRelaysCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activeRelaysCount}
                 </span>
               )}
@@ -1104,13 +1104,13 @@ export function UnifiedBottomBar({
             <button
               onClick={() => toggleSelector("channel")}
               className={cn(
-                "relative p-2 rounded-md transition-colors",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Hash className="w-4 h-4" />
               {activeChannelsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activeChannelsCount}
                 </span>
               )}
@@ -1118,13 +1118,13 @@ export function UnifiedBottomBar({
             <button
               onClick={() => toggleSelector("person")}
               className={cn(
-                "relative p-2 rounded-md transition-colors",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Users className="w-4 h-4" />
               {activePeopleCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activePeopleCount}
                 </span>
               )}
@@ -1132,7 +1132,7 @@ export function UnifiedBottomBar({
             <button
               onClick={useCurrentLocation}
               className={cn(
-                "relative p-2 rounded-md transition-colors",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 locationGeohash
                   ? "bg-primary/20 text-primary"
                   : "text-muted-foreground hover:text-foreground"
