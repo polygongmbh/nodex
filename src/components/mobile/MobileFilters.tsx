@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown } from "lucide-react";
+import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown, Mail } from "lucide-react";
 import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,7 +9,7 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";
-import { LegalDialog } from "@/components/legal/LegalDialog";
+import { LegalDialog, resolveLegalContactEmail } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
@@ -62,6 +62,7 @@ export function MobileFilters({
   onToggleCompletionSound = () => {},
 }: MobileFiltersProps) {
   const { t } = useTranslation();
+  const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;
@@ -179,6 +180,27 @@ export function MobileFilters({
               enabled={completionSoundEnabled}
               onToggle={onToggleCompletionSound}
             />
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <LegalDialog
+              triggerLabel="Impressum"
+              triggerClassName="w-full rounded-lg border border-border px-2 py-1.5 text-xs text-center hover:bg-muted/50"
+              defaultSection="imprint"
+            />
+            <LegalDialog
+              triggerLabel="Datenschutz"
+              triggerClassName="w-full rounded-lg border border-border px-2 py-1.5 text-xs text-center hover:bg-muted/50"
+              defaultSection="privacy"
+            />
+            <a
+              href={`mailto:${legalContactEmail}`}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-1.5 text-xs text-center text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              aria-label="Kontakt per E-Mail"
+              title="Kontakt per E-Mail"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Kontakt
+            </a>
           </div>
         </section>
 
@@ -557,17 +579,6 @@ export function MobileFilters({
           </div>
         </section>
 
-        <section data-onboarding="mobile-filters-legal">
-          <div className="rounded-lg border border-border p-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <LegalDialog
-                triggerLabel="Impressum, Datenschutz & Kontakt"
-                triggerClassName="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
-                defaultSection="imprint"
-              />
-            </div>
-          </div>
-        </section>
       </div>
     </ScrollArea>
   );
