@@ -655,7 +655,8 @@ export function FeedView({
                         }
                         aria-label={listingStatus === "sold" ? "Listing sold" : "Listing active"}
                         className={cn(
-                          "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                          "flex-shrink-0 mt-0.5 rounded transition-colors",
+                          isMobile ? "p-1.5" : "p-0.5",
                           canUpdateListingStatus ? "hover:bg-muted cursor-pointer" : "cursor-default"
                         )}
                       >
