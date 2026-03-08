@@ -890,7 +890,7 @@ export function UnifiedBottomBar({
                     key={relay.id}
                     onClick={() => onRelayToggle(relay.id)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors",
+                      "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
                       relay.isActive
                         ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                         : "border-border"
@@ -898,7 +898,7 @@ export function UnifiedBottomBar({
                   >
                     <RelayIcon className="w-4 h-4" />
                     {relay.name}
-                    {relay.isActive && <Check className="w-3 h-3" />}
+                    {relay.isActive && <Check className="w-3.5 h-3.5" />}
                   </button>
                 );
               })}
