@@ -315,7 +315,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits current kind on Ctrl+Enter and Cmd+Enter", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
