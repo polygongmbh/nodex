@@ -1,4 +1,5 @@
-import type { NDK, NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
+import type NDK from "@nostr-dev-kit/ndk";
+import type { NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
 import type { ReactNode } from "react";
 import type { EditableNostrProfile } from "../profile-metadata";
 import { NostrEventKind } from "../types";

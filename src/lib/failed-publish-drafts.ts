@@ -32,7 +32,7 @@ export interface FailedPublishDraft {
 const taskTypeSchema = z.enum(["task", "comment"] as const);
 const taskDateTypeSchema = z.enum(["due", "scheduled", "start", "end", "milestone"] as const);
 const taskStatusSchema = z.enum(["todo", "in-progress", "done"] as const);
-const personSchema: z.ZodType<Person> = z.object({
+const personSchema = z.object({
   id: z.string(),
   name: z.string(),
   displayName: z.string(),
@@ -40,7 +40,7 @@ const personSchema: z.ZodType<Person> = z.object({
   avatar: z.string().optional(),
   isOnline: z.boolean(),
   isSelected: z.boolean(),
-});
+}) satisfies z.ZodType<Person>;
 const failedPublishDraftSchema: z.ZodType<FailedPublishDraft> = z.object({
   id: z.string(),
   author: personSchema,

@@ -46,7 +46,7 @@ function listKnownCacheStorageKeys(): string[] {
   return Array.from(keys);
 }
 
-const cachedNostrEventSchema: z.ZodType<CachedNostrEvent> = z.object({
+const cachedNostrEventSchema = z.object({
   id: z.string(),
   pubkey: z.string(),
   created_at: z.number(),
@@ -56,7 +56,7 @@ const cachedNostrEventSchema: z.ZodType<CachedNostrEvent> = z.object({
   sig: z.string().optional(),
   relayUrl: z.string().optional(),
   relayUrls: z.array(z.string()).optional(),
-});
+}) satisfies z.ZodType<CachedNostrEvent>;
 const cachedNostrEventsSchema = z.array(cachedNostrEventSchema);
 
 function normalizeRelayUrl(url: string): string {
