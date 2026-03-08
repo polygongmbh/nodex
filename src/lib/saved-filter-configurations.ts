@@ -38,7 +38,7 @@ export function loadSavedFilterState(): SavedFilterState {
         activeConfigurationId && existingIds.has(activeConfigurationId)
           ? activeConfigurationId
           : null,
-      configurations: parsed.data.configurations,
+      configurations: parsed.data.configurations as SavedFilterConfiguration[],
     };
   } catch {
     return EMPTY_STATE;
