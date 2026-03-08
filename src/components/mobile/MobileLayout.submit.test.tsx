@@ -68,7 +68,7 @@ const tasks: Task[] = [];
 
 describe("MobileLayout submit wiring", () => {
   it("forwards explicit mention pubkeys in the correct onNewTask argument slot", () => {
-    const onNewTask = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onNewTask = vi.fn(async () => successResult);
 
     render(
       <MobileLayout

@@ -984,7 +984,7 @@ describe("UnifiedBottomBar auth gating", () => {
       configurable: true,
       value: { getCurrentPosition },
     });
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
