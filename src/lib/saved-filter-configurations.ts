@@ -3,7 +3,7 @@ import type { SavedFilterConfiguration, SavedFilterState } from "@/types";
 
 const SAVED_FILTER_CONFIGURATIONS_STORAGE_KEY = "nodex.saved-filter-configurations.v1";
 
-const savedFilterConfigurationSchema: z.ZodType<SavedFilterConfiguration> = z.object({
+const savedFilterConfigurationSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   relayIds: z.array(z.string()),
