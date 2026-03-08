@@ -242,7 +242,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const shouldShowRelayVerificationToast = useCallback((
     relayUrl: string,
     operation: RelayOperation,
-    outcome: RelayVerificationEvent["outcome"]
+    outcome: RelayVerificationEvent["outcome"] | "verified"
   ): boolean => {
     const now = Date.now();
     const key = `${relayUrl}|${operation}|${outcome}`;
