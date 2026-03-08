@@ -558,11 +558,12 @@ export function TaskComposer({
       attachmentFileRef.current[id] = file;
       return {
         id,
+        url: "",
         fileName: file.name,
         mimeType: file.type || undefined,
         size: file.size,
-        status: "uploading",
-        source: "upload",
+        status: "uploading" as const,
+        source: "upload" as const,
       };
     });
     setAttachments((previous) => [...previous, ...nextEntries]);

@@ -676,7 +676,7 @@ export function CalendarView({
             {desktopMonthSections.map((section) => (
               <section
                 key={section.key}
-                ref={(node) => {
+                ref={(node: HTMLDivElement | null) => {
                   desktopMonthSectionRefs.current[section.key] = node;
                 }}
                 className={cn("space-y-0.5", isMobile ? "pt-1" : "pt-1.5")}
