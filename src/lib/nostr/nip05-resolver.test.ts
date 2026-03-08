@@ -38,7 +38,7 @@ describe("resolveNip05Identifier", () => {
     global.fetch = vi.fn(async () => ({
       ok: true,
       json: async () => ({ names: { alice: "not-a-pubkey" } }),
-    })) as typeof fetch;
+    })) as unknown as typeof fetch;
 
     await expect(resolveNip05Identifier("alice@example.com")).resolves.toBeNull();
     await expect(resolveNip05Identifier("invalid")).resolves.toBeNull();

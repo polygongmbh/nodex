@@ -890,7 +890,7 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalled();
     });
-    expect(onSubmit.mock.calls[0][0]).toContain("@al");
+    expect((onSubmit.mock.calls as unknown[][])[0][0]).toContain("@al");
   });
 
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
