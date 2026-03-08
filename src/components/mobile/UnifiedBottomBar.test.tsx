@@ -370,7 +370,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits comment when send comment button is tapped", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
