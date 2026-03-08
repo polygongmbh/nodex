@@ -204,7 +204,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("allows focused-subtask send without explicit tags", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
