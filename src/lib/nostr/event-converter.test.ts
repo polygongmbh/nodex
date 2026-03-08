@@ -687,7 +687,7 @@ describe("mergeTasks", () => {
       { id: "3", timestamp: new Date(3000) },
     ] as Pick<Task, "id" | "timestamp">[];
     
-    const merged = mergeTasks(existing, newTasks);
+    const merged = mergeTasks(existing as Task[], newTasks as Task[]);
     
     expect(merged).toHaveLength(3);
     expect(merged.map((t) => t.id)).toContain("1");
