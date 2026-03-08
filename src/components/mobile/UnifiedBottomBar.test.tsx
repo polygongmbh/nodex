@@ -815,7 +815,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
