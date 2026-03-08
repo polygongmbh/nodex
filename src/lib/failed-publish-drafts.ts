@@ -40,7 +40,7 @@ const personSchema = z.object({
   avatar: z.string().optional(),
   isOnline: z.boolean(),
   isSelected: z.boolean(),
-}) satisfies z.ZodType<Person>;
+});
 const failedPublishDraftSchema: z.ZodType<FailedPublishDraft> = z.object({
   id: z.string(),
   author: personSchema,
