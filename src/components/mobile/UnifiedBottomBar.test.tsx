@@ -410,7 +410,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("shows offer/request options in feed view and submits listing metadata", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
