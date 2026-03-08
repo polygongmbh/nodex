@@ -863,7 +863,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits on Cmd/Ctrl+Enter even when mention autocomplete is open", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
