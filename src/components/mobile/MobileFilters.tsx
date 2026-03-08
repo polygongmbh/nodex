@@ -526,16 +526,16 @@ export function MobileFilters({
                 key={channel.id}
                 onClick={() => onChannelToggle(channel.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors border",
+                  "flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm active:scale-95",
                   channel.filterState === "included" && "bg-success/10 border-success text-success motion-filter-pop",
                   channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive motion-filter-pop-alt",
                   channel.filterState === "neutral" && "border-border hover:bg-muted"
                 )}
               >
                 #{channel.name}
-                {channel.filterState === "included" && <Check className="w-3 h-3" />}
-                {channel.filterState === "excluded" && <X className="w-3 h-3" />}
-                {channel.filterState === "neutral" && <Minus className="w-3 h-3 opacity-50" />}
+                {channel.filterState === "included" && <Check className="w-3.5 h-3.5" />}
+                {channel.filterState === "excluded" && <X className="w-3.5 h-3.5" />}
+                {channel.filterState === "neutral" && <Minus className="w-3.5 h-3.5 opacity-50" />}
               </button>
             ))}
           </div>
