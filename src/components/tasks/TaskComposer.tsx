@@ -88,7 +88,7 @@ type ComposerMessageType = TaskType | FeedMessageType;
 
 interface ComposeDraftState {
   content?: string;
-  taskType?: TaskType;
+  taskType?: ComposerMessageType;
   messageType?: ComposerMessageType;
   dueDate?: string;
   dueTime?: string;

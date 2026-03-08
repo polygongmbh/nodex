@@ -8,6 +8,7 @@ import {
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 import {
   format,

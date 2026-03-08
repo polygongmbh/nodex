@@ -10,6 +10,7 @@ import {
   SharedTaskViewContext,
   ComposeRestoreRequest,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";

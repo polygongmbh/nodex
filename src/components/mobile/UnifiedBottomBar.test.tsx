@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Person, Relay, TaskCreateResult } from "@/types";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
