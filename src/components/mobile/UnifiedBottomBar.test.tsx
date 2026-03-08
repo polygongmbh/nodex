@@ -770,7 +770,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("adds mention tag via Alt+Enter without inserting mention text", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
