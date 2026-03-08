@@ -177,7 +177,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("disables sending when content has only tags and mentions", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
