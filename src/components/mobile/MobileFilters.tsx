@@ -162,12 +162,12 @@ export function MobileFilters({
 
   return (
     <ScrollArea className="h-full" data-onboarding="mobile-filters">
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-5">
         <section>
           <div className="flex items-center gap-2">
             <button
               onClick={onGuideClick}
-              className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-left hover:bg-muted/50 transition-colors inline-flex items-center gap-2"
+              className="flex-1 rounded-lg border border-border px-3 py-2.5 text-sm text-left hover:bg-muted/50 active:bg-muted transition-colors inline-flex items-center gap-2 touch-target-sm"
               aria-label={t("sidebar.actions.openGuide")}
               title={t("sidebar.actions.openGuide")}
             >
@@ -184,17 +184,17 @@ export function MobileFilters({
           <div className="mt-2 grid grid-cols-3 gap-2">
             <LegalDialog
               triggerLabel="Impressum"
-              triggerClassName="w-full rounded-lg border border-border px-2 py-1.5 text-xs text-center hover:bg-muted/50"
+              triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
               defaultSection="imprint"
             />
             <LegalDialog
               triggerLabel="Datenschutz"
-              triggerClassName="w-full rounded-lg border border-border px-2 py-1.5 text-xs text-center hover:bg-muted/50"
+              triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
               defaultSection="privacy"
             />
             <a
               href={`mailto:${legalContactEmail}`}
-              className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-1.5 text-xs text-center text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2 text-xs text-center text-muted-foreground hover:bg-muted/50 active:bg-muted hover:text-foreground touch-target-sm"
               aria-label="Kontakt per E-Mail"
               title="Kontakt per E-Mail"
             >
