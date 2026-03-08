@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { VersionHint } from "@/components/layout/VersionHint";
+import { LegalDialog } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
 
 export type KanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
@@ -105,7 +106,15 @@ export function DesktopSearchDock({
             </Select>
           </div>
         )}
-        <VersionHint className="flex-shrink-0 rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60" />
+        <div className="flex flex-shrink-0 items-center gap-1.5">
+          <LegalDialog
+            triggerLabel="Impressum"
+            triggerClassName="rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60"
+            showMailIcon
+            mailIconClassName="rounded bg-background/70 backdrop-blur-sm border border-border/60"
+          />
+          <VersionHint className="rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60" />
+        </div>
       </div>
     </div>
   );

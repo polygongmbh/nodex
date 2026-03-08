@@ -78,6 +78,7 @@ describe("MobileFilters management view", () => {
     expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
     expect(screen.getByText(/^v\d+\.\d+\.\d+$/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /open imprint and privacy policy/i })).toBeInTheDocument();
     // Keep manage panel height-bound so content scrolls within mobile view.
     expect(document.querySelector('[data-onboarding="mobile-filters"]')).toHaveClass("h-full");
   });

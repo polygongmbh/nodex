@@ -9,6 +9,7 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";
+import { LegalDialog } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
@@ -553,6 +554,18 @@ export function MobileFilters({
                 </button>
               );
             })}
+          </div>
+        </section>
+
+        <section data-onboarding="mobile-filters-legal">
+          <div className="rounded-lg border border-border p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <LegalDialog
+                triggerLabel="Impressum, Datenschutz & Kontakt"
+                triggerClassName="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
+                defaultSection="imprint"
+              />
+            </div>
           </div>
         </section>
       </div>

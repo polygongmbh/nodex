@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Added an in-app legal dialog with German Impressum and Datenschutzerklaerung content, linked from the desktop bottom-right dock next to the version hint, including a compact contact mail icon.
+- Added a dedicated legal button at the bottom of mobile Manage so Impressum/Datenschutz/Kontakt are accessible on mobile as well.
 
 ## [1.17.0] - 2026-03-06
 Promoted Feed-first navigation defaults, improved publish/filter ergonomics, and refined breadcrumb/status presentation across locales.
