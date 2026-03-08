@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash } from "@/lib/nostr/geohash-location";
 
+const successResult: TaskCreateResult = { ok: true, mode: "local" };
+
 vi.mock("@/lib/nostr/ndk-context", () => ({
   useNDK: () => ({
     createHttpAuthHeader: vi.fn(async () => null),
