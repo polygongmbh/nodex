@@ -88,7 +88,7 @@ export function loadFailedPublishDrafts(): FailedPublishDraft[] {
     if (!raw) return [];
     const parsed = failedPublishDraftsSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return [];
-    return parsed.data.slice(0, MAX_FAILED_PUBLISH_DRAFTS);
+    return (parsed.data as FailedPublishDraft[]).slice(0, MAX_FAILED_PUBLISH_DRAFTS);
   } catch {
     return [];
   }

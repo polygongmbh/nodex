@@ -66,7 +66,7 @@ export function deriveSidebarPeople(
         latestTimestampMs: latestActivityTimestampMs,
       };
     })
-    .filter((entry): entry is { person: Person; latestTimestampMs: number } => entry !== null)
+    .filter((entry): entry is { person: Person; latestTimestampMs: number } & Record<string, unknown> => entry !== null)
     .sort((a, b) => {
       if (b.latestTimestampMs !== a.latestTimestampMs) {
         return b.latestTimestampMs - a.latestTimestampMs;

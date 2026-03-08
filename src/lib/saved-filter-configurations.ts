@@ -14,7 +14,7 @@ const savedFilterConfigurationSchema = z.object({
   updatedAt: z.string(),
 });
 
-const savedFilterStateSchema: z.ZodType<SavedFilterState> = z.object({
+const savedFilterStateSchema = z.object({
   activeConfigurationId: z.string().nullable(),
   configurations: z.array(savedFilterConfigurationSchema),
 });

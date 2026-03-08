@@ -421,7 +421,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
       beginRelayOperation("read");
       const subscription = ndk.subscribe(
-        [{ kinds: [NostrEventKind.Metadata], authors: [pubkey] }],
+        [{ kinds: [NostrEventKind.Metadata as number], authors: [pubkey] }],
         { closeOnEose: true }
       );
 

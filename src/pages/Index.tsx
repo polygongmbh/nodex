@@ -106,7 +106,8 @@ import {
 } from "@/lib/filter-state-utils";
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
 import { normalizeComposerMessageType } from "@/lib/task-type";
-import { buildNip99PublishTags, type Nip99ListingStatus } from "@/lib/nostr/nip99-metadata";
+import { buildNip99PublishTags } from "@/lib/nostr/nip99-metadata";
+import type { Nip99ListingStatus } from "@/types";
 import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
 import { normalizeGeohash } from "@/lib/nostr/geohash-location";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
