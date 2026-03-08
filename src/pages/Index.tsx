@@ -1681,7 +1681,7 @@ const Index = () => {
     if (normalizedMessageType !== taskType) {
       console.warn("Unexpected taskType payload; defaulting to task", { taskType });
     }
-    const normalizedTaskType: TaskType = normalizedMessageType === "task" ? "task" : "comment";
+    const normalizedTaskType: Task["taskType"] = normalizedMessageType === "task" ? "task" : "comment";
     const feedMessageType: Task["feedMessageType"] =
       normalizedMessageType === "offer" || normalizedMessageType === "request"
         ? normalizedMessageType
