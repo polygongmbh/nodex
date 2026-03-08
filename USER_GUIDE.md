@@ -81,11 +81,20 @@
 - The view navigation is at the top.
 - Top-bar view buttons switch directly between task views; they do not close/reopen Manage unless Manage is currently open.
 - Open *Manage* for feed, channel, people, profile, and guide controls.
+- In *Manage* (same row as *Open Guide*), use legal actions:
+  - `Impressum` opens the imprint dialog section.
+  - `Datenschutz` opens the privacy policy dialog section.
+  - `Kontakt` opens your mail app via `mailto:`.
 - Tap the version label (`vX.Y.Z`) to open the in-app changelog dialog.
 - *Open Guide* in *Manage* launches onboarding for signed-out users.
 - The bottom bar is a combined search/compose field:
   - typing updates search results live,
   - send buttons post as task/comment from the same text.
+
+## Legal Information
+- Desktop: the bottom search dock now includes an `Impressum` link next to the version hint.
+- Desktop: a compact mail icon next to `Impressum` opens direct contact by email.
+- Mobile: legal actions are available in *Manage* next to *Open Guide*.
 
 ## Onboarding Guide
 - Onboarding is available only while signed out.
