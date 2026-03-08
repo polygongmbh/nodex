@@ -48,7 +48,7 @@ export function LegalDialog({
               triggerClassName
             )}
             aria-label="Open imprint and privacy policy"
-            title="Impressum und Datenschutzerklaerung"
+            title="Impressum und Datenschutzerklärung"
           >
             {triggerLabel}
           </button>
@@ -71,7 +71,7 @@ export function LegalDialog({
         <DialogHeader className="border-b border-border px-4 py-3 sm:px-6 sm:py-4">
           <DialogTitle className="text-base sm:text-lg">Rechtliche Hinweise</DialogTitle>
           <DialogDescription>
-            Impressum und Datenschutzerklaerung fuer Nodex.
+            Impressum und Datenschutzerklärung für Nodex.
           </DialogDescription>
         </DialogHeader>
         <div className="border-b border-border px-4 py-2 sm:px-6">
@@ -104,7 +104,7 @@ export function LegalDialog({
               <h3 className="text-sm font-semibold text-foreground">Anbieterkennzeichnung (Impressum)</h3>
               <div className="rounded-lg border border-border/70 bg-muted/20 p-3">
                 <p className="font-medium text-foreground">Polygon GmbH</p>
-                <p>vertreten durch geschaeftsfuehrer Janek Janetzko</p>
+                <p>Vertreten durch Geschäftsführer Janek Janetzko</p>
                 <p>Handelsregister Coburg HRB 7580</p>
                 <p>Bamberger Str. 43</p>
                 <p>96215 Lichtenfels</p>
@@ -123,9 +123,9 @@ export function LegalDialog({
             </section>
           ) : (
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold text-foreground">Datenschutzerklaerung</h3>
+              <h3 className="text-sm font-semibold text-foreground">Datenschutzerklärung</h3>
               <p>
-                Diese Datenschutzerklaerung informiert ueber die Verarbeitung personenbezogener Daten bei der Nutzung
+                Diese Datenschutzerklärung informiert über die Verarbeitung personenbezogener Daten bei der Nutzung
                 der Web-Anwendung Nodex.
               </p>
 
@@ -149,7 +149,7 @@ export function LegalDialog({
                   <li>Kontodaten aus dem Nostr-Kontext (z. B. Public Key, Profilmetadaten)</li>
                   <li>Vom Nutzer erstellte Inhalte (Tasks, Kommentare, Tags, Metadaten)</li>
                   <li>Technische Nutzungsdaten in Browser-Speichern (insbesondere localStorage)</li>
-                  <li>Verbindungs- und Relay-bezogene Daten bei Kommunikation mit Nostr-Relays</li>
+                  <li>Verbindungs- und relaybezogene Daten bei Kommunikation mit Nostr-Relays</li>
                 </ul>
               </section>
 
@@ -157,24 +157,24 @@ export function LegalDialog({
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">3. Zwecke und Rechtsgrundlagen</h4>
                 <ul className="list-disc space-y-1 pl-5">
                   <li>Bereitstellung der App-Funktionen und Nutzersitzung (Art. 6 Abs. 1 lit. b DSGVO)</li>
-                  <li>Stabilitaet, Missbrauchsabwehr und technische Sicherheit (Art. 6 Abs. 1 lit. f DSGVO)</li>
-                  <li>Optionale Funktionen auf Nutzerwunsch, z. B. Praeferenzen (Art. 6 Abs. 1 lit. a oder lit. b DSGVO)</li>
+                  <li>Stabilität, Missbrauchsabwehr und technische Sicherheit (Art. 6 Abs. 1 lit. f DSGVO)</li>
+                  <li>Optionale Funktionen auf Nutzerwunsch, z. B. Präferenzen (Art. 6 Abs. 1 lit. a oder lit. b DSGVO)</li>
                 </ul>
               </section>
 
               <section className="space-y-1.5">
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">4. Browser-Speicher (localStorage)</h4>
                 <p>
-                  Nodex nutzt localStorage fuer technisch notwendige App-Zustaende, z. B. Relay-Auswahl, Filter, Drafts,
-                  UI-Praeferenzen oder Auth-Status. Diese Speicherung dient der vom Nutzer angeforderten Funktion des
+                  Nodex nutzt localStorage für technisch notwendige App-Zustände, z. B. Relay-Auswahl, Filter, Drafts,
+                  UI-Präferenzen oder Auth-Status. Diese Speicherung dient der vom Nutzer angeforderten Funktion des
                   Dienstes.
                 </p>
               </section>
 
               <section className="space-y-1.5">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">5. Nostr-Relays und Uebermittlungen</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">5. Nostr-Relays und Übermittlungen</h4>
                 <p>
-                  Bei aktiver Nutzung werden Inhalte an ausgewaehlte Nostr-Relays uebermittelt. Diese Relays koennen in
+                  Bei aktiver Nutzung werden Inhalte an ausgewählte Nostr-Relays übermittelt. Diese Relays können in
                   unterschiedlichen Staaten betrieben werden. Verarbeitungen durch Relay-Betreiber erfolgen in eigener
                   Verantwortung.
                 </p>
@@ -183,17 +183,17 @@ export function LegalDialog({
               <section className="space-y-1.5">
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">6. Speicherdauer</h4>
                 <p>
-                  Lokale Browser-Daten bleiben bis zur Loeschung durch den Nutzer oder bis zur Ueberschreibung erhalten.
-                  An Relays publizierte Nostr-Inhalte koennen dauerhaft verfuegbar bleiben und liegen ausserhalb der
-                  direkten Loeschkontrolle des App-Betreibers.
+                  Lokale Browser-Daten bleiben bis zur Löschung durch den Nutzer oder bis zur Überschreibung erhalten.
+                  An Relays publizierte Nostr-Inhalte können dauerhaft verfügbar bleiben und liegen außerhalb der
+                  direkten Löschkontrolle des App-Betreibers.
                 </p>
               </section>
 
               <section className="space-y-1.5">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">7. Empfaenger</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">7. Empfänger</h4>
                 <p>
-                  Empfaenger koennen eingesetzte Relay-Betreiber sowie technische Dienstleister fuer den Betrieb der
-                  Web-Anwendung sein. Eine Weitergabe erfolgt nur, soweit dies fuer den Betrieb erforderlich ist oder
+                  Empfänger können eingesetzte Relay-Betreiber sowie technische Dienstleister für den Betrieb der
+                  Web-Anwendung sein. Eine Weitergabe erfolgt nur, soweit dies für den Betrieb erforderlich ist oder
                   eine rechtliche Grundlage besteht.
                 </p>
               </section>
@@ -201,19 +201,19 @@ export function LegalDialog({
               <section className="space-y-1.5">
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">8. Betroffenenrechte</h4>
                 <p>
-                  Es bestehen Rechte auf Auskunft, Berichtigung, Loeschung, Einschraenkung, Datenuertragbarkeit und
+                  Es bestehen Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung, Datenübertragbarkeit und
                   Widerspruch nach den gesetzlichen Voraussetzungen.
                 </p>
                 <p>
-                  Zudem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehoerde, insbesondere am Sitz des
+                  Zudem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde, insbesondere am Sitz des
                   Verantwortlichen.
                 </p>
               </section>
 
               <section className="space-y-1.5">
-                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">9. Aenderungen</h4>
+                <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">9. Änderungen</h4>
                 <p>
-                  Diese Hinweise koennen angepasst werden, wenn sich rechtliche oder technische Rahmenbedingungen aendern.
+                  Diese Hinweise können angepasst werden, wenn sich rechtliche oder technische Rahmenbedingungen ändern.
                 </p>
               </section>
             </section>

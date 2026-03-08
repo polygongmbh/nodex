@@ -12,7 +12,7 @@ describe("LegalDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Datenschutz" }));
 
-    expect(screen.getByText("Datenschutzerklaerung")).toBeInTheDocument();
+    expect(screen.getByText("Datenschutzerklärung")).toBeInTheDocument();
     expect(screen.getByText(/Browser-Speicher \(localStorage\)/i)).toBeInTheDocument();
   });
 
