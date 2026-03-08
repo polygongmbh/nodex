@@ -2,11 +2,13 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Person, Relay, TaskCreateResult } from "@/types";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash } from "@/lib/nostr/geohash-location";
+
+const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
 vi.mock("@/lib/nostr/ndk-context", () => ({
   useNDK: () => ({
@@ -138,7 +140,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("keeps task and comment options disabled when sending without a selected channel tag", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
 
     render(
@@ -175,7 +177,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("disables sending when content has only tags and mentions", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
@@ -202,7 +204,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("allows focused-subtask send without explicit tags", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
@@ -273,7 +275,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits as comment on Alt+Enter when no hashtag token is being typed", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
@@ -313,7 +315,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits current kind on Ctrl+Enter and Cmd+Enter", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
@@ -368,7 +370,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits comment when send comment button is tapped", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
@@ -408,7 +410,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("shows offer/request options in feed view and submits listing metadata", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -768,7 +770,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("adds mention tag via Alt+Enter without inserting mention text", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
@@ -813,7 +815,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
@@ -861,7 +863,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits on Cmd/Ctrl+Enter even when mention autocomplete is open", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -888,11 +890,11 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalled();
     });
-    expect(onSubmit.mock.calls[0][0]).toContain("@al");
+    expect((onSubmit.mock.calls as unknown[][])[0][0]).toContain("@al");
   });
 
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
@@ -982,7 +984,7 @@ describe("UnifiedBottomBar auth gating", () => {
       configurable: true,
       value: { getCurrentPosition },
     });
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar

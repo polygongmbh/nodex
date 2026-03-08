@@ -3,7 +3,7 @@ import type { SavedFilterConfiguration, SavedFilterState } from "@/types";
 
 const SAVED_FILTER_CONFIGURATIONS_STORAGE_KEY = "nodex.saved-filter-configurations.v1";
 
-const savedFilterConfigurationSchema: z.ZodType<SavedFilterConfiguration> = z.object({
+const savedFilterConfigurationSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   relayIds: z.array(z.string()),
@@ -14,7 +14,7 @@ const savedFilterConfigurationSchema: z.ZodType<SavedFilterConfiguration> = z.ob
   updatedAt: z.string(),
 });
 
-const savedFilterStateSchema: z.ZodType<SavedFilterState> = z.object({
+const savedFilterStateSchema = z.object({
   activeConfigurationId: z.string().nullable(),
   configurations: z.array(savedFilterConfigurationSchema),
 });
@@ -38,7 +38,7 @@ export function loadSavedFilterState(): SavedFilterState {
         activeConfigurationId && existingIds.has(activeConfigurationId)
           ? activeConfigurationId
           : null,
-      configurations: parsed.data.configurations,
+      configurations: parsed.data.configurations as SavedFilterConfiguration[],
     };
   } catch {
     return EMPTY_STATE;

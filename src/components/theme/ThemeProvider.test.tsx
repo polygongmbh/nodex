@@ -42,7 +42,7 @@ class MatchMediaController {
     Object.defineProperty(queryList, "matches", {
       get: () => this.isDark,
     });
-    return queryList as MediaQueryList;
+    return queryList as unknown as MediaQueryList;
   };
 }
 

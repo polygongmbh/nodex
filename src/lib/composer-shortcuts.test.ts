@@ -42,6 +42,6 @@ describe("composer shortcut helpers", () => {
     };
     expect(isMetadataOnlyAutocompleteClick(withAltState)).toBe(true);
     expect(hasAnyModifierActive(withAltState)).toBe(true);
-    expect(hasAnyModifierActive({ ...base, key: "Enter" })).toBe(false);
+    expect(hasAnyModifierActive({ ...base, key: "Enter" } as any)).toBe(false);
   });
 });

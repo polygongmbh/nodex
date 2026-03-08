@@ -242,7 +242,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const shouldShowRelayVerificationToast = useCallback((
     relayUrl: string,
     operation: RelayOperation,
-    outcome: RelayVerificationEvent["outcome"]
+    outcome: RelayVerificationEvent["outcome"] | "verified"
   ): boolean => {
     const now = Date.now();
     const key = `${relayUrl}|${operation}|${outcome}`;
@@ -421,7 +421,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
       beginRelayOperation("read");
       const subscription = ndk.subscribe(
-        [{ kinds: [NostrEventKind.Metadata], authors: [pubkey] }],
+        [{ kinds: [NostrEventKind.Metadata as number], authors: [pubkey] }],
         { closeOnEose: true }
       );
 

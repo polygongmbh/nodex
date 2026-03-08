@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext } from "@/types";
+import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext, Nip99Metadata } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";

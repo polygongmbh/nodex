@@ -100,7 +100,7 @@ describe("MobileFilters management view", () => {
     ndkMock.user = {
       pubkey,
       npub: "npub1carol",
-      profile: {},
+      profile: { displayName: "" },
     };
 
     render(

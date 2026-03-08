@@ -844,7 +844,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalled();
     });
-    expect(onSubmit.mock.calls[0][0]).toContain("@al");
+    expect((onSubmit.mock.calls as unknown[][])[0][0]).toContain("@al");
   });
 
   it("removes metadata-only hashtag chip when clicked", async () => {

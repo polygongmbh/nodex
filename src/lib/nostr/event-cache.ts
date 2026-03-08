@@ -46,7 +46,7 @@ function listKnownCacheStorageKeys(): string[] {
   return Array.from(keys);
 }
 
-const cachedNostrEventSchema: z.ZodType<CachedNostrEvent> = z.object({
+const cachedNostrEventSchema = z.object({
   id: z.string(),
   pubkey: z.string(),
   created_at: z.number(),
@@ -132,7 +132,7 @@ export function loadCachedNostrEvents(scopeKey?: string): CachedNostrEvent[] {
     if (!raw) return [];
     const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return [];
-    return dedupeAndSortEvents(parsed.data);
+    return dedupeAndSortEvents(parsed.data as CachedNostrEvent[]);
   } catch {
     return [];
   }
@@ -162,7 +162,7 @@ export function removeCachedNostrEventById(eventId: string): void {
       if (!raw) return;
       const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
       if (!parsed.success) return;
-      const next = dedupeAndSortEvents(parsed.data).filter((event) => event.id !== normalizedId);
+      const next = dedupeAndSortEvents(parsed.data as CachedNostrEvent[]).filter((event) => event.id !== normalizedId);
       if (next.length === parsed.data.length) return;
       window.localStorage.setItem(storageKey, JSON.stringify(next));
     } catch {
