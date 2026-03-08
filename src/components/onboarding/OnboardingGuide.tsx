@@ -24,7 +24,7 @@ interface OnboardingGuideProps {
   uiContextKey?: string;
   initialSection: OnboardingInitialSection;
   sections: OnboardingSection[];
-  stepsBySection: Record<OnboardingSectionId, { id: string; title: string; description: string; target?: string }[]>;
+  stepsBySection: Record<OnboardingSectionId, OnboardingStep[]>;
   onClose: () => void;
   onComplete: (lastStep: number) => void;
   onActiveSectionChange?: (section: OnboardingSectionId | null) => void;
