@@ -275,7 +275,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits as comment on Alt+Enter when no hashtag token is being typed", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
