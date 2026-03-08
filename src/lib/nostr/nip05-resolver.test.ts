@@ -13,7 +13,7 @@ describe("resolveNip05Identifier", () => {
     global.fetch = vi.fn(async () => ({
       ok: true,
       json: async () => ({ names: { alice: "a".repeat(64) } }),
-    })) as typeof fetch;
+    })) as unknown as typeof fetch;
 
     const result = await resolveNip05Identifier("alice@example.com");
     expect(result).toBe("a".repeat(64));
