@@ -1213,9 +1213,9 @@ export function UnifiedBottomBar({
       )}
 
       {/* Input Area */}
-      <div className="flex items-stretch gap-2 p-3">
+      <div className="flex items-stretch gap-2 px-3 pb-3 pt-2">
         <div className="flex-1">
-          <div className="flex h-[3.3rem] items-stretch gap-2 text-sm">
+          <div className="flex h-[2.75rem] items-stretch gap-2 text-sm">
             <div className="flex-1 relative">
               {hasComposeText ? (
                 <button
