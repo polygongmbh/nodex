@@ -603,7 +603,8 @@ export function FeedView({
                           aria-label={t("tasks.actions.setStatus")}
                           title={getStatusButtonTitle(task)}
                           className={cn(
-                            "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                            "flex-shrink-0 mt-0.5 rounded transition-colors",
+                            isMobile ? "p-1.5" : "p-0.5",
                             canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                           )}
                         >
