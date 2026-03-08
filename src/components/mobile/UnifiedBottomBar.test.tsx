@@ -140,7 +140,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("keeps task and comment options disabled when sending without a selected channel tag", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
 
     render(
