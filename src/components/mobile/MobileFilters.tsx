@@ -556,7 +556,7 @@ export function MobileFilters({
                   key={person.id}
                   onClick={() => onPersonToggle(person.id)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
+                    "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm active:scale-95",
                     person.isSelected
                       ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                       : "border-border hover:bg-muted"
@@ -566,12 +566,12 @@ export function MobileFilters({
                     id={person.id}
                     displayName={person.displayName || person.name}
                     avatarUrl={person.avatar}
-                    className="w-5 h-5"
+                    className="w-6 h-6"
                   />
                   <span className="truncate max-w-[9rem]" title={person.name}>
                     {personLabel}
                   </span>
-                  {person.isSelected && <Check className="w-3 h-3" />}
+                  {person.isSelected && <Check className="w-3.5 h-3.5" />}
                 </button>
               );
             })}
