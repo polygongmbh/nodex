@@ -132,7 +132,7 @@ export function loadCachedNostrEvents(scopeKey?: string): CachedNostrEvent[] {
     if (!raw) return [];
     const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return [];
-    return dedupeAndSortEvents(parsed.data);
+    return dedupeAndSortEvents(parsed.data as CachedNostrEvent[]);
   } catch {
     return [];
   }
