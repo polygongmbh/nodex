@@ -56,7 +56,7 @@ const cachedNostrEventSchema = z.object({
   sig: z.string().optional(),
   relayUrl: z.string().optional(),
   relayUrls: z.array(z.string()).optional(),
-}) satisfies z.ZodType<CachedNostrEvent>;
+});
 const cachedNostrEventsSchema = z.array(cachedNostrEventSchema);
 
 function normalizeRelayUrl(url: string): string {
