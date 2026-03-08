@@ -24,7 +24,7 @@ describe("resolveNip05Identifier", () => {
       ok: true,
       json: async () => ({ names: { alice: "a".repeat(64) } }),
     }));
-    global.fetch = fetchSpy as typeof fetch;
+    global.fetch = fetchSpy as unknown as typeof fetch;
 
     const first = await resolveNip05Identifier("alice@example.com");
     const second = await resolveNip05Identifier("alice@example.com");
