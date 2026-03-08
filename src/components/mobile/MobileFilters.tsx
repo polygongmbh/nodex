@@ -225,31 +225,31 @@ export function MobileFilters({
               {!user ? (
                 <button
                   onClick={onSignInClick}
-                  className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5 touch-target-sm active:scale-95 transition-transform"
                 >
-                  <LogIn className="w-3.5 h-3.5" />
+                  <LogIn className="w-4 h-4" />
                   {t("filters.profile.signin")}
                 </button>
               ) : (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsProfileEditorOpen((prev) => !prev)}
-                    className="px-3 py-1.5 rounded-md text-sm border border-border inline-flex items-center gap-1"
+                    className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
                   >
-                    <Pencil className="w-3 h-3" />
+                    <Pencil className="w-3.5 h-3.5" />
                     {t("filters.profile.edit")}
                     <ChevronDown
                       className={cn(
-                        "w-3 h-3 transition-transform",
+                        "w-3.5 h-3.5 transition-transform",
                         isProfileEditorOpen && "rotate-180"
                       )}
                     />
                   </button>
                   <button
                     onClick={logout}
-                    className="px-3 py-1.5 rounded-md text-sm border border-destructive/40 text-destructive flex items-center gap-1"
+                    className="px-3 py-2 rounded-lg text-sm border border-destructive/40 text-destructive flex items-center gap-1.5 touch-target-sm active:bg-destructive/10 transition-colors"
                   >
-                    <LogOut className="w-3 h-3" />
+                    <LogOut className="w-3.5 h-3.5" />
                     {t("filters.profile.signout")}
                   </button>
                 </div>
