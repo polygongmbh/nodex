@@ -437,10 +437,10 @@ export function MobileFilters({
             />
             <button
               onClick={handleAddRelay}
-              className="px-3 h-9 rounded-md border border-border text-sm flex items-center gap-1"
+              className="px-3 h-10 rounded-lg border border-border text-sm flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
               aria-label={t("filters.feeds.addAria")}
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               {t("filters.feeds.add")}
             </button>
           </div>
