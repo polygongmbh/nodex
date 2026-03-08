@@ -894,7 +894,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
