@@ -321,11 +321,11 @@ export function MobileFilters({
                     className="min-h-20"
                   />
                 </div>
-                <div className="flex items-center justify-end gap-2 pt-1">
+                <div className="flex items-center justify-end gap-2 pt-2">
                   {!needsProfileSetup && (
                     <button
                       onClick={() => setIsProfileEditorOpen(false)}
-                      className="px-3 py-1.5 rounded-md text-sm border border-border"
+                      className="px-4 py-2 rounded-lg text-sm border border-border touch-target-sm active:bg-muted transition-colors"
                       disabled={isSavingProfile}
                     >
                       {t("filters.profile.cancel")}
@@ -333,7 +333,7 @@ export function MobileFilters({
                   )}
                   <button
                     onClick={handleSaveProfile}
-                    className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground"
+                    className="px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground touch-target-sm active:scale-95 transition-transform"
                     disabled={isSavingProfile || !isProfileNameValid}
                   >
                     {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
