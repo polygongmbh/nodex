@@ -206,6 +206,21 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Minimum 44px touch target for mobile interactive elements */
+  .touch-target {
+    min-height: 2.75rem; /* 44px */
+    min-width: 2.75rem;
+  }
+
+  .touch-target-sm {
+    min-height: 2.25rem; /* 36px */
+    min-width: 2.25rem;
+  }
+
   .task-hover-text {
     transition: color 180ms ease;
   }

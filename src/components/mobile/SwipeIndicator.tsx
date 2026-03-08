@@ -15,7 +15,7 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
 
   return (
     <div 
-      className="flex items-center justify-center gap-1.5 py-2"
+      className="flex items-center justify-center gap-1.5 py-1"
       role="status"
       aria-live="polite"
       aria-label={t("navigation.mobile.currentViewPosition")}
@@ -23,10 +23,10 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
       {/* Management dot */}
       <div
         className={cn(
-          "w-1.5 h-1.5 rounded-full transition-all duration-200",
+          "h-1 rounded-full transition-all duration-200",
           showFilters 
-            ? "w-4 bg-primary" 
-            : "bg-muted-foreground/30"
+            ? "w-3.5 bg-primary" 
+            : "w-1 bg-muted-foreground/30"
         )}
         aria-hidden="true"
       />
@@ -36,10 +36,10 @@ export function SwipeIndicator({ views, currentView, showFilters = false }: Swip
         <div
           key={view}
           className={cn(
-            "h-1.5 rounded-full transition-all duration-200",
+            "h-1 rounded-full transition-all duration-200",
             !showFilters && currentIndex === index
-              ? "w-4 bg-primary" 
-              : "w-1.5 bg-muted-foreground/30"
+              ? "w-3.5 bg-primary" 
+              : "w-1 bg-muted-foreground/30"
           )}
           aria-hidden="true"
         />

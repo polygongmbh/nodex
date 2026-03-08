@@ -603,7 +603,8 @@ export function FeedView({
                           aria-label={t("tasks.actions.setStatus")}
                           title={getStatusButtonTitle(task)}
                           className={cn(
-                            "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                            "flex-shrink-0 mt-0.5 rounded transition-colors",
+                            isMobile ? "p-1.5" : "p-0.5",
                             canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                           )}
                         >
@@ -654,7 +655,8 @@ export function FeedView({
                         }
                         aria-label={listingStatus === "sold" ? "Listing sold" : "Listing active"}
                         className={cn(
-                          "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                          "flex-shrink-0 mt-0.5 rounded transition-colors",
+                          isMobile ? "p-1.5" : "p-0.5",
                           canUpdateListingStatus ? "hover:bg-muted cursor-pointer" : "cursor-default"
                         )}
                       >
@@ -675,7 +677,7 @@ export function FeedView({
                         )}
                       </button>
                     ) : (
-                      <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                      <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4 mx-1.5" : "w-5 h-5")} />
                     )
                   )}
 
