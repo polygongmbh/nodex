@@ -469,7 +469,7 @@ export function MobileFilters({
                 <div
                   key={relay.id}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
+                    "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm",
                     relay.isActive
                       ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                       : "border-border hover:bg-muted",
@@ -478,28 +478,27 @@ export function MobileFilters({
                 >
                   <button
                     onClick={() => onRelayToggle(relay.id)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 flex-1 min-w-0"
                   >
-                    <RelayIcon className="w-4 h-4" />
-                    {relay.name}
+                    <RelayIcon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{relay.name}</span>
                     <span
                       className={cn(
-                        "inline-block h-1.5 w-1.5 rounded-full",
+                        "inline-block h-2 w-2 rounded-full shrink-0",
                         connectionDotClass
                       )}
                       title={resolvedConnectionStatus}
                       aria-label={resolvedConnectionStatus}
                     />
-                    {relay.isActive && <Check className="w-3 h-3" />}
+                    {relay.isActive && <Check className="w-3.5 h-3.5 shrink-0" />}
                   </button>
                   {relay.url && relay.id !== "demo" && (
                     <button
                       onClick={() => onRemoveRelay(relay.url!)}
-                      className="ml-1 text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
+                      className="ml-1 p-1.5 rounded text-muted-foreground hover:text-destructive active:bg-destructive/10 inline-flex items-center gap-1 touch-target-sm"
                       aria-label={t("filters.feeds.removeAria", { name: relay.name })}
                     >
-                      <Trash2 className="w-3 h-3" />
-                      {t("filters.feeds.remove")}
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
