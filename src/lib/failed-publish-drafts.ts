@@ -41,7 +41,7 @@ const personSchema = z.object({
   isOnline: z.boolean(),
   isSelected: z.boolean(),
 });
-const failedPublishDraftSchema: z.ZodType<FailedPublishDraft> = z.object({
+const failedPublishDraftSchema = z.object({
   id: z.string(),
   author: personSchema,
   content: z.string(),
