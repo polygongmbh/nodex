@@ -999,11 +999,11 @@ export function UnifiedBottomBar({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60 active:bg-muted transition-colors shrink-0 touch-target-sm"
               aria-label="Add attachment"
               title="Add attachment"
             >
-              <Paperclip className="w-3.5 h-3.5" />
+              <Paperclip className="w-4 h-4" />
             </button>
           )}
           {showInlineTaskSubmitBlock ? (
