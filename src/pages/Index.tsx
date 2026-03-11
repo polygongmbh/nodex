@@ -112,6 +112,7 @@ import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
 import { normalizeGeohash } from "@/lib/nostr/geohash-location";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
+import { useFilterUrlSync } from "@/hooks/use-filter-url-sync";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { removeCachedNostrEventById, type CachedNostrEvent } from "@/lib/nostr/event-cache";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
