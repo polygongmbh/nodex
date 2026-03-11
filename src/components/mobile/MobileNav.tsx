@@ -21,7 +21,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   ];
   return (
     <nav 
-      className="flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-2 py-1.5 safe-area-top gap-1"
+      className="flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm mt-2 px-2 py-2.5 safe-area-top gap-1"
       role="tablist"
       aria-label={t("navigation.aria.views")}
       data-onboarding="mobile-nav"
@@ -36,7 +36,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
           aria-label={t("navigation.views.switchTo", { view: item.label })}
           title={t("navigation.views.switchTo", { view: item.label })}
           className={cn(
-            "flex flex-col items-center justify-center gap-1 rounded-lg transition-colors flex-1 min-w-0 touch-target focus:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-95",
+            "flex flex-col items-center justify-center gap-1.5 rounded-lg transition-colors flex-1 min-w-0 touch-target focus:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-95 py-1",
             currentView === item.id
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:text-foreground active:bg-muted/50"
