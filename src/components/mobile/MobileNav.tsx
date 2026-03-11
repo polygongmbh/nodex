@@ -21,7 +21,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   ];
   return (
     <nav 
-      className="flex items-center justify-around border-b border-border bg-background/95 backdrop-blur-sm px-1 py-1 safe-area-top"
+      className="flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-2 py-1.5 safe-area-top gap-1"
       role="tablist"
       aria-label={t("navigation.aria.views")}
       data-onboarding="mobile-nav"
@@ -43,7 +43,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
           )}
         >
           {item.icon}
-          <span className="text-[0.65rem] font-medium truncate leading-none">{item.label}</span>
+          <span className="text-[0.65rem] font-medium truncate leading-none px-0.5">{item.label}</span>
         </button>
       ))}
     </nav>
