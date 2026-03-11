@@ -613,6 +613,14 @@ const Index = () => {
     }));
   }, [composeChannels, channelFilterStates]);
 
+  // Sync channel/people filters ↔ URL search params
+  useFilterUrlSync({
+    channelFilterStates,
+    people,
+    setChannelFilterStates,
+    setPeople,
+  });
+
   useEffect(() => {
     saveFailedPublishDrafts(failedPublishDrafts);
   }, [failedPublishDrafts]);
