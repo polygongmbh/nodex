@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { OnboardingGuide } from "./OnboardingGuide";
 import type { OnboardingInitialSection, OnboardingSection, OnboardingSectionId, OnboardingStep } from "./onboarding-types";
@@ -201,7 +202,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
-  it("shows breadcrumb recovery actions when breadcrumb target is unavailable", () => {
+  it("does not render breadcrumb recovery prompt when target is unavailable", () => {
     vi.useFakeTimers();
     renderGuide({
       content: <div data-onboarding="task-list">Task list</div>,
@@ -214,22 +215,49 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
 
     act(() => {
-      vi.advanceTimersByTime(1000);
+      vi.advanceTimersByTime(1500);
     });
 
-    expect(screen.getByText("Breadcrumb is not visible right now")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Open a task context" }));
-    expect(screen.getByText("Open task context")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.queryByText("Breadcrumb is not visible right now")).not.toBeInTheDocument();
     expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
-    expect(screen.getByText("Breadcrumb is not visible right now")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "Skip this step" }));
-    expect(screen.getByText("Next area")).toBeInTheDocument();
+  it("auto-focuses the first task when breadcrumb target is unavailable", async () => {
+    function BreadcrumbAutoFocusHarness() {
+      const [showBreadcrumb, setShowBreadcrumb] = useState(false);
+      return (
+        <div>
+          <div data-onboarding="task-list">
+            Task list
+            <button type="button" data-task-id="task-1" onClick={() => setShowBreadcrumb(true)}>
+              Task 1
+            </button>
+          </div>
+          {showBreadcrumb ? <div data-onboarding="focused-breadcrumb">Breadcrumb row</div> : null}
+        </div>
+      );
+    }
+
+    vi.useFakeTimers();
+    await withMockTargetRect(async () => {
+      renderGuide({
+        content: <BreadcrumbAutoFocusHarness />,
+      });
+
+      fireEvent.click(screen.getByText("Task list"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+
+      expect(screen.getByText("Breadcrumb row")).toBeInTheDocument();
+      expect(screen.queryByText("Breadcrumb is not visible right now")).not.toBeInTheDocument();
+    });
     vi.useRealTimers();
   });
 

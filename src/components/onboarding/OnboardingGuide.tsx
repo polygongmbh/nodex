@@ -46,7 +46,7 @@ interface RectBox {
 }
 
 const GUIDE_ACTION_TIMEOUT_MS = 5000;
-const BREADCRUMB_RECOVERY_DELAY_MS = 900;
+const BREADCRUMB_AUTOFOCUS_DELAY_MS = 120;
 
 function renderGuideTextWithItalics(text: string) {
   return text.split(/(\*[^*]+\*)/g).filter(Boolean).map((part, index) => {
@@ -82,7 +82,6 @@ export function OnboardingGuide({
   const [resolvedTarget, setResolvedTarget] = useState<HTMLElement | null>(null);
   const [interactionSatisfied, setInteractionSatisfied] = useState(false);
   const [interactionTimedOut, setInteractionTimedOut] = useState(false);
-  const [showMissingBreadcrumbFallback, setShowMissingBreadcrumbFallback] = useState(false);
   const [skipDelayElapsed, setSkipDelayElapsed] = useState(false);
   const [isManualSession, setIsManualSession] = useState(Boolean(manualStart || initialSection === null));
   const [manualSelectedSection, setManualSelectedSection] = useState<OnboardingSectionId | null>(null);
@@ -135,6 +134,20 @@ export function OnboardingGuide({
     if (rect.width <= 0 || rect.height <= 0) return false;
     const style = window.getComputedStyle(target);
     if (style.display === "none" || style.visibility === "hidden") return false;
+    return true;
+  }, [getBestVisibleTarget]);
+
+  const tryAutoFocusFirstTaskForBreadcrumb = useCallback((): boolean => {
+    const taskList = getBestVisibleTarget('[data-onboarding="task-list"]');
+    if (!taskList) return false;
+    const firstVisibleTask = Array.from(taskList.querySelectorAll<HTMLElement>("[data-task-id]")).find((task) => {
+      const rect = task.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return false;
+      const style = window.getComputedStyle(task);
+      return style.display !== "none" && style.visibility !== "hidden";
+    });
+    if (!firstVisibleTask) return false;
+    firstVisibleTask.click();
     return true;
   }, [getBestVisibleTarget]);
 
@@ -230,7 +243,6 @@ export function OnboardingGuide({
     setInteractionSatisfied(!step.requiredAction);
     setResolvedTarget(null);
     setTargetRect(null);
-    setShowMissingBreadcrumbFallback(false);
   }, [activeSection, activeSteps, isOpen, stepIndex]);
 
   useEffect(() => {
@@ -448,25 +460,16 @@ export function OnboardingGuide({
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
     const step = activeSteps[stepIndex];
-    if (!step || !isNavigationBreadcrumbStep(step.id)) {
-      setShowMissingBreadcrumbFallback(false);
-      return;
-    }
-    if (isTargetVisible('[data-onboarding="focused-breadcrumb"]')) {
-      setShowMissingBreadcrumbFallback(false);
-      return;
-    }
+    if (!step || !isNavigationBreadcrumbStep(step.id)) return;
 
     const timeout = window.setTimeout(() => {
-      if (!isTargetVisible('[data-onboarding="focused-breadcrumb"]')) {
-        setShowMissingBreadcrumbFallback(true);
-      }
-    }, BREADCRUMB_RECOVERY_DELAY_MS);
-
+      if (isTargetVisible('[data-onboarding="focused-breadcrumb"]')) return;
+      tryAutoFocusFirstTaskForBreadcrumb();
+    }, BREADCRUMB_AUTOFOCUS_DELAY_MS);
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [activeSection, activeSteps, isOpen, isTargetVisible, stepIndex, uiContextKey]);
+  }, [activeSection, activeSteps, isOpen, isTargetVisible, stepIndex, tryAutoFocusFirstTaskForBreadcrumb, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -780,29 +783,6 @@ export function OnboardingGuide({
     });
   };
 
-  const handleSkipCurrentStep = () => {
-    if (isLastStep) {
-      onComplete(stepIndex);
-      onClose();
-      return;
-    }
-    setStepIndex((prev) => Math.min(prev + 1, activeSteps.length - 1));
-  };
-
-  const handleReturnToTaskFocusStep = () => {
-    const focusStepIndex = activeSteps.findIndex((step) => isNavigationFocusStep(step.id));
-    if (focusStepIndex >= 0) {
-      const focusStep = activeSteps[focusStepIndex];
-      if (focusStep) {
-        backUnlockedStepIdsRef.current.add(focusStep.id);
-      }
-      setShowMissingBreadcrumbFallback(false);
-      setStepIndex(focusStepIndex);
-      return;
-    }
-    handleBack();
-  };
-
   const getSectionIcon = (sectionId: OnboardingSectionId) => {
     switch (sectionId) {
       case "navigation":
@@ -1036,27 +1016,6 @@ export function OnboardingGuide({
                     <p className="text-xs text-primary/90 mt-2">
                       {renderGuideTextWithItalics(currentStep.actionPrompt)}
                     </p>
-                  )}
-                  {showMissingBreadcrumbFallback && (
-                    <div className="mt-3 rounded-md border border-border bg-muted/40 p-3 space-y-2">
-                      <p className="text-sm font-medium text-foreground">
-                        {t("onboarding.dialog.breadcrumbFallback.title")}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("onboarding.dialog.breadcrumbFallback.description")}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline" onClick={handleReturnToTaskFocusStep}>
-                          {t("onboarding.dialog.breadcrumbFallback.openTask")}
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={handleSkipCurrentStep}>
-                          {t("onboarding.dialog.breadcrumbFallback.skipStep")}
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={onClose}>
-                          {t("onboarding.dialog.breadcrumbFallback.endGuide")}
-                        </Button>
-                      </div>
-                    </div>
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-2">
