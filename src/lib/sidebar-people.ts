@@ -17,10 +17,28 @@ export function deriveSidebarPeople(
   minPosts: number = DEFAULT_MIN_POSTS
 ): Person[] {
   const statsByAuthorId = new Map<string, SidebarPersonStats>();
+  const peopleByAuthorId = new Map<string, Person>(
+    people.map((person) => [person.id.trim().toLowerCase(), person] as const)
+  );
 
   for (const task of tasks) {
     const authorId = task.author?.id?.trim().toLowerCase();
     if (!authorId) continue;
+    if (!peopleByAuthorId.has(authorId)) {
+      const fallbackAuthor = task.author;
+      const fallbackDisplayName =
+        fallbackAuthor.displayName?.trim() || fallbackAuthor.name?.trim() || fallbackAuthor.id.slice(0, 8);
+      peopleByAuthorId.set(authorId, {
+        id: fallbackAuthor.id,
+        name: fallbackAuthor.name?.trim() || fallbackDisplayName,
+        displayName: fallbackDisplayName,
+        nip05: fallbackAuthor.nip05,
+        avatar: fallbackAuthor.avatar,
+        isOnline: false,
+        onlineStatus: "offline",
+        isSelected: false,
+      });
+    }
 
     const nextTimestampMs = task.timestamp instanceof Date ? task.timestamp.getTime() : Number.NEGATIVE_INFINITY;
     const previous = statsByAuthorId.get(authorId);
@@ -40,8 +58,9 @@ export function deriveSidebarPeople(
   }
 
   const nowMs = now.getTime();
+  const candidatePeople = Array.from(peopleByAuthorId.values());
 
-  return people
+  return candidatePeople
     .map((person) => {
       const stats = statsByAuthorId.get(person.id.trim().toLowerCase());
       if (!stats || stats.count < minPosts) {
