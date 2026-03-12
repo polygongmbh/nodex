@@ -202,6 +202,40 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
+  it("auto-advances on initial breadcrumb interaction", async () => {
+    vi.useFakeTimers();
+    await withMockTargetRect(async () => {
+      render(
+        <div>
+          <div data-onboarding="task-list">Task list</div>
+          <div data-onboarding="focused-breadcrumb">Breadcrumb row</div>
+          <OnboardingGuide
+            isOpen
+            initialSection="navigation"
+            sections={sections}
+            stepsBySection={baseStepsBySection}
+            onClose={vi.fn()}
+            onComplete={vi.fn()}
+          />
+        </div>
+      );
+
+      fireEvent.click(screen.getByText("Task list"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("Breadcrumb row"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+
+      expect(screen.getByText("Next area")).toBeInTheDocument();
+    });
+    vi.useRealTimers();
+  });
+
   it("does not render breadcrumb recovery prompt when target is unavailable", () => {
     vi.useFakeTimers();
     renderGuide({
@@ -464,7 +498,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
           title: "Use breadcrumbs",
           description: "Use breadcrumb navigation.",
           target: '[data-onboarding="focused-breadcrumb"]',
-          requiredAction: "click-target",
         },
       ],
       filters: [],
@@ -506,6 +539,256 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     });
 
     expect(screen.getByText("Open task context")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("advances revisited breadcrumb step on uiContextKey changes when breadcrumb is no longer visible", async () => {
+    vi.useFakeTimers();
+    const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+      navigation: [
+        {
+          id: "navigation-focus",
+          title: "Open task context",
+          description: "Open task context.",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+        {
+          id: "navigation-breadcrumb",
+          title: "Use breadcrumbs",
+          description: "Use breadcrumb navigation.",
+          target: '[data-onboarding="focused-breadcrumb"]',
+          requiredAction: "click-target",
+        },
+        {
+          id: "navigation-next",
+          title: "Next area",
+          description: "Moved forward.",
+          target: '[data-onboarding="task-list"]',
+        },
+      ],
+      filters: [],
+      compose: [],
+    };
+
+    await withMockTargetRect(async () => {
+      const { rerender } = render(
+        <div>
+          <div data-onboarding="task-list">
+            <button type="button">Task list</button>
+            <button type="button" data-task-id="task-1">Task 1</button>
+          </div>
+          <div data-onboarding="focused-breadcrumb">Breadcrumb row</div>
+          <OnboardingGuide
+            isOpen
+            uiContextKey="tree:"
+            initialSection="navigation"
+            sections={sections}
+            stepsBySection={stepsBySection}
+            onClose={vi.fn()}
+            onComplete={vi.fn()}
+          />
+        </div>
+      );
+
+      fireEvent.click(screen.getByText("Task list"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+      fireEvent.click(screen.getByText("Breadcrumb row"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.getByText("Next area")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+
+      rerender(
+        <div>
+          <div data-onboarding="task-list">
+            <button type="button">Task list</button>
+            <button type="button" data-task-id="task-1">Task 1</button>
+          </div>
+          <div data-onboarding="focused-breadcrumb" style={{ display: "none" }}>Breadcrumb row</div>
+          <OnboardingGuide
+            isOpen
+            uiContextKey="feed:"
+            initialSection="navigation"
+            sections={sections}
+            stepsBySection={stepsBySection}
+            onClose={vi.fn()}
+            onComplete={vi.fn()}
+          />
+        </div>
+      );
+
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+      expect(screen.getByText("Next area")).toBeInTheDocument();
+    });
+    vi.useRealTimers();
+  });
+
+  it("does not auto-skip channels step after breadcrumb flow", async () => {
+    vi.useFakeTimers();
+    const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+      navigation: [
+        {
+          id: "navigation-focus",
+          title: "Open task context",
+          description: "Open task context.",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+        {
+          id: "navigation-breadcrumb",
+          title: "Use breadcrumbs",
+          description: "Use breadcrumb navigation.",
+          target: '[data-onboarding="focused-breadcrumb"]',
+          requiredAction: "click-target",
+        },
+      ],
+      filters: [
+        {
+          id: "filters-relays",
+          title: "Relay filters",
+          description: "Use relay filters.",
+          target: '[data-onboarding="relays-section"]',
+          requiredAction: "click-target",
+        },
+        {
+          id: "filters-channels",
+          title: "Channel filters",
+          description: "Use channel filters.",
+          target: '[data-onboarding="channels-section"]',
+        },
+        {
+          id: "filters-next",
+          title: "Next filters step",
+          description: "Moved forward.",
+          target: '[data-onboarding="channels-section"]',
+        },
+      ],
+      compose: [],
+    };
+
+    await withMockTargetRect(async () => {
+      render(
+        <div>
+          <div data-onboarding="task-list">Task list</div>
+          <div data-onboarding="focused-breadcrumb">Breadcrumb row</div>
+          <div data-onboarding="relays-section">Relays</div>
+          <div data-onboarding="channels-section">Channels</div>
+          <OnboardingGuide
+            isOpen
+            initialSection="all"
+            sections={sections}
+            stepsBySection={stepsBySection}
+            onClose={vi.fn()}
+            onComplete={vi.fn()}
+          />
+        </div>
+      );
+
+      fireEvent.click(screen.getByText("Task list"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("Breadcrumb row"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.getByText("Relay filters")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("Relays"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.getByText("Channel filters")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(800);
+      });
+      expect(screen.getByText("Channel filters")).toBeInTheDocument();
+      expect(screen.queryByText("Next filters step")).not.toBeInTheDocument();
+    });
+    vi.useRealTimers();
+  });
+
+  it("re-runs breadcrumb auto-focus when revisiting the breadcrumb step", async () => {
+    vi.useFakeTimers();
+    const onTaskOpen = vi.fn();
+    const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+      navigation: [
+        {
+          id: "navigation-focus",
+          title: "Open task context",
+          description: "Open task context.",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+        {
+          id: "navigation-breadcrumb",
+          title: "Use breadcrumbs",
+          description: "Use breadcrumb navigation.",
+          target: '[data-onboarding="focused-breadcrumb"]',
+        },
+        {
+          id: "navigation-next",
+          title: "Next area",
+          description: "Moved forward.",
+          target: '[data-onboarding="task-list"]',
+        },
+      ],
+      filters: [],
+      compose: [],
+    };
+
+    await withMockTargetRect(async () => {
+      render(
+        <div>
+          <div data-onboarding="task-list">
+            <button type="button" onClick={onTaskOpen}>
+              Task list
+            </button>
+            <button type="button" data-task-id="task-1" onClick={onTaskOpen}>
+              Task 1
+            </button>
+          </div>
+          <OnboardingGuide
+            isOpen
+            initialSection="navigation"
+            sections={sections}
+            stepsBySection={stepsBySection}
+            onClose={vi.fn()}
+            onComplete={vi.fn()}
+          />
+        </div>
+      );
+
+      fireEvent.click(screen.getByText("Task list"));
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+      const callsBeforeReturn = onTaskOpen.mock.calls.length;
+
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+      expect(screen.getByText("Next area")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+      expect(onTaskOpen).toHaveBeenCalledTimes(callsBeforeReturn + 1);
+    });
+
     vi.useRealTimers();
   });
 

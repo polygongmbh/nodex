@@ -6,7 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Added a runtime persistence guard that can be enabled via `?nodexNoStorage=1` (or `VITE_DISABLE_CLIENT_PERSISTENCE=true`) to disable browser local/session storage, cookie writes, and browser cache APIs for the active session.
-- Onboarding breadcrumb guidance now auto-focuses the first visible task immediately when the breadcrumb row is missing, without showing a fallback recovery prompt.
+- Onboarding breadcrumb guidance now uses a stable flow: it auto-focuses a task once on breadcrumb-step entry when needed, advances on initial breadcrumb interaction, and on revisits only auto-advances when breadcrumb context disappears.
 - Starting the onboarding tour with no available tasks now auto-loads the demo feed for the session so navigation steps have usable target data.
 - Demo relay bootstrap for onboarding now seeds demo `kind:0` profile metadata events so sidebar People filters populate from metadata instead of synthetic fallback entries.
 - Demo feed seeding now also injects centralized fixed-timestamp Nostr fixture events (including nameless authors) alongside existing generated demo tasks.

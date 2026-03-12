@@ -90,11 +90,15 @@ export function OnboardingGuide({
   const [guideCardSize, setGuideCardSize] = useState({ width: 380, height: 320 });
   const guideCardRef = useRef<HTMLDivElement | null>(null);
   const manualSelectedSectionRef = useRef<OnboardingSectionId | null>(null);
-  const autoAdvancedStepIdsRef = useRef<Set<string>>(new Set());
-  const pendingAutoAdvanceStepIdsRef = useRef<Set<string>>(new Set());
+  const autoAdvancedStepEntryKeysRef = useRef<Set<string>>(new Set());
+  const pendingAutoAdvanceStepEntryKeysRef = useRef<Set<string>>(new Set());
   const stepEntryContextKeyRef = useRef<{ stepId: string; contextKey?: string } | null>(null);
   const previousStepIdRef = useRef<string | null>(null);
   const backUnlockedStepIdsRef = useRef<Set<string>>(new Set());
+  const breadcrumbAutofocusStepEntryRef = useRef<string | null>(null);
+  const breadcrumbWasVisibleThisEntryRef = useRef(false);
+  const stepEntryCounterRef = useRef(0);
+  const currentStepEntryKeyRef = useRef<string>("");
 
   const getBestVisibleTarget = useCallback((selector: string): HTMLElement | null => {
     const matches = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
@@ -167,13 +171,14 @@ export function OnboardingGuide({
     return stepsBySection[activeSection];
   }, [activeSection, allSteps, stepsBySection]);
 
-  const advanceStep = useCallback((stepId: string) => {
-    if (autoAdvancedStepIdsRef.current.has(stepId)) return;
-    if (pendingAutoAdvanceStepIdsRef.current.has(stepId)) return;
-    pendingAutoAdvanceStepIdsRef.current.add(stepId);
+  const advanceStep = useCallback((stepId: string, entryKeyOverride?: string) => {
+    const entryKey = entryKeyOverride || currentStepEntryKeyRef.current || `${stepId}:fallback`;
+    if (autoAdvancedStepEntryKeysRef.current.has(entryKey)) return;
+    if (pendingAutoAdvanceStepEntryKeysRef.current.has(entryKey)) return;
+    pendingAutoAdvanceStepEntryKeysRef.current.add(entryKey);
     const timeout = window.setTimeout(() => {
-      pendingAutoAdvanceStepIdsRef.current.delete(stepId);
-      autoAdvancedStepIdsRef.current.add(stepId);
+      pendingAutoAdvanceStepEntryKeysRef.current.delete(entryKey);
+      autoAdvancedStepEntryKeysRef.current.add(entryKey);
       const lastStep = stepIndex >= activeSteps.length - 1;
       if (lastStep) {
         onComplete(stepIndex);
@@ -184,7 +189,7 @@ export function OnboardingGuide({
     }, isManualSession ? 0 : 220);
     return () => {
       window.clearTimeout(timeout);
-      pendingAutoAdvanceStepIdsRef.current.delete(stepId);
+      pendingAutoAdvanceStepEntryKeysRef.current.delete(entryKey);
     };
   }, [activeSteps.length, isManualSession, onClose, onComplete, stepIndex]);
 
@@ -199,10 +204,14 @@ export function OnboardingGuide({
     setInteractionSatisfied(false);
     setInteractionTimedOut(false);
     setSkipDelayElapsed(false);
-    autoAdvancedStepIdsRef.current.clear();
-    pendingAutoAdvanceStepIdsRef.current.clear();
+    autoAdvancedStepEntryKeysRef.current.clear();
+    pendingAutoAdvanceStepEntryKeysRef.current.clear();
     previousStepIdRef.current = null;
     backUnlockedStepIdsRef.current.clear();
+    breadcrumbAutofocusStepEntryRef.current = null;
+    breadcrumbWasVisibleThisEntryRef.current = false;
+    stepEntryCounterRef.current = 0;
+    currentStepEntryKeyRef.current = "";
     setPickerMeasuredOnce(false);
   }, [isOpen, initialSection, manualStart]);
 
@@ -243,7 +252,19 @@ export function OnboardingGuide({
     setInteractionSatisfied(!step.requiredAction);
     setResolvedTarget(null);
     setTargetRect(null);
+    breadcrumbAutofocusStepEntryRef.current = null;
+    breadcrumbWasVisibleThisEntryRef.current = false;
+    stepEntryCounterRef.current += 1;
+    currentStepEntryKeyRef.current = `${step.id}:${stepEntryCounterRef.current}`;
   }, [activeSection, activeSteps, isOpen, stepIndex]);
+
+  useEffect(() => {
+    if (!isOpen || activeSection === null) return;
+    const step = activeSteps[stepIndex];
+    if (!step || !isNavigationBreadcrumbStep(step.id)) return;
+    if (!isTargetVisible('[data-onboarding="focused-breadcrumb"]')) return;
+    breadcrumbWasVisibleThisEntryRef.current = true;
+  }, [activeSection, activeSteps, isOpen, isTargetVisible, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || !activeSection || activeSteps.length === 0) return;
@@ -382,9 +403,11 @@ export function OnboardingGuide({
     const step = activeSteps[stepIndex];
     if (!step?.requiredAction) return;
     if (!interactionSatisfied) return;
-    if (autoAdvancedStepIdsRef.current.has(step.id)) return;
+    const isRevisitedBreadcrumbStep =
+      isNavigationBreadcrumbStep(step.id) && backUnlockedStepIdsRef.current.has(step.id);
+    if (isRevisitedBreadcrumbStep) return;
 
-    return advanceStep(step.id);
+    return advanceStep(step.id, currentStepEntryKeyRef.current);
   }, [activeSection, activeSteps, advanceStep, interactionSatisfied, isOpen, stepIndex]);
 
   useEffect(() => {
@@ -401,10 +424,10 @@ export function OnboardingGuide({
     const evaluate = () => {
       const breadcrumbVisible = isTargetVisible('[data-onboarding="focused-breadcrumb"]');
       if (isFocusStep && breadcrumbVisible) {
-        cleanupAdvance = advanceStep(step.id);
+        cleanupAdvance = advanceStep(step.id, currentStepEntryKeyRef.current);
       }
       if (isBreadcrumbStep && !breadcrumbVisible) {
-        cleanupAdvance = advanceStep(step.id);
+        cleanupAdvance = advanceStep(step.id, currentStepEntryKeyRef.current);
       }
     };
 
@@ -421,22 +444,30 @@ export function OnboardingGuide({
     if (!uiContextKey) return;
     const step = activeSteps[stepIndex];
     if (!step) return;
-    if (step.requiredAction !== "click-target") return;
-    if (autoAdvancedStepIdsRef.current.has(step.id)) return;
-
-    const contextDrivenStepIds = new Set([
-      "navigation-switcher",
-      "mobile-navigation-nav",
-    ]);
-    if (!contextDrivenStepIds.has(step.id)) return;
 
     const entry = stepEntryContextKeyRef.current;
     if (!entry || entry.stepId !== step.id) return;
     if (!entry.contextKey) return;
     if (entry.contextKey === uiContextKey) return;
 
-    return advanceStep(step.id);
-  }, [activeSection, activeSteps, advanceStep, isOpen, stepIndex, uiContextKey]);
+    if (isNavigationBreadcrumbStep(step.id)) {
+      if (!backUnlockedStepIdsRef.current.has(step.id)) return;
+      if (!breadcrumbWasVisibleThisEntryRef.current) return;
+      if (!isTargetVisible('[data-onboarding="focused-breadcrumb"]')) {
+        return advanceStep(step.id, currentStepEntryKeyRef.current);
+      }
+      return;
+    }
+
+    if (step.requiredAction !== "click-target") return;
+    const contextDrivenStepIds = new Set([
+      "navigation-switcher",
+      "mobile-navigation-nav",
+    ]);
+    if (!contextDrivenStepIds.has(step.id)) return;
+
+    return advanceStep(step.id, currentStepEntryKeyRef.current);
+  }, [activeSection, activeSteps, advanceStep, isOpen, isTargetVisible, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -461,6 +492,8 @@ export function OnboardingGuide({
     if (!isOpen || activeSection === null) return;
     const step = activeSteps[stepIndex];
     if (!step || !isNavigationBreadcrumbStep(step.id)) return;
+    if (breadcrumbAutofocusStepEntryRef.current === step.id) return;
+    breadcrumbAutofocusStepEntryRef.current = step.id;
 
     const timeout = window.setTimeout(() => {
       if (isTargetVisible('[data-onboarding="focused-breadcrumb"]')) return;
@@ -469,7 +502,7 @@ export function OnboardingGuide({
     return () => {
       window.clearTimeout(timeout);
     };
-  }, [activeSection, activeSteps, isOpen, isTargetVisible, stepIndex, tryAutoFocusFirstTaskForBreadcrumb, uiContextKey]);
+  }, [activeSection, activeSteps, isOpen, isTargetVisible, stepIndex, tryAutoFocusFirstTaskForBreadcrumb]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
