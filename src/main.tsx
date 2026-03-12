@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { AppErrorBoundary } from "@/components/app/AppErrorBoundary";
+import "@/lib/runtime-storage-guard";
 import "@/lib/i18n/config";
 import "./index.css";
 
