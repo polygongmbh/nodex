@@ -47,6 +47,8 @@ interface RectBox {
 
 const GUIDE_ACTION_TIMEOUT_MS = 5000;
 const BREADCRUMB_AUTOFOCUS_DELAY_MS = 120;
+const GUIDE_AUTO_ADVANCE_DELAY_MS = 220;
+const GUIDE_AUTO_ADVANCE_MANUAL_DELAY_MS = 120;
 
 function renderGuideTextWithItalics(text: string) {
   return text.split(/(\*[^*]+\*)/g).filter(Boolean).map((part, index) => {
@@ -186,7 +188,7 @@ export function OnboardingGuide({
         return;
       }
       setStepIndex((prev) => Math.min(prev + 1, activeSteps.length - 1));
-    }, isManualSession ? 0 : 220);
+    }, isManualSession ? GUIDE_AUTO_ADVANCE_MANUAL_DELAY_MS : GUIDE_AUTO_ADVANCE_DELAY_MS);
     return () => {
       window.clearTimeout(timeout);
       pendingAutoAdvanceStepEntryKeysRef.current.delete(entryKey);
@@ -503,6 +505,8 @@ export function OnboardingGuide({
     };
   }, [activeSection, activeSteps, isOpen, isTargetVisible, stepIndex, tryAutoFocusFirstTaskForBreadcrumb]);
 
+  const showSectionPicker = activeSection === null;
+
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
     if (isManualSession) {
@@ -524,7 +528,6 @@ export function OnboardingGuide({
 
   const currentStep = activeSteps[stepIndex];
   const isLastStep = stepIndex >= activeSteps.length - 1;
-  const showSectionPicker = activeSection === null;
   const isBackUnlockedStep = Boolean(currentStep && backUnlockedStepIdsRef.current.has(currentStep.id));
   const nextDisabled = isManualSession
     ? false
@@ -1025,7 +1028,10 @@ export function OnboardingGuide({
             aria-label={t("onboarding.dialog.ariaLabel")}
             ref={guideCardRef}
             className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
-            style={getAnchoredCardStyle()}
+            style={{
+              ...getAnchoredCardStyle(),
+              transition: "left 140ms ease 50ms, top 140ms ease 50ms, opacity 120ms ease 50ms",
+            }}
           >
             {!currentStep ? (
               <div className="space-y-3">
