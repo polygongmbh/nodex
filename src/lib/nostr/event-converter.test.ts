@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Task } from "@/types";
+import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
 import { nostrEventToTask, nostrEventsToTasks, mergeTasks, eventHasTags, extractAllTags, isSpamContent } from "./event-converter";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "./types";
 
@@ -386,26 +387,14 @@ describe("nostrEventToTask", () => {
 
 describe("nostrEventsToTasks", () => {
   it("converts multiple events to tasks", () => {
-    const events: NostrEventWithRelay[] = [
-      makeRelayEvent({ id: "1", pubkey: "pub1", created_at: 1700000000, kind: NostrEventKind.TextNote, content: "First", sig: "sig1" }),
-      makeRelayEvent({ id: "2", pubkey: "pub2", created_at: 1700000001, kind: NostrEventKind.Task, content: "Second", sig: "sig2" }),
-      makeRelayEvent({
-        id: "3",
-        pubkey: "pub3",
-        created_at: 1700000002,
-        kind: NostrEventKind.ClassifiedListing,
-        tags: [["d", "listing-3"], ["type", "request"]],
-        content: "Need help moving a couch",
-        sig: "sig3",
-      }),
-    ];
+    const events = cloneBasicNostrEvents();
     
     const tasks = nostrEventsToTasks(events);
     
     expect(tasks).toHaveLength(3);
-    expect(tasks[0].id).toBe("1");
-    expect(tasks[1].id).toBe("2");
-    expect(tasks[2].id).toBe("3");
+    expect(tasks[0].id).toBe(events[0].id);
+    expect(tasks[1].id).toBe(events[1].id);
+    expect(tasks[2].id).toBe(events[2].id);
     expect(tasks[2].feedMessageType).toBe("request");
   });
 

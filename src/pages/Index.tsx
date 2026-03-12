@@ -134,6 +134,7 @@ import {
   notifyStatusRestricted,
 } from "@/lib/notifications";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
+import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
 import {
   Relay,
   Channel,
@@ -167,6 +168,7 @@ const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 const PUBLISH_UNDO_DELAY_MS = 5000;
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
+const DEMO_SEED_TASKS = mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents()));
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
 );
@@ -305,7 +307,7 @@ const Index = () => {
   const [people, setPeople] = useState<Person[]>([]);
   const [cachedKind0Events, setCachedKind0Events] = useState(() => loadCachedKind0Events());
   const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
-  const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? mockTasks : []));
+  const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? DEMO_SEED_TASKS : []));
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
     () => loadChannelFrecencyState()
@@ -729,7 +731,7 @@ const Index = () => {
   const ensureGuideDataAvailable = useCallback(() => {
     if (!shouldBootstrapGuideDemoFeed({ totalTasks: allTasks.length, demoFeedActive })) return;
     setGuideDemoFeedEnabled(true);
-    setLocalTasks((previous) => (previous.length === 0 ? mockTasks : previous));
+    setLocalTasks((previous) => (previous.length === 0 ? DEMO_SEED_TASKS : previous));
     const seededKind0 = mergeKind0EventsWithCache(mockKind0Events, loadCachedKind0Events());
     saveCachedKind0Events(seededKind0);
     setCachedKind0Events(seededKind0);

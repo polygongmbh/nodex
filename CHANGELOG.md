@@ -9,6 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Onboarding breadcrumb guidance now uses an anchor-or-skip fallback when the breadcrumb row is missing, with direct actions to reopen task context, skip the step, or end the guide.
 - Starting the onboarding tour with no available tasks now auto-loads the demo feed for the session so navigation steps have usable target data.
 - Demo relay bootstrap for onboarding now seeds demo `kind:0` profile metadata events so sidebar People filters populate from metadata instead of synthetic fallback entries.
+- Demo feed seeding now also injects centralized fixed-timestamp Nostr fixture events (including nameless authors) alongside existing generated demo tasks.
 
 ## [1.17.1] - 2026-03-08
 - Added an in-app legal dialog with German Impressum and Datenschutzerklärung content, linked from the desktop bottom-right dock next to the version hint, including a compact contact mail icon.
