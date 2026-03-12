@@ -133,7 +133,7 @@ import {
   notifyPublishSavedForRetry,
   notifyStatusRestricted,
 } from "@/lib/notifications";
-import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
+import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import {
   Relay,
   Channel,
@@ -730,6 +730,9 @@ const Index = () => {
     if (!shouldBootstrapGuideDemoFeed({ totalTasks: allTasks.length, demoFeedActive })) return;
     setGuideDemoFeedEnabled(true);
     setLocalTasks((previous) => (previous.length === 0 ? mockTasks : previous));
+    const seededKind0 = mergeKind0EventsWithCache(mockKind0Events, loadCachedKind0Events());
+    saveCachedKind0Events(seededKind0);
+    setCachedKind0Events(seededKind0);
     setActiveRelayIds((previous) => {
       const next = new Set(previous);
       next.add(DEMO_RELAY_ID);

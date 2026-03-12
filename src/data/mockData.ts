@@ -40,6 +40,28 @@ export const mockPeople: Person[] = [
   { id: MOCK_PUBKEYS.david, name: "david", displayName: "David Kim", isOnline: false, isSelected: false },
 ];
 
+export interface MockKind0Event {
+  kind: number;
+  pubkey: string;
+  created_at: number;
+  content: string;
+}
+
+export const mockKind0Events: MockKind0Event[] = mockPeople.map((person, index) => {
+  const profile = {
+    name: person.name,
+    displayName: person.displayName,
+    picture: person.avatar,
+    nip05: person.nip05,
+  };
+  return {
+    kind: 0,
+    pubkey: person.id,
+    created_at: Math.floor(Date.now() / 1000) - index,
+    content: JSON.stringify(profile),
+  };
+});
+
 // Counter for generating unique event IDs
 let eventCounter = 0;
 

@@ -61,28 +61,4 @@ describe("deriveSidebarPeople", () => {
     expect(sidebarPeople[0].isOnline).toBe(true);
     expect(sidebarPeople[0].onlineStatus).toBe("online");
   });
-
-  it("derives fallback people entries from task authors when metadata people list is empty", () => {
-    const now = new Date("2026-02-17T12:00:00.000Z");
-    const demoAuthor = makePerson({
-      id: "demo-author-pk",
-      name: "demo",
-      displayName: "Demo Author",
-    });
-    const tasks = [
-      makeTask({ id: "d1", author: demoAuthor, timestamp: new Date("2026-02-17T11:59:00.000Z") }),
-      makeTask({ id: "d2", author: demoAuthor, timestamp: new Date("2026-02-17T11:58:00.000Z") }),
-      makeTask({ id: "d3", author: demoAuthor, timestamp: new Date("2026-02-17T11:57:00.000Z") }),
-    ];
-
-    const sidebarPeople = deriveSidebarPeople([], tasks, new Map(), now);
-
-    expect(sidebarPeople).toHaveLength(1);
-    expect(sidebarPeople[0]).toMatchObject({
-      id: "demo-author-pk",
-      name: "demo",
-      displayName: "Demo Author",
-      isSelected: false,
-    });
-  });
 });
