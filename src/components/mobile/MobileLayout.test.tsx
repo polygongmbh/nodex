@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import type { Channel, Person, Relay, Task } from "@/types";
@@ -59,6 +60,44 @@ const relays: Relay[] = [makeRelay()];
 const channels: Channel[] = [makeChannel()];
 const people: Person[] = [makePerson({ id: "me", name: "Me", displayName: "Me" })];
 const tasks: Task[] = [];
+const defaultOnNewTask = () => ({ ok: true, mode: "local" as const });
+
+type MobileLayoutProps = ComponentProps<typeof MobileLayout>;
+
+const baseProps: MobileLayoutProps = {
+  relays,
+  channels,
+  people,
+  tasks,
+  allTasks: tasks,
+  searchQuery: "",
+  focusedTaskId: null,
+  currentUser: people[0],
+  isSignedIn: true,
+  currentView: "tree",
+  onViewChange: () => {},
+  onSearchChange: () => {},
+  onNewTask: defaultOnNewTask,
+  onToggleComplete: () => {},
+  onStatusChange: () => {},
+  onFocusTask: () => {},
+  onRelayToggle: () => {},
+  onChannelToggle: () => {},
+  onPersonToggle: () => {},
+  onAddRelay: () => {},
+  onRemoveRelay: () => {},
+  onSignInClick: () => {},
+  onGuideClick: () => {},
+  onHashtagClick: () => {},
+};
+
+function renderMobileLayout(overrides: Partial<MobileLayoutProps> = {}) {
+  return render(<MobileLayout {...baseProps} {...overrides} />);
+}
+
+function setSignedInUser() {
+  ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+}
 
 describe("MobileLayout auth wiring", () => {
   it("uses auth state (not current user) to gate compose", () => {
@@ -66,34 +105,10 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
     const onSignInClick = vi.fn();
 
-    render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn={false}
-        currentView="tree"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={onSignInClick}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-      />
-    );
+    renderMobileLayout({
+      isSignedIn: false,
+      onSignInClick,
+    });
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
@@ -106,69 +121,22 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
 
-    const { rerender } = render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        hasCachedCurrentUserProfileMetadata={false}
-        isSignedIn={false}
-        currentView="tree"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-      />
-    );
+    const { rerender } = renderMobileLayout({
+      hasCachedCurrentUserProfileMetadata: false,
+      isSignedIn: false,
+    });
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeInTheDocument();
 
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
     rerender(
       <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
+        {...baseProps}
         hasCachedCurrentUserProfileMetadata={false}
-        isSignedIn={true}
-        currentView="tree"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
+        isSignedIn
       />
     );
 
@@ -180,37 +148,10 @@ describe("MobileLayout auth wiring", () => {
   });
 
   it("hides unified compose bar when manage view is open", () => {
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn={true}
-        currentView="tree"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-      />
-    );
+    renderMobileLayout();
 
     expect(screen.getByPlaceholderText(/search or create task/i)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
@@ -218,114 +159,35 @@ describe("MobileLayout auth wiring", () => {
   });
 
   it("syncs manage route state when opening manage view", () => {
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
     const onManageRouteChange = vi.fn();
 
-    render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn={true}
-        currentView="tree"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-        onManageRouteChange={onManageRouteChange}
-      />
-    );
+    renderMobileLayout({
+      onManageRouteChange,
+    });
 
     fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
     expect(onManageRouteChange).toHaveBeenCalledWith(true);
   });
 
   it("restores manage panel from route state", () => {
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn={true}
-        currentView="tree"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-        isManageRouteActive
-      />
-    );
+    renderMobileLayout({
+      isManageRouteActive: true,
+    });
 
     expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
     expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
   });
 
   it("preserves compose draft text when opening and closing manage view", () => {
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn={true}
-        currentView="tree"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-      />
-    );
+    renderMobileLayout();
 
     const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Draft with #general" } });
@@ -336,80 +198,31 @@ describe("MobileLayout auth wiring", () => {
   });
 
   it("falls back to showing all tasks when mobile quick filter has no matches", () => {
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
     const sampleTasks: Task[] = [
       makeTask({ id: "task-1", content: "Ship #general", tags: ["general"] }),
     ];
 
-    render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={sampleTasks}
-        allTasks={sampleTasks}
-        searchQuery="nomatchquery"
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn={true}
-        currentView="tree"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-      />
-    );
+    renderMobileLayout({
+      tasks: sampleTasks,
+      allTasks: sampleTasks,
+      searchQuery: "nomatchquery",
+    });
 
     expect(screen.getByTestId("mobile-quick-filter-fallback")).toBeInTheDocument();
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
 
   it("opens Manage and unfolds profile editor on mobile onboarding step 5", async () => {
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
-    render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn
-        currentView="tree"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-        isOnboardingOpen
-        activeOnboardingStepId="mobile-filters-properties"
-      />
-    );
+    renderMobileLayout({
+      isOnboardingOpen: true,
+      activeOnboardingStepId: "mobile-filters-properties",
+    });
 
     await waitFor(() => {
       expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
@@ -418,40 +231,15 @@ describe("MobileLayout auth wiring", () => {
   });
 
   it("switches to feed on mobile onboarding step 7", async () => {
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
     const onViewChange = vi.fn();
 
-    const { rerender } = render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn
-        currentView="tree"
-        onViewChange={onViewChange}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-        isOnboardingOpen
-        activeOnboardingStepId="mobile-filters-properties"
-      />
-    );
+    const { rerender } = renderMobileLayout({
+      onViewChange,
+      isOnboardingOpen: true,
+      activeOnboardingStepId: "mobile-filters-properties",
+    });
 
     await waitFor(() => {
       expect(document.querySelector('[data-onboarding="mobile-filters"]')).toBeInTheDocument();
@@ -459,30 +247,11 @@ describe("MobileLayout auth wiring", () => {
 
     rerender(
       <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
+        {...baseProps}
         currentUser={people[0]}
         isSignedIn
         currentView="tree"
         onViewChange={onViewChange}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
         isOnboardingOpen
         activeOnboardingStepId="mobile-compose-combobox"
       />
@@ -495,38 +264,13 @@ describe("MobileLayout auth wiring", () => {
   });
 
   it("uses currentView as the source of truth for rendered mobile view", async () => {
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
     const onViewChange = vi.fn();
 
-    const { rerender } = render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn
-        currentView="tree"
-        onViewChange={onViewChange}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-      />
-    );
+    const { rerender } = renderMobileLayout({
+      onViewChange,
+    });
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /switch to feed view/i }));
@@ -535,30 +279,11 @@ describe("MobileLayout auth wiring", () => {
 
     rerender(
       <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
+        {...baseProps}
         currentUser={people[0]}
         isSignedIn
         currentView="feed"
         onViewChange={onViewChange}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
       />
     );
 
@@ -568,40 +293,15 @@ describe("MobileLayout auth wiring", () => {
   });
 
   it("switches top-bar views without closing manage route when not in manage", () => {
-    ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
+    setSignedInUser();
     ndkMock.needsProfileSetup = false;
     const onViewChange = vi.fn();
     const onManageRouteChange = vi.fn();
 
-    render(
-      <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId={null}
-        currentUser={people[0]}
-        isSignedIn
-        currentView="tree"
-        onViewChange={onViewChange}
-        onSearchChange={() => {}}
-        onNewTask={() => ({ ok: true, mode: "local" })}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
-        onManageRouteChange={onManageRouteChange}
-      />
-    );
+    renderMobileLayout({
+      onViewChange,
+      onManageRouteChange,
+    });
 
     fireEvent.click(screen.getByRole("button", { name: /switch to feed view/i }));
 

@@ -3,6 +3,20 @@ import { Task } from "@/types";
 import { nostrEventToTask, nostrEventsToTasks, mergeTasks, eventHasTags, extractAllTags, isSpamContent } from "./event-converter";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "./types";
 
+function makeRelayEvent(overrides: Partial<NostrEventWithRelay> & Pick<NostrEventWithRelay, "id">): NostrEventWithRelay {
+  return {
+    id: overrides.id,
+    pubkey: "pubkey123456789012345678901234567890",
+    created_at: 1700000000,
+    kind: NostrEventKind.TextNote,
+    tags: [],
+    content: "",
+    sig: "sig",
+    relayUrl: "wss://relay.test.com",
+    ...overrides,
+  };
+}
+
 describe("nostrEventToTask", () => {
   const baseEvent: NostrEventWithRelay = {
     id: "abc123",
@@ -373,27 +387,9 @@ describe("nostrEventToTask", () => {
 describe("nostrEventsToTasks", () => {
   it("converts multiple events to tasks", () => {
     const events: NostrEventWithRelay[] = [
-      {
-        id: "1",
-        pubkey: "pub1",
-        created_at: 1700000000,
-        kind: NostrEventKind.TextNote,
-        tags: [],
-        content: "First",
-        sig: "sig1",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
-        id: "2",
-        pubkey: "pub2",
-        created_at: 1700000001,
-        kind: NostrEventKind.Task,
-        tags: [],
-        content: "Second",
-        sig: "sig2",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      makeRelayEvent({ id: "1", pubkey: "pub1", created_at: 1700000000, kind: NostrEventKind.TextNote, content: "First", sig: "sig1" }),
+      makeRelayEvent({ id: "2", pubkey: "pub2", created_at: 1700000001, kind: NostrEventKind.Task, content: "Second", sig: "sig2" }),
+      makeRelayEvent({
         id: "3",
         pubkey: "pub3",
         created_at: 1700000002,
@@ -401,8 +397,7 @@ describe("nostrEventsToTasks", () => {
         tags: [["d", "listing-3"], ["type", "request"]],
         content: "Need help moving a couch",
         sig: "sig3",
-        relayUrl: "wss://relay.test.com",
-      },
+      }),
     ];
     
     const tasks = nostrEventsToTasks(events);
@@ -416,17 +411,8 @@ describe("nostrEventsToTasks", () => {
 
   it("applies latest state-event update to task status", () => {
     const events: NostrEventWithRelay[] = [
-      {
-        id: "task-1",
-        pubkey: "pub1",
-        created_at: 1700000000,
-        kind: NostrEventKind.Task,
-        tags: [],
-        content: "Implement feature",
-        sig: "sig1",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      makeRelayEvent({ id: "task-1", pubkey: "pub1", kind: NostrEventKind.Task, content: "Implement feature", sig: "sig1" }),
+      makeRelayEvent({
         id: "state-old",
         pubkey: "pub1",
         created_at: 1700000001,
@@ -434,9 +420,8 @@ describe("nostrEventsToTasks", () => {
         tags: [["e", "task-1", "", "property"]],
         content: "",
         sig: "sig2",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      }),
+      makeRelayEvent({
         id: "state-new",
         pubkey: "pub1",
         created_at: 1700000002,
@@ -444,8 +429,7 @@ describe("nostrEventsToTasks", () => {
         tags: [["e", "task-1", "", "property"]],
         content: "In Progress",
         sig: "sig3",
-        relayUrl: "wss://relay.test.com",
-      },
+      }),
     ];
 
     const tasks = nostrEventsToTasks(events);
@@ -467,47 +451,25 @@ describe("nostrEventsToTasks", () => {
 
   it("hydrates task due date/time from linked calendar events", () => {
     const events: NostrEventWithRelay[] = [
-      {
-        id: "task-2",
-        pubkey: "pub1",
-        created_at: 1700000000,
-        kind: NostrEventKind.Task,
-        tags: [],
-        content: "Release",
-        sig: "sig1",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      makeRelayEvent({ id: "task-2", pubkey: "pub1", kind: NostrEventKind.Task, content: "Release", sig: "sig1" }),
+      makeRelayEvent({
         id: "cal-1",
         pubkey: "pub1",
         created_at: 1700000003,
         kind: NostrEventKind.CalendarDateBased,
-        tags: [
-          ["d", "deadline-1"],
-          ["title", "Release"],
-          ["start", "2026-03-23"],
-          ["e", "task-2", "", "task"],
-        ],
+        tags: [["d", "deadline-1"], ["title", "Release"], ["start", "2026-03-23"], ["e", "task-2", "", "task"]],
         content: "Release",
         sig: "sig2",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      }),
+      makeRelayEvent({
         id: "cal-2",
         pubkey: "pub1",
         created_at: 1700000004,
         kind: NostrEventKind.CalendarTimeBased,
-        tags: [
-          ["d", "deadline-2"],
-          ["title", "Release"],
-          ["start", "1774276200"],
-          ["due_time", "14:30"],
-          ["e", "task-2", "", "task"],
-        ],
+        tags: [["d", "deadline-2"], ["title", "Release"], ["start", "1774276200"], ["due_time", "14:30"], ["e", "task-2", "", "task"]],
         content: "Release",
         sig: "sig3",
-        relayUrl: "wss://relay.test.com",
-      },
+      }),
     ];
 
     const tasks = nostrEventsToTasks(events);
@@ -518,42 +480,32 @@ describe("nostrEventsToTasks", () => {
 
   it("hydrates latest priority from property update notes and does not render them as tasks", () => {
     const events: NostrEventWithRelay[] = [
-      {
+      makeRelayEvent({
         id: "task-priority",
         pubkey: "pub1",
-        created_at: 1700000000,
         kind: NostrEventKind.Task,
         tags: [["priority", "20"]],
         content: "Prioritized task",
         sig: "sig1",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      }),
+      makeRelayEvent({
         id: "prio-update-old",
         pubkey: "pub1",
         created_at: 1700000010,
         kind: NostrEventKind.TextNote,
-        tags: [
-          ["e", "task-priority", "", "property"],
-          ["priority", "40"],
-        ],
+        tags: [["e", "task-priority", "", "property"], ["priority", "40"]],
         content: "Priority: 40",
         sig: "sig2",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      }),
+      makeRelayEvent({
         id: "prio-update-new",
         pubkey: "pub1",
         created_at: 1700000020,
         kind: NostrEventKind.TextNote,
-        tags: [
-          ["e", "task-priority", "", "property"],
-          ["priority", "90"],
-        ],
+        tags: [["e", "task-priority", "", "property"], ["priority", "90"]],
         content: "Priority: 90",
         sig: "sig3",
-        relayUrl: "wss://relay.test.com",
-      },
+      }),
     ];
 
     const tasks = nostrEventsToTasks(events);
@@ -565,7 +517,7 @@ describe("nostrEventsToTasks", () => {
 
   it("hydrates priority from state events carrying priority property tags", () => {
     const events: NostrEventWithRelay[] = [
-      {
+      makeRelayEvent({
         id: "task-priority-state",
         pubkey: "pub1",
         created_at: 1700000100,
@@ -573,21 +525,16 @@ describe("nostrEventsToTasks", () => {
         tags: [["priority", "20"]],
         content: "State-priority task",
         sig: "sig1",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      }),
+      makeRelayEvent({
         id: "state-update-priority",
         pubkey: "pub1",
         created_at: 1700000110,
         kind: NostrEventKind.GitStatusOpen,
-        tags: [
-          ["e", "task-priority-state", "", "property"],
-          ["priority", "70"],
-        ],
+        tags: [["e", "task-priority-state", "", "property"], ["priority", "70"]],
         content: "In Progress",
         sig: "sig2",
-        relayUrl: "wss://relay.test.com",
-      },
+      }),
     ];
 
     const tasks = nostrEventsToTasks(events);
@@ -599,7 +546,7 @@ describe("nostrEventsToTasks", () => {
 
   it("keeps only latest parameterized replaceable listing revision", () => {
     const events: NostrEventWithRelay[] = [
-      {
+      makeRelayEvent({
         id: "listing-old",
         pubkey: "pub-listing",
         created_at: 1700000200,
@@ -607,9 +554,8 @@ describe("nostrEventsToTasks", () => {
         tags: [["d", "listing-1"], ["status", "active"]],
         content: "Old listing",
         sig: "sig1",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      }),
+      makeRelayEvent({
         id: "listing-new",
         pubkey: "pub-listing",
         created_at: 1700000300,
@@ -617,8 +563,7 @@ describe("nostrEventsToTasks", () => {
         tags: [["d", "listing-1"], ["status", "sold"]],
         content: "New listing",
         sig: "sig2",
-        relayUrl: "wss://relay.test.com",
-      },
+      }),
     ];
 
     const tasks = nostrEventsToTasks(events);
@@ -629,7 +574,7 @@ describe("nostrEventsToTasks", () => {
 
   it("discards invalid parameterized replaceable events missing d", () => {
     const events: NostrEventWithRelay[] = [
-      {
+      makeRelayEvent({
         id: "listing-invalid",
         pubkey: "pub-listing",
         created_at: 1700000200,
@@ -637,8 +582,7 @@ describe("nostrEventsToTasks", () => {
         tags: [["status", "active"]],
         content: "Invalid listing",
         sig: "sig1",
-        relayUrl: "wss://relay.test.com",
-      },
+      }),
     ];
 
     const tasks = nostrEventsToTasks(events);
@@ -647,7 +591,7 @@ describe("nostrEventsToTasks", () => {
 
   it("breaks replaceable listing timestamp ties with lexical event id", () => {
     const events: NostrEventWithRelay[] = [
-      {
+      makeRelayEvent({
         id: "listing-a",
         pubkey: "pub-listing",
         created_at: 1700000400,
@@ -655,9 +599,8 @@ describe("nostrEventsToTasks", () => {
         tags: [["d", "listing-tie"]],
         content: "Older lexical id",
         sig: "sig1",
-        relayUrl: "wss://relay.test.com",
-      },
-      {
+      }),
+      makeRelayEvent({
         id: "listing-b",
         pubkey: "pub-listing",
         created_at: 1700000400,
@@ -665,8 +608,7 @@ describe("nostrEventsToTasks", () => {
         tags: [["d", "listing-tie"]],
         content: "Newer lexical id",
         sig: "sig2",
-        relayUrl: "wss://relay.test.com",
-      },
+      }),
     ];
 
     const tasks = nostrEventsToTasks(events);
