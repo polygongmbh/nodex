@@ -350,7 +350,14 @@
       "skip": "Überspringen",
       "back": "Zurück",
       "finish": "Fertig",
-      "next": "Weiter"
+      "next": "Weiter",
+      "breadcrumbFallback": {
+        "title": "Breadcrumb ist gerade nicht sichtbar",
+        "description": "Öffne zuerst einen Aufgabenkontext, überspringe diesen Schritt oder beende den Guide.",
+        "openTask": "Aufgabenkontext öffnen",
+        "skipStep": "Schritt überspringen",
+        "endGuide": "Guide beenden"
+      }
     },
     "sections": {
       "navigation": {

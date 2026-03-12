@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Added a runtime persistence guard that can be enabled via `?nodexNoStorage=1` (or `VITE_DISABLE_CLIENT_PERSISTENCE=true`) to disable browser local/session storage, cookie writes, and browser cache APIs for the active session.
+- Onboarding breadcrumb guidance now uses an anchor-or-skip fallback when the breadcrumb row is missing, with direct actions to reopen task context, skip the step, or end the guide.
+- Starting the onboarding tour with no available tasks now auto-loads the demo feed for the session so navigation steps have usable target data.
 
 ## [1.17.1] - 2026-03-08
 - Added an in-app legal dialog with German Impressum and Datenschutzerklärung content, linked from the desktop bottom-right dock next to the version hint, including a compact contact mail icon.

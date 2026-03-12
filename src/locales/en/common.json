@@ -350,7 +350,14 @@
       "skip": "Skip",
       "back": "Back",
       "finish": "Finish",
-      "next": "Next"
+      "next": "Next",
+      "breadcrumbFallback": {
+        "title": "Breadcrumb is not visible right now",
+        "description": "Open a task context first, skip this step, or end the guide.",
+        "openTask": "Open a task context",
+        "skipStep": "Skip this step",
+        "endGuide": "End guide"
+      }
     },
     "sections": {
       "navigation": {

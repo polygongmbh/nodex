@@ -350,7 +350,14 @@
       "skip": "Omitir",
       "back": "Atrás",
       "finish": "Finalizar",
-      "next": "Siguiente"
+      "next": "Siguiente",
+      "breadcrumbFallback": {
+        "title": "El breadcrumb no está visible ahora",
+        "description": "Abre primero el contexto de una tarea, omite este paso o finaliza la guía.",
+        "openTask": "Abrir contexto de tarea",
+        "skipStep": "Omitir este paso",
+        "endGuide": "Finalizar guía"
+      }
     },
     "sections": {
       "navigation": {

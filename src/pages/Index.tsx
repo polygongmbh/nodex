@@ -89,7 +89,11 @@ import {
   buildPresenceTags,
   deriveLatestActivePresenceByAuthor,
 } from "@/lib/presence-status";
-import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
+import {
+  getOnboardingBehaviorGateId,
+  shouldBootstrapGuideDemoFeed,
+  shouldForceComposeForGuide,
+} from "@/lib/onboarding-guide";
 import {
   isFilterResetStep,
   isNavigationFocusStep,
@@ -211,6 +215,8 @@ const Index = () => {
 
   // Auth modal state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [guideDemoFeedEnabled, setGuideDemoFeedEnabled] = useState(false);
+  const demoFeedActive = DEMO_FEED_ENABLED || guideDemoFeedEnabled;
 
   const [failedPublishDrafts, setFailedPublishDrafts] = useState<FailedPublishDraft[]>(() => loadFailedPublishDrafts());
 
@@ -243,17 +249,17 @@ const Index = () => {
       postCount: undefined,
     }));
 
-    if (!DEMO_FEED_ENABLED) return nostrRelayItems;
+    if (!demoFeedActive) return nostrRelayItems;
 
     // Include demo relay
     return [...demoRelays, ...nostrRelayItems];
-  }, [ndkRelays]);
+  }, [demoFeedActive, ndkRelays]);
 
   const defaultRelayIds = useMemo(() => {
     const configuredRelayIds = getConfiguredDefaultRelayIds();
-    if (!DEMO_FEED_ENABLED) return configuredRelayIds;
+    if (!demoFeedActive) return configuredRelayIds;
     return Array.from(new Set([DEMO_RELAY_ID, ...configuredRelayIds]));
-  }, []);
+  }, [demoFeedActive]);
 
   // Convert NDK relays to the format expected by sidebar/widgets
   const nostrRelays = useMemo(() => {
@@ -720,12 +726,26 @@ const Index = () => {
     setIsOnboardingOpen(!showIntro);
   }, []);
 
+  const ensureGuideDataAvailable = useCallback(() => {
+    if (!shouldBootstrapGuideDemoFeed({ totalTasks: allTasks.length, demoFeedActive })) return;
+    setGuideDemoFeedEnabled(true);
+    setLocalTasks((previous) => (previous.length === 0 ? mockTasks : previous));
+    setActiveRelayIds((previous) => {
+      const next = new Set(previous);
+      next.add(DEMO_RELAY_ID);
+      return next;
+    });
+    navigate("/feed");
+  }, [allTasks.length, demoFeedActive, navigate, setActiveRelayIds]);
+
   const handleStartOnboardingTour = useCallback(() => {
+    ensureGuideDataAvailable();
     setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(true);
-  }, []);
+  }, [ensureGuideDataAvailable]);
 
   const handleOpenGuide = useCallback(() => {
+    ensureGuideDataAvailable();
     const initialSectionForOpen: OnboardingInitialSection =
       isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
     setOnboardingManualStart(true);
@@ -733,7 +753,7 @@ const Index = () => {
     setActiveOnboardingSection(null);
     setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(true);
-  }, [isMobile]);
+  }, [ensureGuideDataAvailable, isMobile]);
 
   useEffect(() => {
     const onboardingState = loadOnboardingState();
@@ -1369,7 +1389,7 @@ const Index = () => {
 
   const resolveTaskOriginRelay = useCallback((taskId: string) => {
     const task = allTasks.find((item) => item.id === taskId);
-    const originRelayId = resolveOriginRelayIdForTask(task, DEMO_FEED_ENABLED ? DEMO_RELAY_ID : undefined);
+    const originRelayId = resolveOriginRelayIdForTask(task, demoFeedActive ? DEMO_RELAY_ID : undefined);
     if (!originRelayId) {
       nostrDevLog("routing", "No origin relay found for task", { taskId });
       return { relayId: undefined, relayUrls: [] as string[] };
@@ -1698,7 +1718,7 @@ const Index = () => {
 
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
-      : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []);
+      : (demoFeedActive ? [DEMO_RELAY_ID] : []);
     const submissionParentId = feedMessageType ? undefined : parentId;
     const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
     const normalizedExtractedTags = Array.from(
@@ -1717,7 +1737,7 @@ const Index = () => {
       selectedRelayIds: requestedRelayIds,
       relays,
       parentTask,
-      demoRelayId: DEMO_FEED_ENABLED ? DEMO_RELAY_ID : undefined,
+      demoRelayId: demoFeedActive ? DEMO_RELAY_ID : undefined,
     });
     if (resolvedRelaySelection.error) {
       toast.error(resolvedRelaySelection.error || t("toasts.errors.selectRelayOrParent"));
@@ -1730,7 +1750,7 @@ const Index = () => {
       return { ok: false, reason: "relay-selection" };
     }
     const targetRelayIds = resolvedRelaySelection.relayIds;
-    const hasNonDemoRelay = DEMO_FEED_ENABLED
+    const hasNonDemoRelay = demoFeedActive
       ? targetRelayIds.some((id) => id !== DEMO_RELAY_ID)
       : targetRelayIds.length > 0;
 
@@ -1877,13 +1897,13 @@ const Index = () => {
       if (!publishedRelayUrls || publishedRelayUrls.length === 0) {
         return effectiveRelayIds.length > 0
           ? effectiveRelayIds
-          : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []);
+          : (demoFeedActive ? [DEMO_RELAY_ID] : []);
       }
       const ids = publishedRelayUrls.map((url) => getRelayIdFromUrl(url)).filter(Boolean);
       if (ids.length > 0) return ids;
       return effectiveRelayIds.length > 0
         ? effectiveRelayIds
-        : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []);
+        : (demoFeedActive ? [DEMO_RELAY_ID] : []);
     };
     const notifyIfPartialPublish = (publishedRelayUrls?: string[]) => {
       const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
@@ -1904,7 +1924,7 @@ const Index = () => {
       tags: resolvedSubmissionTags,
       relays: effectiveRelayIds.length > 0
         ? effectiveRelayIds
-        : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []),
+        : (demoFeedActive ? [DEMO_RELAY_ID] : []),
       taskType: normalizedTaskType,
       timestamp: createdAt,
       status: normalizedTaskType === "task" ? (initialStatus || "todo") : undefined,
@@ -2202,7 +2222,7 @@ const Index = () => {
       tags: draft.tags,
       relays: effectiveRelayIds.length > 0
         ? effectiveRelayIds
-        : (DEMO_FEED_ENABLED ? [DEMO_RELAY_ID] : []),
+        : (demoFeedActive ? [DEMO_RELAY_ID] : []),
       taskType: draft.taskType,
       timestamp: parseStoredDate(draft.createdAt) || new Date(),
       status: draft.taskType === "task" ? (draft.initialStatus || "todo") : undefined,

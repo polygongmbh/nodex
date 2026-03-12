@@ -193,6 +193,48 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
+  it("shows breadcrumb recovery actions when breadcrumb target is unavailable", () => {
+    vi.useFakeTimers();
+    render(
+      <div>
+        <div data-onboarding="task-list">Task list</div>
+        <OnboardingGuide
+          isOpen
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={baseStepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    fireEvent.click(screen.getByText("Task list"));
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getByText("Breadcrumb is not visible right now")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open a task context" }));
+    expect(screen.getByText("Open task context")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByText("Breadcrumb is not visible right now")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Skip this step" }));
+    expect(screen.getByText("Next area")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
   it("does not render the generic click hint text", () => {
     render(
       <div>
