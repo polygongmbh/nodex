@@ -15,14 +15,6 @@ export function getOnboardingStepsBySection(
   const desktopStepsBySection: StepMap = {
     navigation: [
       {
-        id: "navigation-switcher",
-        title: t("onboarding.steps.navigationSwitcher.title"),
-        description: t("onboarding.steps.navigationSwitcher.description"),
-        target: '[data-onboarding="view-switcher"]',
-        requiredAction: "click-target",
-        actionPrompt: t("onboarding.steps.navigationSwitcher.action"),
-      },
-      {
         id: "navigation-focus",
         title: t("onboarding.steps.navigationFocus.title"),
         description: t("onboarding.steps.navigationFocus.description"),
@@ -37,6 +29,14 @@ export function getOnboardingStepsBySection(
         target: '[data-onboarding="focused-breadcrumb"]',
         requiredAction: "click-target",
         actionPrompt: t("onboarding.steps.navigationBreadcrumb.action"),
+      },
+      {
+        id: "navigation-switcher",
+        title: t("onboarding.steps.navigationSwitcher.title"),
+        description: t("onboarding.steps.navigationSwitcher.description"),
+        target: '[data-onboarding="view-switcher"]',
+        requiredAction: "click-target",
+        actionPrompt: t("onboarding.steps.navigationSwitcher.action"),
       },
     ],
     filters: [

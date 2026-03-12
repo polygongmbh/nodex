@@ -461,7 +461,6 @@ export function OnboardingGuide({
 
     if (step.requiredAction !== "click-target") return;
     const contextDrivenStepIds = new Set([
-      "navigation-switcher",
       "mobile-navigation-nav",
     ]);
     if (!contextDrivenStepIds.has(step.id)) return;

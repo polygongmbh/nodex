@@ -419,9 +419,72 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     expect(feedTarget.getAttribute("style") || "").toContain("outline:");
   });
 
-  it("auto-advances click-required navigation steps when uiContextKey changes", () => {
+  it("auto-advances click-required mobile navigation step when uiContextKey changes", () => {
     vi.useFakeTimers();
     const stepsBySection: Record<OnboardingSectionId, { id: string; title: string; description: string; target?: string; requiredAction?: "click-target" | "focus-target" }[]> = {
+      navigation: [
+        {
+          id: "mobile-navigation-nav",
+          title: "Open mobile nav",
+          description: "Open nav",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+        {
+          id: "navigation-focus",
+          title: "Open task context",
+          description: "Open task",
+          target: '[data-onboarding="task-list"]',
+          requiredAction: "click-target",
+        },
+      ],
+      filters: [],
+      compose: [],
+    };
+
+    const { rerender } = render(
+      <div>
+        <div data-onboarding="task-list">Tree list</div>
+        <OnboardingGuide
+          isOpen
+          uiContextKey="tree:"
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={stepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    expect(screen.getByText("Open mobile nav")).toBeInTheDocument();
+
+    rerender(
+      <div>
+        <div data-onboarding="task-list">Feed list</div>
+        <OnboardingGuide
+          isOpen
+          uiContextKey="feed:"
+          initialSection="navigation"
+          sections={sections}
+          stepsBySection={stepsBySection}
+          onClose={vi.fn()}
+          onComplete={vi.fn()}
+        />
+      </div>
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(screen.getByText("Open task context")).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it("does not auto-advance navigation-switcher from uiContextKey change", () => {
+    vi.useFakeTimers();
+    const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
       navigation: [
         {
           id: "navigation-switcher",
@@ -464,7 +527,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         <div data-onboarding="task-list">Feed list</div>
         <OnboardingGuide
           isOpen
-          uiContextKey="feed:"
+          uiContextKey="feed:abc123"
           initialSection="navigation"
           sections={sections}
           stepsBySection={stepsBySection}
@@ -475,10 +538,11 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     );
 
     act(() => {
-      vi.advanceTimersByTime(300);
+      vi.advanceTimersByTime(500);
     });
 
-    expect(screen.getByText("Open task context")).toBeInTheDocument();
+    expect(screen.getByText("Switch views")).toBeInTheDocument();
+    expect(screen.queryByText("Open task context")).not.toBeInTheDocument();
     vi.useRealTimers();
   });
 
