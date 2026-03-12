@@ -399,9 +399,11 @@ const Index = () => {
   }, [nostrEvents]);
 
   useEffect(() => {
-    const merged = mergeKind0EventsWithCache(liveKind0Events, loadCachedKind0Events());
-    saveCachedKind0Events(merged);
-    setCachedKind0Events(merged);
+    setCachedKind0Events((previous) => {
+      const merged = mergeKind0EventsWithCache(liveKind0Events, previous);
+      saveCachedKind0Events(merged);
+      return merged;
+    });
   }, [liveKind0Events]);
 
   useEffect(() => {
@@ -732,7 +734,7 @@ const Index = () => {
     if (!shouldBootstrapGuideDemoFeed({ totalTasks: allTasks.length, demoFeedActive })) return;
     setGuideDemoFeedEnabled(true);
     setLocalTasks((previous) => (previous.length === 0 ? DEMO_SEED_TASKS : previous));
-    const seededKind0 = mergeKind0EventsWithCache(mockKind0Events, loadCachedKind0Events());
+    const seededKind0 = mergeKind0EventsWithCache(mockKind0Events, cachedKind0Events);
     saveCachedKind0Events(seededKind0);
     setCachedKind0Events(seededKind0);
     setActiveRelayIds((previous) => {
@@ -741,7 +743,7 @@ const Index = () => {
       return next;
     });
     navigate("/feed");
-  }, [allTasks.length, demoFeedActive, navigate, setActiveRelayIds]);
+  }, [allTasks.length, cachedKind0Events, demoFeedActive, navigate, setActiveRelayIds]);
 
   const handleStartOnboardingTour = useCallback(() => {
     ensureGuideDataAvailable();
