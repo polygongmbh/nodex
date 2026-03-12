@@ -430,14 +430,19 @@ const Index = () => {
 
   useEffect(() => {
     if (!profileCachePayload) return;
-    const nextCached = rememberCachedKind0Profile(profileCachePayload.pubkey, {
-      name: profileCachePayload.profile.name,
-      displayName: profileCachePayload.profile.displayName,
-      about: profileCachePayload.profile.about,
-      picture: profileCachePayload.profile.picture,
-      nip05: profileCachePayload.profile.nip05,
-    });
-    setCachedKind0Events(nextCached);
+    setCachedKind0Events((previous) =>
+      rememberCachedKind0Profile(
+        profileCachePayload.pubkey,
+        {
+          name: profileCachePayload.profile.name,
+          displayName: profileCachePayload.profile.displayName,
+          about: profileCachePayload.profile.about,
+          picture: profileCachePayload.profile.picture,
+          nip05: profileCachePayload.profile.nip05,
+        },
+        previous
+      )
+    );
   }, [profileCachePayload]);
 
   useEffect(() => {

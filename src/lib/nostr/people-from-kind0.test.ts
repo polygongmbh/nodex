@@ -117,6 +117,28 @@ describe("derivePeopleFromKind0Events", () => {
     expect(cached?.content).toContain("carol");
   });
 
+  it("preserves provided in-memory metadata when caching a signed-in profile snapshot", () => {
+    const demoPubkey = "d".repeat(64);
+    const userPubkey = "e".repeat(64);
+    const inMemoryEvents = [
+      {
+        kind: NostrEventKind.Metadata,
+        pubkey: demoPubkey,
+        created_at: 1,
+        content: JSON.stringify({ name: "demo" }),
+      },
+    ];
+
+    const next = rememberCachedKind0Profile(
+      userPubkey,
+      { name: "user", displayName: "User" },
+      inMemoryEvents
+    );
+
+    expect(next.some((event) => event.pubkey === demoPubkey)).toBe(true);
+    expect(next.some((event) => event.pubkey === userPubkey)).toBe(true);
+  });
+
   it("tracks remembered login identities in recency order", () => {
     const aPubkey = "a".repeat(64);
     const bPubkey = "b".repeat(64);

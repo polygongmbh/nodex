@@ -90,12 +90,15 @@ export function saveCachedKind0Events(events: Kind0LikeEvent[]): void {
   }
 }
 
-export function rememberCachedKind0Profile(pubkey: string, profile: CachedProfileSnapshot): Kind0LikeEvent[] {
+export function rememberCachedKind0Profile(
+  pubkey: string,
+  profile: CachedProfileSnapshot,
+  existingEvents: Kind0LikeEvent[] = loadCachedKind0Events()
+): Kind0LikeEvent[] {
   const normalizedPubkey = normalizePubkey(pubkey);
-  if (!normalizedPubkey) return loadCachedKind0Events();
+  if (!normalizedPubkey) return existingEvents;
 
-  const cachedEvents = loadCachedKind0Events();
-  const existingEvent = cachedEvents.find((event) => normalizePubkey(event.pubkey) === normalizedPubkey);
+  const existingEvent = existingEvents.find((event) => normalizePubkey(event.pubkey) === normalizedPubkey);
   const existingProfile = existingEvent ? parseKind0Content(existingEvent.content) : {};
 
   const merged = {
@@ -113,7 +116,7 @@ export function rememberCachedKind0Profile(pubkey: string, profile: CachedProfil
     content: JSON.stringify(merged),
   };
 
-  const next = mergeKind0EventsWithCache([snapshotEvent], cachedEvents);
+  const next = mergeKind0EventsWithCache([snapshotEvent], existingEvents);
   saveCachedKind0Events(next);
   return next;
 }
