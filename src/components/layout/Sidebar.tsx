@@ -21,6 +21,14 @@ import {
 } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
 
+const DEFAULT_EXPANDED_SECTIONS = {
+  feeds: true,
+  channels: true,
+  people: true,
+};
+
+let sidebarExpandedSectionsSnapshot = DEFAULT_EXPANDED_SECTIONS;
+
 interface SidebarHeaderProps {
   className?: string;
 }
@@ -104,11 +112,11 @@ export function Sidebar({
 }: SidebarProps) {
   const { t } = useTranslation();
   const COLLAPSED_PREVIEW_LIMIT = 3;
-  const [expandedSections, setExpandedSections] = useState({
-    feeds: true,
-    channels: true,
-    people: true,
-  });
+  const [expandedSections, setExpandedSections] = useState(() => sidebarExpandedSectionsSnapshot);
+
+  useEffect(() => {
+    sidebarExpandedSectionsSnapshot = expandedSections;
+  }, [expandedSections]);
 
   const collapsedPreviewChannelIds = useMemo(
     () =>

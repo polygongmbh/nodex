@@ -18,6 +18,19 @@ export function removeResolvedRelayUrl(relayUrls: string[], relayUrl: string): s
   return relayUrls.filter((entry) => normalizeRelayUrl(entry) !== normalized);
 }
 
+export function filterAutoAddRelayUrls(params: {
+  candidateRelayUrls: string[];
+  existingRelayUrls: Iterable<string>;
+  removedRelayUrls?: Iterable<string>;
+}): string[] {
+  const existingRelayUrls = new Set(Array.from(params.existingRelayUrls, normalizeRelayUrl));
+  const removedRelayUrls = new Set(Array.from(params.removedRelayUrls ?? [], normalizeRelayUrl));
+
+  return params.candidateRelayUrls
+    .map(normalizeRelayUrl)
+    .filter((relayUrl) => relayUrl && !existingRelayUrls.has(relayUrl) && !removedRelayUrls.has(relayUrl));
+}
+
 export function mergeConfiguredRelayStatuses(params: {
   relays: NDKRelayStatus[];
   configuredRelayUrls: string[];

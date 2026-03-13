@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   appendResolvedRelayUrl,
+  filterAutoAddRelayUrls,
   mergeConfiguredRelayStatuses,
   normalizeRelayUrl,
   removeResolvedRelayUrl,
@@ -33,5 +34,15 @@ describe("mergeConfiguredRelayStatuses", () => {
     });
 
     expect(merged).toEqual([]);
+  });
+});
+
+describe("filterAutoAddRelayUrls", () => {
+  it("skips existing and intentionally removed relays", () => {
+    expect(filterAutoAddRelayUrls({
+      candidateRelayUrls: ["wss://relay.one/", "wss://relay.two", "wss://relay.three"],
+      existingRelayUrls: ["wss://relay.one"],
+      removedRelayUrls: ["wss://relay.two/"],
+    })).toEqual(["wss://relay.three"]);
   });
 });

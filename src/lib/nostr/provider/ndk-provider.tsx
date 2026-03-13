@@ -45,6 +45,7 @@ import {
 } from "./relay-status";
 import {
   appendResolvedRelayUrl,
+  filterAutoAddRelayUrls,
   mergeConfiguredRelayStatuses,
   normalizeRelayUrl,
   removeResolvedRelayUrl,
@@ -1160,8 +1161,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         return;
       }
 
-      const existingRelayUrls = new Set(relays.map((relay) => relay.url.replace(/\/+$/, "")));
-      const newRelayUrls = relaySelection.relayUrls.filter((relayUrl) => !existingRelayUrls.has(relayUrl.replace(/\/+$/, "")));
+      const newRelayUrls = filterAutoAddRelayUrls({
+        candidateRelayUrls: relaySelection.relayUrls,
+        existingRelayUrls: relays.map((relay) => relay.url),
+        removedRelayUrls: removedRelaysRef.current,
+      });
       if (newRelayUrls.length === 0) {
         nostrDevLog("relay", "Complementary relay discovery found no new relays", {
           pubkey: user.pubkey,
