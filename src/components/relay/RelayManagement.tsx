@@ -232,6 +232,7 @@ export function RelayManagement({
                     </div>
 
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground"
@@ -254,6 +255,7 @@ export function RelayManagement({
 
                     {/* Remove button */}
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
@@ -266,10 +268,13 @@ export function RelayManagement({
                     </Button>
 
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() => onRemoveRelay(relay.url)}
+                      aria-label={t("relay.remove")}
+                      title={t("relay.remove")}
                     >
                       <X className="w-4 h-4" />
                     </Button>

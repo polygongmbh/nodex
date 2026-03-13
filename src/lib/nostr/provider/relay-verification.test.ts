@@ -20,10 +20,10 @@ describe("isAuthRequiredCloseReason", () => {
 });
 
 describe("shouldSetVerificationFailedStatus", () => {
-  it("only marks relays failed for explicit read rejection", () => {
+  it("marks auth-policy read and write failures, plus explicit subscription read rejection", () => {
     expect(shouldSetVerificationFailedStatus("subscription-closed", "read")).toBe(true);
-    expect(shouldSetVerificationFailedStatus("auth-policy", "read")).toBe(false);
-    expect(shouldSetVerificationFailedStatus("auth-policy", "write")).toBe(false);
+    expect(shouldSetVerificationFailedStatus("auth-policy", "read")).toBe(true);
+    expect(shouldSetVerificationFailedStatus("auth-policy", "write")).toBe(true);
     expect(shouldSetVerificationFailedStatus("auth-policy", "unknown")).toBe(false);
     expect(shouldSetVerificationFailedStatus("subscription-closed", "write")).toBe(false);
   });

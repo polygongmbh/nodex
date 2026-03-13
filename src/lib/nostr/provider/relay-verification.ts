@@ -24,7 +24,13 @@ export function shouldSetVerificationFailedStatus(
   source: RelayVerificationFailureSource,
   operation: RelayVerificationEvent["operation"]
 ): boolean {
-  return source === "subscription-closed" && operation === "read";
+  if (source === "subscription-closed") {
+    return operation === "read";
+  }
+  if (source === "auth-policy") {
+    return operation === "read" || operation === "write";
+  }
+  return false;
 }
 
 export function shouldRetryAuthAfterReadRejection(params: {

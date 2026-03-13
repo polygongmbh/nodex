@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
-type SidebarSectionAnimationMode = "previewCollapse" | "fullCollapse";
+type SidebarSectionAnimationMode = "none" | "previewCollapse" | "fullCollapse";
 
 export interface SidebarSectionProps {
   title: string;
@@ -109,7 +109,9 @@ export function SidebarSection({
       </div>
       <div
         className={cn(
-          animationMode === "fullCollapse"
+          animationMode === "none"
+            ? (isExpanded ? "overflow-visible" : "hidden")
+            : animationMode === "fullCollapse"
             ? cn(
                 "origin-top overflow-hidden will-change-[height] transition-[height,opacity,transform] duration-300 ease-out",
                 isExpanded

@@ -5,7 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Newly added relays now stay in the initial connecting state during startup disconnect churn, are immediately activated in feed filters, and no longer require a manual reconnect in the normal success path.
+- Newly added relays now use a short connection-attempt grace window instead of lingering in `connecting`, are immediately activated in feed filters, and no longer trigger feed-section fold animations while relay lists update.
 
 ## [1.17.2] - 2026-03-13
 - Added a runtime persistence guard that can be enabled via `?nodexNoStorage=1` (or `VITE_DISABLE_CLIENT_PERSISTENCE=true`) to disable browser local/session storage, cookie writes, and browser cache APIs for the active session.

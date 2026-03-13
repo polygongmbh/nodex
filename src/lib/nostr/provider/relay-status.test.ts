@@ -1,6 +1,10 @@
 import { NDKRelayStatus as NativeNDKRelayStatus } from "@nostr-dev-kit/ndk";
 import { describe, expect, it } from "vitest";
-import { mapNativeRelayStatus, resolveRelayLifecycleStatus } from "./relay-status";
+import {
+  mapNativeRelayStatus,
+  RELAY_CONNECTING_GRACE_MS,
+  resolveRelayLifecycleStatus,
+} from "./relay-status";
 
 describe("mapNativeRelayStatus", () => {
   it("keeps auth challenge states connected to avoid false connecting regressions", () => {
@@ -22,6 +26,8 @@ describe("resolveRelayLifecycleStatus", () => {
       previousStatus: "connecting",
       hasConnectedOnce: false,
       isAutoPaused: false,
+      attemptStartedAt: 1000,
+      now: 1000 + RELAY_CONNECTING_GRACE_MS - 1,
     })).toBe("connecting");
   });
 
@@ -31,6 +37,7 @@ describe("resolveRelayLifecycleStatus", () => {
       previousStatus: "connected",
       hasConnectedOnce: true,
       isAutoPaused: false,
+      now: 1000,
     })).toBe("disconnected");
   });
 
@@ -40,6 +47,19 @@ describe("resolveRelayLifecycleStatus", () => {
       previousStatus: "connecting",
       hasConnectedOnce: false,
       isAutoPaused: true,
+      attemptStartedAt: 1000,
+      now: 1000,
     })).toBe("connection-error");
+  });
+
+  it("falls back to disconnected once the initial attempt grace window expires", () => {
+    expect(resolveRelayLifecycleStatus({
+      mappedStatus: "disconnected",
+      previousStatus: "connecting",
+      hasConnectedOnce: false,
+      isAutoPaused: false,
+      attemptStartedAt: 1000,
+      now: 1000 + RELAY_CONNECTING_GRACE_MS,
+    })).toBe("disconnected");
   });
 });

@@ -104,4 +104,26 @@ describe("RelayManagement", () => {
 
     expect(onReconnectRelay).toHaveBeenCalledWith("wss://relay.one");
   });
+
+  it("removes an individual relay without triggering reconnect", () => {
+    const onRemoveRelay = vi.fn();
+    const onReconnectRelay = vi.fn();
+
+    render(
+      <RelayManagement
+        relays={[
+          { url: "wss://relay.one", status: "connected" },
+        ]}
+        onAddRelay={() => {}}
+        onRemoveRelay={onRemoveRelay}
+        onReconnectRelay={onReconnectRelay}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    fireEvent.click(screen.getByRole("button", { name: /remove relay/i }));
+
+    expect(onRemoveRelay).toHaveBeenCalledWith("wss://relay.one");
+    expect(onReconnectRelay).not.toHaveBeenCalled();
+  });
 });
