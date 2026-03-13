@@ -92,7 +92,6 @@ structure:
 - At the start of work, run `git status --short`.
 - If there are unstaged modifications beyond `package-lock.json` and `.env`, warn the user before proceeding.
 - Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash`.
-- Treat the YAML policy block below as the canonical machine-readable source for startup checks.
 
 ### Protocol Compliance
 - Conform to Nostr protocol standards in https://github.com/nostr-protocol/nips/.
@@ -203,7 +202,6 @@ policies:
 - Follow the verification matrix above for required commands.
 - Write tests before each change except minor visual/cosmetic changes, then verify the changed behavior after implementation.
 - Before adjusting existing tests, first determine whether failures indicate regressions or deliberate behavior changes.
-- For high-impact behavior areas, require meaningful business-logic coverage before merge.
 - Prefer behavior/outcome tests over implementation-detail tests.
 - Keep UI tests focused on key flows and accessibility contracts.
 - Do not add cosmetic-only assertions unless explicitly required; any class/style assertion must include a short comment explaining the protected product contract.
@@ -226,7 +224,7 @@ policies:
 - For notable user-visible behavior changes, add/update a changelog entry in the same change set.
 - Do not add changelog entries for minor/internal-only changes unless explicitly requested.
 - Keep entries concrete; one entry may summarize closely related commits.
-- In version sections, classify genuinely new end-user capabilities under `### Added` (for example new guides, new flows, new controls), and reserve `### Fixed` for regressions/bugs in previously existing behavior.
+- In version sections, classify genuinely new end-user capabilities under `### Added` and reserve `### Fixed` for regressions in previously existing behavior.
 - If a version section has fewer than 4 total change bullets, omit `### Added`/`### Changed`/`### Fixed` subheadings and list bullets directly under the version heading.
 - When a feature is first introduced in the same release, do not add separate changelog bullets for implementation/fix-up iterations that occurred while building it; summarize only the final user-visible outcome.
 - Use semantic version sections (`MAJOR.MINOR.PATCH`) and ISO dates (`YYYY-MM-DD`).
@@ -239,7 +237,7 @@ policies:
 - Do cleanup in a separate follow-up `refactor:` commit after the functional milestone commit.
 - Do not mix milestone feature/fix and refactor changes in one commit unless required for functionality.
 - Prefer small, reviewable refactors that preserve behavior.
-- For each major milestone, include a short checklist in handoff/PR notes:
+- For each major milestone, include a short checklist in handoff or review notes:
   - duplication reviewed
   - consistency issues reviewed
   - large/complex components reviewed
@@ -276,20 +274,14 @@ When asked to create a plan to fix or implement something:
 #### push
 - `push` (or starts with `push`) is a special command and MUST run this full release workflow; do not shortcut directly to `git push` unless the user explicitly asks to bypass the routine.
 - if no release or push prep changes are needed, still run the checklist, report results, and ask for explicit confirmation before any network push.
-- update user-facing guides before release or push when behavior changed, at minimum `USER_GUIDE.md` plus any in-app guide or shortcuts copy affected by the change
-- apply the changelog discipline above before release, including wording cleanup, redundancy pruning, and final section classification
+- update user-facing guides before release or push when behavior changed
 - list unpushed commits: `git log origin/<branch>..HEAD --oneline`
 - provide one high-level summary across all unpushed commits
 - omit cosmetic-only low-level details unless asked
-- update `package.json` version semantically based on pending changes
-- apply semantic bump examples using the current version shape as illustrative guidance:
-  - patch: `x.y.z -> x.y.(z+1)` for `fix:` or `enhance:` only
-  - patch: `x.y.z -> x.y.(z+1)` for small or single `feat:` changes that are not substantial
-  - minor: `x.y.z -> x.(y+1).0` when there are multiple or broader `feat:` changes or otherwise significant user-facing scope, and no breaking change exists
-  - major: `x.y.z -> (x+1).0.0` for breaking change (`feat!:`/`fix!:` or `BREAKING CHANGE:`)
+- update `package.json` version semantically based on the release policy above
 - when bumping a patch/minor version, include a short explicit rationale in release/push notes (for example: "patch for fixes only" or "minor for broader user-facing feature scope")
 - create annotated tag matching version (for example `v1.1.0`)
-- run verification commands appropriate to risk, using the verification matrix above
+- apply the changelog discipline and verification matrix above
 - after explicit confirmation, push branch and tags
 
 ### Assistant Response Formatting
