@@ -153,21 +153,47 @@ export function OnboardingGuide({
       }) ?? null;
     };
 
+    const getClickableTaskTarget = (task: HTMLElement): HTMLElement | null => {
+      const selectors = [
+        '[title*="focus" i]',
+        '[aria-label*="focus" i]',
+        '[role="button"][tabindex]',
+        '[role="button"]',
+        "p.cursor-pointer",
+        "div.cursor-pointer",
+        "span.cursor-pointer",
+      ];
+
+      for (const selector of selectors) {
+        const match = getFirstVisibleTask(Array.from(task.querySelectorAll<HTMLElement>(selector)).filter((element) => {
+          if (element.hasAttribute("disabled")) return false;
+          if (element.getAttribute("aria-disabled") === "true") return false;
+          return true;
+        }));
+        if (match) return match;
+      }
+
+      return task;
+    };
+
+    const clickTask = (task: HTMLElement | null): boolean => {
+      if (!task) return false;
+      const clickTarget = getClickableTaskTarget(task);
+      if (!clickTarget) return false;
+      clickTarget.click();
+      return true;
+    };
+
     const taskList = getBestVisibleTarget('[data-onboarding="task-list"]');
     const firstVisibleTaskInList = taskList
       ? getFirstVisibleTask(Array.from(taskList.querySelectorAll<HTMLElement>("[data-task-id]")))
       : null;
-    if (firstVisibleTaskInList) {
-      firstVisibleTaskInList.click();
-      return true;
-    }
+    if (clickTask(firstVisibleTaskInList)) return true;
 
     const firstVisibleGlobalTask = getFirstVisibleTask(
       Array.from(document.querySelectorAll<HTMLElement>("[data-task-id]"))
     );
-    if (!firstVisibleGlobalTask) return false;
-    firstVisibleGlobalTask.click();
-    return true;
+    return clickTask(firstVisibleGlobalTask);
   }, [getBestVisibleTarget]);
 
   const allSteps = useMemo(() => getOnboardingAllSteps(stepsBySection), [stepsBySection]);

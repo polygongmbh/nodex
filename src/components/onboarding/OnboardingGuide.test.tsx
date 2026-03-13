@@ -339,6 +339,59 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
+  it("auto-focuses a clickable descendant in task rows that are wrapper-only containers", async () => {
+    vi.useFakeTimers();
+    await withMockTargetRect(async () => {
+      const onTaskOpen = vi.fn();
+      const onStatusClick = vi.fn();
+      const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+        navigation: [
+          {
+            id: "navigation-breadcrumb",
+            title: "Use breadcrumbs",
+            description: "Use breadcrumb navigation.",
+            target: '[data-onboarding="focused-breadcrumb"]',
+            requiredAction: "click-target",
+          },
+        ],
+        filters: [],
+        compose: [],
+      };
+
+      render(
+        <div>
+          <div data-onboarding="task-list">
+            <div data-task-id="task-1">
+              <button type="button" onClick={onStatusClick}>
+                Status
+              </button>
+              <div title="Focus task" className="cursor-pointer" onClick={onTaskOpen}>
+                Task title
+              </div>
+            </div>
+          </div>
+          <OnboardingGuide
+            isOpen
+            initialSection="navigation"
+            currentView="list"
+            sections={sections}
+            stepsBySection={stepsBySection}
+            onClose={vi.fn()}
+            onComplete={vi.fn()}
+          />
+        </div>
+      );
+
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+
+      expect(onTaskOpen).toHaveBeenCalledTimes(1);
+      expect(onStatusClick).toHaveBeenCalledTimes(0);
+    });
+    vi.useRealTimers();
+  });
+
   it("does not render the generic click hint text", () => {
     renderGuide({
       content: <div data-onboarding="task-list">Task list</div>,
