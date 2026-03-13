@@ -47,7 +47,7 @@ export function shouldRetryAuthAfterReadRejection(params: {
   return (params.now - params.lastRetryAt) >= cooldownMs;
 }
 
-export function shouldRetryNip42AfterSignIn(relay: {
+export function shouldReconnectRelayAfterSignIn(relay: {
   status?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   nip11?: {
     supportsNip42?: boolean;
@@ -55,11 +55,17 @@ export function shouldRetryNip42AfterSignIn(relay: {
   };
 }): boolean {
   return (
-    relay.nip11?.supportsNip42 === true ||
-    relay.nip11?.authRequired === true ||
+    relay.status === "connection-error" ||
+    relay.status === "disconnected" ||
     relay.status === "verification-failed" ||
     relay.status === "read-only"
   );
+}
+
+export function shouldReconnectRelayAfterResume(relay: {
+  status?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
+}): boolean {
+  return relay.status === "disconnected" || relay.status === "connection-error";
 }
 
 interface RelayReadAuthState {

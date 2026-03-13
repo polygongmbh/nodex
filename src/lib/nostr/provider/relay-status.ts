@@ -51,3 +51,31 @@ export function resolveRelayLifecycleStatus({
   }
   return "disconnected";
 }
+
+export function resolveRelayStatus(params: ResolveRelayLifecycleStatusOptions & {
+  readRejected: boolean;
+  writeRejected: boolean;
+}): NDKRelayStatus["status"] {
+  const lifecycleStatus = resolveRelayLifecycleStatus(params);
+  if (lifecycleStatus !== "connected") return lifecycleStatus;
+  if (params.readRejected) return "verification-failed";
+  if (params.writeRejected) return "read-only";
+  return "connected";
+}
+
+export function inferMappedStatusFromUiStatus(
+  status: NDKRelayStatus["status"] | undefined
+): NDKRelayStatus["status"] {
+  switch (status) {
+    case "connected":
+    case "read-only":
+    case "verification-failed":
+      return "connected";
+    case "connecting":
+      return "connecting";
+    case "disconnected":
+    case "connection-error":
+    default:
+      return "disconnected";
+  }
+}

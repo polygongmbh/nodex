@@ -37,10 +37,11 @@ import {
   STORAGE_KEY_NSEC,
 } from "./storage";
 import {
+  inferMappedStatusFromUiStatus,
   mapNativeRelayStatus,
   MAX_INITIAL_CONNECT_FAILURES,
   RELAY_STATUS_RECONCILE_INTERVAL_MS,
-  resolveRelayLifecycleStatus,
+  resolveRelayStatus,
 } from "./relay-status";
 import {
   appendResolvedRelayUrl,
@@ -55,7 +56,8 @@ import { createNip98AuthHeader } from "../nip98-http-auth";
 import {
   isAuthRequiredCloseReason,
   shouldMarkRelayReadOnlyAfterPublishReject,
-  shouldRetryNip42AfterSignIn,
+  shouldReconnectRelayAfterResume,
+  shouldReconnectRelayAfterSignIn,
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
@@ -112,21 +114,31 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayAttemptStartedAtRef = useRef<Map<string, number>>(new Map());
+  const relayCurrentInstanceRef = useRef<Map<string, NDKRelay>>(new Map());
   const relayAuthRetrySessionKeyRef = useRef<string | null>(null);
   const relayAuthRetriedUrlsForSessionRef = useRef<Set<string>>(new Set());
   const complementaryRelaySyncKeyRef = useRef<string | null>(null);
   const lastResumeReconnectAtRef = useRef(0);
+  const initialResolvedDefaultRelaysRef = useRef<string[] | null>(null);
 
-  const resetRelayConnectionTracking = useCallback((normalizedRelayUrl: string) => {
+  if (!isResolvingDefaultRelays && initialResolvedDefaultRelaysRef.current === null) {
+    initialResolvedDefaultRelaysRef.current = resolvedDefaultRelays;
+  }
+  const initialRelayUrls = initialResolvedDefaultRelaysRef.current;
+
+  const resetRelayTransportTracking = useCallback((normalizedRelayUrl: string) => {
     removedRelaysRef.current.delete(normalizedRelayUrl);
     relayInitialFailureCountsRef.current.delete(normalizedRelayUrl);
     relayConnectedOnceRef.current.delete(normalizedRelayUrl);
     relayAutoPausedRef.current.delete(normalizedRelayUrl);
-    relayReadRejectedRef.current.delete(normalizedRelayUrl);
-    relayWriteRejectedRef.current.delete(normalizedRelayUrl);
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
     relayAuthRetryHistoryRef.current.delete(normalizedRelayUrl);
     relayAttemptStartedAtRef.current.set(normalizedRelayUrl, Date.now());
+  }, []);
+
+  const clearRelayCapabilityTracking = useCallback((normalizedRelayUrl: string) => {
+    relayReadRejectedRef.current.delete(normalizedRelayUrl);
+    relayWriteRejectedRef.current.delete(normalizedRelayUrl);
   }, []);
 
   useEffect(() => {
@@ -202,53 +214,145 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayVerificationWriteOpsRef.current = Math.max(0, relayVerificationWriteOpsRef.current - 1);
   }, []);
 
-  const resolveConnectedRelayStatus = useCallback((normalizedRelayUrl: string): NDKRelayStatus["status"] => {
-    if (relayReadRejectedRef.current.get(normalizedRelayUrl)) return "verification-failed";
-    if (relayWriteRejectedRef.current.get(normalizedRelayUrl)) return "read-only";
-    return "connected";
+  const getRelayTransportStatus = useCallback((
+    normalizedRelayUrl: string,
+    previousStatus?: NDKRelayStatus["status"]
+  ): NDKRelayStatus["status"] => {
+    const relay = relayCurrentInstanceRef.current.get(normalizedRelayUrl);
+    if (relay) {
+      return mapNativeRelayStatus(relay.status);
+    }
+    return inferMappedStatusFromUiStatus(previousStatus);
   }, []);
 
+  const resolveRelayUiStatus = useCallback((
+    normalizedRelayUrl: string,
+    options?: {
+      mappedStatus?: NDKRelayStatus["status"];
+      previousStatus?: NDKRelayStatus["status"];
+      now?: number;
+    }
+  ): NDKRelayStatus["status"] => {
+    return resolveRelayStatus({
+      mappedStatus: options?.mappedStatus ?? getRelayTransportStatus(normalizedRelayUrl, options?.previousStatus),
+      previousStatus: options?.previousStatus,
+      hasConnectedOnce: relayConnectedOnceRef.current.has(normalizedRelayUrl),
+      isAutoPaused: relayAutoPausedRef.current.has(normalizedRelayUrl),
+      attemptStartedAt: relayAttemptStartedAtRef.current.get(normalizedRelayUrl),
+      now: options?.now ?? Date.now(),
+      readRejected: relayReadRejectedRef.current.get(normalizedRelayUrl) === true,
+      writeRejected: relayWriteRejectedRef.current.get(normalizedRelayUrl) === true,
+    });
+  }, [getRelayTransportStatus]);
+
+  const updateRelayStatus = useCallback((
+    normalizedRelayUrl: string,
+    options?: {
+      mappedStatus?: NDKRelayStatus["status"];
+      now?: number;
+      ensureEntry?: boolean;
+    }
+  ) => {
+    setRelays((previous) => {
+      let found = false;
+      const next = previous.map((relay) => {
+        if (normalizeRelayUrl(relay.url) !== normalizedRelayUrl) return relay;
+        found = true;
+        return {
+          ...relay,
+          url: normalizedRelayUrl,
+          status: resolveRelayUiStatus(normalizedRelayUrl, {
+            mappedStatus: options?.mappedStatus,
+            previousStatus: relay.status,
+            now: options?.now,
+          }),
+        };
+      });
+
+      if (found || !options?.ensureEntry) return next;
+
+      const info = relayInfoRef.current.get(normalizedRelayUrl);
+      return [...next, {
+        url: normalizedRelayUrl,
+        status: resolveRelayUiStatus(normalizedRelayUrl, {
+          mappedStatus: options?.mappedStatus,
+          now: options?.now,
+        }),
+        nip11: info
+          ? {
+              authRequired: info.authRequired,
+              supportsNip42: info.supportsNip42,
+              checkedAt: Date.now(),
+            }
+          : undefined,
+      }];
+    });
+  }, [resolveRelayUiStatus]);
+
+  const isCurrentRelayInstance = useCallback((relay: NDKRelay): boolean => {
+    const normalizedRelayUrl = normalizeRelayUrl(relay.url);
+    const currentRelay = relayCurrentInstanceRef.current.get(normalizedRelayUrl);
+    return !currentRelay || currentRelay === relay;
+  }, []);
+
+  const connectRelay = useCallback((
+    relayUrl: string,
+    options?: { forceNewSocket?: boolean; clearCapabilityState?: boolean }
+  ): NDKRelay | null => {
+    if (!ndk) return null;
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
+    const existingRelay =
+      relayCurrentInstanceRef.current.get(normalizedRelayUrl) ??
+      ndk.pool.getRelay(normalizedRelayUrl, false);
+    const transportStatus = existingRelay ? mapNativeRelayStatus(existingRelay.status) : undefined;
+    const forceNewSocket = options?.forceNewSocket ?? false;
+
+    if (existingRelay && !forceNewSocket && (transportStatus === "connected" || transportStatus === "connecting")) {
+      relayCurrentInstanceRef.current.set(normalizedRelayUrl, existingRelay);
+      updateRelayStatus(normalizedRelayUrl, {
+        mappedStatus: transportStatus,
+        ensureEntry: true,
+      });
+      return existingRelay;
+    }
+
+    resetRelayTransportTracking(normalizedRelayUrl);
+    if (options?.clearCapabilityState) {
+      clearRelayCapabilityTracking(normalizedRelayUrl);
+    }
+    updateRelayStatus(normalizedRelayUrl, {
+      mappedStatus: "connecting",
+      ensureEntry: true,
+    });
+
+    if (existingRelay && forceNewSocket) {
+      ndk.pool.removeRelay(normalizedRelayUrl);
+    }
+
+    const relay = ndk.pool.getRelay(normalizedRelayUrl, true);
+    relayCurrentInstanceRef.current.set(normalizedRelayUrl, relay);
+    return relay;
+  }, [clearRelayCapabilityTracking, ndk, resetRelayTransportTracking, updateRelayStatus]);
+
   const markRelayReadOutcome = useCallback((relayUrl: string, allowed: boolean) => {
-    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     if (allowed) {
       relayReadRejectedRef.current.delete(normalizedRelayUrl);
     } else {
       relayReadRejectedRef.current.set(normalizedRelayUrl, true);
     }
-    setRelays((previous) =>
-      previous.map((relay) => {
-        if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
-        if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
-          return relay;
-        }
-        return {
-          ...relay,
-          status: resolveConnectedRelayStatus(normalizedRelayUrl),
-        };
-      })
-    );
-  }, [resolveConnectedRelayStatus]);
+    updateRelayStatus(normalizedRelayUrl, { ensureEntry: true });
+  }, [updateRelayStatus]);
 
   const markRelayWriteOutcome = useCallback((relayUrl: string, allowed: boolean) => {
-    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     if (allowed) {
       relayWriteRejectedRef.current.delete(normalizedRelayUrl);
     } else {
       relayWriteRejectedRef.current.set(normalizedRelayUrl, true);
     }
-    setRelays((previous) =>
-      previous.map((relay) => {
-        if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
-        if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
-          return relay;
-        }
-        return {
-          ...relay,
-          status: resolveConnectedRelayStatus(normalizedRelayUrl),
-        };
-      })
-    );
-  }, [resolveConnectedRelayStatus]);
+    updateRelayStatus(normalizedRelayUrl, { ensureEntry: true });
+  }, [updateRelayStatus]);
 
   const shouldShowRelayVerificationToast = useCallback((
     relayUrl: string,
@@ -295,7 +399,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   ) => {
     const shouldSetStatus = options?.setStatus ?? false;
     const shouldShowToast = options?.showToast ?? true;
-    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
     if (shouldSetStatus) {
       if (operation === "read") {
@@ -343,7 +447,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   }, [markRelayVerificationFailure, resolveRelayVerificationOperation]);
 
   const probeRelayInfo = useCallback(async (relayUrl: string) => {
-    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     const info = await fetchRelayInfo(normalizedRelayUrl);
     if (!info) {
       nostrDevLog("relay", "Relay NIP-11 info unavailable", {
@@ -374,38 +478,25 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   }, []);
 
   const retryNip42RelaysAfterSignIn = useCallback((relayUrlsOverride?: string[]) => {
-    if (!ndk) return;
-    const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
     const relayUrlsToRetry = relayUrlsOverride
-      ? relayUrlsOverride.map(normalizeUrl).filter(Boolean)
+      ? relayUrlsOverride.map(normalizeRelayUrl).filter(Boolean)
       : relays
-          .filter((relay) => shouldRetryNip42AfterSignIn(relay))
-          .map((relay) => normalizeUrl(relay.url));
+          .filter((relay) => shouldReconnectRelayAfterSignIn(relay))
+          .map((relay) => normalizeRelayUrl(relay.url));
 
     if (relayUrlsToRetry.length === 0) return;
 
-    const retrySet = new Set(relayUrlsToRetry);
-    nostrDevLog("relay", "Retrying NIP-42 auth-capable relays after sign in", {
+    nostrDevLog("relay", "Retrying failed relays after sign in", {
       relayUrls: relayUrlsToRetry,
     });
 
     relayUrlsToRetry.forEach((relayUrl) => {
-      resetRelayConnectionTracking(relayUrl);
+      connectRelay(relayUrl, {
+        forceNewSocket: true,
+        clearCapabilityState: true,
+      });
     });
-    setRelays((previous) =>
-      previous.map((relay) =>
-        retrySet.has(normalizeUrl(relay.url))
-          ? { ...relay, status: "connecting" }
-          : relay
-      )
-    );
-
-    relayUrlsToRetry.forEach((relayUrl) => {
-      const relay = ndk.pool.getRelay(relayUrl, true);
-      relay?.disconnect();
-      relay?.connect();
-    });
-  }, [ndk, relays, resetRelayConnectionTracking]);
+  }, [connectRelay, relays]);
 
   useEffect(() => {
     const sessionKey = user?.pubkey && authMethod ? `${authMethod}:${user.pubkey}` : null;
@@ -421,8 +512,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
 
     const relayUrlsToRetry = relays
-      .filter((relay) => shouldRetryNip42AfterSignIn(relay))
-      .map((relay) => relay.url.replace(/\/+$/, ""))
+      .filter((relay) => shouldReconnectRelayAfterSignIn(relay))
+      .map((relay) => normalizeRelayUrl(relay.url))
       .filter((relayUrl) => !relayAuthRetriedUrlsForSessionRef.current.has(relayUrl));
 
     if (relayUrlsToRetry.length === 0) return;
@@ -529,16 +620,16 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     user?.profile,
   ]);
 
-  // Initialize NDK
+  // Initialize NDK once after default relays are resolved.
   useEffect(() => {
-    if (isResolvingDefaultRelays) return;
+    if (isResolvingDefaultRelays || !initialRelayUrls) return;
 
     let disposed = false;
     nostrDevLog("provider", "Initializing NDK provider", {
-      configuredDefaultRelays: resolvedDefaultRelays,
+      configuredDefaultRelays: initialRelayUrls,
     });
     const ndkInstance = new NDK({
-      explicitRelayUrls: resolvedDefaultRelays,
+      explicitRelayUrls: initialRelayUrls,
     });
 
     ndkInstance.relayAuthDefaultPolicy = createRelayNip42AuthPolicy(ndkInstance, notifyRelayVerificationEvent);
@@ -550,34 +641,50 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         const nextByUrl = new Map(prev.map((entry) => [normalizeRelayUrl(entry.url), entry]));
         ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
           const normalized = normalizeRelayUrl(relay.url);
+          relayCurrentInstanceRef.current.set(normalized, relay);
           if (removedRelaysRef.current.has(normalized)) return;
           const previousEntry = nextByUrl.get(normalized);
           const mappedStatus = mapNativeRelayStatus(relay.status);
+          const info = relayInfoRef.current.get(normalized);
           nextByUrl.set(normalized, {
             ...previousEntry,
             url: normalized,
-            status: mappedStatus === "connected"
-              ? resolveConnectedRelayStatus(normalized)
-              : resolveRelayLifecycleStatus({
-                  mappedStatus,
-                  previousStatus: previousEntry?.status,
-                  hasConnectedOnce: relayConnectedOnceRef.current.has(normalized),
-                  isAutoPaused: relayAutoPausedRef.current.has(normalized),
-                  attemptStartedAt: relayAttemptStartedAtRef.current.get(normalized),
-                  now,
-                }),
+            status: resolveRelayUiStatus(normalized, {
+              mappedStatus,
+              previousStatus: previousEntry?.status,
+              now,
+            }),
+            nip11: previousEntry?.nip11 ?? (info
+              ? {
+                  authRequired: info.authRequired,
+                  supportsNip42: info.supportsNip42,
+                  checkedAt: Date.now(),
+                }
+              : undefined),
           });
         });
         return Array.from(nextByUrl.values());
       });
     };
 
-    ndkInstance.pool.on("relay:connecting", () => {
-      syncRelayStatusesFromPool();
+    ndkInstance.pool.relays.forEach((relay) => {
+      relayCurrentInstanceRef.current.set(normalizeRelayUrl(relay.url), relay);
+    });
+
+    ndkInstance.pool.on("relay:connecting", (relay: NDKRelay) => {
+      const normalized = normalizeRelayUrl(relay.url);
+      if (!isCurrentRelayInstance(relay)) return;
+      relayCurrentInstanceRef.current.set(normalized, relay);
+      updateRelayStatus(normalized, {
+        mappedStatus: mapNativeRelayStatus(relay.status),
+        ensureEntry: true,
+      });
     });
 
     ndkInstance.pool.on("relay:connect", (relay: NDKRelay) => {
-      const normalized = normalizeUrl(relay.url);
+      const normalized = normalizeRelayUrl(relay.url);
+      if (!isCurrentRelayInstance(relay)) return;
+      relayCurrentInstanceRef.current.set(normalized, relay);
       nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);
@@ -589,58 +696,22 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         markRelayVerificationSuccess(normalized, pendingVerification.operation);
       }
       if (removedRelaysRef.current.has(normalized)) return;
-      setRelays((prev) => {
-        const existing = prev.find((r) => normalizeRelayUrl(r.url) === normalized);
-        if (existing) {
-          return prev.map((r) =>
-            normalizeRelayUrl(r.url) === normalized
-              ? {
-                  ...r,
-                  url: normalized,
-                  status: resolveConnectedRelayStatus(normalized),
-                }
-              : r
-          );
-        }
-        const info = relayInfoRef.current.get(normalized);
-        const next = [...prev, {
-          url: normalized,
-          status: resolveConnectedRelayStatus(normalized),
-          nip11: info
-            ? {
-                authRequired: info.authRequired,
-                supportsNip42: info.supportsNip42,
-                checkedAt: Date.now(),
-              }
-            : undefined,
-        }];
-        savePersistedRelayUrls(next.map((entry) => entry.url));
-        return next;
+      updateRelayStatus(normalized, {
+        mappedStatus: mapNativeRelayStatus(relay.status),
+        ensureEntry: true,
       });
     });
 
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
-      const normalized = normalizeUrl(relay.url);
+      const normalized = normalizeRelayUrl(relay.url);
+      if (!isCurrentRelayInstance(relay)) return;
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
       if (!removedRelaysRef.current.has(normalized)) {
-        const now = Date.now();
-        setRelays((prev) =>
-          prev.map((r) =>
-            normalizeRelayUrl(r.url) === normalized
-              ? {
-                  ...r,
-                  status: resolveRelayLifecycleStatus({
-                    mappedStatus: "disconnected",
-                    previousStatus: r.status,
-                    hasConnectedOnce: relayConnectedOnceRef.current.has(normalized),
-                    isAutoPaused: relayAutoPausedRef.current.has(normalized),
-                    attemptStartedAt: relayAttemptStartedAtRef.current.get(normalized),
-                    now,
-                  }),
-                }
-              : r
-          )
-        );
+        updateRelayStatus(normalized, {
+          mappedStatus: "disconnected",
+          now: Date.now(),
+          ensureEntry: true,
+        });
       }
 
       if (relayConnectedOnceRef.current.has(normalized)) return;
@@ -653,26 +724,25 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
       relayAutoPausedRef.current.add(normalized);
       relayAttemptStartedAtRef.current.delete(normalized);
-      setRelays((prev) =>
-        prev.map((entry) =>
-          normalizeRelayUrl(entry.url) === normalized ? { ...entry, status: "connection-error" } : entry
-        )
-      );
+      updateRelayStatus(normalized, {
+        mappedStatus: "disconnected",
+        now: Date.now(),
+        ensureEntry: true,
+      });
       console.warn("Relay auto-paused after repeated failed connection attempts", {
         relayUrl: normalized,
         failures: nextFailureCount,
       });
 
-      relay.disconnect();
       ndkInstance.pool.removeRelay(relay.url);
     });
 
     // Initialize relay states
     removedRelaysRef.current.clear();
-    resolvedDefaultRelays.forEach((relayUrl) => {
-      relayAttemptStartedAtRef.current.set(relayUrl.replace(/\/+$/, ""), Date.now());
+    initialRelayUrls.forEach((relayUrl) => {
+      relayAttemptStartedAtRef.current.set(normalizeRelayUrl(relayUrl), Date.now());
     });
-    setRelays(resolvedDefaultRelays.map((url) => {
+    setRelays(initialRelayUrls.map((url) => {
       const normalizedUrl = normalizeRelayUrl(url);
       const info = relayInfoRef.current.get(normalizedUrl);
       return {
@@ -688,9 +758,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       };
     }));
     nostrDevLog("relay", "Relay state initialized as connecting", {
-      relayUrls: resolvedDefaultRelays,
+      relayUrls: initialRelayUrls,
     });
-    resolvedDefaultRelays.forEach((relayUrl) => {
+    initialRelayUrls.forEach((relayUrl) => {
       void probeRelayInfo(relayUrl);
     });
 
@@ -819,7 +889,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       ndkInstance.pool.removeAllListeners();
     };
-  }, [isResolvingDefaultRelays, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays]);
+  }, [initialRelayUrls, isResolvingDefaultRelays, isCurrentRelayInstance, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveRelayUiStatus, updateRelayStatus]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -1024,7 +1094,6 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       return;
     }
     const normalized = normalizeRelayUrl(url);
-    resetRelayConnectionTracking(normalized);
     setResolvedDefaultRelays((previous) => appendResolvedRelayUrl(previous, normalized));
     nostrDevLog("relay", "Adding relay and initiating connection", { relayUrl: normalized });
     void probeRelayInfo(normalized);
@@ -1055,11 +1124,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       return next;
     });
 
-    // Connect via NDK
-    const relay = ndk.pool.getRelay(normalized, true);
-    relay?.disconnect();
-    relay?.connect();
-  }, [ndk, probeRelayInfo, resetRelayConnectionTracking]);
+    connectRelay(normalized, {
+      clearCapabilityState: true,
+    });
+  }, [connectRelay, ndk, probeRelayInfo]);
 
   useEffect(() => {
     if (!user?.pubkey || !ndk) return;
@@ -1135,36 +1203,25 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayReadRejectedRef.current.delete(normalized);
     relayWriteRejectedRef.current.delete(normalized);
     relayAttemptStartedAtRef.current.delete(normalized);
+    relayCurrentInstanceRef.current.delete(normalized);
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
     
-    const relay = ndk.pool.getRelay(normalized);
+    const relay = ndk.pool.getRelay(normalized, false);
     if (relay) {
-      relay.disconnect();
       ndk.pool.removeRelay(normalized);
     }
   }, [ndk]);
 
   const reconnectRelay = useCallback((url: string) => {
-    if (!ndk) return;
-    const normalized = url.replace(/\/+$/, "");
-    resetRelayConnectionTracking(normalized);
+    const normalized = normalizeRelayUrl(url);
     nostrDevLog("relay", "Manual relay reconnect requested", { relayUrl: normalized });
-
-    setRelays((previous) =>
-      previous.map((relay) =>
-        relay.url.replace(/\/+$/, "") === normalized
-          ? { ...relay, status: "connecting" }
-          : relay
-      )
-    );
-
-    const relay = ndk.pool.getRelay(normalized, true);
-    relay?.disconnect();
-    relay?.connect();
-  }, [ndk, resetRelayConnectionTracking]);
+    connectRelay(normalized, {
+      forceNewSocket: true,
+      clearCapabilityState: true,
+    });
+  }, [connectRelay]);
 
   const reconnectInactiveRelaysAfterResume = useCallback((reason: "visibility" | "focus" | "online") => {
-    if (!ndk) return;
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
     const now = Date.now();
@@ -1173,11 +1230,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
 
     const targets = relays
-      .filter((relay) =>
-        relay.status === "disconnected" ||
-        relay.status === "connection-error" ||
-        relay.status === "verification-failed"
-      )
+      .filter((relay) => shouldReconnectRelayAfterResume(relay))
       .map((relay) => relay.url);
 
     if (targets.length === 0) return;
@@ -1189,9 +1242,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
 
     for (const url of targets) {
-      reconnectRelay(url);
+      connectRelay(url);
     }
-  }, [ndk, reconnectRelay, relays]);
+  }, [connectRelay, relays]);
 
   useEffect(() => {
     if (!ndk) return;
@@ -1537,8 +1590,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         nostrDevLog("relay", "Retrying relay connection to trigger NIP-42 auth challenge", {
           relayUrl: normalizedRelayUrl,
         });
-        relay.disconnect();
-        relay.connect();
+        connectRelay(normalizedRelayUrl, {
+          forceNewSocket: true,
+        });
       }
       markRelayVerificationFailure(relay.url, "read", {
         setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),
@@ -1555,7 +1609,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     subscription.on("close", finishRead);
 
     return subscription;
-  }, [beginRelayOperation, endRelayOperation, markRelayReadOutcome, markRelayVerificationFailure, ndk]);
+  }, [beginRelayOperation, connectRelay, endRelayOperation, markRelayReadOutcome, markRelayVerificationFailure, ndk]);
 
   const isConnected = useMemo(() => {
     return relays.some((r) => r.status === "connected" || r.status === "read-only");
