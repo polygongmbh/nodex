@@ -60,7 +60,7 @@ const relays: Relay[] = [makeRelay()];
 const channels: Channel[] = [makeChannel()];
 const people: Person[] = [makePerson({ id: "me", name: "Me", displayName: "Me" })];
 const tasks: Task[] = [];
-const defaultOnNewTask = () => ({ ok: true, mode: "local" as const });
+const defaultOnNewTask = () => ({ ok: true as const, mode: "local" as const });
 
 type MobileLayoutProps = ComponentProps<typeof MobileLayout>;
 
