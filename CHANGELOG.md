@@ -5,13 +5,16 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- No unreleased changes yet.
+
+## [1.17.2] - 2026-03-13
 - Added a runtime persistence guard that can be enabled via `?nodexNoStorage=1` (or `VITE_DISABLE_CLIENT_PERSISTENCE=true`) to disable browser local/session storage, cookie writes, and browser cache APIs for the active session.
-- Onboarding breadcrumb guidance now uses a stable flow: it auto-focuses a task once on breadcrumb-step entry when needed, advances on initial breadcrumb interaction, and on revisits only auto-advances when breadcrumb context disappears.
-- Desktop onboarding now starts with task focus (Feed-first) and moves view-switcher guidance to the third navigation step.
+- Desktop onboarding now starts with task focus and keeps navigation guidance ordered as task focus -> breadcrumbs -> view switching.
+- Breadcrumb onboarding flow is now stable across first pass and revisits: task auto-focus runs once when needed, breadcrumb interaction advances the step, revisits auto-advance only after breadcrumb context disappears, and the channels step no longer gets skipped.
+- Breadcrumb auto-activation now works consistently across views (including non-feed layouts) by targeting focusable task descendants when row wrappers are not directly clickable.
+- Guide popup/backdrop positioning now keeps anchor stability while breadcrumb targets unmount and uses synchronized motion timing to reduce transition jank.
 - Starting the onboarding tour with no available tasks now auto-loads the demo feed for the session so navigation steps have usable target data.
-- Demo relay bootstrap for onboarding now seeds demo `kind:0` profile metadata events so sidebar People filters populate from metadata instead of synthetic fallback entries.
-- Demo feed seeding now also injects centralized fixed-timestamp Nostr fixture events (including nameless authors) alongside existing generated demo tasks.
-- Demo `kind:0` profile seeds now stay stable after demo relay activation, including sessions with blocked client persistence where storage reads/writes are unavailable.
+- Demo relay bootstrap now seeds reusable fixture events and stable demo `kind:0` profile metadata so People filters populate correctly and metadata is not overwritten after relay activation.
 
 ## [1.17.1] - 2026-03-08
 - Added an in-app legal dialog with German Impressum and Datenschutzerklärung content, linked from the desktop bottom-right dock next to the version hint, including a compact contact mail icon.

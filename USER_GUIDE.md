@@ -103,6 +103,10 @@
   - Desktop sidebar: *Guide*
   - Mobile *Manage* view: *Open Guide*
 - Desktop sidebar *Guide* and *Shortcuts* actions are directly labeled and no longer show duplicate hover popovers.
+- Desktop navigation onboarding now starts by focusing a task, then teaches breadcrumbs, then view switching.
+- If breadcrumb context is missing on breadcrumb step entry, the guide auto-activates the first visible task (across views) to surface breadcrumbs.
+- On revisiting the breadcrumb step, the guide advances automatically when breadcrumb context disappears (for example after navigating up), instead of forcing repeated interaction.
+- Guide popup and spotlight transitions are synchronized and keep anchor stability when target elements appear/disappear during step transitions.
 - Choose area overlay:
   - Navigation
   - Filters
