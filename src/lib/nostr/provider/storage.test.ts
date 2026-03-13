@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   loadPersistedRelayUrls,
   savePersistedRelayUrls,
@@ -30,5 +30,18 @@ describe("relay list persistence", () => {
   it("returns empty list for malformed persisted data", () => {
     window.localStorage.setItem(STORAGE_KEY_RELAYS, "{bad json");
     expect(loadPersistedRelayUrls()).toEqual([]);
+  });
+
+  it("does not throw when localStorage quota is exceeded while saving relays", () => {
+    const setItemSpy = vi.spyOn(window.localStorage, "setItem").mockImplementation(() => {
+      throw new DOMException("quota exceeded", "QuotaExceededError");
+    });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    expect(() => savePersistedRelayUrls(["wss://relay.one"])).not.toThrow();
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+
+    setItemSpy.mockRestore();
+    warnSpy.mockRestore();
   });
 });

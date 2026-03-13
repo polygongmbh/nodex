@@ -38,5 +38,13 @@ export function savePersistedRelayUrls(urls: string[]): void {
         .filter((entry) => entry.length > 0)
     )
   );
-  window.localStorage.setItem(STORAGE_KEY_RELAYS, JSON.stringify(normalized));
+  try {
+    window.localStorage.setItem(STORAGE_KEY_RELAYS, JSON.stringify(normalized));
+  } catch (error) {
+    console.warn("Failed to persist relay URLs", {
+      storageKey: STORAGE_KEY_RELAYS,
+      relayCount: normalized.length,
+      error,
+    });
+  }
 }
