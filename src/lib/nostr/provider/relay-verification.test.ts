@@ -99,7 +99,7 @@ describe("shouldRetryAuthAfterReadRejection", () => {
 });
 
 describe("shouldRetryNip42AfterSignIn", () => {
-  it("retries only for relays that advertise NIP-42 support", () => {
+  it("retries for relays that advertise NIP-42 support", () => {
     expect(shouldRetryNip42AfterSignIn({
       nip11: { supportsNip42: true },
     })).toBe(true);
@@ -107,5 +107,17 @@ describe("shouldRetryNip42AfterSignIn", () => {
       nip11: { supportsNip42: false },
     })).toBe(false);
     expect(shouldRetryNip42AfterSignIn({})).toBe(false);
+  });
+
+  it("also retries auth-required and previously rejected relays", () => {
+    expect(shouldRetryNip42AfterSignIn({
+      nip11: { authRequired: true },
+    })).toBe(true);
+    expect(shouldRetryNip42AfterSignIn({
+      status: "verification-failed",
+    })).toBe(true);
+    expect(shouldRetryNip42AfterSignIn({
+      status: "read-only",
+    })).toBe(true);
   });
 });

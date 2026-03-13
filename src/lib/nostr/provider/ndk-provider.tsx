@@ -111,6 +111,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayAttemptStartedAtRef = useRef<Map<string, number>>(new Map());
+  const relayAuthRetrySessionKeyRef = useRef<string | null>(null);
+  const relayAuthRetriedUrlsForSessionRef = useRef<Set<string>>(new Set());
   const complementaryRelaySyncKeyRef = useRef<string | null>(null);
   const lastResumeReconnectAtRef = useRef(0);
 
@@ -268,8 +270,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } else if (operation === "write") {
       markRelayWriteOutcome(relayUrl, true);
     } else {
-      // Unknown auth challenge context: clear stale read rejection to avoid sticky red state.
       markRelayReadOutcome(relayUrl, true);
+      markRelayWriteOutcome(relayUrl, true);
     }
     if (!shouldShowRelayVerificationToast(relayUrl, operation, "verified")) {
       return;
@@ -298,6 +300,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       if (operation === "read") {
         markRelayReadOutcome(relayUrl, false);
       } else if (operation === "write") {
+        markRelayWriteOutcome(relayUrl, false);
+      } else {
+        markRelayReadOutcome(relayUrl, false);
         markRelayWriteOutcome(relayUrl, false);
       }
     }
@@ -367,12 +372,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
   }, []);
 
-  const retryNip42RelaysAfterSignIn = useCallback(() => {
+  const retryNip42RelaysAfterSignIn = useCallback((relayUrlsOverride?: string[]) => {
     if (!ndk) return;
     const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
-    const relayUrlsToRetry = relays
-      .filter((relay) => shouldRetryNip42AfterSignIn(relay))
-      .map((relay) => normalizeUrl(relay.url));
+    const relayUrlsToRetry = relayUrlsOverride
+      ? relayUrlsOverride.map(normalizeUrl).filter(Boolean)
+      : relays
+          .filter((relay) => shouldRetryNip42AfterSignIn(relay))
+          .map((relay) => normalizeUrl(relay.url));
 
     if (relayUrlsToRetry.length === 0) return;
 
@@ -398,6 +405,32 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       relay?.connect();
     });
   }, [ndk, relays, resetRelayConnectionTracking]);
+
+  useEffect(() => {
+    const sessionKey = user?.pubkey && authMethod ? `${authMethod}:${user.pubkey}` : null;
+    if (!sessionKey || !ndk?.signer) {
+      relayAuthRetrySessionKeyRef.current = sessionKey;
+      relayAuthRetriedUrlsForSessionRef.current.clear();
+      return;
+    }
+
+    if (relayAuthRetrySessionKeyRef.current !== sessionKey) {
+      relayAuthRetrySessionKeyRef.current = sessionKey;
+      relayAuthRetriedUrlsForSessionRef.current.clear();
+    }
+
+    const relayUrlsToRetry = relays
+      .filter((relay) => shouldRetryNip42AfterSignIn(relay))
+      .map((relay) => relay.url.replace(/\/+$/, ""))
+      .filter((relayUrl) => !relayAuthRetriedUrlsForSessionRef.current.has(relayUrl));
+
+    if (relayUrlsToRetry.length === 0) return;
+
+    relayUrlsToRetry.forEach((relayUrl) => {
+      relayAuthRetriedUrlsForSessionRef.current.add(relayUrl);
+    });
+    retryNip42RelaysAfterSignIn(relayUrlsToRetry);
+  }, [authMethod, ndk, relays, retryNip42RelaysAfterSignIn, user?.pubkey]);
 
   const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
     if (!ndk) return null;
@@ -549,6 +582,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       relayInitialFailureCountsRef.current.delete(normalized);
       relayAutoPausedRef.current.delete(normalized);
       relayAttemptStartedAtRef.current.delete(normalized);
+      const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
+      if (pendingVerification) {
+        pendingRelayVerificationRef.current.delete(normalized);
+        markRelayVerificationSuccess(normalized, pendingVerification.operation);
+      }
       if (removedRelaysRef.current.has(normalized)) return;
       setRelays((prev) => {
         const existing = prev.find((r) => normalizeRelayUrl(r.url) === normalized);

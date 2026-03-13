@@ -48,9 +48,16 @@ export function shouldRetryAuthAfterReadRejection(params: {
 }
 
 export function shouldRetryNip42AfterSignIn(relay: {
+  status?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   nip11?: {
     supportsNip42?: boolean;
+    authRequired?: boolean;
   };
 }): boolean {
-  return relay.nip11?.supportsNip42 === true;
+  return (
+    relay.nip11?.supportsNip42 === true ||
+    relay.nip11?.authRequired === true ||
+    relay.status === "verification-failed" ||
+    relay.status === "read-only"
+  );
 }
