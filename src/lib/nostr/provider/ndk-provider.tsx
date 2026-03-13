@@ -40,6 +40,7 @@ import {
   mapNativeRelayStatus,
   MAX_INITIAL_CONNECT_FAILURES,
   RELAY_STATUS_RECONCILE_INTERVAL_MS,
+  resolveRelayLifecycleStatus,
 } from "./relay-status";
 import { waitForNostrExtensionAvailability } from "./session-restore";
 import { resolveVerifiedNip05RelayUrls, verifyNip05 } from "../nip05-verify";
@@ -512,21 +513,18 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           const normalized = normalizeUrl(relay.url);
           if (removedRelaysRef.current.has(normalized)) return;
           const previousEntry = nextByUrl.get(normalized);
-          if (relayAutoPausedRef.current.has(normalized)) {
-            nextByUrl.set(normalized, {
-              ...previousEntry,
-              url: normalized,
-              status: "connection-error",
-            });
-            return;
-          }
           const mappedStatus = mapNativeRelayStatus(relay.status);
           nextByUrl.set(normalized, {
             ...previousEntry,
             url: normalized,
             status: mappedStatus === "connected"
               ? resolveConnectedRelayStatus(normalized)
-              : mappedStatus,
+              : resolveRelayLifecycleStatus({
+                  mappedStatus,
+                  previousStatus: previousEntry?.status,
+                  hasConnectedOnce: relayConnectedOnceRef.current.has(normalized),
+                  isAutoPaused: relayAutoPausedRef.current.has(normalized),
+                }),
           });
         });
         return Array.from(nextByUrl.values());
@@ -585,7 +583,17 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       if (!removedRelaysRef.current.has(normalized)) {
         setRelays((prev) =>
           prev.map((r) =>
-            normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
+            normalizeUrl(r.url) === normalized
+              ? {
+                  ...r,
+                  status: resolveRelayLifecycleStatus({
+                    mappedStatus: "disconnected",
+                    previousStatus: r.status,
+                    hasConnectedOnce: relayConnectedOnceRef.current.has(normalized),
+                    isAutoPaused: relayAutoPausedRef.current.has(normalized),
+                  }),
+                }
+              : r
           )
         );
       }
