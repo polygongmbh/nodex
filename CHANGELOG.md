@@ -5,22 +5,12 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Shared dialogs, sheets, and alert dialogs now keep their dark backdrops behind the interactive surface so modal content no longer gets dimmed or blocked by the overlay.
-- Desktop relay manager actions no longer toggle the Feeds section while adding relays, feed-section fold animations are restored, and removing a relay now keeps intentionally removed entries from being merged back into the sidebar list.
-- Filter URL sync now skips no-op query replacements, preventing React Router from spamming `history.replaceState` and tripping browser rate limits during repeated filter-state renders.
-- Focused task context now clears automatically when its relay is deselected, while tasks that still match another selected relay stay open.
-- Relay re-add now succeeds on the first manual attempt after removal, even when the old connection emits a delayed disconnect during teardown.
-- Popups now dismiss on outside click by default, while auth/profile dialogs keep outside clicks from closing them when they contain unsaved input; Relay Management always dismisses on outside click.
-- Removing a relay now immediately evicts that relay's cached events and profiles, and People names now resolve relay-first with cached cross-relay fallback only when the selected relay has no profile metadata for an otherwise visible pubkey.
-- Relay reconnect handling is now deterministic: adding a relay no longer rebuilds the whole NDK pool, sign-in retries target only failed relays, resume reconnects target transport failures only, and `read only` / `read rejected` states no longer get silently overwritten by later pool refreshes.
-- Manually removed relays are no longer auto-readded by profile relay discovery, and the desktop feeds filter section now preserves its open/closed state across relay-list remounts.
-- Relay status indicators now distinguish `read only` from `connecting`, explain that `read only` relays can still receive data but not publish, and use a distinct icon for read-rejected relays.
-- Profile setup now auto-opens only once per required-setup cycle and remains dismissible if saving the profile fails.
-- Newly added relays now use a short connection-attempt grace window instead of lingering in `connecting`, are immediately activated in feed filters, and no longer trigger feed-section fold animations while relay lists update.
-- Broad relay backfill subscriptions now clamp their message limits to device-class caps, reducing the chance of browser overload on lower-end systems while preserving targeted lookups.
-- Feed hydration now reveals large relay backfills incrementally so the feed becomes interactive sooner instead of mounting every post in one pass.
-- Relay and event-cache persistence now handles browser storage quota pressure without crashing the app, keeps only recent event-cache entries (7-day window with per-scope caps), and evicts least-recently-used stale scopes first when recovery is needed.
-- First-run host-derived relay detection now retries probe misses, safely handles storage-cache failures, and falls back to optimistic host candidates so discovered feeds still appear reliably (including Safari startup cases); after onboarding is finished or dismissed, signed-out users are now prompted to sign in when all detected relays require authentication for reading.
+
+## [1.17.3] - 2026-03-14
+- Stabilized Relay connection and status handling with cleaner reconnect behavior, clearer `read only` / `read rejected` states, and better startup relay detection.
+- Limit and scope cached data appropriately.
+- Feed loading is more resilient under heavier relay backfills through capped backfill limits and incremental hydration.
+- Fixed a number of small usability issues and errors.
 
 ## [1.17.2] - 2026-03-13
 - Added a runtime persistence guard that can be enabled via `?nodexNoStorage=1` (or `VITE_DISABLE_CLIENT_PERSISTENCE=true`) to disable browser local/session storage, cookie writes, and browser cache APIs for the active session.
