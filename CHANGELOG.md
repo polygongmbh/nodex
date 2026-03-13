@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Desktop relay manager actions no longer toggle the Feeds section while adding relays, and removing a relay now keeps intentionally removed entries from being merged back into the sidebar list.
 - Relay reconnect handling is now deterministic: adding a relay no longer rebuilds the whole NDK pool, sign-in retries target only failed relays, resume reconnects target transport failures only, and `read only` / `read rejected` states no longer get silently overwritten by later pool refreshes.
 - Manually removed relays are no longer auto-readded by profile relay discovery, and the desktop feeds filter section now preserves its open/closed state across relay-list remounts.
 - Relay status indicators now distinguish `read only` from `connecting`, explain that `read only` relays can still receive data but not publish, and use a distinct icon for read-rejected relays.

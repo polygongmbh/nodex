@@ -39,7 +39,12 @@ export function mergeConfiguredRelayStatuses(params: {
 }): NDKRelayStatus[] {
   const removedRelayUrls = params.removedRelayUrls ?? new Set<string>();
   const nextByUrl = new Map(
-    params.relays.map((entry) => [normalizeRelayUrl(entry.url), entry])
+    params.relays
+      .filter((entry) => {
+        const normalized = normalizeRelayUrl(entry.url);
+        return normalized && !removedRelayUrls.has(normalized);
+      })
+      .map((entry) => [normalizeRelayUrl(entry.url), entry])
   );
 
   params.configuredRelayUrls.forEach((relayUrl) => {

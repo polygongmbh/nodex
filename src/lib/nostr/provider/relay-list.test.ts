@@ -35,6 +35,21 @@ describe("mergeConfiguredRelayStatuses", () => {
 
     expect(merged).toEqual([]);
   });
+
+  it("filters intentionally removed relays from previous relay state", () => {
+    const merged = mergeConfiguredRelayStatuses({
+      relays: [
+        { url: "wss://relay.one", status: "connected" },
+        { url: "wss://relay.two", status: "connected" },
+      ],
+      configuredRelayUrls: ["wss://relay.two"],
+      removedRelayUrls: new Set(["wss://relay.one"]),
+    });
+
+    expect(merged).toEqual([
+      { url: "wss://relay.two", status: "connected" },
+    ]);
+  });
 });
 
 describe("filterAutoAddRelayUrls", () => {

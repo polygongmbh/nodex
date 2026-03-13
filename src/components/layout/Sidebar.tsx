@@ -267,9 +267,9 @@ export function Sidebar({
   const focusedItem = isFocused ? getFocusableItems()[focusedItemIndex] : null;
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
+    setExpandedSections((previous) => ({
+      ...previous,
+      [section]: !previous[section],
     }));
   };
 
@@ -308,7 +308,14 @@ export function Sidebar({
                   onReconnectRelay={onReconnectRelay}
                   trigger={
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                        aria-label={t("sidebar.actions.addRelay")}
+                        title={t("sidebar.actions.addRelay")}
+                      >
                         <Plus className="w-3.5 h-3.5" />
                       </Button>
                     </TooltipTrigger>

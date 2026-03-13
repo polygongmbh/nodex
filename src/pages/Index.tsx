@@ -2261,6 +2261,18 @@ const Index = () => {
     });
   }, [addRelay, setActiveRelayIds]);
 
+  const handleRemoveRelay = useCallback((url: string) => {
+    removeRelay(url);
+    const relayId = getRelayIdFromUrl(url);
+    if (!relayId) return;
+    setActiveRelayIds((previous) => {
+      if (!previous.has(relayId)) return previous;
+      const next = new Set(previous);
+      next.delete(relayId);
+      return next;
+    });
+  }, [removeRelay, setActiveRelayIds]);
+
   const filteredTasks = useMemo(
     () =>
       filterTasks({
@@ -2416,7 +2428,7 @@ const Index = () => {
           onPersonToggle={handlePersonToggle}
           onChannelMatchModeChange={handleChannelMatchModeChange}
           onAddRelay={handleAddRelay}
-          onRemoveRelay={removeRelay}
+          onRemoveRelay={handleRemoveRelay}
           onSignInClick={handleOpenAuthModal}
           onGuideClick={handleOpenGuide}
           completionSoundEnabled={completionSoundEnabled}
@@ -2502,7 +2514,7 @@ const Index = () => {
         onChannelMatchModeChange={handleChannelMatchModeChange}
         onToggleAllPeople={handleToggleAllPeople}
         onAddRelay={handleAddRelay}
-        onRemoveRelay={removeRelay}
+        onRemoveRelay={handleRemoveRelay}
         onReconnectRelay={reconnectRelay}
         isFocused={isSidebarFocused}
         onFocusTasks={handleFocusTasks}
