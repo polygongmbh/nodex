@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ALL_RELAYS_SCOPE_KEY } from "@/lib/nostr/event-cache";
 import {
   buildFeedScopeKey,
   drainPendingCachedEvents,
@@ -8,13 +9,16 @@ import {
 
 describe("nostr event cache feed scope helpers", () => {
   it("builds a stable normalized scope key from relay ids", () => {
-    const scopeKey = buildFeedScopeKey(new Set(["Relay-B", "demo", "relay-a", "relay-b"]));
+    const scopeKey = buildFeedScopeKey(
+      new Set(["Relay-B", "demo", "relay-a", "relay-b"]),
+      ["relay-a", "relay-b", "demo"]
+    );
     expect(scopeKey).toBe("relay-a,relay-b");
   });
 
   it("uses all scope when only demo relay is active", () => {
-    const scopeKey = buildFeedScopeKey(new Set(["demo"]));
-    expect(scopeKey).toBe("all");
+    const scopeKey = buildFeedScopeKey(new Set(["demo"]), ["relay-a", "demo"]);
+    expect(scopeKey).toBe(ALL_RELAYS_SCOPE_KEY);
   });
 
   it("builds scoped query keys from the base key", () => {

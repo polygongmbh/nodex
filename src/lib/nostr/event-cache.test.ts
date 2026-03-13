@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
+  EMPTY_RELAY_SCOPE_KEY,
   NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE,
   NOSTR_EVENT_CACHE_RETENTION_SECONDS,
   NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY,
   NOSTR_EVENT_CACHE_STORAGE_KEY,
   loadCachedNostrEvents,
   removeCachedNostrEventById,
+  removeCachedNostrEventsByRelayUrl,
+  removeRelayUrlFromCachedEvents,
   saveCachedNostrEvents,
   type CachedNostrEvent,
 } from "./event-cache";
@@ -164,6 +167,52 @@ describe("nostr event cache", () => {
 
     expect(loadCachedNostrEvents("relay-a").map((event) => event.id)).toEqual(["a"]);
     expect(loadCachedNostrEvents("relay-b")).toEqual([]);
+  });
+
+  it("drops events when their last relay is removed", () => {
+    const next = removeRelayUrlFromCachedEvents([{ ...eventA, relayUrl: "wss://relay.a" }], "wss://relay.a/");
+    expect(next).toEqual([]);
+  });
+
+  it("removes relay-attributed events across scoped caches", () => {
+    saveCachedNostrEvents([
+      { ...eventA, relayUrl: "wss://relay.a" },
+      { ...eventB, relayUrl: "wss://relay.b" },
+    ], "all");
+
+    removeCachedNostrEventsByRelayUrl("wss://relay.a/");
+
+    expect(loadCachedNostrEvents("all").map((event) => event.id)).toEqual(["b"]);
+  });
+
+  it("returns empty data for the empty relay scope", () => {
+    saveCachedNostrEvents([{ ...eventA }], EMPTY_RELAY_SCOPE_KEY);
+    expect(loadCachedNostrEvents(EMPTY_RELAY_SCOPE_KEY)).toEqual([]);
+  });
+
+  it("preserves distinct metadata variants for the same pubkey across relays", () => {
+    const relayOneMetadata: CachedNostrEvent = {
+      id: "meta-relay-1",
+      pubkey: "author",
+      created_at: nowSeconds - 20,
+      kind: NostrEventKind.Metadata,
+      tags: [],
+      content: JSON.stringify({ name: "relay one" }),
+      relayUrl: "wss://relay.a",
+    };
+    const relayTwoMetadata: CachedNostrEvent = {
+      id: "meta-relay-2",
+      pubkey: "author",
+      created_at: nowSeconds - 10,
+      kind: NostrEventKind.Metadata,
+      tags: [],
+      content: JSON.stringify({ name: "relay two" }),
+      relayUrl: "wss://relay.b",
+    };
+
+    saveCachedNostrEvents([relayOneMetadata, relayTwoMetadata], "all");
+
+    expect(loadCachedNostrEvents("all").map((event) => event.id)).toEqual(["meta-relay-2", "meta-relay-1"]);
   });
 
   it("retains only recent events within the configured window", () => {

@@ -5,11 +5,13 @@ import type { CachedNostrEvent } from "@/lib/nostr/event-cache";
 import {
   derivePeopleFromKind0Events,
   loadCachedKind0Events,
+  loadCachedKind0EventsForRelayUrls,
   loadLoggedInIdentityPriority,
-  mergeKind0EventsWithCache,
   rememberCachedKind0Profile,
   rememberLoggedInIdentity,
+  removeCachedKind0EventsByRelayUrl,
   saveCachedKind0Events,
+  type Kind0LikeEvent,
 } from "@/lib/nostr/people-from-kind0";
 import { deriveLatestActivePresenceByAuthor } from "@/lib/presence-status";
 
@@ -30,18 +32,24 @@ interface NostrUserLike {
 interface UseKind0PeopleResult {
   people: Person[];
   setPeople: Dispatch<SetStateAction<Person[]>>;
-  cachedKind0Events: Array<{ kind: number; pubkey: string; created_at?: number; content: string }>;
+  cachedKind0Events: Kind0LikeEvent[];
   supplementalLatestActivityByAuthor: Map<string, number>;
-  seedCachedKind0Events: (events: Array<{ kind: number; pubkey: string; created_at?: number; content: string }>) => void;
+  seedCachedKind0Events: (events: Kind0LikeEvent[]) => void;
+  removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
 export function useKind0People(
   nostrEvents: CachedNostrEvent[],
+  selectedRelayUrls: string[],
   user: NostrUserLike | null
 ): UseKind0PeopleResult {
   const [people, setPeople] = useState<Person[]>([]);
-  const [cachedKind0Events, setCachedKind0Events] = useState(() => loadCachedKind0Events());
+  const [cachedKind0Events, setCachedKind0Events] = useState<Kind0LikeEvent[]>(() =>
+    loadCachedKind0EventsForRelayUrls(selectedRelayUrls)
+  );
+  const [fallbackKind0Events, setFallbackKind0Events] = useState<Kind0LikeEvent[]>(() => loadCachedKind0Events());
   const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
+  const [cacheRevision, setCacheRevision] = useState(0);
 
   const liveKind0Events = useMemo(
     () =>
@@ -52,14 +60,20 @@ export function useKind0People(
           pubkey: event.pubkey,
           created_at: event.created_at,
           content: event.content || "",
+          relayUrls: [
+            ...(event.relayUrls || []),
+            ...(event.relayUrl ? [event.relayUrl] : []),
+          ]
+            .map((relayUrl) => relayUrl.trim().replace(/\/+$/, ""))
+            .filter(Boolean),
         })),
     [nostrEvents]
   );
 
-  const mergedKind0Events = useMemo(
-    () => mergeKind0EventsWithCache(liveKind0Events, cachedKind0Events),
-    [cachedKind0Events, liveKind0Events]
-  );
+  useEffect(() => {
+    setCachedKind0Events(loadCachedKind0EventsForRelayUrls(selectedRelayUrls));
+    setFallbackKind0Events(loadCachedKind0Events());
+  }, [cacheRevision, selectedRelayUrls]);
 
   const supplementalLatestActivityByAuthor = useMemo(() => {
     const nowUnix = Math.floor(Date.now() / 1000);
@@ -93,11 +107,29 @@ export function useKind0People(
   }, [nostrEvents]);
 
   useEffect(() => {
-    setCachedKind0Events((previous) => {
-      const merged = mergeKind0EventsWithCache(liveKind0Events, previous);
-      saveCachedKind0Events(merged);
-      return merged;
+    const eventsByRelayUrl = new Map<string, Kind0LikeEvent[]>();
+    liveKind0Events.forEach((event) => {
+      event.relayUrls.forEach((relayUrl) => {
+        const previous = eventsByRelayUrl.get(relayUrl) || [];
+        eventsByRelayUrl.set(relayUrl, [
+          ...previous,
+          {
+            kind: event.kind,
+            pubkey: event.pubkey,
+            created_at: event.created_at,
+            content: event.content,
+          },
+        ]);
+      });
     });
+
+    if (eventsByRelayUrl.size === 0) return;
+
+    eventsByRelayUrl.forEach((events, relayUrl) => {
+      const existing = loadCachedKind0Events(relayUrl);
+      saveCachedKind0Events([...existing, ...events], relayUrl);
+    });
+    setCacheRevision((previous) => previous + 1);
   }, [liveKind0Events]);
 
   useEffect(() => {
@@ -121,20 +153,30 @@ export function useKind0People(
 
   useEffect(() => {
     if (!profileCachePayload) return;
-    setCachedKind0Events((previous) =>
-      rememberCachedKind0Profile(
-        profileCachePayload.pubkey,
-        {
-          name: profileCachePayload.profile.name,
-          displayName: profileCachePayload.profile.displayName,
-          about: profileCachePayload.profile.about,
-          picture: profileCachePayload.profile.picture,
-          nip05: profileCachePayload.profile.nip05,
-        },
-        previous
-      )
+    rememberCachedKind0Profile(
+      profileCachePayload.pubkey,
+      {
+        name: profileCachePayload.profile.name,
+        displayName: profileCachePayload.profile.displayName,
+        about: profileCachePayload.profile.about,
+        picture: profileCachePayload.profile.picture,
+        nip05: profileCachePayload.profile.nip05,
+      }
     );
+    setCacheRevision((previous) => previous + 1);
   }, [profileCachePayload]);
+
+  const visiblePubkeys = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          nostrEvents
+            .map((event) => event.pubkey?.trim().toLowerCase())
+            .filter((pubkey): pubkey is string => Boolean(pubkey))
+        )
+      ),
+    [nostrEvents]
+  );
 
   useEffect(() => {
     const priorityLookup = new Map(
@@ -151,7 +193,7 @@ export function useKind0People(
       });
 
     setPeople((prev) => {
-      let next = derivePeopleFromKind0Events(mergedKind0Events, prev, {
+      let next = derivePeopleFromKind0Events(visiblePubkeys, cachedKind0Events, fallbackKind0Events, prev, {
         prioritizedPubkeys: loggedInIdentityPriority,
       });
 
@@ -173,18 +215,21 @@ export function useKind0People(
 
       return sortPeopleByPriority(next);
     });
-  }, [loggedInIdentityPriority, mergedKind0Events, user]);
+  }, [cachedKind0Events, fallbackKind0Events, loggedInIdentityPriority, user, visiblePubkeys]);
 
   const seedCachedKind0Events = useCallback(
-    (events: Array<{ kind: number; pubkey: string; created_at?: number; content: string }>) => {
-      setCachedKind0Events((previous) => {
-        const merged = mergeKind0EventsWithCache(events, previous);
-        saveCachedKind0Events(merged);
-        return merged;
-      });
+    (events: Kind0LikeEvent[]) => {
+      const existing = loadCachedKind0Events();
+      saveCachedKind0Events([...existing, ...events]);
+      setCacheRevision((previous) => previous + 1);
     },
     []
   );
+
+  const removeCachedRelayProfile = useCallback((relayUrl: string) => {
+    removeCachedKind0EventsByRelayUrl(relayUrl);
+    setCacheRevision((previous) => previous + 1);
+  }, []);
 
   return {
     people,
@@ -192,5 +237,6 @@ export function useKind0People(
     cachedKind0Events,
     supplementalLatestActivityByAuthor,
     seedCachedKind0Events,
+    removeCachedRelayProfile,
   };
 }

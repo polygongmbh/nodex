@@ -19,6 +19,9 @@ export interface CachedNostrEvent {
   relayUrls?: string[];
 }
 
+export const EMPTY_RELAY_SCOPE_KEY = "none";
+export const ALL_RELAYS_SCOPE_KEY = "all";
+
 interface CacheScopeMetadata {
   lastUsedAt: number;
 }
@@ -104,7 +107,7 @@ const cachedNostrEventSchema = z.object({
 });
 const cachedNostrEventsSchema = z.array(cachedNostrEventSchema);
 
-function normalizeRelayUrl(url: string): string {
+export function normalizeCachedRelayUrl(url: string): string {
   return url.trim().replace(/\/+$/, "");
 }
 
@@ -113,7 +116,7 @@ function getRelayUrls(event: CachedNostrEvent): string[] {
     ...(event.relayUrls || []),
     ...(event.relayUrl ? [event.relayUrl] : []),
   ]
-    .map(normalizeRelayUrl)
+    .map(normalizeCachedRelayUrl)
     .filter((url) => Boolean(url));
   return Array.from(new Set(urls)).sort();
 }
@@ -152,6 +155,18 @@ function dedupeAndSortEvents(events: CachedNostrEvent[]): CachedNostrEvent[] {
   }
   const byReplaceable = new Map<string, CachedNostrEvent>();
   for (const event of byId.values()) {
+    if (event.kind === 0) {
+      const relayScope = getRelayUrls(event).join("|") || "unscoped";
+      const existing = byReplaceable.get(`${event.kind}:${event.pubkey}:${relayScope}`);
+      if (
+        !existing ||
+        event.created_at > existing.created_at ||
+        (event.created_at === existing.created_at && event.id > existing.id)
+      ) {
+        byReplaceable.set(`${event.kind}:${event.pubkey}:${relayScope}`, event);
+      }
+      continue;
+    }
     const replaceableKey = getReplaceableEventKey(event);
     if (!replaceableKey) continue;
     const existing = byReplaceable.get(replaceableKey);
@@ -233,6 +248,7 @@ export function loadCachedNostrEvents(scopeKey?: string): CachedNostrEvent[] {
   if (!hasLocalStorage()) return [];
   try {
     const normalizedScope = normalizeCacheScope(scopeKey);
+    if (normalizedScope === EMPTY_RELAY_SCOPE_KEY) return [];
     const raw = window.localStorage.getItem(getScopedCacheStorageKey(normalizedScope));
     if (!raw) return [];
     const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
@@ -246,6 +262,7 @@ export function loadCachedNostrEvents(scopeKey?: string): CachedNostrEvent[] {
 export function saveCachedNostrEvents(events: CachedNostrEvent[], scopeKey?: string): void {
   if (!hasLocalStorage()) return;
   const normalizedScope = normalizeCacheScope(scopeKey);
+  if (normalizedScope === EMPTY_RELAY_SCOPE_KEY) return;
   const storageKey = getScopedCacheStorageKey(normalizedScope);
   const nowMs = Date.now();
   const nowSeconds = Math.floor(nowMs / 1000);
@@ -292,6 +309,50 @@ export function removeCachedNostrEventById(eventId: string): void {
       if (!parsed.success) return;
       const next = dedupeAndSortEvents(parsed.data as CachedNostrEvent[]).filter((event) => event.id !== normalizedId);
       if (next.length === parsed.data.length) return;
+      window.localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      // Ignore malformed cache payloads and continue.
+    }
+  });
+}
+
+export function removeRelayUrlFromCachedEvents(
+  events: CachedNostrEvent[],
+  relayUrl: string
+): CachedNostrEvent[] {
+  const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
+  if (!normalizedRelayUrl) {
+    return dedupeAndSortEvents(events).filter((event) => getRelayUrls(event).length > 0);
+  }
+
+  return dedupeAndSortEvents(events)
+    .map((event) => {
+      const remainingRelayUrls = getRelayUrls(event).filter((url) => url !== normalizedRelayUrl);
+      if (remainingRelayUrls.length === 0) return null;
+      return {
+        ...event,
+        relayUrl: remainingRelayUrls[0],
+        relayUrls: remainingRelayUrls,
+      } satisfies CachedNostrEvent;
+    })
+    .filter((event): event is CachedNostrEvent => event !== null);
+}
+
+export function removeCachedNostrEventsByRelayUrl(relayUrl: string): void {
+  if (!hasLocalStorage()) return;
+  const storageKeys = listKnownCacheStorageKeys();
+  storageKeys.forEach((storageKey) => {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
+      if (!parsed.success) return;
+      const next = removeRelayUrlFromCachedEvents(parsed.data as CachedNostrEvent[], relayUrl);
+      if (next.length === parsed.data.length) {
+        const currentIds = (parsed.data as CachedNostrEvent[]).map((event) => `${event.id}:${getRelayUrls(event).join(",")}`);
+        const nextIds = next.map((event) => `${event.id}:${getRelayUrls(event).join(",")}`);
+        if (currentIds.every((value, index) => nextIds[index] === value)) return;
+      }
       window.localStorage.setItem(storageKey, JSON.stringify(next));
     } catch {
       // Ignore malformed cache payloads and continue.

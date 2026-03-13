@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
 import {
+  ALL_RELAYS_SCOPE_KEY,
+  EMPTY_RELAY_SCOPE_KEY,
   loadCachedNostrEvents,
   saveCachedNostrEvents,
   type CachedNostrEvent,
@@ -20,6 +22,7 @@ interface UseNostrEventCacheParams {
   isConnected: boolean;
   subscribedKinds: number[];
   activeRelayIds: Set<string>;
+  availableRelayIds: string[];
   subscribe: (
     filters: NDKFilter[],
     onEvent: (event: NDKEvent) => void,
@@ -33,7 +36,16 @@ interface UseNostrEventCacheResult {
   hasLiveHydratedScope: boolean;
 }
 
-export function buildFeedScopeKey(activeRelayIds: Set<string>): string {
+export function buildFeedScopeKey(activeRelayIds: Set<string>, availableRelayIds: string[]): string {
+  const availableKeys = Array.from(
+    new Set(
+      availableRelayIds
+        .map((value) => value.trim().toLowerCase())
+        .filter((value) => Boolean(value) && value !== DEMO_RELAY_ID)
+    )
+  ).sort();
+  if (availableKeys.length === 0) return EMPTY_RELAY_SCOPE_KEY;
+
   const keys = Array.from(
     new Set(
       Array.from(activeRelayIds)
@@ -41,7 +53,7 @@ export function buildFeedScopeKey(activeRelayIds: Set<string>): string {
         .filter((value) => Boolean(value) && value !== DEMO_RELAY_ID)
     )
   ).sort();
-  if (keys.length === 0) return "all";
+  if (keys.length === 0) return ALL_RELAYS_SCOPE_KEY;
   return keys.join(",");
 }
 
@@ -135,11 +147,15 @@ export function useNostrEventCache({
   isConnected,
   subscribedKinds,
   activeRelayIds,
+  availableRelayIds,
   subscribe,
 }: UseNostrEventCacheParams): UseNostrEventCacheResult {
   const queryClient = useQueryClient();
   const [hasLiveHydratedScope, setHasLiveHydratedScope] = useState(false);
-  const feedScopeKey = useMemo(() => buildFeedScopeKey(activeRelayIds), [activeRelayIds]);
+  const feedScopeKey = useMemo(
+    () => buildFeedScopeKey(activeRelayIds, availableRelayIds),
+    [activeRelayIds, availableRelayIds]
+  );
   const queryKey = useMemo(() => getNostrEventsQueryKey(feedScopeKey), [feedScopeKey]);
   const hasFinalizedBootstrapRef = useRef(false);
   const hasMarkedLiveHydratedScopeRef = useRef(false);
