@@ -63,6 +63,7 @@ import {
 } from "@/lib/failed-publish-drafts";
 import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
 import { shouldAutoStartOnboarding } from "@/lib/onboarding-autostart";
+import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
 import { loadPresencePublishingEnabled } from "@/lib/presence-preferences";
@@ -542,15 +543,31 @@ const Index = () => {
     setIsAuthModalOpen(true);
   }, []);
 
+  const shouldForceAuthAfterOnboarding = useMemo(() => {
+    return shouldPromptSignInAfterOnboarding({
+      isSignedIn: Boolean(user),
+      relays: ndkRelays,
+    });
+  }, [ndkRelays, user]);
+  const shouldOpenAuthAfterGuideExitRef = useRef(false);
+
   const handleCloseGuide = useCallback(() => {
     setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(false);
     setActiveOnboardingSection(null);
-  }, []);
+    const shouldOpenAuth = shouldOpenAuthAfterGuideExitRef.current || shouldForceAuthAfterOnboarding;
+    shouldOpenAuthAfterGuideExitRef.current = false;
+    if (shouldOpenAuth) {
+      setIsAuthModalOpen(true);
+    }
+  }, [shouldForceAuthAfterOnboarding]);
 
   const handleCompleteGuide = useCallback((lastStep: number) => {
     markOnboardingCompleted(lastStep);
-  }, []);
+    if (shouldForceAuthAfterOnboarding) {
+      shouldOpenAuthAfterGuideExitRef.current = true;
+    }
+  }, [shouldForceAuthAfterOnboarding]);
 
   // Derive focused task from URL
   const focusedTaskId = urlTaskId || null;
