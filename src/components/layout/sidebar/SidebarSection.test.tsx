@@ -79,4 +79,35 @@ describe("SidebarSection", () => {
       }
     }
   });
+
+  it("preserves measured preview height when collapsed in preview-collapse mode", () => {
+    const originalScrollHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollHeight");
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get: () => 72,
+    });
+
+    try {
+      render(
+        <SidebarSection
+          title="People"
+          icon={Hash}
+          isExpanded={false}
+          onToggle={vi.fn()}
+        >
+          <div>Preview Content</div>
+        </SidebarSection>
+      );
+
+      const outerContainer = screen.getByText("Preview Content").parentElement?.parentElement as HTMLElement;
+      expect(outerContainer.style.height).toBe("72px");
+      expect(outerContainer).toHaveClass("motion-sidebar-fold-close");
+    } finally {
+      if (originalScrollHeight) {
+        Object.defineProperty(HTMLElement.prototype, "scrollHeight", originalScrollHeight);
+      } else {
+        delete (HTMLElement.prototype as { scrollHeight?: number }).scrollHeight;
+      }
+    }
+  });
 });

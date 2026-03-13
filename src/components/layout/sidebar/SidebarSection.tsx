@@ -25,7 +25,7 @@ export function SidebarSection({
   onIconClick,
   hint,
   action,
-  animationMode = "fullCollapse",
+  animationMode = "previewCollapse",
   children,
 }: SidebarSectionProps) {
   const { t } = useTranslation();
@@ -98,14 +98,27 @@ export function SidebarSection({
         className={cn(
           animationMode === "none"
             ? (isExpanded ? "overflow-visible" : "hidden")
-            : cn(
+            : animationMode === "fullCollapse"
+            ? cn(
                 "origin-top overflow-hidden will-change-[height,opacity,transform] transition-[height,opacity,transform] duration-300 ease-out",
                 isExpanded
                   ? "opacity-100 translate-y-0 motion-sidebar-fold-open"
                   : "opacity-100 -translate-y-0.5 motion-sidebar-fold-close"
               )
+            : cn(
+                "origin-top overflow-hidden will-change-[height,opacity,transform] transition-[height,opacity,transform] duration-300 ease-out",
+                isExpanded
+                  ? "opacity-100 translate-y-0 scale-y-100 motion-sidebar-fold-open"
+                  : "opacity-100 -translate-y-1 scale-y-[0.98] motion-sidebar-fold-close"
+              )
         )}
-        style={animationMode === "none" ? undefined : { height: isExpanded ? `${contentHeight}px` : "0px" }}
+        style={
+          animationMode === "none"
+            ? undefined
+            : animationMode === "fullCollapse"
+            ? { height: isExpanded ? `${contentHeight}px` : "0px" }
+            : { height: `${contentHeight}px` }
+        }
       >
         <div ref={contentRef} className="py-0">
           {children}
