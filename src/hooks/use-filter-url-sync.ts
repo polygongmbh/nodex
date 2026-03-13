@@ -69,6 +69,27 @@ export function buildFilterSearchParams(
   return params;
 }
 
+export function mergeFilterSearchParams(
+  currentSearchParams: URLSearchParams,
+  nextFilterSearchParams: URLSearchParams
+): URLSearchParams {
+  const merged = new URLSearchParams(currentSearchParams);
+
+  merged.delete(CHANNEL_INCLUDE_PARAM);
+  merged.delete(CHANNEL_EXCLUDE_PARAM);
+  merged.delete(PEOPLE_PARAM);
+
+  const ch = nextFilterSearchParams.get(CHANNEL_INCLUDE_PARAM);
+  const ex = nextFilterSearchParams.get(CHANNEL_EXCLUDE_PARAM);
+  const p = nextFilterSearchParams.get(PEOPLE_PARAM);
+
+  if (ch) merged.set(CHANNEL_INCLUDE_PARAM, ch);
+  if (ex) merged.set(CHANNEL_EXCLUDE_PARAM, ex);
+  if (p) merged.set(PEOPLE_PARAM, p);
+
+  return merged;
+}
+
 interface UseFilterUrlSyncOptions {
   channelFilterStates: Map<string, Channel["filterState"]>;
   people: Person[];
@@ -90,7 +111,6 @@ export function useFilterUrlSync({
 }: UseFilterUrlSyncOptions) {
   const [searchParams, setSearchParams] = useSearchParams();
   const didHydrateFromUrlRef = useRef(false);
-  const isUpdatingUrlRef = useRef(false);
 
   // Hydrate state from URL on initial mount
   useEffect(() => {
@@ -117,31 +137,13 @@ export function useFilterUrlSync({
   useEffect(() => {
     if (!didHydrateFromUrlRef.current) return;
 
-    // Prevent re-entrant updates
-    if (isUpdatingUrlRef.current) {
-      isUpdatingUrlRef.current = false;
+    const newFilterParams = buildFilterSearchParams(channelFilterStates, people);
+    const mergedSearchParams = mergeFilterSearchParams(searchParams, newFilterParams);
+
+    if (mergedSearchParams.toString() === searchParams.toString()) {
       return;
     }
 
-    const newFilterParams = buildFilterSearchParams(channelFilterStates, people);
-
-    // Merge with existing non-filter params (preserve view params etc.)
-    setSearchParams((prev) => {
-      const merged = new URLSearchParams(prev);
-      // Remove old filter params
-      merged.delete(CHANNEL_INCLUDE_PARAM);
-      merged.delete(CHANNEL_EXCLUDE_PARAM);
-      merged.delete(PEOPLE_PARAM);
-
-      // Add new ones
-      const ch = newFilterParams.get(CHANNEL_INCLUDE_PARAM);
-      const ex = newFilterParams.get(CHANNEL_EXCLUDE_PARAM);
-      const p = newFilterParams.get(PEOPLE_PARAM);
-      if (ch) merged.set(CHANNEL_INCLUDE_PARAM, ch);
-      if (ex) merged.set(CHANNEL_EXCLUDE_PARAM, ex);
-      if (p) merged.set(PEOPLE_PARAM, p);
-
-      return merged;
-    }, { replace: true });
-  }, [channelFilterStates, people, setSearchParams]);
+    setSearchParams(mergedSearchParams, { replace: true });
+  }, [channelFilterStates, people, searchParams, setSearchParams]);
 }

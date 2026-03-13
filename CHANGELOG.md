@@ -5,11 +5,11 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Filter URL sync now skips no-op query replacements, preventing React Router from spamming `history.replaceState` and tripping browser rate limits during repeated filter-state renders.
 - Focused task context now clears automatically when its relay is deselected, while tasks that still match another selected relay stay open.
 - Relay re-add now succeeds on the first manual attempt after removal, even when the old connection emits a delayed disconnect during teardown.
 - Popups now dismiss on outside click by default, while auth/profile dialogs keep outside clicks from closing them when they contain unsaved input; Relay Management always dismisses on outside click.
 - Removing a relay now immediately evicts that relay's cached events and profiles, and People names now resolve relay-first with cached cross-relay fallback only when the selected relay has no profile metadata for an otherwise visible pubkey.
-- Desktop relay manager actions no longer toggle the Feeds section while adding relays, and removing a relay now keeps intentionally removed entries from being merged back into the sidebar list.
 - Relay reconnect handling is now deterministic: adding a relay no longer rebuilds the whole NDK pool, sign-in retries target only failed relays, resume reconnects target transport failures only, and `read only` / `read rejected` states no longer get silently overwritten by later pool refreshes.
 - Manually removed relays are no longer auto-readded by profile relay discovery, and the desktop feeds filter section now preserves its open/closed state across relay-list remounts.
 - Relay status indicators now distinguish `read only` from `connecting`, explain that `read only` relays can still receive data but not publish, and use a distinct icon for read-rejected relays.

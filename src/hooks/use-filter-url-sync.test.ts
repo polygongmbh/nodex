@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseFilterSearchParams, buildFilterSearchParams } from "./use-filter-url-sync";
+import {
+  buildFilterSearchParams,
+  mergeFilterSearchParams,
+  parseFilterSearchParams,
+} from "./use-filter-url-sync";
 import type { Person } from "@/types";
 
 describe("parseFilterSearchParams", () => {
@@ -98,5 +102,32 @@ describe("buildFilterSearchParams", () => {
     expect(parsed.channelFilters?.get("dev")).toBe("included");
     expect(parsed.channelFilters?.get("spam")).toBe("excluded");
     expect(parsed.selectedPersonIds).toEqual(new Set(["pub1"]));
+  });
+});
+
+describe("mergeFilterSearchParams", () => {
+  it("preserves unrelated params while replacing filter params", () => {
+    const current = new URLSearchParams("view=feed&ch=old&p=alice");
+    const nextFilters = new URLSearchParams("ex=spam&p=bob");
+
+    const merged = mergeFilterSearchParams(current, nextFilters);
+
+    expect(merged.toString()).toBe("view=feed&ex=spam&p=bob");
+  });
+
+  it("removes stale filter params when filters are cleared", () => {
+    const current = new URLSearchParams("view=feed&ch=alpha&ex=spam&p=bob");
+    const merged = mergeFilterSearchParams(current, new URLSearchParams());
+
+    expect(merged.toString()).toBe("view=feed");
+  });
+
+  it("keeps an identical query string identical after merging", () => {
+    const current = new URLSearchParams("view=feed&ch=alpha&ex=spam&p=bob");
+    const nextFilters = new URLSearchParams("ch=alpha&ex=spam&p=bob");
+
+    const merged = mergeFilterSearchParams(current, nextFilters);
+
+    expect(merged.toString()).toBe(current.toString());
   });
 });
