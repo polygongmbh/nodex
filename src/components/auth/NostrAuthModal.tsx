@@ -612,11 +612,14 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       <Dialog
         open={isProfileEditorOpen}
         onOpenChange={(open) => {
-          if (!open && needsProfileSetup) return;
+          if (!open && needsProfileSetup && !isSavingProfile) return;
           setIsProfileEditorOpen(open);
         }}
       >
-        <DialogContent className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-lg [&>button]:hidden">
+        <DialogContent
+          showCloseButton={!needsProfileSetup || isSavingProfile}
+          className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-lg"
+        >
           <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-4 sm:p-6">
             <DialogHeader className="shrink-0">
               <DialogTitle>{needsProfileSetup ? t("auth.menu.profileSetupTitle") : t("auth.menu.profileEditTitle")}</DialogTitle>

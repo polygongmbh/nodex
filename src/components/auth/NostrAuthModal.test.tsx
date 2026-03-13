@@ -40,6 +40,7 @@ describe("NostrAuthModal", () => {
     ndkMock.authMethod = null;
     ndkMock.needsProfileSetup = false;
     ndkMock.isProfileSyncing = false;
+    ndkMock.updateUserProfile = vi.fn(async () => true);
   });
 
   it("shows loading indicator only on extension option when extension login starts", async () => {
@@ -169,6 +170,25 @@ describe("NostrAuthModal", () => {
     expect(document.getElementById("profile-presence-enabled")).toBeNull();
     expect(document.getElementById("profile-publish-delay-enabled")).toBeNull();
     expect(document.getElementById("profile-auto-caption-enabled")).toBeNull();
+  });
+
+  it("shows a dismiss button while mandatory profile setup save is still pending", () => {
+    ndkMock.user = {
+      npub: "npub1test",
+      pubkey: "a".repeat(64),
+      profile: { name: "" },
+    };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
+    ndkMock.updateUserProfile = vi.fn(() => new Promise<boolean>(() => {}));
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    fireEvent.change(document.getElementById("profile-name") as HTMLInputElement, { target: { value: "alice" } });
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
   });
 
   it("adds a profile trigger hint including the logged-in pubkey", () => {
