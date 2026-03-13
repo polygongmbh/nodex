@@ -1,3 +1,5 @@
+import { safeLocalStorageSetItem } from "@/lib/safe-local-storage";
+
 type WindowWithNostr = Window & { nostr?: unknown };
 
 export const STORAGE_KEY_AUTH = "nostr_auth_method";
@@ -38,13 +40,7 @@ export function savePersistedRelayUrls(urls: string[]): void {
         .filter((entry) => entry.length > 0)
     )
   );
-  try {
-    window.localStorage.setItem(STORAGE_KEY_RELAYS, JSON.stringify(normalized));
-  } catch (error) {
-    console.warn("Failed to persist relay URLs", {
-      storageKey: STORAGE_KEY_RELAYS,
-      relayCount: normalized.length,
-      error,
-    });
-  }
+  safeLocalStorageSetItem(STORAGE_KEY_RELAYS, JSON.stringify(normalized), {
+    context: "nostr-provider-relay-persistence",
+  });
 }
