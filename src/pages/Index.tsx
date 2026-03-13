@@ -110,7 +110,12 @@ import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { useFilterUrlSync } from "@/hooks/use-filter-url-sync";
 import { useKind0People } from "@/hooks/use-kind0-people";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { removeCachedNostrEventById, type CachedNostrEvent } from "@/lib/nostr/event-cache";
+import {
+  removeCachedNostrEventById,
+  removeCachedNostrEventsByRelayUrl,
+  removeRelayUrlFromCachedEvents,
+  type CachedNostrEvent,
+} from "@/lib/nostr/event-cache";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
@@ -287,6 +292,15 @@ const Index = () => {
       }
     },
   });
+  const selectedRelayUrls = useMemo(() => {
+    const selectedRelayScopeIds = resolveChannelRelayScopeIds(
+      effectiveActiveRelayIds,
+      relays.map((relay) => relay.id)
+    );
+    return relays
+      .filter((relay) => relay.id !== DEMO_RELAY_ID && relay.url && selectedRelayScopeIds.has(relay.id))
+      .map((relay) => relay.url as string);
+  }, [effectiveActiveRelayIds, relays]);
   const {
     events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
@@ -294,6 +308,7 @@ const Index = () => {
     isConnected: isNostrConnected,
     subscribedKinds,
     activeRelayIds: effectiveActiveRelayIds,
+    availableRelayIds: relays.map((relay) => relay.id),
     subscribe,
   });
   const {
@@ -302,7 +317,8 @@ const Index = () => {
     cachedKind0Events,
     supplementalLatestActivityByAuthor,
     seedCachedKind0Events,
-  } = useKind0People(nostrEvents, user);
+    removeCachedRelayProfile,
+  } = useKind0People(nostrEvents, selectedRelayUrls, user);
   const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? DEMO_SEED_TASKS : []));
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
@@ -2262,16 +2278,28 @@ const Index = () => {
   }, [addRelay, setActiveRelayIds]);
 
   const handleRemoveRelay = useCallback((url: string) => {
-    removeRelay(url);
-    const relayId = getRelayIdFromUrl(url);
-    if (!relayId) return;
-    setActiveRelayIds((previous) => {
-      if (!previous.has(relayId)) return previous;
-      const next = new Set(previous);
-      next.delete(relayId);
-      return next;
-    });
-  }, [removeRelay, setActiveRelayIds]);
+    const normalizedRelayUrl = url.trim().replace(/\/+$/, "");
+    if (!normalizedRelayUrl) return;
+
+    queryClient.setQueriesData<CachedNostrEvent[]>(
+      { queryKey: NOSTR_EVENTS_QUERY_KEY },
+      (previous) => removeRelayUrlFromCachedEvents(previous || [], normalizedRelayUrl)
+    );
+    removeCachedNostrEventsByRelayUrl(normalizedRelayUrl);
+    removeCachedRelayProfile(normalizedRelayUrl);
+
+    const relayId = getRelayIdFromUrl(normalizedRelayUrl);
+    if (relayId) {
+      setActiveRelayIds((previous) => {
+        if (!previous.has(relayId)) return previous;
+        const next = new Set(previous);
+        next.delete(relayId);
+        return next;
+      });
+    }
+
+    removeRelay(normalizedRelayUrl);
+  }, [queryClient, removeCachedRelayProfile, removeRelay, setActiveRelayIds]);
 
   const filteredTasks = useMemo(
     () =>
