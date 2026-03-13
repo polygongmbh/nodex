@@ -33,6 +33,17 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 }));
 
 describe("NostrAuthModal", () => {
+  const clickOutsideDialog = () => {
+    const overlay = document.querySelector("[data-state='open'].fixed.inset-0");
+    if (!overlay) {
+      throw new Error("Expected dialog overlay to exist");
+    }
+    fireEvent.pointerDown(overlay);
+    fireEvent.mouseDown(overlay);
+    fireEvent.mouseUp(overlay);
+    fireEvent.click(overlay);
+  };
+
   beforeEach(() => {
     window.localStorage.clear();
     ndkMock.isConnected = true;
@@ -209,6 +220,8 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /save/i }));
 
     await waitFor(() => expect(ndkMock.updateUserProfile).toHaveBeenCalled());
+    clickOutsideDialog();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
   });
 
@@ -224,6 +237,22 @@ describe("NostrAuthModal", () => {
 
     const profileTrigger = screen.getByRole("button", { name: /profile: hint user/i });
     expect(profileTrigger).toHaveAttribute("title", expect.stringContaining("b".repeat(64)));
+  });
+
+  it("ignores outside click when auth form input is dirty", () => {
+    const onClose = vi.fn();
+
+    render(<NostrAuthModal isOpen onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /private key/i }));
+    fireEvent.change(screen.getByLabelText(/^private key$/i), {
+      target: { value: "nsec1example" },
+    });
+
+    clickOutsideDialog();
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
 });

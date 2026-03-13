@@ -55,6 +55,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const [privateKey, setPrivateKey] = useState("");
   const [bunkerUrl, setBunkerUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
 
   const hasExtension = hasNostrExtension();
   const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
@@ -145,7 +146,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" dismissOnOutsideInteract={!hasUnsavedAuthInput}>
         <DialogHeader>
           <DialogTitle>{t("auth.modal.title")}</DialogTitle>
           <DialogDescription>
@@ -372,6 +373,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       publishDelayEnabled,
       autoCaptionEnabled,
     },
+    isProfileDirty,
     isSavingProfile,
     validation: {
       showProfileNameRequired,
@@ -635,6 +637,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       >
         <DialogContent
           showCloseButton={canDismissProfileEditor}
+          dismissOnOutsideInteract={canDismissProfileEditor && !isProfileDirty}
           className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-lg"
         >
           <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-4 sm:p-6">

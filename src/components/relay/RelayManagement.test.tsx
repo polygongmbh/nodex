@@ -141,4 +141,5 @@ describe("RelayManagement", () => {
     expect(onRemoveRelay).toHaveBeenCalledWith("wss://relay.one");
     expect(onReconnectRelay).not.toHaveBeenCalled();
   });
+
 });

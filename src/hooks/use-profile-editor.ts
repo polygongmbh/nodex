@@ -32,6 +32,10 @@ interface ProfileEditorSnapshot {
   about?: string;
 }
 
+function normalizeSnapshotValue(value?: string) {
+  return value || "";
+}
+
 interface UseProfileEditorOptions {
   userPubkey?: string;
   knownProfileNames?: string[];
@@ -55,6 +59,13 @@ export function useProfileEditor({
   const [profilePicture, setProfilePicture] = useState("");
   const [profileNip05, setProfileNip05] = useState("");
   const [profileAbout, setProfileAbout] = useState("");
+  const [initialProfileSnapshot, setInitialProfileSnapshot] = useState<Required<ProfileEditorSnapshot>>({
+    name: "",
+    displayName: "",
+    picture: "",
+    nip05: "",
+    about: "",
+  });
   const [presencePublishingEnabled, setPresencePublishingEnabled] = useState(() =>
     loadPresencePublishingEnabled()
   );
@@ -80,11 +91,19 @@ export function useProfileEditor({
   const isProfileNameValid = Boolean(trimmedProfileName) && !showProfileNameInvalid && !showProfileNameTaken;
 
   const resetFromProfile = (profile: ProfileEditorSnapshot) => {
-    setProfileName(profile.name || "");
-    setProfileDisplayName(profile.displayName || "");
-    setProfilePicture(profile.picture || "");
-    setProfileNip05(profile.nip05 || "");
-    setProfileAbout(profile.about || "");
+    const nextSnapshot = {
+      name: normalizeSnapshotValue(profile.name),
+      displayName: normalizeSnapshotValue(profile.displayName),
+      picture: normalizeSnapshotValue(profile.picture),
+      nip05: normalizeSnapshotValue(profile.nip05),
+      about: normalizeSnapshotValue(profile.about),
+    };
+    setInitialProfileSnapshot(nextSnapshot);
+    setProfileName(nextSnapshot.name);
+    setProfileDisplayName(nextSnapshot.displayName);
+    setProfilePicture(nextSnapshot.picture);
+    setProfileNip05(nextSnapshot.nip05);
+    setProfileAbout(nextSnapshot.about);
     setPresencePublishingEnabled(loadPresencePublishingEnabled());
     setPublishDelayEnabled(loadPublishDelayEnabled());
     setAutoCaptionEnabled(loadAutoCaptionEnabled());
@@ -175,8 +194,30 @@ export function useProfileEditor({
     ]
   );
 
+  const isProfileDirty = useMemo(
+    () =>
+      profileName !== initialProfileSnapshot.name ||
+      profileDisplayName !== initialProfileSnapshot.displayName ||
+      profilePicture !== initialProfileSnapshot.picture ||
+      profileNip05 !== initialProfileSnapshot.nip05 ||
+      profileAbout !== initialProfileSnapshot.about,
+    [
+      initialProfileSnapshot.about,
+      initialProfileSnapshot.displayName,
+      initialProfileSnapshot.name,
+      initialProfileSnapshot.nip05,
+      initialProfileSnapshot.picture,
+      profileAbout,
+      profileDisplayName,
+      profileName,
+      profileNip05,
+      profilePicture,
+    ]
+  );
+
   return {
     fields,
+    isProfileDirty,
     isSavingProfile,
     validation: {
       showProfileNameRequired,
