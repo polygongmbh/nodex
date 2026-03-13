@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
@@ -52,6 +52,46 @@ describe("FeedView", () => {
     fireEvent.click(screen.getByRole("button", { name: /focus task: root task #general/i }));
     expect(onFocusTask).toHaveBeenCalledWith("root");
     expect(onFocusTask).not.toHaveBeenCalledWith("child");
+  });
+
+  it("hydrates the feed incrementally instead of mounting all entries at once", () => {
+    vi.useFakeTimers();
+    const manyTasks = Array.from({ length: 75 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: `Task ${index + 1} #general`,
+        author,
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 75 - index),
+      })
+    );
+
+    const { container } = render(
+      <FeedView
+        tasks={manyTasks}
+        allTasks={manyTasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+
+    act(() => {
+      vi.advanceTimersByTime(80);
+    });
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
+
+    act(() => {
+      vi.advanceTimersByTime(80);
+    });
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(75);
+    vi.useRealTimers();
   });
 
   it("renders breadcrumb buttons as single-line left-aligned truncating labels", () => {

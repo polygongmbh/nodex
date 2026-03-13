@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Profile setup now auto-opens only once per required-setup cycle and remains dismissible if saving the profile fails.
 - Newly added relays now use a short connection-attempt grace window instead of lingering in `connecting`, are immediately activated in feed filters, and no longer trigger feed-section fold animations while relay lists update.
 - Broad relay backfill subscriptions now clamp their message limits to device-class caps, reducing the chance of browser overload on lower-end systems while preserving targeted lookups.
+- Feed hydration now reveals large relay backfills incrementally so the feed becomes interactive sooner instead of mounting every post in one pass.
 - Relay and event-cache persistence now handles browser storage quota pressure without crashing the app, keeps only recent event-cache entries (7-day window with per-scope caps), and evicts least-recently-used stale scopes first when recovery is needed.
 - First-run host-derived relay detection now retries probe misses, safely handles storage-cache failures, and falls back to optimistic host candidates so discovered feeds still appear reliably (including Safari startup cases); after onboarding is finished or dismissed, signed-out users are now prompted to sign in when all detected relays require authentication for reading.
 

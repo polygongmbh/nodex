@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState } from "react";
+import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import {
@@ -46,6 +46,7 @@ import {
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -77,6 +78,11 @@ interface FeedViewProps extends SharedTaskViewContext {
 type FeedEntry =
   | { type: "task"; id: string; timestamp: Date; task: Task }
   | { type: "state-update"; id: string; timestamp: Date; task: Task; update: TaskStateUpdate };
+
+const INITIAL_VISIBLE_FEED_ENTRIES = 40;
+const FEED_REVEAL_BATCH_SIZE = 30;
+const FEED_REVEAL_DELAY_MS = 80;
+const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
 
 export function FeedView({
   tasks,
@@ -182,6 +188,37 @@ export function FeedView({
     }
     return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [feedTasks]);
+  const activeChannelFiltersKey = useMemo(
+    () => channels
+      .filter((channel) => channel.filterState && channel.filterState !== "neutral")
+      .map((channel) => `${channel.id}:${channel.filterState}`)
+      .sort()
+      .join(","),
+    [channels]
+  );
+  const selectedPeopleKey = useMemo(
+    () => people
+      .filter((person) => person.isSelected)
+      .map((person) => person.id)
+      .sort()
+      .join(","),
+    [people]
+  );
+  const feedDisclosureKey = useMemo(
+    () => [
+      focusedTaskId || "",
+      searchQuery.trim().toLowerCase(),
+      channelMatchMode,
+      activeChannelFiltersKey,
+      selectedPeopleKey,
+    ].join("|"),
+    [activeChannelFiltersKey, channelMatchMode, focusedTaskId, searchQuery, selectedPeopleKey]
+  );
+  const [visibleEntryCount, setVisibleEntryCount] = useState(INITIAL_VISIBLE_FEED_ENTRIES);
+  const visibleFeedEntries = useMemo(
+    () => feedEntries.slice(0, visibleEntryCount),
+    [feedEntries, visibleEntryCount]
+  );
   const {
     mediaItems,
     activeMediaIndex,
@@ -210,6 +247,67 @@ export function FeedView({
 
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const revealMoreEntries = useCallback((reason: "timer" | "scroll" | "focus") => {
+    if (feedEntries.length <= visibleEntryCount) return;
+    startTransition(() => {
+      setVisibleEntryCount((previous) => {
+        const next = Math.min(feedEntries.length, previous + FEED_REVEAL_BATCH_SIZE);
+        if (next !== previous) {
+          nostrDevLog("feed", "Revealed incremental feed batch", {
+            reason,
+            visibleEntryCount: next,
+            totalEntryCount: feedEntries.length,
+          });
+        }
+        return next;
+      });
+    });
+  }, [feedEntries.length, visibleEntryCount]);
+
+  useEffect(() => {
+    startTransition(() => {
+      setVisibleEntryCount(INITIAL_VISIBLE_FEED_ENTRIES);
+    });
+  }, [feedDisclosureKey]);
+
+  useEffect(() => {
+    if (feedEntries.length <= visibleEntryCount) return;
+    const timeoutId = window.setTimeout(() => {
+      revealMoreEntries("timer");
+    }, FEED_REVEAL_DELAY_MS);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [feedEntries.length, revealMoreEntries, visibleEntryCount]);
+
+  useEffect(() => {
+    if (!focusedTaskId) return;
+    const focusedIndex = feedEntries.findIndex(
+      (entry) => entry.type === "task" && entry.task.id === focusedTaskId
+    );
+    if (focusedIndex === -1 || focusedIndex < visibleEntryCount) return;
+    startTransition(() => {
+      setVisibleEntryCount((previous) => {
+        const next = Math.min(feedEntries.length, focusedIndex + 1 + FEED_REVEAL_BATCH_SIZE);
+        if (next !== previous) {
+          nostrDevLog("feed", "Expanded feed window to include focused task", {
+            focusedTaskId,
+            visibleEntryCount: next,
+            totalEntryCount: feedEntries.length,
+          });
+        }
+        return next;
+      });
+    });
+  }, [feedEntries, focusedTaskId, visibleEntryCount]);
+
+  const handleFeedScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
+    const remainingDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
+    if (remainingDistance > FEED_REVEAL_SCROLL_THRESHOLD_PX) return;
+    revealMoreEntries("scroll");
+  }, [revealMoreEntries]);
+
   useEffect(() => {
     if (keyboardFocusedTaskId && scrollContainerRef.current) {
       const element = scrollContainerRef.current.querySelector(
@@ -345,13 +443,18 @@ export function FeedView({
       />
 
       {/* Feed List */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto" data-onboarding="task-list">
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto"
+        data-onboarding="task-list"
+        onScroll={handleFeedScroll}
+      >
         {feedEntries.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             <p>{t("tasks.empty.feed")}</p>
           </div>
         ) : (
-          feedEntries.map((entry) => {
+          visibleFeedEntries.map((entry) => {
             if (entry.type === "state-update") {
               const { task, update } = entry;
               const resolvedUpdateAuthor =

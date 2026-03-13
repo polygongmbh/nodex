@@ -6,11 +6,14 @@ import {
   saveCachedNostrEvents,
   type CachedNostrEvent,
 } from "@/lib/nostr/event-cache";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/nostr/replaceable-events";
 
 export const NOSTR_EVENTS_QUERY_KEY = ["nostr-events-cache"] as const;
 const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;
 const CACHE_PERSIST_DEBOUNCE_MS = 750;
+const HYDRATION_FLUSH_BATCH_SIZE = 50;
+const HYDRATION_FLUSH_DELAY_MS = 64;
 const DEMO_RELAY_ID = "demo";
 
 interface UseNostrEventCacheParams {
@@ -98,6 +101,36 @@ function upsertCachedEvent(
   return [normalizedIncoming, ...withoutExisting].sort((left, right) => right.created_at - left.created_at);
 }
 
+export function drainPendingCachedEvents(
+  previous: CachedNostrEvent[],
+  pending: CachedNostrEvent[],
+  batchSize = HYDRATION_FLUSH_BATCH_SIZE
+): {
+  nextEvents: CachedNostrEvent[];
+  remaining: CachedNostrEvent[];
+  flushedCount: number;
+} {
+  if (pending.length === 0 || batchSize <= 0) {
+    return {
+      nextEvents: previous,
+      remaining: pending,
+      flushedCount: 0,
+    };
+  }
+
+  const batch = pending.slice(0, batchSize);
+  const nextEvents = batch.reduce(
+    (events, event) => upsertCachedEvent(events, event),
+    previous
+  );
+
+  return {
+    nextEvents,
+    remaining: pending.slice(batch.length),
+    flushedCount: batch.length,
+  };
+}
+
 export function useNostrEventCache({
   isConnected,
   subscribedKinds,
@@ -109,12 +142,69 @@ export function useNostrEventCache({
   const feedScopeKey = useMemo(() => buildFeedScopeKey(activeRelayIds), [activeRelayIds]);
   const queryKey = useMemo(() => getNostrEventsQueryKey(feedScopeKey), [feedScopeKey]);
   const hasFinalizedBootstrapRef = useRef(false);
+  const hasMarkedLiveHydratedScopeRef = useRef(false);
   const persistTimerRef = useRef<number | null>(null);
+  const hydrationFlushTimerRef = useRef<number | null>(null);
+  const pendingHydrationEventsRef = useRef<CachedNostrEvent[]>([]);
+
+  const clearHydrationFlushTimer = useCallback(() => {
+    if (hydrationFlushTimerRef.current === null || typeof window === "undefined") return;
+    window.clearTimeout(hydrationFlushTimerRef.current);
+    hydrationFlushTimerRef.current = null;
+  }, []);
+
+  const flushPendingEvents = useCallback((flushAll = false) => {
+    clearHydrationFlushTimer();
+
+    if (pendingHydrationEventsRef.current.length === 0) {
+      return;
+    }
+
+    const pendingBeforeFlush = pendingHydrationEventsRef.current.length;
+    const batchSize = flushAll ? pendingBeforeFlush : HYDRATION_FLUSH_BATCH_SIZE;
+
+    queryClient.setQueryData<CachedNostrEvent[]>(
+      queryKey,
+      (previous = []) => {
+        const drained = drainPendingCachedEvents(previous, pendingHydrationEventsRef.current, batchSize);
+        pendingHydrationEventsRef.current = drained.remaining;
+        return drained.nextEvents;
+      }
+    );
+
+    const remaining = pendingHydrationEventsRef.current.length;
+    nostrDevLog("hydrate", "Flushed cached Nostr events batch", {
+      feedScopeKey,
+      flushedCount: pendingBeforeFlush - remaining,
+      remaining,
+      flushAll,
+    });
+
+    if (remaining > 0 && typeof window !== "undefined") {
+      hydrationFlushTimerRef.current = window.setTimeout(() => {
+        flushPendingEvents(false);
+      }, HYDRATION_FLUSH_DELAY_MS);
+    }
+  }, [clearHydrationFlushTimer, feedScopeKey, queryClient, queryKey]);
+
+  const schedulePendingEventFlush = useCallback(() => {
+    if (typeof window === "undefined") {
+      flushPendingEvents(false);
+      return;
+    }
+    if (hydrationFlushTimerRef.current !== null) return;
+    hydrationFlushTimerRef.current = window.setTimeout(() => {
+      flushPendingEvents(false);
+    }, HYDRATION_FLUSH_DELAY_MS);
+  }, [flushPendingEvents]);
 
   useEffect(() => {
     hasFinalizedBootstrapRef.current = false;
+    hasMarkedLiveHydratedScopeRef.current = false;
+    pendingHydrationEventsRef.current = [];
+    clearHydrationFlushTimer();
     setHasLiveHydratedScope(false);
-  }, [feedScopeKey]);
+  }, [clearHydrationFlushTimer, feedScopeKey]);
 
   const { data: nostrEvents = [] } = useQuery({
     queryKey,
@@ -124,9 +214,9 @@ export function useNostrEventCache({
     gcTime: Infinity,
   });
 
-  const finalizeBootstrapScope = useCallback(() => {
-    if (hasFinalizedBootstrapRef.current) return;
-    hasFinalizedBootstrapRef.current = true;
+  const markLiveHydratedScope = useCallback(() => {
+    if (hasMarkedLiveHydratedScopeRef.current) return;
+    hasMarkedLiveHydratedScopeRef.current = true;
     setHasLiveHydratedScope(true);
     queryClient.setQueryData<CachedNostrEvent[]>(
       queryKey,
@@ -134,15 +224,20 @@ export function useNostrEventCache({
     );
   }, [queryClient, queryKey]);
 
+  const finalizeBootstrapScope = useCallback(() => {
+    flushPendingEvents(true);
+    if (hasFinalizedBootstrapRef.current) return;
+    hasFinalizedBootstrapRef.current = true;
+    markLiveHydratedScope();
+  }, [flushPendingEvents, markLiveHydratedScope]);
+
   const pushEvent = useCallback((event: NDKEvent) => {
     const cachedEvent = toCachedEvent(event);
     if (!cachedEvent) return;
-    finalizeBootstrapScope();
-    queryClient.setQueryData<CachedNostrEvent[]>(
-      queryKey,
-      (previous = []) => upsertCachedEvent(previous, cachedEvent)
-    );
-  }, [finalizeBootstrapScope, queryClient, queryKey]);
+    markLiveHydratedScope();
+    pendingHydrationEventsRef.current = [...pendingHydrationEventsRef.current, cachedEvent];
+    schedulePendingEventFlush();
+  }, [markLiveHydratedScope, schedulePendingEventFlush]);
 
   useEffect(() => {
     if (!isConnected) return;
@@ -159,9 +254,10 @@ export function useNostrEventCache({
     subscription?.on("close", finalizeBootstrapScope);
     return () => {
       window.clearTimeout(timeoutId);
+      flushPendingEvents(true);
       subscription?.stop();
     };
-  }, [finalizeBootstrapScope, isConnected, pushEvent, subscribe, subscribedKinds]);
+  }, [finalizeBootstrapScope, flushPendingEvents, isConnected, pushEvent, subscribe, subscribedKinds]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -174,7 +270,9 @@ export function useNostrEventCache({
         window.clearTimeout(persistTimerRef.current);
         persistTimerRef.current = null;
       }
-      saveCachedNostrEvents(nostrEvents, feedScopeKey);
+      flushPendingEvents(true);
+      const latestEvents = queryClient.getQueryData<CachedNostrEvent[]>(queryKey) || nostrEvents;
+      saveCachedNostrEvents(latestEvents, feedScopeKey);
     };
 
     persistTimerRef.current = window.setTimeout(flushPersist, CACHE_PERSIST_DEBOUNCE_MS);
@@ -187,7 +285,7 @@ export function useNostrEventCache({
       document.removeEventListener("visibilitychange", onVisibilityChange);
       flushPersist();
     };
-  }, [feedScopeKey, nostrEvents]);
+  }, [feedScopeKey, flushPendingEvents, nostrEvents, queryClient, queryKey]);
 
   return {
     events: nostrEvents,
