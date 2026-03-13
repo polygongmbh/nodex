@@ -7,12 +7,13 @@ import { useTranslation } from "react-i18next";
 
 interface NoasAuthFormProps {
   onLogin: (username: string, password: string) => Promise<boolean>;
+  onSignUp?: () => void;
   onBack: () => void;
   isLoading: boolean;
   error?: string;
 }
 
-export function NoasAuthForm({ onLogin, onBack, isLoading, error }: NoasAuthFormProps) {
+export function NoasAuthForm({ onLogin, onSignUp, onBack, isLoading, error }: NoasAuthFormProps) {
   const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -120,6 +121,22 @@ export function NoasAuthForm({ onLogin, onBack, isLoading, error }: NoasAuthForm
           {t("auth.noas.footerText") || "Your keys are encrypted and never leave your device"}
         </p>
       </div>
+
+      {onSignUp && (
+        <div className="text-center text-sm border-t pt-4">
+          <p className="text-muted-foreground">
+            {t("auth.noas.noAccount") || "Don't have an account?"}
+            {" "}
+            <button 
+              onClick={onSignUp}
+              disabled={isLoading}
+              className="text-primary hover:underline font-medium"
+            >
+              {t("auth.noas.signUpLink") || "Sign up"}
+            </button>
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -41,6 +41,7 @@ export interface NDKContextValue {
   loginAsGuest: () => Promise<boolean>;
   loginWithNostrConnect: (bunkerUrl: string) => Promise<boolean>;
   loginWithNoas: (username: string, password: string) => Promise<boolean>;
+  signupWithNoas: (username: string, password: string, privateKey: string, pubkey: string) => Promise<boolean>;
   logout: () => void;
   addRelay: (url: string) => void;
   removeRelay: (url: string) => void;

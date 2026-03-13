@@ -990,6 +990,109 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
   }, [ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays, addRelay]);
 
+  const signupWithNoas = useCallback(async (username: string, password: string, privateKey: string, pubkey: string): Promise<boolean> => {
+    if (!ndk) return false;
+
+    const noasApiUrl = import.meta.env.VITE_NOAS_API_URL;
+    const noasNip05Domain = import.meta.env.VITE_NOAS_NIP05_DOMAIN;
+
+    if (!noasApiUrl || !noasNip05Domain) {
+      console.error("Noas configuration missing");
+      return false;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const noasClient = new NoasClient(noasApiUrl, noasNip05Domain);
+      
+      // Normalize the private key to nsec format
+      let nsecKey: string;
+      try {
+        if (privateKey.startsWith('nsec1')) {
+          nsecKey = privateKey;
+        } else if (/^[a-f0-9]{64}$/i.test(privateKey)) {
+          // Convert hex to nsec
+          nsecKey = privateKeyHexToNsec(privateKey);
+        } else {
+          setIsAuthenticating(false);
+          console.error("Invalid private key format");
+          return false;
+        }
+      } catch (error) {
+        console.error("Failed to normalize private key:", error);
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      // Register the user
+      const signUpResponse = await noasClient.register(username, password, nsecKey, pubkey, resolvedDefaultRelays);
+
+      if (!signUpResponse.success || !signUpResponse.user) {
+        console.error("Noas sign-up failed:", signUpResponse.error);
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      // Create signer with the private key
+      let signer: NDKPrivateKeySigner | null = null;
+      try {
+        signer = new NDKPrivateKeySigner(nsecKey);
+        ndk.signer = signer;
+      } catch (error) {
+        console.error('Failed to create signer:', error);
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      if (!signer) {
+        console.error('Signer was not created');
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      const ndkUser = await signer.user();
+      await ndkUser.fetchProfile();
+
+      // Get profile picture if available
+      let profilePicture: string | undefined;
+      const pictureResponse = await noasClient.getProfilePicture(signUpResponse.user.publicKey);
+      if (pictureResponse.profilePicture && pictureResponse.profilePictureType) {
+        const blob = new Blob([pictureResponse.profilePicture], { type: pictureResponse.profilePictureType });
+        profilePicture = URL.createObjectURL(blob);
+      }
+
+      // Get NIP-05 verification
+      const nip05Response = await noasClient.getNip05Verification(username);
+      const nip05Verified = nip05Response.names?.[username] === signUpResponse.user.publicKey;
+
+      setUser({
+        pubkey: ndkUser.pubkey,
+        npub: ndkUser.npub,
+        profile: {
+          name: ndkUser.profile?.name || username,
+          displayName: ndkUser.profile?.displayName || username,
+          picture: profilePicture || ndkUser.profile?.image,
+          about: ndkUser.profile?.about,
+          nip05: noasClient.getNip05Identifier(username),
+          nip05Verified,
+        },
+      });
+
+      // Store Noas session information
+      setAuthMethod("noas");
+      localStorage.setItem(STORAGE_KEY_AUTH, "noas");
+      localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
+
+      retryNip42RelaysAfterSignIn();
+      return true;
+    } catch (error) {
+      console.error("Noas sign-up failed:", error);
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays]);
+
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
     return localStorage.getItem(STORAGE_KEY_NSEC);
@@ -1435,6 +1538,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     loginAsGuest,
     loginWithNostrConnect,
     loginWithNoas,
+    signupWithNoas,
     logout,
     addRelay,
     removeRelay,
@@ -1459,6 +1563,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     loginAsGuest,
     loginWithNostrConnect,
     loginWithNoas,
+    signupWithNoas,
     logout,
     addRelay,
     removeRelay,

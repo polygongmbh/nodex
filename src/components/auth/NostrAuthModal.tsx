@@ -28,13 +28,14 @@ import { useTranslation } from "react-i18next";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { NoasAuthForm } from "./NoasAuthForm";
+import { NoasSignUpForm } from "./NoasSignUpForm";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type AuthStep = "choose" | "privateKey" | "nostrConnect" | "noas";
+type AuthStep = "choose" | "privateKey" | "nostrConnect" | "noas" | "noasSignUp";
 type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | "noas" | null;
 type WindowWithNostr = Window & { nostr?: unknown };
 
@@ -49,6 +50,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     loginAsGuest,
     loginWithNostrConnect,
     loginWithNoas,
+    signupWithNoas,
     isAuthenticating 
   } = useNDK();
   
@@ -147,6 +149,24 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
         return true;
       } else {
         setError(t("auth.modal.errors.noasFailed") || "Noas sign-in failed");
+        return false;
+      }
+    } finally {
+      setPendingAuthMethod(null);
+    }
+  };
+
+  const handleNoasSignUp = async (username: string, password: string, privateKey: string, pubkey: string) => {
+    setError(null);
+    setPendingAuthMethod("noas");
+    try {
+      const success = await signupWithNoas(username, password, privateKey, pubkey);
+      if (success) {
+        toast.success(t("auth.modal.success.noasSignUp") || "Account created successfully");
+        onClose();
+        return true;
+      } else {
+        setError(t("auth.modal.errors.noasSignUpFailed") || "Sign up failed");
         return false;
       }
     } finally {
@@ -338,7 +358,15 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
         ) : step === "noas" ? (
           <NoasAuthForm
             onLogin={handleNoasLogin}
+            onSignUp={() => setStep("noasSignUp")}
             onBack={() => setStep("choose")}
+            isLoading={isAuthenticating}
+            error={error || undefined}
+          />
+        ) : step === "noasSignUp" ? (
+          <NoasSignUpForm
+            onSignUp={handleNoasSignUp}
+            onBack={() => setStep("noas")}
             isLoading={isAuthenticating}
             error={error || undefined}
           />

@@ -79,8 +79,8 @@ export class NoasClient {
   async register(
     username: string,
     password: string,
-    publicKey: string,
-    encryptedPrivateKey: string,
+    nsecKey: string,
+    pubkey: string,
     relays: string[] = []
   ): Promise<NoasRegisterResponse> {
     try {
@@ -92,8 +92,8 @@ export class NoasClient {
         body: JSON.stringify({
           username,
           password,
-          publicKey,
-          encryptedPrivateKey,
+          nsecKey,
+          pubkey,
           relays,
         }),
       });
