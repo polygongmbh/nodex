@@ -289,6 +289,7 @@ When asked to create a plan to fix or implement something:
 - Keep summaries compact and scannable.
 - Prefer single-line status items when content fits.
 - Avoid repetitive progress boilerplate.
+- In post-implementation summaries, concisely report added/removed line counts split into production code, test code, and other changes (for example documentation or process files).
 - Commit reporting format:
   - `✅ <hash> <type>: <message> (+<added> ~<changed> -<removed>)`
 - Status indicators:
