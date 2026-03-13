@@ -7,6 +7,7 @@ import {
 
 describe("default relay env resolution", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     window.localStorage.clear();
   });
 
@@ -127,16 +128,40 @@ describe("default relay env resolution", () => {
         hostname: "app.example.test",
         probeRelay,
       })
-    ).resolves.toEqual([]);
-    expect(probeRelay).toHaveBeenCalledTimes(4);
+    ).resolves.toEqual([
+      "wss://nostr.example.test",
+      "wss://feed.example.test",
+      "wss://tasks.example.test",
+      "wss://base.example.test",
+    ]);
+    expect(probeRelay).toHaveBeenCalledTimes(8);
 
     await expect(
       resolveDefaultRelayUrlsWithDomainFallback({}, {
         hostname: "app.example.test",
         probeRelay,
       })
-    ).resolves.toEqual([]);
-    expect(probeRelay).toHaveBeenCalledTimes(8);
+    ).resolves.toEqual([
+      "wss://nostr.example.test",
+      "wss://feed.example.test",
+      "wss://tasks.example.test",
+      "wss://base.example.test",
+    ]);
+    expect(probeRelay).toHaveBeenCalledTimes(16);
+  });
+
+  it("returns discovered relays even when cache writes fail", async () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("Quota exceeded");
+    });
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.example.test");
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({}, {
+        hostname: "app.example.test",
+        probeRelay,
+      })
+    ).resolves.toEqual(["wss://feed.example.test"]);
   });
 
   it("prefers explicit relay env values without probing host-derived candidates", async () => {

@@ -10,6 +10,7 @@ interface DefaultRelayEnv {
 
 const HOST_DERIVED_RELAY_PREFIXES = ["nostr", "feed", "tasks", "base"] as const;
 const DEFAULT_RELAY_PROBE_TIMEOUT_MS = 1200;
+const DEFAULT_RELAY_PROBE_RETRY_COUNT = 1;
 const HOST_FALLBACK_SUCCESS_CACHE_TTL_MS = 30 * 60 * 1000;
 const HOST_FALLBACK_CACHE_KEY_PREFIX = "nodex.default-relay-fallback.v1";
 let lastDiscoveryLogKey: string | null = null;
@@ -70,7 +71,17 @@ function getHostFallbackCacheKey(hostname: string, protocol: RelayProtocol): str
 function readHostFallbackCache(hostname: string, protocol: RelayProtocol): string[] | null {
   if (typeof window === "undefined" || !window.localStorage) return null;
   const key = getHostFallbackCacheKey(hostname, protocol);
-  const raw = window.localStorage.getItem(key);
+  let raw: string | null = null;
+  try {
+    raw = window.localStorage.getItem(key);
+  } catch (error) {
+    nostrDevLog("relay-discovery", "Host fallback cache read failed", {
+      hostname,
+      protocol,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
   if (!raw) return null;
 
   try {
@@ -80,12 +91,20 @@ function readHostFallbackCache(hostname: string, protocol: RelayProtocol): strin
       ? parsed.relayUrls.filter((value): value is string => typeof value === "string" && value.length > 0)
       : [];
     if (!checkedAt || Date.now() - checkedAt > HOST_FALLBACK_SUCCESS_CACHE_TTL_MS) {
-      window.localStorage.removeItem(key);
+      try {
+        window.localStorage.removeItem(key);
+      } catch {
+        // Ignore cache cleanup errors in constrained browser modes.
+      }
       return null;
     }
     return relayUrls;
   } catch {
-    window.localStorage.removeItem(key);
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // Ignore cache cleanup errors in constrained browser modes.
+    }
     return null;
   }
 }
@@ -98,7 +117,16 @@ function writeHostFallbackCache(hostname: string, protocol: RelayProtocol, relay
     checkedAt: Date.now(),
     relayUrls,
   };
-  window.localStorage.setItem(key, JSON.stringify(payload));
+  try {
+    window.localStorage.setItem(key, JSON.stringify(payload));
+  } catch (error) {
+    nostrDevLog("relay-discovery", "Host fallback cache write failed", {
+      hostname,
+      protocol,
+      relayUrls,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 async function probeRelayAvailability(relayUrl: string, timeoutMs: number): Promise<boolean> {
@@ -143,6 +171,45 @@ interface ResolveRelayFallbackOptions {
   hostname?: string;
   probeRelay?: (relayUrl: string) => Promise<boolean>;
   probeTimeoutMs?: number;
+}
+
+async function probeHostFallbackCandidates(options: {
+  candidates: string[];
+  probe: (relayUrl: string) => Promise<boolean>;
+  retryCount: number;
+}): Promise<string[]> {
+  const failedRelayUrls: string[] = [];
+  const resolvedRelayUrls: string[] = [];
+
+  for (const relayUrl of options.candidates) {
+    const isAvailable = await options.probe(relayUrl);
+    if (isAvailable) {
+      resolvedRelayUrls.push(relayUrl);
+      continue;
+    }
+    failedRelayUrls.push(relayUrl);
+  }
+
+  if (resolvedRelayUrls.length > 0 || failedRelayUrls.length === 0 || options.retryCount <= 0) {
+    return resolvedRelayUrls;
+  }
+
+  let remaining = failedRelayUrls;
+  for (let attempt = 1; attempt <= options.retryCount; attempt += 1) {
+    const retryFailures: string[] = [];
+    for (const relayUrl of remaining) {
+      const isAvailable = await options.probe(relayUrl);
+      if (isAvailable) {
+        resolvedRelayUrls.push(relayUrl);
+      } else {
+        retryFailures.push(relayUrl);
+      }
+    }
+    if (resolvedRelayUrls.length > 0 || retryFailures.length === 0) break;
+    remaining = retryFailures;
+  }
+
+  return resolvedRelayUrls;
 }
 
 export async function resolveDefaultRelayUrlsWithDomainFallback(
@@ -191,9 +258,13 @@ export async function resolveDefaultRelayUrlsWithDomainFallback(
     protocol,
     probeTimeoutMs,
     candidates,
+    retryCount: DEFAULT_RELAY_PROBE_RETRY_COUNT,
   });
-  const probed = await Promise.all(candidates.map(async (relayUrl) => (await probe(relayUrl)) ? relayUrl : null));
-  const resolvedRelayUrls = probed.filter((value): value is string => Boolean(value));
+  const resolvedRelayUrls = await probeHostFallbackCandidates({
+    candidates,
+    probe,
+    retryCount: DEFAULT_RELAY_PROBE_RETRY_COUNT,
+  });
   nostrDevLog("relay-discovery", "Host fallback probe completed", {
     hostname,
     protocol,
@@ -209,8 +280,17 @@ export async function resolveDefaultRelayUrlsWithDomainFallback(
       });
     }
   }
-  writeHostFallbackCache(hostname, protocol, resolvedRelayUrls);
-  return resolvedRelayUrls;
+  if (resolvedRelayUrls.length > 0) {
+    writeHostFallbackCache(hostname, protocol, resolvedRelayUrls);
+    return resolvedRelayUrls;
+  }
+
+  nostrDevLog("relay-discovery", "Host fallback probe found no reachable candidates; using optimistic relay list", {
+    hostname,
+    protocol,
+    relayUrls: candidates,
+  });
+  return candidates;
 }
 
 export function getConfiguredDefaultRelays(): string[] {
