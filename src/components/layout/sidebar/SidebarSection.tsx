@@ -34,9 +34,6 @@ export function SidebarSection({
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [contentHeight, setContentHeight] = useState(0);
   const toggleLabel = `${isExpanded ? t("tasks.actions.collapse") : t("tasks.actions.expandAll")} ${title}`;
-  const stopHeaderToggle = (event: React.SyntheticEvent) => {
-    event.stopPropagation();
-  };
 
   useEffect(() => {
     if (animationMode !== "fullCollapse") return;
@@ -61,13 +58,7 @@ export function SidebarSection({
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <button
             type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              onIconClick?.();
-            }}
-            onKeyDown={stopHeaderToggle}
-            onPointerDown={stopHeaderToggle}
-            onMouseDown={stopHeaderToggle}
+            onClick={() => onIconClick?.()}
             className="hover:ring-2 hover:ring-primary/50 rounded p-0.5 focus:outline-none focus:ring-2 focus:ring-primary/50"
             title={t("sidebar.actions.toggleAll")}
             aria-label={t("sidebar.actions.toggleAllFor", { title: title.toLowerCase() })}
@@ -100,14 +91,7 @@ export function SidebarSection({
           </button>
         </div>
         {action && (
-          <div
-            data-sidebar-section-action="true"
-            className="flex shrink-0 items-center self-center"
-            onClick={stopHeaderToggle}
-            onKeyDown={stopHeaderToggle}
-            onPointerDown={stopHeaderToggle}
-            onMouseDown={stopHeaderToggle}
-          >
+          <div className="flex shrink-0 items-center self-center">
             {action}
           </div>
         )}

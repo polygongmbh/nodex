@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Desktop relay manager actions no longer toggle the Feeds section while adding relays, feed-section fold animations are restored, and removing a relay now keeps intentionally removed entries from being merged back into the sidebar list.
 - Filter URL sync now skips no-op query replacements, preventing React Router from spamming `history.replaceState` and tripping browser rate limits during repeated filter-state renders.
 - Focused task context now clears automatically when its relay is deselected, while tasks that still match another selected relay stay open.
 - Relay re-add now succeeds on the first manual attempt after removal, even when the old connection emits a delayed disconnect during teardown.

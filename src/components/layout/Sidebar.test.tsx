@@ -58,9 +58,13 @@ describe("Sidebar", () => {
   it("preserves feeds section expansion state across remounts while relay lists change", () => {
     const firstRender = renderSidebar(baseRelays);
     const relayOneRow = screen.getByText("Relay One").closest('[data-sidebar-item="relay-relay-one"]') as HTMLElement;
+    const expectCollapsed = (element: HTMLElement | null) => {
+      expect(element).toHaveClass("max-h-0");
+      expect(element).toHaveClass("motion-sidebar-fold-close");
+    };
 
     fireEvent.click(screen.getByRole("button", { name: /collapse feeds/i }));
-    expect(relayOneRow.parentElement?.parentElement).toHaveClass("hidden");
+    expectCollapsed(relayOneRow.parentElement?.parentElement as HTMLElement);
 
     firstRender.unmount();
 
@@ -69,7 +73,7 @@ describe("Sidebar", () => {
     const remountedRelayOneRow = screen.getByText("Relay One").closest('[data-sidebar-item="relay-relay-one"]') as HTMLElement;
     const remountedRelayTwoRow = screen.getByText("Relay Two").closest('[data-sidebar-item="relay-relay-two"]') as HTMLElement;
 
-    expect(remountedRelayOneRow.parentElement?.parentElement).toHaveClass("hidden");
-    expect(remountedRelayTwoRow.parentElement?.parentElement).toHaveClass("hidden");
+    expectCollapsed(remountedRelayOneRow.parentElement?.parentElement as HTMLElement);
+    expectCollapsed(remountedRelayTwoRow.parentElement?.parentElement as HTMLElement);
   });
 });
