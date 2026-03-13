@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 import { Relay } from "@/types";
 import { SidebarFilterRow } from "./SidebarFilterRow";
 import { useTranslation } from "react-i18next";
+import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "building-2": Building2,
@@ -23,22 +25,7 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
   const Icon = iconMap[relay.icon] || Building2;
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
   const isConnectionActive = resolvedConnectionStatus === "connected";
-  const connectionDotClass = (() => {
-    switch (resolvedConnectionStatus) {
-      case "read-only":
-        return "bg-sky-500";
-      case "connecting":
-        return "bg-sky-500";
-      case "verification-failed":
-        return "bg-destructive";
-      case "connection-error":
-        return "bg-destructive";
-      case "disconnected":
-        return "bg-slate-400";
-      default:
-        return "bg-success";
-    }
-  })();
+  const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
 
   return (
     <SidebarFilterRow
@@ -89,14 +76,33 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
           )}
         >
           {relay.name}
-          <span
-            className={cn(
-              "inline-block h-1.5 w-1.5 rounded-full",
-              connectionDotClass
-            )}
-            title={resolvedConnectionStatus}
-            aria-label={resolvedConnectionStatus}
-          />
+          {resolvedConnectionStatus === "read-only" ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={cn(
+                      "inline-block h-1.5 w-1.5 rounded-full",
+                      connectionDotClass
+                    )}
+                    aria-label={t("relay.statusHints.readOnly")}
+                  />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-56 text-xs">
+                  {t("relay.statusHints.readOnly")}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <span
+              className={cn(
+                "inline-block h-1.5 w-1.5 rounded-full",
+                connectionDotClass
+              )}
+              title={resolvedConnectionStatus}
+              aria-label={resolvedConnectionStatus}
+            />
+          )}
         </span>
       </button>
 

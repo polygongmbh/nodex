@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown, Mail } from "lucide-react";
 import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
 import { cn } from "@/lib/utils";
+import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -449,22 +450,7 @@ export function MobileFilters({
               const RelayIcon = relayIconMap[relay.icon] || Building2;
               const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
               const isConnectionActive = resolvedConnectionStatus === "connected";
-              const connectionDotClass = (() => {
-                switch (resolvedConnectionStatus) {
-                  case "read-only":
-                    return "bg-sky-500";
-                  case "connecting":
-                    return "bg-sky-500";
-                  case "verification-failed":
-                    return "bg-destructive";
-                  case "connection-error":
-                    return "bg-destructive";
-                  case "disconnected":
-                    return "bg-slate-400";
-                  default:
-                    return "bg-success";
-                }
-              })();
+              const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
               return (
                 <div
                   key={relay.id}
@@ -487,8 +473,8 @@ export function MobileFilters({
                         "inline-block h-2 w-2 rounded-full shrink-0",
                         connectionDotClass
                       )}
-                      title={resolvedConnectionStatus}
-                      aria-label={resolvedConnectionStatus}
+                      title={resolvedConnectionStatus === "read-only" ? t("relay.statusHints.readOnly") : resolvedConnectionStatus}
+                      aria-label={resolvedConnectionStatus === "read-only" ? t("relay.statusHints.readOnly") : resolvedConnectionStatus}
                     />
                     {relay.isActive && <Check className="w-3.5 h-3.5 shrink-0" />}
                   </button>

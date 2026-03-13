@@ -649,6 +649,9 @@
       "verificationFailedAuthRequired": "Lesen abgelehnt (Auth erforderlich)",
       "readRejectedAuthRequired": "Lesen abgelehnt (Auth erforderlich)"
     },
+    "statusHints": {
+      "readOnly": "Lesen von diesem Relay funktioniert weiter, aber Veröffentlichen dorthin ist derzeit nicht verfügbar."
+    },
     "details": {
       "show": "Relay-Details anzeigen",
       "hide": "Relay-Details ausblenden",

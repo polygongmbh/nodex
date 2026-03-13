@@ -649,6 +649,9 @@
       "verificationFailedAuthRequired": "read rejected (auth required)",
       "readRejectedAuthRequired": "read rejected (auth required)"
     },
+    "statusHints": {
+      "readOnly": "Reads from this relay still work, but publishing to it is currently unavailable."
+    },
     "details": {
       "show": "Show relay details",
       "hide": "Hide relay details",

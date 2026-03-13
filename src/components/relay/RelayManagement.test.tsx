@@ -57,6 +57,21 @@ describe("RelayManagement", () => {
     expect(screen.getByText("read rejected")).toBeInTheDocument();
   });
 
+  it("explains read-only relays as readable but not publishable", () => {
+    render(
+      <RelayManagement
+        relays={[
+          { url: "wss://relay.one", status: "read-only" },
+        ]}
+        onAddRelay={() => {}}
+        onRemoveRelay={() => {}}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    expect(screen.getByText("Reads from this relay still work, but publishing to it is currently unavailable.")).toBeInTheDocument();
+  });
+
   it("shows relay capability details from nip11 metadata", () => {
     render(
       <RelayManagement

@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Relay status indicators now distinguish `read only` from `connecting`, explain that `read only` relays can still receive data but not publish, and use a distinct icon for read-rejected relays.
 - Profile setup now auto-opens only once per required-setup cycle and remains dismissible if saving the profile fails.
 - Newly added relays now use a short connection-attempt grace window instead of lingering in `connecting`, are immediately activated in feed filters, and no longer trigger feed-section fold animations while relay lists update.
 - Broad relay backfill subscriptions now clamp their message limits to device-class caps, reducing the chance of browser overload on lower-end systems while preserving targeted lookups.
