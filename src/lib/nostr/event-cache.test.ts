@@ -1,6 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
+  NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE,
+  NOSTR_EVENT_CACHE_RETENTION_SECONDS,
+  NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY,
   NOSTR_EVENT_CACHE_STORAGE_KEY,
   loadCachedNostrEvents,
   removeCachedNostrEventById,
@@ -8,10 +11,12 @@ import {
   type CachedNostrEvent,
 } from "./event-cache";
 
+const nowSeconds = Math.floor(Date.now() / 1000);
+
 const eventA: CachedNostrEvent = {
   id: "a",
   pubkey: "p1",
-  created_at: 20,
+  created_at: nowSeconds - 60,
   kind: NostrEventKind.Task,
   tags: [["t", "go"]],
   content: "A",
@@ -22,7 +27,7 @@ const eventA: CachedNostrEvent = {
 const eventB: CachedNostrEvent = {
   id: "b",
   pubkey: "p2",
-  created_at: 40,
+  created_at: nowSeconds - 30,
   kind: NostrEventKind.TextNote,
   tags: [["t", "alpha"]],
   content: "B",
@@ -48,10 +53,10 @@ describe("nostr event cache", () => {
   });
 
   it("deduplicates events by id while saving", () => {
-    saveCachedNostrEvents([eventA, { ...eventA, created_at: 999 }]);
+    saveCachedNostrEvents([eventA, { ...eventA, created_at: nowSeconds - 1 }]);
     const loaded = loadCachedNostrEvents();
     expect(loaded).toHaveLength(1);
-    expect(loaded[0].created_at).toBe(999);
+    expect(loaded[0].created_at).toBe(nowSeconds - 1);
   });
 
   it("merges relay attribution when the same event id is seen on multiple relays", () => {
@@ -77,7 +82,7 @@ describe("nostr event cache", () => {
     const oldListing: CachedNostrEvent = {
       id: "listing-old",
       pubkey: "seller",
-      created_at: 10,
+      created_at: nowSeconds - 100,
       kind: NostrEventKind.ClassifiedListing,
       tags: [["d", "listing-1"], ["status", "active"]],
       content: "old",
@@ -85,7 +90,7 @@ describe("nostr event cache", () => {
     const newListing: CachedNostrEvent = {
       ...oldListing,
       id: "listing-new",
-      created_at: 20,
+      created_at: nowSeconds - 50,
       tags: [["d", "listing-1"], ["status", "sold"]],
       content: "new",
     };
@@ -101,7 +106,7 @@ describe("nostr event cache", () => {
     const oldMetadata: CachedNostrEvent = {
       id: "meta-old",
       pubkey: "author",
-      created_at: 100,
+      created_at: nowSeconds - 200,
       kind: NostrEventKind.Metadata,
       tags: [],
       content: "{\"name\":\"old\"}",
@@ -109,7 +114,7 @@ describe("nostr event cache", () => {
     const newMetadata: CachedNostrEvent = {
       ...oldMetadata,
       id: "meta-new",
-      created_at: 200,
+      created_at: nowSeconds - 100,
       content: "{\"name\":\"new\"}",
     };
 
@@ -124,7 +129,7 @@ describe("nostr event cache", () => {
     const invalidListing: CachedNostrEvent = {
       id: "invalid-listing",
       pubkey: "seller",
-      created_at: 55,
+      created_at: nowSeconds - 55,
       kind: NostrEventKind.ClassifiedListing,
       tags: [["status", "active"]],
       content: "invalid",
@@ -159,5 +164,60 @@ describe("nostr event cache", () => {
 
     expect(loadCachedNostrEvents("relay-a").map((event) => event.id)).toEqual(["a"]);
     expect(loadCachedNostrEvents("relay-b")).toEqual([]);
+  });
+
+  it("retains only recent events within the configured window", () => {
+    saveCachedNostrEvents([
+      { ...eventA, id: "recent", created_at: nowSeconds - 10 },
+      {
+        ...eventB,
+        id: "stale",
+        created_at: nowSeconds - NOSTR_EVENT_CACHE_RETENTION_SECONDS - 10,
+      },
+    ]);
+
+    expect(loadCachedNostrEvents().map((event) => event.id)).toEqual(["recent"]);
+  });
+
+  it("caps persisted event count per scope", () => {
+    const oversized = Array.from({ length: NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE + 25 }, (_, index) => ({
+      ...eventA,
+      id: `event-${index}`,
+      created_at: nowSeconds - index,
+    }));
+    saveCachedNostrEvents(oversized, "relay-cap");
+
+    expect(loadCachedNostrEvents("relay-cap")).toHaveLength(NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE);
+  });
+
+  it("evicts least-recently-used scoped cache entries when quota recovery is needed", () => {
+    saveCachedNostrEvents([{ ...eventA, id: "old-scope-event" }], "relay-old");
+    saveCachedNostrEvents([{ ...eventA, id: "new-scope-event" }], "relay-new");
+
+    localStorage.setItem(
+      NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY,
+      JSON.stringify({
+        "relay-old": { lastUsedAt: 1 },
+        "relay-new": { lastUsedAt: Date.now() },
+        "relay-current": { lastUsedAt: Date.now() + 1000 },
+      })
+    );
+
+    const currentScopeStorageKey = `${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope:relay-current`;
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    const setItemSpy = vi.spyOn(localStorage, "setItem").mockImplementation((key: string, value: string) => {
+      if (key === currentScopeStorageKey && localStorage.getItem(`${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope:relay-old`)) {
+        throw new DOMException("quota exceeded", "QuotaExceededError");
+      }
+      originalSetItem(key, value);
+    });
+
+    expect(() =>
+      saveCachedNostrEvents([{ ...eventA, id: "current-event" }], "relay-current")
+    ).not.toThrow();
+
+    expect(loadCachedNostrEvents("relay-old")).toEqual([]);
+    expect(loadCachedNostrEvents("relay-current").map((event) => event.id)).toEqual(["current-event"]);
+    setItemSpy.mockRestore();
   });
 });
