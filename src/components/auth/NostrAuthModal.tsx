@@ -356,6 +356,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   } = useNDK();
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [hasForcedProfileSetupOpen, setHasForcedProfileSetupOpen] = useState(false);
   const effectiveProfile = useMemo(
     () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
     [user?.profile, user?.pubkey]
@@ -431,10 +432,26 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   };
 
   useEffect(() => {
-    if (user && isConnected && needsProfileSetup && !isProfileSyncing && !isProfileEditorOpen) {
+    if (!user || !needsProfileSetup) {
+      setHasForcedProfileSetupOpen(false);
+    }
+  }, [user, needsProfileSetup]);
+
+  useEffect(() => {
+    if (
+      user
+      && isConnected
+      && needsProfileSetup
+      && !isProfileSyncing
+      && !isProfileEditorOpen
+      && !hasForcedProfileSetupOpen
+    ) {
+      setHasForcedProfileSetupOpen(true);
       openProfileEditor();
     }
-  }, [user, isConnected, needsProfileSetup, isProfileSyncing, isProfileEditorOpen, openProfileEditor]);
+  }, [user, isConnected, needsProfileSetup, isProfileSyncing, isProfileEditorOpen, hasForcedProfileSetupOpen, openProfileEditor]);
+
+  const canDismissProfileEditor = !needsProfileSetup || hasForcedProfileSetupOpen;
 
   if (!user) {
     return (
@@ -612,12 +629,12 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       <Dialog
         open={isProfileEditorOpen}
         onOpenChange={(open) => {
-          if (!open && needsProfileSetup && !isSavingProfile) return;
+          if (!open && !canDismissProfileEditor) return;
           setIsProfileEditorOpen(open);
         }}
       >
         <DialogContent
-          showCloseButton={!needsProfileSetup || isSavingProfile}
+          showCloseButton={canDismissProfileEditor}
           className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-lg"
         >
           <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-4 sm:p-6">

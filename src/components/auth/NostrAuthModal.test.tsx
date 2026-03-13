@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
 import type { AuthMethod, NostrUser } from "@/lib/nostr/ndk-context";
@@ -172,7 +172,7 @@ describe("NostrAuthModal", () => {
     expect(document.getElementById("profile-auto-caption-enabled")).toBeNull();
   });
 
-  it("shows a dismiss button while mandatory profile setup save is still pending", () => {
+  it("only auto-opens mandatory profile setup once per required setup cycle", () => {
     ndkMock.user = {
       npub: "npub1test",
       pubkey: "a".repeat(64),
@@ -181,13 +181,34 @@ describe("NostrAuthModal", () => {
     ndkMock.authMethod = "extension";
     ndkMock.needsProfileSetup = true;
     ndkMock.isProfileSyncing = false;
-    ndkMock.updateUserProfile = vi.fn(() => new Promise<boolean>(() => {}));
+
+    const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps the dismiss button available after a mandatory profile setup save fails", async () => {
+    ndkMock.user = {
+      npub: "npub1test",
+      pubkey: "a".repeat(64),
+      profile: { name: "" },
+    };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
+    ndkMock.updateUserProfile = vi.fn(async () => false);
 
     render(<NostrUserMenu onSignInClick={vi.fn()} />);
 
     fireEvent.change(document.getElementById("profile-name") as HTMLInputElement, { target: { value: "alice" } });
     fireEvent.click(screen.getByRole("button", { name: /save/i }));
 
+    await waitFor(() => expect(ndkMock.updateUserProfile).toHaveBeenCalled());
     expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
   });
 
