@@ -61,3 +61,24 @@ export function shouldRetryNip42AfterSignIn(relay: {
     relay.status === "read-only"
   );
 }
+
+interface RelayReadAuthState {
+  status?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
+  nip11?: {
+    authRequired?: boolean;
+  };
+}
+
+export function isRelayReadAuthRequired(relay: RelayReadAuthState): boolean {
+  if (relay.status === "verification-failed") return true;
+  return relay.nip11?.authRequired === true;
+}
+
+export function shouldForceSignInForReadAccess(params: {
+  isSignedIn: boolean;
+  relays: RelayReadAuthState[];
+}): boolean {
+  if (params.isSignedIn) return false;
+  if (params.relays.length === 0) return false;
+  return params.relays.every((relay) => isRelayReadAuthRequired(relay));
+}

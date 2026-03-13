@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   AUTH_RETRY_COOLDOWN_MS,
   isAuthRequiredCloseReason,
+  isRelayReadAuthRequired,
   shouldMarkRelayReadOnlyAfterPublishReject,
+  shouldForceSignInForReadAccess,
   shouldRetryNip42AfterSignIn,
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
@@ -119,5 +121,48 @@ describe("shouldRetryNip42AfterSignIn", () => {
     expect(shouldRetryNip42AfterSignIn({
       status: "read-only",
     })).toBe(true);
+  });
+});
+
+describe("isRelayReadAuthRequired", () => {
+  it("returns true for explicit read rejection and auth-required relay metadata", () => {
+    expect(isRelayReadAuthRequired({ status: "verification-failed" })).toBe(true);
+    expect(isRelayReadAuthRequired({ status: "connected", nip11: { authRequired: true } })).toBe(true);
+  });
+
+  it("returns false for relays without read-auth-required signals", () => {
+    expect(isRelayReadAuthRequired({ status: "connected", nip11: { authRequired: false } })).toBe(false);
+    expect(isRelayReadAuthRequired({ status: "read-only" })).toBe(false);
+    expect(isRelayReadAuthRequired({ status: "disconnected" })).toBe(false);
+  });
+});
+
+describe("shouldForceSignInForReadAccess", () => {
+  it("forces sign-in only when signed out and every detected relay requires auth for reading", () => {
+    expect(shouldForceSignInForReadAccess({
+      isSignedIn: false,
+      relays: [
+        { status: "verification-failed" },
+        { status: "connected", nip11: { authRequired: true } },
+      ],
+    })).toBe(true);
+  });
+
+  it("does not force sign-in when signed in, no relays, or any relay is readable anonymously", () => {
+    expect(shouldForceSignInForReadAccess({
+      isSignedIn: true,
+      relays: [{ status: "verification-failed" }],
+    })).toBe(false);
+    expect(shouldForceSignInForReadAccess({
+      isSignedIn: false,
+      relays: [],
+    })).toBe(false);
+    expect(shouldForceSignInForReadAccess({
+      isSignedIn: false,
+      relays: [
+        { status: "verification-failed" },
+        { status: "connected", nip11: { authRequired: false } },
+      ],
+    })).toBe(false);
   });
 });
