@@ -64,6 +64,7 @@ import {
 } from "./relay-error";
 import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
 import { extractRelayUrlsFromNip65Tags, selectComplementaryRelayUrls } from "../relay-enrichment";
+import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
@@ -1494,13 +1495,23 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     options?: { closeOnEose?: boolean }
   ): NDKSubscription | null => {
     if (!ndk) return null;
+    const limitDecision = applyPerformanceAwareSubscriptionLimits(filters, typeof navigator === "undefined"
+      ? undefined
+      : {
+        hardwareConcurrency: navigator.hardwareConcurrency,
+        deviceMemory: "deviceMemory" in navigator ? navigator.deviceMemory : undefined,
+      });
+
     nostrDevLog("subscribe", "Creating subscription", {
       filterCount: filters.length,
-      filters,
+      filters: limitDecision.filters,
+      performanceClass: limitDecision.performanceClass,
+      subscriptionLimitCap: limitDecision.cap,
+      appliedPerformanceCap: limitDecision.changed,
     });
 
     beginRelayOperation("read");
-    const subscription = ndk.subscribe(filters, { closeOnEose: options?.closeOnEose ?? false });
+    const subscription = ndk.subscribe(limitDecision.filters, { closeOnEose: options?.closeOnEose ?? false });
     
     subscription.on("event", (event: NDKEvent) => {
       if (event.relay?.url) {
