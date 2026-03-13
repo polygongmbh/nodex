@@ -49,6 +49,15 @@ const GUIDE_ACTION_TIMEOUT_MS = 5000;
 const BREADCRUMB_AUTOFOCUS_DELAY_MS = 120;
 const GUIDE_AUTO_ADVANCE_DELAY_MS = 220;
 const GUIDE_AUTO_ADVANCE_MANUAL_DELAY_MS = 120;
+const GUIDE_MOTION_POSITION_MS = 140;
+const GUIDE_MOTION_DELAY_MS = 50;
+const GUIDE_MOTION_EMPHASIS_MS = 120;
+const GUIDE_MOTION_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+function shouldReduceMotion() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
 function renderGuideTextWithItalics(text: string) {
   return text.split(/(\*[^*]+\*)/g).filter(Boolean).map((part, index) => {
@@ -102,6 +111,13 @@ export function OnboardingGuide({
   const stepEntryCounterRef = useRef(0);
   const currentStepEntryKeyRef = useRef<string>("");
   const preservedTargetRectRef = useRef<DOMRect | null>(null);
+  const reduceMotion = shouldReduceMotion();
+  const guidePositionTransition = reduceMotion
+    ? "none"
+    : `left ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, top ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, opacity ${GUIDE_MOTION_EMPHASIS_MS}ms ease ${GUIDE_MOTION_DELAY_MS}ms`;
+  const guideBackdropTransition = reduceMotion
+    ? "none"
+    : `left ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, top ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, width ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, height ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms`;
 
   const getBestVisibleTarget = useCallback((selector: string): HTMLElement | null => {
     const matches = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
@@ -393,10 +409,12 @@ export function OnboardingGuide({
       target.style.backgroundColor = "hsl(var(--primary) / 0.12)";
       target.style.borderRadius = "0.5rem";
     }
-    target.style.transition = "outline-color 120ms ease";
+    target.style.transition = reduceMotion
+      ? "none"
+      : `outline-color ${GUIDE_MOTION_EMPHASIS_MS}ms ease, box-shadow ${GUIDE_MOTION_EMPHASIS_MS}ms ease, background-color ${GUIDE_MOTION_EMPHASIS_MS}ms ease, border-radius ${GUIDE_MOTION_EMPHASIS_MS}ms ease, outline-offset ${GUIDE_MOTION_EMPHASIS_MS}ms ease`;
 
     if ("scrollIntoView" in target && typeof target.scrollIntoView === "function") {
-      target.scrollIntoView({ block: "center", behavior: "smooth" });
+      target.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
     }
 
     const updateRect = () => {
@@ -444,7 +462,7 @@ export function OnboardingGuide({
       target.style.backgroundColor = previousBackgroundColor;
       target.style.borderRadius = previousBorderRadius;
     };
-  }, [activeSection, activeSteps, interactionSatisfied, isOpen, resolvedTarget, stepIndex, uiContextKey]);
+  }, [activeSection, activeSteps, interactionSatisfied, isOpen, reduceMotion, resolvedTarget, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -841,6 +859,7 @@ export function OnboardingGuide({
     return {
       left: `${left}px`,
       top: `${top}px`,
+      transition: guidePositionTransition,
     };
   };
 
@@ -965,16 +984,16 @@ export function OnboardingGuide({
 
     return (
       <>
-        <div className="absolute left-0 top-0 bg-black/30" style={{ width: "100%", height: spotlightTop }} aria-hidden="true" />
-        <div className="absolute left-0 bg-black/30" style={{ top: spotlightTop, width: spotlightLeft, height: spotlightHeight }} aria-hidden="true" />
+        <div className="absolute left-0 top-0 bg-black/30" style={{ width: "100%", height: spotlightTop, transition: guideBackdropTransition }} aria-hidden="true" />
+        <div className="absolute left-0 bg-black/30" style={{ top: spotlightTop, width: spotlightLeft, height: spotlightHeight, transition: guideBackdropTransition }} aria-hidden="true" />
         <div
           className="absolute bg-black/30"
-          style={{ top: spotlightTop, left: spotlightRight, width: Math.max(0, viewportWidth - spotlightRight), height: spotlightHeight }}
+          style={{ top: spotlightTop, left: spotlightRight, width: Math.max(0, viewportWidth - spotlightRight), height: spotlightHeight, transition: guideBackdropTransition }}
           aria-hidden="true"
         />
         <div
           className="absolute left-0 bg-black/30"
-          style={{ top: spotlightBottom, width: "100%", height: Math.max(0, viewportHeight - spotlightBottom) }}
+          style={{ top: spotlightBottom, width: "100%", height: Math.max(0, viewportHeight - spotlightBottom), transition: guideBackdropTransition }}
           aria-hidden="true"
         />
       </>
@@ -1077,7 +1096,7 @@ export function OnboardingGuide({
             className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
             style={{
               ...getAnchoredCardStyle(),
-              transition: "left 140ms ease 50ms, top 140ms ease 50ms, opacity 120ms ease 50ms",
+              transition: guidePositionTransition,
             }}
           >
             {!currentStep ? (
