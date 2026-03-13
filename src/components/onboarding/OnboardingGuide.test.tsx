@@ -202,6 +202,67 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
+  it("keeps dialog anchored while breadcrumb target disappears before auto-advance", async () => {
+    vi.useFakeTimers();
+    await withMockTargetRect(async () => {
+      const { rerender } = render(
+        <div>
+          <div data-onboarding="task-list">Task list</div>
+          <div data-onboarding="focused-breadcrumb">Breadcrumb row</div>
+          <OnboardingGuide
+            isOpen
+            initialSection="navigation"
+            sections={sections}
+            stepsBySection={baseStepsBySection}
+            onClose={vi.fn()}
+            onComplete={vi.fn()}
+          />
+        </div>
+      );
+
+      fireEvent.click(screen.getByText("Task list"));
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+      const dialogBefore = screen.getByRole("dialog", { name: "Onboarding guide" });
+      const topBefore = (dialogBefore as HTMLElement).style.top;
+      expect(topBefore).not.toBe("50%");
+
+      fireEvent.click(screen.getByText("Breadcrumb row"));
+      rerender(
+        <div>
+          <div data-onboarding="task-list">Task list</div>
+          <div data-onboarding="focused-breadcrumb" style={{ display: "none" }}>
+            Breadcrumb row
+          </div>
+          <OnboardingGuide
+            isOpen
+            initialSection="navigation"
+            sections={sections}
+            stepsBySection={baseStepsBySection}
+            onClose={vi.fn()}
+            onComplete={vi.fn()}
+          />
+        </div>
+      );
+
+      act(() => {
+        vi.advanceTimersByTime(120);
+      });
+
+      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+      const dialogDuring = screen.getByRole("dialog", { name: "Onboarding guide" });
+      expect((dialogDuring as HTMLElement).style.top).toBe(topBefore);
+
+      act(() => {
+        vi.advanceTimersByTime(500);
+      });
+      expect(screen.getByText("Next area")).toBeInTheDocument();
+    });
+    vi.useRealTimers();
+  });
+
   it("auto-advances on initial breadcrumb interaction", async () => {
     vi.useFakeTimers();
     await withMockTargetRect(async () => {

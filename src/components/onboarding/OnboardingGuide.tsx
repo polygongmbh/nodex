@@ -101,6 +101,7 @@ export function OnboardingGuide({
   const breadcrumbWasVisibleThisEntryRef = useRef(false);
   const stepEntryCounterRef = useRef(0);
   const currentStepEntryKeyRef = useRef<string>("");
+  const preservedTargetRectRef = useRef<DOMRect | null>(null);
 
   const getBestVisibleTarget = useCallback((selector: string): HTMLElement | null => {
     const matches = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
@@ -293,11 +294,17 @@ export function OnboardingGuide({
     setInteractionSatisfied(!step.requiredAction);
     setResolvedTarget(null);
     setTargetRect(null);
+    preservedTargetRectRef.current = null;
     breadcrumbAutofocusStepEntryRef.current = null;
     breadcrumbWasVisibleThisEntryRef.current = false;
     stepEntryCounterRef.current += 1;
     currentStepEntryKeyRef.current = `${step.id}:${stepEntryCounterRef.current}`;
   }, [activeSection, activeSteps, isOpen, stepIndex]);
+
+  useEffect(() => {
+    if (!targetRect) return;
+    preservedTargetRectRef.current = targetRect;
+  }, [targetRect]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -567,6 +574,7 @@ export function OnboardingGuide({
 
   const currentStep = activeSteps[stepIndex];
   const isLastStep = stepIndex >= activeSteps.length - 1;
+  const anchoredTargetRect = currentStep?.target ? (targetRect ?? preservedTargetRectRef.current) : null;
   const isBackUnlockedStep = Boolean(currentStep && backUnlockedStepIdsRef.current.has(currentStep.id));
   const nextDisabled = isManualSession
     ? false
@@ -725,7 +733,7 @@ export function OnboardingGuide({
         zIndex: 130,
       };
     }
-    if (!currentStep || !targetRect) {
+    if (!currentStep || !anchoredTargetRect) {
       return {
         width: "min(42rem, calc(100vw - 1rem))",
         left: "50%",
@@ -759,10 +767,10 @@ export function OnboardingGuide({
     });
     const targetClearance = isComposeGuidanceStep ? 24 : 12;
     const safeTarget = {
-      left: targetRect.left - targetClearance,
-      top: targetRect.top - targetClearance,
-      right: targetRect.right + targetClearance,
-      bottom: targetRect.bottom + targetClearance,
+      left: anchoredTargetRect.left - targetClearance,
+      top: anchoredTargetRect.top - targetClearance,
+      right: anchoredTargetRect.right + targetClearance,
+      bottom: anchoredTargetRect.bottom + targetClearance,
     };
     const overlapArea = (left: number, top: number) => {
       const right = left + cardWidth;
@@ -771,12 +779,12 @@ export function OnboardingGuide({
       const overlapY = Math.max(0, Math.min(bottom, safeTarget.bottom) - Math.max(top, safeTarget.top));
       return overlapX * overlapY;
     };
-    const centeredLeft = targetRect.left + targetRect.width / 2 - cardWidth / 2;
-    const centeredTop = targetRect.top + targetRect.height / 2 - cardHeightEstimate / 2;
-    const belowTop = targetRect.bottom + gap;
-    const aboveTop = targetRect.top - cardHeightEstimate - gap;
-    const rightLeft = targetRect.right + gap;
-    const leftLeft = targetRect.left - cardWidth - gap;
+    const centeredLeft = anchoredTargetRect.left + anchoredTargetRect.width / 2 - cardWidth / 2;
+    const centeredTop = anchoredTargetRect.top + anchoredTargetRect.height / 2 - cardHeightEstimate / 2;
+    const belowTop = anchoredTargetRect.bottom + gap;
+    const aboveTop = anchoredTargetRect.top - cardHeightEstimate - gap;
+    const rightLeft = anchoredTargetRect.right + gap;
+    const leftLeft = anchoredTargetRect.left - cardWidth - gap;
 
     if (isHashtagContentStep) {
       return {
@@ -791,8 +799,8 @@ export function OnboardingGuide({
 
     const candidates = [
       toCandidate(centeredLeft, belowTop),
-      toCandidate(targetRect.left, belowTop),
-      toCandidate(targetRect.right - cardWidth, belowTop),
+      toCandidate(anchoredTargetRect.left, belowTop),
+      toCandidate(anchoredTargetRect.right - cardWidth, belowTop),
       toCandidate(centeredLeft, aboveTop),
       toCandidate(rightLeft, centeredTop),
       toCandidate(leftLeft, centeredTop),
@@ -824,11 +832,11 @@ export function OnboardingGuide({
   };
 
   const getTargetArrowStyle = (): React.CSSProperties => {
-    if (!targetRect) return {};
+    if (!anchoredTargetRect) return {};
 
     const arrowSize = 24;
-    const left = Math.max(8, Math.min(window.innerWidth - arrowSize - 8, targetRect.left + targetRect.width / 2 - arrowSize / 2));
-    const top = Math.max(8, targetRect.top - (arrowSize + 8));
+    const left = Math.max(8, Math.min(window.innerWidth - arrowSize - 8, anchoredTargetRect.left + anchoredTargetRect.width / 2 - arrowSize / 2));
+    const top = Math.max(8, anchoredTargetRect.top - (arrowSize + 8));
 
     return {
       left: `${left}px`,
@@ -941,17 +949,17 @@ export function OnboardingGuide({
   if (!isOpen) return null;
 
   const renderGuideBackdrop = () => {
-    if (showSectionPicker || !targetRect) {
+    if (showSectionPicker || !anchoredTargetRect) {
       return <div className="absolute inset-0 bg-black/30" aria-hidden="true" />;
     }
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const spotlightPadding = 12;
-    const spotlightLeft = Math.max(0, targetRect.left - spotlightPadding);
-    const spotlightTop = Math.max(0, targetRect.top - spotlightPadding);
-    const spotlightRight = Math.min(viewportWidth, targetRect.right + spotlightPadding);
-    const spotlightBottom = Math.min(viewportHeight, targetRect.bottom + spotlightPadding);
+    const spotlightLeft = Math.max(0, anchoredTargetRect.left - spotlightPadding);
+    const spotlightTop = Math.max(0, anchoredTargetRect.top - spotlightPadding);
+    const spotlightRight = Math.min(viewportWidth, anchoredTargetRect.right + spotlightPadding);
+    const spotlightBottom = Math.min(viewportHeight, anchoredTargetRect.bottom + spotlightPadding);
     const spotlightWidth = Math.max(0, spotlightRight - spotlightLeft);
     const spotlightHeight = Math.max(0, spotlightBottom - spotlightTop);
 
@@ -1049,7 +1057,7 @@ export function OnboardingGuide({
         </>
       ) : (
         <>
-          {currentStep?.target && targetRect && (
+          {currentStep?.target && anchoredTargetRect && (
             <div
               aria-hidden="true"
               data-testid="onboarding-target-arrow"
