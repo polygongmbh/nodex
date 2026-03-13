@@ -4,8 +4,9 @@ import {
   isAuthRequiredCloseReason,
   isRelayReadAuthRequired,
   shouldMarkRelayReadOnlyAfterPublishReject,
+  shouldReconnectRelayAfterResume,
+  shouldReconnectRelayAfterSignIn,
   shouldForceSignInForReadAccess,
-  shouldRetryNip42AfterSignIn,
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
@@ -100,27 +101,38 @@ describe("shouldRetryAuthAfterReadRejection", () => {
   });
 });
 
-describe("shouldRetryNip42AfterSignIn", () => {
-  it("retries for relays that advertise NIP-42 support", () => {
-    expect(shouldRetryNip42AfterSignIn({
-      nip11: { supportsNip42: true },
-    })).toBe(true);
-    expect(shouldRetryNip42AfterSignIn({
-      nip11: { supportsNip42: false },
-    })).toBe(false);
-    expect(shouldRetryNip42AfterSignIn({})).toBe(false);
-  });
-
-  it("also retries auth-required and previously rejected relays", () => {
-    expect(shouldRetryNip42AfterSignIn({
-      nip11: { authRequired: true },
-    })).toBe(true);
-    expect(shouldRetryNip42AfterSignIn({
+describe("shouldReconnectRelayAfterSignIn", () => {
+  it("retries only relay failure states after sign-in", () => {
+    expect(shouldReconnectRelayAfterSignIn({
       status: "verification-failed",
     })).toBe(true);
-    expect(shouldRetryNip42AfterSignIn({
+    expect(shouldReconnectRelayAfterSignIn({
       status: "read-only",
     })).toBe(true);
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "connection-error",
+    })).toBe(true);
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "disconnected",
+    })).toBe(true);
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "connected",
+      nip11: { supportsNip42: true, authRequired: true },
+    })).toBe(false);
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "connecting",
+    })).toBe(false);
+    expect(shouldReconnectRelayAfterSignIn({})).toBe(false);
+  });
+});
+
+describe("shouldReconnectRelayAfterResume", () => {
+  it("retries only transport-failed relays on resume", () => {
+    expect(shouldReconnectRelayAfterResume({ status: "disconnected" })).toBe(true);
+    expect(shouldReconnectRelayAfterResume({ status: "connection-error" })).toBe(true);
+    expect(shouldReconnectRelayAfterResume({ status: "read-only" })).toBe(false);
+    expect(shouldReconnectRelayAfterResume({ status: "verification-failed" })).toBe(false);
+    expect(shouldReconnectRelayAfterResume({ status: "connected" })).toBe(false);
   });
 });
 

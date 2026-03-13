@@ -1,0 +1,220 @@
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NDKProvider, useNDK } from "./ndk-provider";
+
+const mockedNdk = vi.hoisted(() => {
+  interface NdkLike {
+    pool: FakePool;
+    signer: unknown;
+    relayAuthDefaultPolicy: unknown;
+    connect(): Promise<void>;
+    subscribe(): { on(): void; stop(): void };
+  }
+
+  const ndkInstances: NdkLike[] = [];
+
+  enum MockNDKRelayStatus {
+    DISCONNECTING = 0,
+    DISCONNECTED = 1,
+    RECONNECTING = 2,
+    FLAPPING = 3,
+    CONNECTING = 4,
+    CONNECTED = 5,
+    AUTH_REQUESTED = 6,
+    AUTHENTICATING = 7,
+    AUTHENTICATED = 8,
+  }
+
+  class FakeRelay {
+    url: string;
+    status = MockNDKRelayStatus.DISCONNECTED;
+    connectCalls = 0;
+    disconnectCalls = 0;
+    constructor(url: string, private pool: FakePool) {
+      this.url = url.replace(/\/+$/, "");
+    }
+    connect() {
+      this.connectCalls += 1;
+      this.status = MockNDKRelayStatus.CONNECTING;
+      this.pool.emit("relay:connecting", this);
+      this.status = MockNDKRelayStatus.CONNECTED;
+      this.pool.emit("relay:connect", this);
+    }
+    disconnect() {
+      this.disconnectCalls += 1;
+      this.status = MockNDKRelayStatus.DISCONNECTED;
+      this.pool.emit("relay:disconnect", this);
+    }
+  }
+
+  class FakePool {
+    relays = new Map<string, FakeRelay>();
+    private listeners = new Map<string, Set<(...args: unknown[]) => void>>();
+
+    constructor(explicitRelayUrls: string[]) {
+      explicitRelayUrls.forEach((url) => {
+        const relay = new FakeRelay(url, this);
+        this.relays.set(relay.url, relay);
+      });
+    }
+
+    on(event: string, callback: (...args: unknown[]) => void) {
+      const listeners = this.listeners.get(event) ?? new Set();
+      listeners.add(callback);
+      this.listeners.set(event, listeners);
+    }
+
+    emit(event: string, ...args: unknown[]) {
+      this.listeners.get(event)?.forEach((listener) => listener(...args));
+    }
+
+    removeAllListeners() {
+      this.listeners.clear();
+    }
+
+    getRelay(url: string, connect = true) {
+      const normalized = url.replace(/\/+$/, "");
+      let relay = this.relays.get(normalized);
+      if (!relay) {
+        relay = new FakeRelay(normalized, this);
+        this.relays.set(normalized, relay);
+      }
+      if (connect && relay.status !== MockNDKRelayStatus.CONNECTED && relay.status !== MockNDKRelayStatus.CONNECTING) {
+        relay.connect();
+      }
+      return relay;
+    }
+
+    removeRelay(url: string) {
+      const normalized = url.replace(/\/+$/, "");
+      const relay = this.relays.get(normalized);
+      if (!relay) return false;
+      this.relays.delete(normalized);
+      relay.disconnect();
+      return true;
+    }
+
+    connectAll() {
+      this.relays.forEach((relay) => {
+        relay.connect();
+      });
+    }
+  }
+
+  class FakeNDK {
+    pool: FakePool;
+    signer: unknown;
+    relayAuthDefaultPolicy: unknown;
+
+    constructor(options: { explicitRelayUrls?: string[] }) {
+      this.pool = new FakePool(options.explicitRelayUrls ?? []);
+      this.signer = undefined;
+      this.relayAuthDefaultPolicy = undefined;
+      ndkInstances.push(this);
+    }
+
+    async connect() {
+      this.pool.connectAll();
+    }
+
+    subscribe() {
+      return {
+        on() {},
+        stop() {},
+      };
+    }
+  }
+
+  return {
+    FakeNDK,
+    FakeRelay,
+    MockNDKRelayStatus,
+    ndkInstances,
+  };
+});
+
+vi.mock("@nostr-dev-kit/ndk", () => ({
+  __esModule: true,
+  default: mockedNdk.FakeNDK,
+  NDKRelayStatus: mockedNdk.MockNDKRelayStatus,
+  NDKEvent: class {},
+  NDKNip07Signer: class {},
+  NDKNip46Signer: { bunker: () => ({ blockUntilReady: async () => ({ fetchProfile: async () => {}, pubkey: "pub", npub: "npub" }) }) },
+  NDKPrivateKeySigner: class {
+    async user() {
+      return { pubkey: "pub", npub: "npub" };
+    }
+    static generate() {
+      return new this();
+    }
+    get privateKey() {
+      return "nsec";
+    }
+  },
+  NDKRelaySet: { fromRelayUrls: () => ({}) },
+  NDKUser: class {},
+  NDKRelay: mockedNdk.FakeRelay,
+}));
+
+vi.mock("../relay-info", () => ({
+  fetchRelayInfo: vi.fn(async () => null),
+}));
+
+vi.mock("../nip42-relay-auth-policy", () => ({
+  createRelayNip42AuthPolicy: vi.fn(() => undefined),
+}));
+
+vi.mock("./session-restore", () => ({
+  waitForNostrExtensionAvailability: vi.fn(async () => false),
+}));
+
+function Harness() {
+  const { addRelay, relays } = useNDK();
+  return (
+    <div>
+      <button onClick={() => addRelay("wss://relay.two/")}>add relay</button>
+      <output data-testid="relay-state">
+        {relays
+          .map((relay) => `${relay.url}:${relay.status}`)
+          .sort()
+          .join(",")}
+      </output>
+    </div>
+  );
+}
+
+describe("NDKProvider relay lifecycle", () => {
+  beforeEach(() => {
+    mockedNdk.ndkInstances.length = 0;
+    window.localStorage.clear();
+  });
+
+  it("adds a relay without rebuilding the provider or reconnecting healthy relays", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    expect(mockedNdk.ndkInstances).toHaveLength(1);
+    const ndk = mockedNdk.ndkInstances[0];
+    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
+    expect(firstRelay.connectCalls).toBe(1);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "add relay" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two:connected");
+    });
+
+    expect(mockedNdk.ndkInstances).toHaveLength(1);
+    expect(firstRelay.connectCalls).toBe(1);
+    expect(ndk.pool.getRelay("wss://relay.two", false).connectCalls).toBe(1);
+  });
+});
