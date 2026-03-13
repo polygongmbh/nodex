@@ -90,7 +90,7 @@ structure:
 
 ### Startup Repo Check
 - At the start of work, run `git status --short`.
-- If there are unstaged modifications beyond `package-lock.json`, warn the user before proceeding.
+- If there are unstaged modifications beyond `package-lock.json` and `.env`, warn the user before proceeding.
 - Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase`.
 
 ### Protocol Compliance
@@ -215,7 +215,7 @@ policies:
 - You may amend commits with corrections if they are not yet pushed.
 - If a commit only fixes the immediately previous local commit, squash it before handoff.
 - Use Conventional Commits (`feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`).
-- Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) changed.
+- Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) changed, ignore changes in `.env`.
 
 ### Changelog Discipline
 - Keep `CHANGELOG.md` continuously updated.
