@@ -116,7 +116,7 @@ import {
   removeRelayUrlFromCachedEvents,
   type CachedNostrEvent,
 } from "@/lib/nostr/event-cache";
-import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
+import { isTaskOutsideSelectedRelayScope, resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import {
@@ -587,6 +587,10 @@ const Index = () => {
 
   // Derive focused task from URL
   const focusedTaskId = urlTaskId || null;
+  const focusedTask = useMemo(
+    () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId) || null : null),
+    [allTasks, focusedTaskId]
+  );
   const openedWithFocusedTaskRef = useRef(Boolean(urlTaskId));
 
   const isMobile = useIsMobile();
@@ -740,6 +744,23 @@ const Index = () => {
       navigate(`/${currentView}`);
     }
   }, [navigate, currentView]);
+
+  useEffect(() => {
+    if (!focusedTaskId) return;
+    if (!focusedTask) return;
+
+    if (
+      !isTaskOutsideSelectedRelayScope(
+        focusedTask,
+        effectiveActiveRelayIds,
+        relays.map((relay) => relay.id)
+      )
+    ) {
+      return;
+    }
+
+    setFocusedTaskId(null);
+  }, [effectiveActiveRelayIds, focusedTask, focusedTaskId, relays, setFocusedTaskId]);
 
   const lastHandledOnboardingStepRef = useRef<string | null>(null);
   const handleOnboardingStepChange = useCallback((payload: {

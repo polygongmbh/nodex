@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Focused task context now clears automatically when its relay is deselected, while tasks that still match another selected relay stay open.
 - Relay re-add now succeeds on the first manual attempt after removal, even when the old connection emits a delayed disconnect during teardown.
 - Popups now dismiss on outside click by default, while auth/profile dialogs keep outside clicks from closing them when they contain unsaved input; Relay Management always dismisses on outside click.
 - Removing a relay now immediately evicts that relay's cached events and profiles, and People names now resolve relay-first with cached cross-relay fallback only when the selected relay has no profile metadata for an otherwise visible pubkey.
