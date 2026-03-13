@@ -65,4 +65,18 @@ describe("handleDialogOutsideInteraction", () => {
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
+
+  it("renders dialog content above the overlay", () => {
+    render(<DialogHarness />);
+
+    const overlay = document.querySelector("[data-state='open'].fixed.inset-0");
+    const dialog = screen.getByRole("dialog");
+
+    if (!(overlay instanceof HTMLElement)) {
+      throw new Error("Expected dialog overlay");
+    }
+
+    expect(overlay.className).toContain("z-[200]");
+    expect(dialog.className).toContain("z-[210]");
+  });
 });
