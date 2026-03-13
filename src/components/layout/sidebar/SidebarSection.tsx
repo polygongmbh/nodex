@@ -13,7 +13,6 @@ export interface SidebarSectionProps {
   onIconClick?: () => void;
   hint?: string;
   action?: React.ReactNode;
-  collapsedMaxHeightClass?: string;
   animationMode?: SidebarSectionAnimationMode;
   children: React.ReactNode;
 }
@@ -26,8 +25,7 @@ export function SidebarSection({
   onIconClick,
   hint,
   action,
-  collapsedMaxHeightClass = "max-h-0",
-  animationMode = "previewCollapse",
+  animationMode = "fullCollapse",
   children,
 }: SidebarSectionProps) {
   const { t } = useTranslation();
@@ -36,7 +34,7 @@ export function SidebarSection({
   const toggleLabel = `${isExpanded ? t("tasks.actions.collapse") : t("tasks.actions.expandAll")} ${title}`;
 
   useEffect(() => {
-    if (animationMode !== "fullCollapse") return;
+    if (animationMode === "none") return;
     const content = contentRef.current;
     if (!content) return;
 
@@ -100,21 +98,14 @@ export function SidebarSection({
         className={cn(
           animationMode === "none"
             ? (isExpanded ? "overflow-visible" : "hidden")
-            : animationMode === "fullCollapse"
-            ? cn(
-                "origin-top overflow-hidden will-change-[height] transition-[height,opacity,transform] duration-300 ease-out",
+            : cn(
+                "origin-top overflow-hidden will-change-[height,opacity,transform] transition-[height,opacity,transform] duration-300 ease-out",
                 isExpanded
                   ? "opacity-100 translate-y-0 motion-sidebar-fold-open"
                   : "opacity-100 -translate-y-0.5 motion-sidebar-fold-close"
               )
-            : cn(
-                "origin-top overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-out",
-                isExpanded
-                  ? "max-h-[2000px] opacity-100 translate-y-0 scale-y-100 motion-sidebar-fold-open"
-                  : `${collapsedMaxHeightClass} opacity-100 -translate-y-1 scale-y-[0.98] motion-sidebar-fold-close`
-              )
         )}
-        style={animationMode === "fullCollapse" ? { height: isExpanded ? `${contentHeight}px` : "0px" } : undefined}
+        style={animationMode === "none" ? undefined : { height: isExpanded ? `${contentHeight}px` : "0px" }}
       >
         <div ref={contentRef} className="py-0">
           {children}

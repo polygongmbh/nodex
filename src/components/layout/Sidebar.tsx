@@ -347,7 +347,6 @@ export function Sidebar({
           isExpanded={expandedSections.channels}
           onToggle={() => toggleSection("channels")}
           onIconClick={onToggleAllChannels}
-          collapsedMaxHeightClass="max-h-[2000px]"
           action={
             <ChannelMatchModeToggle
               mode={channelMatchMode}
@@ -378,7 +377,6 @@ export function Sidebar({
           isExpanded={expandedSections.people}
           onToggle={() => toggleSection("people")}
           onIconClick={onToggleAllPeople}
-          collapsedMaxHeightClass="max-h-[2000px]"
         >
           {people.map((person) => (
             <PersonItem
