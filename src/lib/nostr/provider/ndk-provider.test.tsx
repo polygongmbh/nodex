@@ -169,10 +169,13 @@ vi.mock("./session-restore", () => ({
 }));
 
 function Harness() {
-  const { addRelay, relays } = useNDK();
+  const { addRelay, removeRelay, relays } = useNDK();
   return (
     <div>
       <button onClick={() => addRelay("wss://relay.two/")}>add relay</button>
+      <button onClick={() => addRelay("wss://relay.one/")}>re-add relay slash</button>
+      <button onClick={() => addRelay("wss://relay.one")}>re-add relay no slash</button>
+      <button onClick={() => removeRelay("wss://relay.one")}>remove relay</button>
       <output data-testid="relay-state">
         {relays
           .map((relay) => `${relay.url}:${relay.status}`)
@@ -216,5 +219,78 @@ describe("NDKProvider relay lifecycle", () => {
     expect(mockedNdk.ndkInstances).toHaveLength(1);
     expect(firstRelay.connectCalls).toBe(1);
     expect(ndk.pool.getRelay("wss://relay.two", false).connectCalls).toBe(1);
+  });
+
+  it("ignores a stale disconnect from the removed relay after re-adding the same normalized URL", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const removedRelay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "remove relay" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).not.toContain("wss://relay.one:");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "re-add relay slash" }));
+    });
+
+    const readdedRelay = ndk.pool.getRelay("wss://relay.one", false);
+    expect(readdedRelay).not.toBe(removedRelay);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    await act(async () => {
+      removedRelay.disconnect();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+    expect(readdedRelay.connectCalls).toBe(1);
+  });
+
+  it("re-adds the same relay on the first attempt regardless of trailing slash normalization", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "remove relay" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).not.toContain("wss://relay.one:");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "re-add relay no slash" }));
+    });
+
+    await waitFor(() => {
+      const relayState = screen.getByTestId("relay-state").textContent ?? "";
+      expect(relayState).toContain("wss://relay.one:connected");
+      expect(relayState.match(/wss:\/\/relay\.one:/g)).toHaveLength(1);
+    });
   });
 });

@@ -293,7 +293,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const isCurrentRelayInstance = useCallback((relay: NDKRelay): boolean => {
     const normalizedRelayUrl = normalizeRelayUrl(relay.url);
     const currentRelay = relayCurrentInstanceRef.current.get(normalizedRelayUrl);
-    return !currentRelay || currentRelay === relay;
+    return currentRelay === relay;
   }, []);
 
   const connectRelay = useCallback((
@@ -330,8 +330,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       ndk.pool.removeRelay(normalizedRelayUrl);
     }
 
-    const relay = ndk.pool.getRelay(normalizedRelayUrl, true);
+    const relay = ndk.pool.getRelay(normalizedRelayUrl, false);
     relayCurrentInstanceRef.current.set(normalizedRelayUrl, relay);
+    relay.connect();
     return relay;
   }, [clearRelayCapabilityTracking, ndk, resetRelayTransportTracking, updateRelayStatus]);
 
@@ -707,13 +708,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       const normalized = normalizeRelayUrl(relay.url);
       if (!isCurrentRelayInstance(relay)) return;
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
-      if (!removedRelaysRef.current.has(normalized)) {
-        updateRelayStatus(normalized, {
-          mappedStatus: "disconnected",
-          now: Date.now(),
-          ensureEntry: true,
-        });
-      }
+      if (removedRelaysRef.current.has(normalized)) return;
+
+      updateRelayStatus(normalized, {
+        mappedStatus: "disconnected",
+        now: Date.now(),
+        ensureEntry: true,
+      });
 
       if (relayConnectedOnceRef.current.has(normalized)) return;
       if (relayAutoPausedRef.current.has(normalized)) return;
@@ -1095,6 +1096,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       return;
     }
     const normalized = normalizeRelayUrl(url);
+    removedRelaysRef.current.delete(normalized);
     setResolvedDefaultRelays((previous) => appendResolvedRelayUrl(previous, normalized));
     nostrDevLog("relay", "Adding relay and initiating connection", { relayUrl: normalized });
     void probeRelayInfo(normalized);
@@ -1192,6 +1194,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     if (!ndk) return;
 
     const normalized = normalizeRelayUrl(url);
+    const currentRelay = relayCurrentInstanceRef.current.get(normalized) ?? ndk.pool.getRelay(normalized, false);
 
     // Mark as intentionally removed so disconnect events don't re-add it
     removedRelaysRef.current.add(normalized);
@@ -1207,12 +1210,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayReadRejectedRef.current.delete(normalized);
     relayWriteRejectedRef.current.delete(normalized);
     relayAttemptStartedAtRef.current.delete(normalized);
-    relayCurrentInstanceRef.current.delete(normalized);
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
-    
-    const relay = ndk.pool.getRelay(normalized, false);
-    if (relay) {
+
+    if (currentRelay) {
+      relayCurrentInstanceRef.current.set(normalized, currentRelay);
       ndk.pool.removeRelay(normalized);
+      if (relayCurrentInstanceRef.current.get(normalized) === currentRelay) {
+        relayCurrentInstanceRef.current.delete(normalized);
+      }
     }
   }, [ndk]);
 
