@@ -91,11 +91,12 @@ structure:
 ### Startup Repo Check
 - At the start of work, run `git status --short`.
 - If there are unstaged modifications beyond `package-lock.json` and `.env`, warn the user before proceeding.
-- Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase`.
+- Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash`.
+- Treat the YAML policy block below as the canonical machine-readable source for startup checks.
 
 ### Protocol Compliance
 - Conform to Nostr protocol standards in https://github.com/nostr-protocol/nips/.
-- Reference relevant NIPs in commit messages and/or PR descriptions when protocol behavior is affected.
+- Reference relevant NIPs in commit messages and release or review notes when protocol behavior is affected.
 
 ### Product Stage
 - Software is in beta.
@@ -112,6 +113,8 @@ structure:
   - avoid duplicate/spammy toasts for the same event
 
 ### CI/Verification Matrix
+Use this table and the matching YAML block below as the canonical verification policy. Keep later prose sections focused on interpretation, not restating the matrix.
+
 | Change category | Required checks | Recommended checks |
 | --- | --- | --- |
 | Docs/process-only updates (for example `AGENTS.md`, non-runtime docs) | Targeted sanity check | None |
@@ -126,7 +129,7 @@ policies:
     must_run:
       - git status --short
     must_run_before_larger_change:
-      - git pull --rebase
+      - git pull --rebase --autostash
     warn_if_unstaged_beyond:
       - package-lock.json
   commits:
@@ -194,25 +197,25 @@ policies:
 - Follow commit/changelog/test/lint/refactor/process rules in this file for all AI-assisted changes.
 - Keep edits focused, reviewable, and behavior-safe unless intentional behavioral changes are requested.
 - Prefer explicit, parseable rules for automation; keep prose for rationale and edge cases.
+- When a policy already exists in a machine-readable block or matrix, update that source first and keep prose sections non-duplicative.
 
 ### Test and Verification
-- Write tests before each change except minor visual/cosmetic changes.
-- Verify tests after each change.
-- Before adjusting existing tests, first evaluate whether failures indicate regressions or deliberate behavior changes.
+- Follow the verification matrix above for required commands.
+- Write tests before each change except minor visual/cosmetic changes, then verify the changed behavior after implementation.
+- Before adjusting existing tests, first determine whether failures indicate regressions or deliberate behavior changes.
 - For high-impact behavior areas, require meaningful business-logic coverage before merge.
 - Prefer behavior/outcome tests over implementation-detail tests.
-- Keep UI tests as targeted checks for key flows or accessibility contracts.
-- Do not add cosmetic-only assertions (classes, exact DOM nesting, spacing, non-semantic icons) unless explicitly required.
-- Any class/style assertion must include a short comment explaining the protected product contract.
+- Keep UI tests focused on key flows and accessibility contracts.
+- Do not add cosmetic-only assertions unless explicitly required; any class/style assertion must include a short comment explaining the protected product contract.
 - Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
-- Treat lint warnings as actionable backlog; do not introduce new warnings.
-- If a lint rule is intentionally relaxed/disabled, document scope and rationale in the same commit.
-- Run `npm run lint` for major milestones; for minor/localized changes, defer full lint to the next major milestone.
+- Treat lint warnings as actionable backlog; do not introduce new warnings. If a lint rule is intentionally relaxed or disabled, document scope and rationale in the same commit.
 
 ### Commit Discipline
 - Always commit every completed change.
 - Make atomic commits that build individually and stay coherent.
 - You may amend commits with corrections if they are not yet pushed.
+- Amend true follow-up fixes into the immediately relevant local commit when they are part of the same change.
+- Keep unrelated changes in separate commits even if they are discovered while working on an unpushed local commit.
 - If a commit only fixes the immediately previous local commit, squash it before handoff.
 - Use Conventional Commits (`feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`).
 - Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) changed, ignore changes in `.env`.
@@ -229,7 +232,7 @@ policies:
 - Use semantic version sections (`MAJOR.MINOR.PATCH`) and ISO dates (`YYYY-MM-DD`).
 - For major/minor releases (for example `2.0.0`, `1.7.0`), include a concise update summary line directly under the version heading before any bullet lists/subsections.
 - On release, move grouped entries from `Unreleased` into the new versioned section.
-- Before every push, prune redundant/iteration-level changelog bullets and reclassify genuinely new user-facing capabilities into `### Added` (keeping `### Changed`/`### Fixed` for refinements and regressions).
+- Before every push, prune redundant or iteration-level changelog bullets and reclassify genuinely new user-facing capabilities into `### Added` while keeping refinements and regressions under `### Changed` or `### Fixed`.
 
 ### Refactoring Cadence
 - After each major milestone, run a cleanup pass for duplication, consistency, complex components, and discovered debt.
@@ -244,7 +247,7 @@ policies:
 
 ## Agent Operating Instructions
 
-### Plans and Worktrees
+### Plans
 When asked to create a plan to fix or implement something:
 - ALWAYS write the plan to `plans/` at repo root.
 - NEVER commit plans to git.
@@ -272,22 +275,21 @@ When asked to create a plan to fix or implement something:
 
 #### push
 - `push` (or starts with `push`) is a special command and MUST run this full release workflow; do not shortcut directly to `git push` unless the user explicitly asks to bypass the routine.
-- if no release/push prep changes are needed, still run the checklist, report results, and ask for explicit confirmation before any network push.
-- update user-facing guides before release/push when behavior changed (at minimum `USER_GUIDE.md`, plus in-app guide/shortcuts copy where relevant)
-- explicitly review and revise `CHANGELOG.md` before release (wording, section classification, redundancy, and user-facing clarity), including pruning repetitive bullets and moving true net-new capabilities into `### Added`
+- if no release or push prep changes are needed, still run the checklist, report results, and ask for explicit confirmation before any network push.
+- update user-facing guides before release or push when behavior changed, at minimum `USER_GUIDE.md` plus any in-app guide or shortcuts copy affected by the change
+- apply the changelog discipline above before release, including wording cleanup, redundancy pruning, and final section classification
 - list unpushed commits: `git log origin/<branch>..HEAD --oneline`
 - provide one high-level summary across all unpushed commits
 - omit cosmetic-only low-level details unless asked
 - update `package.json` version semantically based on pending changes
-- apply semantic bump examples:
-  - patch: `1.4.2 -> 1.4.3` for `fix:`/`enhance:` only
-  - patch: `1.4.2 -> 1.4.3` for small/single `feat:` changes that are not substantial
-  - minor: `1.4.2 -> 1.5.0` when there are multiple/broader `feat:` changes or otherwise significant user-facing scope, and no breaking change exists
-  - major: `1.4.2 -> 2.0.0` for breaking change (`feat!:`/`fix!:` or `BREAKING CHANGE:`)
+- apply semantic bump examples using the current version shape as illustrative guidance:
+  - patch: `x.y.z -> x.y.(z+1)` for `fix:` or `enhance:` only
+  - patch: `x.y.z -> x.y.(z+1)` for small or single `feat:` changes that are not substantial
+  - minor: `x.y.z -> x.(y+1).0` when there are multiple or broader `feat:` changes or otherwise significant user-facing scope, and no breaking change exists
+  - major: `x.y.z -> (x+1).0.0` for breaking change (`feat!:`/`fix!:` or `BREAKING CHANGE:`)
 - when bumping a patch/minor version, include a short explicit rationale in release/push notes (for example: "patch for fixes only" or "minor for broader user-facing feature scope")
-- update `CHANGELOG.md`
 - create annotated tag matching version (for example `v1.1.0`)
-- run verification commands appropriate to risk
+- run verification commands appropriate to risk, using the verification matrix above
 - after explicit confirmation, push branch and tags
 
 ### Assistant Response Formatting
