@@ -295,6 +295,50 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
+  it("auto-focuses a visible global task row when task-list container is missing", async () => {
+    vi.useFakeTimers();
+    await withMockTargetRect(async () => {
+      const onTaskOpen = vi.fn();
+      const stepsBySection: Record<OnboardingSectionId, OnboardingStep[]> = {
+        navigation: [
+          {
+            id: "navigation-breadcrumb",
+            title: "Use breadcrumbs",
+            description: "Use breadcrumb navigation.",
+            target: '[data-onboarding="focused-breadcrumb"]',
+            requiredAction: "click-target",
+          },
+        ],
+        filters: [],
+        compose: [],
+      };
+
+      render(
+        <div>
+          <button type="button" data-task-id="task-1" onClick={onTaskOpen}>
+            Task 1
+          </button>
+          <OnboardingGuide
+            isOpen
+            initialSection="navigation"
+            currentView="kanban"
+            sections={sections}
+            stepsBySection={stepsBySection}
+            onClose={vi.fn()}
+            onComplete={vi.fn()}
+          />
+        </div>
+      );
+
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+
+      expect(onTaskOpen).toHaveBeenCalledTimes(1);
+    });
+    vi.useRealTimers();
+  });
+
   it("does not render the generic click hint text", () => {
     renderGuide({
       content: <div data-onboarding="task-list">Task list</div>,

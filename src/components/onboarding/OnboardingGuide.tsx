@@ -144,16 +144,29 @@ export function OnboardingGuide({
   }, [getBestVisibleTarget]);
 
   const tryAutoFocusFirstTaskForBreadcrumb = useCallback((): boolean => {
+    const getFirstVisibleTask = (tasks: HTMLElement[]): HTMLElement | null => {
+      return tasks.find((task) => {
+        const rect = task.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return false;
+        const style = window.getComputedStyle(task);
+        return style.display !== "none" && style.visibility !== "hidden";
+      }) ?? null;
+    };
+
     const taskList = getBestVisibleTarget('[data-onboarding="task-list"]');
-    if (!taskList) return false;
-    const firstVisibleTask = Array.from(taskList.querySelectorAll<HTMLElement>("[data-task-id]")).find((task) => {
-      const rect = task.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return false;
-      const style = window.getComputedStyle(task);
-      return style.display !== "none" && style.visibility !== "hidden";
-    });
-    if (!firstVisibleTask) return false;
-    firstVisibleTask.click();
+    const firstVisibleTaskInList = taskList
+      ? getFirstVisibleTask(Array.from(taskList.querySelectorAll<HTMLElement>("[data-task-id]")))
+      : null;
+    if (firstVisibleTaskInList) {
+      firstVisibleTaskInList.click();
+      return true;
+    }
+
+    const firstVisibleGlobalTask = getFirstVisibleTask(
+      Array.from(document.querySelectorAll<HTMLElement>("[data-task-id]"))
+    );
+    if (!firstVisibleGlobalTask) return false;
+    firstVisibleGlobalTask.click();
     return true;
   }, [getBestVisibleTarget]);
 
