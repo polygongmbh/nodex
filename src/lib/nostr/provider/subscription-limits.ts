@@ -15,10 +15,10 @@ interface LimitDecision {
 }
 
 const PERFORMANCE_CAPS: Record<PerformanceClass, number> = {
-  low: 100,
-  medium: 250,
-  high: 500,
-  "very-high": 1000,
+  low: 300,
+  medium: 750,
+  high: 1500,
+  "very-high": 3000,
 };
 
 function isFinitePositiveNumber(value: unknown): value is number {

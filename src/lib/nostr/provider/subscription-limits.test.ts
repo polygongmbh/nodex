@@ -14,7 +14,7 @@ describe("subscription performance limits", () => {
 
   it("returns a stable default cap when browser performance hints are unavailable", () => {
     expect(classifySystemPerformance()).toBe("high");
-    expect(getPerformanceBasedSubscriptionCap()).toBe(500);
+    expect(getPerformanceBasedSubscriptionCap()).toBe(1500);
   });
 
   it("adds a cap to broad backfill subscriptions", () => {
@@ -26,8 +26,8 @@ describe("subscription performance limits", () => {
     });
 
     expect(result.changed).toBe(true);
-    expect(result.cap).toBe(250);
-    expect(result.filters).toEqual([{ kinds: [1, 30023], limit: 250 }]);
+    expect(result.cap).toBe(750);
+    expect(result.filters).toEqual([{ kinds: [1, 30023], limit: 750 }]);
   });
 
   it("does not inject limits into targeted author lookups", () => {
@@ -51,7 +51,7 @@ describe("subscription performance limits", () => {
     });
 
     expect(result.changed).toBe(true);
-    expect(result.filters).toEqual([{ kinds: [0], authors: ["pubkey-a"], limit: 100 }]);
+    expect(result.filters).toEqual([{ kinds: [0], authors: ["pubkey-a"], limit: 300 }]);
   });
 
   it("preserves explicit limits that are already under the device cap", () => {
