@@ -24,12 +24,6 @@ import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onbo
 import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
-  loadPersistedChannelMatchMode,
-  loadPersistedChannelFilters,
-  savePersistedChannelMatchMode,
-  savePersistedChannelFilters,
-} from "@/lib/filter-preferences";
-import {
   getChannelFrecencyScores,
   loadChannelFrecencyState,
   recordChannelInteraction,
@@ -89,14 +83,11 @@ import {
   isNavigationFocusStep,
   shouldForceFeedAndResetFiltersOnStep,
 } from "@/lib/onboarding-step-rules";
-import { getPreferredMentionIdentifier, resolveMentionedPubkeysAsync } from "@/lib/mentions";
+import { resolveMentionedPubkeysAsync } from "@/lib/mentions";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import {
   mapPeopleSelection,
-  shouldToggleOffExclusiveChannel,
-  shouldToggleOffExclusivePerson,
   setAllChannelFilters,
-  setExclusiveChannelFilter,
 } from "@/lib/filter-state-utils";
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
 import { normalizeComposerMessageType } from "@/lib/task-type";
@@ -105,8 +96,8 @@ import type { Nip99ListingStatus } from "@/types";
 import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
 import { normalizeGeohash } from "@/lib/nostr/geohash-location";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
+import { useIndexFilters } from "@/hooks/use-index-filters";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
-import { useFilterUrlSync } from "@/hooks/use-filter-url-sync";
 import { useKind0People } from "@/hooks/use-kind0-people";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import {
@@ -257,6 +248,7 @@ const Index = () => {
     }));
   }, [ndkRelays]);
 
+  const isMobile = useIsMobile();
   const {
     activeRelayIds,
     setActiveRelayIds,
@@ -314,7 +306,6 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() => loadCompletionSoundEnabled());
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
-  const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
   const pendingStatusUpdateTimeoutsRef = useRef<Map<string, number>>(new Map());
   const completionConfettiLastAtRef = useRef<Map<string, number>>(new Map());
   const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
@@ -469,53 +460,62 @@ const Index = () => {
     return deriveChannels(localTasks, filteredNostrEvents, postedTags, 1);
   }, [localTasks, filteredNostrEvents, postedTags]);
 
-  // Maintain channel filter states across dynamic updates
-  const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
-    () => loadPersistedChannelFilters()
-  );
-  const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>(
-    () => loadPersistedChannelMatchMode()
-  );
   const [savedFilterState, setSavedFilterState] = useState<SavedFilterState>(() => loadSavedFilterState());
-
-  // Merge dynamic channels with persisted filter states
-  const channelsWithState: Channel[] = useMemo(() => {
-    return channels.map((channel) => ({
-      ...channel,
-      filterState: channelFilterStates.get(channel.id) || "neutral",
-    }));
-  }, [channels, channelFilterStates]);
-
-  const composeChannelsWithState: Channel[] = useMemo(() => {
-    return composeChannels.map((channel) => ({
-      ...channel,
-      filterState: channelFilterStates.get(channel.id) || "neutral",
-    }));
-  }, [composeChannels, channelFilterStates]);
-
-  // Sync channel/people filters ↔ URL search params
-  useFilterUrlSync({
+  const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
+    setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
+  }, []);
+  const sidebarPeople = useMemo(() => {
+    return deriveSidebarPeople(people, allTasks, supplementalLatestActivityByAuthor);
+  }, [allTasks, people, supplementalLatestActivityByAuthor]);
+  const {
+    mentionRequest,
     channelFilterStates,
-    people,
     setChannelFilterStates,
+    channelMatchMode,
+    setChannelMatchMode,
+    composeChannelsWithState,
+    handleChannelToggle,
+    handleChannelExclusive,
+    handleToggleAllChannels,
+    handleChannelMatchModeChange,
+    handleHashtagExclusive,
+    handlePersonToggle,
+    handlePersonExclusive,
+    handleToggleAllPeople,
+    handleAuthorClick,
+    resetFiltersToDefault,
+  } = useIndexFilters({
+    relays,
+    setActiveRelayIds,
+    channels,
+    composeChannels,
+    postedTags,
+    setPostedTags,
+    people,
     setPeople,
+    sidebarPeople,
+    isMobile,
+    setSearchQuery,
+    bumpChannelFrecency,
+    t,
   });
+
+  const channelsWithState: Channel[] = useMemo(
+    () =>
+      channels.map((channel) => ({
+        ...channel,
+        filterState: channelFilterStates.get(channel.id) || "neutral",
+      })),
+    [channels, channelFilterStates]
+  );
 
   useEffect(() => {
     saveFailedPublishDrafts(failedPublishDrafts);
   }, [failedPublishDrafts]);
 
   useEffect(() => {
-    savePersistedChannelFilters(channelFilterStates);
-  }, [channelFilterStates]);
-
-  useEffect(() => {
     saveChannelFrecencyState(channelFrecencyState);
   }, [channelFrecencyState]);
-
-  useEffect(() => {
-    savePersistedChannelMatchMode(channelMatchMode);
-  }, [channelMatchMode]);
 
   useEffect(() => {
     saveSavedFilterState(savedFilterState);
@@ -572,7 +572,6 @@ const Index = () => {
     }
   }, [shouldForceAuthAfterOnboarding]);
 
-  const isMobile = useIsMobile();
   const {
     currentView,
     focusedTaskId,
@@ -771,56 +770,6 @@ const Index = () => {
     }
   }, [currentView, isMobile, setCurrentView]);
 
-  const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
-    setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
-  }, []);
-
-  const handleChannelToggle = (id: string) => {
-    bumpChannelFrecency(id, 1.25);
-    setChannelFilterStates((prev) => {
-      const newMap = new Map(prev);
-      const currentState = newMap.get(id) || "neutral";
-      const states: Channel["filterState"][] = ["neutral", "included", "excluded"];
-      const currentIndex = states.indexOf(currentState);
-      const nextState = states[(currentIndex + 1) % states.length];
-      newMap.set(id, nextState);
-      return newMap;
-    });
-  };
-
-  const handleChannelExclusive = (id: string) => {
-    bumpChannelFrecency(id, 1.6);
-    const shouldToggleOff = shouldToggleOffExclusiveChannel(channels, channelFilterStates, id);
-    if (shouldToggleOff) {
-      setChannelFilterStates((prev) => {
-        const next = new Map(prev);
-        next.set(id, "neutral");
-        return next;
-      });
-      return;
-    }
-    setChannelFilterStates(() => setExclusiveChannelFilter(channels, id));
-    const channel = channelsWithState.find((c) => c.id === id);
-    toast(t("toasts.success.showingOnlyChannel", { channelName: channel?.name || id }));
-  };
-
-  const handleToggleAllChannels = () => {
-    const allNeutral = Array.from(channelFilterStates.values()).every((s) => s === "neutral") || channelFilterStates.size === 0;
-    setChannelFilterStates(() => setAllChannelFilters(channels, allNeutral ? "included" : "neutral"));
-    toast(allNeutral ? t("toasts.success.allChannelsIncluded") : t("toasts.success.allChannelsReset"));
-  };
-
-  const handleChannelMatchModeChange = (mode: ChannelMatchMode) => {
-    setChannelMatchMode(mode);
-  };
-
-  const resetFiltersToDefault = useCallback(() => {
-    setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
-    setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-    setChannelMatchMode("and");
-    setPeople((prev) => mapPeopleSelection(prev, () => false));
-  }, [channels, relays, setActiveRelayIds]);
-
   const handleSaveCurrentFilterConfiguration = useCallback((name: string) => {
     const normalizedName = name.trim();
     if (!normalizedName) return;
@@ -925,118 +874,6 @@ const Index = () => {
       savedFilterState.configurations,
     ]
   );
-
-  const handleHashtagExclusive = useCallback((tag: string) => {
-    const normalizedTag = tag.trim().toLowerCase();
-    if (!normalizedTag) return;
-    bumpChannelFrecency(normalizedTag, 1.9);
-
-    const existsInSidebar = channels.some((ch) => ch.name.toLowerCase() === normalizedTag);
-
-    // If the tag isn't in the sidebar yet, add it via postedTags so deriveChannels includes it
-    if (!existsInSidebar) {
-      setPostedTags((prev) => Array.from(new Set([...prev, normalizedTag])));
-    }
-
-    // Use a functional updater that works with the potentially-updated channels list.
-    // Since postedTags triggers a re-derive of channels, we set the filter state
-    // keyed by the normalizedTag id directly.
-    setChannelFilterStates(() => {
-      const channelId = channels.find((ch) => ch.name.toLowerCase() === normalizedTag)?.id || normalizedTag;
-      const allChannels = existsInSidebar
-        ? channels
-        : [...channels, { id: normalizedTag, name: normalizedTag, filterState: "neutral" as const }];
-      return setExclusiveChannelFilter(allChannels, channelId);
-    });
-
-    toast(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
-  }, [bumpChannelFrecency, channels, t]);
-
-  const handlePersonToggle = (id: string) => {
-    setPeople((prev) =>
-      prev.map((person) =>
-        person.id === id ? { ...person, isSelected: !person.isSelected } : person
-      )
-    );
-  };
-
-  const handlePersonExclusive = (id: string) => {
-    if (shouldToggleOffExclusivePerson(people, id)) {
-      setPeople((prev) => mapPeopleSelection(prev, () => false));
-      return;
-    }
-    setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === id));
-    const person = people.find((p) => p.id === id);
-    toast(
-      t("toasts.success.showingOnlyPerson", {
-        personName: person?.displayName || person?.name || t("toasts.success.selectedUserFallback"),
-      })
-    );
-  };
-
-  const upsertAndSelectPerson = useCallback((author: Person) => {
-    setPeople((prev) => {
-      const exists = prev.some((person) => person.id === author.id);
-      const next = exists
-        ? prev
-        : [
-            ...prev,
-            {
-              ...author,
-              avatar: author.avatar || "",
-              isOnline: author.isOnline ?? true,
-              onlineStatus: author.onlineStatus ?? "online",
-              isSelected: false,
-            },
-          ];
-
-      return next.map((person) => ({
-        ...person,
-        isSelected: person.id === author.id,
-      }));
-    });
-  }, []);
-
-  const handleAuthorClick = useCallback((author: Person) => {
-    upsertAndSelectPerson(author);
-    const mention = `@${getPreferredMentionIdentifier(author)}`;
-    setMentionRequest({ mention, id: Date.now() });
-
-    if (isMobile) {
-      setSearchQuery((previous) => {
-        const escaped = mention.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        if (new RegExp(`(^|\\s)${escaped}(?=\\s|$)`, "i").test(previous)) {
-          return previous;
-        }
-        const separator = previous && !previous.endsWith(" ") ? " " : "";
-        return `${previous}${separator}${mention} `;
-      });
-    }
-    toast(
-      t("toasts.success.showingOnlyAuthorAndTagging", {
-        authorName: author.displayName || author.name,
-        mention,
-      })
-    );
-  }, [isMobile, t, upsertAndSelectPerson]);
-
-  const handleToggleAllPeople = () => {
-    if (sidebarPeople.length === 0) {
-      toast(t("toasts.success.noFrequentPeople"));
-      return;
-    }
-    const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
-    const selectedCount = sidebarPeople.filter((person) => person.isSelected).length;
-    const shouldSelectAll = selectedCount !== sidebarPeople.length;
-    setPeople((prev) =>
-      prev.map((person) =>
-        sidebarIds.has(person.id)
-          ? { ...person, isSelected: shouldSelectAll }
-          : person
-      )
-    );
-    toast(shouldSelectAll ? t("toasts.success.frequentPeopleSelected") : t("toasts.success.frequentPeopleDeselected"));
-  };
 
   const triggerCompletionCheer = useCallback((taskId: string) => {
     const launchCompletionConfetti = (taskElement: HTMLElement) => {
@@ -2249,10 +2086,6 @@ const Index = () => {
       }),
     [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
   );
-
-  const sidebarPeople = useMemo(() => {
-    return deriveSidebarPeople(people, allTasks, supplementalLatestActivityByAuthor);
-  }, [allTasks, people, supplementalLatestActivityByAuthor]);
 
   const lastPublishedPresenceRef = useRef<string | null>(null);
 
