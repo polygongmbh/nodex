@@ -24,6 +24,14 @@ import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onbo
 import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
+  loadPinnedChannelsState,
+  savePinnedChannelsState,
+  getPinnedChannelIdsForView,
+  pinChannelForView,
+  unpinChannelForView,
+  type PinnedChannelsState,
+} from "@/lib/pinned-channels-preferences";
+import {
   getChannelFrecencyScores,
   loadChannelFrecencyState,
   recordChannelInteraction,
@@ -461,6 +469,9 @@ const Index = () => {
   }, [localTasks, filteredNostrEvents, postedTags]);
 
   const [savedFilterState, setSavedFilterState] = useState<SavedFilterState>(() => loadSavedFilterState());
+  const [pinnedChannelsState, setPinnedChannelsState] = useState<PinnedChannelsState>(
+    () => loadPinnedChannelsState(user?.pubkey)
+  );
   const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
     setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
   }, []);
@@ -500,18 +511,18 @@ const Index = () => {
     t,
   });
 
-  const channelsWithState: Channel[] = useMemo(
-    () =>
-      channels.map((channel) => ({
-        ...channel,
-        filterState: channelFilterStates.get(channel.id) || "neutral",
-      })),
-    [channels, channelFilterStates]
-  );
+  // Reload pinned state when the authenticated user changes
+  useEffect(() => {
+    setPinnedChannelsState(loadPinnedChannelsState(user?.pubkey));
+  }, [user?.pubkey]);
 
   useEffect(() => {
     saveFailedPublishDrafts(failedPublishDrafts);
   }, [failedPublishDrafts]);
+
+  useEffect(() => {
+    savePinnedChannelsState(pinnedChannelsState, user?.pubkey);
+  }, [pinnedChannelsState, user?.pubkey]);
 
   useEffect(() => {
     saveChannelFrecencyState(channelFrecencyState);
@@ -583,6 +594,27 @@ const Index = () => {
     desktopSwipeHandlers,
     openedWithFocusedTaskRef,
   } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
+
+  // Merge dynamic channels with persisted filter states, pinned channels sorted first
+  const channelsWithState: Channel[] = useMemo(() => {
+    const pinnedIds = getPinnedChannelIdsForView(pinnedChannelsState, currentView);
+    const pinnedSet = new Set(pinnedIds);
+    const existingIds = new Set(channels.map((c) => c.id));
+    const stubs: Channel[] = pinnedIds
+      .filter((id) => !existingIds.has(id))
+      .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const }));
+    return [...stubs, ...channels]
+      .map((channel) => ({
+        ...channel,
+        filterState: channelFilterStates.get(channel.id) ?? "neutral",
+      }))
+      .sort((a, b) => {
+        const aIdx = pinnedSet.has(a.id) ? pinnedIds.indexOf(a.id) : Infinity;
+        const bIdx = pinnedSet.has(b.id) ? pinnedIds.indexOf(b.id) : Infinity;
+        return aIdx - bIdx;
+      });
+  }, [channels, channelFilterStates, pinnedChannelsState, currentView]);
+
   const currentUser = resolveCurrentUser(people, user);
   const hasCachedCurrentUserProfileMetadata = useMemo(() => {
     if (!user?.pubkey) return true;
@@ -769,6 +801,14 @@ const Index = () => {
       setCurrentView("feed");
     }
   }, [currentView, isMobile, setCurrentView]);
+
+  const handleChannelPin = useCallback((id: string) => {
+    setPinnedChannelsState((prev) => pinChannelForView(prev, currentView, id));
+  }, [currentView]);
+
+  const handleChannelUnpin = useCallback((id: string) => {
+    setPinnedChannelsState((prev) => unpinChannelForView(prev, currentView, id));
+  }, [currentView]);
 
   const handleSaveCurrentFilterConfiguration = useCallback((name: string) => {
     const normalizedName = name.trim();
@@ -2318,6 +2358,9 @@ const Index = () => {
         onShortcutsClick={shortcutsHelp.open}
         onGuideClick={handleOpenGuide}
         savedFilters={savedFilterController}
+        pinnedChannelIds={getPinnedChannelIdsForView(pinnedChannelsState, currentView)}
+        onChannelPin={handleChannelPin}
+        onChannelUnpin={handleChannelUnpin}
       />
       <div className="min-w-0 overflow-hidden flex flex-col" {...desktopSwipeHandlers}>
         <FailedPublishQueueBanner

@@ -214,7 +214,9 @@
       "togglePerson": "Activar/desactivar {{name}}",
       "showOnlyPerson": "Mostrar solo {{name}}",
       "selected": "{{name}} seleccionado",
-      "me": "Yo"
+      "me": "Yo",
+      "pinChannelToView": "Fijar #{{name}} a esta vista",
+      "unpinChannelFromView": "Desfijar #{{name}} de esta vista"
     }
   },
   "hints": {

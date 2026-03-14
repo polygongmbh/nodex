@@ -83,6 +83,9 @@ interface SidebarProps {
   onShortcutsClick?: () => void;
   onGuideClick?: () => void;
   savedFilters?: SavedFilterController;
+  pinnedChannelIds?: string[];
+  onChannelPin?: (id: string) => void;
+  onChannelUnpin?: (id: string) => void;
 }
 
 export function Sidebar({
@@ -109,6 +112,9 @@ export function Sidebar({
   onShortcutsClick,
   onGuideClick,
   savedFilters,
+  pinnedChannelIds = [],
+  onChannelPin,
+  onChannelUnpin,
 }: SidebarProps) {
   const { t } = useTranslation();
   const COLLAPSED_PREVIEW_LIMIT = 3;
@@ -118,11 +124,16 @@ export function Sidebar({
     sidebarExpandedSectionsSnapshot = expandedSections;
   }, [expandedSections]);
 
+  const pinnedChannelSet = useMemo(() => new Set(pinnedChannelIds), [pinnedChannelIds]);
+
   const collapsedPreviewChannelIds = useMemo(
     () =>
       new Set(
         buildCollapsedPreviewItems(
           [...channels].sort((a, b) => {
+            const aPinned = pinnedChannelSet.has(a.id);
+            const bPinned = pinnedChannelSet.has(b.id);
+            if (aPinned !== bPinned) return aPinned ? -1 : 1;
             const usageDiff = (b.usageCount ?? 0) - (a.usageCount ?? 0);
             if (usageDiff !== 0) return usageDiff;
             return a.name.localeCompare(b.name);
@@ -131,7 +142,7 @@ export function Sidebar({
           COLLAPSED_PREVIEW_LIMIT
         ).map((channel) => channel.id)
       ),
-    [channels]
+    [channels, pinnedChannelSet]
   );
   const collapsedPreviewPersonIds = useMemo(
     () =>
@@ -363,6 +374,9 @@ export function Sidebar({
               channel={channel}
               onToggle={() => onChannelToggle(channel.id)}
               onExclusive={() => onChannelExclusive(channel.id)}
+              isPinned={pinnedChannelSet.has(channel.id)}
+              onPin={onChannelPin ? () => onChannelPin(channel.id) : undefined}
+              onUnpin={onChannelUnpin ? () => onChannelUnpin(channel.id) : undefined}
               isKeyboardFocused={focusedItem?.type === 'channel' && focusedItem?.id === channel.id}
               className={!expandedSections.channels && !collapsedPreviewChannelIds.has(channel.id) ? "hidden" : undefined}
             />
