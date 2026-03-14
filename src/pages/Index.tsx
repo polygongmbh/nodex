@@ -2008,6 +2008,30 @@ const Index = () => {
     }
   };
 
+  const onboardingOverlays = (
+    <>
+      <OnboardingIntroPopover
+        isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
+        onStartTour={handleStartOnboardingTour}
+        onSignIn={handleOpenAuthModal}
+      />
+      <OnboardingGuide
+        isOpen={isOnboardingOpen && !isAuthModalOpen}
+        isMobile={isMobile}
+        manualStart={onboardingManualStart}
+        currentView={currentView}
+        uiContextKey={`${currentView}:${focusedTaskId || ""}`}
+        initialSection={onboardingInitialSection}
+        sections={onboardingSections}
+        stepsBySection={onboardingStepsBySection}
+        onClose={handleCloseGuide}
+        onComplete={handleCompleteGuide}
+        onActiveSectionChange={handleOnboardingActiveSectionChange}
+        onStepChange={handleOnboardingStepChange}
+      />
+    </>
+  );
+
   // Mobile layout
   if (isMobile) {
     return (
@@ -2063,25 +2087,7 @@ const Index = () => {
           onManageRouteChange={setManageRouteActive}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-        <OnboardingIntroPopover
-          isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
-          onStartTour={handleStartOnboardingTour}
-          onSignIn={handleOpenAuthModal}
-        />
-        <OnboardingGuide
-          isOpen={isOnboardingOpen && !isAuthModalOpen}
-          isMobile={isMobile}
-          manualStart={onboardingManualStart}
-          currentView={currentView}
-          uiContextKey={`${currentView}:${focusedTaskId || ""}`}
-          initialSection={onboardingInitialSection}
-          sections={onboardingSections}
-          stepsBySection={onboardingStepsBySection}
-          onClose={handleCloseGuide}
-          onComplete={handleCompleteGuide}
-          onActiveSectionChange={handleOnboardingActiveSectionChange}
-          onStepChange={handleOnboardingStepChange}
-        />
+        {onboardingOverlays}
       </>
     );
   }
@@ -2161,25 +2167,7 @@ const Index = () => {
       
       {/* Nostr Auth Modal */}
       <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-      <OnboardingIntroPopover
-        isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
-        onStartTour={handleStartOnboardingTour}
-        onSignIn={handleOpenAuthModal}
-      />
-      <OnboardingGuide
-        isOpen={isOnboardingOpen && !isAuthModalOpen}
-        isMobile={isMobile}
-        manualStart={onboardingManualStart}
-        currentView={currentView}
-        uiContextKey={`${currentView}:${focusedTaskId || ""}`}
-        initialSection={onboardingInitialSection}
-        sections={onboardingSections}
-        stepsBySection={onboardingStepsBySection}
-        onClose={handleCloseGuide}
-        onComplete={handleCompleteGuide}
-        onActiveSectionChange={handleOnboardingActiveSectionChange}
-        onStepChange={handleOnboardingStepChange}
-      />
+      {onboardingOverlays}
     </div>
   );
 };
