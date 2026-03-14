@@ -29,6 +29,7 @@ import {
   getPinnedChannelIdsForView,
   pinChannelForView,
   unpinChannelForView,
+  deriveRelaySetKey,
   type PinnedChannelsState,
 } from "@/lib/pinned-channels-preferences";
 import {
@@ -595,9 +596,14 @@ const Index = () => {
     openedWithFocusedTaskRef,
   } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
 
+  const relaySetKey = useMemo(
+    () => deriveRelaySetKey(effectiveActiveRelayIds),
+    [effectiveActiveRelayIds]
+  );
+
   // Merge dynamic channels with persisted filter states, pinned channels sorted first
   const channelsWithState: Channel[] = useMemo(() => {
-    const pinnedIds = getPinnedChannelIdsForView(pinnedChannelsState, currentView);
+    const pinnedIds = getPinnedChannelIdsForView(pinnedChannelsState, currentView, relaySetKey);
     const pinnedSet = new Set(pinnedIds);
     const existingIds = new Set(channels.map((c) => c.id));
     const stubs: Channel[] = pinnedIds
@@ -613,7 +619,7 @@ const Index = () => {
         const bIdx = pinnedSet.has(b.id) ? pinnedIds.indexOf(b.id) : Infinity;
         return aIdx - bIdx;
       });
-  }, [channels, channelFilterStates, pinnedChannelsState, currentView]);
+  }, [channels, channelFilterStates, pinnedChannelsState, currentView, relaySetKey]);
 
   const currentUser = resolveCurrentUser(people, user);
   const hasCachedCurrentUserProfileMetadata = useMemo(() => {
@@ -803,12 +809,12 @@ const Index = () => {
   }, [currentView, isMobile, setCurrentView]);
 
   const handleChannelPin = useCallback((id: string) => {
-    setPinnedChannelsState((prev) => pinChannelForView(prev, currentView, id));
-  }, [currentView]);
+    setPinnedChannelsState((prev) => pinChannelForView(prev, currentView, relaySetKey, id));
+  }, [currentView, relaySetKey]);
 
   const handleChannelUnpin = useCallback((id: string) => {
-    setPinnedChannelsState((prev) => unpinChannelForView(prev, currentView, id));
-  }, [currentView]);
+    setPinnedChannelsState((prev) => unpinChannelForView(prev, currentView, relaySetKey, id));
+  }, [currentView, relaySetKey]);
 
   const handleSaveCurrentFilterConfiguration = useCallback((name: string) => {
     const normalizedName = name.trim();
@@ -2358,7 +2364,7 @@ const Index = () => {
         onShortcutsClick={shortcutsHelp.open}
         onGuideClick={handleOpenGuide}
         savedFilters={savedFilterController}
-        pinnedChannelIds={getPinnedChannelIdsForView(pinnedChannelsState, currentView)}
+        pinnedChannelIds={getPinnedChannelIdsForView(pinnedChannelsState, currentView, relaySetKey)}
         onChannelPin={handleChannelPin}
         onChannelUnpin={handleChannelUnpin}
       />
