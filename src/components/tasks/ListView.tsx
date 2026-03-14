@@ -17,7 +17,7 @@ import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
+import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";

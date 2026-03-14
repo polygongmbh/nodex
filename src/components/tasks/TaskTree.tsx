@@ -4,7 +4,7 @@ import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedA
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
+import { sortTasks, buildChildrenMap, SortContext } from "@/lib/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";

@@ -6,7 +6,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
-import { sortTasks, type SortContext, getDueDateColorClass } from "@/lib/taskSorting";
+import { sortTasks, type SortContext, getDueDateColorClass } from "@/lib/task-sorting";
 import type { NostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";

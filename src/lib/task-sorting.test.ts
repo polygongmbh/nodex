@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addDays, startOfDay, subDays } from "date-fns";
 import { makeTask } from "@/test/fixtures";
-import { buildChildrenMap, getDueDateColorClass, sortTasks } from "./taskSorting";
+import { buildChildrenMap, getDueDateColorClass, sortTasks } from "./task-sorting";
 
 describe("getDueDateColorClass", () => {
   const today = startOfDay(new Date());

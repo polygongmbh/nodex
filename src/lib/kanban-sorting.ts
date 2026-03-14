@@ -1,5 +1,5 @@
 import type { Task } from "@/types";
-import { getTaskLatestModifiedMs } from "./taskSorting";
+import { getTaskLatestModifiedMs } from "./task-sorting";
 
 export function sortByLatestModified(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
