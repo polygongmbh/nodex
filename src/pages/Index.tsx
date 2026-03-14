@@ -40,9 +40,8 @@ import { resolveCurrentUser } from "@/lib/current-user";
 import { canUserChangeTaskStatus, extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
-import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/nip52-task-calendar-events";
-import { buildTaskPriorityUpdateEvent, isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
+import { isTaskStateEventKind } from "@/lib/nostr/task-state-events";
+import { isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
 import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import {
   buildImetaTag,
@@ -50,7 +49,6 @@ import {
   normalizePublishedAttachments,
 } from "@/lib/attachments";
 import {
-  resolveOriginRelayIdForTask,
   resolveRelaySelectionForSubmission,
 } from "@/lib/nostr/task-relay-routing";
 import {
@@ -93,6 +91,7 @@ import { useIndexFilters } from "@/hooks/use-index-filters";
 import { useIndexOnboarding } from "@/hooks/use-index-onboarding";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { useSavedFilterConfigs } from "@/hooks/use-saved-filter-configs";
+import { useTaskPublishControls } from "@/hooks/use-task-publish-controls";
 import { useKind0People } from "@/hooks/use-kind0-people";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import {
@@ -105,10 +104,7 @@ import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import {
-  notifyDisconnectedSelectedFeeds,
   notifyLocalSaved,
-  notifyNeedSigninModify,
-  notifyNeedSigninPost,
   notifyNeedTag,
   notifyPartialPublish,
   notifyPublished,
@@ -778,60 +774,26 @@ const Index = () => {
     return resolvedRelayUrls;
   }, [relays]);
 
-  const hasDisconnectedSelectedRelays = useMemo(() => {
-    return relays.some(
-      (relay) =>
-        effectiveActiveRelayIds.has(relay.id) &&
-        relay.id !== DEMO_RELAY_ID &&
-        relay.connectionStatus !== "connected"
-    );
-  }, [effectiveActiveRelayIds, relays]);
-
-  const notifyModifyBlockedByDisconnectedFeeds = useCallback(() => {
-    notifyDisconnectedSelectedFeeds(t);
-  }, [t]);
-
-  const isInteractionBlocked = !user || hasDisconnectedSelectedRelays;
-
-  const guardInteraction = useCallback((mode: "post" | "modify"): boolean => {
-    if (hasDisconnectedSelectedRelays) {
-      notifyModifyBlockedByDisconnectedFeeds();
-      return true;
-    }
-    if (!user) {
-      handleOpenAuthModal();
-      if (mode === "post") {
-        notifyNeedSigninPost(t);
-      } else {
-        notifyNeedSigninModify(t);
-      }
-      return true;
-    }
-    return false;
-  }, [handleOpenAuthModal, hasDisconnectedSelectedRelays, notifyModifyBlockedByDisconnectedFeeds, t, user]);
-
-  const handleBlockedInteractionAttempt = useCallback(() => {
-    guardInteraction("modify");
-  }, [guardInteraction]);
-
-  const resolveTaskOriginRelay = useCallback((taskId: string) => {
-    const task = allTasks.find((item) => item.id === taskId);
-    const originRelayId = resolveOriginRelayIdForTask(task, demoFeedActive ? DEMO_RELAY_ID : undefined);
-    if (!originRelayId) {
-      nostrDevLog("routing", "No origin relay found for task", { taskId });
-      return { relayId: undefined, relayUrls: [] as string[] };
-    }
-    const relayUrls = resolveRelayUrlsFromIds([originRelayId]);
-    nostrDevLog("routing", "Resolved task origin relay", {
-      taskId,
-      originRelayId,
-      relayUrls,
-    });
-    return {
-      relayId: originRelayId,
-      relayUrls,
-    };
-  }, [allTasks, resolveRelayUrlsFromIds]);
+  const {
+    hasDisconnectedSelectedRelays,
+    isInteractionBlocked,
+    guardInteraction,
+    handleBlockedInteractionAttempt,
+    resolveTaskOriginRelay,
+    publishTaskStateUpdate,
+    publishTaskDueUpdate,
+    publishTaskPriorityUpdate,
+    publishTaskCreateFollowUps,
+  } = useTaskPublishControls({
+    allTasks,
+    relays,
+    effectiveActiveRelayIds,
+    demoFeedActive,
+    user,
+    handleOpenAuthModal,
+    publishEvent,
+    t,
+  });
 
   const handleToggleComplete = (taskId: string) => {
     if (guardInteraction("modify")) {
@@ -851,169 +813,6 @@ const Index = () => {
     void publishTaskStateUpdate(taskId, nextStatus);
   };
 
-  const publishTaskStateUpdate = useCallback(async (
-    taskId: string,
-    status: "todo" | "in-progress" | "done",
-    relayUrlsOverride?: string[]
-  ) => {
-    if (!isNostrEventId(taskId)) {
-      nostrDevLog("publish-state", "Skipping publish for non-Nostr task id", { taskId, status });
-      return;
-    }
-
-    const relayUrls = relayUrlsOverride && relayUrlsOverride.length > 0
-      ? relayUrlsOverride.slice(0, 1)
-      : resolveTaskOriginRelay(taskId).relayUrls;
-
-    if (relayUrls.length === 0) {
-      nostrDevLog("publish-state", "Skipping publish due to empty relay mapping", { taskId, status });
-      return;
-    }
-    nostrDevLog("publish-state", "Publishing task status update", { taskId, status, relayUrls });
-
-    const mapped = mapTaskStatusToStateEvent(status);
-    const result = await publishEvent(
-      mapped.kind,
-      mapped.content,
-      [["e", taskId, relayUrls[0], "property"]],
-      undefined,
-      relayUrls
-    );
-
-    if (!result.success) {
-      toast.error(t("toasts.errors.publishStatusFailed"));
-      console.warn("Status publish failed", { taskId, status, relayUrls });
-    }
-  }, [publishEvent, resolveTaskOriginRelay, t]);
-
-  const publishTaskDueUpdate = useCallback(async (
-    taskId: string,
-    taskContent: string,
-    dueDate: Date,
-    dueTime?: string,
-    dateType: TaskDateType = "due",
-    relayUrlsOverride?: string[]
-  ) => {
-    if (!isNostrEventId(taskId)) return false;
-    const relayUrls = relayUrlsOverride && relayUrlsOverride.length > 0
-      ? relayUrlsOverride.slice(0, 1)
-      : resolveTaskOriginRelay(taskId).relayUrls;
-    if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.publishDateFailed"));
-      nostrDevLog("publish-date", "Unable to publish due date update: no relay mapping", {
-        taskId,
-        dateType,
-      });
-      return false;
-    }
-    nostrDevLog("publish-date", "Publishing task due date update", {
-      taskId,
-      relayUrls,
-      dateType,
-    });
-    const relayUrl = relayUrls[0];
-    const calendarEvent = buildLinkedTaskCalendarEvent({
-      taskEventId: taskId,
-      taskContent,
-      dueDate,
-      dueTime,
-      dateType,
-      relayUrl,
-    });
-    const result = await publishEvent(
-      calendarEvent.kind,
-      calendarEvent.content,
-      calendarEvent.tags,
-      undefined,
-      [relayUrl]
-    );
-    if (!result.success) {
-      toast.error(t("toasts.errors.publishDateFailed"));
-      console.warn("Date publish failed", { taskId, relayUrl });
-    }
-    return result.success;
-  }, [publishEvent, resolveTaskOriginRelay, t]);
-
-  const publishTaskPriorityUpdate = useCallback(async (taskId: string, priority: number) => {
-    if (!isNostrEventId(taskId)) return false;
-    const { relayUrls } = resolveTaskOriginRelay(taskId);
-    if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.publishPriorityFailed"));
-      nostrDevLog("publish-priority", "Unable to publish priority update: no relay mapping", {
-        taskId,
-        priority,
-      });
-      return false;
-    }
-    nostrDevLog("publish-priority", "Publishing task priority update", {
-      taskId,
-      priority,
-      relayUrls,
-    });
-    const relayUrl = relayUrls[0];
-    const priorityEvent = buildTaskPriorityUpdateEvent({
-      taskEventId: taskId,
-      priority,
-      relayUrl,
-    });
-    const result = await publishEvent(
-      priorityEvent.kind,
-      priorityEvent.content,
-      priorityEvent.tags,
-      undefined,
-      [relayUrl]
-    );
-    if (!result.success) {
-      toast.error(t("toasts.errors.publishPriorityFailed"));
-      console.warn("Priority publish failed", { taskId, priority, relayUrl });
-    }
-    return result.success;
-  }, [publishEvent, resolveTaskOriginRelay, t]);
-
-  const publishTaskCreateFollowUps = useCallback(async (params: {
-    publishedEventId?: string;
-    taskType: Task["taskType"];
-    initialStatus?: TaskStatus;
-    dueDate?: Date;
-    content: string;
-    dueTime?: string;
-    dateType?: TaskDateType;
-    publishedRelayUrls?: string[];
-    fallbackRelayUrls: string[];
-  }) => {
-    const {
-      publishedEventId,
-      taskType,
-      initialStatus,
-      dueDate,
-      content,
-      dueTime,
-      dateType,
-      publishedRelayUrls,
-      fallbackRelayUrls,
-    } = params;
-    if (!publishedEventId || taskType !== "task") return;
-
-    const followUpRelayUrls = (
-      publishedRelayUrls && publishedRelayUrls.length > 0
-        ? publishedRelayUrls
-        : fallbackRelayUrls
-    ).slice(0, 1);
-
-    if (initialStatus) {
-      await publishTaskStateUpdate(publishedEventId, initialStatus, followUpRelayUrls);
-    }
-    if (dueDate) {
-      await publishTaskDueUpdate(
-        publishedEventId,
-        content,
-        dueDate,
-        dueTime,
-        dateType || "due",
-        followUpRelayUrls
-      );
-    }
-  }, [publishTaskDueUpdate, publishTaskStateUpdate]);
 
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
     if (guardInteraction("modify")) {
