@@ -42,6 +42,8 @@ The `useNDK()` hook exposes the entire app state: authenticated user, relay list
 - `Relay` — relay connection with status
 
 ### Nostr Event Kinds Used
+Conform to Nostr protocol standards at https://github.com/nostr-protocol/nips/. 
+Reference relevant NIPs in commit messages and release/review notes when protocol behavior is affected.
 - **1621** — Task (NIP-??), treated as the primary task event
 - **1630–1633** — Git-style open/applied/closed/draft status events
 - **1639** — Procedure
@@ -82,42 +84,22 @@ All `VITE_*` vars are injected at build time via `vite.config.ts`:
 - `VITE_NIP96_UPLOAD_URL` — attachment upload endpoint (hides upload UI if unset)
 - `VITE_ENABLE_DEMO_FEED` — `true` to show local demo feed relay
 
-### mostr-cli Reference
-`mostr-cli/` (if present) is an optional behavioral reference for how Nostr task operations should work. Never treat it as a runtime dependency.
-
 ## Workflow
 
-### Startup Check
-Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash` and warn if there are multiple unrelated changed files.
-
-### Verification Matrix
-
-| Change category | Required | Recommended |
-|---|---|---|
-| Docs/process-only | Targeted sanity check | — |
-| Minor localized logic or UI | Focused tests for changed area | `npm run build` |
-| Major feature, cross-view UI, broad refactor, release prep | `npm run lint`, `npx vitest run`, `npm run build` | — |
-| Protocol/event mapping/publishing changes | `npx vitest run`, `npm run build` | `npm run lint` |
-
-### Commits
+- Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash` and warn if there are multiple unrelated changed files.
 - Use Conventional Commits: `feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`
-- Make atomic commits; keep unrelated changes in separate commits
-- Amend/squash only unpushed local history
-- Ignore `package-lock.json` and `.env` changes unless dependencies actually changed
-- Reference relevant NIPs in commit messages when protocol behavior is affected (e.g. `fix(nip52): correct due date tag format per NIP-52`)
+- Amend the immediately previous local commit when the change is a direct fixup of it; use a new commit otherwise.
+- In post-implementation summaries, concisely report added/removed line counts split into production code, test code, and other changes (e.g. documentation or build files).
 
 ### Changelog
 - Keep `CHANGELOG.md` updated; add user-visible changes to `## [Unreleased]` as you go
-- Use `### Added` for new capabilities, `### Fixed` for regressions; omit subheadings when fewer than 4 bullets in a version
+- Use `### Added` for new capabilities, `### Changed` for enhancements and changes, `### Fixed` for regressions; omit subheadings when fewer than 4 bullets in a version
 - Do not add entries for minor/internal-only changes
 
 ### Plans
 - Write plans to `plans/` at repo root using kebab-case filenames; never commit them
 - After implementing a plan, delete the plan file before handoff
 - Before deleting, archive with: `git add -f <file>` → `git stash push -m "archive <file>" -- <file>` → `git stash drop`
-
-### Protocol Compliance
-Conform to Nostr protocol standards at https://github.com/nostr-protocol/nips/. Reference relevant NIPs in commit messages and release/review notes when protocol behavior is affected.
 
 ### Logging and Toasts
 - Use `console.warn`/`console.error` for actionable issues; avoid noisy debug logs in normal production flows
