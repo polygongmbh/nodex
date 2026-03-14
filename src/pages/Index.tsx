@@ -1,6 +1,6 @@
 import { Suspense, lazy, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Sidebar, SidebarHeader } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
@@ -8,8 +8,7 @@ import { DesktopSearchDock, type KanbanDepthMode } from "@/components/tasks/Desk
 import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
+import { useFeedNavigation } from "@/hooks/use-feed-navigation";
 import { NOSTR_EVENTS_QUERY_KEY, useNostrEventCache } from "@/hooks/use-nostr-event-cache";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
@@ -116,7 +115,7 @@ import {
   removeRelayUrlFromCachedEvents,
   type CachedNostrEvent,
 } from "@/lib/nostr/event-cache";
-import { isTaskOutsideSelectedRelayScope, resolveChannelRelayScopeIds } from "@/lib/relay-scope";
+import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import {
@@ -152,11 +151,6 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
-const validViews: ViewType[] = ["feed", "tree", "kanban", "list", "calendar"];
-const MOBILE_MANAGE_ROUTE = "manage";
-
-// Default Nostr relays - these are managed by NDKProvider in App.tsx
-
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
@@ -190,15 +184,8 @@ function buildPendingPublishDedupKey(task: Task): string {
 
 const Index = () => {
   const { t } = useTranslation();
-  const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isManageRouteActive = urlView === MOBILE_MANAGE_ROUTE;
-
-  // Derive current view from URL
-  const currentView: ViewType = validViews.includes(urlView as ViewType) 
-    ? (urlView as ViewType) 
-    : "feed";
 
   // NDK Nostr integration
   const { 
@@ -585,15 +572,18 @@ const Index = () => {
     }
   }, [shouldForceAuthAfterOnboarding]);
 
-  // Derive focused task from URL
-  const focusedTaskId = urlTaskId || null;
-  const focusedTask = useMemo(
-    () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId) || null : null),
-    [allTasks, focusedTaskId]
-  );
-  const openedWithFocusedTaskRef = useRef(Boolean(urlTaskId));
-
   const isMobile = useIsMobile();
+  const {
+    currentView,
+    focusedTaskId,
+    focusedTask,
+    isManageRouteActive,
+    setCurrentView,
+    setFocusedTaskId,
+    setManageRouteActive,
+    desktopSwipeHandlers,
+    openedWithFocusedTaskRef,
+  } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
   const currentUser = resolveCurrentUser(people, user);
   const hasCachedCurrentUserProfileMetadata = useMemo(() => {
     if (!user?.pubkey) return true;
@@ -686,81 +676,6 @@ const Index = () => {
       setActiveOnboardingStepId(null);
     }
   }, [isOnboardingOpen]);
-
-  // Handle view change - update URL
-  const setCurrentView = useCallback((newView: ViewType) => {
-    if (focusedTaskId) {
-      navigate(`/${newView}/${focusedTaskId}`);
-    } else {
-      navigate(`/${newView}`);
-    }
-  }, [navigate, focusedTaskId]);
-
-  const setManageRouteActive = useCallback((isActive: boolean) => {
-    if (isActive) {
-      navigate(`/${MOBILE_MANAGE_ROUTE}`);
-      return;
-    }
-    if (focusedTaskId) {
-      navigate(`/${currentView}/${focusedTaskId}`);
-      return;
-    }
-    navigate(`/${currentView}`);
-  }, [currentView, focusedTaskId, navigate]);
-
-  const handleDesktopSwipeLeft = useCallback(() => {
-    const currentIndex = validViews.indexOf(currentView);
-    if (currentIndex < validViews.length - 1) {
-      setCurrentView(validViews[currentIndex + 1]);
-    }
-  }, [currentView, setCurrentView]);
-
-  const handleDesktopSwipeRight = useCallback(() => {
-    const currentIndex = validViews.indexOf(currentView);
-    if (currentIndex > 0) {
-      setCurrentView(validViews[currentIndex - 1]);
-    }
-  }, [currentView, setCurrentView]);
-
-  const desktopSwipeHandlers = useSwipeNavigation({
-    onSwipeLeft: handleDesktopSwipeLeft,
-    onSwipeRight: handleDesktopSwipeRight,
-    threshold: 55,
-    enableHaptics: false,
-    enableWheelSwipe: !isMobile,
-  });
-
-  // Desktop keyboard shortcuts (disabled on mobile)
-  useKeyboardShortcuts({
-    onViewChange: setCurrentView,
-    enabled: !isMobile,
-  });
-
-  // Handle task focus - update URL
-  const setFocusedTaskId = useCallback((taskId: string | null) => {
-    if (taskId) {
-      navigate(`/${currentView}/${taskId}`);
-    } else {
-      navigate(`/${currentView}`);
-    }
-  }, [navigate, currentView]);
-
-  useEffect(() => {
-    if (!focusedTaskId) return;
-    if (!focusedTask) return;
-
-    if (
-      !isTaskOutsideSelectedRelayScope(
-        focusedTask,
-        effectiveActiveRelayIds,
-        relays.map((relay) => relay.id)
-      )
-    ) {
-      return;
-    }
-
-    setFocusedTaskId(null);
-  }, [effectiveActiveRelayIds, focusedTask, focusedTaskId, relays, setFocusedTaskId]);
 
   const lastHandledOnboardingStepRef = useRef<string | null>(null);
   const handleOnboardingStepChange = useCallback((payload: {
