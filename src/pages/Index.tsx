@@ -18,9 +18,6 @@ import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
-import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
-import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
-import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
 import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
 import { deriveChannels } from "@/lib/channels";
 import {
@@ -61,8 +58,6 @@ import {
   saveFailedPublishDrafts,
   type FailedPublishDraft,
 } from "@/lib/failed-publish-drafts";
-import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
-import { shouldAutoStartOnboarding } from "@/lib/onboarding-autostart";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
@@ -80,16 +75,7 @@ import {
   buildOfflinePresenceContent,
   buildPresenceTags,
 } from "@/lib/presence-status";
-import {
-  getOnboardingBehaviorGateId,
-  shouldBootstrapGuideDemoFeed,
-  shouldForceComposeForGuide,
-} from "@/lib/onboarding-guide";
-import {
-  isFilterResetStep,
-  isNavigationFocusStep,
-  shouldForceFeedAndResetFiltersOnStep,
-} from "@/lib/onboarding-step-rules";
+import { shouldBootstrapGuideDemoFeed } from "@/lib/onboarding-guide";
 import { resolveMentionedPubkeysAsync } from "@/lib/mentions";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import {
@@ -104,6 +90,7 @@ import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
 import { normalizeGeohash } from "@/lib/nostr/geohash-location";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useIndexFilters } from "@/hooks/use-index-filters";
+import { useIndexOnboarding } from "@/hooks/use-index-onboarding";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { useSavedFilterConfigs } from "@/hooks/use-saved-filter-configs";
 import { useKind0People } from "@/hooks/use-kind0-people";
@@ -151,7 +138,6 @@ import { useTranslation } from "react-i18next";
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
-const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 const PUBLISH_UNDO_DELAY_MS = 5000;
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
@@ -555,25 +541,6 @@ const Index = () => {
       relays: ndkRelays,
     });
   }, [ndkRelays, user]);
-  const shouldOpenAuthAfterGuideExitRef = useRef(false);
-
-  const handleCloseGuide = useCallback(() => {
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(false);
-    setActiveOnboardingSection(null);
-    const shouldOpenAuth = shouldOpenAuthAfterGuideExitRef.current || shouldForceAuthAfterOnboarding;
-    shouldOpenAuthAfterGuideExitRef.current = false;
-    if (shouldOpenAuth) {
-      setIsAuthModalOpen(true);
-    }
-  }, [shouldForceAuthAfterOnboarding]);
-
-  const handleCompleteGuide = useCallback((lastStep: number) => {
-    markOnboardingCompleted(lastStep);
-    if (shouldForceAuthAfterOnboarding) {
-      shouldOpenAuthAfterGuideExitRef.current = true;
-    }
-  }, [shouldForceAuthAfterOnboarding]);
 
   const {
     currentView,
@@ -635,35 +602,7 @@ const Index = () => {
     });
   }, [cachedKind0Events, user?.pubkey]);
   const shortcutsHelp = useKeyboardShortcutsHelp();
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const [isOnboardingIntroOpen, setIsOnboardingIntroOpen] = useState(false);
-  const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
-  const [onboardingManualStart, setOnboardingManualStart] = useState(false);
-  const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
-  const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
-  const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
   const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
-  const onboardingSections = useMemo(
-    () => getOnboardingSections(isMobile, currentView, t),
-    [currentView, isMobile, t]
-  );
-  const onboardingStepsBySection = useMemo(
-    () => getOnboardingStepsBySection(isMobile, currentView, t),
-    [currentView, isMobile, t]
-  );
-
-  const queueOnboardingIntro = useCallback((
-    manualStart: boolean,
-    initialSection: OnboardingInitialSection,
-    showIntro = true
-  ) => {
-    setOnboardingManualStart(manualStart);
-    setOnboardingInitialSection(initialSection);
-    setActiveOnboardingSection(null);
-    setIsOnboardingIntroOpen(showIntro);
-    setIsOnboardingOpen(!showIntro);
-  }, []);
-
   const ensureGuideDataAvailable = useCallback(() => {
     if (!shouldBootstrapGuideDemoFeed({ totalTasks: allTasks.length, demoFeedActive })) return;
     setGuideDemoFeedEnabled(true);
@@ -676,87 +615,39 @@ const Index = () => {
     });
     navigate("/feed");
   }, [allTasks.length, demoFeedActive, navigate, seedCachedKind0Events, setActiveRelayIds]);
-
-  const handleStartOnboardingTour = useCallback(() => {
-    ensureGuideDataAvailable();
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(true);
-  }, [ensureGuideDataAvailable]);
-
-  const handleOpenGuide = useCallback(() => {
-    ensureGuideDataAvailable();
-    const initialSectionForOpen: OnboardingInitialSection =
-      isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
-    setOnboardingManualStart(true);
-    setOnboardingInitialSection(initialSectionForOpen);
-    setActiveOnboardingSection(null);
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(true);
-  }, [ensureGuideDataAvailable, isMobile]);
-
-  useEffect(() => {
-    const onboardingState = loadOnboardingState();
-    if (shouldAutoStartOnboarding({
-      onboardingCompleted: onboardingState.completed,
-      openedWithFocusedTask: openedWithFocusedTaskRef.current,
-    }) && !user) {
-      queueOnboardingIntro(false, "all", !user);
-    }
-  }, [queueOnboardingIntro, user]);
-
-  useEffect(() => {
-    if (!user) return;
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(false);
-    setActiveOnboardingSection(null);
-  }, [user]);
-
-  useEffect(() => {
-    if (!isOnboardingOpen) {
-      lastHandledOnboardingStepRef.current = null;
-      setActiveOnboardingStepId(null);
-    }
-  }, [isOnboardingOpen]);
-
-  const lastHandledOnboardingStepRef = useRef<string | null>(null);
-  const handleOnboardingStepChange = useCallback((payload: {
-    id: string;
-    stepNumber: number;
-  }) => {
-    setActiveOnboardingStepId(payload.id);
-
-    const stepKey = getOnboardingBehaviorGateId(payload.id);
-    if (lastHandledOnboardingStepRef.current === stepKey) return;
-    lastHandledOnboardingStepRef.current = stepKey;
-
-    if (shouldForceFeedAndResetFiltersOnStep(payload.id, isMobile)) {
-      setCurrentView("feed");
-      setFocusedTaskId(null);
-      setSearchQuery("");
-      setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
-      setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-      setPeople((prev) => mapPeopleSelection(prev, () => false));
-      return;
-    }
-
-    if (isNavigationFocusStep(payload.id)) {
-      setCurrentView("feed");
-      return;
-    }
-    if (!isFilterResetStep(payload.id)) return;
-
-    setFocusedTaskId(null);
-    setSearchQuery("");
-    setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
-    setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-    setPeople((prev) => mapPeopleSelection(prev, () => false));
-  }, [channels, isMobile, relays, setActiveRelayIds, setCurrentView, setFocusedTaskId]);
-
-  const forceShowComposeForGuide = shouldForceComposeForGuide({
+  const {
     isOnboardingOpen,
+    isOnboardingIntroOpen,
+    onboardingInitialSection,
+    onboardingManualStart,
     activeOnboardingStepId,
+    onboardingSections,
+    onboardingStepsBySection,
+    forceShowComposeForGuide,
+    composeGuideActivationSignal,
+    handleStartOnboardingTour,
+    handleOpenGuide,
+    handleCloseGuide,
+    handleCompleteGuide,
+    handleOnboardingStepChange,
+    handleOnboardingActiveSectionChange,
+  } = useIndexOnboarding({
+    user,
     isMobile,
     currentView,
+    channels,
+    relays,
+    openedWithFocusedTaskRef,
+    shouldForceAuthAfterOnboarding,
+    ensureGuideDataAvailable,
+    setCurrentView,
+    setFocusedTaskId,
+    setSearchQuery,
+    setActiveRelayIds,
+    setChannelFilterStates,
+    setPeople,
+    setIsAuthModalOpen,
+    t,
   });
 
   const currentFilterSnapshot = useMemo<FilterSnapshot>(
@@ -778,17 +669,6 @@ const Index = () => {
     setPeople,
     resetFiltersToDefault,
   });
-
-  const handleOnboardingActiveSectionChange = useCallback((section: OnboardingSectionId | null) => {
-    setActiveOnboardingSection(section);
-    const isDedicatedViewGuide = !isMobile && (currentView === "kanban" || currentView === "calendar");
-    if (section === "compose" && !isDedicatedViewGuide) {
-      setComposeGuideActivationSignal((previous) => previous + 1);
-    }
-    if (!isMobile && section === "compose" && !isDedicatedViewGuide && currentView !== "feed") {
-      setCurrentView("feed");
-    }
-  }, [currentView, isMobile, setCurrentView]);
 
   const handleChannelPin = useCallback((id: string) => {
     // Pin for each active relay that has at least one post with this tag.
