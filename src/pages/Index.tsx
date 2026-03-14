@@ -68,7 +68,6 @@ import {
   saveCompletionSoundEnabled,
 } from "@/lib/completion-feedback-preferences";
 import { playCompletionPopSound } from "@/lib/completion-feedback";
-import { triggerTaskCompletionCheer } from "@/lib/completion-cheer";
 import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
@@ -971,6 +970,51 @@ const Index = () => {
     return result.success;
   }, [publishEvent, resolveTaskOriginRelay, t]);
 
+  const publishTaskCreateFollowUps = useCallback(async (params: {
+    publishedEventId?: string;
+    taskType: Task["taskType"];
+    initialStatus?: TaskStatus;
+    dueDate?: Date;
+    content: string;
+    dueTime?: string;
+    dateType?: TaskDateType;
+    publishedRelayUrls?: string[];
+    fallbackRelayUrls: string[];
+  }) => {
+    const {
+      publishedEventId,
+      taskType,
+      initialStatus,
+      dueDate,
+      content,
+      dueTime,
+      dateType,
+      publishedRelayUrls,
+      fallbackRelayUrls,
+    } = params;
+    if (!publishedEventId || taskType !== "task") return;
+
+    const followUpRelayUrls = (
+      publishedRelayUrls && publishedRelayUrls.length > 0
+        ? publishedRelayUrls
+        : fallbackRelayUrls
+    ).slice(0, 1);
+
+    if (initialStatus) {
+      await publishTaskStateUpdate(publishedEventId, initialStatus, followUpRelayUrls);
+    }
+    if (dueDate) {
+      await publishTaskDueUpdate(
+        publishedEventId,
+        content,
+        dueDate,
+        dueTime,
+        dateType || "due",
+        followUpRelayUrls
+      );
+    }
+  }, [publishTaskDueUpdate, publishTaskStateUpdate]);
+
   const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
     if (guardInteraction("modify")) {
       return;
@@ -1474,29 +1518,17 @@ const Index = () => {
           return;
         }
 
-        if (publishResult.eventId && normalizedTaskType === "task" && initialStatus) {
-          await publishTaskStateUpdate(
-            publishResult.eventId,
-            initialStatus,
-            (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
-              ? publishResult.publishedRelayUrls
-              : selectedRelayUrls
-            ).slice(0, 1)
-          );
-        }
-        if (publishResult.eventId && normalizedTaskType === "task" && dueDate) {
-          await publishTaskDueUpdate(
-            publishResult.eventId,
-            content,
-            dueDate,
-            dueTime,
-            dateType,
-            (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
-              ? publishResult.publishedRelayUrls
-              : selectedRelayUrls
-            ).slice(0, 1)
-          );
-        }
+        await publishTaskCreateFollowUps({
+          publishedEventId: publishResult.eventId,
+          taskType: normalizedTaskType,
+          initialStatus,
+          dueDate,
+          content,
+          dueTime,
+          dateType,
+          publishedRelayUrls: publishResult.publishedRelayUrls,
+          fallbackRelayUrls: selectedRelayUrls,
+        });
 
         setLocalTasks((prev) =>
           prev.map((task) =>
@@ -1544,29 +1576,17 @@ const Index = () => {
       return { ok: true, mode: "queued" };
     }
 
-    if (publishResult.eventId && normalizedTaskType === "task" && initialStatus) {
-      await publishTaskStateUpdate(
-        publishResult.eventId,
-        initialStatus,
-        (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
-          ? publishResult.publishedRelayUrls
-          : selectedRelayUrls
-        ).slice(0, 1)
-      );
-    }
-    if (publishResult.eventId && normalizedTaskType === "task" && dueDate) {
-      await publishTaskDueUpdate(
-        publishResult.eventId,
-        content,
-        dueDate,
-        dueTime,
-        dateType,
-        (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
-          ? publishResult.publishedRelayUrls
-          : selectedRelayUrls
-        ).slice(0, 1)
-      );
-    }
+    await publishTaskCreateFollowUps({
+      publishedEventId: publishResult.eventId,
+      taskType: normalizedTaskType,
+      initialStatus,
+      dueDate,
+      content,
+      dueTime,
+      dateType,
+      publishedRelayUrls: publishResult.publishedRelayUrls,
+      fallbackRelayUrls: selectedRelayUrls,
+    });
 
     setLocalTasks((prev) => [
       {
@@ -1670,29 +1690,17 @@ const Index = () => {
     setLocalTasks((prev) => [restoredTask, ...prev]);
     setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
 
-    if (publishedEventId && draft.taskType === "task" && draft.initialStatus) {
-      await publishTaskStateUpdate(
-        publishedEventId,
-        draft.initialStatus,
-        (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
-          ? result.publishedRelayUrls
-          : relayUrls
-        ).slice(0, 1)
-      );
-    }
-    if (publishedEventId && draft.taskType === "task" && dueDate) {
-      await publishTaskDueUpdate(
-        publishedEventId,
-        draft.content,
-        dueDate,
-        draft.dueTime,
-        draft.dateType || "due",
-        (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
-          ? result.publishedRelayUrls
-          : relayUrls
-        ).slice(0, 1)
-      );
-    }
+    await publishTaskCreateFollowUps({
+      publishedEventId,
+      taskType: draft.taskType,
+      initialStatus: draft.initialStatus,
+      dueDate,
+      content: draft.content,
+      dueTime: draft.dueTime,
+      dateType: draft.dateType,
+      publishedRelayUrls: result.publishedRelayUrls,
+      fallbackRelayUrls: relayUrls,
+    });
 
     notifyPublished(t, draft.taskType);
   }, [
@@ -1700,6 +1708,7 @@ const Index = () => {
     guardInteraction,
     parseStoredDate,
     publishEvent,
+    publishTaskCreateFollowUps,
     publishTaskDueUpdate,
     publishTaskStateUpdate,
     suppressFailedPublishEvent,
