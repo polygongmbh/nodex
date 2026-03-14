@@ -27,9 +27,8 @@ import {
   loadPinnedChannelsState,
   savePinnedChannelsState,
   getPinnedChannelIdsForView,
-  pinChannelForView,
-  unpinChannelForView,
-  deriveRelaySetKey,
+  pinChannelForRelays,
+  unpinChannelFromRelays,
   type PinnedChannelsState,
 } from "@/lib/pinned-channels-preferences";
 import {
@@ -596,14 +595,27 @@ const Index = () => {
     openedWithFocusedTaskRef,
   } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
 
-  const relaySetKey = useMemo(
-    () => deriveRelaySetKey(effectiveActiveRelayIds),
+  const activeRelayIdList = useMemo(
+    () => Array.from(effectiveActiveRelayIds),
     [effectiveActiveRelayIds]
   );
 
+  // Map each channel ID to the relay IDs that have at least one post with that tag
+  const channelRelayIds = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const task of allTasks) {
+      for (const tag of task.tags) {
+        let relays = map.get(tag);
+        if (!relays) { relays = new Set(); map.set(tag, relays); }
+        for (const relayId of task.relays) relays.add(relayId);
+      }
+    }
+    return map;
+  }, [allTasks]);
+
   // Merge dynamic channels with persisted filter states, pinned channels sorted first
   const channelsWithState: Channel[] = useMemo(() => {
-    const pinnedIds = getPinnedChannelIdsForView(pinnedChannelsState, currentView, relaySetKey);
+    const pinnedIds = getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList);
     const pinnedSet = new Set(pinnedIds);
     const existingIds = new Set(channels.map((c) => c.id));
     const stubs: Channel[] = pinnedIds
@@ -619,7 +631,7 @@ const Index = () => {
         const bIdx = pinnedSet.has(b.id) ? pinnedIds.indexOf(b.id) : Infinity;
         return aIdx - bIdx;
       });
-  }, [channels, channelFilterStates, pinnedChannelsState, currentView, relaySetKey]);
+  }, [channels, channelFilterStates, pinnedChannelsState, currentView, activeRelayIdList]);
 
   const currentUser = resolveCurrentUser(people, user);
   const hasCachedCurrentUserProfileMetadata = useMemo(() => {
@@ -809,12 +821,20 @@ const Index = () => {
   }, [currentView, isMobile, setCurrentView]);
 
   const handleChannelPin = useCallback((id: string) => {
-    setPinnedChannelsState((prev) => pinChannelForView(prev, currentView, relaySetKey, id));
-  }, [currentView, relaySetKey]);
+    // Pin for each active relay that has at least one post with this tag.
+    // Fall back to all active relays if none have the tag yet.
+    const relaysWithTag = channelRelayIds.get(id);
+    const targetRelayIds = relaysWithTag
+      ? activeRelayIdList.filter((r) => relaysWithTag.has(r))
+      : activeRelayIdList;
+    const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
+    setPinnedChannelsState((prev) => pinChannelForRelays(prev, currentView, relayIds, id));
+  }, [activeRelayIdList, channelRelayIds, currentView]);
 
   const handleChannelUnpin = useCallback((id: string) => {
-    setPinnedChannelsState((prev) => unpinChannelForView(prev, currentView, relaySetKey, id));
-  }, [currentView, relaySetKey]);
+    // Unpin from all active relays.
+    setPinnedChannelsState((prev) => unpinChannelFromRelays(prev, currentView, activeRelayIdList, id));
+  }, [activeRelayIdList, currentView]);
 
   const handleSaveCurrentFilterConfiguration = useCallback((name: string) => {
     const normalizedName = name.trim();
@@ -2364,7 +2384,7 @@ const Index = () => {
         onShortcutsClick={shortcutsHelp.open}
         onGuideClick={handleOpenGuide}
         savedFilters={savedFilterController}
-        pinnedChannelIds={getPinnedChannelIdsForView(pinnedChannelsState, currentView, relaySetKey)}
+        pinnedChannelIds={getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList)}
         onChannelPin={handleChannelPin}
         onChannelUnpin={handleChannelUnpin}
       />

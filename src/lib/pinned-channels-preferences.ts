@@ -9,7 +9,7 @@ export interface ViewPinnedEntry {
 export interface PinnedChannelsState {
   version: 2;
   updatedAt: string;
-  // byView[viewType][relaySetKey] = entries
+  // byView[viewType][relayId] = entries
   byView: Partial<Record<string, Partial<Record<string, ViewPinnedEntry[]>>>>;
 }
 
@@ -37,11 +37,6 @@ function emptyState(): PinnedChannelsState {
   return { version: 2, updatedAt: "", byView: {} };
 }
 
-/** Stable key representing the active relay set — sorted relay IDs joined by "+". */
-export function deriveRelaySetKey(relayIds: Iterable<string>): string {
-  return Array.from(relayIds).sort().join("+") || "_";
-}
-
 export function loadPinnedChannelsState(pubkey?: string): PinnedChannelsState {
   try {
     const raw = localStorage.getItem(storageKey(pubkey));
@@ -53,10 +48,10 @@ export function loadPinnedChannelsState(pubkey?: string): PinnedChannelsState {
     for (const [view, byRelay] of Object.entries(parsed.data.byView)) {
       if (!byRelay) continue;
       const cleanedByRelay: Partial<Record<string, ViewPinnedEntry[]>> = {};
-      for (const [relayKey, entries] of Object.entries(byRelay)) {
+      for (const [relayId, entries] of Object.entries(byRelay)) {
         if (!entries) continue;
         const valid = entries.filter((e) => e.channelId.trim() !== "");
-        if (valid.length > 0) cleanedByRelay[relayKey] = valid;
+        if (valid.length > 0) cleanedByRelay[relayId] = valid;
       }
       if (Object.keys(cleanedByRelay).length > 0) byView[view] = cleanedByRelay;
     }
@@ -74,62 +69,98 @@ export function savePinnedChannelsState(state: PinnedChannelsState, pubkey?: str
   }
 }
 
+/**
+ * Returns the union of pinned channel IDs across all given relay IDs for a view.
+ * Ordered by the lowest `order` value seen for each channel across all relay buckets,
+ * with ties broken alphabetically by channel ID.
+ */
 export function getPinnedChannelIdsForView(
   state: PinnedChannelsState,
   view: string,
-  relaySetKey: string
+  relayIds: string[]
 ): string[] {
-  const entries = state.byView[view]?.[relaySetKey] ?? [];
-  return [...entries].sort((a, b) => a.order - b.order).map((e) => e.channelId);
+  const minOrderById = new Map<string, number>();
+  for (const relayId of relayIds) {
+    for (const entry of state.byView[view]?.[relayId] ?? []) {
+      const current = minOrderById.get(entry.channelId);
+      if (current === undefined || entry.order < current) {
+        minOrderById.set(entry.channelId, entry.order);
+      }
+    }
+  }
+  return Array.from(minOrderById.entries())
+    .sort(([idA, orderA], [idB, orderB]) => orderA - orderB || idA.localeCompare(idB))
+    .map(([id]) => id);
 }
 
-export function isChannelPinnedForView(
+/**
+ * Returns true if the channel is pinned on at least one of the given relay IDs for the view.
+ */
+export function isChannelPinnedForAnyRelay(
   state: PinnedChannelsState,
   view: string,
-  relaySetKey: string,
+  relayIds: string[],
   channelId: string
 ): boolean {
-  return (state.byView[view]?.[relaySetKey] ?? []).some((e) => e.channelId === channelId);
+  return relayIds.some((relayId) =>
+    (state.byView[view]?.[relayId] ?? []).some((e) => e.channelId === channelId)
+  );
 }
 
-export function pinChannelForView(
+/**
+ * Pins a channel for each of the given relay IDs on the given view.
+ * Idempotent per relay — skips relays that already have the channel pinned.
+ */
+export function pinChannelForRelays(
   state: PinnedChannelsState,
   view: string,
-  relaySetKey: string,
+  relayIds: string[],
   channelId: string
 ): PinnedChannelsState {
-  const entries = state.byView[view]?.[relaySetKey] ?? [];
-  if (entries.some((e) => e.channelId === channelId)) return state;
-  const maxOrder = entries.length > 0 ? Math.max(...entries.map((e) => e.order)) : -1;
-  const newEntry: ViewPinnedEntry = {
-    channelId,
-    pinnedAt: new Date().toISOString(),
-    order: maxOrder + 1,
-  };
-  return {
-    ...state,
-    updatedAt: new Date().toISOString(),
-    byView: {
-      ...state.byView,
-      [view]: { ...state.byView[view], [relaySetKey]: [...entries, newEntry] },
-    },
-  };
+  let next = state;
+  const now = new Date().toISOString();
+  for (const relayId of relayIds) {
+    const entries = next.byView[view]?.[relayId] ?? [];
+    if (entries.some((e) => e.channelId === channelId)) continue;
+    const maxOrder = entries.length > 0 ? Math.max(...entries.map((e) => e.order)) : -1;
+    const newEntry: ViewPinnedEntry = { channelId, pinnedAt: now, order: maxOrder + 1 };
+    next = {
+      ...next,
+      updatedAt: now,
+      byView: {
+        ...next.byView,
+        [view]: { ...next.byView[view], [relayId]: [...entries, newEntry] },
+      },
+    };
+  }
+  return next;
 }
 
-export function unpinChannelForView(
+/**
+ * Unpins a channel from all of the given relay IDs on the given view.
+ */
+export function unpinChannelFromRelays(
   state: PinnedChannelsState,
   view: string,
-  relaySetKey: string,
+  relayIds: string[],
   channelId: string
 ): PinnedChannelsState {
-  const entries = state.byView[view]?.[relaySetKey] ?? [];
-  const filtered = entries.filter((e) => e.channelId !== channelId);
-  return {
-    ...state,
-    updatedAt: new Date().toISOString(),
-    byView: {
-      ...state.byView,
-      [view]: { ...state.byView[view], [relaySetKey]: filtered },
-    },
-  };
+  let next = state;
+  const now = new Date().toISOString();
+  for (const relayId of relayIds) {
+    const entries = next.byView[view]?.[relayId] ?? [];
+    if (!entries.some((e) => e.channelId === channelId)) continue;
+    next = {
+      ...next,
+      updatedAt: now,
+      byView: {
+        ...next.byView,
+        [view]: {
+          ...next.byView[view],
+          [relayId]: entries.filter((e) => e.channelId !== channelId),
+        },
+      },
+    };
+  }
+  return next;
 }
