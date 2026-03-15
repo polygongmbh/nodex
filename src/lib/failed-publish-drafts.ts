@@ -2,7 +2,8 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person, PublishedAttachment, TaskDateType, TaskStatus, TaskType } from "@/types";
 import { z } from "zod";
 
-export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts.v1";
+import { STORAGE_KEY_FAILED_PUBLISH_DRAFTS as FAILED_PUBLISH_DRAFTS_STORAGE_KEY } from "./storage-registry";
+export { FAILED_PUBLISH_DRAFTS_STORAGE_KEY };
 const MAX_FAILED_PUBLISH_DRAFTS = 50;
 
 export interface FailedPublishDraft {

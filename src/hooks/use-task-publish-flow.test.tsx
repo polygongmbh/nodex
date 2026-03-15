@@ -24,7 +24,7 @@ vi.mock("@/lib/notifications", () => ({
   notifyPublishSavedForRetry: vi.fn(),
 }));
 
-vi.mock("@/lib/publish-delay-preferences", () => ({
+vi.mock("@/lib/user-preferences", () => ({
   loadPublishDelayEnabled: vi.fn(() => false),
 }));
 

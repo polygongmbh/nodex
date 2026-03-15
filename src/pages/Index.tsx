@@ -48,11 +48,11 @@ import {
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
-import { loadPresencePublishingEnabled } from "@/lib/presence-preferences";
+import { loadPresencePublishingEnabled } from "@/lib/user-preferences";
 import {
   loadCompletionSoundEnabled,
   saveCompletionSoundEnabled,
-} from "@/lib/completion-feedback-preferences";
+} from "@/lib/user-preferences";
 import { playCompletionPopSound } from "@/lib/completion-feedback";
 import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,

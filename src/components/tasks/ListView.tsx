@@ -41,6 +41,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { STORAGE_KEY_COMPOSE_DRAFT } from "@/lib/storage-registry";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -135,7 +136,7 @@ export function ListView({
 }: ListViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
-  const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
+  const SHARED_COMPOSE_DRAFT_KEY = STORAGE_KEY_COMPOSE_DRAFT;
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   

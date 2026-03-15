@@ -47,6 +47,7 @@ import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { STORAGE_KEY_COMPOSE_DRAFT } from "@/lib/storage-registry";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -134,7 +135,7 @@ export function FeedView({
 
   const { user } = useNDK();
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
-  const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
+  const SHARED_COMPOSE_DRAFT_KEY = STORAGE_KEY_COMPOSE_DRAFT;
 
   useEffect(() => {
     if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
