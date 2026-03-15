@@ -843,6 +843,8 @@ const Index = () => {
     handleRepostFailedPublish,
     handleDismissFailedPublish,
     handleDismissAllFailedPublish,
+    handleDueDateChange,
+    handlePriorityChange,
   } = useTaskPublishFlow({
     allTasks,
     relays,
@@ -863,45 +865,10 @@ const Index = () => {
     hasDisconnectedSelectedRelays,
     resolveRelayUrlsFromIds,
     publishEvent,
+    publishTaskDueUpdate,
+    publishTaskPriorityUpdate,
     publishTaskCreateFollowUps,
   });
-
-  const handleDueDateChange = useCallback((
-    taskId: string,
-    dueDate: Date | undefined,
-    dueTime?: string,
-    dateType: "due" | "scheduled" | "start" | "end" | "milestone" = "due"
-  ) => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask || existingTask.taskType !== "task" || !dueDate) return;
-    setLocalTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId
-          ? { ...task, dueDate, dueTime, dateType, lastEditedAt: new Date() }
-          : task
-      )
-    );
-    void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
-  }, [allTasks, guardInteraction, publishTaskDueUpdate]);
-
-  const handlePriorityChange = useCallback((taskId: string, priority: number) => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask || existingTask.taskType !== "task") return;
-    setLocalTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId
-          ? { ...task, priority, lastEditedAt: new Date() }
-          : task
-      )
-    );
-    void publishTaskPriorityUpdate(taskId, priority);
-  }, [allTasks, guardInteraction, publishTaskPriorityUpdate]);
 
   // Build relays with active state for sidebar display
   const relaysWithActiveState: Relay[] = useMemo(() => {

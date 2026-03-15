@@ -101,6 +101,15 @@ interface UseTaskPublishFlowOptions {
     parentId?: string,
     relayUrls?: string[]
   ) => Promise<PublishResult>;
+  publishTaskDueUpdate: (
+    taskId: string,
+    taskContent: string,
+    dueDate: Date,
+    dueTime?: string,
+    dateType?: TaskDateType,
+    relayUrlsOverride?: string[]
+  ) => Promise<boolean>;
+  publishTaskPriorityUpdate: (taskId: string, priority: number) => Promise<boolean>;
   publishTaskCreateFollowUps: (params: {
     publishedEventId?: string;
     taskType: Task["taskType"];
@@ -134,6 +143,8 @@ export function useTaskPublishFlow({
   hasDisconnectedSelectedRelays,
   resolveRelayUrlsFromIds,
   publishEvent,
+  publishTaskDueUpdate,
+  publishTaskPriorityUpdate,
   publishTaskCreateFollowUps,
 }: UseTaskPublishFlowOptions) {
   const [failedPublishDrafts, setFailedPublishDrafts] = useState<FailedPublishDraft[]>(() => loadFailedPublishDrafts());
@@ -809,6 +820,39 @@ export function useTaskPublishFlow({
     setFailedPublishDrafts([]);
   }, []);
 
+  const handleDueDateChange = useCallback((
+    taskId: string,
+    dueDate: Date | undefined,
+    dueTime?: string,
+    dateType: TaskDateType = "due"
+  ) => {
+    if (guardInteraction("modify")) return;
+    const existingTask = allTasks.find((task) => task.id === taskId);
+    if (!existingTask || existingTask.taskType !== "task" || !dueDate) return;
+    setLocalTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? { ...task, dueDate, dueTime, dateType, lastEditedAt: new Date() }
+          : task
+      )
+    );
+    void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
+  }, [allTasks, guardInteraction, publishTaskDueUpdate, setLocalTasks]);
+
+  const handlePriorityChange = useCallback((taskId: string, priority: number) => {
+    if (guardInteraction("modify")) return;
+    const existingTask = allTasks.find((task) => task.id === taskId);
+    if (!existingTask || existingTask.taskType !== "task") return;
+    setLocalTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? { ...task, priority, lastEditedAt: new Date() }
+          : task
+      )
+    );
+    void publishTaskPriorityUpdate(taskId, priority);
+  }, [allTasks, guardInteraction, publishTaskPriorityUpdate, setLocalTasks]);
+
   const visibleFailedPublishDrafts = useMemo(() => {
     return failedPublishDrafts.filter((draft) => {
       const targetRelayIds = draft.relayIds.length > 0
@@ -839,5 +883,7 @@ export function useTaskPublishFlow({
     handleRepostFailedPublish,
     handleDismissFailedPublish,
     handleDismissAllFailedPublish,
+    handleDueDateChange,
+    handlePriorityChange,
   };
 }
