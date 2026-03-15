@@ -37,30 +37,18 @@ import {
 } from "@/lib/channel-frecency";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
 import { resolveCurrentUser } from "@/lib/current-user";
-import { canUserChangeTaskStatus, extractAssignedMentionsFromContent } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind } from "@/lib/nostr/task-state-events";
 import { isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
-import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import {
   buildImetaTag,
-  extractEmbeddableAttachmentsFromContent,
-  normalizePublishedAttachments,
 } from "@/lib/attachments";
-import {
-  resolveRelaySelectionForSubmission,
-} from "@/lib/nostr/task-relay-routing";
-import {
-  loadFailedPublishDrafts,
-  saveFailedPublishDrafts,
-  type FailedPublishDraft,
-} from "@/lib/failed-publish-drafts";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
 import { loadPresencePublishingEnabled } from "@/lib/presence-preferences";
-import { loadPublishDelayEnabled } from "@/lib/publish-delay-preferences";
 import {
   loadCompletionSoundEnabled,
   saveCompletionSoundEnabled,
@@ -74,41 +62,31 @@ import {
   buildPresenceTags,
 } from "@/lib/presence-status";
 import { shouldBootstrapGuideDemoFeed } from "@/lib/onboarding-guide";
-import { resolveMentionedPubkeysAsync } from "@/lib/mentions";
-import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import {
   mapPeopleSelection,
   setAllChannelFilters,
 } from "@/lib/filter-state-utils";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
-import { normalizeComposerMessageType } from "@/lib/task-type";
 import { buildNip99PublishTags } from "@/lib/nostr/nip99-metadata";
 import type { Nip99ListingStatus } from "@/types";
 import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
-import { normalizeGeohash } from "@/lib/nostr/geohash-location";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useIndexFilters } from "@/hooks/use-index-filters";
 import { useIndexOnboarding } from "@/hooks/use-index-onboarding";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { useSavedFilterConfigs } from "@/hooks/use-saved-filter-configs";
+import { useTaskPublishFlow } from "@/hooks/use-task-publish-flow";
 import { useTaskPublishControls } from "@/hooks/use-task-publish-controls";
 import { useKind0People } from "@/hooks/use-kind0-people";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import {
-  removeCachedNostrEventById,
   removeCachedNostrEventsByRelayUrl,
   removeRelayUrlFromCachedEvents,
   type CachedNostrEvent,
 } from "@/lib/nostr/event-cache";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
-import { resolveSubmissionTags } from "@/lib/submission-tags";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import {
-  notifyLocalSaved,
-  notifyNeedTag,
-  notifyPartialPublish,
-  notifyPublished,
-  notifyPublishSavedForRetry,
   notifyStatusRestricted,
 } from "@/lib/notifications";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -117,15 +95,8 @@ import {
   Relay,
   Channel,
   ChannelMatchMode,
-  Person,
   Task,
-  TaskCreateResult,
-  TaskDateType,
   TaskStatus,
-  ComposeRestoreRequest,
-  ComposeRestoreState,
-  PublishedAttachment,
-  Nip99Metadata,
 } from "@/types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -135,7 +106,6 @@ const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
 const TASK_STATUS_REORDER_DELAY_MS = 260;
-const PUBLISH_UNDO_DELAY_MS = 5000;
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
 const DEMO_SEED_TASKS = mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents()));
 const FeedView = lazy(() =>
@@ -181,8 +151,6 @@ const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [guideDemoFeedEnabled, setGuideDemoFeedEnabled] = useState(false);
   const demoFeedActive = DEMO_FEED_ENABLED || guideDemoFeedEnabled;
-
-  const [failedPublishDrafts, setFailedPublishDrafts] = useState<FailedPublishDraft[]>(() => loadFailedPublishDrafts());
 
   const subscribedKinds = useMemo<NostrEventKind[]>(
     () => [
@@ -296,10 +264,7 @@ const Index = () => {
   const pendingStatusUpdateTimeoutsRef = useRef<Map<string, number>>(new Map());
   const completionConfettiLastAtRef = useRef<Map<string, number>>(new Map());
   const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
-  const pendingPublishStateRef = useRef<Map<string, { timeoutId: number; toastId: string | number; composeState: ComposeRestoreState }>>(new Map());
-  const [pendingPublishTaskIds, setPendingPublishTaskIds] = useState<Set<string>>(new Set());
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
-  const [composeRestoreRequest, setComposeRestoreRequest] = useState<ComposeRestoreRequest | null>(null);
   const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<Record<string, TaskStatus>>({});
   const [sortModifiedAtHoldByTaskId, setSortModifiedAtHoldByTaskId] = useState<Record<string, string>>({});
 
@@ -495,27 +460,12 @@ const Index = () => {
   }, [user?.pubkey]);
 
   useEffect(() => {
-    saveFailedPublishDrafts(failedPublishDrafts);
-  }, [failedPublishDrafts]);
-
-  useEffect(() => {
     savePinnedChannelsState(pinnedChannelsState, user?.pubkey);
   }, [pinnedChannelsState, user?.pubkey]);
 
   useEffect(() => {
     saveChannelFrecencyState(channelFrecencyState);
   }, [channelFrecencyState]);
-
-  useEffect(() => {
-    const pendingPublishState = pendingPublishStateRef.current;
-    return () => {
-      for (const pending of pendingPublishState.values()) {
-        window.clearTimeout(pending.timeoutId);
-        toast.dismiss(pending.toastId);
-      }
-      pendingPublishState.clear();
-    };
-  }, []);
 
   const handleFocusSidebar = useCallback(() => {
     setIsSidebarFocused(true);
@@ -756,29 +706,12 @@ const Index = () => {
     };
   }, []);
 
-  const resolveMentionPubkeys = useCallback(async (content: string): Promise<string[]> => {
-    return resolveMentionedPubkeysAsync(content, people, {
-      resolveNip05: resolveNip05Identifier,
-    });
-  }, [people]);
-
-  const resolveRelayUrlsFromIds = useCallback((relayIds: string[]) => {
-    const resolvedRelayUrls = relays
-      .filter((relay) => relayIds.includes(relay.id))
-      .map((relay) => relay.url)
-      .filter((url): url is string => Boolean(url));
-    nostrDevLog("routing", "Resolved relay IDs to relay URLs", {
-      relayIds,
-      resolvedRelayUrls,
-    });
-    return resolvedRelayUrls;
-  }, [relays]);
-
   const {
     hasDisconnectedSelectedRelays,
     isInteractionBlocked,
     guardInteraction,
     handleBlockedInteractionAttempt,
+    resolveRelayUrlsFromIds,
     resolveTaskOriginRelay,
     publishTaskStateUpdate,
     publishTaskDueUpdate,
@@ -898,647 +831,46 @@ const Index = () => {
     });
   }, [allTasks, currentUser?.id, guardInteraction, publishEvent, resolveTaskOriginRelay]);
 
-  const isPendingPublishTask = useCallback((taskId: string) => {
-    return pendingPublishTaskIds.has(taskId);
-  }, [pendingPublishTaskIds]);
-
-  const clearPendingPublishTask = useCallback((taskId: string, options?: { dismissToast?: boolean }) => {
-    const pending = pendingPublishStateRef.current.get(taskId);
-    if (!pending) return;
-    window.clearTimeout(pending.timeoutId);
-    if (options?.dismissToast !== false) {
-      toast.dismiss(pending.toastId);
-    }
-    pendingPublishStateRef.current.delete(taskId);
-    setPendingPublishTaskIds((prev) => {
-      if (!prev.has(taskId)) return prev;
-      const next = new Set(prev);
-      next.delete(taskId);
-      return next;
-    });
-  }, []);
-
-  const handleUndoPendingPublish = useCallback((taskId: string) => {
-    const pending = pendingPublishStateRef.current.get(taskId);
-    if (!pending) return;
-    setComposeRestoreRequest({
-      id: Date.now(),
-      state: pending.composeState,
-    });
-    clearPendingPublishTask(taskId);
-    setLocalTasks((prev) => prev.filter((task) => task.id !== taskId));
-    toast.info(t("toasts.success.publishUndone"));
-  }, [clearPendingPublishTask, t]);
-
-  const suppressFailedPublishEvent = useCallback((eventId?: string) => {
-    const normalizedEventId = (eventId || "").trim();
-    if (!normalizedEventId) return;
-    setSuppressedNostrEventIds((previous) => {
-      if (previous.has(normalizedEventId)) return previous;
-      const next = new Set(previous);
-      next.add(normalizedEventId);
-      return next;
-    });
-    queryClient.setQueriesData<CachedNostrEvent[]>(
-      { queryKey: NOSTR_EVENTS_QUERY_KEY },
-      (previous) => (previous || []).filter((event) => event.id !== normalizedEventId)
-    );
-    removeCachedNostrEventById(normalizedEventId);
-  }, [queryClient]);
-
-  useEffect(() => {
-    if (suppressedNostrEventIds.size === 0) return;
-    const blockedIds = new Set(suppressedNostrEventIds);
-    queryClient.setQueriesData<CachedNostrEvent[]>(
-      { queryKey: NOSTR_EVENTS_QUERY_KEY },
-      (previous) => (previous || []).filter((event) => !blockedIds.has(event.id))
-    );
-    blockedIds.forEach((eventId) => removeCachedNostrEventById(eventId));
-  }, [queryClient, suppressedNostrEventIds]);
-
-  const handleNewTask = async (
-    content: string,
-    extractedTags: string[],
-    relayIds: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType: TaskDateType = "due",
-    parentId?: string,
-    initialStatus?: TaskStatus,
-    explicitMentionPubkeys: string[] = [],
-    priority?: number,
-    attachments: PublishedAttachment[] = [],
-    nip99?: Nip99Metadata,
-    locationGeohash?: string
-  ): Promise<TaskCreateResult> => {
-    if (guardInteraction("post")) {
-      return hasDisconnectedSelectedRelays
-        ? { ok: false, reason: "relay-selection" }
-        : { ok: false, reason: "not-authenticated" };
-    }
-    const normalizedMessageType = normalizeComposerMessageType(taskType);
-    if (normalizedMessageType !== taskType) {
-      console.warn("Unexpected taskType payload; defaulting to task", { taskType });
-    }
-    const normalizedTaskType: Task["taskType"] = normalizedMessageType === "task" ? "task" : "comment";
-    const feedMessageType: Task["feedMessageType"] =
-      normalizedMessageType === "offer" || normalizedMessageType === "request"
-        ? normalizedMessageType
-        : undefined;
-
-    const requestedRelayIds = relayIds.length > 0
-      ? relayIds
-      : (demoFeedActive ? [DEMO_RELAY_ID] : []);
-    const submissionParentId = feedMessageType ? undefined : parentId;
-    const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
-    const normalizedExtractedTags = Array.from(
-      new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
-    );
-    const { submissionTags: resolvedSubmissionTags } = resolveSubmissionTags(normalizedExtractedTags, parentTask);
-    if (resolvedSubmissionTags.length === 0) {
-      notifyNeedTag(t);
-      return { ok: false, reason: "missing-tag" };
-    }
-    setPostedTags((prev) => Array.from(new Set([...prev, ...resolvedSubmissionTags])));
-    resolvedSubmissionTags.forEach((tag) => bumpChannelFrecency(tag, 1.1));
-
-    const resolvedRelaySelection = resolveRelaySelectionForSubmission({
-      taskType: normalizedTaskType,
-      selectedRelayIds: requestedRelayIds,
-      relays,
-      parentTask,
-      demoRelayId: demoFeedActive ? DEMO_RELAY_ID : undefined,
-    });
-    if (resolvedRelaySelection.error) {
-      toast.error(resolvedRelaySelection.error || t("toasts.errors.selectRelayOrParent"));
-      nostrDevLog("routing", "Relay selection rejected for submission", {
-        taskType: normalizedTaskType,
-        requestedRelayIds,
-        parentId: parentId || null,
-        error: resolvedRelaySelection.error,
-      });
-      return { ok: false, reason: "relay-selection" };
-    }
-    const targetRelayIds = resolvedRelaySelection.relayIds;
-    const hasNonDemoRelay = demoFeedActive
-      ? targetRelayIds.some((id) => id !== DEMO_RELAY_ID)
-      : targetRelayIds.length > 0;
-
-    const selectedRelayUrls = resolveRelayUrlsFromIds(targetRelayIds);
-    nostrDevLog("routing", "Resolved relay selection for submission", {
-      taskType: normalizedTaskType,
-      requestedRelayIds,
-      targetRelayIds,
-      selectedRelayUrls,
-      hasNonDemoRelay,
-      parentId: parentId || null,
-    });
-    
-    const shouldPublish = hasNonDemoRelay && selectedRelayUrls.length > 0;
-    const dedupedExplicitMentionPubkeys = Array.from(
-      new Set(
-        explicitMentionPubkeys
-          .map((pubkey) => pubkey.trim().toLowerCase())
-          .filter((pubkey) => /^[a-f0-9]{64}$/i.test(pubkey))
-      )
-    );
-    const resolvedMentionPubkeys = await resolveMentionPubkeys(content);
-    const mentionPubkeys = Array.from(
-      new Set([...resolvedMentionPubkeys, ...dedupedExplicitMentionPubkeys])
-    );
-    const defaultAuthorAssignee =
-      normalizedTaskType === "task" && /^[a-f0-9]{64}$/i.test(user.pubkey)
-        ? user.pubkey.toLowerCase()
-        : undefined;
-    const assigneePubkeys = normalizedTaskType === "task"
-      ? Array.from(
-          new Set(
-            mentionPubkeys.length > 0
-              ? mentionPubkeys
-              : [defaultAuthorAssignee].filter((value): value is string => Boolean(value))
-          )
-        )
-      : [];
-    const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
-    const contentDerivedAttachments = extractEmbeddableAttachmentsFromContent(content);
-    const normalizedAttachments = normalizePublishedAttachments([
-      ...attachments,
-      ...contentDerivedAttachments,
-    ]);
-    
-    const createdAt = new Date();
-    const taskAuthor: Person = (() => {
-      if (currentUser) return currentUser;
-      if (user?.pubkey) {
-        return {
-          id: user.pubkey,
-          name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
-          displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
-          nip05: user.profile?.nip05?.trim().toLowerCase(),
-          avatar: user.profile?.picture,
-          isOnline: true,
-          onlineStatus: "online",
-          isSelected: false,
-        };
-      }
-      return people[0];
-    })();
-    const publishKind: NostrEventKind =
-      normalizedMessageType === "task"
-        ? NostrEventKind.Task
-        : normalizedMessageType === "offer" || normalizedMessageType === "request"
-          ? NostrEventKind.ClassifiedListing
-          : NostrEventKind.TextNote;
-    const validParentId = isNostrEventId(submissionParentId) ? submissionParentId : undefined;
-    const primaryRelayUrl = selectedRelayUrls[0] ?? "";
-    if (shouldPublish && normalizedTaskType === "task" && parentId && !validParentId) {
-      toast.warning(t("toasts.warnings.parentLocalOnly"));
-    }
-    const publishTags = shouldPublish
-      ? (
-          normalizedTaskType === "task"
-            ? buildTaskPublishTags(
-                validParentId,
-                primaryRelayUrl,
-                assigneePubkeys,
-                priority,
-                resolvedSubmissionTags,
-                normalizedAttachments,
-                normalizedLocationGeohash
-              )
-            : feedMessageType
-              ? buildNip99PublishTags({
-                  metadata: nip99,
-                  feedMessageType,
-                  hashtags: resolvedSubmissionTags,
-                  mentionPubkeys,
-                  attachmentTags: normalizedAttachments
-                    .map((attachment) => buildImetaTag(attachment))
-                    .filter((tag) => tag.length > 0),
-                  fallbackTitle: content.slice(0, 80),
-                  statusOverride: (nip99?.status || "active") as Nip99ListingStatus,
-                  locationGeohash: normalizedLocationGeohash,
-                })
-              : [
-                  ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
-                  ...resolvedSubmissionTags.map((tag) => ["t", tag] as string[]),
-                  ...normalizedAttachments
-                    .map((attachment) => buildImetaTag(attachment))
-                    .filter((tag) => tag.length > 0),
-                  ...((normalizedLocationGeohash ? [["g", normalizedLocationGeohash]] : []) as string[][]),
-                ]
-        )
-      : [];
-    const publishParentId =
-      shouldPublish && normalizedMessageType === "comment" && validParentId ? validParentId : undefined;
-
-    const publishFailedDraft = (
-      fallbackKind: NostrEventKind,
-      fallbackTags: string[][],
-      fallbackParentId?: string
-    ): FailedPublishDraft => ({
-      id: `failed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-      author: taskAuthor,
-      content,
-      tags: resolvedSubmissionTags,
-      relayIds: targetRelayIds,
-      relayUrls: selectedRelayUrls,
-      taskType: normalizedTaskType,
-      createdAt: createdAt.toISOString(),
-      dueDate: dueDate ? dueDate.toISOString() : undefined,
-      dueTime,
-      dateType,
-      parentId: submissionParentId,
-      initialStatus,
-      mentionPubkeys,
-      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
-      priority: normalizedTaskType === "task" ? priority : undefined,
-      locationGeohash: normalizedLocationGeohash,
-      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
-      publishKind: fallbackKind,
-      publishTags: fallbackTags,
-      publishParentId: fallbackParentId,
-    });
-
-    const effectiveRelayIds = targetRelayIds.length > 0
-      ? targetRelayIds
-      : selectedRelayUrls.map((url) => getRelayIdFromUrl(url));
-    const resolvePublishedRelayIds = (publishedRelayUrls?: string[]): string[] => {
-      if (!publishedRelayUrls || publishedRelayUrls.length === 0) {
-        return effectiveRelayIds.length > 0
-          ? effectiveRelayIds
-          : (demoFeedActive ? [DEMO_RELAY_ID] : []);
-      }
-      const ids = publishedRelayUrls.map((url) => getRelayIdFromUrl(url)).filter(Boolean);
-      if (ids.length > 0) return ids;
-      return effectiveRelayIds.length > 0
-        ? effectiveRelayIds
-        : (demoFeedActive ? [DEMO_RELAY_ID] : []);
-    };
-    const notifyIfPartialPublish = (publishedRelayUrls?: string[]) => {
-      const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
-      const targetCount = new Set(selectedRelayUrls.map(normalizeUrl)).size;
-      const publishedCount = new Set((publishedRelayUrls || []).map(normalizeUrl)).size;
-      if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
-        notifyPartialPublish(t, { publishedCount, targetCount });
-        nostrDevLog("publish", "Partial publish acknowledged by subset of target relays", {
-          targetRelayUrls: selectedRelayUrls,
-          publishedRelayUrls: publishedRelayUrls || [],
-        });
-      }
-    };
-
-    const baseTask: Omit<Task, "id"> = {
-      author: taskAuthor,
-      content,
-      tags: resolvedSubmissionTags,
-      relays: effectiveRelayIds.length > 0
-        ? effectiveRelayIds
-        : (demoFeedActive ? [DEMO_RELAY_ID] : []),
-      taskType: normalizedTaskType,
-      timestamp: createdAt,
-      status: normalizedTaskType === "task" ? (initialStatus || "todo") : undefined,
-      likes: 0,
-      replies: 0,
-      reposts: 0,
-      dueDate,
-      dueTime,
-      dateType,
-      parentId,
-      mentions: Array.from(
-        new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
-      ),
-      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
-      priority: normalizedTaskType === "task" ? priority : undefined,
-      feedMessageType,
-      nip99: feedMessageType ? nip99 : undefined,
-      locationGeohash: normalizedLocationGeohash,
-      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
-    };
-
-    const parsedHashtagsFromContent = new Set(
-      (content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase())
-    );
-    const explicitTagNamesForRestore = normalizedExtractedTags.filter((tag) => !parsedHashtagsFromContent.has(tag));
-    const explicitMentionPubkeysForRestore = dedupedExplicitMentionPubkeys;
-    const composeRestoreState: ComposeRestoreState = {
-      content,
-      taskType: normalizedTaskType,
-      messageType: normalizedMessageType,
-      dueDate,
-      dueTime,
-      dateType,
-      explicitTagNames: explicitTagNamesForRestore,
-      explicitMentionPubkeys: explicitMentionPubkeysForRestore,
-      selectedRelays: targetRelayIds,
-      priority,
-      nip99,
-      locationGeohash: normalizedLocationGeohash,
-      attachments: normalizedAttachments,
-    };
-
-    if (!shouldPublish) {
-      setLocalTasks((prev) => [{ ...baseTask, id: Date.now().toString() }, ...prev]);
-      notifyLocalSaved(t, normalizedTaskType);
-      return { ok: true, mode: "local" };
-    }
-
-    const publishWithMetadata = async () => {
-      nostrDevLog("publish", "Submitting publish request", {
-        kind: publishKind,
-        parentId: publishParentId || null,
-        relayUrls: selectedRelayUrls,
-        tagCount: publishTags.length,
-      });
-      try {
-        const result = await publishEvent(publishKind, content, publishTags, publishParentId, selectedRelayUrls);
-        nostrDevLog("publish", "Publish request completed", {
-          kind: publishKind,
-          success: result.success,
-          eventId: result.eventId || null,
-          rejectionReason: result.rejectionReason || null,
-          publishedRelayUrls: result.publishedRelayUrls || [],
-          relayUrls: selectedRelayUrls,
-        });
-        return {
-          success: result.success,
-          eventId: result.eventId,
-          rejectionReason: result.rejectionReason,
-          publishedRelayUrls: result.publishedRelayUrls,
-        };
-      } catch (error) {
-        console.error("Task publish failed unexpectedly", error);
-        nostrDevLog("publish", "Publish request threw an exception", {
-          kind: publishKind,
-          relayUrls: selectedRelayUrls,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        return {
-          success: false,
-          eventId: undefined as string | undefined,
-          rejectionReason: undefined as string | undefined,
-          publishedRelayUrls: undefined as string[] | undefined,
-        };
-      }
-    };
-
-    const publishDelayEnabled = loadPublishDelayEnabled();
-    if (publishDelayEnabled) {
-      const pendingTaskId = `pending-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-      const pendingUntil = new Date(Date.now() + PUBLISH_UNDO_DELAY_MS);
-      setLocalTasks((prev) => [
-        {
-          ...baseTask,
-          id: pendingTaskId,
-          pendingPublishToken: pendingTaskId,
-          pendingPublishUntil: pendingUntil,
-        },
-        ...prev,
-      ]);
-      setPendingPublishTaskIds((prev) => {
-        const next = new Set(prev);
-        next.add(pendingTaskId);
-        return next;
-      });
-
-      const timeoutId = window.setTimeout(async () => {
-        clearPendingPublishTask(pendingTaskId, { dismissToast: true });
-        const publishResult = await publishWithMetadata();
-        if (!publishResult.success) {
-          suppressFailedPublishEvent(publishResult.eventId);
-          const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
-          setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
-          setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
-          notifyPublishSavedForRetry(t, {
-            relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
-            reason: publishResult.rejectionReason,
-          });
-          return;
-        }
-
-        await publishTaskCreateFollowUps({
-          publishedEventId: publishResult.eventId,
-          taskType: normalizedTaskType,
-          initialStatus,
-          dueDate,
-          content,
-          dueTime,
-          dateType,
-          publishedRelayUrls: publishResult.publishedRelayUrls,
-          fallbackRelayUrls: selectedRelayUrls,
-        });
-
-        setLocalTasks((prev) =>
-          prev.map((task) =>
-            task.id === pendingTaskId
-              ? {
-                  ...task,
-                  id: publishResult.eventId || task.id,
-                  relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
-                  pendingPublishToken: undefined,
-                  pendingPublishUntil: undefined,
-                }
-              : task
-          )
-        );
-        notifyIfPartialPublish(publishResult.publishedRelayUrls);
-        notifyPublished(t, normalizedTaskType);
-      }, PUBLISH_UNDO_DELAY_MS);
-
-      const toastId = toast(t("toasts.info.pendingPublish", { seconds: Math.floor(PUBLISH_UNDO_DELAY_MS / 1000) }), {
-        duration: PUBLISH_UNDO_DELAY_MS,
-        action: {
-          label: t("toasts.actions.undo"),
-          onClick: () => handleUndoPendingPublish(pendingTaskId),
-        },
-      });
-
-      pendingPublishStateRef.current.set(pendingTaskId, { timeoutId, toastId, composeState: composeRestoreState });
-      nostrDevLog("publish", "Queued publish with undo delay", {
-        pendingTaskId,
-        delayMs: PUBLISH_UNDO_DELAY_MS,
-        relayUrls: selectedRelayUrls,
-      });
-      return { ok: true, mode: "published" };
-    }
-
-    const publishResult = await publishWithMetadata();
-    if (!publishResult.success) {
-      suppressFailedPublishEvent(publishResult.eventId);
-      const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
-      setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
-      notifyPublishSavedForRetry(t, {
-        relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
-        reason: publishResult.rejectionReason,
-      });
-      return { ok: true, mode: "queued" };
-    }
-
-    await publishTaskCreateFollowUps({
-      publishedEventId: publishResult.eventId,
-      taskType: normalizedTaskType,
-      initialStatus,
-      dueDate,
-      content,
-      dueTime,
-      dateType,
-      publishedRelayUrls: publishResult.publishedRelayUrls,
-      fallbackRelayUrls: selectedRelayUrls,
-    });
-
-    setLocalTasks((prev) => [
-      {
-        ...baseTask,
-        id: publishResult.eventId || Date.now().toString(),
-        relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
-      },
-      ...prev,
-    ]);
-    notifyIfPartialPublish(publishResult.publishedRelayUrls);
-    notifyPublished(t, normalizedTaskType);
-    return { ok: true, mode: "published" };
-  };
-
-  const parseStoredDate = useCallback((value?: string): Date | undefined => {
-    if (!value) return undefined;
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-  }, []);
-
-  const publishFailedDraft = useCallback(async (
-    draftId: string,
-    resolveRelayUrls: (draft: FailedPublishDraft) => string[]
-  ) => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-    const draft = failedPublishDrafts.find((item) => item.id === draftId);
-    if (!draft) return;
-
-    const relayUrls = resolveRelayUrls(draft);
-    if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.retryRelayMissing"));
-      return;
-    }
-
-    const result = await publishEvent(
-      draft.publishKind,
-      draft.content,
-      draft.publishTags,
-      draft.publishParentId,
-      relayUrls
-    );
-    if (!result.success) {
-      if (result.eventId) {
-        nostrDevLog("publish", "Suppressing retry-failed event from cache and feed", {
-          draftId,
-          eventId: result.eventId,
-        });
-      }
-      suppressFailedPublishEvent(result.eventId);
-      if (result.rejectionReason) {
-        toast.error(t("toasts.errors.retryRejectedByRelayWithReason", { reason: result.rejectionReason }));
-      } else {
-        toast.error(t("toasts.errors.retryRejectedByRelay"));
-      }
-      return;
-    }
-
-    const publishedEventId = result.eventId;
-    const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
-    const targetCount = new Set(relayUrls.map(normalizeUrl)).size;
-    const publishedCount = new Set((result.publishedRelayUrls || []).map(normalizeUrl)).size;
-    if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
-      notifyPartialPublish(t, { publishedCount, targetCount });
-      nostrDevLog("publish", "Partial publish acknowledged by subset of retry relay targets", {
-        draftId,
-        relayUrls,
-        publishedRelayUrls: result.publishedRelayUrls || [],
-      });
-    }
-    const effectiveRelayIds = (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
-      ? result.publishedRelayUrls
-      : relayUrls
-    ).map((url) => getRelayIdFromUrl(url));
-    const dueDate = parseStoredDate(draft.dueDate);
-    const restoredTask: Task = {
-      id: publishedEventId || Date.now().toString(),
-      author: draft.author,
-      content: draft.content,
-      tags: draft.tags,
-      relays: effectiveRelayIds.length > 0
-        ? effectiveRelayIds
-        : (demoFeedActive ? [DEMO_RELAY_ID] : []),
-      taskType: draft.taskType,
-      timestamp: parseStoredDate(draft.createdAt) || new Date(),
-      status: draft.taskType === "task" ? (draft.initialStatus || "todo") : undefined,
-      likes: 0,
-      replies: 0,
-      reposts: 0,
-      dueDate,
-      dueTime: draft.dueTime,
-      dateType: draft.dateType,
-      parentId: draft.parentId,
-      mentions: draft.mentionPubkeys,
-      assigneePubkeys: draft.taskType === "task" ? draft.assigneePubkeys : undefined,
-      priority: draft.taskType === "task" ? draft.priority : undefined,
-      locationGeohash: draft.locationGeohash,
-      attachments: draft.attachments,
-    };
-    setLocalTasks((prev) => [restoredTask, ...prev]);
-    setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
-
-    await publishTaskCreateFollowUps({
-      publishedEventId,
-      taskType: draft.taskType,
-      initialStatus: draft.initialStatus,
-      dueDate,
-      content: draft.content,
-      dueTime: draft.dueTime,
-      dateType: draft.dateType,
-      publishedRelayUrls: result.publishedRelayUrls,
-      fallbackRelayUrls: relayUrls,
-    });
-
-    notifyPublished(t, draft.taskType);
-  }, [
+  const {
+    composeRestoreRequest,
     failedPublishDrafts,
+    visibleFailedPublishDrafts,
+    selectedPublishableRelayIds,
+    isPendingPublishTask,
+    handleUndoPendingPublish,
+    handleNewTask,
+    handleRetryFailedPublish,
+    handleRepostFailedPublish,
+    handleDismissFailedPublish,
+    handleDismissAllFailedPublish,
+  } = useTaskPublishFlow({
+    allTasks,
+    relays,
+    people,
+    currentUser,
+    user,
+    effectiveActiveRelayIds,
+    demoFeedActive,
+    demoRelayId: DEMO_RELAY_ID,
+    queryClient,
+    t,
+    setLocalTasks,
+    setPostedTags,
+    suppressedNostrEventIds,
+    setSuppressedNostrEventIds,
+    bumpChannelFrecency,
     guardInteraction,
-    parseStoredDate,
+    hasDisconnectedSelectedRelays,
+    resolveRelayUrlsFromIds,
     publishEvent,
     publishTaskCreateFollowUps,
-    publishTaskDueUpdate,
-    publishTaskStateUpdate,
-    suppressFailedPublishEvent,
-    t,
-  ]);
-
-  const handleRetryFailedPublish = useCallback(async (draftId: string) => {
-    await publishFailedDraft(draftId, (draft) =>
-      draft.relayUrls.length > 0
-        ? draft.relayUrls
-        : resolveRelayUrlsFromIds(draft.relayIds)
-    );
-  }, [publishFailedDraft, resolveRelayUrlsFromIds]);
-
-  const handleRepostFailedPublish = useCallback(async (draftId: string) => {
-    await publishFailedDraft(draftId, () => resolveRelayUrlsFromIds(Array.from(effectiveActiveRelayIds)));
-  }, [effectiveActiveRelayIds, publishFailedDraft, resolveRelayUrlsFromIds]);
-
-  const handleDismissFailedPublish = useCallback((draftId: string) => {
-    setFailedPublishDrafts((prev) => prev.filter((draft) => draft.id !== draftId));
-  }, []);
-
-  const handleDismissAllFailedPublish = useCallback(() => {
-    setFailedPublishDrafts([]);
-  }, []);
+  });
 
   const handleDueDateChange = useCallback((
     taskId: string,
     dueDate: Date | undefined,
     dueTime?: string,
-    dateType: TaskDateType = "due"
+    dateType: "due" | "scheduled" | "start" | "end" | "milestone" = "due"
   ) => {
     if (guardInteraction("modify")) {
       return;
@@ -1578,24 +910,6 @@ const Index = () => {
       isActive: effectiveActiveRelayIds.has(r.id),
     }));
   }, [relays, effectiveActiveRelayIds]);
-
-  const visibleFailedPublishDrafts = useMemo(() => {
-    return failedPublishDrafts.filter((draft) => {
-      const targetRelayIds = draft.relayIds.length > 0
-        ? draft.relayIds
-        : draft.relayUrls.map((url) => getRelayIdFromUrl(url));
-      if (targetRelayIds.length === 0) return true;
-      return targetRelayIds.some((relayId) => effectiveActiveRelayIds.has(relayId));
-    });
-  }, [effectiveActiveRelayIds, failedPublishDrafts]);
-
-  const selectedPublishableRelayIds = useMemo(
-    () =>
-      relays
-        .filter((relay) => effectiveActiveRelayIds.has(relay.id) && Boolean(relay.url))
-        .map((relay) => relay.id),
-    [effectiveActiveRelayIds, relays]
-  );
 
   const handleAddRelay = useCallback((url: string) => {
     addRelay(url);
