@@ -889,27 +889,20 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const loginWithNoas = useCallback(async (
     username: string,
     password: string,
-    config?: { baseUrl?: string; nip05Domain?: string }
+    config?: { baseUrl?: string }
   ): Promise<boolean> => {
     if (!ndk) return false;
 
     const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
-    const noasNip05Domain = config?.nip05Domain || (() => {
-      try {
-        return noasApiUrl ? new URL(noasApiUrl).hostname : undefined;
-      } catch {
-        return undefined;
-      }
-    })();
 
-    if (!noasApiUrl || !noasNip05Domain) {
+    if (!noasApiUrl) {
       console.error("Noas configuration missing");
       return false;
     }
 
     setIsAuthenticating(true);
     try {
-      const noasClient = new NoasClient(noasApiUrl, noasNip05Domain);
+      const noasClient = new NoasClient(noasApiUrl);
       const signInResponse = await noasClient.signIn(username, password);
 
       if (!signInResponse.success || !signInResponse.encryptedPrivateKey || !signInResponse.publicKey) {
@@ -1006,27 +999,20 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     password: string,
     privateKey: string,
     pubkey: string,
-    config?: { baseUrl?: string; nip05Domain?: string }
+    config?: { baseUrl?: string }
   ): Promise<boolean> => {
     if (!ndk) return false;
 
     const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
-    const noasNip05Domain = config?.nip05Domain || (() => {
-      try {
-        return noasApiUrl ? new URL(noasApiUrl).hostname : undefined;
-      } catch {
-        return undefined;
-      }
-    })();
 
-    if (!noasApiUrl || !noasNip05Domain) {
+    if (!noasApiUrl) {
       console.error("Noas configuration missing");
       return false;
     }
 
     setIsAuthenticating(true);
     try {
-      const noasClient = new NoasClient(noasApiUrl, noasNip05Domain);
+      const noasClient = new NoasClient(noasApiUrl);
       
       // Normalize the private key to nsec format
       let nsecKey: string;

@@ -15,7 +15,6 @@ describe("Noas auth forms", () => {
         onChoosePrivateKey={vi.fn()}
         isLoading={false}
         noasHostUrl="https://noas.example.com"
-        noasDomain="noas.example.com"
       />
     );
 
@@ -38,7 +37,6 @@ describe("Noas auth forms", () => {
         onNoasHostUrlChange={onNoasHostUrlChange}
         isLoading={false}
         noasHostUrl="https://noas.example.com"
-        noasDomain="noas.example.com"
       />
     );
 
@@ -66,7 +64,6 @@ describe("Noas auth forms", () => {
         onNoasHostUrlChange={vi.fn()}
         isLoading={false}
         noasHostUrl="https://custom.noas.example"
-        noasDomain="ignored.example"
       />
     );
 
@@ -77,7 +74,6 @@ describe("Noas auth forms", () => {
 
     expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
       baseUrl: "https://custom.noas.example",
-      nip05Domain: "custom.noas.example",
     });
   });
 
@@ -89,7 +85,6 @@ describe("Noas auth forms", () => {
         onBack={vi.fn()}
         isLoading={false}
         noasHostUrl="https://noas.example.com"
-        noasDomain="noas.example.com"
       />
     );
 

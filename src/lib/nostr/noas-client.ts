@@ -34,11 +34,9 @@ interface NoasUserProfile {
 
 export class NoasClient {
   private baseUrl: string;
-  private nip05Domain: string;
 
-  constructor(baseUrl: string, nip05Domain: string) {
+  constructor(baseUrl: string) {
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    this.nip05Domain = nip05Domain;
   }
 
   /**
@@ -201,7 +199,11 @@ export class NoasClient {
    * Generate NIP-05 identifier for a username
    */
   getNip05Identifier(username: string): string {
-    return `${username}@${this.nip05Domain}`;
+    try {
+      return `${username}@${new URL(this.baseUrl).hostname}`;
+    } catch {
+      return username;
+    }
   }
 
   /**

@@ -44,14 +44,14 @@ export interface NDKContextValue {
   loginWithNoas: (
     username: string,
     password: string,
-    config?: { baseUrl?: string; nip05Domain?: string }
+    config?: { baseUrl?: string }
   ) => Promise<boolean>;
   signupWithNoas: (
     username: string,
     password: string,
     privateKey: string,
     pubkey: string,
-    config?: { baseUrl?: string; nip05Domain?: string }
+    config?: { baseUrl?: string }
   ) => Promise<boolean>;
   logout: () => void;
   addRelay: (url: string) => void;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface NoasAuthFormProps {
-  onLogin: (username: string, password: string, config?: { baseUrl?: string; nip05Domain?: string }) => Promise<boolean>;
+  onLogin: (username: string, password: string, config?: { baseUrl?: string }) => Promise<boolean>;
   onSignUp?: () => void;
   onBack?: () => void;
   onChooseExtension?: () => void;
@@ -16,7 +16,6 @@ interface NoasAuthFormProps {
   isLoading: boolean;
   error?: string;
   noasHostUrl?: string;
-  noasDomain?: string;
   onNoasHostUrlChange?: (value: string) => void;
 }
 
@@ -30,7 +29,6 @@ export function NoasAuthForm({
   isLoading,
   error,
   noasHostUrl = "https://noas.example.com",
-  noasDomain = "noas.example.com",
   onNoasHostUrlChange,
 }: NoasAuthFormProps) {
   const { t } = useTranslation();
@@ -38,14 +36,13 @@ export function NoasAuthForm({
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [isEditingHostUrl, setIsEditingHostUrl] = useState(false);
-
-  const effectiveDomain = useMemo(() => {
+  const displayedHost = (() => {
     try {
-      return new URL(noasHostUrl).hostname || noasDomain;
+      return new URL(noasHostUrl).hostname || "noas.example.com";
     } catch {
-      return noasDomain;
+      return "noas.example.com";
     }
-  }, [noasDomain, noasHostUrl]);
+  })();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +60,6 @@ export function NoasAuthForm({
 
     const success = await onLogin(username.trim(), password, {
       baseUrl: noasHostUrl.trim(),
-      nip05Domain: effectiveDomain,
     });
     if (!success) {
       setLocalError(t("auth.errors.invalidCredentials") || "Invalid username or password");
@@ -146,40 +142,42 @@ export function NoasAuthForm({
               autoComplete="username"
               className="flex-1"
             />
-            <div className="flex w-44 items-center gap-1 rounded-md border bg-muted px-2">
-              <Input
-                value={effectiveDomain}
-                readOnly={!isEditingHostUrl}
-                onChange={(e) => onNoasHostUrlChange?.(`https://${e.target.value}`)}
-                aria-label={t("auth.noas.domain") || "Domain"}
-                className="h-8 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
-              />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditingHostUrl((current) => !current)}
-                      disabled={isLoading}
-                      aria-pressed={isEditingHostUrl}
-                      aria-label={t("auth.noas.editUrl") || "Edit Noas URL"}
-                      className="h-7 w-7 px-0"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t("auth.noas.editUrlWarning") || "Only change this if you are sure you know what you are doing."}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="space-y-1">
+              <div className="flex w-44 items-center gap-1 rounded-md border bg-muted px-2">
+                <Input
+                  value={displayedHost}
+                  readOnly={!isEditingHostUrl}
+                  onChange={(e) => onNoasHostUrlChange?.(`https://${e.target.value}`)}
+                  aria-label={t("auth.noas.domain") || "Domain"}
+                  className="h-8 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
+                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsEditingHostUrl((current) => !current)}
+                        disabled={isLoading}
+                        aria-pressed={isEditingHostUrl}
+                        aria-label={t("auth.noas.editUrl") || "Edit Noas URL"}
+                        className="h-7 w-7 px-0"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t("auth.noas.editUrlWarning") || "Only change this if you are sure you know what you are doing."}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <p className="w-44 text-[11px] text-muted-foreground">
+                {t("auth.noas.urlHint") || "Advanced: edit only if you intentionally use a different Noas host."}
+              </p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {t("auth.noas.urlHint") || "Advanced: edit only if you intentionally use a different Noas host."}
-          </p>
         </div>
 
         <div className="space-y-2">

@@ -68,14 +68,6 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const [editableNoasUrl, setEditableNoasUrl] = useState(defaultNoasUrl);
   const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
 
-  const derivedNoasDomain = useMemo(() => {
-    try {
-      return new URL(editableNoasUrl).hostname || "noas.example.com";
-    } catch {
-      return "noas.example.com";
-    }
-  }, [editableNoasUrl]);
-
   const hasExtension = hasNostrExtension();
   const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
@@ -157,7 +149,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const handleNoasLogin = async (
     username: string,
     password: string,
-    config?: { baseUrl?: string; nip05Domain?: string }
+    config?: { baseUrl?: string }
   ) => {
     setError(null);
     setPendingAuthMethod("noas");
@@ -181,7 +173,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     password: string,
     privateKey: string,
     pubkey: string,
-    config?: { baseUrl?: string; nip05Domain?: string }
+    config?: { baseUrl?: string }
   ) => {
     setError(null);
     setPendingAuthMethod("noas");
@@ -402,7 +394,6 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             isLoading={isAuthenticating}
             error={error || undefined}
             noasHostUrl={editableNoasUrl}
-            noasDomain={derivedNoasDomain}
             onNoasHostUrlChange={setEditableNoasUrl}
           />
         ) : step === "noasSignUp" ? (
@@ -413,7 +404,6 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             isLoading={isAuthenticating}
             error={error || undefined}
             noasHostUrl={editableNoasUrl}
-            noasDomain={derivedNoasDomain}
             onNoasHostUrlChange={setEditableNoasUrl}
           />
         ) : (
