@@ -765,10 +765,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                 <span className="text-xs text-warning">{t("auth.menu.keepSecret")}</span>
               </div>
               <div className="flex items-start gap-2">
-                <code className="block max-w-[10rem] w-full text-xs bg-muted p-2 rounded font-mono whitespace-nowrap overflow-x-auto">
+                <code className="block min-w-0 flex-1 text-xs bg-muted p-2 rounded font-mono whitespace-nowrap overflow-x-auto">
                   {showKey ? getDisplayKey() : "••••••••••••••••••••••••••••••••"}
                 </code>
-                <div className="flex flex-col gap-1">
+                <div className="flex shrink-0 items-start gap-1">
                   <Button
                     variant="ghost"
                     size="sm"

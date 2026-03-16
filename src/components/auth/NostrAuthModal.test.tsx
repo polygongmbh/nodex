@@ -306,6 +306,31 @@ describe("NostrAuthModal", () => {
     expect(editProfileItem).toHaveClass("cursor-pointer");
   });
 
+  it("lets the guest backup key row use available width and keeps copy to the right of view toggle", async () => {
+    ndkMock.user = {
+      npub: "npub1guest",
+      pubkey: "c".repeat(64),
+      profile: { name: "Guest User" },
+    };
+    ndkMock.authMethod = "guest";
+    ndkMock.getGuestPrivateKey = vi.fn(() => "1".repeat(64));
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    const trigger = screen.getByRole("button", { name: /profile: guest user/i });
+    fireEvent.keyDown(trigger, { key: "Enter" });
+
+    const keyText = await screen.findByText("••••••••••••••••••••••••••••••••");
+    const keyContainer = keyText.closest("code");
+    expect(keyContainer).not.toBeNull();
+    expect(keyContainer).toHaveClass("flex-1", "min-w-0");
+
+    const iconButtons = screen.getAllByRole("button").filter((button) => button.className.includes("h-7 w-7 p-0"));
+    expect(iconButtons).toHaveLength(2);
+    expect(iconButtons[0].querySelector(".lucide-eye")).not.toBeNull();
+    expect(iconButtons[1].querySelector(".lucide-copy")).not.toBeNull();
+  });
+
   it("ignores outside click when auth form input is dirty", () => {
     const onClose = vi.fn();
 
