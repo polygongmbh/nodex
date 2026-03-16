@@ -1,9 +1,10 @@
 import { Channel, ChannelMatchMode } from "@/types";
 import { z } from "zod";
-
-const ACTIVE_RELAYS_STORAGE_KEY = "nodex.active-relays.v1";
-const CHANNEL_FILTERS_STORAGE_KEY = "nodex.channel-filters.v1";
-const CHANNEL_MATCH_MODE_STORAGE_KEY = "nodex.channel-match-mode.v1";
+import {
+  ACTIVE_RELAYS_STORAGE_KEY,
+  CHANNEL_FILTERS_STORAGE_KEY,
+  CHANNEL_MATCH_MODE_STORAGE_KEY,
+} from "./storage-registry";
 
 type PersistedChannelFilters = Record<string, Channel["filterState"]>;
 const relayIdsSchema = z.array(z.string());

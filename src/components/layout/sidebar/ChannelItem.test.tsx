@@ -37,4 +37,94 @@ describe("ChannelItem", () => {
     expect(onExclusive).not.toHaveBeenCalled();
   });
 
+  it("renders pin button when onPin is provided", () => {
+    render(
+      <ChannelItem
+        channel={baseChannel}
+        onToggle={vi.fn()}
+        onExclusive={vi.fn()}
+        onPin={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("button", { name: /pin #general/i })).toBeInTheDocument();
+  });
+
+  it("does not render pin button when neither onPin nor onUnpin is provided", () => {
+    render(<ChannelItem channel={baseChannel} onToggle={vi.fn()} onExclusive={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: /pin #general/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /unpin #general/i })).not.toBeInTheDocument();
+  });
+
+  it("calls onPin when pin button is clicked and channel is not pinned", () => {
+    const onPin = vi.fn();
+    const onToggle = vi.fn();
+
+    render(
+      <ChannelItem
+        channel={baseChannel}
+        onToggle={onToggle}
+        onExclusive={vi.fn()}
+        isPinned={false}
+        onPin={onPin}
+        onUnpin={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /pin #general/i }));
+
+    expect(onPin).toHaveBeenCalledTimes(1);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it("calls onUnpin when pin button is clicked and channel is pinned", () => {
+    const onUnpin = vi.fn();
+    const onToggle = vi.fn();
+
+    render(
+      <ChannelItem
+        channel={baseChannel}
+        onToggle={onToggle}
+        onExclusive={vi.fn()}
+        isPinned={true}
+        onPin={vi.fn()}
+        onUnpin={onUnpin}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /unpin #general/i }));
+
+    expect(onUnpin).toHaveBeenCalledTimes(1);
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it("pin button is visible when channel is pinned", () => {
+    render(
+      <ChannelItem
+        channel={baseChannel}
+        onToggle={vi.fn()}
+        onExclusive={vi.fn()}
+        isPinned={true}
+        onPin={vi.fn()}
+        onUnpin={vi.fn()}
+      />
+    );
+    const btn = screen.getByRole("button", { name: /unpin #general/i });
+    expect(btn).not.toHaveClass("opacity-0");
+  });
+
+  it("pin button has opacity-0 class when channel is not pinned", () => {
+    render(
+      <ChannelItem
+        channel={baseChannel}
+        onToggle={vi.fn()}
+        onExclusive={vi.fn()}
+        isPinned={false}
+        onPin={vi.fn()}
+        onUnpin={vi.fn()}
+      />
+    );
+    const btn = screen.getByRole("button", { name: /pin #general/i });
+    expect(btn).toHaveClass("opacity-0");
+  });
+
 });

@@ -7,6 +7,8 @@ import {
   isPrimarySubmitKey,
 } from "./composer-shortcuts";
 
+type ModifierEvent = Parameters<typeof hasAnyModifierActive>[0];
+
 describe("composer shortcut helpers", () => {
   const base = {
     altKey: false,
@@ -42,6 +44,6 @@ describe("composer shortcut helpers", () => {
     };
     expect(isMetadataOnlyAutocompleteClick(withAltState)).toBe(true);
     expect(hasAnyModifierActive(withAltState)).toBe(true);
-    expect(hasAnyModifierActive({ ...base, key: "Enter" })).toBe(false);
+    expect(hasAnyModifierActive({ ...base, key: "Enter" } as ModifierEvent)).toBe(false);
   });
 });

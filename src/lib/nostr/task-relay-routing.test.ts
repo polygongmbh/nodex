@@ -99,4 +99,14 @@ describe("resolveRelaySelectionForSubmission", () => {
     expect(taskResult.relayIds).toEqual(["relay-b"]);
     expect(commentResult.relayIds).toEqual(["relay-b"]);
   });
+
+  it("does not inject demo relay fallback when demo relay is disabled", () => {
+    const result = resolveRelaySelectionForSubmission({
+      taskType: "comment",
+      selectedRelayIds: [],
+      relays: relays.filter((relay) => relay.id !== "demo"),
+      demoRelayId: undefined,
+    });
+    expect(result.relayIds).toEqual([]);
+  });
 });

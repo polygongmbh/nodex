@@ -8,6 +8,7 @@ import {
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -16,9 +17,9 @@ import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/taskSorting";
+import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
@@ -40,6 +41,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -134,7 +136,7 @@ export function ListView({
 }: ListViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
-  const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
+  const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   
@@ -349,6 +351,10 @@ export function ListView({
 
   const canCompleteTask = (task: Task) => {
     return Boolean(user) && !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+  };
+  const getStatusButtonTitle = (task: Task) => {
+    if (canCompleteTask(task)) return t("tasks.actions.setStatus");
+    return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || t("tasks.actions.setStatus");
   };
   const focusedTask = focusedTaskId ? allTasks.find((t) => t.id === focusedTaskId) : null;
 
@@ -687,6 +693,7 @@ export function ListView({
                       <button
                         onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
                         disabled={!canCompleteTask(task)}
+                        title={getStatusButtonTitle(task)}
                         className={cn(
                           "p-0.5 rounded transition-colors",
                           canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"

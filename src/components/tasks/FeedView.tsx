@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState } from "react";
+import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
 import {
@@ -15,6 +15,7 @@ import {
   ComposeRestoreRequest,
   PublishedAttachment,
   Nip99Metadata,
+  TaskStateUpdate,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -25,16 +26,17 @@ import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
-import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";
 import { formatAuthorMetaParts } from "@/lib/person-label";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
-import { getDueDateColorClass } from "@/lib/taskSorting";
+import { getDueDateColorClass } from "@/lib/task-sorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
 import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
+import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +45,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
+import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -70,6 +75,15 @@ interface FeedViewProps extends SharedTaskViewContext {
   } | null;
   isInteractionBlocked?: boolean;
 }
+
+type FeedEntry =
+  | { type: "task"; id: string; timestamp: Date; task: Task }
+  | { type: "state-update"; id: string; timestamp: Date; task: Task; update: TaskStateUpdate };
+
+const INITIAL_VISIBLE_FEED_ENTRIES = 40;
+const FEED_REVEAL_BATCH_SIZE = 30;
+const FEED_REVEAL_DELAY_MS = 80;
+const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
 
 export function FeedView({
   tasks,
@@ -121,7 +135,7 @@ export function FeedView({
 
   const { user } = useNDK();
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
-  const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
+  const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
 
   useEffect(() => {
     if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
@@ -159,6 +173,53 @@ export function FeedView({
     () => [...filteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
     [filteredFeedTasks]
   );
+  const feedEntries = useMemo<FeedEntry[]>(() => {
+    const entries: FeedEntry[] = [];
+    for (const task of feedTasks) {
+      entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
+      for (const update of task.stateUpdates || []) {
+        entries.push({
+          type: "state-update",
+          id: `${task.id}-state-${update.id}`,
+          timestamp: update.timestamp,
+          task,
+          update,
+        });
+      }
+    }
+    return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }, [feedTasks]);
+  const activeChannelFiltersKey = useMemo(
+    () => channels
+      .filter((channel) => channel.filterState && channel.filterState !== "neutral")
+      .map((channel) => `${channel.id}:${channel.filterState}`)
+      .sort()
+      .join(","),
+    [channels]
+  );
+  const selectedPeopleKey = useMemo(
+    () => people
+      .filter((person) => person.isSelected)
+      .map((person) => person.id)
+      .sort()
+      .join(","),
+    [people]
+  );
+  const feedDisclosureKey = useMemo(
+    () => [
+      focusedTaskId || "",
+      searchQuery.trim().toLowerCase(),
+      channelMatchMode,
+      activeChannelFiltersKey,
+      selectedPeopleKey,
+    ].join("|"),
+    [activeChannelFiltersKey, channelMatchMode, focusedTaskId, searchQuery, selectedPeopleKey]
+  );
+  const [visibleEntryCount, setVisibleEntryCount] = useState(INITIAL_VISIBLE_FEED_ENTRIES);
+  const visibleFeedEntries = useMemo(
+    () => feedEntries.slice(0, visibleEntryCount),
+    [feedEntries, visibleEntryCount]
+  );
   const {
     mediaItems,
     activeMediaIndex,
@@ -187,6 +248,67 @@ export function FeedView({
 
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const revealMoreEntries = useCallback((reason: "timer" | "scroll" | "focus") => {
+    if (feedEntries.length <= visibleEntryCount) return;
+    startTransition(() => {
+      setVisibleEntryCount((previous) => {
+        const next = Math.min(feedEntries.length, previous + FEED_REVEAL_BATCH_SIZE);
+        if (next !== previous) {
+          nostrDevLog("feed", "Revealed incremental feed batch", {
+            reason,
+            visibleEntryCount: next,
+            totalEntryCount: feedEntries.length,
+          });
+        }
+        return next;
+      });
+    });
+  }, [feedEntries.length, visibleEntryCount]);
+
+  useEffect(() => {
+    startTransition(() => {
+      setVisibleEntryCount(INITIAL_VISIBLE_FEED_ENTRIES);
+    });
+  }, [feedDisclosureKey]);
+
+  useEffect(() => {
+    if (feedEntries.length <= visibleEntryCount) return;
+    const timeoutId = window.setTimeout(() => {
+      revealMoreEntries("timer");
+    }, FEED_REVEAL_DELAY_MS);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [feedEntries.length, revealMoreEntries, visibleEntryCount]);
+
+  useEffect(() => {
+    if (!focusedTaskId) return;
+    const focusedIndex = feedEntries.findIndex(
+      (entry) => entry.type === "task" && entry.task.id === focusedTaskId
+    );
+    if (focusedIndex === -1 || focusedIndex < visibleEntryCount) return;
+    startTransition(() => {
+      setVisibleEntryCount((previous) => {
+        const next = Math.min(feedEntries.length, focusedIndex + 1 + FEED_REVEAL_BATCH_SIZE);
+        if (next !== previous) {
+          nostrDevLog("feed", "Expanded feed window to include focused task", {
+            focusedTaskId,
+            visibleEntryCount: next,
+            totalEntryCount: feedEntries.length,
+          });
+        }
+        return next;
+      });
+    });
+  }, [feedEntries, focusedTaskId, visibleEntryCount]);
+
+  const handleFeedScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
+    const remainingDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
+    if (remainingDistance > FEED_REVEAL_SCROLL_THRESHOLD_PX) return;
+    revealMoreEntries("scroll");
+  }, [revealMoreEntries]);
+
   useEffect(() => {
     if (keyboardFocusedTaskId && scrollContainerRef.current) {
       const element = scrollContainerRef.current.querySelector(
@@ -231,6 +353,21 @@ export function FeedView({
   const canCompleteTask = (task: Task) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
+  const getStatusButtonTitle = (task: Task) => {
+    if (canCompleteTask(task)) return getStatusToggleHint(task.status);
+    return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || getStatusToggleHint(task.status);
+  };
+  const getStateLabel = (status: Task["status"]) => {
+    if (status === "done") return t("listView.status.done");
+    if (status === "in-progress") return t("listView.status.inProgress");
+    return t("listView.status.todo");
+  };
+  const normalizeLabelText = (value?: string) =>
+    (value || "")
+      .toLowerCase()
+      .replace(/[-_]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
   const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {
     const breadcrumb: { id: string; text: string }[] = [];
@@ -240,7 +377,7 @@ export function FeedView({
       if (parent) {
         breadcrumb.unshift({
           id: parent.id,
-          text: parent.content.slice(0, 20) + (parent.content.length > 20 ? "..." : "")
+          text: parent.content
         });
         current = parent;
       } else {
@@ -307,14 +444,101 @@ export function FeedView({
       />
 
       {/* Feed List */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto" data-onboarding="task-list">
-        {feedTasks.length === 0 ? (
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto"
+        data-onboarding="task-list"
+        onScroll={handleFeedScroll}
+      >
+        {feedEntries.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             <p>{t("tasks.empty.feed")}</p>
           </div>
         ) : (
-          feedTasks.map((task) => {
-            const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
+          visibleFeedEntries.map((entry) => {
+            if (entry.type === "state-update") {
+              const { task, update } = entry;
+              const resolvedUpdateAuthor =
+                people.find((person) => person.id.toLowerCase() === update.authorPubkey.toLowerCase()) || task.author;
+              const updateAuthorMeta = formatAuthorMetaParts({
+                personId: resolvedUpdateAuthor.id,
+                displayName: resolvedUpdateAuthor.displayName,
+                username: resolvedUpdateAuthor.name,
+              });
+              const updateTimeLabel = isMobile
+                ? formatCompactRelativeTime(update.timestamp)
+                : formatDistanceToNow(update.timestamp, { addSuffix: true });
+              const taskSummary = task.content.slice(0, 40) + (task.content.length > 40 ? "..." : "");
+              const stateLabel = getStateLabel(update.status);
+              const statusDescription = update.statusDescription?.trim();
+              const isDefaultInProgressDescription =
+                update.status === "in-progress" &&
+                normalizeLabelText(statusDescription) === normalizeLabelText("In Progress");
+              const showStatusDescription =
+                Boolean(statusDescription) &&
+                !isDefaultInProgressDescription &&
+                normalizeLabelText(statusDescription) !== normalizeLabelText(stateLabel);
+
+              return (
+                <div
+                  key={entry.id}
+                  data-testid={`feed-state-entry-${update.id}`}
+                  onClick={() => onFocusTask?.(task.id)}
+                  className={cn(
+                    "border-b border-border px-4 py-1.5 hover:bg-card/50 transition-colors cursor-pointer",
+                    isMobile && "px-3 py-1.5"
+                  )}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    {update.status === "done" ? (
+                      <CheckCircle2 className={cn("text-primary flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                    ) : update.status === "in-progress" ? (
+                      <CircleDot className={cn("text-warning flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                    ) : (
+                      <Circle className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                    )}
+                    <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-1 overflow-hidden whitespace-nowrap">
+                      <span>{stateLabel}</span>
+                      {showStatusDescription && (
+                        <span className="truncate">{`: ${statusDescription}`}</span>
+                      )}
+                      <span className="shrink-0">·</span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onFocusTask?.(task.id);
+                        }}
+                        className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "font-semibold text-foreground shrink-0")}
+                        title={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
+                        aria-label={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
+                      >
+                        {taskSummary}
+                      </button>
+                      <span className="shrink-0">·</span>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onAuthorClick?.(resolvedUpdateAuthor);
+                        }}
+                        className="hover:text-foreground shrink-0"
+                        aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
+                        title={resolvedUpdateAuthor.id}
+                      >
+                        {updateAuthorMeta.primary}
+                      </button>
+                      <span className="shrink-0">·</span>
+                      <span className="shrink-0" title={getStatusUpdatedTooltip(update.timestamp)}>
+                        {updateTimeLabel}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            const task = entry.task;
             const isComment = task.taskType === "comment";
             const isListing = Boolean(task.feedMessageType);
             const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
@@ -378,8 +602,12 @@ export function FeedView({
                 data-task-id={task.id}
                 onClick={() => onFocusTask?.(task.id)}
                 className={cn(
-                  "border-b border-border p-4 hover:bg-card/50 transition-colors cursor-pointer",
-                  isMobile && "p-3",
+                  "border-b border-border hover:bg-card/50 transition-colors cursor-pointer",
+                  isMobile
+                    ? "p-3"
+                    : breadcrumb.length > 0
+                      ? "px-4 pb-4 pt-2.5"
+                      : "p-4",
                   isCompletedVisual && "opacity-60",
                   isLockedUntilStart && "opacity-50 grayscale",
                   isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
@@ -387,16 +615,20 @@ export function FeedView({
               >
                 {/* Parent breadcrumb - clickable */}
                 {breadcrumb.length > 0 && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                  <div className="mb-1.5 flex min-w-0 items-center gap-1 overflow-hidden text-xs text-muted-foreground">
                     {breadcrumb.map((crumb, i) => (
-                      <span key={crumb.id} className="flex items-center gap-1">
-                        {i > 0 && <span>/</span>}
+                      <span key={crumb.id} className="flex min-w-0 items-center gap-1">
+                        {i > 0 && <span className="shrink-0">/</span>}
                         <button
                           onClick={(event) => {
                             event.stopPropagation();
                             onFocusTask?.(crumb.id);
                           }}
-                          className={`${TASK_INTERACTION_STYLES.hoverLinkText} cursor-pointer`}
+                          className={cn(
+                            TASK_INTERACTION_STYLES.hoverLinkText,
+                            "min-w-0 cursor-pointer truncate whitespace-nowrap text-left",
+                            breadcrumb.length > 1 ? "max-w-[18rem] sm:max-w-[22rem]" : "max-w-full"
+                          )}
                           title={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
                           aria-label={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
                         >
@@ -473,9 +705,10 @@ export function FeedView({
                           }}
                           disabled={!canCompleteTask(task)}
                           aria-label={t("tasks.actions.setStatus")}
-                          title={getStatusToggleHint(task.status)}
+                          title={getStatusButtonTitle(task)}
                           className={cn(
-                            "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                            "flex-shrink-0 mt-0.5 rounded transition-colors",
+                            isMobile ? "p-1.5" : "p-0.5",
                             canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
                           )}
                         >
@@ -526,7 +759,8 @@ export function FeedView({
                         }
                         aria-label={listingStatus === "sold" ? "Listing sold" : "Listing active"}
                         className={cn(
-                          "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
+                          "flex-shrink-0 mt-0.5 rounded transition-colors",
+                          isMobile ? "p-1.5" : "p-0.5",
                           canUpdateListingStatus ? "hover:bg-muted cursor-pointer" : "cursor-default"
                         )}
                       >
@@ -547,7 +781,7 @@ export function FeedView({
                         )}
                       </button>
                     ) : (
-                      <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                      <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4 mx-1.5" : "w-5 h-5")} />
                     )
                   )}
 
@@ -613,7 +847,12 @@ export function FeedView({
                         )}
                       </button>
                       <span className="shrink-0">·</span>
-                      <span className="shrink-0">{timeLabel}</span>
+                      <span
+                        className="shrink-0"
+                        title={isComment ? getCommentCreatedTooltip(task.timestamp) : getTaskCreatedTooltip(task.timestamp)}
+                      >
+                        {timeLabel}
+                      </span>
                       {!isComment && typeof task.priority === "number" && (
                         <>
                           <span className="shrink-0">·</span>
@@ -667,9 +906,10 @@ export function FeedView({
                               inline
                             />
                             {task.locationGeohash && (
-                              <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
-                                {`📍 ${task.locationGeohash}`}
-                              </span>
+                              <TaskLocationChip
+                                geohash={task.locationGeohash}
+                                className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
+                              />
                             )}
                             {task.tags.map((tag) => (
                               <button

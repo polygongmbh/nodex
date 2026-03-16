@@ -24,7 +24,13 @@ export function shouldSetVerificationFailedStatus(
   source: RelayVerificationFailureSource,
   operation: RelayVerificationEvent["operation"]
 ): boolean {
-  return source === "subscription-closed" && operation === "read";
+  if (source === "subscription-closed") {
+    return operation === "read";
+  }
+  if (source === "auth-policy") {
+    return operation === "read" || operation === "write";
+  }
+  return false;
 }
 
 export function shouldRetryAuthAfterReadRejection(params: {
@@ -41,10 +47,44 @@ export function shouldRetryAuthAfterReadRejection(params: {
   return (params.now - params.lastRetryAt) >= cooldownMs;
 }
 
-export function shouldRetryNip42AfterSignIn(relay: {
+export function shouldReconnectRelayAfterSignIn(relay: {
+  status?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   nip11?: {
     supportsNip42?: boolean;
+    authRequired?: boolean;
   };
 }): boolean {
-  return relay.nip11?.supportsNip42 === true;
+  return (
+    relay.status === "connection-error" ||
+    relay.status === "disconnected" ||
+    relay.status === "verification-failed" ||
+    relay.status === "read-only"
+  );
+}
+
+export function shouldReconnectRelayAfterResume(relay: {
+  status?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
+}): boolean {
+  return relay.status === "disconnected" || relay.status === "connection-error";
+}
+
+interface RelayReadAuthState {
+  status?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
+  nip11?: {
+    authRequired?: boolean;
+  };
+}
+
+export function isRelayReadAuthRequired(relay: RelayReadAuthState): boolean {
+  if (relay.status === "verification-failed") return true;
+  return relay.nip11?.authRequired === true;
+}
+
+export function shouldForceSignInForReadAccess(params: {
+  isSignedIn: boolean;
+  relays: RelayReadAuthState[];
+}): boolean {
+  if (params.isSignedIn) return false;
+  if (params.relays.length === 0) return false;
+  return params.relays.every((relay) => isRelayReadAuthRequired(relay));
 }

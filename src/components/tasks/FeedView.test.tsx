@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
 import { formatAuthorMetaLabel } from "@/lib/person-label";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
+import i18n from "@/lib/i18n/config";
 
 vi.mock("@/lib/nostr/ndk-context", () => ({
   useNDK: () => ({ user: null }),
@@ -51,6 +52,115 @@ describe("FeedView", () => {
     fireEvent.click(screen.getByRole("button", { name: /focus task: root task #general/i }));
     expect(onFocusTask).toHaveBeenCalledWith("root");
     expect(onFocusTask).not.toHaveBeenCalledWith("child");
+  });
+
+  it("hydrates the feed incrementally instead of mounting all entries at once", () => {
+    vi.useFakeTimers();
+    const manyTasks = Array.from({ length: 75 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: `Task ${index + 1} #general`,
+        author,
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 75 - index),
+      })
+    );
+
+    const { container } = render(
+      <FeedView
+        tasks={manyTasks}
+        allTasks={manyTasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+
+    act(() => {
+      vi.advanceTimersByTime(80);
+    });
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
+
+    act(() => {
+      vi.advanceTimersByTime(80);
+    });
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(75);
+    vi.useRealTimers();
+  });
+
+  it("renders breadcrumb buttons as single-line left-aligned truncating labels", () => {
+    const root = makeTask({ id: "root", content: "Root breadcrumb label that should not wrap", author, status: "todo" });
+    const child = makeTask({
+      id: "child",
+      parentId: "root",
+      content: "Child task #general",
+      author,
+      status: "todo",
+    });
+
+    render(
+      <FeedView
+        tasks={[child]}
+        allTasks={[root, child]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    const breadcrumbButton = screen.getByRole("button", { name: /focus task: root breadcrumb label that should not wrap/i });
+    // Product contract: feed breadcrumbs must remain left-aligned and single-line when labels are long.
+    expect(breadcrumbButton).toHaveClass("truncate", "whitespace-nowrap", "text-left");
+  });
+
+  it("uses tighter capped widths for multi-level task-card breadcrumbs", () => {
+    const root = makeTask({ id: "root", content: "Root breadcrumb", author, status: "todo" });
+    const middle = makeTask({
+      id: "middle",
+      parentId: "root",
+      content: "Middle breadcrumb",
+      author,
+      status: "todo",
+    });
+    const leaf = makeTask({
+      id: "leaf",
+      parentId: "middle",
+      content: "Leaf task",
+      author,
+      status: "todo",
+    });
+
+    render(
+      <FeedView
+        tasks={[leaf]}
+        allTasks={[root, middle, leaf]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    const rootButton = screen.getByRole("button", { name: /focus task: root breadcrumb/i });
+    const middleButton = screen.getByRole("button", { name: /focus task: middle breadcrumb/i });
+    // Product contract: multi-level task-card breadcrumbs should keep compact, capped per-element widths.
+    expect(rootButton.parentElement).not.toHaveClass("flex-1");
+    expect(middleButton.parentElement).not.toHaveClass("flex-1");
+    expect(rootButton).toHaveClass("max-w-[18rem]", "sm:max-w-[22rem]", "truncate");
+    expect(middleButton).toHaveClass("max-w-[18rem]", "sm:max-w-[22rem]", "truncate");
   });
 
   it("shortens fallback pubkey label on slim desktop widths", async () => {
@@ -157,6 +267,10 @@ describe("FeedView", () => {
     expect(
       screen.getByText((_, element) => element?.textContent === expectedLabel)
     ).toBeInTheDocument();
+    expect(screen.getByTitle(/task created at/i)).toHaveAttribute(
+      "title",
+      expect.stringMatching(/task created at .*\d{2}:\d{2}:\d{2}/i)
+    );
   });
 
   it("hides secondary author metadata on mobile for a denser header row", () => {
@@ -258,6 +372,128 @@ describe("FeedView", () => {
     );
 
     expect(screen.getByText("alice")).toBeInTheDocument();
+  });
+
+  it("renders task state updates as standalone compact feed items with task breadcrumb context", () => {
+    const taskWithStateUpdates = makeTask({
+      id: "task-state",
+      author,
+      content: "Reconnect relays after resume #infra",
+      status: "todo",
+      stateUpdates: [
+        {
+          id: "state-2",
+          status: "in-progress",
+          statusDescription: "Working on relay reconnect",
+          timestamp: new Date(Date.now() - 5 * 60 * 1000),
+          authorPubkey: author.id,
+        },
+        {
+          id: "state-1",
+          status: "todo",
+          statusDescription: "Unblocked",
+          timestamp: new Date(Date.now() - 20 * 60 * 1000),
+          authorPubkey: author.id,
+        },
+      ],
+    });
+
+    render(
+      <FeedView
+        tasks={[taskWithStateUpdates]}
+        allTasks={[taskWithStateUpdates]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/working on relay reconnect/i)).toBeInTheDocument();
+    expect(screen.getByTestId("feed-state-entry-state-2")).toHaveTextContent(/in progress:\s*working on relay reconnect/i);
+    expect(screen.getByText(/unblocked/i)).toBeInTheDocument();
+    expect(screen.getAllByTestId(/feed-state-entry-/)).toHaveLength(2);
+    expect(screen.getAllByTitle(/status updated at/i)).toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", { name: /focus task: reconnect relays after resume #infra/i })
+    ).toHaveLength(2);
+  });
+
+  it("does not duplicate state label when status description matches it", () => {
+    const taskWithStateUpdate = makeTask({
+      id: "task-state-dedupe",
+      author,
+      content: "Task state update test #test",
+      status: "todo",
+      stateUpdates: [
+        {
+          id: "state-dedupe",
+          status: "in-progress",
+          statusDescription: "In Progress",
+          timestamp: new Date(Date.now() - 5 * 60 * 1000),
+          authorPubkey: author.id,
+        },
+      ],
+    });
+
+    render(
+      <FeedView
+        tasks={[taskWithStateUpdate]}
+        allTasks={[taskWithStateUpdate]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText("In Progress")).toHaveLength(1);
+  });
+
+  it("omits english default in-progress description when ui language is german", async () => {
+    await i18n.changeLanguage("de");
+    try {
+      const taskWithStateUpdate = makeTask({
+        id: "task-state-dedupe-german",
+        author,
+        content: "Task state update test #test",
+        status: "todo",
+        stateUpdates: [
+          {
+            id: "state-dedupe-german",
+            status: "in-progress",
+            statusDescription: "In Progress",
+            timestamp: new Date(Date.now() - 5 * 60 * 1000),
+            authorPubkey: author.id,
+          },
+        ],
+      });
+
+      render(
+        <FeedView
+          tasks={[taskWithStateUpdate]}
+          allTasks={[taskWithStateUpdate]}
+          relays={relays}
+          channels={channels}
+          people={[author]}
+          searchQuery=""
+          onSearchChange={vi.fn()}
+          onNewTask={vi.fn()}
+          onToggleComplete={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText("In Arbeit")).toBeInTheDocument();
+      expect(screen.queryByText("In Progress")).not.toBeInTheDocument();
+    } finally {
+      await i18n.changeLanguage("en");
+    }
   });
 
 });

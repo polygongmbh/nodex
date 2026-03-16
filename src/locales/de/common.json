@@ -214,7 +214,9 @@
       "togglePerson": "{{name}} umschalten",
       "showOnlyPerson": "Nur {{name}} anzeigen",
       "selected": "{{name}} ausgewählt",
-      "me": "Ich"
+      "me": "Ich",
+      "pinChannelToView": "#{{name}} an diese Ansicht anheften",
+      "unpinChannelFromView": "#{{name}} von dieser Ansicht lösen"
     }
   },
   "hints": {
@@ -227,7 +229,7 @@
   "breadcrumbs": {
     "up": "Hoch",
     "goToParent": "Zur übergeordneten Aufgabe wechseln",
-    "allTasks": "Alle Aufgaben",
+    "allTasks": "Alle",
     "showAllTasks": "Alle Aufgaben anzeigen"
   },
   "shortcuts": {
@@ -350,7 +352,14 @@
       "skip": "Überspringen",
       "back": "Zurück",
       "finish": "Fertig",
-      "next": "Weiter"
+      "next": "Weiter",
+      "breadcrumbFallback": {
+        "title": "Breadcrumb ist gerade nicht sichtbar",
+        "description": "Öffne zuerst einen Aufgabenkontext, überspringe diesen Schritt oder beende den Guide.",
+        "openTask": "Aufgabenkontext öffnen",
+        "skipStep": "Schritt überspringen",
+        "endGuide": "Guide beenden"
+      }
     },
     "sections": {
       "navigation": {
@@ -550,7 +559,8 @@
   },
   "search": {
     "desktop": {
-      "placeholder": "Aufgaben suchen..."
+      "placeholder": "Aufgaben suchen...",
+      "clear": "Suche löschen"
     },
     "kanban": {
       "depthHint": "Kanban-Tiefenfilter: Root-Aufgaben, begrenzte Tiefe, alle Ebenen oder nur Blätter (Aufgaben ohne Unteraufgaben)",
@@ -641,6 +651,9 @@
       "connectingAuthRequired": "verbindet (Auth erforderlich)",
       "verificationFailedAuthRequired": "Lesen abgelehnt (Auth erforderlich)",
       "readRejectedAuthRequired": "Lesen abgelehnt (Auth erforderlich)"
+    },
+    "statusHints": {
+      "readOnly": "Lesen von diesem Relay funktioniert weiter, aber Veröffentlichen dorthin ist derzeit nicht verfügbar."
     },
     "details": {
       "show": "Relay-Details anzeigen",

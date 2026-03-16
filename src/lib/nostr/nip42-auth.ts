@@ -1,7 +1,7 @@
 // NIP-42 Authentication Challenge/Response
 // https://github.com/nostr-protocol/nips/blob/master/42.md
 
-import { NDKEvent, NDKSigner, NDK } from "@nostr-dev-kit/ndk";
+import NDK, { NDKEvent, NDKSigner } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "./types";
 
 /**

@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import type { Person, Task } from "@/types";
-import { canUserChangeTaskStatus, extractAssignedMentionsFromContent } from "./task-permissions";
+import {
+  canUserChangeTaskStatus,
+  extractAssignedMentionsFromContent,
+  getTaskStatusChangeBlockedReason,
+} from "./task-permissions";
 
 const user: Person = {
   id: "user-1",
@@ -28,6 +32,17 @@ const baseTask: Task = {
 describe("canUserChangeTaskStatus", () => {
   it("allows status changes for unassigned tasks", () => {
     expect(canUserChangeTaskStatus(baseTask, user)).toBe(true);
+  });
+
+  it("blocks status changes for unassigned tasks owned by another user", () => {
+    const otherAuthor: Person = {
+      ...user,
+      id: "other-user",
+      name: "bob",
+      displayName: "Bob",
+      nip05: "bob@example.com",
+    };
+    expect(canUserChangeTaskStatus({ ...baseTask, author: otherAuthor }, user)).toBe(false);
   });
 
   it("blocks status changes for assigned tasks when user is not assignee", () => {
@@ -86,5 +101,68 @@ describe("extractAssignedMentionsFromContent", () => {
     expect(extractAssignedMentionsFromContent("pair with @alice@example.com")).toEqual([
       "alice@example.com",
     ]);
+  });
+});
+
+describe("getTaskStatusChangeBlockedReason", () => {
+  it("returns assignee-focused message when task is assigned to another user", () => {
+    const otherAuthor: Person = {
+      ...user,
+      id: "other-user",
+      name: "bob",
+      displayName: "Bob",
+      nip05: "bob@example.com",
+    };
+    expect(
+      getTaskStatusChangeBlockedReason(
+        { ...baseTask, mentions: ["bob"], author: otherAuthor },
+        user
+      )
+    ).toContain("assigned to Bob (@bob, bob@example.com, other-user)");
+  });
+
+  it("does not trim pubkeys in assignee-focused message", () => {
+    const pubkey = "f".repeat(64);
+    expect(getTaskStatusChangeBlockedReason({ ...baseTask, mentions: [pubkey] }, user)).toContain(pubkey);
+  });
+
+  it("returns owner-focused message when unassigned task belongs to another user", () => {
+    const otherAuthor: Person = {
+      ...user,
+      id: "other-user",
+      name: "bob",
+      displayName: "Bob",
+      nip05: "bob@example.com",
+    };
+    const reason = getTaskStatusChangeBlockedReason({ ...baseTask, author: otherAuthor }, user);
+    expect(reason).toContain("belongs to");
+    expect(reason).toContain("Bob (@bob, bob@example.com, other-user)");
+  });
+
+  it("enriches owner identity from known people context", () => {
+    const sparseAuthor: Person = {
+      ...user,
+      id: "pubkey-123",
+      name: "pubkey123",
+      displayName: "pubkey-123",
+      nip05: undefined,
+    };
+    const knownPerson: Person = {
+      ...sparseAuthor,
+      displayName: "Ryan",
+      name: "ryan",
+      nip05: "ryan@example.com",
+    };
+    const reason = getTaskStatusChangeBlockedReason(
+      { ...baseTask, author: sparseAuthor },
+      user,
+      false,
+      [knownPerson]
+    );
+    expect(reason).toContain("Ryan (@ryan, ryan@example.com, pubkey-123)");
+  });
+
+  it("returns interaction-blocked message when edits are globally blocked", () => {
+    expect(getTaskStatusChangeBlockedReason(baseTask, user, true)).toBe("Editing is currently unavailable.");
   });
 });

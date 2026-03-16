@@ -1,16 +1,15 @@
 import { Suspense, lazy, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Sidebar, SidebarHeader } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { DesktopSearchDock, type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
-import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
+import { ViewSwitcher } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
-import { NOSTR_EVENTS_QUERY_KEY, useNostrEventCache } from "@/hooks/use-nostr-event-cache";
+import { useFeedNavigation } from "@/hooks/use-feed-navigation";
+import { useNostrEventCache } from "@/hooks/use-nostr-event-cache";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
@@ -19,146 +18,64 @@ import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
-import { VersionHint } from "@/components/layout/VersionHint";
-import { getOnboardingSections } from "@/components/onboarding/onboarding-sections";
-import { getOnboardingStepsBySection } from "@/components/onboarding/onboarding-steps";
-import { OnboardingInitialSection, OnboardingSectionId } from "@/components/onboarding/onboarding-types";
-import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
-import { deriveChannels } from "@/lib/channels";
+import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl } from "@/lib/nostr/event-converter";
 import {
-  loadPersistedChannelMatchMode,
-  loadPersistedChannelFilters,
-  savePersistedChannelMatchMode,
-  savePersistedChannelFilters,
-} from "@/lib/filter-preferences";
+  getPinnedChannelIdsForView,
+} from "@/lib/pinned-channels-preferences";
 import {
-  getChannelFrecencyScores,
+  saveChannelFrecencyState,
   loadChannelFrecencyState,
   recordChannelInteraction,
-  saveChannelFrecencyState,
   type ChannelFrecencyState,
 } from "@/lib/channel-frecency";
-import { loadSavedFilterState, saveSavedFilterState } from "@/lib/saved-filter-configurations";
-import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
-import { resolveCurrentUser } from "@/lib/current-user";
-import { canUserChangeTaskStatus, extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { isTaskStateEventKind, mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
-import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/nip52-task-calendar-events";
-import { buildTaskPriorityUpdateEvent, isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
-import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import {
   buildImetaTag,
-  extractEmbeddableAttachmentsFromContent,
-  normalizePublishedAttachments,
 } from "@/lib/attachments";
-import {
-  resolveOriginRelayIdForTask,
-  resolveRelaySelectionForSubmission,
-} from "@/lib/nostr/task-relay-routing";
-import {
-  derivePeopleFromKind0Events,
-  loadCachedKind0Events,
-  loadLoggedInIdentityPriority,
-  mergeKind0EventsWithCache,
-  rememberCachedKind0Profile,
-  rememberLoggedInIdentity,
-  saveCachedKind0Events,
-} from "@/lib/nostr/people-from-kind0";
-import {
-  loadFailedPublishDrafts,
-  saveFailedPublishDrafts,
-  type FailedPublishDraft,
-} from "@/lib/failed-publish-drafts";
-import { loadOnboardingState, markOnboardingCompleted } from "@/lib/onboarding-state";
-import { shouldAutoStartOnboarding } from "@/lib/onboarding-autostart";
+import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasks } from "@/lib/task-filtering";
-import { deriveSidebarPeople } from "@/lib/sidebar-people";
-import { loadPresencePublishingEnabled } from "@/lib/presence-preferences";
-import { loadPublishDelayEnabled } from "@/lib/publish-delay-preferences";
-import {
-  loadCompletionSoundEnabled,
-  saveCompletionSoundEnabled,
-} from "@/lib/completion-feedback-preferences";
-import { playCompletionPopSound } from "@/lib/completion-feedback";
+import { loadPresencePublishingEnabled } from "@/lib/user-preferences";
 import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
   buildActivePresenceContent,
   buildOfflinePresenceContent,
   buildPresenceTags,
-  deriveLatestActivePresenceByAuthor,
 } from "@/lib/presence-status";
-import { getOnboardingBehaviorGateId, shouldForceComposeForGuide } from "@/lib/onboarding-guide";
-import {
-  isFilterResetStep,
-  isNavigationFocusStep,
-  shouldForceFeedAndResetFiltersOnStep,
-} from "@/lib/onboarding-step-rules";
-import { getPreferredMentionIdentifier, resolveMentionedPubkeysAsync } from "@/lib/mentions";
-import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
-import {
-  mapPeopleSelection,
-  shouldToggleOffExclusiveChannel,
-  shouldToggleOffExclusivePerson,
-  setAllChannelFilters,
-  setExclusiveChannelFilter,
-} from "@/lib/filter-state-utils";
-import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
-import { normalizeComposerMessageType } from "@/lib/task-type";
-import { buildNip99PublishTags, type Nip99ListingStatus } from "@/lib/nostr/nip99-metadata";
+import { shouldBootstrapGuideDemoFeed } from "@/lib/onboarding-guide";
+import { buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
+import { buildNip99PublishTags } from "@/lib/nostr/nip99-metadata";
+import type { Nip99ListingStatus } from "@/types";
 import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
-import { normalizeGeohash } from "@/lib/nostr/geohash-location";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
+import { useIndexFilters } from "@/hooks/use-index-filters";
+import { useIndexOnboarding } from "@/hooks/use-index-onboarding";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
-import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { removeCachedNostrEventById, type CachedNostrEvent } from "@/lib/nostr/event-cache";
+import { useSavedFilterConfigs } from "@/hooks/use-saved-filter-configs";
+import { useTaskPublishFlow } from "@/hooks/use-task-publish-flow";
+import { useTaskPublishControls } from "@/hooks/use-task-publish-controls";
+import { useTaskStatusController } from "@/hooks/use-task-status-controller";
+import { useKind0People } from "@/hooks/use-kind0-people";
+import { applyTaskSortOverlays, useIndexDerivedData } from "@/hooks/use-index-derived-data";
+import { usePinnedSidebarChannels } from "@/hooks/use-pinned-sidebar-channels";
+import { useIndexRelayShell } from "@/hooks/use-index-relay-shell";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
-import {
-  notifyDisconnectedSelectedFeeds,
-  notifyLocalSaved,
-  notifyNeedSigninModify,
-  notifyNeedSigninPost,
-  notifyNeedTag,
-  notifyPartialPublish,
-  notifyPublished,
-  notifyPublishSavedForRetry,
-  notifyStatusRestricted,
-} from "@/lib/notifications";
-import { mockTasks, mockRelays as demoRelays } from "@/data/mockData";
+import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
+import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
+import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
 import {
   Relay,
-  Channel,
-  ChannelMatchMode,
-  Person,
   Task,
-  TaskCreateResult,
-  TaskDateType,
-  TaskStatus,
-  ComposeRestoreRequest,
-  ComposeRestoreState,
-  PublishedAttachment,
-  Nip99Metadata,
-  SavedFilterController,
-  SavedFilterConfiguration,
-  SavedFilterState,
 } from "@/types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
-const validViews: ViewType[] = ["tree", "feed", "kanban", "list", "calendar"];
-const MOBILE_MANAGE_ROUTE = "manage";
-
-// Default Nostr relays - these are managed by NDKProvider in App.tsx
-
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
+const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
-const ENABLE_MOBILE_GUIDE_SECTION_PICKER = false;
-const TASK_STATUS_REORDER_DELAY_MS = 260;
-const PUBLISH_UNDO_DELAY_MS = 5000;
-const INITIAL_CHANNEL_SEED_LIMIT = 16;
+const DEMO_SEED_TASKS = mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents()));
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
 );
@@ -172,30 +89,14 @@ const ListView = lazy(() =>
   import("@/components/tasks/ListView").then((module) => ({ default: module.ListView }))
 );
 
-function buildPendingPublishDedupKey(task: Task): string {
-  const authorId = task.author.id?.trim().toLowerCase() || "";
-  const normalizedContent = task.content.trim();
-  const normalizedTags = [...task.tags].map((tag) => tag.trim().toLowerCase()).sort().join(",");
-  const feedMessageType = task.feedMessageType || "";
-  const parentId = task.parentId || "";
-  return `${authorId}|${task.taskType}|${feedMessageType}|${parentId}|${normalizedTags}|${normalizedContent}`;
-}
-
 const Index = () => {
   const { t } = useTranslation();
-  const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isManageRouteActive = urlView === MOBILE_MANAGE_ROUTE;
-
-  // Derive current view from URL
-  const currentView: ViewType = validViews.includes(urlView as ViewType) 
-    ? (urlView as ViewType) 
-    : "tree";
 
   // NDK Nostr integration
-  const { 
-    relays: ndkRelays, 
+  const {
+    relays: ndkRelays,
     isConnected: isNostrConnected,
     addRelay,
     removeRelay,
@@ -207,8 +108,8 @@ const Index = () => {
 
   // Auth modal state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-
-  const [failedPublishDrafts, setFailedPublishDrafts] = useState<FailedPublishDraft[]>(() => loadFailedPublishDrafts());
+  const [guideDemoFeedEnabled, setGuideDemoFeedEnabled] = useState(false);
+  const demoFeedActive = DEMO_FEED_ENABLED || guideDemoFeedEnabled;
 
   const subscribedKinds = useMemo<NostrEventKind[]>(
     () => [
@@ -227,6 +128,7 @@ const Index = () => {
     ],
     []
   );
+
   // Convert relay statuses to app Relay format - combine demo relay with nostr relays
   const relays: Relay[] = useMemo(() => {
     const nostrRelayItems = ndkRelays.map((r) => ({
@@ -238,23 +140,21 @@ const Index = () => {
       url: r.url,
       postCount: undefined,
     }));
-    
+
+    if (!demoFeedActive) return nostrRelayItems;
+
     // Include demo relay
     return [...demoRelays, ...nostrRelayItems];
-  }, [ndkRelays]);
+  }, [demoFeedActive, ndkRelays]);
 
-  // Convert NDK relays to the format expected by sidebar/widgets
-  const nostrRelays = useMemo(() => {
-    return ndkRelays.map(r => ({
-      url: r.url,
-      status: r.status,
-      latency: r.latency,
-      nip11: r.nip11,
-    }));
-  }, [ndkRelays]);
+  const defaultRelayIds = useMemo(() => {
+    const configuredRelayIds = getConfiguredDefaultRelayIds();
+    if (!demoFeedActive) return configuredRelayIds;
+    return Array.from(new Set([DEMO_RELAY_ID, ...configuredRelayIds]));
+  }, [demoFeedActive]);
 
+  const isMobile = useIsMobile();
   const {
-    activeRelayIds,
     setActiveRelayIds,
     effectiveActiveRelayIds,
     handleRelayToggle,
@@ -263,7 +163,7 @@ const Index = () => {
   } = useRelayFilterState({
     relays,
     t,
-    defaultRelayIds: getConfiguredDefaultRelayIds(),
+    defaultRelayIds,
     onRelayEnabled: (relay) => {
       if (
         relay.id !== DEMO_RELAY_ID &&
@@ -275,6 +175,7 @@ const Index = () => {
       }
     },
   });
+
   const {
     events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
@@ -282,363 +183,115 @@ const Index = () => {
     isConnected: isNostrConnected,
     subscribedKinds,
     activeRelayIds: effectiveActiveRelayIds,
+    availableRelayIds: relays.map((relay) => relay.id),
     subscribe,
   });
-  const [people, setPeople] = useState<Person[]>([]);
-  const [cachedKind0Events, setCachedKind0Events] = useState(() => loadCachedKind0Events());
-  const [loggedInIdentityPriority, setLoggedInIdentityPriority] = useState(() => loadLoggedInIdentityPriority());
-  const [localTasks, setLocalTasks] = useState<Task[]>(mockTasks);
+
+  // Compute selected relay URLs for profile hydration
+  const selectedRelayUrls = useMemo(() => {
+    const selectedRelayScopeIds = resolveChannelRelayScopeIds(
+      effectiveActiveRelayIds,
+      relays.map((relay) => relay.id)
+    );
+    return relays
+      .filter((relay) => relay.id !== DEMO_RELAY_ID && relay.url && selectedRelayScopeIds.has(relay.id))
+      .map((relay) => relay.url as string);
+  }, [effectiveActiveRelayIds, relays]);
+
+  const {
+    people,
+    setPeople,
+    cachedKind0Events,
+    supplementalLatestActivityByAuthor,
+    seedCachedKind0Events,
+    removeCachedRelayProfile,
+  } = useKind0People(nostrEvents, selectedRelayUrls, user);
+
+  const {
+    nostrRelays,
+    relaysWithActiveState,
+    handleAddRelay,
+    handleRemoveRelay,
+  } = useIndexRelayShell({
+    ndkRelays,
+    relays,
+    effectiveActiveRelayIds,
+    addRelay,
+    removeRelay,
+    setActiveRelayIds,
+    removeCachedRelayProfile,
+  });
+
+  const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? DEMO_SEED_TASKS : []));
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
     () => loadChannelFrecencyState()
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() => loadCompletionSoundEnabled());
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
-  const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
-  const pendingStatusUpdateTimeoutsRef = useRef<Map<string, number>>(new Map());
-  const completionConfettiLastAtRef = useRef<Map<string, number>>(new Map());
-  const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
-  const pendingPublishStateRef = useRef<Map<string, { timeoutId: number; toastId: string | number; composeState: ComposeRestoreState }>>(new Map());
-  const [pendingPublishTaskIds, setPendingPublishTaskIds] = useState<Set<string>>(new Set());
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
-  const [composeRestoreRequest, setComposeRestoreRequest] = useState<ComposeRestoreRequest | null>(null);
-  const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<Record<string, TaskStatus>>({});
-  const [sortModifiedAtHoldByTaskId, setSortModifiedAtHoldByTaskId] = useState<Record<string, string>>({});
 
-  // Filter nostr events - only keep those with tags and not spam
-  const filteredNostrEvents = useMemo(() => {
-    return nostrEvents.filter(event => {
-      if (suppressedNostrEventIds.has(event.id)) return false;
-      if (event.kind === NostrEventKind.Metadata) return false;
-      if (isTaskStateEventKind(event.kind)) return true;
-      if (isPriorityPropertyEvent(event.kind, event.tags)) return true;
-      if (event.kind === NostrEventKind.ClassifiedListing) return true;
-      if (
-        event.kind === NostrEventKind.CalendarDateBased ||
-        event.kind === NostrEventKind.CalendarTimeBased
-      ) {
-        return true;
-      }
-      // Convert NDKEvent to check tags
-      const hasTags = event.tags.some(tag => tag[0]?.toLowerCase() === "t" && tag[1]) ||
-        /#\w+/.test(event.content);
-      if (!hasTags) return false;
-      // Filter out spam
-      if (isSpamContent(event.content)) return false;
-      return true;
-    });
-  }, [nostrEvents, suppressedNostrEventIds]);
+  const {
+    allTasks: baseAllTasks,
+    channels,
+    composeChannels,
+    sidebarPeople,
+    currentUser,
+    hasCachedCurrentUserProfileMetadata,
+  } = useIndexDerivedData({
+    nostrEvents,
+    localTasks,
+    postedTags,
+    suppressedNostrEventIds,
+    people,
+    supplementalLatestActivityByAuthor,
+    cachedKind0Events,
+    user,
+    effectiveActiveRelayIds,
+    relays,
+    channelFrecencyState,
+  });
 
-  const liveKind0Events = useMemo(
-    () =>
-      nostrEvents
-        .filter((event) => event.kind === NostrEventKind.Metadata)
-        .map((event) => ({
-          kind: event.kind,
-          pubkey: event.pubkey,
-          created_at: event.created_at,
-          content: event.content || "",
-        })),
-    [nostrEvents]
-  );
-
-  const mergedKind0Events = useMemo(
-    () => mergeKind0EventsWithCache(liveKind0Events, cachedKind0Events),
-    [cachedKind0Events, liveKind0Events]
-  );
-  const supplementalLatestActivityByAuthor = useMemo(() => {
-    const nowUnix = Math.floor(Date.now() / 1000);
-    const latestActivePresenceByAuthor = deriveLatestActivePresenceByAuthor(
-      nostrEvents.filter((event) => event.kind === NostrEventKind.UserStatus),
-      nowUnix
-    );
-    const latestByAuthor = new Map<string, number>();
-
-    for (const event of nostrEvents) {
-      if (event.kind === NostrEventKind.Metadata || event.kind === NostrEventKind.UserStatus) continue;
-
-      const authorId = event.pubkey?.trim().toLowerCase();
-      if (!authorId) continue;
-
-      const timestampMs = (event.created_at || 0) * 1000;
-      const previous = latestByAuthor.get(authorId) ?? Number.NEGATIVE_INFINITY;
-      if (timestampMs > previous) {
-        latestByAuthor.set(authorId, timestampMs);
-      }
-    }
-
-    for (const [authorId, presenceTimestampMs] of latestActivePresenceByAuthor.entries()) {
-      const previous = latestByAuthor.get(authorId) ?? Number.NEGATIVE_INFINITY;
-      if (presenceTimestampMs > previous) {
-        latestByAuthor.set(authorId, presenceTimestampMs);
-      }
-    }
-
-    return latestByAuthor;
-  }, [nostrEvents]);
-
-  useEffect(() => {
-    const merged = mergeKind0EventsWithCache(liveKind0Events, loadCachedKind0Events());
-    saveCachedKind0Events(merged);
-    setCachedKind0Events(merged);
-  }, [liveKind0Events]);
-
-  useEffect(() => {
-    if (!user?.pubkey) return;
-    setLoggedInIdentityPriority(rememberLoggedInIdentity(user.pubkey));
-  }, [user?.pubkey]);
-
-  const profileCachePayload = useMemo(() => {
-    if (!user?.pubkey || !user?.profile) return null;
-    return {
-      pubkey: user.pubkey,
-      profile: {
-        name: user.profile.name,
-        displayName: user.profile.displayName,
-        about: user.profile.about,
-        picture: user.profile.picture,
-        nip05: user.profile.nip05,
-      },
-    };
-  }, [
-    user?.profile,
-    user?.pubkey,
-  ]);
-
-  useEffect(() => {
-    if (!profileCachePayload) return;
-    const nextCached = rememberCachedKind0Profile(profileCachePayload.pubkey, {
-      name: profileCachePayload.profile.name,
-      displayName: profileCachePayload.profile.displayName,
-      about: profileCachePayload.profile.about,
-      picture: profileCachePayload.profile.picture,
-      nip05: profileCachePayload.profile.nip05,
-    });
-    setCachedKind0Events(nextCached);
-  }, [profileCachePayload]);
-
-  useEffect(() => {
-    const priorityLookup = new Map(
-      loggedInIdentityPriority.map((pubkey, index) => [pubkey.toLowerCase(), index] as const)
-    );
-    const sortPeopleByPriority = (value: Person[]): Person[] =>
-      [...value].sort((a, b) => {
-        const aPriority = priorityLookup.get(a.id.toLowerCase());
-        const bPriority = priorityLookup.get(b.id.toLowerCase());
-        if (aPriority !== undefined && bPriority !== undefined) return aPriority - bPriority;
-        if (aPriority !== undefined) return -1;
-        if (bPriority !== undefined) return 1;
-        return a.displayName.localeCompare(b.displayName);
-      });
-
-    setPeople((prev) => {
-      let next = derivePeopleFromKind0Events(mergedKind0Events, prev, {
-        prioritizedPubkeys: loggedInIdentityPriority,
-      });
-
-      if (user?.pubkey && !next.some((person) => person.id === user.pubkey)) {
-        next = [
-          ...next,
-          {
-            id: user.pubkey,
-            name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
-            displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
-            nip05: user.profile?.nip05?.trim().toLowerCase(),
-            avatar: user.profile?.picture,
-            isOnline: true,
-            onlineStatus: "online",
-            isSelected: prev.find((person) => person.id === user.pubkey)?.isSelected || false,
-          },
-        ];
-      }
-
-      return sortPeopleByPriority(next);
-    });
-  }, [loggedInIdentityPriority, mergedKind0Events, user]);
-
-  // Convert filtered Nostr events to tasks
-  const nostrTasks: Task[] = useMemo(() => {
-    return nostrEventsToTasks(
-      filteredNostrEvents.map((event) => ({
-        id: event.id,
-        pubkey: event.pubkey,
-        created_at: event.created_at,
-        kind: event.kind as NostrEventKind,
-        tags: event.tags,
-        content: event.content,
-        sig: event.sig || "",
-        relayUrl: event.relayUrl,
-        relayUrls: event.relayUrls,
-      }))
-    );
-  }, [filteredNostrEvents]);
-
-  // Combine local tasks with Nostr tasks
-  const allTasks = useMemo(() => {
-    const nostrTaskDedupKeys = new Set(nostrTasks.map((task) => buildPendingPublishDedupKey(task)));
-    const localTasksForMerge = localTasks.filter((task) => {
-      if (!task.pendingPublishToken) return true;
-      return !nostrTaskDedupKeys.has(buildPendingPublishDedupKey(task));
-    });
-    const combined = mergeTasks(localTasksForMerge, nostrTasks);
-    const byId = new Map<string, Task>();
-    const byListingReplaceableKey = new Map<string, Task>();
-
-    for (const task of combined) {
-      const listingReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
-      if (!listingReplaceableKey) {
-        const existing = byId.get(task.id);
-        if (!existing) {
-          byId.set(task.id, task);
-          continue;
-        }
-        const mergedRelays = Array.from(new Set([...existing.relays, ...task.relays]));
-        byId.set(task.id, {
-          ...(existing.timestamp.getTime() >= task.timestamp.getTime() ? existing : task),
-          relays: mergedRelays,
-        });
-        continue;
-      }
-      const existing = byListingReplaceableKey.get(listingReplaceableKey);
-      if (
-        !existing ||
-        task.timestamp.getTime() > existing.timestamp.getTime() ||
-        (task.timestamp.getTime() === existing.timestamp.getTime() && task.id > existing.id)
-      ) {
-        byListingReplaceableKey.set(listingReplaceableKey, task);
-      }
-    }
-
-    return [...byId.values(), ...byListingReplaceableKey.values()].map((task) => {
-      const sortStatus = sortStatusHoldByTaskId[task.id];
-      const sortLastEditedAtIso = sortModifiedAtHoldByTaskId[task.id];
-      if (!sortStatus && !sortLastEditedAtIso) return task;
-      return {
-        ...task,
-        ...(sortStatus ? { sortStatus } : {}),
-        ...(sortLastEditedAtIso ? { sortLastEditedAt: new Date(sortLastEditedAtIso) } : {}),
-      };
-    }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [localTasks, nostrTasks, sortModifiedAtHoldByTaskId, sortStatusHoldByTaskId]);
-
-  const personalizedChannelScores = useMemo(
-    () => getChannelFrecencyScores(channelFrecencyState),
-    [channelFrecencyState]
-  );
-
-  const scopedLocalTasksForChannels = useMemo(
-    () =>
-      {
-        const channelRelayScopeIds = resolveChannelRelayScopeIds(
-          effectiveActiveRelayIds,
-          relays.map((relay) => relay.id)
-        );
-        return localTasks.filter((task) =>
-          task.relays.length === 0 ||
-          task.relays.some((relayId) => channelRelayScopeIds.has(relayId))
-        );
-      },
-    [effectiveActiveRelayIds, localTasks, relays]
-  );
-
-  const scopedNostrEventsForChannels = useMemo(
-    () => {
-      const channelRelayScopeIds = resolveChannelRelayScopeIds(
-        effectiveActiveRelayIds,
-        relays.map((relay) => relay.id)
-      );
-      return filteredNostrEvents.filter((event) => {
-        const relayUrls = [
-          ...(event.relayUrls || []),
-          ...(event.relayUrl ? [event.relayUrl] : []),
-        ]
-          .map((url) => url.trim().replace(/\/+$/, ""))
-          .filter((url) => Boolean(url));
-        if (relayUrls.length === 0) return false;
-        return relayUrls.some((relayUrl) => channelRelayScopeIds.has(getRelayIdFromUrl(relayUrl)));
-      });
-    },
-    [effectiveActiveRelayIds, filteredNostrEvents, relays]
-  );
-
-  // Sidebar channels: selected-feed scoped, personalized, and dampened by usage.
-  const channels: Channel[] = useMemo(() => {
-    return deriveChannels(scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, {
-      minCount: 6,
-      personalizeScores: personalizedChannelScores,
-      maxCount: INITIAL_CHANNEL_SEED_LIMIT,
-      sortVisibleAlphabetically: true,
-    });
-  }, [scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, personalizedChannelScores]);
-
-  // Compose autocomplete channels: all known tags.
-  const composeChannels: Channel[] = useMemo(() => {
-    return deriveChannels(localTasks, filteredNostrEvents, postedTags, 1);
-  }, [localTasks, filteredNostrEvents, postedTags]);
-
-  // Maintain channel filter states across dynamic updates
-  const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
-    () => loadPersistedChannelFilters()
-  );
-  const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>(
-    () => loadPersistedChannelMatchMode()
-  );
-  const [savedFilterState, setSavedFilterState] = useState<SavedFilterState>(() => loadSavedFilterState());
-
-  // Merge dynamic channels with persisted filter states
-  const channelsWithState: Channel[] = useMemo(() => {
-    return channels.map((channel) => ({
-      ...channel,
-      filterState: channelFilterStates.get(channel.id) || "neutral",
-    }));
-  }, [channels, channelFilterStates]);
-
-  const composeChannelsWithState: Channel[] = useMemo(() => {
-    return composeChannels.map((channel) => ({
-      ...channel,
-      filterState: channelFilterStates.get(channel.id) || "neutral",
-    }));
-  }, [composeChannels, channelFilterStates]);
-
-  useEffect(() => {
-    saveFailedPublishDrafts(failedPublishDrafts);
-  }, [failedPublishDrafts]);
-
-  useEffect(() => {
-    savePersistedChannelFilters(channelFilterStates);
-  }, [channelFilterStates]);
+  const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
+    setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
+  }, []);
 
   useEffect(() => {
     saveChannelFrecencyState(channelFrecencyState);
   }, [channelFrecencyState]);
 
-  useEffect(() => {
-    savePersistedChannelMatchMode(channelMatchMode);
-  }, [channelMatchMode]);
-
-  useEffect(() => {
-    saveSavedFilterState(savedFilterState);
-  }, [savedFilterState]);
-
-  useEffect(() => {
-    const pendingPublishState = pendingPublishStateRef.current;
-    return () => {
-      for (const pending of pendingPublishState.values()) {
-        window.clearTimeout(pending.timeoutId);
-        toast.dismiss(pending.toastId);
-      }
-      pendingPublishState.clear();
-    };
-  }, []);
-
-  const handleFocusSidebar = useCallback(() => {
-    setIsSidebarFocused(true);
-  }, []);
-
-  const handleFocusTasks = useCallback(() => {
-    setIsSidebarFocused(false);
-  }, []);
+  const {
+    mentionRequest,
+    channelFilterStates,
+    setChannelFilterStates,
+    channelMatchMode,
+    setChannelMatchMode,
+    composeChannelsWithState,
+    handleChannelToggle,
+    handleChannelExclusive,
+    handleToggleAllChannels,
+    handleChannelMatchModeChange,
+    handleHashtagExclusive,
+    handlePersonToggle,
+    handlePersonExclusive,
+    handleToggleAllPeople,
+    handleAuthorClick,
+    resetFiltersToDefault,
+  } = useIndexFilters({
+    relays,
+    setActiveRelayIds,
+    channels,
+    composeChannels,
+    postedTags,
+    setPostedTags,
+    people,
+    setPeople,
+    sidebarPeople,
+    isMobile,
+    setSearchQuery,
+    bumpChannelFrecency,
+    t,
+  });
 
   const handleOpenAuthModal = useCallback(() => {
     setIsOnboardingIntroOpen(false);
@@ -646,196 +299,149 @@ const Index = () => {
     setIsAuthModalOpen(true);
   }, []);
 
-  const handleCloseGuide = useCallback(() => {
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(false);
-    setActiveOnboardingSection(null);
-  }, []);
-
-  const handleCompleteGuide = useCallback((lastStep: number) => {
-    markOnboardingCompleted(lastStep);
-  }, []);
-
-  // Derive focused task from URL
-  const focusedTaskId = urlTaskId || null;
-  const openedWithFocusedTaskRef = useRef(Boolean(urlTaskId));
-
-  const isMobile = useIsMobile();
-  const currentUser = resolveCurrentUser(people, user);
-  const hasCachedCurrentUserProfileMetadata = useMemo(() => {
-    if (!user?.pubkey) return true;
-    const normalizedPubkey = user.pubkey.trim().toLowerCase();
-    return cachedKind0Events.some((event) => {
-      const eventPubkey = typeof event.pubkey === "string" ? event.pubkey.trim().toLowerCase() : "";
-      return eventPubkey === normalizedPubkey && Boolean(event.content?.trim());
+  const shouldForceAuthAfterOnboarding = useMemo(() => {
+    return shouldPromptSignInAfterOnboarding({
+      isSignedIn: Boolean(user),
+      relays: ndkRelays,
     });
-  }, [cachedKind0Events, user?.pubkey]);
+  }, [ndkRelays, user]);
+
   const shortcutsHelp = useKeyboardShortcutsHelp();
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
-  const [isOnboardingIntroOpen, setIsOnboardingIntroOpen] = useState(false);
-  const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
-  const [onboardingManualStart, setOnboardingManualStart] = useState(false);
-  const [activeOnboardingSection, setActiveOnboardingSection] = useState<OnboardingSectionId | null>(null);
-  const [activeOnboardingStepId, setActiveOnboardingStepId] = useState<string | null>(null);
-  const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
   const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
-  const onboardingSections = useMemo(
-    () => getOnboardingSections(isMobile, currentView, t),
-    [currentView, isMobile, t]
-  );
-  const onboardingStepsBySection = useMemo(
-    () => getOnboardingStepsBySection(isMobile, currentView, t),
-    [currentView, isMobile, t]
-  );
 
-  const queueOnboardingIntro = useCallback((
-    manualStart: boolean,
-    initialSection: OnboardingInitialSection,
-    showIntro = true
-  ) => {
-    setOnboardingManualStart(manualStart);
-    setOnboardingInitialSection(initialSection);
-    setActiveOnboardingSection(null);
-    setIsOnboardingIntroOpen(showIntro);
-    setIsOnboardingOpen(!showIntro);
-  }, []);
-
-  const handleStartOnboardingTour = useCallback(() => {
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(true);
-  }, []);
-
-  const handleOpenGuide = useCallback(() => {
-    const initialSectionForOpen: OnboardingInitialSection =
-      isMobile && !ENABLE_MOBILE_GUIDE_SECTION_PICKER ? "all" : null;
-    setOnboardingManualStart(true);
-    setOnboardingInitialSection(initialSectionForOpen);
-    setActiveOnboardingSection(null);
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(true);
-  }, [isMobile]);
-
-  useEffect(() => {
-    const onboardingState = loadOnboardingState();
-    if (shouldAutoStartOnboarding({
-      onboardingCompleted: onboardingState.completed,
-      openedWithFocusedTask: openedWithFocusedTaskRef.current,
-    }) && !user) {
-      queueOnboardingIntro(false, "all", !user);
-    }
-  }, [queueOnboardingIntro, user]);
-
-  useEffect(() => {
-    if (!user) return;
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(false);
-    setActiveOnboardingSection(null);
-  }, [user]);
-
-  useEffect(() => {
-    if (!isOnboardingOpen) {
-      lastHandledOnboardingStepRef.current = null;
-      setActiveOnboardingStepId(null);
-    }
-  }, [isOnboardingOpen]);
-
-  // Handle view change - update URL
-  const setCurrentView = useCallback((newView: ViewType) => {
-    if (focusedTaskId) {
-      navigate(`/${newView}/${focusedTaskId}`);
-    } else {
-      navigate(`/${newView}`);
-    }
-  }, [navigate, focusedTaskId]);
-
-  const setManageRouteActive = useCallback((isActive: boolean) => {
-    if (isActive) {
-      navigate(`/${MOBILE_MANAGE_ROUTE}`);
-      return;
-    }
-    if (focusedTaskId) {
-      navigate(`/${currentView}/${focusedTaskId}`);
-      return;
-    }
-    navigate(`/${currentView}`);
-  }, [currentView, focusedTaskId, navigate]);
-
-  const handleDesktopSwipeLeft = useCallback(() => {
-    const currentIndex = validViews.indexOf(currentView);
-    if (currentIndex < validViews.length - 1) {
-      setCurrentView(validViews[currentIndex + 1]);
-    }
-  }, [currentView, setCurrentView]);
-
-  const handleDesktopSwipeRight = useCallback(() => {
-    const currentIndex = validViews.indexOf(currentView);
-    if (currentIndex > 0) {
-      setCurrentView(validViews[currentIndex - 1]);
-    }
-  }, [currentView, setCurrentView]);
-
-  const desktopSwipeHandlers = useSwipeNavigation({
-    onSwipeLeft: handleDesktopSwipeLeft,
-    onSwipeRight: handleDesktopSwipeRight,
-    threshold: 55,
-    enableHaptics: false,
-    enableWheelSwipe: !isMobile,
+  const {
+    hasDisconnectedSelectedRelays,
+    isInteractionBlocked,
+    guardInteraction,
+    handleBlockedInteractionAttempt,
+    resolveRelayUrlsFromIds,
+    resolveTaskOriginRelay,
+    publishTaskStateUpdate,
+    publishTaskDueUpdate,
+    publishTaskPriorityUpdate,
+    publishTaskCreateFollowUps,
+  } = useTaskPublishControls({
+    allTasks: baseAllTasks,
+    relays,
+    effectiveActiveRelayIds,
+    demoFeedActive,
+    user,
+    handleOpenAuthModal,
+    publishEvent,
+    t,
   });
 
-  // Desktop keyboard shortcuts (disabled on mobile)
-  useKeyboardShortcuts({
-    onViewChange: setCurrentView,
-    enabled: !isMobile,
+  const {
+    completionSoundEnabled,
+    handleToggleCompletionSound,
+    handleToggleComplete,
+    handleStatusChange,
+    sortStatusHoldByTaskId,
+    sortModifiedAtHoldByTaskId,
+  } = useTaskStatusController({
+    allTasks: baseAllTasks,
+    currentUser,
+    guardInteraction,
+    publishTaskStateUpdate,
+    setLocalTasks,
+    t,
   });
 
-  // Handle task focus - update URL
-  const setFocusedTaskId = useCallback((taskId: string | null) => {
-    if (taskId) {
-      navigate(`/${currentView}/${taskId}`);
-    } else {
-      navigate(`/${currentView}`);
-    }
-  }, [navigate, currentView]);
+  const allTasks = useMemo(
+    () =>
+      applyTaskSortOverlays(
+        baseAllTasks,
+        sortStatusHoldByTaskId,
+        sortModifiedAtHoldByTaskId
+      ),
+    [baseAllTasks, sortModifiedAtHoldByTaskId, sortStatusHoldByTaskId]
+  );
 
-  const lastHandledOnboardingStepRef = useRef<string | null>(null);
-  const handleOnboardingStepChange = useCallback((payload: {
-    id: string;
-    stepNumber: number;
-  }) => {
-    setActiveOnboardingStepId(payload.id);
+  const {
+    currentView,
+    focusedTaskId,
+    isManageRouteActive,
+    setCurrentView,
+    setFocusedTaskId,
+    setManageRouteActive,
+    desktopSwipeHandlers,
+    openedWithFocusedTaskRef,
+  } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
 
-    const stepKey = getOnboardingBehaviorGateId(payload.id);
-    if (lastHandledOnboardingStepRef.current === stepKey) return;
-    lastHandledOnboardingStepRef.current = stepKey;
+  const {
+    pinnedChannelsState,
+    activeRelayIdList,
+    channelsWithState,
+    handleChannelPin,
+    handleChannelUnpin,
+  } = usePinnedSidebarChannels({
+    userPubkey: user?.pubkey,
+    currentView,
+    effectiveActiveRelayIds,
+    channels,
+    channelFilterStates,
+    allTasks,
+  });
 
-    if (shouldForceFeedAndResetFiltersOnStep(payload.id, isMobile)) {
-      setCurrentView("feed");
-      setFocusedTaskId(null);
-      setSearchQuery("");
-      setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
-      setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-      setPeople((prev) => mapPeopleSelection(prev, () => false));
-      return;
-    }
+  const filteredTasks = useMemo(
+    () =>
+      filterTasks({
+        tasks: allTasks,
+        activeRelayIds: effectiveActiveRelayIds,
+        channels: channelsWithState,
+        people,
+        channelMatchMode,
+        allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
+      }),
+    [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
+  );
 
-    if (isNavigationFocusStep(payload.id)) {
-      setCurrentView("feed");
-      return;
-    }
-    if (!isFilterResetStep(payload.id)) return;
+  const ensureGuideDataAvailable = useCallback(() => {
+    if (!shouldBootstrapGuideDemoFeed({ totalTasks: allTasks.length, demoFeedActive })) return;
+    setGuideDemoFeedEnabled(true);
+    setLocalTasks((previous) => (previous.length === 0 ? DEMO_SEED_TASKS : previous));
+    seedCachedKind0Events(mockKind0Events);
+    setActiveRelayIds((previous) => {
+      const next = new Set(previous);
+      next.add(DEMO_RELAY_ID);
+      return next;
+    });
+    navigate("/feed");
+  }, [allTasks.length, demoFeedActive, navigate, seedCachedKind0Events, setActiveRelayIds]);
 
-    setFocusedTaskId(null);
-    setSearchQuery("");
-    setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
-    setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-    setPeople((prev) => mapPeopleSelection(prev, () => false));
-  }, [channels, isMobile, relays, setActiveRelayIds, setCurrentView, setFocusedTaskId]);
-
-  const forceShowComposeForGuide = shouldForceComposeForGuide({
+  const {
     isOnboardingOpen,
+    isOnboardingIntroOpen,
+    onboardingInitialSection,
+    onboardingManualStart,
     activeOnboardingStepId,
+    onboardingSections,
+    onboardingStepsBySection,
+    forceShowComposeForGuide,
+    composeGuideActivationSignal,
+    handleStartOnboardingTour,
+    handleOpenGuide,
+    handleCloseGuide,
+    handleCompleteGuide,
+    handleOnboardingStepChange,
+    handleOnboardingActiveSectionChange,
+  } = useIndexOnboarding({
+    user,
     isMobile,
     currentView,
+    channels,
+    relays,
+    openedWithFocusedTaskRef,
+    shouldForceAuthAfterOnboarding,
+    ensureGuideDataAvailable,
+    setCurrentView,
+    setFocusedTaskId,
+    setSearchQuery,
+    setActiveRelayIds,
+    setChannelFilterStates,
+    setPeople,
+    setIsAuthModalOpen,
+    t,
   });
 
   const currentFilterSnapshot = useMemo<FilterSnapshot>(
@@ -848,679 +454,15 @@ const Index = () => {
       }),
     [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode]
   );
-
-  const activeSavedConfiguration = useMemo(
-    () =>
-      savedFilterState.configurations.find(
-        (configuration) => configuration.id === savedFilterState.activeConfigurationId
-      ) || null,
-    [savedFilterState.activeConfigurationId, savedFilterState.configurations]
-  );
-
-  const createSnapshotFromConfiguration = useCallback(
-    (configuration: SavedFilterConfiguration): FilterSnapshot => ({
-      relayIds: [...configuration.relayIds].sort(),
-      channelStates: configuration.channelStates,
-      selectedPeopleIds: [...configuration.selectedPeopleIds].sort(),
-      channelMatchMode: configuration.channelMatchMode,
-    }),
-    []
-  );
-
-  useEffect(() => {
-    if (!activeSavedConfiguration) return;
-    const activeSnapshot = createSnapshotFromConfiguration(activeSavedConfiguration);
-    if (areFilterSnapshotsEqual(activeSnapshot, currentFilterSnapshot)) return;
-    setSavedFilterState((previous) => {
-      if (!previous.activeConfigurationId) return previous;
-      return {
-        ...previous,
-        activeConfigurationId: null,
-      };
-    });
-  }, [activeSavedConfiguration, createSnapshotFromConfiguration, currentFilterSnapshot]);
-
-  const handleOnboardingActiveSectionChange = useCallback((section: OnboardingSectionId | null) => {
-    setActiveOnboardingSection(section);
-    const isDedicatedViewGuide = !isMobile && (currentView === "kanban" || currentView === "calendar");
-    if (section === "compose" && !isDedicatedViewGuide) {
-      setComposeGuideActivationSignal((previous) => previous + 1);
-    }
-    if (!isMobile && section === "compose" && !isDedicatedViewGuide && currentView !== "feed") {
-      setCurrentView("feed");
-    }
-  }, [currentView, isMobile, setCurrentView]);
-
-  const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
-    setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
-  }, []);
-
-  const handleChannelToggle = (id: string) => {
-    bumpChannelFrecency(id, 1.25);
-    setChannelFilterStates((prev) => {
-      const newMap = new Map(prev);
-      const currentState = newMap.get(id) || "neutral";
-      const states: Channel["filterState"][] = ["neutral", "included", "excluded"];
-      const currentIndex = states.indexOf(currentState);
-      const nextState = states[(currentIndex + 1) % states.length];
-      newMap.set(id, nextState);
-      return newMap;
-    });
-  };
-
-  const handleChannelExclusive = (id: string) => {
-    bumpChannelFrecency(id, 1.6);
-    const shouldToggleOff = shouldToggleOffExclusiveChannel(channels, channelFilterStates, id);
-    if (shouldToggleOff) {
-      setChannelFilterStates((prev) => {
-        const next = new Map(prev);
-        next.set(id, "neutral");
-        return next;
-      });
-      return;
-    }
-    setChannelFilterStates(() => setExclusiveChannelFilter(channels, id));
-    const channel = channelsWithState.find((c) => c.id === id);
-    toast(t("toasts.success.showingOnlyChannel", { channelName: channel?.name || id }));
-  };
-
-  const handleToggleAllChannels = () => {
-    const allNeutral = Array.from(channelFilterStates.values()).every((s) => s === "neutral") || channelFilterStates.size === 0;
-    setChannelFilterStates(() => setAllChannelFilters(channels, allNeutral ? "included" : "neutral"));
-    toast(allNeutral ? t("toasts.success.allChannelsIncluded") : t("toasts.success.allChannelsReset"));
-  };
-
-  const handleChannelMatchModeChange = (mode: ChannelMatchMode) => {
-    setChannelMatchMode(mode);
-  };
-
-  const resetFiltersToDefault = useCallback(() => {
-    setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
-    setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
-    setChannelMatchMode("and");
-    setPeople((prev) => mapPeopleSelection(prev, () => false));
-  }, [channels, relays, setActiveRelayIds]);
-
-  const handleSaveCurrentFilterConfiguration = useCallback((name: string) => {
-    const normalizedName = name.trim();
-    if (!normalizedName) return;
-    const nowIso = new Date().toISOString();
-    const configurationId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `saved-filter-${Date.now()}`;
-    const configuration: SavedFilterConfiguration = {
-      id: configurationId,
-      name: normalizedName,
-      relayIds: currentFilterSnapshot.relayIds,
-      channelStates: currentFilterSnapshot.channelStates,
-      selectedPeopleIds: currentFilterSnapshot.selectedPeopleIds,
-      channelMatchMode: currentFilterSnapshot.channelMatchMode,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    };
-
-    setSavedFilterState((previous) => ({
-      activeConfigurationId: configurationId,
-      configurations: [...previous.configurations, configuration],
-    }));
-  }, [currentFilterSnapshot]);
-
-  const handleApplySavedFilterConfiguration = useCallback((configurationId: string) => {
-    const configuration = savedFilterState.configurations.find((item) => item.id === configurationId);
-    if (!configuration) return;
-
-    if (savedFilterState.activeConfigurationId === configurationId) {
-      resetFiltersToDefault();
-      setSavedFilterState((previous) => ({
-        ...previous,
-        activeConfigurationId: null,
-      }));
-      return;
-    }
-
-    const availableRelayIds = new Set(relays.map((relay) => relay.id));
-    const nextRelayIds = new Set(
-      configuration.relayIds.filter((relayId) => availableRelayIds.has(relayId))
-    );
-    setActiveRelayIds(nextRelayIds.size > 0 ? nextRelayIds : new Set(relays.map((relay) => relay.id)));
-
-    const nextChannelStates = new Map<string, Channel["filterState"]>();
-    for (const [channelId, state] of Object.entries(configuration.channelStates)) {
-      if (state === "included" || state === "excluded") {
-        nextChannelStates.set(channelId, state);
-      }
-    }
-    setChannelFilterStates(nextChannelStates);
-    setChannelMatchMode(configuration.channelMatchMode);
-
-    const selectedPeopleIdSet = new Set(configuration.selectedPeopleIds);
-    setPeople((previous) => mapPeopleSelection(previous, (person) => selectedPeopleIdSet.has(person.id)));
-
-    setSavedFilterState((previous) => ({
-      ...previous,
-      activeConfigurationId: configurationId,
-    }));
-  }, [relays, resetFiltersToDefault, savedFilterState.activeConfigurationId, savedFilterState.configurations, setActiveRelayIds]);
-
-  const handleRenameSavedFilterConfiguration = useCallback((configurationId: string, nextName: string) => {
-    const normalizedName = nextName.trim();
-    if (!normalizedName) return;
-    setSavedFilterState((previous) => ({
-      ...previous,
-      configurations: previous.configurations.map((configuration) =>
-        configuration.id === configurationId
-          ? {
-              ...configuration,
-              name: normalizedName,
-              updatedAt: new Date().toISOString(),
-            }
-          : configuration
-      ),
-    }));
-  }, []);
-
-  const handleDeleteSavedFilterConfiguration = useCallback((configurationId: string) => {
-    setSavedFilterState((previous) => ({
-      activeConfigurationId:
-        previous.activeConfigurationId === configurationId ? null : previous.activeConfigurationId,
-      configurations: previous.configurations.filter((configuration) => configuration.id !== configurationId),
-    }));
-  }, []);
-
-  const savedFilterController = useMemo<SavedFilterController>(
-    () => ({
-      configurations: savedFilterState.configurations,
-      activeConfigurationId: savedFilterState.activeConfigurationId,
-      onApplyConfiguration: handleApplySavedFilterConfiguration,
-      onSaveCurrentConfiguration: handleSaveCurrentFilterConfiguration,
-      onRenameConfiguration: handleRenameSavedFilterConfiguration,
-      onDeleteConfiguration: handleDeleteSavedFilterConfiguration,
-    }),
-    [
-      handleApplySavedFilterConfiguration,
-      handleDeleteSavedFilterConfiguration,
-      handleRenameSavedFilterConfiguration,
-      handleSaveCurrentFilterConfiguration,
-      savedFilterState.activeConfigurationId,
-      savedFilterState.configurations,
-    ]
-  );
-
-  const handleHashtagExclusive = useCallback((tag: string) => {
-    const normalizedTag = tag.trim().toLowerCase();
-    if (!normalizedTag) return;
-    bumpChannelFrecency(normalizedTag, 1.9);
-
-    const existsInSidebar = channels.some((ch) => ch.name.toLowerCase() === normalizedTag);
-
-    // If the tag isn't in the sidebar yet, add it via postedTags so deriveChannels includes it
-    if (!existsInSidebar) {
-      setPostedTags((prev) => Array.from(new Set([...prev, normalizedTag])));
-    }
-
-    // Use a functional updater that works with the potentially-updated channels list.
-    // Since postedTags triggers a re-derive of channels, we set the filter state
-    // keyed by the normalizedTag id directly.
-    setChannelFilterStates(() => {
-      const channelId = channels.find((ch) => ch.name.toLowerCase() === normalizedTag)?.id || normalizedTag;
-      const allChannels = existsInSidebar
-        ? channels
-        : [...channels, { id: normalizedTag, name: normalizedTag, filterState: "neutral" as const }];
-      return setExclusiveChannelFilter(allChannels, channelId);
-    });
-
-    toast(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
-  }, [bumpChannelFrecency, channels, t]);
-
-  const handlePersonToggle = (id: string) => {
-    setPeople((prev) =>
-      prev.map((person) =>
-        person.id === id ? { ...person, isSelected: !person.isSelected } : person
-      )
-    );
-  };
-
-  const handlePersonExclusive = (id: string) => {
-    if (shouldToggleOffExclusivePerson(people, id)) {
-      setPeople((prev) => mapPeopleSelection(prev, () => false));
-      return;
-    }
-    setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === id));
-    const person = people.find((p) => p.id === id);
-    toast(
-      t("toasts.success.showingOnlyPerson", {
-        personName: person?.displayName || person?.name || t("toasts.success.selectedUserFallback"),
-      })
-    );
-  };
-
-  const upsertAndSelectPerson = useCallback((author: Person) => {
-    setPeople((prev) => {
-      const exists = prev.some((person) => person.id === author.id);
-      const next = exists
-        ? prev
-        : [
-            ...prev,
-            {
-              ...author,
-              avatar: author.avatar || "",
-              isOnline: author.isOnline ?? true,
-              onlineStatus: author.onlineStatus ?? "online",
-              isSelected: false,
-            },
-          ];
-
-      return next.map((person) => ({
-        ...person,
-        isSelected: person.id === author.id,
-      }));
-    });
-  }, []);
-
-  const handleAuthorClick = useCallback((author: Person) => {
-    upsertAndSelectPerson(author);
-    const mention = `@${getPreferredMentionIdentifier(author)}`;
-    setMentionRequest({ mention, id: Date.now() });
-
-    if (isMobile) {
-      setSearchQuery((previous) => {
-        const escaped = mention.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        if (new RegExp(`(^|\\s)${escaped}(?=\\s|$)`, "i").test(previous)) {
-          return previous;
-        }
-        const separator = previous && !previous.endsWith(" ") ? " " : "";
-        return `${previous}${separator}${mention} `;
-      });
-    }
-    toast(
-      t("toasts.success.showingOnlyAuthorAndTagging", {
-        authorName: author.displayName || author.name,
-        mention,
-      })
-    );
-  }, [isMobile, t, upsertAndSelectPerson]);
-
-  const handleToggleAllPeople = () => {
-    if (sidebarPeople.length === 0) {
-      toast(t("toasts.success.noFrequentPeople"));
-      return;
-    }
-    const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
-    const selectedCount = sidebarPeople.filter((person) => person.isSelected).length;
-    const shouldSelectAll = selectedCount !== sidebarPeople.length;
-    setPeople((prev) =>
-      prev.map((person) =>
-        sidebarIds.has(person.id)
-          ? { ...person, isSelected: shouldSelectAll }
-          : person
-      )
-    );
-    toast(shouldSelectAll ? t("toasts.success.frequentPeopleSelected") : t("toasts.success.frequentPeopleDeselected"));
-  };
-
-  const triggerCompletionCheer = useCallback((taskId: string) => {
-    const launchCompletionConfetti = (taskElement: HTMLElement) => {
-      if (typeof window === "undefined" || typeof document === "undefined") return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-      const now = Date.now();
-      const lastAt = completionConfettiLastAtRef.current.get(taskId) || 0;
-      if (now - lastAt < 220) return;
-      completionConfettiLastAtRef.current.set(taskId, now);
-
-      const rect = taskElement.getBoundingClientRect();
-      const burst = document.createElement("div");
-      burst.setAttribute("data-confetti-burst", taskId);
-      burst.style.position = "fixed";
-      burst.style.left = `${rect.left + Math.min(44, rect.width * 0.2)}px`;
-      burst.style.top = `${rect.top + Math.min(24, rect.height * 0.5)}px`;
-      burst.style.pointerEvents = "none";
-      burst.style.zIndex = "250";
-
-      const particles = [
-        { x: -18, y: -22, rotate: -22, color: "hsl(var(--success))" },
-        { x: -8, y: -28, rotate: -6, color: "hsl(var(--primary))" },
-        { x: 6, y: -26, rotate: 12, color: "hsl(var(--warning))" },
-        { x: 18, y: -20, rotate: 24, color: "hsl(var(--success))" },
-        { x: -3, y: -18, rotate: -14, color: "hsl(var(--primary))" },
-        { x: 12, y: -16, rotate: 18, color: "hsl(var(--warning))" },
-      ];
-
-      for (const particle of particles) {
-        const node = document.createElement("span");
-        node.className = "motion-confetti-particle";
-        node.style.position = "absolute";
-        node.style.left = "0px";
-        node.style.top = "0px";
-        node.style.width = "0.28rem";
-        node.style.height = "0.28rem";
-        node.style.borderRadius = "9999px";
-        node.style.background = particle.color;
-        node.style.setProperty("--confetti-x", `${particle.x}px`);
-        node.style.setProperty("--confetti-y", `${particle.y}px`);
-        node.style.setProperty("--confetti-rotate", `${particle.rotate}deg`);
-        burst.appendChild(node);
-      }
-
-      document.body.appendChild(burst);
-      window.setTimeout(() => {
-        burst.remove();
-      }, 420);
-    };
-
-    window.setTimeout(() => {
-      const escapedId = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(taskId) : taskId;
-      const taskElement = document.querySelector(`[data-task-id="${escapedId}"]`) as HTMLElement | null;
-      if (!taskElement) return;
-      taskElement.classList.remove("motion-completion-cheer");
-      // Reflow allows immediate replay when users complete tasks in quick succession.
-      void taskElement.offsetWidth;
-      taskElement.classList.add("motion-completion-cheer");
-      launchCompletionConfetti(taskElement);
-      window.setTimeout(() => {
-        taskElement.classList.remove("motion-completion-cheer");
-      }, 700);
-    }, 0);
-  }, []);
-
-  const triggerCompletionFeedback = useCallback((taskId: string, status: "todo" | "in-progress" | "done") => {
-    if (status !== "done") return;
-    triggerCompletionCheer(taskId);
-    playCompletionPopSound(completionSoundEnabled);
-  }, [completionSoundEnabled, triggerCompletionCheer]);
-
-  const handleToggleCompletionSound = useCallback(() => {
-    setCompletionSoundEnabled((previous) => {
-      const next = !previous;
-      saveCompletionSoundEnabled(next);
-      return next;
-    });
-  }, []);
-
-  const clearPendingStatusUpdate = useCallback((taskId: string) => {
-    const timeoutId = pendingStatusUpdateTimeoutsRef.current.get(taskId);
-    if (timeoutId === undefined) return;
-    window.clearTimeout(timeoutId);
-    pendingStatusUpdateTimeoutsRef.current.delete(taskId);
-  }, []);
-
-  const scheduleTaskStatusReorderUpdate = useCallback((taskId: string, status: TaskStatus) => {
-    clearPendingStatusUpdate(taskId);
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    const currentStatus = pendingTaskStatusesRef.current.get(taskId) ?? existingTask?.status ?? "todo";
-    pendingTaskStatusesRef.current.set(taskId, status);
-    setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
-    if (existingTask) {
-      const currentSortDate = existingTask.lastEditedAt || existingTask.timestamp;
-      setSortModifiedAtHoldByTaskId((previous) => ({
-        ...previous,
-        [taskId]: currentSortDate.toISOString(),
-      }));
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setLocalTasks((previous) =>
-        applyTaskStatusUpdate(previous, allTasks, taskId, status, currentUser?.name)
-      );
-      pendingTaskStatusesRef.current.delete(taskId);
-      pendingStatusUpdateTimeoutsRef.current.delete(taskId);
-      setSortStatusHoldByTaskId((previous) => {
-        const next = { ...previous };
-        delete next[taskId];
-        return next;
-      });
-      setSortModifiedAtHoldByTaskId((previous) => {
-        const next = { ...previous };
-        delete next[taskId];
-        return next;
-      });
-    }, TASK_STATUS_REORDER_DELAY_MS);
-
-    pendingStatusUpdateTimeoutsRef.current.set(taskId, timeoutId);
-  }, [allTasks, clearPendingStatusUpdate, currentUser?.name]);
-
-  useEffect(() => {
-    const pendingTimeouts = pendingStatusUpdateTimeoutsRef.current;
-    const pendingStatuses = pendingTaskStatusesRef.current;
-    return () => {
-      for (const timeoutId of pendingTimeouts.values()) {
-        window.clearTimeout(timeoutId);
-      }
-      pendingTimeouts.clear();
-      pendingStatuses.clear();
-      setSortStatusHoldByTaskId({});
-      setSortModifiedAtHoldByTaskId({});
-    };
-  }, []);
-
-  const resolveMentionPubkeys = useCallback(async (content: string): Promise<string[]> => {
-    return resolveMentionedPubkeysAsync(content, people, {
-      resolveNip05: resolveNip05Identifier,
-    });
-  }, [people]);
-
-  const resolveRelayUrlsFromIds = useCallback((relayIds: string[]) => {
-    const resolvedRelayUrls = relays
-      .filter((relay) => relayIds.includes(relay.id))
-      .map((relay) => relay.url)
-      .filter((url): url is string => Boolean(url));
-    nostrDevLog("routing", "Resolved relay IDs to relay URLs", {
-      relayIds,
-      resolvedRelayUrls,
-    });
-    return resolvedRelayUrls;
-  }, [relays]);
-
-  const hasDisconnectedSelectedRelays = useMemo(() => {
-    return relays.some(
-      (relay) =>
-        effectiveActiveRelayIds.has(relay.id) &&
-        relay.id !== DEMO_RELAY_ID &&
-        relay.connectionStatus !== "connected"
-    );
-  }, [effectiveActiveRelayIds, relays]);
-
-  const notifyModifyBlockedByDisconnectedFeeds = useCallback(() => {
-    notifyDisconnectedSelectedFeeds(t);
-  }, [t]);
-
-  const isInteractionBlocked = !user || hasDisconnectedSelectedRelays;
-
-  const guardInteraction = useCallback((mode: "post" | "modify"): boolean => {
-    if (hasDisconnectedSelectedRelays) {
-      notifyModifyBlockedByDisconnectedFeeds();
-      return true;
-    }
-    if (!user) {
-      handleOpenAuthModal();
-      if (mode === "post") {
-        notifyNeedSigninPost(t);
-      } else {
-        notifyNeedSigninModify(t);
-      }
-      return true;
-    }
-    return false;
-  }, [handleOpenAuthModal, hasDisconnectedSelectedRelays, notifyModifyBlockedByDisconnectedFeeds, t, user]);
-
-  const handleBlockedInteractionAttempt = useCallback(() => {
-    guardInteraction("modify");
-  }, [guardInteraction]);
-
-  const resolveTaskOriginRelay = useCallback((taskId: string) => {
-    const task = allTasks.find((item) => item.id === taskId);
-    const originRelayId = resolveOriginRelayIdForTask(task, DEMO_RELAY_ID);
-    if (!originRelayId) {
-      nostrDevLog("routing", "No origin relay found for task", { taskId });
-      return { relayId: undefined, relayUrls: [] as string[] };
-    }
-    const relayUrls = resolveRelayUrlsFromIds([originRelayId]);
-    nostrDevLog("routing", "Resolved task origin relay", {
-      taskId,
-      originRelayId,
-      relayUrls,
-    });
-    return {
-      relayId: originRelayId,
-      relayUrls,
-    };
-  }, [allTasks, resolveRelayUrlsFromIds]);
-
-  const handleToggleComplete = (taskId: string) => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask) return;
-    if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-      notifyStatusRestricted(t);
-      return;
-    }
-    const currentStatus = pendingTaskStatusesRef.current.get(taskId) ?? existingTask.status ?? "todo";
-    const nextStatus = cycleTaskStatus(currentStatus);
-    scheduleTaskStatusReorderUpdate(taskId, nextStatus);
-    triggerCompletionFeedback(taskId, nextStatus);
-    void publishTaskStateUpdate(taskId, nextStatus);
-  };
-
-  const publishTaskStateUpdate = useCallback(async (
-    taskId: string,
-    status: "todo" | "in-progress" | "done",
-    relayUrlsOverride?: string[]
-  ) => {
-    if (!isNostrEventId(taskId)) {
-      console.info("Skipping state publish: task id is not a Nostr event id", { taskId });
-      nostrDevLog("publish-state", "Skipping publish for non-Nostr task id", { taskId, status });
-      return;
-    }
-
-    const relayUrls = relayUrlsOverride && relayUrlsOverride.length > 0
-      ? relayUrlsOverride.slice(0, 1)
-      : resolveTaskOriginRelay(taskId).relayUrls;
-
-    if (relayUrls.length === 0) {
-      console.info("Skipping state publish: no non-demo relay mapped for task", taskId);
-      nostrDevLog("publish-state", "Skipping publish due to empty relay mapping", { taskId, status });
-      return;
-    }
-    nostrDevLog("publish-state", "Publishing task status update", { taskId, status, relayUrls });
-
-    const mapped = mapTaskStatusToStateEvent(status);
-    const result = await publishEvent(
-      mapped.kind,
-      mapped.content,
-      [["e", taskId, relayUrls[0], "property"]],
-      undefined,
-      relayUrls
-    );
-
-    if (!result.success) {
-      toast.error(t("toasts.errors.publishStatusFailed"));
-      console.warn("Status publish failed", { taskId, status, relayUrls });
-    }
-  }, [publishEvent, resolveTaskOriginRelay, t]);
-
-  const publishTaskDueUpdate = useCallback(async (
-    taskId: string,
-    taskContent: string,
-    dueDate: Date,
-    dueTime?: string,
-    dateType: TaskDateType = "due",
-    relayUrlsOverride?: string[]
-  ) => {
-    if (!isNostrEventId(taskId)) return false;
-    const relayUrls = relayUrlsOverride && relayUrlsOverride.length > 0
-      ? relayUrlsOverride.slice(0, 1)
-      : resolveTaskOriginRelay(taskId).relayUrls;
-    if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.publishDateFailed"));
-      nostrDevLog("publish-date", "Unable to publish due date update: no relay mapping", {
-        taskId,
-        dateType,
-      });
-      return false;
-    }
-    nostrDevLog("publish-date", "Publishing task due date update", {
-      taskId,
-      relayUrls,
-      dateType,
-    });
-    const relayUrl = relayUrls[0];
-    const calendarEvent = buildLinkedTaskCalendarEvent({
-      taskEventId: taskId,
-      taskContent,
-      dueDate,
-      dueTime,
-      dateType,
-      relayUrl,
-    });
-    const result = await publishEvent(
-      calendarEvent.kind,
-      calendarEvent.content,
-      calendarEvent.tags,
-      undefined,
-      [relayUrl]
-    );
-    if (!result.success) {
-      toast.error(t("toasts.errors.publishDateFailed"));
-      console.warn("Date publish failed", { taskId, relayUrl });
-    }
-    return result.success;
-  }, [publishEvent, resolveTaskOriginRelay, t]);
-
-  const publishTaskPriorityUpdate = useCallback(async (taskId: string, priority: number) => {
-    if (!isNostrEventId(taskId)) return false;
-    const { relayUrls } = resolveTaskOriginRelay(taskId);
-    if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.publishPriorityFailed"));
-      nostrDevLog("publish-priority", "Unable to publish priority update: no relay mapping", {
-        taskId,
-        priority,
-      });
-      return false;
-    }
-    nostrDevLog("publish-priority", "Publishing task priority update", {
-      taskId,
-      priority,
-      relayUrls,
-    });
-    const relayUrl = relayUrls[0];
-    const priorityEvent = buildTaskPriorityUpdateEvent({
-      taskEventId: taskId,
-      priority,
-      relayUrl,
-    });
-    const result = await publishEvent(
-      priorityEvent.kind,
-      priorityEvent.content,
-      priorityEvent.tags,
-      undefined,
-      [relayUrl]
-    );
-    if (!result.success) {
-      toast.error(t("toasts.errors.publishPriorityFailed"));
-      console.warn("Priority publish failed", { taskId, priority, relayUrl });
-    }
-    return result.success;
-  }, [publishEvent, resolveTaskOriginRelay, t]);
-
-  const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask) return;
-    if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-      notifyStatusRestricted(t);
-      return;
-    }
-
-    scheduleTaskStatusReorderUpdate(taskId, newStatus);
-    triggerCompletionFeedback(taskId, newStatus);
-    void publishTaskStateUpdate(taskId, newStatus);
-  };
+  const { savedFilterController } = useSavedFilterConfigs({
+    currentFilterSnapshot,
+    relays,
+    setActiveRelayIds,
+    setChannelFilterStates,
+    setChannelMatchMode,
+    setPeople,
+    resetFiltersToDefault,
+  });
 
   const handleListingStatusChange = useCallback((taskId: string, status: Nip99ListingStatus) => {
     if (guardInteraction("modify")) return;
@@ -1589,741 +531,52 @@ const Index = () => {
     });
   }, [allTasks, currentUser?.id, guardInteraction, publishEvent, resolveTaskOriginRelay]);
 
-  const isPendingPublishTask = useCallback((taskId: string) => {
-    return pendingPublishTaskIds.has(taskId);
-  }, [pendingPublishTaskIds]);
-
-  const clearPendingPublishTask = useCallback((taskId: string, options?: { dismissToast?: boolean }) => {
-    const pending = pendingPublishStateRef.current.get(taskId);
-    if (!pending) return;
-    window.clearTimeout(pending.timeoutId);
-    if (options?.dismissToast !== false) {
-      toast.dismiss(pending.toastId);
-    }
-    pendingPublishStateRef.current.delete(taskId);
-    setPendingPublishTaskIds((prev) => {
-      if (!prev.has(taskId)) return prev;
-      const next = new Set(prev);
-      next.delete(taskId);
-      return next;
-    });
-  }, []);
-
-  const handleUndoPendingPublish = useCallback((taskId: string) => {
-    const pending = pendingPublishStateRef.current.get(taskId);
-    if (!pending) return;
-    setComposeRestoreRequest({
-      id: Date.now(),
-      state: pending.composeState,
-    });
-    clearPendingPublishTask(taskId);
-    setLocalTasks((prev) => prev.filter((task) => task.id !== taskId));
-    toast.info(t("toasts.success.publishUndone"));
-  }, [clearPendingPublishTask, t]);
-
-  const suppressFailedPublishEvent = useCallback((eventId?: string) => {
-    const normalizedEventId = (eventId || "").trim();
-    if (!normalizedEventId) return;
-    setSuppressedNostrEventIds((previous) => {
-      if (previous.has(normalizedEventId)) return previous;
-      const next = new Set(previous);
-      next.add(normalizedEventId);
-      return next;
-    });
-    queryClient.setQueriesData<CachedNostrEvent[]>(
-      { queryKey: NOSTR_EVENTS_QUERY_KEY },
-      (previous) => (previous || []).filter((event) => event.id !== normalizedEventId)
-    );
-    removeCachedNostrEventById(normalizedEventId);
-  }, [queryClient]);
-
-  useEffect(() => {
-    if (suppressedNostrEventIds.size === 0) return;
-    const blockedIds = new Set(suppressedNostrEventIds);
-    queryClient.setQueriesData<CachedNostrEvent[]>(
-      { queryKey: NOSTR_EVENTS_QUERY_KEY },
-      (previous) => (previous || []).filter((event) => !blockedIds.has(event.id))
-    );
-    blockedIds.forEach((eventId) => removeCachedNostrEventById(eventId));
-  }, [queryClient, suppressedNostrEventIds]);
-
-  const handleNewTask = async (
-    content: string,
-    extractedTags: string[],
-    relayIds: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType: TaskDateType = "due",
-    parentId?: string,
-    initialStatus?: TaskStatus,
-    explicitMentionPubkeys: string[] = [],
-    priority?: number,
-    attachments: PublishedAttachment[] = [],
-    nip99?: Nip99Metadata,
-    locationGeohash?: string
-  ): Promise<TaskCreateResult> => {
-    if (guardInteraction("post")) {
-      return hasDisconnectedSelectedRelays
-        ? { ok: false, reason: "relay-selection" }
-        : { ok: false, reason: "not-authenticated" };
-    }
-    if (extractedTags.length === 0) {
-      notifyNeedTag(t);
-      return { ok: false, reason: "missing-tag" };
-    }
-    const normalizedMessageType = normalizeComposerMessageType(taskType);
-    if (normalizedMessageType !== taskType) {
-      console.warn("Unexpected taskType payload; defaulting to task", { taskType });
-    }
-    const normalizedTaskType: TaskType = normalizedMessageType === "task" ? "task" : "comment";
-    const feedMessageType: Task["feedMessageType"] =
-      normalizedMessageType === "offer" || normalizedMessageType === "request"
-        ? normalizedMessageType
-        : undefined;
-    setPostedTags((prev) => Array.from(new Set([...prev, ...extractedTags.map((t) => t.toLowerCase())])));
-    extractedTags.forEach((tag) => bumpChannelFrecency(tag, 1.1));
-
-    const requestedRelayIds = relayIds.length > 0 ? relayIds : [DEMO_RELAY_ID];
-    const submissionParentId = feedMessageType ? undefined : parentId;
-    const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
-    const resolvedRelaySelection = resolveRelaySelectionForSubmission({
-      taskType: normalizedTaskType,
-      selectedRelayIds: requestedRelayIds,
-      relays,
-      parentTask,
-      demoRelayId: DEMO_RELAY_ID,
-    });
-    if (resolvedRelaySelection.error) {
-      toast.error(resolvedRelaySelection.error || t("toasts.errors.selectRelayOrParent"));
-      nostrDevLog("routing", "Relay selection rejected for submission", {
-        taskType: normalizedTaskType,
-        requestedRelayIds,
-        parentId: parentId || null,
-        error: resolvedRelaySelection.error,
-      });
-      return { ok: false, reason: "relay-selection" };
-    }
-    const targetRelayIds = resolvedRelaySelection.relayIds;
-    const hasNonDemoRelay = targetRelayIds.some((id) => id !== DEMO_RELAY_ID);
-
-    const selectedRelayUrls = resolveRelayUrlsFromIds(targetRelayIds);
-    nostrDevLog("routing", "Resolved relay selection for submission", {
-      taskType: normalizedTaskType,
-      requestedRelayIds,
-      targetRelayIds,
-      selectedRelayUrls,
-      hasNonDemoRelay,
-      parentId: parentId || null,
-    });
-    
-    const shouldPublish = hasNonDemoRelay && selectedRelayUrls.length > 0;
-    const dedupedExplicitMentionPubkeys = Array.from(
-      new Set(
-        explicitMentionPubkeys
-          .map((pubkey) => pubkey.trim().toLowerCase())
-          .filter((pubkey) => /^[a-f0-9]{64}$/i.test(pubkey))
-      )
-    );
-    const resolvedMentionPubkeys = await resolveMentionPubkeys(content);
-    const mentionPubkeys = Array.from(
-      new Set([...resolvedMentionPubkeys, ...dedupedExplicitMentionPubkeys])
-    );
-    const defaultAuthorAssignee =
-      normalizedTaskType === "task" && /^[a-f0-9]{64}$/i.test(user.pubkey)
-        ? user.pubkey.toLowerCase()
-        : undefined;
-    const assigneePubkeys = normalizedTaskType === "task"
-      ? Array.from(
-          new Set(
-            mentionPubkeys.length > 0
-              ? mentionPubkeys
-              : [defaultAuthorAssignee].filter((value): value is string => Boolean(value))
-          )
-        )
-      : [];
-    const normalizedExtractedTags = Array.from(
-      new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
-    );
-    const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
-    const contentDerivedAttachments = extractEmbeddableAttachmentsFromContent(content);
-    const normalizedAttachments = normalizePublishedAttachments([
-      ...attachments,
-      ...contentDerivedAttachments,
-    ]);
-    
-    const createdAt = new Date();
-    const taskAuthor: Person = (() => {
-      if (currentUser) return currentUser;
-      if (user?.pubkey) {
-        return {
-          id: user.pubkey,
-          name: (user.profile?.name || user.profile?.displayName || user.npub.slice(0, 8)).trim(),
-          displayName: (user.profile?.displayName || user.profile?.name || `${user.npub.slice(0, 8)}...`).trim(),
-          nip05: user.profile?.nip05?.trim().toLowerCase(),
-          avatar: user.profile?.picture,
-          isOnline: true,
-          onlineStatus: "online",
-          isSelected: false,
-        };
-      }
-      return people[0];
-    })();
-    const publishKind: NostrEventKind =
-      normalizedMessageType === "task"
-        ? NostrEventKind.Task
-        : normalizedMessageType === "offer" || normalizedMessageType === "request"
-          ? NostrEventKind.ClassifiedListing
-          : NostrEventKind.TextNote;
-    const validParentId = isNostrEventId(submissionParentId) ? submissionParentId : undefined;
-    const primaryRelayUrl = selectedRelayUrls[0] ?? "";
-    if (shouldPublish && normalizedTaskType === "task" && parentId && !validParentId) {
-      toast.warning(t("toasts.warnings.parentLocalOnly"));
-    }
-    const publishTags = shouldPublish
-      ? (
-          normalizedTaskType === "task"
-            ? buildTaskPublishTags(
-                validParentId,
-                primaryRelayUrl,
-                assigneePubkeys,
-                priority,
-                normalizedExtractedTags,
-                normalizedAttachments,
-                normalizedLocationGeohash
-              )
-            : feedMessageType
-              ? buildNip99PublishTags({
-                  metadata: nip99,
-                  feedMessageType,
-                  hashtags: normalizedExtractedTags,
-                  mentionPubkeys,
-                  attachmentTags: normalizedAttachments
-                    .map((attachment) => buildImetaTag(attachment))
-                    .filter((tag) => tag.length > 0),
-                  fallbackTitle: content.slice(0, 80),
-                  statusOverride: (nip99?.status || "active") as Nip99ListingStatus,
-                  locationGeohash: normalizedLocationGeohash,
-                })
-              : [
-                  ...mentionPubkeys.map((pubkey) => ["p", pubkey] as string[]),
-                  ...normalizedExtractedTags.map((tag) => ["t", tag] as string[]),
-                  ...normalizedAttachments
-                    .map((attachment) => buildImetaTag(attachment))
-                    .filter((tag) => tag.length > 0),
-                  ...((normalizedLocationGeohash ? [["g", normalizedLocationGeohash]] : []) as string[][]),
-                ]
-        )
-      : [];
-    const publishParentId =
-      shouldPublish && normalizedMessageType === "comment" && validParentId ? validParentId : undefined;
-
-    const publishFailedDraft = (
-      fallbackKind: NostrEventKind,
-      fallbackTags: string[][],
-      fallbackParentId?: string
-    ): FailedPublishDraft => ({
-      id: `failed-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
-      author: taskAuthor,
-      content,
-      tags: normalizedExtractedTags,
-      relayIds: targetRelayIds,
-      relayUrls: selectedRelayUrls,
-      taskType: normalizedTaskType,
-      createdAt: createdAt.toISOString(),
-      dueDate: dueDate ? dueDate.toISOString() : undefined,
-      dueTime,
-      dateType,
-      parentId: submissionParentId,
-      initialStatus,
-      mentionPubkeys,
-      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
-      priority: normalizedTaskType === "task" ? priority : undefined,
-      locationGeohash: normalizedLocationGeohash,
-      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
-      publishKind: fallbackKind,
-      publishTags: fallbackTags,
-      publishParentId: fallbackParentId,
-    });
-
-    const effectiveRelayIds = targetRelayIds.length > 0
-      ? targetRelayIds
-      : selectedRelayUrls.map((url) => getRelayIdFromUrl(url));
-    const resolvePublishedRelayIds = (publishedRelayUrls?: string[]): string[] => {
-      if (!publishedRelayUrls || publishedRelayUrls.length === 0) {
-        return effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID];
-      }
-      const ids = publishedRelayUrls.map((url) => getRelayIdFromUrl(url)).filter(Boolean);
-      return ids.length > 0 ? ids : (effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID]);
-    };
-    const notifyIfPartialPublish = (publishedRelayUrls?: string[]) => {
-      const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
-      const targetCount = new Set(selectedRelayUrls.map(normalizeUrl)).size;
-      const publishedCount = new Set((publishedRelayUrls || []).map(normalizeUrl)).size;
-      if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
-        notifyPartialPublish(t, { publishedCount, targetCount });
-        nostrDevLog("publish", "Partial publish acknowledged by subset of target relays", {
-          targetRelayUrls: selectedRelayUrls,
-          publishedRelayUrls: publishedRelayUrls || [],
-        });
-      }
-    };
-
-    const baseTask: Omit<Task, "id"> = {
-      author: taskAuthor,
-      content,
-      tags: normalizedExtractedTags,
-      relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
-      taskType: normalizedTaskType,
-      timestamp: createdAt,
-      status: normalizedTaskType === "task" ? (initialStatus || "todo") : undefined,
-      likes: 0,
-      replies: 0,
-      reposts: 0,
-      dueDate,
-      dueTime,
-      dateType,
-      parentId,
-      mentions: Array.from(
-        new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
-      ),
-      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
-      priority: normalizedTaskType === "task" ? priority : undefined,
-      feedMessageType,
-      nip99: feedMessageType ? nip99 : undefined,
-      locationGeohash: normalizedLocationGeohash,
-      attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
-    };
-
-    const parsedHashtagsFromContent = new Set(
-      (content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase())
-    );
-    const explicitTagNamesForRestore = normalizedExtractedTags.filter((tag) => !parsedHashtagsFromContent.has(tag));
-    const explicitMentionPubkeysForRestore = dedupedExplicitMentionPubkeys;
-    const composeRestoreState: ComposeRestoreState = {
-      content,
-      taskType: normalizedTaskType,
-      messageType: normalizedMessageType,
-      dueDate,
-      dueTime,
-      dateType,
-      explicitTagNames: explicitTagNamesForRestore,
-      explicitMentionPubkeys: explicitMentionPubkeysForRestore,
-      selectedRelays: targetRelayIds,
-      priority,
-      nip99,
-      locationGeohash: normalizedLocationGeohash,
-      attachments: normalizedAttachments,
-    };
-
-    if (!shouldPublish) {
-      setLocalTasks((prev) => [{ ...baseTask, id: Date.now().toString() }, ...prev]);
-      notifyLocalSaved(t, normalizedTaskType);
-      return { ok: true, mode: "local" };
-    }
-
-    const publishWithMetadata = async () => {
-      nostrDevLog("publish", "Submitting publish request", {
-        kind: publishKind,
-        parentId: publishParentId || null,
-        relayUrls: selectedRelayUrls,
-        tagCount: publishTags.length,
-      });
-      try {
-        const result = await publishEvent(publishKind, content, publishTags, publishParentId, selectedRelayUrls);
-        nostrDevLog("publish", "Publish request completed", {
-          kind: publishKind,
-          success: result.success,
-          eventId: result.eventId || null,
-          rejectionReason: result.rejectionReason || null,
-          publishedRelayUrls: result.publishedRelayUrls || [],
-          relayUrls: selectedRelayUrls,
-        });
-        return {
-          success: result.success,
-          eventId: result.eventId,
-          rejectionReason: result.rejectionReason,
-          publishedRelayUrls: result.publishedRelayUrls,
-        };
-      } catch (error) {
-        console.error("Task publish failed unexpectedly", error);
-        nostrDevLog("publish", "Publish request threw an exception", {
-          kind: publishKind,
-          relayUrls: selectedRelayUrls,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        return {
-          success: false,
-          eventId: undefined as string | undefined,
-          rejectionReason: undefined as string | undefined,
-          publishedRelayUrls: undefined as string[] | undefined,
-        };
-      }
-    };
-
-    const publishDelayEnabled = loadPublishDelayEnabled();
-    if (publishDelayEnabled) {
-      const pendingTaskId = `pending-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-      const pendingUntil = new Date(Date.now() + PUBLISH_UNDO_DELAY_MS);
-      setLocalTasks((prev) => [
-        {
-          ...baseTask,
-          id: pendingTaskId,
-          pendingPublishToken: pendingTaskId,
-          pendingPublishUntil: pendingUntil,
-        },
-        ...prev,
-      ]);
-      setPendingPublishTaskIds((prev) => {
-        const next = new Set(prev);
-        next.add(pendingTaskId);
-        return next;
-      });
-
-      const timeoutId = window.setTimeout(async () => {
-        clearPendingPublishTask(pendingTaskId, { dismissToast: true });
-        const publishResult = await publishWithMetadata();
-        if (!publishResult.success) {
-          suppressFailedPublishEvent(publishResult.eventId);
-          const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
-          setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
-          setLocalTasks((prev) => prev.filter((task) => task.id !== pendingTaskId));
-          notifyPublishSavedForRetry(t, {
-            relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
-            reason: publishResult.rejectionReason,
-          });
-          return;
-        }
-
-        if (publishResult.eventId && normalizedTaskType === "task" && initialStatus) {
-          await publishTaskStateUpdate(
-            publishResult.eventId,
-            initialStatus,
-            (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
-              ? publishResult.publishedRelayUrls
-              : selectedRelayUrls
-            ).slice(0, 1)
-          );
-        }
-        if (publishResult.eventId && normalizedTaskType === "task" && dueDate) {
-          await publishTaskDueUpdate(
-            publishResult.eventId,
-            content,
-            dueDate,
-            dueTime,
-            dateType,
-            (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
-              ? publishResult.publishedRelayUrls
-              : selectedRelayUrls
-            ).slice(0, 1)
-          );
-        }
-
-        setLocalTasks((prev) =>
-          prev.map((task) =>
-            task.id === pendingTaskId
-              ? {
-                  ...task,
-                  id: publishResult.eventId || task.id,
-                  relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
-                  pendingPublishToken: undefined,
-                  pendingPublishUntil: undefined,
-                }
-              : task
-          )
-        );
-        notifyIfPartialPublish(publishResult.publishedRelayUrls);
-        notifyPublished(t, normalizedTaskType);
-      }, PUBLISH_UNDO_DELAY_MS);
-
-      const toastId = toast(t("toasts.info.pendingPublish", { seconds: Math.floor(PUBLISH_UNDO_DELAY_MS / 1000) }), {
-        duration: PUBLISH_UNDO_DELAY_MS,
-        action: {
-          label: t("toasts.actions.undo"),
-          onClick: () => handleUndoPendingPublish(pendingTaskId),
-        },
-      });
-
-      pendingPublishStateRef.current.set(pendingTaskId, { timeoutId, toastId, composeState: composeRestoreState });
-      nostrDevLog("publish", "Queued publish with undo delay", {
-        pendingTaskId,
-        delayMs: PUBLISH_UNDO_DELAY_MS,
-        relayUrls: selectedRelayUrls,
-      });
-      return { ok: true, mode: "published" };
-    }
-
-    const publishResult = await publishWithMetadata();
-    if (!publishResult.success) {
-      suppressFailedPublishEvent(publishResult.eventId);
-      const failedDraft = publishFailedDraft(publishKind, publishTags, publishParentId);
-      setFailedPublishDrafts((prev) => [failedDraft, ...prev].slice(0, 50));
-      notifyPublishSavedForRetry(t, {
-        relayUrl: selectedRelayUrls.length === 1 ? selectedRelayUrls[0] : undefined,
-        reason: publishResult.rejectionReason,
-      });
-      return { ok: true, mode: "queued" };
-    }
-
-    if (publishResult.eventId && normalizedTaskType === "task" && initialStatus) {
-      await publishTaskStateUpdate(
-        publishResult.eventId,
-        initialStatus,
-        (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
-          ? publishResult.publishedRelayUrls
-          : selectedRelayUrls
-        ).slice(0, 1)
-      );
-    }
-    if (publishResult.eventId && normalizedTaskType === "task" && dueDate) {
-      await publishTaskDueUpdate(
-        publishResult.eventId,
-        content,
-        dueDate,
-        dueTime,
-        dateType,
-        (publishResult.publishedRelayUrls && publishResult.publishedRelayUrls.length > 0
-          ? publishResult.publishedRelayUrls
-          : selectedRelayUrls
-        ).slice(0, 1)
-      );
-    }
-
-    setLocalTasks((prev) => [
-      {
-        ...baseTask,
-        id: publishResult.eventId || Date.now().toString(),
-        relays: resolvePublishedRelayIds(publishResult.publishedRelayUrls),
-      },
-      ...prev,
-    ]);
-    notifyIfPartialPublish(publishResult.publishedRelayUrls);
-    notifyPublished(t, normalizedTaskType);
-    return { ok: true, mode: "published" };
-  };
-
-  const parseStoredDate = useCallback((value?: string): Date | undefined => {
-    if (!value) return undefined;
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-  }, []);
-
-  const publishFailedDraft = useCallback(async (
-    draftId: string,
-    resolveRelayUrls: (draft: FailedPublishDraft) => string[]
-  ) => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-    const draft = failedPublishDrafts.find((item) => item.id === draftId);
-    if (!draft) return;
-
-    const relayUrls = resolveRelayUrls(draft);
-    if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.retryRelayMissing"));
-      return;
-    }
-
-    const result = await publishEvent(
-      draft.publishKind,
-      draft.content,
-      draft.publishTags,
-      draft.publishParentId,
-      relayUrls
-    );
-    if (!result.success) {
-      if (result.eventId) {
-        nostrDevLog("publish", "Suppressing retry-failed event from cache and feed", {
-          draftId,
-          eventId: result.eventId,
-        });
-      }
-      suppressFailedPublishEvent(result.eventId);
-      if (result.rejectionReason) {
-        toast.error(t("toasts.errors.retryRejectedByRelayWithReason", { reason: result.rejectionReason }));
-      } else {
-        toast.error(t("toasts.errors.retryRejectedByRelay"));
-      }
-      return;
-    }
-
-    const publishedEventId = result.eventId;
-    const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
-    const targetCount = new Set(relayUrls.map(normalizeUrl)).size;
-    const publishedCount = new Set((result.publishedRelayUrls || []).map(normalizeUrl)).size;
-    if (targetCount > 0 && publishedCount > 0 && publishedCount < targetCount) {
-      notifyPartialPublish(t, { publishedCount, targetCount });
-      nostrDevLog("publish", "Partial publish acknowledged by subset of retry relay targets", {
-        draftId,
-        relayUrls,
-        publishedRelayUrls: result.publishedRelayUrls || [],
-      });
-    }
-    const effectiveRelayIds = (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
-      ? result.publishedRelayUrls
-      : relayUrls
-    ).map((url) => getRelayIdFromUrl(url));
-    const dueDate = parseStoredDate(draft.dueDate);
-    const restoredTask: Task = {
-      id: publishedEventId || Date.now().toString(),
-      author: draft.author,
-      content: draft.content,
-      tags: draft.tags,
-      relays: effectiveRelayIds.length > 0 ? effectiveRelayIds : [DEMO_RELAY_ID],
-      taskType: draft.taskType,
-      timestamp: parseStoredDate(draft.createdAt) || new Date(),
-      status: draft.taskType === "task" ? (draft.initialStatus || "todo") : undefined,
-      likes: 0,
-      replies: 0,
-      reposts: 0,
-      dueDate,
-      dueTime: draft.dueTime,
-      dateType: draft.dateType,
-      parentId: draft.parentId,
-      mentions: draft.mentionPubkeys,
-      assigneePubkeys: draft.taskType === "task" ? draft.assigneePubkeys : undefined,
-      priority: draft.taskType === "task" ? draft.priority : undefined,
-      locationGeohash: draft.locationGeohash,
-      attachments: draft.attachments,
-    };
-    setLocalTasks((prev) => [restoredTask, ...prev]);
-    setFailedPublishDrafts((prev) => prev.filter((item) => item.id !== draftId));
-
-    if (publishedEventId && draft.taskType === "task" && draft.initialStatus) {
-      await publishTaskStateUpdate(
-        publishedEventId,
-        draft.initialStatus,
-        (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
-          ? result.publishedRelayUrls
-          : relayUrls
-        ).slice(0, 1)
-      );
-    }
-    if (publishedEventId && draft.taskType === "task" && dueDate) {
-      await publishTaskDueUpdate(
-        publishedEventId,
-        draft.content,
-        dueDate,
-        draft.dueTime,
-        draft.dateType || "due",
-        (result.publishedRelayUrls && result.publishedRelayUrls.length > 0
-          ? result.publishedRelayUrls
-          : relayUrls
-        ).slice(0, 1)
-      );
-    }
-
-    notifyPublished(t, draft.taskType);
-  }, [
+  const {
+    composeRestoreRequest,
     failedPublishDrafts,
+    visibleFailedPublishDrafts,
+    selectedPublishableRelayIds,
+    isPendingPublishTask,
+    handleUndoPendingPublish,
+    handleNewTask,
+    handleRetryFailedPublish,
+    handleRepostFailedPublish,
+    handleDismissFailedPublish,
+    handleDismissAllFailedPublish,
+    handleDueDateChange,
+    handlePriorityChange,
+  } = useTaskPublishFlow({
+    allTasks,
+    relays,
+    people,
+    currentUser,
+    user,
+    effectiveActiveRelayIds,
+    demoFeedActive,
+    demoRelayId: DEMO_RELAY_ID,
+    queryClient,
+    t,
+    setLocalTasks,
+    setPostedTags,
+    suppressedNostrEventIds,
+    setSuppressedNostrEventIds,
+    bumpChannelFrecency,
     guardInteraction,
-    parseStoredDate,
+    hasDisconnectedSelectedRelays,
+    resolveRelayUrlsFromIds,
     publishEvent,
     publishTaskDueUpdate,
-    publishTaskStateUpdate,
-    suppressFailedPublishEvent,
-    t,
-  ]);
+    publishTaskPriorityUpdate,
+    publishTaskCreateFollowUps,
+  });
 
-  const handleRetryFailedPublish = useCallback(async (draftId: string) => {
-    await publishFailedDraft(draftId, (draft) =>
-      draft.relayUrls.length > 0
-        ? draft.relayUrls
-        : resolveRelayUrlsFromIds(draft.relayIds)
-    );
-  }, [publishFailedDraft, resolveRelayUrlsFromIds]);
-
-  const handleRepostFailedPublish = useCallback(async (draftId: string) => {
-    await publishFailedDraft(draftId, () => resolveRelayUrlsFromIds(Array.from(effectiveActiveRelayIds)));
-  }, [effectiveActiveRelayIds, publishFailedDraft, resolveRelayUrlsFromIds]);
-
-  const handleDismissFailedPublish = useCallback((draftId: string) => {
-    setFailedPublishDrafts((prev) => prev.filter((draft) => draft.id !== draftId));
+  const handleFocusSidebar = useCallback(() => {
+    setIsSidebarFocused(true);
   }, []);
 
-  const handleDismissAllFailedPublish = useCallback(() => {
-    setFailedPublishDrafts([]);
+  const handleFocusTasks = useCallback(() => {
+    setIsSidebarFocused(false);
   }, []);
-
-  const handleDueDateChange = useCallback((
-    taskId: string,
-    dueDate: Date | undefined,
-    dueTime?: string,
-    dateType: TaskDateType = "due"
-  ) => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask || existingTask.taskType !== "task" || !dueDate) return;
-    setLocalTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId
-          ? { ...task, dueDate, dueTime, dateType, lastEditedAt: new Date() }
-          : task
-      )
-    );
-    void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
-  }, [allTasks, guardInteraction, publishTaskDueUpdate]);
-
-  const handlePriorityChange = useCallback((taskId: string, priority: number) => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask || existingTask.taskType !== "task") return;
-    setLocalTasks((prev) =>
-      prev.map((task) =>
-        task.id === taskId
-          ? { ...task, priority, lastEditedAt: new Date() }
-          : task
-      )
-    );
-    void publishTaskPriorityUpdate(taskId, priority);
-  }, [allTasks, guardInteraction, publishTaskPriorityUpdate]);
-
-  // Build relays with active state for sidebar display
-  const relaysWithActiveState: Relay[] = useMemo(() => {
-    return relays.map((r) => ({
-      ...r,
-      isActive: effectiveActiveRelayIds.has(r.id),
-    }));
-  }, [relays, effectiveActiveRelayIds]);
-
-  const visibleFailedPublishDrafts = useMemo(() => {
-    return failedPublishDrafts.filter((draft) => {
-      const targetRelayIds = draft.relayIds.length > 0
-        ? draft.relayIds
-        : draft.relayUrls.map((url) => getRelayIdFromUrl(url));
-      if (targetRelayIds.length === 0) return true;
-      return targetRelayIds.some((relayId) => effectiveActiveRelayIds.has(relayId));
-    });
-  }, [effectiveActiveRelayIds, failedPublishDrafts]);
-
-  const selectedPublishableRelayIds = useMemo(
-    () =>
-      relays
-        .filter((relay) => effectiveActiveRelayIds.has(relay.id) && Boolean(relay.url))
-        .map((relay) => relay.id),
-    [effectiveActiveRelayIds, relays]
-  );
-
-  const filteredTasks = useMemo(
-    () =>
-      filterTasks({
-        tasks: allTasks,
-        activeRelayIds: effectiveActiveRelayIds,
-        channels: channelsWithState,
-        people,
-        channelMatchMode,
-        allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
-      }),
-    [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
-  );
-
-  const sidebarPeople = useMemo(() => {
-    return deriveSidebarPeople(people, allTasks, supplementalLatestActivityByAuthor);
-  }, [allTasks, people, supplementalLatestActivityByAuthor]);
 
   const lastPublishedPresenceRef = useRef<string | null>(null);
 
@@ -2435,6 +688,30 @@ const Index = () => {
     }
   };
 
+  const onboardingOverlays = (
+    <>
+      <OnboardingIntroPopover
+        isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
+        onStartTour={handleStartOnboardingTour}
+        onSignIn={handleOpenAuthModal}
+      />
+      <OnboardingGuide
+        isOpen={isOnboardingOpen && !isAuthModalOpen}
+        isMobile={isMobile}
+        manualStart={onboardingManualStart}
+        currentView={currentView}
+        uiContextKey={`${currentView}:${focusedTaskId || ""}`}
+        initialSection={onboardingInitialSection}
+        sections={onboardingSections}
+        stepsBySection={onboardingStepsBySection}
+        onClose={handleCloseGuide}
+        onComplete={handleCompleteGuide}
+        onActiveSectionChange={handleOnboardingActiveSectionChange}
+        onStepChange={handleOnboardingStepChange}
+      />
+    </>
+  );
+
   // Mobile layout
   if (isMobile) {
     return (
@@ -2462,8 +739,8 @@ const Index = () => {
           onChannelToggle={handleChannelToggle}
           onPersonToggle={handlePersonToggle}
           onChannelMatchModeChange={handleChannelMatchModeChange}
-          onAddRelay={addRelay}
-          onRemoveRelay={removeRelay}
+          onAddRelay={handleAddRelay}
+          onRemoveRelay={handleRemoveRelay}
           onSignInClick={handleOpenAuthModal}
           onGuideClick={handleOpenGuide}
           completionSoundEnabled={completionSoundEnabled}
@@ -2490,25 +767,7 @@ const Index = () => {
           onManageRouteChange={setManageRouteActive}
         />
         <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-        <OnboardingIntroPopover
-          isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
-          onStartTour={handleStartOnboardingTour}
-          onSignIn={handleOpenAuthModal}
-        />
-        <OnboardingGuide
-          isOpen={isOnboardingOpen && !isAuthModalOpen}
-          isMobile={isMobile}
-          manualStart={onboardingManualStart}
-          currentView={currentView}
-          uiContextKey={`${currentView}:${focusedTaskId || ""}`}
-          initialSection={onboardingInitialSection}
-          sections={onboardingSections}
-          stepsBySection={onboardingStepsBySection}
-          onClose={handleCloseGuide}
-          onComplete={handleCompleteGuide}
-          onActiveSectionChange={handleOnboardingActiveSectionChange}
-          onStepChange={handleOnboardingStepChange}
-        />
+        {onboardingOverlays}
       </>
     );
   }
@@ -2548,14 +807,17 @@ const Index = () => {
         onToggleAllChannels={handleToggleAllChannels}
         onChannelMatchModeChange={handleChannelMatchModeChange}
         onToggleAllPeople={handleToggleAllPeople}
-        onAddRelay={addRelay}
-        onRemoveRelay={removeRelay}
+        onAddRelay={handleAddRelay}
+        onRemoveRelay={handleRemoveRelay}
         onReconnectRelay={reconnectRelay}
         isFocused={isSidebarFocused}
         onFocusTasks={handleFocusTasks}
         onShortcutsClick={shortcutsHelp.open}
         onGuideClick={handleOpenGuide}
         savedFilters={savedFilterController}
+        pinnedChannelIds={getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList)}
+        onChannelPin={handleChannelPin}
+        onChannelUnpin={handleChannelUnpin}
       />
       <div className="min-w-0 overflow-hidden flex flex-col" {...desktopSwipeHandlers}>
         <FailedPublishQueueBanner
@@ -2578,33 +840,13 @@ const Index = () => {
           onKanbanDepthModeChange={setKanbanDepthMode}
         />
       </div>
-      
-      
+
       {/* Keyboard Shortcuts Help Dialog */}
       <KeyboardShortcutsHelp isOpen={shortcutsHelp.isOpen} onClose={shortcutsHelp.close} />
-      
+
       {/* Nostr Auth Modal */}
       <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-      <OnboardingIntroPopover
-        isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
-        onStartTour={handleStartOnboardingTour}
-        onSignIn={handleOpenAuthModal}
-      />
-      <OnboardingGuide
-        isOpen={isOnboardingOpen && !isAuthModalOpen}
-        isMobile={isMobile}
-        manualStart={onboardingManualStart}
-        currentView={currentView}
-        uiContextKey={`${currentView}:${focusedTaskId || ""}`}
-        initialSection={onboardingInitialSection}
-        sections={onboardingSections}
-        stepsBySection={onboardingStepsBySection}
-        onClose={handleCloseGuide}
-        onComplete={handleCompleteGuide}
-        onActiveSectionChange={handleOnboardingActiveSectionChange}
-        onStepChange={handleOnboardingStepChange}
-      />
-      <VersionHint className="fixed bottom-2 right-3 z-20 rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60" />
+      {onboardingOverlays}
     </div>
   );
 };

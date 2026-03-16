@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TFunction } from "i18next";
 import { toast } from "sonner";
 import { Relay } from "@/types";
@@ -19,10 +19,26 @@ export function useRelayFilterState({ relays, t, defaultRelayIds, onRelayEnabled
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
     loadPersistedRelayIds(defaultRelayIds)
   );
+  const didAutoInitializeRef = useRef(false);
 
   useEffect(() => {
     savePersistedRelayIds(activeRelayIds);
   }, [activeRelayIds]);
+
+  useEffect(() => {
+    if (didAutoInitializeRef.current) return;
+    if (relays.length === 0) return;
+
+    const availableRelayIds = new Set(relays.map((relay) => relay.id));
+    const hasMatchingSelection = Array.from(activeRelayIds).some((relayId) => availableRelayIds.has(relayId));
+    if (hasMatchingSelection) {
+      didAutoInitializeRef.current = true;
+      return;
+    }
+
+    didAutoInitializeRef.current = true;
+    setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
+  }, [activeRelayIds, relays]);
 
   const handleRelayToggle = (id: string) => {
     const relay = relays.find((r) => r.id === id);
@@ -48,11 +64,18 @@ export function useRelayFilterState({ relays, t, defaultRelayIds, onRelayEnabled
 
   const handleRelayExclusive = (id: string) => {
     const relay = relays.find((r) => r.id === id);
-    setActiveRelayIds(new Set([id]));
-    if (relay) {
-      onRelayEnabled?.(relay);
-    }
-    toast(t("toasts.success.showingOnlyRelay", { relayName: relay?.name || id }));
+    setActiveRelayIds((prev) => {
+      if (prev.size === 1 && prev.has(id)) {
+        toast(t("toasts.success.relayFilterDisabled", { relayName: relay?.name || id }));
+        return new Set();
+      }
+
+      if (relay) {
+        onRelayEnabled?.(relay);
+      }
+      toast(t("toasts.success.showingOnlyRelay", { relayName: relay?.name || id }));
+      return new Set([id]);
+    });
   };
 
   const handleToggleAllRelays = () => {

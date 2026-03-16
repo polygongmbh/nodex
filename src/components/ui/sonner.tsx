@@ -44,7 +44,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       mobileOffset={{ top: 12, left: 12, right: 12 }}
       toastOptions={{
         duration: isMobile ? 1800 : 2800,
-        dismissible: true,
+        // dismissible: true,
         closeButton: true,
         style: {
           userSelect: "text",

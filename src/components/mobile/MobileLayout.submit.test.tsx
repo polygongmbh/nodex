@@ -1,8 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
-import type { Channel, Person, Relay, Task } from "@/types";
+import type { Channel, Person, Relay, Task, TaskCreateResult } from "@/types";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
+
+const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
 const ndkMock = {
   user: null,
@@ -66,7 +68,7 @@ const tasks: Task[] = [];
 
 describe("MobileLayout submit wiring", () => {
   it("forwards explicit mention pubkeys in the correct onNewTask argument slot", () => {
-    const onNewTask = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onNewTask = vi.fn(async () => successResult);
 
     render(
       <MobileLayout

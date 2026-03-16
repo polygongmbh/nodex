@@ -5,6 +5,60 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Fixed a feed startup crash caused by task status sorting state initializing before the main Index task data graph was ready.
+
+## [1.17.3] - 2026-03-14
+- Stabilized Relay connection and status handling with cleaner reconnect behavior, clearer `read only` / `read rejected` states, and better startup relay detection.
+- Limit and scope cached data appropriately.
+- Feed loading is more resilient under heavier relay backfills through capped backfill limits and incremental hydration.
+- Fixed a number of small usability issues and errors.
+
+## [1.17.2] - 2026-03-13
+- Added a runtime persistence guard that can be enabled via `?nodexNoStorage=1` (or `VITE_DISABLE_CLIENT_PERSISTENCE=true`) to disable browser local/session storage, cookie writes, and browser cache APIs for the active session.
+- Desktop onboarding now starts with task focus and keeps navigation guidance ordered as task focus -> breadcrumbs -> view switching.
+- Breadcrumb onboarding flow is now stable across first pass and revisits: task auto-focus runs once when needed, breadcrumb interaction advances the step, revisits auto-advance only after breadcrumb context disappears, and the channels step no longer gets skipped.
+- Breadcrumb auto-activation now works consistently across views (including non-feed layouts) by targeting focusable task descendants when row wrappers are not directly clickable.
+- Guide popup/backdrop positioning now keeps anchor stability while breadcrumb targets unmount and uses synchronized motion timing to reduce transition jank.
+- Starting the onboarding tour with no available tasks now auto-loads the demo feed for the session so navigation steps have usable target data.
+- Demo relay bootstrap now seeds reusable fixture events and stable demo `kind:0` profile metadata so People filters populate correctly and metadata is not overwritten after relay activation.
+
+## [1.17.1] - 2026-03-08
+- Added an in-app legal dialog with German Impressum and Datenschutzerklärung content, linked from the desktop bottom-right dock next to the version hint, including a compact contact mail icon.
+- Added dedicated mobile legal actions in the Manage guide section with separate `Impressum`, `Datenschutz`, and `Kontakt` buttons.
+
+## [1.17.0] - 2026-03-06
+Promoted Feed-first navigation defaults, improved publish/filter ergonomics, and refined breadcrumb/status presentation across locales.
+- Feed is now the first/default task view across routing, desktop/mobile view switchers, swipe order, and numeric view shortcuts (`1` now opens Feed).
+- Host-fallback relay discovery was hardened with deterministic probe ordering, short-term probe caching, more robust persisted relay recovery, and cleaner runtime diagnostics.
+- Clicking an already-sole active feed now toggles it off, and state-update cards now avoid localized duplicate labels while formatting custom status text as `State: detail`.
+- Subtask/subitem posting now falls back to parent hashtags when no explicit tags are provided, including mobile compose parity for parent-focused sends.
+- Focused breadcrumb rows no longer stretch short task labels across available width, while long labels continue truncating safely.
+
+## [1.16.5] - 2026-03-06
+- Relay connections now auto-attempt reconnect when returning to a previously inactive tab (visibility/focus/online resume), improving recovery after idle background periods.
+- Startup host fallback relay discovery now probes host-derived relay candidates in deterministic order (`nostr.`, `feed.`, `tasks.`, `base.`), while still auto-connecting only to reachable relays.
+- Successful host-fallback probe results are now cached for 30 minutes per host/protocol so discovered relays reconnect quickly on repeat loads.
+- Host-fallback WebSocket probe timeout handling no longer force-closes in-flight sockets, reducing Firefox "connection interrupted while page was loading" console noise during fallback discovery.
+- Host-fallback cache now ignores stale cached relay URLs that no longer match current host-derived candidates, preventing empty relay lists when valid probes should run.
+- Feed filter state now auto-initializes to currently available relays when persisted relay IDs do not match discovered relays, so newly discovered feeds are immediately active and usable.
+- NDK provider now mirrors resolved default/discovered relay URLs into relay state immediately, so discovered feeds show in the sidebar even before relay-pool status events arrive.
+- Successful host-fallback relay discoveries are now persisted into relay storage and automatically reused on subsequent app loads.
+- Feed view now renders task state changes as standalone compact timeline items with the referenced task shown as breadcrumb context.
+- Desktop search now shows an inline clear (`x`) control whenever a query is present, allowing one-click reset.
+- Desktop bottom search dock now keeps spacing in a single responsive padding layer and places the version hint inline in the dock row to avoid overlap.
+- Breadcrumb labels no longer pre-abbreviate task text, now stay left-aligned on a single line, share available width evenly in constrained page breadcrumbs, and use compact capped widths in task-card breadcrumbs before truncating.
+
+## [1.16.4] - 2026-03-06
+- Task/comment location chips now resolve geohashes to rough coordinates in-chip and open the mapped location directly in a map app/browser when tapped.
+- Disabled task status controls now explain why editing is unavailable via hover title text and include richer assignee/owner identity details when known.
+
+## [1.16.3] - 2026-03-05
+Refined relay bootstrapping defaults and mobile compose location flow while reducing default demo noise.
+- When no default relays are configured via env and no relay list is persisted, startup now probes host-derived relay candidates (`base.`, `feed.`, `nostr.`, `tasks.`) based on the current domain and auto-connects only to reachable relays.
+- After sign-in, complementary relay enrichment now prefers NIP-65 (`kind:10002`) relay lists and only falls back to verified NIP-05 relay hints when no NIP-65 relay list is available.
+- The demo feed relay and seeded demo tasks are now hidden by default and can be explicitly enabled with `VITE_ENABLE_DEMO_FEED=true`.
+- Mobile composer location now captures and attaches device geolocation directly from the location button instead of opening a separate location selector panel.
+- Undo-send delay now defaults to off for new installs until explicitly enabled in preferences.
 
 ## [1.16.2] - 2026-03-04
 - Top-level comments/offers/requests now preserve selected relay targets, and published post metadata records only relays that actually acknowledged publish while root tasks/threaded comments remain single-origin routed.

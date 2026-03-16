@@ -1,4 +1,4 @@
-import { Hash } from "lucide-react";
+import { Hash, Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Channel } from "@/types";
 import { SidebarFilterRow } from "./SidebarFilterRow";
@@ -8,6 +8,9 @@ interface ChannelItemProps {
   channel: Channel;
   onToggle: () => void;
   onExclusive: () => void;
+  isPinned?: boolean;
+  onPin?: () => void;
+  onUnpin?: () => void;
   isKeyboardFocused?: boolean;
   className?: string;
 }
@@ -16,6 +19,9 @@ export function ChannelItem({
   channel,
   onToggle,
   onExclusive,
+  isPinned = false,
+  onPin,
+  onUnpin,
   isKeyboardFocused = false,
   className,
 }: ChannelItemProps) {
@@ -75,11 +81,37 @@ export function ChannelItem({
       {channel.filterState !== "neutral" && (
         <div
           className={cn(
-            "ml-auto w-1.5 h-1.5 rounded-full",
+            "w-1.5 h-1.5 rounded-full flex-shrink-0",
             channel.filterState === "included" && "bg-channel-included",
             channel.filterState === "excluded" && "bg-channel-excluded"
           )}
         />
+      )}
+
+      {(onPin || onUnpin) && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            isPinned ? onUnpin?.() : onPin?.();
+          }}
+          title={isPinned
+            ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
+            : t("sidebar.filters.pinChannelToView", { name: channel.name })}
+          aria-label={isPinned
+            ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
+            : t("sidebar.filters.pinChannelToView", { name: channel.name })}
+          className={cn(
+            "flex-shrink-0 transition-opacity",
+            isPinned ? "opacity-100" : "opacity-0 group-hover:opacity-50 hover:!opacity-100"
+          )}
+        >
+          <Pin
+            className={cn(
+              "w-3 h-3",
+              isPinned ? "text-primary fill-primary" : "text-muted-foreground"
+            )}
+          />
+        </button>
       )}
     </SidebarFilterRow>
   );

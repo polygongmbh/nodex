@@ -52,10 +52,10 @@ function shouldDebugAttachmentUploads(): boolean {
 function debugLog(message: string, payload?: Record<string, unknown>) {
   if (!shouldDebugAttachmentUploads()) return;
   if (payload) {
-    console.info("[attachments]", message, payload);
+    console.debug("[attachments]", message, payload);
     return;
   }
-  console.info("[attachments]", message);
+  console.debug("[attachments]", message);
 }
 
 function parseNip94Tags(tags: unknown): PublishedAttachment | null {
@@ -113,8 +113,9 @@ function pickUrlFromUploadResponse(payload: NIP96UploadResponse): string | undef
     if (typeof arrayCandidate === "string" && arrayCandidate.trim().length > 0) {
       return arrayCandidate.trim();
     }
-  } else if (data && typeof data === "object") {
-    const objectCandidate = data.url ?? data.download_url ?? data.media_url ?? data.file_url;
+  } else if (data && typeof data === "object" && !Array.isArray(data)) {
+    const d = data as { url?: unknown; download_url?: unknown; media_url?: unknown; file_url?: unknown };
+    const objectCandidate = d.url ?? d.download_url ?? d.media_url ?? d.file_url;
     if (typeof objectCandidate === "string" && objectCandidate.trim().length > 0) {
       return objectCandidate.trim();
     }

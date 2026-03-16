@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ShieldCheck,
   ShieldAlert,
+  Info,
   RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,8 @@ import {
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { ensureRelayProtocol, stripRelayProtocol } from "@/lib/nostr/relay-url";
 import { useTranslation } from "react-i18next";
+import { getRelayStatusDotClass, getRelayStatusTextClass } from "./relayStatusStyles";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface RelayManagementProps {
   relays: NDKRelayStatus[];
@@ -90,37 +93,25 @@ export function RelayManagement({
   };
 
   const getStatusIcon = (status: NDKRelayStatus["status"]) => {
+    const colorClass = getRelayStatusTextClass(status);
     switch (status) {
       case "connected":
-        return <Wifi className="w-4 h-4 text-success" />;
+        return <Wifi className={cn("w-4 h-4", colorClass)} />;
       case "connecting":
-        return <Loader2 className="w-4 h-4 text-sky-500 animate-spin" />;
+        return <Loader2 className={cn("w-4 h-4 animate-spin", colorClass)} />;
       case "read-only":
-        return <AlertCircle className="w-4 h-4 text-sky-500" />;
+        return <AlertCircle className={cn("w-4 h-4", colorClass)} />;
       case "connection-error":
-        return <AlertCircle className="w-4 h-4 text-destructive" />;
+        return <AlertCircle className={cn("w-4 h-4", colorClass)} />;
       case "verification-failed":
-        return <AlertCircle className="w-4 h-4 text-destructive" />;
+        return <ShieldAlert className={cn("w-4 h-4", colorClass)} />;
       default:
-        return <WifiOff className="w-4 h-4 text-slate-400" />;
+        return <WifiOff className={cn("w-4 h-4", colorClass)} />;
     }
   };
 
   const getStatusColor = (status: NDKRelayStatus["status"]) => {
-    switch (status) {
-      case "connected":
-        return "bg-success";
-      case "connecting":
-        return "bg-sky-500 animate-pulse";
-      case "read-only":
-        return "bg-sky-500";
-      case "connection-error":
-        return "bg-destructive";
-      case "verification-failed":
-        return "bg-destructive";
-      default:
-        return "bg-slate-400";
-    }
+    return getRelayStatusDotClass(status);
   };
 
   const getStatusLabel = (relay: NDKRelayStatus) => {
@@ -175,7 +166,8 @@ export function RelayManagement({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <TooltipProvider>
+          <div className="space-y-4">
           {/* Add new relay */}
           <div className="flex gap-2">
             <Input
@@ -228,10 +220,32 @@ export function RelayManagement({
                             <span className="ml-1">({relay.latency}ms)</span>
                           )}
                         </span>
+                        {relay.status === "read-only" && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                                aria-label={t("relay.statusHints.readOnly")}
+                              >
+                                <Info className="h-3.5 w-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-56 text-xs">
+                              {t("relay.statusHints.readOnly")}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
+                      {relay.status === "read-only" && (
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          {t("relay.statusHints.readOnly")}
+                        </p>
+                      )}
                     </div>
 
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground"
@@ -254,6 +268,7 @@ export function RelayManagement({
 
                     {/* Remove button */}
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
@@ -266,10 +281,13 @@ export function RelayManagement({
                     </Button>
 
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() => onRemoveRelay(relay.url)}
+                      aria-label={t("relay.remove")}
+                      title={t("relay.remove")}
                     >
                       <X className="w-4 h-4" />
                     </Button>
@@ -349,7 +367,8 @@ export function RelayManagement({
               </div>
             </div>
           </div>
-        </div>
+          </div>
+        </TooltipProvider>
       </DialogContent>
     </Dialog>
   );

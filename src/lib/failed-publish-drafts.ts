@@ -2,7 +2,8 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person, PublishedAttachment, TaskDateType, TaskStatus, TaskType } from "@/types";
 import { z } from "zod";
 
-export const FAILED_PUBLISH_DRAFTS_STORAGE_KEY = "nodex.failed-publish-drafts.v1";
+import { FAILED_PUBLISH_DRAFTS_STORAGE_KEY } from "./storage-registry";
+export { FAILED_PUBLISH_DRAFTS_STORAGE_KEY };
 const MAX_FAILED_PUBLISH_DRAFTS = 50;
 
 export interface FailedPublishDraft {
@@ -32,7 +33,7 @@ export interface FailedPublishDraft {
 const taskTypeSchema = z.enum(["task", "comment"] as const);
 const taskDateTypeSchema = z.enum(["due", "scheduled", "start", "end", "milestone"] as const);
 const taskStatusSchema = z.enum(["todo", "in-progress", "done"] as const);
-const personSchema: z.ZodType<Person> = z.object({
+const personSchema = z.object({
   id: z.string(),
   name: z.string(),
   displayName: z.string(),
@@ -41,7 +42,7 @@ const personSchema: z.ZodType<Person> = z.object({
   isOnline: z.boolean(),
   isSelected: z.boolean(),
 });
-const failedPublishDraftSchema: z.ZodType<FailedPublishDraft> = z.object({
+const failedPublishDraftSchema = z.object({
   id: z.string(),
   author: personSchema,
   content: z.string(),
@@ -88,7 +89,7 @@ export function loadFailedPublishDrafts(): FailedPublishDraft[] {
     if (!raw) return [];
     const parsed = failedPublishDraftsSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return [];
-    return parsed.data.slice(0, MAX_FAILED_PUBLISH_DRAFTS);
+    return (parsed.data as FailedPublishDraft[]).slice(0, MAX_FAILED_PUBLISH_DRAFTS);
   } catch {
     return [];
   }

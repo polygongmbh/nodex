@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPreferredMapLink,
   buildGeohashTag,
+  decodeGeohash,
   encodeGeohash,
   normalizeGeohash,
   parseFirstGeohashTag,
@@ -28,5 +30,19 @@ describe("geohash location helpers", () => {
   it("encodes latitude/longitude to deterministic geohash", () => {
     // Times Square (approximate)
     expect(encodeGeohash(40.758, -73.9855, 7)).toBe("dr5ru7v");
+  });
+
+  it("decodes geohash to approximate center and region size", () => {
+    const decoded = decodeGeohash("u4pruyd");
+    expect(decoded).toBeDefined();
+    expect(decoded?.latitude).toBeCloseTo(57.649, 2);
+    expect(decoded?.longitude).toBeCloseTo(10.407, 2);
+    expect(decoded?.radiusMeters).toBeGreaterThan(0);
+  });
+
+  it("builds platform map links for decoded coordinates", () => {
+    expect(buildPreferredMapLink(37.7749, -122.4194, "Android")).toContain("geo:");
+    expect(buildPreferredMapLink(37.7749, -122.4194, "iPhone")).toContain("maps.apple.com");
+    expect(buildPreferredMapLink(37.7749, -122.4194, "Desktop")).toContain("google.com/maps/search");
   });
 });

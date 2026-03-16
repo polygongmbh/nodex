@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
 import type { AuthMethod, NostrUser } from "@/lib/nostr/ndk-context";
@@ -34,6 +34,17 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 }));
 
 describe("NostrAuthModal", () => {
+  const clickOutsideDialog = () => {
+    const overlay = document.querySelector("[data-state='open'].fixed.inset-0");
+    if (!overlay) {
+      throw new Error("Expected dialog overlay to exist");
+    }
+    fireEvent.pointerDown(overlay);
+    fireEvent.mouseDown(overlay);
+    fireEvent.mouseUp(overlay);
+    fireEvent.click(overlay);
+  };
+
   beforeEach(() => {
     window.localStorage.clear();
     ndkMock.isConnected = true;
@@ -41,6 +52,7 @@ describe("NostrAuthModal", () => {
     ndkMock.authMethod = null;
     ndkMock.needsProfileSetup = false;
     ndkMock.isProfileSyncing = false;
+    ndkMock.updateUserProfile = vi.fn(async () => true);
   });
 
   it("shows loading indicator only on extension option when extension login starts", async () => {
@@ -172,6 +184,48 @@ describe("NostrAuthModal", () => {
     expect(document.getElementById("profile-auto-caption-enabled")).toBeNull();
   });
 
+  it("only auto-opens mandatory profile setup once per required setup cycle", () => {
+    ndkMock.user = {
+      npub: "npub1test",
+      pubkey: "a".repeat(64),
+      profile: { name: "" },
+    };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
+
+    const { rerender } = render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps the dismiss button available after a mandatory profile setup save fails", async () => {
+    ndkMock.user = {
+      npub: "npub1test",
+      pubkey: "a".repeat(64),
+      profile: { name: "" },
+    };
+    ndkMock.authMethod = "extension";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
+    ndkMock.updateUserProfile = vi.fn(async () => false);
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    fireEvent.change(document.getElementById("profile-name") as HTMLInputElement, { target: { value: "alice" } });
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+
+    await waitFor(() => expect(ndkMock.updateUserProfile).toHaveBeenCalled());
+    clickOutsideDialog();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
+  });
+
   it("adds a profile trigger hint including the logged-in pubkey", () => {
     ndkMock.user = {
       npub: "npub1hint",
@@ -184,6 +238,22 @@ describe("NostrAuthModal", () => {
 
     const profileTrigger = screen.getByRole("button", { name: /profile: hint user/i });
     expect(profileTrigger).toHaveAttribute("title", expect.stringContaining("b".repeat(64)));
+  });
+
+  it("ignores outside click when auth form input is dirty", () => {
+    const onClose = vi.fn();
+
+    render(<NostrAuthModal isOpen onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /private key/i }));
+    fireEvent.change(screen.getByLabelText(/^private key$/i), {
+      target: { value: "nsec1example" },
+    });
+
+    clickOutsideDialog();
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
 });

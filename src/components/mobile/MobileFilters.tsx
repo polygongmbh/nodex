@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown } from "lucide-react";
+import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown, Mail } from "lucide-react";
 import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
 import { cn } from "@/lib/utils";
+import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -9,6 +10,7 @@ import { useNDK } from "@/lib/nostr/ndk-context";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";
+import { LegalDialog, resolveLegalContactEmail } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
@@ -61,6 +63,7 @@ export function MobileFilters({
   onToggleCompletionSound = () => {},
 }: MobileFiltersProps) {
   const { t } = useTranslation();
+  const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
     return `${value.slice(0, 10)}…${value.slice(-6)}`;
@@ -162,12 +165,12 @@ export function MobileFilters({
 
   return (
     <ScrollArea className="h-full" data-onboarding="mobile-filters">
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-5">
         <section>
           <div className="flex items-center gap-2">
             <button
               onClick={onGuideClick}
-              className="flex-1 rounded-lg border border-border px-3 py-2 text-sm text-left hover:bg-muted/50 transition-colors inline-flex items-center gap-2"
+              className="flex-1 rounded-lg border border-border px-3 py-2.5 text-sm text-left hover:bg-muted/50 active:bg-muted transition-colors inline-flex items-center gap-2 touch-target-sm"
               aria-label={t("sidebar.actions.openGuide")}
               title={t("sidebar.actions.openGuide")}
             >
@@ -180,6 +183,27 @@ export function MobileFilters({
               enabled={completionSoundEnabled}
               onToggle={onToggleCompletionSound}
             />
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <LegalDialog
+              triggerLabel="Impressum"
+              triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
+              defaultSection="imprint"
+            />
+            <LegalDialog
+              triggerLabel="Datenschutz"
+              triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
+              defaultSection="privacy"
+            />
+            <a
+              href={`mailto:${legalContactEmail}`}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2 text-xs text-center text-muted-foreground hover:bg-muted/50 active:bg-muted hover:text-foreground touch-target-sm"
+              aria-label="Kontakt per E-Mail"
+              title="Kontakt per E-Mail"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              Kontakt
+            </a>
           </div>
         </section>
 
@@ -204,31 +228,31 @@ export function MobileFilters({
               {!user ? (
                 <button
                   onClick={onSignInClick}
-                  className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5 touch-target-sm active:scale-95 transition-transform"
                 >
-                  <LogIn className="w-3.5 h-3.5" />
+                  <LogIn className="w-4 h-4" />
                   {t("filters.profile.signin")}
                 </button>
               ) : (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsProfileEditorOpen((prev) => !prev)}
-                    className="px-3 py-1.5 rounded-md text-sm border border-border inline-flex items-center gap-1"
+                    className="px-3 py-2 rounded-lg text-sm border border-border inline-flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
                   >
-                    <Pencil className="w-3 h-3" />
+                    <Pencil className="w-3.5 h-3.5" />
                     {t("filters.profile.edit")}
                     <ChevronDown
                       className={cn(
-                        "w-3 h-3 transition-transform",
+                        "w-3.5 h-3.5 transition-transform",
                         isProfileEditorOpen && "rotate-180"
                       )}
                     />
                   </button>
                   <button
                     onClick={logout}
-                    className="px-3 py-1.5 rounded-md text-sm border border-destructive/40 text-destructive flex items-center gap-1"
+                    className="px-3 py-2 rounded-lg text-sm border border-destructive/40 text-destructive flex items-center gap-1.5 touch-target-sm active:bg-destructive/10 transition-colors"
                   >
-                    <LogOut className="w-3 h-3" />
+                    <LogOut className="w-3.5 h-3.5" />
                     {t("filters.profile.signout")}
                   </button>
                 </div>
@@ -300,11 +324,11 @@ export function MobileFilters({
                     className="min-h-20"
                   />
                 </div>
-                <div className="flex items-center justify-end gap-2 pt-1">
+                <div className="flex items-center justify-end gap-2 pt-2">
                   {!needsProfileSetup && (
                     <button
                       onClick={() => setIsProfileEditorOpen(false)}
-                      className="px-3 py-1.5 rounded-md text-sm border border-border"
+                      className="px-4 py-2 rounded-lg text-sm border border-border touch-target-sm active:bg-muted transition-colors"
                       disabled={isSavingProfile}
                     >
                       {t("filters.profile.cancel")}
@@ -312,7 +336,7 @@ export function MobileFilters({
                   )}
                   <button
                     onClick={handleSaveProfile}
-                    className="px-3 py-1.5 rounded-md text-sm bg-primary text-primary-foreground"
+                    className="px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground touch-target-sm active:scale-95 transition-transform"
                     disabled={isSavingProfile || !isProfileNameValid}
                   >
                     {isSavingProfile ? t("filters.profile.saving") : t("filters.profile.save")}
@@ -416,10 +440,10 @@ export function MobileFilters({
             />
             <button
               onClick={handleAddRelay}
-              className="px-3 h-9 rounded-md border border-border text-sm flex items-center gap-1"
+              className="px-3 h-10 rounded-lg border border-border text-sm flex items-center gap-1.5 touch-target-sm active:bg-muted transition-colors"
               aria-label={t("filters.feeds.addAria")}
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               {t("filters.feeds.add")}
             </button>
           </div>
@@ -428,27 +452,12 @@ export function MobileFilters({
               const RelayIcon = relayIconMap[relay.icon] || Building2;
               const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
               const isConnectionActive = resolvedConnectionStatus === "connected";
-              const connectionDotClass = (() => {
-                switch (resolvedConnectionStatus) {
-                  case "read-only":
-                    return "bg-sky-500";
-                  case "connecting":
-                    return "bg-sky-500";
-                  case "verification-failed":
-                    return "bg-destructive";
-                  case "connection-error":
-                    return "bg-destructive";
-                  case "disconnected":
-                    return "bg-slate-400";
-                  default:
-                    return "bg-success";
-                }
-              })();
+              const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
               return (
                 <div
                   key={relay.id}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
+                    "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm",
                     relay.isActive
                       ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                       : "border-border hover:bg-muted",
@@ -457,28 +466,27 @@ export function MobileFilters({
                 >
                   <button
                     onClick={() => onRelayToggle(relay.id)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 flex-1 min-w-0"
                   >
-                    <RelayIcon className="w-4 h-4" />
-                    {relay.name}
+                    <RelayIcon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{relay.name}</span>
                     <span
                       className={cn(
-                        "inline-block h-1.5 w-1.5 rounded-full",
+                        "inline-block h-2 w-2 rounded-full shrink-0",
                         connectionDotClass
                       )}
-                      title={resolvedConnectionStatus}
-                      aria-label={resolvedConnectionStatus}
+                      title={resolvedConnectionStatus === "read-only" ? t("relay.statusHints.readOnly") : resolvedConnectionStatus}
+                      aria-label={resolvedConnectionStatus === "read-only" ? t("relay.statusHints.readOnly") : resolvedConnectionStatus}
                     />
-                    {relay.isActive && <Check className="w-3 h-3" />}
+                    {relay.isActive && <Check className="w-3.5 h-3.5 shrink-0" />}
                   </button>
                   {relay.url && relay.id !== "demo" && (
                     <button
                       onClick={() => onRemoveRelay(relay.url!)}
-                      className="ml-1 text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1"
+                      className="ml-1 p-1.5 rounded text-muted-foreground hover:text-destructive active:bg-destructive/10 inline-flex items-center gap-1 touch-target-sm"
                       aria-label={t("filters.feeds.removeAria", { name: relay.name })}
                     >
-                      <Trash2 className="w-3 h-3" />
-                      {t("filters.feeds.remove")}
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -506,16 +514,16 @@ export function MobileFilters({
                 key={channel.id}
                 onClick={() => onChannelToggle(channel.id)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors border",
+                  "flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm active:scale-95",
                   channel.filterState === "included" && "bg-success/10 border-success text-success motion-filter-pop",
                   channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive motion-filter-pop-alt",
                   channel.filterState === "neutral" && "border-border hover:bg-muted"
                 )}
               >
                 #{channel.name}
-                {channel.filterState === "included" && <Check className="w-3 h-3" />}
-                {channel.filterState === "excluded" && <X className="w-3 h-3" />}
-                {channel.filterState === "neutral" && <Minus className="w-3 h-3 opacity-50" />}
+                {channel.filterState === "included" && <Check className="w-3.5 h-3.5" />}
+                {channel.filterState === "excluded" && <X className="w-3.5 h-3.5" />}
+                {channel.filterState === "neutral" && <Minus className="w-3.5 h-3.5 opacity-50" />}
               </button>
             ))}
           </div>
@@ -536,7 +544,7 @@ export function MobileFilters({
                   key={person.id}
                   onClick={() => onPersonToggle(person.id)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border",
+                    "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm active:scale-95",
                     person.isSelected
                       ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                       : "border-border hover:bg-muted"
@@ -546,17 +554,18 @@ export function MobileFilters({
                     id={person.id}
                     displayName={person.displayName || person.name}
                     avatarUrl={person.avatar}
-                    className="w-5 h-5"
+                    className="w-6 h-6"
                   />
                   <span className="truncate max-w-[9rem]" title={person.name}>
                     {personLabel}
                   </span>
-                  {person.isSelected && <Check className="w-3 h-3" />}
+                  {person.isSelected && <Check className="w-3.5 h-3.5" />}
                 </button>
               );
             })}
           </div>
         </section>
+
       </div>
     </ScrollArea>
   );

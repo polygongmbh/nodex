@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, LocateFixed, MapPin } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -36,7 +36,7 @@ import {
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
 import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/nip96-attachment-upload";
-import { loadAutoCaptionEnabled } from "@/lib/auto-caption-preferences";
+import { loadAutoCaptionEnabled } from "@/lib/user-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/lib/nostr/geohash-location";
@@ -66,7 +66,7 @@ interface UnifiedBottomBarProps {
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
-type SelectorType = "relay" | "channel" | "person" | "date" | "location" | null;
+type SelectorType = "relay" | "channel" | "person" | "date" | null;
 
 const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "building-2": Building2,
@@ -411,7 +411,7 @@ export function UnifiedBottomBar({
     if (!hasMeaningfulComposerText(sharedText)) return;
     const extractedChannels = sharedText.match(/#(\w+)/g)?.map((token) => token.slice(1).toLowerCase()) || [];
     const submitChannels = Array.from(new Set([...extractedChannels, ...explicitTagNames]));
-    if (submitChannels.length === 0) {
+    if (submitChannels.length === 0 && !focusedTaskId) {
       notifyNeedTag(t);
       return;
     }
@@ -607,11 +607,12 @@ export function UnifiedBottomBar({
       attachmentFileRef.current[id] = file;
       return {
         id,
+        url: "",
         fileName: file.name,
         mimeType: file.type || undefined,
         size: file.size,
-        status: "uploading",
-        source: "upload",
+        status: "uploading" as const,
+        source: "upload" as const,
       };
     });
     setAttachments((previous) => [...previous, ...nextEntries]);
@@ -670,6 +671,7 @@ export function UnifiedBottomBar({
   const hasComposeText = sharedText.trim().length > 0;
   const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
   const hasAtLeastOneTag = ((sharedText.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
+  const canInheritParentTags = Boolean(focusedTaskId);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
   const taskSubmitBlockedReason = !isSignedIn
@@ -680,7 +682,7 @@ export function UnifiedBottomBar({
         ? "Retry or remove failed attachments"
       : !hasMeaningfulComposeText
         ? t("composer.blocked.write")
-        : !hasAtLeastOneTag
+        : !hasAtLeastOneTag && !canInheritParentTags
           ? t("composer.blocked.tag")
         : hasInvalidRootTaskRelaySelection
           ? t("composer.blocked.relay")
@@ -690,7 +692,7 @@ export function UnifiedBottomBar({
   }).slice(0, 8);
 
   useEffect(() => {
-    if (taskSubmitBlockedReason && (activeSelector === "date" || activeSelector === "location")) {
+    if (taskSubmitBlockedReason && activeSelector === "date") {
       setActiveSelector(null);
     }
   }, [activeSelector, taskSubmitBlockedReason]);
@@ -738,8 +740,8 @@ export function UnifiedBottomBar({
   };
 
   const canSendTask = hasMeaningfulComposeText && !hasInvalidRootTaskRelaySelection && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
-  const canSendComment = hasMeaningfulComposeText && hasAtLeastOneTag && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
-  const canSendListing = hasMeaningfulComposeText && hasAtLeastOneTag && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
+  const canSendComment = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
+  const canSendListing = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
   const canSubmitFromPrimary = canOfferComment ? (canSendTask || canSendComment) : canSendTask;
   const hasTaskSubmitBlock = taskSubmitBlockedReason !== null;
@@ -760,7 +762,9 @@ export function UnifiedBottomBar({
   };
 
   const useCurrentLocation = () => {
+    featureDebugLog("compose-location", "Attempting mobile location capture");
     if (!navigator.geolocation) {
+      featureDebugLog("compose-location", "Mobile location capture unavailable: geolocation API missing");
       toast.error(t("toasts.errors.locationUnavailable"));
       return;
     }
@@ -768,9 +772,11 @@ export function UnifiedBottomBar({
       (position) => {
         const geohash = encodeGeohash(position.coords.latitude, position.coords.longitude, DEFAULT_GEOHASH_PRECISION);
         setLocationGeohash(geohash);
+        featureDebugLog("compose-location", "Mobile location capture succeeded", { geohash });
         toast.success(t("toasts.success.locationCaptured", { geohash }));
       },
       () => {
+        featureDebugLog("compose-location", "Mobile location capture failed");
         toast.error(t("toasts.errors.locationCaptureFailed"));
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
@@ -884,7 +890,7 @@ export function UnifiedBottomBar({
                     key={relay.id}
                     onClick={() => onRelayToggle(relay.id)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors",
+                      "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
                       relay.isActive
                         ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                         : "border-border"
@@ -892,7 +898,7 @@ export function UnifiedBottomBar({
                   >
                     <RelayIcon className="w-4 h-4" />
                     {relay.name}
-                    {relay.isActive && <Check className="w-3 h-3" />}
+                    {relay.isActive && <Check className="w-3.5 h-3.5" />}
                   </button>
                 );
               })}
@@ -905,16 +911,16 @@ export function UnifiedBottomBar({
                   key={channel.id}
                   onClick={() => onChannelToggle(channel.id)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors",
+                    "flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
                     channel.filterState === "included" && "bg-success/10 border-success text-success motion-filter-pop",
                     channel.filterState === "excluded" && "bg-destructive/10 border-destructive text-destructive motion-filter-pop-alt",
                     channel.filterState === "neutral" && "border-border"
                   )}
                 >
                   #{channel.name}
-                  {channel.filterState === "included" && <Check className="w-3 h-3" />}
-                  {channel.filterState === "excluded" && <X className="w-3 h-3" />}
-                  {channel.filterState === "neutral" && <Minus className="w-3 h-3 opacity-50" />}
+                  {channel.filterState === "included" && <Check className="w-3.5 h-3.5" />}
+                  {channel.filterState === "excluded" && <X className="w-3.5 h-3.5" />}
+                  {channel.filterState === "neutral" && <Minus className="w-3.5 h-3.5 opacity-50" />}
                 </button>
               ))}
             </div>
@@ -929,7 +935,7 @@ export function UnifiedBottomBar({
                     key={person.id}
                     onClick={() => onPersonToggle(person.id)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors",
+                      "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
                       person.isSelected
                         ? "bg-primary/10 border-primary text-primary motion-filter-pop"
                         : "border-border"
@@ -939,12 +945,12 @@ export function UnifiedBottomBar({
                       id={person.id}
                       displayName={person.displayName || person.name}
                       avatarUrl={person.avatar}
-                      className="w-5 h-5"
+                      className="w-6 h-6"
                     />
                     <span className="truncate max-w-[8rem]" title={person.name}>
                       {personLabel}
                     </span>
-                    {person.isSelected && <Check className="w-3 h-3" />}
+                    {person.isSelected && <Check className="w-3.5 h-3.5" />}
                   </button>
                 );
               })}
@@ -982,39 +988,6 @@ export function UnifiedBottomBar({
               </div>
             </div>
           )}
-          {activeSelector === "location" && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={useCurrentLocation}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/50 bg-background px-2 text-xs hover:bg-muted/60"
-                >
-                  <LocateFixed className="h-3.5 w-3.5" />
-                  {t("composer.actions.useCurrentLocation")}
-                </button>
-                {locationGeohash && (
-                  <button
-                    type="button"
-                    onClick={() => setLocationGeohash(undefined)}
-                    className="h-8 inline-flex items-center rounded-md border border-border/50 bg-background px-2 text-xs hover:bg-muted/60"
-                  >
-                    {t("composer.actions.clearLocation")}
-                  </button>
-                )}
-              </div>
-              <div className="inline-flex w-full items-center gap-1.5 rounded-md border border-border/50 bg-background px-2">
-                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                <input
-                  value={locationGeohash || ""}
-                  onChange={(event) => setLocationGeohash(normalizeGeohash(event.target.value) || event.target.value.trim().toLowerCase())}
-                  placeholder={t("composer.placeholders.geohash")}
-                  aria-label={t("composer.placeholders.geohash")}
-                  className="h-8 w-full bg-transparent text-xs focus:outline-none"
-                />
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -1026,11 +999,11 @@ export function UnifiedBottomBar({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="h-8 w-8 inline-flex items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+              className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60 active:bg-muted transition-colors shrink-0 touch-target-sm"
               aria-label="Add attachment"
               title="Add attachment"
             >
-              <Paperclip className="w-3.5 h-3.5" />
+              <Paperclip className="w-4 h-4" />
             </button>
           )}
           {showInlineTaskSubmitBlock ? (
@@ -1113,17 +1086,17 @@ export function UnifiedBottomBar({
           ) : null}
 
           {/* Filter/Selector Buttons */}
-          <div className="flex items-center gap-1 ml-auto shrink-0">
+          <div className="flex items-center gap-0.5 ml-auto shrink-0">
             <button
               onClick={() => toggleSelector("relay")}
               className={cn(
-                "relative p-2 rounded-md transition-colors",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "relay" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Radio className="w-4 h-4" />
               {activeRelaysCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activeRelaysCount}
                 </span>
               )}
@@ -1131,13 +1104,13 @@ export function UnifiedBottomBar({
             <button
               onClick={() => toggleSelector("channel")}
               className={cn(
-                "relative p-2 rounded-md transition-colors",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "channel" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Hash className="w-4 h-4" />
               {activeChannelsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activeChannelsCount}
                 </span>
               )}
@@ -1145,22 +1118,22 @@ export function UnifiedBottomBar({
             <button
               onClick={() => toggleSelector("person")}
               className={cn(
-                "relative p-2 rounded-md transition-colors",
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Users className="w-4 h-4" />
               {activePeopleCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 w-4 h-4 bg-primary text-primary-foreground text-[0.625rem] rounded-full flex items-center justify-center">
                   {activePeopleCount}
                 </span>
               )}
             </button>
             <button
-              onClick={() => toggleSelector("location")}
+              onClick={useCurrentLocation}
               className={cn(
-                "relative p-2 rounded-md transition-colors",
-                activeSelector === "location" || locationGeohash
+                "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
+                locationGeohash
                   ? "bg-primary/20 text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
@@ -1240,9 +1213,9 @@ export function UnifiedBottomBar({
       )}
 
       {/* Input Area */}
-      <div className="flex items-stretch gap-2 p-3">
+      <div className="flex items-stretch gap-2 px-3 pb-3 pt-2">
         <div className="flex-1">
-          <div className="flex h-[3.3rem] items-stretch gap-2 text-sm">
+          <div className="flex h-[2.75rem] items-stretch gap-2 text-sm">
             <div className="flex-1 relative">
               {hasComposeText ? (
                 <button

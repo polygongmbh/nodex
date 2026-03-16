@@ -8,6 +8,7 @@ import {
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
+  Nip99Metadata,
 } from "@/types";
 import {
   format,
@@ -34,10 +35,10 @@ import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { getAuthorColor } from "@/lib/author-color";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
-import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
-import { buildChildrenMap, sortTasks, type SortContext } from "@/lib/taskSorting";
+import { buildChildrenMap, sortTasks, type SortContext } from "@/lib/task-sorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
@@ -394,6 +395,10 @@ export function CalendarView({
   const canCompleteTask = (task: Task) => {
     return canUserChangeTaskStatus(task, currentUser);
   };
+  const getStatusButtonTitle = (task: Task) => {
+    if (canCompleteTask(task)) return getStatusToggleHint(task.status);
+    return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(task.status);
+  };
 
   const openStatusMenu = (taskId: string) => {
     setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
@@ -595,7 +600,7 @@ export function CalendarView({
                                   }}
                                   disabled={!canCompleteTask(task)}
                                   aria-label={t("tasks.actions.setStatus")}
-                                  title={getStatusToggleHint(task.status)}
+                                  title={getStatusButtonTitle(task)}
                                   className={cn(
                                     "flex-shrink-0 mt-0.5",
                                     canCompleteTask(task) ? "cursor-pointer" : "cursor-not-allowed opacity-50"
@@ -671,7 +676,7 @@ export function CalendarView({
             {desktopMonthSections.map((section) => (
               <section
                 key={section.key}
-                ref={(node) => {
+                ref={(node: HTMLDivElement | null) => {
                   desktopMonthSectionRefs.current[section.key] = node;
                 }}
                 className={cn("space-y-0.5", isMobile ? "pt-1" : "pt-1.5")}
@@ -992,7 +997,7 @@ export function CalendarView({
                                 }}
                                 disabled={!canCompleteTask(task)}
                                 aria-label={t("tasks.actions.setStatus")}
-                                title={getStatusToggleHint(task.status)}
+                                title={getStatusButtonTitle(task)}
                                 className={cn(
                                   "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
                                   canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"

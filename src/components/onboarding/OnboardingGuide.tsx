@@ -24,7 +24,7 @@ interface OnboardingGuideProps {
   uiContextKey?: string;
   initialSection: OnboardingInitialSection;
   sections: OnboardingSection[];
-  stepsBySection: Record<OnboardingSectionId, { id: string; title: string; description: string; target?: string }[]>;
+  stepsBySection: Record<OnboardingSectionId, OnboardingStep[]>;
   onClose: () => void;
   onComplete: (lastStep: number) => void;
   onActiveSectionChange?: (section: OnboardingSectionId | null) => void;
@@ -46,6 +46,18 @@ interface RectBox {
 }
 
 const GUIDE_ACTION_TIMEOUT_MS = 5000;
+const BREADCRUMB_AUTOFOCUS_DELAY_MS = 120;
+const GUIDE_AUTO_ADVANCE_DELAY_MS = 220;
+const GUIDE_AUTO_ADVANCE_MANUAL_DELAY_MS = 120;
+const GUIDE_MOTION_POSITION_MS = 140;
+const GUIDE_MOTION_DELAY_MS = 50;
+const GUIDE_MOTION_EMPHASIS_MS = 120;
+const GUIDE_MOTION_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+function shouldReduceMotion() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
 function renderGuideTextWithItalics(text: string) {
   return text.split(/(\*[^*]+\*)/g).filter(Boolean).map((part, index) => {
@@ -89,11 +101,23 @@ export function OnboardingGuide({
   const [guideCardSize, setGuideCardSize] = useState({ width: 380, height: 320 });
   const guideCardRef = useRef<HTMLDivElement | null>(null);
   const manualSelectedSectionRef = useRef<OnboardingSectionId | null>(null);
-  const autoAdvancedStepIdsRef = useRef<Set<string>>(new Set());
-  const pendingAutoAdvanceStepIdsRef = useRef<Set<string>>(new Set());
+  const autoAdvancedStepEntryKeysRef = useRef<Set<string>>(new Set());
+  const pendingAutoAdvanceStepEntryKeysRef = useRef<Set<string>>(new Set());
   const stepEntryContextKeyRef = useRef<{ stepId: string; contextKey?: string } | null>(null);
   const previousStepIdRef = useRef<string | null>(null);
   const backUnlockedStepIdsRef = useRef<Set<string>>(new Set());
+  const breadcrumbAutofocusStepEntryRef = useRef<string | null>(null);
+  const breadcrumbWasVisibleThisEntryRef = useRef(false);
+  const stepEntryCounterRef = useRef(0);
+  const currentStepEntryKeyRef = useRef<string>("");
+  const preservedTargetRectRef = useRef<DOMRect | null>(null);
+  const reduceMotion = shouldReduceMotion();
+  const guidePositionTransition = reduceMotion
+    ? "none"
+    : `left ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, top ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, opacity ${GUIDE_MOTION_EMPHASIS_MS}ms ease ${GUIDE_MOTION_DELAY_MS}ms`;
+  const guideBackdropTransition = reduceMotion
+    ? "none"
+    : `left ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, top ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, width ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms, height ${GUIDE_MOTION_POSITION_MS}ms ${GUIDE_MOTION_EASE} ${GUIDE_MOTION_DELAY_MS}ms`;
 
   const getBestVisibleTarget = useCallback((selector: string): HTMLElement | null => {
     const matches = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
@@ -136,6 +160,59 @@ export function OnboardingGuide({
     return true;
   }, [getBestVisibleTarget]);
 
+  const tryAutoFocusFirstTaskForBreadcrumb = useCallback((): boolean => {
+    const getFirstVisibleTask = (tasks: HTMLElement[]): HTMLElement | null => {
+      return tasks.find((task) => {
+        const rect = task.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return false;
+        const style = window.getComputedStyle(task);
+        return style.display !== "none" && style.visibility !== "hidden";
+      }) ?? null;
+    };
+
+    const getClickableTaskTarget = (task: HTMLElement): HTMLElement | null => {
+      const selectors = [
+        '[title*="focus" i]',
+        '[aria-label*="focus" i]',
+        '[role="button"][tabindex]',
+        '[role="button"]',
+        "p.cursor-pointer",
+        "div.cursor-pointer",
+        "span.cursor-pointer",
+      ];
+
+      for (const selector of selectors) {
+        const match = getFirstVisibleTask(Array.from(task.querySelectorAll<HTMLElement>(selector)).filter((element) => {
+          if (element.hasAttribute("disabled")) return false;
+          if (element.getAttribute("aria-disabled") === "true") return false;
+          return true;
+        }));
+        if (match) return match;
+      }
+
+      return task;
+    };
+
+    const clickTask = (task: HTMLElement | null): boolean => {
+      if (!task) return false;
+      const clickTarget = getClickableTaskTarget(task);
+      if (!clickTarget) return false;
+      clickTarget.click();
+      return true;
+    };
+
+    const taskList = getBestVisibleTarget('[data-onboarding="task-list"]');
+    const firstVisibleTaskInList = taskList
+      ? getFirstVisibleTask(Array.from(taskList.querySelectorAll<HTMLElement>("[data-task-id]")))
+      : null;
+    if (clickTask(firstVisibleTaskInList)) return true;
+
+    const firstVisibleGlobalTask = getFirstVisibleTask(
+      Array.from(document.querySelectorAll<HTMLElement>("[data-task-id]"))
+    );
+    return clickTask(firstVisibleGlobalTask);
+  }, [getBestVisibleTarget]);
+
   const allSteps = useMemo(() => getOnboardingAllSteps(stepsBySection), [stepsBySection]);
 
   const getFirstStepIndexForSection = (sectionId: OnboardingSectionId): number => {
@@ -152,13 +229,14 @@ export function OnboardingGuide({
     return stepsBySection[activeSection];
   }, [activeSection, allSteps, stepsBySection]);
 
-  const advanceStep = useCallback((stepId: string) => {
-    if (autoAdvancedStepIdsRef.current.has(stepId)) return;
-    if (pendingAutoAdvanceStepIdsRef.current.has(stepId)) return;
-    pendingAutoAdvanceStepIdsRef.current.add(stepId);
+  const advanceStep = useCallback((stepId: string, entryKeyOverride?: string) => {
+    const entryKey = entryKeyOverride || currentStepEntryKeyRef.current || `${stepId}:fallback`;
+    if (autoAdvancedStepEntryKeysRef.current.has(entryKey)) return;
+    if (pendingAutoAdvanceStepEntryKeysRef.current.has(entryKey)) return;
+    pendingAutoAdvanceStepEntryKeysRef.current.add(entryKey);
     const timeout = window.setTimeout(() => {
-      pendingAutoAdvanceStepIdsRef.current.delete(stepId);
-      autoAdvancedStepIdsRef.current.add(stepId);
+      pendingAutoAdvanceStepEntryKeysRef.current.delete(entryKey);
+      autoAdvancedStepEntryKeysRef.current.add(entryKey);
       const lastStep = stepIndex >= activeSteps.length - 1;
       if (lastStep) {
         onComplete(stepIndex);
@@ -166,10 +244,10 @@ export function OnboardingGuide({
         return;
       }
       setStepIndex((prev) => Math.min(prev + 1, activeSteps.length - 1));
-    }, isManualSession ? 0 : 220);
+    }, isManualSession ? GUIDE_AUTO_ADVANCE_MANUAL_DELAY_MS : GUIDE_AUTO_ADVANCE_DELAY_MS);
     return () => {
       window.clearTimeout(timeout);
-      pendingAutoAdvanceStepIdsRef.current.delete(stepId);
+      pendingAutoAdvanceStepEntryKeysRef.current.delete(entryKey);
     };
   }, [activeSteps.length, isManualSession, onClose, onComplete, stepIndex]);
 
@@ -184,10 +262,14 @@ export function OnboardingGuide({
     setInteractionSatisfied(false);
     setInteractionTimedOut(false);
     setSkipDelayElapsed(false);
-    autoAdvancedStepIdsRef.current.clear();
-    pendingAutoAdvanceStepIdsRef.current.clear();
+    autoAdvancedStepEntryKeysRef.current.clear();
+    pendingAutoAdvanceStepEntryKeysRef.current.clear();
     previousStepIdRef.current = null;
     backUnlockedStepIdsRef.current.clear();
+    breadcrumbAutofocusStepEntryRef.current = null;
+    breadcrumbWasVisibleThisEntryRef.current = false;
+    stepEntryCounterRef.current = 0;
+    currentStepEntryKeyRef.current = "";
     setPickerMeasuredOnce(false);
   }, [isOpen, initialSection, manualStart]);
 
@@ -228,7 +310,25 @@ export function OnboardingGuide({
     setInteractionSatisfied(!step.requiredAction);
     setResolvedTarget(null);
     setTargetRect(null);
+    preservedTargetRectRef.current = null;
+    breadcrumbAutofocusStepEntryRef.current = null;
+    breadcrumbWasVisibleThisEntryRef.current = false;
+    stepEntryCounterRef.current += 1;
+    currentStepEntryKeyRef.current = `${step.id}:${stepEntryCounterRef.current}`;
   }, [activeSection, activeSteps, isOpen, stepIndex]);
+
+  useEffect(() => {
+    if (!targetRect) return;
+    preservedTargetRectRef.current = targetRect;
+  }, [targetRect]);
+
+  useEffect(() => {
+    if (!isOpen || activeSection === null) return;
+    const step = activeSteps[stepIndex];
+    if (!step || !isNavigationBreadcrumbStep(step.id)) return;
+    if (!isTargetVisible('[data-onboarding="focused-breadcrumb"]')) return;
+    breadcrumbWasVisibleThisEntryRef.current = true;
+  }, [activeSection, activeSteps, isOpen, isTargetVisible, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || !activeSection || activeSteps.length === 0) return;
@@ -309,10 +409,12 @@ export function OnboardingGuide({
       target.style.backgroundColor = "hsl(var(--primary) / 0.12)";
       target.style.borderRadius = "0.5rem";
     }
-    target.style.transition = "outline-color 120ms ease";
+    target.style.transition = reduceMotion
+      ? "none"
+      : `outline-color ${GUIDE_MOTION_EMPHASIS_MS}ms ease, box-shadow ${GUIDE_MOTION_EMPHASIS_MS}ms ease, background-color ${GUIDE_MOTION_EMPHASIS_MS}ms ease, border-radius ${GUIDE_MOTION_EMPHASIS_MS}ms ease, outline-offset ${GUIDE_MOTION_EMPHASIS_MS}ms ease`;
 
     if ("scrollIntoView" in target && typeof target.scrollIntoView === "function") {
-      target.scrollIntoView({ block: "center", behavior: "smooth" });
+      target.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
     }
 
     const updateRect = () => {
@@ -360,16 +462,18 @@ export function OnboardingGuide({
       target.style.backgroundColor = previousBackgroundColor;
       target.style.borderRadius = previousBorderRadius;
     };
-  }, [activeSection, activeSteps, interactionSatisfied, isOpen, resolvedTarget, stepIndex, uiContextKey]);
+  }, [activeSection, activeSteps, interactionSatisfied, isOpen, reduceMotion, resolvedTarget, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
     const step = activeSteps[stepIndex];
     if (!step?.requiredAction) return;
     if (!interactionSatisfied) return;
-    if (autoAdvancedStepIdsRef.current.has(step.id)) return;
+    const isRevisitedBreadcrumbStep =
+      isNavigationBreadcrumbStep(step.id) && backUnlockedStepIdsRef.current.has(step.id);
+    if (isRevisitedBreadcrumbStep) return;
 
-    return advanceStep(step.id);
+    return advanceStep(step.id, currentStepEntryKeyRef.current);
   }, [activeSection, activeSteps, advanceStep, interactionSatisfied, isOpen, stepIndex]);
 
   useEffect(() => {
@@ -386,10 +490,10 @@ export function OnboardingGuide({
     const evaluate = () => {
       const breadcrumbVisible = isTargetVisible('[data-onboarding="focused-breadcrumb"]');
       if (isFocusStep && breadcrumbVisible) {
-        cleanupAdvance = advanceStep(step.id);
+        cleanupAdvance = advanceStep(step.id, currentStepEntryKeyRef.current);
       }
       if (isBreadcrumbStep && !breadcrumbVisible) {
-        cleanupAdvance = advanceStep(step.id);
+        cleanupAdvance = advanceStep(step.id, currentStepEntryKeyRef.current);
       }
     };
 
@@ -406,22 +510,29 @@ export function OnboardingGuide({
     if (!uiContextKey) return;
     const step = activeSteps[stepIndex];
     if (!step) return;
-    if (step.requiredAction !== "click-target") return;
-    if (autoAdvancedStepIdsRef.current.has(step.id)) return;
-
-    const contextDrivenStepIds = new Set([
-      "navigation-switcher",
-      "mobile-navigation-nav",
-    ]);
-    if (!contextDrivenStepIds.has(step.id)) return;
 
     const entry = stepEntryContextKeyRef.current;
     if (!entry || entry.stepId !== step.id) return;
     if (!entry.contextKey) return;
     if (entry.contextKey === uiContextKey) return;
 
-    return advanceStep(step.id);
-  }, [activeSection, activeSteps, advanceStep, isOpen, stepIndex, uiContextKey]);
+    if (isNavigationBreadcrumbStep(step.id)) {
+      if (!backUnlockedStepIdsRef.current.has(step.id)) return;
+      if (!breadcrumbWasVisibleThisEntryRef.current) return;
+      if (!isTargetVisible('[data-onboarding="focused-breadcrumb"]')) {
+        return advanceStep(step.id, currentStepEntryKeyRef.current);
+      }
+      return;
+    }
+
+    if (step.requiredAction !== "click-target") return;
+    const contextDrivenStepIds = new Set([
+      "mobile-navigation-nav",
+    ]);
+    if (!contextDrivenStepIds.has(step.id)) return;
+
+    return advanceStep(step.id, currentStepEntryKeyRef.current);
+  }, [activeSection, activeSteps, advanceStep, isOpen, isTargetVisible, stepIndex, uiContextKey]);
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
@@ -444,6 +555,24 @@ export function OnboardingGuide({
 
   useEffect(() => {
     if (!isOpen || activeSection === null) return;
+    const step = activeSteps[stepIndex];
+    if (!step || !isNavigationBreadcrumbStep(step.id)) return;
+    if (breadcrumbAutofocusStepEntryRef.current === step.id) return;
+    breadcrumbAutofocusStepEntryRef.current = step.id;
+
+    const timeout = window.setTimeout(() => {
+      if (isTargetVisible('[data-onboarding="focused-breadcrumb"]')) return;
+      tryAutoFocusFirstTaskForBreadcrumb();
+    }, BREADCRUMB_AUTOFOCUS_DELAY_MS);
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [activeSection, activeSteps, isOpen, isTargetVisible, stepIndex, tryAutoFocusFirstTaskForBreadcrumb]);
+
+  const showSectionPicker = activeSection === null;
+
+  useEffect(() => {
+    if (!isOpen || activeSection === null) return;
     if (isManualSession) {
       setSkipDelayElapsed(true);
       return;
@@ -463,7 +592,7 @@ export function OnboardingGuide({
 
   const currentStep = activeSteps[stepIndex];
   const isLastStep = stepIndex >= activeSteps.length - 1;
-  const showSectionPicker = activeSection === null;
+  const anchoredTargetRect = currentStep?.target ? (targetRect ?? preservedTargetRectRef.current) : null;
   const isBackUnlockedStep = Boolean(currentStep && backUnlockedStepIdsRef.current.has(currentStep.id));
   const nextDisabled = isManualSession
     ? false
@@ -622,7 +751,7 @@ export function OnboardingGuide({
         zIndex: 130,
       };
     }
-    if (!currentStep || !targetRect) {
+    if (!currentStep || !anchoredTargetRect) {
       return {
         width: "min(42rem, calc(100vw - 1rem))",
         left: "50%",
@@ -656,10 +785,10 @@ export function OnboardingGuide({
     });
     const targetClearance = isComposeGuidanceStep ? 24 : 12;
     const safeTarget = {
-      left: targetRect.left - targetClearance,
-      top: targetRect.top - targetClearance,
-      right: targetRect.right + targetClearance,
-      bottom: targetRect.bottom + targetClearance,
+      left: anchoredTargetRect.left - targetClearance,
+      top: anchoredTargetRect.top - targetClearance,
+      right: anchoredTargetRect.right + targetClearance,
+      bottom: anchoredTargetRect.bottom + targetClearance,
     };
     const overlapArea = (left: number, top: number) => {
       const right = left + cardWidth;
@@ -668,12 +797,12 @@ export function OnboardingGuide({
       const overlapY = Math.max(0, Math.min(bottom, safeTarget.bottom) - Math.max(top, safeTarget.top));
       return overlapX * overlapY;
     };
-    const centeredLeft = targetRect.left + targetRect.width / 2 - cardWidth / 2;
-    const centeredTop = targetRect.top + targetRect.height / 2 - cardHeightEstimate / 2;
-    const belowTop = targetRect.bottom + gap;
-    const aboveTop = targetRect.top - cardHeightEstimate - gap;
-    const rightLeft = targetRect.right + gap;
-    const leftLeft = targetRect.left - cardWidth - gap;
+    const centeredLeft = anchoredTargetRect.left + anchoredTargetRect.width / 2 - cardWidth / 2;
+    const centeredTop = anchoredTargetRect.top + anchoredTargetRect.height / 2 - cardHeightEstimate / 2;
+    const belowTop = anchoredTargetRect.bottom + gap;
+    const aboveTop = anchoredTargetRect.top - cardHeightEstimate - gap;
+    const rightLeft = anchoredTargetRect.right + gap;
+    const leftLeft = anchoredTargetRect.left - cardWidth - gap;
 
     if (isHashtagContentStep) {
       return {
@@ -688,8 +817,8 @@ export function OnboardingGuide({
 
     const candidates = [
       toCandidate(centeredLeft, belowTop),
-      toCandidate(targetRect.left, belowTop),
-      toCandidate(targetRect.right - cardWidth, belowTop),
+      toCandidate(anchoredTargetRect.left, belowTop),
+      toCandidate(anchoredTargetRect.right - cardWidth, belowTop),
       toCandidate(centeredLeft, aboveTop),
       toCandidate(rightLeft, centeredTop),
       toCandidate(leftLeft, centeredTop),
@@ -721,15 +850,16 @@ export function OnboardingGuide({
   };
 
   const getTargetArrowStyle = (): React.CSSProperties => {
-    if (!targetRect) return {};
+    if (!anchoredTargetRect) return {};
 
     const arrowSize = 24;
-    const left = Math.max(8, Math.min(window.innerWidth - arrowSize - 8, targetRect.left + targetRect.width / 2 - arrowSize / 2));
-    const top = Math.max(8, targetRect.top - (arrowSize + 8));
+    const left = Math.max(8, Math.min(window.innerWidth - arrowSize - 8, anchoredTargetRect.left + anchoredTargetRect.width / 2 - arrowSize / 2));
+    const top = Math.max(8, anchoredTargetRect.top - (arrowSize + 8));
 
     return {
       left: `${left}px`,
       top: `${top}px`,
+      transition: guidePositionTransition,
     };
   };
 
@@ -838,32 +968,32 @@ export function OnboardingGuide({
   if (!isOpen) return null;
 
   const renderGuideBackdrop = () => {
-    if (showSectionPicker || !targetRect) {
+    if (showSectionPicker || !anchoredTargetRect) {
       return <div className="absolute inset-0 bg-black/30" aria-hidden="true" />;
     }
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     const spotlightPadding = 12;
-    const spotlightLeft = Math.max(0, targetRect.left - spotlightPadding);
-    const spotlightTop = Math.max(0, targetRect.top - spotlightPadding);
-    const spotlightRight = Math.min(viewportWidth, targetRect.right + spotlightPadding);
-    const spotlightBottom = Math.min(viewportHeight, targetRect.bottom + spotlightPadding);
+    const spotlightLeft = Math.max(0, anchoredTargetRect.left - spotlightPadding);
+    const spotlightTop = Math.max(0, anchoredTargetRect.top - spotlightPadding);
+    const spotlightRight = Math.min(viewportWidth, anchoredTargetRect.right + spotlightPadding);
+    const spotlightBottom = Math.min(viewportHeight, anchoredTargetRect.bottom + spotlightPadding);
     const spotlightWidth = Math.max(0, spotlightRight - spotlightLeft);
     const spotlightHeight = Math.max(0, spotlightBottom - spotlightTop);
 
     return (
       <>
-        <div className="absolute left-0 top-0 bg-black/30" style={{ width: "100%", height: spotlightTop }} aria-hidden="true" />
-        <div className="absolute left-0 bg-black/30" style={{ top: spotlightTop, width: spotlightLeft, height: spotlightHeight }} aria-hidden="true" />
+        <div className="absolute left-0 top-0 bg-black/30" style={{ width: "100%", height: spotlightTop, transition: guideBackdropTransition }} aria-hidden="true" />
+        <div className="absolute left-0 bg-black/30" style={{ top: spotlightTop, width: spotlightLeft, height: spotlightHeight, transition: guideBackdropTransition }} aria-hidden="true" />
         <div
           className="absolute bg-black/30"
-          style={{ top: spotlightTop, left: spotlightRight, width: Math.max(0, viewportWidth - spotlightRight), height: spotlightHeight }}
+          style={{ top: spotlightTop, left: spotlightRight, width: Math.max(0, viewportWidth - spotlightRight), height: spotlightHeight, transition: guideBackdropTransition }}
           aria-hidden="true"
         />
         <div
           className="absolute left-0 bg-black/30"
-          style={{ top: spotlightBottom, width: "100%", height: Math.max(0, viewportHeight - spotlightBottom) }}
+          style={{ top: spotlightBottom, width: "100%", height: Math.max(0, viewportHeight - spotlightBottom), transition: guideBackdropTransition }}
           aria-hidden="true"
         />
       </>
@@ -946,7 +1076,7 @@ export function OnboardingGuide({
         </>
       ) : (
         <>
-          {currentStep?.target && targetRect && (
+          {currentStep?.target && anchoredTargetRect && (
             <div
               aria-hidden="true"
               data-testid="onboarding-target-arrow"
@@ -964,7 +1094,10 @@ export function OnboardingGuide({
             aria-label={t("onboarding.dialog.ariaLabel")}
             ref={guideCardRef}
             className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
-            style={getAnchoredCardStyle()}
+            style={{
+              ...getAnchoredCardStyle(),
+              transition: guidePositionTransition,
+            }}
           >
             {!currentStep ? (
               <div className="space-y-3">

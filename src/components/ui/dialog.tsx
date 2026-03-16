@@ -4,6 +4,17 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+export function handleDialogOutsideInteraction(
+  dismissOnOutsideInteract: boolean,
+  event: { preventDefault: () => void },
+  handler?: (event: typeof event) => void,
+) {
+  if (!dismissOnOutsideInteract) {
+    event.preventDefault();
+  }
+  handler?.(event);
+}
+
 const Dialog = DialogPrimitive.Root;
 
 const DialogTrigger = DialogPrimitive.Trigger;
@@ -31,16 +42,29 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     showCloseButton?: boolean;
+    dismissOnOutsideInteract?: boolean;
   }
->(({ className, children, showCloseButton = true, ...props }, ref) => (
+>(({ className, children, showCloseButton = true, dismissOnOutsideInteract = true, onInteractOutside, onPointerDownOutside, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay />
+    {dismissOnOutsideInteract ? (
+      <DialogPrimitive.Close asChild>
+        <DialogOverlay />
+      </DialogPrimitive.Close>
+    ) : (
+      <DialogOverlay />
+    )}
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "motion-popup fixed left-[50%] top-[50%] z-[200] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "motion-popup fixed left-[50%] top-[50%] z-[210] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
         className,
       )}
+      onPointerDownOutside={(event) =>
+        handleDialogOutsideInteraction(dismissOnOutsideInteract, event, onPointerDownOutside)
+      }
+      onInteractOutside={(event) =>
+        handleDialogOutsideInteraction(dismissOnOutsideInteract, event, onInteractOutside)
+      }
       {...props}
     >
       {children}

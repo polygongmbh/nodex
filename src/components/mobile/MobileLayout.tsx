@@ -1,11 +1,9 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import { SwipeIndicator } from "./SwipeIndicator";
 import { TaskTree } from "@/components/tasks/TaskTree";
-import { FeedView } from "@/components/tasks/FeedView";
-import { CalendarView } from "@/components/tasks/CalendarView";
 import { FocusedTaskBreadcrumb } from "@/components/tasks/FocusedTaskBreadcrumb";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -84,11 +82,18 @@ interface MobileLayoutProps {
 }
 
 // Mobile view order for swipe navigation
-const mobileViews: MobileViewType[] = ["tree", "feed", "list", "calendar"];
+const mobileViews: MobileViewType[] = ["feed", "tree", "list", "calendar"];
 
-const isPrimaryMobileView = (view: ViewType): view is "tree" | "feed" | "list" | "calendar" => {
-  return view === "tree" || view === "feed" || view === "list" || view === "calendar";
+const isPrimaryMobileView = (view: ViewType): view is "feed" | "tree" | "list" | "calendar" => {
+  return view === "feed" || view === "tree" || view === "list" || view === "calendar";
 };
+
+const FeedView = lazy(() =>
+  import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
+);
+const CalendarView = lazy(() =>
+  import("@/components/tasks/CalendarView").then((module) => ({ default: module.CalendarView }))
+);
 
 export function MobileLayout({
   relays,
@@ -147,7 +152,7 @@ export function MobileLayout({
   const previousSignedInRef = useRef(isSignedIn);
   const lastHandledGuideStepIdRef = useRef<string | null>(null);
   const { needsProfileSetup } = useNDK();
-  const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView) ? currentView : "tree";
+  const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView) ? currentView : "feed";
 
   // Build default content from active channel filters
   const includedChannels = channels.filter(c => c.filterState === "included");
@@ -258,6 +263,7 @@ export function MobileLayout({
 
   const mobileCurrentView: MobileViewType = showFilters ? "filters" : activePrimaryView;
   const hasSearchQuery = searchQuery.trim().length > 0;
+  const viewFallback = <div className="h-full" aria-hidden="true" />;
   const hasQuickFilterMatch = useMemo(() => {
     if (!hasSearchQuery) return true;
     return tasks.some((task) => taskMatchesTextQuery(task, searchQuery, people));
@@ -423,7 +429,9 @@ export function MobileLayout({
               isAnimating && swipeDirection === "right" && "translate-x-4 opacity-80"
             )}
           >
-            {renderView()}
+            <Suspense fallback={viewFallback}>
+              {renderView()}
+            </Suspense>
           </div>
         </div>
       </main>

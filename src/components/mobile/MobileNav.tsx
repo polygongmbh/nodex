@@ -14,14 +14,14 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   const { t } = useTranslation();
   const navItems: { id: MobileViewType; label: string; icon: React.ReactNode }[] = [
     { id: "filters", label: t("navigation.views.manage"), icon: <Filter className="w-5 h-5" /> },
-    { id: "tree", label: t("navigation.views.tree"), icon: <GitBranch className="w-5 h-5" /> },
     { id: "feed", label: t("navigation.views.feed"), icon: <LayoutList className="w-5 h-5" /> },
+    { id: "tree", label: t("navigation.views.tree"), icon: <GitBranch className="w-5 h-5" /> },
     { id: "list", label: t("navigation.views.upcoming"), icon: <List className="w-5 h-5" /> },
     { id: "calendar", label: t("navigation.views.calendar"), icon: <Calendar className="w-5 h-5" /> },
   ];
   return (
     <nav 
-      className="flex items-center justify-around border-b border-border bg-background/95 backdrop-blur-sm px-2 py-2.5 safe-area-top"
+      className="flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm mt-2 px-2 py-2.5 safe-area-top gap-1"
       role="tablist"
       aria-label={t("navigation.aria.views")}
       data-onboarding="mobile-nav"
@@ -36,14 +36,14 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
           aria-label={t("navigation.views.switchTo", { view: item.label })}
           title={t("navigation.views.switchTo", { view: item.label })}
           className={cn(
-            "flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-lg transition-colors flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            "flex flex-col items-center justify-center gap-1.5 rounded-lg transition-colors flex-1 min-w-0 touch-target focus:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-95 py-1",
             currentView === item.id
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:text-foreground active:bg-muted/50"
           )}
         >
           {item.icon}
-          <span className="text-xs font-medium truncate">{item.label}</span>
+          <span className="text-[0.65rem] font-medium truncate leading-none px-0.5">{item.label}</span>
         </button>
       ))}
     </nav>

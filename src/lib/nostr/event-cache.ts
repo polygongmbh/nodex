@@ -3,6 +3,9 @@ import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/no
 
 export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache.v1";
 export const NOSTR_EVENT_CACHE_SCOPE_PREFIX = `${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope:`;
+export const NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY = `${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope-meta.v1`;
+export const NOSTR_EVENT_CACHE_RETENTION_SECONDS = 7 * 24 * 60 * 60;
+export const NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE = 500;
 
 export interface CachedNostrEvent {
   id: string;
@@ -15,6 +18,15 @@ export interface CachedNostrEvent {
   relayUrl?: string;
   relayUrls?: string[];
 }
+
+export const EMPTY_RELAY_SCOPE_KEY = "none";
+export const ALL_RELAYS_SCOPE_KEY = "all";
+
+interface CacheScopeMetadata {
+  lastUsedAt: number;
+}
+
+type CacheScopeMetadataRecord = Record<string, CacheScopeMetadata>;
 
 function hasLocalStorage(): boolean {
   return typeof window !== "undefined" && Boolean(window.localStorage);
@@ -46,7 +58,43 @@ function listKnownCacheStorageKeys(): string[] {
   return Array.from(keys);
 }
 
-const cachedNostrEventSchema: z.ZodType<CachedNostrEvent> = z.object({
+function extractScopeFromStorageKey(storageKey: string): string {
+  if (storageKey === NOSTR_EVENT_CACHE_STORAGE_KEY) return "global";
+  if (!storageKey.startsWith(NOSTR_EVENT_CACHE_SCOPE_PREFIX)) return "";
+  return storageKey.slice(NOSTR_EVENT_CACHE_SCOPE_PREFIX.length).trim() || "global";
+}
+
+function readScopeMetadata(): CacheScopeMetadataRecord {
+  if (!hasLocalStorage()) return {};
+  try {
+    const raw = window.localStorage.getItem(NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    const entries = Object.entries(parsed as Record<string, unknown>);
+    const next: CacheScopeMetadataRecord = {};
+    entries.forEach(([scope, value]) => {
+      if (!scope || typeof value !== "object" || !value) return;
+      const candidate = value as { lastUsedAt?: unknown };
+      if (typeof candidate.lastUsedAt !== "number" || !Number.isFinite(candidate.lastUsedAt)) return;
+      next[scope] = { lastUsedAt: candidate.lastUsedAt };
+    });
+    return next;
+  } catch {
+    return {};
+  }
+}
+
+function writeScopeMetadata(next: CacheScopeMetadataRecord): void {
+  if (!hasLocalStorage()) return;
+  try {
+    window.localStorage.setItem(NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Ignore metadata persistence failures.
+  }
+}
+
+const cachedNostrEventSchema = z.object({
   id: z.string(),
   pubkey: z.string(),
   created_at: z.number(),
@@ -59,7 +107,7 @@ const cachedNostrEventSchema: z.ZodType<CachedNostrEvent> = z.object({
 });
 const cachedNostrEventsSchema = z.array(cachedNostrEventSchema);
 
-function normalizeRelayUrl(url: string): string {
+export function normalizeCachedRelayUrl(url: string): string {
   return url.trim().replace(/\/+$/, "");
 }
 
@@ -68,7 +116,7 @@ function getRelayUrls(event: CachedNostrEvent): string[] {
     ...(event.relayUrls || []),
     ...(event.relayUrl ? [event.relayUrl] : []),
   ]
-    .map(normalizeRelayUrl)
+    .map(normalizeCachedRelayUrl)
     .filter((url) => Boolean(url));
   return Array.from(new Set(urls)).sort();
 }
@@ -107,6 +155,18 @@ function dedupeAndSortEvents(events: CachedNostrEvent[]): CachedNostrEvent[] {
   }
   const byReplaceable = new Map<string, CachedNostrEvent>();
   for (const event of byId.values()) {
+    if (event.kind === 0) {
+      const relayScope = getRelayUrls(event).join("|") || "unscoped";
+      const existing = byReplaceable.get(`${event.kind}:${event.pubkey}:${relayScope}`);
+      if (
+        !existing ||
+        event.created_at > existing.created_at ||
+        (event.created_at === existing.created_at && event.id > existing.id)
+      ) {
+        byReplaceable.set(`${event.kind}:${event.pubkey}:${relayScope}`, event);
+      }
+      continue;
+    }
     const replaceableKey = getReplaceableEventKey(event);
     if (!replaceableKey) continue;
     const existing = byReplaceable.get(replaceableKey);
@@ -125,14 +185,75 @@ function dedupeAndSortEvents(events: CachedNostrEvent[]): CachedNostrEvent[] {
   return [...nonReplaceable, ...replaceable].sort((left, right) => right.created_at - left.created_at);
 }
 
+function applyRetentionLimits(events: CachedNostrEvent[], nowSeconds = Math.floor(Date.now() / 1000)): CachedNostrEvent[] {
+  const deduped = dedupeAndSortEvents(events);
+  const cutoff = nowSeconds - NOSTR_EVENT_CACHE_RETENTION_SECONDS;
+  return deduped
+    .filter((event) => event.created_at >= cutoff)
+    .slice(0, NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE);
+}
+
+function markScopeUsed(scopeKey: string, metadata: CacheScopeMetadataRecord, nowMs: number): void {
+  metadata[scopeKey] = { lastUsedAt: nowMs };
+}
+
+function pruneMetadataForKnownScopes(metadata: CacheScopeMetadataRecord): CacheScopeMetadataRecord {
+  const knownScopeKeys = new Set(
+    listKnownCacheStorageKeys()
+      .map(extractScopeFromStorageKey)
+      .filter((scope) => Boolean(scope))
+  );
+  const next: CacheScopeMetadataRecord = {};
+  Object.entries(metadata).forEach(([scope, value]) => {
+    if (!knownScopeKeys.has(scope)) return;
+    next[scope] = value;
+  });
+  return next;
+}
+
+function removeScopeCache(storageKey: string, metadata: CacheScopeMetadataRecord): void {
+  if (!hasLocalStorage()) return;
+  try {
+    window.localStorage.removeItem(storageKey);
+  } catch {
+    // Ignore remove failures and continue best-effort pruning.
+  }
+  const scope = extractScopeFromStorageKey(storageKey);
+  if (scope) {
+    delete metadata[scope];
+  }
+}
+
+function getEvictionCandidates(
+  metadata: CacheScopeMetadataRecord,
+  preserveScopeKey: string
+): Array<{ storageKey: string; scope: string; lastUsedAt: number }> {
+  const candidates = listKnownCacheStorageKeys()
+    .map((storageKey) => {
+      const scope = extractScopeFromStorageKey(storageKey);
+      if (!scope || scope === preserveScopeKey) return null;
+      return {
+        storageKey,
+        scope,
+        lastUsedAt: metadata[scope]?.lastUsedAt || 0,
+      };
+    })
+    .filter((candidate): candidate is { storageKey: string; scope: string; lastUsedAt: number } => candidate !== null);
+
+  candidates.sort((left, right) => left.lastUsedAt - right.lastUsedAt);
+  return candidates;
+}
+
 export function loadCachedNostrEvents(scopeKey?: string): CachedNostrEvent[] {
   if (!hasLocalStorage()) return [];
   try {
-    const raw = window.localStorage.getItem(getScopedCacheStorageKey(scopeKey));
+    const normalizedScope = normalizeCacheScope(scopeKey);
+    if (normalizedScope === EMPTY_RELAY_SCOPE_KEY) return [];
+    const raw = window.localStorage.getItem(getScopedCacheStorageKey(normalizedScope));
     if (!raw) return [];
     const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return [];
-    return dedupeAndSortEvents(parsed.data);
+    return applyRetentionLimits(parsed.data as CachedNostrEvent[]);
   } catch {
     return [];
   }
@@ -140,14 +261,38 @@ export function loadCachedNostrEvents(scopeKey?: string): CachedNostrEvent[] {
 
 export function saveCachedNostrEvents(events: CachedNostrEvent[], scopeKey?: string): void {
   if (!hasLocalStorage()) return;
+  const normalizedScope = normalizeCacheScope(scopeKey);
+  if (normalizedScope === EMPTY_RELAY_SCOPE_KEY) return;
+  const storageKey = getScopedCacheStorageKey(normalizedScope);
+  const nowMs = Date.now();
+  const nowSeconds = Math.floor(nowMs / 1000);
+  const normalizedEvents = applyRetentionLimits(events, nowSeconds);
+  const metadata = readScopeMetadata();
+  markScopeUsed(normalizedScope, metadata, nowMs);
   try {
-    const storageKey = getScopedCacheStorageKey(scopeKey);
-    window.localStorage.setItem(
-      storageKey,
-      JSON.stringify(dedupeAndSortEvents(events))
-    );
+    window.localStorage.setItem(storageKey, JSON.stringify(normalizedEvents));
+    writeScopeMetadata(pruneMetadataForKnownScopes(metadata));
   } catch {
-    // Ignore persistence errors and continue.
+    // Try to recover from quota pressure by evicting least-recently-used scopes.
+    const candidates = getEvictionCandidates(metadata, normalizedScope);
+    let persisted = false;
+    for (const candidate of candidates) {
+      removeScopeCache(candidate.storageKey, metadata);
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify(normalizedEvents));
+        persisted = true;
+        break;
+      } catch {
+        // Continue evicting older scopes.
+      }
+    }
+    if (!persisted) {
+      console.warn("Failed to persist nostr event cache after pruning", {
+        scope: normalizedScope,
+        eventCount: normalizedEvents.length,
+      });
+    }
+    writeScopeMetadata(pruneMetadataForKnownScopes(metadata));
   }
 }
 
@@ -162,8 +307,52 @@ export function removeCachedNostrEventById(eventId: string): void {
       if (!raw) return;
       const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
       if (!parsed.success) return;
-      const next = dedupeAndSortEvents(parsed.data).filter((event) => event.id !== normalizedId);
+      const next = dedupeAndSortEvents(parsed.data as CachedNostrEvent[]).filter((event) => event.id !== normalizedId);
       if (next.length === parsed.data.length) return;
+      window.localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      // Ignore malformed cache payloads and continue.
+    }
+  });
+}
+
+export function removeRelayUrlFromCachedEvents(
+  events: CachedNostrEvent[],
+  relayUrl: string
+): CachedNostrEvent[] {
+  const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
+  if (!normalizedRelayUrl) {
+    return dedupeAndSortEvents(events).filter((event) => getRelayUrls(event).length > 0);
+  }
+
+  return dedupeAndSortEvents(events)
+    .map((event) => {
+      const remainingRelayUrls = getRelayUrls(event).filter((url) => url !== normalizedRelayUrl);
+      if (remainingRelayUrls.length === 0) return null;
+      return {
+        ...event,
+        relayUrl: remainingRelayUrls[0],
+        relayUrls: remainingRelayUrls,
+      } satisfies CachedNostrEvent;
+    })
+    .filter((event): event is CachedNostrEvent => event !== null);
+}
+
+export function removeCachedNostrEventsByRelayUrl(relayUrl: string): void {
+  if (!hasLocalStorage()) return;
+  const storageKeys = listKnownCacheStorageKeys();
+  storageKeys.forEach((storageKey) => {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
+      if (!parsed.success) return;
+      const next = removeRelayUrlFromCachedEvents(parsed.data as CachedNostrEvent[], relayUrl);
+      if (next.length === parsed.data.length) {
+        const currentIds = (parsed.data as CachedNostrEvent[]).map((event) => `${event.id}:${getRelayUrls(event).join(",")}`);
+        const nextIds = next.map((event) => `${event.id}:${getRelayUrls(event).join(",")}`);
+        if (currentIds.every((value, index) => nextIds[index] === value)) return;
+      }
       window.localStorage.setItem(storageKey, JSON.stringify(next));
     } catch {
       // Ignore malformed cache payloads and continue.

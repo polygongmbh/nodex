@@ -19,7 +19,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Navigate to="/tree" replace />} />
+              <Route path="/" element={<Navigate to="/feed" replace />} />
               <Route path="/:view" element={<Index />} />
               <Route path="/:view/:taskId" element={<Index />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -4,7 +4,7 @@ services:
     container_name: nodex-rnostr
     restart: unless-stopped
     ports:
-      - "${RNOSTR_WS_PORT:-7447}:7447"
+      - "${RNOSTR_WS_PORT:-7447}:8080"
     volumes:
       - ./docker/data/rnostr:/rnostr
 

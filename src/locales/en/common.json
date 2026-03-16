@@ -214,7 +214,9 @@
       "togglePerson": "Toggle {{name}}",
       "showOnlyPerson": "Show only {{name}}",
       "selected": "{{name}} selected",
-      "me": "Me"
+      "me": "Me",
+      "pinChannelToView": "Pin #{{name}} to this view",
+      "unpinChannelFromView": "Unpin #{{name}} from this view"
     }
   },
   "hints": {
@@ -227,7 +229,7 @@
   "breadcrumbs": {
     "up": "Up",
     "goToParent": "Go to parent task",
-    "allTasks": "All Tasks",
+    "allTasks": "All",
     "showAllTasks": "Show all tasks"
   },
   "shortcuts": {
@@ -364,7 +366,14 @@
       "skip": "Skip",
       "back": "Back",
       "finish": "Finish",
-      "next": "Next"
+      "next": "Next",
+      "breadcrumbFallback": {
+        "title": "Breadcrumb is not visible right now",
+        "description": "Open a task context first, skip this step, or end the guide.",
+        "openTask": "Open a task context",
+        "skipStep": "Skip this step",
+        "endGuide": "End guide"
+      }
     },
     "sections": {
       "navigation": {
@@ -564,7 +573,8 @@
   },
   "search": {
     "desktop": {
-      "placeholder": "Search tasks..."
+      "placeholder": "Search tasks...",
+      "clear": "Clear search"
     },
     "kanban": {
       "depthHint": "Kanban depth filter: root tasks, limited-depth tasks, all levels, or leaves only (tasks with no subtasks)",
@@ -656,6 +666,9 @@
       "verificationFailedAuthRequired": "read rejected (auth required)",
       "readRejectedAuthRequired": "read rejected (auth required)"
     },
+    "statusHints": {
+      "readOnly": "Reads from this relay still work, but publishing to it is currently unavailable."
+    },
     "details": {
       "show": "Show relay details",
       "hide": "Hide relay details",
@@ -670,6 +683,7 @@
     "copyDebug": "Copy diagnostics",
     "copyUrls": "Copy relay URLs",
     "reconnect": "Reconnect relay",
+    "remove": "Remove relay",
     "debugCopied": "Relay diagnostics copied",
     "urlsCopied": "Relay URLs copied",
     "copyFailed": "Could not copy relay debug data"

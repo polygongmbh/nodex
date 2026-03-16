@@ -125,9 +125,84 @@ describe("TaskItem status actions", () => {
 
     const statusButton = screen.getByLabelText("Set status");
     expect(statusButton).toBeDisabled();
+    expect(statusButton).toHaveAttribute("title", expect.stringContaining("assigned to"));
     fireEvent.click(statusButton);
     expect(onStatusChange).not.toHaveBeenCalled();
     expect(onToggleComplete).not.toHaveBeenCalled();
+  });
+
+  it("blocks status changes when unassigned task belongs to another user", () => {
+    const onStatusChange = vi.fn();
+    const onToggleComplete = vi.fn();
+
+    render(
+      <TaskItem
+        task={{
+          ...baseTask,
+          author: makePerson({
+            id: "other-pubkey",
+            name: "alice",
+            displayName: "Alice",
+            isOnline: false,
+          }),
+        }}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+        onToggleComplete={onToggleComplete}
+      />
+    );
+
+    const statusButton = screen.getByLabelText("Set status");
+    expect(statusButton).toBeDisabled();
+    expect(statusButton).toHaveAttribute("title", expect.stringContaining("belongs to"));
+    expect(statusButton).toHaveAttribute("title", expect.stringContaining("Alice (@alice, other-pubkey)"));
+    fireEvent.click(statusButton);
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(onToggleComplete).not.toHaveBeenCalled();
+  });
+
+  it("uses people context to show enriched identity details in blocked reason", () => {
+    const onStatusChange = vi.fn();
+    const onToggleComplete = vi.fn();
+    const sparseAuthor = makePerson({
+      id: "ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318",
+      name: "ad9cb1b0",
+      displayName: "ad9cb1b0...1318",
+      isOnline: false,
+    });
+    const knownPerson = makePerson({
+      id: sparseAuthor.id,
+      name: "ryan",
+      displayName: "Ryan",
+      nip05: "ryan@example.com",
+      isOnline: false,
+    });
+
+    render(
+      <TaskItem
+        task={{
+          ...baseTask,
+          author: sparseAuthor,
+          mentions: [sparseAuthor.id],
+        }}
+        people={[knownPerson]}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+        onToggleComplete={onToggleComplete}
+      />
+    );
+
+    const statusButton = screen.getByLabelText("Set status");
+    expect(statusButton).toBeDisabled();
+    expect(statusButton).toHaveAttribute(
+      "title",
+      expect.stringContaining("assigned to Ryan (@ryan, ryan@example.com")
+    );
+    expect(statusButton).toHaveAttribute("title", expect.stringContaining(sparseAuthor.id));
   });
 
   it("calls author quick action for comment avatar/name clicks", () => {
@@ -157,5 +232,29 @@ describe("TaskItem status actions", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /filter and mention alice/i })[0]);
 
     expect(onAuthorClick).toHaveBeenCalledWith(commentTask.author);
+  });
+
+  it("shows a precise hover timestamp for comment created time", () => {
+    const commentTask: Task = {
+      ...baseTask,
+      id: "c2",
+      taskType: "comment",
+      content: "Precise time test",
+      timestamp: new Date("2026-03-01T23:57:11.000Z"),
+    };
+
+    render(
+      <TaskItem
+        task={commentTask}
+        filteredChildren={[]}
+        allTasks={[commentTask]}
+        currentUser={baseTask.author}
+      />
+    );
+
+    expect(screen.getByTitle(/comment created at/i)).toHaveAttribute(
+      "title",
+      expect.stringMatching(/comment created at .*\d{2}:\d{2}:\d{2}/i)
+    );
   });
 });

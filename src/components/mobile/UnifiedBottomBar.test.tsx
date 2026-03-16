@@ -1,11 +1,14 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Person, Relay, TaskCreateResult } from "@/types";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
+import { DEFAULT_GEOHASH_PRECISION, encodeGeohash } from "@/lib/nostr/geohash-location";
+
+const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
 vi.mock("@/lib/nostr/ndk-context", () => ({
   useNDK: () => ({
@@ -34,10 +37,32 @@ const people: Person[] = [
 ];
 
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
+const originalGeolocation = navigator.geolocation;
+
+function createPosition(latitude: number, longitude: number): GeolocationPosition {
+  return {
+    coords: {
+      latitude,
+      longitude,
+      accuracy: 10,
+      altitude: null,
+      altitudeAccuracy: null,
+      heading: null,
+      speed: null,
+    },
+    timestamp: Date.now(),
+  } as GeolocationPosition;
+}
 
 describe("UnifiedBottomBar auth gating", () => {
   beforeEach(() => {
     attachmentUploadEnabledSpy.mockReturnValue(true);
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: {
+        getCurrentPosition: vi.fn(),
+      },
+    });
   });
 
   it("shows a single attachment action", () => {
@@ -115,7 +140,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("keeps task and comment options disabled when sending without a selected channel tag", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
 
     render(
@@ -152,7 +177,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("disables sending when content has only tags and mentions", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
@@ -176,6 +201,48 @@ describe("UnifiedBottomBar auth gating", () => {
     const sendButton = screen.getByRole("button", { name: /send task \/ send comment/i });
     expect(sendButton).toBeDisabled();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("allows focused-subtask send without explicit tags", async () => {
+    const onSubmit = vi.fn(async () => successResult);
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="tree"
+        focusedTaskId="parent-task"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Follow-up details for parent task" } });
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Follow-up details for parent task",
+        [],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined,
+        [],
+        undefined
+      );
+    });
   });
 
   it("keeps compose text when submit returns a failure result", async () => {
@@ -208,7 +275,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits as comment on Alt+Enter when no hashtag token is being typed", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
@@ -248,7 +315,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits current kind on Ctrl+Enter and Cmd+Enter", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
@@ -303,7 +370,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits comment when send comment button is tapped", () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
 
     render(
       <UnifiedBottomBar
@@ -343,7 +410,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("shows offer/request options in feed view and submits listing metadata", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -703,7 +770,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("adds mention tag via Alt+Enter without inserting mention text", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
@@ -748,7 +815,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
@@ -796,7 +863,7 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("submits on Cmd/Ctrl+Enter even when mention autocomplete is open", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
@@ -823,11 +890,11 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalled();
     });
-    expect(onSubmit.mock.calls[0][0]).toContain("@al");
+    expect((onSubmit.mock.calls as unknown[][])[0][0]).toContain("@al");
   });
 
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: true, mode: "local" as const }));
+    const onSubmit = vi.fn(async () => successResult);
     const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
@@ -870,5 +937,133 @@ describe("UnifiedBottomBar auth gating", () => {
       [],
       undefined
     );
+  });
+
+  it("captures location directly from the location button without opening a selector menu", () => {
+    const latitude = 40.7128;
+    const longitude = -74.006;
+    const getCurrentPosition = vi.fn((success: PositionCallback) => {
+      success(createPosition(latitude, longitude));
+    });
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /use current location/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /location/i }));
+    expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: /use current location/i })).not.toBeInTheDocument();
+  });
+
+  it("includes captured location geohash in submit payload", async () => {
+    const latitude = 37.7749;
+    const longitude = -122.4194;
+    const expectedGeohash = encodeGeohash(latitude, longitude, DEFAULT_GEOHASH_PRECISION);
+    const getCurrentPosition = vi.fn((success: PositionCallback) => {
+      success(createPosition(latitude, longitude));
+    });
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+    const onSubmit = vi.fn(async () => successResult);
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /location/i }));
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+    expect(onSubmit).toHaveBeenCalledWith(
+      "Ship #general",
+      ["general"],
+      ["demo"],
+      "task",
+      undefined,
+      undefined,
+      "due",
+      [],
+      undefined,
+      [],
+      undefined,
+      expectedGeohash
+    );
+  });
+
+  it("shows location capture failure toast when geolocation errors", () => {
+    const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
+    const getCurrentPosition = vi.fn((_success: PositionCallback, error?: PositionErrorCallback) => {
+      error?.({ code: 1, message: "denied", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 } as GeolocationPositionError);
+    });
+    Object.defineProperty(navigator, "geolocation", {
+      configurable: true,
+      value: { getCurrentPosition },
+    });
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /location/i }));
+    expect(getCurrentPosition).toHaveBeenCalledTimes(1);
+    expect(toastErrorSpy).toHaveBeenCalledTimes(1);
+    toastErrorSpy.mockRestore();
+  });
+});
+
+afterAll(() => {
+  Object.defineProperty(navigator, "geolocation", {
+    configurable: true,
+    value: originalGeolocation,
   });
 });

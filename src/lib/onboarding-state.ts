@@ -1,5 +1,6 @@
 export const ONBOARDING_VERSION = 1;
-export const ONBOARDING_STATE_STORAGE_KEY = `nodex.onboarding.v${ONBOARDING_VERSION}`;
+import { ONBOARDING_STATE_STORAGE_KEY } from "./storage-registry";
+export { ONBOARDING_STATE_STORAGE_KEY };
 
 export interface OnboardingState {
   version: number;

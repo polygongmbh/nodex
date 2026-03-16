@@ -59,6 +59,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const [privateKey, setPrivateKey] = useState("");
   const [bunkerUrl, setBunkerUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
 
   const hasExtension = hasNostrExtension();
   const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
@@ -185,7 +186,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" dismissOnOutsideInteract={!hasUnsavedAuthInput}>
         <DialogHeader>
           <DialogTitle>{t("auth.modal.title")}</DialogTitle>
           <DialogDescription>
@@ -433,6 +434,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   } = useNDK();
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [hasForcedProfileSetupOpen, setHasForcedProfileSetupOpen] = useState(false);
   const effectiveProfile = useMemo(
     () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
     [user?.profile, user?.pubkey]
@@ -448,6 +450,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       publishDelayEnabled,
       autoCaptionEnabled,
     },
+    isProfileDirty,
     isSavingProfile,
     validation: {
       showProfileNameRequired,
@@ -508,10 +511,26 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   };
 
   useEffect(() => {
-    if (user && isConnected && needsProfileSetup && !isProfileSyncing && !isProfileEditorOpen) {
+    if (!user || !needsProfileSetup) {
+      setHasForcedProfileSetupOpen(false);
+    }
+  }, [user, needsProfileSetup]);
+
+  useEffect(() => {
+    if (
+      user
+      && isConnected
+      && needsProfileSetup
+      && !isProfileSyncing
+      && !isProfileEditorOpen
+      && !hasForcedProfileSetupOpen
+    ) {
+      setHasForcedProfileSetupOpen(true);
       openProfileEditor();
     }
-  }, [user, isConnected, needsProfileSetup, isProfileSyncing, isProfileEditorOpen, openProfileEditor]);
+  }, [user, isConnected, needsProfileSetup, isProfileSyncing, isProfileEditorOpen, hasForcedProfileSetupOpen, openProfileEditor]);
+
+  const canDismissProfileEditor = !needsProfileSetup || hasForcedProfileSetupOpen;
 
   if (!user) {
     return (
@@ -691,11 +710,15 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       <Dialog
         open={isProfileEditorOpen}
         onOpenChange={(open) => {
-          if (!open && needsProfileSetup) return;
+          if (!open && !canDismissProfileEditor) return;
           setIsProfileEditorOpen(open);
         }}
       >
-        <DialogContent className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-lg [&>button]:hidden">
+        <DialogContent
+          showCloseButton={canDismissProfileEditor}
+          dismissOnOutsideInteract={canDismissProfileEditor && !isProfileDirty}
+          className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-lg"
+        >
           <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-4 sm:p-6">
             <DialogHeader className="shrink-0">
               <DialogTitle>{needsProfileSetup ? t("auth.menu.profileSetupTitle") : t("auth.menu.profileEditTitle")}</DialogTitle>

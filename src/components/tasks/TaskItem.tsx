@@ -6,10 +6,10 @@ import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
-import { sortTasks, type SortContext, getDueDateColorClass } from "@/lib/taskSorting";
+import { sortTasks, type SortContext, getDueDateColorClass } from "@/lib/task-sorting";
 import type { NostrProfile } from "@/hooks/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
-import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
@@ -21,6 +21,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
+import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -223,6 +225,7 @@ export function TaskItem({
   const canCompleteTask = () => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
+  const statusBlockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
 
   // Calculate indentation based on depth
   const indentStyle = depth > 0 ? { marginLeft: `${depth * 1.5}rem` } : {};
@@ -335,7 +338,7 @@ export function TaskItem({
                 }}
                 disabled={!canCompleteTask()}
                 aria-label={t("tasks.actions.setStatus")}
-                title={getStatusToggleHint(task.status)}
+                title={canCompleteTask() ? getStatusToggleHint(task.status) : (statusBlockedReason || getStatusToggleHint(task.status))}
                 className={cn(
                   "flex-shrink-0 mt-0.5 p-0.5 rounded transition-colors",
                   canCompleteTask() ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
@@ -439,7 +442,7 @@ export function TaskItem({
                     )}
                   </button>
                   <span>·</span>
-                  <span>{timeAgo}</span>
+                  <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>
                 </>
               )}
               {!isComment && allTaskChildren.length > 0 && (
@@ -527,9 +530,10 @@ export function TaskItem({
                 </span>
               )}
               {task.locationGeohash && (
-                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
-                  {`📍 ${task.locationGeohash}`}
-                </span>
+                <TaskLocationChip
+                  geohash={task.locationGeohash}
+                  className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
+                />
               )}
               {task.tags.map((tag) => (
                 <button

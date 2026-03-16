@@ -1,8 +1,9 @@
 import type { Person } from "@/types";
+import { normalizeCachedRelayUrl } from "./event-cache";
 import { parseKind0Content } from "./profile-metadata";
 import { NostrEventKind } from "./types";
 
-interface Kind0LikeEvent {
+export interface Kind0LikeEvent {
   kind: number;
   pubkey: string;
   created_at?: number;
@@ -17,25 +18,16 @@ interface CachedProfileSnapshot {
   nip05?: string;
 }
 
-const KIND0_CACHE_STORAGE_KEY = "nodex.kind0.cache.v1";
+const KIND0_CACHE_STORAGE_PREFIX = "nodex.kind0.cache.v2";
+const KIND0_CACHE_RELAY_PREFIX = `${KIND0_CACHE_STORAGE_PREFIX}:relay:`;
+const KIND0_CACHE_LOCAL_STORAGE_KEY = `${KIND0_CACHE_STORAGE_PREFIX}:local`;
+const LEGACY_KIND0_CACHE_STORAGE_KEY = "nodex.kind0.cache.v1";
 const LOGIN_HISTORY_STORAGE_KEY = "nodex.identity.login-history.v1";
 const MAX_CACHED_KIND0_EVENTS = 500;
 const MAX_LOGGED_IN_IDENTITIES = 50;
 
 function isMetadataEvent(event: Kind0LikeEvent): boolean {
   return event.kind === NostrEventKind.Metadata && Boolean(event.pubkey);
-}
-
-function getLatestKind0ByPubkey(events: Kind0LikeEvent[]): Map<string, Kind0LikeEvent> {
-  const latestByPubkey = new Map<string, Kind0LikeEvent>();
-  for (const event of events) {
-    if (!isMetadataEvent(event)) continue;
-    const current = latestByPubkey.get(event.pubkey);
-    if (!current || (event.created_at || 0) >= (current.created_at || 0)) {
-      latestByPubkey.set(event.pubkey, event);
-    }
-  }
-  return latestByPubkey;
 }
 
 function canUseStorage(): boolean {
@@ -46,20 +38,52 @@ function normalizePubkey(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export function mergeKind0EventsWithCache(
-  liveEvents: Kind0LikeEvent[],
-  cachedEvents: Kind0LikeEvent[]
-): Kind0LikeEvent[] {
-  const merged = getLatestKind0ByPubkey([...cachedEvents, ...liveEvents]);
-  return Array.from(merged.values())
+function getLatestKind0ByPubkey(events: Kind0LikeEvent[]): Map<string, Kind0LikeEvent> {
+  const latestByPubkey = new Map<string, Kind0LikeEvent>();
+  for (const event of events) {
+    if (!isMetadataEvent(event)) continue;
+    const normalizedPubkey = normalizePubkey(event.pubkey);
+    if (!normalizedPubkey) continue;
+    const current = latestByPubkey.get(normalizedPubkey);
+    if (
+      !current ||
+      (event.created_at || 0) > (current.created_at || 0) ||
+      ((event.created_at || 0) === (current.created_at || 0) && event.content > current.content)
+    ) {
+      latestByPubkey.set(normalizedPubkey, {
+        ...event,
+        pubkey: normalizedPubkey,
+      });
+    }
+  }
+  return latestByPubkey;
+}
+
+function mergeKind0EventLists(...eventLists: Kind0LikeEvent[][]): Kind0LikeEvent[] {
+  return Array.from(getLatestKind0ByPubkey(eventLists.flat()).values())
     .sort((a, b) => (b.created_at || 0) - (a.created_at || 0))
     .slice(0, MAX_CACHED_KIND0_EVENTS);
 }
 
-export function loadCachedKind0Events(): Kind0LikeEvent[] {
+function getRelayStorageKey(relayUrl: string): string {
+  return `${KIND0_CACHE_RELAY_PREFIX}${normalizeCachedRelayUrl(relayUrl)}`;
+}
+
+function listKnownRelayStorageKeys(): string[] {
+  if (!canUseStorage()) return [];
+  const keys = new Set<string>();
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (!key || !key.startsWith(KIND0_CACHE_RELAY_PREFIX)) continue;
+    keys.add(key);
+  }
+  return Array.from(keys);
+}
+
+function readStoredKind0Events(storageKey: string): Kind0LikeEvent[] {
   if (!canUseStorage()) return [];
   try {
-    const raw = window.localStorage.getItem(KIND0_CACHE_STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKey);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -74,28 +98,105 @@ export function loadCachedKind0Events(): Kind0LikeEvent[] {
         )
       )
       .filter(isMetadataEvent)
+      .map((event) => ({
+        ...event,
+        pubkey: normalizePubkey(event.pubkey),
+      }))
       .slice(0, MAX_CACHED_KIND0_EVENTS);
   } catch {
     return [];
   }
 }
 
-export function saveCachedKind0Events(events: Kind0LikeEvent[]): void {
+function writeStoredKind0Events(storageKey: string, events: Kind0LikeEvent[]): void {
   if (!canUseStorage()) return;
-  const latestEvents = mergeKind0EventsWithCache(events, []);
   try {
-    window.localStorage.setItem(KIND0_CACHE_STORAGE_KEY, JSON.stringify(latestEvents));
+    window.localStorage.setItem(storageKey, JSON.stringify(mergeKind0EventLists(events)));
   } catch {
     // Ignore local storage write failures.
   }
 }
 
-export function rememberCachedKind0Profile(pubkey: string, profile: CachedProfileSnapshot): Kind0LikeEvent[] {
-  const normalizedPubkey = normalizePubkey(pubkey);
-  if (!normalizedPubkey) return loadCachedKind0Events();
+export function mergeKind0EventsWithCache(
+  liveEvents: Kind0LikeEvent[],
+  cachedEvents: Kind0LikeEvent[]
+): Kind0LikeEvent[] {
+  return mergeKind0EventLists(cachedEvents, liveEvents);
+}
 
-  const cachedEvents = loadCachedKind0Events();
-  const existingEvent = cachedEvents.find((event) => normalizePubkey(event.pubkey) === normalizedPubkey);
+export function loadCachedKind0Events(relayUrl?: string): Kind0LikeEvent[] {
+  if (!canUseStorage()) return [];
+  if (relayUrl) {
+    const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
+    if (!normalizedRelayUrl) return [];
+    return readStoredKind0Events(getRelayStorageKey(normalizedRelayUrl));
+  }
+
+  return mergeKind0EventLists(
+    readStoredKind0Events(LEGACY_KIND0_CACHE_STORAGE_KEY),
+    readStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY),
+    ...listKnownRelayStorageKeys().map((storageKey) => readStoredKind0Events(storageKey))
+  );
+}
+
+export function loadCachedKind0EventsForRelayUrls(relayUrls: string[]): Kind0LikeEvent[] {
+  return mergeKind0EventLists(
+    ...Array.from(
+      new Set(
+        relayUrls
+          .map((relayUrl) => normalizeCachedRelayUrl(relayUrl))
+          .filter(Boolean)
+      )
+    ).map((relayUrl) => loadCachedKind0Events(relayUrl))
+  );
+}
+
+export function saveCachedKind0Events(events: Kind0LikeEvent[], relayUrl?: string): void {
+  if (!canUseStorage()) return;
+  if (!relayUrl) {
+    writeStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY, events);
+    return;
+  }
+
+  const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
+  if (!normalizedRelayUrl) return;
+  writeStoredKind0Events(getRelayStorageKey(normalizedRelayUrl), events);
+}
+
+export function removeCachedKind0EventsByRelayUrl(relayUrl: string): void {
+  if (!canUseStorage()) return;
+  const normalizedRelayUrl = normalizeCachedRelayUrl(relayUrl);
+  if (!normalizedRelayUrl) return;
+  try {
+    window.localStorage.removeItem(getRelayStorageKey(normalizedRelayUrl));
+  } catch {
+    // Ignore remove failures.
+  }
+}
+
+function resolveKind0EventForPubkey(
+  pubkey: string,
+  selectedEvents: Kind0LikeEvent[],
+  fallbackEvents: Kind0LikeEvent[]
+): Kind0LikeEvent | null {
+  const normalizedPubkey = normalizePubkey(pubkey);
+  if (!normalizedPubkey) return null;
+
+  const selected = getLatestKind0ByPubkey(selectedEvents).get(normalizedPubkey);
+  if (selected) return selected;
+
+  return getLatestKind0ByPubkey(fallbackEvents).get(normalizedPubkey) || null;
+}
+
+export function rememberCachedKind0Profile(
+  pubkey: string,
+  profile: CachedProfileSnapshot,
+  existingEvents: Kind0LikeEvent[] = readStoredKind0Events(KIND0_CACHE_LOCAL_STORAGE_KEY)
+): Kind0LikeEvent[] {
+  const normalizedPubkey = normalizePubkey(pubkey);
+  if (!normalizedPubkey) return existingEvents;
+
+  const existingEvent = existingEvents.find((event) => normalizePubkey(event.pubkey) === normalizedPubkey);
   const existingProfile = existingEvent ? parseKind0Content(existingEvent.content) : {};
 
   const merged = {
@@ -113,7 +214,7 @@ export function rememberCachedKind0Profile(pubkey: string, profile: CachedProfil
     content: JSON.stringify(merged),
   };
 
-  const next = mergeKind0EventsWithCache([snapshotEvent], cachedEvents);
+  const next = mergeKind0EventLists(existingEvents, [snapshotEvent]);
   saveCachedKind0Events(next);
   return next;
 }
@@ -153,19 +254,25 @@ export function rememberLoggedInIdentity(pubkey: string): string[] {
 }
 
 export function derivePeopleFromKind0Events(
-  events: Kind0LikeEvent[],
+  visiblePubkeys: string[],
+  selectedEvents: Kind0LikeEvent[],
+  fallbackEvents: Kind0LikeEvent[],
   previousPeople: Person[],
   options?: { prioritizedPubkeys?: string[] }
 ): Person[] {
-  const previousSelection = new Map(previousPeople.map((person) => [person.id, person.isSelected]));
-  const latestByPubkey = getLatestKind0ByPubkey(events);
+  const previousSelection = new Map(previousPeople.map((person) => [normalizePubkey(person.id), person.isSelected]));
   const priorityLookup = new Map(
     (options?.prioritizedPubkeys || [])
       .map((value, index) => [normalizePubkey(value), index] as const)
   );
 
-  const people = Array.from(latestByPubkey.entries()).map(([pubkey, event]) => {
-    const parsed = parseKind0Content(event.content);
+  const normalizedVisiblePubkeys = Array.from(
+    new Set(visiblePubkeys.map((pubkey) => normalizePubkey(pubkey)).filter(Boolean))
+  );
+
+  const people = normalizedVisiblePubkeys.map((pubkey) => {
+    const event = resolveKind0EventForPubkey(pubkey, selectedEvents, fallbackEvents);
+    const parsed = event ? parseKind0Content(event.content) : {};
     const name = (parsed.name || parsed.displayName || pubkey.slice(0, 8)).trim();
     const displayName = (parsed.displayName || parsed.name || `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`).trim();
 

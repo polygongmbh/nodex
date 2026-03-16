@@ -31,8 +31,8 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
     {
       title: t("shortcuts.groups.views"),
       shortcuts: [
-        { key: "1", description: t("shortcuts.items.treeView") },
-        { key: "2", description: t("shortcuts.items.feedView") },
+        { key: "1", description: t("shortcuts.items.feedView") },
+        { key: "2", description: t("shortcuts.items.treeView") },
         { key: "3", description: t("shortcuts.items.kanbanView") },
         { key: "4", description: t("shortcuts.items.calendarView") },
         { key: "5", description: t("shortcuts.items.tableView") },

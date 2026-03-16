@@ -3,6 +3,17 @@ import { getOnboardingStepsBySection } from "./onboarding-steps";
 import i18n from "@/lib/i18n/config";
 
 describe("onboarding steps", () => {
+  it("starts desktop navigation onboarding with task focus before breadcrumb and view switching", () => {
+    const desktop = getOnboardingStepsBySection(false, "tree", i18n.getFixedT("en", "common"));
+    const navigationIds = desktop.navigation.map((step) => step.id);
+
+    expect(navigationIds).toEqual([
+      "navigation-focus",
+      "navigation-breadcrumb",
+      "navigation-switcher",
+    ]);
+  });
+
   it("folds reset guidance into channel and people filter steps", () => {
     const desktop = getOnboardingStepsBySection(false, "tree", i18n.getFixedT("en", "common"));
     const filterIds = desktop.filters.map((step) => step.id);

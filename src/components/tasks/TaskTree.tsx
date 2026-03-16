@@ -1,10 +1,10 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext } from "@/types";
+import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext, Nip99Metadata } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import { sortTasks, buildChildrenMap, SortContext } from "@/lib/taskSorting";
+import { sortTasks, buildChildrenMap, SortContext } from "@/lib/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
@@ -13,6 +13,7 @@ import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/li
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { useNostrProfiles } from "@/hooks/use-nostr-profiles";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -62,7 +63,7 @@ export function TaskTree({
   const { t } = useTranslation();
   const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
-  const SHARED_COMPOSE_DRAFT_KEY = "nodex.compose-draft.feed-tree";
+  const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const {
     mediaItems,
     activeMediaIndex,

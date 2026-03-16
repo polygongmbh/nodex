@@ -1,7 +1,8 @@
 export type ThemeMode = "light" | "dark" | "auto";
 export type EffectiveTheme = "light" | "dark";
 
-export const THEME_MODE_STORAGE_KEY = "nodex.theme.mode";
+import { THEME_MODE_STORAGE_KEY } from "./storage-registry";
+export { THEME_MODE_STORAGE_KEY };
 const VALID_THEME_MODES: ThemeMode[] = ["light", "dark", "auto"];
 
 function isThemeMode(value: unknown): value is ThemeMode {

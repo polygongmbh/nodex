@@ -54,7 +54,7 @@ import {
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
 import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/nip96-attachment-upload";
-import { loadAutoCaptionEnabled } from "@/lib/auto-caption-preferences";
+import { loadAutoCaptionEnabled } from "@/lib/user-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/lib/nostr/geohash-location";
@@ -88,7 +88,7 @@ type ComposerMessageType = TaskType | FeedMessageType;
 
 interface ComposeDraftState {
   content?: string;
-  taskType?: TaskType;
+  taskType?: ComposerMessageType;
   messageType?: ComposerMessageType;
   dueDate?: string;
   dueTime?: string;
@@ -558,11 +558,12 @@ export function TaskComposer({
       attachmentFileRef.current[id] = file;
       return {
         id,
+        url: "",
         fileName: file.name,
         mimeType: file.type || undefined,
         size: file.size,
-        status: "uploading",
-        source: "upload",
+        status: "uploading" as const,
+        source: "upload" as const,
       };
     });
     setAttachments((previous) => [...previous, ...nextEntries]);
@@ -715,7 +716,7 @@ export function TaskComposer({
     
     const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1).toLowerCase()) || [];
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
-    if (submitTags.length === 0) {
+    if (submitTags.length === 0 && !parentId) {
       notifyNeedTag(t);
       return;
     }
@@ -906,6 +907,7 @@ export function TaskComposer({
       .map((tag) => ({ tag, metadataOnly: true })),
   ];
   const hasAtLeastOneTag = ((content.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
+  const canInheritParentTags = Boolean(parentId);
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
@@ -918,7 +920,7 @@ export function TaskComposer({
         ? "Retry or remove failed attachments"
     : !hasMeaningfulContent
       ? t("composer.blocked.write")
-    : !hasAtLeastOneTag
+    : !hasAtLeastOneTag && !canInheritParentTags
       ? t("composer.blocked.tag")
       : hasInvalidRootTaskRelaySelection
           ? t("composer.blocked.relay")

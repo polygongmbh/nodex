@@ -18,6 +18,7 @@
 - Use the top view switcher to move between Tree, Feed, Kanban, Table, and Calendar.
 - Click a task to focus on that task context.
 - Use breadcrumb navigation (`All Tasks` / `Up` / parent path) to move through hierarchy.
+- Breadcrumb paths stay single-line and left-aligned; page-header breadcrumbs evenly share available width when constrained, while feed-card breadcrumbs use compact capped widths before truncating.
 - In Kanban, use the Levels dropdown near search to switch hierarchy scope:
   - `Top-level`: only root tasks (no parent).
   - `2/3 levels`: include subtasks up to that depth.
@@ -58,6 +59,9 @@
 
 ## Feed Filtering and Publishing
 - Feed filter controls determine which items are visible.
+- If no default relays are configured and no relay list is stored yet, Nodex probes host-derived relay candidates (`base.`, `feed.`, `nostr.`, `tasks.`) from the current domain and auto-connects only to reachable relays.
+- After sign-in, relay enrichment prefers relays from your NIP-65 relay list (`kind:10002`) and only falls back to verified NIP-05 relay hints when needed.
+- The demo feed is hidden by default and can be explicitly enabled with `VITE_ENABLE_DEMO_FEED=true`.
 - Feed chips show live connection state; selected disconnected feeds block posting/task edits until reconnected.
 - Selecting a disconnected feed (toggle, exclusive-select, or select-all) triggers an automatic reconnect attempt.
 - If no feeds are selected, channel suggestions/chips behave like all feeds are selected (channel list does not collapse to empty).
@@ -77,11 +81,20 @@
 - The view navigation is at the top.
 - Top-bar view buttons switch directly between task views; they do not close/reopen Manage unless Manage is currently open.
 - Open *Manage* for feed, channel, people, profile, and guide controls.
+- In *Manage* (same row as *Open Guide*), use legal actions:
+  - `Impressum` opens the imprint dialog section.
+  - `Datenschutz` opens the privacy policy dialog section.
+  - `Kontakt` opens your mail app via `mailto:`.
 - Tap the version label (`vX.Y.Z`) to open the in-app changelog dialog.
 - *Open Guide* in *Manage* launches onboarding for signed-out users.
 - The bottom bar is a combined search/compose field:
   - typing updates search results live,
   - send buttons post as task/comment from the same text.
+
+## Legal Information
+- Desktop: the bottom search dock now includes an `Impressum` link next to the version hint.
+- Desktop: a compact mail icon next to `Impressum` opens direct contact by email.
+- Mobile: legal actions are available in *Manage* next to *Open Guide*.
 
 ## Onboarding Guide
 - Onboarding is available only while signed out.
@@ -90,6 +103,10 @@
   - Desktop sidebar: *Guide*
   - Mobile *Manage* view: *Open Guide*
 - Desktop sidebar *Guide* and *Shortcuts* actions are directly labeled and no longer show duplicate hover popovers.
+- Desktop navigation onboarding now starts by focusing a task, then teaches breadcrumbs, then view switching.
+- If breadcrumb context is missing on breadcrumb step entry, the guide auto-activates the first visible task (across views) to surface breadcrumbs.
+- On revisiting the breadcrumb step, the guide advances automatically when breadcrumb context disappears (for example after navigating up), instead of forcing repeated interaction.
+- Guide popup and spotlight transitions are synchronized and keep anchor stability when target elements appear/disappear during step transitions.
 - Choose area overlay:
   - Navigation
   - Filters
@@ -106,7 +123,7 @@
 - Included channel filters are added to compose as metadata-only hashtag chips (without injecting `#channel` text).
 - Selected people filters are added to compose as metadata-only mention chips.
 - Filter/relay confirmation messages use neutral toasts; canceling a delayed publish shows an informational toast.
-- Feed-backed posts can use a short undo-send delay; undo restores the full compose draft state.
+- Feed-backed posts can use an optional short undo-send delay (disabled by default); when enabled, undo restores the full compose draft state.
 - If posting from mobile with no selected/typed channel tag, the app shows immediate feedback instead of silently failing.
 - Task compose supports optional priority selection.
 - Desktop and mobile composers include `image` and `file` attachment buttons; uploaded files are published as attachment metadata (`imeta`) and shown inline in task views.
@@ -115,6 +132,9 @@
 - Profile settings include an experimental opt-in toggle for local on-device image caption inference; when enabled, successful attachment inference can auto-fill image alt text.
 - Next to the date picker, choose the date type: `Due`, `Scheduled`, `Start`, `End`, or `Milestone`.
 - On mobile, the inline date picker above the bottom bar scrolls horizontally through months (infinite-style strip) without month arrow controls.
+- On mobile, tapping the location button captures and attaches current device location directly (when location permission is granted) instead of opening a separate location menu.
+- Task location chips now show an approximate coordinate region; tapping a location chip opens the location in your map app/browser.
+- When a task status control is disabled, hovering it explains why edits are blocked (for example assigned owner, task owner, sign-in required, or temporary interaction lock).
 - Date-typed tasks appear in Calendar view.
 - Tasks with a future `Start` date are shown as not yet doable (greyed out) until that date.
 - On mobile, use the task/comment send actions in the combined bottom bar to create.

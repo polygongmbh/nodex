@@ -1,10 +1,12 @@
 // Intentionally retained for potential future sidebar/dashboard reuse.
-import { Radio, WifiOff, Loader2, AlertCircle } from "lucide-react";
+import { Radio, WifiOff, Loader2, AlertCircle, ShieldAlert, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
 import { RelayManagement } from "@/components/relay/RelayManagement";
+import { getRelayStatusDotClass, getRelayStatusTextClass } from "@/components/relay/relayStatusStyles";
 import { stripRelayProtocol } from "@/lib/nostr/relay-url";
 import { useTranslation } from "react-i18next";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface RelayStatusWidgetProps {
   relays: NDKRelayStatus[];
@@ -15,78 +17,75 @@ interface RelayStatusWidgetProps {
 export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelayStatusWidgetProps) {
   const { t } = useTranslation();
   const getStatusColor = (status: NDKRelayStatus["status"]) => {
-    switch (status) {
-      case "connected":
-        return "bg-success";
-      case "read-only":
-        return "bg-sky-500";
-      case "connecting":
-        return "bg-sky-500 animate-pulse";
-      case "connection-error":
-        return "bg-destructive";
-      case "verification-failed":
-        return "bg-destructive";
-      default:
-        return "bg-slate-400";
-    }
+    return getRelayStatusDotClass(status);
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden">
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Radio className="w-5 h-5 text-primary" />
-          <h3 className="font-heading font-semibold text-foreground">{t("widgets.relayStatus.title")}</h3>
+    <TooltipProvider>
+      <div className="bg-card rounded-xl border border-border overflow-hidden">
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Radio className="w-5 h-5 text-primary" />
+            <h3 className="font-heading font-semibold text-foreground">{t("widgets.relayStatus.title")}</h3>
+          </div>
         </div>
-      </div>
-      <div className="p-3 space-y-2">
-        {relays.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-2">
-            {t("widgets.relayStatus.noneConnected")}
-          </p>
-        ) : (
-          relays.map((relay) => (
-            <div
-              key={relay.url}
-              className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors"
-            >
+        <div className="p-3 space-y-2">
+          {relays.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              {t("widgets.relayStatus.noneConnected")}
+            </p>
+          ) : (
+            relays.map((relay) => (
               <div
-                className={cn(
-                  "w-2 h-2 rounded-full",
-                  getStatusColor(relay.status)
+                key={relay.url}
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors"
+              >
+                <div
+                  className={cn(
+                    "w-2 h-2 rounded-full",
+                    getStatusColor(relay.status)
+                  )}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground truncate font-mono">
+                    {stripRelayProtocol(relay.url)}
+                  </p>
+                </div>
+                {relay.status === "connected" ? (
+                  <span className="text-xs text-muted-foreground">
+                    {relay.latency ? `${relay.latency}ms` : t("widgets.relayStatus.connected")}
+                  </span>
+                ) : relay.status === "read-only" ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={cn("inline-flex items-center gap-1 text-xs", getRelayStatusTextClass(relay.status))}>
+                        {t("widgets.relayStatus.readOnly")}
+                        <Info className="h-3 w-3" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="max-w-56 text-xs">
+                      {t("relay.statusHints.readOnly")}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : relay.status === "connecting" ? (
+                  <Loader2 className={cn("w-4 h-4 animate-spin", getRelayStatusTextClass(relay.status))} />
+                ) : relay.status === "connection-error" ? (
+                  <AlertCircle className={cn("w-4 h-4", getRelayStatusTextClass(relay.status))} />
+                ) : relay.status === "verification-failed" ? (
+                  <ShieldAlert className={cn("w-4 h-4", getRelayStatusTextClass(relay.status))} />
+                ) : (
+                  <WifiOff className={cn("w-4 h-4", getRelayStatusTextClass(relay.status))} />
                 )}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground truncate font-mono">
-                  {stripRelayProtocol(relay.url)}
-                </p>
               </div>
-              {relay.status === "connected" ? (
-                <span className="text-xs text-muted-foreground">
-                  {relay.latency ? `${relay.latency}ms` : t("widgets.relayStatus.connected")}
-                </span>
-              ) : relay.status === "read-only" ? (
-                <span className="text-xs text-sky-500">
-                  {t("widgets.relayStatus.readOnly")}
-                </span>
-              ) : relay.status === "connecting" ? (
-                <Loader2 className="w-4 h-4 text-sky-500 animate-spin" />
-              ) : relay.status === "connection-error" ? (
-                <AlertCircle className="w-4 h-4 text-destructive" />
-              ) : relay.status === "verification-failed" ? (
-                <AlertCircle className="w-4 h-4 text-destructive" />
-              ) : (
-                <WifiOff className="w-4 h-4 text-slate-400" />
-              )}
-            </div>
-          ))
-        )}
+            ))
+          )}
+        </div>
+        <RelayManagement
+          relays={relays}
+          onAddRelay={onAddRelay}
+          onRemoveRelay={onRemoveRelay}
+        />
       </div>
-      <RelayManagement
-        relays={relays}
-        onAddRelay={onAddRelay}
-        onRemoveRelay={onRemoveRelay}
-      />
-    </div>
+    </TooltipProvider>
   );
 }

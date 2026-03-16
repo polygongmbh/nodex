@@ -214,7 +214,9 @@
       "togglePerson": "Activar/desactivar {{name}}",
       "showOnlyPerson": "Mostrar solo {{name}}",
       "selected": "{{name}} seleccionado",
-      "me": "Yo"
+      "me": "Yo",
+      "pinChannelToView": "Fijar #{{name}} a esta vista",
+      "unpinChannelFromView": "Desfijar #{{name}} de esta vista"
     }
   },
   "hints": {
@@ -227,7 +229,7 @@
   "breadcrumbs": {
     "up": "Subir",
     "goToParent": "Ir a la tarea padre",
-    "allTasks": "Todas las tareas",
+    "allTasks": "Todas",
     "showAllTasks": "Mostrar todas las tareas"
   },
   "shortcuts": {
@@ -350,7 +352,14 @@
       "skip": "Omitir",
       "back": "Atrás",
       "finish": "Finalizar",
-      "next": "Siguiente"
+      "next": "Siguiente",
+      "breadcrumbFallback": {
+        "title": "El breadcrumb no está visible ahora",
+        "description": "Abre primero el contexto de una tarea, omite este paso o finaliza la guía.",
+        "openTask": "Abrir contexto de tarea",
+        "skipStep": "Omitir este paso",
+        "endGuide": "Finalizar guía"
+      }
     },
     "sections": {
       "navigation": {
@@ -550,7 +559,8 @@
   },
   "search": {
     "desktop": {
-      "placeholder": "Buscar tareas..."
+      "placeholder": "Buscar tareas...",
+      "clear": "Borrar búsqueda"
     },
     "kanban": {
       "depthHint": "Filtro de profundidad Kanban: tareas raíz, profundidad limitada, todos los niveles o solo hojas (tareas sin subtareas)",
@@ -641,6 +651,9 @@
       "connectingAuthRequired": "conectando (auth requerida)",
       "verificationFailedAuthRequired": "lectura rechazada (auth requerida)",
       "readRejectedAuthRequired": "lectura rechazada (auth requerida)"
+    },
+    "statusHints": {
+      "readOnly": "Seguir leyendo desde este relay funciona, pero publicar en él no está disponible ahora mismo."
     },
     "details": {
       "show": "Mostrar detalles del relay",

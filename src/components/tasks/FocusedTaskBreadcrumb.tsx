@@ -66,11 +66,11 @@ export function FocusedTaskBreadcrumb({
         <ChevronUp className="w-3.5 h-3.5" />
         <span>{t("breadcrumbs.up")}</span>
       </button>
-      <div className="min-w-0 flex-1 flex flex-wrap items-center gap-1.5 text-sm text-foreground/80">
+      <div className="min-w-0 flex flex-1 items-center gap-1.5 overflow-hidden text-sm text-foreground/80 whitespace-nowrap">
         <button
           onClick={() => onFocusTask?.(null)}
           className={cn(
-            "rounded px-1.5 py-0.5 transition-colors hover:text-foreground hover:bg-background/70",
+            "shrink-0 rounded px-1.5 py-0.5 text-left transition-colors hover:text-foreground hover:bg-background/70",
             path.length === 0 && "text-foreground font-semibold"
           )}
           type="button"
@@ -79,19 +79,18 @@ export function FocusedTaskBreadcrumb({
           {t("breadcrumbs.allTasks")}
         </button>
         {path.map((task, index) => (
-          <span key={task.id} className="flex items-center gap-1 min-w-0">
-            <span className="text-foreground/50">/</span>
+          <span key={task.id} className="flex min-w-0 shrink items-center gap-1">
+            <span className="shrink-0 text-foreground/50">/</span>
             <button
               onClick={() => onFocusTask?.(task.id)}
               className={cn(
-                "truncate max-w-[220px] rounded px-1.5 py-0.5 transition-colors hover:text-foreground hover:bg-background/70",
+                "max-w-full shrink truncate rounded px-1.5 py-0.5 text-left transition-colors hover:text-foreground hover:bg-background/70",
                 index === path.length - 1 && "text-foreground font-semibold"
               )}
               type="button"
               title={task.content}
             >
-              {task.content.slice(0, 80)}
-              {task.content.length > 80 ? "..." : ""}
+              {task.content}
             </button>
           </span>
         ))}

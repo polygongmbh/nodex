@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   AUTH_RETRY_COOLDOWN_MS,
   isAuthRequiredCloseReason,
+  isRelayReadAuthRequired,
   shouldMarkRelayReadOnlyAfterPublishReject,
-  shouldRetryNip42AfterSignIn,
+  shouldReconnectRelayAfterResume,
+  shouldReconnectRelayAfterSignIn,
+  shouldForceSignInForReadAccess,
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
@@ -20,10 +23,10 @@ describe("isAuthRequiredCloseReason", () => {
 });
 
 describe("shouldSetVerificationFailedStatus", () => {
-  it("only marks relays failed for explicit read rejection", () => {
+  it("marks auth-policy read and write failures, plus explicit subscription read rejection", () => {
     expect(shouldSetVerificationFailedStatus("subscription-closed", "read")).toBe(true);
-    expect(shouldSetVerificationFailedStatus("auth-policy", "read")).toBe(false);
-    expect(shouldSetVerificationFailedStatus("auth-policy", "write")).toBe(false);
+    expect(shouldSetVerificationFailedStatus("auth-policy", "read")).toBe(true);
+    expect(shouldSetVerificationFailedStatus("auth-policy", "write")).toBe(true);
     expect(shouldSetVerificationFailedStatus("auth-policy", "unknown")).toBe(false);
     expect(shouldSetVerificationFailedStatus("subscription-closed", "write")).toBe(false);
   });
@@ -98,14 +101,80 @@ describe("shouldRetryAuthAfterReadRejection", () => {
   });
 });
 
-describe("shouldRetryNip42AfterSignIn", () => {
-  it("retries only for relays that advertise NIP-42 support", () => {
-    expect(shouldRetryNip42AfterSignIn({
-      nip11: { supportsNip42: true },
+describe("shouldReconnectRelayAfterSignIn", () => {
+  it("retries only relay failure states after sign-in", () => {
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "verification-failed",
     })).toBe(true);
-    expect(shouldRetryNip42AfterSignIn({
-      nip11: { supportsNip42: false },
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "read-only",
+    })).toBe(true);
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "connection-error",
+    })).toBe(true);
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "disconnected",
+    })).toBe(true);
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "connected",
+      nip11: { supportsNip42: true, authRequired: true },
     })).toBe(false);
-    expect(shouldRetryNip42AfterSignIn({})).toBe(false);
+    expect(shouldReconnectRelayAfterSignIn({
+      status: "connecting",
+    })).toBe(false);
+    expect(shouldReconnectRelayAfterSignIn({})).toBe(false);
+  });
+});
+
+describe("shouldReconnectRelayAfterResume", () => {
+  it("retries only transport-failed relays on resume", () => {
+    expect(shouldReconnectRelayAfterResume({ status: "disconnected" })).toBe(true);
+    expect(shouldReconnectRelayAfterResume({ status: "connection-error" })).toBe(true);
+    expect(shouldReconnectRelayAfterResume({ status: "read-only" })).toBe(false);
+    expect(shouldReconnectRelayAfterResume({ status: "verification-failed" })).toBe(false);
+    expect(shouldReconnectRelayAfterResume({ status: "connected" })).toBe(false);
+  });
+});
+
+describe("isRelayReadAuthRequired", () => {
+  it("returns true for explicit read rejection and auth-required relay metadata", () => {
+    expect(isRelayReadAuthRequired({ status: "verification-failed" })).toBe(true);
+    expect(isRelayReadAuthRequired({ status: "connected", nip11: { authRequired: true } })).toBe(true);
+  });
+
+  it("returns false for relays without read-auth-required signals", () => {
+    expect(isRelayReadAuthRequired({ status: "connected", nip11: { authRequired: false } })).toBe(false);
+    expect(isRelayReadAuthRequired({ status: "read-only" })).toBe(false);
+    expect(isRelayReadAuthRequired({ status: "disconnected" })).toBe(false);
+  });
+});
+
+describe("shouldForceSignInForReadAccess", () => {
+  it("forces sign-in only when signed out and every detected relay requires auth for reading", () => {
+    expect(shouldForceSignInForReadAccess({
+      isSignedIn: false,
+      relays: [
+        { status: "verification-failed" },
+        { status: "connected", nip11: { authRequired: true } },
+      ],
+    })).toBe(true);
+  });
+
+  it("does not force sign-in when signed in, no relays, or any relay is readable anonymously", () => {
+    expect(shouldForceSignInForReadAccess({
+      isSignedIn: true,
+      relays: [{ status: "verification-failed" }],
+    })).toBe(false);
+    expect(shouldForceSignInForReadAccess({
+      isSignedIn: false,
+      relays: [],
+    })).toBe(false);
+    expect(shouldForceSignInForReadAccess({
+      isSignedIn: false,
+      relays: [
+        { status: "verification-failed" },
+        { status: "connected", nip11: { authRequired: false } },
+      ],
+    })).toBe(false);
   });
 });
