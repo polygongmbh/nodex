@@ -140,7 +140,7 @@ export function NoasSignUpForm({
             size="sm"
             asChild
             className="text-xs"
-            title={t("auth.noas.visitNoas") || "Visit Noas Host"}
+            title={t("auth.noas.signerAppForNoas") || "Signer app for Noas"}
           >
             <a href={noasHostUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-3 w-3" />

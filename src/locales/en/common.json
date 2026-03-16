@@ -286,6 +286,7 @@
       "signUpTitle": "Sign up with Noas",
       "signUpDescription": "Create a new Noas account to use with Nodex",
       "visitNoas": "Visit Noas Host",
+      "signerAppForNoas": "Signer app for Noas",
       "domain": "Domain",
       "usernameHint": "3-32 characters, lowercase letters, numbers, underscores only",
       "passwordHint": "Minimum 8 characters",
