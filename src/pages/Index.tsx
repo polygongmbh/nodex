@@ -71,6 +71,8 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
+type AuthModalEntryStep = "choose" | "noas" | "noasSignUp";
+
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
@@ -108,6 +110,7 @@ const Index = () => {
 
   // Auth modal state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalInitialStep, setAuthModalInitialStep] = useState<AuthModalEntryStep | undefined>(undefined);
   const [guideDemoFeedEnabled, setGuideDemoFeedEnabled] = useState(false);
   const demoFeedActive = DEMO_FEED_ENABLED || guideDemoFeedEnabled;
 
@@ -293,7 +296,8 @@ const Index = () => {
     t,
   });
 
-  const handleOpenAuthModal = useCallback(() => {
+  const handleOpenAuthModal = useCallback((initialStep?: AuthModalEntryStep) => {
+    setAuthModalInitialStep(initialStep);
     setIsAuthModalOpen(true);
   }, []);
 
@@ -691,7 +695,8 @@ const Index = () => {
       <OnboardingIntroPopover
         isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
         onStartTour={handleStartOnboardingTour}
-        onSignIn={handleOpenAuthModal}
+        onCreateAccount={() => handleOpenAuthModal("noasSignUp")}
+        onSignIn={() => handleOpenAuthModal("noas")}
       />
       <OnboardingGuide
         isOpen={isOnboardingOpen && !isAuthModalOpen}
@@ -764,7 +769,11 @@ const Index = () => {
           isManageRouteActive={isManageRouteActive}
           onManageRouteChange={setManageRouteActive}
         />
-        <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        <NostrAuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          initialStep={authModalInitialStep}
+        />
         {onboardingOverlays}
       </>
     );
@@ -843,7 +852,11 @@ const Index = () => {
       <KeyboardShortcutsHelp isOpen={shortcutsHelp.isOpen} onClose={shortcutsHelp.close} />
 
       {/* Nostr Auth Modal */}
-      <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      <NostrAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialStep={authModalInitialStep}
+      />
       {onboardingOverlays}
     </div>
   );

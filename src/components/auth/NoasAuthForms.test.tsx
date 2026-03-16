@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
@@ -10,12 +10,14 @@ function ControlledNoasAuthForm({
   initialUsername = "",
   initialPassword = "",
   initialNoasHostUrl = "https://noas.example.com",
+  error,
 }: {
   onLogin?: Parameters<typeof NoasAuthForm>[0]["onLogin"];
   onNoasHostUrlChange?: (value: string) => void;
   initialUsername?: string;
   initialPassword?: string;
   initialNoasHostUrl?: string;
+  error?: string;
 }) {
   const [username, setUsername] = useState(initialUsername);
   const [password, setPassword] = useState(initialPassword);
@@ -31,6 +33,7 @@ function ControlledNoasAuthForm({
       password={password}
       isEditingHostUrl={isEditingHostUrl}
       isLoading={false}
+      error={error}
       noasHostUrl={noasHostUrl}
       onUsernameChange={setUsername}
       onPasswordChange={setPassword}
@@ -113,6 +116,26 @@ describe("Noas auth forms", () => {
 
     expect(onLogin).not.toHaveBeenCalled();
     expect(screen.getByText(/username must be 3-32 characters/i)).toBeInTheDocument();
+  });
+
+  it("shows only one sign-in error message when submit failure also returns a parent error", async () => {
+    const onLogin = vi.fn(async () => false);
+    const parentError = "Noas sign-in failed. Please check your username and password.";
+
+    render(
+      <ControlledNoasAuthForm
+        onLogin={onLogin}
+        initialUsername="alice"
+        initialPassword="password123"
+        error={parentError}
+      />
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    await waitFor(() => expect(onLogin).toHaveBeenCalled());
+    expect(screen.getAllByText(parentError)).toHaveLength(1);
+    expect(screen.queryByText(/invalid username or password/i)).not.toBeInTheDocument();
   });
 
   it("shows a more options button on the sign-up form", () => {

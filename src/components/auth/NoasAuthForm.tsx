@@ -37,6 +37,7 @@ export function NoasAuthForm({
 }: NoasAuthFormProps) {
   const { t } = useTranslation();
   const [localError, setLocalError] = useState<string | null>(null);
+  const displayedError = localError ?? error;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,9 +57,6 @@ export function NoasAuthForm({
     const success = await onLogin(username.trim(), password, {
       baseUrl: noasHostUrl.trim(),
     });
-    if (!success) {
-      setLocalError(t("auth.errors.invalidCredentials"));
-    }
   };
 
   return (
@@ -77,17 +75,10 @@ export function NoasAuthForm({
         </button>
       </div>
 
-      {error ? (
+      {displayedError ? (
         <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-destructive">
           <AlertCircle className="h-4 w-4" />
-          <span className="text-sm">{error}</span>
-        </div>
-      ) : null}
-
-      {localError ? (
-        <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-destructive">
-          <AlertCircle className="h-4 w-4" />
-          <span className="text-sm">{localError}</span>
+          <span className="text-sm">{displayedError}</span>
         </div>
       ) : null}
 

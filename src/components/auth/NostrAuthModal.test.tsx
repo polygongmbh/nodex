@@ -283,4 +283,16 @@ describe("NostrAuthModal", () => {
     expect(screen.getByLabelText(/^password$/i)).toHaveValue("password123");
   });
 
+  it("opens directly to noas sign up when requested and still allows switching to sign in", () => {
+    render(<NostrAuthModal isOpen onClose={vi.fn()} initialStep="noasSignUp" />);
+
+    expect(screen.getAllByRole("button", { name: /^sign up$/i })).toHaveLength(2);
+    expect(screen.getByLabelText(/^username$/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+
+    expect(screen.getAllByRole("button", { name: /^sign in$/i })).toHaveLength(2);
+    expect(screen.getByRole("button", { name: /^more options$/i })).toBeInTheDocument();
+  });
+
 });

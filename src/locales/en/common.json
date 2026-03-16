@@ -386,6 +386,7 @@
       "description": "Nodex is a Nostr-native workspace for tasks and discussions.",
       "features": "Use channels, people filters, and relay controls to shape your feed while composing tasks and comments in one flow.",
       "startTour": "Start the Tour",
+      "createAccount": "Create account",
       "signIn": "Sign in"
     },
     "picker": {

@@ -33,6 +33,7 @@ import { NoasSignUpForm } from "./NoasSignUpForm";
 interface NostrAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialStep?: "choose" | "noas" | "noasSignUp";
 }
 
 type AuthStep = "choose" | "privateKey" | "nostrConnect" | "noas" | "noasSignUp";
@@ -42,7 +43,7 @@ type WindowWithNostr = Window & { nostr?: unknown };
 const hasNostrExtension = (): boolean =>
   typeof window !== "undefined" && Boolean((window as WindowWithNostr).nostr);
 
-export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
+export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalProps) {
   const { t } = useTranslation();
   const { 
     loginWithExtension, 
@@ -57,10 +58,15 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const noasApiUrl = import.meta.env.VITE_NOAS_API_URL as string | undefined;
   const noasHostUrl = import.meta.env.VITE_NOAS_HOST_URL as string | undefined;
   const noasEnabled = Boolean(noasApiUrl || noasHostUrl);
-  const defaultStep: AuthStep = noasEnabled ? "noas" : "choose";
+  const resolvedDefaultStep = useMemo<AuthStep>(() => {
+    if (initialStep === "noasSignUp" && noasEnabled) return "noasSignUp";
+    if (initialStep === "noas" && noasEnabled) return "noas";
+    if (initialStep === "choose") return "choose";
+    return noasEnabled ? "noas" : "choose";
+  }, [initialStep, noasEnabled]);
   const defaultNoasUrl = noasHostUrl || noasApiUrl || "https://noas.example.com";
   
-  const [step, setStep] = useState<AuthStep>(defaultStep);
+  const [step, setStep] = useState<AuthStep>(resolvedDefaultStep);
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
   const [privateKey, setPrivateKey] = useState("");
   const [bunkerUrl, setBunkerUrl] = useState("");
@@ -196,7 +202,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   };
 
   const handleClose = () => {
-    setStep(defaultStep);
+    setStep(resolvedDefaultStep);
     setPrivateKey("");
     setBunkerUrl("");
     setPendingAuthMethod(null);
@@ -207,6 +213,12 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     setIsEditingNoasHost(false);
     onClose();
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      setStep(resolvedDefaultStep);
+    }
+  }, [isOpen, resolvedDefaultStep]);
 
   const shouldShowModalHeader = step !== "noas" && step !== "noasSignUp";
 

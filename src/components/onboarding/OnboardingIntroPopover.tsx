@@ -1,16 +1,18 @@
 import { Button } from "@/components/ui/button";
-import { LogIn, Sparkles } from "lucide-react";
+import { LogIn, Sparkles, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface OnboardingIntroPopoverProps {
   isOpen: boolean;
   onStartTour: () => void;
+  onCreateAccount: () => void;
   onSignIn: () => void;
 }
 
 export function OnboardingIntroPopover({
   isOpen,
   onStartTour,
+  onCreateAccount,
   onSignIn,
 }: OnboardingIntroPopoverProps) {
   const { t } = useTranslation();
@@ -31,7 +33,11 @@ export function OnboardingIntroPopover({
           <p className="text-sm text-muted-foreground">{t("onboarding.intro.description")}</p>
           <p className="text-sm text-muted-foreground">{t("onboarding.intro.features")}</p>
         </div>
-        <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+          <Button variant="outline" onClick={onCreateAccount}>
+            <UserPlus className="h-4 w-4" />
+            {t("onboarding.intro.createAccount")}
+          </Button>
           <Button variant="outline" onClick={onSignIn}>
             <LogIn className="h-4 w-4" />
             {t("onboarding.intro.signIn")}

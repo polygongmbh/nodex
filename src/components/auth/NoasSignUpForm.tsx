@@ -50,6 +50,7 @@ export function NoasSignUpForm({
   const [pubkey, setPubkey] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const displayedError = localError ?? error;
 
   const derivePublicKeyFromHex = (hexPrivateKey: string): string | null => {
     try {
@@ -119,9 +120,6 @@ export function NoasSignUpForm({
     const success = await onSignUp(username.trim(), password, privateKey.trim(), finalPubkey, {
       baseUrl: noasHostUrl.trim(),
     });
-    if (!success) {
-      setLocalError(t("auth.errors.signUpFailed"));
-    }
   };
 
   return (
@@ -140,17 +138,10 @@ export function NoasSignUpForm({
         </button>
       </div>
 
-      {error ? (
+      {displayedError ? (
         <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-destructive">
           <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-          <span className="text-sm">{error}</span>
-        </div>
-      ) : null}
-
-      {localError ? (
-        <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-          <span className="text-sm">{localError}</span>
+          <span className="text-sm">{displayedError}</span>
         </div>
       ) : null}
 
