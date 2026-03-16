@@ -53,8 +53,14 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     signupWithNoas,
     isAuthenticating 
   } = useNDK();
+
+  const noasApiUrl = import.meta.env.VITE_NOAS_API_URL as string | undefined;
+  const noasNip05Domain = import.meta.env.VITE_NOAS_NIP05_DOMAIN as string | undefined;
+  const noasHostUrl = import.meta.env.VITE_NOAS_HOST_URL as string | undefined;
+  const noasEnabled = Boolean(noasApiUrl && noasNip05Domain);
+  const defaultStep: AuthStep = noasEnabled ? "noas" : "choose";
   
-  const [step, setStep] = useState<AuthStep>("choose");
+  const [step, setStep] = useState<AuthStep>(defaultStep);
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
   const [privateKey, setPrivateKey] = useState("");
   const [bunkerUrl, setBunkerUrl] = useState("");
@@ -176,7 +182,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   };
 
   const handleClose = () => {
-    setStep("choose");
+    setStep(defaultStep);
     setPrivateKey("");
     setBunkerUrl("");
     setPendingAuthMethod(null);
@@ -194,7 +200,11 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
               ? t("auth.modal.descriptionChoose")
               : step === "privateKey"
                 ? t("auth.modal.descriptionPrivateKey")
-                : t("auth.modal.descriptionNostrConnect")
+                : step === "nostrConnect"
+                  ? t("auth.modal.descriptionNostrConnect")
+                  : step === "noasSignUp"
+                    ? t("auth.noas.signUpDescription") || "Create a new Noas account to use with Nodex"
+                    : t("auth.noas.description") || "Sign in with your Noas account username and password"
             }
           </DialogDescription>
         </DialogHeader>
@@ -256,7 +266,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             </button>
 
             {/* Noas Authentication */}
-            {import.meta.env.VITE_NOAS_API_URL && (
+            {noasEnabled && (
               <button
                 onClick={() => setStep("noas")}
                 disabled={isAuthenticating}
@@ -360,16 +370,21 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
           <NoasAuthForm
             onLogin={handleNoasLogin}
             onSignUp={() => setStep("noasSignUp")}
-            onBack={() => setStep("choose")}
+            onBack={noasEnabled ? () => setStep("choose") : undefined}
             isLoading={isAuthenticating}
             error={error || undefined}
+            noasHostUrl={noasHostUrl || noasApiUrl}
+            noasDomain={noasNip05Domain || "noas.example.com"}
           />
         ) : step === "noasSignUp" ? (
           <NoasSignUpForm
             onSignUp={handleNoasSignUp}
-            onBack={() => setStep("noas")}
+            onSignIn={() => setStep("noas")}
+            onBack={noasEnabled ? () => setStep("choose") : undefined}
             isLoading={isAuthenticating}
             error={error || undefined}
+            noasHostUrl={noasHostUrl || noasApiUrl}
+            noasDomain={noasNip05Domain || "noas.example.com"}
           />
         ) : (
           <div className="space-y-4">

@@ -73,6 +73,11 @@ describe("NostrAuthModal", () => {
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
+    const backButtons = screen.queryAllByRole("button", { name: /back|auth\.back/i });
+    if (backButtons.length > 0) {
+      fireEvent.click(backButtons[0]);
+    }
+
     fireEvent.click(screen.getByRole("button", { name: /browser extension/i }));
 
     const extensionOption = screen.getByRole("button", { name: /browser extension/i });
@@ -244,6 +249,11 @@ describe("NostrAuthModal", () => {
     const onClose = vi.fn();
 
     render(<NostrAuthModal isOpen onClose={onClose} />);
+
+    const backButtons = screen.queryAllByRole("button", { name: /back|auth\.back/i });
+    if (backButtons.length > 0) {
+      fireEvent.click(backButtons[0]);
+    }
 
     fireEvent.click(screen.getByRole("button", { name: /private key/i }));
     fireEvent.change(screen.getByLabelText(/^private key$/i), {

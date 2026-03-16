@@ -271,15 +271,45 @@
     }
   },
   "auth": {
+    "back": "Back",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signingIn": "Signing in",
+    "signingUp": "Signing up",
+    "username": "Username",
+    "password": "Password",
+    "usernamePlaceholder": "your-username",
+    "passwordPlaceholder": "••••••••",
     "noas": {
       "signInTitle": "Sign in with Noas",
       "description": "Sign in with your Noas account username and password",
+      "signUpTitle": "Sign up with Noas",
+      "signUpDescription": "Create a new Noas account to use with Nodex",
+      "visitNoas": "Visit Noas Host",
+      "domain": "Domain",
+      "usernameHint": "3-32 characters, lowercase letters, numbers, underscores only",
+      "passwordHint": "Minimum 8 characters",
+      "privateKey": "Private Key",
+      "publicKey": "Public Key",
+      "privateKeyPlaceholder": "64-character hex or nsec...",
+      "publicKeyPlaceholder": "64-character pubkey",
+      "privateKeyWarning": "Your private key is stored securely. Keep it safe and never share it.",
+      "generate": "Generate",
+      "privateKeyCopied": "Private key copied to clipboard",
+      "publicKeyCopied": "Public key copied to clipboard",
+      "signerExtension": "Signer Extension",
       "footerText": "Your keys are encrypted and never leave your device"
     },
     "errors": {
       "usernameRequired": "Username is required",
       "passwordRequired": "Password is required",
-      "invalidCredentials": "Invalid username or password"
+      "invalidCredentials": "Invalid username or password",
+      "usernameLength": "Username must be 3-32 characters",
+      "usernameFormat": "Username must contain only lowercase letters, numbers, and underscores",
+      "passwordLength": "Password must be at least 8 characters",
+      "privateKeyRequired": "Private key is required",
+      "pubkeyRequired": "Public key is required. Please generate a valid private key.",
+      "signUpFailed": "Sign up failed. Please check your details and try again."
     },
     "modal": {
       "title": "Sign in to Nostr",

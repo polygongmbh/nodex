@@ -2,18 +2,28 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Loader2, AlertCircle, LogIn } from "lucide-react";
+import { Loader2, AlertCircle, LogIn, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 interface NoasAuthFormProps {
   onLogin: (username: string, password: string) => Promise<boolean>;
   onSignUp?: () => void;
-  onBack: () => void;
+  onBack?: () => void;
   isLoading: boolean;
   error?: string;
+  noasHostUrl?: string;
+  noasDomain?: string;
 }
 
-export function NoasAuthForm({ onLogin, onSignUp, onBack, isLoading, error }: NoasAuthFormProps) {
+export function NoasAuthForm({
+  onLogin,
+  onSignUp,
+  onBack,
+  isLoading,
+  error,
+  noasHostUrl = "https://noas.example.com",
+  noasDomain = "noas.example.com",
+}: NoasAuthFormProps) {
   const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -42,17 +52,47 @@ export function NoasAuthForm({ onLogin, onSignUp, onBack, isLoading, error }: No
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">
-          {t("auth.noas.signInTitle") || "Sign in with Noas"}
-        </h3>
-        <Button variant="ghost" size="sm" onClick={onBack} disabled={isLoading}>
-          {t("auth.back") || "Back"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-medium">
+            {t("auth.noas.signInTitle") || "Sign in with Noas"}
+          </h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="text-xs"
+            title={t("auth.noas.visitNoas") || "Visit Noas Host"}
+          >
+            <a href={noasHostUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </Button>
+        </div>
+        {onBack ? (
+          <Button variant="ghost" size="sm" onClick={onBack} disabled={isLoading}>
+            {t("auth.back") || "Back"}
+          </Button>
+        ) : null}
       </div>
 
       <p className="text-sm text-muted-foreground">
         {t("auth.noas.description") || "Sign in with your Noas account username and password"}
       </p>
+
+      {onSignUp ? (
+        <div className="flex gap-2 border-b">
+          <button className="pb-2 text-sm font-medium text-primary border-b-2 border-primary">
+            {t("auth.signIn") || "Sign In"}
+          </button>
+          <button
+            onClick={onSignUp}
+            disabled={isLoading}
+            className="pb-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            {t("auth.signUp") || "Sign Up"}
+          </button>
+        </div>
+      ) : null}
 
       {error && (
         <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-md text-destructive">
@@ -73,16 +113,24 @@ export function NoasAuthForm({ onLogin, onSignUp, onBack, isLoading, error }: No
           <Label htmlFor="noas-username">
             {t("auth.username") || "Username"}
           </Label>
-          <Input
-            id="noas-username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder={t("auth.usernamePlaceholder") || "your-username"}
-            disabled={isLoading}
-            autoComplete="username"
-            className="w-full"
-          />
+          <div className="flex gap-2">
+            <Input
+              id="noas-username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              placeholder={t("auth.usernamePlaceholder") || "your-username"}
+              disabled={isLoading}
+              autoComplete="username"
+              className="flex-1"
+            />
+            <Input
+              value={noasDomain}
+              readOnly
+              aria-label={t("auth.noas.domain") || "Domain"}
+              className="w-36 text-sm text-muted-foreground bg-muted"
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -122,21 +170,21 @@ export function NoasAuthForm({ onLogin, onSignUp, onBack, isLoading, error }: No
         </p>
       </div>
 
-      {onSignUp && (
-        <div className="text-center text-sm border-t pt-4">
-          <p className="text-muted-foreground">
-            {t("auth.noas.noAccount") || "Don't have an account?"}
-            {" "}
-            <button 
-              onClick={onSignUp}
-              disabled={isLoading}
-              className="text-primary hover:underline font-medium"
-            >
-              {t("auth.noas.signUpLink") || "Sign up"}
-            </button>
-          </p>
+      {onBack ? (
+        <div className="space-y-2 border-t pt-4">
+          <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="w-full">
+            {t("auth.noas.signerExtension") || "Signer Extension"}
+          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>
+              {t("auth.modal.signerApp") || "Signer App / Bunker"}
+            </Button>
+            <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>
+              {t("auth.modal.privateKey") || "Private Key"}
+            </Button>
+          </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
