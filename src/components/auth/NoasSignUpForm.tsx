@@ -213,25 +213,36 @@ export function NoasSignUpForm({
           <Label htmlFor="noas-username">
             {t("auth.username") || "Username"}
           </Label>
-          <div className="flex gap-2">
-            <Input
-              id="noas-username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value.toLowerCase())}
-              placeholder={t("auth.usernamePlaceholder") || "your-username"}
-              disabled={isLoading}
-              autoComplete="username"
-              className="flex-1"
-            />
+          <div className="grid grid-cols-[minmax(0,1fr)_11rem] items-start gap-2">
             <div className="space-y-1">
-              <div className="flex w-44 items-center gap-1 rounded-md border bg-muted px-2">
+              <Input
+                id="noas-username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase())}
+                placeholder={t("auth.usernamePlaceholder") || "your-username"}
+                disabled={isLoading}
+                autoComplete="username"
+                className="h-10"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("auth.noas.usernameHint") || "3-32 characters, lowercase letters, numbers, underscores only"}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <div
+                className={`flex h-10 items-center gap-1 rounded-md border px-2 transition-colors ${
+                  isEditingHostUrl ? "border-primary/50 bg-background" : "bg-muted"
+                }`}
+              >
                 <Input
                   value={displayedHost}
                   readOnly={!isEditingHostUrl}
                   onChange={(e) => onNoasHostUrlChange?.(`${parsedNoasUrl?.protocol || "https:"}//${e.target.value}`)}
                   aria-label={t("auth.noas.host")}
-                  className="h-8 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
+                  className={`h-full border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0 ${
+                    isEditingHostUrl ? "text-foreground" : "text-muted-foreground"
+                  }`}
                 />
                 <TooltipProvider>
                   <Tooltip>
@@ -244,7 +255,7 @@ export function NoasSignUpForm({
                         disabled={isLoading}
                         aria-pressed={isEditingHostUrl}
                         aria-label={t("auth.noas.editHost")}
-                        className="h-7 w-7 px-0"
+                        className="h-8 w-8 px-0"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -255,14 +266,11 @@ export function NoasSignUpForm({
                   </Tooltip>
                 </TooltipProvider>
               </div>
-              <p className="w-44 text-[11px] text-muted-foreground">
+              <p className="text-[11px] leading-none text-muted-foreground whitespace-nowrap">
                 {t("auth.noas.hostHint")}
               </p>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {t("auth.noas.usernameHint") || "3-32 characters, lowercase letters, numbers, underscores only"}
-          </p>
         </div>
 
         {/* Password field */}
