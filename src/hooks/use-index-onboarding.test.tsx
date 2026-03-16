@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useIndexOnboarding } from "./use-index-onboarding";
@@ -23,11 +23,14 @@ const peopleSeed: Person[] = [
 function Harness({
   isMobile = true,
   shouldForceAuthAfterOnboarding = false,
+  initialUser = null,
 }: {
   isMobile?: boolean;
   shouldForceAuthAfterOnboarding?: boolean;
+  initialUser?: { pubkey?: string } | null;
 }) {
   const openedWithFocusedTaskRef = useRef(false);
+  const [user, setUser] = useState<{ pubkey?: string } | null>(initialUser);
   const [currentView, setCurrentView] = useState<"feed" | "tree" | "kanban" | "calendar" | "list">("tree");
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>("task-1");
   const [searchQuery, setSearchQuery] = useState("draft");
@@ -40,7 +43,7 @@ function Harness({
   const [guideBootstrapCount, setGuideBootstrapCount] = useState(0);
 
   const onboarding = useIndexOnboarding({
-    user: null,
+    user,
     isMobile,
     currentView,
     channels,
@@ -66,6 +69,8 @@ function Harness({
       <button onClick={() => onboarding.handleCompleteGuide(3)}>CompleteGuide</button>
       <button onClick={onboarding.handleCloseGuide}>CloseGuide</button>
       <button onClick={onboarding.handleOpenGuide}>OpenGuide</button>
+      <button onClick={() => setUser({ pubkey: "signed-in" })}>SignIn</button>
+      <button onClick={() => setUser(null)}>SignOut</button>
       <output data-testid="current-view">{currentView}</output>
       <output data-testid="focused-task">{focusedTaskId ?? ""}</output>
       <output data-testid="search-query">{searchQuery}</output>
@@ -76,12 +81,17 @@ function Harness({
       </output>
       <output data-testid="auth-open">{String(authOpen)}</output>
       <output data-testid="guide-open">{String(onboarding.isOnboardingOpen)}</output>
+      <output data-testid="intro-open">{String(onboarding.isOnboardingIntroOpen)}</output>
       <output data-testid="guide-bootstrap-count">{String(guideBootstrapCount)}</output>
     </>
   );
 }
 
 describe("useIndexOnboarding", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it("resets view and filters on the mobile navigation-focus step", () => {
     render(<Harness />);
 
@@ -111,5 +121,23 @@ describe("useIndexOnboarding", () => {
 
     expect(screen.getByTestId("guide-open")).toHaveTextContent("true");
     expect(screen.getByTestId("guide-bootstrap-count")).toHaveTextContent("1");
+  });
+
+  it("does not reopen the welcome dialog after signing out later in the session", () => {
+    render(<Harness />);
+
+    expect(screen.getByTestId("intro-open")).toHaveTextContent("true");
+
+    fireEvent.click(screen.getByRole("button", { name: "SignIn" }));
+    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
+
+    fireEvent.click(screen.getByRole("button", { name: "SignOut" }));
+    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
+  });
+
+  it("does not auto-open the welcome dialog when the app starts signed in", () => {
+    render(<Harness initialUser={{ pubkey: "signed-in" }} />);
+
+    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
   });
 });

@@ -62,6 +62,8 @@ export function useIndexOnboarding({
   const [composeGuideActivationSignal, setComposeGuideActivationSignal] = useState(0);
   const lastHandledOnboardingStepRef = useRef<string | null>(null);
   const shouldOpenAuthAfterGuideExitRef = useRef(false);
+  const startedSignedOutRef = useRef(!user);
+  const handledStartupIntroRef = useRef(false);
 
   const onboardingSections = useMemo(
     () => getOnboardingSections(isMobile, currentView, t),
@@ -119,6 +121,10 @@ export function useIndexOnboarding({
   }, [shouldForceAuthAfterOnboarding]);
 
   useEffect(() => {
+    if (handledStartupIntroRef.current) return;
+    handledStartupIntroRef.current = true;
+    if (!startedSignedOutRef.current) return;
+
     const onboardingState = loadOnboardingState();
     if (shouldAutoStartOnboarding({
       onboardingCompleted: onboardingState.completed,
