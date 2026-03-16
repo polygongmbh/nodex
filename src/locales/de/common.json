@@ -290,6 +290,7 @@
       "hostHint": "Nur für Fortgeschrittene: eigenen Noas-Host nutzen.",
       "editHost": "Noas-Host bearbeiten",
       "editHostWarning": "Nur ändern, wenn du weißt, was du tust.",
+      "moreOptions": "Mehr Optionen",
       "usernameHint": "3-32 Zeichen, nur Kleinbuchstaben, Zahlen und Unterstriche",
       "passwordHint": "Mindestens 8 Zeichen",
       "privateKey": "Privatschlüssel",

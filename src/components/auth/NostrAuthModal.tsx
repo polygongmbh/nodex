@@ -388,9 +388,6 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             onLogin={handleNoasLogin}
             onSignUp={() => setStep("noasSignUp")}
             onBack={noasEnabled ? () => setStep("choose") : undefined}
-            onChooseExtension={handleExtensionLogin}
-            onChooseSigner={() => setStep("nostrConnect")}
-            onChoosePrivateKey={() => setStep("privateKey")}
             isLoading={isAuthenticating}
             error={error || undefined}
             noasHostUrl={editableNoasUrl}

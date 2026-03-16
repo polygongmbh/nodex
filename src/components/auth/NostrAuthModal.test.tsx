@@ -78,6 +78,7 @@ describe("NostrAuthModal", () => {
       fireEvent.click(backButtons[0]);
     }
 
+    fireEvent.click(screen.getByRole("button", { name: /more options/i }));
     fireEvent.click(screen.getByRole("button", { name: /browser extension/i }));
 
     const extensionOption = screen.getByRole("button", { name: /browser extension/i });
@@ -255,6 +256,7 @@ describe("NostrAuthModal", () => {
       fireEvent.click(backButtons[0]);
     }
 
+    fireEvent.click(screen.getByRole("button", { name: /more options/i }));
     fireEvent.click(screen.getByRole("button", { name: /private key/i }));
     fireEvent.change(screen.getByLabelText(/^private key$/i), {
       target: { value: "nsec1example" },
