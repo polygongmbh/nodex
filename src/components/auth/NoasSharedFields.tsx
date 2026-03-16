@@ -66,7 +66,7 @@ export function NoasSharedFields({
     <>
       <div className="space-y-2">
         <Label htmlFor="noas-username">{t("auth.username")}</Label>
-        <div className="grid grid-cols-[minmax(0,1fr)_11rem] items-start gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_11rem] items-start gap-2">
           <div className={showUsernameHint ? "space-y-1" : undefined}>
             <Input
               id="noas-username"
@@ -81,6 +81,9 @@ export function NoasSharedFields({
             {showUsernameHint ? (
               <p className="text-xs text-muted-foreground">{t("auth.noas.usernameHint")}</p>
             ) : null}
+          </div>
+          <div className="flex h-10 items-center justify-center text-sm font-medium text-muted-foreground" aria-hidden="true">
+            @
           </div>
           <div className="space-y-1">
             <div className="relative">
