@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Relay, Task } from "@/types";
 import {
-  RELAY_SELECTION_ERROR_MESSAGE,
+  RELAY_SELECTION_ERROR_KEY,
   resolveOriginRelayIdForTask,
   resolveRelaySelectionForSubmission,
 } from "./task-relay-routing";
@@ -56,7 +56,7 @@ describe("resolveRelaySelectionForSubmission", () => {
       relays,
       demoRelayId: "demo",
     });
-    expect(result.error).toBe(RELAY_SELECTION_ERROR_MESSAGE);
+    expect(result.errorKey).toBe(RELAY_SELECTION_ERROR_KEY);
   });
 
   it("allows one selected relay for root task creation", () => {

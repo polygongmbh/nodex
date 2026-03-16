@@ -513,7 +513,7 @@ export function TaskComposer({
         })();
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed";
+      const message = error instanceof Error ? error.message : t("composer.attachments.uploadFailed");
       console.warn("[composer] Attachment upload failed", {
         fileName: file.name,
         size: file.size,
@@ -915,9 +915,9 @@ export function TaskComposer({
   const submitBlockedReason = !user
     ? t("composer.blocked.signin")
     : hasPendingAttachmentUploads
-      ? "Wait for attachments to finish uploading"
+      ? t("composer.attachments.waitForUploads")
       : hasFailedAttachmentUploads
-        ? "Retry or remove failed attachments"
+        ? t("composer.attachments.retryFailed")
     : !hasMeaningfulContent
       ? t("composer.blocked.write")
     : !hasAtLeastOneTag && !canInheritParentTags
@@ -1429,7 +1429,7 @@ export function TaskComposer({
                 <span className="truncate">{attachment.fileName || attachment.name || attachment.url}</span>
                 <div className="flex items-center gap-1">
                   {attachment.status === "uploading" && (
-                    <span className="text-muted-foreground">Uploading…</span>
+                    <span className="text-muted-foreground">{t("composer.attachments.uploading")}</span>
                   )}
                   {attachment.status === "failed" && (
                     <>
@@ -1438,19 +1438,19 @@ export function TaskComposer({
                         onClick={() => retryAttachmentUpload(attachment.id)}
                         className="rounded px-1.5 py-0.5 text-foreground hover:bg-muted"
                       >
-                        Retry
+                        {t("composer.attachments.retry")}
                       </button>
-                      <span className="text-destructive">Failed</span>
+                      <span className="text-destructive">{t("composer.attachments.failed")}</span>
                     </>
                   )}
                   {attachment.status === "uploaded" && (
-                    <span className="text-emerald-600">Ready</span>
+                    <span className="text-emerald-600">{t("composer.attachments.ready")}</span>
                   )}
                   <button
                     type="button"
                     onClick={() => removeAttachment(attachment.id)}
                     className="rounded p-0.5 hover:bg-muted"
-                    aria-label="Remove attachment"
+                    aria-label={t("composer.attachments.remove")}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -1477,8 +1477,8 @@ export function TaskComposer({
                     );
                   }}
                   className="mt-1 h-7 w-full rounded border border-border/50 bg-background px-2 text-xs"
-                  placeholder="Alt text (optional)"
-                  aria-label="Attachment alt text"
+                  placeholder={t("composer.attachments.altPlaceholder")}
+                  aria-label={t("composer.attachments.altLabel")}
                 />
               )}
             </div>
@@ -1615,29 +1615,29 @@ export function TaskComposer({
               setIsNip99TitleTouched(true);
               updateNip99({ title: event.target.value });
             }}
-            placeholder="Listing title"
-            aria-label="Listing title"
+            placeholder={t("composer.nip99.title")}
+            aria-label={t("composer.nip99.title")}
             className="h-8 min-w-[12rem] flex-1 rounded-md border border-border/50 bg-background px-2 text-xs"
           />
           <input
             value={nip99.location || ""}
             onChange={(event) => updateNip99({ location: event.target.value })}
-            placeholder="Location"
-            aria-label="Location"
+            placeholder={t("composer.nip99.location")}
+            aria-label={t("composer.nip99.location")}
             className="h-8 min-w-[8rem] rounded-md border border-border/50 bg-background px-2 text-xs"
           />
           <input
             value={nip99.price || ""}
             onChange={(event) => updateNip99({ price: event.target.value })}
-            placeholder="Price"
-            aria-label="Price"
+            placeholder={t("composer.nip99.price")}
+            aria-label={t("composer.nip99.price")}
             className="h-8 w-20 rounded-md border border-border/50 bg-background px-2 text-xs"
           />
           <input
             value={nip99.currency || "EUR"}
             onChange={(event) => updateNip99({ currency: event.target.value.toUpperCase() })}
-            placeholder="Currency"
-            aria-label="Currency"
+            placeholder={t("composer.nip99.currency")}
+            aria-label={t("composer.nip99.currency")}
             list="nip99-currency-suggestions"
             className="h-8 w-20 rounded-md border border-border/50 bg-background px-2 text-xs"
             maxLength={8}
@@ -1650,24 +1650,24 @@ export function TaskComposer({
           <select
             value={nip99.frequency || ""}
             onChange={(event) => updateNip99({ frequency: event.target.value || undefined })}
-            aria-label="Price frequency"
+            aria-label={t("composer.nip99.frequency")}
             className="h-8 min-w-[6.5rem] rounded-md border border-border/50 bg-background px-2 text-xs"
           >
-            <option value="">One-time</option>
-            <option value="hour">hour</option>
-            <option value="day">day</option>
-            <option value="week">week</option>
-            <option value="month">month</option>
-            <option value="year">year</option>
+            <option value="">{t("composer.nip99.frequencyOptions.oneTime")}</option>
+            <option value="hour">{t("composer.nip99.frequencyOptions.hour")}</option>
+            <option value="day">{t("composer.nip99.frequencyOptions.day")}</option>
+            <option value="week">{t("composer.nip99.frequencyOptions.week")}</option>
+            <option value="month">{t("composer.nip99.frequencyOptions.month")}</option>
+            <option value="year">{t("composer.nip99.frequencyOptions.year")}</option>
           </select>
           <select
             value={nip99.status || "active"}
             onChange={(event) => updateNip99({ status: event.target.value as Nip99Metadata["status"] })}
-            aria-label="Listing status"
+            aria-label={t("composer.nip99.status")}
             className="h-8 min-w-[6rem] rounded-md border border-border/50 bg-background px-2 text-xs"
           >
-            <option value="active">Active</option>
-            <option value="sold">Sold</option>
+            <option value="active">{t("composer.nip99.statusOptions.active")}</option>
+            <option value="sold">{t("composer.nip99.statusOptions.sold")}</option>
           </select>
           <input
             value={nip99.summary || ""}
@@ -1675,8 +1675,8 @@ export function TaskComposer({
               setIsNip99SummaryTouched(true);
               updateNip99({ summary: event.target.value });
             }}
-            placeholder="Summary"
-            aria-label="Summary"
+            placeholder={t("composer.nip99.summary")}
+            aria-label={t("composer.nip99.summary")}
             className="h-8 min-w-[12rem] flex-[2] rounded-md border border-border/50 bg-background px-2 text-xs"
           />
         </div>
@@ -1734,8 +1734,8 @@ export function TaskComposer({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-              aria-label="Add attachment"
-              title="Add attachment"
+              aria-label={t("composer.attachments.add")}
+              title={t("composer.attachments.add")}
             >
               <Paperclip className="w-4 h-4 text-primary" />
             </button>

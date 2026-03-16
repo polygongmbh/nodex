@@ -34,6 +34,47 @@
       "clearLocation": "Quitar ubicación",
       "location": "Ubicación"
     },
+    "attachments": {
+      "add": "Añadir archivo",
+      "remove": "Quitar archivo",
+      "altPlaceholder": "Texto alternativo (opcional)",
+      "altLabel": "Texto alternativo del archivo",
+      "uploading": "Subiendo...",
+      "retry": "Reintentar",
+      "failed": "Falló",
+      "ready": "Listo",
+      "uploadFailed": "La subida falló",
+      "uploadFailedWithStatus": "La subida falló ({{status}})",
+      "uploadUrlMissing": "La URL de subida de archivos no está configurada",
+      "networkError": "La solicitud de subida falló (red o CORS)",
+      "invalidJson": "La respuesta de subida no contenía JSON válido",
+      "missingFileUrl": "La respuesta de subida no incluyó una URL de archivo",
+      "maxSizeExceeded": "El archivo supera el tamaño máximo de subida de {{maxSizeMb}} MB",
+      "waitForUploads": "Espera a que terminen de subirse los archivos",
+      "retryFailed": "Reintenta o elimina los archivos fallidos"
+    },
+    "nip99": {
+      "title": "Título del anuncio",
+      "location": "Ubicación",
+      "price": "Precio",
+      "currency": "Moneda",
+      "frequency": "Frecuencia del precio",
+      "status": "Estado del anuncio",
+      "summary": "Resumen",
+      "defaultTitle": "Anuncio",
+      "frequencyOptions": {
+        "oneTime": "Una vez",
+        "hour": "hora",
+        "day": "día",
+        "week": "semana",
+        "month": "mes",
+        "year": "año"
+      },
+      "statusOptions": {
+        "active": "Activo",
+        "sold": "Vendido"
+      }
+    },
     "labels": {
       "dateType": "Tipo de fecha",
       "priority": "Prioridad",
@@ -95,6 +136,7 @@
       "retryRelayMissing": "Reintento fallido: el feed ya no está configurado",
       "retryRejectedByRelay": "Reintento fallido: el feed no aceptó la publicación",
       "retryRejectedByRelayWithReason": "Reintento fallido: el feed no aceptó la publicación ({{reason}})",
+      "publishListingStatusFailed": "No se pudo publicar la actualización del estado del anuncio en el relay",
       "locationUnavailable": "Los servicios de ubicación no están disponibles en este dispositivo",
       "locationCaptureFailed": "No se pudo obtener tu ubicación actual",
       "relayVerificationReadFailed": "La verificación del relay para lectura falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
@@ -356,6 +398,7 @@
         "noasConnectionFailed": "Falló la conexión con el host de Noas. Revisa la URL e inténtalo de nuevo.",
         "noasInvalidHost": "Introduce una URL válida del host de Noas.",
         "noasServerFailed": "El inicio de sesión con Noas falló por un problema del servidor o de claves. Inténtalo de nuevo.",
+        "noasSignUpFailed": "El registro falló",
         "noasSignUpConnectionFailed": "Falló la conexión con el host de Noas durante el registro. Revisa la URL e inténtalo de nuevo.",
         "noasSignUpInvalidHost": "Introduce una URL válida del host de Noas antes de registrarte.",
         "noasSignUpServerFailed": "El registro con Noas falló por un problema del servidor. Inténtalo de nuevo."
@@ -364,7 +407,9 @@
         "extension": "¡Sesión iniciada con extensión de Nostr!",
         "privateKey": "¡Sesión iniciada con clave privada!",
         "guest": "¡Sesión iniciada como invitado! Se creó una nueva identidad para ti.",
-        "signer": "¡Conectado a la app firmante!"
+        "signer": "¡Conectado a la app firmante!",
+        "noas": "¡Sesión iniciada con Noas!",
+        "noasSignUp": "Cuenta creada correctamente"
       }
     },
     "menu": {
@@ -393,6 +438,7 @@
       "description": "Nodex es un espacio de trabajo nativo de Nostr para tareas y conversaciones.",
       "features": "Usa canales, filtros de personas y controles de feeds para moldear tu vista mientras publicas tareas y comentarios en un solo flujo.",
       "startTour": "Iniciar tour",
+      "createAccount": "Crear cuenta",
       "signIn": "Iniciar sesión"
     },
     "picker": {
@@ -640,6 +686,9 @@
     "goHome": "Ir al inicio",
     "unexpected": "Error inesperado de la aplicación"
   },
+  "app": {
+    "loadingView": "Cargando vista..."
+  },
   "calendar": {
     "tabs": {
       "upcoming": "Próximas",
@@ -726,9 +775,52 @@
     "copyDebug": "Copiar diagnóstico",
     "copyUrls": "Copiar URLs de relay",
     "reconnect": "Reconectar relay",
+    "remove": "Eliminar relay",
     "debugCopied": "Diagnóstico de relays copiado",
     "urlsCopied": "URLs de relay copiadas",
     "copyFailed": "No se pudieron copiar los datos de depuración de relay"
+  },
+  "theme": {
+    "mode": {
+      "auto": "Tema automático",
+      "light": "Tema claro",
+      "dark": "Tema oscuro"
+    },
+    "switchTo": "Cambiar a {{mode}}."
+  },
+  "mediaLightbox": {
+    "title": "Vista previa de medios",
+    "description": "Previsualiza medios y navega entre los adjuntos de una publicación",
+    "openPost": "Abrir publicación",
+    "close": "Cerrar vista previa de medios",
+    "previous": "Medio anterior",
+    "next": "Siguiente medio",
+    "imageAlt": "Vista previa de medios"
+  },
+  "linkify": {
+    "embeddedVideo": "Vídeo incrustado",
+    "embeddedAttachment": "Archivo incrustado"
+  },
+  "autoCaption": {
+    "warnings": {
+      "unsupported": "El autodescrito es experimental y no es compatible con este navegador o dispositivo.",
+      "timeout": "La generación de la descripción tardó demasiado. Aun así puedes escribir el texto alternativo manualmente.",
+      "failed": "La generación de la descripción falló en este dispositivo. Aun así puedes escribir el texto alternativo manualmente."
+    },
+    "toasts": {
+      "preparingModel": "Preparando el modelo local de descripciones...",
+      "downloadingModel": "Descargando el modelo local de descripciones... {{progress}}%",
+      "downloadFailed": "La descarga del modelo local de descripciones falló.",
+      "modelReady": "El modelo local de descripciones está listo.",
+      "generating": "Generando descripción para {{fileName}}...",
+      "preparingImage": "Preparando imagen para describir: {{fileName}}...",
+      "generatingWithModel": "Generando descripción con el modelo local: {{fileName}}...",
+      "generated": "Descripción generada para {{fileName}}."
+    },
+    "errors": {
+      "pipelineUnavailable": "La canalización de descripciones no está disponible",
+      "modelUnavailable": "El modelo de descripciones no está disponible"
+    }
   },
   "tasks": {
     "task": "Tarea",

@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Completed an i18n sweep across auth, compose, media preview, theme toggle, and attachment flows so user-facing strings now come from locale bundles in English, German, and Spanish, while the legal dialog remains intentionally German-only.
 - Split the startup onboarding dialog into separate `Create account` and `Sign in` actions, with `Create account` opening Noas sign-up directly when Noas env configuration is present and staying hidden otherwise.
 - Noas sign-in/sign-up now accept full custom host URLs, normalize bare hosts to `https://`, and show clearer host/connection/server errors instead of collapsing failures into generic invalid-credential messages.
 - The Noas host field now uses a flexible layout so long custom URLs no longer clip in the sign-in/sign-up forms.

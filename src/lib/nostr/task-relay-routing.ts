@@ -1,7 +1,7 @@
 import type { Relay, Task, TaskType } from "@/types";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
-export const RELAY_SELECTION_ERROR_MESSAGE = "Select a single relay or a parent task to create a new task";
+export const RELAY_SELECTION_ERROR_KEY = "toasts.errors.selectRelayOrParent";
 
 function dedupeRelayIds(relayIds: string[]): string[] {
   return Array.from(new Set(relayIds.filter(Boolean)));
@@ -21,7 +21,7 @@ export function resolveRelaySelectionForSubmission(params: {
   relays: Relay[];
   parentTask?: Task;
   demoRelayId?: string;
-}): { relayIds: string[]; error?: string } {
+}): { relayIds: string[]; errorKey?: string } {
   const { taskType, selectedRelayIds, relays, parentTask, demoRelayId } = params;
   const availableRelayIds = new Set(relays.map((relay) => relay.id));
   const normalizedSelectedRelayIds = dedupeRelayIds(selectedRelayIds).filter((relayId) =>
@@ -54,7 +54,7 @@ export function resolveRelaySelectionForSubmission(params: {
         selectedNonDemoRelays,
         count: selectedNonDemoRelays.length,
       });
-      return { relayIds: normalizedSelectedRelayIds, error: RELAY_SELECTION_ERROR_MESSAGE };
+      return { relayIds: normalizedSelectedRelayIds, errorKey: RELAY_SELECTION_ERROR_KEY };
     }
     return { relayIds: [selectedNonDemoRelays[0]] };
   }

@@ -4,6 +4,7 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Person } from "@/types";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
 import { guessMimeTypeFromUrl, isSafeHttpUrl } from "@/lib/attachments";
+import i18n from "@/lib/i18n/config";
 
 const TOKEN_REGEX =
   /(^|[^A-Za-z0-9_])(#([A-Za-z0-9_]+)|@([A-Za-z0-9._-]+(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?))/g;
@@ -120,7 +121,7 @@ function renderStandaloneEmbed(url: string, key: string, options?: LinkifyOption
       <div key={key} className="max-w-xl overflow-hidden rounded-md border border-border/60 bg-muted/20 group">
         <iframe
           src={youtubeEmbedUrl}
-          title="Embedded video"
+          title={i18n.t("linkify.embeddedVideo")}
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
@@ -151,7 +152,7 @@ function renderStandaloneEmbed(url: string, key: string, options?: LinkifyOption
       >
         <img
           src={url}
-          alt={caption || "Embedded attachment"}
+          alt={caption || i18n.t("linkify.embeddedAttachment")}
           loading="lazy"
           className="max-h-64 w-auto rounded-md border border-border/60 bg-muted/30 object-contain"
         />

@@ -2,6 +2,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import type { PublishedAttachment } from "@/types";
 import { parseImetaTag } from "@/lib/attachments";
+import i18n from "@/lib/i18n/config";
 
 interface NIP96UploadResponse {
   status?: string;
@@ -165,7 +166,7 @@ export async function uploadAttachment(
 
   if (file.size > maxFileSizeBytes) {
     const maxSizeMb = Math.max(1, Math.ceil(maxFileSizeBytes / (1024 * 1024)));
-    throw new Error(`File exceeds maximum upload size of ${maxSizeMb} MB`);
+    throw new Error(i18n.t("composer.attachments.maxSizeExceeded", { maxSizeMb }));
   }
 
   if (!isAttachmentUploadConfigured(uploadUrl)) {
@@ -173,7 +174,7 @@ export async function uploadAttachment(
       fileName: file.name,
       size: file.size,
     });
-    throw new Error("Attachment upload URL is not configured (VITE_NIP96_UPLOAD_URL)");
+    throw new Error(i18n.t("composer.attachments.uploadUrlMissing"));
   }
 
   const formData = new FormData();
@@ -212,7 +213,7 @@ export async function uploadAttachment(
       uploadUrl,
       error: error instanceof Error ? error.message : String(error),
     });
-    throw new Error("Upload request failed (network/CORS)");
+    throw new Error(i18n.t("composer.attachments.networkError"));
   }
 
   if (!response.ok) {
@@ -229,7 +230,7 @@ export async function uploadAttachment(
       statusText: response.statusText,
       bodyPreview,
     });
-    throw new Error(`Upload failed (${response.status})`);
+    throw new Error(i18n.t("composer.attachments.uploadFailedWithStatus", { status: response.status }));
   }
 
   let payload: NIP96UploadResponse;
@@ -241,7 +242,7 @@ export async function uploadAttachment(
       uploadUrl,
       contentType: response.headers.get("content-type"),
     });
-    throw new Error("Upload response was not valid JSON");
+    throw new Error(i18n.t("composer.attachments.invalidJson"));
   }
 
   let attachment: PublishedAttachment | null = null;
@@ -267,7 +268,7 @@ export async function uploadAttachment(
       payloadStatus: payload.status || null,
       payloadMessage: payload.message || null,
     });
-    throw new Error(payload.message || "Upload response did not include a file URL");
+    throw new Error(payload.message || i18n.t("composer.attachments.missingFileUrl"));
   }
 
   if (!attachment.sha256) {

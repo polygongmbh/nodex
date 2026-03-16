@@ -50,28 +50,28 @@ function resolveNoasErrorMessage(
     switch (errorCode) {
       case "invalid_url":
       case "missing_config":
-        return t("auth.modal.errors.noasSignUpInvalidHost") || "Enter a valid Noas host URL";
+        return t("auth.modal.errors.noasSignUpInvalidHost");
       case "connection_failed":
-        return t("auth.modal.errors.noasSignUpConnectionFailed") || "Connection to the Noas host failed";
+        return t("auth.modal.errors.noasSignUpConnectionFailed");
       case "server_error":
-        return t("auth.modal.errors.noasSignUpServerFailed") || "Noas sign-up failed. Please try again.";
+        return t("auth.modal.errors.noasSignUpServerFailed");
       default:
-        return t("auth.modal.errors.noasSignUpFailed") || "Sign up failed";
+        return t("auth.modal.errors.noasSignUpFailed");
     }
   }
 
   switch (errorCode) {
     case "invalid_url":
     case "missing_config":
-      return t("auth.modal.errors.noasInvalidHost") || "Enter a valid Noas host URL";
+      return t("auth.modal.errors.noasInvalidHost");
     case "connection_failed":
-      return t("auth.modal.errors.noasConnectionFailed") || "Connection to the Noas host failed";
+      return t("auth.modal.errors.noasConnectionFailed");
     case "server_error":
     case "decryption_failed":
     case "key_mismatch":
-      return t("auth.modal.errors.noasServerFailed") || "Noas sign-in failed. Please try again.";
+      return t("auth.modal.errors.noasServerFailed");
     default:
-      return t("auth.modal.errors.noasFailed") || "Noas sign-in failed";
+      return t("auth.modal.errors.noasFailed");
   }
 }
 
@@ -200,7 +200,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     try {
       const result = await loginWithNoas(username, password, config);
       if (result.success) {
-        toast.success(t("auth.modal.success.noas") || "Signed in with Noas");
+        toast.success(t("auth.modal.success.noas"));
         onClose();
         return true;
       } else {
@@ -224,7 +224,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     try {
       const result = await signupWithNoas(username, password, privateKey, pubkey, config);
       if (result.success) {
-        toast.success(t("auth.modal.success.noasSignUp") || "Account created successfully");
+        toast.success(t("auth.modal.success.noasSignUp"));
         onClose();
         return true;
       } else {
@@ -275,7 +275,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
         ) : (
           <DialogHeader className="sr-only">
             <DialogTitle>{t("auth.modal.title")}</DialogTitle>
-            <DialogDescription>{t("auth.noas.description") || "Noas authentication"}</DialogDescription>
+            <DialogDescription>{t("auth.noas.description")}</DialogDescription>
           </DialogHeader>
         )}
 
@@ -345,9 +345,9 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                 <LogIn className="w-5 h-5 text-blue-600" />
               </div>
               <div className="flex-1">
-                <div className="font-medium">{t("auth.modal.noasAuth") || "Noas Authentication"}</div>
+                <div className="font-medium">{t("auth.modal.noasAuth")}</div>
                 <div className="text-sm text-muted-foreground">
-                  {t("auth.modal.noasAuthHint") || "Sign in with username and password"}
+                  {t("auth.modal.noasAuthHint")}
                 </div>
               </div>
               {pendingAuthMethod === "noas" && (

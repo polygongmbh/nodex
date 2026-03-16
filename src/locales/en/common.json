@@ -34,6 +34,47 @@
       "clearLocation": "Clear location",
       "location": "Location"
     },
+    "attachments": {
+      "add": "Add attachment",
+      "remove": "Remove attachment",
+      "altPlaceholder": "Alt text (optional)",
+      "altLabel": "Attachment alt text",
+      "uploading": "Uploading...",
+      "retry": "Retry",
+      "failed": "Failed",
+      "ready": "Ready",
+      "uploadFailed": "Upload failed",
+      "uploadFailedWithStatus": "Upload failed ({{status}})",
+      "uploadUrlMissing": "Attachment upload URL is not configured",
+      "networkError": "Upload request failed (network or CORS)",
+      "invalidJson": "Upload response was not valid JSON",
+      "missingFileUrl": "Upload response did not include a file URL",
+      "maxSizeExceeded": "File exceeds maximum upload size of {{maxSizeMb}} MB",
+      "waitForUploads": "Wait for attachments to finish uploading",
+      "retryFailed": "Retry or remove failed attachments"
+    },
+    "nip99": {
+      "title": "Listing title",
+      "location": "Location",
+      "price": "Price",
+      "currency": "Currency",
+      "frequency": "Price frequency",
+      "status": "Listing status",
+      "summary": "Summary",
+      "defaultTitle": "Listing",
+      "frequencyOptions": {
+        "oneTime": "One-time",
+        "hour": "hour",
+        "day": "day",
+        "week": "week",
+        "month": "month",
+        "year": "year"
+      },
+      "statusOptions": {
+        "active": "Active",
+        "sold": "Sold"
+      }
+    },
     "labels": {
       "dateType": "Date type",
       "priority": "Priority",
@@ -95,6 +136,7 @@
       "retryRelayMissing": "Retry failed: feed is no longer configured",
       "retryRejectedByRelay": "Retry failed: publish was not accepted by feed",
       "retryRejectedByRelayWithReason": "Retry failed: publish was not accepted by feed ({{reason}})",
+      "publishListingStatusFailed": "Failed to publish listing status update to relay",
       "locationUnavailable": "Location services are unavailable on this device",
       "locationCaptureFailed": "Unable to capture your current location",
       "relayVerificationReadFailed": "Relay verification failed for reading on {{relayUrl}}. Check signer access and relay permissions.",
@@ -356,6 +398,7 @@
         "noasConnectionFailed": "Connection to the Noas host failed. Check the host URL and try again.",
         "noasInvalidHost": "Enter a valid Noas host URL.",
         "noasServerFailed": "Noas sign-in failed due to a server or key error. Please try again.",
+        "noasSignUpFailed": "Sign up failed",
         "noasSignUpConnectionFailed": "Connection to the Noas host failed during sign-up. Check the host URL and try again.",
         "noasSignUpInvalidHost": "Enter a valid Noas host URL before signing up.",
         "noasSignUpServerFailed": "Noas sign-up failed due to a server error. Please try again."
@@ -365,7 +408,8 @@
         "privateKey": "Signed in with private key!",
         "guest": "Signed in as guest! A new identity was created for you.",
         "signer": "Connected to signer app!",
-        "noas": "Signed in with Noas!"
+        "noas": "Signed in with Noas!",
+        "noasSignUp": "Account created successfully"
       }
     },
     "menu": {
@@ -642,6 +686,9 @@
     "goHome": "Go to home",
     "unexpected": "Unexpected application error"
   },
+  "app": {
+    "loadingView": "Loading view..."
+  },
   "calendar": {
     "tabs": {
       "upcoming": "Upcoming",
@@ -732,6 +779,48 @@
     "debugCopied": "Relay diagnostics copied",
     "urlsCopied": "Relay URLs copied",
     "copyFailed": "Could not copy relay debug data"
+  },
+  "theme": {
+    "mode": {
+      "auto": "Auto theme",
+      "light": "Light theme",
+      "dark": "Dark theme"
+    },
+    "switchTo": "Switch to {{mode}}."
+  },
+  "mediaLightbox": {
+    "title": "Media preview",
+    "description": "Preview media and navigate between post attachments",
+    "openPost": "Open post",
+    "close": "Close media preview",
+    "previous": "Previous media",
+    "next": "Next media",
+    "imageAlt": "Media preview"
+  },
+  "linkify": {
+    "embeddedVideo": "Embedded video",
+    "embeddedAttachment": "Embedded attachment"
+  },
+  "autoCaption": {
+    "warnings": {
+      "unsupported": "Auto-caption is experimental and unsupported in this browser or device.",
+      "timeout": "Caption generation timed out. You can still enter alt text manually.",
+      "failed": "Caption generation failed on this device. You can still enter alt text manually."
+    },
+    "toasts": {
+      "preparingModel": "Preparing local caption model...",
+      "downloadingModel": "Downloading local caption model... {{progress}}%",
+      "downloadFailed": "Local caption model download failed.",
+      "modelReady": "Local caption model ready.",
+      "generating": "Generating caption for {{fileName}}...",
+      "preparingImage": "Preparing image for captioning: {{fileName}}...",
+      "generatingWithModel": "Generating caption with local model: {{fileName}}...",
+      "generated": "Caption generated for {{fileName}}."
+    },
+    "errors": {
+      "pipelineUnavailable": "Caption pipeline unavailable",
+      "modelUnavailable": "Caption model unavailable"
+    }
   },
   "tasks": {
     "task": "Task",

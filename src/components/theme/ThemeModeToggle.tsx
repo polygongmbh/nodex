@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useThemeMode } from "./ThemeProvider";
 import { type ThemeMode } from "@/lib/theme-preferences";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const THEME_ORDER: ThemeMode[] = ["auto", "light", "dark"];
 
@@ -11,6 +12,7 @@ interface ThemeModeToggleProps {
 }
 
 export function ThemeModeToggle({ className }: ThemeModeToggleProps) {
+  const { t } = useTranslation();
   const { mode, setMode } = useThemeMode();
   const currentIndex = THEME_ORDER.indexOf(mode);
   const nextMode = THEME_ORDER[(currentIndex + 1) % THEME_ORDER.length];
@@ -27,8 +29,9 @@ export function ThemeModeToggle({ className }: ThemeModeToggleProps) {
   ) : (
     <Moon className="h-4 w-4 xl:h-5 xl:w-5" />
   );
-  const label = mode === "auto" ? "Auto theme" : mode === "light" ? "Light theme" : "Dark theme";
-  const nextLabel = nextMode === "auto" ? "auto" : nextMode === "light" ? "light" : "dark";
+  const label = t(`theme.mode.${mode}`);
+  const nextLabel = t(`theme.mode.${nextMode}`);
+  const switchLabel = t("theme.switchTo", { mode: nextLabel });
 
   return (
     <Button
@@ -37,8 +40,8 @@ export function ThemeModeToggle({ className }: ThemeModeToggleProps) {
       size="icon"
       className={cn("h-9 w-9 hover:bg-accent/60 hover:text-accent-foreground xl:h-10 xl:w-10", className)}
       onClick={() => setMode(nextMode)}
-      aria-label={`${label}. Switch to ${nextLabel}.`}
-      title={`${label} (click to switch to ${nextLabel})`}
+      aria-label={`${label}. ${switchLabel}`}
+      title={`${label} (${switchLabel})`}
     >
       {icon}
     </Button>

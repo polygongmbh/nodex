@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ export function TaskMediaLightbox({
   onNextPost,
   onOpenTask,
 }: TaskMediaLightboxProps) {
+  const { t } = useTranslation();
   const previewAreaRef = useRef<HTMLDivElement | null>(null);
   const mediaBoundsRef = useRef<HTMLDivElement | null>(null);
   const [overlayBounds, setOverlayBounds] = useState({ top: 0, height: 0 });
@@ -147,8 +149,8 @@ export function TaskMediaLightbox({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="max-w-5xl p-0 overflow-hidden border-0">
-        <DialogTitle className="sr-only">Media preview</DialogTitle>
-        <DialogDescription className="sr-only">Preview media and navigate between post attachments</DialogDescription>
+        <DialogTitle className="sr-only">{t("mediaLightbox.title")}</DialogTitle>
+        <DialogDescription className="sr-only">{t("mediaLightbox.description")}</DialogDescription>
         {mediaItem ? (
           <div className="relative bg-background">
             <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-muted-foreground">
@@ -163,14 +165,14 @@ export function TaskMediaLightbox({
                   className="truncate text-left text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                   title={postText}
                 >
-                  {postTextPreview || "Open post"}
+                  {postTextPreview || t("mediaLightbox.openPost")}
                 </button>
               </div>
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
                 className="rounded-md bg-background/90 p-2 text-foreground hover:bg-background"
-                aria-label="Close media preview"
+                aria-label={t("mediaLightbox.close")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -183,7 +185,7 @@ export function TaskMediaLightbox({
               >
                 <div ref={mediaBoundsRef} className="inline-flex max-h-[68vh] max-w-full items-center justify-center">
                   {mediaItem.kind === "image" && (
-                    <img src={mediaItem.url} alt={mediaItem.alt || mediaItem.name || "Media preview"} className="block max-h-[68vh] w-auto object-contain" />
+                    <img src={mediaItem.url} alt={mediaItem.alt || mediaItem.name || t("mediaLightbox.imageAlt")} className="block max-h-[68vh] w-auto object-contain" />
                   )}
                   {mediaItem.kind === "video" && (
                     <video controls preload="metadata" autoPlay className="block max-h-[68vh] max-w-full w-auto object-contain">
@@ -202,7 +204,7 @@ export function TaskMediaLightbox({
                   disabled={!canGoPrevious}
                   className="absolute left-0 z-10 flex w-[24%] min-w-[6rem] items-center justify-start pl-4 text-foreground transition-colors hover:bg-black/10 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
                   style={hasOverlayBounds ? { top: `${overlayBounds.top}px`, height: `${overlayBounds.height}px` } : undefined}
-                  aria-label="Previous media"
+                  aria-label={t("mediaLightbox.previous")}
                 >
                   <ChevronLeft className="h-7 w-7" />
                 </button>
@@ -212,7 +214,7 @@ export function TaskMediaLightbox({
                   disabled={!canGoNext}
                   className="absolute right-0 z-10 flex w-[24%] min-w-[6rem] items-center justify-end pr-4 text-foreground transition-colors hover:bg-black/10 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
                   style={hasOverlayBounds ? { top: `${overlayBounds.top}px`, height: `${overlayBounds.height}px` } : undefined}
-                  aria-label="Next media"
+                  aria-label={t("mediaLightbox.next")}
                 >
                   <ChevronRight className="h-7 w-7" />
                 </button>

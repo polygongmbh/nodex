@@ -33,6 +33,7 @@ export function LegalDialog({
   showMailIcon = false,
   mailIconClassName,
 }: LegalDialogProps) {
+  // Legal copy is intentionally German-only for the current jurisdiction/compliance scope.
   const [section, setSection] = useState<LegalSection>(defaultSection);
   const emailAddress = useMemo(() => resolveEmailAddress(), []);
 

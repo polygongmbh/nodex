@@ -1,5 +1,6 @@
 import type { FeedMessageType, Nip99ListingStatus, Nip99Metadata } from "@/types";
 import { buildGeohashTag } from "@/lib/nostr/geohash-location";
+import i18n from "@/lib/i18n/config";
 
 export interface Nip99PublishTagParams {
   metadata?: Nip99Metadata;
@@ -78,7 +79,7 @@ export function buildNip99PublishTags({
     clean(identifierSeed) ||
     `listing-${Date.now().toString(36)}`;
   const status = statusOverride || parseStatus(metadata?.status) || "active";
-  const title = clean(metadata?.title) || clean(fallbackTitle) || "Listing";
+  const title = clean(metadata?.title) || clean(fallbackTitle) || i18n.t("composer.nip99.defaultTitle");
   const summary = clean(metadata?.summary);
   const location = clean(metadata?.location);
   const price = clean(metadata?.price);

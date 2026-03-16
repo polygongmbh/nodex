@@ -1,16 +1,17 @@
 import type { Task, TaskDateType } from "@/types";
+import i18n from "@/lib/i18n/config";
 
-const DATE_TYPE_LABELS: Record<TaskDateType, string> = {
-  due: "Due",
-  scheduled: "Scheduled",
-  start: "Start",
-  end: "End",
-  milestone: "Milestone",
+const DATE_TYPE_LABEL_KEYS: Record<TaskDateType, string> = {
+  due: "composer.dates.due",
+  scheduled: "composer.dates.scheduled",
+  start: "composer.dates.start",
+  end: "composer.dates.end",
+  milestone: "composer.dates.milestone",
 };
 
 export function getTaskDateTypeLabel(dateType: TaskDateType | undefined): string {
-  if (!dateType) return DATE_TYPE_LABELS.due;
-  return DATE_TYPE_LABELS[dateType] || DATE_TYPE_LABELS.due;
+  const key = dateType ? DATE_TYPE_LABEL_KEYS[dateType] || DATE_TYPE_LABEL_KEYS.due : DATE_TYPE_LABEL_KEYS.due;
+  return i18n.t(key);
 }
 
 export function isTaskLockedUntilStart(task: Task, now: Date = new Date()): boolean {

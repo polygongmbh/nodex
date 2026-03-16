@@ -309,13 +309,13 @@ export function useTaskPublishFlow({
       parentTask,
       demoRelayId: demoFeedActive ? demoRelayId : undefined,
     });
-    if (resolvedRelaySelection.error) {
-      toast.error(resolvedRelaySelection.error || t("toasts.errors.selectRelayOrParent"));
+    if (resolvedRelaySelection.errorKey) {
+      toast.error(t(resolvedRelaySelection.errorKey));
       nostrDevLog("routing", "Relay selection rejected for submission", {
         taskType: normalizedTaskType,
         requestedRelayIds,
         parentId: parentId || null,
-        error: resolvedRelaySelection.error,
+        errorKey: resolvedRelaySelection.errorKey,
       });
       return { ok: false, reason: "relay-selection" };
     }

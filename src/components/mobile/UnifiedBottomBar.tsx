@@ -436,7 +436,7 @@ export function UnifiedBottomBar({
     const listingMetadata: Nip99Metadata | undefined =
       submitType === "offer" || submitType === "request"
         ? {
-            title: truncateWordSafe(normalizeListingTextFromContent(sharedText), NIP99_TITLE_MAX_LENGTH) || "Listing",
+            title: truncateWordSafe(normalizeListingTextFromContent(sharedText), NIP99_TITLE_MAX_LENGTH) || t("composer.nip99.defaultTitle"),
             status: "active",
           }
         : undefined;
@@ -564,7 +564,7 @@ export function UnifiedBottomBar({
         })();
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Upload failed";
+      const message = error instanceof Error ? error.message : t("composer.attachments.uploadFailed");
       console.warn("[mobile-composer] Attachment upload failed", {
         fileName: file.name,
         size: file.size,
@@ -677,9 +677,9 @@ export function UnifiedBottomBar({
   const taskSubmitBlockedReason = !isSignedIn
     ? t("composer.blocked.signin")
     : hasPendingAttachmentUploads
-      ? "Wait for attachments to finish uploading"
+      ? t("composer.attachments.waitForUploads")
       : hasFailedAttachmentUploads
-        ? "Retry or remove failed attachments"
+        ? t("composer.attachments.retryFailed")
       : !hasMeaningfulComposeText
         ? t("composer.blocked.write")
         : !hasAtLeastOneTag && !canInheritParentTags
@@ -1000,8 +1000,8 @@ export function UnifiedBottomBar({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60 active:bg-muted transition-colors shrink-0 touch-target-sm"
-              aria-label="Add attachment"
-              title="Add attachment"
+              aria-label={t("composer.attachments.add")}
+              title={t("composer.attachments.add")}
             >
               <Paperclip className="w-4 h-4" />
             </button>
@@ -1155,7 +1155,7 @@ export function UnifiedBottomBar({
                 <span className="truncate">{attachment.fileName || attachment.name || attachment.url}</span>
                 <div className="flex items-center gap-1">
                   {attachment.status === "uploading" && (
-                    <span className="text-muted-foreground">Uploading…</span>
+                    <span className="text-muted-foreground">{t("composer.attachments.uploading")}</span>
                   )}
                   {attachment.status === "failed" && (
                     <>
@@ -1164,19 +1164,19 @@ export function UnifiedBottomBar({
                         onClick={() => retryAttachmentUpload(attachment.id)}
                         className="rounded px-1 py-0.5 hover:bg-muted"
                       >
-                        Retry
+                        {t("composer.attachments.retry")}
                       </button>
-                      <span className="text-destructive">Failed</span>
+                      <span className="text-destructive">{t("composer.attachments.failed")}</span>
                     </>
                   )}
                   {attachment.status === "uploaded" && (
-                    <span className="text-emerald-600">Ready</span>
+                    <span className="text-emerald-600">{t("composer.attachments.ready")}</span>
                   )}
                   <button
                     type="button"
                     onClick={() => removeAttachment(attachment.id)}
                     className="rounded p-0.5 hover:bg-muted"
-                    aria-label="Remove attachment"
+                    aria-label={t("composer.attachments.remove")}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -1203,8 +1203,8 @@ export function UnifiedBottomBar({
                     );
                   }}
                   className="mt-1 h-7 w-full rounded border border-border/50 bg-background px-2 text-xs"
-                  placeholder="Alt text (optional)"
-                  aria-label="Attachment alt text"
+                  placeholder={t("composer.attachments.altPlaceholder")}
+                  aria-label={t("composer.attachments.altLabel")}
                 />
               )}
             </div>

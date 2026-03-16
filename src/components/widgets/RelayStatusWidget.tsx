@@ -53,13 +53,13 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
                 </div>
                 {relay.status === "connected" ? (
                   <span className="text-xs text-muted-foreground">
-                    {relay.latency ? `${relay.latency}ms` : t("widgets.relayStatus.connected")}
+                    {relay.latency ? `${relay.latency}ms` : t("relay.status.connected")}
                   </span>
                 ) : relay.status === "read-only" ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className={cn("inline-flex items-center gap-1 text-xs", getRelayStatusTextClass(relay.status))}>
-                        {t("widgets.relayStatus.readOnly")}
+                        {t("relay.status.readOnly")}
                         <Info className="h-3 w-3" />
                       </span>
                     </TooltipTrigger>

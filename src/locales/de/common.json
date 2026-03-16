@@ -34,6 +34,47 @@
       "clearLocation": "Standort entfernen",
       "location": "Standort"
     },
+    "attachments": {
+      "add": "Anhang hinzufügen",
+      "remove": "Anhang entfernen",
+      "altPlaceholder": "Alternativtext (optional)",
+      "altLabel": "Alternativtext für Anhang",
+      "uploading": "Lädt hoch...",
+      "retry": "Erneut versuchen",
+      "failed": "Fehlgeschlagen",
+      "ready": "Bereit",
+      "uploadFailed": "Upload fehlgeschlagen",
+      "uploadFailedWithStatus": "Upload fehlgeschlagen ({{status}})",
+      "uploadUrlMissing": "Upload-URL für Anhänge ist nicht konfiguriert",
+      "networkError": "Upload-Anfrage fehlgeschlagen (Netzwerk oder CORS)",
+      "invalidJson": "Upload-Antwort war kein gültiges JSON",
+      "missingFileUrl": "Upload-Antwort enthielt keine Datei-URL",
+      "maxSizeExceeded": "Datei überschreitet die maximale Upload-Größe von {{maxSizeMb}} MB",
+      "waitForUploads": "Warte, bis Anhänge fertig hochgeladen sind",
+      "retryFailed": "Fehlgeschlagene Anhänge erneut versuchen oder entfernen"
+    },
+    "nip99": {
+      "title": "Listing-Titel",
+      "location": "Ort",
+      "price": "Preis",
+      "currency": "Währung",
+      "frequency": "Preisintervall",
+      "status": "Listing-Status",
+      "summary": "Zusammenfassung",
+      "defaultTitle": "Listing",
+      "frequencyOptions": {
+        "oneTime": "Einmalig",
+        "hour": "Stunde",
+        "day": "Tag",
+        "week": "Woche",
+        "month": "Monat",
+        "year": "Jahr"
+      },
+      "statusOptions": {
+        "active": "Aktiv",
+        "sold": "Verkauft"
+      }
+    },
     "labels": {
       "dateType": "Datumstyp",
       "priority": "Priorität",
@@ -95,6 +136,7 @@
       "retryRelayMissing": "Erneuter Versuch fehlgeschlagen: Feed ist nicht mehr konfiguriert",
       "retryRejectedByRelay": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Feed nicht akzeptiert",
       "retryRejectedByRelayWithReason": "Erneuter Versuch fehlgeschlagen: Veröffentlichung wurde vom Feed nicht akzeptiert ({{reason}})",
+      "publishListingStatusFailed": "Listing-Statusupdate konnte nicht an den Relay veröffentlicht werden",
       "locationUnavailable": "Standortdienste sind auf diesem Gerät nicht verfügbar",
       "locationCaptureFailed": "Aktueller Standort konnte nicht ermittelt werden",
       "relayVerificationReadFailed": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
@@ -356,6 +398,7 @@
         "noasConnectionFailed": "Verbindung zum Noas-Host fehlgeschlagen. Prüfe die Host-URL und versuche es erneut.",
         "noasInvalidHost": "Gib eine gültige Noas-Host-URL ein.",
         "noasServerFailed": "Noas-Anmeldung ist wegen eines Server- oder Schlüsselfehlers fehlgeschlagen. Bitte versuche es erneut.",
+        "noasSignUpFailed": "Registrierung fehlgeschlagen",
         "noasSignUpConnectionFailed": "Verbindung zum Noas-Host während der Registrierung fehlgeschlagen. Prüfe die Host-URL und versuche es erneut.",
         "noasSignUpInvalidHost": "Gib vor der Registrierung eine gültige Noas-Host-URL ein.",
         "noasSignUpServerFailed": "Noas-Registrierung ist wegen eines Serverfehlers fehlgeschlagen. Bitte versuche es erneut."
@@ -364,7 +407,9 @@
         "extension": "Mit Nostr-Erweiterung angemeldet!",
         "privateKey": "Mit Privatschlüssel angemeldet!",
         "guest": "Als Gast angemeldet! Eine neue Identität wurde erstellt.",
-        "signer": "Mit Signer-App verbunden!"
+        "signer": "Mit Signer-App verbunden!",
+        "noas": "Mit Noas angemeldet!",
+        "noasSignUp": "Konto erfolgreich erstellt"
       }
     },
     "menu": {
@@ -393,6 +438,7 @@
       "description": "Nodex ist ein Nostr-nativer Workspace für Aufgaben und Diskussionen.",
       "features": "Nutze Kanäle, Personenfilter und Feed-Steuerung, um deine Ansicht zu formen und Aufgaben sowie Kommentare im selben Ablauf zu verfassen.",
       "startTour": "Tour starten",
+      "createAccount": "Konto erstellen",
       "signIn": "Anmelden"
     },
     "picker": {
@@ -640,6 +686,9 @@
     "goHome": "Zur Startseite",
     "unexpected": "Unerwarteter Anwendungsfehler"
   },
+  "app": {
+    "loadingView": "Ansicht wird geladen..."
+  },
   "calendar": {
     "tabs": {
       "upcoming": "Anstehend",
@@ -726,9 +775,52 @@
     "copyDebug": "Diagnose kopieren",
     "copyUrls": "Relay-URLs kopieren",
     "reconnect": "Relay neu verbinden",
+    "remove": "Relay entfernen",
     "debugCopied": "Relay-Diagnose kopiert",
     "urlsCopied": "Relay-URLs kopiert",
     "copyFailed": "Relay-Debugdaten konnten nicht kopiert werden"
+  },
+  "theme": {
+    "mode": {
+      "auto": "Automatisches Theme",
+      "light": "Helles Theme",
+      "dark": "Dunkles Theme"
+    },
+    "switchTo": "Zu {{mode}} wechseln."
+  },
+  "mediaLightbox": {
+    "title": "Medienvorschau",
+    "description": "Medien ansehen und zwischen Anhängen eines Beitrags navigieren",
+    "openPost": "Beitrag öffnen",
+    "close": "Medienvorschau schließen",
+    "previous": "Vorheriges Medium",
+    "next": "Nächstes Medium",
+    "imageAlt": "Medienvorschau"
+  },
+  "linkify": {
+    "embeddedVideo": "Eingebettetes Video",
+    "embeddedAttachment": "Eingebetteter Anhang"
+  },
+  "autoCaption": {
+    "warnings": {
+      "unsupported": "Auto-Beschriftung ist experimentell und wird in diesem Browser oder auf diesem Gerät nicht unterstützt.",
+      "timeout": "Die Beschriftungserzeugung hat zu lange gedauert. Du kannst den Alternativtext weiterhin manuell eingeben.",
+      "failed": "Die Beschriftungserzeugung ist auf diesem Gerät fehlgeschlagen. Du kannst den Alternativtext weiterhin manuell eingeben."
+    },
+    "toasts": {
+      "preparingModel": "Lokales Beschriftungsmodell wird vorbereitet...",
+      "downloadingModel": "Lokales Beschriftungsmodell wird heruntergeladen... {{progress}}%",
+      "downloadFailed": "Der Download des lokalen Beschriftungsmodells ist fehlgeschlagen.",
+      "modelReady": "Lokales Beschriftungsmodell ist bereit.",
+      "generating": "Beschriftung für {{fileName}} wird erzeugt...",
+      "preparingImage": "Bild wird für die Beschriftung vorbereitet: {{fileName}}...",
+      "generatingWithModel": "Beschriftung mit lokalem Modell wird erzeugt: {{fileName}}...",
+      "generated": "Beschriftung für {{fileName}} wurde erzeugt."
+    },
+    "errors": {
+      "pipelineUnavailable": "Beschriftungs-Pipeline nicht verfügbar",
+      "modelUnavailable": "Beschriftungsmodell nicht verfügbar"
+    }
   },
   "tasks": {
     "task": "Aufgabe",

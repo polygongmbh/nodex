@@ -494,7 +494,7 @@ const Index = () => {
     if (!isNostrEventId(existing.id)) return;
     const { relayUrls } = resolveTaskOriginRelay(existing.id);
     if (relayUrls.length === 0) {
-      toast.error("Failed to publish listing status update to relay");
+      toast.error(t("toasts.errors.publishListingStatusFailed"));
       return;
     }
 
@@ -520,7 +520,7 @@ const Index = () => {
       relayUrls.slice(0, 1)
     ).then((result) => {
       if (!result.success) {
-        toast.error("Failed to publish listing status update to relay");
+        toast.error(t("toasts.errors.publishListingStatusFailed"));
         setLocalTasks((prev) => prev.map((task) => {
           const taskReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
           if (taskReplaceableKey !== replaceableKey) return task;
@@ -532,7 +532,7 @@ const Index = () => {
         }));
       }
     });
-  }, [allTasks, currentUser?.id, guardInteraction, publishEvent, resolveTaskOriginRelay]);
+  }, [allTasks, currentUser?.id, guardInteraction, publishEvent, resolveTaskOriginRelay, t]);
 
   const {
     composeRestoreRequest,
@@ -658,7 +658,7 @@ const Index = () => {
   };
 
   const renderView = () => {
-    const viewFallback = <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading view...</div>;
+    const viewFallback = <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t("app.loadingView")}</div>;
     switch (currentView) {
       case "tree":
         return <TaskTree {...viewProps} />;
