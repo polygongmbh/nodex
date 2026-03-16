@@ -49,9 +49,6 @@ export interface UseIndexDerivedDataOptions {
   effectiveActiveRelayIds: Set<string>;
   relays: Relay[];
   channelFrecencyState: ChannelFrecencyState;
-  // Status overlay maps from useTaskStatusController
-  sortStatusHoldByTaskId: Record<string, TaskStatus>;
-  sortModifiedAtHoldByTaskId: Record<string, string>;
 }
 
 export interface UseIndexDerivedDataResult {
@@ -68,6 +65,25 @@ export interface UseIndexDerivedDataResult {
   hasCachedCurrentUserProfileMetadata: boolean;
 }
 
+export function applyTaskSortOverlays(
+  tasks: Task[],
+  sortStatusHoldByTaskId: Record<string, TaskStatus>,
+  sortModifiedAtHoldByTaskId: Record<string, string>
+): Task[] {
+  return tasks
+    .map((task) => {
+      const sortStatus = sortStatusHoldByTaskId[task.id];
+      const sortLastEditedAtIso = sortModifiedAtHoldByTaskId[task.id];
+      if (!sortStatus && !sortLastEditedAtIso) return task;
+      return {
+        ...task,
+        ...(sortStatus ? { sortStatus } : {}),
+        ...(sortLastEditedAtIso ? { sortLastEditedAt: new Date(sortLastEditedAtIso) } : {}),
+      };
+    })
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+}
+
 export function useIndexDerivedData({
   nostrEvents,
   localTasks,
@@ -80,8 +96,6 @@ export function useIndexDerivedData({
   effectiveActiveRelayIds,
   relays,
   channelFrecencyState,
-  sortStatusHoldByTaskId,
-  sortModifiedAtHoldByTaskId,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
@@ -159,19 +173,10 @@ export function useIndexDerivedData({
       }
     }
 
-    return [...byId.values(), ...byListingReplaceableKey.values()]
-      .map((task) => {
-        const sortStatus = sortStatusHoldByTaskId[task.id];
-        const sortLastEditedAtIso = sortModifiedAtHoldByTaskId[task.id];
-        if (!sortStatus && !sortLastEditedAtIso) return task;
-        return {
-          ...task,
-          ...(sortStatus ? { sortStatus } : {}),
-          ...(sortLastEditedAtIso ? { sortLastEditedAt: new Date(sortLastEditedAtIso) } : {}),
-        };
-      })
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [localTasks, nostrTasks, sortModifiedAtHoldByTaskId, sortStatusHoldByTaskId]);
+    return [...byId.values(), ...byListingReplaceableKey.values()].sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+    );
+  }, [localTasks, nostrTasks]);
 
   const personalizedChannelScores = useMemo(
     () => getChannelFrecencyScores(channelFrecencyState),

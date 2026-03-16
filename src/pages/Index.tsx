@@ -57,7 +57,7 @@ import { useTaskPublishFlow } from "@/hooks/use-task-publish-flow";
 import { useTaskPublishControls } from "@/hooks/use-task-publish-controls";
 import { useTaskStatusController } from "@/hooks/use-task-status-controller";
 import { useKind0People } from "@/hooks/use-kind0-people";
-import { useIndexDerivedData } from "@/hooks/use-index-derived-data";
+import { applyTaskSortOverlays, useIndexDerivedData } from "@/hooks/use-index-derived-data";
 import { usePinnedSidebarChannels } from "@/hooks/use-pinned-sidebar-channels";
 import { useIndexRelayShell } from "@/hooks/use-index-relay-shell";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
@@ -232,7 +232,7 @@ const Index = () => {
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
 
   const {
-    allTasks,
+    allTasks: baseAllTasks,
     channels,
     composeChannels,
     sidebarPeople,
@@ -250,8 +250,6 @@ const Index = () => {
     effectiveActiveRelayIds,
     relays,
     channelFrecencyState,
-    sortStatusHoldByTaskId,
-    sortModifiedAtHoldByTaskId,
   });
 
   const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
@@ -295,6 +293,70 @@ const Index = () => {
     t,
   });
 
+  const handleOpenAuthModal = useCallback(() => {
+    setIsOnboardingIntroOpen(false);
+    setIsOnboardingOpen(false);
+    setIsAuthModalOpen(true);
+  }, []);
+
+  const shouldForceAuthAfterOnboarding = useMemo(() => {
+    return shouldPromptSignInAfterOnboarding({
+      isSignedIn: Boolean(user),
+      relays: ndkRelays,
+    });
+  }, [ndkRelays, user]);
+
+  const shortcutsHelp = useKeyboardShortcutsHelp();
+  const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
+
+  const {
+    hasDisconnectedSelectedRelays,
+    isInteractionBlocked,
+    guardInteraction,
+    handleBlockedInteractionAttempt,
+    resolveRelayUrlsFromIds,
+    resolveTaskOriginRelay,
+    publishTaskStateUpdate,
+    publishTaskDueUpdate,
+    publishTaskPriorityUpdate,
+    publishTaskCreateFollowUps,
+  } = useTaskPublishControls({
+    allTasks: baseAllTasks,
+    relays,
+    effectiveActiveRelayIds,
+    demoFeedActive,
+    user,
+    handleOpenAuthModal,
+    publishEvent,
+    t,
+  });
+
+  const {
+    completionSoundEnabled,
+    handleToggleCompletionSound,
+    handleToggleComplete,
+    handleStatusChange,
+    sortStatusHoldByTaskId,
+    sortModifiedAtHoldByTaskId,
+  } = useTaskStatusController({
+    allTasks: baseAllTasks,
+    currentUser,
+    guardInteraction,
+    publishTaskStateUpdate,
+    setLocalTasks,
+    t,
+  });
+
+  const allTasks = useMemo(
+    () =>
+      applyTaskSortOverlays(
+        baseAllTasks,
+        sortStatusHoldByTaskId,
+        sortModifiedAtHoldByTaskId
+      ),
+    [baseAllTasks, sortModifiedAtHoldByTaskId, sortStatusHoldByTaskId]
+  );
+
   const {
     currentView,
     focusedTaskId,
@@ -333,22 +395,6 @@ const Index = () => {
       }),
     [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
   );
-
-  const handleOpenAuthModal = useCallback(() => {
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(false);
-    setIsAuthModalOpen(true);
-  }, []);
-
-  const shouldForceAuthAfterOnboarding = useMemo(() => {
-    return shouldPromptSignInAfterOnboarding({
-      isSignedIn: Boolean(user),
-      relays: ndkRelays,
-    });
-  }, [ndkRelays, user]);
-
-  const shortcutsHelp = useKeyboardShortcutsHelp();
-  const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
 
   const ensureGuideDataAvailable = useCallback(() => {
     if (!shouldBootstrapGuideDemoFeed({ totalTasks: allTasks.length, demoFeedActive })) return;
@@ -416,44 +462,6 @@ const Index = () => {
     setChannelMatchMode,
     setPeople,
     resetFiltersToDefault,
-  });
-
-  const {
-    hasDisconnectedSelectedRelays,
-    isInteractionBlocked,
-    guardInteraction,
-    handleBlockedInteractionAttempt,
-    resolveRelayUrlsFromIds,
-    resolveTaskOriginRelay,
-    publishTaskStateUpdate,
-    publishTaskDueUpdate,
-    publishTaskPriorityUpdate,
-    publishTaskCreateFollowUps,
-  } = useTaskPublishControls({
-    allTasks,
-    relays,
-    effectiveActiveRelayIds,
-    demoFeedActive,
-    user,
-    handleOpenAuthModal,
-    publishEvent,
-    t,
-  });
-
-  const {
-    completionSoundEnabled,
-    handleToggleCompletionSound,
-    handleToggleComplete,
-    handleStatusChange,
-    sortStatusHoldByTaskId,
-    sortModifiedAtHoldByTaskId,
-  } = useTaskStatusController({
-    allTasks,
-    currentUser,
-    guardInteraction,
-    publishTaskStateUpdate,
-    setLocalTasks,
-    t,
   });
 
   const handleListingStatusChange = useCallback((taskId: string, status: Nip99ListingStatus) => {

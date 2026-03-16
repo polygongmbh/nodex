@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Fixed a feed startup crash caused by task status sorting state initializing before the main Index task data graph was ready.
 
 ## [1.17.3] - 2026-03-14
 - Stabilized Relay connection and status handling with cleaner reconnect behavior, clearer `read only` / `read rejected` states, and better startup relay detection.
