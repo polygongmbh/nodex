@@ -1,71 +1,96 @@
+import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
 
+function ControlledNoasAuthForm({
+  onLogin = vi.fn(async () => true),
+  onNoasHostUrlChange,
+  initialUsername = "",
+  initialPassword = "",
+  initialNoasHostUrl = "https://noas.example.com",
+}: {
+  onLogin?: Parameters<typeof NoasAuthForm>[0]["onLogin"];
+  onNoasHostUrlChange?: (value: string) => void;
+  initialUsername?: string;
+  initialPassword?: string;
+  initialNoasHostUrl?: string;
+}) {
+  const [username, setUsername] = useState(initialUsername);
+  const [password, setPassword] = useState(initialPassword);
+  const [noasHostUrl, setNoasHostUrl] = useState(initialNoasHostUrl);
+  const [isEditingHostUrl, setIsEditingHostUrl] = useState(false);
+
+  return (
+    <NoasAuthForm
+      onLogin={onLogin}
+      onSignUp={vi.fn()}
+      onBack={vi.fn()}
+      username={username}
+      password={password}
+      isEditingHostUrl={isEditingHostUrl}
+      isLoading={false}
+      noasHostUrl={noasHostUrl}
+      onUsernameChange={setUsername}
+      onPasswordChange={setPassword}
+      onNoasHostUrlChange={(value) => {
+        setNoasHostUrl(value);
+        onNoasHostUrlChange?.(value);
+      }}
+      onToggleHostEdit={() => setIsEditingHostUrl((current) => !current)}
+    />
+  );
+}
+
 describe("Noas auth forms", () => {
-  it("shows alternative sign-in methods on the sign-in form", () => {
+  it("shows a more options button on the sign-in form", () => {
     render(
-      <NoasAuthForm
-        onLogin={vi.fn(async () => true)}
-        onSignUp={vi.fn()}
-        onBack={vi.fn()}
-        onChooseExtension={vi.fn()}
-        onChooseSigner={vi.fn()}
-        onChoosePrivateKey={vi.fn()}
-        isLoading={false}
-        noasHostUrl="https://noas.example.com"
-      />
+      <ControlledNoasAuthForm />
     );
 
-    expect(screen.getByRole("button", { name: /signer extension/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /signer app/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /private key/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /more options/i })).toBeInTheDocument();
+    expect(screen.queryByText(/your keys are encrypted/i)).not.toBeInTheDocument();
   });
 
-  it("edits the noas domain in the username row only after enabling the pencil control", () => {
+  it("edits the noas host in the username row only after enabling the pencil control", () => {
+    const onNoasHostUrlChange = vi.fn();
+
+    render(<ControlledNoasAuthForm onNoasHostUrlChange={onNoasHostUrlChange} />);
+
+    const hostInput = screen.getByLabelText(/^host$/i);
+    expect(hostInput).toHaveAttribute("readonly");
+
+    fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
+    expect(hostInput).not.toHaveAttribute("readonly");
+
+    fireEvent.change(hostInput, { target: { value: "custom.noas.example" } });
+    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example");
+  });
+
+  it("preserves the port in the displayed and edited noas host", () => {
     const onNoasHostUrlChange = vi.fn();
 
     render(
-      <NoasAuthForm
-        onLogin={vi.fn(async () => true)}
-        onSignUp={vi.fn()}
-        onBack={vi.fn()}
-        onChooseExtension={vi.fn()}
-        onChooseSigner={vi.fn()}
-        onChoosePrivateKey={vi.fn()}
+      <ControlledNoasAuthForm
         onNoasHostUrlChange={onNoasHostUrlChange}
-        isLoading={false}
-        noasHostUrl="https://noas.example.com"
+        initialNoasHostUrl="https://custom.noas.example:8443"
       />
     );
 
-    const domainInput = screen.getByLabelText(/domain/i);
-    expect(domainInput).toHaveAttribute("readonly");
+    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
+    expect(hostInput.value).toBe("custom.noas.example:8443");
 
-    fireEvent.click(screen.getByRole("button", { name: /edit noas url/i }));
-    expect(domainInput).not.toHaveAttribute("readonly");
+    fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
+    fireEvent.change(hostInput, { target: { value: "other.noas.example:9443" } });
 
-    fireEvent.change(domainInput, { target: { value: "custom.noas.example" } });
-    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example");
+    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://other.noas.example:9443");
   });
 
   it("submits matching noas auth url and nip05 domain", async () => {
     const onLogin = vi.fn(async () => true);
 
-    render(
-      <NoasAuthForm
-        onLogin={onLogin}
-        onSignUp={vi.fn()}
-        onBack={vi.fn()}
-        onChooseExtension={vi.fn()}
-        onChooseSigner={vi.fn()}
-        onChoosePrivateKey={vi.fn()}
-        onNoasHostUrlChange={vi.fn()}
-        isLoading={false}
-        noasHostUrl="https://custom.noas.example"
-      />
-    );
+    render(<ControlledNoasAuthForm onLogin={onLogin} initialNoasHostUrl="https://custom.noas.example" />);
 
     const usernameInput = screen.getByLabelText(/^username$/i);
     fireEvent.change(usernameInput, { target: { value: "alice" } });
@@ -77,19 +102,37 @@ describe("Noas auth forms", () => {
     });
   });
 
-  it("hides alternative sign-in methods on the sign-up form", () => {
+  it("validates sign-in username with sign-up rules before submitting", () => {
+    const onLogin = vi.fn(async () => true);
+
+    render(<ControlledNoasAuthForm onLogin={onLogin} />);
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "ab" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    expect(onLogin).not.toHaveBeenCalled();
+    expect(screen.getByText(/username must be 3-32 characters/i)).toBeInTheDocument();
+  });
+
+  it("shows a more options button on the sign-up form", () => {
     render(
       <NoasSignUpForm
         onSignUp={vi.fn(async () => true)}
         onSignIn={vi.fn()}
         onBack={vi.fn()}
+        username=""
+        password=""
+        isEditingHostUrl={false}
         isLoading={false}
         noasHostUrl="https://noas.example.com"
+        onUsernameChange={vi.fn()}
+        onPasswordChange={vi.fn()}
+        onToggleHostEdit={vi.fn()}
       />
     );
 
-    expect(screen.queryByRole("button", { name: /signer extension/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /signer app/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /private key/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /more options/i })).toBeInTheDocument();
+    expect(screen.getByText(/your keys are encrypted/i)).toBeInTheDocument();
   });
 });
