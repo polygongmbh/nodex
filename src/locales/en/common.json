@@ -557,6 +557,7 @@
       "extension": "Extension",
       "guest": "Guest",
       "signer": "Signer",
+      "noas": "Noas",
       "privateKey": "Private key",
       "unknown": "Unknown"
     }

@@ -543,6 +543,7 @@
       "extension": "Erweiterung",
       "guest": "Gast",
       "signer": "Signer",
+      "noas": "Noas",
       "privateKey": "Privater Schlüssel",
       "unknown": "Unbekannt"
     }

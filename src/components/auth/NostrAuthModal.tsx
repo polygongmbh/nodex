@@ -539,7 +539,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       ? t("filters.authMethod.guest")
       : authMethod === "nostrConnect"
         ? t("filters.authMethod.signer")
-        : t("filters.authMethod.privateKey");
+        : authMethod === "noas"
+          ? t("filters.authMethod.noas")
+          : t("filters.authMethod.privateKey");
 
   return (
     <>

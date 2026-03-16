@@ -124,6 +124,8 @@ export function MobileFilters({
       ? t("filters.authMethod.guest")
       : authMethod === "nostrConnect"
         ? t("filters.authMethod.signer")
+        : authMethod === "noas"
+          ? t("filters.authMethod.noas")
         : authMethod === "privateKey"
           ? t("filters.authMethod.privateKey")
           : t("filters.authMethod.unknown");

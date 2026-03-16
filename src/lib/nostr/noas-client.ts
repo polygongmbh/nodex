@@ -4,7 +4,7 @@
  */
 
 import { nip19 } from 'nostr-tools';
-import { decryptNip49PrivateKey, isNip49EncryptedKey, privateKeyHexToNsec } from './nip49-utils';
+import { decryptNip49PrivateKey, isNip49EncryptedKey } from './nip49-utils';
 
 interface NoasSignInResponse {
   success: boolean;
@@ -226,30 +226,30 @@ export class NoasClient {
    * @returns Promise<string> Decrypted private key in nsec format
    */
   async decryptPrivateKey(encryptedKey: string, password: string): Promise<string> {
-    console.log(`DEBUG: NoasClient.decryptPrivateKey input: ${encryptedKey}`);
-    console.log(`DEBUG: NoasClient.decryptPrivateKey input length: ${encryptedKey.length}`);
-    
-    // Check if it starts with ncryptsec (our temporary format)
-    if (encryptedKey.startsWith('ncryptsec')) {
-      console.log('DEBUG: Detected ncryptsec format, extracting hex');
-      const decryptedHex = await decryptNip49PrivateKey(encryptedKey, password);
-      console.log('DEBUG: Returning decrypted hex key:', decryptedHex);
-      return decryptedHex;
+    // Standard encrypted formats.
+    if (encryptedKey.startsWith('ncryptsec') || isNip49EncryptedKey(encryptedKey)) {
+      return decryptNip49PrivateKey(encryptedKey, password);
     }
-    
-    if (!isNip49EncryptedKey(encryptedKey)) {
-      // If not encrypted, return as nsec if it's a hex key
-      if (/^[0-9a-f]{64}$/i.test(encryptedKey)) {
-        console.log('DEBUG: Detected pure hex key');
-        return privateKeyHexToNsec(encryptedKey);
-      }
-      console.log('DEBUG: Assuming already in nsec format');
-      return encryptedKey; // Return as-is if already in nsec format
+
+    // Raw hex private key.
+    if (/^[0-9a-f]{64}$/i.test(encryptedKey)) {
+      return encryptedKey.toLowerCase();
     }
-    
+
+    // Raw nsec private key.
     try {
-      const decryptedHex = await decryptNip49PrivateKey(encryptedKey, password);
-      return privateKeyHexToNsec(decryptedHex);
+      const decoded = nip19.decode(encryptedKey);
+      if (decoded.type === 'nsec') {
+        return Array.from(new Uint8Array(decoded.data))
+          .map((byte) => byte.toString(16).padStart(2, '0'))
+          .join('');
+      }
+    } catch {
+      // Ignore and throw below.
+    }
+
+    try {
+      return await decryptNip49PrivateKey(encryptedKey, password);
     } catch (error) {
       console.error('Private key decryption failed:', error);
       throw new Error(`Could not decrypt private key: ${error instanceof Error ? error.message : 'Unknown error'}`);

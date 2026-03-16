@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { isNip49EncryptedKey, privateKeyHexToNsec } from './nip49-utils';
 import { nip19 } from 'nostr-tools';
+import * as nip49 from 'nostr-tools/nip49';
 
 describe('NIP-49 Utility Functions', () => {
 
@@ -45,10 +46,9 @@ describe('NIP-49 Utility Functions', () => {
       expect(decodedHex).toBe(hexKey);
     });
 
-    it('should handle various hex lengths without throwing', () => {
-      // The function doesn't actually validate length, it just processes what it gets
-      expect(() => privateKeyHexToNsec('123')).not.toThrow();
-      expect(() => privateKeyHexToNsec('1234')).not.toThrow();
+    it('should reject invalid hex length', () => {
+      expect(() => privateKeyHexToNsec('123')).toThrow();
+      expect(() => privateKeyHexToNsec('1234')).toThrow();
     });
   });
 
@@ -72,6 +72,17 @@ describe('NIP-49 Utility Functions', () => {
       const result = await decryptNip49PrivateKey(nsecKey, 'password');
       // decryptNip49PrivateKey returns hex string for nsec keys
       // The result should be the hex representation of the private key data
+      expect(result).toBe(hexKey);
+    });
+
+    it('should decrypt real NIP-49 ncryptsec keys from nostr-tools', async () => {
+      const { decryptNip49PrivateKey } = await import('./nip49-utils');
+
+      const hexKey = '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+      const password = 'correct horse battery staple';
+      const encrypted = await nip49.encrypt(hexToUint8Array(hexKey), password);
+
+      const result = await decryptNip49PrivateKey(encrypted, password);
       expect(result).toBe(hexKey);
     });
   });

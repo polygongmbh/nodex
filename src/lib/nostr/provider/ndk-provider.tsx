@@ -912,15 +912,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       let signer: NDKPrivateKeySigner | null = null;
       try {
         decryptedPrivateKey = await noasClient.decryptPrivateKey(signInResponse.encryptedPrivateKey, password);
-        console.log('DEBUG: Decrypted private key length:', decryptedPrivateKey.length);
-        
+
         // Convert hex key to nsec format for better compatibility with NDK
         const nsecKey = privateKeyHexToNsec(decryptedPrivateKey);
-        console.log('DEBUG: NSEC key:', nsecKey);
-        console.log('DEBUG: NSEC key length:', nsecKey.length);
-        
         signer = new NDKPrivateKeySigner(nsecKey);
-        console.log('DEBUG: Signer created:', signer);
         ndk.signer = signer;
       } catch (decryptionError) {
         console.error('Failed to decrypt private key:', decryptionError);
@@ -935,9 +930,15 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         return false;
       }
 
-      console.log('DEBUG: About to call signer.user()');
-      console.log('DEBUG: Signer object:', signer);
       const ndkUser = await signer.user();
+      if (ndkUser.pubkey.toLowerCase() !== signInResponse.publicKey.toLowerCase()) {
+        console.error("Noas sign-in key mismatch: decrypted signer pubkey does not match server response", {
+          username,
+          signerPubkey: ndkUser.pubkey,
+          responsePubkey: signInResponse.publicKey,
+        });
+        return false;
+      }
       await ndkUser.fetchProfile();
 
       // Get profile picture if available

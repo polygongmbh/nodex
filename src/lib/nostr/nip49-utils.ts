@@ -6,6 +6,7 @@
  */
 
 import { nip44, nip19, type Event as NostrEvent } from 'nostr-tools';
+import * as nip49 from 'nostr-tools/nip49';
 
 /**
  * Derive a cryptographic key from password using PBKDF2
@@ -132,91 +133,57 @@ function uint8ArrayToHex(bytes: Uint8Array): string {
  * @throws Error if decryption fails
  */
 export async function decryptNip49PrivateKey(encryptedKey: string, password: string): Promise<string> {
-  console.log(`DEBUG: decryptNip49PrivateKey called with: ${encryptedKey}`);
-  console.log(`DEBUG: decryptNip49PrivateKey input length: ${encryptedKey.length}`);
-  
   try {
-    // Check if it's actually a hex private key (64 characters)
-    const isPureHex = /^[0-9a-f]{64}$/i.test(encryptedKey);
-    console.log(`DEBUG: isPureHex match: ${isPureHex}`);
-    if (isPureHex) {
-      console.log('DEBUG: Returning as pure hex key');
-      return encryptedKey; // Return as-is, it's already a hex key
+    // Already a raw hex private key.
+    if (/^[0-9a-f]{64}$/i.test(encryptedKey)) {
+      return encryptedKey.toLowerCase();
     }
-    
-    // Check if it's an nsec key
+
+    // Already an nsec private key.
     try {
       const decoded = nip19.decode(encryptedKey);
       if (decoded.type === 'nsec') {
-        // Convert Uint8Array to hex string
         return uint8ArrayToHex(new Uint8Array(decoded.data));
       }
     } catch {
-      // Not an nsec key, continue
+      // Ignore and continue to encrypted handling.
     }
-    
-    // Handle ncryptsec keys with proper decryption
-    if (encryptedKey.startsWith('ncryptsec')) {
-      console.log('DEBUG: Processing ncryptsec format with proper decryption');
-      
-      try {
-        // Parse the ncryptsec format
-        const { salt, iv, ciphertext } = parseNcryptsec(encryptedKey);
-        console.log(`DEBUG: Parsed salt (${salt.length} bytes), iv (${iv.length} bytes), ciphertext (${ciphertext.length} bytes)`);
-        
-        // Derive decryption key from password
-        const decryptionKey = await deriveKey(password, salt);
-        console.log(`DEBUG: Derived decryption key (${decryptionKey.length} bytes)`);
-        
-        // Decrypt the private key
-        const decryptedBytes = await decryptAESGCM(ciphertext, decryptionKey, iv);
-        console.log(`DEBUG: Decrypted ${decryptedBytes.length} bytes`);
-        
-        // Convert to hex string
-        const hexKey = uint8ArrayToHex(decryptedBytes);
-        console.log(`DEBUG: Decrypted hex key length: ${hexKey.length}`);
-        
-        // Validate it's a valid private key (64 hex chars = 32 bytes)
-        if (hexKey.length !== 64) {
-          throw new Error(`Invalid decrypted key length: ${hexKey.length} (expected 64)`);
-        }
-        
-        console.log('DEBUG: Successfully decrypted private key');
-        return hexKey;
-        
-      } catch (decryptionError) {
-        console.error('Proper decryption failed, falling back to legacy method:', decryptionError);
-        
-        // Fallback to legacy method for compatibility with old keys
-        console.warn('NIP-49 decryption failed - using legacy fallback');
-        
-        // Temporary fallback: extract hex from the ncryptsec string
-        const afterPrefix = encryptedKey.replace('ncryptsec', '');
-        const hexMatch = afterPrefix.match(/^[0-9a-f]+/i);
-        
-        if (hexMatch) {
-          console.warn('Using legacy fallback - extracting hex from ncryptsec string');
-          let hexKey = hexMatch[0];
-          
-          // Ensure it's exactly 64 characters (32 bytes) for a valid private key
-          if (hexKey.length > 64) {
-            console.warn(`Key too long (${hexKey.length} chars), truncating to 64`);
-            hexKey = hexKey.substring(0, 64);
-          } else if (hexKey.length < 64) {
-            console.warn(`Key too short (${hexKey.length} chars), padding with zeros`);
-            hexKey = hexKey.padEnd(64, '0');
-          }
-          
-          return hexKey;
-        } else {
-          throw new Error('Could not extract private key from ncryptsec format');
-        }
+
+    // Legacy custom format: ncryptsec<salt>:<iv>:<ciphertext>
+    if (encryptedKey.startsWith('ncryptsec') && encryptedKey.includes(':')) {
+      const { salt, iv, ciphertext } = parseNcryptsec(encryptedKey);
+      const decryptionKey = await deriveKey(password, salt);
+      const decryptedBytes = await decryptAESGCM(ciphertext, decryptionKey, iv);
+      const hexKey = uint8ArrayToHex(decryptedBytes);
+      if (!/^[0-9a-f]{64}$/i.test(hexKey)) {
+        throw new Error(`Invalid decrypted key length: ${hexKey.length} (expected 64)`);
       }
+      return hexKey.toLowerCase();
     }
-    
+
+    // Standard NIP-49 format from nostr-tools (bech32 ncryptsec1...).
+    if (encryptedKey.startsWith('ncryptsec')) {
+      const decrypted = await nip49.decrypt(encryptedKey, password);
+      if (typeof decrypted === 'string') {
+        if (/^[0-9a-f]{64}$/i.test(decrypted)) return decrypted.toLowerCase();
+        const maybeNsec = nip19.decode(decrypted);
+        if (maybeNsec.type === 'nsec') return uint8ArrayToHex(new Uint8Array(maybeNsec.data));
+        throw new Error('NIP-49 decrypt returned unsupported key string format');
+      }
+
+      const decryptedBytes =
+        decrypted instanceof Uint8Array
+          ? decrypted
+          : new Uint8Array((decrypted as ArrayBufferView).buffer);
+      const hexKey = uint8ArrayToHex(decryptedBytes);
+      if (!/^[0-9a-f]{64}$/i.test(hexKey)) {
+        throw new Error('NIP-49 decrypt returned invalid key bytes');
+      }
+      return hexKey.toLowerCase();
+    }
+
     throw new Error('Unsupported private key format');
   } catch (error) {
-    console.error('Private key decryption error:', error);
     throw new Error(`Failed to decrypt private key: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -241,19 +208,11 @@ export function isNip49EncryptedKey(key: string): boolean {
  * @returns string Private key in nsec format
  */
 export function privateKeyHexToNsec(privateKeyHex: string): string {
-  console.log(`DEBUG: privateKeyHexToNsec input: ${privateKeyHex}`);
-  console.log(`DEBUG: privateKeyHexToNsec input length: ${privateKeyHex.length}`);
-  
-  // Convert hex string to Uint8Array for nip19.nsecEncode (browser-compatible)
-  const hexBytes = privateKeyHex.match(/.{1,2}/g);
-  console.log(`DEBUG: hexBytes array: ${hexBytes}`);
-  console.log(`DEBUG: hexBytes length: ${hexBytes ? hexBytes.length : 0}`);
-  
-  const hexBuffer = new Uint8Array(hexBytes ? hexBytes.map(byte => parseInt(byte, 16)) : []);
-  console.log(`DEBUG: Uint8Array length: ${hexBuffer.length}`);
-  console.log(`DEBUG: Uint8Array: ${Array.from(hexBuffer)}`);
-  
-  const result = nip19.nsecEncode(hexBuffer);
-  console.log(`DEBUG: nsecEncode result: ${result}`);
-  return result;
+  if (!/^[0-9a-f]{64}$/i.test(privateKeyHex)) {
+    throw new Error('Private key must be a 64-character hex string');
+  }
+
+  const hexBytes = privateKeyHex.match(/.{1,2}/g) || [];
+  const hexBuffer = new Uint8Array(hexBytes.map((byte) => parseInt(byte, 16)));
+  return nip19.nsecEncode(hexBuffer);
 }
