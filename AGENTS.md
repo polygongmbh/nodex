@@ -179,6 +179,15 @@ policies:
         - npm run build
       recommended:
         - npm run lint
+  localization:
+    supported_languages:
+      - en
+      - de
+      - es
+    production_code_user_facing_strings_must_be_localized: true
+    allowed_hardcoded_user_facing_string_exceptions:
+      - jurisdiction_or_compliance_text_explicitly_documented_in_code
+    locale_updates_must_cover_all_supported_languages: true
   release:
     bump_from_commit_types:
       fix: patch
@@ -198,6 +207,7 @@ policies:
 - Prefer explicit, parseable rules for automation; keep prose for rationale and edge cases.
 - When a policy already exists in a machine-readable block or matrix, update that source first and keep prose sections non-duplicative.
 - When changing shared user-facing copy in locale files, propagate equivalent updates across all supported languages in `src/locales/` in the same change unless an omission is explicitly documented.
+- Do not leave hardcoded user-facing strings in production code; route them through i18n and keep `en`, `de`, and `es` in sync unless a documented compliance/jurisdiction exception applies.
 
 ### Test and Verification
 - Follow the verification matrix above for required commands.
