@@ -6,7 +6,8 @@ import { Loader2, AlertCircle, UserPlus, Copy, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { getPublicKey } from "nostr-tools";
-import { NoasSharedFields, validateNoasUsername } from "./NoasSharedFields";
+import { NoasSharedFields, validateNoasBaseUrl, validateNoasUsername } from "./NoasSharedFields";
+import { normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
 
 interface NoasSignUpFormProps {
   onSignUp: (
@@ -100,8 +101,10 @@ export function NoasSignUpForm({
       return;
     }
 
-    if (!noasHostUrl.trim()) {
-      setLocalError(t("auth.errors.noasHostRequired"));
+    const normalizedNoasBaseUrl = normalizeNoasBaseUrl(noasHostUrl);
+    const noasHostError = validateNoasBaseUrl(normalizedNoasBaseUrl, t);
+    if (noasHostError) {
+      setLocalError(noasHostError);
       return;
     }
 
@@ -125,7 +128,7 @@ export function NoasSignUpForm({
     }
 
     const success = await onSignUp(username.trim(), password, privateKey.trim(), finalPubkey, {
-      baseUrl: noasHostUrl.trim(),
+      baseUrl: normalizedNoasBaseUrl,
     });
   };
 

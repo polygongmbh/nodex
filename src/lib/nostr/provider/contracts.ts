@@ -1,6 +1,7 @@
 import type NDK from "@nostr-dev-kit/ndk";
 import type { NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
 import type { ReactNode } from "react";
+import type { NoasAuthResult } from "../noas-client";
 import type { EditableNostrProfile } from "../profile-metadata";
 import { NostrEventKind } from "../types";
 
@@ -45,14 +46,14 @@ export interface NDKContextValue {
     username: string,
     password: string,
     config?: { baseUrl?: string }
-  ) => Promise<boolean>;
+  ) => Promise<NoasAuthResult>;
   signupWithNoas: (
     username: string,
     password: string,
     privateKey: string,
     pubkey: string,
     config?: { baseUrl?: string }
-  ) => Promise<boolean>;
+  ) => Promise<NoasAuthResult>;
   logout: () => void;
   addRelay: (url: string) => void;
   removeRelay: (url: string) => void;

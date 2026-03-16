@@ -70,8 +70,8 @@ describe("Noas auth forms", () => {
     fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
     expect(hostInput).not.toHaveAttribute("readonly");
 
-    fireEvent.change(hostInput, { target: { value: "custom.noas.example" } });
-    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example");
+    fireEvent.change(hostInput, { target: { value: "https://custom.noas.example/api" } });
+    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example/api");
   });
 
   it("preserves the port in the displayed and edited noas host", () => {
@@ -85,12 +85,12 @@ describe("Noas auth forms", () => {
     );
 
     const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
-    expect(hostInput.value).toBe("custom.noas.example:8443");
+    expect(hostInput.value).toBe("https://custom.noas.example:8443");
 
     fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
-    fireEvent.change(hostInput, { target: { value: "other.noas.example:9443" } });
+    fireEvent.change(hostInput, { target: { value: "https://other.noas.example:9443/custom/path" } });
 
-    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://other.noas.example:9443");
+    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://other.noas.example:9443/custom/path");
   });
 
   it("shows an unlocked empty host field without the pencil control when direct host edit is allowed", () => {
@@ -111,8 +111,8 @@ describe("Noas auth forms", () => {
     expect(screen.queryByText(/advanced only/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/only change this if you know what you're doing/i)).not.toBeInTheDocument();
 
-    fireEvent.change(hostInput, { target: { value: "custom.noas.example" } });
-    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example");
+    fireEvent.change(hostInput, { target: { value: "https://custom.noas.example:7443/custom/path" } });
+    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example:7443/custom/path");
   });
 
   it("submits matching noas auth url and nip05 domain", async () => {
@@ -128,6 +128,45 @@ describe("Noas auth forms", () => {
     expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
       baseUrl: "https://custom.noas.example",
     });
+  });
+
+  it("normalizes a bare custom host to https on submit", () => {
+    const onLogin = vi.fn(async () => true);
+
+    render(
+      <ControlledNoasAuthForm
+        allowDirectHostEdit
+        onLogin={onLogin}
+        initialNoasHostUrl="custom.noas.example:7443/api"
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
+      baseUrl: "https://custom.noas.example:7443/api",
+    });
+  });
+
+  it("shows a host-specific validation error for malformed custom URLs", () => {
+    const onLogin = vi.fn(async () => true);
+
+    render(
+      <ControlledNoasAuthForm
+        allowDirectHostEdit
+        onLogin={onLogin}
+        initialNoasHostUrl="https://bad host"
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    expect(onLogin).not.toHaveBeenCalled();
+    expect(screen.getByText(/enter a valid host url/i)).toBeInTheDocument();
   });
 
   it("validates sign-in username with sign-up rules before submitting", () => {

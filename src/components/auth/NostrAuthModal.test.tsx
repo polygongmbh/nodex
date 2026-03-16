@@ -10,7 +10,8 @@ const ndkMock = {
   loginWithPrivateKey: vi.fn(async () => true),
   loginAsGuest: vi.fn(async () => true),
   loginWithNostrConnect: vi.fn(async () => true),
-  loginWithNoas: vi.fn(async () => true),
+  loginWithNoas: vi.fn(async () => ({ success: true })),
+  signupWithNoas: vi.fn(async () => ({ success: true })),
   isAuthenticating: false,
   isConnected: true,
   user: null as NostrUser | null,
@@ -54,6 +55,8 @@ describe("NostrAuthModal", () => {
     ndkMock.needsProfileSetup = false;
     ndkMock.isProfileSyncing = false;
     ndkMock.updateUserProfile = vi.fn(async () => true);
+    ndkMock.loginWithNoas = vi.fn(async () => ({ success: true }));
+    ndkMock.signupWithNoas = vi.fn(async () => ({ success: true }));
   });
 
   it("starts on the auth chooser and still shows Noas when no Noas env is configured", () => {
@@ -90,7 +93,6 @@ describe("NostrAuthModal", () => {
       fireEvent.click(backButtons[0]);
     }
 
-    fireEvent.click(screen.getByRole("button", { name: /more options/i }));
     fireEvent.click(screen.getByRole("button", { name: /browser extension/i }));
 
     const extensionOption = screen.getByRole("button", { name: /browser extension/i });
@@ -268,7 +270,6 @@ describe("NostrAuthModal", () => {
       fireEvent.click(backButtons[0]);
     }
 
-    fireEvent.click(screen.getByRole("button", { name: /more options/i }));
     fireEvent.click(screen.getByRole("button", { name: /private key/i }));
     fireEvent.change(screen.getByLabelText(/^private key$/i), {
       target: { value: "nsec1example" },
@@ -283,6 +284,7 @@ describe("NostrAuthModal", () => {
   it("preserves shared noas credentials when switching between sign in and sign up", () => {
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
+    fireEvent.click(screen.getByRole("button", { name: /noas authentication/i }));
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice_name" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
 
@@ -309,6 +311,24 @@ describe("NostrAuthModal", () => {
     expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/advanced only/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/only change this if you know what you're doing/i)).not.toBeInTheDocument();
+  });
+
+  it("shows a connection-specific Noas error when the host request fails", async () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+    ndkMock.loginWithNoas = vi.fn(async () => ({ success: false, errorCode: "connection_failed" }));
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /noas authentication/i }));
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
+    expect(screen.getAllByText(/connection to the noas host failed/i)).toHaveLength(2);
+    expect(screen.queryByText(/invalid username or password/i)).not.toBeInTheDocument();
   });
 
   it("opens directly to noas sign up when requested and still allows switching to sign in", () => {

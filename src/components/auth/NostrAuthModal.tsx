@@ -29,6 +29,7 @@ import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
+import type { NoasAuthErrorCode } from "@/lib/nostr/noas-client";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -39,6 +40,40 @@ interface NostrAuthModalProps {
 type AuthStep = "choose" | "privateKey" | "nostrConnect" | "noas" | "noasSignUp";
 type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | "noas" | null;
 type WindowWithNostr = Window & { nostr?: unknown };
+
+function resolveNoasErrorMessage(
+  errorCode: NoasAuthErrorCode | undefined,
+  t: ReturnType<typeof useTranslation>["t"],
+  mode: "signIn" | "signUp"
+): string {
+  if (mode === "signUp") {
+    switch (errorCode) {
+      case "invalid_url":
+      case "missing_config":
+        return t("auth.modal.errors.noasSignUpInvalidHost") || "Enter a valid Noas host URL";
+      case "connection_failed":
+        return t("auth.modal.errors.noasSignUpConnectionFailed") || "Connection to the Noas host failed";
+      case "server_error":
+        return t("auth.modal.errors.noasSignUpServerFailed") || "Noas sign-up failed. Please try again.";
+      default:
+        return t("auth.modal.errors.noasSignUpFailed") || "Sign up failed";
+    }
+  }
+
+  switch (errorCode) {
+    case "invalid_url":
+    case "missing_config":
+      return t("auth.modal.errors.noasInvalidHost") || "Enter a valid Noas host URL";
+    case "connection_failed":
+      return t("auth.modal.errors.noasConnectionFailed") || "Connection to the Noas host failed";
+    case "server_error":
+    case "decryption_failed":
+    case "key_mismatch":
+      return t("auth.modal.errors.noasServerFailed") || "Noas sign-in failed. Please try again.";
+    default:
+      return t("auth.modal.errors.noasFailed") || "Noas sign-in failed";
+  }
+}
 
 const hasNostrExtension = (): boolean =>
   typeof window !== "undefined" && Boolean((window as WindowWithNostr).nostr);
@@ -163,13 +198,13 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     setError(null);
     setPendingAuthMethod("noas");
     try {
-      const success = await loginWithNoas(username, password, config);
-      if (success) {
+      const result = await loginWithNoas(username, password, config);
+      if (result.success) {
         toast.success(t("auth.modal.success.noas") || "Signed in with Noas");
         onClose();
         return true;
       } else {
-        setError(t("auth.modal.errors.noasFailed") || "Noas sign-in failed");
+        setError(resolveNoasErrorMessage(result.errorCode, t, "signIn"));
         return false;
       }
     } finally {
@@ -187,13 +222,13 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     setError(null);
     setPendingAuthMethod("noas");
     try {
-      const success = await signupWithNoas(username, password, privateKey, pubkey, config);
-      if (success) {
+      const result = await signupWithNoas(username, password, privateKey, pubkey, config);
+      if (result.success) {
         toast.success(t("auth.modal.success.noasSignUp") || "Account created successfully");
         onClose();
         return true;
       } else {
-        setError(t("auth.modal.errors.noasSignUpFailed") || "Sign up failed");
+        setError(resolveNoasErrorMessage(result.errorCode, t, "signUp"));
         return false;
       }
     } finally {

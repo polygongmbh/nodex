@@ -11,7 +11,7 @@ import NDK, {
   NDKSubscription,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "../types";
-import { NoasClient } from "../noas-client";
+import { isValidNoasBaseUrl, NoasClient, normalizeNoasBaseUrl, type NoasAuthResult } from "../noas-client";
 import { privateKeyHexToNsec } from "../nip49-utils";
 import {
   buildKind0Content,
@@ -890,14 +890,19 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     username: string,
     password: string,
     config?: { baseUrl?: string }
-  ): Promise<boolean> => {
-    if (!ndk) return false;
+  ): Promise<NoasAuthResult> => {
+    if (!ndk) return { success: false, errorCode: "server_error" };
 
-    const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
+    const noasApiUrl = normalizeNoasBaseUrl(config?.baseUrl || import.meta.env.VITE_NOAS_HOST_URL || import.meta.env.VITE_NOAS_API_URL || "");
 
     if (!noasApiUrl) {
       console.error("Noas configuration missing");
-      return false;
+      return { success: false, errorCode: "missing_config" };
+    }
+
+    if (!isValidNoasBaseUrl(noasApiUrl)) {
+      console.error("Invalid Noas base URL");
+      return { success: false, errorCode: "invalid_url" };
     }
 
     setIsAuthenticating(true);
@@ -907,7 +912,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
       if (!signInResponse.success || !signInResponse.encryptedPrivateKey || !signInResponse.publicKey) {
         console.error("Noas sign-in failed:", signInResponse.error);
-        return false;
+        return {
+          success: false,
+          errorCode: signInResponse.errorCode || "server_error",
+          errorMessage: signInResponse.error,
+        };
       }
 
       // Decrypt the NIP-49 encrypted private key using the user's password
@@ -923,14 +932,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       } catch (decryptionError) {
         console.error('Failed to decrypt private key:', decryptionError);
         setIsAuthenticating(false);
-        return false;
+        return { success: false, errorCode: "decryption_failed" };
       }
 
       // Check if signer was created successfully
       if (!signer) {
         console.error('Signer was not created during decryption');
         setIsAuthenticating(false);
-        return false;
+        return { success: false, errorCode: "decryption_failed" };
       }
 
       const ndkUser = await signer.user();
@@ -940,7 +949,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           signerPubkey: ndkUser.pubkey,
           responsePubkey: signInResponse.publicKey,
         });
-        return false;
+        return { success: false, errorCode: "key_mismatch" };
       }
       await ndkUser.fetchProfile();
 
@@ -985,10 +994,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       }
 
       retryNip42RelaysAfterSignIn();
-      return true;
+      return { success: true };
     } catch (error) {
       console.error("Noas login failed:", error);
-      return false;
+      return { success: false, errorCode: "connection_failed" };
     } finally {
       setIsAuthenticating(false);
     }
@@ -1000,14 +1009,19 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     privateKey: string,
     pubkey: string,
     config?: { baseUrl?: string }
-  ): Promise<boolean> => {
-    if (!ndk) return false;
+  ): Promise<NoasAuthResult> => {
+    if (!ndk) return { success: false, errorCode: "server_error" };
 
-    const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
+    const noasApiUrl = normalizeNoasBaseUrl(config?.baseUrl || import.meta.env.VITE_NOAS_HOST_URL || import.meta.env.VITE_NOAS_API_URL || "");
 
     if (!noasApiUrl) {
       console.error("Noas configuration missing");
-      return false;
+      return { success: false, errorCode: "missing_config" };
+    }
+
+    if (!isValidNoasBaseUrl(noasApiUrl)) {
+      console.error("Invalid Noas base URL");
+      return { success: false, errorCode: "invalid_url" };
     }
 
     setIsAuthenticating(true);
@@ -1025,12 +1039,12 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         } else {
           setIsAuthenticating(false);
           console.error("Invalid private key format");
-          return false;
+          return { success: false, errorCode: "server_error" };
         }
       } catch (error) {
         console.error("Failed to normalize private key:", error);
         setIsAuthenticating(false);
-        return false;
+        return { success: false, errorCode: "server_error" };
       }
 
       // Register the user
@@ -1039,7 +1053,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       if (!signUpResponse.success || !signUpResponse.user) {
         console.error("Noas sign-up failed:", signUpResponse.error);
         setIsAuthenticating(false);
-        return false;
+        return {
+          success: false,
+          errorCode: signUpResponse.errorCode || "server_error",
+          errorMessage: signUpResponse.error,
+        };
       }
 
       // Create signer with the private key
@@ -1050,13 +1068,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       } catch (error) {
         console.error('Failed to create signer:', error);
         setIsAuthenticating(false);
-        return false;
+        return { success: false, errorCode: "server_error" };
       }
 
       if (!signer) {
         console.error('Signer was not created');
         setIsAuthenticating(false);
-        return false;
+        return { success: false, errorCode: "server_error" };
       }
 
       const ndkUser = await signer.user();
@@ -1093,10 +1111,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
 
       retryNip42RelaysAfterSignIn();
-      return true;
+      return { success: true };
     } catch (error) {
       console.error("Noas sign-up failed:", error);
-      return false;
+      return { success: false, errorCode: "connection_failed" };
     } finally {
       setIsAuthenticating(false);
     }

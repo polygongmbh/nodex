@@ -314,6 +314,7 @@
       "usernameFormat": "Username must contain only lowercase letters, numbers, and underscores",
       "passwordLength": "Password must be at least 8 characters",
       "noasHostRequired": "Host is required",
+      "noasHostInvalid": "Enter a valid host URL",
       "privateKeyRequired": "Private key is required",
       "pubkeyRequired": "Public key is required. Please generate a valid private key.",
       "signUpFailed": "Sign up failed. Please check your details and try again."
@@ -351,7 +352,13 @@
         "guestFailed": "Failed to create guest identity.",
         "signerRequired": "Please paste a bunker:// connection string",
         "signerFailed": "Failed to connect. Verify your bunker:// string and try again.",
-        "noasFailed": "Noas sign-in failed. Please check your username and password."
+        "noasFailed": "Noas sign-in failed. Please check your username and password.",
+        "noasConnectionFailed": "Connection to the Noas host failed. Check the host URL and try again.",
+        "noasInvalidHost": "Enter a valid Noas host URL.",
+        "noasServerFailed": "Noas sign-in failed due to a server or key error. Please try again.",
+        "noasSignUpConnectionFailed": "Connection to the Noas host failed during sign-up. Check the host URL and try again.",
+        "noasSignUpInvalidHost": "Enter a valid Noas host URL before signing up.",
+        "noasSignUpServerFailed": "Noas sign-up failed due to a server error. Please try again."
       },
       "success": {
         "extension": "Signed in with Nostr extension!",

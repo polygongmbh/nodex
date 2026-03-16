@@ -6,12 +6,51 @@
 import { nip19 } from 'nostr-tools';
 import { decryptNip49PrivateKey, isNip49EncryptedKey } from './nip49-utils';
 
+export type NoasAuthErrorCode =
+  | "invalid_credentials"
+  | "connection_failed"
+  | "invalid_url"
+  | "server_error"
+  | "missing_config"
+  | "decryption_failed"
+  | "key_mismatch";
+
+export interface NoasAuthResult {
+  success: boolean;
+  errorCode?: NoasAuthErrorCode;
+  errorMessage?: string;
+}
+
+export function normalizeNoasBaseUrl(rawValue: string): string {
+  const trimmed = rawValue.trim();
+  if (!trimmed) return "";
+
+  const withProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  return withProtocol.replace(/\/+$/, "");
+}
+
+export function isValidNoasBaseUrl(rawValue: string): boolean {
+  const normalized = normalizeNoasBaseUrl(rawValue);
+  if (!normalized) return false;
+
+  try {
+    const parsed = new URL(normalized);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 interface NoasSignInResponse {
   success: boolean;
   encryptedPrivateKey?: string;
   publicKey?: string;
   relays?: string[];
   error?: string;
+  errorCode?: NoasAuthErrorCode;
 }
 
 interface NoasRegisterResponse {
@@ -21,6 +60,7 @@ interface NoasRegisterResponse {
     publicKey: string;
   };
   error?: string;
+  errorCode?: NoasAuthErrorCode;
 }
 
 interface NoasUserProfile {
@@ -58,6 +98,7 @@ export class NoasClient {
         return {
           success: false,
           error: errorData.error || 'Sign in failed',
+          errorCode: response.status === 401 || response.status === 403 ? "invalid_credentials" : "server_error",
         };
       }
 
@@ -67,6 +108,7 @@ export class NoasClient {
       return {
         success: false,
         error: 'Network error during sign in',
+        errorCode: "connection_failed",
       };
     }
   }
@@ -101,6 +143,7 @@ export class NoasClient {
         return {
           success: false,
           error: errorData.error || 'Registration failed',
+          errorCode: response.status === 400 ? "invalid_credentials" : "server_error",
         };
       }
 
@@ -110,6 +153,7 @@ export class NoasClient {
       return {
         success: false,
         error: 'Network error during registration',
+        errorCode: "connection_failed",
       };
     }
   }

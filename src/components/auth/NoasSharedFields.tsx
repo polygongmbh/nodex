@@ -4,6 +4,7 @@ import { Label } from "../ui/label";
 import { Pencil } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import type { TFunction } from "i18next";
+import { isValidNoasBaseUrl, normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
 
 export function validateNoasUsername(username: string, t: TFunction): string | null {
   const trimmedUsername = username.trim();
@@ -18,6 +19,18 @@ export function validateNoasUsername(username: string, t: TFunction): string | n
 
   if (!/^[a-z0-9_]+$/.test(trimmedUsername)) {
     return t("auth.errors.usernameFormat");
+  }
+
+  return null;
+}
+
+export function validateNoasBaseUrl(value: string, t: TFunction): string | null {
+  if (!value.trim()) {
+    return t("auth.errors.noasHostRequired");
+  }
+
+  if (!isValidNoasBaseUrl(value)) {
+    return t("auth.errors.noasHostInvalid");
   }
 
   return null;
@@ -54,19 +67,9 @@ export function NoasSharedFields({
   onNoasHostUrlChange,
   onToggleHostEdit,
 }: NoasSharedFieldsProps) {
-  const parsedNoasUrl = (() => {
-    try {
-      if (!noasHostUrl.trim()) {
-        return null;
-      }
-      return new URL(noasHostUrl);
-    } catch {
-      return null;
-    }
-  })();
-
-  const displayedHost = parsedNoasUrl?.host || "";
   const hostReadOnly = allowDirectHostEdit ? false : !isEditingHostUrl;
+  const hostValue = noasHostUrl;
+  const normalizedPlaceholder = normalizeNoasBaseUrl("noas.example.com");
 
   return (
     <>
@@ -94,10 +97,11 @@ export function NoasSharedFields({
           <div className="space-y-1">
             <div className="relative">
               <Input
-                value={displayedHost}
+                value={hostValue}
                 readOnly={hostReadOnly}
-                onChange={(e) => onNoasHostUrlChange?.(`${parsedNoasUrl?.protocol || "https:"}//${e.target.value}`)}
+                onChange={(e) => onNoasHostUrlChange?.(e.target.value)}
                 aria-label={t("auth.noas.host")}
+                placeholder={normalizedPlaceholder}
                 className={`h-10 pr-10 text-sm ${
                   hostReadOnly ? "text-muted-foreground" : "text-foreground"
                 }`}

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { AlertCircle, Loader2, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { NoasSharedFields, validateNoasUsername } from "./NoasSharedFields";
+import { NoasSharedFields, validateNoasBaseUrl, validateNoasUsername } from "./NoasSharedFields";
+import { normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
 
 interface NoasAuthFormProps {
   onLogin: (username: string, password: string, config?: { baseUrl?: string }) => Promise<boolean>;
@@ -56,13 +57,15 @@ export function NoasAuthForm({
       return;
     }
 
-    if (!noasHostUrl.trim()) {
-      setLocalError(t("auth.errors.noasHostRequired"));
+    const normalizedNoasBaseUrl = normalizeNoasBaseUrl(noasHostUrl);
+    const noasHostError = validateNoasBaseUrl(normalizedNoasBaseUrl, t);
+    if (noasHostError) {
+      setLocalError(noasHostError);
       return;
     }
 
     const success = await onLogin(username.trim(), password, {
-      baseUrl: noasHostUrl.trim(),
+      baseUrl: normalizedNoasBaseUrl,
     });
   };
 

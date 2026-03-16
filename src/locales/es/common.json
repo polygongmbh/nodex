@@ -314,6 +314,7 @@
       "usernameFormat": "El nombre de usuario solo puede contener letras minúsculas, números y guiones bajos",
       "passwordLength": "La contraseña debe tener al menos 8 caracteres",
       "noasHostRequired": "El host es obligatorio",
+      "noasHostInvalid": "Introduce una URL de host válida",
       "privateKeyRequired": "La clave privada es obligatoria",
       "pubkeyRequired": "La clave pública es obligatoria. Genera una clave privada válida.",
       "signUpFailed": "No se pudo completar el registro. Revisa tus datos e inténtalo de nuevo."
@@ -350,7 +351,14 @@
         "privateKeyInvalid": "Clave privada no válida. Revísala e inténtalo de nuevo.",
         "guestFailed": "No se pudo crear la identidad de invitado.",
         "signerRequired": "Pega una cadena de conexión bunker://",
-        "signerFailed": "No se pudo conectar. Verifica tu cadena bunker:// e inténtalo de nuevo."
+        "signerFailed": "No se pudo conectar. Verifica tu cadena bunker:// e inténtalo de nuevo.",
+        "noasFailed": "No se pudo iniciar sesión con Noas. Revisa tu nombre de usuario y contraseña.",
+        "noasConnectionFailed": "Falló la conexión con el host de Noas. Revisa la URL e inténtalo de nuevo.",
+        "noasInvalidHost": "Introduce una URL válida del host de Noas.",
+        "noasServerFailed": "El inicio de sesión con Noas falló por un problema del servidor o de claves. Inténtalo de nuevo.",
+        "noasSignUpConnectionFailed": "Falló la conexión con el host de Noas durante el registro. Revisa la URL e inténtalo de nuevo.",
+        "noasSignUpInvalidHost": "Introduce una URL válida del host de Noas antes de registrarte.",
+        "noasSignUpServerFailed": "El registro con Noas falló por un problema del servidor. Inténtalo de nuevo."
       },
       "success": {
         "extension": "¡Sesión iniciada con extensión de Nostr!",
