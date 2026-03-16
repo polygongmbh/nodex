@@ -16,6 +16,20 @@ function getTaskAssignees(task: Task): string[] {
   return extractAssignedMentionsFromContent(task.content);
 }
 
+function getTaskAssigneePubkeys(task: Task): string[] {
+  const explicitAssigneePubkeys =
+    task.assigneePubkeys?.map((value) => value.trim().toLowerCase()).filter(Boolean) || [];
+  if (explicitAssigneePubkeys.length > 0) return explicitAssigneePubkeys;
+
+  const explicitMentionPubkeys =
+    task.mentions
+      ?.map((value) => value.trim().toLowerCase())
+      .filter((value) => /^[a-f0-9]{64}$/i.test(value)) || [];
+  if (explicitMentionPubkeys.length > 0) return explicitMentionPubkeys;
+
+  return extractAssignedMentionsFromContent(task.content).filter((value) => /^[a-f0-9]{64}$/i.test(value));
+}
+
 function normalizeIdentity(value: string | undefined): string {
   return value?.trim().toLowerCase() || "";
 }
@@ -46,15 +60,39 @@ function isTaskOwnedByUser(task: Task, currentUser?: Person): boolean {
   return ownerIdentifiers.some((value) => userIdentifiers.has(value));
 }
 
-export function canUserChangeTaskStatus(task: Task, currentUser?: Person): boolean {
+function isTaskOwnedByPubkey(task: Task, pubkey?: string): boolean {
+  const normalizedPubkey = normalizeIdentity(pubkey);
+  if (!normalizedPubkey) return false;
+  return normalizeIdentity(task.author.id) === normalizedPubkey;
+}
+
+export function canUserUpdateTask(task: Task, currentUser?: Person): boolean {
   if (task.taskType !== "task") return false;
   if (!currentUser) return false;
 
   const assignees = getTaskAssignees(task);
-  const userIdentifiers = getNormalizedUserIdentifiers(currentUser);
-  if (assignees.length === 0) return isTaskOwnedByUser(task, currentUser);
+  if (assignees.length === 0) return true;
+  if (isTaskOwnedByUser(task, currentUser)) return true;
 
+  const userIdentifiers = getNormalizedUserIdentifiers(currentUser);
   return assignees.some((assignee) => userIdentifiers.has(assignee));
+}
+
+export function canPubkeyUpdateTask(task: Task, updaterPubkey?: string): boolean {
+  if (task.taskType !== "task") return false;
+
+  const assigneePubkeys = getTaskAssigneePubkeys(task);
+  if (assigneePubkeys.length === 0) return Boolean(normalizeIdentity(updaterPubkey));
+
+  if (isTaskOwnedByPubkey(task, updaterPubkey)) return true;
+  const normalizedPubkey = normalizeIdentity(updaterPubkey);
+  if (!normalizedPubkey) return false;
+
+  return assigneePubkeys.some((assignee) => assignee === normalizedPubkey);
+}
+
+export function canUserChangeTaskStatus(task: Task, currentUser?: Person): boolean {
+  return canUserUpdateTask(task, currentUser);
 }
 
 function getPersonIdentityLabel(person: Person): string {
@@ -105,7 +143,7 @@ export function getTaskStatusChangeBlockedReason(
   if (!currentUser) {
     return "Sign in to edit this task.";
   }
-  if (canUserChangeTaskStatus(task, currentUser)) {
+  if (canUserUpdateTask(task, currentUser)) {
     return undefined;
   }
   const assignees = getTaskAssignees(task);
@@ -122,10 +160,7 @@ export function getTaskStatusChangeBlockedReason(
       : matchedPerson
         ? getPersonIdentityLabel(matchedPerson)
         : formatPrincipalLabel(assignee);
-    return `Editing is not possible because this task is assigned to ${assigneeLabel}.`;
+    return `Editing is not possible because this task is assigned to ${assigneeLabel}. Only tagged assignees and the creator can update it.`;
   }
-  if (task.taskType === "task" && currentUser) {
-    return `Editing is not possible because this task belongs to ${getTaskOwnerLabel(task, knownPeople)}.`;
-  }
-  return `Editing is not possible because this task belongs to ${getTaskOwnerLabel(task, knownPeople)}.`;
+  return undefined;
 }

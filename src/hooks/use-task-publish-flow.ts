@@ -32,13 +32,14 @@ import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import { buildNip99PublishTags } from "@/lib/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { loadPublishDelayEnabled } from "@/lib/user-preferences";
-import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
+import { canUserUpdateTask, extractAssignedMentionsFromContent } from "@/lib/task-permissions";
 import {
   notifyLocalSaved,
   notifyNeedTag,
   notifyPartialPublish,
   notifyPublished,
   notifyPublishSavedForRetry,
+  notifyStatusRestricted,
 } from "@/lib/notifications";
 import type {
   ComposeRestoreRequest,
@@ -343,19 +344,9 @@ export function useTaskPublishFlow({
     );
     const resolvedMentionPubkeys = await resolveMentionPubkeys(content);
     const mentionPubkeys = Array.from(new Set([...resolvedMentionPubkeys, ...dedupedExplicitMentionPubkeys]));
-    const defaultAuthorAssignee =
-      normalizedTaskType === "task" && /^[a-f0-9]{64}$/i.test(user?.pubkey || "")
-        ? user!.pubkey.toLowerCase()
-        : undefined;
     const assigneePubkeys = normalizedTaskType === "task"
-      ? Array.from(
-          new Set(
-            mentionPubkeys.length > 0
-              ? mentionPubkeys
-              : [defaultAuthorAssignee].filter((value): value is string => Boolean(value))
-          )
-        )
-      : [];
+      ? Array.from(new Set(mentionPubkeys))
+      : undefined;
     const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
     const contentDerivedAttachments = extractEmbeddableAttachmentsFromContent(content);
     const normalizedAttachments = normalizePublishedAttachments([
@@ -402,7 +393,7 @@ export function useTaskPublishFlow({
             ? buildTaskPublishTags(
                 validParentId,
                 primaryRelayUrl,
-                assigneePubkeys,
+                assigneePubkeys || [],
                 priority,
                 resolvedSubmissionTags,
                 normalizedAttachments,
@@ -498,7 +489,10 @@ export function useTaskPublishFlow({
       mentions: Array.from(
         new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
       ),
-      assigneePubkeys: normalizedTaskType === "task" ? assigneePubkeys : undefined,
+      assigneePubkeys:
+        normalizedTaskType === "task" && (assigneePubkeys?.length || 0) > 0
+          ? assigneePubkeys
+          : undefined,
       priority: normalizedTaskType === "task" ? priority : undefined,
       feedMessageType,
       nip99: feedMessageType ? nip99 : undefined,
@@ -829,6 +823,10 @@ export function useTaskPublishFlow({
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask || existingTask.taskType !== "task" || !dueDate) return;
+    if (!canUserUpdateTask(existingTask, currentUser)) {
+      notifyStatusRestricted(t);
+      return;
+    }
     setLocalTasks((prev) =>
       prev.map((task) =>
         task.id === taskId
@@ -837,12 +835,16 @@ export function useTaskPublishFlow({
       )
     );
     void publishTaskDueUpdate(taskId, existingTask.content, dueDate, dueTime, dateType);
-  }, [allTasks, guardInteraction, publishTaskDueUpdate, setLocalTasks]);
+  }, [allTasks, currentUser, guardInteraction, publishTaskDueUpdate, setLocalTasks, t]);
 
   const handlePriorityChange = useCallback((taskId: string, priority: number) => {
     if (guardInteraction("modify")) return;
     const existingTask = allTasks.find((task) => task.id === taskId);
     if (!existingTask || existingTask.taskType !== "task") return;
+    if (!canUserUpdateTask(existingTask, currentUser)) {
+      notifyStatusRestricted(t);
+      return;
+    }
     setLocalTasks((prev) =>
       prev.map((task) =>
         task.id === taskId
@@ -851,7 +853,7 @@ export function useTaskPublishFlow({
       )
     );
     void publishTaskPriorityUpdate(taskId, priority);
-  }, [allTasks, guardInteraction, publishTaskPriorityUpdate, setLocalTasks]);
+  }, [allTasks, currentUser, guardInteraction, publishTaskPriorityUpdate, setLocalTasks, t]);
 
   const visibleFailedPublishDrafts = useMemo(() => {
     return failedPublishDrafts.filter((draft) => {

@@ -19,6 +19,7 @@ import {
   parseImetaTag,
   parseNip94AttachmentMetadataTags,
 } from "@/lib/attachments";
+import { canPubkeyUpdateTask } from "@/lib/task-permissions";
 
 // Spam keywords for basic filtering
 const SPAM_KEYWORDS = [
@@ -335,7 +336,9 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
   for (const stateEvent of stateEvents) {
     const targetTaskId = extractTaskStateTargetId(stateEvent.tags);
     if (!targetTaskId) continue;
-    if (!taskMap.has(targetTaskId)) continue;
+    const task = taskMap.get(targetTaskId);
+    if (!task) continue;
+    if (!canPubkeyUpdateTask(task, stateEvent.pubkey)) continue;
 
     const mapped = mapTaskStateEventToTaskStatus(stateEvent.kind, stateEvent.content);
     const prev = latestStateByTaskId.get(targetTaskId);
@@ -380,7 +383,10 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
 
   for (const calendarEvent of calendarEvents) {
     const parsed = parseLinkedTaskDueFromCalendarEvent(calendarEvent.kind, calendarEvent.tags);
-    if (!parsed.taskId || !taskMap.has(parsed.taskId) || !parsed.dueDate) continue;
+    if (!parsed.taskId || !parsed.dueDate) continue;
+    const task = taskMap.get(parsed.taskId);
+    if (!task) continue;
+    if (!canPubkeyUpdateTask(task, calendarEvent.pubkey)) continue;
     const prev = latestDueByTaskId.get(parsed.taskId);
     if (!prev || calendarEvent.created_at >= prev.createdAt) {
       latestDueByTaskId.set(parsed.taskId, {
@@ -411,7 +417,10 @@ export function nostrEventsToTasks(events: NostrEventWithRelay[]): Task[] {
   for (const propertyEvent of priorityPropertyEvents) {
     const taskId = extractPriorityTargetTaskId(propertyEvent.tags);
     const priority = parsePriorityTag(propertyEvent.tags);
-    if (!taskId || typeof priority !== "number" || !taskMap.has(taskId)) continue;
+    if (!taskId || typeof priority !== "number") continue;
+    const task = taskMap.get(taskId);
+    if (!task) continue;
+    if (!canPubkeyUpdateTask(task, propertyEvent.pubkey)) continue;
     const prev = latestPriorityByTaskId.get(taskId);
     if (!prev || propertyEvent.created_at >= prev.createdAt) {
       latestPriorityByTaskId.set(taskId, {

@@ -20,12 +20,7 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 
 const baseTask: Task = makeTask({
   id: "t1",
-  author: makePerson({
-    id: "me",
-    name: "me",
-    displayName: "Me",
-    isOnline: false,
-  }),
+  author: makePerson({ id: "me", name: "me", displayName: "Me" }),
   content: "Ship feature #frontend",
   tags: ["frontend"],
   status: "todo",
@@ -114,7 +109,11 @@ describe("TaskItem status actions", () => {
 
     render(
       <TaskItem
-        task={{ ...baseTask, content: "Follow up with @alice" }}
+        task={{
+          ...baseTask,
+          author: makePerson({ id: "other-pubkey", name: "bob" }),
+          content: "Follow up with @alice",
+        }}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
@@ -131,7 +130,7 @@ describe("TaskItem status actions", () => {
     expect(onToggleComplete).not.toHaveBeenCalled();
   });
 
-  it("blocks status changes when unassigned task belongs to another user", () => {
+  it("allows status changes when an unassigned task belongs to another user", () => {
     const onStatusChange = vi.fn();
     const onToggleComplete = vi.fn();
 
@@ -139,12 +138,7 @@ describe("TaskItem status actions", () => {
       <TaskItem
         task={{
           ...baseTask,
-          author: makePerson({
-            id: "other-pubkey",
-            name: "alice",
-            displayName: "Alice",
-            isOnline: false,
-          }),
+          author: makePerson({ id: "other-pubkey", name: "alice" }),
         }}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -155,12 +149,10 @@ describe("TaskItem status actions", () => {
     );
 
     const statusButton = screen.getByLabelText("Set status");
-    expect(statusButton).toBeDisabled();
-    expect(statusButton).toHaveAttribute("title", expect.stringContaining("belongs to"));
-    expect(statusButton).toHaveAttribute("title", expect.stringContaining("Alice (@alice, other-pubkey)"));
+    expect(statusButton).not.toBeDisabled();
     fireEvent.click(statusButton);
+    expect(onToggleComplete).toHaveBeenCalledWith("t1");
     expect(onStatusChange).not.toHaveBeenCalled();
-    expect(onToggleComplete).not.toHaveBeenCalled();
   });
 
   it("uses people context to show enriched identity details in blocked reason", () => {
@@ -170,14 +162,12 @@ describe("TaskItem status actions", () => {
       id: "ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318",
       name: "ad9cb1b0",
       displayName: "ad9cb1b0...1318",
-      isOnline: false,
     });
     const knownPerson = makePerson({
       id: sparseAuthor.id,
       name: "ryan",
       displayName: "Ryan",
       nip05: "ryan@example.com",
-      isOnline: false,
     });
 
     render(

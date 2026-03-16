@@ -83,7 +83,7 @@
       "needTag": "Añade al menos un #canal antes de publicar",
       "needSigninPost": "Se requiere iniciar sesión para publicar",
       "needSigninModify": "Se requiere iniciar sesión para modificar tareas",
-      "statusRestricted": "Las actualizaciones de estado están restringidas a usuarios asignados",
+      "statusRestricted": "Las actualizaciones de tareas están restringidas a los asignados etiquetados y al creador",
       "selectRelayOrParent": "Selecciona un único feed o una tarea padre para crear una nueva tarea",
       "publishStatusFailed": "No se pudo publicar la actualización de estado en los relays",
       "publishDateFailed": "No se pudo publicar la actualización de fecha en el relay",

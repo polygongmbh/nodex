@@ -83,7 +83,7 @@
       "needTag": "Mindestens einen #channel vor dem Veröffentlichen hinzufügen",
       "needSigninPost": "Anmeldung zum Veröffentlichen erforderlich",
       "needSigninModify": "Anmeldung zum Ändern von Aufgaben erforderlich",
-      "statusRestricted": "Status-Updates sind auf zugewiesene Nutzer beschränkt",
+      "statusRestricted": "Aufgaben-Updates sind auf markierte Zuständige und den Ersteller beschränkt",
       "selectRelayOrParent": "Wähle einen einzelnen Feed oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
       "publishStatusFailed": "Status-Update konnte nicht an Relays veröffentlicht werden",
       "publishDateFailed": "Datums-Update konnte nicht an Relay veröffentlicht werden",

@@ -83,7 +83,7 @@
       "needTag": "Add at least one #channel before posting",
       "needSigninPost": "Sign in required to post",
       "needSigninModify": "Sign in required to modify tasks",
-      "statusRestricted": "Status updates are restricted to assigned users",
+      "statusRestricted": "Task updates are restricted to tagged assignees and the creator",
       "selectRelayOrParent": "Select a single feed or a parent task to create a new task",
       "publishStatusFailed": "Failed to publish status update to relays",
       "publishDateFailed": "Failed to publish date update to relay",

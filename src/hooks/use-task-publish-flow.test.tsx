@@ -22,6 +22,7 @@ vi.mock("@/lib/notifications", () => ({
   notifyPartialPublish: vi.fn(),
   notifyPublished: vi.fn(),
   notifyPublishSavedForRetry: vi.fn(),
+  notifyStatusRestricted: vi.fn(),
 }));
 
 vi.mock("@/lib/user-preferences", () => ({
@@ -31,27 +32,36 @@ vi.mock("@/lib/user-preferences", () => ({
 function Harness({
   publishEvent = vi.fn(async () => ({ success: true, eventId: "b".repeat(64), publishedRelayUrls: ["wss://relay.one"] })),
   initialTasks = [] as Task[],
+  currentUser = makePerson({ id: "a".repeat(64), name: "Alice", displayName: "Alice" }),
+  people = [] as Person[],
+  publishTaskDueUpdate = vi.fn(async () => true),
+  publishTaskPriorityUpdate = vi.fn(async () => true),
+  forceLocalMode = false,
   queryClient,
 }: {
   publishEvent?: ReturnType<typeof vi.fn>;
   initialTasks?: Task[];
+  currentUser?: Person;
+  people?: Person[];
+  publishTaskDueUpdate?: ReturnType<typeof vi.fn>;
+  publishTaskPriorityUpdate?: ReturnType<typeof vi.fn>;
+  forceLocalMode?: boolean;
   queryClient: QueryClient;
 }) {
   const [localTasks, setLocalTasks] = useState<Task[]>(initialTasks);
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
   const relay = makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" });
-  const currentUser = makePerson({ id: "a".repeat(64), name: "Alice", displayName: "Alice" });
-  const people: Person[] = [currentUser];
+  const availablePeople = people.length > 0 ? people : [currentUser];
   const allTasks = [...localTasks];
   const hook = useTaskPublishFlow({
     allTasks,
     relays: [relay] as Relay[],
-    people,
+    people: availablePeople,
     currentUser,
     user: { pubkey: currentUser.id, npub: "npub1alice", profile: { name: "Alice" } },
-    effectiveActiveRelayIds: new Set(["relay-one"]),
-    demoFeedActive: false,
+    effectiveActiveRelayIds: forceLocalMode ? new Set() : new Set(["relay-one"]),
+    demoFeedActive: forceLocalMode,
     demoRelayId: "demo",
     queryClient,
     t: ((key: string) => key) as unknown as TFunction,
@@ -62,10 +72,15 @@ function Harness({
     bumpChannelFrecency: vi.fn(),
     guardInteraction: vi.fn(() => false),
     hasDisconnectedSelectedRelays: false,
-    resolveRelayUrlsFromIds: (relayIds: string[]) => relayIds.includes("relay-one") ? ["wss://relay.one"] : [],
+    resolveRelayUrlsFromIds: (relayIds: string[]) =>
+      forceLocalMode
+        ? []
+        : relayIds.includes("relay-one")
+          ? ["wss://relay.one"]
+          : [],
     publishEvent,
-    publishTaskDueUpdate: vi.fn(async () => true),
-    publishTaskPriorityUpdate: vi.fn(async () => true),
+    publishTaskDueUpdate,
+    publishTaskPriorityUpdate,
     publishTaskCreateFollowUps: vi.fn(async () => undefined),
   });
 
@@ -90,6 +105,7 @@ function Harness({
       <output data-testid="local-count">{String(localTasks.length)}</output>
       <output data-testid="first-priority">{String(localTasks[0]?.priority ?? "")}</output>
       <output data-testid="first-due-date">{localTasks[0]?.dueDate?.toISOString() || ""}</output>
+      <output data-testid="first-assignees">{(localTasks[0]?.assigneePubkeys || []).join(",")}</output>
       <output data-testid="posted-tags">{postedTags.join(",")}</output>
     </>
   );
@@ -177,5 +193,42 @@ describe("useTaskPublishFlow", () => {
       expect(screen.getByTestId("first-priority")).toHaveTextContent("3");
     });
     expect(screen.getByTestId("first-due-date")).toHaveTextContent("2026-04-01T10:00:00.000Z");
+  });
+
+  it("blocks due date and priority changes for unrelated users on assigned tasks", async () => {
+    const publishTaskDueUpdate = vi.fn(async () => true);
+    const publishTaskPriorityUpdate = vi.fn(async () => true);
+    const currentUser = makePerson({ id: "viewer-pubkey", name: "viewer", displayName: "Viewer" });
+    const initialTask = makeTask({
+      id: "task-1",
+      relays: ["relay-one"],
+      author: makePerson({ id: "creator-pubkey", name: "creator", displayName: "Creator" }),
+      assigneePubkeys: ["assignee-pubkey"],
+    });
+
+    renderHarness({
+      initialTasks: [initialTask],
+      currentUser,
+      people: [currentUser, initialTask.author],
+      publishTaskDueUpdate,
+      publishTaskPriorityUpdate,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Due" }));
+    fireEvent.click(screen.getByRole("button", { name: "Priority" }));
+
+    expect(screen.getByTestId("first-priority")).toBeEmptyDOMElement();
+    expect(screen.getByTestId("first-due-date")).toBeEmptyDOMElement();
+    expect(publishTaskDueUpdate).not.toHaveBeenCalled();
+    expect(publishTaskPriorityUpdate).not.toHaveBeenCalled();
+  });
+
+  it("does not assign the creator when publishing an untagged task locally", async () => {
+    renderHarness({ forceLocalMode: true });
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("local-count")).toHaveTextContent("1");
+    });
+    expect(screen.getByTestId("first-assignees")).toBeEmptyDOMElement();
   });
 });

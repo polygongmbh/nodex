@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Fixed a feed startup crash caused by task status sorting state initializing before the main Index task data graph was ready.
+- Reworked task update permissions so untagged tasks can be updated by any signed-in user, tagged tasks remain editable by tagged assignees and the creator, and unauthorized relay-driven status/date/priority updates no longer override tasks locally.
 
 ## [1.17.3] - 2026-03-14
 - Stabilized Relay connection and status handling with cleaner reconnect behavior, clearer `read only` / `read rejected` states, and better startup relay detection.

@@ -438,6 +438,70 @@ describe("nostrEventsToTasks", () => {
     ]);
   });
 
+  it("ignores unauthorized state-event updates on assigned tasks", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "task-assigned",
+        pubkey: "creator-pubkey",
+        created_at: 1700000000,
+        kind: NostrEventKind.Task,
+        tags: [["p", "assignee-pubkey"]],
+        content: "Assigned task",
+        sig: "sig1",
+      }),
+      makeRelayEvent({
+        id: "state-unauthorized",
+        pubkey: "intruder-pubkey",
+        created_at: 1700000005,
+        kind: NostrEventKind.GitStatusApplied,
+        tags: [["e", "task-assigned", "", "property"]],
+        content: "",
+        sig: "sig2",
+      }),
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].status).toBe("todo");
+    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000000 * 1000);
+    expect(tasks[0].stateUpdates).toBeUndefined();
+  });
+
+  it("applies assignee-authored state updates on assigned tasks", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "task-assigned-allowed",
+        pubkey: "creator-pubkey",
+        created_at: 1700000010,
+        kind: NostrEventKind.Task,
+        tags: [["p", "assignee-pubkey"]],
+        content: "Assigned task",
+        sig: "sig1",
+      }),
+      makeRelayEvent({
+        id: "state-assignee",
+        pubkey: "assignee-pubkey",
+        created_at: 1700000015,
+        kind: NostrEventKind.GitStatusApplied,
+        tags: [["e", "task-assigned-allowed", "", "property"]],
+        content: "",
+        sig: "sig2",
+      }),
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].status).toBe("done");
+    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000015 * 1000);
+    expect(tasks[0].stateUpdates).toEqual([
+      expect.objectContaining({
+        id: "state-assignee",
+        status: "done",
+        authorPubkey: "assignee-pubkey",
+      }),
+    ]);
+  });
+
   it("hydrates task due date/time from linked calendar events", () => {
     const events: NostrEventWithRelay[] = [
       makeRelayEvent({ id: "task-2", pubkey: "pub1", kind: NostrEventKind.Task, content: "Release", sig: "sig1" }),
@@ -465,6 +529,44 @@ describe("nostrEventsToTasks", () => {
     expect(tasks).toHaveLength(1);
     expect(tasks[0].dueDate?.toISOString()).toBe("2026-03-23T14:30:00.000Z");
     expect(tasks[0].dueTime).toBe("14:30");
+  });
+
+  it("ignores unauthorized due-date and priority updates on assigned tasks", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "task-assigned-properties",
+        pubkey: "creator-pubkey",
+        created_at: 1700000020,
+        kind: NostrEventKind.Task,
+        tags: [["p", "assignee-pubkey"], ["priority", "20"]],
+        content: "Assigned task",
+        sig: "sig1",
+      }),
+      makeRelayEvent({
+        id: "cal-unauthorized",
+        pubkey: "intruder-pubkey",
+        created_at: 1700000025,
+        kind: NostrEventKind.CalendarDateBased,
+        tags: [["d", "deadline-1"], ["title", "Assigned task"], ["start", "2026-03-30"], ["e", "task-assigned-properties", "", "task"]],
+        content: "Assigned task",
+        sig: "sig2",
+      }),
+      makeRelayEvent({
+        id: "prio-unauthorized",
+        pubkey: "intruder-pubkey",
+        created_at: 1700000030,
+        kind: NostrEventKind.TextNote,
+        tags: [["e", "task-assigned-properties", "", "property"], ["priority", "90"]],
+        content: "Priority: 90",
+        sig: "sig3",
+      }),
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].dueDate).toBeUndefined();
+    expect(tasks[0].priority).toBe(20);
+    expect(tasks[0].lastEditedAt?.getTime()).toBe(1700000020 * 1000);
   });
 
   it("hydrates latest priority from property update notes and does not render them as tasks", () => {
