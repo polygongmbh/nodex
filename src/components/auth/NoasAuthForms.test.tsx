@@ -50,6 +50,32 @@ describe("Noas auth forms", () => {
     expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example");
   });
 
+  it("preserves the port in the displayed and edited noas host", () => {
+    const onNoasHostUrlChange = vi.fn();
+
+    render(
+      <NoasAuthForm
+        onLogin={vi.fn(async () => true)}
+        onSignUp={vi.fn()}
+        onBack={vi.fn()}
+        onChooseExtension={vi.fn()}
+        onChooseSigner={vi.fn()}
+        onChoosePrivateKey={vi.fn()}
+        onNoasHostUrlChange={onNoasHostUrlChange}
+        isLoading={false}
+        noasHostUrl="https://custom.noas.example:8443"
+      />
+    );
+
+    const domainInput = screen.getByLabelText(/domain/i) as HTMLInputElement;
+    expect(domainInput.value).toBe("custom.noas.example:8443");
+
+    fireEvent.click(screen.getByRole("button", { name: /edit noas url/i }));
+    fireEvent.change(domainInput, { target: { value: "other.noas.example:9443" } });
+
+    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://other.noas.example:9443");
+  });
+
   it("submits matching noas auth url and nip05 domain", async () => {
     const onLogin = vi.fn(async () => true);
 

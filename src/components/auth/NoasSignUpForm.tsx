@@ -41,13 +41,14 @@ export function NoasSignUpForm({
   const [localError, setLocalError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [isEditingHostUrl, setIsEditingHostUrl] = useState(false);
-  const displayedHost = (() => {
+  const parsedNoasUrl = (() => {
     try {
-      return new URL(noasHostUrl).hostname || "noas.example.com";
+      return new URL(noasHostUrl);
     } catch {
-      return "noas.example.com";
+      return null;
     }
   })();
+  const displayedHost = parsedNoasUrl?.host || "noas.example.com";
 
   // Helper function to derive public key from hex private key
   const derivePublicKeyFromHex = (hexPrivateKey: string): string | null => {
@@ -228,7 +229,7 @@ export function NoasSignUpForm({
                 <Input
                   value={displayedHost}
                   readOnly={!isEditingHostUrl}
-                  onChange={(e) => onNoasHostUrlChange?.(`https://${e.target.value}`)}
+                  onChange={(e) => onNoasHostUrlChange?.(`${parsedNoasUrl?.protocol || "https:"}//${e.target.value}`)}
                   aria-label={t("auth.noas.domain") || "Domain"}
                   className="h-8 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
                 />

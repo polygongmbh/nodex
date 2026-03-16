@@ -36,13 +36,14 @@ export function NoasAuthForm({
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [isEditingHostUrl, setIsEditingHostUrl] = useState(false);
-  const displayedHost = (() => {
+  const parsedNoasUrl = (() => {
     try {
-      return new URL(noasHostUrl).hostname || "noas.example.com";
+      return new URL(noasHostUrl);
     } catch {
-      return "noas.example.com";
+      return null;
     }
   })();
+  const displayedHost = parsedNoasUrl?.host || "noas.example.com";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,7 +148,7 @@ export function NoasAuthForm({
                 <Input
                   value={displayedHost}
                   readOnly={!isEditingHostUrl}
-                  onChange={(e) => onNoasHostUrlChange?.(`https://${e.target.value}`)}
+                  onChange={(e) => onNoasHostUrlChange?.(`${parsedNoasUrl?.protocol || "https:"}//${e.target.value}`)}
                   aria-label={t("auth.noas.domain") || "Domain"}
                   className="h-8 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
                 />
