@@ -335,7 +335,7 @@
       "editHost": "Editar host de Noas",
       "editHostWarning": "Cámbialo solo si sabes lo que haces.",
       "moreOptions": "Más opciones",
-      "usernameHint": "3-32 caracteres, solo letras minúsculas, números y guiones bajos",
+      "usernameHint": "3-32 caracteres: minúsculas, números, _ y -",
       "passwordHint": "Mínimo 8 caracteres",
       "privateKey": "Clave privada",
       "publicKey": "Clave pública",

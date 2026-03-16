@@ -335,7 +335,7 @@
       "editHost": "Edit Noas host",
       "editHostWarning": "Only change this if you know what you're doing.",
       "moreOptions": "Nostr Authentication Options",
-      "usernameHint": "3-32 characters, lowercase letters, numbers, underscores only",
+      "usernameHint": "3-32 chars: lowercase letters, numbers, _ and -",
       "passwordHint": "Minimum 8 characters",
       "privateKey": "Private Key",
       "publicKey": "Public Key",
