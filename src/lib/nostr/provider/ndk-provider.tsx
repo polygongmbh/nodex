@@ -51,7 +51,7 @@ import { createNip98AuthHeader } from "../nip98-http-auth";
 import {
   isAuthRequiredCloseReason,
   shouldMarkRelayReadOnlyAfterPublishReject,
-  shouldRetryNip42AfterSignIn,
+  shouldReconnectRelayAfterSignIn,
   shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
@@ -295,7 +295,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     if (!ndk) return;
     const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
     const relayUrlsToRetry = relays
-      .filter((relay) => shouldRetryNip42AfterSignIn(relay))
+      .filter((relay) => shouldReconnectRelayAfterSignIn(relay))
       .map((relay) => normalizeUrl(relay.url));
 
     if (relayUrlsToRetry.length === 0) return;
