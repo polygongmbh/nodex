@@ -410,4 +410,13 @@ describe("NostrAuthModal", () => {
     expect(screen.getByRole("button", { name: /^nostr authentication options$/i })).toBeInTheDocument();
   });
 
+  it("applies sign-up initialStep when the modal opens after mount", () => {
+    const { rerender } = render(<NostrAuthModal isOpen={false} onClose={vi.fn()} />);
+
+    rerender(<NostrAuthModal isOpen onClose={vi.fn()} initialStep="noasSignUp" />);
+
+    expect(screen.getAllByRole("button", { name: /^sign up$/i })).toHaveLength(2);
+    expect(screen.getByLabelText(/^username$/i)).toBeInTheDocument();
+  });
+
 });

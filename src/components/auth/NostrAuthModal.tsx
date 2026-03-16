@@ -250,7 +250,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
   };
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
       setStep(resolvedDefaultStep);
     }
   }, [isOpen, resolvedDefaultStep]);
