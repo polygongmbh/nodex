@@ -313,6 +313,7 @@
       "usernameLength": "Username must be 3-32 characters",
       "usernameFormat": "Username must contain only lowercase letters, numbers, and underscores",
       "passwordLength": "Password must be at least 8 characters",
+      "noasHostRequired": "Host is required",
       "privateKeyRequired": "Private key is required",
       "pubkeyRequired": "Public key is required. Please generate a valid private key.",
       "signUpFailed": "Sign up failed. Please check your details and try again."

@@ -57,14 +57,14 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
 
   const noasApiUrl = import.meta.env.VITE_NOAS_API_URL as string | undefined;
   const noasHostUrl = import.meta.env.VITE_NOAS_HOST_URL as string | undefined;
-  const noasEnabled = Boolean(noasApiUrl || noasHostUrl);
+  const hasConfiguredNoasHost = Boolean(noasApiUrl || noasHostUrl);
   const resolvedDefaultStep = useMemo<AuthStep>(() => {
-    if (initialStep === "noasSignUp" && noasEnabled) return "noasSignUp";
-    if (initialStep === "noas" && noasEnabled) return "noas";
+    if (initialStep === "noasSignUp") return "noasSignUp";
+    if (initialStep === "noas") return "noas";
     if (initialStep === "choose") return "choose";
-    return noasEnabled ? "noas" : "choose";
-  }, [initialStep, noasEnabled]);
-  const defaultNoasUrl = noasHostUrl || noasApiUrl || "https://noas.example.com";
+    return hasConfiguredNoasHost ? "noas" : "choose";
+  }, [hasConfiguredNoasHost, initialStep]);
+  const defaultNoasUrl = noasHostUrl || noasApiUrl || "";
   
   const [step, setStep] = useState<AuthStep>(resolvedDefaultStep);
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
@@ -301,26 +301,24 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             </button>
 
             {/* Noas Authentication */}
-            {noasEnabled && (
-              <button
-                onClick={() => setStep("noas")}
-                disabled={isAuthenticating}
-                className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
-              >
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <LogIn className="w-5 h-5 text-blue-600" />
+            <button
+              onClick={() => setStep("noas")}
+              disabled={isAuthenticating}
+              className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
+            >
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <LogIn className="w-5 h-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-medium">{t("auth.modal.noasAuth") || "Noas Authentication"}</div>
+                <div className="text-sm text-muted-foreground">
+                  {t("auth.modal.noasAuthHint") || "Sign in with username and password"}
                 </div>
-                <div className="flex-1">
-                  <div className="font-medium">{t("auth.modal.noasAuth") || "Noas Authentication"}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {t("auth.modal.noasAuthHint") || "Sign in with username and password"}
-                  </div>
-                </div>
-                {pendingAuthMethod === "noas" && (
-                  <Loader2 data-testid="auth-loader-noas" className="w-4 h-4 animate-spin" />
-                )}
-              </button>
-            )}
+              </div>
+              {pendingAuthMethod === "noas" && (
+                <Loader2 data-testid="auth-loader-noas" className="w-4 h-4 animate-spin" />
+              )}
+            </button>
 
             {/* Private Key */}
             <button
@@ -405,10 +403,11 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
           <NoasAuthForm
             onLogin={handleNoasLogin}
             onSignUp={() => setStep("noasSignUp")}
-            onBack={noasEnabled ? () => setStep("choose") : undefined}
+            onBack={() => setStep("choose")}
             username={noasUsername}
             password={noasPassword}
             isEditingHostUrl={isEditingNoasHost}
+            allowDirectHostEdit={!hasConfiguredNoasHost}
             isLoading={isAuthenticating}
             error={error || undefined}
             noasHostUrl={editableNoasUrl}
@@ -421,10 +420,11 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
           <NoasSignUpForm
             onSignUp={handleNoasSignUp}
             onSignIn={() => setStep("noas")}
-            onBack={noasEnabled ? () => setStep("choose") : undefined}
+            onBack={() => setStep("choose")}
             username={noasUsername}
             password={noasPassword}
             isEditingHostUrl={isEditingNoasHost}
+            allowDirectHostEdit={!hasConfiguredNoasHost}
             isLoading={isAuthenticating}
             error={error || undefined}
             noasHostUrl={editableNoasUrl}

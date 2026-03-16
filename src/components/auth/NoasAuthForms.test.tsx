@@ -11,6 +11,7 @@ function ControlledNoasAuthForm({
   initialPassword = "",
   initialNoasHostUrl = "https://noas.example.com",
   error,
+  allowDirectHostEdit = false,
 }: {
   onLogin?: Parameters<typeof NoasAuthForm>[0]["onLogin"];
   onNoasHostUrlChange?: (value: string) => void;
@@ -18,6 +19,7 @@ function ControlledNoasAuthForm({
   initialPassword?: string;
   initialNoasHostUrl?: string;
   error?: string;
+  allowDirectHostEdit?: boolean;
 }) {
   const [username, setUsername] = useState(initialUsername);
   const [password, setPassword] = useState(initialPassword);
@@ -32,6 +34,7 @@ function ControlledNoasAuthForm({
       username={username}
       password={password}
       isEditingHostUrl={isEditingHostUrl}
+      allowDirectHostEdit={allowDirectHostEdit}
       isLoading={false}
       error={error}
       noasHostUrl={noasHostUrl}
@@ -88,6 +91,28 @@ describe("Noas auth forms", () => {
     fireEvent.change(hostInput, { target: { value: "other.noas.example:9443" } });
 
     expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://other.noas.example:9443");
+  });
+
+  it("shows an unlocked empty host field without the pencil control when direct host edit is allowed", () => {
+    const onNoasHostUrlChange = vi.fn();
+
+    render(
+      <ControlledNoasAuthForm
+        allowDirectHostEdit
+        initialNoasHostUrl=""
+        onNoasHostUrlChange={onNoasHostUrlChange}
+      />
+    );
+
+    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
+    expect(hostInput.value).toBe("");
+    expect(hostInput).not.toHaveAttribute("readonly");
+    expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/advanced only/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/only change this if you know what you're doing/i)).not.toBeInTheDocument();
+
+    fireEvent.change(hostInput, { target: { value: "custom.noas.example" } });
+    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example");
   });
 
   it("submits matching noas auth url and nip05 domain", async () => {

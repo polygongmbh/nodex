@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Split the startup onboarding dialog into separate `Create account` and `Sign in` actions so first-time users can jump straight to registration while returning users land on sign-in.
+- Kept Noas sign-in/sign-up available without Noas env configuration by defaulting the auth modal to the method chooser and showing an empty editable host field in the Noas forms.
 - Updated the Nostr sign-in dialog copy across English, Spanish, and German so the username/password option no longer refers to a "Noas account" in its description text.
 - Added a distinct `Closed` task state with separate Nostr status-event mapping, explicit task status menu selection, and a fourth Kanban column to the right of `Done` without adding `Closed` to the normal click cycle.
 - Fixed a feed startup crash caused by task status sorting state initializing before the main Index task data graph was ready.

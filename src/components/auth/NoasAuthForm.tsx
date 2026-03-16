@@ -11,6 +11,7 @@ interface NoasAuthFormProps {
   username: string;
   password: string;
   isEditingHostUrl: boolean;
+  allowDirectHostEdit?: boolean;
   isLoading: boolean;
   error?: string;
   noasHostUrl?: string;
@@ -27,9 +28,10 @@ export function NoasAuthForm({
   username,
   password,
   isEditingHostUrl,
+  allowDirectHostEdit = false,
   isLoading,
   error,
-  noasHostUrl = "https://noas.example.com",
+  noasHostUrl = "",
   onUsernameChange,
   onPasswordChange,
   onNoasHostUrlChange,
@@ -51,6 +53,11 @@ export function NoasAuthForm({
 
     if (!password) {
       setLocalError(t("auth.errors.passwordRequired"));
+      return;
+    }
+
+    if (!noasHostUrl.trim()) {
+      setLocalError(t("auth.errors.noasHostRequired"));
       return;
     }
 
@@ -89,6 +96,7 @@ export function NoasAuthForm({
           password={password}
           noasHostUrl={noasHostUrl}
           isEditingHostUrl={isEditingHostUrl}
+          allowDirectHostEdit={allowDirectHostEdit}
           isLoading={isLoading}
           passwordAutoComplete="current-password"
           onUsernameChange={onUsernameChange}

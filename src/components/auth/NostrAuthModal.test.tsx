@@ -47,12 +47,24 @@ describe("NostrAuthModal", () => {
 
   beforeEach(() => {
     window.localStorage.clear();
+    vi.unstubAllEnvs();
     ndkMock.isConnected = true;
     ndkMock.user = null;
     ndkMock.authMethod = null;
     ndkMock.needsProfileSetup = false;
     ndkMock.isProfileSyncing = false;
     ndkMock.updateUserProfile = vi.fn(async () => true);
+  });
+
+  it("starts on the auth chooser and still shows Noas when no Noas env is configured", () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    expect(screen.getByText(/choose how you want to authenticate/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /noas authentication/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^more options$/i })).not.toBeInTheDocument();
   });
 
   it("shows loading indicator only on extension option when extension login starts", async () => {
@@ -281,6 +293,22 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
     expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice_name");
     expect(screen.getByLabelText(/^password$/i)).toHaveValue("password123");
+  });
+
+  it("shows an immediately editable empty Noas host when no Noas env is configured", () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /noas authentication/i }));
+
+    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
+    expect(hostInput).toHaveValue("");
+    expect(hostInput).not.toHaveAttribute("readonly");
+    expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/advanced only/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/only change this if you know what you're doing/i)).not.toBeInTheDocument();
   });
 
   it("opens directly to noas sign up when requested and still allows switching to sign in", () => {

@@ -29,6 +29,7 @@ interface NoasSharedFieldsProps {
   password: string;
   noasHostUrl: string;
   isEditingHostUrl: boolean;
+  allowDirectHostEdit?: boolean;
   isLoading: boolean;
   showUsernameHint?: boolean;
   passwordAutoComplete: "current-password" | "new-password";
@@ -44,6 +45,7 @@ export function NoasSharedFields({
   password,
   noasHostUrl,
   isEditingHostUrl,
+  allowDirectHostEdit = false,
   isLoading,
   showUsernameHint = false,
   passwordAutoComplete,
@@ -54,13 +56,17 @@ export function NoasSharedFields({
 }: NoasSharedFieldsProps) {
   const parsedNoasUrl = (() => {
     try {
+      if (!noasHostUrl.trim()) {
+        return null;
+      }
       return new URL(noasHostUrl);
     } catch {
       return null;
     }
   })();
 
-  const displayedHost = parsedNoasUrl?.host || "noas.example.com";
+  const displayedHost = parsedNoasUrl?.host || "";
+  const hostReadOnly = allowDirectHostEdit ? false : !isEditingHostUrl;
 
   return (
     <>
@@ -89,36 +95,40 @@ export function NoasSharedFields({
             <div className="relative">
               <Input
                 value={displayedHost}
-                readOnly={!isEditingHostUrl}
+                readOnly={hostReadOnly}
                 onChange={(e) => onNoasHostUrlChange?.(`${parsedNoasUrl?.protocol || "https:"}//${e.target.value}`)}
                 aria-label={t("auth.noas.host")}
                 className={`h-10 pr-10 text-sm ${
-                  isEditingHostUrl ? "text-foreground" : "text-muted-foreground"
+                  hostReadOnly ? "text-muted-foreground" : "text-foreground"
                 }`}
               />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={onToggleHostEdit}
-                      disabled={isLoading}
-                      aria-pressed={isEditingHostUrl}
-                      aria-label={t("auth.noas.editHost")}
-                      className="absolute right-1 top-1 h-8 w-8 px-0"
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t("auth.noas.editHostWarning")}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              {allowDirectHostEdit ? null : (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={onToggleHostEdit}
+                        disabled={isLoading}
+                        aria-pressed={isEditingHostUrl}
+                        aria-label={t("auth.noas.editHost")}
+                        className="absolute right-1 top-1 h-8 w-8 px-0"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t("auth.noas.editHostWarning")}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
-            <p className="text-[11px] leading-none text-muted-foreground whitespace-nowrap">
-              {t("auth.noas.hostHint")}
-            </p>
+            {allowDirectHostEdit ? null : (
+              <p className="text-[11px] leading-none text-muted-foreground whitespace-nowrap">
+                {t("auth.noas.hostHint")}
+              </p>
+            )}
           </div>
         </div>
       </div>

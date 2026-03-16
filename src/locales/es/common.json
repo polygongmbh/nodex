@@ -306,6 +306,18 @@
       "signerExtension": "Extensión firmante",
       "footerText": "Tus claves están cifradas y nunca salen de tu dispositivo"
     },
+    "errors": {
+      "usernameRequired": "El nombre de usuario es obligatorio",
+      "passwordRequired": "La contraseña es obligatoria",
+      "invalidCredentials": "Nombre de usuario o contraseña no válidos",
+      "usernameLength": "El nombre de usuario debe tener entre 3 y 32 caracteres",
+      "usernameFormat": "El nombre de usuario solo puede contener letras minúsculas, números y guiones bajos",
+      "passwordLength": "La contraseña debe tener al menos 8 caracteres",
+      "noasHostRequired": "El host es obligatorio",
+      "privateKeyRequired": "La clave privada es obligatoria",
+      "pubkeyRequired": "La clave pública es obligatoria. Genera una clave privada válida.",
+      "signUpFailed": "No se pudo completar el registro. Revisa tus datos e inténtalo de nuevo."
+    },
     "modal": {
       "title": "Iniciar sesión en Nostr",
       "descriptionChoose": "Elige cómo quieres autenticarte para publicar en relays de Nostr.",
