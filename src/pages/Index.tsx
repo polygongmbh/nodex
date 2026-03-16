@@ -294,8 +294,6 @@ const Index = () => {
   });
 
   const handleOpenAuthModal = useCallback(() => {
-    setIsOnboardingIntroOpen(false);
-    setIsOnboardingOpen(false);
     setIsAuthModalOpen(true);
   }, []);
 

@@ -27,14 +27,16 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
+import { NoasAuthForm } from "./NoasAuthForm";
+import { NoasSignUpForm } from "./NoasSignUpForm";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type AuthStep = "choose" | "privateKey" | "nostrConnect";
-type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | null;
+type AuthStep = "choose" | "privateKey" | "nostrConnect" | "noas" | "noasSignUp";
+type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | "noas" | null;
 type WindowWithNostr = Window & { nostr?: unknown };
 
 const hasNostrExtension = (): boolean =>
@@ -47,14 +49,23 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     loginWithPrivateKey, 
     loginAsGuest,
     loginWithNostrConnect,
+    loginWithNoas,
+    signupWithNoas,
     isAuthenticating 
   } = useNDK();
+
+  const noasApiUrl = import.meta.env.VITE_NOAS_API_URL as string | undefined;
+  const noasHostUrl = import.meta.env.VITE_NOAS_HOST_URL as string | undefined;
+  const noasEnabled = Boolean(noasApiUrl || noasHostUrl);
+  const defaultStep: AuthStep = noasEnabled ? "noas" : "choose";
+  const defaultNoasUrl = noasHostUrl || noasApiUrl || "https://noas.example.com";
   
-  const [step, setStep] = useState<AuthStep>("choose");
+  const [step, setStep] = useState<AuthStep>(defaultStep);
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
   const [privateKey, setPrivateKey] = useState("");
   const [bunkerUrl, setBunkerUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [editableNoasUrl, setEditableNoasUrl] = useState(defaultNoasUrl);
   const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
 
   const hasExtension = hasNostrExtension();
@@ -135,29 +146,85 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     }
   };
 
+  const handleNoasLogin = async (
+    username: string,
+    password: string,
+    config?: { baseUrl?: string }
+  ) => {
+    setError(null);
+    setPendingAuthMethod("noas");
+    try {
+      const success = await loginWithNoas(username, password, config);
+      if (success) {
+        toast.success(t("auth.modal.success.noas") || "Signed in with Noas");
+        onClose();
+        return true;
+      } else {
+        setError(t("auth.modal.errors.noasFailed") || "Noas sign-in failed");
+        return false;
+      }
+    } finally {
+      setPendingAuthMethod(null);
+    }
+  };
+
+  const handleNoasSignUp = async (
+    username: string,
+    password: string,
+    privateKey: string,
+    pubkey: string,
+    config?: { baseUrl?: string }
+  ) => {
+    setError(null);
+    setPendingAuthMethod("noas");
+    try {
+      const success = await signupWithNoas(username, password, privateKey, pubkey, config);
+      if (success) {
+        toast.success(t("auth.modal.success.noasSignUp") || "Account created successfully");
+        onClose();
+        return true;
+      } else {
+        setError(t("auth.modal.errors.noasSignUpFailed") || "Sign up failed");
+        return false;
+      }
+    } finally {
+      setPendingAuthMethod(null);
+    }
+  };
+
   const handleClose = () => {
-    setStep("choose");
+    setStep(defaultStep);
     setPrivateKey("");
     setBunkerUrl("");
     setPendingAuthMethod(null);
     setError(null);
+    setEditableNoasUrl(defaultNoasUrl);
     onClose();
   };
+
+  const shouldShowModalHeader = step !== "noas" && step !== "noasSignUp";
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md" dismissOnOutsideInteract={!hasUnsavedAuthInput}>
-        <DialogHeader>
-          <DialogTitle>{t("auth.modal.title")}</DialogTitle>
-          <DialogDescription>
-            {step === "choose"
-              ? t("auth.modal.descriptionChoose")
-              : step === "privateKey"
-                ? t("auth.modal.descriptionPrivateKey")
-                : t("auth.modal.descriptionNostrConnect")
-            }
-          </DialogDescription>
-        </DialogHeader>
+        {shouldShowModalHeader ? (
+          <DialogHeader>
+            <DialogTitle>{t("auth.modal.title")}</DialogTitle>
+            <DialogDescription>
+              {step === "choose"
+                ? t("auth.modal.descriptionChoose")
+                : step === "privateKey"
+                  ? t("auth.modal.descriptionPrivateKey")
+                  : t("auth.modal.descriptionNostrConnect")
+              }
+            </DialogDescription>
+          </DialogHeader>
+        ) : (
+          <DialogHeader className="sr-only">
+            <DialogTitle>{t("auth.modal.title")}</DialogTitle>
+            <DialogDescription>{t("auth.noas.description") || "Noas authentication"}</DialogDescription>
+          </DialogHeader>
+        )}
 
         {error && (
           <div className="flex items-start gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
@@ -214,6 +281,28 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
                 </div>
               </div>
             </button>
+
+            {/* Noas Authentication */}
+            {noasEnabled && (
+              <button
+                onClick={() => setStep("noas")}
+                disabled={isAuthenticating}
+                className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
+              >
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <LogIn className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium">{t("auth.modal.noasAuth") || "Noas Authentication"}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {t("auth.modal.noasAuthHint") || "Sign in with username and password"}
+                  </div>
+                </div>
+                {pendingAuthMethod === "noas" && (
+                  <Loader2 data-testid="auth-loader-noas" className="w-4 h-4 animate-spin" />
+                )}
+              </button>
+            )}
 
             {/* Private Key */}
             <button
@@ -294,6 +383,29 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
               </Button>
             </div>
           </div>
+        ) : step === "noas" ? (
+          <NoasAuthForm
+            onLogin={handleNoasLogin}
+            onSignUp={() => setStep("noasSignUp")}
+            onBack={noasEnabled ? () => setStep("choose") : undefined}
+            onChooseExtension={handleExtensionLogin}
+            onChooseSigner={() => setStep("nostrConnect")}
+            onChoosePrivateKey={() => setStep("privateKey")}
+            isLoading={isAuthenticating}
+            error={error || undefined}
+            noasHostUrl={editableNoasUrl}
+            onNoasHostUrlChange={setEditableNoasUrl}
+          />
+        ) : step === "noasSignUp" ? (
+          <NoasSignUpForm
+            onSignUp={handleNoasSignUp}
+            onSignIn={() => setStep("noas")}
+            onBack={noasEnabled ? () => setStep("choose") : undefined}
+            isLoading={isAuthenticating}
+            error={error || undefined}
+            noasHostUrl={editableNoasUrl}
+            onNoasHostUrlChange={setEditableNoasUrl}
+          />
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -481,7 +593,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       ? t("filters.authMethod.guest")
       : authMethod === "nostrConnect"
         ? t("filters.authMethod.signer")
-        : t("filters.authMethod.privateKey");
+        : authMethod === "noas"
+          ? t("filters.authMethod.noas")
+          : t("filters.authMethod.privateKey");
 
   return (
     <>

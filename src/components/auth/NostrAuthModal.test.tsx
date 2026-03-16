@@ -10,6 +10,7 @@ const ndkMock = {
   loginWithPrivateKey: vi.fn(async () => true),
   loginAsGuest: vi.fn(async () => true),
   loginWithNostrConnect: vi.fn(async () => true),
+  loginWithNoas: vi.fn(async () => true),
   isAuthenticating: false,
   isConnected: true,
   user: null as NostrUser | null,
@@ -71,6 +72,11 @@ describe("NostrAuthModal", () => {
     });
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    const backButtons = screen.queryAllByRole("button", { name: /back|auth\.back/i });
+    if (backButtons.length > 0) {
+      fireEvent.click(backButtons[0]);
+    }
 
     fireEvent.click(screen.getByRole("button", { name: /browser extension/i }));
 
@@ -243,6 +249,11 @@ describe("NostrAuthModal", () => {
     const onClose = vi.fn();
 
     render(<NostrAuthModal isOpen onClose={onClose} />);
+
+    const backButtons = screen.queryAllByRole("button", { name: /back|auth\.back/i });
+    if (backButtons.length > 0) {
+      fireEvent.click(backButtons[0]);
+    }
 
     fireEvent.click(screen.getByRole("button", { name: /private key/i }));
     fireEvent.change(screen.getByLabelText(/^private key$/i), {

@@ -273,6 +273,36 @@
     }
   },
   "auth": {
+    "back": "Zurück",
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "signingIn": "Anmeldung läuft",
+    "signingUp": "Registrierung läuft",
+    "username": "Benutzername",
+    "password": "Passwort",
+    "usernamePlaceholder": "dein-benutzername",
+    "passwordPlaceholder": "••••••••",
+    "noas": {
+      "signInTitle": "Mit Noas anmelden",
+      "description": "Melde dich mit deinem Noas-Benutzernamen und Passwort an",
+      "signUpTitle": "Mit Noas registrieren",
+      "signUpDescription": "Erstelle ein neues Noas-Konto für Nodex",
+      "visitNoas": "Noas-Host öffnen",
+      "signerAppForNoas": "Signer-App für Noas",
+      "domain": "Domain",
+      "usernameHint": "3-32 Zeichen, nur Kleinbuchstaben, Zahlen und Unterstriche",
+      "passwordHint": "Mindestens 8 Zeichen",
+      "privateKey": "Privatschlüssel",
+      "publicKey": "Öffentlicher Schlüssel",
+      "privateKeyPlaceholder": "64-stelliger Hex- oder nsec-Schlüssel...",
+      "publicKeyPlaceholder": "64-stelliger öffentlicher Schlüssel",
+      "privateKeyWarning": "Dein privater Schlüssel wird sicher gespeichert. Teile ihn niemals.",
+      "generate": "Generieren",
+      "privateKeyCopied": "Privatschlüssel in die Zwischenablage kopiert",
+      "publicKeyCopied": "Öffentlicher Schlüssel in die Zwischenablage kopiert",
+      "signerExtension": "Signer-Erweiterung",
+      "footerText": "Deine Schlüssel sind verschlüsselt und verlassen niemals dein Gerät"
+    },
     "modal": {
       "title": "Bei Nostr anmelden",
       "descriptionChoose": "Wähle, wie du dich zum Veröffentlichen auf Nostr-Relays anmelden möchtest.",
@@ -554,6 +584,7 @@
       "extension": "Erweiterung",
       "guest": "Gast",
       "signer": "Signer",
+      "noas": "Noas",
       "privateKey": "Privater Schlüssel",
       "unknown": "Unbekannt"
     }

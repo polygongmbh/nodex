@@ -273,6 +273,36 @@
     }
   },
   "auth": {
+    "back": "Atrás",
+    "signIn": "Iniciar sesión",
+    "signUp": "Registrarse",
+    "signingIn": "Iniciando sesión",
+    "signingUp": "Registrando cuenta",
+    "username": "Nombre de usuario",
+    "password": "Contraseña",
+    "usernamePlaceholder": "tu-usuario",
+    "passwordPlaceholder": "••••••••",
+    "noas": {
+      "signInTitle": "Iniciar sesión con Noas",
+      "description": "Inicia sesión con tu usuario y contraseña de Noas",
+      "signUpTitle": "Registrarse con Noas",
+      "signUpDescription": "Crea una cuenta nueva de Noas para usar en Nodex",
+      "visitNoas": "Abrir Noas Host",
+      "signerAppForNoas": "App firmante para Noas",
+      "domain": "Dominio",
+      "usernameHint": "3-32 caracteres, solo letras minúsculas, números y guiones bajos",
+      "passwordHint": "Mínimo 8 caracteres",
+      "privateKey": "Clave privada",
+      "publicKey": "Clave pública",
+      "privateKeyPlaceholder": "Clave hex de 64 caracteres o nsec...",
+      "publicKeyPlaceholder": "Clave pública de 64 caracteres",
+      "privateKeyWarning": "Tu clave privada se almacena de forma segura. Nunca la compartas.",
+      "generate": "Generar",
+      "privateKeyCopied": "Clave privada copiada al portapapeles",
+      "publicKeyCopied": "Clave pública copiada al portapapeles",
+      "signerExtension": "Extensión firmante",
+      "footerText": "Tus claves están cifradas y nunca salen de tu dispositivo"
+    },
     "modal": {
       "title": "Iniciar sesión en Nostr",
       "descriptionChoose": "Elige cómo quieres autenticarte para publicar en relays de Nostr.",
@@ -554,6 +584,7 @@
       "extension": "Extensión",
       "guest": "Invitado",
       "signer": "Firmante",
+      "noas": "Noas",
       "privateKey": "Clave privada",
       "unknown": "Desconocido"
     }

@@ -1,12 +1,31 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import NDK, {
+  NDKEvent,
   NDKNip07Signer,
   NDKNip46Signer,
   NDKPrivateKeySigner,
+  NDKRelaySet,
   NDKUser,
   NDKRelay,
+  NDKFilter,
+  NDKSubscription,
 } from "@nostr-dev-kit/ndk";
-import { getConfiguredDefaultRelays, getConfiguredDefaultRelaysWithFallback } from "@/lib/nostr/default-relays";
+import { NostrEventKind } from "../types";
+import { NoasClient } from "../noas-client";
+import { privateKeyHexToNsec } from "../nip49-utils";
+import {
+  buildKind0Content,
+  hasRequiredProfileFields,
+  mergeKind0Profiles,
+  type EditableNostrProfile,
+} from "../profile-metadata";
+import {
+  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
+  buildOfflinePresenceContent,
+  buildPresenceTags,
+} from "@/lib/presence-status";
+import { buildDeterministicGuestName } from "@/lib/guest-name";
+import { getConfiguredDefaultRelays } from "@/lib/nostr/default-relays";
 import { isRelayUrl } from "@/lib/nostr/relay-url";
 import { nostrDevLog } from "../dev-logs";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
@@ -18,53 +37,47 @@ import {
   STORAGE_KEY_NIP46_BUNKER,
   STORAGE_KEY_NIP46_LOCAL_NSEC,
   STORAGE_KEY_NSEC,
+  STORAGE_KEY_NOAS_USERNAME,
 } from "./storage";
 import {
   mapNativeRelayStatus,
   MAX_INITIAL_CONNECT_FAILURES,
   RELAY_STATUS_RECONCILE_INTERVAL_MS,
 } from "./relay-status";
-import {
-  appendResolvedRelayUrl,
-  mergeConfiguredRelayStatuses,
-  normalizeRelayUrl,
-  removeResolvedRelayUrl,
-} from "./relay-list";
 import { waitForNostrExtensionAvailability } from "./session-restore";
-import { createRelayNip42AuthPolicy } from "../nip42-relay-auth-policy";
+import { verifyNip05 } from "../nip05-verify";
+import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "../nip42-relay-auth-policy";
+import { createNip98AuthHeader } from "../nip98-http-auth";
+import {
+  isAuthRequiredCloseReason,
+  shouldMarkRelayReadOnlyAfterPublishReject,
+  shouldReconnectRelayAfterSignIn,
+  shouldRetryAuthAfterReadRejection,
+  shouldSetVerificationFailedStatus,
+} from "./relay-verification";
+import {
+  extractRelayRejectionReason,
+} from "./relay-error";
 import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
-import { shouldReconnectRelayAfterResume, shouldReconnectRelayAfterSignIn } from "./relay-verification";
-import { useRelayTransport, type RelayTransportRefs } from "./use-relay-transport";
-import { useRelayVerification } from "./use-relay-verification";
-import { usePublish } from "./use-publish";
-import { useAuthActions } from "./use-auth-actions";
-import { useRelayEnrichment } from "./use-relay-enrichment";
-import { useProfileSync } from "./use-profile-sync";
-import type { RelayOperation } from "./use-relay-transport";
-
+import i18n from "@/lib/i18n/config";
+import { toast } from "sonner";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
-const RELAY_RESUME_RECONNECT_COOLDOWN_MS = 5000;
+const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
+const RELAY_PUBLISH_TIMEOUT_MS = 3000;
+type RelayOperation = "read" | "write" | "unknown";
 
 export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
-  const persistedRelayUrls = useMemo(() => loadPersistedRelayUrls(), []);
   const configuredDefaultRelays = useMemo(
     () => defaultRelays || getConfiguredDefaultRelays(),
     [defaultRelays]
   );
-  const [resolvedDefaultRelays, setResolvedDefaultRelays] = useState<string[]>(
-    () => {
-      if (persistedRelayUrls && persistedRelayUrls.length > 0) return persistedRelayUrls;
-      if (configuredDefaultRelays.length > 0) return configuredDefaultRelays;
-      return [];
-    }
-  );
-  const [isResolvingDefaultRelays, setIsResolvingDefaultRelays] = useState(
-    () => (!persistedRelayUrls || persistedRelayUrls.length === 0) && configuredDefaultRelays.length === 0
-  );
+  const resolvedDefaultRelays = useMemo(() => {
+    const persisted = loadPersistedRelayUrls();
+    return persisted ?? configuredDefaultRelays;
+  }, [configuredDefaultRelays]);
   const [ndk, setNdk] = useState<NDK | null>(null);
-  const ndkRef = useRef<NDK | null>(null);
   const [user, setUser] = useState<NostrUser | null>(null);
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -84,262 +97,388 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
-  const relayAttemptStartedAtRef = useRef<Map<string, number>>(new Map());
-  const relayCurrentInstanceRef = useRef<Map<string, NDKRelay>>(new Map());
-  const relayAuthRetrySessionKeyRef = useRef<string | null>(null);
-  const relayAuthRetriedUrlsForSessionRef = useRef<Set<string>>(new Set());
-  const complementaryRelaySyncKeyRef = useRef<string | null>(null);
-  const lastResumeReconnectAtRef = useRef(0);
-  const initialResolvedDefaultRelaysRef = useRef<string[] | null>(null);
 
-  if (!isResolvingDefaultRelays && initialResolvedDefaultRelaysRef.current === null) {
-    initialResolvedDefaultRelaysRef.current = resolvedDefaultRelays;
-  }
-  const initialRelayUrls = initialResolvedDefaultRelaysRef.current;
+  const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
+    const hasRead = relayVerificationReadOpsRef.current > 0;
+    const hasWrite = relayVerificationWriteOpsRef.current > 0;
+    if (hasRead && hasWrite) return "unknown";
+    if (hasWrite) return "write";
+    if (hasRead) return "read";
+    return "unknown";
+  }, []);
 
-  // Keep ndkRef in sync with ndk state so hooks have stable ref access
-  useEffect(() => {
-    ndkRef.current = ndk;
-  }, [ndk]);
+  const beginRelayOperation = useCallback((operation: Exclude<RelayOperation, "unknown">) => {
+    if (operation === "read") {
+      relayVerificationReadOpsRef.current += 1;
+      return;
+    }
+    relayVerificationWriteOpsRef.current += 1;
+  }, []);
 
-  const transportRefs: RelayTransportRefs = {
-    removedRelaysRef,
-    relayInitialFailureCountsRef,
-    relayConnectedOnceRef,
-    relayAutoPausedRef,
-    relayVerificationReadOpsRef,
-    relayVerificationWriteOpsRef,
-    relayAttemptStartedAtRef,
-    relayCurrentInstanceRef,
-    relayReadRejectedRef,
-    relayWriteRejectedRef,
-    pendingRelayVerificationRef,
-    relayAuthRetryHistoryRef,
-  };
+  const endRelayOperation = useCallback((operation: Exclude<RelayOperation, "unknown">) => {
+    if (operation === "read") {
+      relayVerificationReadOpsRef.current = Math.max(0, relayVerificationReadOpsRef.current - 1);
+      return;
+    }
+    relayVerificationWriteOpsRef.current = Math.max(0, relayVerificationWriteOpsRef.current - 1);
+  }, []);
 
-  const transport = useRelayTransport(transportRefs, ndkRef, setRelays, relayInfoRef);
+  const resolveConnectedRelayStatus = useCallback((normalizedRelayUrl: string): NDKRelayStatus["status"] => {
+    if (relayReadRejectedRef.current.get(normalizedRelayUrl)) return "verification-failed";
+    if (relayWriteRejectedRef.current.get(normalizedRelayUrl)) return "read-only";
+    return "connected";
+  }, []);
 
-  const verification = useRelayVerification(
-    {
-      relayVerificationToastHistoryRef,
-      pendingRelayVerificationRef,
-      relayInfoRef,
-      relayVerificationReadOpsRef,
-      relayVerificationWriteOpsRef,
-      relayReadRejectedRef,
-      relayWriteRejectedRef,
-    },
-    transport,
-    setRelays,
-    relays,
-  );
-
-  const { publishEvent, subscribe, createHttpAuthHeader } = usePublish(
-    ndkRef,
-    relays,
-    resolvedDefaultRelays,
-    verification,
-    transport,
-    pendingRelayVerificationRef,
-    relayAuthRetryHistoryRef,
-  );
-
-  const { loginWithExtension, loginWithPrivateKey, loginAsGuest, loginWithNostrConnect, getGuestPrivateKey, logout } =
-    useAuthActions(
-      ndkRef,
-      relays,
-      resolvedDefaultRelays,
-      verification.retryNip42RelaysAfterSignIn,
-      publishEvent,
-      profileSyncRunRef,
-      setUser,
-      setAuthMethod,
-      setIsAuthenticating,
-      setIsProfileSyncing,
-      authMethod,
-    );
-
-  const { updateUserProfile, userProfileSnapshot } = useProfileSync(
-    ndk,
-    user,
-    relays,
-    publishEvent,
-    profileSyncRunRef,
-    setUser,
-    setNeedsProfileSetup,
-    setIsProfileSyncing,
-    verification.beginRelayOperation,
-    verification.endRelayOperation,
-  );
-
-  useEffect(() => {
-    if (resolvedDefaultRelays.length === 0) return;
+  const markRelayReadOutcome = useCallback((relayUrl: string, allowed: boolean) => {
+    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    if (allowed) {
+      relayReadRejectedRef.current.delete(normalizedRelayUrl);
+    } else {
+      relayReadRejectedRef.current.set(normalizedRelayUrl, true);
+    }
     setRelays((previous) =>
-      mergeConfiguredRelayStatuses({
-        relays: previous,
-        configuredRelayUrls: resolvedDefaultRelays,
-        removedRelayUrls: removedRelaysRef.current,
-        relayInfoByUrl: relayInfoRef.current,
+      previous.map((relay) => {
+        if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
+        if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
+          return relay;
+        }
+        return {
+          ...relay,
+          status: resolveConnectedRelayStatus(normalizedRelayUrl),
+        };
       })
     );
-  }, [resolvedDefaultRelays]);
+  }, [resolveConnectedRelayStatus]);
 
-  useEffect(() => {
-    if (persistedRelayUrls && persistedRelayUrls.length > 0) {
-      setResolvedDefaultRelays(persistedRelayUrls);
-      setIsResolvingDefaultRelays(false);
+  const markRelayWriteOutcome = useCallback((relayUrl: string, allowed: boolean) => {
+    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    if (allowed) {
+      relayWriteRejectedRef.current.delete(normalizedRelayUrl);
+    } else {
+      relayWriteRejectedRef.current.set(normalizedRelayUrl, true);
+    }
+    setRelays((previous) =>
+      previous.map((relay) => {
+        if (relay.url.replace(/\/+$/, "") !== normalizedRelayUrl) return relay;
+        if (relay.status === "connection-error" || relay.status === "disconnected" || relay.status === "connecting") {
+          return relay;
+        }
+        return {
+          ...relay,
+          status: resolveConnectedRelayStatus(normalizedRelayUrl),
+        };
+      })
+    );
+  }, [resolveConnectedRelayStatus]);
+
+  const shouldShowRelayVerificationToast = useCallback((
+    relayUrl: string,
+    operation: RelayOperation,
+    outcome: RelayVerificationEvent["outcome"]
+  ): boolean => {
+    const now = Date.now();
+    const key = `${relayUrl}|${operation}|${outcome}`;
+    const previousShownAt = relayVerificationToastHistoryRef.current.get(key) ?? 0;
+    if (now - previousShownAt < RELAY_VERIFICATION_TOAST_DEDUPE_MS) {
+      return false;
+    }
+    relayVerificationToastHistoryRef.current.set(key, now);
+    return true;
+  }, []);
+
+  const markRelayVerificationSuccess = useCallback((relayUrl: string, operation: RelayOperation) => {
+    if (operation === "read") {
+      markRelayReadOutcome(relayUrl, true);
+    } else if (operation === "write") {
+      markRelayWriteOutcome(relayUrl, true);
+    } else {
+      // Unknown auth challenge context: clear stale read rejection to avoid sticky red state.
+      markRelayReadOutcome(relayUrl, true);
+    }
+    if (!shouldShowRelayVerificationToast(relayUrl, operation, "verified")) {
       return;
     }
-
-    if (configuredDefaultRelays.length > 0) {
-      setResolvedDefaultRelays(configuredDefaultRelays);
-      setIsResolvingDefaultRelays(false);
+    if (operation === "read") {
+      toast.success(i18n.t("toasts.success.relayVerificationRead", { relayUrl }));
       return;
     }
+    if (operation === "write") {
+      toast.success(i18n.t("toasts.success.relayVerificationWrite", { relayUrl }));
+      return;
+    }
+    toast.success(i18n.t("toasts.success.relayVerificationUnknown", { relayUrl }));
+  }, [markRelayReadOutcome, markRelayWriteOutcome, shouldShowRelayVerificationToast]);
 
-    let cancelled = false;
-    setIsResolvingDefaultRelays(true);
-    void (async () => {
-      const discoveredRelayUrls = await getConfiguredDefaultRelaysWithFallback();
-      if (cancelled) return;
-      setResolvedDefaultRelays(discoveredRelayUrls);
-      setIsResolvingDefaultRelays(false);
-      if (discoveredRelayUrls.length > 0) {
-        savePersistedRelayUrls(discoveredRelayUrls);
-        nostrDevLog("relay", "Resolved default relays from current host", {
-          hostname: window.location.hostname,
-          relayUrls: discoveredRelayUrls,
-        });
-        return;
+  const markRelayVerificationFailure = useCallback((
+    relayUrl: string,
+    operation: RelayOperation,
+    options?: { setStatus?: boolean; showToast?: boolean }
+  ) => {
+    const shouldSetStatus = options?.setStatus ?? false;
+    const shouldShowToast = options?.showToast ?? true;
+    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    pendingRelayVerificationRef.current.delete(normalizedRelayUrl);
+    if (shouldSetStatus) {
+      if (operation === "read") {
+        markRelayReadOutcome(relayUrl, false);
+      } else if (operation === "write") {
+        markRelayWriteOutcome(relayUrl, false);
       }
-      console.warn("No default relays configured and no host-derived relay was reachable");
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [configuredDefaultRelays, persistedRelayUrls]);
-
-  // Auto-retry NIP-42 auth relays after sign-in
-  useEffect(() => {
-    const sessionKey = user?.pubkey && authMethod ? `${authMethod}:${user.pubkey}` : null;
-    if (!sessionKey || !ndk?.signer) {
-      relayAuthRetrySessionKeyRef.current = sessionKey;
-      relayAuthRetriedUrlsForSessionRef.current.clear();
+    }
+    if (!shouldShowToast || !shouldShowRelayVerificationToast(relayUrl, operation, "failed")) {
       return;
     }
-
-    if (relayAuthRetrySessionKeyRef.current !== sessionKey) {
-      relayAuthRetrySessionKeyRef.current = sessionKey;
-      relayAuthRetriedUrlsForSessionRef.current.clear();
+    if (operation === "read") {
+      toast.error(i18n.t("toasts.errors.relayVerificationReadFailed", { relayUrl }));
+    } else if (operation === "write") {
+      toast.error(i18n.t("toasts.errors.relayVerificationWriteFailed", { relayUrl }));
+    } else {
+      toast.error(i18n.t("toasts.errors.relayVerificationUnknownFailed", { relayUrl }));
     }
+  }, [markRelayReadOutcome, markRelayWriteOutcome, shouldShowRelayVerificationToast]);
 
+  const notifyRelayVerificationEvent = useCallback((incoming: RelayVerificationEvent) => {
+    const operation = incoming.operation === "unknown"
+      ? resolveRelayVerificationOperation()
+      : incoming.operation;
+    const event = { ...incoming, operation };
+
+    nostrDevLog("relay", "Relay verification event", event);
+
+    if (event.outcome === "required") {
+      pendingRelayVerificationRef.current.set(event.relayUrl.replace(/\/+$/, ""), {
+        operation: event.operation,
+        requestedAt: Date.now(),
+      });
+      return;
+    }
+    if (event.outcome === "failed") {
+      markRelayVerificationFailure(event.relayUrl, event.operation, {
+        setStatus: shouldSetVerificationFailedStatus("auth-policy", event.operation),
+        showToast: false,
+      });
+    }
+  }, [markRelayVerificationFailure, resolveRelayVerificationOperation]);
+
+  const probeRelayInfo = useCallback(async (relayUrl: string) => {
+    const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+    const info = await fetchRelayInfo(normalizedRelayUrl);
+    if (!info) {
+      nostrDevLog("relay", "Relay NIP-11 info unavailable", {
+        relayUrl: normalizedRelayUrl,
+      });
+      return;
+    }
+    relayInfoRef.current.set(normalizedRelayUrl, info);
+    setRelays((previous) =>
+      previous.map((relay) =>
+        relay.url.replace(/\/+$/, "") === normalizedRelayUrl
+          ? {
+              ...relay,
+              nip11: {
+                authRequired: info.authRequired,
+                supportsNip42: info.supportsNip42,
+                checkedAt: Date.now(),
+              },
+            }
+          : relay
+      )
+    );
+    nostrDevLog("relay", "Relay NIP-11 info loaded", {
+      relayUrl: normalizedRelayUrl,
+      authRequired: info.authRequired,
+      supportsNip42: info.supportsNip42,
+    });
+  }, []);
+
+  const retryNip42RelaysAfterSignIn = useCallback(() => {
+    if (!ndk) return;
+    const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
     const relayUrlsToRetry = relays
       .filter((relay) => shouldReconnectRelayAfterSignIn(relay))
-      .map((relay) => normalizeRelayUrl(relay.url))
-      .filter((relayUrl) => !relayAuthRetriedUrlsForSessionRef.current.has(relayUrl));
+      .map((relay) => normalizeUrl(relay.url));
 
     if (relayUrlsToRetry.length === 0) return;
 
-    relayUrlsToRetry.forEach((relayUrl) => {
-      relayAuthRetriedUrlsForSessionRef.current.add(relayUrl);
+    const retrySet = new Set(relayUrlsToRetry);
+    nostrDevLog("relay", "Retrying NIP-42 auth-capable relays after sign in", {
+      relayUrls: relayUrlsToRetry,
     });
-    verification.retryNip42RelaysAfterSignIn(relayUrlsToRetry);
-  }, [authMethod, ndk, relays, verification, user?.pubkey]);
 
-  // Initialize NDK once after default relays are resolved.
+    setRelays((previous) =>
+      previous.map((relay) =>
+        retrySet.has(normalizeUrl(relay.url))
+          ? { ...relay, status: "connecting" }
+          : relay
+      )
+    );
+
+    relayUrlsToRetry.forEach((relayUrl) => {
+      relayAutoPausedRef.current.delete(relayUrl);
+      relayInitialFailureCountsRef.current.delete(relayUrl);
+      relayAuthRetryHistoryRef.current.delete(relayUrl);
+      pendingRelayVerificationRef.current.delete(relayUrl);
+      relayReadRejectedRef.current.delete(relayUrl);
+      const relay = ndk.pool.getRelay(relayUrl, true);
+      relay?.disconnect();
+      relay?.connect();
+    });
+  }, [ndk, relays]);
+
+  const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
+    if (!ndk) return null;
+
+    return await new Promise((resolve) => {
+      const candidates: { createdAt: number; content: string }[] = [];
+      let settled = false;
+
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        endRelayOperation("read");
+        subscription.stop();
+        if (candidates.length === 0) {
+          resolve(null);
+          return;
+        }
+        const parsed = mergeKind0Profiles(candidates);
+        resolve({
+          name: parsed.name,
+          displayName: parsed.displayName,
+          picture: parsed.picture,
+          about: parsed.about,
+          nip05: parsed.nip05,
+        });
+      };
+
+      beginRelayOperation("read");
+      const subscription = ndk.subscribe(
+        [{ kinds: [NostrEventKind.Metadata], authors: [pubkey] }],
+        { closeOnEose: true }
+      );
+
+      subscription.on("event", (event: NDKEvent) => {
+        if (event.content) {
+          candidates.push({ createdAt: event.created_at || 0, content: event.content });
+        }
+      });
+      subscription.on("eose", finish);
+
+      // Fallback so the UI does not hang if eose never arrives.
+      setTimeout(finish, 12000);
+    });
+  }, [beginRelayOperation, endRelayOperation, ndk]);
+
+  const userProfileSnapshot = useMemo<NostrUser["profile"] | null>(() => {
+    if (!user?.profile) return null;
+    return {
+      name: user.profile.name,
+      displayName: user.profile.displayName,
+      picture: user.profile.picture,
+      about: user.profile.about,
+      nip05: user.profile.nip05,
+      nip05Verified: user.profile.nip05Verified,
+    };
+  }, [
+    user?.profile,
+  ]);
+
+  // Initialize NDK
   useEffect(() => {
-    if (isResolvingDefaultRelays || !initialRelayUrls) return;
-
     let disposed = false;
     nostrDevLog("provider", "Initializing NDK provider", {
-      configuredDefaultRelays: initialRelayUrls,
+      configuredDefaultRelays: resolvedDefaultRelays,
     });
     const ndkInstance = new NDK({
-      explicitRelayUrls: initialRelayUrls,
+      explicitRelayUrls: resolvedDefaultRelays,
     });
 
-    ndkInstance.relayAuthDefaultPolicy = createRelayNip42AuthPolicy(ndkInstance, verification.notifyRelayVerificationEvent);
+    ndkInstance.relayAuthDefaultPolicy = createRelayNip42AuthPolicy(ndkInstance, notifyRelayVerificationEvent);
 
     // Set up relay event handlers
+    const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
     const syncRelayStatusesFromPool = () => {
-      const now = Date.now();
       setRelays((prev) => {
-        const nextByUrl = new Map(prev.map((entry) => [normalizeRelayUrl(entry.url), entry]));
+        const nextByUrl = new Map(prev.map((entry) => [normalizeUrl(entry.url), entry]));
         ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
-          const normalized = normalizeRelayUrl(relay.url);
-          relayCurrentInstanceRef.current.set(normalized, relay);
+          const normalized = normalizeUrl(relay.url);
           if (removedRelaysRef.current.has(normalized)) return;
           const previousEntry = nextByUrl.get(normalized);
+          if (relayAutoPausedRef.current.has(normalized)) {
+            nextByUrl.set(normalized, {
+              ...previousEntry,
+              url: normalized,
+              status: "connection-error",
+            });
+            return;
+          }
           const mappedStatus = mapNativeRelayStatus(relay.status);
-          const info = relayInfoRef.current.get(normalized);
           nextByUrl.set(normalized, {
             ...previousEntry,
             url: normalized,
-            status: transport.resolveRelayUiStatus(normalized, {
-              mappedStatus,
-              previousStatus: previousEntry?.status,
-              now,
-            }),
-            nip11: previousEntry?.nip11 ?? (info
-              ? {
-                  authRequired: info.authRequired,
-                  supportsNip42: info.supportsNip42,
-                  checkedAt: Date.now(),
-                }
-              : undefined),
+            status: mappedStatus === "connected"
+              ? resolveConnectedRelayStatus(normalized)
+              : mappedStatus,
           });
         });
         return Array.from(nextByUrl.values());
       });
     };
 
-    ndkInstance.pool.relays.forEach((relay) => {
-      relayCurrentInstanceRef.current.set(normalizeRelayUrl(relay.url), relay);
-    });
-
-    ndkInstance.pool.on("relay:connecting", (relay: NDKRelay) => {
-      const normalized = normalizeRelayUrl(relay.url);
-      if (!transport.isCurrentRelayInstance(relay)) return;
-      relayCurrentInstanceRef.current.set(normalized, relay);
-      transport.updateRelayStatus(normalized, {
-        mappedStatus: mapNativeRelayStatus(relay.status),
-        ensureEntry: true,
-      });
+    ndkInstance.pool.on("relay:connecting", () => {
+      syncRelayStatusesFromPool();
     });
 
     ndkInstance.pool.on("relay:connect", (relay: NDKRelay) => {
-      const normalized = normalizeRelayUrl(relay.url);
-      if (!transport.isCurrentRelayInstance(relay)) return;
-      relayCurrentInstanceRef.current.set(normalized, relay);
+      const normalized = normalizeUrl(relay.url);
       nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);
       relayAutoPausedRef.current.delete(normalized);
-      relayAttemptStartedAtRef.current.delete(normalized);
       const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
       if (pendingVerification) {
         pendingRelayVerificationRef.current.delete(normalized);
-        verification.markRelayVerificationSuccess(normalized, pendingVerification.operation);
+        markRelayVerificationSuccess(normalized, pendingVerification.operation);
       }
       if (removedRelaysRef.current.has(normalized)) return;
-      transport.updateRelayStatus(normalized, {
-        mappedStatus: mapNativeRelayStatus(relay.status),
-        ensureEntry: true,
+      setRelays((prev) => {
+        const existing = prev.find((r) => normalizeUrl(r.url) === normalized);
+        if (existing) {
+          return prev.map((r) =>
+            normalizeUrl(r.url) === normalized
+              ? {
+                  ...r,
+                  url: normalized,
+                  status: resolveConnectedRelayStatus(normalized),
+                }
+              : r
+          );
+        }
+        const info = relayInfoRef.current.get(normalized);
+        return [...prev, {
+          url: normalized,
+          status: resolveConnectedRelayStatus(normalized),
+          nip11: info
+            ? {
+                authRequired: info.authRequired,
+                supportsNip42: info.supportsNip42,
+                checkedAt: Date.now(),
+              }
+            : undefined,
+        }];
       });
     });
 
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
-      const normalized = normalizeRelayUrl(relay.url);
-      if (!transport.isCurrentRelayInstance(relay)) return;
+      const normalized = normalizeUrl(relay.url);
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
-      if (removedRelaysRef.current.has(normalized)) return;
-
-      transport.updateRelayStatus(normalized, {
-        mappedStatus: "disconnected",
-        now: Date.now(),
-        ensureEntry: true,
-      });
+      if (!removedRelaysRef.current.has(normalized)) {
+        setRelays((prev) =>
+          prev.map((r) =>
+            normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
+          )
+        );
+      }
 
       if (relayConnectedOnceRef.current.has(normalized)) return;
       if (relayAutoPausedRef.current.has(normalized)) return;
@@ -350,27 +489,24 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       if (nextFailureCount < MAX_INITIAL_CONNECT_FAILURES) return;
 
       relayAutoPausedRef.current.add(normalized);
-      relayAttemptStartedAtRef.current.delete(normalized);
-      transport.updateRelayStatus(normalized, {
-        mappedStatus: "disconnected",
-        now: Date.now(),
-        ensureEntry: true,
-      });
+      setRelays((prev) =>
+        prev.map((entry) =>
+          normalizeUrl(entry.url) === normalized ? { ...entry, status: "connection-error" } : entry
+        )
+      );
       console.warn("Relay auto-paused after repeated failed connection attempts", {
         relayUrl: normalized,
         failures: nextFailureCount,
       });
 
+      relay.disconnect();
       ndkInstance.pool.removeRelay(relay.url);
     });
 
     // Initialize relay states
     removedRelaysRef.current.clear();
-    initialRelayUrls.forEach((relayUrl) => {
-      relayAttemptStartedAtRef.current.set(normalizeRelayUrl(relayUrl), Date.now());
-    });
-    setRelays(initialRelayUrls.map((url) => {
-      const normalizedUrl = normalizeRelayUrl(url);
+    setRelays(resolvedDefaultRelays.map((url) => {
+      const normalizedUrl = url.replace(/\/+$/, "");
       const info = relayInfoRef.current.get(normalizedUrl);
       return {
         url,
@@ -385,10 +521,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       };
     }));
     nostrDevLog("relay", "Relay state initialized as connecting", {
-      relayUrls: initialRelayUrls,
+      relayUrls: resolvedDefaultRelays,
     });
-    initialRelayUrls.forEach((relayUrl) => {
-      void verification.probeRelayInfo(relayUrl);
+    resolvedDefaultRelays.forEach((relayUrl) => {
+      void probeRelayInfo(relayUrl);
     });
 
     setNdk(ndkInstance);
@@ -516,29 +652,183 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       ndkInstance.pool.removeAllListeners();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialRelayUrls, isResolvingDefaultRelays]);
+  }, [markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays]);
+
+  const loginWithExtension = useCallback(async (): Promise<boolean> => {
+    if (!ndk) return false;
+    
+    if (!hasNostrExtension()) {
+      console.error("No Nostr extension found");
+      return false;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const signer = new NDKNip07Signer();
+      ndk.signer = signer;
+      
+      const ndkUser = await signer.user();
+      setUser({
+        pubkey: ndkUser.pubkey,
+        npub: ndkUser.npub,
+        profile: ndkUser.profile
+          ? {
+              name: ndkUser.profile.name,
+              displayName: ndkUser.profile.displayName,
+              picture: ndkUser.profile.image,
+              about: ndkUser.profile.about,
+              nip05: ndkUser.profile.nip05,
+            }
+          : undefined,
+      });
+      setAuthMethod("extension");
+      localStorage.setItem(STORAGE_KEY_AUTH, "extension");
+      retryNip42RelaysAfterSignIn();
+      return true;
+    } catch (error) {
+      console.error("Extension login failed:", error);
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [ndk, retryNip42RelaysAfterSignIn]);
+
+  const loginWithPrivateKey = useCallback(async (nsecOrHex: string): Promise<boolean> => {
+    if (!ndk) return false;
+
+    setIsAuthenticating(true);
+    try {
+      const signer = new NDKPrivateKeySigner(nsecOrHex);
+      ndk.signer = signer;
+      
+      const ndkUser = await signer.user();
+      
+      setUser({
+        pubkey: ndkUser.pubkey,
+        npub: ndkUser.npub,
+      });
+      setAuthMethod("privateKey");
+      localStorage.setItem(STORAGE_KEY_AUTH, "privateKey");
+      // Don't store private key for security
+      retryNip42RelaysAfterSignIn();
+      return true;
+    } catch (error) {
+      console.error("Private key login failed:", error);
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [ndk, retryNip42RelaysAfterSignIn]);
+
+  const loginAsGuest = useCallback(async (): Promise<boolean> => {
+    if (!ndk) return false;
+
+    setIsAuthenticating(true);
+    try {
+      // Check for existing guest key
+      const nsec = localStorage.getItem(STORAGE_KEY_NSEC);
+      let signer: NDKPrivateKeySigner;
+      
+      if (nsec) {
+        signer = new NDKPrivateKeySigner(nsec);
+      } else {
+        signer = NDKPrivateKeySigner.generate();
+        // Store for session persistence
+        const privateKey = signer.privateKey;
+        if (privateKey) {
+          localStorage.setItem(STORAGE_KEY_NSEC, privateKey);
+        }
+      }
+      
+      ndk.signer = signer;
+      const ndkUser = await signer.user();
+      
+      setUser({
+        pubkey: ndkUser.pubkey,
+        npub: ndkUser.npub,
+        profile: {
+          name: buildDeterministicGuestName(ndkUser.pubkey),
+        },
+      });
+      setAuthMethod("guest");
+      localStorage.setItem(STORAGE_KEY_AUTH, "guest");
+      retryNip42RelaysAfterSignIn();
+      return true;
+    } catch (error) {
+      console.error("Guest login failed:", error);
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [ndk, retryNip42RelaysAfterSignIn]);
+
+  const loginWithNostrConnect = useCallback(async (bunkerUrl: string): Promise<boolean> => {
+    if (!ndk) return false;
+    if (!bunkerUrl.trim().startsWith("bunker://")) {
+      console.error("Invalid NIP-46 bunker URL");
+      return false;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
+      const signer = NDKNip46Signer.bunker(ndk, bunkerUrl.trim(), localKey);
+      ndk.signer = signer;
+
+      const ndkUser = await signer.blockUntilReady();
+      await ndkUser.fetchProfile();
+
+      setUser({
+        pubkey: ndkUser.pubkey,
+        npub: ndkUser.npub,
+        profile: {
+          name: ndkUser.profile?.name,
+          displayName: ndkUser.profile?.displayName,
+          picture: ndkUser.profile?.image,
+          about: ndkUser.profile?.about,
+          nip05: ndkUser.profile?.nip05,
+        },
+      });
+      setAuthMethod("nostrConnect");
+      localStorage.setItem(STORAGE_KEY_AUTH, "nostrConnect");
+      localStorage.setItem(STORAGE_KEY_NIP46_BUNKER, bunkerUrl.trim());
+      if (signer.localSigner?.privateKey) {
+        localStorage.setItem(STORAGE_KEY_NIP46_LOCAL_NSEC, signer.localSigner.privateKey);
+      }
+      retryNip42RelaysAfterSignIn();
+      return true;
+    } catch (error) {
+      console.error("Nostr Connect login failed:", error);
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [ndk, retryNip42RelaysAfterSignIn]);
+
+
 
   const addRelay = useCallback((url: string) => {
-    const currentNdk = ndkRef.current;
-    if (!currentNdk) return;
-
+    if (!ndk) return;
+    
     if (!isRelayUrl(url)) {
       console.error("Invalid relay URL");
       return;
     }
-    const normalized = normalizeRelayUrl(url);
+    const normalizeUrl = (u: string) => u.replace(/\/+$/, "");
+    const normalized = normalizeUrl(url);
     removedRelaysRef.current.delete(normalized);
-    setResolvedDefaultRelays((previous) => appendResolvedRelayUrl(previous, normalized));
+    relayInitialFailureCountsRef.current.delete(normalized);
+    relayConnectedOnceRef.current.delete(normalized);
+    relayAutoPausedRef.current.delete(normalized);
     nostrDevLog("relay", "Adding relay and initiating connection", { relayUrl: normalized });
-    void verification.probeRelayInfo(normalized);
+    void probeRelayInfo(normalized);
 
     // Add to relays state
     setRelays((prev) => {
       let next: NDKRelayStatus[];
-      if (prev.some((r) => normalizeRelayUrl(r.url) === normalized)) {
+      if (prev.some((r) => normalizeUrl(r.url) === normalized)) {
         next = prev.map((r) =>
-          normalizeRelayUrl(r.url) === normalized ? { ...r, url: normalized, status: "connecting" } : r
+          normalizeUrl(r.url) === normalized ? { ...r, url: normalized, status: "connecting" } : r
         );
         savePersistedRelayUrls(next.map((relay) => relay.url));
         return next;
@@ -559,23 +849,315 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       return next;
     });
 
-    transport.connectRelay(normalized, {
-      clearCapabilityState: true,
+    // Connect via NDK
+    const relay = ndk.pool.getRelay(normalized, true);
+    relay?.connect();
+
+    // Set up relay event listeners
+    relay?.on("connect", () => {
+      nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
+      setRelays((prev) =>
+        prev.map((r) =>
+          normalizeUrl(r.url) === normalized ? { ...r, status: "connected" } : r
+        )
+      );
     });
-  }, [ndkRef, transport, verification]);
+
+    relay?.on("disconnect", () => {
+      nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
+      setRelays((prev) =>
+        prev.map((r) =>
+          normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
+        )
+      );
+    });
+
+    relay?.on("notice", (notice) => {
+      console.warn("Relay notice:", notice, "from", normalized);
+    });
+
+    relay?.on("auth", (challenge) => {
+      nostrDevLog("relay", "Relay auth challenge", { relayUrl: normalized, challenge });
+      beginRelayOperation("read");
+      pendingRelayVerificationRef.current.set(normalized, {
+        operation: "read",
+        requestedAt: Date.now(),
+      });
+    });
+  }, [ndk, probeRelayInfo, beginRelayOperation, relays]);
+
+  const loginWithNoas = useCallback(async (
+    username: string,
+    password: string,
+    config?: { baseUrl?: string }
+  ): Promise<boolean> => {
+    if (!ndk) return false;
+
+    const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
+
+    if (!noasApiUrl) {
+      console.error("Noas configuration missing");
+      return false;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const noasClient = new NoasClient(noasApiUrl);
+      const signInResponse = await noasClient.signIn(username, password);
+
+      if (!signInResponse.success || !signInResponse.encryptedPrivateKey || !signInResponse.publicKey) {
+        console.error("Noas sign-in failed:", signInResponse.error);
+        return false;
+      }
+
+      // Decrypt the NIP-49 encrypted private key using the user's password
+      let decryptedPrivateKey: string;
+      let signer: NDKPrivateKeySigner | null = null;
+      try {
+        decryptedPrivateKey = await noasClient.decryptPrivateKey(signInResponse.encryptedPrivateKey, password);
+
+        // Convert hex key to nsec format for better compatibility with NDK
+        const nsecKey = privateKeyHexToNsec(decryptedPrivateKey);
+        signer = new NDKPrivateKeySigner(nsecKey);
+        ndk.signer = signer;
+      } catch (decryptionError) {
+        console.error('Failed to decrypt private key:', decryptionError);
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      // Check if signer was created successfully
+      if (!signer) {
+        console.error('Signer was not created during decryption');
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      const ndkUser = await signer.user();
+      if (ndkUser.pubkey.toLowerCase() !== signInResponse.publicKey.toLowerCase()) {
+        console.error("Noas sign-in key mismatch: decrypted signer pubkey does not match server response", {
+          username,
+          signerPubkey: ndkUser.pubkey,
+          responsePubkey: signInResponse.publicKey,
+        });
+        return false;
+      }
+      await ndkUser.fetchProfile();
+
+      // Get profile picture if available
+      let profilePicture: string | undefined;
+      const pictureResponse = await noasClient.getProfilePicture(signInResponse.publicKey);
+      if (pictureResponse.profilePicture && pictureResponse.profilePictureType) {
+        const blob = new Blob([pictureResponse.profilePicture], { type: pictureResponse.profilePictureType });
+        profilePicture = URL.createObjectURL(blob);
+      }
+
+      // Get NIP-05 verification
+      const nip05Response = await noasClient.getNip05Verification(username);
+      const nip05Verified = nip05Response.names?.[username] === signInResponse.publicKey;
+
+      setUser({
+        pubkey: ndkUser.pubkey,
+        npub: ndkUser.npub,
+        profile: {
+          name: ndkUser.profile?.name || username,
+          displayName: ndkUser.profile?.displayName || username,
+          picture: profilePicture || ndkUser.profile?.image,
+          about: ndkUser.profile?.about,
+          nip05: noasClient.getNip05Identifier(username),
+          nip05Verified,
+        },
+      });
+
+      // Store Noas session information
+      setAuthMethod("noas");
+      localStorage.setItem(STORAGE_KEY_AUTH, "noas");
+      localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
+      
+      // Store relays if provided
+      if (signInResponse.relays && signInResponse.relays.length > 0) {
+        const relaySet = new Set([...resolvedDefaultRelays, ...signInResponse.relays]);
+        signInResponse.relays.forEach((relayUrl) => {
+          if (isRelayUrl(relayUrl)) {
+            addRelay(relayUrl);
+          }
+        });
+      }
+
+      retryNip42RelaysAfterSignIn();
+      return true;
+    } catch (error) {
+      console.error("Noas login failed:", error);
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays, addRelay]);
+
+  const signupWithNoas = useCallback(async (
+    username: string,
+    password: string,
+    privateKey: string,
+    pubkey: string,
+    config?: { baseUrl?: string }
+  ): Promise<boolean> => {
+    if (!ndk) return false;
+
+    const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
+
+    if (!noasApiUrl) {
+      console.error("Noas configuration missing");
+      return false;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const noasClient = new NoasClient(noasApiUrl);
+      
+      // Normalize the private key to nsec format
+      let nsecKey: string;
+      try {
+        if (privateKey.startsWith('nsec1')) {
+          nsecKey = privateKey;
+        } else if (/^[a-f0-9]{64}$/i.test(privateKey)) {
+          // Convert hex to nsec
+          nsecKey = privateKeyHexToNsec(privateKey);
+        } else {
+          setIsAuthenticating(false);
+          console.error("Invalid private key format");
+          return false;
+        }
+      } catch (error) {
+        console.error("Failed to normalize private key:", error);
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      // Register the user
+      const signUpResponse = await noasClient.register(username, password, nsecKey, pubkey, resolvedDefaultRelays);
+
+      if (!signUpResponse.success || !signUpResponse.user) {
+        console.error("Noas sign-up failed:", signUpResponse.error);
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      // Create signer with the private key
+      let signer: NDKPrivateKeySigner | null = null;
+      try {
+        signer = new NDKPrivateKeySigner(nsecKey);
+        ndk.signer = signer;
+      } catch (error) {
+        console.error('Failed to create signer:', error);
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      if (!signer) {
+        console.error('Signer was not created');
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      const ndkUser = await signer.user();
+      await ndkUser.fetchProfile();
+
+      // Get profile picture if available
+      let profilePicture: string | undefined;
+      const pictureResponse = await noasClient.getProfilePicture(signUpResponse.user.publicKey);
+      if (pictureResponse.profilePicture && pictureResponse.profilePictureType) {
+        const blob = new Blob([pictureResponse.profilePicture], { type: pictureResponse.profilePictureType });
+        profilePicture = URL.createObjectURL(blob);
+      }
+
+      // Get NIP-05 verification
+      const nip05Response = await noasClient.getNip05Verification(username);
+      const nip05Verified = nip05Response.names?.[username] === signUpResponse.user.publicKey;
+
+      setUser({
+        pubkey: ndkUser.pubkey,
+        npub: ndkUser.npub,
+        profile: {
+          name: ndkUser.profile?.name || username,
+          displayName: ndkUser.profile?.displayName || username,
+          picture: profilePicture || ndkUser.profile?.image,
+          about: ndkUser.profile?.about,
+          nip05: noasClient.getNip05Identifier(username),
+          nip05Verified,
+        },
+      });
+
+      // Store Noas session information
+      setAuthMethod("noas");
+      localStorage.setItem(STORAGE_KEY_AUTH, "noas");
+      localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
+
+      retryNip42RelaysAfterSignIn();
+      return true;
+    } catch (error) {
+      console.error("Noas sign-up failed:", error);
+      return false;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays]);
+
+  const getGuestPrivateKey = useCallback((): string | null => {
+    if (authMethod !== "guest") return null;
+    return localStorage.getItem(STORAGE_KEY_NSEC);
+  }, [authMethod]);
+
+  const publishPresenceOffline = useCallback(async () => {
+    if (!ndk || !ndk.signer) return;
+
+    try {
+      const event = new NDKEvent(ndk);
+      event.kind = NostrEventKind.UserStatus;
+      event.content = buildOfflinePresenceContent();
+      event.tags = buildPresenceTags(
+        Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
+      );
+      await event.sign();
+
+      const relayUrls = relays.map((relay) => relay.url);
+      const relaySet = NDKRelaySet.fromRelayUrls(
+        relayUrls.length > 0 ? relayUrls : resolvedDefaultRelays,
+        ndk,
+        true
+      );
+      await event.publish(relaySet);
+    } catch (error) {
+      console.warn("Failed to publish offline presence event during logout", error);
+    }
+  }, [resolvedDefaultRelays, ndk, relays]);
+
+  const logout = useCallback(() => {
+    void publishPresenceOffline();
+    profileSyncRunRef.current += 1;
+    setIsProfileSyncing(false);
+    if (ndk) {
+      ndk.signer = undefined;
+    }
+    setUser(null);
+    setAuthMethod(null);
+    localStorage.removeItem(STORAGE_KEY_AUTH);
+    localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
+    localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
+    // Keep guest key for potential re-login
+  }, [ndk, publishPresenceOffline]);
+
+
 
   const removeRelay = useCallback((url: string) => {
-    const currentNdk = ndkRef.current;
-    if (!currentNdk) return;
+    if (!ndk) return;
 
-    const normalized = normalizeRelayUrl(url);
-    const currentRelay = relayCurrentInstanceRef.current.get(normalized) ?? currentNdk.pool.getRelay(normalized, false);
+    const normalizeUrl = (u: string) => u.replace(/\/+$/, "");
+    const normalized = normalizeUrl(url);
 
     // Mark as intentionally removed so disconnect events don't re-add it
     removedRelaysRef.current.add(normalized);
-    setResolvedDefaultRelays((previous) => removeResolvedRelayUrl(previous, normalized));
     setRelays((prev) => {
-      const next = prev.filter((r) => normalizeRelayUrl(r.url) !== normalized);
+      const next = prev.filter((r) => normalizeUrl(r.url) !== normalized);
       savePersistedRelayUrls(next.map((relay) => relay.url));
       return next;
     });
@@ -584,88 +1166,370 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayAutoPausedRef.current.delete(normalized);
     relayReadRejectedRef.current.delete(normalized);
     relayWriteRejectedRef.current.delete(normalized);
-    relayAttemptStartedAtRef.current.delete(normalized);
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
-
-    if (currentRelay) {
-      relayCurrentInstanceRef.current.set(normalized, currentRelay);
-      currentNdk.pool.removeRelay(normalized);
-      if (relayCurrentInstanceRef.current.get(normalized) === currentRelay) {
-        relayCurrentInstanceRef.current.delete(normalized);
-      }
+    
+    const relay = ndk.pool.getRelay(normalized);
+    if (relay) {
+      relay.disconnect();
+      ndk.pool.removeRelay(normalized);
     }
-  }, [ndkRef]);
+  }, [ndk]);
 
   const reconnectRelay = useCallback((url: string) => {
-    const normalized = normalizeRelayUrl(url);
+    if (!ndk) return;
+    const normalized = url.replace(/\/+$/, "");
+    removedRelaysRef.current.delete(normalized);
+    relayInitialFailureCountsRef.current.delete(normalized);
+    relayConnectedOnceRef.current.delete(normalized);
+    relayAutoPausedRef.current.delete(normalized);
+    relayReadRejectedRef.current.delete(normalized);
+    relayWriteRejectedRef.current.delete(normalized);
+    pendingRelayVerificationRef.current.delete(normalized);
+    relayAuthRetryHistoryRef.current.delete(normalized);
     nostrDevLog("relay", "Manual relay reconnect requested", { relayUrl: normalized });
-    transport.connectRelay(normalized, {
-      forceNewSocket: true,
-      clearCapabilityState: true,
-    });
-  }, [transport]);
 
-  const reconnectInactiveRelaysAfterResume = useCallback((reason: "visibility" | "focus" | "online") => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    setRelays((previous) =>
+      previous.map((relay) =>
+        relay.url.replace(/\/+$/, "") === normalized
+          ? { ...relay, status: "connecting" }
+          : relay
+      )
+    );
 
-    const now = Date.now();
-    if (now - lastResumeReconnectAtRef.current < RELAY_RESUME_RECONNECT_COOLDOWN_MS) {
+    const relay = ndk.pool.getRelay(normalized, true);
+    relay?.disconnect();
+    relay?.connect();
+  }, [ndk]);
+
+  const publishEvent = useCallback(async (
+    kind: NostrEventKind,
+    content: string,
+    tags: string[][] = [],
+    parentId?: string,
+    relayUrls?: string[]
+  ): Promise<{ success: boolean; eventId?: string; rejectionReason?: string; publishedRelayUrls?: string[] }> => {
+    if (!ndk || !ndk.signer) {
+      console.error("Not authenticated or NDK not ready");
+      return { success: false };
+    }
+
+    let signedEventId: string | undefined;
+    let targetRelayUrls: string[] = [];
+    try {
+      beginRelayOperation("write");
+      const event = new NDKEvent(ndk);
+      event.kind = kind;
+      event.content = content;
+      
+      // Build tags
+      const eventTags: string[][] = [...tags];
+      
+      // Add reply tag if this is a reply
+      if (parentId) {
+        eventTags.push(["e", parentId, "", "reply"]);
+      }
+
+      // Extract hashtags for text content kinds only.
+      if (kind === NostrEventKind.TextNote || kind === NostrEventKind.Task) {
+        const hashtagRegex = /#(\w+)/g;
+        let match;
+        while ((match = hashtagRegex.exec(content)) !== null) {
+          eventTags.push(["t", match[1].toLowerCase()]);
+        }
+      }
+      
+      event.tags = eventTags;
+      
+      await event.sign();
+      signedEventId = event.id;
+      
+      const normalizeRelayUrl = (url: string) => url.trim().replace(/\/+$/, "");
+      const urls = (relayUrls && relayUrls.length > 0)
+        ? relayUrls
+        : relays.map((r) => r.url);
+      targetRelayUrls = Array.from(
+        new Set((urls.length > 0 ? urls : resolvedDefaultRelays).map(normalizeRelayUrl).filter(Boolean))
+      );
+      nostrDevLog("publish", "Preparing publish relay set", {
+        kind,
+        eventTagCount: eventTags.length,
+        parentId: parentId || null,
+        reason: relayUrls && relayUrls.length > 0 ? "explicit relay override" : "active relays fallback",
+        targetRelayUrls,
+      });
+      const publishedRelayUrlSet = new Set<string>();
+      let rejectionReason: string | undefined;
+
+      for (const relayUrl of targetRelayUrls) {
+        try {
+          const relaySet = NDKRelaySet.fromRelayUrls([relayUrl], ndk, true);
+          const publishedTo = await event.publish(relaySet, RELAY_PUBLISH_TIMEOUT_MS, 1);
+          Array.from(publishedTo)
+            .map((relay) => normalizeRelayUrl(relay.url))
+            .filter(Boolean)
+            .forEach((url) => publishedRelayUrlSet.add(url));
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error || "");
+          const extractedReason = extractRelayRejectionReason(error);
+          if (!rejectionReason && extractedReason) {
+            rejectionReason = extractedReason;
+          }
+          if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason: extractedReason })) {
+            markRelayVerificationFailure(relayUrl, "write", {
+              setStatus: true,
+              showToast: false,
+            });
+          }
+          nostrDevLog("publish", "Relay publish attempt failed", {
+            relayUrl,
+            rejectionReason: extractedReason || null,
+            error: errorMessage,
+          });
+        }
+      }
+
+      const publishedRelayUrls = Array.from(publishedRelayUrlSet);
+      if (publishedRelayUrls.length === 0) {
+        console.warn("Event publish completed but no relays confirmed receipt");
+        return { success: false, eventId: event.id, rejectionReason };
+      }
+
+      publishedRelayUrls.forEach((relayUrl) => {
+        markRelayWriteOutcome(relayUrl, true);
+      });
+      nostrDevLog("publish", "Event published", {
+        eventId: event.id,
+        kind,
+        targetRelayUrls,
+        publishedRelayUrls,
+      });
+      return { success: true, eventId: event.id, publishedRelayUrls };
+    } catch (error) {
+      console.error("Failed to publish event:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error || "");
+      const rejectionReason = extractRelayRejectionReason(error);
+      if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason })) {
+        const failedRelayUrls = [...targetRelayUrls];
+        if (failedRelayUrls.length === 0 && relayUrls && relayUrls.length === 1) {
+          failedRelayUrls.push(relayUrls[0].replace(/\/+$/, ""));
+        }
+        failedRelayUrls.forEach((relayUrl) => {
+          markRelayVerificationFailure(relayUrl, "write", {
+            setStatus: true,
+            showToast: false,
+          });
+        });
+        nostrDevLog("relay", "Publish write-rejection failure scope", {
+          targetRelayUrls,
+          failedRelayUrls,
+          rejectionReason,
+        });
+      }
+      return { success: false, eventId: signedEventId, rejectionReason };
+    } finally {
+      endRelayOperation("write");
+    }
+  }, [beginRelayOperation, endRelayOperation, markRelayVerificationFailure, markRelayWriteOutcome, ndk, relays, resolvedDefaultRelays]);
+
+  const createHttpAuthHeader = useCallback(async (
+    url: string,
+    method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+  ): Promise<string | null> => {
+    return createNip98AuthHeader(ndk, url, method);
+  }, [ndk]);
+
+  const updateUserProfile = useCallback(async (profile: EditableNostrProfile): Promise<boolean> => {
+    if (!hasRequiredProfileFields(profile)) {
+      console.warn("Profile update rejected: missing required name");
+      return false;
+    }
+
+    const relayUrls = relays
+      .filter((relay) => relay.status === "connected")
+      .map((relay) => relay.url);
+
+    if (relayUrls.length === 0) {
+      console.warn("Profile update skipped: no connected relays");
+      return false;
+    }
+
+    const result = await publishEvent(
+      NostrEventKind.Metadata,
+      buildKind0Content(profile),
+      [],
+      undefined,
+      relayUrls
+    );
+
+    if (!result.success) {
+      return false;
+    }
+
+    let nip05Verified = false;
+    if (profile.nip05) {
+      nip05Verified = await verifyNip05(profile.nip05, user?.pubkey || "");
+    }
+
+    setUser((prev) => prev ? ({
+      ...prev,
+      profile: {
+        name: profile.name.trim(),
+        displayName: profile.displayName?.trim() || undefined,
+        picture: profile.picture?.trim() || undefined,
+        about: profile.about?.trim() || undefined,
+        nip05: profile.nip05?.trim() || undefined,
+        nip05Verified,
+      },
+    }) : prev);
+    setNeedsProfileSetup(false);
+    return true;
+  }, [publishEvent, relays, user?.pubkey]);
+
+  useEffect(() => {
+    if (!user?.pubkey) {
+      setNeedsProfileSetup(false);
+      setIsProfileSyncing(false);
       return;
     }
 
-    const targets = relays
-      .filter((relay) => shouldReconnectRelayAfterResume(relay))
-      .map((relay) => relay.url);
+    const baseProfile = userProfileSnapshot;
+    const syncRun = profileSyncRunRef.current + 1;
+    profileSyncRunRef.current = syncRun;
+    let cancelled = false;
+    const isStale = () => cancelled || profileSyncRunRef.current !== syncRun;
 
-    if (targets.length === 0) return;
-    lastResumeReconnectAtRef.current = now;
+    setIsProfileSyncing(true);
 
-    nostrDevLog("relay", "Auto reconnecting relays after tab resume", {
-      reason,
-      relayUrls: targets,
+    const syncProfile = async () => {
+      let signerProfile: NostrUser["profile"] | null = null;
+      if (ndk?.signer) {
+        try {
+          const signerUser = await ndk.signer.user();
+          if (!isStale() && signerUser.pubkey === user.pubkey) {
+            await signerUser.fetchProfile();
+            if (!isStale()) {
+              signerProfile = {
+                name: signerUser.profile?.name,
+                displayName: signerUser.profile?.displayName,
+                picture: signerUser.profile?.image,
+                about: signerUser.profile?.about,
+                nip05: signerUser.profile?.nip05,
+              };
+            }
+          }
+        } catch (error) {
+          console.warn("Profile sync: signer profile fetch failed", error);
+        }
+      }
+
+      const kind0Profile = await fetchLatestKind0Profile(user.pubkey);
+      if (isStale()) return;
+
+      const mergedProfile = {
+        ...(userProfileSnapshot || {}),
+        ...(signerProfile || {}),
+        ...(kind0Profile || {}),
+      };
+
+      let nip05Verified = false;
+      if (mergedProfile.nip05) {
+        nip05Verified = await verifyNip05(mergedProfile.nip05, user.pubkey);
+      }
+      if (isStale()) return;
+
+      const nextProfile = {
+        ...mergedProfile,
+        nip05Verified,
+      };
+
+      setUser((prev) => {
+        if (!prev || prev.pubkey !== user.pubkey) return prev;
+        const previousProfile = prev.profile;
+        const isUnchanged =
+          previousProfile?.name === nextProfile.name &&
+          previousProfile?.displayName === nextProfile.displayName &&
+          previousProfile?.picture === nextProfile.picture &&
+          previousProfile?.about === nextProfile.about &&
+          previousProfile?.nip05 === nextProfile.nip05 &&
+          previousProfile?.nip05Verified === nextProfile.nip05Verified;
+        if (isUnchanged) return prev;
+        return {
+          ...prev,
+          profile: nextProfile,
+        };
+      });
+      setNeedsProfileSetup(!hasRequiredProfileFields(mergedProfile));
+      setIsProfileSyncing(false);
+    };
+
+    void syncProfile().catch((error) => {
+      if (isStale()) return;
+      console.warn("Profile sync failed", error);
+      setNeedsProfileSetup(!(baseProfile && hasRequiredProfileFields(baseProfile)));
+      setIsProfileSyncing(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ndk, fetchLatestKind0Profile, user?.pubkey, userProfileSnapshot]);
+
+  const subscribe = useCallback((
+    filters: NDKFilter[],
+    onEvent: (event: NDKEvent) => void,
+    options?: { closeOnEose?: boolean }
+  ): NDKSubscription | null => {
+    if (!ndk) return null;
+    nostrDevLog("subscribe", "Creating subscription", {
+      filterCount: filters.length,
+      filters,
     });
 
-    for (const url of targets) {
-      transport.connectRelay(url);
-    }
-  }, [transport, relays]);
-
-  // Visibility/focus/online reconnect effect
-  useEffect(() => {
-    if (!ndk) return;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== "visible") return;
-      reconnectInactiveRelaysAfterResume("visibility");
+    beginRelayOperation("read");
+    const subscription = ndk.subscribe(filters, { closeOnEose: options?.closeOnEose ?? false });
+    
+    subscription.on("event", (event: NDKEvent) => {
+      if (event.relay?.url) {
+        markRelayReadOutcome(event.relay.url, true);
+      }
+      onEvent(event);
+    });
+    subscription.on("closed", (relay: NDKRelay, reason: string) => {
+      if (!isAuthRequiredCloseReason(reason || "")) return;
+      nostrDevLog("relay", "Relay closed subscription due to auth failure", {
+        relayUrl: relay.url,
+        reason,
+      });
+      const normalizedRelayUrl = relay.url.replace(/\/+$/, "");
+      const shouldRetry = shouldRetryAuthAfterReadRejection({
+        hasSigner: Boolean(ndk.signer),
+        hadPendingAuthChallenge: pendingRelayVerificationRef.current.has(normalizedRelayUrl),
+        lastRetryAt: relayAuthRetryHistoryRef.current.get(normalizedRelayUrl),
+        now: Date.now(),
+      });
+      if (shouldRetry) {
+        relayAuthRetryHistoryRef.current.set(normalizedRelayUrl, Date.now());
+        nostrDevLog("relay", "Retrying relay connection to trigger NIP-42 auth challenge", {
+          relayUrl: normalizedRelayUrl,
+        });
+        relay.disconnect();
+        relay.connect();
+      }
+      markRelayVerificationFailure(relay.url, "read", {
+        setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),
+        showToast: true,
+      });
+    });
+    let finished = false;
+    const finishRead = () => {
+      if (finished) return;
+      finished = true;
+      endRelayOperation("read");
     };
-    const handleFocus = () => {
-      reconnectInactiveRelaysAfterResume("focus");
-    };
-    const handleOnline = () => {
-      reconnectInactiveRelaysAfterResume("online");
-    };
+    subscription.on("eose", finishRead);
+    subscription.on("close", finishRead);
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("focus", handleFocus);
-    window.addEventListener("online", handleOnline);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("focus", handleFocus);
-      window.removeEventListener("online", handleOnline);
-    };
-  }, [ndk, reconnectInactiveRelaysAfterResume]);
-
-  // Complementary relay enrichment from NIP-65 and NIP-05 profile data
-  useRelayEnrichment(
-    ndk,
-    user,
-    relays,
-    removedRelaysRef,
-    addRelay,
-    verification.beginRelayOperation,
-    verification.endRelayOperation,
-    complementaryRelaySyncKeyRef,
-  );
+    return subscription;
+  }, [beginRelayOperation, endRelayOperation, markRelayReadOutcome, markRelayVerificationFailure, ndk]);
 
   const isConnected = useMemo(() => {
     return relays.some((r) => r.status === "connected" || r.status === "read-only");
@@ -674,15 +1538,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const contextValue: NDKContextValue = useMemo(() => ({
     ndk,
     isConnected,
-    relays: (() => {
-      if (resolvedDefaultRelays.length === 0) return relays;
-      return mergeConfiguredRelayStatuses({
-        relays,
-        configuredRelayUrls: resolvedDefaultRelays,
-        removedRelayUrls: removedRelaysRef.current,
-        relayInfoByUrl: relayInfoRef.current,
-      });
-    })(),
+    relays,
     user,
     authMethod,
     isAuthenticating,
@@ -690,6 +1546,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     loginWithPrivateKey,
     loginAsGuest,
     loginWithNostrConnect,
+    loginWithNoas,
+    signupWithNoas,
     logout,
     addRelay,
     removeRelay,
@@ -701,11 +1559,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     isProfileSyncing,
     subscribe,
     getGuestPrivateKey,
+    
   }), [
     ndk,
     isConnected,
     relays,
-    resolvedDefaultRelays,
     user,
     authMethod,
     isAuthenticating,
@@ -713,6 +1571,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     loginWithPrivateKey,
     loginAsGuest,
     loginWithNostrConnect,
+    loginWithNoas,
+    signupWithNoas,
     logout,
     addRelay,
     removeRelay,
