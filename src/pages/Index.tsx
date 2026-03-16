@@ -9,7 +9,7 @@ import { ViewSwitcher } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/hooks/use-feed-navigation";
-import { NOSTR_EVENTS_QUERY_KEY, useNostrEventCache } from "@/hooks/use-nostr-event-cache";
+import { useNostrEventCache } from "@/hooks/use-nostr-event-cache";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
@@ -20,12 +20,7 @@ import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
 import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl } from "@/lib/nostr/event-converter";
 import {
-  loadPinnedChannelsState,
-  savePinnedChannelsState,
   getPinnedChannelIdsForView,
-  pinChannelForRelays,
-  unpinChannelFromRelays,
-  type PinnedChannelsState,
 } from "@/lib/pinned-channels-preferences";
 import {
   saveChannelFrecencyState,
@@ -63,18 +58,14 @@ import { useTaskPublishControls } from "@/hooks/use-task-publish-controls";
 import { useTaskStatusController } from "@/hooks/use-task-status-controller";
 import { useKind0People } from "@/hooks/use-kind0-people";
 import { useIndexDerivedData } from "@/hooks/use-index-derived-data";
-import {
-  removeCachedNostrEventsByRelayUrl,
-  removeRelayUrlFromCachedEvents,
-  type CachedNostrEvent,
-} from "@/lib/nostr/event-cache";
+import { usePinnedSidebarChannels } from "@/hooks/use-pinned-sidebar-channels";
+import { useIndexRelayShell } from "@/hooks/use-index-relay-shell";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
 import {
   Relay,
-  Channel,
   Task,
 } from "@/types";
 import { toast } from "sonner";
@@ -156,15 +147,6 @@ const Index = () => {
     return [...demoRelays, ...nostrRelayItems];
   }, [demoFeedActive, ndkRelays]);
 
-  const nostrRelays = useMemo(() => {
-    return ndkRelays.map((relay) => ({
-      url: relay.url,
-      status: relay.status,
-      latency: relay.latency,
-      nip11: relay.nip11,
-    }));
-  }, [ndkRelays]);
-
   const defaultRelayIds = useMemo(() => {
     const configuredRelayIds = getConfiguredDefaultRelayIds();
     if (!demoFeedActive) return configuredRelayIds;
@@ -225,6 +207,21 @@ const Index = () => {
     removeCachedRelayProfile,
   } = useKind0People(nostrEvents, selectedRelayUrls, user);
 
+  const {
+    nostrRelays,
+    relaysWithActiveState,
+    handleAddRelay,
+    handleRemoveRelay,
+  } = useIndexRelayShell({
+    ndkRelays,
+    relays,
+    effectiveActiveRelayIds,
+    addRelay,
+    removeRelay,
+    setActiveRelayIds,
+    removeCachedRelayProfile,
+  });
+
   const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? DEMO_SEED_TASKS : []));
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
@@ -257,20 +254,9 @@ const Index = () => {
     sortModifiedAtHoldByTaskId,
   });
 
-  const [pinnedChannelsState, setPinnedChannelsState] = useState<PinnedChannelsState>(
-    () => loadPinnedChannelsState(user?.pubkey)
-  );
   const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
     setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
   }, []);
-
-  useEffect(() => {
-    setPinnedChannelsState(loadPinnedChannelsState(user?.pubkey));
-  }, [user?.pubkey]);
-
-  useEffect(() => {
-    savePinnedChannelsState(pinnedChannelsState, user?.pubkey);
-  }, [pinnedChannelsState, user?.pubkey]);
 
   useEffect(() => {
     saveChannelFrecencyState(channelFrecencyState);
@@ -320,44 +306,20 @@ const Index = () => {
     openedWithFocusedTaskRef,
   } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
 
-  const activeRelayIdList = useMemo(
-    () => Array.from(effectiveActiveRelayIds),
-    [effectiveActiveRelayIds]
-  );
-
-  const channelRelayIds = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    for (const task of allTasks) {
-      for (const tag of task.tags) {
-        let relaysForTag = map.get(tag);
-        if (!relaysForTag) {
-          relaysForTag = new Set();
-          map.set(tag, relaysForTag);
-        }
-        for (const relayId of task.relays) relaysForTag.add(relayId);
-      }
-    }
-    return map;
-  }, [allTasks]);
-
-  const channelsWithState: Channel[] = useMemo(() => {
-    const pinnedIds = getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList);
-    const pinnedSet = new Set(pinnedIds);
-    const existingIds = new Set(channels.map((channel) => channel.id));
-    const stubs: Channel[] = pinnedIds
-      .filter((id) => !existingIds.has(id))
-      .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const }));
-    return [...stubs, ...channels]
-      .map((channel) => ({
-        ...channel,
-        filterState: channelFilterStates.get(channel.id) ?? "neutral",
-      }))
-      .sort((a, b) => {
-        const aIdx = pinnedSet.has(a.id) ? pinnedIds.indexOf(a.id) : Infinity;
-        const bIdx = pinnedSet.has(b.id) ? pinnedIds.indexOf(b.id) : Infinity;
-        return aIdx - bIdx;
-      });
-  }, [activeRelayIdList, channelFilterStates, channels, currentView, pinnedChannelsState]);
+  const {
+    pinnedChannelsState,
+    activeRelayIdList,
+    channelsWithState,
+    handleChannelPin,
+    handleChannelUnpin,
+  } = usePinnedSidebarChannels({
+    userPubkey: user?.pubkey,
+    currentView,
+    effectiveActiveRelayIds,
+    channels,
+    channelFilterStates,
+    allTasks,
+  });
 
   const filteredTasks = useMemo(
     () =>
@@ -599,64 +561,6 @@ const Index = () => {
     publishTaskPriorityUpdate,
     publishTaskCreateFollowUps,
   });
-
-  const handleChannelPin = useCallback((id: string) => {
-    const relaysWithTag = channelRelayIds.get(id);
-    const targetRelayIds = relaysWithTag
-      ? activeRelayIdList.filter((relayId) => relaysWithTag.has(relayId))
-      : activeRelayIdList;
-    const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
-    setPinnedChannelsState((previous) => pinChannelForRelays(previous, currentView, relayIds, id));
-  }, [activeRelayIdList, channelRelayIds, currentView]);
-
-  const handleChannelUnpin = useCallback((id: string) => {
-    setPinnedChannelsState((previous) =>
-      unpinChannelFromRelays(previous, currentView, activeRelayIdList, id)
-    );
-  }, [activeRelayIdList, currentView]);
-
-  const relaysWithActiveState: Relay[] = useMemo(() => {
-    return relays.map((relay) => ({
-      ...relay,
-      isActive: effectiveActiveRelayIds.has(relay.id),
-    }));
-  }, [effectiveActiveRelayIds, relays]);
-
-  const handleAddRelay = useCallback((url: string) => {
-    addRelay(url);
-    const relayId = getRelayIdFromUrl(url);
-    if (!relayId) return;
-    setActiveRelayIds((previous) => {
-      if (previous.has(relayId)) return previous;
-      const next = new Set(previous);
-      next.add(relayId);
-      return next;
-    });
-  }, [addRelay, setActiveRelayIds]);
-
-  const handleRemoveRelay = useCallback((url: string) => {
-    const normalizedRelayUrl = url.trim().replace(/\/+$/, "");
-    if (!normalizedRelayUrl) return;
-
-    queryClient.setQueriesData<CachedNostrEvent[]>(
-      { queryKey: NOSTR_EVENTS_QUERY_KEY },
-      (previous) => removeRelayUrlFromCachedEvents(previous || [], normalizedRelayUrl)
-    );
-    removeCachedNostrEventsByRelayUrl(normalizedRelayUrl);
-    removeCachedRelayProfile(normalizedRelayUrl);
-
-    const relayId = getRelayIdFromUrl(normalizedRelayUrl);
-    if (relayId) {
-      setActiveRelayIds((previous) => {
-        if (!previous.has(relayId)) return previous;
-        const next = new Set(previous);
-        next.delete(relayId);
-        return next;
-      });
-    }
-
-    removeRelay(normalizedRelayUrl);
-  }, [queryClient, removeCachedRelayProfile, removeRelay, setActiveRelayIds]);
 
   const handleFocusSidebar = useCallback(() => {
     setIsSidebarFocused(true);
