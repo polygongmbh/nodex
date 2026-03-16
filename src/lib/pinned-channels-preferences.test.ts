@@ -165,7 +165,7 @@ describe("getPinnedChannelIdsForView (multi-relay union)", () => {
   });
 
   it("deduplicates channels pinned on multiple relays", () => {
-    let state = pinChannelForRelays(emptyState(), "feed", [RELAY_A, RELAY_B], "work");
+    const state = pinChannelForRelays(emptyState(), "feed", [RELAY_A, RELAY_B], "work");
     expect(getPinnedChannelIdsForView(state, "feed", [RELAY_A, RELAY_B])).toEqual(["work"]);
   });
 

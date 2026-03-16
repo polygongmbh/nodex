@@ -92,7 +92,11 @@ export function ChannelItem({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            isPinned ? onUnpin?.() : onPin?.();
+            if (isPinned) {
+              onUnpin?.();
+              return;
+            }
+            onPin?.();
           }}
           title={isPinned
             ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
