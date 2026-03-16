@@ -242,4 +242,25 @@ describe("Noas auth forms", () => {
     expect(screen.getByRole("button", { name: /more options/i })).toBeInTheDocument();
     expect(screen.getByText(/your keys are encrypted/i)).toBeInTheDocument();
   });
+
+  it("shows shared tabs on the sign-up form and lets users switch back to sign-in", () => {
+    render(
+      <NoasSignUpForm
+        onSignUp={vi.fn(async () => true)}
+        onSignIn={vi.fn()}
+        onBack={vi.fn()}
+        username=""
+        password=""
+        isEditingHostUrl={false}
+        isLoading={false}
+        noasHostUrl="https://noas.example.com"
+        onUsernameChange={vi.fn()}
+        onPasswordChange={vi.fn()}
+        onToggleHostEdit={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /^sign in$/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /^sign up$/i }).length).toBeGreaterThan(0);
+  });
 });

@@ -35,6 +35,20 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 }));
 
 describe("NostrAuthModal", () => {
+  const openChooserIfNeeded = () => {
+    const moreOptionsButton = screen.queryByRole("button", { name: /^more options$/i });
+    if (moreOptionsButton) {
+      fireEvent.click(moreOptionsButton);
+    }
+  };
+
+  const openNoasEntryIfNeeded = () => {
+    const noasEntryButton = screen.queryByRole("button", { name: /noas authentication/i });
+    if (noasEntryButton) {
+      fireEvent.click(noasEntryButton);
+    }
+  };
+
   const clickOutsideDialog = () => {
     const overlay = document.querySelector("[data-state='open'].fixed.inset-0");
     if (!overlay) {
@@ -88,11 +102,7 @@ describe("NostrAuthModal", () => {
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
-    const backButtons = screen.queryAllByRole("button", { name: /back|auth\.back/i });
-    if (backButtons.length > 0) {
-      fireEvent.click(backButtons[0]);
-    }
-
+    openChooserIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /browser extension/i }));
 
     const extensionOption = screen.getByRole("button", { name: /browser extension/i });
@@ -265,11 +275,7 @@ describe("NostrAuthModal", () => {
 
     render(<NostrAuthModal isOpen onClose={onClose} />);
 
-    const backButtons = screen.queryAllByRole("button", { name: /back|auth\.back/i });
-    if (backButtons.length > 0) {
-      fireEvent.click(backButtons[0]);
-    }
-
+    openChooserIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /private key/i }));
     fireEvent.change(screen.getByLabelText(/^private key$/i), {
       target: { value: "nsec1example" },
@@ -284,7 +290,7 @@ describe("NostrAuthModal", () => {
   it("preserves shared noas credentials when switching between sign in and sign up", () => {
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /noas authentication/i }));
+    openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice_name" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
 
@@ -303,7 +309,7 @@ describe("NostrAuthModal", () => {
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /noas authentication/i }));
+    openNoasEntryIfNeeded();
 
     const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
     expect(hostInput).toHaveValue("");
@@ -320,14 +326,14 @@ describe("NostrAuthModal", () => {
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /noas authentication/i }));
+    openNoasEntryIfNeeded();
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
-    expect(screen.getAllByText(/connection to the noas host failed/i)).toHaveLength(2);
+    expect(screen.getAllByText(/connection to the noas host failed/i)).toHaveLength(1);
     expect(screen.queryByText(/invalid username or password/i)).not.toBeInTheDocument();
   });
 

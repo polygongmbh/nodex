@@ -279,7 +279,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
           </DialogHeader>
         )}
 
-        {error && (
+        {error && step !== "noas" && step !== "noasSignUp" && (
           <div className="flex items-start gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
             <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <span>{error}</span>

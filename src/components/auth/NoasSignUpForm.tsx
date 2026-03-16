@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Loader2, AlertCircle, UserPlus, Copy, RefreshCw } from "lucide-react";
+import { Loader2, UserPlus, Copy, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { getPublicKey } from "nostr-tools";
-import { NoasSharedFields, validateNoasBaseUrl, validateNoasUsername } from "./NoasSharedFields";
-import { normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
+import { NoasSharedFields, validateNoasUsername } from "./NoasSharedFields";
+import { NoasAuthPanelShell } from "./NoasAuthPanelShell";
+import { resolveNoasBaseUrlForSubmit } from "./noas-form-helpers";
 
 interface NoasSignUpFormProps {
   onSignUp: (
@@ -101,8 +102,7 @@ export function NoasSignUpForm({
       return;
     }
 
-    const normalizedNoasBaseUrl = normalizeNoasBaseUrl(noasHostUrl);
-    const noasHostError = validateNoasBaseUrl(normalizedNoasBaseUrl, t);
+    const { baseUrl: normalizedNoasBaseUrl, error: noasHostError } = resolveNoasBaseUrlForSubmit(noasHostUrl, t);
     if (noasHostError) {
       setLocalError(noasHostError);
       return;
@@ -127,34 +127,20 @@ export function NoasSignUpForm({
       }
     }
 
-    const success = await onSignUp(username.trim(), password, privateKey.trim(), finalPubkey, {
+    await onSignUp(username.trim(), password, privateKey.trim(), finalPubkey, {
       baseUrl: normalizedNoasBaseUrl,
     });
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4 border-b pb-2 pr-10">
-        <button
-          type="button"
-          onClick={onSignIn}
-          disabled={isLoading}
-          className="text-sm font-medium text-muted-foreground hover:text-foreground pb-2 -mb-[9px]"
-        >
-          {t("auth.signIn")}
-        </button>
-        <button type="button" className="text-sm font-medium text-primary border-b-2 border-primary pb-2 -mb-[9px]">
-          {t("auth.signUp")}
-        </button>
-      </div>
-
-      {displayedError ? (
-        <div className="flex items-start gap-2 rounded-md bg-destructive/10 p-3 text-destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-          <span className="text-sm">{displayedError}</span>
-        </div>
-      ) : null}
-
+    <NoasAuthPanelShell
+      mode="signUp"
+      isLoading={isLoading}
+      error={displayedError || undefined}
+      onSignIn={onSignIn}
+      onBack={onBack}
+      footerText={t("auth.noas.footerText")}
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <NoasSharedFields
           t={t}
@@ -249,13 +235,6 @@ export function NoasSignUpForm({
           )}
         </Button>
       </form>
-
-      <div className="space-y-3 border-t pt-4">
-        <p className="text-center text-sm text-muted-foreground">{t("auth.noas.footerText")}</p>
-        <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="w-full">
-          {t("auth.noas.moreOptions")}
-        </Button>
-      </div>
-    </div>
+    </NoasAuthPanelShell>
   );
 }

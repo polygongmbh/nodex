@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { AlertCircle, Loader2, LogIn } from "lucide-react";
+import { Loader2, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { NoasSharedFields, validateNoasBaseUrl, validateNoasUsername } from "./NoasSharedFields";
-import { normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
+import { NoasSharedFields, validateNoasUsername } from "./NoasSharedFields";
+import { NoasAuthPanelShell } from "./NoasAuthPanelShell";
+import { resolveNoasBaseUrlForSubmit } from "./noas-form-helpers";
 
 interface NoasAuthFormProps {
   onLogin: (username: string, password: string, config?: { baseUrl?: string }) => Promise<boolean>;
@@ -57,41 +58,25 @@ export function NoasAuthForm({
       return;
     }
 
-    const normalizedNoasBaseUrl = normalizeNoasBaseUrl(noasHostUrl);
-    const noasHostError = validateNoasBaseUrl(normalizedNoasBaseUrl, t);
+    const { baseUrl: normalizedNoasBaseUrl, error: noasHostError } = resolveNoasBaseUrlForSubmit(noasHostUrl, t);
     if (noasHostError) {
       setLocalError(noasHostError);
       return;
     }
 
-    const success = await onLogin(username.trim(), password, {
+    await onLogin(username.trim(), password, {
       baseUrl: normalizedNoasBaseUrl,
     });
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4 border-b pb-2 pr-10">
-        <button type="button" className="text-sm font-medium text-primary border-b-2 border-primary pb-2 -mb-[9px]">
-          {t("auth.signIn")}
-        </button>
-        <button
-          type="button"
-          onClick={onSignUp}
-          disabled={isLoading}
-          className="text-sm font-medium text-muted-foreground hover:text-foreground pb-2 -mb-[9px]"
-        >
-          {t("auth.signUp")}
-        </button>
-      </div>
-
-      {displayedError ? (
-        <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-destructive">
-          <AlertCircle className="h-4 w-4" />
-          <span className="text-sm">{displayedError}</span>
-        </div>
-      ) : null}
-
+    <NoasAuthPanelShell
+      mode="signIn"
+      isLoading={isLoading}
+      error={displayedError || undefined}
+      onSignUp={onSignUp}
+      onBack={onBack}
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
         <NoasSharedFields
           t={t}
@@ -122,12 +107,6 @@ export function NoasAuthForm({
           )}
         </Button>
       </form>
-
-      <div>
-        <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="w-full">
-          {t("auth.noas.moreOptions")}
-        </Button>
-      </div>
-    </div>
+    </NoasAuthPanelShell>
   );
 }
