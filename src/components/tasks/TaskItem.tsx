@@ -24,6 +24,7 @@ import {
 import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/lib/task-status";
+import { handleTaskStatusToggleClick } from "@/lib/task-status-toggle";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -303,25 +304,22 @@ export function TaskItem({
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => {
-                  e.stopPropagation();
                   if (!canCompleteTask()) return;
-                  if (isTaskTerminalStatus(task.status) && onStatusChange) {
-                    if (statusMenuOpen) {
-                      setStatusMenuOpen(false);
-                      allowStatusMenuOpenRef.current = false;
-                    } else {
+                  handleTaskStatusToggleClick(e, {
+                    status: task.status,
+                    hasStatusChangeHandler: Boolean(onStatusChange),
+                    isMenuOpen: statusMenuOpen,
+                    openMenu: () => setStatusMenuOpen(true),
+                    closeMenu: () => setStatusMenuOpen(false),
+                    allowMenuOpen: () => {
                       allowStatusMenuOpenRef.current = true;
-                      setStatusMenuOpen(true);
-                    }
-                    return;
-                  }
-                  if (e.altKey && onStatusChange) {
-                    allowStatusMenuOpenRef.current = true;
-                    setStatusMenuOpen(true);
-                    return;
-                  }
-                  setStatusMenuOpen(false);
-                  onToggleComplete?.(task.id);
+                    },
+                    clearMenuOpenIntent: () => {
+                      allowStatusMenuOpenRef.current = false;
+                    },
+                    toggleStatus: () => onToggleComplete?.(task.id),
+                    focusTask: () => onSelect?.(task.id),
+                  });
                 }}
                 onFocus={(e) => {
                   if (!onStatusChange || !canCompleteTask()) return;

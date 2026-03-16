@@ -53,6 +53,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { isTaskTerminalStatus } from "@/lib/task-status";
+import { handleTaskStatusToggleClick } from "@/lib/task-status-toggle";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -560,25 +561,17 @@ export function CalendarView({
                                 <button
                                   onClick={(e) => {
                                     if (!canCompleteTask(task)) return;
-                                    if (isTaskTerminalStatus(task.status) && onStatusChange) {
-                                      const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
-                                      if (isMenuOpen) {
-                                        closeStatusMenu(task.id);
-                                        clearStatusMenuOpenIntent(task.id);
-                                      } else {
-                                        allowStatusMenuOpen(task.id);
-                                        openStatusMenu(task.id);
-                                      }
-                                      return;
-                                    }
-                                    if (e.altKey && onStatusChange) {
-                                      allowStatusMenuOpen(task.id);
-                                      openStatusMenu(task.id);
-                                      return;
-                                    }
-                                    closeStatusMenu(task.id);
-                                    clearStatusMenuOpenIntent(task.id);
-                                    onToggleComplete(task.id);
+                                    handleTaskStatusToggleClick(e, {
+                                      status: task.status,
+                                      hasStatusChangeHandler: Boolean(onStatusChange),
+                                      isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
+                                      openMenu: () => openStatusMenu(task.id),
+                                      closeMenu: () => closeStatusMenu(task.id),
+                                      allowMenuOpen: () => allowStatusMenuOpen(task.id),
+                                      clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
+                                      toggleStatus: () => onToggleComplete(task.id),
+                                      focusTask: () => onFocusTask?.(task.id),
+                                    });
                                   }}
                                   onFocus={(e) => {
                                     if (!onStatusChange || !canCompleteTask(task)) return;
@@ -959,25 +952,17 @@ export function CalendarView({
                               <button
                                 onClick={(e) => {
                                   if (!canCompleteTask(task)) return;
-                                  if (isTaskTerminalStatus(task.status) && onStatusChange) {
-                                    const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
-                                    if (isMenuOpen) {
-                                      closeStatusMenu(task.id);
-                                      clearStatusMenuOpenIntent(task.id);
-                                    } else {
-                                      allowStatusMenuOpen(task.id);
-                                      openStatusMenu(task.id);
-                                    }
-                                    return;
-                                  }
-                                  if (e.altKey && onStatusChange) {
-                                    allowStatusMenuOpen(task.id);
-                                    openStatusMenu(task.id);
-                                    return;
-                                  }
-                                  closeStatusMenu(task.id);
-                                  clearStatusMenuOpenIntent(task.id);
-                                  onToggleComplete(task.id);
+                                  handleTaskStatusToggleClick(e, {
+                                    status: task.status,
+                                    hasStatusChangeHandler: Boolean(onStatusChange),
+                                    isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
+                                    openMenu: () => openStatusMenu(task.id),
+                                    closeMenu: () => closeStatusMenu(task.id),
+                                    allowMenuOpen: () => allowStatusMenuOpen(task.id),
+                                    clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
+                                    toggleStatus: () => onToggleComplete(task.id),
+                                    focusTask: () => onFocusTask?.(task.id),
+                                  });
                                 }}
                                 onFocus={(e) => {
                                   if (!onStatusChange || !canCompleteTask(task)) return;

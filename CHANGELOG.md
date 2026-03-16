@@ -5,11 +5,13 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Split the startup onboarding dialog into separate `Create account` and `Sign in` actions so first-time users can jump straight to registration while returning users land on sign-in.
 - Updated the Nostr sign-in dialog copy across English, Spanish, and German so the username/password option no longer refers to a "Noas account" in its description text.
 - Added a distinct `Closed` task state with separate Nostr status-event mapping, explicit task status menu selection, and a fourth Kanban column to the right of `Done` without adding `Closed` to the normal click cycle.
 - Fixed a feed startup crash caused by task status sorting state initializing before the main Index task data graph was ready.
 - Reworked task update permissions so untagged tasks can be updated by any signed-in user, tagged tasks remain editable by tagged assignees and the creator, and unauthorized relay-driven status/date/priority updates no longer override tasks locally.
 - Refined the Noas auth flow so sign-up stays focused, sign-in alternatives show distinct icons again, and the username suffix host can be edited in place behind a guarded pencil control.
+- Task checkbox clicks now only enter a task when the quick toggle moves it into `In Progress`, and `Option`/`Alt` clicks no longer open the task while using the status picker.
 
 ## [1.17.3] - 2026-03-14
 - Stabilized Relay connection and status handling with cleaner reconnect behavior, clearer `read only` / `read rejected` states, and better startup relay detection.

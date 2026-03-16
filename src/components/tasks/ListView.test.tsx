@@ -133,4 +133,75 @@ describe("ListView priority control", () => {
     expect(screen.getByLabelText(/priority for task content/i)).toBeDisabled();
     expect(screen.getByRole("button", { name: /set date/i })).toBeDisabled();
   });
+
+  it("focuses a task after checkbox click only when toggling into in progress", () => {
+    mockUser = { id: "me" };
+    const task = makeTask({
+      id: "task-focus",
+      content: "Task content #general",
+      status: "todo",
+    });
+    const relays = [makeRelay()];
+    const channels = [makeChannel()];
+    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+    const onFocusTask = vi.fn();
+    const onToggleComplete = vi.fn();
+
+    render(
+      <ListView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        currentUser={people[0]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={onToggleComplete}
+        onFocusTask={onFocusTask}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Set status"));
+
+    expect(onToggleComplete).toHaveBeenCalledWith("task-focus");
+    expect(onFocusTask).toHaveBeenCalledWith("task-focus");
+  });
+
+  it("does not focus a task after option-clicking its checkbox", () => {
+    mockUser = { id: "me" };
+    const task = makeTask({
+      id: "task-option",
+      content: "Task content #general",
+      status: "todo",
+    });
+    const relays = [makeRelay()];
+    const channels = [makeChannel()];
+    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+    const onFocusTask = vi.fn();
+    const onToggleComplete = vi.fn();
+
+    render(
+      <ListView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        currentUser={people[0]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={onToggleComplete}
+        onStatusChange={vi.fn()}
+        onFocusTask={onFocusTask}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
+
+    expect(onToggleComplete).not.toHaveBeenCalled();
+    expect(onFocusTask).not.toHaveBeenCalled();
+  });
 });

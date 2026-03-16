@@ -50,6 +50,7 @@ import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedToolti
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
 import { isTaskTerminalStatus } from "@/lib/task-status";
+import { handleTaskStatusToggleClick } from "@/lib/task-status-toggle";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -668,25 +669,17 @@ export function FeedView({
                         <button
                           onClick={(e) => {
                             if (!canCompleteTask(task)) return;
-                            if (isTaskTerminalStatus(task.status) && onStatusChange) {
-                              const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
-                              if (isMenuOpen) {
-                                closeStatusMenu(task.id);
-                                clearStatusMenuOpenIntent(task.id);
-                              } else {
-                                allowStatusMenuOpen(task.id);
-                                openStatusMenu(task.id);
-                              }
-                              return;
-                            }
-                            if (e.altKey && onStatusChange) {
-                              allowStatusMenuOpen(task.id);
-                              openStatusMenu(task.id);
-                              return;
-                            }
-                            closeStatusMenu(task.id);
-                            clearStatusMenuOpenIntent(task.id);
-                            onToggleComplete(task.id);
+                            handleTaskStatusToggleClick(e, {
+                              status: task.status,
+                              hasStatusChangeHandler: Boolean(onStatusChange),
+                              isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
+                              openMenu: () => openStatusMenu(task.id),
+                              closeMenu: () => closeStatusMenu(task.id),
+                              allowMenuOpen: () => allowStatusMenuOpen(task.id),
+                              clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
+                              toggleStatus: () => onToggleComplete(task.id),
+                              focusTask: () => onFocusTask?.(task.id),
+                            });
                           }}
                           onFocus={(e) => {
                             if (!onStatusChange || !canCompleteTask(task)) return;

@@ -44,6 +44,7 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
 import { isTaskTerminalStatus } from "@/lib/task-status";
+import { handleTaskStatusToggleClick } from "@/lib/task-status-toggle";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -749,27 +750,20 @@ export function ListView({
                           <button
                             onClick={(event) => {
                               if (!canCompleteTask(task)) return;
-                              if (onStatusChange && isTaskTerminalStatus(task.status)) {
-                                const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
-                                if (isMenuOpen) {
-                                  closeStatusMenu(task.id);
-                                  clearStatusMenuOpenIntent(task.id);
-                                } else {
-                                  allowStatusMenuOpen(task.id);
-                                  openStatusMenu(task.id);
-                                }
-                                return;
-                              }
-                              if (event.altKey && onStatusChange) {
-                                allowStatusMenuOpen(task.id);
-                                openStatusMenu(task.id);
-                                return;
-                              }
-                              closeStatusMenu(task.id);
-                              clearStatusMenuOpenIntent(task.id);
-                              onToggleComplete(task.id);
+                              handleTaskStatusToggleClick(event, {
+                                status: task.status,
+                                hasStatusChangeHandler: Boolean(onStatusChange),
+                                isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
+                                openMenu: () => openStatusMenu(task.id),
+                                closeMenu: () => closeStatusMenu(task.id),
+                                allowMenuOpen: () => allowStatusMenuOpen(task.id),
+                                clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
+                                toggleStatus: () => onToggleComplete(task.id),
+                                focusTask: () => onFocusTask?.(task.id),
+                              });
                             }}
                             disabled={!canCompleteTask(task)}
+                            aria-label={t("tasks.actions.setStatus")}
                             title={getStatusButtonTitle(task)}
                             className={cn(
                               "p-0.5 rounded transition-colors",

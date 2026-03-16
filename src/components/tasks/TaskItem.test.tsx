@@ -30,6 +30,7 @@ describe("TaskItem status actions", () => {
   it("cycles status on plain click even when status menu exists", () => {
     const onStatusChange = vi.fn();
     const onToggleComplete = vi.fn();
+    const onSelect = vi.fn();
 
     render(
       <TaskItem
@@ -39,6 +40,7 @@ describe("TaskItem status actions", () => {
         currentUser={baseTask.author}
         onStatusChange={onStatusChange}
         onToggleComplete={onToggleComplete}
+        onSelect={onSelect}
       />
     );
 
@@ -46,6 +48,55 @@ describe("TaskItem status actions", () => {
 
     expect(onToggleComplete).toHaveBeenCalledWith("t1");
     expect(onStatusChange).not.toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledWith("t1");
+  });
+
+  it("does not enter the task when toggling from in progress to done", () => {
+    const onStatusChange = vi.fn();
+    const onToggleComplete = vi.fn();
+    const onSelect = vi.fn();
+
+    render(
+      <TaskItem
+        task={{ ...baseTask, status: "in-progress" }}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+        onToggleComplete={onToggleComplete}
+        onSelect={onSelect}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Set status"));
+
+    expect(onToggleComplete).toHaveBeenCalledWith("t1");
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("does not enter the task on option-click", () => {
+    const onStatusChange = vi.fn();
+    const onToggleComplete = vi.fn();
+    const onSelect = vi.fn();
+
+    render(
+      <TaskItem
+        task={baseTask}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+        onToggleComplete={onToggleComplete}
+        onSelect={onSelect}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
+
+    expect(onToggleComplete).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("allows directly marking a task as done", () => {
