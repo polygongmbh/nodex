@@ -13,7 +13,7 @@ import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/li
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { useNostrProfiles } from "@/hooks/use-nostr-profiles";
-import { STORAGE_KEY_COMPOSE_DRAFT } from "@/lib/storage-registry";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -63,7 +63,7 @@ export function TaskTree({
   const { t } = useTranslation();
   const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
-  const SHARED_COMPOSE_DRAFT_KEY = STORAGE_KEY_COMPOSE_DRAFT;
+  const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const {
     mediaItems,
     activeMediaIndex,

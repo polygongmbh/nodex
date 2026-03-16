@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { SavedFilterConfiguration, SavedFilterState } from "@/types";
-import { STORAGE_KEY_SAVED_FILTER_CONFIGS as SAVED_FILTER_CONFIGURATIONS_STORAGE_KEY } from "./storage-registry";
+import { SAVED_FILTER_CONFIGS_STORAGE_KEY as SAVED_FILTER_CONFIGURATIONS_STORAGE_KEY } from "./storage-registry";
 
 const savedFilterConfigurationSchema = z.object({
   id: z.string().min(1),

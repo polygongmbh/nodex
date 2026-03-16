@@ -35,9 +35,7 @@ import {
   saveChannelFrecencyState,
   type ChannelFrecencyState,
 } from "@/lib/channel-frecency";
-import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
 import { resolveCurrentUser } from "@/lib/current-user";
-import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind } from "@/lib/nostr/task-state-events";
@@ -49,11 +47,6 @@ import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt"
 import { filterTasks } from "@/lib/task-filtering";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
 import { loadPresencePublishingEnabled } from "@/lib/user-preferences";
-import {
-  loadCompletionSoundEnabled,
-  saveCompletionSoundEnabled,
-} from "@/lib/user-preferences";
-import { playCompletionPopSound } from "@/lib/completion-feedback";
 import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
@@ -77,6 +70,7 @@ import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { useSavedFilterConfigs } from "@/hooks/use-saved-filter-configs";
 import { useTaskPublishFlow } from "@/hooks/use-task-publish-flow";
 import { useTaskPublishControls } from "@/hooks/use-task-publish-controls";
+import { useTaskStatusController } from "@/hooks/use-task-status-controller";
 import { useKind0People } from "@/hooks/use-kind0-people";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import {
@@ -86,9 +80,6 @@ import {
 } from "@/lib/nostr/event-cache";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
-import {
-  notifyStatusRestricted,
-} from "@/lib/notifications";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
 import {
@@ -96,7 +87,6 @@ import {
   Channel,
   ChannelMatchMode,
   Task,
-  TaskStatus,
 } from "@/types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -105,7 +95,6 @@ import { useTranslation } from "react-i18next";
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
-const TASK_STATUS_REORDER_DELAY_MS = 260;
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
 const DEMO_SEED_TASKS = mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents()));
 const FeedView = lazy(() =>
@@ -259,14 +248,8 @@ const Index = () => {
     () => loadChannelFrecencyState()
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [completionSoundEnabled, setCompletionSoundEnabled] = useState(() => loadCompletionSoundEnabled());
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
-  const pendingStatusUpdateTimeoutsRef = useRef<Map<string, number>>(new Map());
-  const completionConfettiLastAtRef = useRef<Map<string, number>>(new Map());
-  const pendingTaskStatusesRef = useRef<Map<string, TaskStatus>>(new Map());
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
-  const [sortStatusHoldByTaskId, setSortStatusHoldByTaskId] = useState<Record<string, TaskStatus>>({});
-  const [sortModifiedAtHoldByTaskId, setSortModifiedAtHoldByTaskId] = useState<Record<string, string>>({});
 
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
@@ -632,80 +615,6 @@ const Index = () => {
     setPinnedChannelsState((prev) => unpinChannelFromRelays(prev, currentView, activeRelayIdList, id));
   }, [activeRelayIdList, currentView]);
 
-  const triggerCompletionCheer = useCallback((taskId: string) => {
-    triggerTaskCompletionCheer(taskId, completionConfettiLastAtRef.current);
-  }, []);
-
-  const triggerCompletionFeedback = useCallback((taskId: string, status: "todo" | "in-progress" | "done") => {
-    if (status !== "done") return;
-    triggerCompletionCheer(taskId);
-    playCompletionPopSound(completionSoundEnabled);
-  }, [completionSoundEnabled, triggerCompletionCheer]);
-
-  const handleToggleCompletionSound = useCallback(() => {
-    setCompletionSoundEnabled((previous) => {
-      const next = !previous;
-      saveCompletionSoundEnabled(next);
-      return next;
-    });
-  }, []);
-
-  const clearPendingStatusUpdate = useCallback((taskId: string) => {
-    const timeoutId = pendingStatusUpdateTimeoutsRef.current.get(taskId);
-    if (timeoutId === undefined) return;
-    window.clearTimeout(timeoutId);
-    pendingStatusUpdateTimeoutsRef.current.delete(taskId);
-  }, []);
-
-  const scheduleTaskStatusReorderUpdate = useCallback((taskId: string, status: TaskStatus) => {
-    clearPendingStatusUpdate(taskId);
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    const currentStatus = pendingTaskStatusesRef.current.get(taskId) ?? existingTask?.status ?? "todo";
-    pendingTaskStatusesRef.current.set(taskId, status);
-    setSortStatusHoldByTaskId((previous) => ({ ...previous, [taskId]: currentStatus }));
-    if (existingTask) {
-      const currentSortDate = existingTask.lastEditedAt || existingTask.timestamp;
-      setSortModifiedAtHoldByTaskId((previous) => ({
-        ...previous,
-        [taskId]: currentSortDate.toISOString(),
-      }));
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setLocalTasks((previous) =>
-        applyTaskStatusUpdate(previous, allTasks, taskId, status, currentUser?.name)
-      );
-      pendingTaskStatusesRef.current.delete(taskId);
-      pendingStatusUpdateTimeoutsRef.current.delete(taskId);
-      setSortStatusHoldByTaskId((previous) => {
-        const next = { ...previous };
-        delete next[taskId];
-        return next;
-      });
-      setSortModifiedAtHoldByTaskId((previous) => {
-        const next = { ...previous };
-        delete next[taskId];
-        return next;
-      });
-    }, TASK_STATUS_REORDER_DELAY_MS);
-
-    pendingStatusUpdateTimeoutsRef.current.set(taskId, timeoutId);
-  }, [allTasks, clearPendingStatusUpdate, currentUser?.name]);
-
-  useEffect(() => {
-    const pendingTimeouts = pendingStatusUpdateTimeoutsRef.current;
-    const pendingStatuses = pendingTaskStatusesRef.current;
-    return () => {
-      for (const timeoutId of pendingTimeouts.values()) {
-        window.clearTimeout(timeoutId);
-      }
-      pendingTimeouts.clear();
-      pendingStatuses.clear();
-      setSortStatusHoldByTaskId({});
-      setSortModifiedAtHoldByTaskId({});
-    };
-  }, []);
-
   const {
     hasDisconnectedSelectedRelays,
     isInteractionBlocked,
@@ -728,41 +637,21 @@ const Index = () => {
     t,
   });
 
-  const handleToggleComplete = (taskId: string) => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask) return;
-    if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-      notifyStatusRestricted(t);
-      return;
-    }
-    const currentStatus = pendingTaskStatusesRef.current.get(taskId) ?? existingTask.status ?? "todo";
-    const nextStatus = cycleTaskStatus(currentStatus);
-    scheduleTaskStatusReorderUpdate(taskId, nextStatus);
-    triggerCompletionFeedback(taskId, nextStatus);
-    void publishTaskStateUpdate(taskId, nextStatus);
-  };
-
-
-  const handleStatusChange = (taskId: string, newStatus: "todo" | "in-progress" | "done") => {
-    if (guardInteraction("modify")) {
-      return;
-    }
-
-    const existingTask = allTasks.find((task) => task.id === taskId);
-    if (!existingTask) return;
-    if (!canUserChangeTaskStatus(existingTask, currentUser)) {
-      notifyStatusRestricted(t);
-      return;
-    }
-
-    scheduleTaskStatusReorderUpdate(taskId, newStatus);
-    triggerCompletionFeedback(taskId, newStatus);
-    void publishTaskStateUpdate(taskId, newStatus);
-  };
+  const {
+    completionSoundEnabled,
+    handleToggleCompletionSound,
+    handleToggleComplete,
+    handleStatusChange,
+    sortStatusHoldByTaskId,
+    sortModifiedAtHoldByTaskId,
+  } = useTaskStatusController({
+    allTasks,
+    currentUser,
+    guardInteraction,
+    publishTaskStateUpdate,
+    setLocalTasks,
+    t,
+  });
 
   const handleListingStatusChange = useCallback((taskId: string, status: Nip99ListingStatus) => {
     if (guardInteraction("modify")) return;

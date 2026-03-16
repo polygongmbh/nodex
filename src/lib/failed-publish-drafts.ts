@@ -2,7 +2,7 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import type { Person, PublishedAttachment, TaskDateType, TaskStatus, TaskType } from "@/types";
 import { z } from "zod";
 
-import { STORAGE_KEY_FAILED_PUBLISH_DRAFTS as FAILED_PUBLISH_DRAFTS_STORAGE_KEY } from "./storage-registry";
+import { FAILED_PUBLISH_DRAFTS_STORAGE_KEY } from "./storage-registry";
 export { FAILED_PUBLISH_DRAFTS_STORAGE_KEY };
 const MAX_FAILED_PUBLISH_DRAFTS = 50;
 

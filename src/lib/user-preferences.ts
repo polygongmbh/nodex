@@ -1,8 +1,8 @@
 import {
-  STORAGE_KEY_AUTO_CAPTION_ENABLED,
-  STORAGE_KEY_COMPLETION_SOUND_ENABLED,
-  STORAGE_KEY_PRESENCE_ENABLED,
-  STORAGE_KEY_PUBLISH_DELAY_ENABLED,
+  AUTO_CAPTION_ENABLED_STORAGE_KEY,
+  COMPLETION_SOUND_ENABLED_STORAGE_KEY,
+  PRESENCE_ENABLED_STORAGE_KEY,
+  PUBLISH_DELAY_ENABLED_STORAGE_KEY,
 } from "./storage-registry";
 
 function loadBooleanPref(key: string, defaultValue: boolean): boolean {
@@ -18,29 +18,29 @@ function saveBooleanPref(key: string, value: boolean): void {
 }
 
 export function loadPresencePublishingEnabled(): boolean {
-  return loadBooleanPref(STORAGE_KEY_PRESENCE_ENABLED, true);
+  return loadBooleanPref(PRESENCE_ENABLED_STORAGE_KEY, true);
 }
 export function savePresencePublishingEnabled(enabled: boolean): void {
-  saveBooleanPref(STORAGE_KEY_PRESENCE_ENABLED, enabled);
+  saveBooleanPref(PRESENCE_ENABLED_STORAGE_KEY, enabled);
 }
 
 export function loadAutoCaptionEnabled(): boolean {
-  return loadBooleanPref(STORAGE_KEY_AUTO_CAPTION_ENABLED, false);
+  return loadBooleanPref(AUTO_CAPTION_ENABLED_STORAGE_KEY, false);
 }
 export function saveAutoCaptionEnabled(enabled: boolean): void {
-  saveBooleanPref(STORAGE_KEY_AUTO_CAPTION_ENABLED, enabled);
+  saveBooleanPref(AUTO_CAPTION_ENABLED_STORAGE_KEY, enabled);
 }
 
 export function loadPublishDelayEnabled(): boolean {
-  return loadBooleanPref(STORAGE_KEY_PUBLISH_DELAY_ENABLED, false);
+  return loadBooleanPref(PUBLISH_DELAY_ENABLED_STORAGE_KEY, false);
 }
 export function savePublishDelayEnabled(enabled: boolean): void {
-  saveBooleanPref(STORAGE_KEY_PUBLISH_DELAY_ENABLED, enabled);
+  saveBooleanPref(PUBLISH_DELAY_ENABLED_STORAGE_KEY, enabled);
 }
 
 export function loadCompletionSoundEnabled(): boolean {
-  return loadBooleanPref(STORAGE_KEY_COMPLETION_SOUND_ENABLED, true);
+  return loadBooleanPref(COMPLETION_SOUND_ENABLED_STORAGE_KEY, true);
 }
 export function saveCompletionSoundEnabled(enabled: boolean): void {
-  saveBooleanPref(STORAGE_KEY_COMPLETION_SOUND_ENABLED, enabled);
+  saveBooleanPref(COMPLETION_SOUND_ENABLED_STORAGE_KEY, enabled);
 }

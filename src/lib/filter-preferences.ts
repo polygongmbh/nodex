@@ -1,9 +1,9 @@
 import { Channel, ChannelMatchMode } from "@/types";
 import { z } from "zod";
 import {
-  STORAGE_KEY_ACTIVE_RELAYS as ACTIVE_RELAYS_STORAGE_KEY,
-  STORAGE_KEY_CHANNEL_FILTERS as CHANNEL_FILTERS_STORAGE_KEY,
-  STORAGE_KEY_CHANNEL_MATCH_MODE as CHANNEL_MATCH_MODE_STORAGE_KEY,
+  ACTIVE_RELAYS_STORAGE_KEY,
+  CHANNEL_FILTERS_STORAGE_KEY,
+  CHANNEL_MATCH_MODE_STORAGE_KEY,
 } from "./storage-registry";
 
 type PersistedChannelFilters = Record<string, Channel["filterState"]>;
