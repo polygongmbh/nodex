@@ -58,6 +58,7 @@ import {
 import {
   extractRelayRejectionReason,
 } from "./relay-error";
+import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
 import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
@@ -472,7 +473,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
-      if (!removedRelaysRef.current.has(normalized)) {
+
+      // Do not overwrite "connection-error" with "disconnected": pool.removeRelay() fires a
+      // second relay:disconnect after auto-pause, which would clobber the error status.
+      if (!removedRelaysRef.current.has(normalized) && !relayAutoPausedRef.current.has(normalized)) {
         setRelays((prev) =>
           prev.map((r) =>
             normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
@@ -480,13 +484,41 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         );
       }
 
-      if (relayConnectedOnceRef.current.has(normalized)) return;
       if (relayAutoPausedRef.current.has(normalized)) return;
 
+      if (relayConnectedOnceRef.current.has(normalized)) {
+        // Relay had connected before. NDK normally handles reconnection via handleReconnection(),
+        // but NDK's handleStaleConnection() (wsStateMonitor / keepalive probe) sets status to
+        // DISCONNECTED *before* calling onDisconnect(), so handleReconnection is never scheduled.
+        // Scheduling relay.connect() here covers that gap; NDK's internal guard makes it a no-op
+        // if NDK is already reconnecting.
+        if (!removedRelaysRef.current.has(normalized)) {
+          setTimeout(() => {
+            if (!removedRelaysRef.current.has(normalized) && !relayAutoPausedRef.current.has(normalized)) {
+              relay.connect();
+            }
+          }, 3000);
+        }
+        return;
+      }
+
+      // Relay has never connected. NDK skips handleReconnection() when the initial WebSocket
+      // closes while still in CONNECTING state (because status wasn't CONNECTED). Track failures
+      // and schedule retries with exponential backoff ourselves.
       const nextFailureCount = (relayInitialFailureCountsRef.current.get(normalized) ?? 0) + 1;
       relayInitialFailureCountsRef.current.set(normalized, nextFailureCount);
 
-      if (nextFailureCount < MAX_INITIAL_CONNECT_FAILURES) return;
+      if (nextFailureCount < MAX_INITIAL_CONNECT_FAILURES) {
+        if (!removedRelaysRef.current.has(normalized)) {
+          const delay = Math.min(1000 * 2 ** (nextFailureCount - 1), 30000);
+          setTimeout(() => {
+            if (!removedRelaysRef.current.has(normalized) && !relayAutoPausedRef.current.has(normalized)) {
+              relay.connect();
+            }
+          }, delay);
+        }
+        return;
+      }
 
       relayAutoPausedRef.current.add(normalized);
       setRelays((prev) =>
@@ -1481,13 +1513,24 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     options?: { closeOnEose?: boolean }
   ): NDKSubscription | null => {
     if (!ndk) return null;
+
+    const limitDecision = applyPerformanceAwareSubscriptionLimits(filters, typeof navigator === "undefined"
+      ? undefined
+      : {
+        hardwareConcurrency: navigator.hardwareConcurrency,
+        deviceMemory: "deviceMemory" in navigator ? (navigator as Record<string, unknown>).deviceMemory as number : undefined,
+      });
+
     nostrDevLog("subscribe", "Creating subscription", {
-      filterCount: filters.length,
-      filters,
+      filterCount: limitDecision.filters.length,
+      filters: limitDecision.filters,
+      performanceClass: limitDecision.performanceClass,
+      subscriptionLimitCap: limitDecision.cap,
+      appliedPerformanceCap: limitDecision.changed,
     });
 
     beginRelayOperation("read");
-    const subscription = ndk.subscribe(filters, { closeOnEose: options?.closeOnEose ?? false });
+    const subscription = ndk.subscribe(limitDecision.filters, { closeOnEose: options?.closeOnEose ?? false });
     
     subscription.on("event", (event: NDKEvent) => {
       if (event.relay?.url) {
