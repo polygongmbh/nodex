@@ -64,11 +64,16 @@ describe("Noas auth forms", () => {
 
     render(<ControlledNoasAuthForm onNoasHostUrlChange={onNoasHostUrlChange} />);
 
-    const hostInput = screen.getByLabelText(/^host$/i);
+    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
     expect(hostInput).toHaveAttribute("readonly");
+    expect(hostInput.className).toContain("pr-10");
 
     fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
     expect(hostInput).not.toHaveAttribute("readonly");
+    expect(hostInput).toHaveFocus();
+    expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
+    // Once editing starts, the hidden pencil should no longer reserve input space.
+    expect(hostInput.className).not.toContain("pr-10");
 
     fireEvent.change(hostInput, { target: { value: "https://custom.noas.example/api" } });
     expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example/api");

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -68,8 +69,16 @@ export function NoasSharedFields({
   onToggleHostEdit,
 }: NoasSharedFieldsProps) {
   const hostReadOnly = allowDirectHostEdit ? false : !isEditingHostUrl;
+  const shouldShowHostEditButton = !allowDirectHostEdit && hostReadOnly;
   const hostValue = noasHostUrl;
   const normalizedPlaceholder = normalizeNoasBaseUrl("noas.example.com");
+  const hostInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!hostReadOnly) {
+      hostInputRef.current?.focus();
+    }
+  }, [hostReadOnly]);
 
   return (
     <>
@@ -100,17 +109,18 @@ export function NoasSharedFields({
           <div className="space-y-1 min-w-0">
             <div className="relative">
               <Input
+                ref={hostInputRef}
                 value={hostValue}
                 readOnly={hostReadOnly}
                 onChange={(e) => onNoasHostUrlChange?.(e.target.value)}
                 aria-label={t("auth.noas.host")}
                 placeholder={normalizedPlaceholder}
                 title={hostValue || undefined}
-                className={`h-10 text-sm ${allowDirectHostEdit ? "" : "pr-10"} ${
+                className={`h-10 text-sm ${shouldShowHostEditButton ? "pr-10" : ""} ${
                   hostReadOnly ? "text-muted-foreground" : "text-foreground"
                 }`}
               />
-              {allowDirectHostEdit ? null : (
+              {shouldShowHostEditButton ? (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -130,7 +140,7 @@ export function NoasSharedFields({
                     <TooltipContent>{t("auth.noas.editHostWarning")}</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              )}
+              ) : null}
             </div>
             {allowDirectHostEdit ? null : (
               <p className="text-[11px] leading-none text-muted-foreground whitespace-nowrap">
