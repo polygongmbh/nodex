@@ -23,7 +23,7 @@ describe("Noas auth forms", () => {
     expect(screen.getByRole("button", { name: /private key/i })).toBeInTheDocument();
   });
 
-  it("edits the noas domain in the username row only after enabling the pencil control", () => {
+  it("edits the noas host in the username row only after enabling the pencil control", () => {
     const onNoasHostUrlChange = vi.fn();
 
     render(
@@ -40,13 +40,13 @@ describe("Noas auth forms", () => {
       />
     );
 
-    const domainInput = screen.getByLabelText(/domain/i);
-    expect(domainInput).toHaveAttribute("readonly");
+    const hostInput = screen.getByLabelText(/^host$/i);
+    expect(hostInput).toHaveAttribute("readonly");
 
-    fireEvent.click(screen.getByRole("button", { name: /edit noas url/i }));
-    expect(domainInput).not.toHaveAttribute("readonly");
+    fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
+    expect(hostInput).not.toHaveAttribute("readonly");
 
-    fireEvent.change(domainInput, { target: { value: "custom.noas.example" } });
+    fireEvent.change(hostInput, { target: { value: "custom.noas.example" } });
     expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example");
   });
 
@@ -67,11 +67,11 @@ describe("Noas auth forms", () => {
       />
     );
 
-    const domainInput = screen.getByLabelText(/domain/i) as HTMLInputElement;
-    expect(domainInput.value).toBe("custom.noas.example:8443");
+    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
+    expect(hostInput.value).toBe("custom.noas.example:8443");
 
-    fireEvent.click(screen.getByRole("button", { name: /edit noas url/i }));
-    fireEvent.change(domainInput, { target: { value: "other.noas.example:9443" } });
+    fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
+    fireEvent.change(hostInput, { target: { value: "other.noas.example:9443" } });
 
     expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://other.noas.example:9443");
   });

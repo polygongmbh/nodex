@@ -149,7 +149,7 @@ export function NoasAuthForm({
                   value={displayedHost}
                   readOnly={!isEditingHostUrl}
                   onChange={(e) => onNoasHostUrlChange?.(`${parsedNoasUrl?.protocol || "https:"}//${e.target.value}`)}
-                  aria-label={t("auth.noas.domain") || "Domain"}
+                  aria-label={t("auth.noas.host")}
                   className="h-8 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
                 />
                 <TooltipProvider>
@@ -162,20 +162,20 @@ export function NoasAuthForm({
                         onClick={() => setIsEditingHostUrl((current) => !current)}
                         disabled={isLoading}
                         aria-pressed={isEditingHostUrl}
-                        aria-label={t("auth.noas.editUrl") || "Edit Noas URL"}
+                        aria-label={t("auth.noas.editHost")}
                         className="h-7 w-7 px-0"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      {t("auth.noas.editUrlWarning") || "Only change this if you are sure you know what you are doing."}
+                      {t("auth.noas.editHostWarning")}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
               <p className="w-44 text-[11px] text-muted-foreground">
-                {t("auth.noas.urlHint") || "Advanced: edit only if you intentionally use a different Noas host."}
+                {t("auth.noas.hostHint")}
               </p>
             </div>
           </div>
