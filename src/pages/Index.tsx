@@ -5,7 +5,7 @@ import { Sidebar, SidebarHeader } from "@/components/layout/Sidebar";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { DesktopSearchDock, type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
-import { ViewSwitcher, ViewType } from "@/components/tasks/ViewSwitcher";
+import { ViewSwitcher } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/hooks/use-feed-navigation";
@@ -18,8 +18,7 @@ import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
-import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl, isSpamContent } from "@/lib/nostr/event-converter";
-import { deriveChannels } from "@/lib/channels";
+import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl } from "@/lib/nostr/event-converter";
 import {
   loadPinnedChannelsState,
   savePinnedChannelsState,
@@ -29,23 +28,18 @@ import {
   type PinnedChannelsState,
 } from "@/lib/pinned-channels-preferences";
 import {
-  getChannelFrecencyScores,
+  saveChannelFrecencyState,
   loadChannelFrecencyState,
   recordChannelInteraction,
-  saveChannelFrecencyState,
   type ChannelFrecencyState,
 } from "@/lib/channel-frecency";
-import { resolveCurrentUser } from "@/lib/current-user";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { isTaskStateEventKind } from "@/lib/nostr/task-state-events";
-import { isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
 import {
   buildImetaTag,
 } from "@/lib/attachments";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasks } from "@/lib/task-filtering";
-import { deriveSidebarPeople } from "@/lib/sidebar-people";
 import { loadPresencePublishingEnabled } from "@/lib/user-preferences";
 import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
@@ -55,10 +49,6 @@ import {
   buildPresenceTags,
 } from "@/lib/presence-status";
 import { shouldBootstrapGuideDemoFeed } from "@/lib/onboarding-guide";
-import {
-  mapPeopleSelection,
-  setAllChannelFilters,
-} from "@/lib/filter-state-utils";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
 import { buildNip99PublishTags } from "@/lib/nostr/nip99-metadata";
 import type { Nip99ListingStatus } from "@/types";
@@ -72,7 +62,7 @@ import { useTaskPublishFlow } from "@/hooks/use-task-publish-flow";
 import { useTaskPublishControls } from "@/hooks/use-task-publish-controls";
 import { useTaskStatusController } from "@/hooks/use-task-status-controller";
 import { useKind0People } from "@/hooks/use-kind0-people";
-import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { useIndexDerivedData } from "@/hooks/use-index-derived-data";
 import {
   removeCachedNostrEventsByRelayUrl,
   removeRelayUrlFromCachedEvents,
@@ -85,7 +75,6 @@ import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
 import {
   Relay,
   Channel,
-  ChannelMatchMode,
   Task,
 } from "@/types";
 import { toast } from "sonner";
@@ -95,7 +84,6 @@ import { useTranslation } from "react-i18next";
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
-const INITIAL_CHANNEL_SEED_LIMIT = 16;
 const DEMO_SEED_TASKS = mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents()));
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
@@ -110,23 +98,14 @@ const ListView = lazy(() =>
   import("@/components/tasks/ListView").then((module) => ({ default: module.ListView }))
 );
 
-function buildPendingPublishDedupKey(task: Task): string {
-  const authorId = task.author.id?.trim().toLowerCase() || "";
-  const normalizedContent = task.content.trim();
-  const normalizedTags = [...task.tags].map((tag) => tag.trim().toLowerCase()).sort().join(",");
-  const feedMessageType = task.feedMessageType || "";
-  const parentId = task.parentId || "";
-  return `${authorId}|${task.taskType}|${feedMessageType}|${parentId}|${normalizedTags}|${normalizedContent}`;
-}
-
 const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // NDK Nostr integration
-  const { 
-    relays: ndkRelays, 
+  const {
+    relays: ndkRelays,
     isConnected: isNostrConnected,
     addRelay,
     removeRelay,
@@ -158,6 +137,7 @@ const Index = () => {
     ],
     []
   );
+
   // Convert relay statuses to app Relay format - combine demo relay with nostr relays
   const relays: Relay[] = useMemo(() => {
     const nostrRelayItems = ndkRelays.map((r) => ({
@@ -176,25 +156,23 @@ const Index = () => {
     return [...demoRelays, ...nostrRelayItems];
   }, [demoFeedActive, ndkRelays]);
 
+  const nostrRelays = useMemo(() => {
+    return ndkRelays.map((relay) => ({
+      url: relay.url,
+      status: relay.status,
+      latency: relay.latency,
+      nip11: relay.nip11,
+    }));
+  }, [ndkRelays]);
+
   const defaultRelayIds = useMemo(() => {
     const configuredRelayIds = getConfiguredDefaultRelayIds();
     if (!demoFeedActive) return configuredRelayIds;
     return Array.from(new Set([DEMO_RELAY_ID, ...configuredRelayIds]));
   }, [demoFeedActive]);
 
-  // Convert NDK relays to the format expected by sidebar/widgets
-  const nostrRelays = useMemo(() => {
-    return ndkRelays.map(r => ({
-      url: r.url,
-      status: r.status,
-      latency: r.latency,
-      nip11: r.nip11,
-    }));
-  }, [ndkRelays]);
-
   const isMobile = useIsMobile();
   const {
-    activeRelayIds,
     setActiveRelayIds,
     effectiveActiveRelayIds,
     handleRelayToggle,
@@ -215,15 +193,7 @@ const Index = () => {
       }
     },
   });
-  const selectedRelayUrls = useMemo(() => {
-    const selectedRelayScopeIds = resolveChannelRelayScopeIds(
-      effectiveActiveRelayIds,
-      relays.map((relay) => relay.id)
-    );
-    return relays
-      .filter((relay) => relay.id !== DEMO_RELAY_ID && relay.url && selectedRelayScopeIds.has(relay.id))
-      .map((relay) => relay.url as string);
-  }, [effectiveActiveRelayIds, relays]);
+
   const {
     events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
@@ -234,6 +204,18 @@ const Index = () => {
     availableRelayIds: relays.map((relay) => relay.id),
     subscribe,
   });
+
+  // Compute selected relay URLs for profile hydration
+  const selectedRelayUrls = useMemo(() => {
+    const selectedRelayScopeIds = resolveChannelRelayScopeIds(
+      effectiveActiveRelayIds,
+      relays.map((relay) => relay.id)
+    );
+    return relays
+      .filter((relay) => relay.id !== DEMO_RELAY_ID && relay.url && selectedRelayScopeIds.has(relay.id))
+      .map((relay) => relay.url as string);
+  }, [effectiveActiveRelayIds, relays]);
+
   const {
     people,
     setPeople,
@@ -242,6 +224,7 @@ const Index = () => {
     seedCachedKind0Events,
     removeCachedRelayProfile,
   } = useKind0People(nostrEvents, selectedRelayUrls, user);
+
   const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? DEMO_SEED_TASKS : []));
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
@@ -251,149 +234,28 @@ const Index = () => {
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
 
-  // Filter nostr events - only keep those with tags and not spam
-  const filteredNostrEvents = useMemo(() => {
-    return nostrEvents.filter(event => {
-      if (suppressedNostrEventIds.has(event.id)) return false;
-      if (event.kind === NostrEventKind.Metadata) return false;
-      if (isTaskStateEventKind(event.kind)) return true;
-      if (isPriorityPropertyEvent(event.kind, event.tags)) return true;
-      if (event.kind === NostrEventKind.ClassifiedListing) return true;
-      if (
-        event.kind === NostrEventKind.CalendarDateBased ||
-        event.kind === NostrEventKind.CalendarTimeBased
-      ) {
-        return true;
-      }
-      // Convert NDKEvent to check tags
-      const hasTags = event.tags.some(tag => tag[0]?.toLowerCase() === "t" && tag[1]) ||
-        /#\w+/.test(event.content);
-      if (!hasTags) return false;
-      // Filter out spam
-      if (isSpamContent(event.content)) return false;
-      return true;
-    });
-  }, [nostrEvents, suppressedNostrEventIds]);
-
-  // Convert filtered Nostr events to tasks
-  const nostrTasks: Task[] = useMemo(() => {
-    return nostrEventsToTasks(
-      filteredNostrEvents.map((event) => ({
-        id: event.id,
-        pubkey: event.pubkey,
-        created_at: event.created_at,
-        kind: event.kind as NostrEventKind,
-        tags: event.tags,
-        content: event.content,
-        sig: event.sig || "",
-        relayUrl: event.relayUrl,
-        relayUrls: event.relayUrls,
-      }))
-    );
-  }, [filteredNostrEvents]);
-
-  // Combine local tasks with Nostr tasks
-  const allTasks = useMemo(() => {
-    const nostrTaskDedupKeys = new Set(nostrTasks.map((task) => buildPendingPublishDedupKey(task)));
-    const localTasksForMerge = localTasks.filter((task) => {
-      if (!task.pendingPublishToken) return true;
-      return !nostrTaskDedupKeys.has(buildPendingPublishDedupKey(task));
-    });
-    const combined = mergeTasks(localTasksForMerge, nostrTasks);
-    const byId = new Map<string, Task>();
-    const byListingReplaceableKey = new Map<string, Task>();
-
-    for (const task of combined) {
-      const listingReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
-      if (!listingReplaceableKey) {
-        const existing = byId.get(task.id);
-        if (!existing) {
-          byId.set(task.id, task);
-          continue;
-        }
-        const mergedRelays = Array.from(new Set([...existing.relays, ...task.relays]));
-        byId.set(task.id, {
-          ...(existing.timestamp.getTime() >= task.timestamp.getTime() ? existing : task),
-          relays: mergedRelays,
-        });
-        continue;
-      }
-      const existing = byListingReplaceableKey.get(listingReplaceableKey);
-      if (
-        !existing ||
-        task.timestamp.getTime() > existing.timestamp.getTime() ||
-        (task.timestamp.getTime() === existing.timestamp.getTime() && task.id > existing.id)
-      ) {
-        byListingReplaceableKey.set(listingReplaceableKey, task);
-      }
-    }
-
-    return [...byId.values(), ...byListingReplaceableKey.values()].map((task) => {
-      const sortStatus = sortStatusHoldByTaskId[task.id];
-      const sortLastEditedAtIso = sortModifiedAtHoldByTaskId[task.id];
-      if (!sortStatus && !sortLastEditedAtIso) return task;
-      return {
-        ...task,
-        ...(sortStatus ? { sortStatus } : {}),
-        ...(sortLastEditedAtIso ? { sortLastEditedAt: new Date(sortLastEditedAtIso) } : {}),
-      };
-    }).sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [localTasks, nostrTasks, sortModifiedAtHoldByTaskId, sortStatusHoldByTaskId]);
-
-  const personalizedChannelScores = useMemo(
-    () => getChannelFrecencyScores(channelFrecencyState),
-    [channelFrecencyState]
-  );
-
-  const scopedLocalTasksForChannels = useMemo(
-    () =>
-      {
-        const channelRelayScopeIds = resolveChannelRelayScopeIds(
-          effectiveActiveRelayIds,
-          relays.map((relay) => relay.id)
-        );
-        return localTasks.filter((task) =>
-          task.relays.length === 0 ||
-          task.relays.some((relayId) => channelRelayScopeIds.has(relayId))
-        );
-      },
-    [effectiveActiveRelayIds, localTasks, relays]
-  );
-
-  const scopedNostrEventsForChannels = useMemo(
-    () => {
-      const channelRelayScopeIds = resolveChannelRelayScopeIds(
-        effectiveActiveRelayIds,
-        relays.map((relay) => relay.id)
-      );
-      return filteredNostrEvents.filter((event) => {
-        const relayUrls = [
-          ...(event.relayUrls || []),
-          ...(event.relayUrl ? [event.relayUrl] : []),
-        ]
-          .map((url) => url.trim().replace(/\/+$/, ""))
-          .filter((url) => Boolean(url));
-        if (relayUrls.length === 0) return false;
-        return relayUrls.some((relayUrl) => channelRelayScopeIds.has(getRelayIdFromUrl(relayUrl)));
-      });
-    },
-    [effectiveActiveRelayIds, filteredNostrEvents, relays]
-  );
-
-  // Sidebar channels: selected-feed scoped, personalized, and dampened by usage.
-  const channels: Channel[] = useMemo(() => {
-    return deriveChannels(scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, {
-      minCount: 6,
-      personalizeScores: personalizedChannelScores,
-      maxCount: INITIAL_CHANNEL_SEED_LIMIT,
-      sortVisibleAlphabetically: true,
-    });
-  }, [scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, personalizedChannelScores]);
-
-  // Compose autocomplete channels: all known tags.
-  const composeChannels: Channel[] = useMemo(() => {
-    return deriveChannels(localTasks, filteredNostrEvents, postedTags, 1);
-  }, [localTasks, filteredNostrEvents, postedTags]);
+  const {
+    allTasks,
+    channels,
+    composeChannels,
+    sidebarPeople,
+    currentUser,
+    hasCachedCurrentUserProfileMetadata,
+  } = useIndexDerivedData({
+    nostrEvents,
+    localTasks,
+    postedTags,
+    suppressedNostrEventIds,
+    people,
+    supplementalLatestActivityByAuthor,
+    cachedKind0Events,
+    user,
+    effectiveActiveRelayIds,
+    relays,
+    channelFrecencyState,
+    sortStatusHoldByTaskId,
+    sortModifiedAtHoldByTaskId,
+  });
 
   const [pinnedChannelsState, setPinnedChannelsState] = useState<PinnedChannelsState>(
     () => loadPinnedChannelsState(user?.pubkey)
@@ -401,9 +263,19 @@ const Index = () => {
   const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
     setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
   }, []);
-  const sidebarPeople = useMemo(() => {
-    return deriveSidebarPeople(people, allTasks, supplementalLatestActivityByAuthor);
-  }, [allTasks, people, supplementalLatestActivityByAuthor]);
+
+  useEffect(() => {
+    setPinnedChannelsState(loadPinnedChannelsState(user?.pubkey));
+  }, [user?.pubkey]);
+
+  useEffect(() => {
+    savePinnedChannelsState(pinnedChannelsState, user?.pubkey);
+  }, [pinnedChannelsState, user?.pubkey]);
+
+  useEffect(() => {
+    saveChannelFrecencyState(channelFrecencyState);
+  }, [channelFrecencyState]);
+
   const {
     mentionRequest,
     channelFilterStates,
@@ -437,26 +309,68 @@ const Index = () => {
     t,
   });
 
-  // Reload pinned state when the authenticated user changes
-  useEffect(() => {
-    setPinnedChannelsState(loadPinnedChannelsState(user?.pubkey));
-  }, [user?.pubkey]);
+  const {
+    currentView,
+    focusedTaskId,
+    isManageRouteActive,
+    setCurrentView,
+    setFocusedTaskId,
+    setManageRouteActive,
+    desktopSwipeHandlers,
+    openedWithFocusedTaskRef,
+  } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
 
-  useEffect(() => {
-    savePinnedChannelsState(pinnedChannelsState, user?.pubkey);
-  }, [pinnedChannelsState, user?.pubkey]);
+  const activeRelayIdList = useMemo(
+    () => Array.from(effectiveActiveRelayIds),
+    [effectiveActiveRelayIds]
+  );
 
-  useEffect(() => {
-    saveChannelFrecencyState(channelFrecencyState);
-  }, [channelFrecencyState]);
+  const channelRelayIds = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const task of allTasks) {
+      for (const tag of task.tags) {
+        let relaysForTag = map.get(tag);
+        if (!relaysForTag) {
+          relaysForTag = new Set();
+          map.set(tag, relaysForTag);
+        }
+        for (const relayId of task.relays) relaysForTag.add(relayId);
+      }
+    }
+    return map;
+  }, [allTasks]);
 
-  const handleFocusSidebar = useCallback(() => {
-    setIsSidebarFocused(true);
-  }, []);
+  const channelsWithState: Channel[] = useMemo(() => {
+    const pinnedIds = getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList);
+    const pinnedSet = new Set(pinnedIds);
+    const existingIds = new Set(channels.map((channel) => channel.id));
+    const stubs: Channel[] = pinnedIds
+      .filter((id) => !existingIds.has(id))
+      .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const }));
+    return [...stubs, ...channels]
+      .map((channel) => ({
+        ...channel,
+        filterState: channelFilterStates.get(channel.id) ?? "neutral",
+      }))
+      .sort((a, b) => {
+        const aIdx = pinnedSet.has(a.id) ? pinnedIds.indexOf(a.id) : Infinity;
+        const bIdx = pinnedSet.has(b.id) ? pinnedIds.indexOf(b.id) : Infinity;
+        return aIdx - bIdx;
+      });
+  }, [activeRelayIdList, channelFilterStates, channels, currentView, pinnedChannelsState]);
 
-  const handleFocusTasks = useCallback(() => {
-    setIsSidebarFocused(false);
-  }, []);
+  const filteredTasks = useMemo(
+    () =>
+      filterTasks({
+        tasks: allTasks,
+        activeRelayIds: effectiveActiveRelayIds,
+        channels: channelsWithState,
+        people,
+        channelMatchMode,
+        allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
+      }),
+    [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
+  );
 
   const handleOpenAuthModal = useCallback(() => {
     setIsOnboardingIntroOpen(false);
@@ -471,67 +385,9 @@ const Index = () => {
     });
   }, [ndkRelays, user]);
 
-  const {
-    currentView,
-    focusedTaskId,
-    focusedTask,
-    isManageRouteActive,
-    setCurrentView,
-    setFocusedTaskId,
-    setManageRouteActive,
-    desktopSwipeHandlers,
-    openedWithFocusedTaskRef,
-  } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
-
-  const activeRelayIdList = useMemo(
-    () => Array.from(effectiveActiveRelayIds),
-    [effectiveActiveRelayIds]
-  );
-
-  // Map each channel ID to the relay IDs that have at least one post with that tag
-  const channelRelayIds = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    for (const task of allTasks) {
-      for (const tag of task.tags) {
-        let relays = map.get(tag);
-        if (!relays) { relays = new Set(); map.set(tag, relays); }
-        for (const relayId of task.relays) relays.add(relayId);
-      }
-    }
-    return map;
-  }, [allTasks]);
-
-  // Merge dynamic channels with persisted filter states, pinned channels sorted first
-  const channelsWithState: Channel[] = useMemo(() => {
-    const pinnedIds = getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList);
-    const pinnedSet = new Set(pinnedIds);
-    const existingIds = new Set(channels.map((c) => c.id));
-    const stubs: Channel[] = pinnedIds
-      .filter((id) => !existingIds.has(id))
-      .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const }));
-    return [...stubs, ...channels]
-      .map((channel) => ({
-        ...channel,
-        filterState: channelFilterStates.get(channel.id) ?? "neutral",
-      }))
-      .sort((a, b) => {
-        const aIdx = pinnedSet.has(a.id) ? pinnedIds.indexOf(a.id) : Infinity;
-        const bIdx = pinnedSet.has(b.id) ? pinnedIds.indexOf(b.id) : Infinity;
-        return aIdx - bIdx;
-      });
-  }, [channels, channelFilterStates, pinnedChannelsState, currentView, activeRelayIdList]);
-
-  const currentUser = resolveCurrentUser(people, user);
-  const hasCachedCurrentUserProfileMetadata = useMemo(() => {
-    if (!user?.pubkey) return true;
-    const normalizedPubkey = user.pubkey.trim().toLowerCase();
-    return cachedKind0Events.some((event) => {
-      const eventPubkey = typeof event.pubkey === "string" ? event.pubkey.trim().toLowerCase() : "";
-      return eventPubkey === normalizedPubkey && Boolean(event.content?.trim());
-    });
-  }, [cachedKind0Events, user?.pubkey]);
   const shortcutsHelp = useKeyboardShortcutsHelp();
   const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
+
   const ensureGuideDataAvailable = useCallback(() => {
     if (!shouldBootstrapGuideDemoFeed({ totalTasks: allTasks.length, demoFeedActive })) return;
     setGuideDemoFeedEnabled(true);
@@ -544,6 +400,7 @@ const Index = () => {
     });
     navigate("/feed");
   }, [allTasks.length, demoFeedActive, navigate, seedCachedKind0Events, setActiveRelayIds]);
+
   const {
     isOnboardingOpen,
     isOnboardingIntroOpen,
@@ -598,22 +455,6 @@ const Index = () => {
     setPeople,
     resetFiltersToDefault,
   });
-
-  const handleChannelPin = useCallback((id: string) => {
-    // Pin for each active relay that has at least one post with this tag.
-    // Fall back to all active relays if none have the tag yet.
-    const relaysWithTag = channelRelayIds.get(id);
-    const targetRelayIds = relaysWithTag
-      ? activeRelayIdList.filter((r) => relaysWithTag.has(r))
-      : activeRelayIdList;
-    const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
-    setPinnedChannelsState((prev) => pinChannelForRelays(prev, currentView, relayIds, id));
-  }, [activeRelayIdList, channelRelayIds, currentView]);
-
-  const handleChannelUnpin = useCallback((id: string) => {
-    // Unpin from all active relays.
-    setPinnedChannelsState((prev) => unpinChannelFromRelays(prev, currentView, activeRelayIdList, id));
-  }, [activeRelayIdList, currentView]);
 
   const {
     hasDisconnectedSelectedRelays,
@@ -759,13 +600,27 @@ const Index = () => {
     publishTaskCreateFollowUps,
   });
 
-  // Build relays with active state for sidebar display
+  const handleChannelPin = useCallback((id: string) => {
+    const relaysWithTag = channelRelayIds.get(id);
+    const targetRelayIds = relaysWithTag
+      ? activeRelayIdList.filter((relayId) => relaysWithTag.has(relayId))
+      : activeRelayIdList;
+    const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
+    setPinnedChannelsState((previous) => pinChannelForRelays(previous, currentView, relayIds, id));
+  }, [activeRelayIdList, channelRelayIds, currentView]);
+
+  const handleChannelUnpin = useCallback((id: string) => {
+    setPinnedChannelsState((previous) =>
+      unpinChannelFromRelays(previous, currentView, activeRelayIdList, id)
+    );
+  }, [activeRelayIdList, currentView]);
+
   const relaysWithActiveState: Relay[] = useMemo(() => {
-    return relays.map((r) => ({
-      ...r,
-      isActive: effectiveActiveRelayIds.has(r.id),
+    return relays.map((relay) => ({
+      ...relay,
+      isActive: effectiveActiveRelayIds.has(relay.id),
     }));
-  }, [relays, effectiveActiveRelayIds]);
+  }, [effectiveActiveRelayIds, relays]);
 
   const handleAddRelay = useCallback((url: string) => {
     addRelay(url);
@@ -803,18 +658,13 @@ const Index = () => {
     removeRelay(normalizedRelayUrl);
   }, [queryClient, removeCachedRelayProfile, removeRelay, setActiveRelayIds]);
 
-  const filteredTasks = useMemo(
-    () =>
-      filterTasks({
-        tasks: allTasks,
-        activeRelayIds: effectiveActiveRelayIds,
-        channels: channelsWithState,
-        people,
-        channelMatchMode,
-        allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
-      }),
-    [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
-  );
+  const handleFocusSidebar = useCallback(() => {
+    setIsSidebarFocused(true);
+  }, []);
+
+  const handleFocusTasks = useCallback(() => {
+    setIsSidebarFocused(false);
+  }, []);
 
   const lastPublishedPresenceRef = useRef<string | null>(null);
 
@@ -1078,11 +928,10 @@ const Index = () => {
           onKanbanDepthModeChange={setKanbanDepthMode}
         />
       </div>
-      
-      
+
       {/* Keyboard Shortcuts Help Dialog */}
       <KeyboardShortcutsHelp isOpen={shortcutsHelp.isOpen} onClose={shortcutsHelp.close} />
-      
+
       {/* Nostr Auth Modal */}
       <NostrAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       {onboardingOverlays}
