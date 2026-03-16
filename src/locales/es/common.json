@@ -426,7 +426,7 @@
       "signOut": "Cerrar sesión",
       "profileSetupTitle": "Configura tu perfil",
       "profileEditTitle": "Editar perfil",
-      "profileDescription": "Tus metadatos de Nostr (`kind:0`) se publicarán en los feeds conectados. El nombre es obligatorio.",
+      "profileDescription": "Tus metadatos de Nostr (`kind:0`) se publicarán en los feeds conectados. El nombre de usuario es obligatorio.",
       "copySuccessNsec": "¡Clave privada copiada al portapapeles!",
       "copySuccessHex": "¡Clave privada (hex) copiada al portapapeles!"
     }
@@ -606,7 +606,7 @@
       "signin": "Iniciar sesión",
       "signout": "Cerrar sesión",
       "edit": "Editar",
-      "name": "Nombre *",
+      "name": "Nombre de usuario *",
       "displayName": "Nombre para mostrar",
       "picture": "URL de imagen",
       "nip05": "NIP-05",
@@ -620,8 +620,8 @@
       "showPrivateKey": "Mostrar clave privada",
       "copyPrivateKey": "Copiar clave privada",
       "copiedPrivateKey": "Clave privada copiada al portapapeles",
-      "nameRequired": "El nombre del perfil es obligatorio",
-      "nameInvalidNip05": "El nombre debe usar letras minúsculas, números, puntos, guiones bajos o guiones",
+      "nameRequired": "El nombre de usuario es obligatorio",
+      "nameInvalidNip05": "El nombre de usuario debe usar letras minúsculas, números, puntos, guiones bajos o guiones",
       "nameTaken": "Este nombre de usuario ya es conocido. Elige otro.",
       "noRelayConnected": "Conéctate al menos a un feed antes de editar el perfil",
       "presenceTitle": "Compartir estado en vivo",

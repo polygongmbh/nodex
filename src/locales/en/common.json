@@ -426,7 +426,7 @@
       "signOut": "Sign out",
       "profileSetupTitle": "Set up your profile",
       "profileEditTitle": "Edit profile",
-      "profileDescription": "Your Nostr metadata (`kind:0`) will be published to connected feeds. Name is required.",
+      "profileDescription": "Your Nostr metadata (`kind:0`) will be published to connected feeds. Username is required.",
       "copySuccessNsec": "Private key copied to clipboard!",
       "copySuccessHex": "Private key (hex) copied to clipboard!"
     }
@@ -606,7 +606,7 @@
       "signin": "Sign in",
       "signout": "Sign out",
       "edit": "Edit",
-      "name": "Name *",
+      "name": "Username *",
       "displayName": "Display name",
       "picture": "Picture URL",
       "nip05": "NIP-05",
@@ -620,8 +620,8 @@
       "showPrivateKey": "Show private key",
       "copyPrivateKey": "Copy private key",
       "copiedPrivateKey": "Private key copied to clipboard",
-      "nameRequired": "Profile name is required",
-      "nameInvalidNip05": "Name must use lowercase letters, numbers, dots, underscores, or hyphens",
+      "nameRequired": "Username is required",
+      "nameInvalidNip05": "Username must use lowercase letters, numbers, dots, underscores, or hyphens",
       "nameTaken": "This username is already known. Please choose another.",
       "noRelayConnected": "Connect to at least one feed before editing profile",
       "presenceTitle": "Share live status",

@@ -23,6 +23,7 @@ import { preloadLocalImageCaptionModel } from "@/lib/local-image-caption";
 import { EditableNostrProfile, isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
 import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
 import { featureDebugLog } from "@/lib/feature-debug";
+import { sanitizeProfileUsername } from "@/lib/profile-username";
 
 interface ProfileEditorSnapshot {
   name?: string;
@@ -59,6 +60,7 @@ export function useProfileEditor({
   const [profilePicture, setProfilePicture] = useState("");
   const [profileNip05, setProfileNip05] = useState("");
   const [profileAbout, setProfileAbout] = useState("");
+  const [isProfileNameAutoFilled, setIsProfileNameAutoFilled] = useState(false);
   const [initialProfileSnapshot, setInitialProfileSnapshot] = useState<Required<ProfileEditorSnapshot>>({
     name: "",
     displayName: "",
@@ -104,9 +106,35 @@ export function useProfileEditor({
     setProfilePicture(nextSnapshot.picture);
     setProfileNip05(nextSnapshot.nip05);
     setProfileAbout(nextSnapshot.about);
+    setIsProfileNameAutoFilled(false);
     setPresencePublishingEnabled(loadPresencePublishingEnabled());
     setPublishDelayEnabled(loadPublishDelayEnabled());
     setAutoCaptionEnabled(loadAutoCaptionEnabled());
+  };
+
+  const handleProfileNameChange = (value: string) => {
+    setProfileName(value);
+    setIsProfileNameAutoFilled(false);
+  };
+
+  const handleProfileDisplayNameChange = (value: string) => {
+    const nextAutoFilledName = sanitizeProfileUsername(value);
+    const canAutoFillProfileName = !profileName.trim() || isProfileNameAutoFilled;
+
+    setProfileDisplayName(value);
+
+    if (!canAutoFillProfileName) {
+      return;
+    }
+
+    setProfileName(nextAutoFilledName);
+    setIsProfileNameAutoFilled(Boolean(nextAutoFilledName));
+
+    featureDebugLog("profile", "Auto-filled username from display name", {
+      displayName: value,
+      username: nextAutoFilledName || null,
+      userPubkey: userPubkey || null,
+    });
   };
 
   const handlePresencePublishingChange = (enabled: boolean) => {
@@ -225,8 +253,8 @@ export function useProfileEditor({
       showProfileNameTaken,
       isProfileNameValid,
     },
-    setProfileName,
-    setProfileDisplayName,
+    setProfileName: handleProfileNameChange,
+    setProfileDisplayName: handleProfileDisplayNameChange,
     setProfilePicture,
     setProfileNip05,
     setProfileAbout,

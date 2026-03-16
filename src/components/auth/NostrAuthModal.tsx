@@ -822,8 +822,12 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                 {t("auth.menu.profileDescription")}
               </DialogDescription>
             </DialogHeader>
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
-              <div className="space-y-3">
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+              <div className="space-y-3 px-1">
+                <div className="space-y-1.5">
+                  <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
+                  <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
+                </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="profile-name">{t("filters.profile.name")}</Label>
                   <Input
@@ -850,10 +854,6 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
-                  <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
                   <Label htmlFor="profile-picture">{t("filters.profile.picture")}</Label>
                   <Input id="profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
                 </div>
@@ -867,7 +867,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                 </div>
               </div>
             </div>
-            <div className="mt-3 flex shrink-0 justify-end gap-2 border-t border-border/60 bg-background/95 pt-3">
+            <div className="mt-3 flex shrink-0 justify-end gap-2 bg-background/95 pt-2">
               {!needsProfileSetup && (
                 <Button variant="outline" onClick={() => setIsProfileEditorOpen(false)} disabled={isSavingProfile}>
                   {t("filters.profile.cancel")}

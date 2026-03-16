@@ -262,6 +262,15 @@ export function MobileFilters({
             {user && isProfileEditorOpen && (
               <div className="space-y-2 rounded-md border border-border/70 bg-muted/20 p-2.5">
                 <div className="space-y-1">
+                  <label htmlFor="manage-profile-display-name" className="text-xs text-muted-foreground">{t("filters.profile.displayName")}</label>
+                  <Input
+                    id="manage-profile-display-name"
+                    value={profileDisplayName}
+                    onChange={(e) => setProfileDisplayName(e.target.value)}
+                    className="h-8"
+                  />
+                </div>
+                <div className="space-y-1">
                   <label htmlFor="manage-profile-name" className="text-xs text-muted-foreground">{t("filters.profile.name")}</label>
                   <Input
                     id="manage-profile-name"
@@ -286,15 +295,6 @@ export function MobileFilters({
                       {t("filters.profile.nameTaken")}
                     </p>
                   )}
-                </div>
-                <div className="space-y-1">
-                  <label htmlFor="manage-profile-display-name" className="text-xs text-muted-foreground">{t("filters.profile.displayName")}</label>
-                  <Input
-                    id="manage-profile-display-name"
-                    value={profileDisplayName}
-                    onChange={(e) => setProfileDisplayName(e.target.value)}
-                    className="h-8"
-                  />
                 </div>
                 <div className="space-y-1">
                   <label htmlFor="manage-profile-picture" className="text-xs text-muted-foreground">{t("filters.profile.picture")}</label>

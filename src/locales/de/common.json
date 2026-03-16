@@ -426,7 +426,7 @@
       "signOut": "Abmelden",
       "profileSetupTitle": "Profil einrichten",
       "profileEditTitle": "Profil bearbeiten",
-      "profileDescription": "Deine Nostr-Metadaten (`kind:0`) werden auf verbundenen Feeds veröffentlicht. Name ist erforderlich.",
+      "profileDescription": "Deine Nostr-Metadaten (`kind:0`) werden auf verbundenen Feeds veröffentlicht. Benutzername ist erforderlich.",
       "copySuccessNsec": "Privatschlüssel in Zwischenablage kopiert!",
       "copySuccessHex": "Privatschlüssel (Hex) in Zwischenablage kopiert!"
     }
@@ -606,7 +606,7 @@
       "signin": "Anmelden",
       "signout": "Abmelden",
       "edit": "Bearbeiten",
-      "name": "Name *",
+      "name": "Benutzername *",
       "displayName": "Anzeigename",
       "picture": "Bild-URL",
       "nip05": "NIP-05",
@@ -620,8 +620,8 @@
       "showPrivateKey": "Privaten Schlüssel anzeigen",
       "copyPrivateKey": "Privaten Schlüssel kopieren",
       "copiedPrivateKey": "Privater Schlüssel in Zwischenablage kopiert",
-      "nameRequired": "Profilname ist erforderlich",
-      "nameInvalidNip05": "Der Name muss Kleinbuchstaben, Zahlen, Punkte, Unterstriche oder Bindestriche verwenden",
+      "nameRequired": "Benutzername ist erforderlich",
+      "nameInvalidNip05": "Der Benutzername muss Kleinbuchstaben, Zahlen, Punkte, Unterstriche oder Bindestriche verwenden",
       "nameTaken": "Dieser Benutzername ist bereits bekannt. Bitte wähle einen anderen.",
       "noRelayConnected": "Verbinde mindestens einen Feed, bevor du das Profil bearbeitest",
       "presenceTitle": "Live-Status teilen",
