@@ -75,7 +75,7 @@ export function NoasSharedFields({
     <>
       <div className="space-y-2">
         <Label htmlFor="noas-username">{t("auth.username")}</Label>
-        <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.35fr)]">
+        <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <div className={showUsernameHint ? "space-y-1 min-w-0" : "min-w-0"}>
             <Input
               id="noas-username"
