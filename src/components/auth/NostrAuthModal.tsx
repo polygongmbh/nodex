@@ -190,24 +190,29 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     onClose();
   };
 
+  const shouldShowModalHeader = step !== "noas" && step !== "noasSignUp";
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md" dismissOnOutsideInteract={!hasUnsavedAuthInput}>
-        <DialogHeader>
-          <DialogTitle>{t("auth.modal.title")}</DialogTitle>
-          <DialogDescription>
-            {step === "choose"
-              ? t("auth.modal.descriptionChoose")
-              : step === "privateKey"
-                ? t("auth.modal.descriptionPrivateKey")
-                : step === "nostrConnect"
-                  ? t("auth.modal.descriptionNostrConnect")
-                  : step === "noasSignUp"
-                    ? t("auth.noas.signUpDescription") || "Create a new Noas account to use with Nodex"
-                    : t("auth.noas.description") || "Sign in with your Noas account username and password"
-            }
-          </DialogDescription>
-        </DialogHeader>
+        {shouldShowModalHeader ? (
+          <DialogHeader>
+            <DialogTitle>{t("auth.modal.title")}</DialogTitle>
+            <DialogDescription>
+              {step === "choose"
+                ? t("auth.modal.descriptionChoose")
+                : step === "privateKey"
+                  ? t("auth.modal.descriptionPrivateKey")
+                  : t("auth.modal.descriptionNostrConnect")
+              }
+            </DialogDescription>
+          </DialogHeader>
+        ) : (
+          <DialogHeader className="sr-only">
+            <DialogTitle>{t("auth.modal.title")}</DialogTitle>
+            <DialogDescription>{t("auth.noas.description") || "Noas authentication"}</DialogDescription>
+          </DialogHeader>
+        )}
 
         {error && (
           <div className="flex items-start gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
