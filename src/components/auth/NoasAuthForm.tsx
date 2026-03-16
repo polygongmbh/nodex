@@ -1,33 +1,51 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Loader2, AlertCircle, LogIn, ExternalLink } from "lucide-react";
+import { Loader2, AlertCircle, LogIn, ExternalLink, Pencil, KeyRound, ShieldCheck, AppWindow } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface NoasAuthFormProps {
-  onLogin: (username: string, password: string) => Promise<boolean>;
+  onLogin: (username: string, password: string, config?: { baseUrl?: string; nip05Domain?: string }) => Promise<boolean>;
   onSignUp?: () => void;
   onBack?: () => void;
+  onChooseExtension?: () => void;
+  onChooseSigner?: () => void;
+  onChoosePrivateKey?: () => void;
   isLoading: boolean;
   error?: string;
   noasHostUrl?: string;
   noasDomain?: string;
+  onNoasHostUrlChange?: (value: string) => void;
 }
 
 export function NoasAuthForm({
   onLogin,
   onSignUp,
   onBack,
+  onChooseExtension,
+  onChooseSigner,
+  onChoosePrivateKey,
   isLoading,
   error,
   noasHostUrl = "https://noas.example.com",
   noasDomain = "noas.example.com",
+  onNoasHostUrlChange,
 }: NoasAuthFormProps) {
   const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
+  const [isEditingHostUrl, setIsEditingHostUrl] = useState(false);
+
+  const effectiveDomain = useMemo(() => {
+    try {
+      return new URL(noasHostUrl).hostname || noasDomain;
+    } catch {
+      return noasDomain;
+    }
+  }, [noasDomain, noasHostUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +61,10 @@ export function NoasAuthForm({
       return;
     }
 
-    const success = await onLogin(username.trim(), password);
+    const success = await onLogin(username.trim(), password, {
+      baseUrl: noasHostUrl.trim(),
+      nip05Domain: effectiveDomain,
+    });
     if (!success) {
       setLocalError(t("auth.errors.invalidCredentials") || "Invalid username or password");
     }
@@ -69,7 +90,7 @@ export function NoasAuthForm({
           </Button>
         </div>
         {onBack ? (
-          <Button variant="ghost" size="sm" onClick={onBack} disabled={isLoading}>
+          <Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={isLoading}>
             {t("auth.back") || "Back"}
           </Button>
         ) : null}
@@ -81,10 +102,11 @@ export function NoasAuthForm({
 
       {onSignUp ? (
         <div className="flex gap-2 border-b">
-          <button className="pb-2 text-sm font-medium text-primary border-b-2 border-primary">
+          <button type="button" className="pb-2 text-sm font-medium text-primary border-b-2 border-primary">
             {t("auth.signIn") || "Sign In"}
           </button>
           <button
+            type="button"
             onClick={onSignUp}
             disabled={isLoading}
             className="pb-2 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -124,13 +146,40 @@ export function NoasAuthForm({
               autoComplete="username"
               className="flex-1"
             />
-            <Input
-              value={noasDomain}
-              readOnly
-              aria-label={t("auth.noas.domain") || "Domain"}
-              className="w-36 text-sm text-muted-foreground bg-muted"
-            />
+            <div className="flex w-44 items-center gap-1 rounded-md border bg-muted px-2">
+              <Input
+                value={effectiveDomain}
+                readOnly={!isEditingHostUrl}
+                onChange={(e) => onNoasHostUrlChange?.(`https://${e.target.value}`)}
+                aria-label={t("auth.noas.domain") || "Domain"}
+                className="h-8 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
+              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingHostUrl((current) => !current)}
+                      disabled={isLoading}
+                      aria-pressed={isEditingHostUrl}
+                      aria-label={t("auth.noas.editUrl") || "Edit Noas URL"}
+                      className="h-7 w-7 px-0"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("auth.noas.editUrlWarning") || "Only change this if you are sure you know what you are doing."}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            {t("auth.noas.urlHint") || "Advanced: edit only if you intentionally use a different Noas host."}
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -172,14 +221,23 @@ export function NoasAuthForm({
 
       {onBack ? (
         <div className="space-y-2 border-t pt-4">
-          <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="w-full">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onChooseExtension}
+            disabled={isLoading}
+            className="w-full gap-2"
+          >
+            <AppWindow className="h-4 w-4" />
             {t("auth.noas.signerExtension") || "Signer Extension"}
           </Button>
           <div className="grid grid-cols-2 gap-2">
-            <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={onChooseSigner} disabled={isLoading} className="gap-2">
+              <ShieldCheck className="h-4 w-4" />
               {t("auth.modal.signerApp") || "Signer App / Bunker"}
             </Button>
-            <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={onChoosePrivateKey} disabled={isLoading} className="gap-2">
+              <KeyRound className="h-4 w-4" />
               {t("auth.modal.privateKey") || "Private Key"}
             </Button>
           </div>

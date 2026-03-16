@@ -886,11 +886,15 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
   }, [ndk, probeRelayInfo, beginRelayOperation, relays]);
 
-  const loginWithNoas = useCallback(async (username: string, password: string): Promise<boolean> => {
+  const loginWithNoas = useCallback(async (
+    username: string,
+    password: string,
+    config?: { baseUrl?: string; nip05Domain?: string }
+  ): Promise<boolean> => {
     if (!ndk) return false;
 
-    const noasApiUrl = import.meta.env.VITE_NOAS_API_URL;
-    const noasNip05Domain = import.meta.env.VITE_NOAS_NIP05_DOMAIN;
+    const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
+    const noasNip05Domain = config?.nip05Domain || import.meta.env.VITE_NOAS_NIP05_DOMAIN;
 
     if (!noasApiUrl || !noasNip05Domain) {
       console.error("Noas configuration missing");
@@ -991,11 +995,17 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
   }, [ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays, addRelay]);
 
-  const signupWithNoas = useCallback(async (username: string, password: string, privateKey: string, pubkey: string): Promise<boolean> => {
+  const signupWithNoas = useCallback(async (
+    username: string,
+    password: string,
+    privateKey: string,
+    pubkey: string,
+    config?: { baseUrl?: string; nip05Domain?: string }
+  ): Promise<boolean> => {
     if (!ndk) return false;
 
-    const noasApiUrl = import.meta.env.VITE_NOAS_API_URL;
-    const noasNip05Domain = import.meta.env.VITE_NOAS_NIP05_DOMAIN;
+    const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
+    const noasNip05Domain = config?.nip05Domain || import.meta.env.VITE_NOAS_NIP05_DOMAIN;
 
     if (!noasApiUrl || !noasNip05Domain) {
       console.error("Noas configuration missing");

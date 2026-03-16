@@ -41,8 +41,18 @@ export interface NDKContextValue {
   loginWithPrivateKey: (nsecOrHex: string) => Promise<boolean>;
   loginAsGuest: () => Promise<boolean>;
   loginWithNostrConnect: (bunkerUrl: string) => Promise<boolean>;
-  loginWithNoas: (username: string, password: string) => Promise<boolean>;
-  signupWithNoas: (username: string, password: string, privateKey: string, pubkey: string) => Promise<boolean>;
+  loginWithNoas: (
+    username: string,
+    password: string,
+    config?: { baseUrl?: string; nip05Domain?: string }
+  ) => Promise<boolean>;
+  signupWithNoas: (
+    username: string,
+    password: string,
+    privateKey: string,
+    pubkey: string,
+    config?: { baseUrl?: string; nip05Domain?: string }
+  ) => Promise<boolean>;
   logout: () => void;
   addRelay: (url: string) => void;
   removeRelay: (url: string) => void;

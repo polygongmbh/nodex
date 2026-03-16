@@ -1,20 +1,28 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Loader2, AlertCircle, UserPlus, Copy, RefreshCw, ExternalLink } from "lucide-react";
+import { Loader2, AlertCircle, UserPlus, Copy, RefreshCw, ExternalLink, Pencil } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { getPublicKey } from "nostr-tools";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface NoasSignUpFormProps {
-  onSignUp: (username: string, password: string, privateKey: string, pubkey: string) => Promise<boolean>;
+  onSignUp: (
+    username: string,
+    password: string,
+    privateKey: string,
+    pubkey: string,
+    config?: { baseUrl?: string; nip05Domain?: string }
+  ) => Promise<boolean>;
   onBack?: () => void;
   onSignIn?: () => void;
   isLoading: boolean;
   error?: string;
   noasHostUrl?: string;
   noasDomain?: string;
+  onNoasHostUrlChange?: (value: string) => void;
 }
 
 export function NoasSignUpForm({ 
@@ -24,7 +32,8 @@ export function NoasSignUpForm({
   isLoading, 
   error,
   noasHostUrl = "https://noas.example.com",
-  noasDomain = "noas.example.com"
+  noasDomain = "noas.example.com",
+  onNoasHostUrlChange,
 }: NoasSignUpFormProps) {
   const { t } = useTranslation();
   const [username, setUsername] = useState("");
@@ -33,6 +42,15 @@ export function NoasSignUpForm({
   const [pubkey, setPubkey] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [isEditingHostUrl, setIsEditingHostUrl] = useState(false);
+
+  const effectiveDomain = useMemo(() => {
+    try {
+      return new URL(noasHostUrl).hostname || noasDomain;
+    } catch {
+      return noasDomain;
+    }
+  }, [noasDomain, noasHostUrl]);
 
   // Helper function to derive public key from hex private key
   const derivePublicKeyFromHex = (hexPrivateKey: string): string | null => {
@@ -121,7 +139,10 @@ export function NoasSignUpForm({
       }
     }
 
-    const success = await onSignUp(username.trim(), password, privateKey.trim(), finalPubkey);
+    const success = await onSignUp(username.trim(), password, privateKey.trim(), finalPubkey, {
+      baseUrl: noasHostUrl.trim(),
+      nip05Domain: effectiveDomain,
+    });
     if (!success) {
       setLocalError(t("auth.errors.signUpFailed") || "Sign up failed. Please check your details and try again.");
     }
@@ -148,7 +169,7 @@ export function NoasSignUpForm({
           </Button>
         </div>
         {onBack ? (
-          <Button variant="ghost" size="sm" onClick={onBack} disabled={isLoading}>
+          <Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={isLoading}>
             {t("auth.back") || "Back"}
           </Button>
         ) : null}
@@ -161,13 +182,14 @@ export function NoasSignUpForm({
       {onSignIn ? (
         <div className="flex gap-2 border-b">
           <button
+            type="button"
             onClick={onSignIn}
             disabled={isLoading}
             className="pb-2 text-sm font-medium text-muted-foreground hover:text-foreground"
           >
             {t("auth.signIn") || "Sign In"}
           </button>
-          <button className="pb-2 text-sm font-medium text-primary border-b-2 border-primary">
+          <button type="button" className="pb-2 text-sm font-medium text-primary border-b-2 border-primary">
             {t("auth.signUp") || "Sign Up"}
           </button>
         </div>
@@ -205,15 +227,42 @@ export function NoasSignUpForm({
               autoComplete="username"
               className="flex-1"
             />
-            <Input
-              value={noasDomain}
-              readOnly
-              aria-label={t("auth.noas.domain") || "Domain"}
-              className="w-36 text-sm text-muted-foreground bg-muted"
-            />
+            <div className="flex w-44 items-center gap-1 rounded-md border bg-muted px-2">
+              <Input
+                value={effectiveDomain}
+                readOnly={!isEditingHostUrl}
+                onChange={(e) => onNoasHostUrlChange?.(`https://${e.target.value}`)}
+                aria-label={t("auth.noas.domain") || "Domain"}
+                className="h-8 border-0 bg-transparent px-0 text-sm text-muted-foreground shadow-none focus-visible:ring-0"
+              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingHostUrl((current) => !current)}
+                      disabled={isLoading}
+                      aria-pressed={isEditingHostUrl}
+                      aria-label={t("auth.noas.editUrl") || "Edit Noas URL"}
+                      className="h-7 w-7 px-0"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("auth.noas.editUrlWarning") || "Only change this if you are sure you know what you are doing."}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">
             {t("auth.noas.usernameHint") || "3-32 characters, lowercase letters, numbers, underscores only"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {t("auth.noas.urlHint") || "Advanced: edit only if you intentionally use a different Noas host."}
           </p>
         </div>
 
@@ -336,22 +385,6 @@ export function NoasSignUpForm({
           {t("auth.noas.footerText") || "Your keys are encrypted and never leave your device"}
         </p>
       </div>
-
-      {onBack ? (
-        <div className="space-y-2 border-t pt-4">
-          <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="w-full">
-            {t("auth.noas.signerExtension") || "Signer Extension"}
-          </Button>
-          <div className="grid grid-cols-2 gap-2">
-            <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>
-              {t("auth.modal.signerApp") || "Signer App / Bunker"}
-            </Button>
-            <Button type="button" variant="outline" onClick={onBack} disabled={isLoading}>
-              {t("auth.modal.privateKey") || "Private Key"}
-            </Button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }

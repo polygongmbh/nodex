@@ -59,13 +59,24 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const noasHostUrl = import.meta.env.VITE_NOAS_HOST_URL as string | undefined;
   const noasEnabled = Boolean(noasApiUrl && noasNip05Domain);
   const defaultStep: AuthStep = noasEnabled ? "noas" : "choose";
+  const defaultNoasUrl = noasHostUrl || noasApiUrl || "https://noas.example.com";
   
   const [step, setStep] = useState<AuthStep>(defaultStep);
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
   const [privateKey, setPrivateKey] = useState("");
   const [bunkerUrl, setBunkerUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [editableNoasUrl, setEditableNoasUrl] = useState(defaultNoasUrl);
   const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
+
+  const derivedNoasDomain = useMemo(() => {
+    if (noasNip05Domain) return noasNip05Domain;
+    try {
+      return new URL(editableNoasUrl).hostname || "noas.example.com";
+    } catch {
+      return "noas.example.com";
+    }
+  }, [editableNoasUrl, noasNip05Domain]);
 
   const hasExtension = hasNostrExtension();
   const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
@@ -145,11 +156,15 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     }
   };
 
-  const handleNoasLogin = async (username: string, password: string) => {
+  const handleNoasLogin = async (
+    username: string,
+    password: string,
+    config?: { baseUrl?: string; nip05Domain?: string }
+  ) => {
     setError(null);
     setPendingAuthMethod("noas");
     try {
-      const success = await loginWithNoas(username, password);
+      const success = await loginWithNoas(username, password, config);
       if (success) {
         toast.success(t("auth.modal.success.noas") || "Signed in with Noas");
         onClose();
@@ -163,11 +178,17 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     }
   };
 
-  const handleNoasSignUp = async (username: string, password: string, privateKey: string, pubkey: string) => {
+  const handleNoasSignUp = async (
+    username: string,
+    password: string,
+    privateKey: string,
+    pubkey: string,
+    config?: { baseUrl?: string; nip05Domain?: string }
+  ) => {
     setError(null);
     setPendingAuthMethod("noas");
     try {
-      const success = await signupWithNoas(username, password, privateKey, pubkey);
+      const success = await signupWithNoas(username, password, privateKey, pubkey, config);
       if (success) {
         toast.success(t("auth.modal.success.noasSignUp") || "Account created successfully");
         onClose();
@@ -187,6 +208,7 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     setBunkerUrl("");
     setPendingAuthMethod(null);
     setError(null);
+    setEditableNoasUrl(defaultNoasUrl);
     onClose();
   };
 
@@ -376,10 +398,14 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             onLogin={handleNoasLogin}
             onSignUp={() => setStep("noasSignUp")}
             onBack={noasEnabled ? () => setStep("choose") : undefined}
+            onChooseExtension={handleExtensionLogin}
+            onChooseSigner={() => setStep("nostrConnect")}
+            onChoosePrivateKey={() => setStep("privateKey")}
             isLoading={isAuthenticating}
             error={error || undefined}
-            noasHostUrl={noasHostUrl || noasApiUrl}
-            noasDomain={noasNip05Domain || "noas.example.com"}
+            noasHostUrl={editableNoasUrl}
+            noasDomain={derivedNoasDomain}
+            onNoasHostUrlChange={setEditableNoasUrl}
           />
         ) : step === "noasSignUp" ? (
           <NoasSignUpForm
@@ -388,8 +414,9 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             onBack={noasEnabled ? () => setStep("choose") : undefined}
             isLoading={isAuthenticating}
             error={error || undefined}
-            noasHostUrl={noasHostUrl || noasApiUrl}
-            noasDomain={noasNip05Domain || "noas.example.com"}
+            noasHostUrl={editableNoasUrl}
+            noasDomain={derivedNoasDomain}
+            onNoasHostUrlChange={setEditableNoasUrl}
           />
         ) : (
           <div className="space-y-4">
