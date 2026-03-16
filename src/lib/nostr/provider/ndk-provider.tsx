@@ -809,7 +809,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
   const addRelay = useCallback((url: string) => {
     if (!ndk) return;
-    
+
     if (!isRelayUrl(url)) {
       console.error("Invalid relay URL");
       return;
@@ -822,6 +822,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayAutoPausedRef.current.delete(normalized);
     nostrDevLog("relay", "Adding relay and initiating connection", { relayUrl: normalized });
     void probeRelayInfo(normalized);
+
+    // Keep NDK's explicit relay list in sync so subscription routing includes this relay.
+    // NDK's pool monitor uses explicitRelayUrls to decide whether to send REQ to newly
+    // connected relays for existing subscriptions.
+    if (!ndk.explicitRelayUrls?.includes(normalized)) {
+      ndk.explicitRelayUrls = [...(ndk.explicitRelayUrls || []), normalized];
+    }
 
     // Add to relays state
     setRelays((prev) => {
@@ -849,42 +856,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       return next;
     });
 
-    // Connect via NDK
-    const relay = ndk.pool.getRelay(normalized, true);
-    relay?.connect();
-
-    // Set up relay event listeners
-    relay?.on("connect", () => {
-      nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
-      setRelays((prev) =>
-        prev.map((r) =>
-          normalizeUrl(r.url) === normalized ? { ...r, status: "connected" } : r
-        )
-      );
-    });
-
-    relay?.on("disconnect", () => {
-      nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
-      setRelays((prev) =>
-        prev.map((r) =>
-          normalizeUrl(r.url) === normalized ? { ...r, status: "disconnected" } : r
-        )
-      );
-    });
-
-    relay?.on("notice", (notice) => {
-      console.warn("Relay notice:", notice, "from", normalized);
-    });
-
-    relay?.on("auth", (challenge) => {
-      nostrDevLog("relay", "Relay auth challenge", { relayUrl: normalized, challenge });
-      beginRelayOperation("read");
-      pendingRelayVerificationRef.current.set(normalized, {
-        operation: "read",
-        requestedAt: Date.now(),
-      });
-    });
-  }, [ndk, probeRelayInfo, beginRelayOperation, relays]);
+    // Connect via NDK. Use connect=false so NDK does not auto-connect (we do it manually
+    // exactly once). The pool-level relay:connect / relay:disconnect handlers set up in the
+    // useEffect correctly update status via resolveConnectedRelayStatus; we do not attach
+    // per-relay listeners here to avoid: hardcoded "connected" overriding write-rejected
+    // state, leaked beginRelayOperation("read") calls, and listener accumulation on re-add.
+    const relay = ndk.pool.getRelay(normalized, false);
+    relay.connect();
+  }, [ndk, probeRelayInfo]);
 
   const loginWithNoas = useCallback(async (
     username: string,
@@ -1185,7 +1164,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayReadRejectedRef.current.delete(normalized);
     relayWriteRejectedRef.current.delete(normalized);
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
-    
+
+    // Remove from NDK's explicit relay list so subscriptions stop routing to it.
+    ndk.explicitRelayUrls = ndk.explicitRelayUrls?.filter((u) => u.replace(/\/+$/, "") !== normalized);
+
     const relay = ndk.pool.getRelay(normalized);
     if (relay) {
       relay.disconnect();
@@ -1214,9 +1196,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       )
     );
 
-    const relay = ndk.pool.getRelay(normalized, true);
-    relay?.disconnect();
-    relay?.connect();
+    // Use connect=false so the pool does not auto-connect before we explicitly call connect,
+    // avoiding a triple connect/disconnect/connect sequence.
+    const relay = ndk.pool.getRelay(normalized, false);
+    relay.disconnect();
+    relay.connect();
   }, [ndk]);
 
   const publishEvent = useCallback(async (
