@@ -353,7 +353,7 @@
       "passwordRequired": "Password is required",
       "invalidCredentials": "Invalid username or password",
       "usernameLength": "Username must be 3-32 characters",
-      "usernameFormat": "Username must contain only lowercase letters, numbers, and underscores",
+      "usernameFormat": "Username must contain only lowercase letters, numbers, underscores, and hyphens",
       "passwordLength": "Password must be at least 8 characters",
       "noasHostRequired": "Host is required",
       "noasHostInvalid": "Enter a valid host URL",

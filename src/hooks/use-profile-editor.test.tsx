@@ -45,7 +45,7 @@ describe("useProfileEditor", () => {
 
     fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Jörg Müller_test" } });
 
-    expect(screen.getByLabelText("Username")).toHaveValue("jorg-muller-test");
+    expect(screen.getByLabelText("Username")).toHaveValue("jorg-muller_test");
   });
 
   it("keeps auto-filled username in sync until the user edits the username manually", () => {

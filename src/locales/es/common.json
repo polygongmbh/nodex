@@ -353,7 +353,7 @@
       "passwordRequired": "La contraseña es obligatoria",
       "invalidCredentials": "Nombre de usuario o contraseña no válidos",
       "usernameLength": "El nombre de usuario debe tener entre 3 y 32 caracteres",
-      "usernameFormat": "El nombre de usuario solo puede contener letras minúsculas, números y guiones bajos",
+      "usernameFormat": "El nombre de usuario solo puede contener letras minúsculas, números, guiones bajos y guiones",
       "passwordLength": "La contraseña debe tener al menos 8 caracteres",
       "noasHostRequired": "El host es obligatorio",
       "noasHostInvalid": "Introduce una URL de host válida",

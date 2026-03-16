@@ -10,11 +10,9 @@ export function sanitizeProfileUsername(value?: string | null): string {
     .trim()
     .toLowerCase()
     .replace(/[äöüß]/g, (character) => UMLAUT_MAP[character] || "")
-    .replace(/[ _]+/g, "-")
-    .replace(/[^a-z0-9.-]/g, "")
-    .replace(/-{2,}/g, "-")
-    .replace(/\.{2,}/g, ".")
-    .replace(/^[.-]+|[.-]+$/g, "");
+    .replace(/ +/g, "-")
+    .replace(/[^a-z0-9._-]/g, "")
+    .replace(/\.{2,}/g, ".");
 
   return normalized;
 }

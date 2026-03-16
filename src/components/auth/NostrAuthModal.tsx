@@ -515,6 +515,9 @@ interface NostrUserMenuProps {
   onSignInClick: () => void;
 }
 
+const desktopTopbarControlClassName =
+  "h-9 w-auto max-w-[14rem] rounded-md bg-transparent px-2 gap-2 justify-end whitespace-nowrap hover:bg-accent/60 hover:text-accent-foreground data-[state=open]:bg-accent/60 data-[state=open]:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0 xl:h-10";
+
 export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const { t } = useTranslation();
   const {
@@ -634,7 +637,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         variant="ghost"
         size="sm"
         onClick={onSignInClick}
-        className="h-full px-2 gap-2 text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent rounded-none whitespace-nowrap"
+        className={cn(desktopTopbarControlClassName, "text-muted-foreground hover:text-accent-foreground")}
       >
         <LogIn className="w-4 h-4" />
         <span className="hidden xl:inline">{t("auth.menu.signInToPost")}</span>
@@ -665,7 +668,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 w-auto max-w-[14rem] px-2 gap-2 bg-transparent hover:bg-accent/60 hover:text-accent-foreground data-[state=open]:bg-accent/60 data-[state=open]:text-accent-foreground rounded-md justify-end focus-visible:ring-0 focus-visible:ring-offset-0"
+            className={desktopTopbarControlClassName}
             title={profileTriggerHint}
             aria-label={profileTriggerHint}
           >

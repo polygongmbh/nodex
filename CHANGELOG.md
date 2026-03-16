@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Standardized the desktop top-right auth/profile controls so signed-out and signed-in states now use matching button treatment and height, and profile dropdown actions show pointer cursor affordance again.
 - Reordered profile editor identity fields to show display name before username, fixed clipped profile inputs in the desktop editor, removed the stray divider above save actions, and auto-generate a sanitized username from display name while the username field is still blank.
 - Completed an i18n sweep across auth, compose, media preview, theme toggle, and attachment flows so user-facing strings now come from locale bundles in English, German, and Spanish, while the legal dialog remains intentionally German-only.
 - Split the startup onboarding dialog into separate `Create account` and `Sign in` actions, with `Create account` opening Noas sign-up directly when Noas env configuration is present and staying hidden otherwise.

@@ -202,6 +202,20 @@ describe("Noas auth forms", () => {
     expect(screen.getByText(/username must be 3-32 characters/i)).toBeInTheDocument();
   });
 
+  it("accepts dashed usernames for Noas sign-in", () => {
+    const onLogin = vi.fn(async () => true);
+
+    render(<ControlledNoasAuthForm onLogin={onLogin} />);
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice-test" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    expect(onLogin).toHaveBeenCalledWith("alice-test", "password123", {
+      baseUrl: "https://noas.example.com",
+    });
+  });
+
   it("shows only one sign-in error message when submit failure also returns a parent error", async () => {
     const onLogin = vi.fn(async () => false);
     const parentError = "Noas sign-in failed. Please check your username and password.";

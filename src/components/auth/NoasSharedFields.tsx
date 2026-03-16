@@ -18,7 +18,7 @@ export function validateNoasUsername(username: string, t: TFunction): string | n
     return t("auth.errors.usernameLength");
   }
 
-  if (!/^[a-z0-9_]+$/.test(trimmedUsername)) {
+  if (!/^[a-z0-9_-]+$/.test(trimmedUsername)) {
     return t("auth.errors.usernameFormat");
   }
 
