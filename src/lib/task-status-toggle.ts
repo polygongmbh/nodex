@@ -12,6 +12,7 @@ interface HandleTaskStatusToggleClickOptions {
   clearMenuOpenIntent: () => void;
   toggleStatus: () => void;
   focusTask?: () => void;
+  focusOnQuickToggle?: boolean;
 }
 
 export function handleTaskStatusToggleClick(
@@ -26,6 +27,7 @@ export function handleTaskStatusToggleClick(
     clearMenuOpenIntent,
     toggleStatus,
     focusTask,
+    focusOnQuickToggle = true,
   }: HandleTaskStatusToggleClickOptions
 ): void {
   event.stopPropagation();
@@ -45,7 +47,7 @@ export function handleTaskStatusToggleClick(
   clearMenuOpenIntent();
   toggleStatus();
 
-  if (!event.altKey && cycleTaskStatus(status) === "in-progress") {
+  if (focusOnQuickToggle && !event.altKey && cycleTaskStatus(status) === "in-progress") {
     focusTask?.();
   }
 }

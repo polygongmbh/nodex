@@ -760,6 +760,7 @@ export function ListView({
                                 clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
                                 toggleStatus: () => onToggleComplete(task.id),
                                 focusTask: () => onFocusTask?.(task.id),
+                                focusOnQuickToggle: false,
                               });
                             }}
                             disabled={!canCompleteTask(task)}
@@ -784,28 +785,40 @@ export function ListView({
                         {onStatusChange && canCompleteTask(task) && (
                           <DropdownMenuContent align="start">
                             <DropdownMenuItem
-                              onClick={() => onStatusChange(task.id, "todo")}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onStatusChange(task.id, "todo");
+                              }}
                               className={cn((task.status || "todo") === "todo" && "bg-muted")}
                             >
                               <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
                               {t("listView.status.todo")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => onStatusChange(task.id, "in-progress")}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onStatusChange(task.id, "in-progress");
+                              }}
                               className={cn(task.status === "in-progress" && "bg-muted")}
                             >
                               <CircleDot className="w-4 h-4 mr-2 text-warning" />
                               {t("listView.status.inProgress")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => onStatusChange(task.id, "done")}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onStatusChange(task.id, "done");
+                              }}
                               className={cn(task.status === "done" && "bg-muted")}
                             >
                               <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
                               {t("listView.status.done")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => onStatusChange(task.id, "closed")}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onStatusChange(task.id, "closed");
+                              }}
                               className={cn(task.status === "closed" && "bg-muted")}
                             >
                               <X className="w-4 h-4 mr-2 text-muted-foreground" />

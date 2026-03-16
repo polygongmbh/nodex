@@ -724,19 +724,39 @@ export function FeedView({
                       </DropdownMenuTrigger>
                       {onStatusChange && canCompleteTask(task) && (
                         <DropdownMenuContent align="start">
-                          <DropdownMenuItem onClick={() => onStatusChange(task.id, "todo")}>
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onStatusChange(task.id, "todo");
+                            }}
+                          >
                             <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
                             {t("listView.status.todo")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onStatusChange(task.id, "in-progress")}>
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onStatusChange(task.id, "in-progress");
+                            }}
+                          >
                             <CircleDot className="w-4 h-4 mr-2 text-warning" />
                             {t("listView.status.inProgress")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onStatusChange(task.id, "done");
+                            }}
+                          >
                             <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
                             {t("listView.status.done")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onStatusChange(task.id, "closed")}>
+                          <DropdownMenuItem
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onStatusChange(task.id, "closed");
+                            }}
+                          >
                             <X className="w-4 h-4 mr-2 text-muted-foreground" />
                             {t("listView.status.closed")}
                           </DropdownMenuItem>

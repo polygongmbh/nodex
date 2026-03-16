@@ -134,7 +134,7 @@ describe("ListView priority control", () => {
     expect(screen.getByRole("button", { name: /set date/i })).toBeDisabled();
   });
 
-  it("focuses a task after checkbox click only when toggling into in progress", () => {
+  it("does not focus a task after checkbox quick-toggle in table view", () => {
     mockUser = { id: "me" };
     const task = makeTask({
       id: "task-focus",
@@ -166,7 +166,7 @@ describe("ListView priority control", () => {
     fireEvent.click(screen.getByLabelText("Set status"));
 
     expect(onToggleComplete).toHaveBeenCalledWith("task-focus");
-    expect(onFocusTask).toHaveBeenCalledWith("task-focus");
+    expect(onFocusTask).not.toHaveBeenCalled();
   });
 
   it("does not focus a task after option-clicking its checkbox", () => {
@@ -202,6 +202,43 @@ describe("ListView priority control", () => {
     fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
 
     expect(onToggleComplete).not.toHaveBeenCalled();
+    expect(onFocusTask).not.toHaveBeenCalled();
+  });
+
+  it("does not focus a task after selecting a dropdown status in table view", () => {
+    mockUser = { id: "me" };
+    const task = makeTask({
+      id: "task-dropdown",
+      content: "Task content #general",
+      status: "done",
+    });
+    const relays = [makeRelay()];
+    const channels = [makeChannel()];
+    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+    const onFocusTask = vi.fn();
+    const onStatusChange = vi.fn();
+
+    render(
+      <ListView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        currentUser={people[0]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={vi.fn()}
+        onStatusChange={onStatusChange}
+        onFocusTask={onFocusTask}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Set status"));
+    fireEvent.click(screen.getByText("In Progress"));
+
+    expect(onStatusChange).toHaveBeenCalledWith("task-dropdown", "in-progress");
     expect(onFocusTask).not.toHaveBeenCalled();
   });
 });

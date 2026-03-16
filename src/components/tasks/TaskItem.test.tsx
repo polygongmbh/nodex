@@ -99,6 +99,28 @@ describe("TaskItem status actions", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
+  it("does not enter the task when selecting a status from the dropdown", () => {
+    const onStatusChange = vi.fn();
+    const onSelect = vi.fn();
+
+    render(
+      <TaskItem
+        task={{ ...baseTask, status: "done" }}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+        onSelect={onSelect}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Set status"));
+    fireEvent.click(screen.getByText("In Progress"));
+
+    expect(onStatusChange).toHaveBeenCalledWith("t1", "in-progress");
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it("allows directly marking a task as done", () => {
     const onStatusChange = vi.fn();
 
