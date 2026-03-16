@@ -289,7 +289,7 @@
       "signerAppForNoas": "Signer app for Noas",
       "domain": "Domain",
       "urlLabel": "Noas URL",
-      "urlHint": "Advanced: edit only if you intentionally use a different Noas host.",
+      "urlHint": "Advanced only: use a custom Noas host.",
       "editUrl": "Edit Noas URL",
       "editUrlWarning": "Only change this if you are sure you know what you are doing.",
       "usernameHint": "3-32 characters, lowercase letters, numbers, underscores only",
