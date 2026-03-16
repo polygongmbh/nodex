@@ -455,7 +455,6 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
           <NoasSignUpForm
             onSignUp={handleNoasSignUp}
             onSignIn={() => setStep("noas")}
-            onBack={() => setStep("choose")}
             username={noasUsername}
             password={noasPassword}
             isEditingHostUrl={isEditingNoasHost}

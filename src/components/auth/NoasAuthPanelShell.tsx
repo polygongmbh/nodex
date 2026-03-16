@@ -11,6 +11,7 @@ interface NoasAuthPanelShellProps {
   onSignUp?: () => void;
   onBack?: () => void;
   footerText?: string;
+  showBackAction?: boolean;
   children: ReactNode;
 }
 
@@ -22,13 +23,14 @@ export function NoasAuthPanelShell({
   onSignUp,
   onBack,
   footerText,
+  showBackAction = true,
   children,
 }: NoasAuthPanelShellProps) {
   const { t } = useTranslation();
   const isSignIn = mode === "signIn";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center gap-4 border-b pb-2 pr-10">
         <button
           type="button"
@@ -65,11 +67,13 @@ export function NoasAuthPanelShell({
 
       {children}
 
-      <div className={footerText ? "space-y-3 border-t pt-4" : undefined}>
+      <div className={footerText || showBackAction ? "space-y-3 border-t pt-3" : undefined}>
         {footerText ? <p className="text-center text-sm text-muted-foreground">{footerText}</p> : null}
-        <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="w-full">
-          {t("auth.noas.moreOptions")}
-        </Button>
+        {showBackAction ? (
+          <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="w-full">
+            {t("auth.noas.moreOptions")}
+          </Button>
+        ) : null}
       </div>
     </div>
   );

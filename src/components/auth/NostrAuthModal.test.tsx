@@ -36,7 +36,7 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
 
 describe("NostrAuthModal", () => {
   const openChooserIfNeeded = () => {
-    const moreOptionsButton = screen.queryByRole("button", { name: /^more options$/i });
+    const moreOptionsButton = screen.queryByRole("button", { name: /^nostr authentication options$/i });
     if (moreOptionsButton) {
       fireEvent.click(moreOptionsButton);
     }
@@ -346,7 +346,7 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     expect(screen.getAllByRole("button", { name: /^sign in$/i })).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /^more options$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^nostr authentication options$/i })).toBeInTheDocument();
   });
 
 });

@@ -55,7 +55,7 @@ describe("Noas auth forms", () => {
       <ControlledNoasAuthForm />
     );
 
-    expect(screen.getByRole("button", { name: /more options/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /nostr authentication options/i })).toBeInTheDocument();
     expect(screen.queryByText(/your keys are encrypted/i)).not.toBeInTheDocument();
   });
 
@@ -222,12 +222,11 @@ describe("Noas auth forms", () => {
     expect(screen.queryByText(/invalid username or password/i)).not.toBeInTheDocument();
   });
 
-  it("shows a more options button on the sign-up form", () => {
+  it("keeps sign-up compact without a more options button", () => {
     render(
       <NoasSignUpForm
         onSignUp={vi.fn(async () => true)}
         onSignIn={vi.fn()}
-        onBack={vi.fn()}
         username=""
         password=""
         isEditingHostUrl={false}
@@ -239,8 +238,9 @@ describe("Noas auth forms", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /more options/i })).toBeInTheDocument();
     expect(screen.getByText(/your keys are encrypted/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /more options/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/64-character pubkey/i)).toBeInTheDocument();
   });
 
   it("shows shared tabs on the sign-up form and lets users switch back to sign-in", () => {
@@ -248,7 +248,6 @@ describe("Noas auth forms", () => {
       <NoasSignUpForm
         onSignUp={vi.fn(async () => true)}
         onSignIn={vi.fn()}
-        onBack={vi.fn()}
         username=""
         password=""
         isEditingHostUrl={false}

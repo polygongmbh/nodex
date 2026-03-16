@@ -18,7 +18,6 @@ interface NoasSignUpFormProps {
     pubkey: string,
     config?: { baseUrl?: string }
   ) => Promise<boolean>;
-  onBack?: () => void;
   onSignIn?: () => void;
   username: string;
   password: string;
@@ -35,7 +34,6 @@ interface NoasSignUpFormProps {
 
 export function NoasSignUpForm({
   onSignUp,
-  onBack,
   onSignIn,
   username,
   password,
@@ -138,10 +136,10 @@ export function NoasSignUpForm({
       isLoading={isLoading}
       error={displayedError || undefined}
       onSignIn={onSignIn}
-      onBack={onBack}
-      footerText={t("auth.noas.footerText")}
+      footerText={undefined}
+      showBackAction={false}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <NoasSharedFields
           t={t}
           username={username}
@@ -173,7 +171,7 @@ export function NoasSignUpForm({
               {t("auth.noas.generate")}
             </Button>
           </div>
-          <div className="flex gap-2">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
             <Input
               id="noas-private-key"
               type={showPrivateKey ? "text" : "password"}
@@ -181,28 +179,39 @@ export function NoasSignUpForm({
               onChange={(e) => setPrivateKey(e.target.value)}
               placeholder={t("auth.noas.privateKeyPlaceholder")}
               disabled={isLoading}
-              className="flex-1 font-mono text-xs"
+              className="w-full min-w-0 font-mono text-[11px] sm:text-xs"
             />
             {privateKey ? (
-              <Button type="button" variant="ghost" size="sm" onClick={copyToClipboard} disabled={isLoading}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={copyToClipboard}
+                disabled={isLoading}
+                className="shrink-0"
+              >
                 <Copy className="h-4 w-4" />
               </Button>
             ) : null}
           </div>
-          <p className="text-xs text-muted-foreground">{t("auth.noas.privateKeyWarning")}</p>
+          <p className="text-[11px] leading-4 text-muted-foreground">
+            {t("auth.noas.footerText")}
+          </p>
 
-          <div className="mt-3 space-y-2 border-t pt-3">
-            <Label htmlFor="noas-public-key">{t("auth.noas.publicKey")}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="noas-public-key"
-                type="text"
-                value={pubkey}
-                onChange={(e) => setPubkey(e.target.value.trim())}
-                placeholder={t("auth.noas.publicKeyPlaceholder")}
-                disabled={isLoading}
-                className="flex-1 font-mono text-xs"
-              />
+          <div className="mt-2 border-t pt-2">
+            <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 text-[11px] leading-4 text-muted-foreground">
+              <span className="shrink-0 font-medium uppercase tracking-[0.08em]">
+                {t("auth.noas.publicKey")}
+              </span>
+              <div className="min-w-0 overflow-hidden">
+                <div
+                  id="noas-public-key"
+                  className="overflow-x-auto whitespace-nowrap font-mono text-[11px] text-foreground/85"
+                  title={pubkey || t("auth.noas.publicKeyPlaceholder")}
+                >
+                  {pubkey || t("auth.noas.publicKeyPlaceholder")}
+                </div>
+              </div>
               {pubkey ? (
                 <Button
                   type="button"
@@ -213,8 +222,9 @@ export function NoasSignUpForm({
                     toast.success(t("auth.noas.publicKeyCopied"));
                   }}
                   disabled={isLoading}
+                  className="h-7 shrink-0 px-2"
                 >
-                  <Copy className="h-4 w-4" />
+                  <Copy className="h-3.5 w-3.5" />
                 </Button>
               ) : null}
             </div>
