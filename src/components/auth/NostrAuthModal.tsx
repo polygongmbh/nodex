@@ -55,9 +55,8 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   } = useNDK();
 
   const noasApiUrl = import.meta.env.VITE_NOAS_API_URL as string | undefined;
-  const noasNip05Domain = import.meta.env.VITE_NOAS_NIP05_DOMAIN as string | undefined;
   const noasHostUrl = import.meta.env.VITE_NOAS_HOST_URL as string | undefined;
-  const noasEnabled = Boolean(noasApiUrl && noasNip05Domain);
+  const noasEnabled = Boolean(noasApiUrl || noasHostUrl);
   const defaultStep: AuthStep = noasEnabled ? "noas" : "choose";
   const defaultNoasUrl = noasHostUrl || noasApiUrl || "https://noas.example.com";
   
@@ -70,13 +69,12 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
 
   const derivedNoasDomain = useMemo(() => {
-    if (noasNip05Domain) return noasNip05Domain;
     try {
       return new URL(editableNoasUrl).hostname || "noas.example.com";
     } catch {
       return "noas.example.com";
     }
-  }, [editableNoasUrl, noasNip05Domain]);
+  }, [editableNoasUrl]);
 
   const hasExtension = hasNostrExtension();
   const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;

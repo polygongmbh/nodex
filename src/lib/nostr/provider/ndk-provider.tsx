@@ -894,7 +894,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     if (!ndk) return false;
 
     const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
-    const noasNip05Domain = config?.nip05Domain || import.meta.env.VITE_NOAS_NIP05_DOMAIN;
+    const noasNip05Domain = config?.nip05Domain || (() => {
+      try {
+        return noasApiUrl ? new URL(noasApiUrl).hostname : undefined;
+      } catch {
+        return undefined;
+      }
+    })();
 
     if (!noasApiUrl || !noasNip05Domain) {
       console.error("Noas configuration missing");
@@ -1005,7 +1011,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     if (!ndk) return false;
 
     const noasApiUrl = config?.baseUrl || import.meta.env.VITE_NOAS_API_URL;
-    const noasNip05Domain = config?.nip05Domain || import.meta.env.VITE_NOAS_NIP05_DOMAIN;
+    const noasNip05Domain = config?.nip05Domain || (() => {
+      try {
+        return noasApiUrl ? new URL(noasApiUrl).hostname : undefined;
+      } catch {
+        return undefined;
+      }
+    })();
 
     if (!noasApiUrl || !noasNip05Domain) {
       console.error("Noas configuration missing");

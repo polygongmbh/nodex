@@ -52,6 +52,35 @@ describe("Noas auth forms", () => {
     expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example");
   });
 
+  it("submits matching noas auth url and nip05 domain", async () => {
+    const onLogin = vi.fn(async () => true);
+
+    render(
+      <NoasAuthForm
+        onLogin={onLogin}
+        onSignUp={vi.fn()}
+        onBack={vi.fn()}
+        onChooseExtension={vi.fn()}
+        onChooseSigner={vi.fn()}
+        onChoosePrivateKey={vi.fn()}
+        onNoasHostUrlChange={vi.fn()}
+        isLoading={false}
+        noasHostUrl="https://custom.noas.example"
+        noasDomain="ignored.example"
+      />
+    );
+
+    const usernameInput = screen.getByLabelText(/^username$/i);
+    fireEvent.change(usernameInput, { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.submit(usernameInput.closest("form") as HTMLFormElement);
+
+    expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
+      baseUrl: "https://custom.noas.example",
+      nip05Domain: "custom.noas.example",
+    });
+  });
+
   it("hides alternative sign-in methods on the sign-up form", () => {
     render(
       <NoasSignUpForm
