@@ -20,6 +20,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Navigate to="/feed" replace />} />
+              <Route path="/signin" element={<Index />} />
+              <Route path="/signup" element={<Index />} />
               <Route path="/:view" element={<Index />} />
               <Route path="/:view/:taskId" element={<Index />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -60,6 +60,7 @@ import { useKind0People } from "@/hooks/use-kind0-people";
 import { applyTaskSortOverlays, useIndexDerivedData } from "@/hooks/use-index-derived-data";
 import { usePinnedSidebarChannels } from "@/hooks/use-pinned-sidebar-channels";
 import { useIndexRelayShell } from "@/hooks/use-index-relay-shell";
+import { useAuthModalRoute } from "@/hooks/use-auth-modal-route";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -70,8 +71,6 @@ import {
 } from "@/types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-
-type AuthModalEntryStep = "choose" | "noas" | "noasSignUp";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
@@ -108,9 +107,13 @@ const Index = () => {
     user,
   } = useNDK();
 
-  // Auth modal state
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalInitialStep, setAuthModalInitialStep] = useState<AuthModalEntryStep | undefined>(undefined);
+  const {
+    isAuthModalOpen,
+    authModalInitialStep,
+    setIsAuthModalOpen,
+    handleOpenAuthModal,
+    handleCloseAuthModal,
+  } = useAuthModalRoute();
   const [guideDemoFeedEnabled, setGuideDemoFeedEnabled] = useState(false);
   const demoFeedActive = DEMO_FEED_ENABLED || guideDemoFeedEnabled;
   const hasConfiguredNoasAuth = Boolean(import.meta.env.VITE_NOAS_API_URL || import.meta.env.VITE_NOAS_HOST_URL);
@@ -296,11 +299,6 @@ const Index = () => {
     bumpChannelFrecency,
     t,
   });
-
-  const handleOpenAuthModal = useCallback((initialStep?: AuthModalEntryStep) => {
-    setAuthModalInitialStep(initialStep);
-    setIsAuthModalOpen(true);
-  }, []);
 
   const shouldForceAuthAfterOnboarding = useMemo(() => {
     return shouldPromptSignInAfterOnboarding({
@@ -773,7 +771,7 @@ const Index = () => {
         />
         <NostrAuthModal
           isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
+          onClose={handleCloseAuthModal}
           initialStep={authModalInitialStep}
         />
         {onboardingOverlays}
@@ -854,11 +852,11 @@ const Index = () => {
       <KeyboardShortcutsHelp isOpen={shortcutsHelp.isOpen} onClose={shortcutsHelp.close} />
 
       {/* Nostr Auth Modal */}
-      <NostrAuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        initialStep={authModalInitialStep}
-      />
+        <NostrAuthModal
+          isOpen={isAuthModalOpen}
+          onClose={handleCloseAuthModal}
+          initialStep={authModalInitialStep}
+        />
       {onboardingOverlays}
     </div>
   );
