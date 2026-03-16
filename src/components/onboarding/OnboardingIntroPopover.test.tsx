@@ -7,6 +7,7 @@ describe("OnboardingIntroPopover", () => {
     render(
       <OnboardingIntroPopover
         isOpen
+        showCreateAccount
         onStartTour={vi.fn()}
         onCreateAccount={vi.fn()}
         onSignIn={vi.fn()}
@@ -27,6 +28,7 @@ describe("OnboardingIntroPopover", () => {
     render(
       <OnboardingIntroPopover
         isOpen
+        showCreateAccount
         onStartTour={onStartTour}
         onCreateAccount={onCreateAccount}
         onSignIn={onSignIn}
@@ -43,10 +45,26 @@ describe("OnboardingIntroPopover", () => {
     expect(onSignIn).toHaveBeenCalledTimes(1);
   });
 
+  it("hides create account when Noas sign-up is not configured", () => {
+    render(
+      <OnboardingIntroPopover
+        isOpen
+        showCreateAccount={false}
+        onStartTour={vi.fn()}
+        onCreateAccount={vi.fn()}
+        onSignIn={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: "Create account" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+  });
+
   it("does not render when closed", () => {
     render(
       <OnboardingIntroPopover
         isOpen={false}
+        showCreateAccount
         onStartTour={vi.fn()}
         onCreateAccount={vi.fn()}
         onSignIn={vi.fn()}

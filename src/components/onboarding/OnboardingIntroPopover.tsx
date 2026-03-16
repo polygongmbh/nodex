@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 interface OnboardingIntroPopoverProps {
   isOpen: boolean;
+  showCreateAccount?: boolean;
   onStartTour: () => void;
   onCreateAccount: () => void;
   onSignIn: () => void;
@@ -11,6 +12,7 @@ interface OnboardingIntroPopoverProps {
 
 export function OnboardingIntroPopover({
   isOpen,
+  showCreateAccount = false,
   onStartTour,
   onCreateAccount,
   onSignIn,
@@ -34,10 +36,12 @@ export function OnboardingIntroPopover({
           <p className="text-sm text-muted-foreground">{t("onboarding.intro.features")}</p>
         </div>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-          <Button variant="outline" onClick={onCreateAccount}>
-            <UserPlus className="h-4 w-4" />
-            {t("onboarding.intro.createAccount")}
-          </Button>
+          {showCreateAccount ? (
+            <Button variant="outline" onClick={onCreateAccount}>
+              <UserPlus className="h-4 w-4" />
+              {t("onboarding.intro.createAccount")}
+            </Button>
+          ) : null}
           <Button variant="outline" onClick={onSignIn}>
             <LogIn className="h-4 w-4" />
             {t("onboarding.intro.signIn")}
