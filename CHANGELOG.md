@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 - Split the startup onboarding dialog into separate `Create account` and `Sign in` actions, with `Create account` opening Noas sign-up directly when Noas env configuration is present and staying hidden otherwise.
 - Noas sign-in/sign-up now accept full custom host URLs, normalize bare hosts to `https://`, and show clearer host/connection/server errors instead of collapsing failures into generic invalid-credential messages.
+- The Noas host field now uses a flexible layout so long custom URLs no longer clip in the sign-in/sign-up forms.
 - Kept Noas sign-in/sign-up available without Noas env configuration by defaulting the auth modal to the method chooser and showing an empty editable host field in the Noas forms.
 - Updated the Nostr sign-in dialog copy across English, Spanish, and German so the username/password option no longer refers to a "Noas account" in its description text.
 - Added a distinct `Closed` task state with separate Nostr status-event mapping, explicit task status menu selection, and a fourth Kanban column to the right of `Done` without adding `Closed` to the normal click cycle.

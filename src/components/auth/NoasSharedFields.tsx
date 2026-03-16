@@ -75,8 +75,8 @@ export function NoasSharedFields({
     <>
       <div className="space-y-2">
         <Label htmlFor="noas-username">{t("auth.username")}</Label>
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_11rem] items-start gap-2">
-          <div className={showUsernameHint ? "space-y-1" : undefined}>
+        <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.35fr)]">
+          <div className={showUsernameHint ? "space-y-1 min-w-0" : "min-w-0"}>
             <Input
               id="noas-username"
               type="text"
@@ -91,10 +91,13 @@ export function NoasSharedFields({
               <p className="text-xs text-muted-foreground">{t("auth.noas.usernameHint")}</p>
             ) : null}
           </div>
-          <div className="flex h-10 items-center justify-center text-sm font-medium text-muted-foreground" aria-hidden="true">
+          <div
+            className="hidden h-10 items-center justify-center text-sm font-medium text-muted-foreground md:flex"
+            aria-hidden="true"
+          >
             @
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0">
             <div className="relative">
               <Input
                 value={hostValue}
@@ -102,7 +105,8 @@ export function NoasSharedFields({
                 onChange={(e) => onNoasHostUrlChange?.(e.target.value)}
                 aria-label={t("auth.noas.host")}
                 placeholder={normalizedPlaceholder}
-                className={`h-10 pr-10 text-sm ${
+                title={hostValue || undefined}
+                className={`h-10 text-sm ${allowDirectHostEdit ? "" : "pr-10"} ${
                   hostReadOnly ? "text-muted-foreground" : "text-foreground"
                 }`}
               />

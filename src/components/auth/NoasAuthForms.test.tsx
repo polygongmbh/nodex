@@ -107,6 +107,8 @@ describe("Noas auth forms", () => {
     const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
     expect(hostInput.value).toBe("");
     expect(hostInput).not.toHaveAttribute("readonly");
+    // Direct edit mode should not reserve space for a hidden pencil button.
+    expect(hostInput.className).not.toContain("pr-10");
     expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/advanced only/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/only change this if you know what you're doing/i)).not.toBeInTheDocument();
@@ -148,6 +150,19 @@ describe("Noas auth forms", () => {
     expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
       baseUrl: "https://custom.noas.example:7443/api",
     });
+  });
+
+  it("keeps long custom URLs intact in the editable host field", () => {
+    render(
+      <ControlledNoasAuthForm
+        allowDirectHostEdit
+        initialNoasHostUrl="http://localhost:3000/custom/noas/path?mode=dev"
+      />
+    );
+
+    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
+    expect(hostInput.value).toBe("http://localhost:3000/custom/noas/path?mode=dev");
+    expect(hostInput).toHaveAttribute("title", "http://localhost:3000/custom/noas/path?mode=dev");
   });
 
   it("shows a host-specific validation error for malformed custom URLs", () => {
