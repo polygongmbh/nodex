@@ -284,7 +284,7 @@
     "passwordPlaceholder": "••••••••",
     "noas": {
       "signInTitle": "Sign in with Noas",
-      "description": "Sign in with your Noas account username and password",
+      "description": "Sign in with username and password",
       "signUpTitle": "Sign up with Noas",
       "signUpDescription": "Create a new Noas account to use with Nodex",
       "signerAppForNoas": "Signer app for Noas",
@@ -329,7 +329,7 @@
       "signerApp": "Signer App (Nostr Connect)",
       "signerAppHint": "Connect with a mobile signer using a bunker:// link",
       "noasAuth": "Noas Authentication",
-      "noasAuthHint": "Sign in with your Noas account username and password",
+      "noasAuthHint": "Sign in with username and password",
       "privateKey": "Private Key",
       "privateKeyHint": "Enter your nsec or hex private key",
       "guestIdentity": "Guest Identity",

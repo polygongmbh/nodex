@@ -197,6 +197,7 @@ policies:
 - Keep edits focused, reviewable, and behavior-safe unless intentional behavioral changes are requested.
 - Prefer explicit, parseable rules for automation; keep prose for rationale and edge cases.
 - When a policy already exists in a machine-readable block or matrix, update that source first and keep prose sections non-duplicative.
+- When changing shared user-facing copy in locale files, propagate equivalent updates across all supported languages in `src/locales/` in the same change unless an omission is explicitly documented.
 
 ### Test and Verification
 - Follow the verification matrix above for required commands.

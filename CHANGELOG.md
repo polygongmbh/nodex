@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Updated the Nostr sign-in dialog copy across English, Spanish, and German so the username/password option no longer refers to a "Noas account" in its description text.
 - Added a distinct `Closed` task state with separate Nostr status-event mapping, explicit task status menu selection, and a fourth Kanban column to the right of `Done` without adding `Closed` to the normal click cycle.
 - Fixed a feed startup crash caused by task status sorting state initializing before the main Index task data graph was ready.
 - Reworked task update permissions so untagged tasks can be updated by any signed-in user, tagged tasks remain editable by tagged assignees and the creator, and unauthorized relay-driven status/date/priority updates no longer override tasks locally.

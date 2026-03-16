@@ -284,7 +284,7 @@
     "passwordPlaceholder": "••••••••",
     "noas": {
       "signInTitle": "Mit Noas anmelden",
-      "description": "Melde dich mit deinem Noas-Benutzernamen und Passwort an",
+      "description": "Mit Benutzername und Passwort anmelden",
       "signUpTitle": "Mit Noas registrieren",
       "signUpDescription": "Erstelle ein neues Noas-Konto für Nodex",
       "signerAppForNoas": "Signer-App für Noas",
@@ -317,6 +317,8 @@
       "extensionMissing": "Keine Nostr-Erweiterung erkannt",
       "signerApp": "Signer-App (Nostr Connect)",
       "signerAppHint": "Mit einem mobilen Signer über einen bunker://-Link verbinden",
+      "noasAuth": "Noas-Authentifizierung",
+      "noasAuthHint": "Mit Benutzername und Passwort anmelden",
       "privateKey": "Privatschlüssel",
       "privateKeyHint": "Deinen nsec- oder Hex-Privatschlüssel eingeben",
       "guestIdentity": "Gast-Identität",
