@@ -66,6 +66,9 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
   const [bunkerUrl, setBunkerUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [editableNoasUrl, setEditableNoasUrl] = useState(defaultNoasUrl);
+  const [noasUsername, setNoasUsername] = useState("");
+  const [noasPassword, setNoasPassword] = useState("");
+  const [isEditingNoasHost, setIsEditingNoasHost] = useState(false);
   const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
 
   const hasExtension = hasNostrExtension();
@@ -199,6 +202,9 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
     setPendingAuthMethod(null);
     setError(null);
     setEditableNoasUrl(defaultNoasUrl);
+    setNoasUsername("");
+    setNoasPassword("");
+    setIsEditingNoasHost(false);
     onClose();
   };
 
@@ -388,20 +394,32 @@ export function NostrAuthModal({ isOpen, onClose }: NostrAuthModalProps) {
             onLogin={handleNoasLogin}
             onSignUp={() => setStep("noasSignUp")}
             onBack={noasEnabled ? () => setStep("choose") : undefined}
+            username={noasUsername}
+            password={noasPassword}
+            isEditingHostUrl={isEditingNoasHost}
             isLoading={isAuthenticating}
             error={error || undefined}
             noasHostUrl={editableNoasUrl}
+            onUsernameChange={setNoasUsername}
+            onPasswordChange={setNoasPassword}
             onNoasHostUrlChange={setEditableNoasUrl}
+            onToggleHostEdit={() => setIsEditingNoasHost((current) => !current)}
           />
         ) : step === "noasSignUp" ? (
           <NoasSignUpForm
             onSignUp={handleNoasSignUp}
             onSignIn={() => setStep("noas")}
             onBack={noasEnabled ? () => setStep("choose") : undefined}
+            username={noasUsername}
+            password={noasPassword}
+            isEditingHostUrl={isEditingNoasHost}
             isLoading={isAuthenticating}
             error={error || undefined}
             noasHostUrl={editableNoasUrl}
+            onUsernameChange={setNoasUsername}
+            onPasswordChange={setNoasPassword}
             onNoasHostUrlChange={setEditableNoasUrl}
+            onToggleHostEdit={() => setIsEditingNoasHost((current) => !current)}
           />
         ) : (
           <div className="space-y-4">

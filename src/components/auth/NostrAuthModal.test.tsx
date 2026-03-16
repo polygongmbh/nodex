@@ -268,4 +268,19 @@ describe("NostrAuthModal", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("preserves shared noas credentials when switching between sign in and sign up", () => {
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice_name" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice_name");
+    expect(screen.getByLabelText(/^password$/i)).toHaveValue("password123");
+
+    fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
+    expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice_name");
+    expect(screen.getByLabelText(/^password$/i)).toHaveValue("password123");
+  });
+
 });

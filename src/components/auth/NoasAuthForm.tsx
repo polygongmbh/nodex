@@ -8,26 +8,35 @@ interface NoasAuthFormProps {
   onLogin: (username: string, password: string, config?: { baseUrl?: string }) => Promise<boolean>;
   onSignUp?: () => void;
   onBack?: () => void;
+  username: string;
+  password: string;
+  isEditingHostUrl: boolean;
   isLoading: boolean;
   error?: string;
   noasHostUrl?: string;
+  onUsernameChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
   onNoasHostUrlChange?: (value: string) => void;
+  onToggleHostEdit: () => void;
 }
 
 export function NoasAuthForm({
   onLogin,
   onSignUp,
   onBack,
+  username,
+  password,
+  isEditingHostUrl,
   isLoading,
   error,
   noasHostUrl = "https://noas.example.com",
+  onUsernameChange,
+  onPasswordChange,
   onNoasHostUrlChange,
+  onToggleHostEdit,
 }: NoasAuthFormProps) {
   const { t } = useTranslation();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
-  const [isEditingHostUrl, setIsEditingHostUrl] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,10 +100,10 @@ export function NoasAuthForm({
           isEditingHostUrl={isEditingHostUrl}
           isLoading={isLoading}
           passwordAutoComplete="current-password"
-          onUsernameChange={setUsername}
-          onPasswordChange={setPassword}
+          onUsernameChange={onUsernameChange}
+          onPasswordChange={onPasswordChange}
           onNoasHostUrlChange={onNoasHostUrlChange}
-          onToggleHostEdit={() => setIsEditingHostUrl((current) => !current)}
+          onToggleHostEdit={onToggleHostEdit}
         />
 
         <Button type="submit" disabled={isLoading} className="w-full gap-2">
@@ -112,8 +121,7 @@ export function NoasAuthForm({
         </Button>
       </form>
 
-      <div className="space-y-3 border-t pt-4">
-        <p className="text-center text-sm text-muted-foreground">{t("auth.noas.footerText")}</p>
+      <div>
         <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="w-full">
           {t("auth.noas.moreOptions")}
         </Button>

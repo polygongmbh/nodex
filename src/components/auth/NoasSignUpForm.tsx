@@ -18,29 +18,38 @@ interface NoasSignUpFormProps {
   ) => Promise<boolean>;
   onBack?: () => void;
   onSignIn?: () => void;
+  username: string;
+  password: string;
+  isEditingHostUrl: boolean;
   isLoading: boolean;
   error?: string;
   noasHostUrl?: string;
+  onUsernameChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
   onNoasHostUrlChange?: (value: string) => void;
+  onToggleHostEdit: () => void;
 }
 
 export function NoasSignUpForm({
   onSignUp,
   onBack,
   onSignIn,
+  username,
+  password,
+  isEditingHostUrl,
   isLoading,
   error,
   noasHostUrl = "https://noas.example.com",
+  onUsernameChange,
+  onPasswordChange,
   onNoasHostUrlChange,
+  onToggleHostEdit,
 }: NoasSignUpFormProps) {
   const { t } = useTranslation();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [privateKey, setPrivateKey] = useState("");
   const [pubkey, setPubkey] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
-  const [isEditingHostUrl, setIsEditingHostUrl] = useState(false);
 
   const derivePublicKeyFromHex = (hexPrivateKey: string): string | null => {
     try {
@@ -155,10 +164,10 @@ export function NoasSignUpForm({
           isLoading={isLoading}
           showUsernameHint
           passwordAutoComplete="new-password"
-          onUsernameChange={setUsername}
-          onPasswordChange={setPassword}
+          onUsernameChange={onUsernameChange}
+          onPasswordChange={onPasswordChange}
           onNoasHostUrlChange={onNoasHostUrlChange}
-          onToggleHostEdit={() => setIsEditingHostUrl((current) => !current)}
+          onToggleHostEdit={onToggleHostEdit}
         />
 
         <div className="space-y-2 rounded-lg bg-muted/50 p-3">

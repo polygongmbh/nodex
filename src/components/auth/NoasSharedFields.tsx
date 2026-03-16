@@ -83,17 +83,13 @@ export function NoasSharedFields({
             ) : null}
           </div>
           <div className="space-y-1">
-            <div
-              className={`flex h-10 items-center gap-1 rounded-md border px-2 transition-colors ${
-                isEditingHostUrl ? "border-primary/50 bg-background" : "bg-muted"
-              }`}
-            >
+            <div className="relative">
               <Input
                 value={displayedHost}
                 readOnly={!isEditingHostUrl}
                 onChange={(e) => onNoasHostUrlChange?.(`${parsedNoasUrl?.protocol || "https:"}//${e.target.value}`)}
                 aria-label={t("auth.noas.host")}
-                className={`h-full border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0 ${
+                className={`h-10 pr-10 text-sm ${
                   isEditingHostUrl ? "text-foreground" : "text-muted-foreground"
                 }`}
               />
@@ -108,7 +104,7 @@ export function NoasSharedFields({
                       disabled={isLoading}
                       aria-pressed={isEditingHostUrl}
                       aria-label={t("auth.noas.editHost")}
-                      className="h-8 w-8 px-0"
+                      className="absolute right-1 top-1 h-8 w-8 px-0"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
