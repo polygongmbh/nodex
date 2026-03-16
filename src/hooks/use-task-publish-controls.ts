@@ -9,7 +9,7 @@ import { mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
 import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/nip52-task-calendar-events";
 import { buildTaskPriorityUpdateEvent } from "@/lib/nostr/task-property-events";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { Task, TaskDateType, TaskStatus, Relay } from "@/types";
+import type { Task, TaskDateType, TaskInitialStatus, TaskStatus, Relay } from "@/types";
 import { getRelayIdFromUrl } from "@/lib/nostr/event-converter";
 
 interface PublishResult {
@@ -133,6 +133,12 @@ export function useTaskPublishControls({
     }
 
     const mapped = mapTaskStatusToStateEvent(status);
+    nostrDevLog("publish-state", "Publishing task state update", {
+      taskId,
+      status,
+      kind: mapped.kind,
+      relayUrls,
+    });
     const result = await publishEvent(
       mapped.kind,
       mapped.content,
@@ -216,7 +222,7 @@ export function useTaskPublishControls({
   const publishTaskCreateFollowUps = useCallback(async (params: {
     publishedEventId?: string;
     taskType: Task["taskType"];
-    initialStatus?: TaskStatus;
+    initialStatus?: TaskInitialStatus;
     dueDate?: Date;
     content: string;
     dueTime?: string;

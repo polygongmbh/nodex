@@ -438,6 +438,37 @@ describe("nostrEventsToTasks", () => {
     ]);
   });
 
+  it("preserves closed state updates separately from done", () => {
+    const events: NostrEventWithRelay[] = [
+      makeRelayEvent({
+        id: "task-closed",
+        pubkey: "pub1",
+        kind: NostrEventKind.Task,
+        content: "Close without applying",
+        sig: "sig1",
+      }),
+      makeRelayEvent({
+        id: "state-closed",
+        pubkey: "pub1",
+        created_at: 1700000005,
+        kind: NostrEventKind.GitStatusClosed,
+        tags: [["e", "task-closed", "", "property"]],
+        content: "",
+        sig: "sig2",
+      }),
+    ];
+
+    const tasks = nostrEventsToTasks(events);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].status).toBe("closed");
+    expect(tasks[0].stateUpdates).toEqual([
+      expect.objectContaining({
+        id: "state-closed",
+        status: "closed",
+      }),
+    ]);
+  });
+
   it("ignores unauthorized state-event updates on assigned tasks", () => {
     const events: NostrEventWithRelay[] = [
       makeRelayEvent({

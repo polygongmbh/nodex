@@ -1,5 +1,15 @@
 import { Task, TaskStatus } from "@/types";
 
+export function isTaskCompletedStatus(status: TaskStatus | undefined): status is "done" {
+  return status === "done";
+}
+
+export function isTaskTerminalStatus(
+  status: TaskStatus | undefined
+): status is "done" | "closed" {
+  return status === "done" || status === "closed";
+}
+
 export function cycleTaskStatus(current: TaskStatus | undefined): TaskStatus {
   if (current === "todo" || !current) return "in-progress";
   if (current === "in-progress") return "done";
@@ -23,7 +33,7 @@ export function applyTaskStatusUpdate(
             ...task,
             status: newStatus,
             lastEditedAt: now,
-            completedBy: newStatus === "done" ? completedBy : undefined,
+            completedBy: isTaskCompletedStatus(newStatus) ? completedBy : undefined,
           }
         : task
     );
@@ -37,7 +47,7 @@ export function applyTaskStatusUpdate(
       ...sourceTask,
       status: newStatus,
       lastEditedAt: now,
-      completedBy: newStatus === "done" ? completedBy : undefined,
+      completedBy: isTaskCompletedStatus(newStatus) ? completedBy : undefined,
     },
     ...localTasks,
   ];

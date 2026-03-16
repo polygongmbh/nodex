@@ -1,4 +1,4 @@
-import { Relay, Channel, Person, Task } from "@/types";
+import { Relay, Channel, Person, Task, TaskStatus } from "@/types";
 import { addDays, subDays } from "date-fns";
 
 const today = new Date();
@@ -85,7 +85,7 @@ function createTask(
   tags: string[],
   options: {
     parentId?: string;
-    status?: "todo" | "in-progress" | "done";
+    status?: TaskStatus;
     completedBy?: string;
     dueDate?: Date;
     dueTime?: string;

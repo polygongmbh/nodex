@@ -151,6 +151,7 @@
       "todo": "Por hacer",
       "inProgress": "En progreso",
       "done": "Hecho",
+      "closed": "Cerrado",
       "inProgressShort": "Haciendo"
     },
     "dates": {
@@ -223,7 +224,8 @@
     "statusToggle": {
       "todo": "Marcar tarea en progreso. Mantén {{alternateKey}} al hacer clic para elegir el estado.",
       "inProgress": "Marcar tarea como hecha. Mantén {{alternateKey}} al hacer clic para elegir el estado.",
-      "done": "La tarea está hecha. Haz clic para elegir el estado."
+      "done": "La tarea está hecha. Haz clic para elegir el estado.",
+      "closed": "La tarea está cerrada. Haz clic para elegir el estado."
     }
   },
   "breadcrumbs": {
@@ -466,7 +468,7 @@
       },
       "kanbanColumnsStatus": {
         "title": "Columnas y estado",
-        "description": "Usa las columnas Por hacer, En progreso y Hecho para seguir el estado. Mover una tarea entre columnas cambia su estado.",
+        "description": "Usa las columnas Por hacer, En progreso, Hecho y Cerrado para seguir el estado. Mover una tarea entre columnas cambia su estado.",
         "action": "Haz clic o arrastra una tarjeta en el tablero para continuar."
       },
       "kanbanCreateInColumn": {

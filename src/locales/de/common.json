@@ -151,6 +151,7 @@
       "todo": "Offen",
       "inProgress": "In Arbeit",
       "done": "Erledigt",
+      "closed": "Geschlossen",
       "inProgressShort": "Mache"
     },
     "dates": {
@@ -223,7 +224,8 @@
     "statusToggle": {
       "todo": "Aufgabe als in Arbeit markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
       "inProgress": "Aufgabe als erledigt markieren. Halte {{alternateKey}} beim Klicken gedrückt, um den Status auszuwählen.",
-      "done": "Aufgabe ist erledigt. Klicke, um den Status auszuwählen."
+      "done": "Aufgabe ist erledigt. Klicke, um den Status auszuwählen.",
+      "closed": "Aufgabe ist geschlossen. Klicke, um den Status auszuwählen."
     }
   },
   "breadcrumbs": {
@@ -466,7 +468,7 @@
       },
       "kanbanColumnsStatus": {
         "title": "Spalten und Status",
-        "description": "Nutze die Spalten Offen, In Arbeit und Erledigt zur Statusverfolgung. Beim Verschieben zwischen Spalten ändert sich der Status.",
+        "description": "Nutze die Spalten Offen, In Arbeit, Erledigt und Geschlossen zur Statusverfolgung. Beim Verschieben zwischen Spalten ändert sich der Status.",
         "action": "Klicke oder ziehe eine Karte im Board, um fortzufahren."
       },
       "kanbanCreateInColumn": {

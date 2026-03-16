@@ -21,6 +21,7 @@ import {
   ComposeRestoreRequest,
   PublishedAttachment,
   Nip99Metadata,
+  TaskStatus,
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { useNDK } from "@/lib/nostr/ndk-context";
@@ -44,7 +45,7 @@ interface MobileLayoutProps {
   onSearchChange: (query: string) => void;
   onNewTask: OnNewTask;
   onToggleComplete: (taskId: string) => void;
-  onStatusChange: (taskId: string, status: "todo" | "in-progress" | "done") => void;
+  onStatusChange: (taskId: string, status: TaskStatus) => void;
   onFocusTask: (taskId: string | null) => void;
   onRelayToggle: (id: string) => void;
   onChannelToggle: (id: string) => void;

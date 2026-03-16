@@ -151,6 +151,7 @@
       "todo": "To Do",
       "inProgress": "In Progress",
       "done": "Done",
+      "closed": "Closed",
       "inProgressShort": "Doing"
     },
     "dates": {
@@ -223,7 +224,8 @@
     "statusToggle": {
       "todo": "Mark task in progress. Hold {{alternateKey}} while clicking to select status.",
       "inProgress": "Mark task done. Hold {{alternateKey}} while clicking to select status.",
-      "done": "Task is done. Click to select status."
+      "done": "Task is done. Click to select status.",
+      "closed": "Task is closed. Click to select status."
     }
   },
   "breadcrumbs": {
@@ -466,7 +468,7 @@
       },
       "kanbanColumnsStatus": {
         "title": "Columns and status",
-        "description": "Use To Do, In Progress, and Done columns to track status. Moving a task between columns changes its status.",
+        "description": "Use To Do, In Progress, Done, and Closed columns to track status. Moving a task between columns changes its status.",
         "action": "Click or drag a card in the board to continue."
       },
       "kanbanCreateInColumn": {

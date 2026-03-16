@@ -6,6 +6,7 @@ import {
   Task,
   TaskCreateResult,
   TaskDateType,
+  TaskInitialStatus,
   TaskStatus,
   SharedTaskViewContext,
   ComposeRestoreRequest,
@@ -32,6 +33,7 @@ import { filterTasksByDepthMode } from "@/lib/depth-mode-filter";
 import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
+import { isTaskTerminalStatus } from "@/lib/task-status";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
@@ -48,6 +50,7 @@ const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string
   { id: "todo", label: t("listView.status.todo"), icon: <Circle className="w-4 h-4" />, color: "text-muted-foreground" },
   { id: "in-progress", label: t("listView.status.inProgress"), icon: <CircleDot className="w-4 h-4" />, color: "text-warning" },
   { id: "done", label: t("listView.status.done"), icon: <CheckCircle2 className="w-4 h-4" />, color: "text-primary" },
+  { id: "closed", label: t("listView.status.closed"), icon: <X className="w-4 h-4" />, color: "text-muted-foreground" },
 ];
 const ACTIVE_KANBAN_STATUSES: TaskStatus[] = ["todo", "in-progress"];
 
@@ -79,7 +82,7 @@ export function KanbanView({
   const { t } = useTranslation();
   const { user } = useNDK();
   const columns = useMemo(() => getColumns((key) => t(key)), [t]);
-  const [composingColumn, setComposingColumn] = useState<TaskStatus | null>(null);
+  const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
 
   // Build children map
@@ -158,6 +161,7 @@ export function KanbanView({
       "todo": [],
       "in-progress": [],
       "done": [],
+      "closed": [],
     };
     
     kanbanTasks.forEach(task => {
@@ -165,16 +169,22 @@ export function KanbanView({
       grouped[status].push(task);
     });
 
-    // Keep done column strictly chronological; apply shared priority ordering elsewhere.
+    // Keep terminal columns chronological; apply shared priority ordering elsewhere.
     for (const status of ACTIVE_KANBAN_STATUSES) {
       grouped[status] = sortTasks(grouped[status], sortContext);
     }
     grouped["done"] = sortByLatestModified(grouped["done"]);
+    grouped["closed"] = sortByLatestModified(grouped["closed"]);
 
     return grouped;
   }, [kanbanTasks, sortContext]);
   const orderedKanbanTasks = useMemo(
-    () => [...tasksByStatus["todo"], ...tasksByStatus["in-progress"], ...tasksByStatus["done"]],
+    () => [
+      ...tasksByStatus["todo"],
+      ...tasksByStatus["in-progress"],
+      ...tasksByStatus["done"],
+      ...tasksByStatus["closed"],
+    ],
     [tasksByStatus]
   );
   const {
@@ -247,7 +257,12 @@ export function KanbanView({
 
   // Flatten all visible task IDs for keyboard navigation (across all columns)
   const allVisibleTaskIds = useMemo(() => {
-    return [...tasksByStatus["todo"], ...tasksByStatus["in-progress"], ...tasksByStatus["done"]].map(t => t.id);
+    return [
+      ...tasksByStatus["todo"],
+      ...tasksByStatus["in-progress"],
+      ...tasksByStatus["done"],
+      ...tasksByStatus["closed"],
+    ].map((task) => task.id);
   }, [tasksByStatus]);
 
   // Column-aware task IDs for Kanban navigation
@@ -255,6 +270,7 @@ export function KanbanView({
     tasksByStatus["todo"].map(t => t.id),
     tasksByStatus["in-progress"].map(t => t.id),
     tasksByStatus["done"].map(t => t.id),
+    tasksByStatus["closed"].map(t => t.id),
   ], [tasksByStatus]);
 
   // Track keyboard focus state
@@ -282,7 +298,8 @@ export function KanbanView({
     const currentStatus = task.status || "todo";
     let newStatus: TaskStatus;
     
-    if (currentStatus === "done") newStatus = "in-progress";
+    if (currentStatus === "closed") newStatus = "done";
+    else if (currentStatus === "done") newStatus = "in-progress";
     else if (currentStatus === "in-progress") newStatus = "todo";
     else return; // Already at leftmost
     
@@ -307,6 +324,7 @@ export function KanbanView({
     
     if (currentStatus === "todo") newStatus = "in-progress";
     else if (currentStatus === "in-progress") newStatus = "done";
+    else if (currentStatus === "done") newStatus = "closed";
     else return; // Already at rightmost
     
     pendingRefocusRef.current = focusedId;
@@ -390,9 +408,9 @@ export function KanbanView({
                       {tasksByStatus[column.id].length}
                     </span>
                   </div>
-                  {user && !isInteractionBlocked && (
+                  {user && !isInteractionBlocked && column.id !== "closed" && (
                     <button
-                      onClick={() => setComposingColumn(column.id)}
+                      onClick={() => setComposingColumn(column.id as TaskInitialStatus)}
                       className="p-1 rounded hover:bg-muted transition-colors"
                       data-onboarding="kanban-add-task"
                     >
@@ -480,7 +498,7 @@ export function KanbanView({
                                     "relative bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer",
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md",
                                     !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
-                                    task.status === "done" && "opacity-70",
+                                    isTaskTerminalStatus(task.status) && "opacity-70",
                                     isLockedUntilStart && "opacity-50 grayscale",
                                     isKeyboardFocused && !snapshot.isDragging && "ring-2 ring-primary ring-offset-1 ring-offset-background"
                                   )}
@@ -521,11 +539,11 @@ export function KanbanView({
                                   <div
                                     className={cn(
                                       `text-sm leading-relaxed whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText}`,
-                                      task.status === "done" && "line-through text-muted-foreground"
+                                      isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                                     )}
                                   >
                                     {linkifyContent(task.content, onHashtagClick, {
-                                      plainHashtags: task.status === "done",
+                                      plainHashtags: isTaskTerminalStatus(task.status),
                                       people,
                                       onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                                       getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),

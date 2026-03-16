@@ -9,6 +9,7 @@ import {
   ComposeRestoreRequest,
   PublishedAttachment,
   Nip99Metadata,
+  TaskStatus,
 } from "@/types";
 import {
   format,
@@ -51,10 +52,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { isTaskTerminalStatus } from "@/lib/task-status";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
-  onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
+  onStatusChange?: (taskId: string, status: TaskStatus) => void;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
@@ -91,6 +93,7 @@ export function CalendarView({
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
+    if (status === "closed") return t("hints.statusToggle.closed");
     return t("hints.statusToggle.todo", { alternateKey });
   };
 
@@ -254,7 +257,7 @@ export function CalendarView({
 
   // Shared task-ordering for upcoming feed groups (non-feed views).
   const upcomingTasks = useMemo(() => {
-    const active = tasksWithDueDates.filter((task) => task.status !== "done");
+    const active = tasksWithDueDates.filter((task) => !isTaskTerminalStatus(task.status));
     return sortTasks(active, sortContext);
   }, [tasksWithDueDates, sortContext]);
 
@@ -557,7 +560,7 @@ export function CalendarView({
                                 <button
                                   onClick={(e) => {
                                     if (!canCompleteTask(task)) return;
-                                    if (task.status === "done" && onStatusChange) {
+                                    if (isTaskTerminalStatus(task.status) && onStatusChange) {
                                       const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
                                       if (isMenuOpen) {
                                         closeStatusMenu(task.id);
@@ -608,6 +611,8 @@ export function CalendarView({
                                 >
                                   {task.status === "done" ? (
                                     <CheckCircle2 className="w-4 h-4 text-primary" />
+                                  ) : task.status === "closed" ? (
+                                    <X className="w-4 h-4 text-muted-foreground" />
                                   ) : task.status === "in-progress" ? (
                                     <CircleDot className="w-4 h-4 text-warning" />
                                   ) : (
@@ -764,7 +769,7 @@ export function CalendarView({
                                         key={task.id}
                                         className={cn(
                                           "text-[0.625rem] leading-tight px-1 py-0.5 rounded truncate flex items-center gap-1",
-                                          task.status === "done"
+                                          isTaskTerminalStatus(task.status)
                                             ? "bg-muted text-muted-foreground line-through"
                                             : task.status === "in-progress"
                                               ? "bg-warning/15 text-warning"
@@ -906,7 +911,7 @@ export function CalendarView({
                         onClick={() => onFocusTask?.(task.id)}
                         className={cn(
                           "p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card hover:bg-muted/50 transition-colors cursor-pointer",
-                          task.status === "done" && "opacity-60",
+                          isTaskTerminalStatus(task.status) && "opacity-60",
                           isLockedUntilStart && "opacity-50 grayscale"
                         )}
                         style={{ borderLeftColor: authorColor.accent }}
@@ -954,7 +959,7 @@ export function CalendarView({
                               <button
                                 onClick={(e) => {
                                   if (!canCompleteTask(task)) return;
-                                  if (task.status === "done" && onStatusChange) {
+                                  if (isTaskTerminalStatus(task.status) && onStatusChange) {
                                     const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
                                     if (isMenuOpen) {
                                       closeStatusMenu(task.id);
@@ -1005,6 +1010,8 @@ export function CalendarView({
                               >
                                 {task.status === "done" ? (
                                   <CheckCircle2 className="w-4 h-4 text-primary" />
+                                ) : task.status === "closed" ? (
+                                  <X className="w-4 h-4 text-muted-foreground" />
                                 ) : task.status === "in-progress" ? (
                                   <CircleDot className="w-4 h-4 text-warning" />
                                 ) : (
@@ -1026,6 +1033,10 @@ export function CalendarView({
                                   <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
                                   {t("listView.status.done")}
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onStatusChange(task.id, "closed")}>
+                                  <X className="w-4 h-4 mr-2 text-muted-foreground" />
+                                  {t("listView.status.closed")}
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             )}
                           </DropdownMenu>
@@ -1033,11 +1044,11 @@ export function CalendarView({
                             <div
                               className={cn(
                                 "text-sm whitespace-pre-wrap",
-                                task.status === "done" && "line-through text-muted-foreground"
+                                isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                               )}
                             >
                               {linkifyContent(task.content, onHashtagClick, {
-                                plainHashtags: task.status === "done",
+                                plainHashtags: isTaskTerminalStatus(task.status),
                                 people,
                                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                                 getStandaloneMediaCaption: (url) =>

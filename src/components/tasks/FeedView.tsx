@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock } from "lucide-react";
+import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X } from "lucide-react";
 import {
   Task,
   Relay,
@@ -16,6 +16,7 @@ import {
   PublishedAttachment,
   Nip99Metadata,
   TaskStateUpdate,
+  TaskStatus,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -48,6 +49,7 @@ import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
+import { isTaskTerminalStatus } from "@/lib/task-status";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -60,7 +62,7 @@ function formatCompactRelativeTime(date: Date): string {
 
 interface FeedViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
-  onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
+  onStatusChange?: (taskId: string, status: TaskStatus) => void;
   onListingStatusChange?: (taskId: string, status: Nip99ListingStatus) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
@@ -119,6 +121,7 @@ export function FeedView({
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
+    if (status === "closed") return t("hints.statusToggle.closed");
     return t("hints.statusToggle.todo", { alternateKey });
   };
 
@@ -359,6 +362,7 @@ export function FeedView({
   };
   const getStateLabel = (status: Task["status"]) => {
     if (status === "done") return t("listView.status.done");
+    if (status === "closed") return t("listView.status.closed");
     if (status === "in-progress") return t("listView.status.inProgress");
     return t("listView.status.todo");
   };
@@ -492,6 +496,8 @@ export function FeedView({
                   <div className="flex items-center gap-2 min-w-0">
                     {update.status === "done" ? (
                       <CheckCircle2 className={cn("text-primary flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                    ) : update.status === "closed" ? (
+                      <X className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
                     ) : update.status === "in-progress" ? (
                       <CircleDot className={cn("text-warning flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
                     ) : (
@@ -543,7 +549,7 @@ export function FeedView({
             const isListing = Boolean(task.feedMessageType);
             const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
             const isSoldListing = isListing && listingStatus === "sold";
-            const isCompletedVisual = task.status === "done" || isSoldListing;
+            const isCompletedVisual = isTaskTerminalStatus(task.status) || isSoldListing;
             const feedMessageLabel =
               task.feedMessageType === "offer"
                 ? "Offer"
@@ -662,7 +668,7 @@ export function FeedView({
                         <button
                           onClick={(e) => {
                             if (!canCompleteTask(task)) return;
-                            if (task.status === "done" && onStatusChange) {
+                            if (isTaskTerminalStatus(task.status) && onStatusChange) {
                               const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
                               if (isMenuOpen) {
                                 closeStatusMenu(task.id);
@@ -714,6 +720,8 @@ export function FeedView({
                         >
                           {task.status === "done" ? (
                             <CheckCircle2 className={cn("text-primary", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                          ) : task.status === "closed" ? (
+                            <X className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                           ) : task.status === "in-progress" ? (
                             <CircleDot className={cn("text-warning", isMobile ? "w-4 h-4" : "w-5 h-5")} />
                           ) : (
@@ -734,6 +742,10 @@ export function FeedView({
                           <DropdownMenuItem onClick={() => onStatusChange(task.id, "done")}>
                             <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
                             {t("listView.status.done")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onStatusChange(task.id, "closed")}>
+                            <X className="w-4 h-4 mr-2 text-muted-foreground" />
+                            {t("listView.status.closed")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       )}

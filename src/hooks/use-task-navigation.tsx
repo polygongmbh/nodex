@@ -13,7 +13,7 @@ interface UseTaskNavigationOptions {
   // For Kanban: Shift+arrows/HJKL move tasks, plain arrows/HJKL navigate
   kanbanMode?: boolean;
   // Column-aware navigation for Kanban
-  columnTaskIds?: string[][]; // Array of task IDs per column [todoIds, inProgressIds, doneIds]
+  columnTaskIds?: string[][]; // Array of task IDs per Kanban column, left to right
 }
 
 export function useTaskNavigation({

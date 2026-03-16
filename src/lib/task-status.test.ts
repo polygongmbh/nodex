@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Task } from "@/types";
-import { applyTaskStatusUpdate } from "./task-status";
+import { applyTaskStatusUpdate, cycleTaskStatus } from "./task-status";
 
 const baseTask: Task = {
   id: "n1",
@@ -24,6 +24,13 @@ const baseTask: Task = {
 };
 
 describe("applyTaskStatusUpdate", () => {
+  it("keeps the click cycle three-state even when closed exists", () => {
+    expect(cycleTaskStatus("todo")).toBe("in-progress");
+    expect(cycleTaskStatus("in-progress")).toBe("done");
+    expect(cycleTaskStatus("done")).toBe("todo");
+    expect(cycleTaskStatus("closed")).toBe("todo");
+  });
+
   it("creates a local override for non-local tasks so status does not revert", () => {
     const localTasks: Task[] = [];
     const allTasks: Task[] = [baseTask];
@@ -43,5 +50,15 @@ describe("applyTaskStatusUpdate", () => {
 
     expect(editedAt).toBeDefined();
     expect(editedAt!.getTime()).toBeGreaterThanOrEqual(before);
+  });
+
+  it("clears completedBy when moved to closed", () => {
+    const localTasks: Task[] = [{ ...baseTask, status: "done", completedBy: "me" }];
+    const allTasks: Task[] = localTasks;
+
+    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "closed", "me");
+
+    expect(updated.find((t) => t.id === "n1")?.status).toBe("closed");
+    expect(updated.find((t) => t.id === "n1")?.completedBy).toBeUndefined();
   });
 });

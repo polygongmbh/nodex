@@ -55,6 +55,8 @@ export type TaskCreateFailureReason =
 export type TaskCreateResult =
   | { ok: true; mode: "published" | "local" | "queued" }
   | { ok: false; reason: TaskCreateFailureReason };
+export type TaskStatus = "todo" | "in-progress" | "done" | "closed";
+export type TaskInitialStatus = Exclude<TaskStatus, "closed">;
 export type OnNewTask = (
   content: string,
   tags: string[],
@@ -64,7 +66,7 @@ export type OnNewTask = (
   dueTime?: string,
   dateType?: TaskDateType,
   parentId?: string,
-  initialStatus?: "todo" | "in-progress" | "done",
+  initialStatus?: TaskInitialStatus,
   explicitMentionPubkeys?: string[],
   priority?: number,
   attachments?: PublishedAttachment[],
@@ -85,8 +87,6 @@ export type ComposerSubmit = (
   nip99?: Nip99Metadata,
   locationGeohash?: string
 ) => Promise<TaskCreateResult> | TaskCreateResult;
-
-export type TaskStatus = "todo" | "in-progress" | "done";
 
 export interface TaskStateUpdate {
   id: string;

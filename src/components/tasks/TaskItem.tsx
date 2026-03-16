@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2, BadgeCheck } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2, BadgeCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
+import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/lib/task-status";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -89,6 +90,7 @@ export function TaskItem({
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
     if (status === "done") return t("hints.statusToggle.done");
+    if (status === "closed") return t("hints.statusToggle.closed");
     return t("hints.statusToggle.todo", { alternateKey });
   };
 
@@ -136,15 +138,19 @@ export function TaskItem({
     if (prevStatus !== currentStatus) {
       if (currentStatus === "in-progress") {
         setLocalFoldState("matchingOnly");
-      } else if (currentStatus === "done") {
+      } else if (isTaskTerminalStatus(currentStatus)) {
         setLocalFoldState("collapsed");
-        setIsCheering(true);
-        if (cheerTimeoutRef.current !== null) {
-          window.clearTimeout(cheerTimeoutRef.current);
-        }
-        cheerTimeoutRef.current = window.setTimeout(() => {
+        if (isTaskCompletedStatus(currentStatus)) {
+          setIsCheering(true);
+          if (cheerTimeoutRef.current !== null) {
+            window.clearTimeout(cheerTimeoutRef.current);
+          }
+          cheerTimeoutRef.current = window.setTimeout(() => {
+            setIsCheering(false);
+          }, 700);
+        } else {
           setIsCheering(false);
-        }, 700);
+        }
       }
       prevStatusRef.current = currentStatus;
     }
@@ -168,7 +174,9 @@ export function TaskItem({
   const filteredCommentChildren = filteredChildren.filter(c => c.taskType === "comment");
   
   // When no active filters, "matching" means not done
-  const defaultMatchingTaskChildren = allTaskChildren.filter(c => c.status !== "done");
+  const defaultMatchingTaskChildren = allTaskChildren.filter(
+    (child) => !isTaskTerminalStatus(child.status)
+  );
   const defaultMatchingCommentChildren = allCommentChildren;
   
   // Determine if "expand all" would differ from "expand matching"
@@ -238,7 +246,7 @@ export function TaskItem({
           isComment 
             ? "bg-muted/30 hover:bg-muted/50" 
             : "hover:bg-card/80",
-          task.status === "done" && "opacity-60",
+          isTaskTerminalStatus(task.status) && "opacity-60",
           isLockedUntilStart && "opacity-50 grayscale",
           depth > 0 && "border-l-2 border-muted ml-1.5 pl-4",
           isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background bg-primary/5"
@@ -278,7 +286,7 @@ export function TaskItem({
           <div className="w-5 flex-shrink-0" />
         )}
 
-        {/* Status toggle for tasks - tri-state: todo -> in-progress -> done */}
+        {/* Status toggle for tasks - quick cycle stays todo -> in-progress -> done */}
         {!isComment && (
           <DropdownMenu
             open={statusMenuOpen}
@@ -297,7 +305,7 @@ export function TaskItem({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!canCompleteTask()) return;
-                  if (task.status === "done" && onStatusChange) {
+                  if (isTaskTerminalStatus(task.status) && onStatusChange) {
                     if (statusMenuOpen) {
                       setStatusMenuOpen(false);
                       allowStatusMenuOpenRef.current = false;
@@ -346,6 +354,8 @@ export function TaskItem({
               >
                 {task.status === "done" ? (
                   <CheckCircle2 className="w-5 h-5 text-primary" />
+                ) : task.status === "closed" ? (
+                  <X className="w-5 h-5 text-muted-foreground" />
                 ) : task.status === "in-progress" ? (
                   <CircleDot className="w-5 h-5 text-warning" />
                 ) : (
@@ -384,6 +394,16 @@ export function TaskItem({
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
                   {t("listView.status.done")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusChange(task.id, "closed");
+                  }}
+                  className={cn(task.status === "closed" && "bg-muted")}
+                >
+                  <X className="w-4 h-4 mr-2 text-muted-foreground" />
+                  {t("listView.status.closed")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             )}
@@ -449,7 +469,7 @@ export function TaskItem({
                 <>
                   <span className="flex items-center gap-1">
                     <CheckSquare className="w-3 h-3" />
-                    {allTaskChildren.filter(c => c.status === "done").length}/{allTaskChildren.length}
+                    {allTaskChildren.filter((child) => isTaskCompletedStatus(child.status)).length}/{allTaskChildren.length}
                   </span>
                 </>
               )}
@@ -481,10 +501,10 @@ export function TaskItem({
           {/* Task content */}
           <div className={cn(
             `text-sm leading-relaxed whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText}`,
-            task.status === "done" && "line-through text-muted-foreground"
+            isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
           )}>
             {linkifyContent(task.content, onHashtagClick, {
-              plainHashtags: task.status === "done",
+              plainHashtags: isTaskTerminalStatus(task.status),
               people,
               onMentionClick: onAuthorClick,
               onStandaloneMediaClick: (url) => onMediaClick?.(task.id, url),
@@ -555,7 +575,7 @@ export function TaskItem({
           )}
 
           {/* Completed indicator */}
-          {task.status === "done" && task.completedBy && (
+          {isTaskCompletedStatus(task.status) && task.completedBy && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
               <CheckSquare className="w-3 h-3" />
               <span>{t("tasks.completedBy", { user: task.completedBy })}</span>
@@ -607,7 +627,7 @@ export function TaskItem({
                   const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible" 
-                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : child.status !== "done"))
+                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
                     : true;
                   return (
                     <TaskItem
@@ -641,7 +661,7 @@ export function TaskItem({
                   const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible"
-                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : child.status !== "done"))
+                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
                     : true;
                   return (
                     <TaskItem

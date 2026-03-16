@@ -1,4 +1,5 @@
 import { Task, TaskStatus } from "@/types";
+import { isTaskTerminalStatus } from "./task-status";
 import { isToday, isTomorrow, isPast, startOfDay, differenceInDays } from "date-fns";
 
 /**
@@ -159,7 +160,7 @@ export function sortTasks(tasks: Task[], context: SortContext): Task[] {
 
   const getSortTier = (task: Task): number => {
     const status = getStatusForSort(task) || "todo";
-    if (status === "done") return 7;
+    if (isTaskTerminalStatus(status)) return 7;
 
     if (dueTodayOrPastInTree(task.id)) return 0;
 
@@ -206,7 +207,7 @@ export function buildChildrenMap(allTasks: Task[]): Map<string | undefined, Task
 
 // Get due date color class based on urgency
 export function getDueDateColorClass(dueDate: Date | undefined, status?: string): string {
-  if (!dueDate || status === "done") return "text-muted-foreground";
+  if (!dueDate || isTaskTerminalStatus(status as TaskStatus | undefined)) return "text-muted-foreground";
   
   const today = startOfDay(new Date());
   const dueDay = startOfDay(dueDate);

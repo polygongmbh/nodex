@@ -27,6 +27,9 @@ export function mapTaskStatusToStateEvent(
   if (status === "done") {
     return { kind: NostrEventKind.GitStatusApplied, content: description?.trim() || "" };
   }
+  if (status === "closed") {
+    return { kind: NostrEventKind.GitStatusClosed, content: description?.trim() || "" };
+  }
   if (status === "in-progress") {
     return {
       kind: NostrEventKind.GitStatusOpen,
@@ -41,8 +44,11 @@ export function mapTaskStateEventToTaskStatus(
   content: string
 ): { status: TaskStatus; statusDescription?: string } {
   const statusDescription = content.trim() || undefined;
-  if (kind === NostrEventKind.GitStatusApplied || kind === NostrEventKind.GitStatusClosed) {
+  if (kind === NostrEventKind.GitStatusApplied) {
     return { status: "done", statusDescription };
+  }
+  if (kind === NostrEventKind.GitStatusClosed) {
+    return { status: "closed", statusDescription };
   }
   if (kind === NostrEventKind.GitStatusOpen || kind === NostrEventKind.GitStatusDraft || kind === NostrEventKind.Procedure) {
     if (!statusDescription) return { status: "todo" };

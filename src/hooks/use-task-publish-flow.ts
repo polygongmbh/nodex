@@ -52,7 +52,7 @@ import type {
   Task,
   TaskCreateResult,
   TaskDateType,
-  TaskStatus,
+  TaskInitialStatus,
 } from "@/types";
 
 const PUBLISH_UNDO_DELAY_MS = 5000;
@@ -114,7 +114,7 @@ interface UseTaskPublishFlowOptions {
   publishTaskCreateFollowUps: (params: {
     publishedEventId?: string;
     taskType: Task["taskType"];
-    initialStatus?: TaskStatus;
+    initialStatus?: TaskInitialStatus;
     dueDate?: Date;
     content: string;
     dueTime?: string;
@@ -262,7 +262,7 @@ export function useTaskPublishFlow({
     dueTime?: string,
     dateType: TaskDateType = "due",
     parentId?: string,
-    initialStatus?: TaskStatus,
+    initialStatus?: TaskInitialStatus,
     explicitMentionPubkeys: string[] = [],
     priority?: number,
     attachments: PublishedAttachment[] = [],

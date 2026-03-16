@@ -1,6 +1,6 @@
 import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags } from "lucide-react";
+import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags, X } from "lucide-react";
 import {
   Task,
   TaskCreateResult,
@@ -9,6 +9,7 @@ import {
   ComposeRestoreRequest,
   PublishedAttachment,
   Nip99Metadata,
+  TaskStatus,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -42,11 +43,12 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
+import { isTaskTerminalStatus } from "@/lib/task-status";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
   onToggleComplete: (taskId: string) => void;
-  onStatusChange?: (taskId: string, status: "todo" | "in-progress" | "done") => void;
+  onStatusChange?: (taskId: string, status: TaskStatus) => void;
   onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
   onUpdatePriority?: (taskId: string, priority: number) => void;
   onFocusSidebar?: () => void;
@@ -147,6 +149,8 @@ export function ListView({
   const prevTasksRef = useRef<string>("");
   const prevSearchRef = useRef(searchQuery);
   const prevFocusedRef = useRef(focusedTaskId);
+  const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
+  const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
 
   // Detect filter/view changes (not status changes) to trigger re-sort
   useEffect(() => {
@@ -259,8 +263,14 @@ export function ListView({
           comparison = a.content.localeCompare(b.content);
           break;
         case "status": {
-          const statusOrder = { "in-progress": 0, "todo": 1, "done": 2 };
-          comparison = (statusOrder[a.status || "todo"] || 1) - (statusOrder[b.status || "todo"] || 1);
+          const statusOrder: Record<TaskStatus, number> = {
+            "in-progress": 0,
+            "todo": 1,
+            "done": 2,
+            "closed": 3,
+          };
+          comparison =
+            (statusOrder[a.status || "todo"] ?? 1) - (statusOrder[b.status || "todo"] ?? 1);
           break;
         }
         case "dueDate":
@@ -311,6 +321,27 @@ export function ListView({
       setSortField(field);
       setSortDirection("asc");
     }
+  };
+
+  const openStatusMenu = (taskId: string) => {
+    setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
+  };
+
+  const closeStatusMenu = (taskId: string) => {
+    setStatusMenuOpenByTaskId((prev) => {
+      if (!prev[taskId]) return prev;
+      const next = { ...prev };
+      delete next[taskId];
+      return next;
+    });
+  };
+
+  const allowStatusMenuOpen = (taskId: string) => {
+    allowStatusMenuOpenTaskIdsRef.current.add(taskId);
+  };
+
+  const clearStatusMenuOpenIntent = (taskId: string) => {
+    allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
   };
 
   const handleResetSort = () => {
@@ -403,6 +434,7 @@ export function ListView({
     const statusClassName = cn(
       "text-xs px-1.5 sm:px-2 py-1 rounded-full font-medium whitespace-nowrap",
       status === "done" ? "bg-primary/10 text-primary" :
+      status === "closed" ? "bg-muted/80 text-muted-foreground" :
       status === "in-progress" ? "bg-warning/15 text-warning" :
       "bg-muted text-muted-foreground"
     );
@@ -415,7 +447,7 @@ export function ListView({
               <span className="lg:hidden">{t("listView.status.inProgressShort")}</span>
               <span className="hidden lg:inline">{t("listView.status.inProgress")}</span>
             </>
-          ) : status === "done" ? t("listView.status.done") : t("listView.status.todo")}
+          ) : status === "done" ? t("listView.status.done") : status === "closed" ? t("listView.status.closed") : t("listView.status.todo")}
         </span>
       );
     }
@@ -429,7 +461,7 @@ export function ListView({
                 <span className="lg:hidden">{t("listView.status.inProgressShort")}</span>
                 <span className="hidden lg:inline">{t("listView.status.inProgress")}</span>
               </>
-            ) : status === "done" ? t("listView.status.done") : t("listView.status.todo")}
+            ) : status === "done" ? t("listView.status.done") : status === "closed" ? t("listView.status.closed") : t("listView.status.todo")}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
@@ -453,6 +485,13 @@ export function ListView({
           >
             <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
             {t("listView.status.done")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onStatusChange?.(task.id, "closed")}
+            className={cn(status === "closed" && "bg-muted")}
+          >
+            <X className="w-4 h-4 mr-2 text-muted-foreground" />
+            {t("listView.status.closed")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -684,29 +723,103 @@ export function ListView({
                     data-task-id={task.id}
                     className={cn(
                       "border-b border-border hover:bg-muted/30 transition-colors",
-                      task.status === "done" && "opacity-60",
+                      isTaskTerminalStatus(task.status) && "opacity-60",
                       isLockedUntilStart && "opacity-50 grayscale",
                       isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
                     )}
                   >
                     <td className="p-2 2xl:p-3">
-                      <button
-                        onClick={() => canCompleteTask(task) && onToggleComplete(task.id)}
-                        disabled={!canCompleteTask(task)}
-                        title={getStatusButtonTitle(task)}
-                        className={cn(
-                          "p-0.5 rounded transition-colors",
-                          canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
-                        )}
+                      <DropdownMenu
+                        open={Boolean(statusMenuOpenByTaskId[task.id])}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            closeStatusMenu(task.id);
+                            clearStatusMenuOpenIntent(task.id);
+                            return;
+                          }
+                          if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
+                            openStatusMenu(task.id);
+                          } else {
+                            closeStatusMenu(task.id);
+                          }
+                          clearStatusMenuOpenIntent(task.id);
+                        }}
                       >
-                        {task.status === "done" ? (
-                          <CheckCircle2 className="w-5 h-5 text-primary" />
-                        ) : task.status === "in-progress" ? (
-                          <CircleDot className="w-5 h-5 text-warning" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-muted-foreground" />
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            onClick={(event) => {
+                              if (!canCompleteTask(task)) return;
+                              if (onStatusChange && isTaskTerminalStatus(task.status)) {
+                                const isMenuOpen = Boolean(statusMenuOpenByTaskId[task.id]);
+                                if (isMenuOpen) {
+                                  closeStatusMenu(task.id);
+                                  clearStatusMenuOpenIntent(task.id);
+                                } else {
+                                  allowStatusMenuOpen(task.id);
+                                  openStatusMenu(task.id);
+                                }
+                                return;
+                              }
+                              if (event.altKey && onStatusChange) {
+                                allowStatusMenuOpen(task.id);
+                                openStatusMenu(task.id);
+                                return;
+                              }
+                              closeStatusMenu(task.id);
+                              clearStatusMenuOpenIntent(task.id);
+                              onToggleComplete(task.id);
+                            }}
+                            disabled={!canCompleteTask(task)}
+                            title={getStatusButtonTitle(task)}
+                            className={cn(
+                              "p-0.5 rounded transition-colors",
+                              canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+                            )}
+                          >
+                            {task.status === "done" ? (
+                              <CheckCircle2 className="w-5 h-5 text-primary" />
+                            ) : task.status === "closed" ? (
+                              <X className="w-5 h-5 text-muted-foreground" />
+                            ) : task.status === "in-progress" ? (
+                              <CircleDot className="w-5 h-5 text-warning" />
+                            ) : (
+                              <Circle className="w-5 h-5 text-muted-foreground" />
+                            )}
+                          </button>
+                        </DropdownMenuTrigger>
+                        {onStatusChange && canCompleteTask(task) && (
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem
+                              onClick={() => onStatusChange(task.id, "todo")}
+                              className={cn((task.status || "todo") === "todo" && "bg-muted")}
+                            >
+                              <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
+                              {t("listView.status.todo")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onStatusChange(task.id, "in-progress")}
+                              className={cn(task.status === "in-progress" && "bg-muted")}
+                            >
+                              <CircleDot className="w-4 h-4 mr-2 text-warning" />
+                              {t("listView.status.inProgress")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onStatusChange(task.id, "done")}
+                              className={cn(task.status === "done" && "bg-muted")}
+                            >
+                              <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
+                              {t("listView.status.done")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onStatusChange(task.id, "closed")}
+                              className={cn(task.status === "closed" && "bg-muted")}
+                            >
+                              <X className="w-4 h-4 mr-2 text-muted-foreground" />
+                              {t("listView.status.closed")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
                         )}
-                      </button>
+                      </DropdownMenu>
                     </td>
                     <td className="p-2 2xl:p-3 min-w-0">
                       <div className="space-y-1">
@@ -735,12 +848,12 @@ export function ListView({
                           onClick={() => onFocusTask?.(task.id)}
                           className={cn(
                             `text-sm cursor-pointer whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText} break-words`,
-                            task.status === "done" && "line-through text-muted-foreground"
+                            isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                           )}
                           title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
                         >
                           {linkifyContent(task.content, onHashtagClick, {
-                            plainHashtags: task.status === "done",
+                            plainHashtags: isTaskTerminalStatus(task.status),
                             people,
                             onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                             getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),

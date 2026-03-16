@@ -66,6 +66,24 @@ describe("TaskItem status actions", () => {
     expect(onStatusChange).toHaveBeenCalledWith("t1", "done");
   });
 
+  it("allows directly marking a task as closed", () => {
+    const onStatusChange = vi.fn();
+
+    render(
+      <TaskItem
+        task={baseTask}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+      />
+    );
+
+    fireEvent.click(screen.getByText("Closed"));
+
+    expect(onStatusChange).toHaveBeenCalledWith("t1", "closed");
+  });
+
   it("does not cycle done tasks on click when status menu is available", () => {
     const onStatusChange = vi.fn();
     const onToggleComplete = vi.fn();
@@ -73,6 +91,27 @@ describe("TaskItem status actions", () => {
     render(
       <TaskItem
         task={{ ...baseTask, status: "done" }}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onStatusChange={onStatusChange}
+        onToggleComplete={onToggleComplete}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText("Set status"));
+
+    expect(onToggleComplete).not.toHaveBeenCalled();
+    expect(onStatusChange).not.toHaveBeenCalled();
+  });
+
+  it("does not cycle closed tasks on click when status menu is available", () => {
+    const onStatusChange = vi.fn();
+    const onToggleComplete = vi.fn();
+
+    render(
+      <TaskItem
+        task={{ ...baseTask, status: "closed" }}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}

@@ -1,5 +1,5 @@
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
-import { Task, Person, type FeedMessageType, type TaskStateUpdate } from "@/types";
+import { Task, Person, type FeedMessageType, type TaskStateUpdate, type TaskStatus } from "@/types";
 import { extractTaskStateTargetId, isTaskStateEventKind, mapTaskStateEventToTaskStatus } from "@/lib/nostr/task-state-events";
 import {
   extractPriorityTargetTaskId,
@@ -144,12 +144,14 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   const locationGeohash = parseFirstGeohashTag(event.tags);
 
   // Extract status from tags for kind 1621
-  let status: "todo" | "in-progress" | "done" = "todo";
+  let status: TaskStatus = "todo";
   const statusTag = event.tags.find((tag) => tag[0] === "status");
   if (statusTag) {
     const statusValue = statusTag[1].toLowerCase();
     if (statusValue === "done" || statusValue === "completed") {
       status = "done";
+    } else if (statusValue === "closed") {
+      status = "closed";
     } else if (statusValue === "in-progress" || statusValue === "active") {
       status = "in-progress";
     }

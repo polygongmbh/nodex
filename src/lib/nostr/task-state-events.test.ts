@@ -20,6 +20,12 @@ describe("task-state-events", () => {
     expect(mapped.content).toBe("");
   });
 
+  it("maps closed to Closed kind", () => {
+    const mapped = mapTaskStatusToStateEvent("closed");
+    expect(mapped.kind).toBe(NostrEventKind.GitStatusClosed);
+    expect(mapped.content).toBe("");
+  });
+
   it("extracts property target from e tags", () => {
     const target = extractTaskStateTargetId([
       ["e", "task-parent", "", "parent"],
@@ -35,6 +41,15 @@ describe("task-state-events", () => {
     );
     expect(mapped.status).toBe("in-progress");
     expect(mapped.statusDescription).toBe("Working on this now");
+  });
+
+  it("maps Closed kind to closed", () => {
+    const mapped = mapTaskStateEventToTaskStatus(
+      NostrEventKind.GitStatusClosed,
+      ""
+    );
+    expect(mapped.status).toBe("closed");
+    expect(mapped.statusDescription).toBeUndefined();
   });
 
   it("classifies only task-state kinds as state events", () => {
