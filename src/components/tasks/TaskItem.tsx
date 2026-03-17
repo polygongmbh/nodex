@@ -7,7 +7,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
-import type { NostrProfile } from "@/hooks/use-nostr-profiles";
+import type { NostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";

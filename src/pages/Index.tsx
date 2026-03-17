@@ -9,7 +9,7 @@ import { ViewSwitcher } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
-import { useNostrEventCache } from "@/hooks/use-nostr-event-cache";
+import { useNostrEventCache } from "@/infrastructure/nostr/use-nostr-event-cache";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
@@ -51,7 +51,7 @@ import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-save
 import { useTaskPublishFlow } from "@/features/feed-page/controllers/use-task-publish-flow";
 import { useTaskPublishControls } from "@/features/feed-page/controllers/use-task-publish-controls";
 import { useTaskStatusController } from "@/features/feed-page/controllers/use-task-status-controller";
-import { useKind0People } from "@/hooks/use-kind0-people";
+import { useKind0People } from "@/infrastructure/nostr/use-kind0-people";
 import { useIndexDerivedData } from "@/features/feed-page/controllers/use-index-derived-data";
 import { usePinnedSidebarChannels } from "@/features/feed-page/controllers/use-pinned-sidebar-channels";
 import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";

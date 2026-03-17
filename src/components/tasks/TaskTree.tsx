@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
-import { useNostrProfiles } from "@/hooks/use-nostr-profiles";
+import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 interface TaskTreeProps extends SharedTaskViewContext {

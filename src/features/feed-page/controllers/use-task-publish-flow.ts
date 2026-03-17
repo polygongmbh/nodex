@@ -3,7 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
 import { toast } from "sonner";
-import { NOSTR_EVENTS_QUERY_KEY } from "@/hooks/use-nostr-event-cache";
+import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {
   removeCachedNostrEventById,
   type CachedNostrEvent,

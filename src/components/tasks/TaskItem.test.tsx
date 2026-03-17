@@ -5,7 +5,7 @@ import { TaskItem } from "./TaskItem";
 import type { Task } from "@/types";
 import { makePerson, makeTask } from "@/test/fixtures";
 
-vi.mock("@/hooks/use-nostr-profiles", () => ({
+vi.mock("@/infrastructure/nostr/use-nostr-profiles", () => ({
   useNostrProfile: () => ({ profile: null }),
 }));
 
