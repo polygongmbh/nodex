@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Task } from "@/types";
-import { applyTaskSortOverlays } from "./use-index-derived-data";
+import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 
 const baseAuthor = {
   id: "user-1",

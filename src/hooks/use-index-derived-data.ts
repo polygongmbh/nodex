@@ -8,6 +8,11 @@ import {
   getRelayIdFromUrl,
   isSpamContent,
 } from "@/lib/nostr/event-converter";
+import {
+  applyTaskSortOverlays,
+  dedupeMergedTasks,
+  filterPendingLocalTasksForMerge,
+} from "@/domain/content/task-collections";
 import { deriveChannels } from "@/lib/channels";
 import {
   getChannelFrecencyScores,
@@ -19,19 +24,7 @@ import { isTaskStateEventKind } from "@/lib/nostr/task-state-events";
 import { isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
 import { deriveSidebarPeople } from "@/lib/sidebar-people";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
-import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
-
-const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
-
-function buildPendingPublishDedupKey(task: Task): string {
-  const authorId = task.author.id?.trim().toLowerCase() || "";
-  const normalizedContent = task.content.trim();
-  const normalizedTags = [...task.tags].map((tag) => tag.trim().toLowerCase()).sort().join(",");
-  const feedMessageType = task.feedMessageType || "";
-  const parentId = task.parentId || "";
-  return `${authorId}|${task.taskType}|${feedMessageType}|${parentId}|${normalizedTags}|${normalizedContent}`;
-}
 
 export interface UseIndexDerivedDataOptions {
   // Raw event sources
@@ -65,25 +58,6 @@ export interface UseIndexDerivedDataResult {
   sidebarPeople: Person[];
   currentUser: Person | undefined;
   hasCachedCurrentUserProfileMetadata: boolean;
-}
-
-export function applyTaskSortOverlays(
-  tasks: Task[],
-  sortStatusHoldByTaskId: Record<string, TaskStatus>,
-  sortModifiedAtHoldByTaskId: Record<string, string>
-): Task[] {
-  return tasks
-    .map((task) => {
-      const sortStatus = sortStatusHoldByTaskId[task.id];
-      const sortLastEditedAtIso = sortModifiedAtHoldByTaskId[task.id];
-      if (!sortStatus && !sortLastEditedAtIso) return task;
-      return {
-        ...task,
-        ...(sortStatus ? { sortStatus } : {}),
-        ...(sortLastEditedAtIso ? { sortLastEditedAt: new Date(sortLastEditedAtIso) } : {}),
-      };
-    })
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
 
 export function useIndexDerivedData({
@@ -150,43 +124,8 @@ export function useIndexDerivedData({
 
   // Combine local tasks with Nostr tasks, dedup, and overlay optimistic status
   const allTasks = useMemo(() => {
-    const nostrTaskDedupKeys = new Set(nostrTasks.map((task) => buildPendingPublishDedupKey(task)));
-    const localTasksForMerge = localTasks.filter((task) => {
-      if (!task.pendingPublishToken) return true;
-      return !nostrTaskDedupKeys.has(buildPendingPublishDedupKey(task));
-    });
-    const combined = mergeTasks(localTasksForMerge, nostrTasks);
-    const byId = new Map<string, Task>();
-    const byListingReplaceableKey = new Map<string, Task>();
-
-    for (const task of combined) {
-      const listingReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
-      if (!listingReplaceableKey) {
-        const existing = byId.get(task.id);
-        if (!existing) {
-          byId.set(task.id, task);
-          continue;
-        }
-        const mergedRelays = Array.from(new Set([...existing.relays, ...task.relays]));
-        byId.set(task.id, {
-          ...(existing.timestamp.getTime() >= task.timestamp.getTime() ? existing : task),
-          relays: mergedRelays,
-        });
-        continue;
-      }
-      const existing = byListingReplaceableKey.get(listingReplaceableKey);
-      if (
-        !existing ||
-        task.timestamp.getTime() > existing.timestamp.getTime() ||
-        (task.timestamp.getTime() === existing.timestamp.getTime() && task.id > existing.id)
-      ) {
-        byListingReplaceableKey.set(listingReplaceableKey, task);
-      }
-    }
-
-    return [...byId.values(), ...byListingReplaceableKey.values()].sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
-    );
+    const localTasksForMerge = filterPendingLocalTasksForMerge(localTasks, nostrTasks);
+    return dedupeMergedTasks(mergeTasks(localTasksForMerge, nostrTasks));
   }, [localTasks, nostrTasks]);
 
   const personalizedChannelScores = useMemo(
