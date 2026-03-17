@@ -3,16 +3,15 @@ import type { Task, Channel, Person, Relay, TaskStatus } from "@/types";
 import type { CachedNostrEvent } from "@/lib/nostr/event-cache";
 import type { NostrUser } from "@/lib/nostr/ndk-context";
 import {
-  mergeTasks,
   nostrEventsToTasks,
-  getRelayIdFromUrl,
   isSpamContent,
-} from "@/lib/nostr/event-converter";
+} from "@/infrastructure/nostr/task-converter";
 import {
   applyTaskSortOverlays,
   dedupeMergedTasks,
   filterPendingLocalTasksForMerge,
 } from "@/domain/content/task-collections";
+import { mergeTasks } from "@/domain/content/task-merge";
 import { deriveChannels } from "@/domain/content/channels";
 import {
   getChannelFrecencyScores,
@@ -24,6 +23,7 @@ import { isTaskStateEventKind } from "@/lib/nostr/task-state-events";
 import { isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
 import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
+import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
 
 export interface UseIndexDerivedDataOptions {

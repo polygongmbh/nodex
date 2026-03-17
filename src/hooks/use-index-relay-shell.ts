@@ -2,7 +2,7 @@ import { useMemo, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Relay } from "@/types";
 import type { NDKRelayStatus } from "@/lib/nostr/ndk-context";
-import { getRelayIdFromUrl } from "@/lib/nostr/event-converter";
+import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/hooks/use-nostr-event-cache";
 import {
   removeCachedNostrEventsByRelayUrl,

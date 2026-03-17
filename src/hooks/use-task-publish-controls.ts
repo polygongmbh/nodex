@@ -10,7 +10,7 @@ import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/nip52-task-calendar-ev
 import { buildTaskPriorityUpdateEvent } from "@/lib/nostr/task-property-events";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Task, TaskDateType, TaskInitialStatus, TaskStatus, Relay } from "@/types";
-import { getRelayIdFromUrl } from "@/lib/nostr/event-converter";
+import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 
 interface PublishResult {
   success: boolean;

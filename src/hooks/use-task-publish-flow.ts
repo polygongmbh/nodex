@@ -15,7 +15,7 @@ import {
 } from "@/lib/failed-publish-drafts";
 import { resolveMentionedPubkeysAsync } from "@/lib/mentions";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
-import { getRelayIdFromUrl } from "@/lib/nostr/event-converter";
+import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { normalizeComposerMessageType } from "@/lib/task-type";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
 import {

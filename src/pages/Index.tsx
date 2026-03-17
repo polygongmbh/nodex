@@ -18,7 +18,9 @@ import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
-import { mergeTasks, nostrEventsToTasks, getRelayIdFromUrl, getRelayNameFromUrl } from "@/lib/nostr/event-converter";
+import { mergeTasks } from "@/domain/content/task-merge";
+import { getRelayIdFromUrl, getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
+import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
 import {
   getPinnedChannelIdsForView,
 } from "@/lib/pinned-channels-preferences";
