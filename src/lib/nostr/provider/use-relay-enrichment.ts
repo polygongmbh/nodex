@@ -5,7 +5,10 @@ import { NostrEventKind } from "../types";
 import { normalizeRelayUrl } from "./relay-list";
 import { filterAutoAddRelayUrls } from "./relay-list";
 import { resolveVerifiedNip05RelayUrls } from "../nip05-verify";
-import { extractRelayUrlsFromNip65Tags, selectComplementaryRelayUrls } from "../relay-enrichment";
+import {
+  extractRelayUrlsFromNip65Tags,
+  selectComplementaryRelayUrls,
+} from "@/infrastructure/nostr/relay-enrichment";
 import { nostrDevLog } from "../dev-logs";
 import type { NDKRelayStatus, NostrUser } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";

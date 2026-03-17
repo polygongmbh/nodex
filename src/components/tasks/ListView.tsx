@@ -1,5 +1,5 @@
 import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { useNDK } from "@/lib/nostr/ndk-context";
+import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags, X } from "lucide-react";
 import {
   Task,

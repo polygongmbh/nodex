@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts";
 import { useTranslation } from "react-i18next";
-import { relayUrlToId } from "@/lib/nostr/relay-url";
+import { relayUrlToId } from "@/infrastructure/nostr/relay-url";
 
 interface FailedPublishQueueBannerProps {
   drafts: FailedPublishDraft[];

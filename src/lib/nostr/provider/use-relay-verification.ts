@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import type { MutableRefObject } from "react";
 import { normalizeRelayUrl } from "./relay-list";
 import { shouldSetVerificationFailedStatus } from "./relay-verification";
-import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
+import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 import { nostrDevLog } from "../dev-logs";
 import type { NDKRelayStatus } from "./contracts";
 import type { RelayVerificationEvent } from "../nip42-relay-auth-policy";

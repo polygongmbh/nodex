@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TaskTree } from "./TaskTree";
 import type { Channel, Person, Relay, Task } from "@/types";
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
 }));
 

@@ -26,7 +26,7 @@ import {
 } from "@/lib/presence-status";
 import { buildDeterministicGuestName } from "@/lib/guest-name";
 import { getConfiguredDefaultRelays } from "@/lib/nostr/default-relays";
-import { isRelayUrl } from "@/lib/nostr/relay-url";
+import { isRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "../dev-logs";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
 import {
@@ -59,7 +59,7 @@ import {
   extractRelayRejectionReason,
 } from "./relay-error";
 import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
-import { fetchRelayInfo, type RelayInfoSummary } from "../relay-info";
+import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";

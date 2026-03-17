@@ -7,9 +7,9 @@ import {
   loadCachedNostrEvents,
   saveCachedNostrEvents,
   type CachedNostrEvent,
-} from "@/lib/nostr/event-cache";
+} from "@/infrastructure/nostr/event-cache";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/nostr/replaceable-events";
+import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/infrastructure/nostr/replaceable-events";
 
 export const NOSTR_EVENTS_QUERY_KEY = ["nostr-events-cache"] as const;
 const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;

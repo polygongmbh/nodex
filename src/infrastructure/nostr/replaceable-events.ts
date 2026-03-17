@@ -1,5 +1,5 @@
 import type { NostrEventWithRelay } from "@/lib/nostr/types";
-import type { CachedNostrEvent } from "@/lib/nostr/event-cache";
+import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 
 type ReplaceableLikeEvent = Pick<NostrEventWithRelay, "kind" | "pubkey" | "tags">;
 type ReplaceableCachedEvent = Pick<CachedNostrEvent, "kind" | "pubkey" | "tags">;

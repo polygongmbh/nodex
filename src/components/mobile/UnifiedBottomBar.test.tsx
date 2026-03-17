@@ -10,7 +10,7 @@ import { DEFAULT_GEOHASH_PRECISION, encodeGeohash } from "@/infrastructure/nostr
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({
     createHttpAuthHeader: vi.fn(async () => null),
   }),

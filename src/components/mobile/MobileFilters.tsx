@@ -6,7 +6,7 @@ import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { useNDK } from "@/lib/nostr/ndk-context";
+import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";

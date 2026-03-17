@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Sidebar } from "./Sidebar";
 import type { Channel, Person, Relay } from "@/types";
-import type { NDKRelayStatus } from "@/lib/nostr/ndk-context";
+import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 
 const baseRelays: Relay[] = [
   {

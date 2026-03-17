@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import type { Person } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { CachedNostrEvent } from "@/lib/nostr/event-cache";
+import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import {
   derivePeopleFromKind0Events,
   loadCachedKind0Events,

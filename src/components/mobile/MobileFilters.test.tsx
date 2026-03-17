@@ -18,7 +18,7 @@ const ndkMock = {
   publishEvent: vi.fn(async () => ({ success: true })),
 };
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ndkMock,
 }));
 

@@ -27,8 +27,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
-import { ensureRelayProtocol, stripRelayProtocol } from "@/lib/nostr/relay-url";
+import { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
+import { ensureRelayProtocol, stripRelayProtocol } from "@/infrastructure/nostr/relay-url";
 import { useTranslation } from "react-i18next";
 import { getRelayStatusDotClass, getRelayStatusTextClass } from "./relayStatusStyles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";

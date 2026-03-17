@@ -4,7 +4,7 @@ import { useNostrProfile } from "./use-nostr-profiles";
 
 const mockUseNDK = vi.fn();
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => mockUseNDK(),
 }));
 

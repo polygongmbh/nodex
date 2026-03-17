@@ -19,7 +19,7 @@ vi.mock("@/components/theme/ThemeProvider", () => ({
   ThemeProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   NDKProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 

@@ -1,4 +1,4 @@
-import { ensureRelayProtocol } from "@/lib/nostr/relay-url";
+import { ensureRelayProtocol } from "@/infrastructure/nostr/relay-url";
 
 type ComplementaryRelaySource = "nip65" | "nip05" | null;
 

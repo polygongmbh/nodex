@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
-import { useNDK } from "@/lib/nostr/ndk-context";
+import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import {
   Task,

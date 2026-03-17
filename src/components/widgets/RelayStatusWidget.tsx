@@ -1,10 +1,10 @@
 // Intentionally retained for potential future sidebar/dashboard reuse.
 import { Radio, WifiOff, Loader2, AlertCircle, ShieldAlert, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
+import { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 import { RelayManagement } from "@/components/relay/RelayManagement";
 import { getRelayStatusDotClass, getRelayStatusTextClass } from "@/components/relay/relayStatusStyles";
-import { stripRelayProtocol } from "@/lib/nostr/relay-url";
+import { stripRelayProtocol } from "@/infrastructure/nostr/relay-url";
 import { useTranslation } from "react-i18next";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNDK } from "@/lib/nostr/ndk-context";
+import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { NDKEvent, NDKFilter, NDKKind } from "@nostr-dev-kit/ndk";
 
 export interface NostrProfile {

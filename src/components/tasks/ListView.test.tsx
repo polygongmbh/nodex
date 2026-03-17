@@ -6,7 +6,7 @@ import type { TaskCreateResult } from "@/types";
 
 let mockUser: { id: string } | null = { id: "me" };
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: mockUser }),
 }));
 

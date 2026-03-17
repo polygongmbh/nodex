@@ -11,7 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
 import { useNostrEventCache } from "@/infrastructure/nostr/use-nostr-event-cache";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
-import { useNDK } from "@/lib/nostr/ndk-context";
+import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";

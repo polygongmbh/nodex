@@ -5,7 +5,7 @@ import { KanbanView } from "./KanbanView";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { TaskCreateResult } from "@/types";
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
 }));
 

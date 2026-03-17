@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALL_RELAYS_SCOPE_KEY, EMPTY_RELAY_SCOPE_KEY } from "@/lib/nostr/event-cache";
+import { ALL_RELAYS_SCOPE_KEY, EMPTY_RELAY_SCOPE_KEY } from "@/infrastructure/nostr/event-cache";
 import { buildFeedScopeKey } from "./use-nostr-event-cache";
 
 describe("buildFeedScopeKey", () => {

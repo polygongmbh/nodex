@@ -8,7 +8,7 @@ import { SidebarSection } from "./sidebar/SidebarSection";
 import { SavedFilterPresetRow } from "@/components/tasks/SavedFilterPresetRow";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { RelayManagement } from "@/components/relay/RelayManagement";
-import { NDKRelayStatus } from "@/lib/nostr/ndk-context";
+import { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 import { cn } from "@/lib/utils";
 import { APP_VERSION } from "@/lib/app-version";
 import { buildCollapsedPreviewItems } from "@/lib/sidebar-collapsed-preview";

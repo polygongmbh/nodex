@@ -7,7 +7,7 @@ import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-c
 import {
   removeCachedNostrEventById,
   type CachedNostrEvent,
-} from "@/lib/nostr/event-cache";
+} from "@/infrastructure/nostr/event-cache";
 import {
   loadFailedPublishDrafts,
   saveFailedPublishDrafts,

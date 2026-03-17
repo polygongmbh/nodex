@@ -1,5 +1,5 @@
 import type { Person } from "@/types";
-import { normalizeCachedRelayUrl } from "@/lib/nostr/event-cache";
+import { normalizeCachedRelayUrl } from "@/infrastructure/nostr/event-cache";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { parseKind0Content } from "./profile-metadata";
 

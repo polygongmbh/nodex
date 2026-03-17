@@ -15,7 +15,7 @@ import {
   FeedMessageType,
 } from "@/types";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
-import { useNDK } from "@/lib/nostr/ndk-context";
+import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { addMonths, format, startOfMonth, subMonths } from "date-fns";
 import { toast } from "sonner";

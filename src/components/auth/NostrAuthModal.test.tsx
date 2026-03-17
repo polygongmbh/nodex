@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
-import type { AuthMethod, NostrUser } from "@/lib/nostr/ndk-context";
+import type { AuthMethod, NostrUser } from "@/infrastructure/nostr/ndk-context";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
@@ -31,7 +31,7 @@ vi.mock("sonner", () => ({
   },
 }));
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ndkMock,
 }));
 

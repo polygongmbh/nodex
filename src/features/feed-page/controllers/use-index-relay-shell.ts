@@ -1,14 +1,14 @@
 import { useMemo, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Relay } from "@/types";
-import type { NDKRelayStatus } from "@/lib/nostr/ndk-context";
+import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {
   removeCachedNostrEventsByRelayUrl,
   removeRelayUrlFromCachedEvents,
   type CachedNostrEvent,
-} from "@/lib/nostr/event-cache";
+} from "@/infrastructure/nostr/event-cache";
 
 export interface UseIndexRelayShellOptions {
   ndkRelays: NDKRelayStatus[];

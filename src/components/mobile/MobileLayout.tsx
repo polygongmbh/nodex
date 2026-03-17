@@ -24,7 +24,7 @@ import {
   TaskStatus,
 } from "@/types";
 import { cn } from "@/lib/utils";
-import { useNDK } from "@/lib/nostr/ndk-context";
+import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
 import { useTranslation } from "react-i18next";
 

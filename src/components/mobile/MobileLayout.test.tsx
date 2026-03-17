@@ -18,7 +18,7 @@ const ndkMock = {
   updateUserProfile: vi.fn(async () => true),
 };
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ndkMock,
 }));
 

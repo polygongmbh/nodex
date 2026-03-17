@@ -1,5 +1,5 @@
 import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
-import { useNDK } from "@/lib/nostr/ndk-context";
+import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X, Loader2 } from "lucide-react";
 import {
   Task,

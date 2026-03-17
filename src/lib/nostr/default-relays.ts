@@ -1,4 +1,4 @@
-import { ensureRelayProtocol, relayUrlToId as toRelayId, RelayProtocol } from "@/lib/nostr/relay-url";
+import { ensureRelayProtocol, relayUrlToId as toRelayId, RelayProtocol } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 interface DefaultRelayEnv {

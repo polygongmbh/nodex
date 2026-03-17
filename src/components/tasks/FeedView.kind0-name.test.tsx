@@ -4,7 +4,7 @@ import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
 
-vi.mock("@/lib/nostr/ndk-context", () => ({
+vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: null }),
 }));
 

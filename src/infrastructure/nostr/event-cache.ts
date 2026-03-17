@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/lib/nostr/replaceable-events";
+import { getReplaceableEventKey, isParameterizedReplaceableKind } from "@/infrastructure/nostr/replaceable-events";
 
 export const NOSTR_EVENT_CACHE_STORAGE_KEY = "nodex.nostr-events.cache.v1";
 export const NOSTR_EVENT_CACHE_SCOPE_PREFIX = `${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope:`;

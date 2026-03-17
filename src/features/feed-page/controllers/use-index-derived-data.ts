@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react";
 import type { Task, Channel, Person, Relay, TaskStatus } from "@/types";
-import type { CachedNostrEvent } from "@/lib/nostr/event-cache";
-import type { NostrUser } from "@/lib/nostr/ndk-context";
+import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
+import type { NostrUser } from "@/infrastructure/nostr/ndk-context";
 import {
   nostrEventsToTasks,
   isSpamContent,

@@ -16,7 +16,7 @@ import { parseFirstGeohashTag } from "@/infrastructure/nostr/geohash-location";
 import {
   getReplaceableEventKey,
   isParameterizedReplaceableKind,
-} from "@/lib/nostr/replaceable-events";
+} from "@/infrastructure/nostr/replaceable-events";
 import {
   extractEmbeddableAttachmentsFromContent,
   extractSha256FromUrl,
