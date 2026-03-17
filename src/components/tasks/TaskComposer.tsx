@@ -207,11 +207,7 @@ export function TaskComposer({
     if (initialDraft?.selectedRelays && Array.isArray(initialDraft.selectedRelays)) {
       return initialDraft.selectedRelays.filter((id): id is string => typeof id === "string");
     }
-    const connected = relays.filter(isPostableRelay);
-    const activeConnected = connected.filter(r => r.isActive);
-    if (activeConnected.length > 0) return activeConnected.map(r => r.id);
-    if (connected.length > 0) return [connected[0].id];
-    return [];
+    return relays.filter(r => r.isActive && isPostableRelay(r)).map(r => r.id);
   });
   const [dueDate, setDueDate] = useState<Date | undefined>(() => {
     if (initialDraft?.dueDate) {
@@ -605,15 +601,7 @@ export function TaskComposer({
 
   // Keep selected publish targets aligned with currently active relay filters.
   useEffect(() => {
-    const connected = relays.filter(isPostableRelay);
-    const activeConnected = connected.filter(r => r.isActive);
-    if (activeConnected.length > 0) {
-      setSelectedRelays(activeConnected.map(r => r.id));
-    } else if (connected.length > 0) {
-      setSelectedRelays([connected[0].id]);
-    } else {
-      setSelectedRelays([]);
-    }
+    setSelectedRelays(relays.filter(r => r.isActive && isPostableRelay(r)).map(r => r.id));
   }, [relays]);
 
   useEffect(() => {

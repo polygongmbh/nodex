@@ -1245,7 +1245,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
   });
 
-  it("allows root task submit when relay is connected but not active", () => {
+  it("blocks root task submit when relay is connected but not toggled active", () => {
     const connectedInactiveRelays: Relay[] = [{
       id: "demo",
       name: "Demo",
@@ -1268,7 +1268,8 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Ship #backend now" },
     });
 
-    expect(screen.getByRole("button", { name: /create task/i })).not.toBeDisabled();
+    expect(screen.getByText("Select a single feed or a parent task to create a new task")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
   });
 
   it("blocks comment submit when no parent task is selected", () => {
