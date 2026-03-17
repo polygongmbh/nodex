@@ -39,7 +39,6 @@ import {
   buildOfflinePresenceContent,
   buildPresenceTags,
 } from "@/lib/presence-status";
-import { shouldBootstrapGuideDemoFeed } from "@/lib/onboarding-guide";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
 import type { Nip99ListingStatus } from "@/types";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
@@ -55,6 +54,7 @@ import { applyTaskSortOverlays, useIndexDerivedData } from "@/hooks/use-index-de
 import { usePinnedSidebarChannels } from "@/hooks/use-pinned-sidebar-channels";
 import { useIndexRelayShell } from "@/hooks/use-index-relay-shell";
 import { useAuthModalRoute } from "@/hooks/use-auth-modal-route";
+import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-demo-bootstrap";
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
@@ -393,18 +393,18 @@ const Index = () => {
     [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
   );
 
-  const ensureGuideDataAvailable = useCallback(() => {
-    if (!shouldBootstrapGuideDemoFeed({ totalTasks: allTasks.length, demoFeedActive })) return;
-    setGuideDemoFeedEnabled(true);
-    setLocalTasks((previous) => (previous.length === 0 ? DEMO_SEED_TASKS : previous));
-    seedCachedKind0Events(mockKind0Events);
-    setActiveRelayIds((previous) => {
-      const next = new Set(previous);
-      next.add(DEMO_RELAY_ID);
-      return next;
-    });
-    navigate("/feed");
-  }, [allTasks.length, demoFeedActive, navigate, seedCachedKind0Events, setActiveRelayIds]);
+  const { ensureGuideDataAvailable } = useFeedDemoBootstrap({
+    totalTasks: allTasks.length,
+    demoFeedActive,
+    demoRelayId: DEMO_RELAY_ID,
+    demoSeedTasks: DEMO_SEED_TASKS,
+    demoKind0Events: mockKind0Events,
+    setGuideDemoFeedEnabled,
+    setLocalTasks,
+    seedCachedKind0Events,
+    setActiveRelayIds,
+    navigate,
+  });
 
   const {
     isOnboardingOpen,
