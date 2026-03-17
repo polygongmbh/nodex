@@ -57,7 +57,7 @@ import { useAuthModalRoute } from "@/hooks/use-auth-modal-route";
 import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-demo-bootstrap";
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
-import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
+import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
 import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";

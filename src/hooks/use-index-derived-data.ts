@@ -13,7 +13,7 @@ import {
   dedupeMergedTasks,
   filterPendingLocalTasksForMerge,
 } from "@/domain/content/task-collections";
-import { deriveChannels } from "@/lib/channels";
+import { deriveChannels } from "@/domain/content/channels";
 import {
   getChannelFrecencyScores,
   type ChannelFrecencyState,
@@ -22,8 +22,8 @@ import { resolveCurrentUser } from "@/lib/current-user";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind } from "@/lib/nostr/task-state-events";
 import { isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
-import { deriveSidebarPeople } from "@/lib/sidebar-people";
-import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
+import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
+import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
 
 export interface UseIndexDerivedDataOptions {

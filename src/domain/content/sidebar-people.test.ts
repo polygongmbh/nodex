@@ -1,13 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { makePerson, makeTask } from "@/test/fixtures";
-import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
+import { deriveSidebarPeople } from "./sidebar-people";
 
 describe("deriveSidebarPeople", () => {
   it("keeps only people with at least three posts and sorts by latest post first", () => {
     const now = new Date("2026-02-17T12:00:00.000Z");
-    const alice = makePerson({ id: "alice-pk", name: "alice", displayName: "Alice", isSelected: true });
-    const bob = makePerson({ id: "bob-pk", name: "bob", displayName: "Bob", isSelected: false });
-    const carol = makePerson({ id: "carol-pk", name: "carol", displayName: "Carol", isSelected: false });
+    const alice = makePerson({
+      id: "alice-pk",
+      name: "alice",
+      displayName: "Alice",
+      isSelected: true,
+    });
+    const bob = makePerson({
+      id: "bob-pk",
+      name: "bob",
+      displayName: "Bob",
+      isSelected: false,
+    });
+    const carol = makePerson({
+      id: "carol-pk",
+      name: "carol",
+      displayName: "Carol",
+      isSelected: false,
+    });
 
     const tasks = [
       makeTask({ id: "a1", author: alice, timestamp: new Date("2026-02-17T11:59:30.000Z") }),
@@ -43,7 +58,9 @@ describe("deriveSidebarPeople", () => {
     const sidebarPeople = deriveSidebarPeople([recent, stale], tasks, new Map(), now);
     expect(sidebarPeople.find((person) => person.id === "recent-pk")?.isOnline).toBe(true);
     expect(sidebarPeople.find((person) => person.id === "stale-pk")?.isOnline).toBe(false);
-    expect(sidebarPeople.find((person) => person.id === "stale-pk")?.onlineStatus).toBe("recent");
+    expect(sidebarPeople.find((person) => person.id === "stale-pk")?.onlineStatus).toBe(
+      "recent"
+    );
   });
 
   it("uses NIP-38 activity timestamps for online status", () => {
@@ -54,7 +71,9 @@ describe("deriveSidebarPeople", () => {
       makeTask({ id: "a2", author: alice, timestamp: new Date("2026-02-17T10:20:00.000Z") }),
       makeTask({ id: "a3", author: alice, timestamp: new Date("2026-02-17T10:10:00.000Z") }),
     ];
-    const presence = new Map([["alice-pk", new Date("2026-02-17T11:58:30.000Z").getTime()]]);
+    const presence = new Map([
+      ["alice-pk", new Date("2026-02-17T11:58:30.000Z").getTime()],
+    ]);
 
     const sidebarPeople = deriveSidebarPeople([alice], tasks, presence, now);
 
