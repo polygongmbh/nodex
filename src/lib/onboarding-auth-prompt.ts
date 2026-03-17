@@ -1,5 +1,5 @@
-import type { NDKRelayStatus } from "@/lib/nostr/provider/contracts";
-import { shouldForceSignInForReadAccess } from "@/lib/nostr/provider/relay-verification";
+import type { NDKRelayStatus } from "@/infrastructure/nostr/provider/contracts";
+import { shouldForceSignInForReadAccess } from "@/infrastructure/nostr/provider/relay-verification";
 
 export function shouldPromptSignInAfterOnboarding(params: {
   isSignedIn: boolean;

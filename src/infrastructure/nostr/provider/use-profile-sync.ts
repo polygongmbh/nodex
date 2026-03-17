@@ -2,15 +2,15 @@ import { useCallback, useEffect, useMemo } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
 import type { MutableRefObject } from "react";
-import { NostrEventKind } from "../types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import {
   hasRequiredProfileFields,
   mergeKind0Profiles,
   buildKind0Content,
   type EditableNostrProfile,
 } from "@/infrastructure/nostr/profile-metadata";
-import { verifyNip05 } from "../nip05-verify";
-import { nostrDevLog } from "../dev-logs";
+import { verifyNip05 } from "@/lib/nostr/nip05-verify";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import type { NDKRelayStatus, NostrUser } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { PublishCallbacks } from "./use-publish";

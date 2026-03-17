@@ -8,7 +8,7 @@ import NDK, {
   NDKRelaySet,
   NDKUser,
 } from "@nostr-dev-kit/ndk";
-import { NostrEventKind } from "../types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import {
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
   buildOfflinePresenceContent,

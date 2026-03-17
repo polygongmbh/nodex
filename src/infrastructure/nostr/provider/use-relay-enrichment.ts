@@ -1,15 +1,15 @@
 import { useEffect } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
-import { NostrEventKind } from "../types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import { normalizeRelayUrl } from "./relay-list";
 import { filterAutoAddRelayUrls } from "./relay-list";
-import { resolveVerifiedNip05RelayUrls } from "../nip05-verify";
+import { resolveVerifiedNip05RelayUrls } from "@/lib/nostr/nip05-verify";
 import {
   extractRelayUrlsFromNip65Tags,
   selectComplementaryRelayUrls,
 } from "@/infrastructure/nostr/relay-enrichment";
-import { nostrDevLog } from "../dev-logs";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import type { NDKRelayStatus, NostrUser } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { MutableRefObject } from "react";

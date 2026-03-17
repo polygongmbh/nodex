@@ -3,7 +3,7 @@ import type { MutableRefObject } from "react";
 import { normalizeRelayUrl } from "./relay-list";
 import { shouldSetVerificationFailedStatus } from "./relay-verification";
 import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
-import { nostrDevLog } from "../dev-logs";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import type { NDKRelayStatus } from "./contracts";
 import type { RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
 import type { RelayOperation } from "./use-relay-transport";

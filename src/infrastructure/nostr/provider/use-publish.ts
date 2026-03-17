@@ -1,9 +1,9 @@
 import { useCallback } from "react";
 import type { MutableRefObject } from "react";
 import NDK, { NDKEvent, NDKRelaySet, NDKFilter, NDKSubscription, NDKRelay } from "@nostr-dev-kit/ndk";
-import { NostrEventKind } from "../types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import { normalizeRelayUrl } from "./relay-list";
-import { createNip98AuthHeader } from "../nip98-http-auth";
+import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import {
   extractRelayRejectionReason,
 } from "./relay-error";
@@ -14,7 +14,7 @@ import {
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
 import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
-import { nostrDevLog } from "../dev-logs";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import type { NDKRelayStatus } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { RelayTransportCallbacks } from "./use-relay-transport";

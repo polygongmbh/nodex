@@ -10,9 +10,9 @@ import NDK, {
   NDKFilter,
   NDKSubscription,
 } from "@nostr-dev-kit/ndk";
-import { NostrEventKind } from "../types";
-import { isValidNoasBaseUrl, NoasClient, normalizeNoasBaseUrl, type NoasAuthResult } from "../noas-client";
-import { privateKeyHexToNsec } from "../nip49-utils";
+import { NostrEventKind } from "@/lib/nostr/types";
+import { isValidNoasBaseUrl, NoasClient, normalizeNoasBaseUrl, type NoasAuthResult } from "@/lib/nostr/noas-client";
+import { privateKeyHexToNsec } from "@/lib/nostr/nip49-utils";
 import {
   buildKind0Content,
   hasRequiredProfileFields,
@@ -27,7 +27,7 @@ import {
 import { buildDeterministicGuestName } from "@/lib/guest-name";
 import { getConfiguredDefaultRelays } from "@/infrastructure/nostr/default-relays";
 import { isRelayUrl } from "@/infrastructure/nostr/relay-url";
-import { nostrDevLog } from "../dev-logs";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
 import {
   hasNostrExtension,
@@ -45,9 +45,9 @@ import {
   RELAY_STATUS_RECONCILE_INTERVAL_MS,
 } from "./relay-status";
 import { waitForNostrExtensionAvailability } from "./session-restore";
-import { verifyNip05 } from "../nip05-verify";
+import { verifyNip05 } from "@/lib/nostr/nip05-verify";
 import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
-import { createNip98AuthHeader } from "../nip98-http-auth";
+import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import {
   isAuthRequiredCloseReason,
   shouldMarkRelayReadOnlyAfterPublishReject,
