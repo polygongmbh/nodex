@@ -10,15 +10,15 @@ import {
 import {
   loadPresencePublishingEnabled,
   savePresencePublishingEnabled,
-} from "@/lib/user-preferences";
+} from "@/infrastructure/preferences/user-preferences";
 import {
   loadPublishDelayEnabled,
   savePublishDelayEnabled,
-} from "@/lib/user-preferences";
+} from "@/infrastructure/preferences/user-preferences";
 import {
   loadAutoCaptionEnabled,
   saveAutoCaptionEnabled,
-} from "@/lib/user-preferences";
+} from "@/infrastructure/preferences/user-preferences";
 import { preloadLocalImageCaptionModel } from "@/lib/local-image-caption";
 import { EditableNostrProfile, isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
 import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";

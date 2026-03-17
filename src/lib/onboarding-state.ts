@@ -1,5 +1,5 @@
 export const ONBOARDING_VERSION = 1;
-import { ONBOARDING_STATE_STORAGE_KEY } from "./storage-registry";
+import { ONBOARDING_STATE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 export { ONBOARDING_STATE_STORAGE_KEY };
 
 export interface OnboardingState {

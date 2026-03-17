@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { FailedPublishDraft } from "@/lib/failed-publish-drafts";
+import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts";
 import { FailedPublishQueueBanner } from "./FailedPublishQueueBanner";
 
 const baseDraft: FailedPublishDraft = {

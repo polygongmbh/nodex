@@ -48,7 +48,7 @@ import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import {
   handleTaskStatusToggleClick,

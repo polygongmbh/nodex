@@ -1,7 +1,7 @@
 import { Moon, Sun, SunMoon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThemeMode } from "./ThemeProvider";
-import { type ThemeMode } from "@/lib/theme-preferences";
+import { type ThemeMode } from "@/infrastructure/preferences/theme-preferences";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 

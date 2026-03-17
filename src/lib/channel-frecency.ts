@@ -1,4 +1,4 @@
-import { CHANNEL_FRECENCY_STORAGE_KEY } from "./storage-registry";
+import { CHANNEL_FRECENCY_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 export { CHANNEL_FRECENCY_STORAGE_KEY };
 const HALF_LIFE_DAYS = 14;
 const HALF_LIFE_MS = HALF_LIFE_DAYS * 24 * 60 * 60 * 1000;

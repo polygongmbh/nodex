@@ -36,7 +36,7 @@ import {
   isPrimarySubmitKey,
 } from "@/lib/composer-shortcuts";
 import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAttachment } from "@/lib/nostr/nip96-attachment-upload";
-import { loadAutoCaptionEnabled } from "@/lib/user-preferences";
+import { loadAutoCaptionEnabled } from "@/infrastructure/preferences/user-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/lib/nostr/geohash-location";

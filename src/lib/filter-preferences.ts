@@ -4,7 +4,7 @@ import {
   ACTIVE_RELAYS_STORAGE_KEY,
   CHANNEL_FILTERS_STORAGE_KEY,
   CHANNEL_MATCH_MODE_STORAGE_KEY,
-} from "./storage-registry";
+} from "@/infrastructure/preferences/storage-registry";
 
 type PersistedChannelFilters = Record<string, Channel["filterState"]>;
 const relayIdsSchema = z.array(z.string());

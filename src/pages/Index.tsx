@@ -33,7 +33,7 @@ import {
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasks } from "@/domain/content/task-filtering";
-import { loadPresencePublishingEnabled } from "@/lib/user-preferences";
+import { loadPresencePublishingEnabled } from "@/infrastructure/preferences/user-preferences";
 import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,

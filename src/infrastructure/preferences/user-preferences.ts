@@ -3,7 +3,7 @@ import {
   COMPLETION_SOUND_ENABLED_STORAGE_KEY,
   PRESENCE_ENABLED_STORAGE_KEY,
   PUBLISH_DELAY_ENABLED_STORAGE_KEY,
-} from "./storage-registry";
+} from "@/infrastructure/preferences/storage-registry";
 
 function loadBooleanPref(key: string, defaultValue: boolean): boolean {
   if (typeof window === "undefined") return defaultValue;

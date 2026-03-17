@@ -5,7 +5,7 @@ import {
   setStoredThemeMode,
   type EffectiveTheme,
   type ThemeMode,
-} from "@/lib/theme-preferences";
+} from "@/infrastructure/preferences/theme-preferences";
 
 interface ThemeContextValue {
   mode: ThemeMode;

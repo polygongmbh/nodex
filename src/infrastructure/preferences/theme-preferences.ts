@@ -1,7 +1,7 @@
 export type ThemeMode = "light" | "dark" | "auto";
 export type EffectiveTheme = "light" | "dark";
 
-import { THEME_MODE_STORAGE_KEY } from "./storage-registry";
+import { THEME_MODE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 export { THEME_MODE_STORAGE_KEY };
 const VALID_THEME_MODES: ThemeMode[] = ["light", "dark", "auto"];
 

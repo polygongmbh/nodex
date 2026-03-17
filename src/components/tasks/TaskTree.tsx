@@ -13,7 +13,7 @@ import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/do
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { useNostrProfiles } from "@/hooks/use-nostr-profiles";
-import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
+import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
