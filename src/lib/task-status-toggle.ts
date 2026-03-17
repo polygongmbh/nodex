@@ -1,6 +1,6 @@
 import type { MouseEvent } from "react";
 import type { TaskStatus } from "@/types";
-import { cycleTaskStatus, isTaskTerminalStatus } from "@/lib/task-status";
+import { cycleTaskStatus, isTaskTerminalStatus } from "@/domain/content/task-status";
 
 interface HandleTaskStatusToggleClickOptions {
   status?: TaskStatus;

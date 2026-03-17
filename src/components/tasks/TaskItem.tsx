@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
-import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/lib/task-status";
+import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/domain/content/task-status";
 import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,

@@ -52,7 +52,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { isTaskTerminalStatus } from "@/lib/task-status";
+import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,

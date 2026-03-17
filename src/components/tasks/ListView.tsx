@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
-import { isTaskTerminalStatus } from "@/lib/task-status";
+import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,

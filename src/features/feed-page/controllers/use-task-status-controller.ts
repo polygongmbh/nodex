@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import type { TFunction } from "i18next";
 import type { Task, TaskStatus } from "@/types";
 import type { Person } from "@/types";
-import { applyTaskStatusUpdate, cycleTaskStatus } from "@/lib/task-status";
+import { applyTaskStatusUpdate, cycleTaskStatus } from "@/domain/content/task-status";
 import { canUserChangeTaskStatus } from "@/lib/task-permissions";
 import { notifyStatusRestricted } from "@/lib/notifications";
 import { triggerTaskCompletionCheer } from "@/lib/completion-cheer";

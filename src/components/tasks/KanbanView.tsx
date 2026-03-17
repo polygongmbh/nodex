@@ -33,7 +33,7 @@ import { filterTasksByDepthMode } from "@/lib/depth-mode-filter";
 import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
-import { isTaskTerminalStatus } from "@/lib/task-status";
+import { isTaskTerminalStatus } from "@/domain/content/task-status";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
