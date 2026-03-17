@@ -1,5 +1,5 @@
 import type { MouseEvent } from "react";
-import { decodeGeohash, buildPreferredMapLink } from "@/lib/nostr/geohash-location";
+import { decodeGeohash, buildPreferredMapLink } from "@/infrastructure/nostr/geohash-location";
 import { featureDebugLog } from "@/lib/feature-debug";
 
 interface TaskLocationChipProps {

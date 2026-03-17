@@ -1,7 +1,7 @@
 import type { Person } from "@/types";
-import { normalizeCachedRelayUrl } from "./event-cache";
+import { normalizeCachedRelayUrl } from "@/lib/nostr/event-cache";
+import { NostrEventKind } from "@/lib/nostr/types";
 import { parseKind0Content } from "./profile-metadata";
-import { NostrEventKind } from "./types";
 
 export interface Kind0LikeEvent {
   kind: number;

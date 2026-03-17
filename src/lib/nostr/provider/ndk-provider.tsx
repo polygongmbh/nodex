@@ -18,7 +18,7 @@ import {
   hasRequiredProfileFields,
   mergeKind0Profiles,
   type EditableNostrProfile,
-} from "../profile-metadata";
+} from "@/infrastructure/nostr/profile-metadata";
 import {
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
   buildOfflinePresenceContent,

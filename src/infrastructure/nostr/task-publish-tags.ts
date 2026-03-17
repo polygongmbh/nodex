@@ -1,5 +1,5 @@
 import { buildImetaTag, normalizePublishedAttachments } from "@/lib/attachments";
-import { buildGeohashTag } from "@/lib/nostr/geohash-location";
+import { buildGeohashTag } from "@/infrastructure/nostr/geohash-location";
 import type { PublishedAttachment } from "@/types";
 
 export function buildTaskPublishTags(

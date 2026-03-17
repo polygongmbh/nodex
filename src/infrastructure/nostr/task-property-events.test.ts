@@ -5,7 +5,7 @@ import {
   isPriorityPropertyEvent,
   parsePriorityTag,
 } from "./task-property-events";
-import { NostrEventKind } from "./types";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 describe("task property event helpers", () => {
   it("builds a priority property update as kind:1 with property marker", () => {

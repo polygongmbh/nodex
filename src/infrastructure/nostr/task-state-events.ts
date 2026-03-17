@@ -1,5 +1,5 @@
 import type { TaskStatus } from "@/types";
-import { NostrEventKind } from "./types";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 const TASK_STATE_EVENT_KINDS = new Set<number>([
   NostrEventKind.GitStatusOpen,

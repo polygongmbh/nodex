@@ -6,7 +6,7 @@ import type { Channel, Person, Relay, TaskCreateResult } from "@/types";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
-import { DEFAULT_GEOHASH_PRECISION, encodeGeohash } from "@/lib/nostr/geohash-location";
+import { DEFAULT_GEOHASH_PRECISION, encodeGeohash } from "@/infrastructure/nostr/geohash-location";
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
 

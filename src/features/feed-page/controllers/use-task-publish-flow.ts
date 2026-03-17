@@ -22,14 +22,14 @@ import {
   resolveRelaySelectionForSubmission,
 } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { normalizeGeohash } from "@/lib/nostr/geohash-location";
+import { normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
 import {
   buildImetaTag,
   extractEmbeddableAttachmentsFromContent,
   normalizePublishedAttachments,
 } from "@/lib/attachments";
-import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
-import { buildNip99PublishTags } from "@/lib/nostr/nip99-metadata";
+import { buildTaskPublishTags } from "@/infrastructure/nostr/task-publish-tags";
+import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { loadPublishDelayEnabled } from "@/infrastructure/preferences/user-preferences";
 import { canUserUpdateTask, extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";

@@ -19,8 +19,8 @@ import {
 } from "@/lib/channel-frecency";
 import { resolveCurrentUser } from "@/lib/current-user";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { isTaskStateEventKind } from "@/lib/nostr/task-state-events";
-import { isPriorityPropertyEvent } from "@/lib/nostr/task-property-events";
+import { isTaskStateEventKind } from "@/infrastructure/nostr/task-state-events";
+import { isPriorityPropertyEvent } from "@/infrastructure/nostr/task-property-events";
 import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";

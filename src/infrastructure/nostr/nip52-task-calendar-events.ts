@@ -1,5 +1,5 @@
-import { NostrEventKind } from "./types";
 import type { TaskDateType } from "@/types";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 interface LinkedTaskCalendarEventParams {
   taskEventId: string;

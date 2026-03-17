@@ -5,9 +5,9 @@ import { notifyDisconnectedSelectedFeeds, notifyNeedSigninModify, notifyNeedSign
 import { resolveOriginRelayIdForTask } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { isNostrEventId } from "@/lib/nostr/event-id";
-import { mapTaskStatusToStateEvent } from "@/lib/nostr/task-state-events";
-import { buildLinkedTaskCalendarEvent } from "@/lib/nostr/nip52-task-calendar-events";
-import { buildTaskPriorityUpdateEvent } from "@/lib/nostr/task-property-events";
+import { mapTaskStatusToStateEvent } from "@/infrastructure/nostr/task-state-events";
+import { buildLinkedTaskCalendarEvent } from "@/infrastructure/nostr/nip52-task-calendar-events";
+import { buildTaskPriorityUpdateEvent } from "@/infrastructure/nostr/task-property-events";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Task, TaskDateType, TaskInitialStatus, TaskStatus, Relay } from "@/types";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";

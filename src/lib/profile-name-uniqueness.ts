@@ -1,5 +1,5 @@
-import { loadCachedKind0Events } from "@/lib/nostr/people-from-kind0";
-import { parseKind0Content } from "@/lib/nostr/profile-metadata";
+import { loadCachedKind0Events } from "@/infrastructure/nostr/people-from-kind0";
+import { parseKind0Content } from "@/infrastructure/nostr/profile-metadata";
 
 interface ProfileNameUniquenessOptions {
   currentPubkey?: string | null;

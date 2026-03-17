@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NostrEventKind } from "./types";
+import { NostrEventKind } from "@/lib/nostr/types";
 import {
   extractTaskStateTargetId,
   isTaskStateEventKind,

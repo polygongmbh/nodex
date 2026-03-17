@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { buildImetaTag } from "@/lib/attachments";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
-import { buildNip99PublishTags } from "@/lib/nostr/nip99-metadata";
+import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { Nip99ListingStatus, Person, Task } from "@/types";
 

@@ -2,7 +2,7 @@ import type NDK from "@nostr-dev-kit/ndk";
 import type { NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
 import type { ReactNode } from "react";
 import type { NoasAuthResult } from "../noas-client";
-import type { EditableNostrProfile } from "../profile-metadata";
+import type { EditableNostrProfile } from "@/infrastructure/nostr/profile-metadata";
 import { NostrEventKind } from "../types";
 
 export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | "noas" | null;

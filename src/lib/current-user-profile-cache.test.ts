@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { rememberCachedKind0Profile } from "@/infrastructure/nostr/people-from-kind0";
 import { resolveCurrentUserProfile } from "./current-user-profile-cache";
-import { rememberCachedKind0Profile } from "./nostr/people-from-kind0";
 
 describe("resolveCurrentUserProfile", () => {
   beforeEach(() => {

@@ -1,5 +1,5 @@
-import { NostrEventKind } from "./types";
 import { isTaskStateEventKind } from "./task-state-events";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 interface TaskPriorityUpdateParams {
   taskEventId: string;

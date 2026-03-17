@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { isNip05CompatibleName } from "@/infrastructure/nostr/profile-metadata";
 import { buildDeterministicGuestName } from "./guest-name";
-import { isNip05CompatibleName } from "./nostr/profile-metadata";
 
 describe("buildDeterministicGuestName", () => {
   it("is deterministic for the same pubkey", () => {

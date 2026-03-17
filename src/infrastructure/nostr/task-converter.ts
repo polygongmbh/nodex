@@ -4,15 +4,15 @@ import {
   extractTaskStateTargetId,
   isTaskStateEventKind,
   mapTaskStateEventToTaskStatus,
-} from "@/lib/nostr/task-state-events";
+} from "@/infrastructure/nostr/task-state-events";
 import {
   extractPriorityTargetTaskId,
   isPriorityPropertyEvent,
   parsePriorityTag,
-} from "@/lib/nostr/task-property-events";
-import { parseLinkedTaskDueFromCalendarEvent } from "@/lib/nostr/nip52-task-calendar-events";
-import { parseNip99MetadataFromTags } from "@/lib/nostr/nip99-metadata";
-import { parseFirstGeohashTag } from "@/lib/nostr/geohash-location";
+} from "@/infrastructure/nostr/task-property-events";
+import { parseLinkedTaskDueFromCalendarEvent } from "@/infrastructure/nostr/nip52-task-calendar-events";
+import { parseNip99MetadataFromTags } from "@/infrastructure/nostr/nip99-metadata";
+import { parseFirstGeohashTag } from "@/infrastructure/nostr/geohash-location";
 import {
   getReplaceableEventKey,
   isParameterizedReplaceableKind,

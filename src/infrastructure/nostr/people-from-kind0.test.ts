@@ -11,7 +11,7 @@ import {
   removeCachedKind0EventsByRelayUrl,
   saveCachedKind0Events,
 } from "./people-from-kind0";
-import { NostrEventKind } from "./types";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 const prevPeople: Person[] = [
   {

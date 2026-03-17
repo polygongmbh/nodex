@@ -12,7 +12,7 @@ import {
   removeCachedKind0EventsByRelayUrl,
   saveCachedKind0Events,
   type Kind0LikeEvent,
-} from "@/lib/nostr/people-from-kind0";
+} from "@/infrastructure/nostr/people-from-kind0";
 import { deriveLatestActivePresenceByAuthor } from "@/lib/presence-status";
 
 interface UserProfileSnapshot {

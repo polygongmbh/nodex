@@ -20,7 +20,7 @@ import {
   saveAutoCaptionEnabled,
 } from "@/infrastructure/preferences/user-preferences";
 import { preloadLocalImageCaptionModel } from "@/lib/local-image-caption";
-import { EditableNostrProfile, isNip05CompatibleName } from "@/lib/nostr/profile-metadata";
+import { EditableNostrProfile, isNip05CompatibleName } from "@/infrastructure/nostr/profile-metadata";
 import { isProfileNameTaken } from "@/lib/profile-name-uniqueness";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { sanitizeProfileUsername } from "@/lib/profile-username";

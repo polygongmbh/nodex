@@ -1,5 +1,5 @@
 import type { FeedMessageType, Nip99ListingStatus, Nip99Metadata } from "@/types";
-import { buildGeohashTag } from "@/lib/nostr/geohash-location";
+import { buildGeohashTag } from "@/infrastructure/nostr/geohash-location";
 import i18n from "@/lib/i18n/config";
 
 export interface Nip99PublishTagParams {

@@ -39,7 +39,7 @@ import { getAttachmentMaxFileSizeBytes, isAttachmentUploadConfigured, uploadAtta
 import { loadAutoCaptionEnabled } from "@/infrastructure/preferences/user-preferences";
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
-import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/lib/nostr/geohash-location";
+import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
 
 interface UnifiedBottomBarProps {
   // Search props

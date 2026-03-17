@@ -3,7 +3,7 @@ import {
   buildLinkedTaskCalendarEvent,
   parseLinkedTaskDueFromCalendarEvent,
 } from "./nip52-task-calendar-events";
-import { NostrEventKind } from "./types";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 describe("task calendar event helpers", () => {
   it("builds a date-based NIP-52 event when no due time is set", () => {

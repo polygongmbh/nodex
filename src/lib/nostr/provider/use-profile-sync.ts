@@ -3,7 +3,12 @@ import type NDK from "@nostr-dev-kit/ndk";
 import { NDKEvent } from "@nostr-dev-kit/ndk";
 import type { MutableRefObject } from "react";
 import { NostrEventKind } from "../types";
-import { hasRequiredProfileFields, mergeKind0Profiles, buildKind0Content, type EditableNostrProfile } from "../profile-metadata";
+import {
+  hasRequiredProfileFields,
+  mergeKind0Profiles,
+  buildKind0Content,
+  type EditableNostrProfile,
+} from "@/infrastructure/nostr/profile-metadata";
 import { verifyNip05 } from "../nip05-verify";
 import { nostrDevLog } from "../dev-logs";
 import type { NDKRelayStatus, NostrUser } from "./contracts";
