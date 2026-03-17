@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { TFunction } from "i18next";
 import { toast } from "sonner";
 import { Relay } from "@/types";
+import { getEffectiveActiveRelayIds } from "@/domain/preferences/filter-state";
 import {
-  getEffectiveActiveRelayIds,
   loadPersistedRelayIds,
   savePersistedRelayIds,
-} from "@/infrastructure/preferences/filter-preferences";
+} from "@/infrastructure/preferences/filter-preferences-storage";
 
 interface UseRelayFilterStateOptions {
   relays: Relay[];

@@ -1,13 +1,12 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import {
-  getEffectiveActiveRelayIds,
   loadPersistedChannelMatchMode,
   loadPersistedChannelFilters,
   loadPersistedRelayIds,
   savePersistedChannelMatchMode,
   savePersistedChannelFilters,
   savePersistedRelayIds,
-} from "@/infrastructure/preferences/filter-preferences";
+} from "@/infrastructure/preferences/filter-preferences-storage";
 
 describe("filter preferences persistence", () => {
   beforeEach(() => {
@@ -80,15 +79,6 @@ describe("filter preferences persistence", () => {
         b: "included",
         c: "excluded",
       })
-    );
-  });
-
-  it("keeps only active relay ids that are currently available", () => {
-    const activeRelayIds = new Set(["demo", "relay-a", "relay-b"]);
-    const availableRelayIds = ["demo", "relay-b"];
-
-    expect(getEffectiveActiveRelayIds(activeRelayIds, availableRelayIds)).toEqual(
-      new Set(["demo", "relay-b"])
     );
   });
 

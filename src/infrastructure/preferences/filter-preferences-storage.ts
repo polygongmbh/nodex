@@ -1,5 +1,9 @@
-import { Channel, ChannelMatchMode } from "@/types";
+import type { Channel, ChannelMatchMode } from "@/types";
 import { z } from "zod";
+import {
+  DEFAULT_CHANNEL_MATCH_MODE,
+  isPersistedChannelFilterState,
+} from "@/domain/preferences/filter-state";
 import {
   ACTIVE_RELAYS_STORAGE_KEY,
   CHANNEL_FILTERS_STORAGE_KEY,
@@ -37,14 +41,6 @@ export function savePersistedRelayIds(relayIds: Set<string>): void {
   }
 }
 
-export function getEffectiveActiveRelayIds(
-  activeRelayIds: Set<string>,
-  availableRelayIds: string[]
-): Set<string> {
-  const availableSet = new Set(availableRelayIds);
-  return new Set(Array.from(activeRelayIds).filter((relayId) => availableSet.has(relayId)));
-}
-
 export function loadPersistedChannelFilters(): Map<string, Channel["filterState"]> {
   try {
     const raw = localStorage.getItem(CHANNEL_FILTERS_STORAGE_KEY);
@@ -59,7 +55,7 @@ export function loadPersistedChannelFilters(): Map<string, Channel["filterState"
 
     const result = new Map<string, Channel["filterState"]>();
     Object.entries(parsed.data).forEach(([channelId, state]) => {
-      if (state === "included" || state === "excluded") {
+      if (isPersistedChannelFilterState(state)) {
         result.set(channelId, state);
       }
     });
@@ -76,7 +72,7 @@ export function savePersistedChannelFilters(
   try {
     const persisted: PersistedChannelFilters = {};
     filters.forEach((state, channelId) => {
-      if (state === "included" || state === "excluded") {
+      if (isPersistedChannelFilterState(state)) {
         persisted[channelId] = state;
       }
     });
@@ -90,17 +86,17 @@ export function loadPersistedChannelMatchMode(): ChannelMatchMode {
   try {
     const raw = localStorage.getItem(CHANNEL_MATCH_MODE_STORAGE_KEY);
     if (!raw) {
-      return "and";
+      return DEFAULT_CHANNEL_MATCH_MODE;
     }
 
     const parsed = channelMatchModeSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) {
-      return "and";
+      return DEFAULT_CHANNEL_MATCH_MODE;
     }
 
     return parsed.data;
   } catch {
-    return "and";
+    return DEFAULT_CHANNEL_MATCH_MODE;
   }
 }
 
