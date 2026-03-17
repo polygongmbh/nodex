@@ -8,7 +8,7 @@ import { DesktopSearchDock, type KanbanDepthMode } from "@/components/tasks/Desk
 import { ViewSwitcher } from "@/components/tasks/ViewSwitcher";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useFeedNavigation } from "@/hooks/use-feed-navigation";
+import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
 import { useNostrEventCache } from "@/hooks/use-nostr-event-cache";
 import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/lib/nostr/ndk-context";
@@ -44,10 +44,10 @@ import {
 import { buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
 import type { Nip99ListingStatus } from "@/types";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
-import { useIndexFilters } from "@/hooks/use-index-filters";
-import { useIndexOnboarding } from "@/hooks/use-index-onboarding";
+import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
+import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
-import { useSavedFilterConfigs } from "@/hooks/use-saved-filter-configs";
+import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
 import { useTaskPublishFlow } from "@/hooks/use-task-publish-flow";
 import { useTaskPublishControls } from "@/hooks/use-task-publish-controls";
 import { useTaskStatusController } from "@/features/feed-page/controllers/use-task-status-controller";
