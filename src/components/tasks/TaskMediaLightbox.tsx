@@ -52,6 +52,7 @@ export function TaskMediaLightbox({
   const postText = mediaItem?.taskContent.replace(/\s+/g, " ").trim() || "";
   const postTextPreview = postText.length > 90 ? `${postText.slice(0, 90).trimEnd()}...` : postText;
   const hasOverlayBounds = overlayBounds.height > 0;
+  const isRawUrlCaption = caption === mediaItem?.url;
 
   const syncOverlayBounds = useCallback(() => {
     const previewArea = previewAreaRef.current;
@@ -151,13 +152,16 @@ export function TaskMediaLightbox({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-5xl p-0 overflow-hidden border-0">
+      <DialogContent
+        showCloseButton={false}
+        className="w-[min(96vw,80rem)] max-w-[min(96vw,80rem)] min-w-0 p-0 overflow-hidden border-0"
+      >
         <DialogTitle className="sr-only">{t("mediaLightbox.title")}</DialogTitle>
         <DialogDescription className="sr-only">{t("mediaLightbox.description")}</DialogDescription>
         {mediaItem ? (
-          <div className="relative bg-background">
+          <div className="relative min-w-0 max-w-full bg-background">
             <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-muted-foreground">
-              <div className="flex min-w-0 items-center gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
                 <span className="shrink-0">{postMediaLabel}</span>
                 <button
                   type="button"
@@ -165,7 +169,7 @@ export function TaskMediaLightbox({
                     onOpenTask?.(mediaItem.taskId);
                     onOpenChange(false);
                   }}
-                  className="truncate text-left text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  className="min-w-0 flex-1 truncate text-left text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                   title={postText}
                 >
                   {postTextPreview || t("mediaLightbox.openPost")}
@@ -196,8 +200,9 @@ export function TaskMediaLightbox({
                       previewImageUrl={mediaItem.previewImageUrl}
                       dimensions={mediaItem.dimensions}
                       renderMode="lightbox"
+                      preserveAspectRatio={false}
                       className="max-h-[68vh] max-w-full"
-                      imageClassName="max-h-[68vh]"
+                      imageClassName="max-h-[68vh] max-w-full"
                       onDisplayLoad={() => requestAnimationFrame(syncOverlayBounds)}
                     />
                   )}
@@ -235,8 +240,19 @@ export function TaskMediaLightbox({
               </div>
             </div>
 
-            <div className="px-3 py-2 text-sm text-muted-foreground">
-              <p className="truncate" title={caption}>{caption}</p>
+            <div className="min-w-0 max-w-full px-3 py-2 text-sm text-muted-foreground overflow-hidden">
+              {isRawUrlCaption ? (
+                <div className="min-w-0 overflow-hidden">
+                  <div
+                    className="overflow-x-auto whitespace-nowrap font-mono text-[11px] text-foreground/85 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                    title={caption}
+                  >
+                    {caption}
+                  </div>
+                </div>
+              ) : (
+                <p className="truncate" title={caption}>{caption}</p>
+              )}
             </div>
           </div>
         ) : null}

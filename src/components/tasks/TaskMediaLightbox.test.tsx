@@ -144,4 +144,31 @@ describe("TaskMediaLightbox keyboard navigation", () => {
     expect(screen.getByText(/reduced-data mode is showing a preview first/i)).toBeInTheDocument();
     expect(screen.getByRole("img")).toHaveAttribute("src", "https://example.com/preview.jpg");
   });
+
+  it("renders raw-url captions with the compact pubkey-style scroll treatment", () => {
+    const rawUrl = "https://image.nostr.build/very/long/path/that/should/not/stretch/the/dialog/because/it/needs/to/scroll/horizontally.jpg?m=image%2Fjpeg&dim=1152x864&blurhash=%23hash";
+
+    render(
+      <TaskMediaLightbox
+        open
+        mediaItem={{
+          ...mediaItem,
+          url: rawUrl,
+        }}
+        mediaCount={1}
+        mediaIndex={0}
+        postMediaIndex={0}
+        postMediaCount={1}
+        onOpenChange={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+      />
+    );
+
+    const caption = screen.getByText(rawUrl);
+    expect(caption.tagName).toBe("DIV");
+    expect(caption).toHaveClass("overflow-x-auto", "whitespace-nowrap", "font-mono", "text-[11px]", "text-foreground/85");
+    expect(caption.className).toContain("[scrollbar-width:none]");
+    expect(caption.parentElement).toHaveClass("overflow-hidden");
+  });
 });

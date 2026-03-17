@@ -18,6 +18,7 @@ interface TaskProgressiveImageProps {
   previewImageUrl?: string;
   dimensions?: string;
   renderMode: TaskImageRenderMode;
+  preserveAspectRatio?: boolean;
   className?: string;
   imageClassName?: string;
   onDisplayLoad?: () => void;
@@ -31,6 +32,7 @@ export function TaskProgressiveImage({
   previewImageUrl,
   dimensions,
   renderMode,
+  preserveAspectRatio = renderMode === "inline",
   className,
   imageClassName,
   onDisplayLoad,
@@ -109,7 +111,7 @@ export function TaskProgressiveImage({
   return (
     <div
       className={cn("relative flex items-center justify-center overflow-hidden bg-muted/20", className)}
-      style={aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined}
+      style={preserveAspectRatio && aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined}
     >
       {shouldShowPlaceholder && (
         <div
