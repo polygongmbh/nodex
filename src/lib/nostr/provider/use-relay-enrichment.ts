@@ -31,6 +31,7 @@ export function useRelayEnrichment(
       const finish = () => {
         if (settled) return;
         settled = true;
+        window.clearTimeout(fallbackTimeoutId);
         endRelayOperation("read");
         subscription.stop();
         if (candidates.length === 0) {
@@ -55,7 +56,7 @@ export function useRelayEnrichment(
       subscription.on("eose", finish);
 
       // Fallback so the UI does not hang if eose never arrives.
-      setTimeout(finish, 6000);
+      const fallbackTimeoutId = window.setTimeout(finish, 6000);
     });
   };
 

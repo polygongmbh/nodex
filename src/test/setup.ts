@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
 import "@/lib/i18n/config";
-import { beforeAll, afterAll, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
+import { afterAll, afterEach, beforeAll, vi } from "vitest";
 
 function installStorageFallbackIfNeeded(): void {
   const candidate = (window as Window & { localStorage?: unknown }).localStorage as Partial<Storage> | undefined;
@@ -42,6 +43,104 @@ function installStorageFallbackIfNeeded(): void {
 }
 
 installStorageFallbackIfNeeded();
+
+const activeTimeouts = new Map<unknown, string>();
+const activeIntervals = new Map<unknown, string>();
+const activeAnimationFrames = new Map<unknown, string>();
+
+const originalSetTimeout = window.setTimeout.bind(window);
+const originalClearTimeout = window.clearTimeout.bind(window);
+const originalSetInterval = window.setInterval.bind(window);
+const originalClearInterval = window.clearInterval.bind(window);
+const originalRequestAnimationFrame = (callback: FrameRequestCallback) =>
+  originalSetTimeout(() => callback(Date.now()), 16);
+const originalCancelAnimationFrame = (handle: ReturnType<typeof originalSetTimeout>) =>
+  originalClearTimeout(handle);
+
+function installTrackedTimerWrappers(): void {
+  const captureStack = () => new Error().stack?.split("\n").slice(2, 8).join("\n") ?? "stack unavailable";
+
+  const trackedSetTimeout: typeof window.setTimeout = ((handler, timeout, ...args) => {
+    const handle = originalSetTimeout(((...callbackArgs: unknown[]) => {
+      activeTimeouts.delete(handle);
+      if (typeof handler === "function") {
+        handler(...callbackArgs);
+        return;
+      }
+      globalThis.eval(handler);
+    }) as TimerHandler, timeout, ...args);
+    activeTimeouts.set(handle, captureStack());
+    return handle;
+  }) as typeof window.setTimeout;
+
+  const trackedClearTimeout: typeof window.clearTimeout = ((handle?: number) => {
+    if (handle !== undefined && handle !== null) {
+      activeTimeouts.delete(handle);
+    }
+    return originalClearTimeout(handle);
+  }) as typeof window.clearTimeout;
+
+  const trackedSetInterval: typeof window.setInterval = ((handler, timeout, ...args) => {
+    const handle = originalSetInterval(handler, timeout, ...args);
+    activeIntervals.set(handle, captureStack());
+    return handle;
+  }) as typeof window.setInterval;
+
+  const trackedClearInterval: typeof window.clearInterval = ((handle?: number) => {
+    if (handle !== undefined && handle !== null) {
+      activeIntervals.delete(handle);
+    }
+    return originalClearInterval(handle);
+  }) as typeof window.clearInterval;
+
+  const trackedRequestAnimationFrame: typeof window.requestAnimationFrame = ((callback) => {
+    const handle = originalRequestAnimationFrame((timestamp) => {
+      activeAnimationFrames.delete(handle);
+      callback(timestamp);
+    });
+    activeAnimationFrames.set(handle, captureStack());
+    return handle;
+  }) as typeof window.requestAnimationFrame;
+
+  const trackedCancelAnimationFrame: typeof window.cancelAnimationFrame = ((handle: number) => {
+    activeAnimationFrames.delete(handle);
+    return originalCancelAnimationFrame(handle);
+  }) as typeof window.cancelAnimationFrame;
+
+  window.setTimeout = trackedSetTimeout;
+  window.clearTimeout = trackedClearTimeout;
+  window.setInterval = trackedSetInterval;
+  window.clearInterval = trackedClearInterval;
+  window.requestAnimationFrame = trackedRequestAnimationFrame;
+  window.cancelAnimationFrame = trackedCancelAnimationFrame;
+  globalThis.setTimeout = trackedSetTimeout;
+  globalThis.clearTimeout = trackedClearTimeout;
+  globalThis.setInterval = trackedSetInterval;
+  globalThis.clearInterval = trackedClearInterval;
+  globalThis.requestAnimationFrame = trackedRequestAnimationFrame;
+  globalThis.cancelAnimationFrame = trackedCancelAnimationFrame;
+}
+
+function clearTrackedAsyncWork(): { timeouts: string[]; intervals: string[]; animationFrames: string[] } {
+  const shouldIgnoreStack = (stack: string) =>
+    stack.includes("@testing-library/dom/dist/wait-for.js") ||
+    stack.includes("vitest/dist/chunks/vi.");
+
+  const leaked = {
+    timeouts: Array.from(activeTimeouts.values()).filter((stack) => !shouldIgnoreStack(stack)),
+    intervals: Array.from(activeIntervals.values()).filter((stack) => !shouldIgnoreStack(stack)),
+    animationFrames: Array.from(activeAnimationFrames.values()).filter((stack) => !shouldIgnoreStack(stack)),
+  };
+  activeTimeouts.forEach((handle) => originalClearTimeout(handle));
+  activeIntervals.forEach((handle) => originalClearInterval(handle));
+  activeAnimationFrames.forEach((handle) => originalCancelAnimationFrame(handle));
+  activeTimeouts.clear();
+  activeIntervals.clear();
+  activeAnimationFrames.clear();
+  return leaked;
+}
+
+installTrackedTimerWrappers();
 
 // Mock matchMedia for tests
 Object.defineProperty(window, "matchMedia", {
@@ -117,6 +216,13 @@ beforeAll(() => {
   });
 });
 
+afterEach(() => {
+  cleanup();
+  clearTrackedAsyncWork();
+  vi.useRealTimers();
+});
+
 afterAll(() => {
+  clearTrackedAsyncWork();
   vi.restoreAllMocks();
 });

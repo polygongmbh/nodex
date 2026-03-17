@@ -98,6 +98,30 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
+  const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
+
+  const clearTrackedRelayTimeout = useCallback((timeoutId: number | undefined) => {
+    if (typeof timeoutId !== "number") return;
+    window.clearTimeout(timeoutId);
+    relayTimeoutIdsRef.current.delete(timeoutId);
+  }, []);
+
+  const scheduleRelayTimeout = useCallback((callback: () => void, delayMs: number): number => {
+    let timeoutId = 0;
+    timeoutId = window.setTimeout(() => {
+      relayTimeoutIdsRef.current.delete(timeoutId);
+      callback();
+    }, delayMs);
+    relayTimeoutIdsRef.current.add(timeoutId);
+    return timeoutId;
+  }, []);
+
+  const clearAllTrackedRelayTimeouts = useCallback(() => {
+    relayTimeoutIdsRef.current.forEach((timeoutId) => {
+      window.clearTimeout(timeoutId);
+    });
+    relayTimeoutIdsRef.current.clear();
+  }, []);
 
   const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
     const hasRead = relayVerificationReadOpsRef.current > 0;
@@ -336,6 +360,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       const finish = () => {
         if (settled) return;
         settled = true;
+        clearTrackedRelayTimeout(fallbackTimeoutId);
         endRelayOperation("read");
         subscription.stop();
         if (candidates.length === 0) {
@@ -366,9 +391,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       subscription.on("eose", finish);
 
       // Fallback so the UI does not hang if eose never arrives.
-      setTimeout(finish, 12000);
+      const fallbackTimeoutId = scheduleRelayTimeout(finish, 12000);
     });
-  }, [beginRelayOperation, endRelayOperation, ndk]);
+  }, [beginRelayOperation, clearTrackedRelayTimeout, endRelayOperation, ndk, scheduleRelayTimeout]);
 
   const userProfileSnapshot = useMemo<NostrUser["profile"] | null>(() => {
     if (!user?.profile) return null;
@@ -500,7 +525,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         // Scheduling relay.connect() here covers that gap; NDK's internal guard makes it a no-op
         // if NDK is already reconnecting.
         if (!removedRelaysRef.current.has(normalized)) {
-          setTimeout(() => {
+          scheduleRelayTimeout(() => {
             if (!removedRelaysRef.current.has(normalized) && !relayAutoPausedRef.current.has(normalized)) {
               relay.connect();
             }
@@ -518,7 +543,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       if (nextFailureCount < MAX_INITIAL_CONNECT_FAILURES) {
         if (!removedRelaysRef.current.has(normalized)) {
           const delay = Math.min(1000 * 2 ** (nextFailureCount - 1), 30000);
-          setTimeout(() => {
+          scheduleRelayTimeout(() => {
             if (!removedRelaysRef.current.has(normalized) && !relayAutoPausedRef.current.has(normalized)) {
               relay.connect();
             }
@@ -570,7 +595,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     // Restore session first, then connect so protected REQs don't race ahead of signer readiness.
     let extensionRestoreController: AbortController | undefined;
-    let reconcileIntervalId: number | undefined;
+    const reconcileIntervalId = window.setInterval(
+      syncRelayStatusesFromPool,
+      RELAY_STATUS_RECONCILE_INTERVAL_MS
+    );
     const restoreSession = async (): Promise<void> => {
       const savedAuthMethod = localStorage.getItem(STORAGE_KEY_AUTH) as AuthMethod;
       if (savedAuthMethod === "guest") {
@@ -674,24 +702,19 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         nostrDevLog("provider", "NDK connected to relay pool");
         syncRelayStatusesFromPool();
       });
-      reconcileIntervalId = window.setInterval(
-        syncRelayStatusesFromPool,
-        RELAY_STATUS_RECONCILE_INTERVAL_MS
-      );
     })();
 
     return () => {
       disposed = true;
       extensionRestoreController?.abort();
-      if (typeof reconcileIntervalId === "number") {
-        window.clearInterval(reconcileIntervalId);
-      }
+      window.clearInterval(reconcileIntervalId);
+      clearAllTrackedRelayTimeouts();
+      ndkInstance.pool.removeAllListeners();
       ndkInstance.pool.relays.forEach((relay) => {
         relay.disconnect();
       });
-      ndkInstance.pool.removeAllListeners();
     };
-  }, [markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays]);
+  }, [clearAllTrackedRelayTimeouts, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;

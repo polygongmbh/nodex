@@ -39,6 +39,7 @@ export function useProfileSync(
       const finish = () => {
         if (settled) return;
         settled = true;
+        window.clearTimeout(fallbackTimeoutId);
         endRelayOperation("read");
         subscription.stop();
         if (candidates.length === 0) {
@@ -69,7 +70,7 @@ export function useProfileSync(
       subscription.on("eose", finish);
 
       // Fallback so the UI does not hang if eose never arrives.
-      setTimeout(finish, 12000);
+      const fallbackTimeoutId = window.setTimeout(finish, 12000);
     });
   }, [ndk, beginRelayOperation, endRelayOperation]);
 
