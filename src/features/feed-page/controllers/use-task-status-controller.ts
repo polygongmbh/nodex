@@ -10,7 +10,7 @@ import { playCompletionPopSound } from "@/lib/completion-feedback";
 import {
   loadCompletionSoundEnabled,
   saveCompletionSoundEnabled,
-} from "@/infrastructure/preferences/user-preferences";
+} from "@/infrastructure/preferences/user-preferences-storage";
 
 const TASK_STATUS_REORDER_DELAY_MS = 260;
 

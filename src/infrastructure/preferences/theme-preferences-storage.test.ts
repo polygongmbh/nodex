@@ -5,7 +5,7 @@ import {
   resolveEffectiveTheme,
   setStoredThemeMode,
   type ThemeMode,
-} from "./theme-preferences";
+} from "./theme-preferences-storage";
 
 describe("theme-preferences", () => {
   it("defaults to auto and persists it when no stored value exists", () => {

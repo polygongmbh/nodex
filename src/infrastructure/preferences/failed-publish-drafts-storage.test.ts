@@ -5,7 +5,7 @@ import {
   loadFailedPublishDrafts,
   saveFailedPublishDrafts,
   type FailedPublishDraft,
-} from "./failed-publish-drafts";
+} from "./failed-publish-drafts-storage";
 
 const sampleDraft: FailedPublishDraft = {
   id: "draft-1",

@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ThemeProvider, useThemeMode } from "./ThemeProvider";
-import { THEME_MODE_STORAGE_KEY } from "@/infrastructure/preferences/theme-preferences";
+import { THEME_MODE_STORAGE_KEY } from "@/infrastructure/preferences/theme-preferences-storage";
 
 type MatchMediaListener = (event: MediaQueryListEvent) => void;
 

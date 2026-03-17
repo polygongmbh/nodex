@@ -8,7 +8,7 @@ import { FocusedTaskBreadcrumb } from "@/components/tasks/FocusedTaskBreadcrumb"
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
-import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts";
+import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import {
   Relay,
   Channel,

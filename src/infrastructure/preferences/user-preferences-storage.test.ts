@@ -8,7 +8,7 @@ import {
   saveCompletionSoundEnabled,
   savePresencePublishingEnabled,
   savePublishDelayEnabled,
-} from "./user-preferences";
+} from "./user-preferences-storage";
 
 describe("user-preferences", () => {
   beforeEach(() => {

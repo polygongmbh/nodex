@@ -7,7 +7,7 @@
  *   cache      — reconstructable data; prune first when storage is tight
  *
  * Auth keys (nostr_auth_method, nostr_guest_nsec, nostr_nip46_*) are managed
- * separately in src/lib/nostr/provider/storage.ts and are never pruned.
+ * separately in src/infrastructure/nostr/provider/storage.ts and are never pruned.
  */
 
 // ── Preferences ──────────────────────────────────────────────────────────────

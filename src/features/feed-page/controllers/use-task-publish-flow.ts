@@ -12,7 +12,7 @@ import {
   loadFailedPublishDrafts,
   saveFailedPublishDrafts,
   type FailedPublishDraft,
-} from "@/infrastructure/preferences/failed-publish-drafts";
+} from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import { resolveMentionedPubkeysAsync } from "@/lib/mentions";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
@@ -31,7 +31,7 @@ import {
 import { buildTaskPublishTags } from "@/infrastructure/nostr/task-publish-tags";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { loadPublishDelayEnabled } from "@/infrastructure/preferences/user-preferences";
+import { loadPublishDelayEnabled } from "@/infrastructure/preferences/user-preferences-storage";
 import { canUserUpdateTask, extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
 import {
   notifyLocalSaved,
