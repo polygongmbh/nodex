@@ -1,4 +1,4 @@
-import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
+import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
 import type { Task, TaskStatus } from "@/types";
 
 const LISTING_EVENT_KIND = 30402;

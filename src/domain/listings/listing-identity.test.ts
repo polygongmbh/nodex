@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getListingReplaceableKey } from "./listing-replaceable-key";
-import { NostrEventKind } from "./types";
+import { NostrEventKind } from "@/lib/nostr/types";
+import { getListingReplaceableKey } from "./listing-identity";
 
 describe("getListingReplaceableKey", () => {
   it("uses NIP-99 identifier when available", () => {
