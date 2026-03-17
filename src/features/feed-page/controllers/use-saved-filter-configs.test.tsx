@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useMemo, useState } from "react";
 import { useSavedFilterConfigs } from "./use-saved-filter-configs";
-import { buildFilterSnapshot } from "@/lib/filter-snapshot";
-import { mapPeopleSelection } from "@/lib/filter-state-utils";
+import { buildFilterSnapshot } from "@/domain/content/filter-snapshot";
+import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import { makePerson, makeRelay } from "@/test/fixtures";
 import type { Channel, ChannelMatchMode, Person, Relay } from "@/types";
 

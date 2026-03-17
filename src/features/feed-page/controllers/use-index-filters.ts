@@ -15,7 +15,7 @@ import {
   setExclusiveChannelFilter,
   shouldToggleOffExclusiveChannel,
   shouldToggleOffExclusivePerson,
-} from "@/lib/filter-state-utils";
+} from "@/domain/content/filter-state-utils";
 import { useFilterUrlSync } from "@/hooks/use-filter-url-sync";
 import type { Channel, ChannelMatchMode, Person, Relay } from "@/types";
 

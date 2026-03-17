@@ -12,7 +12,7 @@ import {
   isNavigationFocusStep,
   shouldForceFeedAndResetFiltersOnStep,
 } from "@/lib/onboarding-step-rules";
-import { mapPeopleSelection, setAllChannelFilters } from "@/lib/filter-state-utils";
+import { mapPeopleSelection, setAllChannelFilters } from "@/domain/content/filter-state-utils";
 import type { Channel, Person, Relay } from "@/types";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
