@@ -1,7 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { Task } from "@/types";
 import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
-import { nostrEventToTask, nostrEventsToTasks, mergeTasks, eventHasTags, extractAllTags, isSpamContent } from "./event-converter";
+import { mergeTasks } from "@/domain/content/task-merge";
+import {
+  eventHasTags,
+  extractAllTags,
+  isSpamContent,
+  nostrEventToTask,
+  nostrEventsToTasks,
+} from "@/infrastructure/nostr/task-converter";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "./types";
 
 function makeRelayEvent(overrides: Partial<NostrEventWithRelay> & Pick<NostrEventWithRelay, "id">): NostrEventWithRelay {

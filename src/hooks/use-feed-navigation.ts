@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { isTaskOutsideSelectedRelayScope } from "@/lib/relay-scope";
+import { isTaskOutsideSelectedRelayScope } from "@/domain/relays/relay-scope";
 import type { Task, Relay } from "@/types";
 
 const VALID_VIEWS: ViewType[] = ["feed", "tree", "kanban", "list", "calendar"];
