@@ -19,6 +19,49 @@ const triggerHaptic = (style: "light" | "medium" | "heavy" = "light") => {
   }
 };
 
+const HORIZONTAL_SCROLL_OVERFLOW_VALUES = new Set(["auto", "scroll", "overlay"]);
+const WHEEL_GESTURE_IDLE_MS = 220;
+
+function getHorizontalScrollableAncestor(target: EventTarget | null) {
+  let current = target instanceof HTMLElement ? target : null;
+
+  while (current) {
+    const { overflowX } = window.getComputedStyle(current);
+    if (
+      HORIZONTAL_SCROLL_OVERFLOW_VALUES.has(overflowX) &&
+      current.scrollWidth > current.clientWidth
+    ) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+
+  return null;
+}
+
+function canScrollHorizontallyInDirection(element: HTMLElement, deltaX: number) {
+  return canScrollHorizontallyInDirectionFromPosition(
+    element.scrollWidth,
+    element.clientWidth,
+    element.scrollLeft,
+    deltaX,
+  );
+}
+
+function canScrollHorizontallyInDirectionFromPosition(
+  scrollWidth: number,
+  clientWidth: number,
+  scrollLeft: number,
+  deltaX: number,
+) {
+  const maxScrollLeft = scrollWidth - clientWidth;
+  if (maxScrollLeft <= 0 || deltaX === 0) return false;
+  if (deltaX > 0) {
+    return scrollLeft < maxScrollLeft;
+  }
+  return scrollLeft > 0;
+}
+
 export function useSwipeNavigation({
   onSwipeLeft,
   onSwipeRight,
@@ -31,15 +74,20 @@ export function useSwipeNavigation({
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const touchScrollContainer = useRef<HTMLElement | null>(null);
+  const touchScrollStartLeft = useRef(0);
   const wheelAccumX = useRef(0);
   const wheelAccumY = useRef(0);
   const lastWheelEventAt = useRef(0);
   const lastWheelSwipeAt = useRef(0);
+  const wheelGestureMode = useRef<"idle" | "scroll" | "navigate">("idle");
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
     touchStartY.current = e.targetTouches[0].clientY;
     touchEndX.current = null;
+    touchScrollContainer.current = getHorizontalScrollableAncestor(e.target);
+    touchScrollStartLeft.current = touchScrollContainer.current?.scrollLeft ?? 0;
   }, []);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -53,9 +101,30 @@ export function useSwipeNavigation({
 
     const deltaX = touchStartX.current - touchEndX.current;
     const deltaY = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+    const activeScrollContainer = touchScrollContainer.current;
+    const scrollCouldConsumeAtStart = activeScrollContainer
+      ? canScrollHorizontallyInDirectionFromPosition(
+          activeScrollContainer.scrollWidth,
+          activeScrollContainer.clientWidth,
+          touchScrollStartLeft.current,
+          deltaX,
+        )
+      : false;
+    const scrollConsumedGesture = activeScrollContainer
+      ? activeScrollContainer.scrollLeft !== touchScrollStartLeft.current
+      : false;
+    const scrollCanConsumeGesture = activeScrollContainer
+      ? canScrollHorizontallyInDirection(activeScrollContainer, deltaX)
+      : false;
     
     // Only trigger swipe if horizontal movement is greater than vertical (to avoid conflicts with scrolling)
-    if (Math.abs(deltaX) > threshold && Math.abs(deltaX) > deltaY) {
+    if (
+      Math.abs(deltaX) > threshold &&
+      Math.abs(deltaX) > deltaY &&
+      !scrollCouldConsumeAtStart &&
+      !scrollConsumedGesture &&
+      !scrollCanConsumeGesture
+    ) {
       if (preventDefaultOnSwipe) {
         e.preventDefault();
       }
@@ -78,6 +147,8 @@ export function useSwipeNavigation({
     touchStartX.current = null;
     touchStartY.current = null;
     touchEndX.current = null;
+    touchScrollContainer.current = null;
+    touchScrollStartLeft.current = 0;
   }, [onSwipeLeft, onSwipeRight, threshold, preventDefaultOnSwipe, enableHaptics]);
 
   const handleWheel = useCallback((e: WheelEvent) => {
@@ -92,13 +163,20 @@ export function useSwipeNavigation({
     }
 
     const now = Date.now();
-    if (now - lastWheelEventAt.current > 120) {
+    if (now - lastWheelEventAt.current > WHEEL_GESTURE_IDLE_MS) {
       wheelAccumX.current = 0;
       wheelAccumY.current = 0;
+      wheelGestureMode.current = "idle";
     }
     lastWheelEventAt.current = now;
 
     const { deltaX, deltaY } = e;
+    const scrollContainer = target ? getHorizontalScrollableAncestor(target) : null;
+    if (scrollContainer) {
+      wheelGestureMode.current = "scroll";
+      return;
+    }
+    if (wheelGestureMode.current === "scroll" || wheelGestureMode.current === "navigate") return;
     if (Math.abs(deltaX) < Math.abs(deltaY)) return;
 
     if (wheelAccumX.current !== 0 && Math.sign(wheelAccumX.current) !== Math.sign(deltaX)) {
@@ -126,7 +204,7 @@ export function useSwipeNavigation({
       onSwipeRight?.();
     }
 
-    lastWheelSwipeAt.current = now;
+    wheelGestureMode.current = "navigate";
     wheelAccumX.current = 0;
     wheelAccumY.current = 0;
   }, [
