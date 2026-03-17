@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { loadSavedFilterState, saveSavedFilterState } from "@/lib/saved-filter-configurations";
+import { loadSavedFilterState, saveSavedFilterState } from "@/infrastructure/preferences/saved-filter-configurations";
 import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import { areFilterSnapshotsEqual, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import type {

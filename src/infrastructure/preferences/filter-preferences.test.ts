@@ -7,7 +7,7 @@ import {
   savePersistedChannelMatchMode,
   savePersistedChannelFilters,
   savePersistedRelayIds,
-} from "./filter-preferences";
+} from "@/infrastructure/preferences/filter-preferences";
 
 describe("filter preferences persistence", () => {
   beforeEach(() => {

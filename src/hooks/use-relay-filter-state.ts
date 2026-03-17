@@ -6,7 +6,7 @@ import {
   getEffectiveActiveRelayIds,
   loadPersistedRelayIds,
   savePersistedRelayIds,
-} from "@/lib/filter-preferences";
+} from "@/infrastructure/preferences/filter-preferences";
 
 interface UseRelayFilterStateOptions {
   relays: Relay[];

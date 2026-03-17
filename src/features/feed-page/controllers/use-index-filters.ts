@@ -8,7 +8,7 @@ import {
   loadPersistedChannelMatchMode,
   savePersistedChannelFilters,
   savePersistedChannelMatchMode,
-} from "@/lib/filter-preferences";
+} from "@/infrastructure/preferences/filter-preferences";
 import {
   mapPeopleSelection,
   setAllChannelFilters,
