@@ -27,9 +27,34 @@ const relays: Relay[] = [
   },
 ];
 
-function Harness({ onRelayEnabled }: { onRelayEnabled?: (relay: Relay) => void }) {
+const connectedRelays: Relay[] = [
+  {
+    id: "relay-one",
+    name: "Relay One",
+    icon: "radio",
+    isActive: false,
+    connectionStatus: "connected",
+    url: "wss://relay.one",
+  },
+  {
+    id: "relay-two",
+    name: "Relay Two",
+    icon: "radio",
+    isActive: false,
+    connectionStatus: "disconnected",
+    url: "wss://relay.two",
+  },
+];
+
+function Harness({
+  onRelayEnabled,
+  relayList = relays,
+}: {
+  onRelayEnabled?: (relay: Relay) => void;
+  relayList?: Relay[];
+}) {
   const { handleRelayToggle, handleRelayExclusive, handleToggleAllRelays, effectiveActiveRelayIds } = useRelayFilterState({
-    relays,
+    relays: relayList,
     t: ((key: string) => key) as unknown as TFunction,
     defaultRelayIds: [],
     onRelayEnabled,
@@ -91,14 +116,16 @@ describe("useRelayFilterState", () => {
 
   it("calls onRelayEnabled for relays newly selected by select-all", () => {
     const onRelayEnabled = vi.fn();
+    // Seed relay-one as active so auto-init is skipped; Toggle will deactivate it.
+    window.localStorage.setItem("nodex.active-relays.v1", JSON.stringify(["relay-one"]));
 
-    render(<Harness onRelayEnabled={onRelayEnabled} />);
+    render(<Harness relayList={connectedRelays} onRelayEnabled={onRelayEnabled} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Toggle" }));
-    fireEvent.click(screen.getByRole("button", { name: "ToggleAll" }));
+    fireEvent.click(screen.getByRole("button", { name: "Toggle" })); // removes relay-one
+    fireEvent.click(screen.getByRole("button", { name: "ToggleAll" })); // re-activates relay-one (connected)
 
     expect(onRelayEnabled).toHaveBeenCalledTimes(1);
-    expect(onRelayEnabled).toHaveBeenCalledWith(relays[0]);
+    expect(onRelayEnabled).toHaveBeenCalledWith(connectedRelays[0]);
   });
 
   it("auto-selects available relays when persisted ids do not match discovered relays", () => {
@@ -107,5 +134,51 @@ describe("useRelayFilterState", () => {
     render(<Harness />);
 
     expect(screen.getByTestId("active-relay-ids").textContent).toBe("relay-one,relay-two");
+  });
+
+  it("toggle-all selects only connected relays when mix of connected/disconnected", () => {
+    // Seed relay-two (disconnected) as active; toggle-all should switch to relay-one (connected) only.
+    window.localStorage.setItem("nodex.active-relays.v1", JSON.stringify(["relay-two"]));
+    render(<Harness relayList={connectedRelays} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "ToggleAll" }));
+
+    expect(screen.getByTestId("active-relay-ids").textContent).toBe("relay-one");
+  });
+
+  it("toggle-all clears all when all connected relays are already active", () => {
+    // Seed relay-two (disconnected) so auto-init is skipped; relay-one (connected) is not yet active.
+    window.localStorage.setItem("nodex.active-relays.v1", JSON.stringify(["relay-two"]));
+    render(<Harness relayList={connectedRelays} />);
+
+    // First click: activates relay-one (the only connected relay).
+    fireEvent.click(screen.getByRole("button", { name: "ToggleAll" }));
+    expect(screen.getByTestId("active-relay-ids").textContent).toBe("relay-one");
+
+    // Second click: all connected relays are now active → clears everything.
+    fireEvent.click(screen.getByRole("button", { name: "ToggleAll" }));
+    expect(screen.getByTestId("active-relay-ids").textContent).toBe("");
+  });
+
+  it("toggle-all is a no-op when no relays are connected", () => {
+    // Seed relay-two so auto-init is skipped; all relays are disconnected.
+    window.localStorage.setItem("nodex.active-relays.v1", JSON.stringify(["relay-two"]));
+    render(<Harness relayList={relays} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "ToggleAll" }));
+
+    expect(screen.getByTestId("active-relay-ids").textContent).toBe("relay-two");
+  });
+
+  it("calls onRelayEnabled only for newly-connected relays activated by toggle-all", () => {
+    const onRelayEnabled = vi.fn();
+    // Seed relay-two (disconnected) so relay-one (connected) is not yet active.
+    window.localStorage.setItem("nodex.active-relays.v1", JSON.stringify(["relay-two"]));
+    render(<Harness relayList={connectedRelays} onRelayEnabled={onRelayEnabled} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "ToggleAll" }));
+
+    expect(onRelayEnabled).toHaveBeenCalledTimes(1);
+    expect(onRelayEnabled).toHaveBeenCalledWith(connectedRelays[0]);
   });
 });

@@ -80,17 +80,29 @@ export function useRelayFilterState({ relays, t, defaultRelayIds, onRelayEnabled
 
   const handleToggleAllRelays = () => {
     setActiveRelayIds((prev) => {
-      if (prev.size === relays.length) {
+      const connectedRelays = relays.filter(
+        (r) => r.connectionStatus === "connected" || r.connectionStatus === "read-only"
+      );
+
+      if (connectedRelays.length === 0) {
+        return prev;
+      }
+
+      const allConnectedActive =
+        connectedRelays.length > 0 && connectedRelays.every((r) => prev.has(r.id));
+
+      if (allConnectedActive) {
         toast(t("toasts.success.relayFiltersCleared"));
         return new Set();
       }
-      relays.forEach((relay) => {
+
+      connectedRelays.forEach((relay) => {
         if (!prev.has(relay.id)) {
           onRelayEnabled?.(relay);
         }
       });
       toast(t("toasts.success.allRelaysSelected"));
-      return new Set(relays.map((r) => r.id));
+      return new Set(connectedRelays.map((r) => r.id));
     });
   };
 
