@@ -135,6 +135,7 @@ policies:
     must_commit_completed_changes: true
     conventional_commits_required: true
     squash_fixup_into_previous_when_local: true
+    preferred_contiguous_tip_rewrite_method: git_reset_soft_then_recommit
   testing:
     test_first_default: true
     skip_test_first_for:
@@ -282,6 +283,8 @@ When asked to create a plan to fix or implement something:
 - Before any squash/rebase execution, list each squash candidate with its original commit message and intended target commit message.
 - For squash checks, preserve atomic coherent history and do not squash unrelated functional changes.
 - Rewrite only unpushed local history for squash/rebase unless explicitly instructed otherwise.
+- When the commits to rewrite are a contiguous block at the tip, prefer `git reset --soft <target>` followed by selective recommits over an interactive rebase.
+- Reserve interactive rebase for non-contiguous history edits or cases where a soft reset would make commit reconstruction materially less clear.
 - After squashing, diff current commit to the previous head - there should be no difference, if there is, stop and ask how to proceed.
 
 #### push
