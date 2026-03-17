@@ -20,6 +20,7 @@
       "write": "Schreibe zuerst eine Nachricht",
       "tag": "Mindestens einen #channel hinzufügen",
       "relay": "Wähle einen einzelnen Feed oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
+      "selectTask": "Wähle eine Aufgabe zum Antworten",
       "publishing": "Wird veröffentlicht..."
     },
     "actions": {

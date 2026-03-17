@@ -24,6 +24,7 @@ const relays: Relay[] = [{
   url: "wss://relay.example.com",
   icon: "R",
   isActive: true,
+  connectionStatus: "connected",
 }];
 
 const multiRelays: Relay[] = [
@@ -33,6 +34,7 @@ const multiRelays: Relay[] = [
     url: "wss://relay-a.example.com",
     icon: "R",
     isActive: true,
+    connectionStatus: "connected",
   },
   {
     id: "relay-b",
@@ -40,8 +42,18 @@ const multiRelays: Relay[] = [
     url: "wss://relay-b.example.com",
     icon: "R",
     isActive: true,
+    connectionStatus: "connected",
   },
 ];
+
+const disconnectedRelays: Relay[] = [{
+  id: "demo",
+  name: "Demo",
+  url: "wss://relay.example.com",
+  icon: "R",
+  isActive: true,
+  connectionStatus: "disconnected",
+}];
 
 const channels: Channel[] = [
   { id: "backend", name: "backend", filterState: "neutral" },
@@ -678,6 +690,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
+        parentId="parent-task"
       />
     );
 
@@ -1211,6 +1224,96 @@ describe("TaskComposer hashtag autocomplete", () => {
       expect(vi.mocked(toast.error)).toHaveBeenCalledWith("Task creation failed. Please try again.");
     });
     expect(textarea.value).toBe("Ship #backend now");
+  });
+
+  it("blocks root task submit when relay is disconnected", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={disconnectedRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+      target: { value: "Ship #backend now" },
+    });
+
+    expect(screen.getByText("Select a single feed or a parent task to create a new task")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+  });
+
+  it("allows root task submit when relay is connected but not active", () => {
+    const connectedInactiveRelays: Relay[] = [{
+      id: "demo",
+      name: "Demo",
+      url: "wss://relay.example.com",
+      icon: "R",
+      isActive: false,
+      connectionStatus: "connected",
+    }];
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={connectedInactiveRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+      target: { value: "Ship #backend now" },
+    });
+
+    expect(screen.getByRole("button", { name: /create task/i })).not.toBeDisabled();
+  });
+
+  it("blocks comment submit when no parent task is selected", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/add a comment/i), {
+      target: { value: "Looks good #backend" },
+    });
+
+    expect(screen.getByText("Select a task to reply to")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add comment/i })).toBeDisabled();
+  });
+
+  it("allows comment submit when parentId is provided", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        parentId="some-task-id"
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/add a comment/i), {
+      target: { value: "Looks good #backend" },
+    });
+
+    expect(screen.queryByText("Select a task to reply to")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add comment/i })).not.toBeDisabled();
   });
 
   it("restores compose state when restore request changes", () => {

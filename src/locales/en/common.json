@@ -20,6 +20,7 @@
       "write": "Write a message first",
       "tag": "Add at least one #channel",
       "relay": "Select a single feed or a parent task to create a new task",
+      "selectTask": "Select a task to reply to",
       "publishing": "Publishing..."
     },
     "actions": {

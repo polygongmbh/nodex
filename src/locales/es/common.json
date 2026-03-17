@@ -20,6 +20,7 @@
       "write": "Escribe primero un mensaje",
       "tag": "Añade al menos un #canal",
       "relay": "Selecciona un único feed o una tarea padre para crear una nueva tarea",
+      "selectTask": "Selecciona una tarea para responder",
       "publishing": "Publicando..."
     },
     "actions": {

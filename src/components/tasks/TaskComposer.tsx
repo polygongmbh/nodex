@@ -157,9 +157,12 @@ function readComposeDraft(key: string): ComposeDraftState | null {
   }
 }
 
-export function TaskComposer({ 
-  onSubmit, 
-  relays, 
+const isPostableRelay = (r: Relay) =>
+  r.connectionStatus === "connected" || r.connectionStatus === "read-only";
+
+export function TaskComposer({
+  onSubmit,
+  relays,
   channels, 
   people, 
   onCancel, 
@@ -204,8 +207,11 @@ export function TaskComposer({
     if (initialDraft?.selectedRelays && Array.isArray(initialDraft.selectedRelays)) {
       return initialDraft.selectedRelays.filter((id): id is string => typeof id === "string");
     }
-    const activeRelays = relays.filter(r => r.isActive).map(r => r.id);
-    return activeRelays.length > 0 ? activeRelays : [relays[0]?.id].filter(Boolean);
+    const connected = relays.filter(isPostableRelay);
+    const activeConnected = connected.filter(r => r.isActive);
+    if (activeConnected.length > 0) return activeConnected.map(r => r.id);
+    if (connected.length > 0) return [connected[0].id];
+    return [];
   });
   const [dueDate, setDueDate] = useState<Date | undefined>(() => {
     if (initialDraft?.dueDate) {
@@ -599,8 +605,15 @@ export function TaskComposer({
 
   // Keep selected publish targets aligned with currently active relay filters.
   useEffect(() => {
-    const activeRelays = relays.filter((r) => r.isActive).map((r) => r.id);
-    setSelectedRelays(activeRelays.length > 0 ? activeRelays : [relays[0]?.id].filter(Boolean));
+    const connected = relays.filter(isPostableRelay);
+    const activeConnected = connected.filter(r => r.isActive);
+    if (activeConnected.length > 0) {
+      setSelectedRelays(activeConnected.map(r => r.id));
+    } else if (connected.length > 0) {
+      setSelectedRelays([connected[0].id]);
+    } else {
+      setSelectedRelays([]);
+    }
   }, [relays]);
 
   useEffect(() => {
@@ -912,7 +925,11 @@ export function TaskComposer({
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
-  const hasInvalidRootTaskRelaySelection = taskType === "task" && !parentId && selectedRelays.length !== 1;
+  const selectedRelayObjects = relays.filter(r => selectedRelays.includes(r.id));
+  const hasNoConnectedRelay = !selectedRelayObjects.some(isPostableRelay);
+  const hasInvalidRootTaskRelaySelection =
+    taskType === "task" && !parentId && (selectedRelays.length !== 1 || hasNoConnectedRelay);
+  const hasCommentWithoutParent = taskType === "comment" && !parentId;
   const submitBlockedReason = !user
     ? t("composer.blocked.signin")
     : hasPendingAttachmentUploads
@@ -923,11 +940,13 @@ export function TaskComposer({
       ? t("composer.blocked.write")
     : !hasAtLeastOneTag && !canInheritParentTags
       ? t("composer.blocked.tag")
-      : hasInvalidRootTaskRelaySelection
-          ? t("composer.blocked.relay")
-        : isPublishing
-          ? t("composer.blocked.publishing")
-          : null;
+      : hasCommentWithoutParent
+        ? t("composer.blocked.selectTask")
+        : hasInvalidRootTaskRelaySelection
+            ? t("composer.blocked.relay")
+          : isPublishing
+            ? t("composer.blocked.publishing")
+            : null;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (showHashtagSuggestions) {
