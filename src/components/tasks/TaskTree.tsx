@@ -4,9 +4,9 @@ import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedA
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import { sortTasks, buildChildrenMap, SortContext } from "@/lib/task-sorting";
+import { sortTasks, buildChildrenMap, SortContext } from "@/domain/content/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { taskMatchesTextQuery } from "@/lib/task-text-filter";
+import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { useTranslation } from "react-i18next";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";

@@ -18,7 +18,7 @@ import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
-import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/task-sorting";
+import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
@@ -29,7 +29,7 @@ import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
-import { filterTasksByDepthMode } from "@/lib/depth-mode-filter";
+import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
 import {
   DropdownMenu,
   DropdownMenuContent,

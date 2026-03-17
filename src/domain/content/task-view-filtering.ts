@@ -1,4 +1,4 @@
-import { taskMatchesTextQuery } from "@/lib/task-text-filter";
+import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
 import { taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 import type { ChannelMatchMode, Person, Task } from "@/types";
 

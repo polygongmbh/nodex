@@ -25,7 +25,7 @@ import {
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { taskMatchesTextQuery } from "@/lib/task-text-filter";
+import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
 import { useTranslation } from "react-i18next";
 
 interface MobileLayoutProps {

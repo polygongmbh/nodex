@@ -39,7 +39,7 @@ import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
-import { buildChildrenMap, sortTasks, type SortContext } from "@/lib/task-sorting";
+import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
