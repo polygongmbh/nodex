@@ -1,5 +1,5 @@
 import type { Person, Task } from "@/types";
-import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
+import { extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
 
 function normalize(value?: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";

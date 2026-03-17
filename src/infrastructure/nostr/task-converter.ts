@@ -1,5 +1,5 @@
 import { type FeedMessageType, type TaskStateUpdate, type TaskStatus, Person, Task } from "@/types";
-import { extractAssignedMentionsFromContent } from "@/lib/task-permissions";
+import { extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
 import {
   extractTaskStateTargetId,
   isTaskStateEventKind,
@@ -24,7 +24,7 @@ import {
   parseImetaTag,
   parseNip94AttachmentMetadataTags,
 } from "@/lib/attachments";
-import { canPubkeyUpdateTask } from "@/lib/task-permissions";
+import { canPubkeyUpdateTask } from "@/domain/content/task-permissions";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { getRelayIdFromUrl } from "./relay-identity";
 

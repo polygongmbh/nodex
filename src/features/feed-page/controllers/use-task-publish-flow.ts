@@ -32,7 +32,7 @@ import { buildTaskPublishTags } from "@/lib/nostr/task-publish-tags";
 import { buildNip99PublishTags } from "@/lib/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { loadPublishDelayEnabled } from "@/lib/user-preferences";
-import { canUserUpdateTask, extractAssignedMentionsFromContent } from "@/lib/task-permissions";
+import { canUserUpdateTask, extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
 import {
   notifyLocalSaved,
   notifyNeedTag,

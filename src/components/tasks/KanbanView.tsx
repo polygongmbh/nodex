@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getDueDateColorClass, sortTasks, buildChildrenMap, SortContext } from "@/lib/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { canUserChangeTaskStatus } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";

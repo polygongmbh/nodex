@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/lib/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/lib/task-permissions";
+import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
