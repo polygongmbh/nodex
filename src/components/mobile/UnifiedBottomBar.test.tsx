@@ -1027,6 +1027,110 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
+  it("removes the document pointerdown listener on unmount", () => {
+    const addEventListenerSpy = vi.spyOn(document, "addEventListener");
+    const removeEventListenerSpy = vi.spyOn(document, "removeEventListener");
+
+    const { unmount } = render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    const pointerDownRegistration = addEventListenerSpy.mock.calls.find(
+      ([eventName]) => eventName === "pointerdown"
+    );
+    expect(pointerDownRegistration).toBeTruthy();
+
+    unmount();
+
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      "pointerdown",
+      pointerDownRegistration?.[1]
+    );
+  });
+
+  it("clears the pending send-launch timeout on unmount", async () => {
+    vi.useFakeTimers();
+    const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
+    const onSubmit = vi.fn(() => successResult);
+
+    const { unmount } = render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+
+    unmount();
+
+    expect(clearTimeoutSpy).toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it("cancels pending focus animation frames on unmount", () => {
+    const cancelAnimationFrameSpy = vi.spyOn(window, "cancelAnimationFrame");
+    const { unmount } = render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+        composeRestoreRequest={{
+          id: 1,
+          state: {
+            content: "Restored #general",
+            taskType: "task",
+            explicitTagNames: [],
+            explicitMentionPubkeys: [],
+            attachments: [],
+          },
+        }}
+      />
+    );
+
+    unmount();
+
+    expect(cancelAnimationFrameSpy).toHaveBeenCalled();
+  });
+
   it("shows location capture failure toast when geolocation errors", () => {
     const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
     const getCurrentPosition = vi.fn((_success: PositionCallback, error?: PositionErrorCallback) => {

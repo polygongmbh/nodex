@@ -44,9 +44,14 @@ function installStorageFallbackIfNeeded(): void {
 
 installStorageFallbackIfNeeded();
 
+const DEBUG_ASYNC_LEAKS = process.env.VITEST_DEBUG_ASYNC_LEAKS === "true";
 const activeTimeouts = new Map<unknown, string>();
 const activeIntervals = new Map<unknown, string>();
 const activeAnimationFrames = new Map<unknown, string>();
+const activeEventListeners = new Map<string, string>();
+const activeMutationObservers = new Map<object, string>();
+const activeResizeObservers = new Map<object, string>();
+const activeIntersectionObservers = new Map<object, string>();
 
 const originalSetTimeout = window.setTimeout.bind(window);
 const originalClearTimeout = window.clearTimeout.bind(window);
@@ -56,10 +61,62 @@ const originalRequestAnimationFrame = (callback: FrameRequestCallback) =>
   originalSetTimeout(() => callback(Date.now()), 16);
 const originalCancelAnimationFrame = (handle: ReturnType<typeof originalSetTimeout>) =>
   originalClearTimeout(handle);
+const originalWindowAddEventListener = window.addEventListener.bind(window);
+const originalWindowRemoveEventListener = window.removeEventListener.bind(window);
+const originalDocumentAddEventListener = document.addEventListener.bind(document);
+const originalDocumentRemoveEventListener = document.removeEventListener.bind(document);
+const originalMutationObserver = globalThis.MutationObserver;
+const originalResizeObserver = globalThis.ResizeObserver;
+const originalIntersectionObserver = globalThis.IntersectionObserver;
+const originalWindowSetTimeout = window.setTimeout;
+const originalWindowClearTimeout = window.clearTimeout;
+const originalWindowSetInterval = window.setInterval;
+const originalWindowClearInterval = window.clearInterval;
+const originalWindowRequestAnimationFrame = window.requestAnimationFrame;
+const originalWindowCancelAnimationFrame = window.cancelAnimationFrame;
+const originalGlobalSetTimeout = globalThis.setTimeout;
+const originalGlobalClearTimeout = globalThis.clearTimeout;
+const originalGlobalSetInterval = globalThis.setInterval;
+const originalGlobalClearInterval = globalThis.clearInterval;
+const originalGlobalRequestAnimationFrame = globalThis.requestAnimationFrame;
+const originalGlobalCancelAnimationFrame = globalThis.cancelAnimationFrame;
+
+const listenerIds = new WeakMap<EventListenerOrEventListenerObject, number>();
+let nextListenerId = 1;
+
+function captureStack(): string {
+  return new Error().stack?.split("\n").slice(2, 8).join("\n") ?? "stack unavailable";
+}
+
+function getListenerId(listener: EventListenerOrEventListenerObject | null): string {
+  if (!listener) return "null";
+  if (typeof listener === "function") {
+    if (!listenerIds.has(listener)) {
+      listenerIds.set(listener, nextListenerId++);
+    }
+    return `fn:${listenerIds.get(listener)}`;
+  }
+  if (!listenerIds.has(listener)) {
+    listenerIds.set(listener, nextListenerId++);
+  }
+  return `obj:${listenerIds.get(listener)}`;
+}
+
+function resolveCapture(options?: boolean | AddEventListenerOptions | EventListenerOptions): boolean {
+  if (typeof options === "boolean") return options;
+  return Boolean(options?.capture);
+}
+
+function buildListenerKey(
+  target: "window" | "document",
+  type: string,
+  listener: EventListenerOrEventListenerObject | null,
+  options?: boolean | AddEventListenerOptions | EventListenerOptions
+): string {
+  return `${target}:${type}:${getListenerId(listener)}:${resolveCapture(options)}`;
+}
 
 function installTrackedTimerWrappers(): void {
-  const captureStack = () => new Error().stack?.split("\n").slice(2, 8).join("\n") ?? "stack unavailable";
-
   const trackedSetTimeout: typeof window.setTimeout = ((handler, timeout, ...args) => {
     const handle = originalSetTimeout(((...callbackArgs: unknown[]) => {
       activeTimeouts.delete(handle);
@@ -121,7 +178,87 @@ function installTrackedTimerWrappers(): void {
   globalThis.cancelAnimationFrame = trackedCancelAnimationFrame;
 }
 
-function clearTrackedAsyncWork(): { timeouts: string[]; intervals: string[]; animationFrames: string[] } {
+function installTrackedEventListenerWrappers(): void {
+  window.addEventListener = ((type, listener, options) => {
+    activeEventListeners.set(buildListenerKey("window", type, listener, options), captureStack());
+    return originalWindowAddEventListener(type, listener, options);
+  }) as typeof window.addEventListener;
+
+  window.removeEventListener = ((type, listener, options) => {
+    activeEventListeners.delete(buildListenerKey("window", type, listener, options));
+    return originalWindowRemoveEventListener(type, listener, options);
+  }) as typeof window.removeEventListener;
+
+  document.addEventListener = ((type, listener, options) => {
+    activeEventListeners.set(buildListenerKey("document", type, listener, options), captureStack());
+    return originalDocumentAddEventListener(type, listener, options);
+  }) as typeof document.addEventListener;
+
+  document.removeEventListener = ((type, listener, options) => {
+    activeEventListeners.delete(buildListenerKey("document", type, listener, options));
+    return originalDocumentRemoveEventListener(type, listener, options);
+  }) as typeof document.removeEventListener;
+}
+
+function installTrackedObserverWrappers(): void {
+  if (originalMutationObserver) {
+    class TrackedMutationObserver extends originalMutationObserver {
+      constructor(callback: MutationCallback) {
+        super(callback);
+        activeMutationObservers.set(this, captureStack());
+      }
+
+      override disconnect(): void {
+        activeMutationObservers.delete(this);
+        super.disconnect();
+      }
+    }
+
+    globalThis.MutationObserver = TrackedMutationObserver as typeof MutationObserver;
+  }
+
+  if (originalResizeObserver) {
+    class TrackedResizeObserver extends originalResizeObserver {
+      constructor(callback: ResizeObserverCallback) {
+        super(callback);
+        activeResizeObservers.set(this, captureStack());
+      }
+
+      override disconnect(): void {
+        activeResizeObservers.delete(this);
+        super.disconnect();
+      }
+    }
+
+    globalThis.ResizeObserver = TrackedResizeObserver as typeof ResizeObserver;
+  }
+
+  if (originalIntersectionObserver) {
+    class TrackedIntersectionObserver extends originalIntersectionObserver {
+      constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+        super(callback, options);
+        activeIntersectionObservers.set(this, captureStack());
+      }
+
+      override disconnect(): void {
+        activeIntersectionObservers.delete(this);
+        super.disconnect();
+      }
+    }
+
+    globalThis.IntersectionObserver = TrackedIntersectionObserver as typeof IntersectionObserver;
+  }
+}
+
+function clearTrackedAsyncWork(): {
+  timeouts: string[];
+  intervals: string[];
+  animationFrames: string[];
+  eventListeners: string[];
+  mutationObservers: string[];
+  resizeObservers: string[];
+  intersectionObservers: string[];
+} {
   const shouldIgnoreStack = (stack: string) =>
     stack.includes("@testing-library/dom/dist/wait-for.js") ||
     stack.includes("vitest/dist/chunks/vi.");
@@ -130,17 +267,48 @@ function clearTrackedAsyncWork(): { timeouts: string[]; intervals: string[]; ani
     timeouts: Array.from(activeTimeouts.values()).filter((stack) => !shouldIgnoreStack(stack)),
     intervals: Array.from(activeIntervals.values()).filter((stack) => !shouldIgnoreStack(stack)),
     animationFrames: Array.from(activeAnimationFrames.values()).filter((stack) => !shouldIgnoreStack(stack)),
+    eventListeners: Array.from(activeEventListeners.values()).filter((stack) => !shouldIgnoreStack(stack)),
+    mutationObservers: Array.from(activeMutationObservers.values()).filter((stack) => !shouldIgnoreStack(stack)),
+    resizeObservers: Array.from(activeResizeObservers.values()).filter((stack) => !shouldIgnoreStack(stack)),
+    intersectionObservers: Array.from(activeIntersectionObservers.values()).filter((stack) => !shouldIgnoreStack(stack)),
   };
   activeTimeouts.forEach((handle) => originalClearTimeout(handle));
   activeIntervals.forEach((handle) => originalClearInterval(handle));
   activeAnimationFrames.forEach((handle) => originalCancelAnimationFrame(handle));
+  activeMutationObservers.forEach((_stack, observer) => {
+    if ("disconnect" in observer && typeof observer.disconnect === "function") {
+      observer.disconnect();
+    }
+  });
+  activeResizeObservers.forEach((_stack, observer) => {
+    if ("disconnect" in observer && typeof observer.disconnect === "function") {
+      observer.disconnect();
+    }
+  });
+  activeIntersectionObservers.forEach((_stack, observer) => {
+    if ("disconnect" in observer && typeof observer.disconnect === "function") {
+      observer.disconnect();
+    }
+  });
   activeTimeouts.clear();
   activeIntervals.clear();
   activeAnimationFrames.clear();
+  activeEventListeners.clear();
+  activeMutationObservers.clear();
+  activeResizeObservers.clear();
+  activeIntersectionObservers.clear();
+  if (DEBUG_ASYNC_LEAKS) {
+    const leakCount = Object.values(leaked).reduce((count, entries) => count + entries.length, 0);
+    if (leakCount > 0) {
+      console.warn("[test-cleanup] Cleared leaked async work", leaked);
+    }
+  }
   return leaked;
 }
 
 installTrackedTimerWrappers();
+installTrackedEventListenerWrappers();
+installTrackedObserverWrappers();
 
 // Mock matchMedia for tests
 Object.defineProperty(window, "matchMedia", {
@@ -224,5 +392,30 @@ afterEach(() => {
 
 afterAll(() => {
   clearTrackedAsyncWork();
+  window.setTimeout = originalWindowSetTimeout;
+  window.clearTimeout = originalWindowClearTimeout;
+  window.setInterval = originalWindowSetInterval;
+  window.clearInterval = originalWindowClearInterval;
+  window.requestAnimationFrame = originalWindowRequestAnimationFrame;
+  window.cancelAnimationFrame = originalWindowCancelAnimationFrame;
+  globalThis.setTimeout = originalGlobalSetTimeout;
+  globalThis.clearTimeout = originalGlobalClearTimeout;
+  globalThis.setInterval = originalGlobalSetInterval;
+  globalThis.clearInterval = originalGlobalClearInterval;
+  globalThis.requestAnimationFrame = originalGlobalRequestAnimationFrame;
+  globalThis.cancelAnimationFrame = originalGlobalCancelAnimationFrame;
+  window.addEventListener = originalWindowAddEventListener as typeof window.addEventListener;
+  window.removeEventListener = originalWindowRemoveEventListener as typeof window.removeEventListener;
+  document.addEventListener = originalDocumentAddEventListener as typeof document.addEventListener;
+  document.removeEventListener = originalDocumentRemoveEventListener as typeof document.removeEventListener;
+  if (originalMutationObserver) {
+    globalThis.MutationObserver = originalMutationObserver;
+  }
+  if (originalResizeObserver) {
+    globalThis.ResizeObserver = originalResizeObserver;
+  }
+  if (originalIntersectionObserver) {
+    globalThis.IntersectionObserver = originalIntersectionObserver;
+  }
   vi.restoreAllMocks();
 });

@@ -163,6 +163,38 @@ export function UnifiedBottomBar({
   const canOfferComment = currentView === "feed" || (currentView === "tree" && Boolean(focusedTaskId));
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
+  const trackedTimeoutIdsRef = useRef<Set<number>>(new Set());
+  const trackedAnimationFrameIdsRef = useRef<Set<number>>(new Set());
+
+  const clearTrackedTimeout = (handle: number | null | undefined) => {
+    if (handle === null || handle === undefined) return;
+    trackedTimeoutIdsRef.current.delete(handle);
+    window.clearTimeout(handle);
+  };
+
+  const scheduleTrackedTimeout = (callback: () => void, delay: number) => {
+    const handle = window.setTimeout(() => {
+      trackedTimeoutIdsRef.current.delete(handle);
+      callback();
+    }, delay);
+    trackedTimeoutIdsRef.current.add(handle);
+    return handle;
+  };
+
+  const clearTrackedAnimationFrame = (handle: number | null | undefined) => {
+    if (handle === null || handle === undefined) return;
+    trackedAnimationFrameIdsRef.current.delete(handle);
+    window.cancelAnimationFrame(handle);
+  };
+
+  const scheduleTrackedAnimationFrame = (callback: FrameRequestCallback) => {
+    const handle = window.requestAnimationFrame((timestamp) => {
+      trackedAnimationFrameIdsRef.current.delete(handle);
+      callback(timestamp);
+    });
+    trackedAnimationFrameIdsRef.current.add(handle);
+    return handle;
+  };
 
   const syncChannelFiltersFromContent = (nextContent: string, previousContent: string) => {
     const endedWithSpace = /\s$/.test(nextContent);
@@ -207,11 +239,15 @@ export function UnifiedBottomBar({
   };
 
   useEffect(() => {
+    const trackedTimeoutIds = trackedTimeoutIdsRef.current;
+    const trackedAnimationFrameIds = trackedAnimationFrameIdsRef.current;
     return () => {
-      if (sendLaunchTimeoutRef.current !== null) {
-        window.clearTimeout(sendLaunchTimeoutRef.current);
-        sendLaunchTimeoutRef.current = null;
-      }
+      clearTrackedTimeout(sendLaunchTimeoutRef.current);
+      sendLaunchTimeoutRef.current = null;
+      trackedTimeoutIds.forEach((handle) => window.clearTimeout(handle));
+      trackedAnimationFrameIds.forEach((handle) => window.cancelAnimationFrame(handle));
+      trackedTimeoutIds.clear();
+      trackedAnimationFrameIds.clear();
     };
   }, []);
 
@@ -254,7 +290,7 @@ export function UnifiedBottomBar({
     setLocationGeohash(normalizeGeohash(restoreState.locationGeohash));
     setActiveSelector(null);
     setShowSendOptions(false);
-    requestAnimationFrame(() => {
+    scheduleTrackedAnimationFrame(() => {
       const textarea = textareaRef.current;
       if (!textarea) return;
       textarea.focus();
@@ -292,7 +328,7 @@ export function UnifiedBottomBar({
       }
       return [...prev, targetMonth].sort((a, b) => a.getTime() - b.getTime());
     });
-    requestAnimationFrame(() => {
+    scheduleTrackedAnimationFrame(() => {
       const key = getMonthKey(targetMonth);
       dateMonthRefs.current[key]?.scrollIntoView({
         behavior: "auto",
@@ -318,7 +354,7 @@ export function UnifiedBottomBar({
           const last = sorted[sorted.length - 1] ?? startOfMonth(new Date());
           return [...sorted, addMonths(startOfMonth(last), 1)];
         });
-        requestAnimationFrame(() => {
+        scheduleTrackedAnimationFrame(() => {
           dateLoadingRef.current = false;
         });
       }
@@ -483,10 +519,8 @@ export function UnifiedBottomBar({
       return;
     }
     setIsSendLaunching(true);
-    if (sendLaunchTimeoutRef.current !== null) {
-      window.clearTimeout(sendLaunchTimeoutRef.current);
-    }
-    sendLaunchTimeoutRef.current = window.setTimeout(() => {
+    clearTrackedTimeout(sendLaunchTimeoutRef.current);
+    sendLaunchTimeoutRef.current = scheduleTrackedTimeout(() => {
       setIsSendLaunching(false);
       sendLaunchTimeoutRef.current = null;
     }, 260);
@@ -729,7 +763,7 @@ export function UnifiedBottomBar({
     onSearchChange(newText);
     setShowMentionSuggestions(false);
     setActiveMentionIndex(0);
-    setTimeout(() => {
+    scheduleTrackedTimeout(() => {
       const textarea = textareaRef.current;
       if (!textarea) return;
       const pos = mentionStart + mentionToken.length + 2;
@@ -810,7 +844,7 @@ export function UnifiedBottomBar({
       .replace(/[ \t]{2,}/g, " ");
     setSharedText(newText);
     onSearchChange(newText);
-    setTimeout(() => {
+    scheduleTrackedTimeout(() => {
       const textarea = textareaRef.current;
       if (!textarea) return;
       textarea.focus();
@@ -850,7 +884,7 @@ export function UnifiedBottomBar({
       .replace(/[ \t]{2,}/g, " ");
     setSharedText(newText);
     onSearchChange(newText);
-    setTimeout(() => {
+    scheduleTrackedTimeout(() => {
       const textarea = textareaRef.current;
       if (!textarea) return;
       textarea.focus();
@@ -864,7 +898,7 @@ export function UnifiedBottomBar({
       ref={bottomBarRef}
       onFocusCapture={() => setIsBottomBarFocused(true)}
       onBlurCapture={() => {
-        requestAnimationFrame(() => {
+        scheduleTrackedAnimationFrame(() => {
           const root = bottomBarRef.current;
           const active = document.activeElement;
           setIsBottomBarFocused(Boolean(root && active instanceof Element && root.contains(active)));
