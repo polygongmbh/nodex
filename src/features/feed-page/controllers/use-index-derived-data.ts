@@ -173,8 +173,8 @@ export function useIndexDerivedData({
   ]);
 
   const composeChannels: Channel[] = useMemo(() => {
-    return deriveChannels(localTasks, filteredNostrEvents, postedTags, 1);
-  }, [localTasks, filteredNostrEvents, postedTags]);
+    return deriveChannels(scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, 1);
+  }, [postedTags, scopedLocalTasksForChannels, scopedNostrEventsForChannels]);
 
   const sidebarPeople = useMemo(() => {
     return deriveSidebarPeople(people, allTasks, supplementalLatestActivityByAuthor);
