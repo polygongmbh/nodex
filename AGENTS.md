@@ -206,6 +206,7 @@ policies:
 - Keep edits focused, reviewable, and behavior-safe unless intentional behavioral changes are requested.
 - Prefer explicit, parseable rules for automation; keep prose for rationale and edge cases.
 - When a policy already exists in a machine-readable block or matrix, update that source first and keep prose sections non-duplicative.
+- Close any background terminal sessions started for the task once they are no longer needed, and always clean them up after each commit before handoff or further workflow steps.
 - When changing shared user-facing copy in locale files, propagate equivalent updates across all supported languages in `src/locales/` in the same change unless an omission is explicitly documented.
 - Do not leave hardcoded user-facing strings in production code; route them through i18n and keep `en`, `de`, and `es` in sync unless a documented compliance/jurisdiction exception applies.
 
