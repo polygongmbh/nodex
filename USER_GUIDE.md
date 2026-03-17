@@ -19,6 +19,7 @@
 - Click a task to focus on that task context.
 - Use breadcrumb navigation (`All Tasks` / `Up` / parent path) to move through hierarchy.
 - Breadcrumb paths stay single-line and left-aligned; page-header breadcrumbs evenly share available width when constrained, while feed-card breadcrumbs use compact capped widths before truncating.
+- Kanban uses four status columns: `To Do`, `In Progress`, `Done`, and `Closed`; `Closed` is available from explicit status selection rather than the normal click-cycle toggle.
 - In Kanban, use the Levels dropdown near search to switch hierarchy scope:
   - `Top-level`: only root tasks (no parent).
   - `2/3 levels`: include subtasks up to that depth.
@@ -165,8 +166,9 @@
 - Feeds section folding uses measured-height collapse animation for smoother repeated expand/collapse.
 
 ## Task Permissions
-- Tasks can be modified by tagged users (`p` tags).
-- If no users are tagged, only the creator can modify the task.
+- Tagged tasks can be modified by tagged users (`p` tags) and the task creator.
+- Untagged tasks can be modified by any signed-in user.
+- Relay-driven status/date/priority updates from unauthorized users are ignored locally.
 
 ### Compose keyboard behavior (desktop)
 - `Enter` / `Tab` with autocomplete open: insert the highlighted suggestion into text.

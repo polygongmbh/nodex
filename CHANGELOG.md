@@ -5,6 +5,9 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [2.0.0] - 2026-03-17
+Major release focused on auth/onboarding refinement, broader localization coverage, stricter task-state semantics, and faster large-relay feed hydration.
 - Feed hydration is now significantly faster on large relays: event conversion is deferred until after EOSE (one conversion pass instead of dozens), the flush debounce scales up to 500 ms during high-volume bursts, and a "Loading events…" indicator is shown while the initial backfill is in progress.
 - Onboarding `Create account` now opens Noas sign-up directly again, and standalone `/signin` plus `/signup` URLs now open the matching auth modal entry points.
 - Standardized the desktop top-right auth/profile controls so signed-out and signed-in states now use matching button treatment and height, and profile dropdown actions show pointer cursor affordance again.
