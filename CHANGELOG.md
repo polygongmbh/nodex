@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-03-17
 - Hashtags are no longer parsed when `#` appears inside a word, so embedded text like `email#ops` no longer creates channels, chips, or submit tags by mistake.
 - Compose channel tags now follow the active relay scope, so switching to a relay that does not have a previously selected channel no longer keeps that hidden channel attached in compose.
 - Media previews now use attachment preview metadata and blurhash placeholders more consistently, fixing oversized lightbox image positioning and showing preview-first images in reduced-data mode until full media is requested.

@@ -195,9 +195,12 @@ policies:
       enhance: patch
       feat: patch_default_minor_if_substantial
       breaking_change: major
+    line_churn_since_last_release_minor_threshold: 1000
+    line_churn_measurement: total_insertions_plus_deletions_since_previous_release_or_pushed_version
     minor_requires:
       - multiple_feats
       - significant_scope_or_impact
+      - line_churn_at_or_above_minor_threshold
 ```
 
 ## General Workflow Policies
@@ -244,6 +247,10 @@ policies:
 - For major/minor releases (for example `2.0.0`, `1.7.0`), include a concise update summary line directly under the version heading before any bullet lists/subsections.
 - On release, move grouped entries from `Unreleased` into the new versioned section.
 - Before every push, prune redundant or iteration-level changelog bullets and reclassify genuinely new user-facing capabilities into `### Added` while keeping refinements and regressions under `### Changed` or `### Fixed`.
+
+### Release Scope
+- When choosing between patch and minor for an unpushed release, include total line churn since the previous release or currently pushed version as an explicit signal.
+- If total insertions plus deletions reaches 1000 lines or more, default to at least a minor bump even when the user-visible summary is relatively compact.
 
 ### Refactoring Cadence
 - After each major milestone, run a cleanup pass for duplication, consistency, complex components, and discovered debt.
