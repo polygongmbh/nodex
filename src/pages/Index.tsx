@@ -28,11 +28,7 @@ import {
   recordChannelInteraction,
   type ChannelFrecencyState,
 } from "@/lib/channel-frecency";
-import { isNostrEventId } from "@/lib/nostr/event-id";
 import { NostrEventKind } from "@/lib/nostr/types";
-import {
-  buildImetaTag,
-} from "@/lib/attachments";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasks } from "@/lib/task-filtering";
 import { loadPresencePublishingEnabled } from "@/lib/user-preferences";
@@ -45,9 +41,7 @@ import {
 } from "@/lib/presence-status";
 import { shouldBootstrapGuideDemoFeed } from "@/lib/onboarding-guide";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/lib/filter-snapshot";
-import { buildNip99PublishTags } from "@/lib/nostr/nip99-metadata";
 import type { Nip99ListingStatus } from "@/types";
-import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useIndexFilters } from "@/hooks/use-index-filters";
 import { useIndexOnboarding } from "@/hooks/use-index-onboarding";
@@ -61,6 +55,7 @@ import { applyTaskSortOverlays, useIndexDerivedData } from "@/hooks/use-index-de
 import { usePinnedSidebarChannels } from "@/hooks/use-pinned-sidebar-channels";
 import { useIndexRelayShell } from "@/hooks/use-index-relay-shell";
 import { useAuthModalRoute } from "@/hooks/use-auth-modal-route";
+import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
 import { resolveChannelRelayScopeIds } from "@/lib/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -75,7 +70,6 @@ import { useTranslation } from "react-i18next";
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
-const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
 const DEMO_SEED_TASKS = mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents()));
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
@@ -467,72 +461,15 @@ const Index = () => {
     resetFiltersToDefault,
   });
 
-  const handleListingStatusChange = useCallback((taskId: string, status: Nip99ListingStatus) => {
-    if (guardInteraction("modify")) return;
-    const existing = allTasks.find((task) => task.id === taskId);
-    if (!existing?.feedMessageType || !existing.nip99) return;
-    if (!currentUser?.id || currentUser.id.toLowerCase() !== existing.author.id.toLowerCase()) return;
-    const previousStatus = existing.nip99.status;
-    const replaceableKey = getListingReplaceableKey(existing, LISTING_EVENT_KIND);
-    if (!replaceableKey) return;
-
-    setLocalTasks((prev) => {
-      const nextNip99 = { ...(existing.nip99 || {}), status };
-      const matchesListing = (task: Task) =>
-        task.id === taskId ||
-        getListingReplaceableKey(task, LISTING_EVENT_KIND) === replaceableKey;
-      let touched = false;
-      const next = prev.map((task) => {
-        if (!matchesListing(task)) return task;
-        touched = true;
-        return { ...task, nip99: nextNip99, lastEditedAt: new Date() };
-      });
-      if (touched) return next;
-      return [{ ...existing, nip99: nextNip99, lastEditedAt: new Date() }, ...next];
-    });
-
-    if (!isNostrEventId(existing.id)) return;
-    const { relayUrls } = resolveTaskOriginRelay(existing.id);
-    if (relayUrls.length === 0) {
-      toast.error(t("toasts.errors.publishListingStatusFailed"));
-      return;
-    }
-
-    const publishTags = buildNip99PublishTags({
-      metadata: { ...existing.nip99, status },
-      feedMessageType: existing.feedMessageType,
-      hashtags: existing.tags,
-      mentionPubkeys: (existing.mentions || []).filter((mention) => /^[a-f0-9]{64}$/i.test(mention)),
-      attachmentTags: (existing.attachments || [])
-        .map((attachment) => buildImetaTag(attachment))
-        .filter((tag) => tag.length > 0),
-      fallbackTitle: existing.content.slice(0, 80),
-      identifierSeed: existing.nip99.identifier || existing.id,
-      statusOverride: status,
-      locationGeohash: existing.locationGeohash,
-    });
-
-    void publishEvent(
-      NostrEventKind.ClassifiedListing,
-      existing.content,
-      publishTags,
-      undefined,
-      relayUrls.slice(0, 1)
-    ).then((result) => {
-      if (!result.success) {
-        toast.error(t("toasts.errors.publishListingStatusFailed"));
-        setLocalTasks((prev) => prev.map((task) => {
-          const taskReplaceableKey = getListingReplaceableKey(task, LISTING_EVENT_KIND);
-          if (taskReplaceableKey !== replaceableKey) return task;
-          return {
-            ...task,
-            nip99: { ...(task.nip99 || {}), status: previousStatus || "active" },
-            lastEditedAt: new Date(),
-          };
-        }));
-      }
-    });
-  }, [allTasks, currentUser?.id, guardInteraction, publishEvent, resolveTaskOriginRelay, t]);
+  const { handleListingStatusChange } = useListingStatusPublish({
+    allTasks,
+    currentUser,
+    guardInteraction,
+    publishEvent,
+    resolveTaskOriginRelay,
+    setLocalTasks,
+    t,
+  });
 
   const {
     composeRestoreRequest,
