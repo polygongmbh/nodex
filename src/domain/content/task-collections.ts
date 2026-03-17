@@ -1,8 +1,7 @@
-import { NostrEventKind } from "@/lib/nostr/types";
 import { getListingReplaceableKey } from "@/lib/nostr/listing-replaceable-key";
 import type { Task, TaskStatus } from "@/types";
 
-const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;
+const LISTING_EVENT_KIND = 30402;
 
 export function buildPendingPublishDedupKey(task: Task): string {
   const authorId = task.author.id?.trim().toLowerCase() || "";
