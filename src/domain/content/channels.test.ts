@@ -70,4 +70,15 @@ describe("deriveChannels", () => {
     expect(channels.map((channel) => channel.name)).toEqual(["alpha", "zeta"]);
     expect(channels.find((channel) => channel.name === "zeta")?.usageCount).toBe(2);
   });
+
+  it("does not parse hashtags embedded inside words", () => {
+    const channels = deriveChannels(
+      [],
+      [{ tags: [], content: "email#ops #release" }],
+      [],
+      1
+    );
+
+    expect(channels.map((channel) => channel.name)).toEqual(["release"]);
+  });
 });

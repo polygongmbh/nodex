@@ -1,4 +1,5 @@
 import { Channel, Task } from "@/types";
+import { extractHashtagsFromContent } from "@/lib/hashtags";
 
 interface NostrEventLike {
   tags: string[][];
@@ -55,10 +56,8 @@ export function deriveChannels(
         tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
       });
 
-    const hashtagRegex = /#(\w+)/g;
-    let match: RegExpExecArray | null;
-    while ((match = hashtagRegex.exec(event.content)) !== null) {
-      const lower = match[1].toLowerCase();
+    for (const hashtag of extractHashtagsFromContent(event.content)) {
+      const lower = hashtag.toLowerCase();
       tagCounts.set(lower, (tagCounts.get(lower) || 0) + 1);
     }
   });

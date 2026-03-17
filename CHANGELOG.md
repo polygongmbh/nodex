@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Hashtags are no longer parsed when `#` appears inside a word, so embedded text like `email#ops` no longer creates channels, chips, or submit tags by mistake.
+
 ## [2.0.0] - 2026-03-17
 Major release focused on auth/onboarding refinement, broader localization coverage, stricter task-state semantics, and faster large-relay feed hydration.
 - Feed hydration is now significantly faster on large relays: event conversion is deferred until after EOSE (one conversion pass instead of dozens), the flush debounce scales up to 500 ms during high-volume bursts, and a "Loading events…" indicator is shown while the initial backfill is in progress.

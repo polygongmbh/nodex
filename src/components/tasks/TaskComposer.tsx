@@ -58,6 +58,7 @@ import { loadAutoCaptionEnabled } from "@/infrastructure/preferences/user-prefer
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
+import { countHashtagsInContent, extractHashtagsFromContent, getHashtagQueryAtCursor } from "@/lib/hashtags";
 
 interface TaskComposerProps {
   onSubmit: ComposerSubmit;
@@ -714,7 +715,7 @@ export function TaskComposer({
     if (!hasMeaningfulComposerText(content)) return;
     const effectiveTaskType = resolveSubmitType(submitType);
     
-    const extractedTags = content.match(/#(\w+)/g)?.map(t => t.slice(1).toLowerCase()) || [];
+    const extractedTags = extractHashtagsFromContent(content);
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
     if (submitTags.length === 0 && !parentId) {
       notifyNeedTag(t);
@@ -898,7 +899,7 @@ export function TaskComposer({
       label: resolvedLabel || formatMentionIdentifierForDisplay(chip.identifier),
     };
   });
-  const parsedHashtags = Array.from(new Set((content.match(/#(\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase())));
+  const parsedHashtags = extractHashtagsFromContent(content);
   const parsedHashtagSet = new Set(parsedHashtags);
   const hashtagChipItems = [
     ...parsedHashtags.map((tag) => ({ tag, metadataOnly: false })),
@@ -906,7 +907,7 @@ export function TaskComposer({
       .filter((tag) => !parsedHashtagSet.has(tag))
       .map((tag) => ({ tag, metadataOnly: true })),
   ];
-  const hasAtLeastOneTag = ((content.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
+  const hasAtLeastOneTag = countHashtagsInContent(content) + explicitTagNames.length > 0;
   const canInheritParentTags = Boolean(parentId);
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
@@ -951,10 +952,9 @@ export function TaskComposer({
       if (isMetadataOnlyAutocompleteKey(e)) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
-        const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
-        if (hashtagMatch || /#\w*$/.test(content)) {
+        const typedHashtag = getHashtagQueryAtCursor(textBeforeCursor);
+        if (typedHashtag !== null) {
           const selected = filteredChannels[Math.max(activeSuggestionIndex, 0)] || filteredChannels[0];
-          const typedHashtag = (hashtagMatch?.[1] || "").trim().toLowerCase();
           const metadataTag = selected?.name || typedHashtag;
           if (metadataTag) {
             e.preventDefault();
@@ -1042,10 +1042,10 @@ export function TaskComposer({
     setCursorPosition(cursorPos);
 
     const textBeforeCursor = newContent.slice(0, cursorPos);
-    const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
+    const hashtagQuery = getHashtagQueryAtCursor(textBeforeCursor);
     const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
-    if (hashtagMatch) {
-      setHashtagFilter(hashtagMatch[1].toLowerCase());
+    if (hashtagQuery !== null) {
+      setHashtagFilter(hashtagQuery);
       setShowHashtagSuggestions(true);
       setShowMentionSuggestions(false);
       setActiveSuggestionIndex(0);
@@ -1071,10 +1071,10 @@ export function TaskComposer({
       return;
     }
     const textBeforeCursor = textValue.slice(0, nextCursorPosition);
-    const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
+    const hashtagQuery = getHashtagQueryAtCursor(textBeforeCursor);
     const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
-    if (hashtagMatch) {
-      setHashtagFilter(hashtagMatch[1].toLowerCase());
+    if (hashtagQuery !== null) {
+      setHashtagFilter(hashtagQuery);
       setShowHashtagSuggestions(true);
       setShowMentionSuggestions(false);
       setActiveSuggestionIndex(0);

@@ -1133,6 +1133,40 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("does not submit hashtags embedded inside words", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+      target: { value: "email#backend release #design" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "email#backend release #design",
+        ["design"],
+        ["demo"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined,
+        [],
+        undefined
+      );
+    });
+  });
+
   it("keeps content when submit returns a failure result", async () => {
     const onSubmit = vi.fn(async () => ({ ok: false as const, reason: "relay-selection" as const }));
     render(

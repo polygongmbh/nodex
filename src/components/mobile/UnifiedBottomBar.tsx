@@ -40,6 +40,12 @@ import { loadAutoCaptionEnabled } from "@/infrastructure/preferences/user-prefer
 import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
+import {
+  countHashtagsInContent,
+  extractCommittedHashtags,
+  extractHashtagsFromContent,
+  getHashtagQueryAtCursor,
+} from "@/lib/hashtags";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -201,11 +207,8 @@ export function UnifiedBottomBar({
     const removedText = nextContent.length < previousContent.length;
     if (!endedWithSpace && !removedText) return;
 
-    const extractCommittedTags = (content: string) =>
-      new Set((content.match(/#(\w+)(?=\s)/g) || []).map((token) => token.slice(1).toLowerCase()));
-
-    const previousCommittedTags = extractCommittedTags(previousContent);
-    const nextCommittedTags = extractCommittedTags(nextContent);
+    const previousCommittedTags = new Set(extractCommittedHashtags(previousContent));
+    const nextCommittedTags = new Set(extractCommittedHashtags(nextContent));
     const changedTagNames = new Set<string>([
       ...Array.from(previousCommittedTags).filter((tag) => !nextCommittedTags.has(tag)),
       ...Array.from(nextCommittedTags).filter((tag) => !previousCommittedTags.has(tag)),
@@ -445,7 +448,7 @@ export function UnifiedBottomBar({
   const handleSubmit = async (submitType: "task" | "comment" | FeedMessageType = "task") => {
     if (!sharedText.trim()) return;
     if (!hasMeaningfulComposerText(sharedText)) return;
-    const extractedChannels = sharedText.match(/#(\w+)/g)?.map((token) => token.slice(1).toLowerCase()) || [];
+    const extractedChannels = extractHashtagsFromContent(sharedText);
     const submitChannels = Array.from(new Set([...extractedChannels, ...explicitTagNames]));
     if (submitChannels.length === 0 && !focusedTaskId) {
       notifyNeedTag(t);
@@ -526,7 +529,7 @@ export function UnifiedBottomBar({
     }, 260);
     const hashtagOnlyContent = Array.from(
       new Set([
-        ...(sharedText.match(/#(\w+)/g) || []).map((tag) => tag.toLowerCase()),
+        ...extractHashtagsFromContent(sharedText).map((tag) => `#${tag}`),
         ...explicitTagNames.map((tag) => `#${tag.toLowerCase()}`),
       ])
     ).join(" ");
@@ -704,7 +707,7 @@ export function UnifiedBottomBar({
   const hasInvalidRootTaskRelaySelection = !focusedTaskId && activeRelayIds.length !== 1;
   const hasComposeText = sharedText.trim().length > 0;
   const hasMeaningfulComposeText = hasMeaningfulComposerText(sharedText);
-  const hasAtLeastOneTag = ((sharedText.match(/#(\w+)/g)?.length || 0) + explicitTagNames.length) > 0;
+  const hasAtLeastOneTag = countHashtagsInContent(sharedText) + explicitTagNames.length > 0;
   const canInheritParentTags = Boolean(focusedTaskId);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
@@ -1290,9 +1293,8 @@ export function UnifiedBottomBar({
                   if (isMetadataOnlyAutocompleteKey(e)) {
                     const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPositionRef.current;
                     const textBeforeCursor = sharedText.slice(0, effectiveCursor);
-                    const hashtagMatch = textBeforeCursor.match(/#(\w*)$/);
-                    if (hashtagMatch || /#\w*$/.test(textBeforeCursor)) {
-                      const tagName = (hashtagMatch?.[1] || "").trim().toLowerCase();
+                    const tagName = getHashtagQueryAtCursor(textBeforeCursor);
+                    if (tagName !== null) {
                       if (tagName) {
                         e.preventDefault();
                         addHashtagTagOnly(tagName);
