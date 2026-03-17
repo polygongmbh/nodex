@@ -48,14 +48,14 @@ import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filt
 import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
 import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
 import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
-import { useTaskPublishFlow } from "@/hooks/use-task-publish-flow";
-import { useTaskPublishControls } from "@/hooks/use-task-publish-controls";
+import { useTaskPublishFlow } from "@/features/feed-page/controllers/use-task-publish-flow";
+import { useTaskPublishControls } from "@/features/feed-page/controllers/use-task-publish-controls";
 import { useTaskStatusController } from "@/features/feed-page/controllers/use-task-status-controller";
 import { useKind0People } from "@/hooks/use-kind0-people";
 import { useIndexDerivedData } from "@/features/feed-page/controllers/use-index-derived-data";
 import { usePinnedSidebarChannels } from "@/features/feed-page/controllers/use-pinned-sidebar-channels";
 import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
-import { useAuthModalRoute } from "@/hooks/use-auth-modal-route";
+import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-modal-route";
 import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-demo-bootstrap";
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
