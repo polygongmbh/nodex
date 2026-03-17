@@ -32,7 +32,7 @@ import {
 } from "@/lib/channel-frecency";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
-import { filterTasks } from "@/lib/task-filtering";
+import { filterTasks } from "@/domain/content/task-filtering";
 import { loadPresencePublishingEnabled } from "@/lib/user-preferences";
 import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
