@@ -4,10 +4,12 @@ import {
   loadCompletionSoundEnabled,
   loadPresencePublishingEnabled,
   loadPublishDelayEnabled,
+  loadReducedDataMode,
   saveAutoCaptionEnabled,
   saveCompletionSoundEnabled,
   savePresencePublishingEnabled,
   savePublishDelayEnabled,
+  saveReducedDataMode,
 } from "./user-preferences-storage";
 
 describe("user-preferences", () => {
@@ -57,6 +59,17 @@ describe("user-preferences", () => {
     it("persists false", () => {
       saveCompletionSoundEnabled(false);
       expect(loadCompletionSoundEnabled()).toBe(false);
+    });
+  });
+
+  describe("reduced-data-mode", () => {
+    it("defaults to auto", () => {
+      expect(loadReducedDataMode()).toBe("auto");
+    });
+
+    it("persists forced on mode", () => {
+      saveReducedDataMode("on");
+      expect(loadReducedDataMode()).toBe("on");
     });
   });
 });

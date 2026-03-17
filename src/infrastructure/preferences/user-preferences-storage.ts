@@ -3,6 +3,7 @@ import {
   COMPLETION_SOUND_ENABLED_STORAGE_KEY,
   PRESENCE_ENABLED_STORAGE_KEY,
   PUBLISH_DELAY_ENABLED_STORAGE_KEY,
+  REDUCED_DATA_MODE_STORAGE_KEY,
 } from "@/infrastructure/preferences/storage-registry";
 
 function loadBooleanPref(key: string, defaultValue: boolean): boolean {
@@ -15,6 +16,12 @@ function loadBooleanPref(key: string, defaultValue: boolean): boolean {
 function saveBooleanPref(key: string, value: boolean): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(key, value ? "true" : "false");
+}
+
+export type ReducedDataMode = "auto" | "on" | "off";
+
+function isReducedDataMode(value: string | null): value is ReducedDataMode {
+  return value === "auto" || value === "on" || value === "off";
 }
 
 export function loadPresencePublishingEnabled(): boolean {
@@ -43,4 +50,16 @@ export function loadCompletionSoundEnabled(): boolean {
 }
 export function saveCompletionSoundEnabled(enabled: boolean): void {
   saveBooleanPref(COMPLETION_SOUND_ENABLED_STORAGE_KEY, enabled);
+}
+
+export function loadReducedDataMode(): ReducedDataMode {
+  if (typeof window === "undefined") return "auto";
+  const stored = window.localStorage.getItem(REDUCED_DATA_MODE_STORAGE_KEY);
+  if (!isReducedDataMode(stored)) return "auto";
+  return stored;
+}
+
+export function saveReducedDataMode(mode: ReducedDataMode): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(REDUCED_DATA_MODE_STORAGE_KEY, mode);
 }

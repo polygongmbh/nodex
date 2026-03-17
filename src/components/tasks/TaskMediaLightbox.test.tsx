@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { TaskMediaLightbox } from "./TaskMediaLightbox";
 import type { TaskMediaItem } from "@/lib/task-media";
 
@@ -20,6 +20,7 @@ describe("TaskMediaLightbox keyboard navigation", () => {
   };
 
   beforeEach(() => {
+    window.localStorage.clear();
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
   });
 
@@ -116,5 +117,31 @@ describe("TaskMediaLightbox keyboard navigation", () => {
     fireEvent.keyDown(input, { key: "ArrowLeft" });
 
     expect(onPrevious).not.toHaveBeenCalled();
+  });
+
+  it("shows a load-full-image action in reduced-data mode when preview metadata exists", () => {
+    window.localStorage.setItem("nodex.reduced-data-mode.v1", "on");
+
+    render(
+      <TaskMediaLightbox
+        open
+        mediaItem={{
+          ...mediaItem,
+          previewImageUrl: "https://example.com/preview.jpg",
+          blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
+        }}
+        mediaCount={1}
+        mediaIndex={0}
+        postMediaIndex={0}
+        postMediaCount={1}
+        onOpenChange={vi.fn()}
+        onPrevious={vi.fn()}
+        onNext={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /load full image/i })).toBeInTheDocument();
+    expect(screen.getByText(/reduced-data mode is showing a preview first/i)).toBeInTheDocument();
+    expect(screen.getByRole("img")).toHaveAttribute("src", "https://example.com/preview.jpg");
   });
 });

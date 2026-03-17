@@ -795,7 +795,9 @@
     "close": "Cerrar vista previa de medios",
     "previous": "Medio anterior",
     "next": "Siguiente medio",
-    "imageAlt": "Vista previa de medios"
+    "imageAlt": "Vista previa de medios",
+    "loadFullImage": "Cargar imagen completa",
+    "reducedDataPreview": "El modo de ahorro de datos muestra primero una vista previa."
   },
   "linkify": {
     "embeddedVideo": "Vídeo incrustado",

@@ -15,6 +15,7 @@ export const THEME_MODE_STORAGE_KEY = "nodex.theme.mode";
 export const LANGUAGE_STORAGE_KEY = "nodex.language";
 export const PRESENCE_ENABLED_STORAGE_KEY = "nodex.presence.v1";
 export const AUTO_CAPTION_ENABLED_STORAGE_KEY = "nodex.auto-caption.v1";
+export const REDUCED_DATA_MODE_STORAGE_KEY = "nodex.reduced-data-mode.v1";
 export const PUBLISH_DELAY_ENABLED_STORAGE_KEY = "nodex.publish-delay.v1";
 export const COMPLETION_SOUND_ENABLED_STORAGE_KEY = "nodex.completion-sound.v1";
 export const ACTIVE_RELAYS_STORAGE_KEY = "nodex.active-relays.v1";

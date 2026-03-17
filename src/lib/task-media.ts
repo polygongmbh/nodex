@@ -13,6 +13,10 @@ export interface TaskMediaItem {
   kind: TaskMediaKind;
   alt?: string;
   name?: string;
+  blurhash?: string;
+  thumbnailUrl?: string;
+  previewImageUrl?: string;
+  dimensions?: string;
   source: "attachment" | "standalone";
 }
 
@@ -50,7 +54,15 @@ export function inferTaskMediaKind(url: string, mimeType?: string): TaskMediaKin
 
 export function collectTaskMediaItems(task: Task): TaskMediaItem[] {
   const normalizedAttachments = normalizePublishedAttachments(task.attachments || []);
-  const byNormalizedUrl = new Map<string, { alt?: string; name?: string; mimeType?: string }>();
+  const byNormalizedUrl = new Map<string, {
+    alt?: string;
+    name?: string;
+    mimeType?: string;
+    blurhash?: string;
+    thumbnailUrl?: string;
+    previewImageUrl?: string;
+    dimensions?: string;
+  }>();
 
   for (const attachment of normalizedAttachments) {
     const normalizedUrl = attachment.url.trim().toLowerCase();
@@ -58,6 +70,10 @@ export function collectTaskMediaItems(task: Task): TaskMediaItem[] {
       alt: attachment.alt,
       name: attachment.name,
       mimeType: attachment.mimeType,
+      blurhash: attachment.blurhash,
+      thumbnailUrl: attachment.thumbnailUrl,
+      previewImageUrl: attachment.previewImageUrl,
+      dimensions: attachment.dimensions,
     });
   }
 
@@ -79,6 +95,10 @@ export function collectTaskMediaItems(task: Task): TaskMediaItem[] {
       kind,
       alt: attachment.alt,
       name: attachment.name,
+      blurhash: attachment.blurhash,
+      thumbnailUrl: attachment.thumbnailUrl,
+      previewImageUrl: attachment.previewImageUrl,
+      dimensions: attachment.dimensions,
       source: "attachment",
     });
   }
@@ -100,6 +120,10 @@ export function collectTaskMediaItems(task: Task): TaskMediaItem[] {
       kind,
       alt: attachmentMeta?.alt,
       name: attachmentMeta?.name,
+      blurhash: attachmentMeta?.blurhash,
+      thumbnailUrl: attachmentMeta?.thumbnailUrl,
+      previewImageUrl: attachmentMeta?.previewImageUrl,
+      dimensions: attachmentMeta?.dimensions,
       source: "standalone",
     });
   }

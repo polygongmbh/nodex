@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import { TaskProgressiveImage } from "@/components/tasks/TaskProgressiveImage";
 import { normalizePublishedAttachments } from "@/lib/attachments";
 import { inferTaskMediaKind } from "@/lib/task-media";
 import type { PublishedAttachment } from "@/types";
@@ -34,11 +35,16 @@ export function TaskAttachmentList({
               }}
               className="group relative block max-w-sm"
             >
-              <img
+              <TaskProgressiveImage
                 src={attachment.url}
                 alt={caption}
-                loading="lazy"
-                className="max-h-64 w-auto rounded-md border border-border/60 bg-muted/30 object-contain"
+                blurhash={attachment.blurhash}
+                thumbnailUrl={attachment.thumbnailUrl}
+                previewImageUrl={attachment.previewImageUrl}
+                dimensions={attachment.dimensions}
+                renderMode="inline"
+                className="max-h-64 rounded-md border border-border/60"
+                imageClassName="max-h-64"
               />
               <div className="pointer-events-none absolute inset-x-1 bottom-1 rounded bg-background/85 px-2 py-1 text-left text-xs text-foreground opacity-0 transition-opacity group-hover:opacity-100">
                 <p className="truncate" title={caption}>{caption}</p>

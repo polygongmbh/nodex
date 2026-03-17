@@ -1,6 +1,8 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TaskProgressiveImage } from "@/components/tasks/TaskProgressiveImage";
+import { useReducedDataMode } from "@/hooks/use-reduced-data-mode";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +41,7 @@ export function TaskMediaLightbox({
   onOpenTask,
 }: TaskMediaLightboxProps) {
   const { t } = useTranslation();
+  const reducedDataMode = useReducedDataMode();
   const previewAreaRef = useRef<HTMLDivElement | null>(null);
   const mediaBoundsRef = useRef<HTMLDivElement | null>(null);
   const [overlayBounds, setOverlayBounds] = useState({ top: 0, height: 0 });
@@ -183,12 +186,23 @@ export function TaskMediaLightbox({
                 ref={previewAreaRef}
                 className="relative flex min-h-[16rem] max-h-[70vh] items-center justify-center overflow-hidden bg-muted/20"
               >
-                <div ref={mediaBoundsRef} className="inline-flex max-h-[68vh] max-w-full items-center justify-center">
+                <div ref={mediaBoundsRef} className="flex max-h-[68vh] max-w-full items-center justify-center">
                   {mediaItem.kind === "image" && (
-                    <img src={mediaItem.url} alt={mediaItem.alt || mediaItem.name || t("mediaLightbox.imageAlt")} className="block max-h-[68vh] w-auto object-contain" />
+                    <TaskProgressiveImage
+                      src={mediaItem.url}
+                      alt={mediaItem.alt || mediaItem.name || t("mediaLightbox.imageAlt")}
+                      blurhash={mediaItem.blurhash}
+                      thumbnailUrl={mediaItem.thumbnailUrl}
+                      previewImageUrl={mediaItem.previewImageUrl}
+                      dimensions={mediaItem.dimensions}
+                      renderMode="lightbox"
+                      className="max-h-[68vh] max-w-full"
+                      imageClassName="max-h-[68vh]"
+                      onDisplayLoad={() => requestAnimationFrame(syncOverlayBounds)}
+                    />
                   )}
                   {mediaItem.kind === "video" && (
-                    <video controls preload="metadata" autoPlay className="block max-h-[68vh] max-w-full w-auto object-contain">
+                    <video controls preload="metadata" autoPlay={!reducedDataMode} className="block max-h-[68vh] max-w-full w-auto object-contain">
                       <source src={mediaItem.url} />
                     </video>
                   )}

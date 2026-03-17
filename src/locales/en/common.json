@@ -795,7 +795,9 @@
     "close": "Close media preview",
     "previous": "Previous media",
     "next": "Next media",
-    "imageAlt": "Media preview"
+    "imageAlt": "Media preview",
+    "loadFullImage": "Load full image",
+    "reducedDataPreview": "Reduced-data mode is showing a preview first."
   },
   "linkify": {
     "embeddedVideo": "Embedded video",

@@ -795,7 +795,9 @@
     "close": "Medienvorschau schließen",
     "previous": "Vorheriges Medium",
     "next": "Nächstes Medium",
-    "imageAlt": "Medienvorschau"
+    "imageAlt": "Medienvorschau",
+    "loadFullImage": "Vollbild laden",
+    "reducedDataPreview": "Im Datensparmodus wird zuerst eine Vorschau gezeigt."
   },
   "linkify": {
     "embeddedVideo": "Eingebettetes Video",
