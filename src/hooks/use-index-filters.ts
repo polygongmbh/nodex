@@ -152,7 +152,7 @@ export function useIndexFilters({
     });
 
     toast(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
-  }, [bumpChannelFrecency, channels, t]);
+  }, [bumpChannelFrecency, channels, setPostedTags, t]);
 
   const handlePersonToggle = useCallback((id: string) => {
     setPeople((prev) =>

@@ -473,6 +473,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
       const normalized = normalizeUrl(relay.url);
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
+      const activeRelay = ndkInstance.pool.relays.get(normalized);
+
+      // Ignore late disconnects from a removed relay instance after the same normalized URL
+      // has already been re-added to the pool.
+      if (activeRelay && activeRelay !== relay) {
+        return;
+      }
 
       // Do not overwrite "connection-error" with "disconnected": pool.removeRelay() fires a
       // second relay:disconnect after auto-pause, which would clobber the error status.

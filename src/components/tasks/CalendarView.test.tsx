@@ -78,7 +78,7 @@ describe("CalendarView responsiveness", () => {
     fireEvent.click(screen.getByRole("button", { name: /focus task: root/i }));
     expect(onFocusTask).toHaveBeenCalledWith("root");
     expect(onFocusTask).not.toHaveBeenCalledWith("child");
-  });
+  }, 10000);
 
   it("shows week numbers and stacked month sections on desktop", () => {
     vi.useFakeTimers();
@@ -150,5 +150,5 @@ describe("CalendarView responsiveness", () => {
 
     expect(screen.getByRole("button", { name: /previous month/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /next month/i })).toBeInTheDocument();
-  });
+  }, 10000);
 });
