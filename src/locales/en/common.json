@@ -822,6 +822,9 @@
       "modelUnavailable": "Caption model unavailable"
     }
   },
+  "feed": {
+    "hydrating": "Loading events from relay…"
+  },
   "tasks": {
     "task": "Task",
     "comment": "Comment",

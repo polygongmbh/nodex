@@ -822,6 +822,9 @@
       "modelUnavailable": "Beschriftungsmodell nicht verfügbar"
     }
   },
+  "feed": {
+    "hydrating": "Lade Ereignisse vom Relay…"
+  },
   "tasks": {
     "task": "Aufgabe",
     "comment": "Kommentar",

@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Feed hydration is now significantly faster on large relays: event conversion is deferred until after EOSE (one conversion pass instead of dozens), the flush debounce scales up to 500 ms during high-volume bursts, and a "Loading events…" indicator is shown while the initial backfill is in progress.
 - Onboarding `Create account` now opens Noas sign-up directly again, and standalone `/signin` plus `/signup` URLs now open the matching auth modal entry points.
 - Standardized the desktop top-right auth/profile controls so signed-out and signed-in states now use matching button treatment and height, and profile dropdown actions show pointer cursor affordance again.
 - Reordered profile editor identity fields to show display name before username, fixed clipped profile inputs in the desktop editor, removed the stray divider above save actions, and auto-generate a sanitized username from display name while the username field is still blank.

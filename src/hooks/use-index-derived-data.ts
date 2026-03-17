@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import type { Task, Channel, Person, Relay, TaskStatus } from "@/types";
 import type { CachedNostrEvent } from "@/lib/nostr/event-cache";
 import type { NostrUser } from "@/lib/nostr/ndk-context";
@@ -49,6 +49,8 @@ export interface UseIndexDerivedDataOptions {
   effectiveActiveRelayIds: Set<string>;
   relays: Relay[];
   channelFrecencyState: ChannelFrecencyState;
+  /** When true, skip expensive event conversion and return the last committed snapshot. */
+  isHydrating?: boolean;
 }
 
 export interface UseIndexDerivedDataResult {
@@ -96,6 +98,7 @@ export function useIndexDerivedData({
   effectiveActiveRelayIds,
   relays,
   channelFrecencyState,
+  isHydrating = false,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
   // Filter nostr events - only keep those with tags and not spam
   const filteredNostrEvents = useMemo(() => {
@@ -120,9 +123,15 @@ export function useIndexDerivedData({
     });
   }, [nostrEvents, suppressedNostrEventIds]);
 
-  // Convert filtered Nostr events to tasks
+  // Convert filtered Nostr events to tasks.
+  // During the initial backfill burst (isHydrating=true) we skip the expensive
+  // conversion and return the last committed snapshot instead, so that downstream
+  // memos (allTasks, channels, etc.) don't cascade-invalidate on every flush.
+  // The conversion runs once when isHydrating transitions to false (after EOSE).
+  const lastNostrTasksRef = useRef<Task[]>([]);
   const nostrTasks: Task[] = useMemo(() => {
-    return nostrEventsToTasks(
+    if (isHydrating) return lastNostrTasksRef.current;
+    const tasks = nostrEventsToTasks(
       filteredNostrEvents.map((event) => ({
         id: event.id,
         pubkey: event.pubkey,
@@ -135,7 +144,9 @@ export function useIndexDerivedData({
         relayUrls: event.relayUrls,
       }))
     );
-  }, [filteredNostrEvents]);
+    lastNostrTasksRef.current = tasks;
+    return tasks;
+  }, [filteredNostrEvents, isHydrating]);
 
   // Combine local tasks with Nostr tasks, dedup, and overlay optimistic status
   const allTasks = useMemo(() => {

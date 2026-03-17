@@ -822,6 +822,9 @@
       "modelUnavailable": "El modelo de descripciones no está disponible"
     }
   },
+  "feed": {
+    "hydrating": "Cargando eventos del relay…"
+  },
   "tasks": {
     "task": "Tarea",
     "comment": "Comentario",

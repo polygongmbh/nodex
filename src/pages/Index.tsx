@@ -186,6 +186,7 @@ const Index = () => {
   const {
     events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
+    isHydrating,
   } = useNostrEventCache({
     isConnected: isNostrConnected,
     subscribedKinds,
@@ -257,6 +258,7 @@ const Index = () => {
     effectiveActiveRelayIds,
     relays,
     channelFrecencyState,
+    isHydrating,
   });
 
   const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
@@ -663,7 +665,7 @@ const Index = () => {
       case "feed":
         return (
           <Suspense fallback={viewFallback}>
-            <FeedView {...viewProps} />
+            <FeedView {...viewProps} isHydrating={isHydrating} />
           </Suspense>
         );
       case "kanban":

@@ -16,7 +16,16 @@ const CACHE_BOOTSTRAP_MAX_AGE_MS = 8000;
 const CACHE_PERSIST_DEBOUNCE_MS = 750;
 const HYDRATION_FLUSH_BATCH_SIZE = 50;
 const HYDRATION_FLUSH_DELAY_MS = 64;
+// When the pending queue is large the relay is in a bulk-backfill burst.
+// Use a longer delay so events accumulate into fewer, larger flushes.
+const HYDRATION_BURST_THRESHOLD = 200;
+const HYDRATION_BURST_DELAY_MS = 500;
 const DEMO_RELAY_ID = "demo";
+
+/** Returns the flush debounce delay appropriate for the current pending queue depth. */
+export function getFlushDelayMs(pendingCount: number): number {
+  return pendingCount > HYDRATION_BURST_THRESHOLD ? HYDRATION_BURST_DELAY_MS : HYDRATION_FLUSH_DELAY_MS;
+}
 
 interface UseNostrEventCacheParams {
   isConnected: boolean;
@@ -34,6 +43,8 @@ interface UseNostrEventCacheResult {
   events: CachedNostrEvent[];
   feedScopeKey: string;
   hasLiveHydratedScope: boolean;
+  /** True while the initial subscription backfill is in progress (pre-EOSE). */
+  isHydrating: boolean;
 }
 
 export function buildFeedScopeKey(activeRelayIds: Set<string>, availableRelayIds: string[]): string {
@@ -152,6 +163,7 @@ export function useNostrEventCache({
 }: UseNostrEventCacheParams): UseNostrEventCacheResult {
   const queryClient = useQueryClient();
   const [hasLiveHydratedScope, setHasLiveHydratedScope] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(false);
   const feedScopeKey = useMemo(
     () => buildFeedScopeKey(activeRelayIds, availableRelayIds),
     [activeRelayIds, availableRelayIds]
@@ -197,9 +209,10 @@ export function useNostrEventCache({
     });
 
     if (remaining > 0 && typeof window !== "undefined") {
+      const delay = getFlushDelayMs(remaining);
       hydrationFlushTimerRef.current = window.setTimeout(() => {
         flushPendingEvents(false);
-      }, HYDRATION_FLUSH_DELAY_MS);
+      }, delay);
     }
   }, [clearHydrationFlushTimer, feedScopeKey, queryClient, queryKey]);
 
@@ -209,9 +222,10 @@ export function useNostrEventCache({
       return;
     }
     if (hydrationFlushTimerRef.current !== null) return;
+    const delay = getFlushDelayMs(pendingHydrationEventsRef.current.length);
     hydrationFlushTimerRef.current = window.setTimeout(() => {
       flushPendingEvents(false);
-    }, HYDRATION_FLUSH_DELAY_MS);
+    }, delay);
   }, [flushPendingEvents]);
 
   useEffect(() => {
@@ -220,6 +234,7 @@ export function useNostrEventCache({
     pendingHydrationEventsRef.current = [];
     clearHydrationFlushTimer();
     setHasLiveHydratedScope(false);
+    setIsHydrating(false);
   }, [clearHydrationFlushTimer, feedScopeKey]);
 
   const { data: nostrEvents = [] } = useQuery({
@@ -242,6 +257,7 @@ export function useNostrEventCache({
 
   const finalizeBootstrapScope = useCallback(() => {
     flushPendingEvents(true);
+    setIsHydrating(false);
     if (hasFinalizedBootstrapRef.current) return;
     hasFinalizedBootstrapRef.current = true;
     markLiveHydratedScope();
@@ -257,6 +273,7 @@ export function useNostrEventCache({
 
   useEffect(() => {
     if (!isConnected) return;
+    setIsHydrating(true);
     const timeoutId = window.setTimeout(() => {
       finalizeBootstrapScope();
     }, CACHE_BOOTSTRAP_MAX_AGE_MS);
@@ -271,6 +288,7 @@ export function useNostrEventCache({
     return () => {
       window.clearTimeout(timeoutId);
       flushPendingEvents(true);
+      setIsHydrating(false);
       subscription?.stop();
     };
   }, [finalizeBootstrapScope, flushPendingEvents, isConnected, pushEvent, subscribe, subscribedKinds]);
@@ -307,5 +325,6 @@ export function useNostrEventCache({
     events: nostrEvents,
     feedScopeKey,
     hasLiveHydratedScope,
+    isHydrating,
   };
 }

@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
 import { useNDK } from "@/lib/nostr/ndk-context";
-import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X } from "lucide-react";
+import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X, Loader2 } from "lucide-react";
 import {
   Task,
   Relay,
@@ -77,6 +77,7 @@ interface FeedViewProps extends SharedTaskViewContext {
     id: number;
   } | null;
   isInteractionBlocked?: boolean;
+  isHydrating?: boolean;
 }
 
 type FeedEntry =
@@ -116,6 +117,7 @@ export function FeedView({
   composeRestoreRequest = null,
   mentionRequest = null,
   isInteractionBlocked = false,
+  isHydrating = false,
 }: FeedViewProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: Task["status"]): string => {
@@ -449,6 +451,12 @@ export function FeedView({
       />
 
       {/* Feed List */}
+      {isHydrating && (
+        <div className="flex items-center gap-1.5 px-4 py-1.5 text-xs text-muted-foreground bg-muted/40 border-b border-border">
+          <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
+          <span>{t("feed.hydrating")}</span>
+        </div>
+      )}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto"
