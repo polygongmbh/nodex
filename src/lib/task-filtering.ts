@@ -1,6 +1,6 @@
 import type { Channel, ChannelMatchMode, Person, Task } from "@/types";
 import { taskMatchesSelectedPeople } from "@/lib/person-filter";
-import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/lib/channel-filtering";
+import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 
 interface FilterTasksParams {
   tasks: Task[];

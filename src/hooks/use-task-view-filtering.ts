@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { getIncludedExcludedChannelNames } from "@/lib/channel-filtering";
+import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
 import { filterTasksForView } from "@/lib/task-view-filtering";
 import type { Channel, ChannelMatchMode, Person, Task } from "@/types";
 

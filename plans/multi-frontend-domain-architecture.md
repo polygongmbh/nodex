@@ -9,534 +9,280 @@ Reshape the current feed-centric architecture so the same core logic can power m
 - marketplace-style listing browser
 - more social-media-like timeline/feed
 
-This is a structure plan, not just another `Index.tsx` split plan.
+## Layer Model
 
-## Problem Statement
+Use a pragmatic layered model. Do not force classic MVC literally.
 
-The current codebase is still organized primarily around one page and one frontend shape:
+```text
+domain      -> pure business logic; no React, no localStorage, no Nostr wire format
+infrastructure -> adapters for storage, Nostr transport, external APIs; may depend on domain
+feature controllers -> React hooks that assemble domain + infrastructure for one frontend
+views/pages -> rendering and event wiring; depend only on feature controllers
+```
 
-- `Index.tsx` is the composition root for too much state and orchestration
-- many extracted hooks are page-specific controllers, not reusable domain modules
-- a lot of valuable logic exists, but it lives behind React hooks and page setters
-- view-independent concerns are mixed with feed-specific UI assumptions
+Dependency direction:
 
-That makes reuse harder for alternate frontends like:
+```text
+domain/content
+domain/listings       (none import infrastructure or React)
+domain/relays
+domain/preferences
 
-- a map that needs geo-scoped listing markers
-- a marketplace that needs listing-first projections and actions
-- a social feed that needs author/timeline projections more than task trees
+infrastructure/nostr       (imports domain, no pages, no feature controllers)
+infrastructure/preferences (imports domain/preferences, no React)
 
-## Recommended Architecture Model
+features/feed-page/controllers  (imports domain + infrastructure)
+features/feed-page/views
 
-Do not force classic MVC literally.
-
-Use a pragmatic layered model:
-
-1. `Domain`
-   Pure business logic and canonical entities.
-   No React.
-
-2. `Application / Controllers`
-   Feature-specific orchestration.
-   React hooks are fine here.
-   These consume domain modules and infrastructure adapters.
-
-3. `Views`
-   React components and route pages.
-   Mostly rendering and event wiring.
-
-This is effectively a feature-oriented Presentation Model / MVVM-lite approach.
-
-## Folder Semantics: `domain` vs `infrastructure`
-
-Use `src/domain` only for code that still makes sense if transport, storage, and UI change.
-
-`domain`
-
-- canonical entities and relationships
-- merge and dedupe policies
-- visibility and filtering rules
-- listing/task/comment business rules
-- frontend projections that derive from canonical entities
-
-`infrastructure`
-
-- Nostr publish/subscribe adapters
-- event parsing/mapping from wire format
-- event cache and query cache adapters
-- browser and localStorage persistence
-- preference storage and serialization
-- geolocation and external API integrations
+pages/Index.tsx         (imports only feature controllers + layout components)
+```
 
 Quick heuristic:
 
-- “what should happen?” -> `domain`
-- “how do we fetch/store/send it?” -> `infrastructure`
+- "what should happen?" → `domain`
+- "how do we fetch/store/send it?" → `infrastructure`
+- "how does this specific page orchestrate it?" → `features/<name>/controllers`
 
-Important nuance:
+## `domain/preferences` — Emergent Layer
 
-- Nostr wire-event parsing belongs in `infrastructure`
-- canonical content merge/dedupe policy belongs in `domain`
+The original plan put all preferences under `infrastructure`. During implementation a cleaner pattern emerged: split each preference module into two files:
 
-Do not move mixed `src/lib` modules wholesale. Split them by responsibility.
+- `domain/preferences/<name>-state.ts` — pure state model, mutation helpers, business rules; no I/O
+- `infrastructure/preferences/<name>-storage.ts` — zod parsing, localStorage read/write; imports domain type
 
-## Dependency Rules
+`pinned-channels` already follows this pattern. Apply the same split to all remaining preference modules.
 
-Target dependency direction:
-
-```text
-domain -> no React, no page imports
-infrastructure -> may depend on domain, no page imports
-feature controllers -> depend on domain + infrastructure
-views/pages -> depend on feature controllers
-```
-
-Avoid:
-
-- domain importing hooks
-- feature controllers importing route pages
-- pure derivation logic depending on component props or toasts
-- infrastructure details leaking directly into UI components
-
-## Proposed Target Structure
+## Target Structure
 
 ```text
 src/
   domain/
-    content/
-      entities/
-      queries/
-      projections/
-      policies/
-    listings/
-      queries/
-      projections/
-      policies/
-    relays/
-      queries/
-      policies/
+    content/          ✅ established
+    listings/         ✗ not started
+    relays/           ✅ established
+    preferences/      ✅ established (pinned-channel-state.ts)
   infrastructure/
-    nostr/
-      events/
-      publishing/
-      subscriptions/
-    storage/
-    preferences/
+    nostr/            ~ started (relay-identity, task-converter only)
+    preferences/      ~ started (pinned-channels-storage only)
   features/
     feed-page/
-      controllers/
-      views/
-    marketplace/
-      controllers/
-      views/
-    listings-map/
-      controllers/
-      views/
-    social-feed/
-      controllers/
-      views/
+      controllers/    ✅ established (13 files)
+      views/          ✗ not started
+    marketplace/      ✗ future
+    listings-map/     ✗ future
+    social-feed/      ✗ future
 ```
 
-This does not need to be implemented all at once. The key point is to create a real domain seam before building more frontends.
-
-## Current File Groupings To Steer Toward
-
-These are directional groupings, not a bulk-move instruction.
-
-### Likely `domain/content`
-
-- `src/lib/task-filtering.ts`
-- `src/lib/task-status.ts`
-- `src/lib/task-permissions.ts`
-- `src/lib/task-type.ts`
-- `src/lib/task-dates.ts`
-- `src/lib/channels.ts`
-- `src/lib/channel-filtering.ts`
-- `src/lib/sidebar-people.ts`
-- `src/lib/relay-scope.ts`
-- task/listing merge and dedupe helpers currently living around `event-converter` and `Index`
-
-### Likely `domain/listings`
+## Current State
 
-- `src/lib/nostr/listing-replaceable-key.ts` after splitting out any Nostr-specific assumptions
-- listing-specific status rules and projections now embedded in page/controller code
-- geohash- and listing-oriented pure rules from `src/lib/nostr/geohash-location.ts`
+### Already in place
 
-### Likely `infrastructure/nostr`
-
-- `src/lib/nostr/event-converter.ts`
-- `src/lib/nostr/task-publish-tags.ts`
-- `src/lib/nostr/nip52-task-calendar-events.ts`
-- `src/lib/nostr/task-property-events.ts`
-- `src/lib/nostr/nip99-metadata.ts`
-- `src/lib/nostr/default-relays.ts`
-- `src/lib/nostr/event-cache.ts`
-- `src/lib/nostr/ndk-context.tsx`
-- `src/hooks/use-nostr-event-cache.tsx`
-- `src/hooks/use-kind0-people.ts`
+**`domain/content/`**
+- `task-merge.ts` — merge + deduplication of Task arrays
+- `task-collections.ts` — pending-publish dedup key, relay/listing deduplication, sort overlays
+- `channels.ts` — channel derivation from tasks
+- `sidebar-people.ts` — author/people derivation
 
-### Likely `infrastructure/preferences`
+**`domain/relays/`**
+- `relay-scope.ts` — relay scope resolution and visibility checks
 
-- `src/lib/filter-preferences.ts`
-- `src/lib/pinned-channels-preferences.ts`
-- `src/lib/saved-filter-configurations.ts`
-- `src/lib/failed-publish-drafts.ts`
-- `src/lib/theme-preferences.ts`
-- `src/lib/publish-delay-preferences.ts`
-- `src/lib/current-user-profile-cache.ts`
-- `src/lib/storage-registry.ts`
-- `src/lib/user-preferences.ts`
+**`domain/preferences/`**
+- `pinned-channel-state.ts` — pinned channel state model and mutation helpers
 
-### Likely `features/feed-page/controllers`
+**`infrastructure/nostr/`**
+- `relay-identity.ts` — relay URL → id/name mapping
+- `task-converter.ts` — Nostr wire events → Task/Person domain objects
+
+**`infrastructure/preferences/`**
+- `pinned-channels-storage.ts` — zod-parsed localStorage adapter for pinned channel state
+
+**`features/feed-page/controllers/`** (13 files)
+- `use-auth-modal-route`, `use-feed-demo-bootstrap`, `use-feed-navigation`
+- `use-index-derived-data`, `use-index-filters`, `use-index-onboarding`
+- `use-index-relay-shell`, `use-listing-status-publish`, `use-pinned-sidebar-channels`
+- `use-saved-filter-configs`, `use-task-publish-controls`, `use-task-publish-flow`
+- `use-task-status-controller`
+
+### Ghost test files to delete
 
-- `src/hooks/use-feed-navigation.ts`
-- `src/hooks/use-index-filters.ts`
-- `src/hooks/use-index-onboarding.ts`
-- `src/hooks/use-index-derived-data.ts`
-- `src/hooks/use-index-relay-shell.ts`
-- `src/hooks/use-pinned-sidebar-channels.ts`
-- `src/hooks/use-task-publish-controls.ts`
-- `src/hooks/use-task-publish-flow.ts`
-- `src/hooks/use-task-status-controller.ts`
-- `src/hooks/use-auth-modal-route.ts`
-- remaining `Index` orchestration such as listing-status publish and guide/demo bootstrap
+These were left behind after their source moved to `domain/`. The domain folders already have their own test files.
 
-The main steer is:
+- `src/lib/channels.test.ts` (source now in `domain/content/channels.ts`)
+- `src/lib/relay-scope.test.ts` (source now in `domain/relays/relay-scope.ts`)
+- `src/lib/sidebar-people.test.ts` (source now in `domain/content/sidebar-people.ts`)
+- `src/hooks/use-index-derived-data.test.ts` (source now in `features/feed-page/controllers/`)
 
-- shared business rules go down into `domain`
-- transport/persistence specifics go sideways into `infrastructure`
-- page-shaped orchestration moves under `features/feed-page`
+## Remaining Work
 
-## Domain Boundaries To Establish First
+### Milestone A: Finish `domain/content`
 
-### 1. Content Graph Domain
+Move the following pure files from `src/lib/` to `src/domain/content/`:
 
-Shared logic for tasks, comments, listings, and derived content relationships.
+| File | Dependencies | Note |
+|------|-------------|------|
+| `task-status.ts` | `@/types` only | trivially pure |
+| `task-type.ts` | `@/types` only | trivially pure |
+| `task-permissions.ts` | `@/types`, `mentions.ts` | `mentions.ts` may follow or be re-imported from lib |
+| `task-filtering.ts` | `@/types`, `channel-filtering`, `person-filter` | depends on next two |
+| `channel-filtering.ts` | `@/types` only | pure |
+| `person-filter.ts` | `@/types` only | pure |
+| `task-sorting.ts` | likely `@/types` only | verify |
+| `task-text-filter.ts` | likely `@/types` only | verify |
+| `depth-mode-filter.ts` | likely `@/types` only | verify |
+| `task-view-filtering.ts` | wraps several above | move after its dependencies |
+| `filter-state-utils.ts` | pure state derivation | verify no storage deps |
+| `filter-snapshot.ts` | pure snapshot building | verify no storage deps |
 
-Owns:
+`task-dates.ts` imports `i18n` for date formatting. Split if needed: pure date parsing/calculation → `domain/content/task-dates.ts`; display formatting → leave in `lib` or move to a view utility.
 
-- canonical content entities
-- parent/child relationships
-- merge and dedupe rules
-- optimistic overlay application
-- relay-scope membership checks
-- channel extraction and filtering inputs
-- author/sidebar people derivation inputs
+Also address: `task-collections.ts` imports `NostrEventKind.ClassifiedListing` from `@/lib/nostr/types`. This is a wire-format constant leaking into domain. Define a local domain constant (`LISTING_KIND = 30402`) and remove the infrastructure import.
 
-Good candidates to move here:
+### Milestone B: Migrate `infrastructure/preferences`
 
-- `mergeTasks`
-- listing replaceable dedupe rules
-- pending-publish dedupe key logic
-- `filterTasks`
-- channel derivation inputs and helpers
-- relay-scope checks that are currently page-consumed
+Apply the same `domain/preferences` + `infrastructure/preferences` split used for pinned-channels to every remaining preference module.
 
-### 2. Listing Domain
+**Modules to split:**
 
-Shared logic for listings regardless of whether they appear in a feed, a map, or a marketplace grid.
+`filter-preferences.ts` → split into:
+- `domain/preferences/filter-state.ts` — Channel/Person filter state model and defaults
+- `infrastructure/preferences/filter-preferences-storage.ts` — zod + localStorage
 
-Owns:
+`saved-filter-configurations.ts` → split into:
+- `domain/preferences/saved-filter-configurations-state.ts` — SavedFilterConfiguration model and rules
+- `infrastructure/preferences/saved-filter-configurations-storage.ts` — zod + localStorage
 
-- listing identity and replaceable-key rules
-- listing status mutation rules
-- listing projection helpers
-- listing map marker projection
-- listing card projection
-- location-aware listing filters
+`failed-publish-drafts.ts` → `infrastructure/preferences/failed-publish-drafts-storage.ts`
+(state type can stay in `@/types`; no separate domain model needed unless business rules emerge)
 
-Good candidates:
+**Thin adapters — move directly to `infrastructure/preferences/`:**
+- `theme-preferences.ts` → `infrastructure/preferences/theme-preferences-storage.ts`
+- `user-preferences.ts` → `infrastructure/preferences/user-preferences-storage.ts`
+- `storage-registry.ts` → `infrastructure/preferences/storage-registry.ts`
+(storage-registry is a pure key table; it belongs in infrastructure, not domain)
 
-- `getListingReplaceableKey`
-- listing status publish tag building
-- geohash normalization and location display helpers
-- listing-specific feed filters
+### Milestone C: Bulk-migrate `infrastructure/nostr`
 
-### 3. Relay / Feed Scope Domain
+Move the following from `src/lib/nostr/` to `src/infrastructure/nostr/`. Most are self-contained.
 
-Shared logic for relay selection, routeable feed scope, and visibility rules.
+**Wire format / parsing:**
+- `nip99-metadata.ts` — NIP-99 tag parsing
+- `nip52-task-calendar-events.ts` — calendar event parsing
+- `task-property-events.ts` — priority/property event parsing
+- `task-state-events.ts` — status event kind checks
+- `task-publish-tags.ts` — tag building for publishing
+- `people-from-kind0.ts` — Kind-0 → Person mapping
+- `profile-metadata.ts` — profile metadata parsing
+- `geohash-location.ts` — geohash tag parsing (Note: pure geo math belongs here; keep or move pure geo helpers to `domain/listings` once that layer exists)
 
-Owns:
+**Subscriptions / cache:**
+- `event-cache.ts` — in-memory event cache
+- `ndk-context.tsx` — NDK React context (infrastructure with React; fine here)
 
-- relay scope resolution
-- relay selection policies for submission
-- selected relay visibility rules
-- channel pinning by relay scope
-- frontends asking “what is visible in this scope?”
+**Relays / config:**
+- `default-relays.ts` — env-var relay URL resolution
+- `relay-url.ts` — URL normalization utilities
+- `relay-info.ts`, `relay-enrichment.ts` — relay metadata
+- `nip42-auth.ts`, `nip42-relay-auth-policy.ts` — relay auth
+- `replaceable-events.ts` — replaceable event key rules
 
-### 4. User Preference / Filter Domain
+**Leave in `src/lib/nostr/`** (these are utility/auth concerns that don't cleanly belong in infra):
+- `nip05-resolver.ts`, `nip05-verify.ts`
+- `nip49-utils.ts`, `nip49-test-vector.ts`
+- `nip96-attachment-upload.ts`
+- `nip98-http-auth.ts`
+- `noas-client.ts`
+- `dev-logs.ts`
+- `utils.ts`
+- `types.ts` (shared Nostr type definitions; moving requires updating all importers)
 
-Shared, frontend-agnostic preferences and filters.
+**Move Nostr subscription hooks from `src/hooks/` to `src/infrastructure/nostr/`:**
+- `use-nostr-event-cache.tsx` — NDK subscription wrapper
+- `use-kind0-people.ts` — Kind-0 subscription → Person[]
+- `use-nostr-profiles.tsx` — profile subscription
 
-Owns:
+These are infrastructure adapters that happen to use React hooks. They are not page-shaped controllers.
 
-- saved filter snapshots
-- channel/person filter state
-- publish-delay preference
-- completion feedback preference
-- pinned channel preferences
+### Milestone D: Move remaining feed-page hooks
 
-This should likely converge into a more coherent preference layer rather than many small `loadX` / `saveX` modules.
+These three files in `src/hooks/` are feed-page-specific controllers:
 
-## Application-Layer Controllers To Aim For
+- `use-relay-filter-state.ts` → `features/feed-page/controllers/`
+- `use-filter-url-sync.ts` → `features/feed-page/controllers/`
+- `use-task-view-filtering.ts` → `features/feed-page/controllers/`
 
-These are not globally reusable domain modules. They are frontend-specific assemblies.
+After this, `src/hooks/` should contain only genuinely cross-cutting hooks:
+`use-keyboard-shortcuts`, `use-mobile`, `use-swipe-navigation`, `use-task-navigation`,
+`use-task-media-preview`, `use-toast`, `use-profile-editor`
 
-### Feed Page Controller
+### Milestone E: Slim `Index.tsx`
 
-Replaces `Index.tsx` as the main feed frontend assembly layer.
+Currently 807 lines / 55 imports. Target: route wiring + layout composition only.
 
-Owns:
-
-- route/view state composition
-- task status interactions
-- task publish interactions
-- view-ready projections for tree/feed/list/calendar/kanban
-
-### Marketplace Controller
-
-Consumes the shared listing domain but projects into:
-
-- searchable listing cards
-- price/location/status filters
-- seller-centric actions
-
-### Listings Map Controller
-
-Consumes the shared listing domain but projects into:
-
-- marker models
-- viewport/cluster-ready listing results
-- listing preview side panel data
-
-### Social Feed Controller
-
-Consumes the shared content graph but projects into:
-
-- author-centric timeline cards
-- reply threads
-- engagement-oriented feed ordering
-
-## Projection Layer
-
-To support multiple frontends cleanly, define projections explicitly instead of reusing `Task` everywhere.
-
-Examples:
-
-- `FeedEntryViewModel`
-- `ListingCardViewModel`
-- `ListingMarkerViewModel`
-- `TimelinePostViewModel`
-- `SidebarChannelViewModel`
-
-The point is:
-
-- domain entities stay canonical
-- each frontend consumes a projection tailored to its UI
-- different UIs stop fighting over one catch-all entity shape
-
-Further steer:
-
-- stop treating `Task` as the universal frontend entity
-- introduce a canonical content model, then project to:
-  - feed entries
-  - listing cards
-  - listing markers
-  - social timeline posts
-
-This is one of the most important changes if map/marketplace/social frontends are real goals.
-
-## Anti-Corruption Layer
-
-Create an explicit seam between Nostr wire events and the app’s canonical content model.
-
-Target shape:
-
-```text
-Nostr event -> infrastructure mapping -> canonical domain entity -> frontend projection
-```
-
-Why:
-
-- map frontend should not care about raw Nostr tags
-- marketplace frontend should not need feed-specific task shaping
-- social frontend should not inherit tree/task assumptions accidentally
-
-Without this seam, alternate frontends will keep importing feed-era assumptions.
-
-## Recommended Implementation Order
-
-### Milestone 1: Establish `domain/content` and move pure derivation logic
-
-Move pure functions first.
-No React.
-No route logic.
-No toasts.
-
-Target extractions:
-
-- task merge/dedupe
-- optimistic overlay application helpers
-- content filtering inputs
-- channel derivation helpers
-- sidebar people derivation
-- canonical content entity and projection inputs
-
-### Milestone 2: Establish `domain/listings`
-
-Move listing-specific pure logic out of page/controller code.
-
-Target:
-
-- listing identity
-- listing projections
-- listing status rules
-- location/geohash listing helpers
-
-### Milestone 3: Build a real `feed-page` controller layer
-
-Consolidate the current page-specific hooks under one feature assembly boundary.
-
-Likely shape:
-
-```text
-src/features/feed-page/controllers/
-  use-feed-page-controller.ts
-  use-feed-page-status.ts
-  use-feed-page-sidebar.ts
-```
-
-The current small hooks can either remain internal or be absorbed.
-
-Do not keep adding new root-level `src/hooks/use-index-*` files once this starts.
-
-### Milestone 4: Reduce `Index.tsx` to route wiring + layout composition
-
-At this point `Index.tsx` should mostly:
-
+`Index.tsx` should:
 - read route params
-- instantiate the feed page controller
+- instantiate the feed page controller (one hook call or small set)
 - render desktop/mobile layouts
 
-### Milestone 5: Prototype second frontend on shared domain
+Remaining direct `@/lib/*` and `@/hooks/*` imports in `Index.tsx` after milestones A–D complete should all resolve to the new locations. Use that as the integration check.
 
-Do not wait forever to validate the architecture.
-Build one small second frontend to prove the seam.
+Do not create a single `useFeedPageController` mega-hook unless it actually simplifies `Index.tsx`. The existing controller decomposition is fine; just ensure none of it lives in `src/hooks/` or is imported directly from `src/lib/` by the page.
 
-Best candidate:
+### Milestone F: Establish `domain/listings`
 
-- listings map
+Once `domain/content` is stable, extract listing-specific pure logic:
 
-Reason:
+- Move `listing-replaceable-key.ts` from `src/lib/nostr/` — split out the pure identity function into `domain/listings/listing-identity.ts`; keep Nostr tag-building in `infrastructure/nostr/`
+- Move listing status rules and projections out of controller code
+- Move pure geo/geohash rules from `geohash-location.ts` into `domain/listings/location.ts`
 
-- it stresses location projections
-- it reuses listings and relay scope
-- it forces clearer separation from the current feed UI
+This creates the foundation for the listings-map and marketplace frontends.
+
+### Milestone G: Prototype second frontend
+
+Validate the architecture by building one small second frontend.
+
+Best candidate: **listings map**
+
+- stresses location projections
+- reuses `domain/listings` and `domain/relays`
+- forces clearer separation from feed UI assumptions
+
+Do not wait until the rest of the migration is 100% complete. Build this once `domain/listings` is established (Milestone F) to prove the seam.
+
+## Dependency Check Points
+
+After each milestone, verify:
+
+```sh
+# No domain files import React, infrastructure, or page code
+grep -r "from.*react\|from.*@/infrastructure\|from.*@/features\|from.*@/pages" src/domain/
+
+# No infrastructure/preferences files import React
+grep -r "from.*react" src/infrastructure/preferences/
+
+# No domain files import from src/lib/nostr
+grep -r "from.*@/lib/nostr" src/domain/
+```
+
+After Milestone C:
+```sh
+# task-collections.ts should no longer import NostrEventKind
+grep "NostrEventKind" src/domain/
+```
 
 ## What To Avoid
 
-- more tiny page-specific hooks as the main strategy
-- a full-package split before shared seams are proven
-- pushing toasts/navigation into pure logic
-- letting every frontend mutate the same giant `Task` shape directly
-- creating a “common” folder with mixed concerns and no dependency rules
-- letting `src/domain` become a renamed `src/lib`
-- extracting an internal package before a second frontend proves the boundary
-
-## Reusability Assessment Of Current Extractions
-
-### Stronger Reuse Potential
-
-- feed navigation logic
-- publish controls
-- completion cheer utility
-
-### Mostly Feed-Page Internal
-
-- index filters
-- index onboarding
-- task publish flow
-
-That is fine, but it means the next step should be stronger domain extraction, not more hook splitting.
-
-## Possible Future Internal Library Boundary
-
-Only after the shared domain is proven across two frontends, consider an internal package boundary such as:
-
-```text
-packages/
-  nodex-domain/
-  nodex-nostr/
-```
-
-Do not do this yet.
-
-First prove reuse inside `src/domain` and `src/features`.
-
-## Further Sensible Steers
-
-### 1. Add `src/app` as a top-level composition layer
-
-Use `src/app` for:
-
-- providers
-- router setup
-- global wiring
-
-This keeps `features` from becoming the new dumping ground for app bootstrap concerns.
-
-### 2. Prefer feature folders over cross-cutting hook folders for page logic
-
-Example:
-
-```text
-src/features/feed-page/controllers/use-task-status-controller.ts
-```
-
-is better than:
-
-```text
-src/hooks/use-task-status-controller.ts
-```
-
-when the logic is still feed-page-specific.
-
-### 3. Write one short architecture note before moving lots of files
-
-Even a lightweight ADR is enough:
-
-- what goes in `domain`
-- what goes in `infrastructure`
-- what stays feature-local
-- dependency direction
-
-This will prevent `domain` from becoming a semantic junk drawer.
-
-### 4. Validate the architecture with one second frontend early
-
-Best proof target remains a listing map, because it forces:
-
-- location projection
-- listing-centric rendering
-- less dependence on task tree assumptions
-
-### 5. Delay package extraction
-
-Only consider `packages/nodex-domain` or similar after:
-
-- two frontends consume the shared domain
-- imports are already stable inside the monorepo tree
-- infrastructure boundaries are clear
+- More root-level `src/hooks/use-index-*` files — any new feed-page hook goes under `features/feed-page/controllers/` from this point forward
+- Letting `src/domain` become a renamed `src/lib` — every file moved to domain must be React-free and storage-free
+- Pushing toasts, navigation, or localStorage into pure logic
+- Moving `infrastructure/nostr` files in bulk without verifying their import graphs first
+- Creating a `features/feed-page/views/` directory just to have it — only create it when the second frontend makes the separation load-bearing
+- Extracting internal packages (`packages/nodex-domain`) before two frontends prove the boundary
 
 ## Success Criteria
 
-- alternate frontends can be built without importing `Index.tsx` logic
-- feed/map/marketplace/social frontends reuse the same domain rules
-- pure business logic is testable without React
-- `Index.tsx` becomes one frontend adapter, not the app’s implicit domain center
-
-## Best Next Step
-
-Do not start with another `Index` micro-extraction.
-
-Start by carving out `src/domain/content` with the current pure derivation logic, then align the remaining `Index` split work around that boundary.
+- Alternate frontends can be built without importing `Index.tsx` logic or `src/lib/` directly
+- Pure business logic is testable without React, without localStorage, without NDK
+- `Index.tsx` becomes a layout adapter, not the app's implicit domain center
+- `src/hooks/` contains only genuinely cross-cutting UI hooks
+- `src/lib/` is a residual holding area, not the primary location for new logic

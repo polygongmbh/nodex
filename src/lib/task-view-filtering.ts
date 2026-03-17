@@ -1,5 +1,5 @@
 import { taskMatchesTextQuery } from "@/lib/task-text-filter";
-import { taskMatchesChannelFilters } from "@/lib/channel-filtering";
+import { taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 import type { ChannelMatchMode, Person, Task } from "@/types";
 
 export function getDescendantTaskIds(allTasks: Task[], rootTaskId: string): Set<string> {
