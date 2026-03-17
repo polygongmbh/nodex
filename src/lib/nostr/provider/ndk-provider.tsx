@@ -25,7 +25,7 @@ import {
   buildPresenceTags,
 } from "@/lib/presence-status";
 import { buildDeterministicGuestName } from "@/lib/guest-name";
-import { getConfiguredDefaultRelays } from "@/lib/nostr/default-relays";
+import { getConfiguredDefaultRelays } from "@/infrastructure/nostr/default-relays";
 import { isRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "../dev-logs";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
@@ -46,7 +46,7 @@ import {
 } from "./relay-status";
 import { waitForNostrExtensionAvailability } from "./session-restore";
 import { verifyNip05 } from "../nip05-verify";
-import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "../nip42-relay-auth-policy";
+import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
 import { createNip98AuthHeader } from "../nip98-http-auth";
 import {
   isAuthRequiredCloseReason,

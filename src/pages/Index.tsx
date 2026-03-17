@@ -43,7 +43,7 @@ import {
 } from "@/lib/presence-status";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import type { Nip99ListingStatus } from "@/types";
-import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
+import { getConfiguredDefaultRelayIds } from "@/infrastructure/nostr/default-relays";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
 import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
 import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";

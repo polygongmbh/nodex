@@ -1,6 +1,6 @@
 import type NDK from "@nostr-dev-kit/ndk";
 import { createNIP42Response } from "./nip42-auth";
-import { nostrDevLog } from "./dev-logs";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 export interface RelayVerificationEvent {
   relayUrl: string;

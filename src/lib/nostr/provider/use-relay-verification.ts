@@ -5,7 +5,7 @@ import { shouldSetVerificationFailedStatus } from "./relay-verification";
 import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 import { nostrDevLog } from "../dev-logs";
 import type { NDKRelayStatus } from "./contracts";
-import type { RelayVerificationEvent } from "../nip42-relay-auth-policy";
+import type { RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
 import type { RelayOperation } from "./use-relay-transport";
 import type { RelayTransportCallbacks } from "./use-relay-transport";
 import i18n from "@/lib/i18n/config";

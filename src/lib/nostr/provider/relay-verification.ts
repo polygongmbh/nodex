@@ -1,4 +1,4 @@
-import type { RelayVerificationEvent } from "../nip42-relay-auth-policy";
+import type { RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
 
 export type RelayVerificationFailureSource = "auth-policy" | "subscription-closed";
 
