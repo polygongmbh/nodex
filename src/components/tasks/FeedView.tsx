@@ -50,7 +50,10 @@ import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedToolti
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
 import { isTaskTerminalStatus } from "@/lib/task-status";
-import { handleTaskStatusToggleClick } from "@/lib/task-status-toggle";
+import {
+  handleTaskStatusToggleClick,
+  shouldOpenStatusMenuForDirectSelection,
+} from "@/lib/task-status-toggle";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -398,6 +401,7 @@ export function FeedView({
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
+  const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
 
   const openStatusMenu = (taskId: string) => {
     setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
@@ -663,6 +667,7 @@ export function FeedView({
                         if (!open) {
                           closeStatusMenu(task.id);
                           clearStatusMenuOpenIntent(task.id);
+                          statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                           return;
                         }
                         if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
@@ -671,12 +676,17 @@ export function FeedView({
                           closeStatusMenu(task.id);
                         }
                         clearStatusMenuOpenIntent(task.id);
+                        statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                       }}
                     >
                       <DropdownMenuTrigger asChild>
                         <button
                           onClick={(e) => {
                             if (!canCompleteTask(task)) return;
+                            if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
+                              e.stopPropagation();
+                              return;
+                            }
                             handleTaskStatusToggleClick(e, {
                               status: task.status,
                               hasStatusChangeHandler: Boolean(onStatusChange),
@@ -705,10 +715,27 @@ export function FeedView({
                           onPointerDown={() => {
                             statusTriggerPointerDownTaskIdsRef.current.add(task.id);
                             clearStatusMenuOpenIntent(task.id);
+                            statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
+                          }}
+                          onPointerDownCapture={(e) => {
+                            if (!canCompleteTask(task)) return;
+                            if (
+                              shouldOpenStatusMenuForDirectSelection({
+                                status: task.status,
+                                altKey: e.altKey,
+                                hasStatusChangeHandler: Boolean(onStatusChange),
+                              })
+                            ) {
+                              e.preventDefault();
+                              allowStatusMenuOpen(task.id);
+                              statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
+                              openStatusMenu(task.id);
+                            }
                           }}
                           onBlur={() => {
                             statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                             clearStatusMenuOpenIntent(task.id);
+                            statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                           }}
                           disabled={!canCompleteTask(task)}
                           aria-label={t("tasks.actions.setStatus")}

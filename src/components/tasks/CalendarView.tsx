@@ -53,7 +53,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { isTaskTerminalStatus } from "@/lib/task-status";
-import { handleTaskStatusToggleClick } from "@/lib/task-status-toggle";
+import {
+  handleTaskStatusToggleClick,
+  shouldOpenStatusMenuForDirectSelection,
+} from "@/lib/task-status-toggle";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -110,6 +113,7 @@ export function CalendarView({
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
+  const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const effectiveMobileTab = mobileView ?? mobileTab;
   const selectedDate = controlledSelectedDate !== undefined ? controlledSelectedDate : selectedDateInternal;
   const desktopScrollerRef = useRef<HTMLDivElement | null>(null);
@@ -547,6 +551,7 @@ export function CalendarView({
                                 if (!open) {
                                   closeStatusMenu(task.id);
                                   clearStatusMenuOpenIntent(task.id);
+                                  statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                                   return;
                                 }
                                 if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
@@ -555,12 +560,17 @@ export function CalendarView({
                                   closeStatusMenu(task.id);
                                 }
                                 clearStatusMenuOpenIntent(task.id);
+                                statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                               }}
                             >
                               <DropdownMenuTrigger asChild>
                                 <button
                                   onClick={(e) => {
                                     if (!canCompleteTask(task)) return;
+                                    if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
+                                      e.stopPropagation();
+                                      return;
+                                    }
                                     handleTaskStatusToggleClick(e, {
                                       status: task.status,
                                       hasStatusChangeHandler: Boolean(onStatusChange),
@@ -589,10 +599,27 @@ export function CalendarView({
                                   onPointerDown={() => {
                                     statusTriggerPointerDownTaskIdsRef.current.add(task.id);
                                     clearStatusMenuOpenIntent(task.id);
+                                    statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
+                                  }}
+                                  onPointerDownCapture={(e) => {
+                                    if (!canCompleteTask(task)) return;
+                                    if (
+                                      shouldOpenStatusMenuForDirectSelection({
+                                        status: task.status,
+                                        altKey: e.altKey,
+                                        hasStatusChangeHandler: Boolean(onStatusChange),
+                                      })
+                                    ) {
+                                      e.preventDefault();
+                                      allowStatusMenuOpen(task.id);
+                                      statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
+                                      openStatusMenu(task.id);
+                                    }
                                   }}
                                   onBlur={() => {
                                     statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                     clearStatusMenuOpenIntent(task.id);
+                                    statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                                   }}
                                   disabled={!canCompleteTask(task)}
                                   aria-label={t("tasks.actions.setStatus")}
@@ -953,6 +980,7 @@ export function CalendarView({
                               if (!open) {
                                 closeStatusMenu(task.id);
                                 clearStatusMenuOpenIntent(task.id);
+                                statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                                 return;
                               }
                               if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
@@ -961,12 +989,17 @@ export function CalendarView({
                                 closeStatusMenu(task.id);
                               }
                               clearStatusMenuOpenIntent(task.id);
+                              statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                             }}
                           >
                             <DropdownMenuTrigger asChild>
                               <button
                                 onClick={(e) => {
                                   if (!canCompleteTask(task)) return;
+                                  if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
+                                    e.stopPropagation();
+                                    return;
+                                  }
                                   handleTaskStatusToggleClick(e, {
                                     status: task.status,
                                     hasStatusChangeHandler: Boolean(onStatusChange),
@@ -995,10 +1028,27 @@ export function CalendarView({
                                 onPointerDown={() => {
                                   statusTriggerPointerDownTaskIdsRef.current.add(task.id);
                                   clearStatusMenuOpenIntent(task.id);
+                                  statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
+                                }}
+                                onPointerDownCapture={(e) => {
+                                  if (!canCompleteTask(task)) return;
+                                  if (
+                                    shouldOpenStatusMenuForDirectSelection({
+                                      status: task.status,
+                                      altKey: e.altKey,
+                                      hasStatusChangeHandler: Boolean(onStatusChange),
+                                    })
+                                  ) {
+                                    e.preventDefault();
+                                    allowStatusMenuOpen(task.id);
+                                    statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
+                                    openStatusMenu(task.id);
+                                  }
                                 }}
                                 onBlur={() => {
                                   statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
                                   clearStatusMenuOpenIntent(task.id);
+                                  statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                                 }}
                                 disabled={!canCompleteTask(task)}
                                 aria-label={t("tasks.actions.setStatus")}

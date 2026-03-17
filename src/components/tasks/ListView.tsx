@@ -44,7 +44,10 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/lib/storage-registry";
 import { isTaskTerminalStatus } from "@/lib/task-status";
-import { handleTaskStatusToggleClick } from "@/lib/task-status-toggle";
+import {
+  handleTaskStatusToggleClick,
+  shouldOpenStatusMenuForDirectSelection,
+} from "@/lib/task-status-toggle";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -152,6 +155,7 @@ export function ListView({
   const prevFocusedRef = useRef(focusedTaskId);
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
+  const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
 
   // Detect filter/view changes (not status changes) to trigger re-sort
   useEffect(() => {
@@ -736,6 +740,7 @@ export function ListView({
                           if (!open) {
                             closeStatusMenu(task.id);
                             clearStatusMenuOpenIntent(task.id);
+                            statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                             return;
                           }
                           if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
@@ -744,12 +749,17 @@ export function ListView({
                             closeStatusMenu(task.id);
                           }
                           clearStatusMenuOpenIntent(task.id);
+                          statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
                         }}
                       >
                         <DropdownMenuTrigger asChild>
                           <button
                             onClick={(event) => {
                               if (!canCompleteTask(task)) return;
+                              if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
+                                event.stopPropagation();
+                                return;
+                              }
                               handleTaskStatusToggleClick(event, {
                                 status: task.status,
                                 hasStatusChangeHandler: Boolean(onStatusChange),
@@ -762,6 +772,22 @@ export function ListView({
                                 focusTask: () => onFocusTask?.(task.id),
                                 focusOnQuickToggle: false,
                               });
+                            }}
+                            onPointerDown={(event) => {
+                              if (!canCompleteTask(task)) return;
+                              statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
+                              if (
+                                shouldOpenStatusMenuForDirectSelection({
+                                  status: task.status,
+                                  altKey: event.altKey,
+                                  hasStatusChangeHandler: Boolean(onStatusChange),
+                                })
+                              ) {
+                                event.preventDefault();
+                                allowStatusMenuOpen(task.id);
+                                statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
+                                openStatusMenu(task.id);
+                              }
                             }}
                             disabled={!canCompleteTask(task)}
                             aria-label={t("tasks.actions.setStatus")}

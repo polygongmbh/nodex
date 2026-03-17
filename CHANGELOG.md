@@ -22,7 +22,7 @@ Major release focused on auth/onboarding refinement, broader localization covera
 - Fixed a feed startup crash caused by task status sorting state initializing before the main Index task data graph was ready.
 - Reworked task update permissions so untagged tasks can be updated by any signed-in user, tagged tasks remain editable by tagged assignees and the creator, and unauthorized relay-driven status/date/priority updates no longer override tasks locally.
 - Refined the Noas auth flow so sign-up stays focused, sign-in alternatives show distinct icons again, and the username suffix host can be edited in place behind a guarded pencil control.
-- Task status changes no longer enter tasks from dropdown selection, `Option`/`Alt` clicks no longer open tasks while using the status picker, and table-view status changes stay in place instead of entering the task.
+- Task status changes no longer enter tasks from dropdown selection, `Option`/`Alt` clicks no longer open tasks while using the status picker, table-view status changes stay in place instead of entering the task, and direct-selection status pickers open more quickly.
 
 ## [1.17.3] - 2026-03-14
 - Stabilized Relay connection and status handling with cleaner reconnect behavior, clearer `read only` / `read rejected` states, and better startup relay detection.

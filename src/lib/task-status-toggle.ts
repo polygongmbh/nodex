@@ -15,6 +15,20 @@ interface HandleTaskStatusToggleClickOptions {
   focusOnQuickToggle?: boolean;
 }
 
+interface StatusMenuIntentOptions {
+  status?: TaskStatus;
+  altKey: boolean;
+  hasStatusChangeHandler: boolean;
+}
+
+export function shouldOpenStatusMenuForDirectSelection({
+  status,
+  altKey,
+  hasStatusChangeHandler,
+}: StatusMenuIntentOptions): boolean {
+  return hasStatusChangeHandler && (isTaskTerminalStatus(status) || altKey);
+}
+
 export function handleTaskStatusToggleClick(
   event: MouseEvent<HTMLElement>,
   {
@@ -32,7 +46,13 @@ export function handleTaskStatusToggleClick(
 ): void {
   event.stopPropagation();
 
-  if (hasStatusChangeHandler && (isTaskTerminalStatus(status) || event.altKey)) {
+  if (
+    shouldOpenStatusMenuForDirectSelection({
+      status,
+      altKey: event.altKey,
+      hasStatusChangeHandler,
+    })
+  ) {
     if (isMenuOpen) {
       closeMenu();
       clearMenuOpenIntent();

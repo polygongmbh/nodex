@@ -24,7 +24,10 @@ import {
 import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/lib/task-status";
-import { handleTaskStatusToggleClick } from "@/lib/task-status-toggle";
+import {
+  handleTaskStatusToggleClick,
+  shouldOpenStatusMenuForDirectSelection,
+} from "@/lib/task-status-toggle";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -107,6 +110,7 @@ export function TaskItem({
   const [isCheering, setIsCheering] = useState(false);
   const statusTriggerPointerDownRef = useRef(false);
   const allowStatusMenuOpenRef = useRef(false);
+  const statusMenuOpenedOnPointerDownRef = useRef(false);
   const timeAgo = formatDistanceToNow(task.timestamp, { addSuffix: true });
   
   const isPubkey = task.author.id.length === 64 && /^[a-f0-9]+$/.test(task.author.id);
@@ -305,6 +309,11 @@ export function TaskItem({
               <button
                 onClick={(e) => {
                   if (!canCompleteTask()) return;
+                  if (statusMenuOpenedOnPointerDownRef.current) {
+                    statusMenuOpenedOnPointerDownRef.current = false;
+                    e.stopPropagation();
+                    return;
+                  }
                   handleTaskStatusToggleClick(e, {
                     status: task.status,
                     hasStatusChangeHandler: Boolean(onStatusChange),
@@ -337,10 +346,27 @@ export function TaskItem({
                 onPointerDown={() => {
                   statusTriggerPointerDownRef.current = true;
                   allowStatusMenuOpenRef.current = false;
+                  statusMenuOpenedOnPointerDownRef.current = false;
+                }}
+                onPointerDownCapture={(e) => {
+                  if (!canCompleteTask()) return;
+                  if (
+                    shouldOpenStatusMenuForDirectSelection({
+                      status: task.status,
+                      altKey: e.altKey,
+                      hasStatusChangeHandler: Boolean(onStatusChange),
+                    })
+                  ) {
+                    e.preventDefault();
+                    allowStatusMenuOpenRef.current = true;
+                    statusMenuOpenedOnPointerDownRef.current = true;
+                    setStatusMenuOpen(true);
+                  }
                 }}
                 onBlur={() => {
                   statusTriggerPointerDownRef.current = false;
                   allowStatusMenuOpenRef.current = false;
+                  statusMenuOpenedOnPointerDownRef.current = false;
                 }}
                 disabled={!canCompleteTask()}
                 aria-label={t("tasks.actions.setStatus")}

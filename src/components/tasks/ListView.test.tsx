@@ -241,4 +241,36 @@ describe("ListView priority control", () => {
     expect(onStatusChange).toHaveBeenCalledWith("task-dropdown", "in-progress");
     expect(onFocusTask).not.toHaveBeenCalled();
   });
+
+  it("opens the status dropdown on pointer down for direct-selection cases", () => {
+    mockUser = { id: "me" };
+    const task = makeTask({
+      id: "task-direct-select",
+      content: "Task content #general",
+      status: "done",
+    });
+    const relays = [makeRelay()];
+    const channels = [makeChannel()];
+    const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
+
+    render(
+      <ListView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        currentUser={people[0]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={vi.fn()}
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    fireEvent.pointerDown(screen.getByLabelText("Set status"));
+
+    expect(screen.getByText("In Progress")).toBeInTheDocument();
+  });
 });
