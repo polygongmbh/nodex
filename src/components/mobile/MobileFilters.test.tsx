@@ -22,6 +22,77 @@ vi.mock("@/lib/nostr/ndk-context", () => ({
   useNDK: () => ndkMock,
 }));
 
+vi.mock("@/components/layout/VersionHint", () => ({
+  VersionHint: () => <button type="button">v2.0.0</button>,
+}));
+
+vi.mock("@/components/legal/LegalDialog", () => ({
+  LegalDialog: ({ triggerLabel = "Legal" }: { triggerLabel?: string }) => (
+    <button type="button" aria-label="Open imprint and privacy policy">
+      {triggerLabel}
+    </button>
+  ),
+  resolveLegalContactEmail: () => "mail@nodex.nexus",
+}));
+
+vi.mock("@/components/theme/CompletionFeedbackToggle", () => ({
+  CompletionFeedbackToggle: () => <button type="button">Completion feedback</button>,
+}));
+
+vi.mock("@/components/theme/LanguageToggle", () => ({
+  LanguageToggle: () => <button type="button" aria-label="Language: English">EN</button>,
+}));
+
+vi.mock("@/components/filters/ChannelMatchModeToggle", () => ({
+  ChannelMatchModeToggle: ({
+    mode,
+    onChange,
+  }: {
+    mode: "and" | "or";
+    onChange?: (mode: "and" | "or") => void;
+  }) => (
+    <button
+      type="button"
+      aria-label="Included channel match mode"
+      onClick={() => onChange?.(mode === "and" ? "or" : "and")}
+    >
+      Match mode
+    </button>
+  ),
+}));
+
+vi.mock("@/hooks/use-profile-editor", () => ({
+  useProfileEditor: () => ({
+    fields: {
+      profileName: "",
+      profileDisplayName: "",
+      profilePicture: "",
+      profileNip05: "",
+      profileAbout: "",
+      presencePublishingEnabled: true,
+      publishDelayEnabled: true,
+      autoCaptionEnabled: true,
+    },
+    isSavingProfile: false,
+    validation: {
+      showProfileNameRequired: false,
+      showProfileNameInvalid: false,
+      showProfileNameTaken: false,
+      isProfileNameValid: true,
+    },
+    setProfileName: () => {},
+    setProfileDisplayName: () => {},
+    setProfilePicture: () => {},
+    setProfileNip05: () => {},
+    setProfileAbout: () => {},
+    resetFromProfile: () => {},
+    handleSaveProfile: vi.fn(async () => true),
+    handlePresencePublishingChange: () => {},
+    handlePublishDelayChange: () => {},
+    handleAutoCaptionChange: () => {},
+  }),
+}));
+
 const relays: Relay[] = [
   { id: "demo", name: "Demo", icon: "D", isActive: true },
 ];

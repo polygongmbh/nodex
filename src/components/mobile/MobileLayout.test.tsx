@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import type { Channel, Person, Relay, Task } from "@/types";
@@ -40,6 +40,53 @@ vi.mock("./MobileNav", () => ({
 
 vi.mock("./SwipeIndicator", () => ({
   SwipeIndicator: () => <div data-testid="swipe-indicator" />,
+}));
+
+vi.mock("./UnifiedBottomBar", () => ({
+  UnifiedBottomBar: ({
+    searchQuery,
+    onSearchChange,
+    isSignedIn,
+    onSignInClick,
+  }: {
+    searchQuery: string;
+    onSearchChange: (value: string) => void;
+    isSignedIn: boolean;
+    onSignInClick: () => void;
+  }) => {
+    const [value, setValue] = useState(searchQuery);
+
+    useEffect(() => {
+      setValue(searchQuery);
+    }, [searchQuery]);
+
+    return (
+      <div data-testid="unified-bottom-bar">
+        <textarea
+          aria-label="Mobile compose"
+          placeholder="Search or create task"
+          value={value}
+          onChange={(event) => {
+            setValue(event.target.value);
+            onSearchChange(event.target.value);
+          }}
+        />
+        {!isSignedIn ? (
+          <button type="button" onClick={onSignInClick}>
+            Sign in to create
+          </button>
+        ) : null}
+      </div>
+    );
+  },
+}));
+
+vi.mock("./MobileFilters", () => ({
+  MobileFilters: ({ profileEditorOpenSignal = 0 }: { profileEditorOpenSignal?: number }) => (
+    <div data-onboarding="mobile-filters">
+      {profileEditorOpenSignal > 0 ? <input id="manage-profile-name" /> : null}
+    </div>
+  ),
 }));
 
 vi.mock("@/components/tasks/TaskTree", () => ({
