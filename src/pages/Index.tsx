@@ -23,7 +23,7 @@ import { getRelayIdFromUrl, getRelayNameFromUrl } from "@/infrastructure/nostr/r
 import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
 import {
   getPinnedChannelIdsForView,
-} from "@/lib/pinned-channels-preferences";
+} from "@/domain/preferences/pinned-channel-state";
 import {
   saveChannelFrecencyState,
   loadChannelFrecencyState,

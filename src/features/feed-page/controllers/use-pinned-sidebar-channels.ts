@@ -2,13 +2,15 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import type { Channel, Task } from "@/types";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import {
-  loadPinnedChannelsState,
-  savePinnedChannelsState,
   getPinnedChannelIdsForView,
   pinChannelForRelays,
   unpinChannelFromRelays,
   type PinnedChannelsState,
-} from "@/lib/pinned-channels-preferences";
+} from "@/domain/preferences/pinned-channel-state";
+import {
+  loadPinnedChannelsState,
+  savePinnedChannelsState,
+} from "@/infrastructure/preferences/pinned-channels-storage";
 
 export interface UsePinnedSidebarChannelsOptions {
   userPubkey: string | undefined;
