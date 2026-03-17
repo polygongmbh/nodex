@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { loadSavedFilterState, saveSavedFilterState } from "@/infrastructure/preferences/saved-filter-configurations";
+import {
+  findSavedFilterConfiguration,
+} from "@/domain/preferences/saved-filter-state";
+import {
+  loadSavedFilterState,
+  saveSavedFilterState,
+} from "@/infrastructure/preferences/saved-filter-configurations-storage";
 import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import { areFilterSnapshotsEqual, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import type {
@@ -95,7 +101,7 @@ export function useSavedFilterConfigs({
   }, [currentFilterSnapshot]);
 
   const handleApplySavedFilterConfiguration = useCallback((configurationId: string) => {
-    const configuration = savedFilterState.configurations.find((item) => item.id === configurationId);
+    const configuration = findSavedFilterConfiguration(savedFilterState, configurationId);
     if (!configuration) return;
 
     if (savedFilterState.activeConfigurationId === configurationId) {
@@ -132,8 +138,7 @@ export function useSavedFilterConfigs({
   }, [
     relays,
     resetFiltersToDefault,
-    savedFilterState.activeConfigurationId,
-    savedFilterState.configurations,
+    savedFilterState,
     setActiveRelayIds,
     setChannelFilterStates,
     setChannelMatchMode,

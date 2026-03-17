@@ -1,5 +1,9 @@
 import { z } from "zod";
 import type { SavedFilterConfiguration, SavedFilterState } from "@/types";
+import {
+  EMPTY_SAVED_FILTER_STATE,
+  normalizeSavedFilterState,
+} from "@/domain/preferences/saved-filter-state";
 import { SAVED_FILTER_CONFIGS_STORAGE_KEY as SAVED_FILTER_CONFIGURATIONS_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 const savedFilterConfigurationSchema = z.object({
@@ -18,29 +22,19 @@ const savedFilterStateSchema = z.object({
   configurations: z.array(savedFilterConfigurationSchema),
 });
 
-const EMPTY_STATE: SavedFilterState = {
-  activeConfigurationId: null,
-  configurations: [],
-};
-
 export function loadSavedFilterState(): SavedFilterState {
   try {
     const raw = localStorage.getItem(SAVED_FILTER_CONFIGURATIONS_STORAGE_KEY);
-    if (!raw) return EMPTY_STATE;
+    if (!raw) return EMPTY_SAVED_FILTER_STATE;
     const parsed = savedFilterStateSchema.safeParse(JSON.parse(raw));
-    if (!parsed.success) return EMPTY_STATE;
+    if (!parsed.success) return EMPTY_SAVED_FILTER_STATE;
 
-    const existingIds = new Set(parsed.data.configurations.map((configuration) => configuration.id));
-    const activeConfigurationId = parsed.data.activeConfigurationId;
-    return {
-      activeConfigurationId:
-        activeConfigurationId && existingIds.has(activeConfigurationId)
-          ? activeConfigurationId
-          : null,
+    return normalizeSavedFilterState({
+      activeConfigurationId: parsed.data.activeConfigurationId,
       configurations: parsed.data.configurations as SavedFilterConfiguration[],
-    };
+    });
   } catch {
-    return EMPTY_STATE;
+    return EMPTY_SAVED_FILTER_STATE;
   }
 }
 

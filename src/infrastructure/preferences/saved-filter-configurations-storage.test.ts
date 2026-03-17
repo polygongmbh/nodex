@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { loadSavedFilterState, saveSavedFilterState } from "@/infrastructure/preferences/saved-filter-configurations";
+import {
+  loadSavedFilterState,
+  saveSavedFilterState,
+} from "@/infrastructure/preferences/saved-filter-configurations-storage";
 
 describe("saved filter configurations persistence", () => {
   beforeEach(() => {
