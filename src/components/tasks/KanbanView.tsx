@@ -28,7 +28,7 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
-import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
+import { useTaskViewFiltering } from "@/features/feed-page/controllers/use-task-view-filtering";
 import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
 import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";

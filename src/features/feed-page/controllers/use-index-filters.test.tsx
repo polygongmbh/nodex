@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import type { TFunction } from "i18next";
 import { useState } from "react";
 import { useIndexFilters } from "./use-index-filters";
-import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
+import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
 import type { Channel, Person, Relay } from "@/types";
 

@@ -16,7 +16,7 @@ import {
   shouldToggleOffExclusiveChannel,
   shouldToggleOffExclusivePerson,
 } from "@/domain/content/filter-state-utils";
-import { useFilterUrlSync } from "@/hooks/use-filter-url-sync";
+import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import type { Channel, ChannelMatchMode, Person, Relay } from "@/types";
 
 interface UseIndexFiltersOptions {

@@ -28,7 +28,7 @@ import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
-import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
+import { useTaskViewFiltering } from "@/features/feed-page/controllers/use-task-view-filtering";
 import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
 import {
   DropdownMenu,

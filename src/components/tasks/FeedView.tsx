@@ -35,7 +35,7 @@ import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
-import { useTaskViewFiltering } from "@/hooks/use-task-view-filtering";
+import { useTaskViewFiltering } from "@/features/feed-page/controllers/use-task-view-filtering";
 import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
 import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import {

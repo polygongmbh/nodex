@@ -46,7 +46,7 @@ import type { Nip99ListingStatus } from "@/types";
 import { getConfiguredDefaultRelayIds } from "@/lib/nostr/default-relays";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
 import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
-import { useRelayFilterState } from "@/hooks/use-relay-filter-state";
+import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
 import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
 import { useTaskPublishFlow } from "@/features/feed-page/controllers/use-task-publish-flow";
 import { useTaskPublishControls } from "@/features/feed-page/controllers/use-task-publish-controls";
