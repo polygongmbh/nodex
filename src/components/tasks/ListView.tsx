@@ -48,6 +48,7 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
+import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -135,6 +136,8 @@ export function ListView({
   onHashtagClick,
   onAuthorClick,
   onSignInClick,
+  onClearChannelFilter,
+  onClearPersonFilter,
   forceShowComposer = false,
   composeGuideActivationSignal,
   composeRestoreRequest = null,
@@ -630,6 +633,8 @@ export function ListView({
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
         onSignInClick={onSignInClick}
+        onClearChannelFilter={onClearChannelFilter}
+        onClearPersonFilter={onClearPersonFilter}
         forceExpanded={forceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         composeRestoreRequest={composeRestoreRequest}
@@ -699,8 +704,15 @@ export function ListView({
           <tbody>
             {listTasks.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center text-muted-foreground py-8">
-                  {t("tasks.empty.notFound")}
+                <td colSpan={6} className="p-0">
+                  <FilteredEmptyState
+                    variant="collection"
+                    relays={relays}
+                    channels={channels}
+                    people={people}
+                    searchQuery={searchQuery}
+                    className="py-8"
+                  />
                 </td>
               </tr>
             ) : (

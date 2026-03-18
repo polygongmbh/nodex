@@ -858,7 +858,20 @@
       "mobileQuickFilterFallback": "No tasks match the quick filter, showing all tasks.",
       "matchFilters": "No tasks match your filters",
       "noSubtasks": "No subtasks yet",
-      "noneYet": "No tasks yet"
+      "noneYet": "No tasks yet",
+      "filtered": {
+        "title": "Nobody here but your filters.",
+        "scope": "You’re currently narrowed down to {{scope}}.",
+        "action": "Broaden the scope or break the silence."
+      },
+      "unfiltered": {
+        "feedTitle": "Nobody here but us chickens.",
+        "feedDescription": "Be the first to post.",
+        "collectionTitle": "This space is empty for now. Be the first to fill it."
+      },
+      "scope": {
+        "search": "Search: “{{query}}”"
+      }
     }
   },
   "widgets": {

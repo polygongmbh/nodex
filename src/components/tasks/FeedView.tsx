@@ -54,6 +54,7 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
+import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -115,6 +116,8 @@ export function FeedView({
   forceShowComposer = false,
   composeGuideActivationSignal,
   onAuthorClick,
+  onClearChannelFilter,
+  onClearPersonFilter,
   onUndoPendingPublish,
   isPendingPublishTask,
   composeRestoreRequest = null,
@@ -445,6 +448,8 @@ export function FeedView({
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
         onSignInClick={onSignInClick}
+        onClearChannelFilter={onClearChannelFilter}
+        onClearPersonFilter={onClearPersonFilter}
         forceExpanded={forceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         mentionRequest={mentionRequest}
@@ -468,9 +473,13 @@ export function FeedView({
         onScroll={handleFeedScroll}
       >
         {feedEntries.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            <p>{t("tasks.empty.feed")}</p>
-          </div>
+          <FilteredEmptyState
+            variant="feed"
+            relays={relays}
+            channels={channels}
+            people={people}
+            searchQuery={searchQuery}
+          />
         ) : (
           visibleFeedEntries.map((entry) => {
             if (entry.type === "state-update") {

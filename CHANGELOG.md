@@ -6,6 +6,10 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Sidebar channels and people now start folded by default, scale their folded previews with available height, prioritize selected and pinned items in the preview, and always keep pinned channels visible while folded.
+- Feed, tree, and list empty states now explain the active relay/channel/person scope and use warmer fallback copy when the view is simply empty.
+- Filter-backed compose chips now sit in a dedicated footer tray and clear their linked channel/person filters when removed.
+
 ## [2.1.0] - 2026-03-17
 - Hashtags are no longer parsed when `#` appears inside a word, so embedded text like `email#ops` no longer creates channels, chips, or submit tags by mistake.
 - Compose channel tags now follow the active relay scope, so switching to a relay that does not have a previously selected channel no longer keeps that hidden channel attached in compose.

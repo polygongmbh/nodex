@@ -858,7 +858,20 @@
       "mobileQuickFilterFallback": "Keine Aufgaben entsprechen dem Schnellfilter, alle Aufgaben werden angezeigt.",
       "matchFilters": "Keine Aufgaben entsprechen deinen Filtern",
       "noSubtasks": "Noch keine Unteraufgaben",
-      "noneYet": "Noch keine Aufgaben"
+      "noneYet": "Noch keine Aufgaben",
+      "filtered": {
+        "title": "Niemand hier außer deinen Filtern.",
+        "scope": "Derzeit ist deine Ansicht eingegrenzt auf {{scope}}.",
+        "action": "Erweitere den Bereich oder brich die Stille."
+      },
+      "unfiltered": {
+        "feedTitle": "Niemand hier außer uns Hühnern.",
+        "feedDescription": "Sei die erste Person, die etwas postet.",
+        "collectionTitle": "Dieser Bereich ist noch leer. Füll ihn als Erste:r."
+      },
+      "scope": {
+        "search": "Suche: „{{query}}“"
+      }
     }
   },
   "widgets": {

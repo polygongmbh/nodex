@@ -196,6 +196,8 @@ export interface SharedTaskViewContext {
   onFocusTask?: (taskId: string | null) => void;
   onHashtagClick?: (tag: string) => void;
   onAuthorClick?: (author: Person) => void;
+  onClearChannelFilter?: (id: string) => void;
+  onClearPersonFilter?: (id: string) => void;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 

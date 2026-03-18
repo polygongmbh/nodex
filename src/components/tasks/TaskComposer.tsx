@@ -71,6 +71,8 @@ interface TaskComposerProps {
   defaultContent?: string;
   parentId?: string;
   onSignInClick?: () => void;
+  onClearChannelFilter?: (id: string) => void;
+  onClearPersonFilter?: (id: string) => void;
   adaptiveSize?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   draftStorageKey?: string;
@@ -171,6 +173,8 @@ export function TaskComposer({
   defaultContent = "",
   parentId,
   onSignInClick,
+  onClearChannelFilter,
+  onClearPersonFilter,
   adaptiveSize = false,
   onExpandedChange,
   draftStorageKey,
@@ -898,15 +902,16 @@ export function TaskComposer({
     return {
       ...chip,
       label: resolvedLabel || formatMentionIdentifierForDisplay(chip.identifier),
+      filterBacked: chip.metadataOnly && Boolean(chip.explicitPubkey && selectedPeoplePubkeys.includes(chip.explicitPubkey)),
     };
   });
   const parsedHashtags = extractHashtagsFromContent(content);
   const parsedHashtagSet = new Set(parsedHashtags);
   const hashtagChipItems = [
-    ...parsedHashtags.map((tag) => ({ tag, metadataOnly: false })),
+    ...parsedHashtags.map((tag) => ({ tag, metadataOnly: false, filterBacked: false })),
     ...explicitTagNames
       .filter((tag) => !parsedHashtagSet.has(tag))
-      .map((tag) => ({ tag, metadataOnly: true })),
+      .map((tag) => ({ tag, metadataOnly: true, filterBacked: includedChannels.includes(tag) })),
   ];
   const hasAtLeastOneTag = countHashtagsInContent(content) + explicitTagNames.length > 0;
   const canInheritParentTags = Boolean(parentId);
@@ -1211,12 +1216,22 @@ export function TaskComposer({
   const removeExplicitHashtag = (tagName: string) => {
     const normalizedTag = tagName.trim().toLowerCase();
     if (!normalizedTag) return;
+    const channel = channels.find((entry) => entry.name.trim().toLowerCase() === normalizedTag);
+    if (channel?.filterState === "included") {
+      autoManagedFilterTagNamesRef.current.delete(normalizedTag);
+      onClearChannelFilter?.(channel.id);
+    }
     setExplicitTagNames((previous) => previous.filter((tag) => tag !== normalizedTag));
   };
 
   const removeExplicitMention = (pubkey: string | undefined) => {
     if (!pubkey) return;
     const normalizedPubkey = pubkey.trim().toLowerCase();
+    const person = people.find((entry) => entry.id.trim().toLowerCase() === normalizedPubkey);
+    if (person?.isSelected) {
+      autoManagedFilterMentionPubkeysRef.current.delete(normalizedPubkey);
+      onClearPersonFilter?.(person.id);
+    }
     setExplicitMentionPubkeys((previous) => previous.filter((value) => value !== normalizedPubkey));
   };
 
@@ -1370,63 +1385,8 @@ export function TaskComposer({
         )}
       </div>
 
-      {showExpandedControls && (mentionChipItems.length > 0 || hashtagChipItems.length > 0 || Boolean(submitBlockedReason && user)) && (
-        <div className={cn("order-2 flex flex-wrap items-center gap-1.5", adaptiveSize && "motion-ink-stagger [--stagger-index:0]")}>
-          {mentionChipItems.map((mention) => (
-            <button
-              key={`mention-${mention.identifier}`}
-              type="button"
-              data-testid="compose-mention-chip"
-              onClick={() => removeExplicitMention(mention.explicitPubkey)}
-              className={cn(
-                "group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary",
-                mention.metadataOnly && "cursor-pointer hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
-              )}
-              disabled={!mention.metadataOnly}
-              title={`${t("composer.labels.mentions")}: @${mention.identifier}`}
-            >
-              {mention.metadataOnly ? (
-                <>
-                  <AtSign className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
-                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
-                </>
-              ) : (
-                <AtSign className="w-3 h-3" />
-              )}
-              {mention.label}
-            </button>
-          ))}
-          {hashtagChipItems.map((tagChip) => (
-            <button
-              key={`hashtag-${tagChip.tag}`}
-              type="button"
-              data-testid="compose-hashtag-chip"
-              onClick={() => removeExplicitHashtag(tagChip.tag)}
-              className={cn(
-                "group inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground",
-                tagChip.metadataOnly && "cursor-pointer hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
-              )}
-              disabled={!tagChip.metadataOnly}
-            >
-              {tagChip.metadataOnly ? (
-                <>
-                  <Hash className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
-                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
-                </>
-              ) : (
-                <Hash className="w-3 h-3" />
-              )}
-              {tagChip.tag}
-            </button>
-          ))}
-          {submitBlockedReason && user && (
-            <span className="ml-auto text-xs text-muted-foreground sm:text-right">{submitBlockedReason}</span>
-          )}
-        </div>
-      )}
-
       {showExpandedControls && attachments.length > 0 && (
-        <div className="order-3 space-y-2">
+        <div className="order-2 space-y-2">
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
@@ -1490,6 +1450,76 @@ export function TaskComposer({
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {showExpandedControls && (mentionChipItems.length > 0 || hashtagChipItems.length > 0 || Boolean(submitBlockedReason && user)) && (
+        <div
+          className={cn(
+            "order-3 rounded-xl border border-border/60 bg-muted/35 px-3 py-2.5",
+            adaptiveSize && "motion-ink-stagger [--stagger-index:0]"
+          )}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+          {mentionChipItems.map((mention) => (
+            <button
+              key={`mention-${mention.identifier}`}
+              type="button"
+              data-testid="compose-mention-chip"
+              onClick={() => removeExplicitMention(mention.explicitPubkey)}
+              className={cn(
+                "group inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs",
+                mention.filterBacked
+                  ? "cursor-pointer bg-primary/15 text-primary hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+                  : mention.metadataOnly
+                    ? "cursor-pointer bg-primary/10 text-primary hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+                    : "bg-primary/10 text-primary"
+              )}
+              disabled={!mention.metadataOnly && !mention.filterBacked}
+              title={`${t("composer.labels.mentions")}: @${mention.identifier}`}
+            >
+              {mention.metadataOnly || mention.filterBacked ? (
+                <>
+                  <AtSign className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
+                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
+                </>
+              ) : (
+                <AtSign className="w-3 h-3" />
+              )}
+              {mention.label}
+            </button>
+          ))}
+          {hashtagChipItems.map((tagChip) => (
+            <button
+              key={`hashtag-${tagChip.tag}`}
+              type="button"
+              data-testid="compose-hashtag-chip"
+              onClick={() => removeExplicitHashtag(tagChip.tag)}
+              className={cn(
+                "group inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs",
+                tagChip.filterBacked
+                  ? "cursor-pointer bg-foreground/10 text-foreground hover:bg-foreground/15 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+                  : tagChip.metadataOnly
+                    ? "cursor-pointer bg-muted text-muted-foreground hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+                    : "bg-muted text-muted-foreground"
+              )}
+              disabled={!tagChip.metadataOnly && !tagChip.filterBacked}
+            >
+              {tagChip.metadataOnly || tagChip.filterBacked ? (
+                <>
+                  <Hash className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
+                  <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
+                </>
+              ) : (
+                <Hash className="w-3 h-3" />
+              )}
+              {tagChip.tag}
+            </button>
+          ))}
+          {submitBlockedReason && user && (
+            <span className="ml-auto text-xs text-muted-foreground sm:text-right">{submitBlockedReason}</span>
+          )}
+        </div>
         </div>
       )}
 

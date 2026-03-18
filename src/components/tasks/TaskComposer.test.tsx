@@ -1016,6 +1016,48 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
   });
 
+  it("clears an included channel filter when removing its filter-backed chip", () => {
+    const onClearChannelFilter = vi.fn();
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={[{ id: "backend", name: "backend", filterState: "included" }]}
+        people={people}
+        onCancel={() => {}}
+        onClearChannelFilter={onClearChannelFilter}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+      target: { value: "Ship feature now" },
+    });
+    fireEvent.click(screen.getByTestId("compose-hashtag-chip"));
+
+    expect(onClearChannelFilter).toHaveBeenCalledWith("backend");
+  });
+
+  it("clears a selected person filter when removing its filter-backed chip", () => {
+    const onClearPersonFilter = vi.fn();
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={[{ ...people[0], isSelected: true }]}
+        onCancel={() => {}}
+        onClearPersonFilter={onClearPersonFilter}
+      />
+    );
+
+    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+      target: { value: "Ship #backend now" },
+    });
+    fireEvent.click(screen.getByTestId("compose-mention-chip"));
+
+    expect(onClearPersonFilter).toHaveBeenCalledWith("f".repeat(64));
+  });
+
   it("renders parsed mention chips before hashtag chips", () => {
     render(
       <TaskComposer

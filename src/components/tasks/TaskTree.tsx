@@ -8,12 +8,12 @@ import { sortTasks, buildChildrenMap, SortContext } from "@/domain/content/task-
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
-import { useTranslation } from "react-i18next";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
+import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -54,13 +54,14 @@ export function TaskTree({
   forceShowComposer = false,
   composeGuideActivationSignal,
   onAuthorClick,
+  onClearChannelFilter,
+  onClearPersonFilter,
   onUndoPendingPublish,
   isPendingPublishTask,
   composeRestoreRequest = null,
   mentionRequest = null,
   isInteractionBlocked = false,
 }: TaskTreeProps) {
-  const { t } = useTranslation();
   const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
@@ -405,6 +406,8 @@ export function TaskTree({
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={currentContextId || undefined}
         onSignInClick={onSignInClick}
+        onClearChannelFilter={onClearChannelFilter}
+        onClearPersonFilter={onClearPersonFilter}
         forceExpanded={forceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         onExpandedChange={setIsComposerExpanded}
@@ -418,15 +421,13 @@ export function TaskTree({
       {/* Task List */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1" data-onboarding="task-list">
         {visibleTasks.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
-            {hasActiveFilters ? (
-              <p>{t("tasks.empty.matchFilters")}</p>
-            ) : currentContextId ? (
-              <p>{t("tasks.empty.noSubtasks")}</p>
-            ) : (
-              <p>{t("tasks.empty.noneYet")}</p>
-            )}
-          </div>
+          <FilteredEmptyState
+            variant="collection"
+            relays={relays}
+            channels={channels}
+            people={people}
+            searchQuery={searchQuery}
+          />
         ) : (
           visibleTasks.map((task) => (
             <TaskItem

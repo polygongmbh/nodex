@@ -858,7 +858,20 @@
       "mobileQuickFilterFallback": "Ninguna tarea coincide con el filtro rápido; se muestran todas las tareas.",
       "matchFilters": "No hay tareas que coincidan con tus filtros",
       "noSubtasks": "Aún no hay subtareas",
-      "noneYet": "Aún no hay tareas"
+      "noneYet": "Aún no hay tareas",
+      "filtered": {
+        "title": "No hay nadie aquí salvo tus filtros.",
+        "scope": "Ahora mismo tu vista está acotada a {{scope}}.",
+        "action": "Amplía el alcance o rompe el silencio."
+      },
+      "unfiltered": {
+        "feedTitle": "No hay nadie aquí salvo nuestras gallinas.",
+        "feedDescription": "Sé la primera persona en publicar.",
+        "collectionTitle": "Este espacio está vacío por ahora. Sé quien lo llene primero."
+      },
+      "scope": {
+        "search": "Búsqueda: «{{query}}»"
+      }
     }
   },
   "widgets": {

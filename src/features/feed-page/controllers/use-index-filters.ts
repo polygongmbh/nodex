@@ -103,6 +103,15 @@ export function useIndexFilters({
     });
   }, [bumpChannelFrecency]);
 
+  const handleChannelClear = useCallback((id: string) => {
+    setChannelFilterStates((prev) => {
+      if ((prev.get(id) || "neutral") === "neutral") return prev;
+      const next = new Map(prev);
+      next.set(id, "neutral");
+      return next;
+    });
+  }, []);
+
   const handleChannelExclusive = useCallback((id: string) => {
     bumpChannelFrecency(id, 1.6);
     const shouldToggleOff = shouldToggleOffExclusiveChannel(channels, channelFilterStates, id);
@@ -158,6 +167,14 @@ export function useIndexFilters({
     setPeople((prev) =>
       prev.map((person) =>
         person.id === id ? { ...person, isSelected: !person.isSelected } : person
+      )
+    );
+  }, [setPeople]);
+
+  const handlePersonClear = useCallback((id: string) => {
+    setPeople((prev) =>
+      prev.map((person) =>
+        person.id === id && person.isSelected ? { ...person, isSelected: false } : person
       )
     );
   }, [setPeople]);
@@ -264,11 +281,13 @@ export function useIndexFilters({
     setChannelMatchMode,
     composeChannelsWithState,
     handleChannelToggle,
+    handleChannelClear,
     handleChannelExclusive,
     handleToggleAllChannels,
     handleChannelMatchModeChange,
     handleHashtagExclusive,
     handlePersonToggle,
+    handlePersonClear,
     handlePersonExclusive,
     handleToggleAllPeople,
     handleAuthorClick,
