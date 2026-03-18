@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 interface TaskTagChipRowProps {
   task: Task;
   people: Person[];
+  priority?: number;
   expanded?: boolean;
   maxVisibleTags?: number;
   showAllTags?: boolean;
@@ -17,11 +18,13 @@ interface TaskTagChipRowProps {
   onPersonClick?: (author: Person) => void;
   stopPropagation?: boolean;
   showEmptyPlaceholder?: boolean;
+  testId?: string;
 }
 
 export function TaskTagChipRow({
   task,
   people,
+  priority,
   expanded = false,
   maxVisibleTags = 3,
   showAllTags = false,
@@ -32,8 +35,10 @@ export function TaskTagChipRow({
   onPersonClick,
   stopPropagation = true,
   showEmptyPlaceholder = true,
+  testId,
 }: TaskTagChipRowProps) {
   const { t } = useTranslation();
+  const hasPriority = typeof priority === "number";
   const hasMentions = hasTaskMentionChips(task);
   const hasTags = task.tags.length > 0;
   const showAll = showAllTags || expanded;
@@ -41,7 +46,12 @@ export function TaskTagChipRow({
   const hiddenTagCount = Math.max(0, task.tags.length - visibleTags.length);
 
   return (
-    <div className={cn("flex flex-wrap gap-1", className)}>
+    <div className={cn("flex flex-wrap gap-1", className)} data-testid={testId}>
+      {hasPriority && (
+        <span className="inline-flex items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
+          P{priority}
+        </span>
+      )}
       <TaskMentionChips task={task} people={people} onPersonClick={onPersonClick} inline />
       {visibleTags.map((tag) => (
         <button
@@ -90,7 +100,9 @@ export function TaskTagChipRow({
           {t("tasks.less")}
         </button>
       )}
-      {showEmptyPlaceholder && !hasMentions && !hasTags && <span className="text-xs text-muted-foreground">—</span>}
+      {showEmptyPlaceholder && !hasPriority && !hasMentions && !hasTags && (
+        <span className="text-xs text-muted-foreground">—</span>
+      )}
     </div>
   );
 }

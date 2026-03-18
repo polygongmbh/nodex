@@ -31,9 +31,10 @@ import {
 } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
+import { hasTaskMentionChips } from "./TaskMentionChips";
 import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
+import { TaskTagChipRow } from "./TaskTagChipRow";
 import { getAuthorColor } from "@/lib/author-color";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
@@ -1146,25 +1147,18 @@ export function CalendarView({
                                 <span>{task.dueTime}</span>
                               </div>
                             )}
-                            {(hasTaskMentionChips(task) || task.tags.length > 0) && (
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                <TaskMentionChips task={task} people={people} onPersonClick={onAuthorClick} inline />
-                                {task.tags.map((tag) => (
-                                  <button
-                                    key={tag}
-                                    type="button"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      onHashtagClick?.(tag);
-                                    }}
-                                    className={`px-1 py-0.5 rounded text-xs ${TASK_INTERACTION_STYLES.hashtagChip}`}
-                                    aria-label={t("tasks.actions.filterTag", { tag })}
-                                    title={t("tasks.actions.filterTag", { tag })}
-                                  >
-                                    #{tag}
-                                  </button>
-                                ))}
-                              </div>
+                            {(typeof task.priority === "number" || hasTaskMentionChips(task) || task.tags.length > 0) && (
+                              <TaskTagChipRow
+                                task={task}
+                                people={people}
+                                priority={task.priority}
+                                className="mt-1"
+                                tagClassName="px-1 py-0.5 rounded text-xs"
+                                onHashtagClick={onHashtagClick}
+                                onPersonClick={onAuthorClick}
+                                showEmptyPlaceholder={false}
+                                testId={`calendar-chip-row-${task.id}`}
+                              />
                             )}
                           </div>
                         </div>

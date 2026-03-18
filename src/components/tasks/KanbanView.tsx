@@ -17,6 +17,7 @@ import { TaskComposer } from "./TaskComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow } from "./TaskTagChipRow";
+import { hasTaskMentionChips } from "./TaskMentionChips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -470,6 +471,10 @@ export function KanbanView({
                           const isLockedUntilStart = isTaskLockedUntilStart(task);
                           const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
                           const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
+                          const hasMetadataChips =
+                            typeof task.priority === "number" ||
+                            hasTaskMentionChips(task) ||
+                            task.tags.length > 0;
                           const standaloneEmbedUrls = new Set(
                             getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
                           );
@@ -558,28 +563,39 @@ export function KanbanView({
                                     attachments={attachmentsWithoutInlineEmbeds}
                                     onMediaClick={(url) => openTaskMedia(task.id, url)}
                                   />
-                                  <div
-                                    className="mt-2 flex flex-wrap items-center gap-1"
-                                    data-testid={`kanban-chip-row-${task.id}`}
-                                  >
-                                    {typeof task.priority === "number" && (
-                                      <span className="inline-flex items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
-                                        P{task.priority}
-                                      </span>
-                                    )}
+                                  {/* Due date with color coding */}
+                                  {task.dueDate && (
+                                    <div
+                                      className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}
+                                      data-testid={`kanban-due-row-${task.id}`}
+                                    >
+                                      <Calendar className="w-3 h-3" />
+                                      <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
+                                      <span>{format(task.dueDate, "MMM d")}</span>
+                                      {task.dueTime && (
+                                        <>
+                                          <Clock className="w-3 h-3" />
+                                          <span>{task.dueTime}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                  {hasMetadataChips && (
                                     <TaskTagChipRow
                                       task={task}
                                       people={people}
+                                      priority={task.priority}
                                       expanded={Boolean(expandedChipRows[task.id])}
                                       onToggleExpanded={(expanded) =>
                                         setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
                                       }
                                       onHashtagClick={onHashtagClick}
                                       onPersonClick={onAuthorClick}
-                                      className="mt-0"
-                                      showEmptyPlaceholder={typeof task.priority !== "number"}
+                                      className="mt-2"
+                                      showEmptyPlaceholder={false}
+                                      testId={`kanban-chip-row-${task.id}`}
                                     />
-                                  </div>
+                                  )}
                                   {isPendingPublish && (
                                     <div className="mt-2">
                                       <button
@@ -600,21 +616,6 @@ export function KanbanView({
                                     <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
                                       <Layers className="w-3 h-3" />
                                       <span>{t("kanban.hasSubtasks")}</span>
-                                    </div>
-                                  )}
-
-                                  {/* Due date with color coding */}
-                                  {task.dueDate && (
-                                    <div className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}>
-                                      <Calendar className="w-3 h-3" />
-                                      <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-                                      <span>{format(task.dueDate, "MMM d")}</span>
-                                      {task.dueTime && (
-                                        <>
-                                          <Clock className="w-3 h-3" />
-                                          <span>{task.dueTime}</span>
-                                        </>
-                                      )}
                                     </div>
                                   )}
 

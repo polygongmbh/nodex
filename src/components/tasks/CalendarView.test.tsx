@@ -195,4 +195,35 @@ describe("CalendarView responsiveness", () => {
     expect(container.querySelector('[data-task-id="done-calendar-task"]')).toBeInTheDocument();
     expect(container.querySelector('[data-task-id="closed-calendar-task"]')).not.toBeInTheDocument();
   });
+
+  it("shows priority chips in selected-day metadata row", () => {
+    const task = makeTask({
+      id: "calendar-priority-task",
+      author: people[0],
+      content: "Calendar priority task #general",
+      tags: ["general"],
+      status: "todo",
+      dueDate: new Date("2026-02-18T12:00:00.000Z"),
+      priority: 80,
+    });
+
+    render(
+      <CalendarView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        selectedDate={new Date("2026-02-18T00:00:00.000Z")}
+      />
+    );
+
+    const chipRow = screen.getByTestId("calendar-chip-row-calendar-priority-task");
+    expect(chipRow).toHaveTextContent("P80");
+    expect(screen.getByRole("button", { name: /filter to #general/i })).toBeInTheDocument();
+  });
 });

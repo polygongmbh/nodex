@@ -152,4 +152,39 @@ describe("KanbanView closed column", () => {
     expect(chipRow).toHaveTextContent("P80");
     expect(chipRow).toContainElement(hashtagChip);
   });
+
+  it("renders due date row above metadata chips", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const task = makeTask({
+      id: "due-before-chip-task",
+      author,
+      status: "todo",
+      content: "Task with due date and chips #general",
+      tags: ["general"],
+      priority: 80,
+      dueDate: new Date("2026-02-18T10:00:00.000Z"),
+      dueTime: "10:00",
+    });
+
+    render(
+      <KanbanView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        depthMode="leaves"
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={vi.fn()}
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    const dueRow = screen.getByTestId("kanban-due-row-due-before-chip-task");
+    const chipRow = screen.getByTestId("kanban-chip-row-due-before-chip-task");
+    expect(dueRow.compareDocumentPosition(chipRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 });
