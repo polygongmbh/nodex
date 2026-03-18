@@ -75,6 +75,10 @@ const people: Person[] = [
 
 const successfulCreateResult: TaskCreateResult = { ok: true, mode: "local" };
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
+const getTaskComposerInput = () => screen.getByRole("textbox", { name: /what's up\? use #channels and @mentions/i });
+const getCommentComposerInput = () => screen.getByRole("textbox", { name: /add your comment with #channels and @mentions/i });
+const getOfferComposerInput = () => screen.getByRole("textbox", { name: /post an offer with #channels and @mentions/i });
+const getRequestComposerInput = () => screen.getByRole("textbox", { name: /post a request with #channels and @mentions/i });
 
 describe("TaskComposer hashtag autocomplete", () => {
   beforeEach(() => {
@@ -159,7 +163,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Request" }));
-    fireEvent.change(screen.getByLabelText("Post a request..."), {
+    fireEvent.change(getRequestComposerInput(), {
       target: { value: "Need a designer #design" },
     });
     fireEvent.change(screen.getByLabelText("Listing title"), {
@@ -227,7 +231,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Offer" }));
-    fireEvent.change(screen.getByLabelText("Post an offer..."), {
+    fireEvent.change(getOfferComposerInput(), {
       target: { value: "Selling mountain bike @alice@example.com #bikes" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Post Offer" }));
@@ -272,14 +276,14 @@ describe("TaskComposer hashtag autocomplete", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Offer" }));
-    fireEvent.change(screen.getByLabelText("Post an offer..."), {
+    fireEvent.change(getOfferComposerInput(), {
       target: { value: "First listing headline #bikes" },
     });
     const titleInput = screen.getByLabelText("Listing title") as HTMLInputElement;
     expect(titleInput.value).toBe("First listing headline");
 
     fireEvent.change(titleInput, { target: { value: "Custom manual title" } });
-    fireEvent.change(screen.getByLabelText("Post an offer..."), {
+    fireEvent.change(getOfferComposerInput(), {
       target: { value: "Changed body text #bikes" },
     });
 
@@ -297,7 +301,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
 
     fireEvent.change(textarea, {
       target: { value: "#b", selectionStart: 2 },
@@ -326,7 +330,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     fireEvent.change(textarea, {
       target: { value: "#it", selectionStart: 3 },
     });
@@ -351,7 +355,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     fireEvent.change(textarea, {
       target: { value: "#ac", selectionStart: 3 },
     });
@@ -372,7 +376,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     fireEvent.change(textarea, {
       target: { value: "Ship #ba", selectionStart: 8 },
     });
@@ -403,7 +407,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     const draft = "Ship #ba";
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
@@ -447,7 +451,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     const draft = "Ship #ba";
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
@@ -491,7 +495,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     const draft = "Ship #ba";
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
@@ -538,7 +542,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     const draft = "Ship #brandnew";
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
@@ -585,7 +589,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.queryByText(/set .*date \(optional\)/i)).not.toBeInTheDocument();
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    const textarea = getTaskComposerInput();
     fireEvent.focus(textarea);
 
     expect(screen.getByText(/set .*date \(optional\)/i)).toBeInTheDocument();
@@ -613,7 +617,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     );
 
     expect(screen.getByDisplayValue("#persisted hello")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/add a comment/i)).toBeInTheDocument();
+    expect(getCommentComposerInput()).toBeInTheDocument();
     expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
   });
 
@@ -646,7 +650,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "comment" },
     });
 
-    expect(screen.getByPlaceholderText(/add a comment/i)).toBeInTheDocument();
+    expect(getCommentComposerInput()).toBeInTheDocument();
   });
 
   it("submits as the opposite kind on Alt+Enter", async () => {
@@ -661,7 +665,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    const textarea = getTaskComposerInput();
     fireEvent.change(textarea, { target: { value: "Ship #backend now" } });
     fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
 
@@ -699,7 +703,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "comment" },
     });
 
-    const textarea = screen.getByPlaceholderText(/add a comment/i);
+    const textarea = getCommentComposerInput();
     fireEvent.change(textarea, { target: { value: "Looks good #backend" } });
     fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
 
@@ -731,7 +735,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
 
     fireEvent.change(textarea, {
       target: { value: "Need input from @al", selectionStart: 19 },
@@ -756,7 +760,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     const draft = "Ship #backend with @al";
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
@@ -800,7 +804,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     const draft = "Ship #backend with @al";
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
@@ -847,7 +851,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     const draft = "Ship #backend with @al";
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
@@ -873,7 +877,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     const draft = "Ship #brandnew";
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
@@ -904,7 +908,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     const draft = "Ship #backend with @al";
     fireEvent.change(textarea, {
       target: { value: draft, selectionStart: draft.length },
@@ -953,7 +957,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: "Ship feature now" } });
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
@@ -994,7 +998,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: "Ship #backend now" } });
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
@@ -1030,7 +1034,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+    fireEvent.change(getTaskComposerInput(), {
       target: { value: "Ship feature now" },
     });
     fireEvent.click(screen.getByTestId("compose-hashtag-chip"));
@@ -1051,7 +1055,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+    fireEvent.change(getTaskComposerInput(), {
       target: { value: "Ship #backend now" },
     });
     fireEvent.click(screen.getByTestId("compose-mention-chip"));
@@ -1070,7 +1074,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    const textarea = getTaskComposerInput();
     fireEvent.change(textarea, {
       target: { value: "Pair with @alice@example.com on #backend" },
     });
@@ -1097,7 +1101,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.getByText(/set .*date \(optional\)/i)).toBeInTheDocument();
 
-    fireEvent.keyDown(screen.getByPlaceholderText(/what needs to be done/i), { key: "Escape" });
+    fireEvent.keyDown(getTaskComposerInput(), { key: "Escape" });
     expect(screen.queryByText(/set .*date \(optional\)/i)).not.toBeInTheDocument();
 
     rerender(
@@ -1131,7 +1135,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    const textarea = getTaskComposerInput();
     fireEvent.focus(textarea);
     expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
 
@@ -1159,7 +1163,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    const textarea = getTaskComposerInput();
     fireEvent.focus(textarea);
 
     const hashtagButton = screen.getByRole("button", { name: /insert hashtag/i });
@@ -1167,7 +1171,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.click(hashtagButton);
 
     expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
-    expect((screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement).value).toBe("#");
+    expect((getTaskComposerInput() as HTMLTextAreaElement).value).toBe("#");
   });
 
   it("does not collapse when an internal button click blurs the textarea without moving focus", async () => {
@@ -1185,7 +1189,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    const textarea = getTaskComposerInput();
     fireEvent.focus(textarea);
 
     const hashtagButton = screen.getByRole("button", { name: /insert hashtag/i });
@@ -1219,7 +1223,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    const textarea = getTaskComposerInput();
     fireEvent.focus(textarea);
     fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
       target: { value: "comment" },
@@ -1248,7 +1252,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+    fireEvent.change(getTaskComposerInput(), {
       target: { value: "Ship #backend now" },
     });
 
@@ -1267,7 +1271,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+    fireEvent.change(getTaskComposerInput(), {
       target: { value: "#backend @alice@example.com" },
     });
 
@@ -1288,7 +1292,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+    fireEvent.change(getTaskComposerInput(), {
       target: { value: "Follow-up update for this thread" },
     });
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
@@ -1322,7 +1326,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+    fireEvent.change(getTaskComposerInput(), {
       target: { value: "email#backend release #design" },
     });
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
@@ -1356,7 +1360,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: "Ship #backend now" } });
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
@@ -1380,7 +1384,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement;
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: "Ship #backend now" } });
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
@@ -1401,7 +1405,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+    fireEvent.change(getTaskComposerInput(), {
       target: { value: "Ship #backend now" },
     });
 
@@ -1428,7 +1432,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/what needs to be done/i), {
+    fireEvent.change(getTaskComposerInput(), {
       target: { value: "Ship #backend now" },
     });
 
@@ -1450,7 +1454,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
       target: { value: "comment" },
     });
-    fireEvent.change(screen.getByPlaceholderText(/add a comment/i), {
+    fireEvent.change(getCommentComposerInput(), {
       target: { value: "Looks good #backend" },
     });
 
@@ -1473,7 +1477,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
       target: { value: "comment" },
     });
-    fireEvent.change(screen.getByPlaceholderText(/add a comment/i), {
+    fireEvent.change(getCommentComposerInput(), {
       target: { value: "Looks good #backend" },
     });
 

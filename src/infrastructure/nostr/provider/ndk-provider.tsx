@@ -770,6 +770,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         syncRelayStatusesFromPool();
       });
     })();
+    const relayCurrentInstance = relayCurrentInstanceRef.current;
 
     return () => {
       disposed = true;
@@ -780,7 +781,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       ndkInstance.pool.relays.forEach((relay) => {
         relay.disconnect();
       });
-      relayCurrentInstanceRef.current.clear();
+      relayCurrentInstance.clear();
     };
   }, [clearAllTrackedRelayTimeouts, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
 
