@@ -26,3 +26,5 @@ export const getMobilePrimaryAction = () => screen.getByTestId("mobile-compose-p
 export const getMobileCommentAction = () => screen.getByTestId("mobile-compose-comment-action");
 export const getMobileSubmitBlockPanel = () => screen.getByTestId("mobile-task-submit-block-panel");
 export const openMobileComposeOptions = () => fireEvent.click(getMobilePrimaryAction());
+
+export const getOnboardingStepTitle = () => screen.getByTestId("onboarding-step-title");
