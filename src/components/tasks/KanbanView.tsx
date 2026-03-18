@@ -558,6 +558,28 @@ export function KanbanView({
                                     attachments={attachmentsWithoutInlineEmbeds}
                                     onMediaClick={(url) => openTaskMedia(task.id, url)}
                                   />
+                                  <div
+                                    className="mt-2 flex flex-wrap items-center gap-1"
+                                    data-testid={`kanban-chip-row-${task.id}`}
+                                  >
+                                    {typeof task.priority === "number" && (
+                                      <span className="inline-flex items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
+                                        P{task.priority}
+                                      </span>
+                                    )}
+                                    <TaskTagChipRow
+                                      task={task}
+                                      people={people}
+                                      expanded={Boolean(expandedChipRows[task.id])}
+                                      onToggleExpanded={(expanded) =>
+                                        setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
+                                      }
+                                      onHashtagClick={onHashtagClick}
+                                      onPersonClick={onAuthorClick}
+                                      className="mt-0"
+                                      showEmptyPlaceholder={typeof task.priority !== "number"}
+                                    />
+                                  </div>
                                   {isPendingPublish && (
                                     <div className="mt-2">
                                       <button
@@ -596,17 +618,6 @@ export function KanbanView({
                                     </div>
                                   )}
 
-                                  <TaskTagChipRow
-                                    task={task}
-                                    people={people}
-                                    className="mt-2"
-                                    expanded={Boolean(expandedChipRows[task.id])}
-                                    onToggleExpanded={(expanded) =>
-                                      setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
-                                    }
-                                    onHashtagClick={onHashtagClick}
-                                    onPersonClick={onAuthorClick}
-                                  />
                                 </div>
                               )}
                             </Draggable>

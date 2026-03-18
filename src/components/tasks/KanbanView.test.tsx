@@ -81,4 +81,75 @@ describe("KanbanView closed column", () => {
       screen.getByText((_, node) => node?.textContent === "Closed task #general")
     ).toBeInTheDocument();
   });
+
+  it("shows priority chips only for tasks with numeric priority", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const prioritizedTask = makeTask({
+      id: "priority-task",
+      author,
+      status: "todo",
+      content: "Prioritized task #general",
+      priority: 80,
+    });
+    const nonPrioritizedTask = makeTask({
+      id: "no-priority-task",
+      author,
+      status: "todo",
+      content: "No priority task #general",
+    });
+
+    render(
+      <KanbanView
+        tasks={[prioritizedTask, nonPrioritizedTask]}
+        allTasks={[prioritizedTask, nonPrioritizedTask]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        depthMode="leaves"
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={vi.fn()}
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("P80")).toBeInTheDocument();
+    expect(screen.queryByText("P40")).not.toBeInTheDocument();
+  });
+
+  it("renders priority and other chips in the same metadata row", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const task = makeTask({
+      id: "priority-and-tag-task",
+      author,
+      status: "todo",
+      content: "Task with chips #general",
+      tags: ["general"],
+      priority: 80,
+    });
+
+    render(
+      <KanbanView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        depthMode="leaves"
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={vi.fn()}
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    const chipRow = screen.getByTestId("kanban-chip-row-priority-and-tag-task");
+    const hashtagChip = screen.getByRole("button", { name: /filter to #general/i });
+    expect(chipRow).toHaveTextContent("P80");
+    expect(chipRow).toContainElement(hashtagChip);
+  });
 });

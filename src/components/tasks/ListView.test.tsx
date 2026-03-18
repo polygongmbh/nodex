@@ -273,4 +273,32 @@ describe("ListView priority control", () => {
 
     expect(screen.getByText("In Progress")).toBeInTheDocument();
   });
+
+  it("renders only first content line as plain text in table rows", () => {
+    mockUser = { id: "me" };
+    const task = makeTask({
+      id: "task-first-line",
+      content: "Top line https://example.com/image.png\nSecond line should be hidden",
+      status: "todo",
+    });
+
+    render(
+      <ListView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })]}
+        currentUser={task.author}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Top line https://example.com/image.png")).toBeInTheDocument();
+    expect(screen.queryByText("Second line should be hidden")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "https://example.com/image.png" })).not.toBeInTheDocument();
+  });
 });

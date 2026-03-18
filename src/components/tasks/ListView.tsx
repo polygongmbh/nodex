@@ -13,7 +13,6 @@ import {
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
-import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -24,7 +23,6 @@ import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/dom
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
-import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
@@ -76,6 +74,10 @@ interface PriorityCellProps {
   priority?: number;
   editable: boolean;
   onUpdatePriority?: (taskId: string, priority: number) => void;
+}
+
+function getTableContentPreview(content: string): string {
+  return content.split(/\r?\n/, 1)[0]?.trim() ?? "";
 }
 
 const PriorityCell = memo(function PriorityCell({
@@ -356,7 +358,6 @@ export function ListView({
     activeMediaItem,
     activePostMediaIndex,
     activePostMediaCount,
-    openTaskMedia,
     goToPreviousMedia,
     goToNextMedia,
     goToPreviousPost,
@@ -766,19 +767,7 @@ export function ListView({
                 const ancestorChain = getAncestorChain(task.id);
                 const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                 const isLockedUntilStart = isTaskLockedUntilStart(task);
-                const standaloneEmbedUrls = new Set(
-                  getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
-                );
-                const mediaCaptionByUrl = new Map<string, string>();
-                for (const attachment of task.attachments || []) {
-                  const normalizedUrl = attachment.url?.trim().toLowerCase();
-                  const caption = attachment.alt?.trim() || attachment.name?.trim();
-                  if (normalizedUrl && caption) mediaCaptionByUrl.set(normalizedUrl, caption);
-                }
-                const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
-                  const normalizedUrl = attachment.url?.trim().toLowerCase();
-                  return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
-                });
+                const contentPreview = getTableContentPreview(task.content);
                 
                 return (
                   <tr
@@ -938,23 +927,13 @@ export function ListView({
                         <div
                           onClick={() => onFocusTask?.(task.id)}
                           className={cn(
-                            `text-sm cursor-pointer whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText} break-words`,
+                            `text-sm cursor-pointer truncate ${TASK_INTERACTION_STYLES.hoverText}`,
                             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                           )}
                           title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
                         >
-                          {linkifyContent(task.content, onHashtagClick, {
-                            plainHashtags: isTaskTerminalStatus(task.status),
-                            people,
-                            onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
-                            getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
-                          })}
+                          {contentPreview}
                         </div>
-                        <TaskAttachmentList
-                          attachments={attachmentsWithoutInlineEmbeds}
-                          className="space-y-1"
-                          onMediaClick={(url) => openTaskMedia(task.id, url)}
-                        />
                       </div>
                     </td>
                     <td className="hidden 2xl:table-cell p-2 2xl:p-3">

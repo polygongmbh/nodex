@@ -16,6 +16,7 @@ interface TaskTagChipRowProps {
   onHashtagClick?: (tag: string) => void;
   onPersonClick?: (author: Person) => void;
   stopPropagation?: boolean;
+  showEmptyPlaceholder?: boolean;
 }
 
 export function TaskTagChipRow({
@@ -30,6 +31,7 @@ export function TaskTagChipRow({
   onHashtagClick,
   onPersonClick,
   stopPropagation = true,
+  showEmptyPlaceholder = true,
 }: TaskTagChipRowProps) {
   const { t } = useTranslation();
   const hasMentions = hasTaskMentionChips(task);
@@ -88,7 +90,7 @@ export function TaskTagChipRow({
           {t("tasks.less")}
         </button>
       )}
-      {!hasMentions && !hasTags && <span className="text-xs text-muted-foreground">—</span>}
+      {showEmptyPlaceholder && !hasMentions && !hasTags && <span className="text-xs text-muted-foreground">—</span>}
     </div>
   );
 }
