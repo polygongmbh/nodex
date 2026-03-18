@@ -456,6 +456,45 @@ describe("FeedView", () => {
     expect(screen.getAllByText("In Progress")).toHaveLength(1);
   });
 
+  it("hides closed tasks from the feed while keeping done tasks visible", () => {
+    const openTask = makeTask({
+      id: "task-open",
+      author,
+      content: "Open feed task #general",
+      status: "todo",
+    });
+    const doneTask = makeTask({
+      id: "task-done",
+      author,
+      content: "Done feed task #general",
+      status: "done",
+    });
+    const closedTask = makeTask({
+      id: "task-closed",
+      author,
+      content: "Closed feed task #general",
+      status: "closed",
+    });
+
+    const { container } = render(
+      <FeedView
+        tasks={[openTask, doneTask, closedTask]}
+        allTasks={[openTask, doneTask, closedTask]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(container.querySelector('[data-task-id="task-open"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-task-id="task-done"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-task-id="task-closed"]')).not.toBeInTheDocument();
+  });
+
   it("omits english default in-progress description when ui language is german", async () => {
     await i18n.changeLanguage("de");
     try {

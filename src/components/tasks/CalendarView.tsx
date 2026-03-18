@@ -156,6 +156,7 @@ export function CalendarView({
     allTasks,
     tasks,
     focusedTaskId,
+    hideClosedTasks: true,
     searchQuery,
     people,
     channels,

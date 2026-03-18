@@ -39,6 +39,7 @@ interface FilterTasksForViewParams {
   prefilteredTaskIds: Set<string>;
   focusedTaskId?: string | null;
   includeFocusedTask?: boolean;
+  hideClosedTasks?: boolean;
   searchQuery: string;
   people: Person[];
   includedChannels: string[];
@@ -52,6 +53,7 @@ export function filterTasksForView({
   prefilteredTaskIds,
   focusedTaskId,
   includeFocusedTask = false,
+  hideClosedTasks = false,
   searchQuery,
   people,
   includedChannels,
@@ -64,6 +66,7 @@ export function filterTasksForView({
   return allTasks.filter((task) => {
     if (taskPredicate && !taskPredicate(task)) return false;
     if (!prefilteredTaskIds.has(task.id)) return false;
+    if (hideClosedTasks && task.status === "closed") return false;
 
     if (focusedTaskId) {
       if (task.id === focusedTaskId) {

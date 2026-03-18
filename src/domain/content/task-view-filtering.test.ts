@@ -95,4 +95,40 @@ describe("task view filtering", () => {
 
     expect(result.map((task) => task.id)).toEqual(["root", "descendant-1"]);
   });
+
+  it("can hide closed tasks without hiding done tasks", () => {
+    const tasks = [
+      makeTask({
+        id: "todo-task",
+        content: "Todo task #alpha",
+        tags: ["alpha"],
+        status: "todo",
+      }),
+      makeTask({
+        id: "done-task",
+        content: "Done task #alpha",
+        tags: ["alpha"],
+        status: "done",
+      }),
+      makeTask({
+        id: "closed-task",
+        content: "Closed task #alpha",
+        tags: ["alpha"],
+        status: "closed",
+      }),
+    ];
+
+    const result = filterTasksForView({
+      allTasks: tasks,
+      prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+      searchQuery: "",
+      people: [],
+      includedChannels: [],
+      excludedChannels: [],
+      channelMatchMode: "and",
+      hideClosedTasks: true,
+    });
+
+    expect(result.map((task) => task.id)).toEqual(["todo-task", "done-task"]);
+  });
 });

@@ -8,6 +8,7 @@ interface UseTaskViewFilteringParams {
   tasks: Task[];
   focusedTaskId?: string | null;
   includeFocusedTask?: boolean;
+  hideClosedTasks?: boolean;
   searchQuery: string;
   people: Person[];
   channels: Channel[];
@@ -20,6 +21,7 @@ export function useTaskViewFiltering({
   tasks,
   focusedTaskId,
   includeFocusedTask = false,
+  hideClosedTasks = false,
   searchQuery,
   people,
   channels,
@@ -39,6 +41,7 @@ export function useTaskViewFiltering({
         prefilteredTaskIds,
         focusedTaskId,
         includeFocusedTask,
+        hideClosedTasks,
         searchQuery,
         people,
         includedChannels: included,
@@ -52,6 +55,7 @@ export function useTaskViewFiltering({
       excluded,
       focusedTaskId,
       includeFocusedTask,
+      hideClosedTasks,
       included,
       people,
       prefilteredTaskIds,

@@ -176,6 +176,7 @@ export function FeedView({
     tasks,
     focusedTaskId,
     includeFocusedTask: true,
+    hideClosedTasks: true,
     searchQuery,
     people,
     channels,

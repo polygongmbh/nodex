@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CalendarView } from "./CalendarView";
 import type { Channel, Person, Relay, Task } from "@/types";
+import { makeTask } from "@/test/fixtures";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
@@ -151,4 +152,47 @@ describe("CalendarView responsiveness", () => {
     expect(screen.getByRole("button", { name: /previous month/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /next month/i })).toBeInTheDocument();
   }, 10000);
+
+  it("hides closed scheduled tasks from the selected day panel", () => {
+    const openTask = makeTask({
+      id: "open-calendar-task",
+      author: people[0],
+      content: "Open calendar task #general",
+      status: "todo",
+      dueDate: new Date("2026-02-18T10:00:00.000Z"),
+    });
+    const doneTask = makeTask({
+      id: "done-calendar-task",
+      author: people[0],
+      content: "Done calendar task #general",
+      status: "done",
+      dueDate: new Date("2026-02-18T11:00:00.000Z"),
+    });
+    const closedTask = makeTask({
+      id: "closed-calendar-task",
+      author: people[0],
+      content: "Closed calendar task #general",
+      status: "closed",
+      dueDate: new Date("2026-02-18T12:00:00.000Z"),
+    });
+
+    const { container } = render(
+      <CalendarView
+        tasks={[openTask, doneTask, closedTask]}
+        allTasks={[openTask, doneTask, closedTask]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        selectedDate={new Date("2026-02-18T00:00:00.000Z")}
+      />
+    );
+
+    expect(container.querySelector('[data-task-id="open-calendar-task"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-task-id="done-calendar-task"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-task-id="closed-calendar-task"]')).not.toBeInTheDocument();
+  });
 });
