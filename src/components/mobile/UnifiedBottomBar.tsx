@@ -728,7 +728,13 @@ export function UnifiedBottomBar({
     t,
   });
   const taskSubmitBlockedReason = taskSubmitBlock?.reason ?? null;
-  const showTaskSubmitBlockDetail = taskSubmitBlock?.code !== "write" && taskSubmitBlock?.code !== "tag";
+  const showTaskSubmitBlockBanner = taskSubmitBlock?.code !== "write";
+  const showTaskSubmitBlockDetail = taskSubmitBlock?.code === "relay"
+    || taskSubmitBlock?.code === "commentRelay"
+    || taskSubmitBlock?.code === "selectTask"
+    || taskSubmitBlock?.code === "uploading"
+    || taskSubmitBlock?.code === "uploadFailed";
+  const isPrimarySendEmptyDisabled = isSignedIn && sharedText.trim().length === 0;
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
@@ -1101,7 +1107,7 @@ export function UnifiedBottomBar({
               <Paperclip className="w-4 h-4" />
             </button>
           )}
-          {showInlineTaskSubmitBlock ? (
+          {showInlineTaskSubmitBlock && showTaskSubmitBlockBanner ? (
             <div
               data-testid="mobile-task-submit-block-panel"
               className="inline-flex max-w-full items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-2 text-left"
@@ -1488,12 +1494,12 @@ export function UnifiedBottomBar({
               <div className="relative">
                 <button
                   onClick={handlePrimarySend}
-                  disabled={Boolean(taskSubmitBlock?.isHardDisabled)}
+                  disabled={Boolean(taskSubmitBlock?.isHardDisabled) || isPrimarySendEmptyDisabled}
                   className={cn(
                     "h-full w-11 inline-flex items-center justify-center rounded-lg border transition-colors",
                     isSignedIn
                       ? taskSubmitBlock && !taskSubmitBlock.isHardDisabled
-                        ? "border-amber-500 bg-amber-500 text-amber-950 hover:bg-amber-500/90"
+                        ? "border-border/60 bg-muted text-muted-foreground hover:bg-muted/90"
                         : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       : "border-border text-foreground hover:bg-muted"
                   )}
@@ -1527,12 +1533,12 @@ export function UnifiedBottomBar({
                         setShowSendOptions(false);
                         void handleSubmit("task");
                       }}
-                      disabled={Boolean(taskSubmitBlock?.isHardDisabled)}
+                      disabled={Boolean(taskSubmitBlock?.isHardDisabled) || isPrimarySendEmptyDisabled}
                       className={cn(
-                        "h-9 w-9 inline-flex items-center justify-center rounded-md border text-primary-foreground disabled:opacity-50",
+                        "h-9 w-9 inline-flex items-center justify-center rounded-md border disabled:opacity-50",
                         taskSubmitBlock && !taskSubmitBlock.isHardDisabled
-                          ? "border-amber-500 bg-amber-500 text-amber-950 hover:bg-amber-500/90"
-                          : "border-primary bg-primary hover:bg-primary/90"
+                          ? "border-border/60 bg-muted text-muted-foreground hover:bg-muted/90"
+                          : "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
                       )}
                       aria-label={t("composer.actions.createTask")}
                       title={taskSubmitBlock?.reason || t("composer.actions.createTask")}

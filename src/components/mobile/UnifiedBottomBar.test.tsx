@@ -115,6 +115,27 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(onSignInClick).toHaveBeenCalledTimes(1);
   });
 
+  it("disables the mobile primary send button when the textbox is actually empty", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: /create task \/ add comment/i })).toBeDisabled();
+  });
+
   it("searches as user types in combined field", () => {
     const onSearchChange = vi.fn();
     render(
@@ -194,6 +215,7 @@ describe("UnifiedBottomBar auth gating", () => {
     const sendButton = screen.getByRole("button", { name: /create task \/ add comment/i });
     expect(sendButton).toBeEnabled();
     expect(sendButton).toHaveAttribute("title", "Write a message first");
+    expect(screen.queryByTestId("mobile-task-submit-block-panel")).not.toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

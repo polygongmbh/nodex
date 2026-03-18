@@ -968,7 +968,13 @@ export function TaskComposer({
     t,
   });
   const submitBlockedReason = submitBlock?.reason ?? null;
-  const showSubmitBlockDetail = submitBlock?.code !== "write" && submitBlock?.code !== "tag";
+  const showSubmitBlockBanner = submitBlock?.code !== "write";
+  const showSubmitBlockDetail = submitBlock?.code === "relay"
+    || submitBlock?.code === "commentRelay"
+    || submitBlock?.code === "selectTask"
+    || submitBlock?.code === "uploading"
+    || submitBlock?.code === "uploadFailed";
+  const isSubmitButtonEmptyDisabled = user && content.trim().length === 0;
 
   const pulseTarget = (target: "input" | "attachments" | "blocker") => {
     setHighlightedTarget(target);
@@ -1626,7 +1632,7 @@ export function TaskComposer({
         </div>
       )}
 
-      {showExpandedControls && submitBlock && user && submitBlock.code !== "signin" && (
+      {showExpandedControls && submitBlock && user && submitBlock.code !== "signin" && showSubmitBlockBanner && (
         <div
           ref={blockerPanelRef}
           data-testid="composer-submit-block-panel"
@@ -2043,13 +2049,13 @@ export function TaskComposer({
                 }
                 void handleSubmit();
               }}
-              disabled={Boolean(submitBlock?.isHardDisabled)}
+              disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled}
               aria-label={submitActionLabel}
               title={submitBlock?.reason || submitActionLabel}
               className={cn(
                 "min-w-[12.5rem] px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2",
                 submitBlock && !submitBlock.isHardDisabled
-                  ? "bg-amber-500 text-amber-950 hover:bg-amber-500/90"
+                  ? "border border-border/60 bg-muted text-muted-foreground hover:bg-muted/90"
                   : "bg-primary text-primary-foreground hover:bg-primary/90",
                 isSendLaunching && "motion-send-launch"
               )}

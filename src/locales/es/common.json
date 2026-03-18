@@ -41,7 +41,7 @@
         "write": "Escribir mensaje",
         "tag": "Añadir #canal",
         "commentRelay": "Seleccionar feed",
-        "relay": "Corregir selección de feed",
+        "relay": "Seleccionar feed",
         "selectTask": "Seleccionar tarea",
         "uploading": "Esperar subidas",
         "uploadFailed": "Corregir archivos",

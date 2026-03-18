@@ -41,7 +41,7 @@
         "write": "Write message",
         "tag": "Add #channel",
         "commentRelay": "Select feed",
-        "relay": "Fix feed selection",
+        "relay": "Select feed",
         "selectTask": "Select task",
         "uploading": "Wait for uploads",
         "uploadFailed": "Fix attachments",
