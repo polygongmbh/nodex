@@ -1131,6 +1131,46 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(cancelAnimationFrameSpy).toHaveBeenCalled();
   });
 
+  it("uses the same active text treatment for populated mobile date and time controls", async () => {
+    const dueDate = new Date("2026-03-19T00:00:00.000Z");
+    const dueTime = "12:11";
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn
+        onSignInClick={() => {}}
+        composeRestoreRequest={{
+          id: 2,
+          state: {
+            content: "Restored #general",
+            taskType: "task",
+            dueDate,
+            dueTime,
+            explicitTagNames: [],
+            explicitMentionPubkeys: [],
+            attachments: [],
+          },
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      // Protect the UI contract that populated mobile date and time controls share the same active emphasis.
+      expect(screen.getByRole("button", { name: format(dueDate, "MMM d") })).toHaveClass("text-foreground");
+    });
+    expect(screen.getByDisplayValue(dueTime)).toHaveClass("text-foreground");
+  });
+
   it("shows location capture failure toast when geolocation errors", () => {
     const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
     const getCurrentPosition = vi.fn((_success: PositionCallback, error?: PositionErrorCallback) => {

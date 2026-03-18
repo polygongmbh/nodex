@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, it, expect, vi } from "vitest";
+import { format } from "date-fns";
 import { TaskComposer } from "./TaskComposer";
 import type { Channel, Relay, Person, TaskCreateResult } from "@/types";
 import { toast } from "sonner";
@@ -1513,5 +1514,38 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByDisplayValue("Recovered content")).toBeInTheDocument();
     expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("backend");
     expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
+  });
+
+  it("uses the same active text treatment for populated desktop date and time controls", async () => {
+    const dueDate = new Date("2026-03-19T00:00:00.000Z");
+    const dueTime = "12:11";
+
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        composeRestoreRequest={{
+          id: 2,
+          state: {
+            content: "Recovered content #backend",
+            taskType: "task",
+            dueDate,
+            dueTime,
+            explicitTagNames: [],
+            explicitMentionPubkeys: [],
+            attachments: [],
+          },
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      // Protect the UI contract that populated desktop date and time controls share the same active emphasis.
+      expect(screen.getByRole("button", { name: format(dueDate, "MMM d, yyyy") })).toHaveClass("text-foreground");
+    });
+    expect(screen.getByDisplayValue(dueTime)).toHaveClass("text-foreground");
   });
 });

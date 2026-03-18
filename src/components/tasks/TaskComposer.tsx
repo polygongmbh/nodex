@@ -1632,7 +1632,12 @@ export function TaskComposer({
             </select>
             <Popover>
               <PopoverTrigger asChild>
-                <button className="h-8 min-w-[6.5rem] rounded-md border border-border/50 px-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground">
+                <button
+                  className={cn(
+                    "h-8 min-w-[6.5rem] rounded-md border border-border/50 px-2 text-left text-sm transition-colors hover:bg-muted/50 hover:text-foreground",
+                    dueDate ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
                   {dueDate
                     ? format(dueDate, "MMM d, yyyy")
                     : t("composer.dates.setOptional", {

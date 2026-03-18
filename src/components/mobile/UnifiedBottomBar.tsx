@@ -1077,7 +1077,9 @@ export function UnifiedBottomBar({
                     "h-8 flex items-center gap-1.5 px-2 rounded-md border transition-colors text-xs leading-none",
                     activeSelector === "date"
                       ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:bg-muted/60"
+                      : dueDate
+                        ? "border-border text-foreground hover:bg-muted/60"
+                        : "border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                   )}
                 >
                   <Calendar className="w-3.5 h-3.5" />
@@ -1098,13 +1100,13 @@ export function UnifiedBottomBar({
                     <option value="end">{t("composer.dates.end")}</option>
                     <option value="milestone">{t("composer.dates.milestone")}</option>
                   </select>
-                  <div className="h-8 flex items-center gap-1.5 px-2 rounded-md border border-border bg-muted/30">
+                  <div className="h-8 flex items-center gap-1.5 px-2 rounded-md border border-border bg-muted/30 text-foreground">
                     <Clock className="w-3.5 h-3.5" />
                     <input
                       type="time"
                       value={dueTime}
                       onChange={(e) => setDueTime(e.target.value)}
-                      className="text-xs bg-transparent focus:outline-none w-[4.1rem]"
+                      className="w-[4.1rem] bg-transparent text-xs text-foreground focus:outline-none"
                     />
                   </div>
                   <button
