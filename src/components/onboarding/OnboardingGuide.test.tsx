@@ -129,7 +129,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         content: null,
       });
 
-      expect(screen.queryByTestId("onboarding-target-arrow")).not.toBeInTheDocument();
+      expect(screen.queryByRole("img", { name: /target indicator/i })).not.toBeInTheDocument();
 
       rerender(
         <div>
@@ -146,7 +146,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId("onboarding-target-arrow")).toBeInTheDocument();
+        expect(screen.getByRole("img", { name: /target indicator/i })).toBeInTheDocument();
       });
     });
   });
@@ -468,7 +468,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       content: <div data-onboarding="task-list">Task list</div>,
     });
 
-    expect(screen.getByTestId("onboarding-target-arrow")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /target indicator/i })).toBeInTheDocument();
   });
 
   it("keeps skip disabled for a few seconds on first step", () => {

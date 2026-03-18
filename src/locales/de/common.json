@@ -495,6 +495,7 @@
     },
     "dialog": {
       "ariaLabel": "Onboarding-Guide",
+      "targetArrowIndicator": "Zielindikator",
       "emptyTitle": "Keine Onboarding-Schritte verfügbar",
       "stepLabel": "Schritt {{current}} von {{total}}",
       "skip": "Überspringen",

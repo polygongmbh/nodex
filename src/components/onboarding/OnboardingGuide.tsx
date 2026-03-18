@@ -1078,8 +1078,8 @@ export function OnboardingGuide({
         <>
           {currentStep?.target && anchoredTargetRect && (
             <div
-              aria-hidden="true"
-              data-testid="onboarding-target-arrow"
+              role="img"
+              aria-label={t("onboarding.dialog.targetArrowIndicator")}
               className="absolute z-[129] pointer-events-none"
               style={getTargetArrowStyle()}
             >
