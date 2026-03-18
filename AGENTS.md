@@ -229,6 +229,7 @@ policies:
 - Always commit before handoff/final response unless the user explicitly says not to commit.
 - Make atomic commits that build individually and stay coherent.
 - You may amend commits with corrections if they are not yet pushed.
+- Before amending, inspect the current tip commit (`git log --oneline -1` or equivalent) and confirm it is the relevant local commit for the change.
 - Amend true follow-up fixes into the immediately relevant local commit when they are part of the same change.
 - Keep unrelated changes in separate commits even if they are discovered while working on an unpushed local commit.
 - If a commit only fixes the immediately previous local commit, squash it before handoff.
