@@ -16,13 +16,17 @@ describe("filter preferences persistence", () => {
   it("loads persisted relay ids", () => {
     localStorage.setItem("nodex.active-relays.v1", JSON.stringify(["demo", "relay-a"]));
 
-    expect(loadPersistedRelayIds(["demo"])).toEqual(new Set(["demo", "relay-a"]));
+    expect(loadPersistedRelayIds()).toEqual(new Set(["demo", "relay-a"]));
   });
 
-  it("falls back to defaults for invalid relay payloads", () => {
+  it("returns an empty selection for invalid relay payloads", () => {
     localStorage.setItem("nodex.active-relays.v1", JSON.stringify({ invalid: true }));
 
-    expect(loadPersistedRelayIds(["demo"])).toEqual(new Set(["demo"]));
+    expect(loadPersistedRelayIds()).toEqual(new Set());
+  });
+
+  it("returns an empty selection when relay ids are missing", () => {
+    expect(loadPersistedRelayIds()).toEqual(new Set());
   });
 
   it("saves relay ids", () => {

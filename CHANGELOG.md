@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Feed relay selection now restores as none selected when no valid persisted selection exists, instead of re-selecting all feeds after reload.
 - Closed tasks are now hidden from the feed and calendar views while remaining available in views that explicitly manage closed work.
 - Removing a relay no longer forces healthy remaining relays to reconnect, and relay reconnect handling now keeps a single live socket per relay URL instead of leaking duplicate WebSocket connections.
 - Sidebar channels and people now start folded by default, scale their folded previews with available height, prioritize selected and pinned items in the preview, and always keep pinned channels visible while folded.

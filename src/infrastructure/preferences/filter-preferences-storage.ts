@@ -15,21 +15,21 @@ const relayIdsSchema = z.array(z.string());
 const persistedChannelFiltersSchema = z.record(z.string(), z.unknown());
 const channelMatchModeSchema = z.enum(["and", "or"]);
 
-export function loadPersistedRelayIds(defaultRelayIds: string[]): Set<string> {
+export function loadPersistedRelayIds(): Set<string> {
   try {
     const raw = localStorage.getItem(ACTIVE_RELAYS_STORAGE_KEY);
     if (!raw) {
-      return new Set(defaultRelayIds);
+      return new Set();
     }
 
     const parsed = relayIdsSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) {
-      return new Set(defaultRelayIds);
+      return new Set();
     }
 
     return new Set(parsed.data);
   } catch {
-    return new Set(defaultRelayIds);
+    return new Set();
   }
 }
 

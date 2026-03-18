@@ -56,7 +56,6 @@ function Harness({
   const { handleRelayToggle, handleRelayExclusive, handleToggleAllRelays, effectiveActiveRelayIds } = useRelayFilterState({
     relays: relayList,
     t: ((key: string) => key) as unknown as TFunction,
-    defaultRelayIds: [],
     onRelayEnabled,
   });
 
@@ -128,12 +127,26 @@ describe("useRelayFilterState", () => {
     expect(onRelayEnabled).toHaveBeenCalledWith(connectedRelays[0]);
   });
 
-  it("auto-selects available relays when persisted ids do not match discovered relays", () => {
+  it("preserves an empty selection when no relay ids were persisted", () => {
+    render(<Harness />);
+
+    expect(screen.getByTestId("active-relay-ids").textContent).toBe("");
+  });
+
+  it("preserves an empty selection when persisted ids do not match discovered relays", () => {
     window.localStorage.setItem("nodex.active-relays.v1", JSON.stringify(["stale-relay-id"]));
 
     render(<Harness />);
 
-    expect(screen.getByTestId("active-relay-ids").textContent).toBe("relay-one,relay-two");
+    expect(screen.getByTestId("active-relay-ids").textContent).toBe("");
+  });
+
+  it("preserves an empty selection when persisted relay payload is invalid", () => {
+    window.localStorage.setItem("nodex.active-relays.v1", JSON.stringify({ invalid: true }));
+
+    render(<Harness />);
+
+    expect(screen.getByTestId("active-relay-ids").textContent).toBe("");
   });
 
   it("toggle-all selects only connected relays when mix of connected/disconnected", () => {

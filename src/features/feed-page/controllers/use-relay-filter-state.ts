@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TFunction } from "i18next";
 import { toast } from "sonner";
 import { Relay } from "@/types";
@@ -11,34 +11,17 @@ import {
 interface UseRelayFilterStateOptions {
   relays: Relay[];
   t: TFunction;
-  defaultRelayIds: string[];
   onRelayEnabled?: (relay: Relay) => void;
 }
 
-export function useRelayFilterState({ relays, t, defaultRelayIds, onRelayEnabled }: UseRelayFilterStateOptions) {
+export function useRelayFilterState({ relays, t, onRelayEnabled }: UseRelayFilterStateOptions) {
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
-    loadPersistedRelayIds(defaultRelayIds)
+    loadPersistedRelayIds()
   );
-  const didAutoInitializeRef = useRef(false);
 
   useEffect(() => {
     savePersistedRelayIds(activeRelayIds);
   }, [activeRelayIds]);
-
-  useEffect(() => {
-    if (didAutoInitializeRef.current) return;
-    if (relays.length === 0) return;
-
-    const availableRelayIds = new Set(relays.map((relay) => relay.id));
-    const hasMatchingSelection = Array.from(activeRelayIds).some((relayId) => availableRelayIds.has(relayId));
-    if (hasMatchingSelection) {
-      didAutoInitializeRef.current = true;
-      return;
-    }
-
-    didAutoInitializeRef.current = true;
-    setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
-  }, [activeRelayIds, relays]);
 
   const handleRelayToggle = (id: string) => {
     const relay = relays.find((r) => r.id === id);

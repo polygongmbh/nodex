@@ -43,7 +43,6 @@ import {
 } from "@/lib/presence-status";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import type { Nip99ListingStatus } from "@/types";
-import { getConfiguredDefaultRelayIds } from "@/infrastructure/nostr/default-relays";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
 import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
 import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
@@ -151,12 +150,6 @@ const Index = () => {
     return [...demoRelays, ...nostrRelayItems];
   }, [demoFeedActive, ndkRelays]);
 
-  const defaultRelayIds = useMemo(() => {
-    const configuredRelayIds = getConfiguredDefaultRelayIds();
-    if (!demoFeedActive) return configuredRelayIds;
-    return Array.from(new Set([DEMO_RELAY_ID, ...configuredRelayIds]));
-  }, [demoFeedActive]);
-
   const isMobile = useIsMobile();
   const {
     setActiveRelayIds,
@@ -167,7 +160,6 @@ const Index = () => {
   } = useRelayFilterState({
     relays,
     t,
-    defaultRelayIds,
     onRelayEnabled: (relay) => {
       if (
         relay.id !== DEMO_RELAY_ID &&
