@@ -1135,6 +1135,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("backend");
     expect(screen.queryByRole("button", { name: /insert hashtag/i })).not.toBeInTheDocument();
+    expect(screen.queryByText("Write a message first")).not.toBeInTheDocument();
   });
 
   it("blocks root task submit when multiple relays are selected", () => {

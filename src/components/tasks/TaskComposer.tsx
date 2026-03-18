@@ -1528,7 +1528,7 @@ export function TaskComposer({
               {tagChip.tag}
             </button>
           ))}
-          {submitBlockedReason && user && (
+          {showExpandedControls && submitBlockedReason && user && (
             <span className="ml-auto text-xs text-muted-foreground sm:text-right">{submitBlockedReason}</span>
           )}
         </div>
