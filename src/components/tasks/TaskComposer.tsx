@@ -1638,7 +1638,7 @@ export function TaskComposer({
       {showExpandedControls && submitBlock && user && submitBlock.code !== "signin" && showSubmitBlockBanner && (
         <div
           ref={blockerPanelRef}
-          data-testid="composer-submit-block-panel"
+          role="alert"
           className={cn(
             "order-8 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm",
             highlightedTarget === "blocker" && "ring-2 ring-amber-400"
@@ -2030,7 +2030,6 @@ export function TaskComposer({
                       ? <HandHelping className="w-4 h-4" />
                       : <MessageSquare className="w-4 h-4" />;
               const submitButtonTitle = submitBlock?.reason || submitActionLabel;
-              const submitDataTestId = taskType === "comment" ? "compose-secondary-action-comment" : "compose-primary-action";
               if (!user) {
                 return (
                   <button
@@ -2047,7 +2046,6 @@ export function TaskComposer({
               }
               return (
             <button
-              data-testid={submitDataTestId}
               onClick={() => {
                 if (submitBlock && !submitBlock.isHardDisabled) {
                   handleBlockedSubmitAttempt();

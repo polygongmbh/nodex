@@ -224,7 +224,7 @@ describe("UnifiedBottomBar auth gating", () => {
     const sendButton = getMobilePrimaryAction();
     expect(sendButton).toBeEnabled();
     expect(sendButton).toHaveAttribute("title", "Write a message first");
-    expect(screen.queryByTestId("mobile-task-submit-block-panel")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -571,7 +571,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
 
     expect(getMobilePrimaryAction()).toBeInTheDocument();
-    expect(screen.queryByTestId("mobile-compose-comment-action")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^add comment$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^add comment$/i })).not.toBeInTheDocument();
   });
 

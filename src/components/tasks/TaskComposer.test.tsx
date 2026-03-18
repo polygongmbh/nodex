@@ -6,8 +6,6 @@ import type { Channel, Relay, Person, TaskCreateResult } from "@/types";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import {
-  getComposerCommentAction,
-  getComposerPrimaryAction,
   getCommentComposerInput,
   getOfferComposerInput,
   getRequestComposerInput,
@@ -156,8 +154,9 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Ship update" },
     });
 
-    expect(screen.getByTestId("composer-submit-block-panel")).toHaveTextContent("Can't post yet");
-    expect(screen.getByTestId("composer-submit-block-panel")).toHaveTextContent("Add or select at least one #channel");
+    const blockPanel = screen.getByRole("alert");
+    expect(blockPanel).toHaveTextContent("Can't post yet");
+    expect(blockPanel).toHaveTextContent("Add or select at least one #channel");
     expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Add #channel");
   });
 
@@ -179,7 +178,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
 
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByTestId("composer-submit-block-panel")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 
   it("shows offer/request kind options only when feed message types are enabled", () => {

@@ -1112,9 +1112,7 @@ export function OnboardingGuide({
                   {t("onboarding.dialog.stepLabel", { current: stepIndex + 1, total: activeSteps.length })}
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold" data-testid="onboarding-step-title">
-                    {currentStep.title}
-                  </h2>
+                  <h2 className="text-lg font-semibold">{currentStep.title}</h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     {renderGuideTextWithItalics(currentStep.description)}
                   </p>

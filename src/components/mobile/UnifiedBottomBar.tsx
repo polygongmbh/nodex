@@ -1119,7 +1119,7 @@ export function UnifiedBottomBar({
           )}
           {showInlineTaskSubmitBlock && showTaskSubmitBlockBanner ? (
             <div
-              data-testid="mobile-task-submit-block-panel"
+              role="alert"
               className="inline-flex max-w-full items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-2 text-left"
             >
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
@@ -1517,7 +1517,6 @@ export function UnifiedBottomBar({
                   )}
                   aria-label={isSignedIn ? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")) : t("composer.hints.signInToCreate")}
                   title={primarySendTitle}
-                  data-testid="mobile-compose-primary-action"
                 >
                   <span className={cn(isSendLaunching && "motion-send-launch")}>
                     {!isSignedIn ? <LogIn className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
@@ -1558,7 +1557,6 @@ export function UnifiedBottomBar({
                       disabled={!canSendComment}
                     className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       aria-label={t("composer.actions.addComment")}
-                      data-testid="mobile-compose-comment-action"
                       title={t("composer.actions.addComment")}
                     >
                       <MessageSquare className="w-4 h-4" />
