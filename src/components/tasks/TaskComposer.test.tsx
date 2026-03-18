@@ -1436,7 +1436,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
   });
 
-  it("blocks comment submit when no parent task is selected", () => {
+  it("allows root-level comment submit when a tag and postable relay are present", () => {
     render(
       <TaskComposer
         onSubmit={() => successfulCreateResult}
@@ -1454,8 +1454,8 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Looks good #backend" },
     });
 
-    expect(screen.getByText("Select a task to reply to")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add comment/i })).toBeDisabled();
+    expect(screen.queryByText("Select a task to reply to")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add comment/i })).not.toBeDisabled();
   });
 
   it("allows comment submit when parentId is provided", () => {

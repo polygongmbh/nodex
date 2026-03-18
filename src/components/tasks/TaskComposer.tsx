@@ -943,7 +943,8 @@ export function TaskComposer({
   const hasNoConnectedRelay = !selectedRelayObjects.some(isPostableRelay);
   const hasInvalidRootTaskRelaySelection =
     taskType === "task" && !parentId && (selectedRelays.length !== 1 || hasNoConnectedRelay);
-  const hasCommentWithoutParent = taskType === "comment" && !parentId;
+  const hasInvalidRootCommentRelaySelection =
+    taskType === "comment" && !parentId && hasNoConnectedRelay;
   const submitBlockedReason = !user
     ? t("composer.blocked.signin")
     : hasPendingAttachmentUploads
@@ -954,13 +955,11 @@ export function TaskComposer({
       ? t("composer.blocked.write")
     : !hasAtLeastOneTag && !canInheritParentTags
       ? t("composer.blocked.tag")
-      : hasCommentWithoutParent
-        ? t("composer.blocked.selectTask")
-        : hasInvalidRootTaskRelaySelection
-            ? t("composer.blocked.relay")
-          : isPublishing
-            ? t("composer.blocked.publishing")
-            : null;
+      : hasInvalidRootTaskRelaySelection || hasInvalidRootCommentRelaySelection
+        ? t("composer.blocked.relay")
+        : isPublishing
+          ? t("composer.blocked.publishing")
+          : null;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (showHashtagSuggestions) {
