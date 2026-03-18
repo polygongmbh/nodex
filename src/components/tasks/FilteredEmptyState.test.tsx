@@ -111,6 +111,7 @@ describe("FilteredEmptyState", () => {
 
   it("truncates long parent context at word boundaries while preserving start and end fragments", () => {
     const longParentTitle = "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA";
+    const expectedTail = longParentTitle.slice(-20);
     render(
       <FilteredEmptyState
         variant="feed"
@@ -125,7 +126,27 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText((content) =>
       content.includes('under "This immediate parent')
       && content.includes(" ... ")
-      && content.includes('ZETA-OMEGA".')
+      && content.includes(`${expectedTail}".`)
+    )).toBeInTheDocument();
+  });
+
+  it("does not treat umlauts as boundaries when preserving the end fragment", () => {
+    const umlautEndingTitle = "Context prefix that is definitely long enough to trigger truncation and ends with kontinuierlichÜbermäßigÄußerst";
+    const expectedTail = umlautEndingTitle.slice(-20);
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        contextTaskTitle={umlautEndingTitle}
+        mode="footer"
+      />
+    );
+
+    expect(screen.getByText((content) =>
+      content.includes(" ... ")
+      && content.includes(`${expectedTail}".`)
     )).toBeInTheDocument();
   });
 

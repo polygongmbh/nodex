@@ -45,7 +45,7 @@ function resolveRelayStatus(relay: Relay): NonNullable<Relay["connectionStatus"]
 
 const CONTEXT_TITLE_MAX_CHARS = 72;
 const CONTEXT_TITLE_PREFIX_CHARS = 44;
-const CONTEXT_TITLE_SUFFIX_CHARS = 14;
+const CONTEXT_TITLE_SUFFIX_CHARS = 20;
 
 function trimAtWordBoundaryStart(value: string, maxChars: number): string {
   if (value.length <= maxChars) return value;
@@ -59,11 +59,11 @@ function trimAtWordBoundaryStart(value: string, maxChars: number): string {
 
 function trimAtWordBoundaryEnd(value: string, maxChars: number): string {
   if (value.length <= maxChars) return value;
-  const rawSlice = value.slice(-maxChars - 1);
+  const rawSlice = value.slice(-maxChars - 8);
   const firstSpace = rawSlice.indexOf(" ");
-  if (firstSpace >= 0 && firstSpace <= Math.floor(maxChars * 0.4)) {
+  if (firstSpace >= 0 && firstSpace <= Math.floor(maxChars * 0.35)) {
     const candidate = rawSlice.slice(firstSpace + 1).trimStart();
-    if (candidate.length > 0) return candidate;
+    if (candidate.length >= maxChars) return candidate;
   }
   return value.slice(-maxChars).trimStart();
 }
