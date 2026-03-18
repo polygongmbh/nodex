@@ -220,6 +220,7 @@ policies:
 - Before adjusting existing tests, first determine whether failures indicate regressions or deliberate behavior changes.
 - Prefer behavior/outcome tests over implementation-detail tests.
 - Keep UI tests focused on key flows and accessibility contracts.
+- Prefer semantics-based queries (`getByRole` with accessible names or stable `data-testid`) instead of literal text searches and keep copy-specific assertions inside dedicated i18n/messaging suites.
 - Do not add cosmetic-only assertions unless explicitly required; any class/style assertion must include a short comment explaining the protected product contract.
 - Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
 - Treat lint warnings as actionable backlog; do not introduce new warnings. If a lint rule is intentionally relaxed or disabled, document scope and rationale in the same commit.
