@@ -173,7 +173,7 @@ describe("useIndexFilters", () => {
     fireEvent.click(screen.getByRole("button", { name: "PersonExclusive" }));
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
 
-    expect(screen.getByTestId("relay-ids")).toHaveTextContent("relay-one,relay-two");
+    expect(screen.getByTestId("relay-ids")).toHaveTextContent("");
     expect(screen.getByTestId("channel-state-general")).toHaveTextContent("neutral");
     expect(screen.getByTestId("channel-match-mode")).toHaveTextContent("and");
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");

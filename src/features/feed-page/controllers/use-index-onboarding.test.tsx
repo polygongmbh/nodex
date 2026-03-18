@@ -100,7 +100,7 @@ describe("useIndexOnboarding", () => {
     expect(screen.getByTestId("current-view")).toHaveTextContent("feed");
     expect(screen.getByTestId("focused-task")).toHaveTextContent("");
     expect(screen.getByTestId("search-query")).toHaveTextContent("");
-    expect(screen.getByTestId("relay-ids")).toHaveTextContent("relay-one,relay-two");
+    expect(screen.getByTestId("relay-ids")).toHaveTextContent("");
     expect(screen.getByTestId("channel-state")).toHaveTextContent("neutral");
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");
   });

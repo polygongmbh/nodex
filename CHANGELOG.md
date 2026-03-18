@@ -17,6 +17,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Loading empty-state microcopy now rotates through a larger set of wellness-style waiting prompts with updated localization tone in English, German, and Spanish.
 - Feed/tree/table scope hints now show a true end-of-content footer (`This is all ...`) when filtered results are visible, while `No post yet ...` remains reserved for actual zero-result states.
 - Unfiltered collection empty states now rotate through poetic localized variants, with new curated copy for English, German, and Spanish.
+- Clearing filters now consistently deactivates all feeds (including saved-filter toggle-off and onboarding reset flows) instead of reactivating every feed.
 
 ## [2.2.0] - 2026-03-18
 Minor release for broader user-facing compose/filter/feed UX updates and relay stability fixes (4545 lines changed since `v2.1.0`).

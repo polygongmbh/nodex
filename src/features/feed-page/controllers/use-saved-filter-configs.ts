@@ -123,7 +123,7 @@ export function useSavedFilterConfigs({
     const nextRelayIds = new Set(
       configuration.relayIds.filter((relayId) => availableRelayIds.has(relayId))
     );
-    setActiveRelayIds(nextRelayIds.size > 0 ? nextRelayIds : new Set(relays.map((relay) => relay.id)));
+    setActiveRelayIds(nextRelayIds);
 
     const nextChannelStates = new Map<string, Channel["filterState"]>();
     for (const [channelId, state] of Object.entries(configuration.channelStates)) {

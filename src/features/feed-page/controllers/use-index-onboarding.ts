@@ -162,7 +162,7 @@ export function useIndexOnboarding({
       setCurrentView("feed");
       setFocusedTaskId(null);
       setSearchQuery("");
-      setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
+      setActiveRelayIds(new Set());
       setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
       setPeople((prev) => mapPeopleSelection(prev, () => false));
       return;
@@ -176,7 +176,7 @@ export function useIndexOnboarding({
 
     setFocusedTaskId(null);
     setSearchQuery("");
-    setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
+    setActiveRelayIds(new Set());
     setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
     setPeople((prev) => mapPeopleSelection(prev, () => false));
   }, [channels, isMobile, relays, setActiveRelayIds, setChannelFilterStates, setCurrentView, setFocusedTaskId, setPeople, setSearchQuery]);

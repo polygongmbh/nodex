@@ -54,7 +54,7 @@ function Harness() {
     setPeople,
     setQuickFilters,
     resetFiltersToDefault: () => {
-      setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
+      setActiveRelayIds(new Set());
       setChannelFilterStates(new Map());
       setChannelMatchMode("and");
       setPeople((prev) => mapPeopleSelection(prev, () => false));
@@ -153,5 +153,44 @@ describe("useSavedFilterConfigs", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "DeleteFirst" }));
     expect(screen.getByTestId("config-count")).toHaveTextContent("0");
+  });
+
+  it("deactivates all relays when toggling off the active saved configuration", () => {
+    render(<Harness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.getByTestId("relay-ids")).toHaveTextContent("relay-one");
+
+    fireEvent.click(screen.getByRole("button", { name: "ApplyFirst" }));
+    expect(screen.getByTestId("relay-ids")).toHaveTextContent("");
+  });
+
+  it("keeps all relays deactivated when applying a configuration with stale relay ids", () => {
+    window.localStorage.setItem("nodex.saved-filter-configurations.v1", JSON.stringify({
+      activeConfigurationId: null,
+      configurations: [
+        {
+          id: "stale-config",
+          name: "Stale",
+          relayIds: ["missing-relay"],
+          channelStates: {},
+          selectedPeopleIds: [],
+          channelMatchMode: "and",
+          quickFilters: {
+            recentEnabled: false,
+            recentDays: 7,
+            priorityEnabled: false,
+            minPriority: 50,
+          },
+          createdAt: "2026-03-18T00:00:00.000Z",
+          updatedAt: "2026-03-18T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    render(<Harness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "ApplyFirst" }));
+    expect(screen.getByTestId("relay-ids")).toHaveTextContent("");
   });
 });

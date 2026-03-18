@@ -317,12 +317,14 @@ export function useIndexFilters({
   }, [setPeople, sidebarPeople, t]);
 
   const resetFiltersToDefault = useCallback(() => {
-    setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
+    setActiveRelayIds(new Set());
     setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
     setChannelMatchMode("and");
     setPeople((prev) => mapPeopleSelection(prev, () => false));
     setQuickFilters(normalizeQuickFilterState());
-    featureDebugLog("quick-filters", "Reset quick filters to defaults");
+    featureDebugLog("quick-filters", "Reset filters to defaults with all feeds deactivated", {
+      availableRelayCount: relays.length,
+    });
   }, [channels, relays, setActiveRelayIds, setChannelFilterStates, setChannelMatchMode, setPeople, setQuickFilters]);
 
   const handleRecentDaysChange = useCallback((value: number) => {
