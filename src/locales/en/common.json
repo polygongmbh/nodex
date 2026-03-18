@@ -890,10 +890,17 @@
       "loading": {
         "scopeOnly": "Loading posts {{scope}}.",
         "none": "Loading posts...",
-        "easterEggs": {
-          "glanceWindow": "How about a glance out of the window?",
-          "stretch": "How about a little stretch?",
-          "water": "Maybe take a sip of water."
+        "waitingPrompts": {
+          "calmBreath": "One calm breath while we pull this in.",
+          "glanceAway": "Quick glance away from the screen.",
+          "smallPause": "Small pause, then back in.",
+          "shoulderRoll": "One shoulder roll and we continue.",
+          "syncBlinks": "While it syncs, give your eyes a couple blinks.",
+          "unclenchExhale": "Unclench, exhale, continue.",
+          "shortBeat": "A short beat while everything catches up.",
+          "postureSettle": "Sit up a touch, we're nearly there.",
+          "sipWater": "A sip of water fits here.",
+          "momentMore": "Just a moment more, then go time."
         }
       },
       "error": {

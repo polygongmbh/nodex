@@ -9,6 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Feed switches now ignore selected channel filters that have no posts in the newly active feed, restoring the original feed-local filtering behavior instead of leaving the new feed empty.
 - Relay-load failure empty states now show feed-only source hints (`Could not load posts from ...`) and use status-aware informational subtitles that distinguish read rejection from connection failures.
 - Startup relay fallback probing now runs again when no relays are configured via env, fixing a regression introduced in `v2.0` that left the app booting with an empty relay list on fallback-only deployments.
+- Loading empty-state microcopy now rotates through a larger set of wellness-style waiting prompts with updated localization tone in English, German, and Spanish.
 
 ## [2.2.0] - 2026-03-18
 Minor release for broader user-facing compose/filter/feed UX updates and relay stability fixes (4545 lines changed since `v2.1.0`).

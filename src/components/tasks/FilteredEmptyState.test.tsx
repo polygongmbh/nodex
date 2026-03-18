@@ -59,7 +59,7 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText("Broaden the scope or break the silence.")).toBeInTheDocument();
   });
 
-  it("renders a loading message and easter egg subtitle while the selected relay is connecting", () => {
+  it("renders a loading message and waiting prompt subtitle while the selected relay is connecting", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
 
     render(
@@ -74,7 +74,7 @@ describe("FilteredEmptyState", () => {
     expect(
       screen.getByText("Loading posts from #ops, by Alice, excluding #frontend, on relay.one.")
     ).toBeInTheDocument();
-    expect(screen.getByText("How about a glance out of the window?")).toBeInTheDocument();
+    expect(screen.getByText("One calm breath while we pull this in.")).toBeInTheDocument();
   });
 
   it("renders a feed error message when the selected relay is unavailable", () => {

@@ -890,10 +890,17 @@
       "loading": {
         "scopeOnly": "Lade Beiträge {{scope}}.",
         "none": "Lade Beiträge ...",
-        "easterEggs": {
-          "glanceWindow": "Wie wäre es mit einem Blick aus dem Fenster?",
-          "stretch": "Wie wäre es mit einer kleinen Dehnung?",
-          "water": "Vielleicht kurz einen Schluck Wasser?"
+        "waitingPrompts": {
+          "calmBreath": "Einmal ruhig durchatmen, wir laden gerade.",
+          "glanceAway": "Kurz den Blick vom Bildschirm lösen.",
+          "smallPause": "Kurze Pause, dann geht's weiter.",
+          "shoulderRoll": "Schultern kurz lockern, dann geht's weiter.",
+          "syncBlinks": "Noch ein Augenblick, dann kommt alles ins Klick.",
+          "unclenchExhale": "Lockerlassen, ausatmen, weiter.",
+          "shortBeat": "Noch ein kurzer Schnauf, dann ist alles drauf.",
+          "postureSettle": "Kurz aufrichten, wir sind fast da.",
+          "sipWater": "Ein Schluck Wasser passt genau jetzt.",
+          "momentMore": "Nur noch einen Moment, dann geht's los."
         }
       },
       "error": {

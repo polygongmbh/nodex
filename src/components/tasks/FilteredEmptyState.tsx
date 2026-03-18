@@ -33,13 +33,20 @@ export function FilteredEmptyState({
     t,
   });
   const loadingSubtitle = useMemo(() => {
-    const easterEggKeys = [
-      "tasks.empty.loading.easterEggs.glanceWindow",
-      "tasks.empty.loading.easterEggs.stretch",
-      "tasks.empty.loading.easterEggs.water",
+    const waitingPromptKeys = [
+      "tasks.empty.loading.waitingPrompts.calmBreath",
+      "tasks.empty.loading.waitingPrompts.glanceAway",
+      "tasks.empty.loading.waitingPrompts.smallPause",
+      "tasks.empty.loading.waitingPrompts.shoulderRoll",
+      "tasks.empty.loading.waitingPrompts.syncBlinks",
+      "tasks.empty.loading.waitingPrompts.unclenchExhale",
+      "tasks.empty.loading.waitingPrompts.shortBeat",
+      "tasks.empty.loading.waitingPrompts.postureSettle",
+      "tasks.empty.loading.waitingPrompts.sipWater",
+      "tasks.empty.loading.waitingPrompts.momentMore",
     ] as const;
-    const index = Math.floor(Math.random() * easterEggKeys.length);
-    return t(easterEggKeys[index]);
+    const index = Math.floor(Math.random() * waitingPromptKeys.length);
+    return t(waitingPromptKeys[index]);
   }, [t]);
 
   if (mode === "screen" && scopeModel.screenState === "loading") {
