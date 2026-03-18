@@ -61,4 +61,38 @@ describe("TaskTree focus sync", () => {
     fireEvent.click(screen.getByRole("button", { name: /up/i }));
     expect(onFocusTask).toHaveBeenCalledWith(null);
   });
+
+  it("activates a task when clicking it from the focused composer", () => {
+    const onFocusTask = vi.fn();
+    render(
+      <TaskTree
+        tasks={[rootTask, childTask]}
+        allTasks={[rootTask, childTask]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        focusedTaskId="root"
+        onFocusTask={onFocusTask}
+      />
+    );
+
+    const composerInput = screen.getByRole("textbox", {
+      name: /what's up\? use #channels and @mentions/i,
+    });
+    fireEvent.focus(composerInput);
+
+    const taskButton = screen.getByText("Child task").closest('[role="button"]');
+    expect(taskButton).not.toBeNull();
+    if (!taskButton) {
+      throw new Error("Expected task button for Child task");
+    }
+    fireEvent.mouseDown(taskButton);
+    fireEvent.click(taskButton);
+
+    expect(onFocusTask).toHaveBeenCalledWith("child");
+  });
 });

@@ -1301,12 +1301,45 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.queryByText("Write a message first")).not.toBeInTheDocument();
 
     fireEvent.mouseDown(outsideButton);
+    fireEvent.click(outsideButton);
 
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: /insert hashtag/i })).not.toBeInTheDocument();
     });
 
     outsideButton.remove();
+  });
+
+  it("waits until the outside click completes before collapsing the empty adaptive composer", async () => {
+    const outsideTarget = document.createElement("div");
+    document.body.appendChild(outsideTarget);
+
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={[{ id: "backend", name: "backend", filterState: "included" }]}
+        people={people}
+        onCancel={() => {}}
+        adaptiveSize
+      />
+    );
+
+    const textarea = getTaskComposerInput();
+    fireEvent.focus(textarea);
+
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
+
+    fireEvent.mouseDown(outsideTarget);
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
+
+    fireEvent.click(outsideTarget);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /insert hashtag/i })).not.toBeInTheDocument();
+    });
+
+    outsideTarget.remove();
   });
 
   it("does not collapse when the empty adaptive composer blurs without a next focus target", () => {

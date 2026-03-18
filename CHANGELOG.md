@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Clicking a task from an empty focused composer now activates the task on the first click instead of losing the activation while the composer collapses.
 - URL-initialized people filters now hydrate once and remain user-controllable, fixing a regression where startup `p=` selections could not be deselected after profiles loaded.
 - Feed/person filters now keep URL-selected channels and people during initial relay hydration, clicked authors can stay visible as active sidebar people filters, scoped cache bootstraps from existing relay caches when entering a cold scope, and all task views now show the same loading row in place of breadcrumbs while hydrating.
 - Sidebar filter toasts now use clearer natural-language phrasing (including relay domains instead of relay display names), and people filters now include posts authored by selected people as well as posts tagging them even when assignee metadata is also present.

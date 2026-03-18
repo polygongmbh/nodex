@@ -291,6 +291,7 @@ export function TaskComposer({
   const dueDatePopoverContentRef = useRef<HTMLDivElement>(null);
   const attachmentFileRef = useRef<Record<string, File>>({});
   const internalMouseDownWithinComposerRef = useRef(false);
+  const pendingOutsidePointerInteractionRef = useRef(false);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
   const remediationHighlightTimeoutRef = useRef<number | null>(null);
   const prevIncludedChannelsRef = useRef<string[]>([]);
@@ -332,16 +333,31 @@ export function TaskComposer({
   useEffect(() => {
     if (!adaptiveSize || !isExpanded || content.trim()) return;
 
+    const isOutsideComposer = (target: EventTarget | null) => {
+      if (!(target instanceof Node)) return false;
+      if (composerRef.current?.contains(target)) return false;
+      if (dueDatePopoverContentRef.current?.contains(target)) return false;
+      return true;
+    };
+
     const handleDocumentMouseDown = (event: MouseEvent) => {
-      const target = event.target;
-      if (target instanceof Node && composerRef.current?.contains(target)) return;
-      if (target instanceof Node && dueDatePopoverContentRef.current?.contains(target)) return;
+      pendingOutsidePointerInteractionRef.current = isOutsideComposer(event.target);
+    };
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (!isOutsideComposer(event.target)) {
+        pendingOutsidePointerInteractionRef.current = false;
+        return;
+      }
+      pendingOutsidePointerInteractionRef.current = false;
       setIsExpanded(false);
     };
 
     document.addEventListener("mousedown", handleDocumentMouseDown, true);
+    document.addEventListener("click", handleDocumentClick);
     return () => {
       document.removeEventListener("mousedown", handleDocumentMouseDown, true);
+      document.removeEventListener("click", handleDocumentClick);
     };
   }, [
     adaptiveSize,
@@ -1385,6 +1401,7 @@ export function TaskComposer({
             if (!nextFocusedElement || hadInternalMouseDown) return;
             if (composerRef.current?.contains(nextFocusedElement)) return;
             if (dueDatePopoverContentRef.current?.contains(nextFocusedElement)) return;
+            if (pendingOutsidePointerInteractionRef.current) return;
             setIsExpanded(false);
           }}
           aria-label={
