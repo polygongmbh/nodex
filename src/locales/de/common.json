@@ -884,7 +884,7 @@
       "noneYet": "Noch keine Aufgaben",
       "filtered": {
         "scopeOnly": "Noch kein Beitrag {{scope}}.",
-        "showingOnlyScope": "Es werden nur Aufgaben {{scope}} angezeigt.",
+        "showingOnlyScope": "Das ist alles {{scope}}.",
         "mobileFallback": "Nichts entspricht dem aktuellen Bereich, deshalb zeigt diese Ansicht stattdessen alles an.",
         "action": "Erweitere den Bereich oder brich die Stille."
       },
@@ -925,6 +925,7 @@
         "relays": "auf {{relays}}",
         "relaysError": "aus {{relays}}",
         "search": "mit „{{query}}“",
+        "contextUnder": "unter {{title}}",
         "listWithOthers": "{{items}} und {{count}} weitere"
       }
     }

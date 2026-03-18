@@ -10,6 +10,7 @@ interface FilteredEmptyStateProps {
   channels: Channel[];
   people: Person[];
   searchQuery?: string;
+  contextTaskTitle?: string;
   mode?: "screen" | "inline" | "mobile" | "footer";
   className?: string;
 }
@@ -20,6 +21,7 @@ export function FilteredEmptyState({
   channels,
   people,
   searchQuery = "",
+  contextTaskTitle = "",
   mode = "screen",
   className,
 }: FilteredEmptyStateProps) {
@@ -29,6 +31,7 @@ export function FilteredEmptyState({
     channels,
     people,
     searchQuery,
+    contextTaskTitle,
     locale: i18n.resolvedLanguage || i18n.language || "en",
     t,
   });

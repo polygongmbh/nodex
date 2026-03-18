@@ -200,10 +200,13 @@ export function TaskTree({
         channels,
         people,
         searchQuery,
+        contextTaskTitle: currentContextId
+          ? allTasks.find((task) => task.id === currentContextId)?.content
+          : "",
         locale: i18n.resolvedLanguage || i18n.language || "en",
         t,
       }),
-    [channels, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
+    [allTasks, channels, currentContextId, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
   );
   const hasSourceTaskContent = baseVisibleTasks.length > 0;
   const shouldShowMobileScopeFallback =
@@ -454,6 +457,7 @@ export function TaskTree({
             channels={channels}
             people={people}
             searchQuery={searchQuery}
+            contextTaskTitle={currentContextTask?.content}
             mode="mobile"
           />
         ) : null}
@@ -464,6 +468,7 @@ export function TaskTree({
             channels={channels}
             people={people}
             searchQuery={searchQuery}
+            contextTaskTitle={currentContextTask?.content}
           />
         ) : (
           <>
@@ -501,6 +506,7 @@ export function TaskTree({
                 channels={channels}
                 people={people}
                 searchQuery={searchQuery}
+                contextTaskTitle={currentContextTask?.content}
                 mode="footer"
               />
             ) : null}
@@ -511,6 +517,7 @@ export function TaskTree({
                 channels={channels}
                 people={people}
                 searchQuery={searchQuery}
+                contextTaskTitle={currentContextTask?.content}
                 mode="inline"
               />
             ) : null}

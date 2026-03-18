@@ -72,9 +72,41 @@ describe("FilteredEmptyState", () => {
 
     expect(screen.getByTestId("filtered-scope-footer")).toBeInTheDocument();
     expect(
-      screen.getByText("Showing only tasks in #ops, by Alice, excluding #frontend, on relay.one.")
+      screen.getByText("This is all in #ops, by Alice, excluding #frontend, on relay.one.")
     ).toBeInTheDocument();
     expect(screen.queryByText("No post yet")).not.toBeInTheDocument();
+  });
+
+  it("appends immediate parent context to empty and footer scope sentences", () => {
+    const parentTitle = "Parent Task";
+    const { rerender } = render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        contextTaskTitle={parentTitle}
+      />
+    );
+
+    expect(
+      screen.getByText(`No post yet in #ops, by Alice, excluding #frontend, on relay.one, under ${parentTitle}.`)
+    ).toBeInTheDocument();
+
+    rerender(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        contextTaskTitle={parentTitle}
+        mode="footer"
+      />
+    );
+
+    expect(
+      screen.getByText(`This is all in #ops, by Alice, excluding #frontend, on relay.one, under ${parentTitle}.`)
+    ).toBeInTheDocument();
   });
 
   it("renders a loading message and waiting prompt subtitle while the selected relay is connecting", () => {

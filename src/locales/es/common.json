@@ -884,7 +884,7 @@
       "noneYet": "Aún no hay tareas",
       "filtered": {
         "scopeOnly": "Aún no hay ninguna publicación {{scope}}.",
-        "showingOnlyScope": "Mostrando solo tareas {{scope}}.",
+        "showingOnlyScope": "Esto es todo {{scope}}.",
         "mobileFallback": "Nada coincide con el alcance actual, así que esta vista muestra todo en su lugar.",
         "action": "Amplía el alcance o rompe el silencio."
       },
@@ -925,6 +925,7 @@
         "relays": "en {{relays}}",
         "relaysError": "desde {{relays}}",
         "search": "que coincidan con «{{query}}»",
+        "contextUnder": "bajo {{title}}",
         "listWithOthers": "{{items}} y {{count}} más"
       }
     }

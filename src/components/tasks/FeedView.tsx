@@ -264,10 +264,13 @@ export function FeedView({
         channels,
         people,
         searchQuery,
+        contextTaskTitle: focusedTaskId
+          ? allTasks.find((task) => task.id === focusedTaskId)?.content
+          : "",
         locale: i18n.resolvedLanguage || i18n.language || "en",
         t,
       }),
-    [channels, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
+    [allTasks, channels, focusedTaskId, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
   );
   const hasSourceFeedContent = allFeedEntries.length > 0;
   const shouldShowMobileScopeFallback =
@@ -1086,6 +1089,7 @@ export function FeedView({
             channels={channels}
             people={people}
             searchQuery={searchQuery}
+            contextTaskTitle={focusedTask?.content}
             mode="mobile"
           />
         ) : null}
@@ -1096,6 +1100,7 @@ export function FeedView({
             channels={channels}
             people={people}
             searchQuery={searchQuery}
+            contextTaskTitle={focusedTask?.content}
           />
         ) : (
           <>
@@ -1107,6 +1112,7 @@ export function FeedView({
                 channels={channels}
                 people={people}
                 searchQuery={searchQuery}
+                contextTaskTitle={focusedTask?.content}
                 mode="footer"
               />
             ) : null}
@@ -1117,6 +1123,7 @@ export function FeedView({
                 channels={channels}
                 people={people}
                 searchQuery={searchQuery}
+                contextTaskTitle={focusedTask?.content}
                 mode="inline"
               />
             ) : null}

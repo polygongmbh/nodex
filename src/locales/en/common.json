@@ -884,7 +884,7 @@
       "noneYet": "No tasks yet",
       "filtered": {
         "scopeOnly": "No post yet {{scope}}.",
-        "showingOnlyScope": "Showing only tasks {{scope}}.",
+        "showingOnlyScope": "This is all {{scope}}.",
         "mobileFallback": "Nothing matches the current scope, so this view is showing everything instead.",
         "action": "Broaden the scope or break the silence."
       },
@@ -925,6 +925,7 @@
         "relays": "on {{relays}}",
         "relaysError": "from {{relays}}",
         "search": "matching “{{query}}”",
+        "contextUnder": "under {{title}}",
         "listWithOthers": "{{items}}, and {{count}} others"
       }
     }

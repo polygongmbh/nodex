@@ -333,10 +333,13 @@ export function ListView({
         channels,
         people,
         searchQuery,
+        contextTaskTitle: focusedTaskId
+          ? allTasks.find((task) => task.id === focusedTaskId)?.content
+          : "",
         locale: i18n.resolvedLanguage || i18n.language || "en",
         t,
       }),
-    [channels, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
+    [allTasks, channels, focusedTaskId, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
   );
   const hasSourceListContent = baseListTasks.length > 0;
   const shouldShowInlineEmptyHint =
@@ -747,6 +750,7 @@ export function ListView({
                     channels={channels}
                     people={people}
                     searchQuery={searchQuery}
+                    contextTaskTitle={focusedTask?.content}
                     className="py-8"
                   />
                 </td>
@@ -978,6 +982,7 @@ export function ListView({
                         channels={channels}
                         people={people}
                         searchQuery={searchQuery}
+                        contextTaskTitle={focusedTask?.content}
                         mode="footer"
                         className="py-6"
                       />
@@ -993,6 +998,7 @@ export function ListView({
                         channels={channels}
                         people={people}
                         searchQuery={searchQuery}
+                        contextTaskTitle={focusedTask?.content}
                         mode="inline"
                         className="py-6"
                       />

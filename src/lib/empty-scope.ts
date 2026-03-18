@@ -9,6 +9,7 @@ interface BuildEmptyScopeModelParams {
   channels: Channel[];
   people: Person[];
   searchQuery?: string;
+  contextTaskTitle?: string;
   locale: string;
   t: TranslateFn;
 }
@@ -47,6 +48,7 @@ export function buildEmptyScopeModel({
   channels,
   people,
   searchQuery = "",
+  contextTaskTitle = "",
   locale,
   t,
 }: BuildEmptyScopeModelParams): EmptyScopeModel {
@@ -138,6 +140,11 @@ export function buildEmptyScopeModel({
       : null,
     trimmedSearchQuery
       ? t("tasks.empty.scope.search", { query: trimmedSearchQuery })
+      : null,
+    contextTaskTitle.trim()
+      ? t("tasks.empty.scope.contextUnder", {
+          title: contextTaskTitle.trim(),
+        })
       : null,
   ].filter((value): value is string => Boolean(value));
 

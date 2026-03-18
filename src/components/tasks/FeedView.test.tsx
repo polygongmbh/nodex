@@ -574,7 +574,7 @@ describe("FeedView", () => {
     );
 
     expect(screen.getByTestId("filtered-scope-footer")).toBeInTheDocument();
-    expect(screen.getByText("Showing only tasks by Alice Doe.")).toBeInTheDocument();
+    expect(screen.getByText("This is all by Alice Doe.")).toBeInTheDocument();
     expect(screen.queryByTestId("filtered-empty-inline")).not.toBeInTheDocument();
   });
 
