@@ -18,7 +18,7 @@
     "blocked": {
       "signin": "Anmeldung erforderlich",
       "write": "Schreibe zuerst eine Nachricht",
-      "tag": "Mindestens einen #channel hinzufügen",
+      "tag": "Mindestens einen #channel hinzufügen oder auswählen",
       "relay": "Wähle einen einzelnen Feed oder eine übergeordnete Aufgabe, um eine neue Aufgabe zu erstellen",
       "selectTask": "Wähle eine Aufgabe zum Antworten",
       "publishing": "Wird veröffentlicht..."
@@ -48,11 +48,9 @@
     "actions": {
       "createTask": "Aufgabe erstellen",
       "addComment": "Kommentar hinzufügen",
-      "postOffer": "Angebot posten",
-      "postRequest": "Gesuch posten",
+      "postOffer": "Angebot inserieren",
+      "postRequest": "Gesuch inserieren",
       "signin": "Anmelden",
-      "sendTask": "Aufgabe senden",
-      "sendComment": "Kommentar senden",
       "useCurrentLocation": "Aktuellen Standort verwenden",
       "clearLocation": "Standort entfernen",
       "location": "Standort"

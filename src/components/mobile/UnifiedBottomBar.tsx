@@ -728,6 +728,7 @@ export function UnifiedBottomBar({
     t,
   });
   const taskSubmitBlockedReason = taskSubmitBlock?.reason ?? null;
+  const showTaskSubmitBlockDetail = taskSubmitBlock?.code !== "write" && taskSubmitBlock?.code !== "tag";
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
@@ -1113,9 +1114,11 @@ export function UnifiedBottomBar({
                 <div className="text-xs font-medium leading-tight text-foreground">
                   {taskSubmitBlockedReason}
                 </div>
-                <div className="text-[11px] leading-tight text-muted-foreground">
-                  {taskSubmitBlock?.detail}
-                </div>
+                {showTaskSubmitBlockDetail && (
+                  <div className="text-[11px] leading-tight text-muted-foreground">
+                    {taskSubmitBlock?.detail}
+                  </div>
+                )}
               </div>
             </div>
           ) : !hasTaskSubmitBlock ? (
@@ -1494,14 +1497,14 @@ export function UnifiedBottomBar({
                         : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       : "border-border text-foreground hover:bg-muted"
                   )}
-                  aria-label={isSignedIn ? (canOfferComment ? `${t("composer.actions.sendTask")} / ${t("composer.actions.sendComment")}` : t("composer.actions.sendTask")) : t("composer.hints.signInToCreate")}
+                  aria-label={isSignedIn ? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")) : t("composer.hints.signInToCreate")}
                   title={
                     !isSignedIn
                       ? t("composer.hints.signInToCreate")
                       : taskSubmitBlock
                         ? taskSubmitBlock.reason
                       : canOfferComment
-                        ? `${t("composer.actions.sendTask")} / ${t("composer.actions.sendComment")}`
+                        ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}`
                         : hasInvalidRootTaskRelaySelection
                           ? t("toasts.errors.selectRelayOrParent")
                           : t("composer.hints.createFromText")
@@ -1531,8 +1534,8 @@ export function UnifiedBottomBar({
                           ? "border-amber-500 bg-amber-500 text-amber-950 hover:bg-amber-500/90"
                           : "border-primary bg-primary hover:bg-primary/90"
                       )}
-                      aria-label={t("composer.actions.sendTask")}
-                      title={taskSubmitBlock?.reason || t("composer.actions.sendTask")}
+                      aria-label={t("composer.actions.createTask")}
+                      title={taskSubmitBlock?.reason || t("composer.actions.createTask")}
                     >
                       <CheckSquare className="w-4 h-4" />
                     </button>
@@ -1543,8 +1546,8 @@ export function UnifiedBottomBar({
                       }}
                       disabled={!canSendComment}
                       className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                      aria-label={t("composer.actions.sendComment")}
-                      title={t("composer.actions.sendComment")}
+                      aria-label={t("composer.actions.addComment")}
+                      title={t("composer.actions.addComment")}
                     >
                       <MessageSquare className="w-4 h-4" />
                     </button>

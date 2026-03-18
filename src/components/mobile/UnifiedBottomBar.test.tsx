@@ -161,10 +161,10 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship update" } });
-    fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
+    fireEvent.click(screen.getByRole("button", { name: /create task \/ add comment/i }));
 
     expect(screen.getByTestId("mobile-task-submit-block-panel")).toHaveTextContent("Can't post yet");
-    expect(screen.getByTestId("mobile-task-submit-block-panel")).toHaveTextContent("Add at least one #channel");
+    expect(screen.getByTestId("mobile-task-submit-block-panel")).toHaveTextContent("Add or select at least one #channel");
     expect(screen.getByRole("button", { name: "#general" })).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -191,7 +191,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "#general @alice@example.com" } });
-    const sendButton = screen.getByRole("button", { name: /send task \/ send comment/i });
+    const sendButton = screen.getByRole("button", { name: /create task \/ add comment/i });
     expect(sendButton).toBeEnabled();
     expect(sendButton).toHaveAttribute("title", "Write a message first");
     expect(onSubmit).not.toHaveBeenCalled();
@@ -223,7 +223,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /send task/i }));
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
 
     expect(screen.getByRole("button", { name: /relay one/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /relay two/i })).toBeInTheDocument();
@@ -397,7 +397,7 @@ describe("UnifiedBottomBar auth gating", () => {
     );
   });
 
-  it("submits comment when send comment button is tapped", () => {
+  it("submits comment when add comment button is tapped", () => {
     const onSubmit = vi.fn(async () => successResult);
 
     render(
@@ -419,8 +419,8 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Reply #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^send comment$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /create task \/ add comment/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^add comment$/i }));
 
     expect(onSubmit).toHaveBeenCalledWith(
       "Reply #general",
@@ -458,7 +458,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Need help #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
+    fireEvent.click(screen.getByRole("button", { name: /create task \/ add comment/i }));
 
     expect(screen.getByRole("button", { name: /post offer/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /post request/i })).toBeInTheDocument();
@@ -503,9 +503,9 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /send task/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /send task \/ send comment/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^send comment$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /create task \/ add comment/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^add comment$/i })).not.toBeInTheDocument();
   });
 
   it("reveals task and comment send options in tree view when a focused parent exists", () => {
@@ -527,16 +527,16 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /send task \/ send comment/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /send task$/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^send comment$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task \/ add comment/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /create task$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^add comment$/i })).not.toBeInTheDocument();
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Reply #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
+    fireEvent.click(screen.getByRole("button", { name: /create task \/ add comment/i }));
 
-    expect(screen.getByRole("button", { name: /^send task$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^send comment$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^create task$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^add comment$/i })).toBeInTheDocument();
   });
 
   it("hides comment send button in non-feed/tree views", () => {
@@ -557,8 +557,8 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /send task/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /send comment/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /add comment/i })).not.toBeInTheDocument();
   });
 
   it("prefills due date with today in calendar view", () => {

@@ -18,7 +18,7 @@
     "blocked": {
       "signin": "Sign in required",
       "write": "Write a message first",
-      "tag": "Add at least one #channel",
+      "tag": "Add or select at least one #channel",
       "relay": "Select a single feed or a parent task to create a new task",
       "selectTask": "Select a task to reply to",
       "publishing": "Publishing..."
@@ -51,8 +51,6 @@
       "postOffer": "Post Offer",
       "postRequest": "Post Request",
       "signin": "Sign in",
-      "sendTask": "Send task",
-      "sendComment": "Send comment",
       "useCurrentLocation": "Use current location",
       "clearLocation": "Clear location",
       "location": "Location"

@@ -18,7 +18,7 @@
     "blocked": {
       "signin": "Se requiere iniciar sesión",
       "write": "Escribe primero un mensaje",
-      "tag": "Añade al menos un #canal",
+      "tag": "Añade o selecciona al menos un #canal",
       "relay": "Selecciona un único feed o una tarea padre para crear una nueva tarea",
       "selectTask": "Selecciona una tarea para responder",
       "publishing": "Publicando..."
@@ -51,8 +51,6 @@
       "postOffer": "Publicar oferta",
       "postRequest": "Publicar solicitud",
       "signin": "Iniciar sesión",
-      "sendTask": "Enviar tarea",
-      "sendComment": "Enviar comentario",
       "useCurrentLocation": "Usar ubicación actual",
       "clearLocation": "Quitar ubicación",
       "location": "Ubicación"
