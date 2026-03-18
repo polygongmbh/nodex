@@ -69,9 +69,10 @@ const channels: Channel[] = [
   { id: "design", name: "design", filterState: "neutral" },
 ];
 
+const alicePubkey = "f".repeat(64);
 const people: Person[] = [
   {
-    id: "f".repeat(64),
+    id: alicePubkey,
     name: "alice",
     displayName: "Alice",
     nip05: "alice@example.com",
@@ -83,27 +84,27 @@ const people: Person[] = [
 
 const successfulCreateResult: TaskCreateResult = { ok: true, mode: "local" };
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
-const getChipButton = (kind: "mention" | "hashtag", label: string) => {
+const getChipButton = (kind: "mention" | "hashtag", value: string) => {
   const match = screen
     .getAllByRole("button")
     .find((button) =>
       button.getAttribute("data-chip-kind") === kind
-      && button.getAttribute("data-chip-label") === label
+      && button.getAttribute("data-chip-value") === value
     );
-  if (!match) throw new Error(`Chip button "${kind}:${label}" not found`);
+  if (!match) throw new Error(`Chip button "${kind}:${value}" not found`);
   return match;
 };
-const queryChipButton = (kind: "mention" | "hashtag", label: string) =>
+const queryChipButton = (kind: "mention" | "hashtag", value: string) =>
   screen
     .queryAllByRole("button")
     .find((button) =>
       button.getAttribute("data-chip-kind") === kind
-      && button.getAttribute("data-chip-label") === label
+      && button.getAttribute("data-chip-value") === value
     ) ?? null;
 const getHashtagChip = (tag: string) => getChipButton("hashtag", tag);
 const queryHashtagChip = (tag: string) => queryChipButton("hashtag", tag);
-const getMentionChip = (name: string) => getChipButton("mention", name);
-const queryMentionChip = (name: string) => queryChipButton("mention", name);
+const getMentionChip = (value: string) => getChipButton("mention", value);
+const queryMentionChip = (value: string) => queryChipButton("mention", value);
 
 describe("TaskComposer hashtag autocomplete", () => {
   beforeEach(() => {
@@ -791,7 +792,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       JSON.stringify({
         content: "#persisted hello",
         taskType: "comment",
-        explicitMentionPubkeys: ["f".repeat(64)],
+        explicitMentionPubkeys: [alicePubkey],
       })
     );
 
@@ -808,7 +809,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.getByDisplayValue("#persisted hello")).toBeInTheDocument();
     expect(getCommentComposerInput()).toBeInTheDocument();
-    expect(getMentionChip("alice")).toBeInTheDocument();
+    expect(getMentionChip(alicePubkey)).toBeInTheDocument();
   });
 
   it("does not render a cancel action button", () => {
@@ -1108,10 +1109,10 @@ describe("TaskComposer hashtag autocomplete", () => {
     await waitFor(() => {
       expect(textarea.value).toBe("Ship #backend with ");
     });
-    expect(getMentionChip("alice")).toBeInTheDocument();
+    expect(getMentionChip(alicePubkey)).toBeInTheDocument();
 
-    fireEvent.click(getMentionChip("alice"));
-    expect(queryMentionChip("alice")).not.toBeInTheDocument();
+    fireEvent.click(getMentionChip(alicePubkey));
+    expect(queryMentionChip(alicePubkey)).not.toBeInTheDocument();
 
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
     await waitFor(() => {
@@ -1201,14 +1202,14 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined,
         undefined,
         "due",
-        ["f".repeat(64)],
+        [alicePubkey],
         undefined,
         [],
         undefined
       );
     });
 
-    expect(getMentionChip("alice")).toBeInTheDocument();
+    expect(getMentionChip(alicePubkey)).toBeInTheDocument();
   });
 
   it("clears an included channel filter when removing its filter-backed chip", () => {
@@ -1248,9 +1249,9 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.change(getTaskComposerInput(), {
       target: { value: "Ship #backend now" },
     });
-    fireEvent.click(getMentionChip("alice"));
+    fireEvent.click(getMentionChip(alicePubkey));
 
-    expect(onClearPersonFilter).toHaveBeenCalledWith("f".repeat(64));
+    expect(onClearPersonFilter).toHaveBeenCalledWith(alicePubkey);
   });
 
   it("renders parsed mention chips before hashtag chips", () => {
@@ -1269,7 +1270,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Pair with @alice@example.com on #backend" },
     });
 
-    const mentionChip = getMentionChip("alice");
+    const mentionChip = getMentionChip("alice@example.com");
     const hashtagChip = getHashtagChip("backend");
     const relation = mentionChip.compareDocumentPosition(hashtagChip);
     expect((relation & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true);
@@ -1806,7 +1807,7 @@ describe("TaskComposer hashtag autocomplete", () => {
             content: "Recovered content",
             taskType: "task",
             explicitTagNames: ["backend"],
-            explicitMentionPubkeys: ["f".repeat(64)],
+            explicitMentionPubkeys: [alicePubkey],
           },
         }}
       />
@@ -1814,7 +1815,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.getByDisplayValue("Recovered content")).toBeInTheDocument();
     expect(getHashtagChip("backend")).toBeInTheDocument();
-    expect(getMentionChip("alice")).toBeInTheDocument();
+    expect(getMentionChip(alicePubkey)).toBeInTheDocument();
   });
 
   it("uses the same active text treatment for populated desktop date and time controls", async () => {
