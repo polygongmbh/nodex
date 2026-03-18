@@ -26,6 +26,12 @@ function Harness() {
   const [people, setPeople] = useState<Person[]>(
     mapPeopleSelection(peopleSeed, (person) => person.id === "alice")
   );
+  const [quickFilters, setQuickFilters] = useState({
+    recentEnabled: true,
+    recentDays: 7,
+    priorityEnabled: true,
+    minPriority: 50,
+  });
 
   const currentFilterSnapshot = useMemo(
     () =>
@@ -34,8 +40,9 @@ function Harness() {
         channelFilterStates,
         people,
         channelMatchMode,
+        quickFilters,
       }),
-    [activeRelayIds, channelFilterStates, people, channelMatchMode]
+    [activeRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
   );
 
   const saved = useSavedFilterConfigs({
@@ -45,11 +52,18 @@ function Harness() {
     setChannelFilterStates,
     setChannelMatchMode,
     setPeople,
+    setQuickFilters,
     resetFiltersToDefault: () => {
       setActiveRelayIds(new Set(relays.map((relay) => relay.id)));
       setChannelFilterStates(new Map());
       setChannelMatchMode("and");
       setPeople((prev) => mapPeopleSelection(prev, () => false));
+      setQuickFilters({
+        recentEnabled: false,
+        recentDays: 7,
+        priorityEnabled: false,
+        minPriority: 50,
+      });
     },
   });
 
@@ -72,6 +86,12 @@ function Harness() {
           setChannelFilterStates(new Map([["general", "excluded"]]));
           setChannelMatchMode("and");
           setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === "bob"));
+          setQuickFilters({
+            recentEnabled: true,
+            recentDays: 21,
+            priorityEnabled: true,
+            minPriority: 80,
+          });
         }}
       >
         Mutate
@@ -84,6 +104,12 @@ function Harness() {
       <output data-testid="match-mode">{channelMatchMode}</output>
       <output data-testid="selected-people">
         {people.filter((person) => person.isSelected).map((person) => person.id).join(",")}
+      </output>
+      <output data-testid="quick-filters">
+        {[
+          quickFilters.recentEnabled ? `recent:${quickFilters.recentDays}` : "recent:off",
+          quickFilters.priorityEnabled ? `priority:${quickFilters.minPriority}` : "priority:off",
+        ].join(",")}
       </output>
     </>
   );
@@ -105,6 +131,7 @@ describe("useSavedFilterConfigs", () => {
     expect(screen.getByTestId("channel-state")).toHaveTextContent("included");
     expect(screen.getByTestId("match-mode")).toHaveTextContent("or");
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
+    expect(screen.getByTestId("quick-filters")).toHaveTextContent("recent:7,priority:50");
   });
 
   it("clears the active configuration id when the current snapshot drifts", () => {

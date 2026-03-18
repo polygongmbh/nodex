@@ -58,6 +58,7 @@ import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-mod
 import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-demo-bootstrap";
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
+import { taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -282,6 +283,12 @@ const Index = () => {
     handlePersonExclusive,
     handleToggleAllPeople,
     handleAuthorClick,
+    quickFilters,
+    setQuickFilters,
+    handleRecentDaysChange,
+    handleRecentEnabledChange,
+    handleMinPriorityChange,
+    handlePriorityEnabledChange,
     resetFiltersToDefault,
   } = useIndexFilters({
     relays,
@@ -410,8 +417,8 @@ const Index = () => {
         activeRelayIds: effectiveActiveRelayIds,
         people,
         allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
-      }),
-    [allTasks, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
+      }).filter((task) => taskMatchesQuickFilters(task, quickFilters)),
+    [allTasks, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people, quickFilters]
   );
 
   const { ensureGuideDataAvailable } = useFeedDemoBootstrap({
@@ -469,8 +476,9 @@ const Index = () => {
         channelFilterStates,
         people,
         channelMatchMode,
+        quickFilters,
       }),
-    [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode]
+    [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
   );
   const { savedFilterController } = useSavedFilterConfigs({
     currentFilterSnapshot,
@@ -479,6 +487,7 @@ const Index = () => {
     setChannelFilterStates,
     setChannelMatchMode,
     setPeople,
+    setQuickFilters,
     resetFiltersToDefault,
   });
 
@@ -786,6 +795,11 @@ const Index = () => {
         onShortcutsClick={shortcutsHelp.open}
         onGuideClick={handleOpenGuide}
         savedFilters={savedFilterController}
+        quickFilters={quickFilters}
+        onRecentDaysChange={handleRecentDaysChange}
+        onRecentEnabledChange={handleRecentEnabledChange}
+        onMinPriorityChange={handleMinPriorityChange}
+        onPriorityEnabledChange={handlePriorityEnabledChange}
         pinnedChannelIds={getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList)}
         onChannelPin={handleChannelPin}
         onChannelUnpin={handleChannelUnpin}

@@ -1,10 +1,12 @@
-import type { Channel, ChannelMatchMode, Person } from "@/types";
+import type { Channel, ChannelMatchMode, Person, QuickFilterState } from "@/types";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 
 export interface FilterSnapshot {
   relayIds: string[];
   channelStates: Record<string, "included" | "excluded">;
   selectedPeopleIds: string[];
   channelMatchMode: ChannelMatchMode;
+  quickFilters?: QuickFilterState;
 }
 
 interface BuildFilterSnapshotParams {
@@ -12,6 +14,7 @@ interface BuildFilterSnapshotParams {
   channelFilterStates: Map<string, Channel["filterState"]>;
   people: Person[];
   channelMatchMode: ChannelMatchMode;
+  quickFilters?: QuickFilterState;
 }
 
 export function buildFilterSnapshot({
@@ -19,6 +22,7 @@ export function buildFilterSnapshot({
   channelFilterStates,
   people,
   channelMatchMode,
+  quickFilters,
 }: BuildFilterSnapshotParams): FilterSnapshot {
   const relayIds = Array.from(activeRelayIds).sort();
   const channelStates: Record<string, "included" | "excluded"> = {};
@@ -39,6 +43,7 @@ export function buildFilterSnapshot({
     channelStates,
     selectedPeopleIds,
     channelMatchMode,
+    quickFilters: normalizeQuickFilterState(quickFilters),
   };
 }
 
@@ -70,6 +75,13 @@ export function areFilterSnapshotsEqual(left: FilterSnapshot, right: FilterSnaps
       return false;
     }
   }
+
+  const leftQuickFilters = normalizeQuickFilterState(left.quickFilters);
+  const rightQuickFilters = normalizeQuickFilterState(right.quickFilters);
+  if (leftQuickFilters.recentEnabled !== rightQuickFilters.recentEnabled) return false;
+  if (leftQuickFilters.recentDays !== rightQuickFilters.recentDays) return false;
+  if (leftQuickFilters.priorityEnabled !== rightQuickFilters.priorityEnabled) return false;
+  if (leftQuickFilters.minPriority !== rightQuickFilters.minPriority) return false;
 
   return true;
 }

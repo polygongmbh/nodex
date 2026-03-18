@@ -209,6 +209,13 @@ export interface FilterState {
   searchQuery: string;
 }
 
+export interface QuickFilterState {
+  recentEnabled: boolean;
+  recentDays: number;
+  priorityEnabled: boolean;
+  minPriority: number;
+}
+
 export interface SavedFilterConfiguration {
   id: string;
   name: string;
@@ -216,6 +223,7 @@ export interface SavedFilterConfiguration {
   channelStates: Record<string, "included" | "excluded">;
   selectedPeopleIds: string[];
   channelMatchMode: ChannelMatchMode;
+  quickFilters?: QuickFilterState;
   createdAt: string;
   updatedAt: string;
 }

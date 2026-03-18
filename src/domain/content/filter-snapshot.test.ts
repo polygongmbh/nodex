@@ -31,6 +31,12 @@ describe("filter snapshot", () => {
       },
       selectedPeopleIds: ["a", "b"],
       channelMatchMode: "or",
+      quickFilters: {
+        recentEnabled: false,
+        recentDays: 7,
+        priorityEnabled: false,
+        minPriority: 50,
+      },
     } satisfies FilterSnapshot);
   });
 

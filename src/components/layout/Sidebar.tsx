@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
-import { Relay, Channel, ChannelMatchMode, Person, SavedFilterController } from "@/types";
+import { Relay, Channel, ChannelMatchMode, Person, QuickFilterState, SavedFilterController } from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
 import { SavedFilterPresetRow } from "@/components/tasks/SavedFilterPresetRow";
+import { SidebarQuickConstraintRow } from "@/components/tasks/SidebarQuickConstraintRow";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { RelayManagement } from "@/components/relay/RelayManagement";
 import { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
@@ -83,6 +84,11 @@ interface SidebarProps {
   onShortcutsClick?: () => void;
   onGuideClick?: () => void;
   savedFilters?: SavedFilterController;
+  quickFilters?: QuickFilterState;
+  onRecentDaysChange?: (days: number) => void;
+  onRecentEnabledChange?: (enabled: boolean) => void;
+  onMinPriorityChange?: (priority: number) => void;
+  onPriorityEnabledChange?: (enabled: boolean) => void;
   pinnedChannelIds?: string[];
   onChannelPin?: (id: string) => void;
   onChannelUnpin?: (id: string) => void;
@@ -112,6 +118,11 @@ export function Sidebar({
   onShortcutsClick,
   onGuideClick,
   savedFilters,
+  quickFilters,
+  onRecentDaysChange = () => {},
+  onRecentEnabledChange = () => {},
+  onMinPriorityChange = () => {},
+  onPriorityEnabledChange = () => {},
   pinnedChannelIds = [],
   onChannelPin,
   onChannelUnpin,
@@ -314,11 +325,19 @@ export function Sidebar({
     >
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto scrollbar-thin py-1.5 pb-3">
-        {savedFilters && (
-          <div className="px-2 sm:px-2.5 lg:px-3 pb-2">
-            <SavedFilterPresetRow savedFilters={savedFilters} />
-          </div>
-        )}
+        <div className="px-2 sm:px-2.5 lg:px-3 pb-2">
+          {savedFilters && <SavedFilterPresetRow savedFilters={savedFilters} />}
+          {quickFilters && (
+            <SidebarQuickConstraintRow
+              quickFilters={quickFilters}
+              onRecentDaysChange={onRecentDaysChange}
+              onRecentEnabledChange={onRecentEnabledChange}
+              onMinPriorityChange={onMinPriorityChange}
+              onPriorityEnabledChange={onPriorityEnabledChange}
+              className={savedFilters ? "pt-1" : undefined}
+            />
+          )}
+        </div>
         {/* Feeds/Relays */}
         <div data-onboarding="relays-section">
         <SidebarSection

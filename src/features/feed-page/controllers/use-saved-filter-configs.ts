@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import {
   findSavedFilterConfiguration,
 } from "@/domain/preferences/saved-filter-state";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import {
   loadSavedFilterState,
   saveSavedFilterState,
@@ -13,6 +14,7 @@ import type {
   Channel,
   ChannelMatchMode,
   Person,
+  QuickFilterState,
   Relay,
   SavedFilterConfiguration,
   SavedFilterController,
@@ -26,6 +28,7 @@ interface UseSavedFilterConfigsOptions {
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setChannelMatchMode: Dispatch<SetStateAction<ChannelMatchMode>>;
   setPeople: Dispatch<SetStateAction<Person[]>>;
+  setQuickFilters: Dispatch<SetStateAction<QuickFilterState>>;
   resetFiltersToDefault: () => void;
 }
 
@@ -36,6 +39,7 @@ export function useSavedFilterConfigs({
   setChannelFilterStates,
   setChannelMatchMode,
   setPeople,
+  setQuickFilters,
   resetFiltersToDefault,
 }: UseSavedFilterConfigsOptions) {
   const [savedFilterState, setSavedFilterState] = useState<SavedFilterState>(() => loadSavedFilterState());
@@ -58,6 +62,7 @@ export function useSavedFilterConfigs({
       channelStates: configuration.channelStates,
       selectedPeopleIds: [...configuration.selectedPeopleIds].sort(),
       channelMatchMode: configuration.channelMatchMode,
+      quickFilters: normalizeQuickFilterState(configuration.quickFilters),
     }),
     []
   );
@@ -90,6 +95,7 @@ export function useSavedFilterConfigs({
       channelStates: currentFilterSnapshot.channelStates,
       selectedPeopleIds: currentFilterSnapshot.selectedPeopleIds,
       channelMatchMode: currentFilterSnapshot.channelMatchMode,
+      quickFilters: normalizeQuickFilterState(currentFilterSnapshot.quickFilters),
       createdAt: nowIso,
       updatedAt: nowIso,
     };
@@ -130,6 +136,7 @@ export function useSavedFilterConfigs({
 
     const selectedPeopleIdSet = new Set(configuration.selectedPeopleIds);
     setPeople((previous) => mapPeopleSelection(previous, (person) => selectedPeopleIdSet.has(person.id)));
+    setQuickFilters(normalizeQuickFilterState(configuration.quickFilters));
 
     setSavedFilterState((previous) => ({
       ...previous,
@@ -143,6 +150,7 @@ export function useSavedFilterConfigs({
     setChannelFilterStates,
     setChannelMatchMode,
     setPeople,
+    setQuickFilters,
   ]);
 
   const handleRenameSavedFilterConfiguration = useCallback((configurationId: string, nextName: string) => {

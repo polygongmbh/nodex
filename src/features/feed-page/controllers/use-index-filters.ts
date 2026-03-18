@@ -16,8 +16,14 @@ import {
   shouldToggleOffExclusiveChannel,
   shouldToggleOffExclusivePerson,
 } from "@/domain/content/filter-state-utils";
+import {
+  clampMinPriority,
+  clampRecentDays,
+  normalizeQuickFilterState,
+} from "@/domain/content/quick-filter-constraints";
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
-import type { Channel, ChannelMatchMode, Person, Relay } from "@/types";
+import { featureDebugLog } from "@/lib/feature-debug";
+import type { Channel, ChannelMatchMode, Person, QuickFilterState, Relay } from "@/types";
 
 interface UseIndexFiltersOptions {
   relays: Relay[];
@@ -61,6 +67,7 @@ export function useIndexFilters({
   const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>(
     () => loadPersistedChannelMatchMode()
   );
+  const [quickFilters, setQuickFilters] = useState<QuickFilterState>(() => normalizeQuickFilterState());
 
   const channelsWithState = useMemo(
     () =>
@@ -314,7 +321,58 @@ export function useIndexFilters({
     setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
     setChannelMatchMode("and");
     setPeople((prev) => mapPeopleSelection(prev, () => false));
-  }, [channels, relays, setActiveRelayIds, setPeople]);
+    setQuickFilters(normalizeQuickFilterState());
+    featureDebugLog("quick-filters", "Reset quick filters to defaults");
+  }, [channels, relays, setActiveRelayIds, setChannelFilterStates, setChannelMatchMode, setPeople, setQuickFilters]);
+
+  const handleRecentDaysChange = useCallback((value: number) => {
+    const nextDays = clampRecentDays(value);
+    setQuickFilters((previous) => {
+      const next = { ...previous, recentDays: nextDays };
+      featureDebugLog("quick-filters", "Updated recent-days filter value", { nextDays, enabled: next.recentEnabled });
+      return next;
+    });
+  }, []);
+
+  const handleRecentEnabledChange = useCallback((enabled: boolean) => {
+    setQuickFilters((previous) => {
+      const next = { ...previous, recentEnabled: enabled };
+      featureDebugLog("quick-filters", "Toggled recent-days filter", { enabled, days: next.recentDays });
+      return next;
+    });
+  }, []);
+
+  const handleMinPriorityChange = useCallback((value: number) => {
+    const nextMinPriority = clampMinPriority(value);
+    setQuickFilters((previous) => {
+      const next = { ...previous, minPriority: nextMinPriority };
+      featureDebugLog("quick-filters", "Updated minimum-priority filter value", {
+        nextMinPriority,
+        enabled: next.priorityEnabled,
+      });
+      return next;
+    });
+  }, []);
+
+  const handlePriorityEnabledChange = useCallback((enabled: boolean) => {
+    setQuickFilters((previous) => {
+      const next = { ...previous, priorityEnabled: enabled };
+      featureDebugLog("quick-filters", "Toggled minimum-priority filter", {
+        enabled,
+        minPriority: next.minPriority,
+      });
+      return next;
+    });
+  }, []);
+
+  const handleClearQuickFilters = useCallback(() => {
+    setQuickFilters((previous) => {
+      if (!previous.recentEnabled && !previous.priorityEnabled) return previous;
+      const next = { ...previous, recentEnabled: false, priorityEnabled: false };
+      featureDebugLog("quick-filters", "Cleared active quick filters");
+      return next;
+    });
+  }, []);
 
   return {
     mentionRequest,
@@ -334,6 +392,13 @@ export function useIndexFilters({
     handlePersonExclusive,
     handleToggleAllPeople,
     handleAuthorClick,
+    quickFilters,
+    setQuickFilters,
+    handleRecentDaysChange,
+    handleRecentEnabledChange,
+    handleMinPriorityChange,
+    handlePriorityEnabledChange,
+    handleClearQuickFilters,
     resetFiltersToDefault,
   };
 }

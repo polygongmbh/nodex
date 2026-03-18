@@ -13,6 +13,14 @@ const savedFilterConfigurationSchema = z.object({
   channelStates: z.record(z.string(), z.enum(["included", "excluded"])),
   selectedPeopleIds: z.array(z.string()),
   channelMatchMode: z.enum(["and", "or"]),
+  quickFilters: z
+    .object({
+      recentEnabled: z.boolean(),
+      recentDays: z.number(),
+      priorityEnabled: z.boolean(),
+      minPriority: z.number(),
+    })
+    .optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

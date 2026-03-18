@@ -284,6 +284,26 @@
       "me": "Ich",
       "pinChannelToView": "#{{name}} an diese Ansicht anheften",
       "unpinChannelFromView": "#{{name}} von dieser Ansicht lösen"
+    },
+    "quickFilters": {
+      "chips": {
+        "recent": "Neu {{days}}T",
+        "priority": "Wichtig P{{priority}}+"
+      },
+      "labels": {
+        "recent": "Neu",
+        "recentDays": "Alter in Tagen",
+        "important": "Wichtig",
+        "minPriority": "Mindestpriorität"
+      },
+      "actions": {
+        "add": "Hinzufügen",
+        "edit": "Bearbeiten",
+        "clear": "Zurücksetzen",
+        "remove": "{{filterName}} entfernen",
+        "toggleRecent": "Filter \"Neu\" umschalten",
+        "toggleImportant": "Filter \"Wichtig\" umschalten"
+      }
     }
   },
   "hints": {
