@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { Relay } from "@/types";
 import type { TFunction } from "i18next";
+import { toast } from "sonner";
 import { useRelayFilterState } from "./use-relay-filter-state";
 
 vi.mock("sonner", () => ({
@@ -49,13 +50,15 @@ const connectedRelays: Relay[] = [
 function Harness({
   onRelayEnabled,
   relayList = relays,
+  t,
 }: {
   onRelayEnabled?: (relay: Relay) => void;
   relayList?: Relay[];
+  t?: TFunction;
 }) {
   const { handleRelayToggle, handleRelayExclusive, handleToggleAllRelays, effectiveActiveRelayIds } = useRelayFilterState({
     relays: relayList,
-    t: ((key: string) => key) as unknown as TFunction,
+    t: t || (((key: string) => key) as unknown as TFunction),
     onRelayEnabled,
   });
 
@@ -78,6 +81,7 @@ function Harness({
 describe("useRelayFilterState", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.clearAllMocks();
   });
 
   it("calls onRelayEnabled only when enabling a relay", () => {
@@ -193,5 +197,18 @@ describe("useRelayFilterState", () => {
 
     expect(onRelayEnabled).toHaveBeenCalledTimes(1);
     expect(onRelayEnabled).toHaveBeenCalledWith(connectedRelays[0]);
+  });
+
+  it("uses relay domain in toast interpolation values", () => {
+    const t: TFunction = ((key: string, values?: Record<string, unknown>) =>
+      values ? `${key}:${JSON.stringify(values)}` : key) as unknown as TFunction;
+
+    render(<Harness relayList={connectedRelays} t={t} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Exclusive" }));
+
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("\"relayDomain\":\"relay.one\"")
+    );
   });
 });

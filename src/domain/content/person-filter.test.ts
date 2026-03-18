@@ -57,6 +57,24 @@ describe("taskMatchesSelectedPeople", () => {
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
   });
 
+  it("passes when mentions match selected person even if assignee pubkeys do not", () => {
+    const task: Task = {
+      ...baseTask,
+      assigneePubkeys: ["charlie-pubkey"],
+      mentions: ["alice-pubkey"],
+    };
+    expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
+  });
+
+  it("passes when content mention matches selected person even if assignee pubkeys do not", () => {
+    const task: Task = {
+      ...baseTask,
+      content: "need @alice on this",
+      assigneePubkeys: ["charlie-pubkey"],
+    };
+    expect(taskMatchesSelectedPeople(task, [alice])).toBe(true);
+  });
+
   it("fails when neither author nor mentions match selected person", () => {
     const task: Task = { ...baseTask, content: "no mention for selected person" };
     expect(taskMatchesSelectedPeople(task, [alice])).toBe(false);

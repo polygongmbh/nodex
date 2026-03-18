@@ -25,14 +25,22 @@ export function taskMatchesSelectedPeople(task: Task, selectedPeople: Person[]):
   }
 
   const selectedIdentifiers = buildSelectedPersonIdentifierSet(selectedPeople);
-  const assigneeIdentifiers =
-    task.assigneePubkeys?.map((mention) => normalize(mention)).filter(Boolean) || [];
-  const taskMentions = assigneeIdentifiers.length > 0
-    ? assigneeIdentifiers
-    : (
-        task.mentions?.map((mention) => normalize(mention)).filter(Boolean) ||
-        extractAssignedMentionsFromContent(task.content || "")
-      );
+  const taskMentions = new Set<string>();
 
-  return taskMentions.some((mention) => selectedIdentifiers.has(mention));
+  for (const assignee of task.assigneePubkeys || []) {
+    const normalizedAssignee = normalize(assignee);
+    if (normalizedAssignee) taskMentions.add(normalizedAssignee);
+  }
+
+  for (const mention of task.mentions || []) {
+    const normalizedMention = normalize(mention);
+    if (normalizedMention) taskMentions.add(normalizedMention);
+  }
+
+  for (const mention of extractAssignedMentionsFromContent(task.content || "")) {
+    const normalizedMention = normalize(mention);
+    if (normalizedMention) taskMentions.add(normalizedMention);
+  }
+
+  return Array.from(taskMentions).some((mention) => selectedIdentifiers.has(mention));
 }

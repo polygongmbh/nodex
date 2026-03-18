@@ -14,6 +14,22 @@ interface UseRelayFilterStateOptions {
   onRelayEnabled?: (relay: Relay) => void;
 }
 
+function getRelayDomain(relay: Relay | undefined, fallbackId: string): string {
+  const relayUrl = relay?.url?.trim();
+  if (relayUrl) {
+    try {
+      return new URL(relayUrl).host;
+    } catch {
+      const normalized = relayUrl.replace(/^[a-z]+:\/\//i, "").replace(/\/.*$/, "");
+      if (normalized) return normalized;
+    }
+  }
+
+  const relayName = relay?.name?.trim();
+  if (relayName) return relayName;
+  return fallbackId;
+}
+
 export function useRelayFilterState({ relays, t, onRelayEnabled }: UseRelayFilterStateOptions) {
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
     loadPersistedRelayIds()
@@ -25,6 +41,7 @@ export function useRelayFilterState({ relays, t, onRelayEnabled }: UseRelayFilte
 
   const handleRelayToggle = (id: string) => {
     const relay = relays.find((r) => r.id === id);
+    const relayDomain = getRelayDomain(relay, id);
     setActiveRelayIds((prev) => {
       const next = new Set(prev);
       const isEnabled = next.has(id);
@@ -38,8 +55,8 @@ export function useRelayFilterState({ relays, t, onRelayEnabled }: UseRelayFilte
       }
       toast(
         isEnabled
-          ? t("toasts.success.relayFilterDisabled", { relayName: relay?.name || id })
-          : t("toasts.success.relayFilterEnabled", { relayName: relay?.name || id })
+          ? t("toasts.success.relayFilterDisabled", { relayDomain })
+          : t("toasts.success.relayFilterEnabled", { relayDomain })
       );
       return next;
     });
@@ -47,16 +64,17 @@ export function useRelayFilterState({ relays, t, onRelayEnabled }: UseRelayFilte
 
   const handleRelayExclusive = (id: string) => {
     const relay = relays.find((r) => r.id === id);
+    const relayDomain = getRelayDomain(relay, id);
     setActiveRelayIds((prev) => {
       if (prev.size === 1 && prev.has(id)) {
-        toast(t("toasts.success.relayFilterDisabled", { relayName: relay?.name || id }));
+        toast(t("toasts.success.relayFilterDisabled", { relayDomain }));
         return new Set();
       }
 
       if (relay) {
         onRelayEnabled?.(relay);
       }
-      toast(t("toasts.success.showingOnlyRelay", { relayName: relay?.name || id }));
+      toast(t("toasts.success.showingOnlyRelay", { relayDomain }));
       return new Set([id]);
     });
   };

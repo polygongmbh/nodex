@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Sidebar filter toasts now use clearer natural-language phrasing (including relay domains instead of relay display names), and people filters now include posts authored by selected people as well as posts tagging them even when assignee metadata is also present.
 - Feed switches now ignore selected channel filters that have no posts in the newly active feed, restoring the original feed-local filtering behavior instead of leaving the new feed empty.
 - Relay-load failure empty states now show feed-only source hints (`Could not load posts from ...`) and use status-aware informational subtitles that distinguish read rejection from connection failures.
 - Startup relay fallback probing now runs again when no relays are configured via env, fixing a regression introduced in `v2.0` that left the app booting with an empty relay list on fallback-only deployments.
