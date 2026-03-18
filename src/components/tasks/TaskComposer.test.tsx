@@ -1115,6 +1115,28 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByText(/set .*date \(optional\)/i)).toBeInTheDocument();
   });
 
+  it("keeps filter chips visible when an empty adaptive composer collapses on blur", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={[{ id: "backend", name: "backend", filterState: "included" }]}
+        people={people}
+        onCancel={() => {}}
+        adaptiveSize
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    fireEvent.focus(textarea);
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
+
+    fireEvent.blur(textarea);
+
+    expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("backend");
+    expect(screen.queryByRole("button", { name: /insert hashtag/i })).not.toBeInTheDocument();
+  });
+
   it("blocks root task submit when multiple relays are selected", () => {
     render(
       <TaskComposer

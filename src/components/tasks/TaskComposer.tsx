@@ -1235,7 +1235,17 @@ export function TaskComposer({
     setExplicitMentionPubkeys((previous) => previous.filter((value) => value !== normalizedPubkey));
   };
 
-  const showExpandedControls = !adaptiveSize || isExpanded || content.trim().length > 0;
+  const hasSupplementalComposerState =
+    attachments.length > 0 ||
+    showLocationControls ||
+    Boolean(locationGeohash) ||
+    Boolean(dueDate) ||
+    Boolean(dueTime) ||
+    typeof priority === "number" ||
+    taskType !== "task";
+  const hasPersistentChipTray = mentionChipItems.length > 0 || hashtagChipItems.length > 0;
+  const showExpandedControls =
+    !adaptiveSize || isExpanded || content.trim().length > 0 || hasSupplementalComposerState;
 
   useEffect(() => {
     if (showExpandedControls) return;
@@ -1276,6 +1286,9 @@ export function TaskComposer({
           onBlur={() => {
             setIsComposerFocused(false);
             updateAutocompleteFromCursor(content, cursorPosition, false);
+            if (adaptiveSize && !content.trim() && !hasSupplementalComposerState) {
+              setIsExpanded(false);
+            }
           }}
           aria-label={
             taskType === "task"
@@ -1453,14 +1466,13 @@ export function TaskComposer({
         </div>
       )}
 
-      {showExpandedControls && (mentionChipItems.length > 0 || hashtagChipItems.length > 0 || Boolean(submitBlockedReason && user)) && (
+      {(hasPersistentChipTray || (showExpandedControls && Boolean(submitBlockedReason && user))) && (
         <div
           className={cn(
-            "order-3 rounded-xl border border-border/60 bg-muted/35 px-3 py-2.5",
+            "order-7 flex flex-wrap items-center gap-2 border-t border-border/50 pt-2",
             adaptiveSize && "motion-ink-stagger [--stagger-index:0]"
           )}
         >
-          <div className="flex flex-wrap items-center gap-2">
           {mentionChipItems.map((mention) => (
             <button
               key={`mention-${mention.identifier}`}
@@ -1519,7 +1531,6 @@ export function TaskComposer({
           {submitBlockedReason && user && (
             <span className="ml-auto text-xs text-muted-foreground sm:text-right">{submitBlockedReason}</span>
           )}
-        </div>
         </div>
       )}
 
