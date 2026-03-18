@@ -18,6 +18,9 @@ export interface EmptyScopeModel {
   scopeDescription: string | null;
   filteredSentence: string | null;
   mobileFallbackHint: string | null;
+  loadingSentence: string | null;
+  errorSentence: string | null;
+  screenState: "default" | "loading" | "error";
 }
 
 function formatNaturalList(values: string[], locale: string): string {
@@ -30,6 +33,11 @@ function formatRelayLabel(relay: Relay): string {
   if (!rawValue) return "";
 
   return rawValue.replace(/^[a-z]+:\/\//i, "").replace(/\/+$/, "");
+}
+
+function resolveRelayStatus(relay: Relay): NonNullable<Relay["connectionStatus"]> | "connected" {
+  if (relay.id === "demo" || !relay.connectionStatus) return "connected";
+  return relay.connectionStatus;
 }
 
 export function buildEmptyScopeModel({
@@ -45,6 +53,23 @@ export function buildEmptyScopeModel({
   const includedChannels = channels.filter((channel) => channel.filterState === "included");
   const excludedChannels = channels.filter((channel) => channel.filterState === "excluded");
   const activePeople = people.filter((person) => person.isSelected);
+  const activeRelayStatuses = activeRelays.map((relay) => resolveRelayStatus(relay));
+  const hasRelayConnection = activeRelayStatuses.some(
+    (status) => status === "connected" || status === "read-only"
+  );
+  const hasRelayLoading = activeRelayStatuses.some((status) => status === "connecting");
+  const hasRelayError = activeRelayStatuses.some(
+    (status) =>
+      status === "disconnected" ||
+      status === "connection-error" ||
+      status === "verification-failed"
+  );
+  const screenState: EmptyScopeModel["screenState"] =
+    !hasRelayConnection && hasRelayLoading
+      ? "loading"
+      : !hasRelayConnection && !hasRelayLoading && hasRelayError
+        ? "error"
+        : "default";
   const hasRelayFilter = activeRelays.length > 0 && activeRelays.length < relays.length;
   const hasActiveFilters =
     Boolean(trimmedSearchQuery) ||
@@ -59,17 +84,25 @@ export function buildEmptyScopeModel({
       scopeDescription: null,
       filteredSentence: null,
       mobileFallbackHint: null,
+      loadingSentence: t("tasks.empty.loading.none"),
+      errorSentence: t("tasks.empty.error.none"),
+      screenState,
     };
   }
 
   const scopeParts = [
     includedChannels.length > 0
-      ? t("tasks.empty.scope.includedChannels", {
+      ? t(
+          screenState === "loading"
+            ? "tasks.empty.scope.includedChannelsLoading"
+            : "tasks.empty.scope.includedChannels",
+          {
           channels: formatNaturalList(
             includedChannels.map((channel) => `#${channel.name}`),
             locale
           ),
-        })
+          }
+        )
       : null,
     activePeople.length > 0
       ? t("tasks.empty.scope.people", {
@@ -104,11 +137,20 @@ export function buildEmptyScopeModel({
   const filteredSentence = scopeDescription
     ? t("tasks.empty.filtered.scopeOnly", { scope: scopeDescription })
     : null;
+  const loadingSentence = scopeDescription
+    ? t("tasks.empty.loading.scopeOnly", { scope: scopeDescription })
+    : t("tasks.empty.loading.none");
+  const errorSentence = scopeDescription
+    ? t("tasks.empty.error.scopeOnly", { scope: scopeDescription })
+    : t("tasks.empty.error.none");
 
   return {
     hasActiveFilters: true,
     scopeDescription,
     filteredSentence,
     mobileFallbackHint: t("tasks.empty.filtered.mobileFallback"),
+    loadingSentence,
+    errorSentence,
+    screenState,
   };
 }

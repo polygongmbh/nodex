@@ -552,7 +552,7 @@ describe("FeedView", () => {
 
     expect(screen.getByTestId("filtered-empty-inline")).toBeInTheDocument();
     expect(
-      screen.getByText("Nothing posted yet matching “nomatchquery”.")
+      screen.getByText("No post yet matching “nomatchquery”.")
     ).toBeInTheDocument();
     expect(screen.queryByText("Broaden the scope or break the silence.")).not.toBeInTheDocument();
   });

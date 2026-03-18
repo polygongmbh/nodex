@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import type { Channel, Person, Relay } from "@/types";
@@ -31,6 +32,47 @@ export function FilteredEmptyState({
     locale: i18n.resolvedLanguage || i18n.language || "en",
     t,
   });
+  const loadingSubtitle = useMemo(() => {
+    const easterEggKeys = [
+      "tasks.empty.loading.easterEggs.glanceWindow",
+      "tasks.empty.loading.easterEggs.stretch",
+      "tasks.empty.loading.easterEggs.water",
+    ] as const;
+    const index = Math.floor(Math.random() * easterEggKeys.length);
+    return t(easterEggKeys[index]);
+  }, [t]);
+
+  if (mode === "screen" && scopeModel.screenState === "loading") {
+    return (
+      <div
+        className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
+        data-testid="filtered-empty-screen"
+      >
+        <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">
+          {scopeModel.loadingSentence}
+        </p>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {loadingSubtitle}
+        </p>
+      </div>
+    );
+  }
+
+  if (mode === "screen" && scopeModel.screenState === "error") {
+    return (
+      <div
+        className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
+        data-testid="filtered-empty-screen"
+      >
+        <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">
+          {scopeModel.errorSentence}
+        </p>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {t("tasks.empty.error.action")}
+        </p>
+      </div>
+    );
+  }
 
   if (scopeModel.hasActiveFilters) {
     if (mode === "mobile") {

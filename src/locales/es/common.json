@@ -883,9 +883,23 @@
       "noSubtasks": "Aún no hay subtareas",
       "noneYet": "Aún no hay tareas",
       "filtered": {
-        "scopeOnly": "Todavía no hay publicaciones {{scope}}.",
+        "scopeOnly": "Aún no hay ninguna publicación {{scope}}.",
         "mobileFallback": "Nada coincide con el alcance actual, así que esta vista muestra todo en su lugar.",
         "action": "Amplía el alcance o rompe el silencio."
+      },
+      "loading": {
+        "scopeOnly": "Cargando publicaciones {{scope}}.",
+        "none": "Cargando publicaciones...",
+        "easterEggs": {
+          "glanceWindow": "¿Qué tal echar un vistazo por la ventana?",
+          "stretch": "¿Qué tal estirarte un poco?",
+          "water": "Tal vez sea momento de tomar un sorbo de agua."
+        }
+      },
+      "error": {
+        "scopeOnly": "No se pudieron cargar las publicaciones {{scope}}.",
+        "none": "No se pudieron cargar las publicaciones del feed seleccionado.",
+        "action": "Revisa el feed seleccionado e inténtalo de nuevo."
       },
       "unfiltered": {
         "feedTitle": "No hay nadie aquí salvo nuestras gallinas.",
@@ -894,6 +908,7 @@
       },
       "scope": {
         "includedChannels": "en {{channels}}",
+        "includedChannelsLoading": "desde {{channels}}",
         "excludedChannels": "excluyendo {{channels}}",
         "people": "de {{people}}",
         "relays": "en {{relays}}",

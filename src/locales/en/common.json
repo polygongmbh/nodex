@@ -883,9 +883,23 @@
       "noSubtasks": "No subtasks yet",
       "noneYet": "No tasks yet",
       "filtered": {
-        "scopeOnly": "Nothing posted yet {{scope}}.",
+        "scopeOnly": "No post yet {{scope}}.",
         "mobileFallback": "Nothing matches the current scope, so this view is showing everything instead.",
         "action": "Broaden the scope or break the silence."
+      },
+      "loading": {
+        "scopeOnly": "Loading posts {{scope}}.",
+        "none": "Loading posts...",
+        "easterEggs": {
+          "glanceWindow": "How about a glance out of the window?",
+          "stretch": "How about a little stretch?",
+          "water": "Maybe take a sip of water."
+        }
+      },
+      "error": {
+        "scopeOnly": "Could not load posts {{scope}}.",
+        "none": "Could not load posts from the selected feed.",
+        "action": "Check the selected feed and try again."
       },
       "unfiltered": {
         "feedTitle": "Nobody here but us chickens.",
@@ -894,6 +908,7 @@
       },
       "scope": {
         "includedChannels": "in {{channels}}",
+        "includedChannelsLoading": "from {{channels}}",
         "excludedChannels": "excluding {{channels}}",
         "people": "by {{people}}",
         "relays": "on {{relays}}",

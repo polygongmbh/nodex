@@ -883,9 +883,23 @@
       "noSubtasks": "Noch keine Unteraufgaben",
       "noneYet": "Noch keine Aufgaben",
       "filtered": {
-        "scopeOnly": "Noch nichts gepostet {{scope}}.",
+        "scopeOnly": "Noch kein Beitrag {{scope}}.",
         "mobileFallback": "Nichts entspricht dem aktuellen Bereich, deshalb zeigt diese Ansicht stattdessen alles an.",
         "action": "Erweitere den Bereich oder brich die Stille."
+      },
+      "loading": {
+        "scopeOnly": "Lade Beiträge {{scope}}.",
+        "none": "Lade Beiträge ...",
+        "easterEggs": {
+          "glanceWindow": "Wie wäre es mit einem Blick aus dem Fenster?",
+          "stretch": "Wie wäre es mit einer kleinen Dehnung?",
+          "water": "Vielleicht kurz einen Schluck Wasser?"
+        }
+      },
+      "error": {
+        "scopeOnly": "Beiträge konnten nicht geladen werden {{scope}}.",
+        "none": "Beiträge aus dem ausgewählten Feed konnten nicht geladen werden.",
+        "action": "Prüfe den ausgewählten Feed und versuche es erneut."
       },
       "unfiltered": {
         "feedTitle": "Niemand hier außer uns Hühnern.",
@@ -894,6 +908,7 @@
       },
       "scope": {
         "includedChannels": "in {{channels}}",
+        "includedChannelsLoading": "aus {{channels}}",
         "excludedChannels": "ohne {{channels}}",
         "people": "von {{people}}",
         "relays": "auf {{relays}}",

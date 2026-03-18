@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilteredEmptyState } from "./FilteredEmptyState";
 import type { Channel, Person, Relay } from "@/types";
 
@@ -39,6 +39,10 @@ const people: Person[] = [
 ];
 
 describe("FilteredEmptyState", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("renders the selected filtered scope summary", () => {
     render(
       <FilteredEmptyState
@@ -50,9 +54,43 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(
-      screen.getByText("Nothing posted yet in #ops, by Alice, excluding #frontend, on relay.one.")
+      screen.getByText("No post yet in #ops, by Alice, excluding #frontend, on relay.one.")
     ).toBeInTheDocument();
     expect(screen.getByText("Broaden the scope or break the silence.")).toBeInTheDocument();
+  });
+
+  it("renders a loading message and easter egg subtitle while the selected relay is connecting", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={[{ ...relays[0], connectionStatus: "connecting" }, relays[1]]}
+        channels={channels}
+        people={people}
+      />
+    );
+
+    expect(
+      screen.getByText("Loading posts from #ops, by Alice, excluding #frontend, on relay.one.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("How about a glance out of the window?")).toBeInTheDocument();
+  });
+
+  it("renders a feed error message when the selected relay is unavailable", () => {
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={[{ ...relays[0], connectionStatus: "connection-error" }, relays[1]]}
+        channels={channels}
+        people={people}
+      />
+    );
+
+    expect(
+      screen.getByText("Could not load posts in #ops, by Alice, excluding #frontend, on relay.one.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Check the selected feed and try again.")).toBeInTheDocument();
   });
 
   it("renders the playful unfiltered feed message", () => {
