@@ -1115,7 +1115,10 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByText(/set .*date \(optional\)/i)).toBeInTheDocument();
   });
 
-  it("keeps filter chips visible when an empty adaptive composer collapses on blur", () => {
+  it("keeps filter chips visible when an empty adaptive composer collapses on blur", async () => {
+    const outsideButton = document.createElement("button");
+    document.body.appendChild(outsideButton);
+
     render(
       <TaskComposer
         onSubmit={() => successfulCreateResult}
@@ -1131,11 +1134,106 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.focus(textarea);
     expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
 
-    fireEvent.blur(textarea);
+    fireEvent.blur(textarea, { relatedTarget: outsideButton });
 
     expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("backend");
-    expect(screen.queryByRole("button", { name: /insert hashtag/i })).not.toBeInTheDocument();
-    expect(screen.queryByText("Write a message first")).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /insert hashtag/i })).not.toBeInTheDocument();
+      expect(screen.queryByText("Write a message first")).not.toBeInTheDocument();
+    });
+
+    outsideButton.remove();
+  });
+
+  it("does not collapse when focus moves to another control inside the composer", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={[{ id: "backend", name: "backend", filterState: "included" }]}
+        people={people}
+        onCancel={() => {}}
+        adaptiveSize
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    fireEvent.focus(textarea);
+
+    const hashtagButton = screen.getByRole("button", { name: /insert hashtag/i });
+    fireEvent.blur(textarea, { relatedTarget: hashtagButton });
+    fireEvent.click(hashtagButton);
+
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
+    expect((screen.getByPlaceholderText(/what needs to be done/i) as HTMLTextAreaElement).value).toBe("#");
+  });
+
+  it("does not collapse when an internal button click blurs the textarea without moving focus", async () => {
+    const outsideButton = document.createElement("button");
+    document.body.appendChild(outsideButton);
+
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={[{ id: "backend", name: "backend", filterState: "included" }]}
+        people={people}
+        onCancel={() => {}}
+        adaptiveSize
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    fireEvent.focus(textarea);
+
+    const hashtagButton = screen.getByRole("button", { name: /insert hashtag/i });
+    fireEvent.mouseDown(hashtagButton);
+    fireEvent.blur(textarea);
+
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
+    expect(screen.getByText("Write a message first")).toBeInTheDocument();
+
+    fireEvent.mouseDown(outsideButton);
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /insert hashtag/i })).not.toBeInTheDocument();
+    });
+
+    outsideButton.remove();
+  });
+
+  it("collapses even when supplemental composer controls have non-default values", async () => {
+    const outsideButton = document.createElement("button");
+    document.body.appendChild(outsideButton);
+
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={[{ id: "backend", name: "backend", filterState: "included" }]}
+        people={people}
+        onCancel={() => {}}
+        adaptiveSize
+      />
+    );
+
+    const textarea = screen.getByPlaceholderText(/what needs to be done/i);
+    fireEvent.focus(textarea);
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+
+    expect(screen.getByRole("button", { name: /add comment/i })).toBeInTheDocument();
+
+    fireEvent.blur(textarea, { relatedTarget: outsideButton });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /add comment/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("combobox", { name: /kind/i })).not.toBeInTheDocument();
+    });
+
+    outsideButton.remove();
   });
 
   it("blocks root task submit when multiple relays are selected", () => {

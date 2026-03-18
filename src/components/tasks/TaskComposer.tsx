@@ -281,9 +281,11 @@ export function TaskComposer({
   );
   const uploadEnabled = isAttachmentUploadConfigured();
   const attachmentMaxFileSizeBytes = getAttachmentMaxFileSizeBytes();
+  const composerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachmentFileRef = useRef<Record<string, File>>({});
+  const internalMouseDownWithinComposerRef = useRef(false);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const prevSelectedPeoplePubkeysRef = useRef<string[]>([]);
@@ -315,6 +317,25 @@ export function TaskComposer({
   useEffect(() => {
     onExpandedChange?.(isExpanded);
   }, [isExpanded, onExpandedChange]);
+
+  useEffect(() => {
+    if (!adaptiveSize || !isExpanded || content.trim()) return;
+
+    const handleDocumentMouseDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Node && composerRef.current?.contains(target)) return;
+      setIsExpanded(false);
+    };
+
+    document.addEventListener("mousedown", handleDocumentMouseDown, true);
+    return () => {
+      document.removeEventListener("mousedown", handleDocumentMouseDown, true);
+    };
+  }, [
+    adaptiveSize,
+    content,
+    isExpanded,
+  ]);
 
   useEffect(() => {
     if (adaptiveSize && forceExpanded) {
@@ -1235,17 +1256,9 @@ export function TaskComposer({
     setExplicitMentionPubkeys((previous) => previous.filter((value) => value !== normalizedPubkey));
   };
 
-  const hasSupplementalComposerState =
-    attachments.length > 0 ||
-    showLocationControls ||
-    Boolean(locationGeohash) ||
-    Boolean(dueDate) ||
-    Boolean(dueTime) ||
-    typeof priority === "number" ||
-    taskType !== "task";
   const hasPersistentChipTray = mentionChipItems.length > 0 || hashtagChipItems.length > 0;
   const showExpandedControls =
-    !adaptiveSize || isExpanded || content.trim().length > 0 || hasSupplementalComposerState;
+    !adaptiveSize || isExpanded || content.trim().length > 0;
 
   useEffect(() => {
     if (showExpandedControls) return;
@@ -1256,6 +1269,10 @@ export function TaskComposer({
 
   return (
     <div
+      ref={composerRef}
+      onMouseDownCapture={(event) => {
+        internalMouseDownWithinComposerRef.current = event.target !== textareaRef.current;
+      }}
       className={cn("flex flex-col gap-3", compact && "gap-2", adaptiveSize && !showExpandedControls && "gap-1")}
       data-onboarding="focused-compose"
     >
@@ -1283,12 +1300,15 @@ export function TaskComposer({
             setCursorPosition(nextCursor);
             updateAutocompleteFromCursor(textarea.value, nextCursor, true);
           }}
-          onBlur={() => {
+          onBlur={(event) => {
             setIsComposerFocused(false);
             updateAutocompleteFromCursor(content, cursorPosition, false);
-            if (adaptiveSize && !content.trim() && !hasSupplementalComposerState) {
-              setIsExpanded(false);
-            }
+            if (!adaptiveSize || content.trim()) return;
+            const hadInternalMouseDown = internalMouseDownWithinComposerRef.current;
+            internalMouseDownWithinComposerRef.current = false;
+            const nextFocusedElement = event.relatedTarget;
+            if (composerRef.current?.contains(nextFocusedElement) || hadInternalMouseDown) return;
+            setIsExpanded(false);
           }}
           aria-label={
             taskType === "task"
