@@ -223,6 +223,11 @@ policies:
 - Prefer semantics-based queries (`getByRole` with accessible names or stable `data-testid`) instead of literal text searches and keep copy-specific assertions inside dedicated i18n/messaging suites.
 - Avoid adding new `data-testid` selectors when stable semantic queries (`getByRole`, labels, landmarks, accessible names) are available.
 - Use `data-testid` only when semantics are genuinely unstable or absent, and keep those usages narrowly scoped and documented in the related test or review notes.
+- Keep runtime `data-testid` usage limited to explicit exceptions:
+  - dynamic per-entity selectors where stable accessible names are not deterministic (`feed-state-entry-*`, `feed-author-*`, `kanban-due-row-*`)
+  - deterministic visual seed checks (`beam-avatar` / `user-avatar` generator output)
+  - reusable helper components that support optional caller-provided test hooks (`TaskTagChipRow`)
+- During reviews and before handoff, run `rg -n "data-testid" src --glob '!**/*.test.*' --glob '!**/__tests__/**'` and reject net-new runtime test ids outside the exception list.
 - Do not add cosmetic-only assertions unless explicitly required; any class/style assertion must include a short comment explaining the protected product contract.
 - Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
 - Treat lint warnings as actionable backlog; do not introduce new warnings. If a lint rule is intentionally relaxed or disabled, document scope and rationale in the same commit.
