@@ -51,6 +51,20 @@ export function FilteredEmptyState({
     const index = Math.floor(Math.random() * waitingPromptKeys.length);
     return t(waitingPromptKeys[index]);
   }, [t]);
+  const collectionTitle = useMemo(() => {
+    const options = t("tasks.empty.unfiltered.collectionTitleOptions", {
+      returnObjects: true,
+      defaultValue: [],
+    });
+    if (Array.isArray(options) && options.length > 0) {
+      const index = Math.floor(Math.random() * options.length);
+      const selected = options[index];
+      if (typeof selected === "string" && selected.length > 0) {
+        return selected;
+      }
+    }
+    return t("tasks.empty.unfiltered.collectionTitle");
+  }, [t, i18n.language, i18n.resolvedLanguage]);
 
   if (mode === "screen" && scopeModel.screenState === "loading") {
     return (
@@ -139,7 +153,7 @@ export function FilteredEmptyState({
 
   const title = variant === "feed"
     ? t("tasks.empty.unfiltered.feedTitle")
-    : t("tasks.empty.unfiltered.collectionTitle");
+    : collectionTitle;
   const description = variant === "feed"
     ? t("tasks.empty.unfiltered.feedDescription")
     : null;

@@ -915,7 +915,14 @@
       "unfiltered": {
         "feedTitle": "No hay nadie aquí salvo nuestras gallinas.",
         "feedDescription": "Sé la primera persona en publicar.",
-        "collectionTitle": "Este espacio está vacío por ahora. Sé quien lo llene primero."
+        "collectionTitle": "Este espacio está vacío por ahora. Sé quien lo llene primero.",
+        "collectionTitleOptions": [
+          "Aquí reina el silencio por ahora. Deja la primera huella.",
+          "Una página en calma espera. Escribe la línea de apertura.",
+          "Aquí aún nada florece. Siembra la primera semilla.",
+          "Esta sala sigue intacta. Empieza su historia.",
+          "Por ahora solo hay cielo abierto. Sé la primera estrella."
+        ]
       },
       "scope": {
         "includedChannels": "en {{channels}}",

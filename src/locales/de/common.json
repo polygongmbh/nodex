@@ -915,7 +915,14 @@
       "unfiltered": {
         "feedTitle": "Niemand hier außer uns Hühnern.",
         "feedDescription": "Sei die erste Person, die etwas postet.",
-        "collectionTitle": "Dieser Bereich ist noch leer. Füll ihn als Erste:r."
+        "collectionTitle": "Dieser Bereich ist noch leer. Füll ihn als Erste:r.",
+        "collectionTitleOptions": [
+          "Hier ist es noch still. Setz den ersten Ton.",
+          "Hier fehlt nur noch ein erster Funke. Deiner.",
+          "Es ist noch leer zwischen den Zeilen. Schreib die erste.",
+          "Noch ruht dieser Raum. Bring ihn zum Klingen.",
+          "Alles bereit, nur der Anfang fehlt. Setz ihn jetzt."
+        ]
       },
       "scope": {
         "includedChannels": "in {{channels}}",

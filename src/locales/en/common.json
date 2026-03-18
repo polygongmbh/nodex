@@ -915,7 +915,14 @@
       "unfiltered": {
         "feedTitle": "Nobody here but us chickens.",
         "feedDescription": "Be the first to post.",
-        "collectionTitle": "This space is empty for now. Be the first to fill it."
+        "collectionTitle": "This space is empty for now. Be the first to fill it.",
+        "collectionTitleOptions": [
+          "Silence lives here for now. Leave the first trace.",
+          "A quiet page awaits. Write the opening line.",
+          "Nothing has bloomed here yet. Plant the first seed.",
+          "This room is still untouched. Start its story.",
+          "Only open sky for now. Be the first star."
+        ]
       },
       "scope": {
         "includedChannels": "in {{channels}}",

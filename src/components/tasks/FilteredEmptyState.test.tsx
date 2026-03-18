@@ -175,4 +175,19 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText("Nobody here but us chickens.")).toBeInTheDocument();
     expect(screen.getByText("Be the first to post.")).toBeInTheDocument();
   });
+
+  it("renders a randomized unfiltered collection message", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    render(
+      <FilteredEmptyState
+        variant="collection"
+        relays={relays.map((relay) => ({ ...relay, isActive: true }))}
+        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+        people={[{ ...people[0], isSelected: false }]}
+      />
+    );
+
+    expect(screen.getByText("Silence lives here for now. Leave the first trace.")).toBeInTheDocument();
+  });
 });
