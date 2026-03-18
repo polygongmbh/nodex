@@ -29,13 +29,23 @@ const peopleSeed: Person[] = [
 
 function Harness({
   isMobile = false,
+  isHydrating = false,
+  hasLiveHydratedScope = false,
+  startWithEmptyScope = false,
 }: {
   isMobile?: boolean;
+  isHydrating?: boolean;
+  hasLiveHydratedScope?: boolean;
+  startWithEmptyScope?: boolean;
 }) {
   const [people, setPeople] = useState<Person[]>(peopleSeed);
-  const [visibleChannels, setVisibleChannels] = useState<Channel[]>(channels);
-  const [visibleComposeChannels, setVisibleComposeChannels] = useState<Channel[]>(channels);
-  const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<Person[]>(peopleSeed);
+  const [visibleChannels, setVisibleChannels] = useState<Channel[]>(startWithEmptyScope ? [] : channels);
+  const [visibleComposeChannels, setVisibleComposeChannels] = useState<Channel[]>(
+    startWithEmptyScope ? [] : channels
+  );
+  const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<Person[]>(
+    startWithEmptyScope ? [] : peopleSeed
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const relayState = useRelayFilterState({
@@ -54,6 +64,8 @@ function Harness({
     setPeople,
     sidebarPeople: visibleSidebarPeople,
     isMobile,
+    hasLiveHydratedScope,
+    isHydrating,
     setSearchQuery,
     bumpChannelFrecency: vi.fn(),
     t: ((key: string, values?: Record<string, unknown>) =>
@@ -109,9 +121,15 @@ function Harness({
   );
 }
 
-function renderHarness(options?: { isMobile?: boolean }) {
+function renderHarness(options?: {
+  isMobile?: boolean;
+  isHydrating?: boolean;
+  hasLiveHydratedScope?: boolean;
+  startWithEmptyScope?: boolean;
+  initialEntries?: string[];
+}) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={options?.initialEntries}>
       <Harness {...options} />
     </MemoryRouter>
   );
@@ -199,5 +217,17 @@ describe("useIndexFilters", () => {
     fireEvent.click(screen.getByRole("button", { name: "HideAliceSidebarPerson" }));
 
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");
+  });
+
+  it("keeps URL-hydrated channel and people filters during initial hydration", () => {
+    renderHarness({
+      isHydrating: true,
+      hasLiveHydratedScope: false,
+      startWithEmptyScope: true,
+      initialEntries: ["/?ch=general&p=alice"],
+    });
+
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
   });
 });

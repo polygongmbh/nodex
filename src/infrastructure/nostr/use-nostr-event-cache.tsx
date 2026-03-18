@@ -4,6 +4,7 @@ import type { NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
 import {
   ALL_RELAYS_SCOPE_KEY,
   EMPTY_RELAY_SCOPE_KEY,
+  loadCachedNostrEventsForBootstrap,
   loadCachedNostrEvents,
   saveCachedNostrEvents,
   type CachedNostrEvent,
@@ -239,8 +240,8 @@ export function useNostrEventCache({
 
   const { data: nostrEvents = [] } = useQuery({
     queryKey,
-    queryFn: () => loadCachedNostrEvents(feedScopeKey),
-    initialData: () => loadCachedNostrEvents(feedScopeKey),
+    queryFn: () => loadCachedNostrEventsForBootstrap(feedScopeKey),
+    initialData: () => loadCachedNostrEventsForBootstrap(feedScopeKey),
     staleTime: Infinity,
     gcTime: Infinity,
   });

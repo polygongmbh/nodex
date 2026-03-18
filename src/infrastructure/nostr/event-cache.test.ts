@@ -7,6 +7,7 @@ import {
   NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY,
   NOSTR_EVENT_CACHE_STORAGE_KEY,
   loadCachedNostrEvents,
+  loadCachedNostrEventsForBootstrap,
   removeCachedNostrEventById,
   removeCachedNostrEventsByRelayUrl,
   removeRelayUrlFromCachedEvents,
@@ -157,6 +158,15 @@ describe("nostr event cache", () => {
 
     expect(loadCachedNostrEvents("relay-a").map((event) => event.id)).toEqual(["a"]);
     expect(loadCachedNostrEvents("relay-b").map((event) => event.id)).toEqual(["b"]);
+  });
+
+  it("bootstraps from other scopes when the selected scope cache is empty", () => {
+    saveCachedNostrEvents([{ ...eventA, id: "scope-a" }], "relay-a");
+    saveCachedNostrEvents([{ ...eventB, id: "scope-b" }], "relay-b");
+
+    const bootstrapped = loadCachedNostrEventsForBootstrap("relay-a,relay-b");
+
+    expect(bootstrapped.map((event) => event.id)).toEqual(["scope-b", "scope-a"]);
   });
 
   it("removes matching cached ids across scoped caches", () => {

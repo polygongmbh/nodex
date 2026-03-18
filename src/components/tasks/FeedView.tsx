@@ -1,6 +1,6 @@
 import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
-import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X, Loader2 } from "lucide-react";
+import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X } from "lucide-react";
 import {
   Task,
   Relay,
@@ -56,6 +56,7 @@ import {
 } from "@/lib/task-status-toggle";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
+import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -1039,12 +1040,16 @@ export function FeedView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {!isMobile && focusedTaskId && (
-        <FocusedTaskBreadcrumb
-          allTasks={allTasks}
-          focusedTaskId={focusedTaskId}
-          onFocusTask={onFocusTask}
-        />
+      {!isMobile && (
+        isHydrating ? (
+          <HydrationStatusRow />
+        ) : focusedTaskId ? (
+          <FocusedTaskBreadcrumb
+            allTasks={allTasks}
+            focusedTaskId={focusedTaskId}
+            onFocusTask={onFocusTask}
+          />
+        ) : null
       )}
 
       <SharedViewComposer
@@ -1070,12 +1075,6 @@ export function FeedView({
       />
 
       {/* Feed List */}
-      {isHydrating && (
-        <div className="flex items-center gap-1.5 px-4 py-1.5 text-xs text-muted-foreground bg-muted/40 border-b border-border">
-          <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
-          <span>{t("feed.hydrating")}</span>
-        </div>
-      )}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto"

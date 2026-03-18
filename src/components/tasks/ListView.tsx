@@ -50,6 +50,7 @@ import {
 } from "@/lib/task-status-toggle";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
+import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -63,6 +64,7 @@ interface ListViewProps extends SharedTaskViewContext {
   composeGuideActivationSignal?: number;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
+  isHydrating?: boolean;
 }
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
@@ -143,6 +145,7 @@ export function ListView({
   composeGuideActivationSignal,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
+  isHydrating = false,
 }: ListViewProps) {
   const { t, i18n } = useTranslation();
   const { user } = useNDK();
@@ -653,13 +656,15 @@ export function ListView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {focusedTaskId && (
+      {isHydrating ? (
+        <HydrationStatusRow />
+      ) : focusedTaskId ? (
         <FocusedTaskBreadcrumb
           allTasks={allTasks}
           focusedTaskId={focusedTaskId}
           onFocusTask={onFocusTask}
         />
-      )}
+      ) : null}
 
       <SharedViewComposer
         visible={Boolean(user) || forceShowComposer}

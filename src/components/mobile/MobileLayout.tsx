@@ -5,6 +5,7 @@ import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import { SwipeIndicator } from "./SwipeIndicator";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { FocusedTaskBreadcrumb } from "@/components/tasks/FocusedTaskBreadcrumb";
+import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
@@ -80,6 +81,7 @@ interface MobileLayoutProps {
   activeOnboardingStepId?: string | null;
   isManageRouteActive?: boolean;
   onManageRouteChange?: (isActive: boolean) => void;
+  isHydrating?: boolean;
 }
 
 // Mobile view order for swipe navigation
@@ -145,6 +147,7 @@ export function MobileLayout({
   activeOnboardingStepId = null,
   isManageRouteActive = false,
   onManageRouteChange = () => {},
+  isHydrating = false,
 }: MobileLayoutProps) {
   const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
@@ -260,6 +263,7 @@ export function MobileLayout({
     mentionRequest,
     isInteractionBlocked,
     onInteractionBlocked,
+    isHydrating,
   };
 
   const mobileCurrentView: MobileViewType = showFilters ? "filters" : activePrimaryView;
@@ -415,13 +419,17 @@ export function MobileLayout({
               {t("tasks.empty.mobileQuickFilterFallback")}
             </div>
           )}
-          {!showFilters && focusedTaskId && activePrimaryView !== "list" && activePrimaryView !== "calendar" && (
-            <FocusedTaskBreadcrumb
-              allTasks={allTasks}
-              focusedTaskId={focusedTaskId}
-              onFocusTask={onFocusTask}
-              className="h-10 px-3 text-xs"
-            />
+          {!showFilters && (
+            isHydrating ? (
+              <HydrationStatusRow className="px-3" />
+            ) : focusedTaskId && activePrimaryView !== "list" && activePrimaryView !== "calendar" ? (
+              <FocusedTaskBreadcrumb
+                allTasks={allTasks}
+                focusedTaskId={focusedTaskId}
+                onFocusTask={onFocusTask}
+                className="h-10 px-3 text-xs"
+              />
+            ) : null
           )}
           <div 
             className={cn(

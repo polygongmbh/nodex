@@ -34,6 +34,7 @@ import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
@@ -44,6 +45,7 @@ interface KanbanViewProps extends SharedTaskViewContext {
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
+  isHydrating?: boolean;
 }
 
 const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string; icon: React.ReactNode; color: string }[] => [
@@ -78,6 +80,7 @@ export function KanbanView({
   composeRestoreRequest = null,
   isInteractionBlocked = false,
   onInteractionBlocked,
+  isHydrating = false,
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const { user } = useNDK();
@@ -378,13 +381,15 @@ export function KanbanView({
 
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
-      {focusedTaskId && (
+      {isHydrating ? (
+        <HydrationStatusRow />
+      ) : focusedTaskId ? (
         <FocusedTaskBreadcrumb
           allTasks={allTasks}
           focusedTaskId={focusedTaskId}
           onFocusTask={onFocusTask}
         />
-      )}
+      ) : null}
 
       {/* Kanban Columns */}
       <div

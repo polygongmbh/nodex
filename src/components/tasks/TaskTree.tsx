@@ -16,6 +16,7 @@ import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
+import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -32,6 +33,7 @@ interface TaskTreeProps extends SharedTaskViewContext {
     id: number;
   } | null;
   isInteractionBlocked?: boolean;
+  isHydrating?: boolean;
 }
 
 export function TaskTree({
@@ -63,6 +65,7 @@ export function TaskTree({
   composeRestoreRequest = null,
   mentionRequest = null,
   isInteractionBlocked = false,
+  isHydrating = false,
 }: TaskTreeProps) {
   const { t, i18n } = useTranslation();
   const { user } = useNDK();
@@ -417,12 +420,16 @@ export function TaskTree({
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       {/* Top composer with context controls - hidden on mobile */}
-      {!isMobile && currentContextId && (
-        <FocusedTaskBreadcrumb
-          allTasks={allTasks}
-          focusedTaskId={currentContextId}
-          onFocusTask={onFocusTask}
-        />
+      {!isMobile && (
+        isHydrating ? (
+          <HydrationStatusRow />
+        ) : currentContextId ? (
+          <FocusedTaskBreadcrumb
+            allTasks={allTasks}
+            focusedTaskId={currentContextId}
+            onFocusTask={onFocusTask}
+          />
+        ) : null
       )}
 
       <SharedViewComposer

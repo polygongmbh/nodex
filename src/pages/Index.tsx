@@ -250,6 +250,12 @@ const Index = () => {
     isHydrating,
   });
 
+  const sidebarPeopleWithSelected = useMemo(() => {
+    const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
+    const selectedMissing = people.filter((person) => person.isSelected && !sidebarIds.has(person.id));
+    return [...selectedMissing, ...sidebarPeople];
+  }, [people, sidebarPeople]);
+
   const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
     setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
   }, []);
@@ -286,8 +292,10 @@ const Index = () => {
     setPostedTags,
     people,
     setPeople,
-    sidebarPeople,
+    sidebarPeople: sidebarPeopleWithSelected,
     isMobile,
+    hasLiveHydratedScope: hasLiveHydratedRelayScope,
+    isHydrating,
     setSearchQuery,
     bumpChannelFrecency,
     t,
@@ -607,6 +615,7 @@ const Index = () => {
     onUpdatePriority: handlePriorityChange,
     isInteractionBlocked,
     onInteractionBlocked: handleBlockedInteractionAttempt,
+    isHydrating,
   };
 
   const renderView = () => {
@@ -617,7 +626,7 @@ const Index = () => {
       case "feed":
         return (
           <Suspense fallback={viewFallback}>
-            <FeedView {...viewProps} isHydrating={isHydrating} />
+            <FeedView {...viewProps} />
           </Suspense>
         );
       case "kanban":
@@ -718,6 +727,7 @@ const Index = () => {
           onDismissAllFailedPublish={handleDismissAllFailedPublish}
           isInteractionBlocked={isInteractionBlocked}
           onInteractionBlocked={handleBlockedInteractionAttempt}
+          isHydrating={isHydrating}
           isOnboardingOpen={isOnboardingOpen && !isAuthModalOpen}
           activeOnboardingStepId={activeOnboardingStepId}
           isManageRouteActive={isManageRouteActive}
@@ -756,7 +766,7 @@ const Index = () => {
         relays={relaysWithActiveState}
         channels={channelsWithState}
         channelMatchMode={channelMatchMode}
-        people={sidebarPeople}
+        people={sidebarPeopleWithSelected}
         nostrRelays={nostrRelays}
         onRelayToggle={handleRelayToggle}
         onRelayExclusive={handleRelayExclusive}

@@ -64,6 +64,19 @@ function extractScopeFromStorageKey(storageKey: string): string {
   return storageKey.slice(NOSTR_EVENT_CACHE_SCOPE_PREFIX.length).trim() || "global";
 }
 
+function loadCachedEventsFromStorageKey(storageKey: string): CachedNostrEvent[] {
+  if (!hasLocalStorage()) return [];
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return [];
+    const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) return [];
+    return applyRetentionLimits(parsed.data as CachedNostrEvent[]);
+  } catch {
+    return [];
+  }
+}
+
 function readScopeMetadata(): CacheScopeMetadataRecord {
   if (!hasLocalStorage()) return {};
   try {
@@ -249,14 +262,23 @@ export function loadCachedNostrEvents(scopeKey?: string): CachedNostrEvent[] {
   try {
     const normalizedScope = normalizeCacheScope(scopeKey);
     if (normalizedScope === EMPTY_RELAY_SCOPE_KEY) return [];
-    const raw = window.localStorage.getItem(getScopedCacheStorageKey(normalizedScope));
-    if (!raw) return [];
-    const parsed = cachedNostrEventsSchema.safeParse(JSON.parse(raw));
-    if (!parsed.success) return [];
-    return applyRetentionLimits(parsed.data as CachedNostrEvent[]);
+    return loadCachedEventsFromStorageKey(getScopedCacheStorageKey(normalizedScope));
   } catch {
     return [];
   }
+}
+
+export function loadCachedNostrEventsForBootstrap(scopeKey?: string): CachedNostrEvent[] {
+  const normalizedScope = normalizeCacheScope(scopeKey);
+  if (normalizedScope === EMPTY_RELAY_SCOPE_KEY) return [];
+
+  const primaryScopeEvents = loadCachedNostrEvents(normalizedScope);
+  if (primaryScopeEvents.length > 0) return primaryScopeEvents;
+
+  const combined = listKnownCacheStorageKeys().flatMap((storageKey) =>
+    loadCachedEventsFromStorageKey(storageKey)
+  );
+  return applyRetentionLimits(combined);
 }
 
 export function saveCachedNostrEvents(events: CachedNostrEvent[], scopeKey?: string): void {

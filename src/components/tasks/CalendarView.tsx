@@ -57,6 +57,7 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
+import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -65,6 +66,7 @@ interface CalendarViewProps extends SharedTaskViewContext {
   onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
   mobileView?: "calendar" | "upcoming";
+  isHydrating?: boolean;
 }
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
@@ -91,6 +93,7 @@ export function CalendarView({
   onHashtagClick,
   onAuthorClick,
   composeRestoreRequest = null,
+  isHydrating = false,
 }: CalendarViewProps) {
   const { t } = useTranslation();
   const getStatusToggleHint = (status?: Task["status"]): string => {
@@ -478,13 +481,15 @@ export function CalendarView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {focusedTaskId && (
+      {isHydrating ? (
+        <HydrationStatusRow />
+      ) : focusedTaskId ? (
         <FocusedTaskBreadcrumb
           allTasks={allTasks}
           focusedTaskId={focusedTaskId}
           onFocusTask={onFocusTask}
         />
-      )}
+      ) : null}
 
       <div
         className={cn(

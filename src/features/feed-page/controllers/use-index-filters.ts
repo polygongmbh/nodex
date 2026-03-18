@@ -30,6 +30,8 @@ interface UseIndexFiltersOptions {
   setPeople: Dispatch<SetStateAction<Person[]>>;
   sidebarPeople: Person[];
   isMobile: boolean;
+  hasLiveHydratedScope?: boolean;
+  isHydrating?: boolean;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   bumpChannelFrecency: (tag: string, weight?: number) => void;
   t: TFunction;
@@ -46,6 +48,8 @@ export function useIndexFilters({
   setPeople,
   sidebarPeople,
   isMobile,
+  hasLiveHydratedScope = false,
+  isHydrating = false,
   setSearchQuery,
   bumpChannelFrecency,
   t,
@@ -76,7 +80,10 @@ export function useIndexFilters({
     [channelFilterStates, composeChannels]
   );
 
+  const isFilterPruneReady = hasLiveHydratedScope || !isHydrating;
+
   useEffect(() => {
+    if (!isFilterPruneReady) return;
     const availableChannelIds = new Set([
       ...channels.map((channel) => channel.id),
       ...composeChannels
@@ -95,9 +102,10 @@ export function useIndexFilters({
 
       return changed ? next : prev;
     });
-  }, [channels, composeChannels]);
+  }, [channels, composeChannels, isFilterPruneReady]);
 
   useEffect(() => {
+    if (!isFilterPruneReady) return;
     const sidebarPersonIds = new Set(sidebarPeople.map((person) => person.id));
     setPeople((prev) => {
       let changed = false;
@@ -109,7 +117,7 @@ export function useIndexFilters({
 
       return changed ? next : prev;
     });
-  }, [setPeople, sidebarPeople]);
+  }, [isFilterPruneReady, setPeople, sidebarPeople]);
 
   useFilterUrlSync({
     channelFilterStates,
