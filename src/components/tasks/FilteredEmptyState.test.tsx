@@ -78,7 +78,7 @@ describe("FilteredEmptyState", () => {
   });
 
   it("appends immediate parent context to empty and footer scope sentences", () => {
-    const parentTitle = "Parent Task";
+    const parentTitle = "Parent Task\nSecond line should not be shown";
     const { rerender } = render(
       <FilteredEmptyState
         variant="feed"
@@ -90,7 +90,7 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(
-      screen.getByText(`No post yet in #ops, by Alice, excluding #frontend, on relay.one, under ${parentTitle}.`)
+      screen.getByText('No post yet in #ops, by Alice, excluding #frontend, on relay.one, under "Parent Task".')
     ).toBeInTheDocument();
 
     rerender(
@@ -105,8 +105,28 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(
-      screen.getByText(`This is all in #ops, by Alice, excluding #frontend, on relay.one, under ${parentTitle}.`)
+      screen.getByText('This is all in #ops, by Alice, excluding #frontend, on relay.one, under "Parent Task".')
     ).toBeInTheDocument();
+  });
+
+  it("truncates long parent context at word boundaries while preserving start and end fragments", () => {
+    const longParentTitle = "This immediate parent task title starts with a useful context chunk and keeps going until it reaches a very specific ending token ZETA-OMEGA";
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        contextTaskTitle={longParentTitle}
+        mode="footer"
+      />
+    );
+
+    expect(screen.getByText((content) =>
+      content.includes('under "This immediate parent')
+      && content.includes(" ... ")
+      && content.includes('ZETA-OMEGA".')
+    )).toBeInTheDocument();
   });
 
   it("renders a loading message and waiting prompt subtitle while the selected relay is connecting", () => {

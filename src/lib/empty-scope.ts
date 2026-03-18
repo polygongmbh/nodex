@@ -43,6 +43,44 @@ function resolveRelayStatus(relay: Relay): NonNullable<Relay["connectionStatus"]
   return relay.connectionStatus;
 }
 
+const CONTEXT_TITLE_MAX_CHARS = 72;
+const CONTEXT_TITLE_PREFIX_CHARS = 44;
+const CONTEXT_TITLE_SUFFIX_CHARS = 14;
+
+function trimAtWordBoundaryStart(value: string, maxChars: number): string {
+  if (value.length <= maxChars) return value;
+  const slice = value.slice(0, maxChars + 1);
+  const lastSpace = slice.lastIndexOf(" ");
+  if (lastSpace >= Math.floor(maxChars * 0.6)) {
+    return slice.slice(0, lastSpace).trimEnd();
+  }
+  return value.slice(0, maxChars).trimEnd();
+}
+
+function trimAtWordBoundaryEnd(value: string, maxChars: number): string {
+  if (value.length <= maxChars) return value;
+  const rawSlice = value.slice(-maxChars - 1);
+  const firstSpace = rawSlice.indexOf(" ");
+  if (firstSpace >= 0 && firstSpace <= Math.floor(maxChars * 0.4)) {
+    const candidate = rawSlice.slice(firstSpace + 1).trimStart();
+    if (candidate.length > 0) return candidate;
+  }
+  return value.slice(-maxChars).trimStart();
+}
+
+function formatContextTaskTitle(title: string): string {
+  const firstLine = title.split(/\r?\n/u, 1)[0] ?? "";
+  const normalized = firstLine.replace(/\s+/g, " ").trim();
+  if (!normalized) return "";
+  if (normalized.length <= CONTEXT_TITLE_MAX_CHARS) {
+    return `"${normalized}"`;
+  }
+
+  const prefix = trimAtWordBoundaryStart(normalized, CONTEXT_TITLE_PREFIX_CHARS);
+  const suffix = trimAtWordBoundaryEnd(normalized, CONTEXT_TITLE_SUFFIX_CHARS);
+  return `"${prefix} ... ${suffix}"`;
+}
+
 export function buildEmptyScopeModel({
   relays,
   channels,
@@ -53,6 +91,7 @@ export function buildEmptyScopeModel({
   t,
 }: BuildEmptyScopeModelParams): EmptyScopeModel {
   const trimmedSearchQuery = searchQuery.trim();
+  const formattedContextTitle = formatContextTaskTitle(contextTaskTitle);
   const activeRelays = relays.filter((relay) => relay.isActive);
   const includedChannels = channels.filter((channel) => channel.filterState === "included");
   const excludedChannels = channels.filter((channel) => channel.filterState === "excluded");
@@ -141,9 +180,9 @@ export function buildEmptyScopeModel({
     trimmedSearchQuery
       ? t("tasks.empty.scope.search", { query: trimmedSearchQuery })
       : null,
-    contextTaskTitle.trim()
+    formattedContextTitle
       ? t("tasks.empty.scope.contextUnder", {
-          title: contextTaskTitle.trim(),
+          title: formattedContextTitle,
         })
       : null,
   ].filter((value): value is string => Boolean(value));

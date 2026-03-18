@@ -64,7 +64,7 @@ export function FilteredEmptyState({
       }
     }
     return t("tasks.empty.unfiltered.collectionTitle");
-  }, [t, i18n.language, i18n.resolvedLanguage]);
+  }, [t]);
 
   if (mode === "screen" && scopeModel.screenState === "loading") {
     return (
