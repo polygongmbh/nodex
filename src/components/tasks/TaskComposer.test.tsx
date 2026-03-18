@@ -136,7 +136,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
 
     expect(screen.getByTestId("composer-submit-block-panel")).toHaveTextContent("Can't post yet");
-    expect(screen.getByTestId("composer-submit-block-panel")).toHaveTextContent("Add at least one #channel");
+    expect(screen.getByTestId("composer-submit-block-panel")).toHaveTextContent("Add or select at least one #channel");
     expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Add #channel");
   });
 

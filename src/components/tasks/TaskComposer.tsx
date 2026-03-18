@@ -967,6 +967,7 @@ export function TaskComposer({
     t,
   });
   const submitBlockedReason = submitBlock?.reason ?? null;
+  const showSubmitBlockDetail = submitBlock?.code !== "write" && submitBlock?.code !== "tag";
 
   const pulseTarget = (target: "input" | "attachments" | "blocker") => {
     setHighlightedTarget(target);
@@ -1639,7 +1640,9 @@ export function TaskComposer({
               {t("composer.blockedDetail.title")}
             </div>
             <div className="font-medium text-foreground">{submitBlock.reason}</div>
-            <div className="text-xs text-muted-foreground">{submitBlock.detail}</div>
+            {showSubmitBlockDetail && (
+              <div className="text-xs text-muted-foreground">{submitBlock.detail}</div>
+            )}
           </div>
         </div>
       )}
