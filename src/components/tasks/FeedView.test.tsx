@@ -557,6 +557,27 @@ describe("FeedView", () => {
     expect(screen.queryByText("Broaden the scope or break the silence.")).not.toBeInTheDocument();
   });
 
+  it("renders a scope footer hint at the end when filtered results are visible", () => {
+    const selectedAuthor = { ...author, isSelected: true };
+    render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={[selectedAuthor]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("filtered-scope-footer")).toBeInTheDocument();
+    expect(screen.getByText("Showing only tasks by Alice Doe.")).toBeInTheDocument();
+    expect(screen.queryByTestId("filtered-empty-inline")).not.toBeInTheDocument();
+  });
+
   it("keeps showing feed posts on mobile when the current scope has no matches", () => {
     const { container } = render(
       <FeedView

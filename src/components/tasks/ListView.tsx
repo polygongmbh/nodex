@@ -341,6 +341,8 @@ export function ListView({
   const hasSourceListContent = baseListTasks.length > 0;
   const shouldShowInlineEmptyHint =
     scopeModel.hasActiveFilters && listTasks.length === 0 && hasSourceListContent;
+  const shouldShowScopeFooterHint =
+    scopeModel.hasActiveFilters && listTasks.length > 0;
   const shouldShowScreenEmptyState = listTasks.length === 0 && !shouldShowInlineEmptyHint;
   const {
     mediaItems,
@@ -967,6 +969,21 @@ export function ListView({
                   </tr>
                 );
               })}
+                {shouldShowScopeFooterHint ? (
+                  <tr>
+                    <td colSpan={6} className="p-0">
+                      <FilteredEmptyState
+                        variant="collection"
+                        relays={relays}
+                        channels={channels}
+                        people={people}
+                        searchQuery={searchQuery}
+                        mode="footer"
+                        className="py-6"
+                      />
+                    </td>
+                  </tr>
+                ) : null}
                 {shouldShowInlineEmptyHint ? (
                   <tr>
                     <td colSpan={6} className="p-0">

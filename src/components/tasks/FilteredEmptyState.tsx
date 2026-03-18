@@ -10,7 +10,7 @@ interface FilteredEmptyStateProps {
   channels: Channel[];
   people: Person[];
   searchQuery?: string;
-  mode?: "screen" | "inline" | "mobile";
+  mode?: "screen" | "inline" | "mobile" | "footer";
   className?: string;
 }
 
@@ -101,6 +101,19 @@ export function FilteredEmptyState({
         >
           <p className="max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             {scopeModel.filteredSentence}
+          </p>
+        </div>
+      );
+    }
+
+    if (mode === "footer") {
+      return (
+        <div
+          className={cn("flex justify-center px-4 py-6 text-center", className)}
+          data-testid="filtered-scope-footer"
+        >
+          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            {scopeModel.scopeFooterSentence}
           </p>
         </div>
       );

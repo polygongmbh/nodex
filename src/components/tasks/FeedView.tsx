@@ -279,6 +279,8 @@ export function FeedView({
   );
   const shouldShowInlineEmptyHint =
     !isMobile && scopeModel.hasActiveFilters && feedEntries.length === 0 && hasSourceFeedContent;
+  const shouldShowScopeFooterHint =
+    !isMobile && scopeModel.hasActiveFilters && feedEntries.length > 0;
   const shouldShowScreenEmptyState = feedEntries.length === 0 && !shouldShowMobileScopeFallback && !shouldShowInlineEmptyHint;
   const {
     mediaItems,
@@ -1098,6 +1100,16 @@ export function FeedView({
         ) : (
           <>
             {displayedFeedEntries.map(renderFeedEntry)}
+            {shouldShowScopeFooterHint ? (
+              <FilteredEmptyState
+                variant="feed"
+                relays={relays}
+                channels={channels}
+                people={people}
+                searchQuery={searchQuery}
+                mode="footer"
+              />
+            ) : null}
             {shouldShowInlineEmptyHint ? (
               <FilteredEmptyState
                 variant="feed"

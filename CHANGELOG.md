@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Relay-load failure empty states now show feed-only source hints (`Could not load posts from ...`) and use status-aware informational subtitles that distinguish read rejection from connection failures.
 - Startup relay fallback probing now runs again when no relays are configured via env, fixing a regression introduced in `v2.0` that left the app booting with an empty relay list on fallback-only deployments.
 - Loading empty-state microcopy now rotates through a larger set of wellness-style waiting prompts with updated localization tone in English, German, and Spanish.
+- Feed/tree/table scope hints now show a true end-of-content footer (`Showing only tasks ...`) when filtered results are visible, while `No post yet ...` remains reserved for actual zero-result states.
 
 ## [2.2.0] - 2026-03-18
 Minor release for broader user-facing compose/filter/feed UX updates and relay stability fixes (4545 lines changed since `v2.1.0`).

@@ -59,6 +59,24 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText("Broaden the scope or break the silence.")).toBeInTheDocument();
   });
 
+  it("renders a scope footer sentence for non-empty filtered results", () => {
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        mode="footer"
+      />
+    );
+
+    expect(screen.getByTestId("filtered-scope-footer")).toBeInTheDocument();
+    expect(
+      screen.getByText("Showing only tasks in #ops, by Alice, excluding #frontend, on relay.one.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No post yet")).not.toBeInTheDocument();
+  });
+
   it("renders a loading message and waiting prompt subtitle while the selected relay is connecting", () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
 

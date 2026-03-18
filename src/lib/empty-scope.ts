@@ -17,6 +17,7 @@ export interface EmptyScopeModel {
   hasActiveFilters: boolean;
   scopeDescription: string | null;
   filteredSentence: string | null;
+  scopeFooterSentence: string | null;
   mobileFallbackHint: string | null;
   loadingSentence: string | null;
   errorSentence: string | null;
@@ -91,6 +92,7 @@ export function buildEmptyScopeModel({
       hasActiveFilters: false,
       scopeDescription: null,
       filteredSentence: null,
+      scopeFooterSentence: null,
       mobileFallbackHint: null,
       loadingSentence: t("tasks.empty.loading.none"),
       errorSentence: t("tasks.empty.error.none"),
@@ -143,6 +145,9 @@ export function buildEmptyScopeModel({
   const filteredSentence = scopeDescription
     ? t("tasks.empty.filtered.scopeOnly", { scope: scopeDescription })
     : null;
+  const scopeFooterSentence = scopeDescription
+    ? t("tasks.empty.filtered.showingOnlyScope", { scope: scopeDescription })
+    : null;
   const loadingSentence = scopeDescription
     ? t("tasks.empty.loading.scopeOnly", { scope: scopeDescription })
     : t("tasks.empty.loading.none");
@@ -159,6 +164,7 @@ export function buildEmptyScopeModel({
     hasActiveFilters: true,
     scopeDescription,
     filteredSentence,
+    scopeFooterSentence,
     mobileFallbackHint: t("tasks.empty.filtered.mobileFallback"),
     loadingSentence,
     errorSentence,

@@ -211,6 +211,8 @@ export function TaskTree({
   const displayedTasks = shouldShowMobileScopeFallback ? baseVisibleTasks : visibleTasks;
   const shouldShowInlineEmptyHint =
     !isMobile && scopeModel.hasActiveFilters && visibleTasks.length === 0 && hasSourceTaskContent;
+  const shouldShowScopeFooterHint =
+    !isMobile && scopeModel.hasActiveFilters && visibleTasks.length > 0;
   const shouldShowScreenEmptyState =
     visibleTasks.length === 0 && !shouldShowMobileScopeFallback && !shouldShowInlineEmptyHint;
 
@@ -492,6 +494,16 @@ export function TaskTree({
                 authorProfiles={authorProfiles}
               />
             ))}
+            {shouldShowScopeFooterHint ? (
+              <FilteredEmptyState
+                variant="collection"
+                relays={relays}
+                channels={channels}
+                people={people}
+                searchQuery={searchQuery}
+                mode="footer"
+              />
+            ) : null}
             {shouldShowInlineEmptyHint ? (
               <FilteredEmptyState
                 variant="collection"
