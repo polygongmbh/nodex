@@ -30,11 +30,13 @@ const mockedNdk = vi.hoisted(() => {
     status = MockNDKRelayStatus.DISCONNECTED;
     connectCalls = 0;
     disconnectCalls = 0;
+    socketOpen = false;
     constructor(url: string, private pool: FakePool) {
       this.url = url.replace(/\/+$/, "");
     }
     connect() {
       this.connectCalls += 1;
+      this.socketOpen = true;
       this.status = MockNDKRelayStatus.CONNECTING;
       this.pool.emit("relay:connecting", this);
       this.status = MockNDKRelayStatus.CONNECTED;
@@ -42,6 +44,7 @@ const mockedNdk = vi.hoisted(() => {
     }
     disconnect() {
       this.disconnectCalls += 1;
+      this.socketOpen = false;
       this.status = MockNDKRelayStatus.DISCONNECTED;
       this.pool.emit("relay:disconnect", this);
     }
@@ -49,13 +52,23 @@ const mockedNdk = vi.hoisted(() => {
 
   class FakePool {
     relays = new Map<string, FakeRelay>();
+    createdRelays = new Map<string, FakeRelay[]>();
     private listeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
     constructor(explicitRelayUrls: string[]) {
       explicitRelayUrls.forEach((url) => {
-        const relay = new FakeRelay(url, this);
+        const relay = this.createRelay(url);
         this.relays.set(relay.url, relay);
       });
+    }
+
+    private createRelay(url: string) {
+      const relay = new FakeRelay(url, this);
+      const normalized = relay.url;
+      const created = this.createdRelays.get(normalized) ?? [];
+      created.push(relay);
+      this.createdRelays.set(normalized, created);
+      return relay;
     }
 
     on(event: string, callback: (...args: unknown[]) => void) {
@@ -76,7 +89,7 @@ const mockedNdk = vi.hoisted(() => {
       const normalized = url.replace(/\/+$/, "");
       let relay = this.relays.get(normalized);
       if (!relay) {
-        relay = new FakeRelay(normalized, this);
+        relay = this.createRelay(normalized);
         this.relays.set(normalized, relay);
       }
       if (connect && relay.status !== MockNDKRelayStatus.CONNECTED && relay.status !== MockNDKRelayStatus.CONNECTING) {
@@ -98,6 +111,14 @@ const mockedNdk = vi.hoisted(() => {
       this.relays.forEach((relay) => {
         relay.connect();
       });
+    }
+
+    getCreatedRelays(url: string) {
+      return this.createdRelays.get(url.replace(/\/+$/, "")) ?? [];
+    }
+
+    getOpenSocketCount(url: string) {
+      return this.getCreatedRelays(url).filter((relay) => relay.socketOpen).length;
     }
   }
 
@@ -169,13 +190,14 @@ vi.mock("./session-restore", () => ({
 }));
 
 function Harness() {
-  const { addRelay, removeRelay, relays } = useNDK();
+  const { addRelay, removeRelay, reconnectRelay, relays } = useNDK();
   return (
     <div>
       <button onClick={() => addRelay("wss://relay.two/")}>add relay</button>
       <button onClick={() => addRelay("wss://relay.one/")}>re-add relay slash</button>
       <button onClick={() => addRelay("wss://relay.one")}>re-add relay no slash</button>
       <button onClick={() => removeRelay("wss://relay.one")}>remove relay</button>
+      <button onClick={() => reconnectRelay("wss://relay.one")}>reconnect relay</button>
       <output data-testid="relay-state">
         {relays
           .map((relay) => `${relay.url}:${relay.status}`)
@@ -292,5 +314,67 @@ describe("NDKProvider relay lifecycle", () => {
       expect(relayState).toContain("wss://relay.one:connected");
       expect(relayState.match(/wss:\/\/relay\.one:/g)).toHaveLength(1);
     });
+  });
+
+  it("removes one relay without reconnecting healthy survivors", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/", "wss://relay.two/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      const relayState = screen.getByTestId("relay-state").textContent ?? "";
+      expect(relayState).toContain("wss://relay.one:connected");
+      expect(relayState).toContain("wss://relay.two:connected");
+    });
+
+    expect(mockedNdk.ndkInstances).toHaveLength(1);
+    const ndk = mockedNdk.ndkInstances[0];
+    const survivingRelay = ndk.pool.getRelay("wss://relay.two", false);
+    expect(survivingRelay.connectCalls).toBe(1);
+    expect(ndk.pool.getOpenSocketCount("wss://relay.two")).toBe(1);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "remove relay" }));
+    });
+
+    await waitFor(() => {
+      const relayState = screen.getByTestId("relay-state").textContent ?? "";
+      expect(relayState).not.toContain("wss://relay.one:");
+      expect(relayState).toContain("wss://relay.two:connected");
+    });
+
+    expect(mockedNdk.ndkInstances).toHaveLength(1);
+    expect(survivingRelay.connectCalls).toBe(1);
+    expect(ndk.pool.getCreatedRelays("wss://relay.two")).toHaveLength(1);
+    expect(ndk.pool.getOpenSocketCount("wss://relay.two")).toBe(1);
+  });
+
+  it("reconnects a relay without leaving multiple open sockets for the same url", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
+    expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
+    expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
   });
 });
