@@ -45,6 +45,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
@@ -73,6 +79,8 @@ function formatCompactRelativeTime(date: Date): string {
 interface FeedViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: TaskStatus) => void;
+  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
+  onUpdatePriority?: (taskId: string, priority: number) => void;
   onListingStatusChange?: (taskId: string, status: Nip99ListingStatus) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
@@ -98,6 +106,186 @@ const FEED_REVEAL_BATCH_SIZE = 30;
 const FEED_REVEAL_DELAY_MS = 80;
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
 
+interface FeedDueDateChipProps {
+  task: Task;
+  editable: boolean;
+  dueDateColor: string;
+  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
+}
+
+function FeedDueDateChip({
+  task,
+  editable,
+  dueDateColor,
+  onUpdateDueDate,
+}: FeedDueDateChipProps) {
+  const { t } = useTranslation();
+  const [localDueTime, setLocalDueTime] = useState(task.dueTime || "");
+  const [localDateType, setLocalDateType] = useState<TaskDateType>(task.dateType || "due");
+
+  useEffect(() => {
+    setLocalDueTime(task.dueTime || "");
+  }, [task.dueTime, task.id]);
+
+  useEffect(() => {
+    setLocalDateType(task.dateType || "due");
+  }, [task.dateType, task.id]);
+
+  if (!task.dueDate) return null;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          disabled={!editable}
+          onClick={(event) => event.stopPropagation()}
+          className={cn(
+            "inline-flex items-center gap-1 rounded px-1 py-0.5 text-left transition-colors",
+            dueDateColor,
+            editable ? "cursor-pointer hover:bg-muted/50" : "cursor-default"
+          )}
+        >
+          <Calendar className="w-3 h-3" />
+          <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
+          <span>{format(task.dueDate, "MMM d, yyyy")}</span>
+          {task.dueTime && (
+            <>
+              <Clock className="w-3 h-3 ml-1" />
+              <span>{task.dueTime}</span>
+            </>
+          )}
+        </button>
+      </PopoverTrigger>
+      {editable && (
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="space-y-2 p-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground" htmlFor={`feed-date-type-${task.id}`}>
+                {t("listView.dates.type")}
+              </label>
+              <select
+                id={`feed-date-type-${task.id}`}
+                aria-label={t("listView.dates.type")}
+                value={localDateType}
+                onChange={(event) => {
+                  const nextType = event.target.value as TaskDateType;
+                  setLocalDateType(nextType);
+                  if (task.dueDate) {
+                    onUpdateDueDate?.(task.id, task.dueDate, localDueTime || undefined, nextType);
+                  }
+                }}
+                className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
+              >
+                <option value="due">{t("composer.dates.due")}</option>
+                <option value="scheduled">{t("composer.dates.scheduled")}</option>
+                <option value="start">{t("composer.dates.start")}</option>
+                <option value="end">{t("composer.dates.end")}</option>
+                <option value="milestone">{t("composer.dates.milestone")}</option>
+              </select>
+            </div>
+            <CalendarComponent
+              mode="single"
+              selected={task.dueDate}
+              onSelect={(date) => {
+                onUpdateDueDate?.(task.id, date, localDueTime || undefined, localDateType);
+              }}
+              initialFocus
+            />
+            <div className="flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+              <input
+                type="time"
+                value={localDueTime}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setLocalDueTime(value);
+                  if (task.dueDate) {
+                    onUpdateDueDate?.(task.id, task.dueDate, value || undefined, localDateType);
+                  }
+                }}
+                className="rounded border border-border bg-background px-2 py-1 text-xs"
+              />
+            </div>
+          </div>
+        </PopoverContent>
+      )}
+    </Popover>
+  );
+}
+
+interface FeedPriorityChipProps {
+  task: Task;
+  editable: boolean;
+  onUpdatePriority?: (taskId: string, priority: number) => void;
+}
+
+function FeedPriorityChip({ task, editable, onUpdatePriority }: FeedPriorityChipProps) {
+  const { t } = useTranslation();
+  const [localPriority, setLocalPriority] = useState(
+    typeof task.priority === "number" ? String(task.priority) : ""
+  );
+
+  useEffect(() => {
+    setLocalPriority(typeof task.priority === "number" ? String(task.priority) : "");
+  }, [task.priority, task.id]);
+
+  if (typeof task.priority !== "number") return null;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          disabled={!editable}
+          onClick={(event) => event.stopPropagation()}
+          className={cn(
+            "rounded bg-warning/15 px-1.5 py-0.5 text-xs text-warning transition-colors",
+            editable && "cursor-pointer hover:bg-warning/20"
+          )}
+        >
+          P{task.priority}
+        </button>
+      </PopoverTrigger>
+      {editable && (
+        <PopoverContent
+          className="w-36 p-2"
+          align="start"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <label className="sr-only" htmlFor={`feed-priority-${task.id}`}>
+            {t("composer.labels.priority")}
+          </label>
+          <select
+            id={`feed-priority-${task.id}`}
+            aria-label={t("composer.labels.priority")}
+            value={localPriority}
+            onChange={(event) => {
+              const next = event.target.value;
+              setLocalPriority(next);
+              const parsed = Number.parseInt(next, 10);
+              if (Number.isFinite(parsed)) {
+                onUpdatePriority?.(task.id, parsed);
+              }
+            }}
+            className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground focus:outline-none"
+          >
+            <option value="20">P20</option>
+            <option value="40">P40</option>
+            <option value="60">P60</option>
+            <option value="80">P80</option>
+            <option value="100">P100</option>
+          </select>
+        </PopoverContent>
+      )}
+    </Popover>
+  );
+}
+
 export function FeedView({
   tasks,
   allTasks,
@@ -111,6 +299,8 @@ export function FeedView({
   onNewTask,
   onToggleComplete,
   onStatusChange,
+  onUpdateDueDate,
+  onUpdatePriority,
   onListingStatusChange,
   focusedTaskId,
   onFocusTask,
@@ -939,9 +1129,11 @@ export function FeedView({
               {!isComment && typeof task.priority === "number" && (
                 <>
                   <span className="shrink-0">·</span>
-                  <span className="text-xs bg-warning/15 text-warning px-1.5 py-0.5 rounded">
-                    P{task.priority}
-                  </span>
+                  <FeedPriorityChip
+                    task={task}
+                    editable={canCompleteTask(task)}
+                    onUpdatePriority={onUpdatePriority}
+                  />
                 </>
               )}
               {isComment && !isMobile && (
@@ -965,17 +1157,12 @@ export function FeedView({
               {task.dueDate && (
                 <>
                   <span className="shrink-0">·</span>
-                  <span className={cn("inline-flex items-center gap-1", dueDateColor)}>
-                    <Calendar className="w-3 h-3" />
-                    <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-                    <span>{format(task.dueDate, "MMM d, yyyy")}</span>
-                    {task.dueTime && (
-                      <>
-                        <Clock className="w-3 h-3 ml-1" />
-                        <span>{task.dueTime}</span>
-                      </>
-                    )}
-                  </span>
+                  <FeedDueDateChip
+                    task={task}
+                    editable={canCompleteTask(task)}
+                    dueDateColor={dueDateColor}
+                    onUpdateDueDate={onUpdateDueDate}
+                  />
                 </>
               )}
               {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash) && (

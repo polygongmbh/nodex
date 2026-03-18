@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
 import { formatAuthorMetaLabel } from "@/lib/person-label";
@@ -8,6 +9,20 @@ import i18n from "@/lib/i18n/config";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: null }),
+}));
+
+vi.mock("@/components/ui/popover", () => ({
+  Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@/components/ui/calendar", () => ({
+  Calendar: ({ onSelect }: { onSelect?: (date?: Date) => void }) => (
+    <button type="button" onClick={() => onSelect?.(new Date("2026-05-10T00:00:00.000Z"))}>
+      Select calendar date
+    </button>
+  ),
 }));
 
 const author: Person = {
@@ -635,6 +650,72 @@ describe("FeedView", () => {
 
     expect(document.querySelector('[data-empty-mode="mobile"]')).toBeInTheDocument();
     expect(container.querySelector('[data-task-id="task-1"]')).toBeInTheDocument();
+  });
+
+  it("updates task priority from the feed priority chip", () => {
+    const onUpdatePriority = vi.fn();
+    const taskWithPriority = makeTask({
+      id: "task-priority",
+      author,
+      status: "todo",
+      priority: 40,
+    });
+
+    render(
+      <FeedView
+        tasks={[taskWithPriority]}
+        allTasks={[taskWithPriority]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        onUpdatePriority={onUpdatePriority}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
+      target: { value: "80" },
+    });
+
+    expect(onUpdatePriority).toHaveBeenCalledWith("task-priority", 80);
+  });
+
+  it("updates date type from the feed due-date chip", () => {
+    const onUpdateDueDate = vi.fn();
+    const dueDate = new Date("2026-05-01T00:00:00.000Z");
+    const taskWithDueDate = makeTask({
+      id: "task-due-date",
+      author,
+      status: "todo",
+      dueDate,
+      dateType: "due",
+    });
+
+    render(
+      <FeedView
+        tasks={[taskWithDueDate]}
+        allTasks={[taskWithDueDate]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        onUpdateDueDate={onUpdateDueDate}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /type/i }), {
+      target: { value: "scheduled" },
+    });
+
+    expect(onUpdateDueDate).toHaveBeenCalledWith("task-due-date", dueDate, undefined, "scheduled");
   });
 
 });
