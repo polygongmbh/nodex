@@ -5,6 +5,7 @@ export type ComposeSubmitBlockCode =
   | "write"
   | "tag"
   | "selectTask"
+  | "commentRelay"
   | "relay"
   | "uploading"
   | "uploadFailed"
@@ -33,6 +34,7 @@ interface ResolveComposeSubmitBlockOptions {
   hasAtLeastOneTag: boolean;
   canInheritParentTags: boolean;
   hasCommentWithoutParent?: boolean;
+  hasInvalidRootCommentRelaySelection?: boolean;
   hasInvalidRootTaskRelaySelection?: boolean;
   hasPendingAttachmentUploads: boolean;
   hasFailedAttachmentUploads: boolean;
@@ -46,6 +48,7 @@ export function resolveComposeSubmitBlock({
   hasAtLeastOneTag,
   canInheritParentTags,
   hasCommentWithoutParent = false,
+  hasInvalidRootCommentRelaySelection = false,
   hasInvalidRootTaskRelaySelection = false,
   hasPendingAttachmentUploads,
   hasFailedAttachmentUploads,
@@ -114,6 +117,17 @@ export function resolveComposeSubmitBlock({
       detail: t("composer.blockedDetail.detail.selectTask"),
       ctaLabel: t("composer.blockedDetail.cta.selectTask"),
       action: "focus-task-context",
+      isHardDisabled: false,
+    };
+  }
+
+  if (hasInvalidRootCommentRelaySelection) {
+    return {
+      code: "commentRelay",
+      reason: t("composer.blocked.commentRelay"),
+      detail: t("composer.blockedDetail.detail.commentRelay"),
+      ctaLabel: t("composer.blockedDetail.cta.commentRelay"),
+      action: "open-relay-selector",
       isHardDisabled: false,
     };
   }

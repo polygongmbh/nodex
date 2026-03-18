@@ -1503,6 +1503,31 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /add comment/i })).not.toBeDisabled();
   });
 
+  it("uses the comment-specific relay warning when no postable relay is selected", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={disconnectedRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+    fireEvent.change(getCommentComposerInput(), {
+      target: { value: "Looks good #backend" },
+    });
+
+    expect(screen.getByText("Select at least one active feed to post a comment")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Select a single feed or a parent task to create a new task")
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select feed");
+  });
+
   it("allows comment submit when parentId is provided", () => {
     render(
       <TaskComposer
