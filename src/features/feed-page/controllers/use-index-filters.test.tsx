@@ -32,13 +32,15 @@ function Harness({
   isHydrating = false,
   hasLiveHydratedScope = false,
   startWithEmptyScope = false,
+  startWithEmptyPeople = false,
 }: {
   isMobile?: boolean;
   isHydrating?: boolean;
   hasLiveHydratedScope?: boolean;
   startWithEmptyScope?: boolean;
+  startWithEmptyPeople?: boolean;
 }) {
-  const [people, setPeople] = useState<Person[]>(peopleSeed);
+  const [people, setPeople] = useState<Person[]>(startWithEmptyPeople ? [] : peopleSeed);
   const [visibleChannels, setVisibleChannels] = useState<Channel[]>(startWithEmptyScope ? [] : channels);
   const [visibleComposeChannels, setVisibleComposeChannels] = useState<Channel[]>(
     startWithEmptyScope ? [] : channels
@@ -102,6 +104,7 @@ function Harness({
       <button onClick={() => filters.handleAuthorClick(makePerson({ id: "alice", name: "alice", displayName: "Alice" }))}>
         AuthorClick
       </button>
+      <button onClick={() => setPeople(peopleSeed)}>LoadPeople</button>
       <button onClick={filters.resetFiltersToDefault}>Reset</button>
       <output data-testid="relay-ids">{Array.from(relayState.effectiveActiveRelayIds).sort().join(",")}</output>
       <output data-testid="channel-state-general">
@@ -126,6 +129,7 @@ function renderHarness(options?: {
   isHydrating?: boolean;
   hasLiveHydratedScope?: boolean;
   startWithEmptyScope?: boolean;
+  startWithEmptyPeople?: boolean;
   initialEntries?: string[];
 }) {
   return render(
@@ -228,6 +232,21 @@ describe("useIndexFilters", () => {
     });
 
     expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
+  });
+
+  it("applies URL-hydrated selected people when people profiles load after mount", () => {
+    renderHarness({
+      isHydrating: true,
+      hasLiveHydratedScope: false,
+      startWithEmptyPeople: true,
+      initialEntries: ["/?p=alice"],
+    });
+
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("");
+
+    fireEvent.click(screen.getByRole("button", { name: "LoadPeople" }));
+
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
   });
 });

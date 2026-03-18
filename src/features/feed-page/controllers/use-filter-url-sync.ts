@@ -111,6 +111,7 @@ export function useFilterUrlSync({
 }: UseFilterUrlSyncOptions) {
   const [searchParams, setSearchParams] = useSearchParams();
   const didHydrateFromUrlRef = useRef(false);
+  const pendingUrlSelectedPersonIdsRef = useRef<Set<string> | null>(null);
 
   // Hydrate state from URL on initial mount
   useEffect(() => {
@@ -124,6 +125,7 @@ export function useFilterUrlSync({
     }
 
     if (selectedPersonIds !== null && selectedPersonIds.size > 0) {
+      pendingUrlSelectedPersonIdsRef.current = new Set(selectedPersonIds);
       setPeople((prev) =>
         prev.map((person) => ({
           ...person,
@@ -132,6 +134,30 @@ export function useFilterUrlSync({
       );
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Apply URL-selected people to profiles that load after initial mount.
+  useEffect(() => {
+    const pendingIds = pendingUrlSelectedPersonIdsRef.current;
+    if (!pendingIds || pendingIds.size === 0) return;
+
+    const matchedIds = new Set<string>();
+    setPeople((prev) => {
+      let changed = false;
+      const next = prev.map((person) => {
+        if (!pendingIds.has(person.id)) return person;
+        matchedIds.add(person.id);
+        if (person.isSelected) return person;
+        changed = true;
+        return { ...person, isSelected: true };
+      });
+      return changed ? next : prev;
+    });
+
+    if (matchedIds.size === 0) return;
+    const remainingIds = new Set(pendingIds);
+    matchedIds.forEach((id) => remainingIds.delete(id));
+    pendingUrlSelectedPersonIdsRef.current = remainingIds.size > 0 ? remainingIds : null;
+  }, [people, setPeople]);
 
   // Sync state → URL (debounced to avoid thrashing during rapid changes)
   useEffect(() => {
