@@ -78,17 +78,10 @@ export function usePinnedSidebarChannels({
     );
     const pinnedSet = new Set(pinnedIds);
     const existingIds = new Set(channels.map((c) => c.id));
-    const activeFilteredIds = Array.from(channelFilterStates.entries())
-      .filter(([, state]) => state !== "neutral")
-      .map(([id]) => id)
-      .filter((id) => !existingIds.has(id));
     const stubs: Channel[] = pinnedIds
       .filter((id) => !existingIds.has(id))
       .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const }));
-    const activeFilterStubs: Channel[] = activeFilteredIds
-      .filter((id) => !pinnedSet.has(id))
-      .map((id) => ({ id, name: id, usageCount: 0, filterState: "neutral" as const }));
-    return [...stubs, ...activeFilterStubs, ...channels]
+    return [...stubs, ...channels]
       .map((channel) => ({
         ...channel,
         filterState: channelFilterStates.get(channel.id) ?? "neutral",

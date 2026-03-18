@@ -76,6 +76,41 @@ export function useIndexFilters({
     [channelFilterStates, composeChannels]
   );
 
+  useEffect(() => {
+    const availableChannelIds = new Set([
+      ...channels.map((channel) => channel.id),
+      ...composeChannels
+        .filter((channel) => channel.usageCount !== 0)
+        .map((channel) => channel.id),
+    ]);
+    setChannelFilterStates((prev) => {
+      let changed = false;
+      const next = new Map(prev);
+
+      for (const [id] of prev) {
+        if (availableChannelIds.has(id)) continue;
+        next.delete(id);
+        changed = true;
+      }
+
+      return changed ? next : prev;
+    });
+  }, [channels, composeChannels]);
+
+  useEffect(() => {
+    const sidebarPersonIds = new Set(sidebarPeople.map((person) => person.id));
+    setPeople((prev) => {
+      let changed = false;
+      const next = prev.map((person) => {
+        if (!person.isSelected || sidebarPersonIds.has(person.id)) return person;
+        changed = true;
+        return { ...person, isSelected: false };
+      });
+
+      return changed ? next : prev;
+    });
+  }, [setPeople, sidebarPeople]);
+
   useFilterUrlSync({
     channelFilterStates,
     people,

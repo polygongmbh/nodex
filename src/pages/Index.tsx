@@ -32,7 +32,7 @@ import {
 } from "@/lib/channel-frecency";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
-import { filterTasks } from "@/domain/content/task-filtering";
+import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { loadPresencePublishingEnabled } from "@/infrastructure/preferences/user-preferences-storage";
 import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
@@ -362,6 +362,24 @@ const Index = () => {
     openedWithFocusedTaskRef,
   } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
 
+  const sidebarChannels = useMemo(() => {
+    const activeChannelIds = new Set(
+      Array.from(channelFilterStates.entries())
+        .filter(([, state]) => state !== "neutral")
+        .map(([id]) => id)
+    );
+    if (activeChannelIds.size === 0) return channels;
+
+    const existingIds = new Set(channels.map((channel) => channel.id));
+    const selectedComposeChannels = composeChannels.filter(
+      (channel) =>
+        channel.usageCount !== 0 &&
+        activeChannelIds.has(channel.id) &&
+        !existingIds.has(channel.id)
+    );
+    return [...selectedComposeChannels, ...channels];
+  }, [channelFilterStates, channels, composeChannels]);
+
   const {
     pinnedChannelsState,
     activeRelayIdList,
@@ -372,22 +390,20 @@ const Index = () => {
     userPubkey: user?.pubkey,
     currentView,
     effectiveActiveRelayIds,
-    channels,
+    channels: sidebarChannels,
     channelFilterStates,
     allTasks,
   });
 
   const filteredTasks = useMemo(
     () =>
-      filterTasks({
+      filterTasksByRelayAndPeople({
         tasks: allTasks,
         activeRelayIds: effectiveActiveRelayIds,
-        channels: channelsWithState,
         people,
-        channelMatchMode,
         allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
       }),
-    [allTasks, channelMatchMode, channelsWithState, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
+    [allTasks, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people]
   );
 
   const { ensureGuideDataAvailable } = useFeedDemoBootstrap({

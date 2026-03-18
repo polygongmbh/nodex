@@ -2,6 +2,13 @@ import type { Channel, ChannelMatchMode, Person, Task } from "@/types";
 import { taskMatchesSelectedPeople } from "@/domain/content/person-filter";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 
+interface FilterTasksByRelayAndPeopleParams {
+  tasks: Task[];
+  activeRelayIds: Set<string>;
+  people: Person[];
+  allowUnknownRelayMetadata?: boolean;
+}
+
 interface FilterTasksParams {
   tasks: Task[];
   activeRelayIds: Set<string>;
@@ -11,16 +18,14 @@ interface FilterTasksParams {
   allowUnknownRelayMetadata?: boolean;
 }
 
-export function filterTasks({
+export function filterTasksByRelayAndPeople({
   tasks,
   activeRelayIds,
-  channels,
   people,
-  channelMatchMode,
   allowUnknownRelayMetadata = true,
-}: FilterTasksParams): Task[] {
+}: FilterTasksByRelayAndPeopleParams): Task[] {
   const selectedPeople = people.filter((person) => person.isSelected);
-  const { included, excluded } = getIncludedExcludedChannelNames(channels);
+
   return tasks.filter((task) => {
     const hasUnknownRelayMetadata =
       task.relays.length === 0 ||
@@ -33,14 +38,25 @@ export function filterTasks({
       return false;
     }
 
-    if (!taskMatchesSelectedPeople(task, selectedPeople)) {
-      return false;
-    }
-
-    if (!taskMatchesChannelFilters(task.tags, included, excluded, channelMatchMode)) {
-      return false;
-    }
-
-    return true;
+    return taskMatchesSelectedPeople(task, selectedPeople);
   });
+}
+
+export function filterTasks({
+  tasks,
+  activeRelayIds,
+  channels,
+  people,
+  channelMatchMode,
+  allowUnknownRelayMetadata = true,
+}: FilterTasksParams): Task[] {
+  const { included, excluded } = getIncludedExcludedChannelNames(channels);
+  return filterTasksByRelayAndPeople({
+    tasks,
+    activeRelayIds,
+    people,
+    allowUnknownRelayMetadata,
+  }).filter((task) =>
+    taskMatchesChannelFilters(task.tags, included, excluded, channelMatchMode)
+  );
 }

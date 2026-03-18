@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Channel, Person, Task } from "@/types";
-import { filterTasks } from "./task-filtering";
+import { filterTasks, filterTasksByRelayAndPeople } from "./task-filtering";
 
 const alice: Person = {
   id: "alice-id",
@@ -182,5 +182,23 @@ describe("filterTasks", () => {
     });
 
     expect(result.map((task) => task.id)).toEqual(["a", "b"]);
+  });
+
+  it("can prefilter by relay and people without applying channel filters", () => {
+    const selectedBob: Person = { ...bob, isSelected: true };
+    const tasks = [
+      buildTask({ id: "relay-one-general", relays: ["r1"], author: bob, tags: ["general"] }),
+      buildTask({ id: "relay-one-ops", relays: ["r1"], author: bob, tags: ["ops"] }),
+      buildTask({ id: "relay-two-general", relays: ["r2"], author: bob, tags: ["general"] }),
+      buildTask({ id: "relay-one-other-author", relays: ["r1"], author: alice, tags: ["general"] }),
+    ];
+
+    const result = filterTasksByRelayAndPeople({
+      tasks,
+      activeRelayIds: new Set(["r1"]),
+      people: [alice, selectedBob],
+    });
+
+    expect(result.map((task) => task.id)).toEqual(["relay-one-general", "relay-one-ops"]);
   });
 });

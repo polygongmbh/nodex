@@ -33,6 +33,9 @@ function Harness({
   isMobile?: boolean;
 }) {
   const [people, setPeople] = useState<Person[]>(peopleSeed);
+  const [visibleChannels, setVisibleChannels] = useState<Channel[]>(channels);
+  const [visibleComposeChannels, setVisibleComposeChannels] = useState<Channel[]>(channels);
+  const [visibleSidebarPeople, setVisibleSidebarPeople] = useState<Person[]>(peopleSeed);
   const [searchQuery, setSearchQuery] = useState("");
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const relayState = useRelayFilterState({
@@ -43,13 +46,13 @@ function Harness({
   const filters = useIndexFilters({
     relays,
     setActiveRelayIds: relayState.setActiveRelayIds,
-    channels,
-    composeChannels: channels,
+    channels: visibleChannels,
+    composeChannels: visibleComposeChannels,
     postedTags,
     setPostedTags,
     people,
     setPeople,
-    sidebarPeople: people,
+    sidebarPeople: visibleSidebarPeople,
     isMobile,
     setSearchQuery,
     bumpChannelFrecency: vi.fn(),
@@ -64,6 +67,26 @@ function Harness({
       <button onClick={() => filters.handleChannelMatchModeChange("or")}>ModeOr</button>
       <button onClick={() => filters.handlePersonExclusive("alice")}>PersonExclusive</button>
       <button onClick={() => filters.handleHashtagExclusive("urgent")}>HashtagExclusive</button>
+      <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralSidebarChannel</button>
+      <button onClick={() => {
+        setVisibleChannels([channels[1]]);
+        setVisibleComposeChannels([channels[1]]);
+      }}>HideGeneralEverywhere</button>
+      <button onClick={() => {
+        setVisibleChannels([channels[1]]);
+        setVisibleComposeChannels([
+          makeChannel({ id: "general", name: "general", usageCount: 3 }),
+          channels[1],
+        ]);
+      }}>KeepGeneralComposeRealOnly</button>
+      <button onClick={() => {
+        setVisibleChannels([channels[1]]);
+        setVisibleComposeChannels([
+          makeChannel({ id: "general", name: "general", usageCount: 0 }),
+          channels[1],
+        ]);
+      }}>KeepGeneralComposeForcedOnly</button>
+      <button onClick={() => setVisibleSidebarPeople([peopleSeed[1]])}>HideAliceSidebarPerson</button>
       <button onClick={() => filters.handleAuthorClick(makePerson({ id: "alice", name: "alice", displayName: "Alice" }))}>
         AuthorClick
       </button>
@@ -131,6 +154,50 @@ describe("useIndexFilters", () => {
     expect(screen.getByTestId("relay-ids")).toHaveTextContent("relay-one,relay-two");
     expect(screen.getByTestId("channel-state-general")).toHaveTextContent("neutral");
     expect(screen.getByTestId("channel-match-mode")).toHaveTextContent("and");
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("");
+  });
+
+  it("keeps channel filter state when the channel falls out of the compact sidebar list but remains available in real scoped compose data", () => {
+    renderHarness();
+
+    fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+
+    fireEvent.click(screen.getByRole("button", { name: "KeepGeneralComposeRealOnly" }));
+
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+  });
+
+  it("clears channel filter state when the channel is no longer available anywhere in the current feed scope", () => {
+    renderHarness();
+
+    fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+
+    fireEvent.click(screen.getByRole("button", { name: "HideGeneralEverywhere" }));
+
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("neutral");
+  });
+
+  it("clears channel filter state when the channel remains only as a metadata-only compose fallback", () => {
+    renderHarness();
+
+    fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+
+    fireEvent.click(screen.getByRole("button", { name: "KeepGeneralComposeForcedOnly" }));
+
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("neutral");
+  });
+
+  it("deselects people who are no longer available in the current sidebar scope", () => {
+    renderHarness();
+
+    fireEvent.click(screen.getByRole("button", { name: "PersonExclusive" }));
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
+
+    fireEvent.click(screen.getByRole("button", { name: "HideAliceSidebarPerson" }));
+
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");
   });
 });

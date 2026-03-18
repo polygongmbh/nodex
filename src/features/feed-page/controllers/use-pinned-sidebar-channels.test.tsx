@@ -37,7 +37,7 @@ describe("usePinnedSidebarChannels", () => {
     window.localStorage.clear();
   });
 
-  it("surfaces active filtered channels even when missing from derived channels", () => {
+  it("does not surface missing active filtered channels in the sidebar", () => {
     render(
       <Harness
         channels={[makeChannel({ id: "general", name: "general" })]}
@@ -47,8 +47,8 @@ describe("usePinnedSidebarChannels", () => {
       />
     );
 
-    expect(screen.getByTestId("channels-with-state")).toHaveTextContent("urgent:included");
     expect(screen.getByTestId("channels-with-state")).toHaveTextContent("general:neutral");
+    expect(screen.getByTestId("channels-with-state")).not.toHaveTextContent("urgent:included");
   });
 
   it("does not duplicate a channel already present in the derived list", () => {
