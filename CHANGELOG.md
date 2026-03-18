@@ -23,7 +23,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [2.2.0] - 2026-03-18
 Minor release for broader user-facing compose/filter/feed UX updates and relay stability fixes (4545 lines changed since `v2.1.0`).
 
-- Compose now shows a prominent blocked-post panel with specific next-step guidance, uses clearer "green feed" wording for relay selection, and blocked post buttons steer users toward fixing missing channels, relay selection, or attachment issues instead of silently failing.
+- Compose now shows a prominent blocked-post panel with specific next-step guidance, uses clearer "green feed" wording for relay selection, moves in-progress publishing feedback to a toast instead of a warning banner, and blocked post buttons steer users toward fixing missing channels, relay selection, or attachment issues instead of silently failing.
 - Task creation now keeps the composer open after submit, preserves selected date and priority values for follow-up tasks, and uses button hover text instead of separate empty-state warning copy.
 - Root-level comments can be posted again from the main composer when they include a channel tag and at least one writable relay is selected.
 - Clicking a task hashtag now ensures that channel appears in the Channels list when its filter is activated, so the active tag filter stays visible and can be adjusted or cleared from the sidebar.

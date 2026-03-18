@@ -8,8 +8,7 @@ export type ComposeSubmitBlockCode =
   | "commentRelay"
   | "relay"
   | "uploading"
-  | "uploadFailed"
-  | "publishing";
+  | "uploadFailed";
 
 export type ComposeSubmitBlockAction =
   | "focus-input"
@@ -38,7 +37,6 @@ interface ResolveComposeSubmitBlockOptions {
   hasInvalidRootTaskRelaySelection?: boolean;
   hasPendingAttachmentUploads: boolean;
   hasFailedAttachmentUploads: boolean;
-  isPublishing?: boolean;
   t: TFunction;
 }
 
@@ -52,7 +50,6 @@ export function resolveComposeSubmitBlock({
   hasInvalidRootTaskRelaySelection = false,
   hasPendingAttachmentUploads,
   hasFailedAttachmentUploads,
-  isPublishing = false,
   t,
 }: ResolveComposeSubmitBlockOptions): ComposeSubmitBlockState | null {
   if (!isSignedIn) {
@@ -140,17 +137,6 @@ export function resolveComposeSubmitBlock({
       ctaLabel: t("composer.blockedDetail.cta.relay"),
       action: "open-relay-selector",
       isHardDisabled: false,
-    };
-  }
-
-  if (isPublishing) {
-    return {
-      code: "publishing",
-      reason: t("composer.blocked.publishing"),
-      detail: t("composer.blockedDetail.detail.publishing"),
-      ctaLabel: t("composer.blockedDetail.cta.publishing"),
-      action: null,
-      isHardDisabled: true,
     };
   }
 

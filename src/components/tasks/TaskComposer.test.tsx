@@ -22,6 +22,8 @@ vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
     success: vi.fn(),
+    loading: vi.fn(),
+    dismiss: vi.fn(),
   },
 }));
 
@@ -87,6 +89,8 @@ describe("TaskComposer hashtag autocomplete", () => {
     mockUser = { id: "me" };
     vi.mocked(toast.error).mockClear();
     vi.mocked(toast.success).mockClear();
+    vi.mocked(toast.loading).mockClear();
+    vi.mocked(toast.dismiss).mockClear();
     attachmentUploadEnabledSpy.mockReturnValue(true);
   });
 
@@ -179,6 +183,70 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+
+  it("shows publishing as a toast instead of a warning banner", async () => {
+    const onSubmit = vi.fn(
+      () =>
+        new Promise<TaskCreateResult>(() => {
+          // keep pending to assert in-progress UI behavior
+        })
+    );
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Ship update #backend" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    await waitFor(() => {
+      expect(toast.loading).toHaveBeenCalledWith("Publishing...", { id: "task-composer-publishing" });
+    });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+  });
+
+  it("prevents duplicate submits while publishing is in flight", async () => {
+    let resolveSubmit: ((result: TaskCreateResult) => void) | null = null;
+    const onSubmit = vi.fn(
+      () =>
+        new Promise<TaskCreateResult>((resolve) => {
+          resolveSubmit = resolve;
+        })
+    );
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Ship update #backend" },
+    });
+    const submitButton = screen.getByRole("button", { name: /create task/i });
+    fireEvent.click(submitButton);
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    resolveSubmit?.(successfulCreateResult);
+    await waitFor(() => {
+      expect(toast.dismiss).toHaveBeenCalledWith("task-composer-publishing");
+    });
   });
 
   it("shows offer/request kind options only when feed message types are enabled", () => {

@@ -765,6 +765,7 @@ export function TaskComposer({
   }, [content, isNip99SummaryTouched, isNip99TitleTouched, taskType]);
 
   const handleSubmit = async (submitType?: unknown) => {
+    if (isPublishing) return;
     if (!content.trim()) return;
     if (!hasMeaningfulComposerText(content)) return;
     const effectiveTaskType = resolveSubmitType(submitType);
@@ -816,7 +817,9 @@ export function TaskComposer({
     }
     
     // Also add locally (and publish in parent handler)
+    const publishingToastId = "task-composer-publishing";
     setIsPublishing(true);
+    toast.loading(t("composer.blocked.publishing"), { id: publishingToastId });
     let result: TaskCreateResult;
     try {
       const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
@@ -853,9 +856,11 @@ export function TaskComposer({
     } catch (error) {
       console.error("Task submit failed", error);
       notifyTaskCreationFailed(t);
+      toast.dismiss(publishingToastId);
       setIsPublishing(false);
       return;
     }
+    toast.dismiss(publishingToastId);
     setIsPublishing(false);
     if (!result.ok) {
       return;
@@ -986,7 +991,6 @@ export function TaskComposer({
     hasInvalidRootTaskRelaySelection,
     hasPendingAttachmentUploads,
     hasFailedAttachmentUploads,
-    isPublishing,
     t,
   });
   const submitBlockedReason = submitBlock?.reason ?? null;
@@ -2075,7 +2079,7 @@ export function TaskComposer({
                 }
                 void handleSubmit();
               }}
-              disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled}
+              disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled || isPublishing}
               aria-label={submitActionLabel}
               title={submitButtonTitle}
               className={cn(
