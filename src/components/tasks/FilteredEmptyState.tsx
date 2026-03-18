@@ -70,7 +70,6 @@ export function FilteredEmptyState({
     return (
       <div
         className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
-        data-testid="filtered-empty-screen"
       >
         <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">
           {scopeModel.loadingSentence}
@@ -86,7 +85,6 @@ export function FilteredEmptyState({
     return (
       <div
         className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
-        data-testid="filtered-empty-screen"
       >
         <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">
           {scopeModel.errorSentence}
@@ -139,7 +137,6 @@ export function FilteredEmptyState({
     return (
       <div
         className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
-        data-testid="filtered-empty-screen"
       >
         <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">
           {scopeModel.filteredSentence}
@@ -161,7 +158,6 @@ export function FilteredEmptyState({
   return (
     <div
       className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
-      data-testid="filtered-empty-screen"
     >
       <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">{title}</p>
       {description ? (

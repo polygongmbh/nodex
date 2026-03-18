@@ -445,7 +445,7 @@ export function MobileLayout({
         </div>
       </main>
       
-      <div hidden={showFilters} data-testid="mobile-compose-bar">
+      <div hidden={showFilters}>
         <UnifiedBottomBar
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
