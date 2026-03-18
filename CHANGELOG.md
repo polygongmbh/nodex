@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Sidebar frequent-people derivation now follows the currently active relay scope (matching channel scoping), so non-selected people from hidden feeds no longer appear in the People sidebar list.
 - Clicking a task from an empty focused composer now activates the task on the first click instead of losing the activation while the composer collapses.
 - Sidebar saved filters now include two permanent compact quick filters (`Recent` and `Important`) with text toggles, inline number controls, defaults of `7` days and `P50+`, and recency matching based on latest task/state-update activity.
 - URL-initialized people filters now hydrate once and remain user-controllable, fixing a regression where startup `p=` selections could not be deselected after profiles loaded.

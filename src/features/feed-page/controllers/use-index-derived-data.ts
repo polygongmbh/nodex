@@ -176,9 +176,22 @@ export function useIndexDerivedData({
     return deriveChannels(scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, 1);
   }, [postedTags, scopedLocalTasksForChannels, scopedNostrEventsForChannels]);
 
+  const scopedTasksForSidebarPeople = useMemo(() => {
+    const sidebarRelayScopeIds = resolveChannelRelayScopeIds(
+      effectiveActiveRelayIds,
+      relays.map((relay) => relay.id)
+    );
+
+    return allTasks.filter(
+      (task) =>
+        task.relays.length === 0 ||
+        task.relays.some((relayId) => sidebarRelayScopeIds.has(relayId))
+    );
+  }, [allTasks, effectiveActiveRelayIds, relays]);
+
   const sidebarPeople = useMemo(() => {
-    return deriveSidebarPeople(people, allTasks, supplementalLatestActivityByAuthor);
-  }, [allTasks, people, supplementalLatestActivityByAuthor]);
+    return deriveSidebarPeople(people, scopedTasksForSidebarPeople, supplementalLatestActivityByAuthor);
+  }, [people, scopedTasksForSidebarPeople, supplementalLatestActivityByAuthor]);
 
   const currentUser = resolveCurrentUser(people, user);
 

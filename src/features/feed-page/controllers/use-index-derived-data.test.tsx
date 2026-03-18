@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import { useIndexDerivedData } from "./use-index-derived-data";
 import { useIndexFilters } from "./use-index-filters";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
-import { makeRelay } from "@/test/fixtures";
+import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Person, Relay } from "@/types";
 
 vi.mock("sonner", () => ({
@@ -121,5 +121,62 @@ describe("useIndexDerivedData compose channels", () => {
     expect(screen.getByTestId("compose-channel-names")).toHaveTextContent("general");
     expect(screen.getByTestId("compose-channel-names")).not.toHaveTextContent("ops");
     expect(screen.getByTestId("compose-included-channel-names")).toHaveTextContent("");
+  });
+});
+
+function SidebarPeopleHarness() {
+  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
+
+  const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice" });
+  const bob = makePerson({ id: "bob", name: "bob", displayName: "Bob" });
+  const tasks = [
+    makeTask({ id: "a1", author: alice, tags: ["ops"], relays: ["relay-one"] }),
+    makeTask({ id: "a2", author: alice, tags: ["ops"], relays: ["relay-one"] }),
+    makeTask({ id: "a3", author: alice, tags: ["ops"], relays: ["relay-one"] }),
+    makeTask({ id: "b1", author: bob, tags: ["general"], relays: ["relay-two"] }),
+    makeTask({ id: "b2", author: bob, tags: ["general"], relays: ["relay-two"] }),
+    makeTask({ id: "b3", author: bob, tags: ["general"], relays: ["relay-two"] }),
+  ];
+
+  const derived = useIndexDerivedData({
+    nostrEvents: [],
+    localTasks: tasks,
+    postedTags: [],
+    suppressedNostrEventIds: new Set(),
+    people: [alice, bob],
+    supplementalLatestActivityByAuthor: new Map(),
+    cachedKind0Events: [],
+    user: null,
+    effectiveActiveRelayIds: activeRelayIds,
+    relays,
+    channelFrecencyState: {},
+    isHydrating: false,
+  });
+
+  return (
+    <>
+      <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
+      <output data-testid="sidebar-people-ids">
+        {derived.sidebarPeople.map((person) => person.id).join(",")}
+      </output>
+    </>
+  );
+}
+
+describe("useIndexDerivedData sidebar people", () => {
+  it("derives frequent people from the active relay scope", () => {
+    render(
+      <MemoryRouter>
+        <SidebarPeopleHarness />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("alice");
+    expect(screen.getByTestId("sidebar-people-ids")).not.toHaveTextContent("bob");
+
+    fireEvent.click(screen.getByRole("button", { name: "SwitchRelay" }));
+
+    expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("bob");
+    expect(screen.getByTestId("sidebar-people-ids")).not.toHaveTextContent("alice");
   });
 });
