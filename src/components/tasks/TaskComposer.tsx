@@ -2026,10 +2026,11 @@ export function TaskComposer({
                   ? <CheckSquare className="w-4 h-4" />
                   : taskType === "offer"
                     ? <Package className="w-4 h-4" />
-                  : taskType === "request"
-                    ? <HandHelping className="w-4 h-4" />
-                    : <MessageSquare className="w-4 h-4" />;
+                    : taskType === "request"
+                      ? <HandHelping className="w-4 h-4" />
+                      : <MessageSquare className="w-4 h-4" />;
               const submitButtonTitle = submitBlock?.reason || submitActionLabel;
+              const submitDataTestId = taskType === "comment" ? "compose-secondary-action-comment" : "compose-primary-action";
               if (!user) {
                 return (
                   <button
@@ -2046,6 +2047,7 @@ export function TaskComposer({
               }
               return (
             <button
+              data-testid={submitDataTestId}
               onClick={() => {
                 if (submitBlock && !submitBlock.isHardDisabled) {
                   handleBlockedSubmitAttempt();

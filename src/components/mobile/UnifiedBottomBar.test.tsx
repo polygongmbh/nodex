@@ -7,6 +7,12 @@ import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash } from "@/infrastructure/nostr/geohash-location";
+import {
+  getMobileCommentAction,
+  getMobilePrimaryAction,
+  getMobileSubmitBlockPanel,
+  openMobileComposeOptions,
+} from "@/test/ui";
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
@@ -133,7 +139,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    const button = screen.getByRole("button", { name: /create task \/ add comment/i });
+    const button = getMobilePrimaryAction();
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute("title", "Write a message first");
   });
@@ -184,10 +190,11 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship update" } });
-    fireEvent.click(screen.getByRole("button", { name: /create task \/ add comment/i }));
+    openMobileComposeOptions();
 
-    expect(screen.getByTestId("mobile-task-submit-block-panel")).toHaveTextContent("Can't post yet");
-    expect(screen.getByTestId("mobile-task-submit-block-panel")).toHaveTextContent("Add or select at least one #channel");
+    const blockPanel = getMobileSubmitBlockPanel();
+    expect(blockPanel).toHaveTextContent("Can't post yet");
+    expect(blockPanel).toHaveTextContent("Add or select at least one #channel");
     expect(screen.getByRole("button", { name: "#general" })).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -214,7 +221,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "#general @alice@example.com" } });
-    const sendButton = screen.getByRole("button", { name: /create task \/ add comment/i });
+    const sendButton = getMobilePrimaryAction();
     expect(sendButton).toBeEnabled();
     expect(sendButton).toHaveAttribute("title", "Write a message first");
     expect(screen.queryByTestId("mobile-task-submit-block-panel")).not.toBeInTheDocument();
@@ -283,7 +290,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+    fireEvent.click(getMobilePrimaryAction());
 
     expect(screen.getByRole("button", { name: /relay one/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /relay two/i })).toBeInTheDocument();
@@ -479,8 +486,8 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Reply #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /create task \/ add comment/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^add comment$/i }));
+    openMobileComposeOptions();
+    fireEvent.click(getMobileCommentAction());
 
     expect(onSubmit).toHaveBeenCalledWith(
       "Reply #general",
@@ -518,7 +525,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const composeField = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(composeField, { target: { value: "Need help #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /create task \/ add comment/i }));
+    openMobileComposeOptions();
 
     expect(screen.getByRole("button", { name: /post offer/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /post request/i })).toBeInTheDocument();
@@ -563,8 +570,8 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /create task/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /create task \/ add comment/i })).not.toBeInTheDocument();
+    expect(getMobilePrimaryAction()).toBeInTheDocument();
+    expect(screen.queryByTestId("mobile-compose-comment-action")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^add comment$/i })).not.toBeInTheDocument();
   });
 
@@ -587,13 +594,14 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /create task \/ add comment/i })).toBeInTheDocument();
+    expect(getMobilePrimaryAction()).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /create task$/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^add comment$/i })).not.toBeInTheDocument();
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Reply #general" } });
-    fireEvent.click(screen.getByRole("button", { name: /create task \/ add comment/i }));
+    openMobileComposeOptions();
+    expect(getMobileCommentAction()).toBeInTheDocument();
 
     expect(screen.getByRole("button", { name: /^create task$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^add comment$/i })).toBeInTheDocument();

@@ -5,6 +5,14 @@ import { TaskComposer } from "./TaskComposer";
 import type { Channel, Relay, Person, TaskCreateResult } from "@/types";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
+import {
+  getComposerCommentAction,
+  getComposerPrimaryAction,
+  getCommentComposerInput,
+  getOfferComposerInput,
+  getRequestComposerInput,
+  getTaskComposerInput,
+} from "@/test/ui";
 
 let mockUser: { id: string } | null = { id: "me" };
 
@@ -75,10 +83,6 @@ const people: Person[] = [
 
 const successfulCreateResult: TaskCreateResult = { ok: true, mode: "local" };
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
-const getTaskComposerInput = () => screen.getByRole("textbox", { name: /what's up\? use #channels and @mentions/i });
-const getCommentComposerInput = () => screen.getByRole("textbox", { name: /add your comment with #channels and @mentions/i });
-const getOfferComposerInput = () => screen.getByRole("textbox", { name: /post an offer with #channels and @mentions/i });
-const getRequestComposerInput = () => screen.getByRole("textbox", { name: /post a request with #channels and @mentions/i });
 
 describe("TaskComposer hashtag autocomplete", () => {
   beforeEach(() => {

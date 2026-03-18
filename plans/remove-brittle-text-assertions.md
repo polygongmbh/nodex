@@ -19,6 +19,7 @@ Do not keep asserting exact prose for generic helper text, placeholders, button 
 
 - Composer/mobile compose surfaces now use role-based queries and shared selectors; action texts no longer need exact matching thanks to the unified `createTask`/`addComment` keys.
 - Added the new test-query guideline in `AGENTS.md`, calling for semantics-first selectors or stable `data-testid` usage and pointing copy checks to i18n suites.
+- Added `src/test/ui.ts` helpers plus new `data-testid` hooks in the composer/mobile controls so tests can rely on stable selectors instead of literal copy.
 - Next focus: stabilize onboarding/auth/lightbox tests and start extracting shared helpers for these flows so further text-comparison edits can reuse the same patterns.
 
 ## Why This Path

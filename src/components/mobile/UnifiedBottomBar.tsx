@@ -1517,6 +1517,7 @@ export function UnifiedBottomBar({
                   )}
                   aria-label={isSignedIn ? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")) : t("composer.hints.signInToCreate")}
                   title={primarySendTitle}
+                  data-testid="mobile-compose-primary-action"
                 >
                   <span className={cn(isSendLaunching && "motion-send-launch")}>
                     {!isSignedIn ? <LogIn className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
@@ -1555,8 +1556,9 @@ export function UnifiedBottomBar({
                         void handleSubmit("comment");
                       }}
                       disabled={!canSendComment}
-                      className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       aria-label={t("composer.actions.addComment")}
+                      data-testid="mobile-compose-comment-action"
                       title={t("composer.actions.addComment")}
                     >
                       <MessageSquare className="w-4 h-4" />
