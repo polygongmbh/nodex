@@ -23,6 +23,28 @@
       "selectTask": "Select a task to reply to",
       "publishing": "Publishing..."
     },
+    "blockedDetail": {
+      "title": "Can't post yet",
+      "detail": {
+        "signin": "Sign in to publish this post.",
+        "write": "Add some text first, then try again.",
+        "tag": "Add at least one channel tag like #design, or use an included channel filter.",
+        "relay": "Choose exactly one active feed for a new task, or post from inside an existing task.",
+        "selectTask": "Open a task first if you want to post a comment.",
+        "uploading": "Your attachments are still uploading. Posting will unlock automatically when they finish.",
+        "uploadFailed": "Retry or remove failed attachments before posting.",
+        "publishing": "This post is already on the way."
+      },
+      "cta": {
+        "write": "Write message",
+        "tag": "Add #channel",
+        "relay": "Fix feed selection",
+        "selectTask": "Select task",
+        "uploading": "Wait for uploads",
+        "uploadFailed": "Fix attachments",
+        "publishing": "Publishing..."
+      }
+    },
     "actions": {
       "createTask": "Create Task",
       "addComment": "Add Comment",

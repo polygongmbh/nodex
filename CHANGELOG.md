@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Compose now shows a prominent blocked-post panel with specific next-step guidance, and blocked post buttons steer users toward fixing missing channels, relay selection, or attachment issues instead of silently failing.
 - Root-level comments can be posted again from the main composer when they include a channel tag and at least one writable relay is selected.
 - Clicking a task hashtag now ensures that channel appears in the Channels list when its filter is activated, so the active tag filter stays visible and can be adjusted or cleared from the sidebar.
 - Feed relay selection now restores as none selected when no valid persisted selection exists, instead of re-selecting all feeds after reload.

@@ -23,6 +23,28 @@
       "selectTask": "Selecciona una tarea para responder",
       "publishing": "Publicando..."
     },
+    "blockedDetail": {
+      "title": "Aún no se puede publicar",
+      "detail": {
+        "signin": "Inicia sesión para publicar esta entrada.",
+        "write": "Añade primero algo de texto y vuelve a intentarlo.",
+        "tag": "Añade al menos una etiqueta de canal como #design o usa un filtro de canal incluido.",
+        "relay": "Elige exactamente un feed activo para una tarea nueva o publica desde una tarea existente.",
+        "selectTask": "Abre primero una tarea si quieres publicar un comentario.",
+        "uploading": "Tus archivos todavía se están subiendo. La publicación se habilitará automáticamente cuando terminen.",
+        "uploadFailed": "Reintenta o elimina los archivos fallidos antes de publicar.",
+        "publishing": "Esta entrada ya se está publicando."
+      },
+      "cta": {
+        "write": "Escribir mensaje",
+        "tag": "Añadir #canal",
+        "relay": "Corregir selección de feed",
+        "selectTask": "Seleccionar tarea",
+        "uploading": "Esperar subidas",
+        "uploadFailed": "Corregir archivos",
+        "publishing": "Publicando..."
+      }
+    },
     "actions": {
       "createTask": "Crear tarea",
       "addComment": "Añadir comentario",

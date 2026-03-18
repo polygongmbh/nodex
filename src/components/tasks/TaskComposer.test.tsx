@@ -120,6 +120,47 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.queryByRole("button", { name: /create task/i })).not.toBeInTheDocument();
   });
 
+  it("shows a blocker panel and remediation CTA when posting is blocked by missing channel tags", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Ship update" },
+    });
+
+    expect(screen.getByTestId("composer-submit-block-panel")).toHaveTextContent("Can't post yet");
+    expect(screen.getByTestId("composer-submit-block-panel")).toHaveTextContent("Add at least one #channel");
+    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Add #channel");
+  });
+
+  it("keeps the blocked desktop CTA interactive instead of submitting", () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Ship update" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByTestId("composer-submit-block-panel")).toBeInTheDocument();
+  });
+
   it("shows offer/request kind options only when feed message types are enabled", () => {
     const { rerender } = render(
       <TaskComposer
@@ -1257,7 +1298,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
 
     expect(screen.getByText("Select a single feed or a parent task to create a new task")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Fix feed selection");
   });
 
   it("blocks submit when composer content has only tags and mentions", () => {
@@ -1275,7 +1316,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "#backend @alice@example.com" },
     });
 
-    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Write message");
     expect(screen.getByText("Write a message first")).toBeInTheDocument();
   });
 
@@ -1410,7 +1451,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
 
     expect(screen.getByText("Select a single feed or a parent task to create a new task")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Fix feed selection");
   });
 
   it("blocks root task submit when relay is connected but not toggled active", () => {
@@ -1437,7 +1478,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
 
     expect(screen.getByText("Select a single feed or a parent task to create a new task")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Fix feed selection");
   });
 
   it("allows root-level comment submit when a tag and postable relay are present", () => {

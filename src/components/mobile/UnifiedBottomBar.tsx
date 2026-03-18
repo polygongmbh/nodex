@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, MapPin } from "lucide-react";
+import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, MapPin, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Relay,
@@ -46,6 +46,7 @@ import {
   extractHashtagsFromContent,
   getHashtagQueryAtCursor,
 } from "@/lib/hashtags";
+import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 
 interface UnifiedBottomBarProps {
   // Search props
@@ -146,8 +147,10 @@ export function UnifiedBottomBar({
   const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
   const [locationGeohash, setLocationGeohash] = useState<string | undefined>();
+  const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const attachmentsRef = useRef<HTMLDivElement | null>(null);
   const attachmentFileRef = useRef<Record<string, File>>({});
   const bottomBarRef = useRef<HTMLDivElement | null>(null);
   const cursorPositionRef = useRef(0);
@@ -169,6 +172,7 @@ export function UnifiedBottomBar({
   const canOfferComment = currentView === "feed" || (currentView === "tree" && Boolean(focusedTaskId));
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
+  const remediationHighlightTimeoutRef = useRef<number | null>(null);
   const trackedTimeoutIdsRef = useRef<Set<number>>(new Set());
   const trackedAnimationFrameIdsRef = useRef<Set<number>>(new Set());
 
@@ -247,6 +251,8 @@ export function UnifiedBottomBar({
     return () => {
       clearTrackedTimeout(sendLaunchTimeoutRef.current);
       sendLaunchTimeoutRef.current = null;
+      clearTrackedTimeout(remediationHighlightTimeoutRef.current);
+      remediationHighlightTimeoutRef.current = null;
       trackedTimeoutIds.forEach((handle) => window.clearTimeout(handle));
       trackedAnimationFrameIds.forEach((handle) => window.cancelAnimationFrame(handle));
       trackedTimeoutIds.clear();
@@ -711,22 +717,68 @@ export function UnifiedBottomBar({
   const canInheritParentTags = Boolean(focusedTaskId);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
-  const taskSubmitBlockedReason = !isSignedIn
-    ? t("composer.blocked.signin")
-    : hasPendingAttachmentUploads
-      ? t("composer.attachments.waitForUploads")
-      : hasFailedAttachmentUploads
-        ? t("composer.attachments.retryFailed")
-      : !hasMeaningfulComposeText
-        ? t("composer.blocked.write")
-        : !hasAtLeastOneTag && !canInheritParentTags
-          ? t("composer.blocked.tag")
-        : hasInvalidRootTaskRelaySelection
-          ? t("composer.blocked.relay")
-          : null;
+  const taskSubmitBlock = resolveComposeSubmitBlock({
+    isSignedIn,
+    hasMeaningfulContent: hasMeaningfulComposeText,
+    hasAtLeastOneTag,
+    canInheritParentTags,
+    hasInvalidRootTaskRelaySelection,
+    hasPendingAttachmentUploads,
+    hasFailedAttachmentUploads,
+    t,
+  });
+  const taskSubmitBlockedReason = taskSubmitBlock?.reason ?? null;
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
+
+  const pulseTarget = (target: "input" | "attachments") => {
+    setHighlightedTarget(target);
+    clearTrackedTimeout(remediationHighlightTimeoutRef.current);
+    remediationHighlightTimeoutRef.current = scheduleTrackedTimeout(() => {
+      setHighlightedTarget((current) => (current === target ? null : current));
+      remediationHighlightTimeoutRef.current = null;
+    }, 1800);
+  };
+
+  const focusComposeInput = () => {
+    scheduleTrackedTimeout(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      const nextCursor = textarea.selectionStart ?? textarea.value.length;
+      textarea.setSelectionRange(nextCursor, nextCursor);
+      cursorPositionRef.current = nextCursor;
+    }, 0);
+    pulseTarget("input");
+  };
+
+  const focusAttachments = () => {
+    attachmentsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    pulseTarget("attachments");
+  };
+
+  const handleBlockedTaskAttempt = () => {
+    if (!taskSubmitBlock) return;
+    switch (taskSubmitBlock.action) {
+      case "focus-input":
+        focusComposeInput();
+        break;
+      case "open-channel-selector":
+        setActiveSelector("channel");
+        break;
+      case "open-relay-selector":
+        setActiveSelector("relay");
+        break;
+      case "focus-attachments":
+        focusAttachments();
+        break;
+      case "focus-task-context":
+      case "review-blocker":
+      case null:
+        break;
+    }
+  };
 
   useEffect(() => {
     if (taskSubmitBlockedReason && activeSelector === "date") {
@@ -780,19 +832,24 @@ export function UnifiedBottomBar({
   const canSendComment = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canSendListing = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
-  const canSubmitFromPrimary = canOfferComment ? (canSendTask || canSendComment) : canSendTask;
-  const hasTaskSubmitBlock = taskSubmitBlockedReason !== null;
-  const showInlineTaskSubmitBlock = hasTaskSubmitBlock && (
-    isComposeFocused || (hasComposeText && (isBottomBarFocused || isBottomBarInteracting))
-  );
+  const hasTaskSubmitBlock = taskSubmitBlock !== null;
+  const showInlineTaskSubmitBlock = hasTaskSubmitBlock && hasComposeText;
 
   const handlePrimarySend = () => {
     if (!isSignedIn) {
       onSignInClick();
       return;
     }
+    if (taskSubmitBlock && !taskSubmitBlock.isHardDisabled && !canSendComment && !canSendListing) {
+      handleBlockedTaskAttempt();
+      return;
+    }
     if (canOfferComment) {
       setShowSendOptions((previous) => !previous);
+      return;
+    }
+    if (taskSubmitBlock && !taskSubmitBlock.isHardDisabled) {
+      handleBlockedTaskAttempt();
       return;
     }
     void handleSubmit("task");
@@ -1044,8 +1101,22 @@ export function UnifiedBottomBar({
             </button>
           )}
           {showInlineTaskSubmitBlock ? (
-            <div className="h-8 inline-flex items-center justify-center rounded-md border border-border/70 bg-muted/40 px-2 text-xs leading-none text-muted-foreground">
-              {taskSubmitBlockedReason}
+            <div
+              data-testid="mobile-task-submit-block-panel"
+              className="inline-flex max-w-full items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 py-2 text-left"
+            >
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" />
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-amber-800/90">
+                  {t("composer.blockedDetail.title")}
+                </div>
+                <div className="text-xs font-medium leading-tight text-foreground">
+                  {taskSubmitBlockedReason}
+                </div>
+                <div className="text-[11px] leading-tight text-muted-foreground">
+                  {taskSubmitBlock?.detail}
+                </div>
+              </div>
             </div>
           ) : !hasTaskSubmitBlock ? (
             <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
@@ -1187,7 +1258,13 @@ export function UnifiedBottomBar({
       </div>
 
       {attachments.length > 0 && (
-        <div className="px-3 pb-2 space-y-1.5">
+        <div
+          ref={attachmentsRef}
+          className={cn(
+            "px-3 pb-2 space-y-1.5 rounded-xl",
+            highlightedTarget === "attachments" && "ring-2 ring-amber-400/80 ring-offset-2 ring-offset-background"
+          )}
+        >
           {attachments.map((attachment) => (
             <div key={attachment.id} className="rounded border border-border/60 bg-muted/30 px-2 py-1 text-xs">
               <div className="flex items-center justify-between gap-2">
@@ -1356,7 +1433,10 @@ export function UnifiedBottomBar({
                   }
                 }}
                 placeholder={t("composer.placeholders.mobileTask")}
-                className="h-full w-full bg-muted/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm leading-[1.35] resize-none overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className={cn(
+                  "h-full w-full bg-muted/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm leading-[1.35] resize-none overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden focus:outline-none focus:ring-2 focus:ring-primary/50",
+                  highlightedTarget === "input" && "ring-2 ring-amber-400 border-amber-400/70"
+                )}
                 rows={1}
               />
               {showMentionSuggestions && filteredPeople.length > 0 && (
@@ -1405,17 +1485,21 @@ export function UnifiedBottomBar({
               <div className="relative">
                 <button
                   onClick={handlePrimarySend}
-                  disabled={isSignedIn ? !canSubmitFromPrimary : false}
+                  disabled={Boolean(taskSubmitBlock?.isHardDisabled)}
                   className={cn(
                     "h-full w-11 inline-flex items-center justify-center rounded-lg border transition-colors",
                     isSignedIn
-                      ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      ? taskSubmitBlock && !taskSubmitBlock.isHardDisabled
+                        ? "border-amber-500 bg-amber-500 text-amber-950 hover:bg-amber-500/90"
+                        : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                       : "border-border text-foreground hover:bg-muted"
                   )}
                   aria-label={isSignedIn ? (canOfferComment ? `${t("composer.actions.sendTask")} / ${t("composer.actions.sendComment")}` : t("composer.actions.sendTask")) : t("composer.hints.signInToCreate")}
                   title={
                     !isSignedIn
                       ? t("composer.hints.signInToCreate")
+                      : taskSubmitBlock
+                        ? taskSubmitBlock.reason
                       : canOfferComment
                         ? `${t("composer.actions.sendTask")} / ${t("composer.actions.sendComment")}`
                         : hasInvalidRootTaskRelaySelection
@@ -1432,13 +1516,23 @@ export function UnifiedBottomBar({
                   <div className="absolute bottom-full right-0 mb-1.5 flex items-center gap-1 rounded-lg border border-border bg-popover p-1 shadow-lg z-[116]">
                     <button
                       onClick={() => {
+                        if (taskSubmitBlock && !taskSubmitBlock.isHardDisabled) {
+                          setShowSendOptions(false);
+                          handleBlockedTaskAttempt();
+                          return;
+                        }
                         setShowSendOptions(false);
                         void handleSubmit("task");
                       }}
-                      disabled={hasTaskSubmitBlock}
-                      className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      disabled={Boolean(taskSubmitBlock?.isHardDisabled)}
+                      className={cn(
+                        "h-9 w-9 inline-flex items-center justify-center rounded-md border text-primary-foreground disabled:opacity-50",
+                        taskSubmitBlock && !taskSubmitBlock.isHardDisabled
+                          ? "border-amber-500 bg-amber-500 text-amber-950 hover:bg-amber-500/90"
+                          : "border-primary bg-primary hover:bg-primary/90"
+                      )}
                       aria-label={t("composer.actions.sendTask")}
-                      title={hasInvalidRootTaskRelaySelection ? t("toasts.errors.selectRelayOrParent") : t("composer.actions.sendTask")}
+                      title={taskSubmitBlock?.reason || t("composer.actions.sendTask")}
                     >
                       <CheckSquare className="w-4 h-4" />
                     </button>

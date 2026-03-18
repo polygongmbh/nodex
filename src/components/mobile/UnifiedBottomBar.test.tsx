@@ -139,9 +139,8 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(onSearchChange).toHaveBeenLastCalledWith("hello #general");
   });
 
-  it("keeps task and comment options disabled when sending without a selected channel tag", () => {
+  it("shows a blocker panel and opens channel remediation when sending without a selected channel tag", () => {
     const onSubmit = vi.fn(async () => successResult);
-    const toastErrorSpy = vi.spyOn(toast, "error").mockImplementation(() => "");
 
     render(
       <UnifiedBottomBar
@@ -163,20 +162,14 @@ describe("UnifiedBottomBar auth gating", () => {
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship update" } });
     fireEvent.click(screen.getByRole("button", { name: /send task \/ send comment/i }));
-    const taskButton = screen.getByRole("button", { name: /^send task$/i });
-    const commentButton = screen.getByRole("button", { name: /^send comment$/i });
-    expect(taskButton).toBeDisabled();
-    expect(commentButton).toBeDisabled();
-    fireEvent.click(taskButton);
-    fireEvent.click(commentButton);
 
-    expect(toastErrorSpy).not.toHaveBeenCalled();
+    expect(screen.getByTestId("mobile-task-submit-block-panel")).toHaveTextContent("Can't post yet");
+    expect(screen.getByTestId("mobile-task-submit-block-panel")).toHaveTextContent("Add at least one #channel");
+    expect(screen.getByRole("button", { name: "#general" })).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
-
-    toastErrorSpy.mockRestore();
   });
 
-  it("disables sending when content has only tags and mentions", () => {
+  it("shows the blocker CTA when content has only tags and mentions", () => {
     const onSubmit = vi.fn(async () => successResult);
 
     render(
@@ -199,7 +192,42 @@ describe("UnifiedBottomBar auth gating", () => {
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "#general @alice@example.com" } });
     const sendButton = screen.getByRole("button", { name: /send task \/ send comment/i });
-    expect(sendButton).toBeDisabled();
+    expect(sendButton).toBeEnabled();
+    expect(sendButton).toHaveAttribute("title", "Write a message first");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("opens relay selection when task posting is blocked by multiple active feeds", () => {
+    const onSubmit = vi.fn(async () => successResult);
+    const relayToggle = vi.fn();
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="tree"
+        relays={[
+          { id: "relay-one", name: "Relay One", icon: "D", isActive: true },
+          { id: "relay-two", name: "Relay Two", icon: "D", isActive: true },
+        ]}
+        channels={channels}
+        people={people}
+        onRelayToggle={relayToggle}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #general" } });
+    fireEvent.click(screen.getByRole("button", { name: /send task/i }));
+
+    expect(screen.getByRole("button", { name: /relay one/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /relay two/i })).toBeInTheDocument();
+    expect(relayToggle).not.toHaveBeenCalled();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 

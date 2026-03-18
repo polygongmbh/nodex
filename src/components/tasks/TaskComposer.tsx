@@ -5,6 +5,7 @@ import {
   Clock,
   X,
   AtSign,
+  AlertTriangle,
   Flag,
   CheckSquare,
   MessageSquare,
@@ -59,6 +60,7 @@ import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
 import { countHashtagsInContent, extractHashtagsFromContent, getHashtagQueryAtCursor } from "@/lib/hashtags";
+import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 
 interface TaskComposerProps {
   onSubmit: ComposerSubmit;
@@ -284,15 +286,19 @@ export function TaskComposer({
   const composerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentsRef = useRef<HTMLDivElement>(null);
+  const blockerPanelRef = useRef<HTMLDivElement>(null);
   const attachmentFileRef = useRef<Record<string, File>>({});
   const internalMouseDownWithinComposerRef = useRef(false);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
+  const remediationHighlightTimeoutRef = useRef<number | null>(null);
   const prevIncludedChannelsRef = useRef<string[]>([]);
   const prevSelectedPeoplePubkeysRef = useRef<string[]>([]);
   const autoManagedFilterTagNamesRef = useRef<Set<string>>(new Set());
   const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
+  const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | "blocker" | null>(null);
 
   const hasMention = (text: string, mention: string) => {
     const escaped = mention.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -304,6 +310,10 @@ export function TaskComposer({
       if (sendLaunchTimeoutRef.current !== null) {
         window.clearTimeout(sendLaunchTimeoutRef.current);
         sendLaunchTimeoutRef.current = null;
+      }
+      if (remediationHighlightTimeoutRef.current !== null) {
+        window.clearTimeout(remediationHighlightTimeoutRef.current);
+        remediationHighlightTimeoutRef.current = null;
       }
     };
   }, []);
@@ -945,21 +955,78 @@ export function TaskComposer({
     taskType === "task" && !parentId && (selectedRelays.length !== 1 || hasNoConnectedRelay);
   const hasInvalidRootCommentRelaySelection =
     taskType === "comment" && !parentId && hasNoConnectedRelay;
-  const submitBlockedReason = !user
-    ? t("composer.blocked.signin")
-    : hasPendingAttachmentUploads
-      ? t("composer.attachments.waitForUploads")
-      : hasFailedAttachmentUploads
-        ? t("composer.attachments.retryFailed")
-    : !hasMeaningfulContent
-      ? t("composer.blocked.write")
-    : !hasAtLeastOneTag && !canInheritParentTags
-      ? t("composer.blocked.tag")
-      : hasInvalidRootTaskRelaySelection || hasInvalidRootCommentRelaySelection
-        ? t("composer.blocked.relay")
-        : isPublishing
-          ? t("composer.blocked.publishing")
-          : null;
+  const submitBlock = resolveComposeSubmitBlock({
+    isSignedIn: Boolean(user),
+    hasMeaningfulContent,
+    hasAtLeastOneTag,
+    canInheritParentTags,
+    hasInvalidRootTaskRelaySelection: hasInvalidRootTaskRelaySelection || hasInvalidRootCommentRelaySelection,
+    hasPendingAttachmentUploads,
+    hasFailedAttachmentUploads,
+    isPublishing,
+    t,
+  });
+  const submitBlockedReason = submitBlock?.reason ?? null;
+
+  const pulseTarget = (target: "input" | "attachments" | "blocker") => {
+    setHighlightedTarget(target);
+    if (remediationHighlightTimeoutRef.current !== null) {
+      window.clearTimeout(remediationHighlightTimeoutRef.current);
+    }
+    remediationHighlightTimeoutRef.current = window.setTimeout(() => {
+      setHighlightedTarget((current) => (current === target ? null : current));
+      remediationHighlightTimeoutRef.current = null;
+    }, 1800);
+  };
+
+  const focusComposerInput = (options?: { openHashtagSuggestions?: boolean }) => {
+    if (adaptiveSize && !isExpanded) {
+      setIsExpanded(true);
+    }
+    window.setTimeout(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      textarea.focus();
+      const nextCursor = textarea.selectionStart ?? textarea.value.length;
+      textarea.setSelectionRange(nextCursor, nextCursor);
+      setCursorPosition(nextCursor);
+      updateAutocompleteFromCursor(textarea.value, nextCursor, true);
+      if (options?.openHashtagSuggestions) {
+        setShowHashtagSuggestions(true);
+        setShowMentionSuggestions(false);
+        setActiveSuggestionIndex(0);
+      }
+    }, 0);
+    pulseTarget("input");
+  };
+
+  const focusAttachments = () => {
+    attachmentsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    pulseTarget("attachments");
+  };
+
+  const handleBlockedSubmitAttempt = () => {
+    if (!submitBlock) return;
+    switch (submitBlock.action) {
+      case "focus-input":
+        focusComposerInput();
+        break;
+      case "open-channel-selector":
+        focusComposerInput({ openHashtagSuggestions: true });
+        break;
+      case "focus-attachments":
+        focusAttachments();
+        break;
+      case "open-relay-selector":
+      case "focus-task-context":
+      case "review-blocker":
+        blockerPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        pulseTarget("blocker");
+        break;
+      case null:
+        break;
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (showHashtagSuggestions) {
@@ -1329,6 +1396,7 @@ export function TaskComposer({
           }
           className={cn(
             "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
+            highlightedTarget === "input" && "ring-2 ring-amber-400 border-amber-400/70",
             adaptiveSize && !showExpandedControls
               ? "min-h-[42px] py-2"
               : compact
@@ -1418,7 +1486,13 @@ export function TaskComposer({
       </div>
 
       {showExpandedControls && attachments.length > 0 && (
-        <div className="order-2 space-y-2">
+        <div
+          ref={attachmentsRef}
+          className={cn(
+            "order-2 space-y-2 rounded-xl",
+            highlightedTarget === "attachments" && "ring-2 ring-amber-400/80 ring-offset-2 ring-offset-background"
+          )}
+        >
           {attachments.map((attachment) => (
             <div
               key={attachment.id}
@@ -1547,9 +1621,26 @@ export function TaskComposer({
               {tagChip.tag}
             </button>
           ))}
-          {showExpandedControls && submitBlockedReason && user && (
-            <span className="ml-auto text-xs text-muted-foreground sm:text-right">{submitBlockedReason}</span>
+        </div>
+      )}
+
+      {showExpandedControls && submitBlock && user && submitBlock.code !== "signin" && (
+        <div
+          ref={blockerPanelRef}
+          data-testid="composer-submit-block-panel"
+          className={cn(
+            "order-8 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm",
+            highlightedTarget === "blocker" && "ring-2 ring-amber-400"
           )}
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-800/90">
+              {t("composer.blockedDetail.title")}
+            </div>
+            <div className="font-medium text-foreground">{submitBlock.reason}</div>
+            <div className="text-xs text-muted-foreground">{submitBlock.detail}</div>
+          </div>
         </div>
       )}
 
@@ -1942,13 +2033,20 @@ export function TaskComposer({
               return (
             <button
               onClick={() => {
+                if (submitBlock && !submitBlock.isHardDisabled) {
+                  handleBlockedSubmitAttempt();
+                  return;
+                }
                 void handleSubmit();
               }}
-              disabled={Boolean(submitBlockedReason)}
+              disabled={Boolean(submitBlock?.isHardDisabled)}
               aria-label={submitActionLabel}
-              title={submitActionLabel}
+              title={submitBlock?.reason || submitActionLabel}
               className={cn(
-                "min-w-[12.5rem] px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2",
+                "min-w-[12.5rem] px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2",
+                submitBlock && !submitBlock.isHardDisabled
+                  ? "bg-amber-500 text-amber-950 hover:bg-amber-500/90"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90",
                 isSendLaunching && "motion-send-launch"
               )}
             >
@@ -1956,7 +2054,7 @@ export function TaskComposer({
                 <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               )}
               {submitActionIcon}
-              {submitActionLabel}
+              {submitBlock?.ctaLabel || submitActionLabel}
             </button>
               );
             })()}
