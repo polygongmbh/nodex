@@ -1480,6 +1480,39 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
   });
 
+  it("does not collapse when clearing the date with the clear button", async () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={[{ id: "backend", name: "backend", filterState: "included" }]}
+        people={people}
+        onCancel={() => {}}
+        adaptiveSize
+        composeRestoreRequest={{
+          id: 3,
+          state: {
+            content: "",
+            taskType: "task",
+            dueDate: new Date("2026-03-19T00:00:00.000Z"),
+            dueTime: "09:15",
+            explicitTagNames: [],
+            explicitMentionPubkeys: [],
+            attachments: [],
+          },
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("composer-clear-date"));
+
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
+    expect(screen.getByText(/set .*date \(optional\)/i)).toBeInTheDocument();
+  });
+
   it("collapses even when supplemental composer controls have non-default values", async () => {
     const outsideButton = document.createElement("button");
     document.body.appendChild(outsideButton);

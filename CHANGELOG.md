@@ -20,6 +20,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Unfiltered collection empty states now rotate through poetic localized variants, with new curated copy for English, German, and Spanish.
 - Clearing filters now consistently deactivates all feeds (including saved-filter toggle-off and onboarding reset flows) instead of reactivating every feed.
 - Compose submissions now scope due date fields to tasks only, and root offers/requests now follow comment posting rules by requiring a selected feed while parented offers/requests inherit parent tags and parent-origin feed routing.
+- Clearing a selected task date via the compose-row `x` control no longer collapses the adaptive composer unexpectedly.
 
 ## [2.2.0] - 2026-03-18
 Minor release for broader user-facing compose/filter/feed UX updates and relay stability fixes (4545 lines changed since `v2.1.0`).

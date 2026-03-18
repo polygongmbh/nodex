@@ -344,12 +344,10 @@ export function TaskComposer({
       pendingOutsidePointerInteractionRef.current = isOutsideComposer(event.target);
     };
 
-    const handleDocumentClick = (event: MouseEvent) => {
-      if (!isOutsideComposer(event.target)) {
-        pendingOutsidePointerInteractionRef.current = false;
-        return;
-      }
+    const handleDocumentClick = () => {
+      const shouldCollapse = pendingOutsidePointerInteractionRef.current;
       pendingOutsidePointerInteractionRef.current = false;
+      if (!shouldCollapse) return;
       setIsExpanded(false);
     };
 
@@ -1796,6 +1794,7 @@ export function TaskComposer({
                   className="h-8 w-16 rounded-md border border-border/50 bg-transparent px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
                 />
                 <button
+                  data-testid="composer-clear-date"
                   onClick={() => {
                     setDueDate(undefined);
                     setDueTime("");
