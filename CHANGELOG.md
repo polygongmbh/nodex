@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Table view now shows only the first line of task content as plain text (no inline link/media rendering), and Kanban cards now display `P{priority}` chips for prioritized tasks.
 - Tree view item cards now let you click due-date and priority chips to edit date, date type, time, and priority inline (matching list-view quick editing).
 - Sidebar frequent-people derivation now follows the currently active relay scope (matching channel scoping), so non-selected people from hidden feeds no longer appear in the People sidebar list.
 - Clicking a task from an empty focused composer now activates the task on the first click instead of losing the activation while the composer collapses.

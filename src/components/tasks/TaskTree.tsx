@@ -21,6 +21,8 @@ import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
   onStatusChange?: (taskId: string, status: TaskStatus) => void;
+  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
+  onUpdatePriority?: (taskId: string, priority: number) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
   onSignInClick?: () => void;
@@ -49,6 +51,8 @@ export function TaskTree({
   onNewTask,
   onToggleComplete,
   onStatusChange,
+  onUpdateDueDate,
+  onUpdatePriority,
   focusedTaskId,
   onFocusTask,
   onFocusSidebar,
@@ -502,6 +506,8 @@ export function TaskTree({
                 isPendingPublishTask={isPendingPublishTask}
                 isInteractionBlocked={isInteractionBlocked}
                 onMediaClick={openTaskMedia}
+                onUpdateDueDate={onUpdateDueDate}
+                onUpdatePriority={onUpdatePriority}
                 sortContext={sortContext}
                 authorProfiles={authorProfiles}
               />
