@@ -83,21 +83,27 @@ const people: Person[] = [
 
 const successfulCreateResult: TaskCreateResult = { ok: true, mode: "local" };
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
-const getChipButton = (name: string) => {
+const getChipButton = (kind: "mention" | "hashtag", label: string) => {
   const match = screen
-    .getAllByRole("button", { name: new RegExp(`^${name}$`, "i") })
-    .find((button) => button.className.includes("rounded-full"));
-  if (!match) throw new Error(`Chip button "${name}" not found`);
+    .getAllByRole("button")
+    .find((button) =>
+      button.getAttribute("data-chip-kind") === kind
+      && button.getAttribute("data-chip-label") === label
+    );
+  if (!match) throw new Error(`Chip button "${kind}:${label}" not found`);
   return match;
 };
-const queryChipButton = (name: string) =>
+const queryChipButton = (kind: "mention" | "hashtag", label: string) =>
   screen
-    .queryAllByRole("button", { name: new RegExp(`^${name}$`, "i") })
-    .find((button) => button.className.includes("rounded-full")) ?? null;
-const getHashtagChip = (tag: string) => getChipButton(tag);
-const queryHashtagChip = (tag: string) => queryChipButton(tag);
-const getMentionChip = (name: string) => getChipButton(name);
-const queryMentionChip = (name: string) => queryChipButton(name);
+    .queryAllByRole("button")
+    .find((button) =>
+      button.getAttribute("data-chip-kind") === kind
+      && button.getAttribute("data-chip-label") === label
+    ) ?? null;
+const getHashtagChip = (tag: string) => getChipButton("hashtag", tag);
+const queryHashtagChip = (tag: string) => queryChipButton("hashtag", tag);
+const getMentionChip = (name: string) => getChipButton("mention", name);
+const queryMentionChip = (name: string) => queryChipButton("mention", name);
 
 describe("TaskComposer hashtag autocomplete", () => {
   beforeEach(() => {

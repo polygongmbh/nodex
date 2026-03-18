@@ -100,6 +100,7 @@ export function FilteredEmptyState({
     if (mode === "mobile") {
       return (
         <div
+          data-empty-mode="mobile"
           className={cn("px-3 pt-2 pb-1 text-center text-xs leading-snug text-muted-foreground", className)}
         >
           {scopeModel.mobileFallbackHint}
@@ -110,6 +111,7 @@ export function FilteredEmptyState({
     if (mode === "inline") {
       return (
         <div
+          data-empty-mode="inline"
           className={cn("flex min-h-full items-end justify-center px-4 py-6 text-center", className)}
         >
           <p className="max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -122,6 +124,7 @@ export function FilteredEmptyState({
     if (mode === "footer") {
       return (
         <div
+          data-empty-mode="footer"
           className={cn("flex justify-center px-4 py-6 text-center", className)}
         >
           <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">

@@ -550,9 +550,8 @@ describe("FeedView", () => {
       />
     );
 
-    expect(
-      screen.getByText("No post yet matching “nomatchquery”.")
-    ).toBeInTheDocument();
+    expect(document.querySelector('[data-empty-mode="inline"]')).toBeInTheDocument();
+    expect(screen.getByText("No post yet matching “nomatchquery”.")).toBeInTheDocument();
     expect(screen.queryByText("Broaden the scope or break the silence.")).not.toBeInTheDocument();
   });
 
@@ -572,8 +571,9 @@ describe("FeedView", () => {
       />
     );
 
+    expect(document.querySelector('[data-empty-mode="footer"]')).toBeInTheDocument();
     expect(screen.getByText("This is all by Alice Doe.")).toBeInTheDocument();
-    expect(screen.queryByText("No post yet matching")).not.toBeInTheDocument();
+    expect(document.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
   });
 
   it("keeps showing feed posts on mobile when the current scope has no matches", () => {
@@ -592,9 +592,7 @@ describe("FeedView", () => {
       />
     );
 
-    expect(
-      screen.getByText("Nothing matches the current scope, so this view is showing everything instead.")
-    ).toBeInTheDocument();
+    expect(document.querySelector('[data-empty-mode="mobile"]')).toBeInTheDocument();
     expect(container.querySelector('[data-task-id="task-1"]')).toBeInTheDocument();
   });
 
