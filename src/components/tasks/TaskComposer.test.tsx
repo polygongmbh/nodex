@@ -1626,10 +1626,11 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Looks good #backend" },
     });
 
-    expect(screen.getByText("Select at least one active feed to post a comment")).toBeInTheDocument();
+    expect(screen.getByText("Select at least one green feed to post a comment")).toBeInTheDocument();
     expect(
       screen.queryByText("Select a single feed or a parent task to create a new task")
     ).not.toBeInTheDocument();
+    expect(screen.queryByText("Comments can be posted to any green feed.")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select feed");
   });
 

@@ -971,7 +971,6 @@ export function TaskComposer({
   const submitBlockedReason = submitBlock?.reason ?? null;
   const showSubmitBlockBanner = submitBlock?.code !== "write";
   const showSubmitBlockDetail = submitBlock?.code === "relay"
-    || submitBlock?.code === "commentRelay"
     || submitBlock?.code === "selectTask"
     || submitBlock?.code === "uploading"
     || submitBlock?.code === "uploadFailed";

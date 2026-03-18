@@ -729,7 +729,6 @@ export function UnifiedBottomBar({
   const taskSubmitBlockedReason = taskSubmitBlock?.reason ?? null;
   const showTaskSubmitBlockBanner = taskSubmitBlock?.code !== "write";
   const showTaskSubmitBlockDetail = taskSubmitBlock?.code === "relay"
-    || taskSubmitBlock?.code === "commentRelay"
     || taskSubmitBlock?.code === "selectTask"
     || taskSubmitBlock?.code === "uploading"
     || taskSubmitBlock?.code === "uploadFailed";
