@@ -292,6 +292,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             <button
               onClick={handleExtensionLogin}
               disabled={isAuthenticating || !hasExtension || isMobile}
+              aria-busy={pendingAuthMethod === "extension"}
               className={cn(
                 "w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-left",
                 hasExtension && !isMobile
@@ -313,9 +314,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                   }
                 </div>
               </div>
-              {pendingAuthMethod === "extension" && (
-                <Loader2 data-testid="auth-loader-extension" className="w-4 h-4 animate-spin" />
-              )}
+              {pendingAuthMethod === "extension" && <Loader2 className="w-4 h-4 animate-spin" />}
             </button>
 
             {/* Nostr Connect (Signer App) */}
@@ -339,6 +338,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             <button
               onClick={() => setStep("noas")}
               disabled={isAuthenticating}
+              aria-busy={pendingAuthMethod === "noas"}
               className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
             >
               <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -350,9 +350,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                   {t("auth.modal.noasAuthHint")}
                 </div>
               </div>
-              {pendingAuthMethod === "noas" && (
-                <Loader2 data-testid="auth-loader-noas" className="w-4 h-4 animate-spin" />
-              )}
+              {pendingAuthMethod === "noas" && <Loader2 className="w-4 h-4 animate-spin" />}
             </button>
 
             {/* Private Key */}
@@ -376,6 +374,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             <button
               onClick={handleGuestLogin}
               disabled={isAuthenticating}
+              aria-busy={pendingAuthMethod === "guest"}
               className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
             >
               <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
@@ -387,9 +386,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                   {t("auth.modal.guestIdentityHint")}
                 </div>
               </div>
-              {pendingAuthMethod === "guest" && (
-                <Loader2 data-testid="auth-loader-guest" className="w-4 h-4 animate-spin" />
-              )}
+              {pendingAuthMethod === "guest" && <Loader2 className="w-4 h-4 animate-spin" />}
             </button>
 
             <p className="text-xs text-muted-foreground text-center pt-2">

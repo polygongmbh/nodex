@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
 import type { AuthMethod, NostrUser } from "@/infrastructure/nostr/ndk-context";
@@ -109,8 +109,8 @@ describe("NostrAuthModal", () => {
     const extensionOption = screen.getByRole("button", { name: /browser extension/i });
     const guestOption = screen.getByRole("button", { name: /guest identity/i });
 
-    expect(within(extensionOption).getByTestId("auth-loader-extension")).toBeInTheDocument();
-    expect(within(guestOption).queryByTestId("auth-loader-guest")).not.toBeInTheDocument();
+    expect(extensionOption).toHaveAttribute("aria-busy", "true");
+    expect(guestOption).toHaveAttribute("aria-busy", "false");
   });
 
   it("renders safely when user signs out after profile setup was required", () => {

@@ -1794,7 +1794,8 @@ export function TaskComposer({
                   className="h-8 w-16 rounded-md border border-border/50 bg-transparent px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
                 />
                 <button
-                  data-testid="composer-clear-date"
+                  aria-label={t("composer.hints.clearDueDate")}
+                  title={t("composer.hints.clearDueDate")}
                   onClick={() => {
                     setDueDate(undefined);
                     setDueTime("");

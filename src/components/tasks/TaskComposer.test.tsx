@@ -1507,7 +1507,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByTestId("composer-clear-date"));
+    fireEvent.click(screen.getByRole("button", { name: /clear due date/i }));
 
     expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
     expect(screen.getByText(/set .*date \(optional\)/i)).toBeInTheDocument();

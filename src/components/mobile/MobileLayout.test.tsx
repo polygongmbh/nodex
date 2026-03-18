@@ -258,7 +258,7 @@ describe("MobileLayout auth wiring", () => {
       searchQuery: "nomatchquery",
     });
 
-    expect(screen.getByTestId("mobile-quick-filter-fallback")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
 

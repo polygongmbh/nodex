@@ -415,7 +415,11 @@ export function MobileLayout({
       >
         <div className="h-full flex flex-col">
           {isQuickFilterFallbackActive && (
-            <div className="px-3 pt-2 pb-1 text-xs leading-none text-muted-foreground" data-testid="mobile-quick-filter-fallback">
+            <div
+              role="status"
+              aria-live="polite"
+              className="px-3 pt-2 pb-1 text-xs leading-none text-muted-foreground"
+            >
               {t("tasks.empty.mobileQuickFilterFallback")}
             </div>
           )}
