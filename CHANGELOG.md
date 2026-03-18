@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Clicking a task hashtag now ensures that channel appears in the Channels list when its filter is activated, so the active tag filter stays visible and can be adjusted or cleared from the sidebar.
 - Feed relay selection now restores as none selected when no valid persisted selection exists, instead of re-selecting all feeds after reload.
 - Closed tasks are now hidden from the feed and calendar views while remaining available in views that explicitly manage closed work.
 - Removing a relay no longer forces healthy remaining relays to reconnect, and relay reconnect handling now keeps a single live socket per relay URL instead of leaking duplicate WebSocket connections.
