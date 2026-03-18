@@ -249,4 +249,32 @@ describe("useIndexFilters", () => {
 
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
   });
+
+  it("allows deselecting URL-hydrated people after startup", () => {
+    renderHarness({
+      initialEntries: ["/?p=alice"],
+    });
+
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
+
+    fireEvent.click(screen.getByRole("button", { name: "PersonExclusive" }));
+
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("");
+  });
+
+  it("does not reselect URL-hydrated people after delayed load once deselected", () => {
+    renderHarness({
+      isHydrating: true,
+      hasLiveHydratedScope: false,
+      startWithEmptyPeople: true,
+      initialEntries: ["/?p=alice"],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "LoadPeople" }));
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
+
+    fireEvent.click(screen.getByRole("button", { name: "PersonExclusive" }));
+
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("");
+  });
 });

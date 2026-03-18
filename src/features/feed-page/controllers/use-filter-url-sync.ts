@@ -140,12 +140,18 @@ export function useFilterUrlSync({
     const pendingIds = pendingUrlSelectedPersonIdsRef.current;
     if (!pendingIds || pendingIds.size === 0) return;
 
-    const matchedIds = new Set<string>();
+    const matchedIds = new Set(
+      people
+        .map((person) => person.id)
+        .filter((id) => pendingIds.has(id))
+    );
+
+    if (matchedIds.size === 0) return;
+
     setPeople((prev) => {
       let changed = false;
       const next = prev.map((person) => {
-        if (!pendingIds.has(person.id)) return person;
-        matchedIds.add(person.id);
+        if (!matchedIds.has(person.id)) return person;
         if (person.isSelected) return person;
         changed = true;
         return { ...person, isSelected: true };
@@ -153,7 +159,6 @@ export function useFilterUrlSync({
       return changed ? next : prev;
     });
 
-    if (matchedIds.size === 0) return;
     const remainingIds = new Set(pendingIds);
     matchedIds.forEach((id) => remainingIds.delete(id));
     pendingUrlSelectedPersonIdsRef.current = remainingIds.size > 0 ? remainingIds : null;
