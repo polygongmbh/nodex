@@ -7,10 +7,10 @@
   },
   "composer": {
     "placeholders": {
-      "task": "What needs to be done? Use #tags...",
-      "comment": "Add a comment...",
-      "offer": "Post an offer...",
-      "request": "Post a request...",
+      "task": "What's up? Use #channels and @mentions...",
+      "comment": "Add your comment with #channels and @mentions...",
+      "offer": "Post an offer with #channels and @mentions...",
+      "request": "Post a request with #channels and @mentions...",
       "mobileTask": "Search or create task... #tags",
       "mobileComment": "Search or add comment... #tags",
       "geohash": "Enter geohash (e.g. u4pruyd)"
