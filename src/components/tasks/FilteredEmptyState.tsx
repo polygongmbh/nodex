@@ -101,7 +101,6 @@ export function FilteredEmptyState({
       return (
         <div
           className={cn("px-3 pt-2 pb-1 text-center text-xs leading-snug text-muted-foreground", className)}
-          data-testid="filtered-empty-mobile-hint"
         >
           {scopeModel.mobileFallbackHint}
         </div>
@@ -112,7 +111,6 @@ export function FilteredEmptyState({
       return (
         <div
           className={cn("flex min-h-full items-end justify-center px-4 py-6 text-center", className)}
-          data-testid="filtered-empty-inline"
         >
           <p className="max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             {scopeModel.filteredSentence}
@@ -125,7 +123,6 @@ export function FilteredEmptyState({
       return (
         <div
           className={cn("flex justify-center px-4 py-6 text-center", className)}
-          data-testid="filtered-scope-footer"
         >
           <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
             {scopeModel.scopeFooterSentence}

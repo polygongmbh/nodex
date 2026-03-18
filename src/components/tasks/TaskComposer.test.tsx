@@ -83,6 +83,21 @@ const people: Person[] = [
 
 const successfulCreateResult: TaskCreateResult = { ok: true, mode: "local" };
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
+const getChipButton = (name: string) => {
+  const match = screen
+    .getAllByRole("button", { name: new RegExp(`^${name}$`, "i") })
+    .find((button) => button.className.includes("rounded-full"));
+  if (!match) throw new Error(`Chip button "${name}" not found`);
+  return match;
+};
+const queryChipButton = (name: string) =>
+  screen
+    .queryAllByRole("button", { name: new RegExp(`^${name}$`, "i") })
+    .find((button) => button.className.includes("rounded-full")) ?? null;
+const getHashtagChip = (tag: string) => getChipButton(tag);
+const queryHashtagChip = (tag: string) => queryChipButton(tag);
+const getMentionChip = (name: string) => getChipButton(name);
+const queryMentionChip = (name: string) => queryChipButton(name);
 
 describe("TaskComposer hashtag autocomplete", () => {
   beforeEach(() => {
@@ -787,7 +802,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.getByDisplayValue("#persisted hello")).toBeInTheDocument();
     expect(getCommentComposerInput()).toBeInTheDocument();
-    expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
+    expect(getMentionChip("alice")).toBeInTheDocument();
   });
 
   it("does not render a cancel action button", () => {
@@ -1056,10 +1071,10 @@ describe("TaskComposer hashtag autocomplete", () => {
     await waitFor(() => {
       expect(textarea.value).toBe("Ship ");
     });
-    expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("brandnew");
+    expect(getHashtagChip("brandnew")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("compose-hashtag-chip"));
-    expect(screen.queryByTestId("compose-hashtag-chip")).not.toBeInTheDocument();
+    fireEvent.click(getHashtagChip("brandnew"));
+    expect(queryHashtagChip("brandnew")).not.toBeInTheDocument();
 
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
     expect(onSubmit).not.toHaveBeenCalled();
@@ -1087,10 +1102,10 @@ describe("TaskComposer hashtag autocomplete", () => {
     await waitFor(() => {
       expect(textarea.value).toBe("Ship #backend with ");
     });
-    expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
+    expect(getMentionChip("alice")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("compose-mention-chip"));
-    expect(screen.queryByTestId("compose-mention-chip")).not.toBeInTheDocument();
+    fireEvent.click(getMentionChip("alice"));
+    expect(queryMentionChip("alice")).not.toBeInTheDocument();
 
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
     await waitFor(() => {
@@ -1146,7 +1161,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       );
     });
 
-    expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("backend");
+    expect(getHashtagChip("backend")).toBeInTheDocument();
   });
 
   it("adds selected people as metadata-only mention chips", async () => {
@@ -1187,7 +1202,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       );
     });
 
-    expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
+    expect(getMentionChip("alice")).toBeInTheDocument();
   });
 
   it("clears an included channel filter when removing its filter-backed chip", () => {
@@ -1206,7 +1221,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.change(getTaskComposerInput(), {
       target: { value: "Ship feature now" },
     });
-    fireEvent.click(screen.getByTestId("compose-hashtag-chip"));
+    fireEvent.click(getHashtagChip("backend"));
 
     expect(onClearChannelFilter).toHaveBeenCalledWith("backend");
   });
@@ -1227,7 +1242,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.change(getTaskComposerInput(), {
       target: { value: "Ship #backend now" },
     });
-    fireEvent.click(screen.getByTestId("compose-mention-chip"));
+    fireEvent.click(getMentionChip("alice"));
 
     expect(onClearPersonFilter).toHaveBeenCalledWith("f".repeat(64));
   });
@@ -1248,8 +1263,8 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Pair with @alice@example.com on #backend" },
     });
 
-    const mentionChip = screen.getByTestId("compose-mention-chip");
-    const hashtagChip = screen.getByTestId("compose-hashtag-chip");
+    const mentionChip = getMentionChip("alice");
+    const hashtagChip = getHashtagChip("backend");
     const relation = mentionChip.compareDocumentPosition(hashtagChip);
     expect((relation & Node.DOCUMENT_POSITION_FOLLOWING) !== 0).toBe(true);
   });
@@ -1310,7 +1325,7 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     fireEvent.blur(textarea, { relatedTarget: outsideButton });
 
-    expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("backend");
+    expect(getHashtagChip("backend")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: /insert hashtag/i })).not.toBeInTheDocument();
@@ -1526,7 +1541,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
 
     expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Write message");
-    expect(screen.queryByTestId("composer-submit-block-panel")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("allows parent-scoped submit without explicit tags", async () => {
@@ -1792,8 +1807,8 @@ describe("TaskComposer hashtag autocomplete", () => {
     );
 
     expect(screen.getByDisplayValue("Recovered content")).toBeInTheDocument();
-    expect(screen.getByTestId("compose-hashtag-chip")).toHaveTextContent("backend");
-    expect(screen.getByTestId("compose-mention-chip")).toHaveTextContent("alice");
+    expect(getHashtagChip("backend")).toBeInTheDocument();
+    expect(getMentionChip("alice")).toBeInTheDocument();
   });
 
   it("uses the same active text treatment for populated desktop date and time controls", async () => {

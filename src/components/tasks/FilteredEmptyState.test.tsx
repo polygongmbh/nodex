@@ -70,7 +70,6 @@ describe("FilteredEmptyState", () => {
       />
     );
 
-    expect(screen.getByTestId("filtered-scope-footer")).toBeInTheDocument();
     expect(
       screen.getByText("This is all in #ops, by Alice, excluding #frontend, on relay.one.")
     ).toBeInTheDocument();

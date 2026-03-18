@@ -1607,7 +1607,6 @@ export function TaskComposer({
             <button
               key={`mention-${mention.identifier}`}
               type="button"
-              data-testid="compose-mention-chip"
               onClick={() => removeExplicitMention(mention.explicitPubkey)}
               className={cn(
                 "group inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs",
@@ -1635,7 +1634,6 @@ export function TaskComposer({
             <button
               key={`hashtag-${tagChip.tag}`}
               type="button"
-              data-testid="compose-hashtag-chip"
               onClick={() => removeExplicitHashtag(tagChip.tag)}
               className={cn(
                 "group inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs",
