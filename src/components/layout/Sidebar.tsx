@@ -11,7 +11,7 @@ import { RelayManagement } from "@/components/relay/RelayManagement";
 import { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 import { cn } from "@/lib/utils";
 import { APP_VERSION } from "@/lib/app-version";
-import { buildCollapsedPreviewItems } from "@/lib/sidebar-collapsed-preview";
+import { buildCollapsedPreviewItems, getCollapsedPreviewMaxItems } from "@/lib/sidebar-collapsed-preview";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -23,8 +23,8 @@ import { useTranslation } from "react-i18next";
 
 const DEFAULT_EXPANDED_SECTIONS = {
   feeds: true,
-  channels: true,
-  people: true,
+  channels: false,
+  people: false,
 };
 
 let sidebarExpandedSectionsSnapshot = DEFAULT_EXPANDED_SECTIONS;
@@ -117,12 +117,31 @@ export function Sidebar({
   onChannelUnpin,
 }: SidebarProps) {
   const { t } = useTranslation();
-  const COLLAPSED_PREVIEW_LIMIT = 3;
   const [expandedSections, setExpandedSections] = useState(() => sidebarExpandedSectionsSnapshot);
+  const [screenHeight, setScreenHeight] = useState(() =>
+    typeof window === "undefined" ? 900 : window.innerHeight
+  );
 
   useEffect(() => {
     sidebarExpandedSectionsSnapshot = expandedSections;
   }, [expandedSections]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncScreenHeight = () => {
+      setScreenHeight(window.innerHeight);
+    };
+
+    syncScreenHeight();
+    window.addEventListener("resize", syncScreenHeight);
+    return () => window.removeEventListener("resize", syncScreenHeight);
+  }, []);
+
+  const collapsedPreviewLimit = useMemo(
+    () => getCollapsedPreviewMaxItems(screenHeight),
+    [screenHeight]
+  );
 
   const pinnedChannelSet = useMemo(() => new Set(pinnedChannelIds), [pinnedChannelIds]);
 
@@ -130,30 +149,31 @@ export function Sidebar({
     () =>
       new Set(
         buildCollapsedPreviewItems(
-          [...channels].sort((a, b) => {
-            const aPinned = pinnedChannelSet.has(a.id);
-            const bPinned = pinnedChannelSet.has(b.id);
-            if (aPinned !== bPinned) return aPinned ? -1 : 1;
-            const usageDiff = (b.usageCount ?? 0) - (a.usageCount ?? 0);
-            if (usageDiff !== 0) return usageDiff;
-            return a.name.localeCompare(b.name);
-          }),
-          (channel) => channel.filterState !== "neutral",
-          COLLAPSED_PREVIEW_LIMIT
+          {
+            items: [...channels].sort((a, b) => {
+              const usageDiff = (b.usageCount ?? 0) - (a.usageCount ?? 0);
+              if (usageDiff !== 0) return usageDiff;
+              return a.name.localeCompare(b.name);
+            }),
+            isSelected: (channel) => channel.filterState !== "neutral",
+            isPinned: (channel) => pinnedChannelSet.has(channel.id),
+            maxItems: collapsedPreviewLimit,
+            alwaysIncludePinned: true,
+          }
         ).map((channel) => channel.id)
       ),
-    [channels, pinnedChannelSet]
+    [channels, collapsedPreviewLimit, pinnedChannelSet]
   );
   const collapsedPreviewPersonIds = useMemo(
     () =>
       new Set(
-        buildCollapsedPreviewItems(
-          people,
-          (person) => person.isSelected,
-          COLLAPSED_PREVIEW_LIMIT
-        ).map((person) => person.id)
+        buildCollapsedPreviewItems({
+          items: people,
+          isSelected: (person) => person.isSelected,
+          maxItems: collapsedPreviewLimit,
+        }).map((person) => person.id)
       ),
-    [people]
+    [collapsedPreviewLimit, people]
   );
 
   // Build a flat list of all focusable items

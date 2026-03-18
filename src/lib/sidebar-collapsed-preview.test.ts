@@ -1,31 +1,50 @@
 import { describe, expect, it } from "vitest";
-import { buildCollapsedPreviewItems } from "./sidebar-collapsed-preview";
+import { buildCollapsedPreviewItems, getCollapsedPreviewMaxItems } from "./sidebar-collapsed-preview";
 
 describe("buildCollapsedPreviewItems", () => {
-  it("keeps all selected items and appends only a few unselected items", () => {
+  it("prioritizes selected items before pinned and other items", () => {
     const items = [
-      { id: "a", selected: false },
-      { id: "b", selected: true },
-      { id: "c", selected: false },
-      { id: "d", selected: true },
-      { id: "e", selected: false },
+      { id: "a", selected: false, pinned: false },
+      { id: "b", selected: true, pinned: false },
+      { id: "c", selected: false, pinned: true },
+      { id: "d", selected: false, pinned: false },
+      { id: "e", selected: false, pinned: false },
     ];
 
-    const result = buildCollapsedPreviewItems(items, (item) => item.selected, 2);
+    const result = buildCollapsedPreviewItems({
+      items,
+      isSelected: (item) => item.selected,
+      isPinned: (item) => item.pinned,
+      maxItems: 3,
+    });
 
-    expect(result.map((item) => item.id)).toEqual(["b", "d", "a", "c"]);
+    expect(result.map((item) => item.id)).toEqual(["b", "c", "a"]);
   });
 
-  it("returns selected items even when there are more than preview limit", () => {
+  it("keeps all pinned items visible when configured to do so", () => {
     const items = [
-      { id: "a", selected: true },
-      { id: "b", selected: true },
-      { id: "c", selected: true },
-      { id: "d", selected: false },
+      { id: "a", selected: false, pinned: true },
+      { id: "b", selected: false, pinned: true },
+      { id: "c", selected: true, pinned: false },
+      { id: "d", selected: false, pinned: false },
     ];
 
-    const result = buildCollapsedPreviewItems(items, (item) => item.selected, 1);
+    const result = buildCollapsedPreviewItems({
+      items,
+      isSelected: (item) => item.selected,
+      isPinned: (item) => item.pinned,
+      maxItems: 1,
+      alwaysIncludePinned: true,
+    });
 
-    expect(result.map((item) => item.id)).toEqual(["a", "b", "c", "d"]);
+    expect(result.map((item) => item.id)).toEqual(["c", "a", "b"]);
+  });
+});
+
+describe("getCollapsedPreviewMaxItems", () => {
+  it("uses coarse height buckets", () => {
+    expect(getCollapsedPreviewMaxItems(720)).toBe(3);
+    expect(getCollapsedPreviewMaxItems(840)).toBe(5);
+    expect(getCollapsedPreviewMaxItems(1080)).toBe(7);
   });
 });
