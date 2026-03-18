@@ -187,4 +187,28 @@ describe("KanbanView closed column", () => {
     const chipRow = screen.getByTestId("kanban-chip-row-due-before-chip-task");
     expect(dueRow.compareDocumentPosition(chipRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+
+  it("renders a full-height droppable target for empty columns", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+
+    const { container } = render(
+      <KanbanView
+        tasks={[]}
+        allTasks={[]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        depthMode="leaves"
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={vi.fn()}
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    const todoDropTarget = container.querySelector('[data-droppable-id="todo"]');
+    expect(todoDropTarget).toHaveClass("h-full", "min-h-full", "flex", "flex-col");
+  });
 });

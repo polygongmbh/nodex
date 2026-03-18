@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Kanban columns now accept drag-and-drop across the full column body (including sparse or empty columns) instead of only near the top task stack.
 - Table view now shows only the first line of task content as plain text (no inline link/media rendering), and Kanban/Calendar metadata rows now consistently show due-date above chips with shared `P{priority}` chip treatment.
 - Tree view item cards now let you click due-date and priority chips to edit date, date type, time, and priority inline (matching list-view quick editing).
 - Feed view item cards now let you click due-date and priority chips to edit date, date type, time, and priority inline.

@@ -20,7 +20,6 @@ import { TaskTagChipRow } from "./TaskTagChipRow";
 import { hasTaskMentionChips } from "./TaskMentionChips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { getDueDateColorClass, sortTasks, buildChildrenMap, SortContext } from "@/domain/content/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
@@ -453,16 +452,16 @@ export function KanbanView({
                 {/* Column Content - Droppable */}
                 <Droppable droppableId={column.id}>
                   {(provided, snapshot) => (
-                    <ScrollArea 
+                    <div
                       className={cn(
-                        "flex-1 p-2",
+                        "flex-1 min-h-0 overflow-y-auto p-2",
                         snapshot.isDraggingOver && "bg-primary/5"
                       )}
                     >
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className="space-y-2 min-h-[100px]"
+                        className="h-full min-h-full flex flex-col gap-2"
                       >
                         {tasksByStatus[column.id].map((task, index) => {
                           const ancestorChain = showContext ? getAncestorChain(task.id) : [];
@@ -624,9 +623,10 @@ export function KanbanView({
                             </Draggable>
                           );
                         })}
+                        {tasksByStatus[column.id].length === 0 && <div className="flex-1 min-h-[96px]" aria-hidden="true" />}
                         {provided.placeholder}
                       </div>
-                    </ScrollArea>
+                    </div>
                   )}
                 </Droppable>
               </div>
