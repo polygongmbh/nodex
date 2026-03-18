@@ -54,6 +54,47 @@ describe("FeedView", () => {
     expect(onFocusTask).not.toHaveBeenCalledWith("child");
   });
 
+  it("opens raw nostr event dialog on shift+alt+click and does not focus the task", () => {
+    const onFocusTask = vi.fn();
+    const rawTask = makeTask({
+      id: "task-raw",
+      author,
+      status: "todo",
+      rawNostrEvent: {
+        id: "event-raw-1",
+        pubkey: author.id,
+        created_at: 1700000000,
+        kind: 1,
+        tags: [["t", "general"]],
+        content: "Raw content #general",
+        sig: "f".repeat(128),
+      },
+    });
+
+    const { container } = render(
+      <FeedView
+        tasks={[rawTask]}
+        allTasks={[rawTask]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        onFocusTask={onFocusTask}
+      />
+    );
+
+    const row = container.querySelector('[data-task-id="task-raw"]');
+    expect(row).not.toBeNull();
+    fireEvent.click(row as HTMLElement, { shiftKey: true, altKey: true, button: 0 });
+
+    expect(screen.getByText("Raw Nostr Event")).toBeInTheDocument();
+    expect(screen.getByText(/"id": "event-raw-1"/)).toBeInTheDocument();
+    expect(onFocusTask).not.toHaveBeenCalled();
+  });
+
   it("hydrates the feed incrementally instead of mounting all entries at once", () => {
     vi.useFakeTimers();
     const manyTasks = Array.from({ length: 75 }, (_, index) =>

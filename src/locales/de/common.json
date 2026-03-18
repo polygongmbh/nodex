@@ -352,6 +352,7 @@
       "navigateWithinColumn": "Innerhalb der Spalte navigieren",
       "moveTaskColumns": "Aufgabe zwischen Spalten verschieben",
       "toggleKeyboardShortcuts": "Tastenkürzel ein-/ausblenden",
+      "openRawEventJson": "Rohes Nostr-Event-JSON für einen Beitrag öffnen",
       "submitCurrentKind": "Als aktuellen Typ senden",
       "submitOppositeKind": "Als anderen Typ senden (wenn kein Autocomplete offen ist)",
       "insertHighlightedSuggestion": "Bei offenem Autocomplete: markierten Vorschlag einfügen",
@@ -891,6 +892,22 @@
       "collapse": "Einklappen",
       "expandAll": "Ausklappen (alle)",
       "expandMatchingOnly": "Ausklappen (nur Treffer)"
+    },
+    "rawEvent": {
+      "title": "Rohes Nostr-Event",
+      "description": "Prüfe die vollständige Event-Nutzlast aus dem Relay-Cache.",
+      "empty": "Für diesen Beitrag sind keine rohen Nostr-Event-Daten verfügbar.",
+      "actions": {
+        "copyJson": "JSON kopieren",
+        "copyEventId": "Event-ID kopieren",
+        "close": "Schließen"
+      },
+      "toasts": {
+        "copiedJson": "Rohes JSON in die Zwischenablage kopiert.",
+        "copyJsonFailed": "Rohes JSON konnte nicht kopiert werden.",
+        "copiedEventId": "Event-ID in die Zwischenablage kopiert.",
+        "copyEventIdFailed": "Event-ID konnte nicht kopiert werden."
+      }
     },
     "empty": {
       "feed": "Keine Aufgaben zum Anzeigen",

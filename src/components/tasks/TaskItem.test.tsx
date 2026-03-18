@@ -18,6 +18,20 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   ),
 }));
 
+vi.mock("@/components/ui/popover", () => ({
+  Popover: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  PopoverContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@/components/ui/calendar", () => ({
+  Calendar: ({ onSelect }: { onSelect?: (date?: Date) => void }) => (
+    <button type="button" onClick={() => onSelect?.(new Date("2026-05-10T00:00:00.000Z"))}>
+      Select calendar date
+    </button>
+  ),
+}));
+
 const baseTask: Task = makeTask({
   id: "t1",
   author: makePerson({ id: "me", name: "me", displayName: "Me" }),
@@ -96,6 +110,42 @@ describe("TaskItem status actions", () => {
 
     expect(onToggleComplete).not.toHaveBeenCalled();
     expect(onStatusChange).not.toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("opens raw nostr event dialog on shift+alt+click and skips task selection", () => {
+    const onSelect = vi.fn();
+    const taskWithRawEvent: Task = {
+      ...baseTask,
+      rawNostrEvent: {
+        id: "event-1",
+        pubkey: "b".repeat(64),
+        created_at: 1700000000,
+        kind: 1,
+        tags: [["t", "frontend"]],
+        content: "Ship feature #frontend",
+        sig: "c".repeat(128),
+      },
+    };
+
+    render(
+      <TaskItem
+        task={taskWithRawEvent}
+        filteredChildren={[]}
+        allTasks={[taskWithRawEvent]}
+        currentUser={baseTask.author}
+        onSelect={onSelect}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /task: ship feature #frontend/i }), {
+      shiftKey: true,
+      altKey: true,
+      button: 0,
+    });
+
+    expect(screen.getByText("Raw Nostr Event")).toBeInTheDocument();
+    expect(screen.getByText(/"id": "event-1"/)).toBeInTheDocument();
     expect(onSelect).not.toHaveBeenCalled();
   });
 
@@ -358,5 +408,44 @@ describe("TaskItem status actions", () => {
       "title",
       expect.stringMatching(/comment created at .*\d{2}:\d{2}:\d{2}/i)
     );
+  });
+
+  it("updates task priority from the priority chip", () => {
+    const onUpdatePriority = vi.fn();
+    render(
+      <TaskItem
+        task={{ ...baseTask, priority: 40 }}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onUpdatePriority={onUpdatePriority}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
+      target: { value: "80" },
+    });
+
+    expect(onUpdatePriority).toHaveBeenCalledWith("t1", 80);
+  });
+
+  it("updates date type from the due date chip controls", () => {
+    const onUpdateDueDate = vi.fn();
+    const dueDate = new Date("2026-05-01T00:00:00.000Z");
+    render(
+      <TaskItem
+        task={{ ...baseTask, dueDate, dateType: "due" }}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        onUpdateDueDate={onUpdateDueDate}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /type/i }), {
+      target: { value: "scheduled" },
+    });
+
+    expect(onUpdateDueDate).toHaveBeenCalledWith("t1", dueDate, undefined, "scheduled");
   });
 });

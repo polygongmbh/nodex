@@ -280,6 +280,15 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
     priority,
     attachments: attachments.length > 0 ? attachments : undefined,
+    rawNostrEvent: {
+      id: event.id,
+      pubkey: event.pubkey,
+      created_at: event.created_at,
+      kind: event.kind,
+      tags: event.tags,
+      content: event.content,
+      sig: event.sig,
+    },
   };
 }
 

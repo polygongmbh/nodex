@@ -17,6 +17,7 @@ import {
   Nip99Metadata,
   TaskStateUpdate,
   TaskStatus,
+  RawNostrEvent,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -57,6 +58,8 @@ import {
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
+import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
+import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -149,6 +152,8 @@ export function FeedView({
 
   const { user } = useNDK();
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
+  const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
+  const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
 
   useEffect(() => {
@@ -628,7 +633,16 @@ export function FeedView({
       <div
         key={task.id}
         data-task-id={task.id}
-        onClick={() => onFocusTask?.(task.id)}
+        onClick={(event) => {
+          if (task.rawNostrEvent && isRawNostrEventShortcutClick(event)) {
+            event.preventDefault();
+            event.stopPropagation();
+            setActiveRawEvent(task.rawNostrEvent);
+            setRawEventDialogOpen(true);
+            return;
+          }
+          onFocusTask?.(task.id);
+        }}
         className={cn(
           "border-b border-border hover:bg-card/50 transition-colors cursor-pointer",
           isMobile
@@ -1144,6 +1158,11 @@ export function FeedView({
         onPreviousPost={goToPreviousPost}
         onNextPost={goToNextPost}
         onOpenTask={(taskId) => onFocusTask?.(taskId)}
+      />
+      <RawNostrEventDialog
+        open={rawEventDialogOpen}
+        onOpenChange={setRawEventDialogOpen}
+        event={activeRawEvent}
       />
 
     </main>

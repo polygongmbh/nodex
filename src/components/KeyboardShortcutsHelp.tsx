@@ -71,7 +71,10 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
     },
     {
       title: t("shortcuts.groups.general"),
-      shortcuts: [{ key: "?", description: t("shortcuts.items.toggleKeyboardShortcuts") }],
+      shortcuts: [
+        { key: "?", description: t("shortcuts.items.toggleKeyboardShortcuts") },
+        { key: "Shift + Alt/Option + Click", description: t("shortcuts.items.openRawEventJson") },
+      ],
     },
     {
       title: t("shortcuts.groups.compose"),

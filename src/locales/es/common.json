@@ -352,6 +352,7 @@
       "navigateWithinColumn": "Navegar dentro de la columna",
       "moveTaskColumns": "Mover tarea entre columnas",
       "toggleKeyboardShortcuts": "Mostrar/ocultar atajos de teclado",
+      "openRawEventJson": "Abrir el JSON bruto del evento Nostr de una publicación",
       "submitCurrentKind": "Enviar como tipo actual",
       "submitOppositeKind": "Enviar como tipo opuesto (cuando no hay autocompletado abierto)",
       "insertHighlightedSuggestion": "Con autocompletado abierto: insertar sugerencia resaltada",
@@ -891,6 +892,22 @@
       "collapse": "Contraer",
       "expandAll": "Expandir (todo)",
       "expandMatchingOnly": "Expandir (solo coincidentes)"
+    },
+    "rawEvent": {
+      "title": "Evento Nostr bruto",
+      "description": "Inspecciona la carga completa del evento desde la caché del relay.",
+      "empty": "No hay datos brutos del evento Nostr para esta publicación.",
+      "actions": {
+        "copyJson": "Copiar JSON",
+        "copyEventId": "Copiar id del evento",
+        "close": "Cerrar"
+      },
+      "toasts": {
+        "copiedJson": "JSON bruto copiado al portapapeles.",
+        "copyJsonFailed": "No se pudo copiar el JSON bruto.",
+        "copiedEventId": "Id del evento copiado al portapapeles.",
+        "copyEventIdFailed": "No se pudo copiar el id del evento."
+      }
     },
     "empty": {
       "feed": "No hay tareas para mostrar",

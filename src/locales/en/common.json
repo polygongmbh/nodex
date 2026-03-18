@@ -352,6 +352,7 @@
       "navigateWithinColumn": "Navigate within column",
       "moveTaskColumns": "Move task between columns",
       "toggleKeyboardShortcuts": "Toggle keyboard shortcuts",
+      "openRawEventJson": "Open raw Nostr event JSON for a post",
       "submitCurrentKind": "Submit as current kind",
       "submitOppositeKind": "Submit as opposite kind (when no autocomplete is open)",
       "insertHighlightedSuggestion": "With autocomplete open: insert highlighted suggestion",
@@ -891,6 +892,22 @@
       "collapse": "Collapse",
       "expandAll": "Expand (all)",
       "expandMatchingOnly": "Expand (matching only)"
+    },
+    "rawEvent": {
+      "title": "Raw Nostr Event",
+      "description": "Inspect the full event payload from the relay cache.",
+      "empty": "Raw Nostr event data is unavailable for this post.",
+      "actions": {
+        "copyJson": "Copy JSON",
+        "copyEventId": "Copy event id",
+        "close": "Close"
+      },
+      "toasts": {
+        "copiedJson": "Raw JSON copied to clipboard.",
+        "copyJsonFailed": "Could not copy raw JSON.",
+        "copiedEventId": "Event id copied to clipboard.",
+        "copyEventIdFailed": "Could not copy event id."
+      }
     },
     "empty": {
       "feed": "No tasks to show",

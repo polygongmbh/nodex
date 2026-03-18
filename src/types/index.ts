@@ -96,6 +96,16 @@ export interface TaskStateUpdate {
   authorPubkey: string;
 }
 
+export interface RawNostrEvent {
+  id: string;
+  pubkey: string;
+  created_at: number;
+  kind: number;
+  tags: string[][];
+  content: string;
+  sig: string;
+}
+
 export interface PublishedAttachment {
   url: string;
   mimeType?: string;
@@ -177,6 +187,7 @@ export interface Task {
   attachments?: PublishedAttachment[];
   pendingPublishToken?: string;
   pendingPublishUntil?: Date;
+  rawNostrEvent?: RawNostrEvent;
 }
 
 export interface SharedTaskViewContext {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2, BadgeCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Task, Person, TaskStatus, Relay } from "@/types";
+import { Task, Person, TaskStatus, Relay, TaskDateType } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
@@ -21,9 +21,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/domain/content/task-status";
+import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
+import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
@@ -57,6 +65,8 @@ interface TaskItemProps {
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   onMediaClick?: (taskId: string, url: string) => void;
+  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
+  onUpdatePriority?: (taskId: string, priority: number) => void;
   sortContext?: SortContext;
   authorProfiles?: Record<string, NostrProfile>;
 }
@@ -86,6 +96,8 @@ export function TaskItem({
   isPendingPublishTask,
   isInteractionBlocked = false,
   onMediaClick,
+  onUpdateDueDate,
+  onUpdatePriority,
   sortContext,
   authorProfiles,
 }: TaskItemProps) {
@@ -108,6 +120,9 @@ export function TaskItem({
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isCheering, setIsCheering] = useState(false);
+  const [localDueTime, setLocalDueTime] = useState(task.dueTime || "");
+  const [localDateType, setLocalDateType] = useState<TaskDateType>(task.dateType || "due");
+  const [localPriority, setLocalPriority] = useState(typeof task.priority === "number" ? String(task.priority) : "");
   const statusTriggerPointerDownRef = useRef(false);
   const allowStatusMenuOpenRef = useRef(false);
   const statusMenuOpenedOnPointerDownRef = useRef(false);
@@ -168,6 +183,18 @@ export function TaskItem({
       }
     };
   }, []);
+
+  useEffect(() => {
+    setLocalDueTime(task.dueTime || "");
+  }, [task.dueTime, task.id]);
+
+  useEffect(() => {
+    setLocalDateType(task.dateType || "due");
+  }, [task.dateType, task.id]);
+
+  useEffect(() => {
+    setLocalPriority(typeof task.priority === "number" ? String(task.priority) : "");
+  }, [task.priority, task.id]);
 
   // Get ALL children from allTasks for total counts
   const allChildren = allTasks.filter(t => t.parentId === task.id);
@@ -235,9 +262,22 @@ export function TaskItem({
     onSelect?.(task.id);
   };
 
+  const [isRawEventDialogOpen, setIsRawEventDialogOpen] = useState(false);
+
+  const handleTaskContainerClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (task.rawNostrEvent && isRawNostrEventShortcutClick(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsRawEventDialogOpen(true);
+      return;
+    }
+    handleSelect();
+  };
+
   const canCompleteTask = () => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
+  const editableMetadata = !isComment && canCompleteTask();
   const statusBlockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
 
   // Calculate indentation based on depth
@@ -257,7 +297,7 @@ export function TaskItem({
           isKeyboardFocused && "ring-2 ring-primary ring-offset-1 ring-offset-background bg-primary/5"
         )}
         style={indentStyle}
-        onClick={handleSelect}
+        onClick={handleTaskContainerClick}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -542,25 +582,138 @@ export function TaskItem({
 
           {/* Due date */}
           {task.dueDate && (
-            <div className={cn("flex items-center gap-2 text-xs mt-1", dueDateColor)}>
-              <Calendar className="w-3 h-3" />
-              <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-              <span>{format(task.dueDate, "MMM d, yyyy")}</span>
-              {task.dueTime && (
-                <>
-                  <Clock className="w-3 h-3 ml-1" />
-                  <span>{task.dueTime}</span>
-                </>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  disabled={!editableMetadata}
+                  onClick={(event) => event.stopPropagation()}
+                  className={cn(
+                    "mt-1 flex items-center gap-2 rounded px-1 py-0.5 text-xs transition-colors",
+                    dueDateColor,
+                    editableMetadata ? "cursor-pointer hover:bg-muted/50" : "cursor-default"
+                  )}
+                >
+                  <Calendar className="w-3 h-3" />
+                  <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
+                  <span>{format(task.dueDate, "MMM d, yyyy")}</span>
+                  {task.dueTime && (
+                    <>
+                      <Clock className="w-3 h-3 ml-1" />
+                      <span>{task.dueTime}</span>
+                    </>
+                  )}
+                </button>
+              </PopoverTrigger>
+              {editableMetadata && (
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="start"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="space-y-2 p-3">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-muted-foreground" htmlFor={`task-date-type-${task.id}`}>
+                        {t("listView.dates.type")}
+                      </label>
+                      <select
+                        id={`task-date-type-${task.id}`}
+                        aria-label={t("listView.dates.type")}
+                        value={localDateType}
+                        onChange={(event) => {
+                          const nextType = event.target.value as TaskDateType;
+                          setLocalDateType(nextType);
+                          if (task.dueDate) {
+                            onUpdateDueDate?.(task.id, task.dueDate, localDueTime || undefined, nextType);
+                          }
+                        }}
+                        className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
+                      >
+                        <option value="due">{t("composer.dates.due")}</option>
+                        <option value="scheduled">{t("composer.dates.scheduled")}</option>
+                        <option value="start">{t("composer.dates.start")}</option>
+                        <option value="end">{t("composer.dates.end")}</option>
+                        <option value="milestone">{t("composer.dates.milestone")}</option>
+                      </select>
+                    </div>
+                    <CalendarComponent
+                      mode="single"
+                      selected={task.dueDate}
+                      onSelect={(date) => {
+                        onUpdateDueDate?.(task.id, date, localDueTime || undefined, localDateType);
+                      }}
+                      initialFocus
+                    />
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                      <input
+                        type="time"
+                        value={localDueTime}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setLocalDueTime(value);
+                          if (task.dueDate) {
+                            onUpdateDueDate?.(task.id, task.dueDate, value || undefined, localDateType);
+                          }
+                        }}
+                        className="rounded border border-border bg-background px-2 py-1 text-xs"
+                      />
+                    </div>
+                  </div>
+                </PopoverContent>
               )}
-            </div>
+            </Popover>
           )}
 
           {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash || (typeof task.priority === "number" && !isComment)) && (
             <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-1.5")}>
               {typeof task.priority === "number" && !isComment && (
-                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-warning/15 text-warning">
-                  P{task.priority}
-                </span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={!editableMetadata}
+                      onClick={(event) => event.stopPropagation()}
+                      className={cn(
+                        "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning",
+                        editableMetadata && "cursor-pointer hover:bg-warning/20"
+                      )}
+                    >
+                      P{task.priority}
+                    </button>
+                  </PopoverTrigger>
+                  {editableMetadata && (
+                    <PopoverContent
+                      className="w-36 p-2"
+                      align="start"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <label className="sr-only" htmlFor={`task-priority-${task.id}`}>
+                        {t("composer.labels.priority")}
+                      </label>
+                      <select
+                        id={`task-priority-${task.id}`}
+                        aria-label={t("composer.labels.priority")}
+                        value={localPriority}
+                        onChange={(event) => {
+                          const next = event.target.value;
+                          setLocalPriority(next);
+                          const parsed = Number.parseInt(next, 10);
+                          if (Number.isFinite(parsed)) {
+                            onUpdatePriority?.(task.id, parsed);
+                          }
+                        }}
+                        className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground focus:outline-none"
+                      >
+                        <option value="20">P20</option>
+                        <option value="40">P40</option>
+                        <option value="60">P60</option>
+                        <option value="80">P80</option>
+                        <option value="100">P100</option>
+                      </select>
+                    </PopoverContent>
+                  )}
+                </Popover>
               )}
               <TaskMentionChips
                 task={task}
@@ -675,6 +828,8 @@ export function TaskItem({
                       onUndoPendingPublish={onUndoPendingPublish}
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
+                      onUpdateDueDate={onUpdateDueDate}
+                      onUpdatePriority={onUpdatePriority}
                       sortContext={sortContext}
                       authorProfiles={authorProfiles}
                     />
@@ -709,6 +864,8 @@ export function TaskItem({
                       onUndoPendingPublish={onUndoPendingPublish}
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
+                      onUpdateDueDate={onUpdateDueDate}
+                      onUpdatePriority={onUpdatePriority}
                       sortContext={sortContext}
                       authorProfiles={authorProfiles}
                     />
@@ -719,6 +876,11 @@ export function TaskItem({
           })()}
         </div>
       )}
+      <RawNostrEventDialog
+        open={isRawEventDialogOpen}
+        onOpenChange={setIsRawEventDialogOpen}
+        event={task.rawNostrEvent || null}
+      />
     </div>
   );
 }
