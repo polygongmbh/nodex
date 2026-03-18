@@ -14,6 +14,8 @@ import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
+import { useTranslation } from "react-i18next";
+import { buildEmptyScopeModel } from "@/lib/empty-scope";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -62,6 +64,7 @@ export function TaskTree({
   mentionRequest = null,
   isInteractionBlocked = false,
 }: TaskTreeProps) {
+  const { t, i18n } = useTranslation();
   const { user } = useNDK();
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
@@ -165,29 +168,51 @@ export function TaskTree({
   }, [hasActiveFilters, searchQuery, includedChannels, excludedChannels, getDirectlyMatchingTasks, getAncestors, getDescendants]);
 
   // Get visible tasks based on context and filters, sorted with priority system
-  const visibleTasks = useMemo(() => {
+  const baseVisibleTasks = useMemo(() => {
     let rootTasks: Task[];
-    
+
     if (currentContextId) {
-      // Show children of current context
       rootTasks = childrenMap.get(currentContextId) || [];
     } else {
-      // Show root-level tasks (no parent) - hide top-level comments
       rootTasks = (childrenMap.get(undefined) || []).filter(task => task.taskType !== "comment");
     }
 
-    // Filter by pre-filtered tasks from Index (relay/person filtering)
     const filteredTaskIds = new Set(tasks.map(t => t.id));
     rootTasks = rootTasks.filter(task => filteredTaskIds.has(task.id));
 
+    return sortTasks(rootTasks, sortContext);
+  }, [currentContextId, childrenMap, sortContext, tasks]);
+
+  const visibleTasks = useMemo(() => {
+    let rootTasks = baseVisibleTasks;
+
     if (hasActiveFilters) {
-      // Filter to show tasks that match, are ancestors, or are descendants of matches
       rootTasks = rootTasks.filter(task => allVisibleIds.has(task.id));
     }
 
-    // Sort using the new priority system
-    return sortTasks(rootTasks, sortContext);
-  }, [currentContextId, childrenMap, hasActiveFilters, allVisibleIds, sortContext, tasks]);
+    return rootTasks;
+  }, [allVisibleIds, baseVisibleTasks, hasActiveFilters]);
+
+  const scopeModel = useMemo(
+    () =>
+      buildEmptyScopeModel({
+        relays,
+        channels,
+        people,
+        searchQuery,
+        locale: i18n.resolvedLanguage || i18n.language || "en",
+        t,
+      }),
+    [channels, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
+  );
+  const hasSourceTaskContent = baseVisibleTasks.length > 0;
+  const shouldShowMobileScopeFallback =
+    isMobile && scopeModel.hasActiveFilters && visibleTasks.length === 0 && hasSourceTaskContent;
+  const displayedTasks = shouldShowMobileScopeFallback ? baseVisibleTasks : visibleTasks;
+  const shouldShowInlineEmptyHint =
+    !isMobile && scopeModel.hasActiveFilters && visibleTasks.length === 0 && hasSourceTaskContent;
+  const shouldShowScreenEmptyState =
+    visibleTasks.length === 0 && !shouldShowMobileScopeFallback && !shouldShowInlineEmptyHint;
 
   const currentContextTask = currentContextId ? taskById.get(currentContextId) || null : null;
   const handleSelectTask = (taskId: string) => {
@@ -420,7 +445,17 @@ export function TaskTree({
 
       {/* Task List */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1" data-onboarding="task-list">
-        {visibleTasks.length === 0 ? (
+        {shouldShowMobileScopeFallback ? (
+          <FilteredEmptyState
+            variant="collection"
+            relays={relays}
+            channels={channels}
+            people={people}
+            searchQuery={searchQuery}
+            mode="mobile"
+          />
+        ) : null}
+        {shouldShowScreenEmptyState ? (
           <FilteredEmptyState
             variant="collection"
             relays={relays}
@@ -429,33 +464,45 @@ export function TaskTree({
             searchQuery={searchQuery}
           />
         ) : (
-          visibleTasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              filteredChildren={getFilteredChildren(task.id)}
-              allTasks={allTasks}
-              people={people}
-              currentUser={currentUser}
-              onSelect={handleSelectTask}
-              onToggleComplete={onToggleComplete}
-              onStatusChange={onStatusChange}
-              matchedByFilter={isTaskDirectMatch(task.id)}
-              isDirectMatchFn={isTaskDirectMatch}
-              getFilteredChildrenFn={getFilteredChildren}
-              hasActiveFilters={hasActiveFilters}
-              activeRelays={relays.filter(r => r.isActive)}
-              isKeyboardFocused={keyboardFocusedTaskId === task.id}
-              onHashtagClick={onHashtagClick}
-              onAuthorClick={onAuthorClick}
-              onUndoPendingPublish={onUndoPendingPublish}
-              isPendingPublishTask={isPendingPublishTask}
-              isInteractionBlocked={isInteractionBlocked}
-              onMediaClick={openTaskMedia}
-              sortContext={sortContext}
-              authorProfiles={authorProfiles}
-            />
-          ))
+          <>
+            {displayedTasks.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                filteredChildren={getFilteredChildren(task.id)}
+                allTasks={allTasks}
+                people={people}
+                currentUser={currentUser}
+                onSelect={handleSelectTask}
+                onToggleComplete={onToggleComplete}
+                onStatusChange={onStatusChange}
+                matchedByFilter={isTaskDirectMatch(task.id)}
+                isDirectMatchFn={isTaskDirectMatch}
+                getFilteredChildrenFn={getFilteredChildren}
+                hasActiveFilters={hasActiveFilters}
+                activeRelays={relays.filter(r => r.isActive)}
+                isKeyboardFocused={keyboardFocusedTaskId === task.id}
+                onHashtagClick={onHashtagClick}
+                onAuthorClick={onAuthorClick}
+                onUndoPendingPublish={onUndoPendingPublish}
+                isPendingPublishTask={isPendingPublishTask}
+                isInteractionBlocked={isInteractionBlocked}
+                onMediaClick={openTaskMedia}
+                sortContext={sortContext}
+                authorProfiles={authorProfiles}
+              />
+            ))}
+            {shouldShowInlineEmptyHint ? (
+              <FilteredEmptyState
+                variant="collection"
+                relays={relays}
+                channels={channels}
+                people={people}
+                searchQuery={searchQuery}
+                mode="inline"
+              />
+            ) : null}
+          </>
         )}
       </div>
       <TaskMediaLightbox

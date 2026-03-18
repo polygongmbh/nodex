@@ -1,0 +1,114 @@
+import type { Channel, Person, Relay } from "@/types";
+
+interface TranslateFn {
+  (key: string, options?: Record<string, unknown>): string;
+}
+
+interface BuildEmptyScopeModelParams {
+  relays: Relay[];
+  channels: Channel[];
+  people: Person[];
+  searchQuery?: string;
+  locale: string;
+  t: TranslateFn;
+}
+
+export interface EmptyScopeModel {
+  hasActiveFilters: boolean;
+  scopeDescription: string | null;
+  filteredSentence: string | null;
+  mobileFallbackHint: string | null;
+}
+
+function formatNaturalList(values: string[], locale: string): string {
+  const formatter = new Intl.ListFormat(locale, { style: "long", type: "conjunction" });
+  return formatter.format(values);
+}
+
+function formatRelayLabel(relay: Relay): string {
+  const rawValue = relay.url?.trim() || relay.name;
+  if (!rawValue) return "";
+
+  return rawValue.replace(/^[a-z]+:\/\//i, "").replace(/\/+$/, "");
+}
+
+export function buildEmptyScopeModel({
+  relays,
+  channels,
+  people,
+  searchQuery = "",
+  locale,
+  t,
+}: BuildEmptyScopeModelParams): EmptyScopeModel {
+  const trimmedSearchQuery = searchQuery.trim();
+  const activeRelays = relays.filter((relay) => relay.isActive);
+  const includedChannels = channels.filter((channel) => channel.filterState === "included");
+  const excludedChannels = channels.filter((channel) => channel.filterState === "excluded");
+  const activePeople = people.filter((person) => person.isSelected);
+  const hasRelayFilter = activeRelays.length > 0 && activeRelays.length < relays.length;
+  const hasActiveFilters =
+    Boolean(trimmedSearchQuery) ||
+    hasRelayFilter ||
+    includedChannels.length > 0 ||
+    excludedChannels.length > 0 ||
+    activePeople.length > 0;
+
+  if (!hasActiveFilters) {
+    return {
+      hasActiveFilters: false,
+      scopeDescription: null,
+      filteredSentence: null,
+      mobileFallbackHint: null,
+    };
+  }
+
+  const scopeParts = [
+    includedChannels.length > 0
+      ? t("tasks.empty.scope.includedChannels", {
+          channels: formatNaturalList(
+            includedChannels.map((channel) => `#${channel.name}`),
+            locale
+          ),
+        })
+      : null,
+    activePeople.length > 0
+      ? t("tasks.empty.scope.people", {
+          people: formatNaturalList(
+            activePeople.map((person) => person.displayName || person.name || person.id),
+            locale
+          ),
+        })
+      : null,
+    excludedChannels.length > 0
+      ? t("tasks.empty.scope.excludedChannels", {
+          channels: formatNaturalList(
+            excludedChannels.map((channel) => `#${channel.name}`),
+            locale
+          ),
+        })
+      : null,
+    hasRelayFilter
+      ? t("tasks.empty.scope.relays", {
+          relays: formatNaturalList(
+            activeRelays.map((relay) => formatRelayLabel(relay)).filter(Boolean),
+            locale
+          ),
+        })
+      : null,
+    trimmedSearchQuery
+      ? t("tasks.empty.scope.search", { query: trimmedSearchQuery })
+      : null,
+  ].filter((value): value is string => Boolean(value));
+
+  const scopeDescription = scopeParts.join(", ");
+  const filteredSentence = scopeDescription
+    ? t("tasks.empty.filtered.scopeOnly", { scope: scopeDescription })
+    : null;
+
+  return {
+    hasActiveFilters: true,
+    scopeDescription,
+    filteredSentence,
+    mobileFallbackHint: t("tasks.empty.filtered.mobileFallback"),
+  };
+}

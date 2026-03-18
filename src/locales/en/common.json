@@ -860,8 +860,8 @@
       "noSubtasks": "No subtasks yet",
       "noneYet": "No tasks yet",
       "filtered": {
-        "title": "Nobody here but your filters.",
-        "scope": "You’re currently narrowed down to {{scope}}.",
+        "scopeOnly": "Nothing posted yet {{scope}}.",
+        "mobileFallback": "Nothing matches the current scope, so this view is showing everything instead.",
         "action": "Broaden the scope or break the silence."
       },
       "unfiltered": {
@@ -870,7 +870,12 @@
         "collectionTitle": "This space is empty for now. Be the first to fill it."
       },
       "scope": {
-        "search": "Search: “{{query}}”"
+        "includedChannels": "in {{channels}}",
+        "excludedChannels": "excluding {{channels}}",
+        "people": "by {{people}}",
+        "relays": "on {{relays}}",
+        "search": "matching “{{query}}”",
+        "listWithOthers": "{{items}}, and {{count}} others"
       }
     }
   },

@@ -24,6 +24,7 @@ const relays: Relay[] = [
 
 const channels: Channel[] = [
   { id: "ops", name: "ops", filterState: "included" },
+  { id: "frontend", name: "frontend", filterState: "excluded" },
 ];
 
 const people: Person[] = [
@@ -48,8 +49,9 @@ describe("FilteredEmptyState", () => {
       />
     );
 
-    expect(screen.getByText("Nobody here but your filters.")).toBeInTheDocument();
-    expect(screen.getByText(/Feeds: Relay One/)).toBeInTheDocument();
+    expect(
+      screen.getByText("Nothing posted yet in #ops, by Alice, excluding #frontend, on relay.one.")
+    ).toBeInTheDocument();
     expect(screen.getByText("Broaden the scope or break the silence.")).toBeInTheDocument();
   });
 

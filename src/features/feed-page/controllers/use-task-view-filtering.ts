@@ -33,6 +33,24 @@ export function useTaskViewFiltering({
     [channels]
   );
   const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
+  const availableChannelNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const task of tasks) {
+      for (const tag of task.tags) {
+        const normalized = tag.trim().toLowerCase();
+        if (normalized) names.add(normalized);
+      }
+    }
+    return names;
+  }, [tasks]);
+  const effectiveIncludedChannels = useMemo(
+    () => included.filter((channel) => availableChannelNames.has(channel)),
+    [availableChannelNames, included]
+  );
+  const effectiveExcludedChannels = useMemo(
+    () => excluded.filter((channel) => availableChannelNames.has(channel)),
+    [availableChannelNames, excluded]
+  );
 
   return useMemo(
     () =>
@@ -44,19 +62,19 @@ export function useTaskViewFiltering({
         hideClosedTasks,
         searchQuery,
         people,
-        includedChannels: included,
-        excludedChannels: excluded,
+        includedChannels: effectiveIncludedChannels,
+        excludedChannels: effectiveExcludedChannels,
         channelMatchMode,
         taskPredicate,
       }),
     [
       allTasks,
       channelMatchMode,
-      excluded,
+      effectiveExcludedChannels,
       focusedTaskId,
       includeFocusedTask,
       hideClosedTasks,
-      included,
+      effectiveIncludedChannels,
       people,
       prefilteredTaskIds,
       searchQuery,

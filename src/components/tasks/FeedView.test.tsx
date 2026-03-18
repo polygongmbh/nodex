@@ -535,4 +535,46 @@ describe("FeedView", () => {
     }
   });
 
+  it("renders an inline scope hint on desktop when source posts exist but none match the current scope", () => {
+    render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery="nomatchquery"
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("filtered-empty-inline")).toBeInTheDocument();
+    expect(
+      screen.getByText("Nothing posted yet matching “nomatchquery”.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Broaden the scope or break the silence.")).not.toBeInTheDocument();
+  });
+
+  it("keeps showing feed posts on mobile when the current scope has no matches", () => {
+    const { container } = render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery="nomatchquery"
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+        isMobile
+      />
+    );
+
+    expect(screen.getByTestId("filtered-empty-mobile-hint")).toBeInTheDocument();
+    expect(container.querySelector('[data-task-id="task-1"]')).toBeInTheDocument();
+  });
+
 });

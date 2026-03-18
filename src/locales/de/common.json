@@ -860,8 +860,8 @@
       "noSubtasks": "Noch keine Unteraufgaben",
       "noneYet": "Noch keine Aufgaben",
       "filtered": {
-        "title": "Niemand hier außer deinen Filtern.",
-        "scope": "Derzeit ist deine Ansicht eingegrenzt auf {{scope}}.",
+        "scopeOnly": "Noch nichts gepostet {{scope}}.",
+        "mobileFallback": "Nichts entspricht dem aktuellen Bereich, deshalb zeigt diese Ansicht stattdessen alles an.",
         "action": "Erweitere den Bereich oder brich die Stille."
       },
       "unfiltered": {
@@ -870,7 +870,12 @@
         "collectionTitle": "Dieser Bereich ist noch leer. Füll ihn als Erste:r."
       },
       "scope": {
-        "search": "Suche: „{{query}}“"
+        "includedChannels": "in {{channels}}",
+        "excludedChannels": "ohne {{channels}}",
+        "people": "von {{people}}",
+        "relays": "auf {{relays}}",
+        "search": "mit „{{query}}“",
+        "listWithOthers": "{{items}} und {{count}} weitere"
       }
     }
   },

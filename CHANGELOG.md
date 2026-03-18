@@ -11,7 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Closed tasks are now hidden from the feed and calendar views while remaining available in views that explicitly manage closed work.
 - Removing a relay no longer forces healthy remaining relays to reconnect, and relay reconnect handling now keeps a single live socket per relay URL instead of leaking duplicate WebSocket connections.
 - Sidebar channels and people now start folded by default, scale their folded previews with available height, prioritize selected and pinned items in the preview, and always keep pinned channels visible while folded.
-- Feed, tree, and list empty states now explain the active relay/channel/person scope and use warmer fallback copy when the view is simply empty.
+- Feed, tree, and list empty states now describe the current relay/channel/person scope in natural language, place desktop scope-only hints at the end of the scroll area when broader content exists, and keep mobile views showing broader results with a compact fallback hint.
 - Filter-backed compose chips now sit in a dedicated footer tray, stay visible when an empty adaptive composer collapses, and clear their linked channel/person filters when removed.
 
 ## [2.1.0] - 2026-03-17

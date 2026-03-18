@@ -49,6 +49,7 @@ import {
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
+import { buildEmptyScopeModel } from "@/lib/empty-scope";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -143,7 +144,7 @@ export function ListView({
   composeRestoreRequest = null,
   isInteractionBlocked = false,
 }: ListViewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useNDK();
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const [sortField, setSortField] = useState<SortField>("priority");
@@ -242,11 +243,21 @@ export function ListView({
     channelMatchMode,
     taskPredicate: (task) => task.taskType === "task",
   });
-  
-  // Stable sorted list - only re-sort when sortVersion changes
-  const listTasks = useMemo(() => {
+
+  const baseListTaskCandidates = useTaskViewFiltering({
+    allTasks,
+    tasks,
+    focusedTaskId,
+    searchQuery: "",
+    people,
+    channels: channels.map((channel) => ({ ...channel, filterState: "neutral" })),
+    channelMatchMode,
+    taskPredicate: (task) => task.taskType === "task",
+  });
+
+  const sortListTasks = useCallback((taskCandidates: Task[]) => {
     let filtered = filterTasksByDepthMode({
-      tasks: filteredTaskCandidates,
+      tasks: taskCandidates,
       depthMode,
       focusedTaskId,
       getDepth,
@@ -299,7 +310,6 @@ export function ListView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     depthMode,
-    filteredTaskCandidates,
     focusedTaskId,
     getDepth,
     hasChildren,
@@ -308,6 +318,30 @@ export function ListView({
     sortField,
     sortVersion,
   ]);
+  const listTasks = useMemo(
+    () => sortListTasks(filteredTaskCandidates),
+    [filteredTaskCandidates, sortListTasks]
+  );
+  const baseListTasks = useMemo(
+    () => sortListTasks(baseListTaskCandidates),
+    [baseListTaskCandidates, sortListTasks]
+  );
+  const scopeModel = useMemo(
+    () =>
+      buildEmptyScopeModel({
+        relays,
+        channels,
+        people,
+        searchQuery,
+        locale: i18n.resolvedLanguage || i18n.language || "en",
+        t,
+      }),
+    [channels, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
+  );
+  const hasSourceListContent = baseListTasks.length > 0;
+  const shouldShowInlineEmptyHint =
+    scopeModel.hasActiveFilters && listTasks.length === 0 && hasSourceListContent;
+  const shouldShowScreenEmptyState = listTasks.length === 0 && !shouldShowInlineEmptyHint;
   const {
     mediaItems,
     activeMediaIndex,
@@ -702,7 +736,7 @@ export function ListView({
             </tr>
           </thead>
           <tbody>
-            {listTasks.length === 0 ? (
+            {shouldShowScreenEmptyState ? (
               <tr>
                 <td colSpan={6} className="p-0">
                   <FilteredEmptyState
@@ -716,7 +750,8 @@ export function ListView({
                 </td>
               </tr>
             ) : (
-              listTasks.map((task) => {
+              <>
+                {listTasks.map((task) => {
                 const ancestorChain = getAncestorChain(task.id);
                 const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                 const isLockedUntilStart = isTaskLockedUntilStart(task);
@@ -931,7 +966,23 @@ export function ListView({
                     </td>
                   </tr>
                 );
-              })
+              })}
+                {shouldShowInlineEmptyHint ? (
+                  <tr>
+                    <td colSpan={6} className="p-0">
+                      <FilteredEmptyState
+                        variant="collection"
+                        relays={relays}
+                        channels={channels}
+                        people={people}
+                        searchQuery={searchQuery}
+                        mode="inline"
+                        className="py-6"
+                      />
+                    </td>
+                  </tr>
+                ) : null}
+              </>
             )}
           </tbody>
         </table>
