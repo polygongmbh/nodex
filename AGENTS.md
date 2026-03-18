@@ -226,6 +226,7 @@ policies:
 
 ### Commit Discipline
 - Always commit every completed change.
+- Always commit before handoff/final response unless the user explicitly says not to commit.
 - Make atomic commits that build individually and stay coherent.
 - You may amend commits with corrections if they are not yet pushed.
 - Amend true follow-up fixes into the immediately relevant local commit when they are part of the same change.

@@ -131,7 +131,10 @@ describe("TaskComposer hashtag autocomplete", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /create task/i })).toBeDisabled();
+    const button = screen.getByRole("button", { name: /create task/i });
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("Create Task");
+    expect(button).toHaveAttribute("title", "Write a message first");
   });
 
   it("shows a blocker panel and remediation CTA when posting is blocked by missing channel tags", () => {
@@ -251,6 +254,46 @@ describe("TaskComposer hashtag autocomplete", () => {
         }
       );
     });
+  });
+
+  it("keeps the adaptive composer open and preserves date and priority after submit", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    const dueDate = new Date("2026-03-19T00:00:00.000Z");
+
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        adaptiveSize
+        composeRestoreRequest={{
+          id: 10,
+          state: {
+            content: "Ship #backend",
+            taskType: "task",
+            dueDate,
+            priority: 40,
+            explicitTagNames: [],
+            explicitMentionPubkeys: [],
+            attachments: [],
+          },
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    expect(getTaskComposerInput()).toHaveFocus();
+    expect(getTaskComposerInput()).toHaveValue("");
+    expect(screen.getByRole("button", { name: format(dueDate, "MMM d, yyyy") })).toBeInTheDocument();
+    expect(screen.getByLabelText("Priority")).toHaveValue("40");
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
   });
 
   it("defaults currency field to EUR with currency autocomplete suggestions", () => {
@@ -1261,6 +1304,54 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
 
     outsideButton.remove();
+  });
+
+  it("does not collapse when the empty adaptive composer blurs without a next focus target", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={[{ id: "backend", name: "backend", filterState: "included" }]}
+        people={people}
+        onCancel={() => {}}
+        adaptiveSize
+      />
+    );
+
+    const textarea = getTaskComposerInput();
+    fireEvent.focus(textarea);
+
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
+
+    fireEvent.blur(textarea);
+
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
+  });
+
+  it("does not collapse when interacting with the due date popover while empty", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={[{ id: "backend", name: "backend", filterState: "included" }]}
+        people={people}
+        onCancel={() => {}}
+        adaptiveSize
+      />
+    );
+
+    const textarea = getTaskComposerInput();
+    fireEvent.focus(textarea);
+
+    const dueDateButton = screen.getByRole("button", { name: /set .*date \(optional\)/i });
+    fireEvent.click(dueDateButton);
+
+    const popoverContent = document.querySelector("[data-radix-popper-content-wrapper] .motion-selector-panel");
+    expect(popoverContent).not.toBeNull();
+
+    fireEvent.mouseDown(popoverContent!);
+
+    expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
   });
 
   it("collapses even when supplemental composer controls have non-default values", async () => {

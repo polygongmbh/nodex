@@ -288,6 +288,7 @@ export function TaskComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachmentsRef = useRef<HTMLDivElement>(null);
   const blockerPanelRef = useRef<HTMLDivElement>(null);
+  const dueDatePopoverContentRef = useRef<HTMLDivElement>(null);
   const attachmentFileRef = useRef<Record<string, File>>({});
   const internalMouseDownWithinComposerRef = useRef(false);
   const sendLaunchTimeoutRef = useRef<number | null>(null);
@@ -334,6 +335,7 @@ export function TaskComposer({
     const handleDocumentMouseDown = (event: MouseEvent) => {
       const target = event.target;
       if (target instanceof Node && composerRef.current?.contains(target)) return;
+      if (target instanceof Node && dueDatePopoverContentRef.current?.contains(target)) return;
       setIsExpanded(false);
     };
 
@@ -851,12 +853,8 @@ export function TaskComposer({
     prevSelectedPeoplePubkeysRef.current = [...selectedPeoplePubkeys];
     autoManagedFilterTagNamesRef.current = new Set(includedChannels);
     autoManagedFilterMentionPubkeysRef.current = new Set(selectedPeoplePubkeys);
-    setDueDate(undefined);
-    setDueTime("");
-    setDateType("due");
     setExplicitTagNames([...includedChannels]);
     setExplicitMentionPubkeys([...selectedPeoplePubkeys]);
-    setPriority(undefined);
     setLocationGeohash(undefined);
     setShowLocationControls(false);
     setNip99({});
@@ -865,8 +863,11 @@ export function TaskComposer({
     setAttachments([]);
     attachmentFileRef.current = {};
     if (adaptiveSize) {
-      setIsExpanded(false);
+      setIsExpanded(true);
     }
+    window.setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 0);
     if (draftStorageKey) {
       localStorage.removeItem(draftStorageKey);
     }
@@ -975,6 +976,7 @@ export function TaskComposer({
     || submitBlock?.code === "uploading"
     || submitBlock?.code === "uploadFailed";
   const isSubmitButtonEmptyDisabled = user && content.trim().length === 0;
+  const submitButtonLabel = isSubmitButtonEmptyDisabled ? null : submitBlock?.ctaLabel;
 
   const pulseTarget = (target: "input" | "attachments" | "blocker") => {
     setHighlightedTarget(target);
@@ -1381,7 +1383,9 @@ export function TaskComposer({
             const hadInternalMouseDown = internalMouseDownWithinComposerRef.current;
             internalMouseDownWithinComposerRef.current = false;
             const nextFocusedElement = event.relatedTarget;
-            if (composerRef.current?.contains(nextFocusedElement) || hadInternalMouseDown) return;
+            if (!nextFocusedElement || hadInternalMouseDown) return;
+            if (composerRef.current?.contains(nextFocusedElement)) return;
+            if (dueDatePopoverContentRef.current?.contains(nextFocusedElement)) return;
             setIsExpanded(false);
           }}
           aria-label={
@@ -1745,7 +1749,7 @@ export function TaskComposer({
                       })}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent ref={dueDatePopoverContentRef} className="w-auto p-0" align="start">
                 <CalendarComponent
                   mode="single"
                   selected={dueDate}
@@ -2026,6 +2030,7 @@ export function TaskComposer({
                   : taskType === "request"
                     ? <HandHelping className="w-4 h-4" />
                     : <MessageSquare className="w-4 h-4" />;
+              const submitButtonTitle = submitBlock?.reason || submitActionLabel;
               if (!user) {
                 return (
                   <button
@@ -2051,12 +2056,14 @@ export function TaskComposer({
               }}
               disabled={Boolean(submitBlock?.isHardDisabled) || isSubmitButtonEmptyDisabled}
               aria-label={submitActionLabel}
-              title={submitBlock?.reason || submitActionLabel}
+              title={submitButtonTitle}
               className={cn(
-                "min-w-[12.5rem] px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2",
-                submitBlock && !submitBlock.isHardDisabled
-                  ? "border border-border/60 bg-muted text-muted-foreground hover:bg-muted/90"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90",
+                "min-w-[12.5rem] px-4 py-2 text-sm disabled:cursor-not-allowed flex items-center justify-center gap-2",
+                isSubmitButtonEmptyDisabled
+                  ? "border border-primary/40 bg-primary/45 text-primary-foreground/85 disabled:opacity-100"
+                  : submitBlock && !submitBlock.isHardDisabled
+                    ? "border border-primary/25 bg-primary/25 text-primary/75 disabled:opacity-100 hover:bg-primary/30"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-100",
                 isSendLaunching && "motion-send-launch"
               )}
             >
@@ -2064,7 +2071,7 @@ export function TaskComposer({
                 <span className="w-3 h-3 border border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
               )}
               {submitActionIcon}
-              {submitBlock?.ctaLabel || submitActionLabel}
+              {submitButtonLabel || submitActionLabel}
             </button>
               );
             })()}

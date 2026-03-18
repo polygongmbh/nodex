@@ -133,7 +133,9 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /create task \/ add comment/i })).toBeDisabled();
+    const button = screen.getByRole("button", { name: /create task \/ add comment/i });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute("title", "Write a message first");
   });
 
   it("searches as user types in combined field", () => {
@@ -217,6 +219,42 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(sendButton).toHaveAttribute("title", "Write a message first");
     expect(screen.queryByTestId("mobile-task-submit-block-panel")).not.toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("keeps focus and preserves date and priority after mobile submit", async () => {
+    const onSubmit = vi.fn(async () => successResult);
+    const dueDate = new Date("2026-03-19T00:00:00.000Z");
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={onSubmit}
+        currentView="calendar"
+        defaultContent="Ship #general"
+        selectedCalendarDate={dueDate}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText("Priority"), { target: { value: "40" } });
+    fireEvent.click(screen.getByRole("button", { name: /^create task$/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    expect(field).toHaveFocus();
+    expect(screen.getByText(format(dueDate, "MMM d"))).toBeInTheDocument();
+    expect(screen.getByLabelText("Priority")).toHaveValue("40");
   });
 
   it("opens relay selection when task posting is blocked by multiple active feeds", () => {

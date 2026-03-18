@@ -543,16 +543,15 @@ export function UnifiedBottomBar({
     onSearchChange(hashtagOnlyContent);
     prevIncludedChannelsRef.current = [...includedChannels];
     autoManagedChannelsRef.current = new Set(includedChannels);
-    setDueDate(undefined);
-    setDueTime("");
-    setDateType("due");
-    setPriority(undefined);
     setLocationGeohash(undefined);
     setExplicitTagNames([]);
     setExplicitMentionPubkeys([]);
     setAttachments([]);
     attachmentFileRef.current = {};
     setActiveSelector(null);
+    scheduleTrackedTimeout(() => {
+      textareaRef.current?.focus();
+    }, 0);
   };
 
   const handleAttachmentUpload = async (file: File, id: string) => {
@@ -735,6 +734,18 @@ export function UnifiedBottomBar({
     || taskSubmitBlock?.code === "uploading"
     || taskSubmitBlock?.code === "uploadFailed";
   const isPrimarySendEmptyDisabled = isSignedIn && sharedText.trim().length === 0;
+  const primarySendTitle = isPrimarySendEmptyDisabled
+    ? (taskSubmitBlock?.reason
+      ?? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")))
+    : !isSignedIn
+      ? t("composer.hints.signInToCreate")
+      : taskSubmitBlock
+        ? taskSubmitBlock.reason
+        : canOfferComment
+          ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}`
+          : hasInvalidRootTaskRelaySelection
+            ? t("toasts.errors.selectRelayOrParent")
+            : t("composer.hints.createFromText");
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
@@ -1127,7 +1138,7 @@ export function UnifiedBottomBar({
                 )}
               </div>
             </div>
-          ) : !hasTaskSubmitBlock ? (
+          ) : (
             <div className="flex flex-col gap-1.5 text-xs text-muted-foreground shrink-0">
               <div className="flex items-center gap-1">
                 <select
@@ -1202,7 +1213,7 @@ export function UnifiedBottomBar({
                 </div>
               )}
             </div>
-          ) : null}
+          )}
 
           {/* Filter/Selector Buttons */}
           <div className="flex items-center gap-0.5 ml-auto shrink-0">
@@ -1498,23 +1509,15 @@ export function UnifiedBottomBar({
                   className={cn(
                     "h-full w-11 inline-flex items-center justify-center rounded-lg border transition-colors",
                     isSignedIn
-                      ? taskSubmitBlock && !taskSubmitBlock.isHardDisabled
-                        ? "border-border/60 bg-muted text-muted-foreground hover:bg-muted/90"
-                        : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      ? isPrimarySendEmptyDisabled
+                        ? "border-primary/40 bg-primary/45 text-primary-foreground/85 disabled:opacity-100"
+                        : taskSubmitBlock && !taskSubmitBlock.isHardDisabled
+                          ? "border-primary/25 bg-primary/25 text-primary/75 disabled:opacity-100 hover:bg-primary/30"
+                          : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-100"
                       : "border-border text-foreground hover:bg-muted"
                   )}
                   aria-label={isSignedIn ? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")) : t("composer.hints.signInToCreate")}
-                  title={
-                    !isSignedIn
-                      ? t("composer.hints.signInToCreate")
-                      : taskSubmitBlock
-                        ? taskSubmitBlock.reason
-                      : canOfferComment
-                        ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}`
-                        : hasInvalidRootTaskRelaySelection
-                          ? t("toasts.errors.selectRelayOrParent")
-                          : t("composer.hints.createFromText")
-                  }
+                  title={primarySendTitle}
                 >
                   <span className={cn(isSendLaunching && "motion-send-launch")}>
                     {!isSignedIn ? <LogIn className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
@@ -1535,10 +1538,12 @@ export function UnifiedBottomBar({
                       }}
                       disabled={Boolean(taskSubmitBlock?.isHardDisabled) || isPrimarySendEmptyDisabled}
                       className={cn(
-                        "h-9 w-9 inline-flex items-center justify-center rounded-md border disabled:opacity-50",
-                        taskSubmitBlock && !taskSubmitBlock.isHardDisabled
-                          ? "border-border/60 bg-muted text-muted-foreground hover:bg-muted/90"
-                          : "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+                        "h-9 w-9 inline-flex items-center justify-center rounded-md border disabled:cursor-not-allowed",
+                        isPrimarySendEmptyDisabled
+                          ? "border-primary/40 bg-primary/45 text-primary-foreground/85 disabled:opacity-100"
+                          : taskSubmitBlock && !taskSubmitBlock.isHardDisabled
+                            ? "border-primary/25 bg-primary/25 text-primary/75 disabled:opacity-100 hover:bg-primary/30"
+                            : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-100"
                       )}
                       aria-label={t("composer.actions.createTask")}
                       title={taskSubmitBlock?.reason || t("composer.actions.createTask")}
