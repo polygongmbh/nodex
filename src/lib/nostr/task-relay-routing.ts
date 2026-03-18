@@ -59,9 +59,12 @@ export function resolveRelaySelectionForSubmission(params: {
     return { relayIds: [selectedNonDemoRelays[0]] };
   }
 
-  return {
-    relayIds: normalizedSelectedRelayIds.length > 0
-      ? normalizedSelectedRelayIds
-      : (demoRelayId ? [demoRelayId] : []),
-  };
+  if (normalizedSelectedRelayIds.length === 0) {
+    nostrDevLog("routing", "Comment-like submission rejected due to empty relay selection", {
+      taskType,
+    });
+    return { relayIds: [], errorKey: RELAY_SELECTION_ERROR_KEY };
+  }
+
+  return { relayIds: normalizedSelectedRelayIds };
 }

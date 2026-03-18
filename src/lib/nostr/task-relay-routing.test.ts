@@ -100,13 +100,13 @@ describe("resolveRelaySelectionForSubmission", () => {
     expect(commentResult.relayIds).toEqual(["relay-b"]);
   });
 
-  it("does not inject demo relay fallback when demo relay is disabled", () => {
+  it("requires at least one relay for top-level comments", () => {
     const result = resolveRelaySelectionForSubmission({
       taskType: "comment",
       selectedRelayIds: [],
       relays: relays.filter((relay) => relay.id !== "demo"),
       demoRelayId: undefined,
     });
-    expect(result.relayIds).toEqual([]);
+    expect(result.errorKey).toBe(RELAY_SELECTION_ERROR_KEY);
   });
 });

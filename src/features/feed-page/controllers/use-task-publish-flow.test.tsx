@@ -94,6 +94,47 @@ function Harness({
       >
         Submit
       </button>
+      <button
+        onClick={async () => {
+          const result = await hook.handleNewTask("Need support #general", ["general"], [], "offer");
+          window.__TEST_RESULT__ = result;
+        }}
+      >
+        SubmitRootOfferNoRelay
+      </button>
+      <button
+        onClick={async () => {
+          const result = await hook.handleNewTask(
+            "Need support",
+            [],
+            ["relay-one"],
+            "offer",
+            new Date("2026-04-01T10:00:00.000Z"),
+            "10:00",
+            "start",
+            "a".repeat(64)
+          );
+          window.__TEST_RESULT__ = result;
+        }}
+      >
+        SubmitChildOfferWithDate
+      </button>
+      <button
+        onClick={async () => {
+          const result = await hook.handleNewTask(
+            "Need support #general",
+            ["general"],
+            ["relay-one"],
+            "offer",
+            new Date("2026-04-01T10:00:00.000Z"),
+            "10:00",
+            "start"
+          );
+          window.__TEST_RESULT__ = result;
+        }}
+      >
+        SubmitRootOfferWithDate
+      </button>
       <button onClick={() => hook.handleRetryFailedPublish(hook.failedPublishDrafts[0]?.id || "")}>Retry</button>
       <button onClick={() => hook.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due")}>
         Due
@@ -230,5 +271,56 @@ describe("useTaskPublishFlow", () => {
       expect(screen.getByTestId("local-count")).toHaveTextContent("1");
     });
     expect(screen.getByTestId("first-assignees")).toBeEmptyDOMElement();
+  });
+
+  it("requires a relay for root offer submissions", async () => {
+    const publishEvent = vi.fn(async () => ({
+      success: true,
+      eventId: "e".repeat(64),
+      publishedRelayUrls: ["wss://relay.one"],
+    }));
+    renderHarness({ publishEvent });
+    fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferNoRelay" }));
+
+    await waitFor(() => {
+      expect(window.__TEST_RESULT__).toEqual({ ok: false, reason: "relay-selection" });
+    });
+    expect(publishEvent).not.toHaveBeenCalled();
+  });
+
+  it("inherits parent tags and parent relay for child offer submissions", async () => {
+    const publishEvent = vi.fn(async () => ({
+      success: true,
+      eventId: "f".repeat(64),
+      publishedRelayUrls: ["wss://relay.one"],
+    }));
+    const parentTask = makeTask({
+      id: "a".repeat(64),
+      tags: ["backend"],
+      relays: ["relay-one"],
+    });
+
+    renderHarness({ publishEvent, initialTasks: [parentTask] });
+    fireEvent.click(screen.getByRole("button", { name: "SubmitChildOfferWithDate" }));
+
+    await waitFor(() => {
+      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+    });
+    expect(publishEvent).toHaveBeenCalledTimes(1);
+    const [, , publishTags, publishParentId, relayUrls] = publishEvent.mock.calls[0];
+    expect(publishTags).toEqual(expect.arrayContaining([["t", "backend"]]));
+    expect(publishParentId).toBe(parentTask.id);
+    expect(relayUrls).toEqual(["wss://relay.one"]);
+    expect(screen.getByTestId("first-due-date")).toBeEmptyDOMElement();
+  });
+
+  it("drops offer date fields when storing local-only submissions", async () => {
+    renderHarness({ forceLocalMode: true });
+    fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferWithDate" }));
+
+    await waitFor(() => {
+      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "local" });
+    });
+    expect(screen.getByTestId("first-due-date")).toBeEmptyDOMElement();
   });
 });

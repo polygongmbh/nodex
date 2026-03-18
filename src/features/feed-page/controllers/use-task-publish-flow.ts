@@ -288,7 +288,7 @@ export function useTaskPublishFlow({
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
-    const submissionParentId = feedMessageType ? undefined : parentId;
+    const submissionParentId = parentId;
     const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
     const normalizedExtractedTags = Array.from(
       new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
@@ -314,7 +314,7 @@ export function useTaskPublishFlow({
       nostrDevLog("routing", "Relay selection rejected for submission", {
         taskType: normalizedTaskType,
         requestedRelayIds,
-        parentId: parentId || null,
+        parentId: submissionParentId || null,
         errorKey: resolvedRelaySelection.errorKey,
       });
       return { ok: false, reason: "relay-selection" };
@@ -331,7 +331,7 @@ export function useTaskPublishFlow({
       targetRelayIds,
       selectedRelayUrls,
       hasNonDemoRelay,
-      parentId: parentId || null,
+      parentId: submissionParentId || null,
     });
 
     const shouldPublish = hasNonDemoRelay && selectedRelayUrls.length > 0;
@@ -348,6 +348,9 @@ export function useTaskPublishFlow({
       ? Array.from(new Set(mentionPubkeys))
       : undefined;
     const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
+    const submissionDueDate = normalizedTaskType === "task" ? dueDate : undefined;
+    const submissionDueTime = normalizedTaskType === "task" ? dueTime : undefined;
+    const submissionDateType = normalizedTaskType === "task" ? dateType : undefined;
     const contentDerivedAttachments = extractEmbeddableAttachmentsFromContent(content);
     const normalizedAttachments = normalizePublishedAttachments([
       ...attachments,
@@ -423,7 +426,7 @@ export function useTaskPublishFlow({
         )
       : [];
     const publishParentId =
-      shouldPublish && normalizedMessageType === "comment" && validParentId ? validParentId : undefined;
+      shouldPublish && normalizedTaskType === "comment" && validParentId ? validParentId : undefined;
 
     const buildFailedPublishDraft = (
       fallbackKind: NostrEventKind,
@@ -438,9 +441,9 @@ export function useTaskPublishFlow({
       relayUrls: selectedRelayUrls,
       taskType: normalizedTaskType,
       createdAt: createdAt.toISOString(),
-      dueDate: dueDate ? dueDate.toISOString() : undefined,
-      dueTime,
-      dateType,
+      dueDate: submissionDueDate ? submissionDueDate.toISOString() : undefined,
+      dueTime: submissionDueTime,
+      dateType: submissionDateType,
       parentId: submissionParentId,
       initialStatus,
       mentionPubkeys,
@@ -482,10 +485,10 @@ export function useTaskPublishFlow({
       likes: 0,
       replies: 0,
       reposts: 0,
-      dueDate,
-      dueTime,
-      dateType,
-      parentId,
+      dueDate: submissionDueDate,
+      dueTime: submissionDueTime,
+      dateType: submissionDateType,
+      parentId: submissionParentId,
       mentions: Array.from(
         new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
       ),
@@ -507,9 +510,9 @@ export function useTaskPublishFlow({
       content,
       taskType: normalizedTaskType,
       messageType: normalizedMessageType,
-      dueDate,
-      dueTime,
-      dateType,
+      dueDate: submissionDueDate,
+      dueTime: submissionDueTime,
+      dateType: submissionDateType,
       explicitTagNames: normalizedExtractedTags.filter((tag) => !parsedHashtagsFromContent.has(tag)),
       explicitMentionPubkeys: dedupedExplicitMentionPubkeys,
       selectedRelays: targetRelayIds,
@@ -596,10 +599,10 @@ export function useTaskPublishFlow({
           publishedEventId: publishResult.eventId,
           taskType: normalizedTaskType,
           initialStatus,
-          dueDate,
+          dueDate: submissionDueDate,
           content,
-          dueTime,
-          dateType,
+          dueTime: submissionDueTime,
+          dateType: submissionDateType,
           publishedRelayUrls: publishResult.publishedRelayUrls,
           fallbackRelayUrls: selectedRelayUrls,
         });
@@ -654,10 +657,10 @@ export function useTaskPublishFlow({
       publishedEventId: publishResult.eventId,
       taskType: normalizedTaskType,
       initialStatus,
-      dueDate,
+      dueDate: submissionDueDate,
       content,
-      dueTime,
-      dateType,
+      dueTime: submissionDueTime,
+      dateType: submissionDateType,
       publishedRelayUrls: publishResult.publishedRelayUrls,
       fallbackRelayUrls: selectedRelayUrls,
     });

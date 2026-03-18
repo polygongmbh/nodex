@@ -768,6 +768,10 @@ export function TaskComposer({
     if (!content.trim()) return;
     if (!hasMeaningfulComposerText(content)) return;
     const effectiveTaskType = resolveSubmitType(submitType);
+    const shouldSubmitTaskDates = effectiveTaskType === "task";
+    const submissionDueDate = shouldSubmitTaskDates ? dueDate : undefined;
+    const submissionDueTime = shouldSubmitTaskDates ? (dueTime || undefined) : undefined;
+    const submissionDateType = shouldSubmitTaskDates ? dateType : undefined;
     
     const extractedTags = extractHashtagsFromContent(content);
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
@@ -823,9 +827,9 @@ export function TaskComposer({
               submitTags,
               selectedRelays,
               effectiveTaskType,
-              dueDate,
-              dueTime || undefined,
-              dateType,
+              submissionDueDate,
+              submissionDueTime,
+              submissionDateType,
               explicitMentionPubkeys,
               priority,
               uploadedAttachments,
@@ -837,9 +841,9 @@ export function TaskComposer({
               submitTags,
               selectedRelays,
               effectiveTaskType,
-              dueDate,
-              dueTime || undefined,
-              dateType,
+              submissionDueDate,
+              submissionDueTime,
+              submissionDateType,
               explicitMentionPubkeys,
               priority,
               uploadedAttachments,
@@ -970,8 +974,9 @@ export function TaskComposer({
   const hasNoConnectedRelay = !selectedRelayObjects.some(isPostableRelay);
   const hasInvalidRootTaskRelaySelection =
     taskType === "task" && !parentId && (selectedRelays.length !== 1 || hasNoConnectedRelay);
+  const isCommentLikeRootPostType = taskType === "comment" || taskType === "offer" || taskType === "request";
   const hasInvalidRootCommentRelaySelection =
-    taskType === "comment" && !parentId && hasNoConnectedRelay;
+    isCommentLikeRootPostType && !parentId && hasNoConnectedRelay;
   const submitBlock = resolveComposeSubmitBlock({
     isSignedIn: Boolean(user),
     hasMeaningfulContent,
