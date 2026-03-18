@@ -39,7 +39,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import {
@@ -49,6 +48,7 @@ import {
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
+import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -87,29 +87,16 @@ const PriorityCell = memo(function PriorityCell({
   editable,
   onUpdatePriority,
 }: PriorityCellProps) {
-  const value = typeof priority === "number" ? String(priority) : "";
   return (
-    <select
-      aria-label={`Priority for ${taskContent}`}
-      value={value}
+    <TaskPrioritySelect
+      taskId={taskId}
+      priority={priority}
+      ariaLabel={`Priority for ${taskContent}`}
       disabled={!editable}
-      onChange={(event) => {
-        const next = event.target.value;
-        if (!next) return;
-        const parsed = Number.parseInt(next, 10);
-        if (Number.isFinite(parsed)) {
-          onUpdatePriority?.(taskId, parsed);
-        }
-      }}
+      includeEmptyOption
       className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground"
-    >
-      <option value="">—</option>
-      <option value="20">P20</option>
-      <option value="40">P40</option>
-      <option value="60">P60</option>
-      <option value="80">P80</option>
-      <option value="100">P100</option>
-    </select>
+      onUpdatePriority={onUpdatePriority}
+    />
   );
 }, (prev, next) =>
   prev.taskId === next.taskId &&
@@ -552,8 +539,6 @@ export function ListView({
   // Editable due date cell
   const DueDateCell = ({ task }: { task: Task }) => {
     const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
-    const [localDueTime, setLocalDueTime] = useState(task.dueTime || "");
-    const [localDateType, setLocalDateType] = useState<TaskDateType>(task.dateType || "due");
     const editable = canCompleteTask(task);
     const trigger = (
       <button
@@ -592,46 +577,14 @@ export function ListView({
       <Popover>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
-          <div className="p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-muted-foreground" htmlFor={`list-date-type-${task.id}`}>{t("listView.dates.type")}</label>
-              <select
-                id={`list-date-type-${task.id}`}
-                value={localDateType}
-                onChange={(event) => setLocalDateType(event.target.value as TaskDateType)}
-                className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
-              >
-                <option value="due">{t("composer.dates.due")}</option>
-                <option value="scheduled">{t("composer.dates.scheduled")}</option>
-                <option value="start">{t("composer.dates.start")}</option>
-                <option value="end">{t("composer.dates.end")}</option>
-                <option value="milestone">{t("composer.dates.milestone")}</option>
-              </select>
-            </div>
-            <CalendarComponent
-              mode="single"
-              selected={task.dueDate}
-              onSelect={(date) => {
-                onUpdateDueDate?.(task.id, date, localDueTime || undefined, localDateType);
-              }}
-              initialFocus
-            />
-            <div className="flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-              <input
-                type="time"
-                value={localDueTime}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setLocalDueTime(value);
-                  if (task.dueDate) {
-                    onUpdateDueDate?.(task.id, task.dueDate, value || undefined, localDateType);
-                  }
-                }}
-                className="text-xs bg-background border border-border rounded px-2 py-1"
-              />
-            </div>
-          </div>
+          <TaskDueDateEditorForm
+            taskId={task.id}
+            dueDate={task.dueDate}
+            dueTime={task.dueTime}
+            dateType={task.dateType}
+            idPrefix="list"
+            onUpdateDueDate={onUpdateDueDate}
+          />
         </PopoverContent>
       </Popover>
     );

@@ -26,7 +26,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/domain/content/task-status";
@@ -120,9 +120,6 @@ export function TaskItem({
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isCheering, setIsCheering] = useState(false);
-  const [localDueTime, setLocalDueTime] = useState(task.dueTime || "");
-  const [localDateType, setLocalDateType] = useState<TaskDateType>(task.dateType || "due");
-  const [localPriority, setLocalPriority] = useState(typeof task.priority === "number" ? String(task.priority) : "");
   const statusTriggerPointerDownRef = useRef(false);
   const allowStatusMenuOpenRef = useRef(false);
   const statusMenuOpenedOnPointerDownRef = useRef(false);
@@ -183,18 +180,6 @@ export function TaskItem({
       }
     };
   }, []);
-
-  useEffect(() => {
-    setLocalDueTime(task.dueTime || "");
-  }, [task.dueTime, task.id]);
-
-  useEffect(() => {
-    setLocalDateType(task.dateType || "due");
-  }, [task.dateType, task.id]);
-
-  useEffect(() => {
-    setLocalPriority(typeof task.priority === "number" ? String(task.priority) : "");
-  }, [task.priority, task.id]);
 
   // Get ALL children from allTasks for total counts
   const allChildren = allTasks.filter(t => t.parentId === task.id);
@@ -611,55 +596,14 @@ export function TaskItem({
                   align="start"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  <div className="space-y-2 p-3">
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs text-muted-foreground" htmlFor={`task-date-type-${task.id}`}>
-                        {t("listView.dates.type")}
-                      </label>
-                      <select
-                        id={`task-date-type-${task.id}`}
-                        aria-label={t("listView.dates.type")}
-                        value={localDateType}
-                        onChange={(event) => {
-                          const nextType = event.target.value as TaskDateType;
-                          setLocalDateType(nextType);
-                          if (task.dueDate) {
-                            onUpdateDueDate?.(task.id, task.dueDate, localDueTime || undefined, nextType);
-                          }
-                        }}
-                        className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
-                      >
-                        <option value="due">{t("composer.dates.due")}</option>
-                        <option value="scheduled">{t("composer.dates.scheduled")}</option>
-                        <option value="start">{t("composer.dates.start")}</option>
-                        <option value="end">{t("composer.dates.end")}</option>
-                        <option value="milestone">{t("composer.dates.milestone")}</option>
-                      </select>
-                    </div>
-                    <CalendarComponent
-                      mode="single"
-                      selected={task.dueDate}
-                      onSelect={(date) => {
-                        onUpdateDueDate?.(task.id, date, localDueTime || undefined, localDateType);
-                      }}
-                      initialFocus
-                    />
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                      <input
-                        type="time"
-                        value={localDueTime}
-                        onChange={(event) => {
-                          const value = event.target.value;
-                          setLocalDueTime(value);
-                          if (task.dueDate) {
-                            onUpdateDueDate?.(task.id, task.dueDate, value || undefined, localDateType);
-                          }
-                        }}
-                        className="rounded border border-border bg-background px-2 py-1 text-xs"
-                      />
-                    </div>
-                  </div>
+                  <TaskDueDateEditorForm
+                    taskId={task.id}
+                    dueDate={task.dueDate}
+                    dueTime={task.dueTime}
+                    dateType={task.dateType}
+                    idPrefix="task"
+                    onUpdateDueDate={onUpdateDueDate}
+                  />
                 </PopoverContent>
               )}
             </Popover>
@@ -691,26 +635,14 @@ export function TaskItem({
                       <label className="sr-only" htmlFor={`task-priority-${task.id}`}>
                         {t("composer.labels.priority")}
                       </label>
-                      <select
+                      <TaskPrioritySelect
                         id={`task-priority-${task.id}`}
-                        aria-label={t("composer.labels.priority")}
-                        value={localPriority}
-                        onChange={(event) => {
-                          const next = event.target.value;
-                          setLocalPriority(next);
-                          const parsed = Number.parseInt(next, 10);
-                          if (Number.isFinite(parsed)) {
-                            onUpdatePriority?.(task.id, parsed);
-                          }
-                        }}
+                        taskId={task.id}
+                        priority={task.priority}
+                        ariaLabel={t("composer.labels.priority")}
                         className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground focus:outline-none"
-                      >
-                        <option value="20">P20</option>
-                        <option value="40">P40</option>
-                        <option value="60">P60</option>
-                        <option value="80">P80</option>
-                        <option value="100">P100</option>
-                      </select>
+                        onUpdatePriority={onUpdatePriority}
+                      />
                     </PopoverContent>
                   )}
                 </Popover>
