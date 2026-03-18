@@ -899,7 +899,10 @@
       "error": {
         "scopeOnly": "Could not load posts {{scope}}.",
         "none": "Could not load posts from the selected feed.",
-        "action": "Check the selected feed and try again."
+        "action": "The selected feed is currently unavailable.",
+        "unableToConnect": "Unable to connect to the selected feed.",
+        "readRejected": "Read access was rejected by the selected feed.",
+        "mixed": "Some selected feeds are unavailable, and others rejected read access."
       },
       "unfiltered": {
         "feedTitle": "Nobody here but us chickens.",
@@ -912,6 +915,7 @@
         "excludedChannels": "excluding {{channels}}",
         "people": "by {{people}}",
         "relays": "on {{relays}}",
+        "relaysError": "from {{relays}}",
         "search": "matching “{{query}}”",
         "listWithOthers": "{{items}}, and {{count}} others"
       }

@@ -68,7 +68,7 @@ export function FilteredEmptyState({
           {scopeModel.errorSentence}
         </p>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-          {t("tasks.empty.error.action")}
+          {scopeModel.errorSubtitle}
         </p>
       </div>
     );

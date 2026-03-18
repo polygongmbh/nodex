@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 - Feed switches now ignore selected channel filters that have no posts in the newly active feed, restoring the original feed-local filtering behavior instead of leaving the new feed empty.
+- Relay-load failure empty states now show feed-only source hints (`Could not load posts from ...`) and use status-aware informational subtitles that distinguish read rejection from connection failures.
 
 ## [2.2.0] - 2026-03-18
 Minor release for broader user-facing compose/filter/feed UX updates and relay stability fixes (4545 lines changed since `v2.1.0`).

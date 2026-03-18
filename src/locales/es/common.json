@@ -899,7 +899,10 @@
       "error": {
         "scopeOnly": "No se pudieron cargar las publicaciones {{scope}}.",
         "none": "No se pudieron cargar las publicaciones del feed seleccionado.",
-        "action": "Revisa el feed seleccionado e inténtalo de nuevo."
+        "action": "El feed seleccionado no está disponible en este momento.",
+        "unableToConnect": "No se pudo establecer conexión con el feed seleccionado.",
+        "readRejected": "El feed seleccionado rechazó el acceso de lectura.",
+        "mixed": "Algunos feeds seleccionados no están disponibles y otros rechazaron el acceso de lectura."
       },
       "unfiltered": {
         "feedTitle": "No hay nadie aquí salvo nuestras gallinas.",
@@ -912,6 +915,7 @@
         "excludedChannels": "excluyendo {{channels}}",
         "people": "de {{people}}",
         "relays": "en {{relays}}",
+        "relaysError": "desde {{relays}}",
         "search": "que coincidan con «{{query}}»",
         "listWithOthers": "{{items}} y {{count}} más"
       }

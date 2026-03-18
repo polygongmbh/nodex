@@ -20,6 +20,7 @@ export interface EmptyScopeModel {
   mobileFallbackHint: string | null;
   loadingSentence: string | null;
   errorSentence: string | null;
+  errorSubtitle: string;
   screenState: "default" | "loading" | "error";
 }
 
@@ -58,12 +59,18 @@ export function buildEmptyScopeModel({
     (status) => status === "connected" || status === "read-only"
   );
   const hasRelayLoading = activeRelayStatuses.some((status) => status === "connecting");
-  const hasRelayError = activeRelayStatuses.some(
-    (status) =>
-      status === "disconnected" ||
-      status === "connection-error" ||
-      status === "verification-failed"
+  const hasReadRejected = activeRelayStatuses.some((status) => status === "verification-failed");
+  const hasConnectionFailure = activeRelayStatuses.some(
+    (status) => status === "disconnected" || status === "connection-error"
   );
+  const hasRelayError = hasConnectionFailure || hasReadRejected;
+  const errorSubtitle = hasReadRejected && hasConnectionFailure
+    ? t("tasks.empty.error.mixed")
+    : hasReadRejected
+      ? t("tasks.empty.error.readRejected")
+      : hasConnectionFailure
+        ? t("tasks.empty.error.unableToConnect")
+        : t("tasks.empty.error.action");
   const screenState: EmptyScopeModel["screenState"] =
     !hasRelayConnection && hasRelayLoading
       ? "loading"
@@ -71,6 +78,7 @@ export function buildEmptyScopeModel({
         ? "error"
         : "default";
   const hasRelayFilter = activeRelays.length > 0 && activeRelays.length < relays.length;
+  const activeRelayLabels = activeRelays.map((relay) => formatRelayLabel(relay)).filter(Boolean);
   const hasActiveFilters =
     Boolean(trimmedSearchQuery) ||
     hasRelayFilter ||
@@ -86,6 +94,7 @@ export function buildEmptyScopeModel({
       mobileFallbackHint: null,
       loadingSentence: t("tasks.empty.loading.none"),
       errorSentence: t("tasks.empty.error.none"),
+      errorSubtitle,
       screenState,
     };
   }
@@ -120,12 +129,9 @@ export function buildEmptyScopeModel({
           ),
         })
       : null,
-    hasRelayFilter
+    hasRelayFilter && activeRelayLabels.length > 0
       ? t("tasks.empty.scope.relays", {
-          relays: formatNaturalList(
-            activeRelays.map((relay) => formatRelayLabel(relay)).filter(Boolean),
-            locale
-          ),
+          relays: formatNaturalList(activeRelayLabels, locale),
         })
       : null,
     trimmedSearchQuery
@@ -140,8 +146,13 @@ export function buildEmptyScopeModel({
   const loadingSentence = scopeDescription
     ? t("tasks.empty.loading.scopeOnly", { scope: scopeDescription })
     : t("tasks.empty.loading.none");
-  const errorSentence = scopeDescription
-    ? t("tasks.empty.error.scopeOnly", { scope: scopeDescription })
+  const errorScopeDescription = activeRelayLabels.length > 0
+    ? t("tasks.empty.scope.relaysError", {
+        relays: formatNaturalList(activeRelayLabels, locale),
+      })
+    : null;
+  const errorSentence = errorScopeDescription
+    ? t("tasks.empty.error.scopeOnly", { scope: errorScopeDescription })
     : t("tasks.empty.error.none");
 
   return {
@@ -151,6 +162,7 @@ export function buildEmptyScopeModel({
     mobileFallbackHint: t("tasks.empty.filtered.mobileFallback"),
     loadingSentence,
     errorSentence,
+    errorSubtitle,
     screenState,
   };
 }

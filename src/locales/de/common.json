@@ -899,7 +899,10 @@
       "error": {
         "scopeOnly": "Beiträge konnten nicht geladen werden {{scope}}.",
         "none": "Beiträge aus dem ausgewählten Feed konnten nicht geladen werden.",
-        "action": "Prüfe den ausgewählten Feed und versuche es erneut."
+        "action": "Der ausgewählte Feed ist derzeit nicht verfügbar.",
+        "unableToConnect": "Verbindung zum ausgewählten Feed konnte nicht hergestellt werden.",
+        "readRejected": "Lesezugriff auf den ausgewählten Feed wurde abgelehnt.",
+        "mixed": "Einige ausgewählte Feeds sind nicht erreichbar und andere lehnen Lesezugriff ab."
       },
       "unfiltered": {
         "feedTitle": "Niemand hier außer uns Hühnern.",
@@ -912,6 +915,7 @@
         "excludedChannels": "ohne {{channels}}",
         "people": "von {{people}}",
         "relays": "auf {{relays}}",
+        "relaysError": "aus {{relays}}",
         "search": "mit „{{query}}“",
         "listWithOthers": "{{items}} und {{count}} weitere"
       }
