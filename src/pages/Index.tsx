@@ -748,6 +748,7 @@ const Index = () => {
       isPendingPublishTask,
       composeRestoreRequest,
       mentionRequest,
+      forceShowComposer: forceShowComposeForGuide,
       composeGuideActivationSignal,
       onUpdateDueDate: handleDueDateChange,
       onUpdatePriority: handlePriorityChange,
@@ -776,6 +777,7 @@ const Index = () => {
       isPendingPublishTask,
       composeRestoreRequest,
       mentionRequest,
+      forceShowComposeForGuide,
       composeGuideActivationSignal,
       handleDueDateChange,
       handlePriorityChange,
@@ -791,16 +793,9 @@ const Index = () => {
       channels: channelsWithState,
       channelMatchMode,
       people,
-      tasks: filteredTasks,
-      allTasks,
-      searchQuery,
-      focusedTaskId,
-      currentUser,
       hasCachedCurrentUserProfileMetadata,
       isSignedIn: Boolean(user),
       currentView,
-      isInteractionBlocked,
-      isHydrating,
       isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
       activeOnboardingStepId,
       isManageRouteActive,
@@ -810,16 +805,9 @@ const Index = () => {
       channelsWithState,
       channelMatchMode,
       people,
-      filteredTasks,
-      allTasks,
-      searchQuery,
-      focusedTaskId,
-      currentUser,
       hasCachedCurrentUserProfileMetadata,
       user,
       currentView,
-      isInteractionBlocked,
-      isHydrating,
       isOnboardingOpen,
       isAuthModalOpen,
       activeOnboardingStepId,
@@ -830,11 +818,6 @@ const Index = () => {
   const mobileActions = useMemo(
     () => ({
       onViewChange: setCurrentView,
-      onSearchChange: setSearchQuery,
-      onNewTask: handleNewTask,
-      onToggleComplete: handleDispatchToggleComplete,
-      onStatusChange: handleDispatchStatusChange,
-      onFocusTask: setFocusedTaskId,
       onRelayToggle: handleRelayToggle,
       onChannelToggle: handleChannelToggle,
       onPersonToggle: handlePersonToggle,
@@ -843,16 +826,10 @@ const Index = () => {
       onRemoveRelay: handleRemoveRelay,
       onSignInClick: handleDispatchOpenAuthModal,
       onGuideClick: handleOpenGuide,
-      onInteractionBlocked: handleBlockedInteractionAttempt,
       onManageRouteChange: setManageRouteActive,
     }),
     [
       setCurrentView,
-      setSearchQuery,
-      handleNewTask,
-      handleDispatchToggleComplete,
-      handleDispatchStatusChange,
-      setFocusedTaskId,
       handleRelayToggle,
       handleChannelToggle,
       handlePersonToggle,
@@ -861,18 +838,8 @@ const Index = () => {
       handleRemoveRelay,
       handleDispatchOpenAuthModal,
       handleOpenGuide,
-      handleBlockedInteractionAttempt,
       setManageRouteActive,
     ]
-  );
-
-  const mobileComposer = useMemo(
-    () => ({
-      forceComposeMode: forceShowComposeForGuide,
-      composeRestoreRequest,
-      mentionRequest,
-    }),
-    [forceShowComposeForGuide, composeRestoreRequest, mentionRequest]
   );
 
   const mobilePublishState = useMemo(
@@ -1011,11 +978,8 @@ const Index = () => {
     () => ({
       viewState: mobileViewState,
       actions: mobileActions,
-      composerState: mobileComposer,
       publishState: {
         ...mobilePublishState,
-        onUndoPendingPublish: handleUndoPendingPublish,
-        isPendingPublishTask,
         onRetryFailedPublish: handleRetryFailedPublish,
         onRepostFailedPublish: handleRepostFailedPublish,
         onDismissFailedPublish: handleDismissFailedPublish,
@@ -1025,10 +989,7 @@ const Index = () => {
     [
       mobileViewState,
       mobileActions,
-      mobileComposer,
       mobilePublishState,
-      handleUndoPendingPublish,
-      isPendingPublishTask,
       handleRetryFailedPublish,
       handleRepostFailedPublish,
       handleDismissFailedPublish,

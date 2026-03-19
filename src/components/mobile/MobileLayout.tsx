@@ -15,47 +15,33 @@ import {
   Channel,
   ChannelMatchMode,
   Person,
-  Task,
   TaskCreateResult,
-  OnNewTask,
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
   Nip99Metadata,
-  TaskStatus,
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
 import { useTranslation } from "react-i18next";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 
 export interface MobileLayoutViewState {
   relays: Relay[];
   channels: Channel[];
   channelMatchMode?: ChannelMatchMode;
   people: Person[];
-  tasks: Task[];
-  allTasks: Task[];
-  searchQuery: string;
-  focusedTaskId: string | null;
-  currentUser?: Person;
   hasCachedCurrentUserProfileMetadata?: boolean;
   isSignedIn: boolean;
   currentView: ViewType;
-  isInteractionBlocked?: boolean;
   isOnboardingOpen?: boolean;
   activeOnboardingStepId?: string | null;
   isManageRouteActive?: boolean;
-  isHydrating?: boolean;
 }
 
 export interface MobileLayoutActions {
   onViewChange: (view: ViewType) => void;
-  onSearchChange: (query: string) => void;
-  onNewTask: OnNewTask;
-  onToggleComplete: (taskId: string) => void;
-  onStatusChange: (taskId: string, status: TaskStatus) => void;
-  onFocusTask: (taskId: string | null) => void;
   onRelayToggle: (id: string) => void;
   onChannelToggle: (id: string) => void;
   onPersonToggle: (id: string) => void;
@@ -64,7 +50,6 @@ export interface MobileLayoutActions {
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
   onGuideClick: () => void;
-  onInteractionBlocked?: () => void;
   onManageRouteChange?: (isActive: boolean) => void;
 }
 
@@ -121,27 +106,15 @@ export function MobileLayout({
     channels,
     channelMatchMode = "and",
     people,
-    tasks,
-    allTasks,
-    searchQuery,
-    focusedTaskId,
-    currentUser,
     hasCachedCurrentUserProfileMetadata = true,
     isSignedIn,
     currentView,
-    isInteractionBlocked = false,
     isOnboardingOpen = false,
     activeOnboardingStepId = null,
     isManageRouteActive = false,
-    isHydrating = false,
   } = viewState;
   const {
     onViewChange,
-    onSearchChange,
-    onNewTask,
-    onToggleComplete,
-    onStatusChange,
-    onFocusTask,
     onRelayToggle,
     onChannelToggle,
     onPersonToggle,
@@ -150,17 +123,32 @@ export function MobileLayout({
     onRemoveRelay,
     onSignInClick,
     onGuideClick,
-    onInteractionBlocked,
     onManageRouteChange = () => {},
   } = actions;
+  const feedTaskViewModel = useFeedTaskViewModel();
   const {
-    forceComposeMode = false,
-    composeRestoreRequest = null,
-    mentionRequest = null,
+    tasks,
+    allTasks,
+    searchQuery,
+    focusedTaskId = null,
+    onSearchChange,
+    onNewTask,
+    onFocusTask,
+    composeRestoreRequest: contextComposeRestoreRequest = null,
+    mentionRequest: contextMentionRequest = null,
+    forceShowComposer: contextForceShowComposer = false,
+    onUndoPendingPublish: contextOnUndoPendingPublish,
+    isPendingPublishTask: contextIsPendingPublishTask,
+    isHydrating = false,
+  } = feedTaskViewModel;
+  const {
+    forceComposeMode = contextForceShowComposer,
+    composeRestoreRequest = contextComposeRestoreRequest,
+    mentionRequest = contextMentionRequest,
   } = composerState ?? {};
   const {
-    onUndoPendingPublish,
-    isPendingPublishTask,
+    onUndoPendingPublish = contextOnUndoPendingPublish,
+    isPendingPublishTask = contextIsPendingPublishTask,
     failedPublishDrafts = [],
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds = [],
@@ -261,29 +249,6 @@ export function MobileLayout({
     enableHaptics: true,
   });
 
-  const viewProps = {
-    tasks,
-    allTasks,
-    relays,
-    channels,
-    channelMatchMode,
-    people,
-    currentUser,
-    searchQuery,
-    onSearchChange,
-    onNewTask,
-    onToggleComplete,
-    focusedTaskId,
-    onFocusTask,
-    onStatusChange,
-    onUndoPendingPublish,
-    isPendingPublishTask,
-    mentionRequest,
-    isInteractionBlocked,
-    onInteractionBlocked,
-    isHydrating,
-  };
-
   const mobileCurrentView: MobileViewType = showFilters ? "filters" : activePrimaryView;
   const hasSearchQuery = searchQuery.trim().length > 0;
   const viewFallback = <div className="h-full" aria-hidden="true" />;
@@ -293,6 +258,26 @@ export function MobileLayout({
   }, [hasSearchQuery, tasks, searchQuery, people]);
   const isQuickFilterFallbackActive = !showFilters && hasSearchQuery && !hasQuickFilterMatch;
   const effectiveSearchQuery = isQuickFilterFallbackActive ? "" : searchQuery;
+  const effectiveTaskViewModel = useMemo(
+    () => ({
+      ...feedTaskViewModel,
+      searchQuery: effectiveSearchQuery,
+      composeRestoreRequest,
+      mentionRequest,
+      forceShowComposer: forceComposeMode,
+      onUndoPendingPublish,
+      isPendingPublishTask,
+    }),
+    [
+      feedTaskViewModel,
+      effectiveSearchQuery,
+      composeRestoreRequest,
+      mentionRequest,
+      forceComposeMode,
+      onUndoPendingPublish,
+      isPendingPublishTask,
+    ]
+  );
 
   const handleMobileSubmit = useCallback((
     content: string,
@@ -365,10 +350,6 @@ export function MobileLayout({
   }, [isSignedIn, needsProfileSetup, hasCachedCurrentUserProfileMetadata, openManageView]);
 
   const renderView = () => {
-    const effectiveViewProps = {
-      ...viewProps,
-      searchQuery: effectiveSearchQuery,
-    };
     if (showFilters) {
       return (
         <MobileFilters
@@ -390,15 +371,15 @@ export function MobileLayout({
     }
     switch (activePrimaryView) {
       case "tree":
-        return <TaskTree {...effectiveViewProps} isMobile />;
+        return <TaskTree {...effectiveTaskViewModel} isMobile />;
       case "feed":
-        return <FeedView {...effectiveViewProps} isMobile />;
+        return <FeedView {...effectiveTaskViewModel} isMobile />;
       case "list":
-        return <CalendarView {...effectiveViewProps} isMobile mobileView="upcoming" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView {...effectiveTaskViewModel} isMobile mobileView="upcoming" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       case "calendar":
-        return <CalendarView {...effectiveViewProps} isMobile mobileView="calendar" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
+        return <CalendarView {...effectiveTaskViewModel} isMobile mobileView="calendar" selectedDate={selectedCalendarDate} onSelectedDateChange={setSelectedCalendarDate} />;
       default:
-        return <TaskTree {...effectiveViewProps} isMobile />;
+        return <TaskTree {...effectiveTaskViewModel} isMobile />;
     }
   };
 

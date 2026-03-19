@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import type { Channel, Person, Relay, Task, TaskCreateResult } from "@/types";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
+import {
+  FeedTaskViewModelProvider,
+  type FeedTaskViewModel,
+} from "@/features/feed-page/views/feed-task-view-model-context";
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
@@ -69,37 +73,44 @@ const tasks: Task[] = [];
 describe("MobileLayout submit wiring", () => {
   it("forwards explicit mention pubkeys in the correct onNewTask argument slot", () => {
     const onNewTask = vi.fn(async () => successResult);
+    const taskViewModel: FeedTaskViewModel = {
+      tasks,
+      allTasks: tasks,
+      relays,
+      channels,
+      composeChannels: channels,
+      people,
+      currentUser: people[0],
+      searchQuery: "",
+      focusedTaskId: "parent-123",
+      onSearchChange: () => {},
+      onNewTask,
+      onToggleComplete: () => {},
+      onFocusTask: () => {},
+    };
 
     render(
-      <MobileLayout
-        viewState={{
-          relays,
-          channels,
-          people,
-          tasks,
-          allTasks: tasks,
-          searchQuery: "",
-          focusedTaskId: "parent-123",
-          currentUser: people[0],
-          isSignedIn: true,
-          currentView: "feed",
-        }}
-        actions={{
-          onViewChange: () => {},
-          onSearchChange: () => {},
-          onNewTask,
-          onToggleComplete: () => {},
-          onStatusChange: () => {},
-          onFocusTask: () => {},
-          onRelayToggle: () => {},
-          onChannelToggle: () => {},
-          onPersonToggle: () => {},
-          onAddRelay: () => {},
-          onRemoveRelay: () => {},
-          onSignInClick: () => {},
-          onGuideClick: () => {},
-        }}
-      />
+      <FeedTaskViewModelProvider value={taskViewModel}>
+        <MobileLayout
+          viewState={{
+            relays,
+            channels,
+            people,
+            isSignedIn: true,
+            currentView: "feed",
+          }}
+          actions={{
+            onViewChange: () => {},
+            onRelayToggle: () => {},
+            onChannelToggle: () => {},
+            onPersonToggle: () => {},
+            onAddRelay: () => {},
+            onRemoveRelay: () => {},
+            onSignInClick: () => {},
+            onGuideClick: () => {},
+          }}
+        />
+      </FeedTaskViewModelProvider>
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Submit" }));

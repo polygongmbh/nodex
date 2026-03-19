@@ -4,6 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import type { Channel, Person, Relay, Task } from "@/types";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
+import {
+  FeedTaskViewModelProvider,
+  type FeedTaskViewModel,
+} from "@/features/feed-page/views/feed-task-view-model-context";
 
 const ndkMock = {
   user: null as null | {
@@ -115,6 +119,7 @@ type MobileLayoutOverrides = {
   actions?: Partial<MobileLayoutProps["actions"]>;
   composerState?: Partial<NonNullable<MobileLayoutProps["composerState"]>>;
   publishState?: Partial<NonNullable<MobileLayoutProps["publishState"]>>;
+  taskViewModel?: Partial<FeedTaskViewModel>;
 };
 
 const baseProps: MobileLayoutProps = {
@@ -122,21 +127,11 @@ const baseProps: MobileLayoutProps = {
     relays,
     channels,
     people,
-    tasks,
-    allTasks: tasks,
-    searchQuery: "",
-    focusedTaskId: null,
-    currentUser: people[0],
     isSignedIn: true,
     currentView: "tree",
   },
   actions: {
     onViewChange: () => {},
-    onSearchChange: () => {},
-    onNewTask: defaultOnNewTask,
-    onToggleComplete: () => {},
-    onStatusChange: () => {},
-    onFocusTask: () => {},
     onRelayToggle: () => {},
     onChannelToggle: () => {},
     onPersonToggle: () => {},
@@ -146,27 +141,48 @@ const baseProps: MobileLayoutProps = {
     onGuideClick: () => {},
   },
 };
+const baseTaskViewModel: FeedTaskViewModel = {
+  tasks,
+  allTasks: tasks,
+  relays,
+  channels,
+  composeChannels: channels,
+  people,
+  currentUser: people[0],
+  searchQuery: "",
+  onSearchChange: () => {},
+  onNewTask: defaultOnNewTask,
+  onToggleComplete: () => {},
+  onFocusTask: () => {},
+};
 
 function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
+  const taskViewModel: FeedTaskViewModel = {
+    ...baseTaskViewModel,
+    ...overrides.taskViewModel,
+  };
+
   return render(
-    <MobileLayout
-      viewState={{
-        ...baseProps.viewState,
-        ...overrides.viewState,
-      }}
-      actions={{
-        ...baseProps.actions,
-        ...overrides.actions,
-      }}
-      composerState={{
-        ...baseProps.composerState,
-        ...overrides.composerState,
-      }}
-      publishState={{
-        ...baseProps.publishState,
-        ...overrides.publishState,
-      }}
-    />
+    <FeedTaskViewModelProvider value={taskViewModel}>
+      <MobileLayout
+        viewState={{
+          ...baseProps.viewState,
+          ...overrides.viewState,
+        }}
+        actions={{
+          ...baseProps.actions,
+          ...overrides.actions,
+        }}
+        composerState={{
+          ...baseProps.composerState,
+          ...overrides.composerState,
+        }}
+        publishState={{
+          ...baseProps.publishState,
+          ...overrides.publishState,
+        }}
+      />
+    </FeedTaskViewModelProvider>
   );
 }
 
@@ -210,14 +226,16 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     rerender(
-      <MobileLayout
-        viewState={{
-          ...baseProps.viewState,
-          hasCachedCurrentUserProfileMetadata: false,
-          isSignedIn: true,
-        }}
-        actions={baseProps.actions}
-      />
+      <FeedTaskViewModelProvider value={baseTaskViewModel}>
+        <MobileLayout
+          viewState={{
+            ...baseProps.viewState,
+            hasCachedCurrentUserProfileMetadata: false,
+            isSignedIn: true,
+          }}
+          actions={baseProps.actions}
+        />
+      </FeedTaskViewModelProvider>
     );
 
     await waitFor(() => {
@@ -286,7 +304,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      viewState: {
+      taskViewModel: {
         tasks: sampleTasks,
         allTasks: sampleTasks,
         searchQuery: "nomatchquery",
@@ -332,20 +350,21 @@ describe("MobileLayout auth wiring", () => {
     });
 
     rerender(
-      <MobileLayout
-        viewState={{
-          ...baseProps.viewState,
-          currentUser: people[0],
-          isSignedIn: true,
-          currentView: "tree",
-          isOnboardingOpen: true,
-          activeOnboardingStepId: "mobile-compose-combobox",
-        }}
-        actions={{
-          ...baseProps.actions,
-          onViewChange,
-        }}
-      />
+      <FeedTaskViewModelProvider value={baseTaskViewModel}>
+        <MobileLayout
+          viewState={{
+            ...baseProps.viewState,
+            isSignedIn: true,
+            currentView: "tree",
+            isOnboardingOpen: true,
+            activeOnboardingStepId: "mobile-compose-combobox",
+          }}
+          actions={{
+            ...baseProps.actions,
+            onViewChange,
+          }}
+        />
+      </FeedTaskViewModelProvider>
     );
 
     await waitFor(() => {
@@ -369,18 +388,19 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
 
     rerender(
-      <MobileLayout
-        viewState={{
-          ...baseProps.viewState,
-          currentUser: people[0],
-          isSignedIn: true,
-          currentView: "feed",
-        }}
-        actions={{
-          ...baseProps.actions,
-          onViewChange,
-        }}
-      />
+      <FeedTaskViewModelProvider value={baseTaskViewModel}>
+        <MobileLayout
+          viewState={{
+            ...baseProps.viewState,
+            isSignedIn: true,
+            currentView: "feed",
+          }}
+          actions={{
+            ...baseProps.actions,
+            onViewChange,
+          }}
+        />
+      </FeedTaskViewModelProvider>
     );
 
     await waitFor(() => {
