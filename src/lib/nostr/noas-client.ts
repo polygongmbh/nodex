@@ -3,6 +3,8 @@
  * Handles communication with the Noas authentication server
  */
 
+import { safeLocalStorageSetItem } from "@/lib/safe-local-storage";
+import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { nip19 } from 'nostr-tools';
 import { decryptNip49PrivateKey, isNip49EncryptedKey } from './nip49-utils';
 
@@ -19,6 +21,20 @@ export interface NoasAuthResult {
   success: boolean;
   errorCode?: NoasAuthErrorCode;
   errorMessage?: string;
+}
+
+const NOAS_API_BASE_CACHE_PREFIX = "nostr_noas_api_base_cache";
+const NOAS_API_BASE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+interface NoasDiscoveryDocument {
+  noas?: {
+    api_base?: unknown;
+  };
+}
+
+interface NoasApiBaseCacheEntry {
+  apiBaseUrl: string;
+  cachedAt: number;
 }
 
 export function normalizeNoasBaseUrl(rawValue: string): string {
@@ -41,6 +57,124 @@ export function isValidNoasBaseUrl(rawValue: string): boolean {
     return parsed.protocol === "https:" || parsed.protocol === "http:";
   } catch {
     return false;
+  }
+}
+
+function resolveNoasDiscoveryOrigin(rawValue: string): string {
+  const normalized = normalizeNoasBaseUrl(rawValue);
+  if (!normalized) return "";
+
+  try {
+    return new URL(normalized).origin;
+  } catch {
+    return "";
+  }
+}
+
+function getNoasApiBaseCacheKey(rawValue: string): string {
+  return `${NOAS_API_BASE_CACHE_PREFIX}:${resolveNoasDiscoveryOrigin(rawValue)}`;
+}
+
+function loadCachedNoasApiBaseUrl(rawValue: string): string {
+  if (typeof window === "undefined" || !window.localStorage) return "";
+
+  const cacheKey = getNoasApiBaseCacheKey(rawValue);
+  if (!cacheKey.endsWith(":")) {
+    try {
+      const rawEntry = window.localStorage.getItem(cacheKey);
+      if (!rawEntry) return "";
+
+      const parsed = JSON.parse(rawEntry) as Partial<NoasApiBaseCacheEntry>;
+      if (typeof parsed.apiBaseUrl !== "string" || typeof parsed.cachedAt !== "number") return "";
+      if (Date.now() - parsed.cachedAt > NOAS_API_BASE_CACHE_TTL_MS) return "";
+
+      const normalizedApiBaseUrl = normalizeNoasBaseUrl(parsed.apiBaseUrl);
+      return isValidNoasBaseUrl(normalizedApiBaseUrl) ? normalizedApiBaseUrl : "";
+    } catch {
+      return "";
+    }
+  }
+
+  return "";
+}
+
+function cacheNoasApiBaseUrl(rawValue: string, apiBaseUrl: string): void {
+  if (typeof window === "undefined" || !window.localStorage) return;
+
+  const cacheKey = getNoasApiBaseCacheKey(rawValue);
+  if (!cacheKey.endsWith(":")) {
+    safeLocalStorageSetItem(
+      cacheKey,
+      JSON.stringify({
+        apiBaseUrl,
+        cachedAt: Date.now(),
+      } satisfies NoasApiBaseCacheEntry),
+      {
+        context: "noas-api-base-discovery",
+      }
+    );
+  }
+}
+
+export async function resolveNoasApiBaseUrl(rawValue: string): Promise<string> {
+  const normalizedBaseUrl = normalizeNoasBaseUrl(rawValue);
+  if (!normalizedBaseUrl || !isValidNoasBaseUrl(normalizedBaseUrl)) return normalizedBaseUrl;
+
+  const cachedApiBaseUrl = loadCachedNoasApiBaseUrl(normalizedBaseUrl);
+  if (cachedApiBaseUrl) {
+    nostrDevLog("noas", "Using cached NoaS API base URL", {
+      submittedBaseUrl: normalizedBaseUrl,
+      apiBaseUrl: cachedApiBaseUrl,
+    });
+    return cachedApiBaseUrl;
+  }
+
+  const discoveryOrigin = resolveNoasDiscoveryOrigin(normalizedBaseUrl);
+  if (!discoveryOrigin) return normalizedBaseUrl;
+
+  try {
+    const response = await fetch(`${discoveryOrigin}/.well-known/nostr.json`, {
+      headers: {
+        Accept: "application/nostr+json, application/json",
+      },
+    });
+
+    if (!response.ok) {
+      nostrDevLog("noas", "NoaS API base discovery returned a non-OK response", {
+        submittedBaseUrl: normalizedBaseUrl,
+        discoveryOrigin,
+        status: response.status,
+      });
+      return normalizedBaseUrl;
+    }
+
+    const discoveryDocument = await response.json() as NoasDiscoveryDocument;
+    const discoveredApiBaseUrl = typeof discoveryDocument.noas?.api_base === "string"
+      ? normalizeNoasBaseUrl(discoveryDocument.noas.api_base)
+      : "";
+
+    if (!isValidNoasBaseUrl(discoveredApiBaseUrl)) {
+      nostrDevLog("noas", "NoaS API base discovery missing a valid api_base entry", {
+        submittedBaseUrl: normalizedBaseUrl,
+        discoveryOrigin,
+      });
+      return normalizedBaseUrl;
+    }
+
+    cacheNoasApiBaseUrl(normalizedBaseUrl, discoveredApiBaseUrl);
+    nostrDevLog("noas", "Discovered NoaS API base URL", {
+      submittedBaseUrl: normalizedBaseUrl,
+      discoveryOrigin,
+      apiBaseUrl: discoveredApiBaseUrl,
+    });
+    return discoveredApiBaseUrl;
+  } catch (error) {
+    nostrDevLog("noas", "NoaS API base discovery failed, falling back to submitted host", {
+      submittedBaseUrl: normalizedBaseUrl,
+      discoveryOrigin,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return normalizedBaseUrl;
   }
 }
 

@@ -11,7 +11,7 @@ import NDK, {
   NDKSubscription,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { isValidNoasBaseUrl, NoasClient, normalizeNoasBaseUrl, type NoasAuthResult } from "@/lib/nostr/noas-client";
+import { isValidNoasBaseUrl, NoasClient, normalizeNoasBaseUrl, resolveNoasApiBaseUrl, type NoasAuthResult } from "@/lib/nostr/noas-client";
 import { privateKeyHexToNsec } from "@/lib/nostr/nip49-utils";
 import {
   buildKind0Content,
@@ -1003,20 +1003,27 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   ): Promise<NoasAuthResult> => {
     if (!ndk) return { success: false, errorCode: "server_error" };
 
-    const noasApiUrl = normalizeNoasBaseUrl(config?.baseUrl || import.meta.env.VITE_NOAS_HOST_URL || import.meta.env.VITE_NOAS_API_URL || "");
+    const submittedNoasBaseUrl = normalizeNoasBaseUrl(config?.baseUrl || import.meta.env.VITE_NOAS_HOST_URL || import.meta.env.VITE_NOAS_API_URL || "");
 
-    if (!noasApiUrl) {
+    if (!submittedNoasBaseUrl) {
       console.error("Noas configuration missing");
       return { success: false, errorCode: "missing_config" };
     }
 
-    if (!isValidNoasBaseUrl(noasApiUrl)) {
+    if (!isValidNoasBaseUrl(submittedNoasBaseUrl)) {
       console.error("Invalid Noas base URL");
       return { success: false, errorCode: "invalid_url" };
     }
 
     setIsAuthenticating(true);
     try {
+      const noasApiUrl = await resolveNoasApiBaseUrl(submittedNoasBaseUrl);
+
+      if (!isValidNoasBaseUrl(noasApiUrl)) {
+        console.error("Resolved Noas API base URL is invalid");
+        return { success: false, errorCode: "invalid_url" };
+      }
+
       const noasClient = new NoasClient(noasApiUrl);
       const signInResponse = await noasClient.signIn(username, password);
 
@@ -1122,20 +1129,27 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   ): Promise<NoasAuthResult> => {
     if (!ndk) return { success: false, errorCode: "server_error" };
 
-    const noasApiUrl = normalizeNoasBaseUrl(config?.baseUrl || import.meta.env.VITE_NOAS_HOST_URL || import.meta.env.VITE_NOAS_API_URL || "");
+    const submittedNoasBaseUrl = normalizeNoasBaseUrl(config?.baseUrl || import.meta.env.VITE_NOAS_HOST_URL || import.meta.env.VITE_NOAS_API_URL || "");
 
-    if (!noasApiUrl) {
+    if (!submittedNoasBaseUrl) {
       console.error("Noas configuration missing");
       return { success: false, errorCode: "missing_config" };
     }
 
-    if (!isValidNoasBaseUrl(noasApiUrl)) {
+    if (!isValidNoasBaseUrl(submittedNoasBaseUrl)) {
       console.error("Invalid Noas base URL");
       return { success: false, errorCode: "invalid_url" };
     }
 
     setIsAuthenticating(true);
     try {
+      const noasApiUrl = await resolveNoasApiBaseUrl(submittedNoasBaseUrl);
+
+      if (!isValidNoasBaseUrl(noasApiUrl)) {
+        console.error("Resolved Noas API base URL is invalid");
+        return { success: false, errorCode: "invalid_url" };
+      }
+
       const noasClient = new NoasClient(noasApiUrl);
       
       // Normalize the private key to nsec format

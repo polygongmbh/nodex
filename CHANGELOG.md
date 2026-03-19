@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Noas sign-in/sign-up now discover `/.well-known/nostr.json` on the submitted Noas domain, use any advertised `noas.api_base` for API calls, and cache that resolved API base for repeat auth attempts.
+
 ## [2.4.0] - 2026-03-19
 Minor release for markdown rendering and content-reference parsing upgrades, plus task-card metadata interaction polish (3258 lines changed since `v2.3.0`).
 
