@@ -90,7 +90,7 @@ structure:
 
 ### Startup Repo Check
 - At the start of work, run `git status --short`.
-- If there are unstaged modifications beyond `package-lock.json` and `.env`, warn the user before proceeding.
+- If there are unstaged modifications beyond `package-lock.json` and `.env` or `vite.config.ts`, warn the user before proceeding.
 - Before any larger change (major feature, cross-view UI change, broad refactor, or release prep), run `git pull --rebase --autostash`.
 
 ### Protocol Compliance

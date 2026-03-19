@@ -127,7 +127,7 @@
 - Feed-backed posts can use an optional short undo-send delay (disabled by default); when enabled, undo restores the full compose draft state.
 - If posting from mobile with no selected/typed channel tag, the app shows immediate feedback instead of silently failing.
 - Task compose supports optional priority selection.
-- Desktop and mobile composers include `image` and `file` attachment buttons; uploaded files are published as attachment metadata (`imeta`) and shown inline in task views.
+- Desktop and mobile composers include `image` and `file` attachment buttons; you can also drag files into the composer or paste clipboard images/files directly, and uploaded files are published as attachment metadata (`imeta`) and shown inline in task views.
 - Direct `http/https` image and file URLs typed in content are auto-detected and rendered as embeds/attachment links.
 - Some NIP-96 upload services require NIP-98 authorization; Nodex signs upload requests from the active Nostr signer when needed.
 - Profile settings include an experimental opt-in toggle for local on-device image caption inference; when enabled, successful attachment inference can auto-fill image alt text.
