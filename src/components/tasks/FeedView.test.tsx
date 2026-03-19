@@ -150,6 +150,59 @@ describe("FeedView", () => {
     vi.useRealTimers();
   });
 
+  it("re-clamps the visible feed window when clearing a broadening filter", () => {
+    vi.useFakeTimers();
+    const manyTasks = Array.from({ length: 75 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: index < 10 ? `Frontend task ${index + 1} #frontend` : `General task ${index + 1} #general`,
+        tags: index < 10 ? ["frontend"] : ["general"],
+        author,
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 75 - index),
+      })
+    );
+
+    const { container, rerender } = render(
+      <FeedView
+        tasks={manyTasks}
+        allTasks={manyTasks}
+        relays={relays}
+        channels={[makeChannel({ id: "frontend", name: "frontend", filterState: "included" })]}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(10);
+
+    rerender(
+      <FeedView
+        tasks={manyTasks}
+        allTasks={manyTasks}
+        relays={relays}
+        channels={[makeChannel({ id: "frontend", name: "frontend", filterState: "neutral" })]}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+
+    act(() => {
+      vi.advanceTimersByTime(80);
+    });
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
+
+    vi.useRealTimers();
+  });
+
   it("renders breadcrumb buttons as single-line left-aligned truncating labels", () => {
     const root = makeTask({ id: "root", content: "Root breadcrumb label that should not wrap", author, status: "todo" });
     const child = makeTask({

@@ -6,11 +6,14 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-03-19
+
 - Composer attachments can now be added by dragging files into the composer or pasting clipboard images/files, and dropped plain text now lands in the composer body instead of being ignored.
 - Feed/list/calendar/kanban channel filters now remain authoritative inside the selected feed scope instead of being dropped when the current relay slice does not already contain a matching channel.
 - Feed/list/tree end-of-scroll scope notes now stay visible for relay-only selections as well, so scoped feeds consistently end with summaries like `This is all on feed.example.com`.
 - Noas sign-in/sign-up now discover `/.well-known/nostr.json` on the submitted Noas domain, use any advertised `noas.api_base` for API calls, and cache that resolved API base for repeat auth attempts.
 - Main app views now use a shared higher-contrast scrollbar with a reserved track, while compact surfaces keep gutter-free scrollbars and compose fields avoid clipping against rounded corners as they grow up to about half the viewport height.
+- Clearing feed filters now falls back to the initial incremental feed window before revealing more posts, reducing lag when broadening back out to large feeds.
 - Feed and tree views now avoid several repeated task/person scans during render, and search filtering is deferred slightly so large task sets feel more responsive while typing and expanding nested work.
 
 ## [2.4.0] - 2026-03-19

@@ -113,6 +113,11 @@ interface FeedDueDateChipProps {
   onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
 }
 
+interface FeedDisclosureState {
+  key: string;
+  visibleEntryCount: number;
+}
+
 function FeedDueDateChip({
   task,
   editable,
@@ -365,7 +370,10 @@ export function FeedView({
     ].join("|"),
     [activeChannelFiltersKey, channelMatchMode, deferredSearchQuery, focusedTaskId, selectedPeopleKey]
   );
-  const [visibleEntryCount, setVisibleEntryCount] = useState(INITIAL_VISIBLE_FEED_ENTRIES);
+  const [feedDisclosureState, setFeedDisclosureState] = useState<FeedDisclosureState>(() => ({
+    key: feedDisclosureKey,
+    visibleEntryCount: INITIAL_VISIBLE_FEED_ENTRIES,
+  }));
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
   const peopleById = useMemo(
     () =>
@@ -393,6 +401,10 @@ export function FeedView({
   const shouldShowMobileScopeFallback =
     isMobile && scopeModel.hasActiveFilters && feedEntries.length === 0 && hasSourceFeedContent;
   const activeFeedEntries = shouldShowMobileScopeFallback ? allFeedEntries : feedEntries;
+  const visibleEntryCount =
+    feedDisclosureState.key === feedDisclosureKey
+      ? feedDisclosureState.visibleEntryCount
+      : INITIAL_VISIBLE_FEED_ENTRIES;
   const displayedFeedEntries = useMemo(
     () => activeFeedEntries.slice(0, visibleEntryCount),
     [activeFeedEntries, visibleEntryCount]
@@ -433,23 +445,33 @@ export function FeedView({
   const revealMoreEntries = useCallback((reason: "timer" | "scroll" | "focus") => {
     if (activeFeedEntries.length <= visibleEntryCount) return;
     startTransition(() => {
-      setVisibleEntryCount((previous) => {
-        const next = Math.min(activeFeedEntries.length, previous + FEED_REVEAL_BATCH_SIZE);
-        if (next !== previous) {
+      setFeedDisclosureState((previous) => {
+        const previousVisibleCount =
+          previous.key === feedDisclosureKey
+            ? previous.visibleEntryCount
+            : INITIAL_VISIBLE_FEED_ENTRIES;
+        const next = Math.min(activeFeedEntries.length, previousVisibleCount + FEED_REVEAL_BATCH_SIZE);
+        if (next !== previousVisibleCount) {
           nostrDevLog("feed", "Revealed incremental feed batch", {
             reason,
             visibleEntryCount: next,
             totalEntryCount: activeFeedEntries.length,
           });
         }
-        return next;
+        return {
+          key: feedDisclosureKey,
+          visibleEntryCount: next,
+        };
       });
     });
-  }, [activeFeedEntries.length, visibleEntryCount]);
+  }, [activeFeedEntries.length, feedDisclosureKey, visibleEntryCount]);
 
   useEffect(() => {
     startTransition(() => {
-      setVisibleEntryCount(INITIAL_VISIBLE_FEED_ENTRIES);
+      setFeedDisclosureState({
+        key: feedDisclosureKey,
+        visibleEntryCount: INITIAL_VISIBLE_FEED_ENTRIES,
+      });
     });
   }, [feedDisclosureKey]);
 
@@ -470,19 +492,26 @@ export function FeedView({
     );
     if (focusedIndex === -1 || focusedIndex < visibleEntryCount) return;
     startTransition(() => {
-      setVisibleEntryCount((previous) => {
+      setFeedDisclosureState((previous) => {
+        const previousVisibleCount =
+          previous.key === feedDisclosureKey
+            ? previous.visibleEntryCount
+            : INITIAL_VISIBLE_FEED_ENTRIES;
         const next = Math.min(activeFeedEntries.length, focusedIndex + 1 + FEED_REVEAL_BATCH_SIZE);
-        if (next !== previous) {
+        if (next !== previousVisibleCount) {
           nostrDevLog("feed", "Expanded feed window to include focused task", {
             focusedTaskId,
             visibleEntryCount: next,
             totalEntryCount: activeFeedEntries.length,
           });
         }
-        return next;
+        return {
+          key: feedDisclosureKey,
+          visibleEntryCount: next,
+        };
       });
     });
-  }, [activeFeedEntries, focusedTaskId, visibleEntryCount]);
+  }, [activeFeedEntries, feedDisclosureKey, focusedTaskId, visibleEntryCount]);
 
   const handleFeedScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
     const container = event.currentTarget;
