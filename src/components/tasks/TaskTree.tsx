@@ -17,6 +17,7 @@ import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
+import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -59,7 +60,7 @@ export function TaskTree({
   isMobile = false,
   onSignInClick,
   onHashtagClick,
-  forceShowComposer = false,
+  forceShowComposer,
   composeGuideActivationSignal,
   onAuthorClick,
   onClearChannelFilter,
@@ -72,7 +73,15 @@ export function TaskTree({
   isHydrating = false,
 }: TaskTreeProps) {
   const { t, i18n } = useTranslation();
+  const interactionModel = useFeedViewInteractionModel();
   const { user } = useNDK();
+  const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
+  const effectiveOnSignInClick = onSignInClick ?? interactionModel.onSignInClick;
+  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
+  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
+  const effectiveOnClearChannelFilter = onClearChannelFilter ?? interactionModel.onClearChannelFilter;
+  const effectiveOnClearPersonFilter = onClearPersonFilter ?? interactionModel.onClearPersonFilter;
+  const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
@@ -320,7 +329,7 @@ export function TaskTree({
     taskIds: flattenedTaskIds,
     onSelectTask: handleSelectTask,
     onGoBack: handleGoUp,
-    onFocusSidebar,
+    onFocusSidebar: effectiveOnFocusSidebar,
     enabled: !isMobile && !isComposerExpanded,
   });
 
@@ -438,7 +447,7 @@ export function TaskTree({
       )}
 
       <SharedViewComposer
-        visible={!isMobile && (Boolean(user) || forceShowComposer)}
+        visible={!isMobile && (Boolean(user) || effectiveForceShowComposer)}
         onSubmit={handleNewTask}
         relays={relays}
         channels={channels}
@@ -447,10 +456,10 @@ export function TaskTree({
         onCancel={() => setIsComposerExpanded(false)}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={currentContextId || undefined}
-        onSignInClick={onSignInClick}
-        onClearChannelFilter={onClearChannelFilter}
-        onClearPersonFilter={onClearPersonFilter}
-        forceExpanded={forceShowComposer}
+        onSignInClick={effectiveOnSignInClick}
+        onClearChannelFilter={effectiveOnClearChannelFilter}
+        onClearPersonFilter={effectiveOnClearPersonFilter}
+        forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         onExpandedChange={setIsComposerExpanded}
         mentionRequest={mentionRequest}
@@ -502,8 +511,8 @@ export function TaskTree({
                 hasActiveFilters={hasActiveFilters}
                 activeRelays={activeRelays}
                 isKeyboardFocused={keyboardFocusedTaskId === task.id}
-                onHashtagClick={onHashtagClick}
-                onAuthorClick={onAuthorClick}
+                onHashtagClick={effectiveOnHashtagClick}
+                onAuthorClick={effectiveOnAuthorClick}
                 onUndoPendingPublish={onUndoPendingPublish}
                 isPendingPublishTask={isPendingPublishTask}
                 isInteractionBlocked={isInteractionBlocked}

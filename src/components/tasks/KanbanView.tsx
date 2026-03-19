@@ -35,6 +35,7 @@ import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
+import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
@@ -83,6 +84,10 @@ export function KanbanView({
   isHydrating = false,
 }: KanbanViewProps) {
   const { t } = useTranslation();
+  const interactionModel = useFeedViewInteractionModel();
+  const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
+  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
+  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
   const { user } = useNDK();
   const columns = useMemo(() => getColumns((key) => t(key)), [t]);
   const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
@@ -340,7 +345,7 @@ export function KanbanView({
     onSelectTask: (id) => onFocusTask?.(id),
     onMoveLeft: handleMoveLeft,
     onMoveRight: handleMoveRight,
-    onFocusSidebar,
+    onFocusSidebar: effectiveOnFocusSidebar,
     enabled: composingColumn === null,
     kanbanMode: true,
     columnTaskIds,
@@ -551,7 +556,7 @@ export function KanbanView({
                                       isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                                     )}
                                   >
-                                    {linkifyContent(task.content, onHashtagClick, {
+                                    {linkifyContent(task.content, effectiveOnHashtagClick, {
                                       plainHashtags: isTaskTerminalStatus(task.status),
                                       people,
                                       onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
@@ -588,8 +593,8 @@ export function KanbanView({
                                       onToggleExpanded={(expanded) =>
                                         setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
                                       }
-                                      onHashtagClick={onHashtagClick}
-                                      onPersonClick={onAuthorClick}
+                                      onHashtagClick={effectiveOnHashtagClick}
+                                      onPersonClick={effectiveOnAuthorClick}
                                       className="mt-2"
                                       showEmptyPlaceholder={false}
                                       testId={`kanban-chip-row-${task.id}`}

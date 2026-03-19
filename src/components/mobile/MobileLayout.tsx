@@ -64,8 +64,6 @@ export interface MobileLayoutActions {
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
   onGuideClick: () => void;
-  onHashtagClick: (tag: string) => void;
-  onAuthorClick?: (author: Person) => void;
   onInteractionBlocked?: () => void;
   onManageRouteChange?: (isActive: boolean) => void;
 }
@@ -152,8 +150,6 @@ export function MobileLayout({
     onRemoveRelay,
     onSignInClick,
     onGuideClick,
-    onHashtagClick,
-    onAuthorClick,
     onInteractionBlocked,
     onManageRouteChange = () => {},
   } = actions;
@@ -280,8 +276,6 @@ export function MobileLayout({
     focusedTaskId,
     onFocusTask,
     onStatusChange,
-    onHashtagClick,
-    onAuthorClick,
     onUndoPendingPublish,
     isPendingPublishTask,
     mentionRequest,

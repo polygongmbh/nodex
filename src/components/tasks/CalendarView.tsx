@@ -59,6 +59,7 @@ import {
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
+import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -97,6 +98,9 @@ export function CalendarView({
   isHydrating = false,
 }: CalendarViewProps) {
   const { t } = useTranslation();
+  const interactionModel = useFeedViewInteractionModel();
+  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
+  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -1124,7 +1128,7 @@ export function CalendarView({
                                 isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                               )}
                             >
-                              {linkifyContent(task.content, onHashtagClick, {
+                              {linkifyContent(task.content, effectiveOnHashtagClick, {
                                 plainHashtags: isTaskTerminalStatus(task.status),
                                 people,
                                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
@@ -1154,8 +1158,8 @@ export function CalendarView({
                                 priority={task.priority}
                                 className="mt-1"
                                 tagClassName="px-1 py-0.5 rounded text-xs"
-                                onHashtagClick={onHashtagClick}
-                                onPersonClick={onAuthorClick}
+                                onHashtagClick={effectiveOnHashtagClick}
+                                onPersonClick={effectiveOnAuthorClick}
                                 showEmptyPlaceholder={false}
                                 testId={`calendar-chip-row-${task.id}`}
                               />

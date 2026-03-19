@@ -144,7 +144,6 @@ const baseProps: MobileLayoutProps = {
     onRemoveRelay: () => {},
     onSignInClick: () => {},
     onGuideClick: () => {},
-    onHashtagClick: () => {},
   },
 };
 

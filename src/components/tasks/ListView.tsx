@@ -49,6 +49,7 @@ import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
+import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -130,14 +131,22 @@ export function ListView({
   onSignInClick,
   onClearChannelFilter,
   onClearPersonFilter,
-  forceShowComposer = false,
+  forceShowComposer,
   composeGuideActivationSignal,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
   isHydrating = false,
 }: ListViewProps) {
   const { t, i18n } = useTranslation();
+  const interactionModel = useFeedViewInteractionModel();
   const { user } = useNDK();
+  const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
+  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
+  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
+  const effectiveOnSignInClick = onSignInClick ?? interactionModel.onSignInClick;
+  const effectiveOnClearChannelFilter = onClearChannelFilter ?? interactionModel.onClearChannelFilter;
+  const effectiveOnClearPersonFilter = onClearPersonFilter ?? interactionModel.onClearPersonFilter;
+  const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -435,7 +444,7 @@ export function ListView({
     taskIds,
     onSelectTask: (id) => onFocusTask?.(id),
     onGoBack: () => onFocusTask?.(null),
-    onFocusSidebar,
+    onFocusSidebar: effectiveOnFocusSidebar,
     enabled: true,
   });
 
@@ -602,8 +611,8 @@ export function ListView({
         onToggleExpanded={(expanded) =>
           setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
         }
-        onHashtagClick={onHashtagClick}
-        onPersonClick={onAuthorClick}
+        onHashtagClick={effectiveOnHashtagClick}
+        onPersonClick={effectiveOnAuthorClick}
       />
     );
   };
@@ -621,7 +630,7 @@ export function ListView({
       ) : null}
 
       <SharedViewComposer
-        visible={Boolean(user) || forceShowComposer}
+        visible={Boolean(user) || effectiveForceShowComposer}
         onSubmit={handleNewTask}
         relays={relays}
         channels={channels}
@@ -630,10 +639,10 @@ export function ListView({
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
-        onSignInClick={onSignInClick}
-        onClearChannelFilter={onClearChannelFilter}
-        onClearPersonFilter={onClearPersonFilter}
-        forceExpanded={forceShowComposer}
+        onSignInClick={effectiveOnSignInClick}
+        onClearChannelFilter={effectiveOnClearChannelFilter}
+        onClearPersonFilter={effectiveOnClearPersonFilter}
+        forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"

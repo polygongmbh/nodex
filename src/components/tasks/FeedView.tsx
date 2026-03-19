@@ -66,6 +66,7 @@ import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
+import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -221,7 +222,7 @@ export function FeedView({
   isMobile = false,
   onSignInClick,
   onHashtagClick,
-  forceShowComposer = false,
+  forceShowComposer,
   composeGuideActivationSignal,
   onAuthorClick,
   onClearChannelFilter,
@@ -234,6 +235,14 @@ export function FeedView({
   isHydrating = false,
 }: FeedViewProps) {
   const { t, i18n } = useTranslation();
+  const interactionModel = useFeedViewInteractionModel();
+  const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
+  const effectiveOnSignInClick = onSignInClick ?? interactionModel.onSignInClick;
+  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
+  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
+  const effectiveOnClearChannelFilter = onClearChannelFilter ?? interactionModel.onClearChannelFilter;
+  const effectiveOnClearPersonFilter = onClearPersonFilter ?? interactionModel.onClearPersonFilter;
+  const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -436,7 +445,7 @@ export function FeedView({
     taskIds,
     onSelectTask: (id) => onFocusTask?.(id),
     onGoBack: () => onFocusTask?.(null),
-    onFocusSidebar,
+    onFocusSidebar: effectiveOnFocusSidebar,
     enabled: !isMobile,
   });
 
@@ -693,7 +702,7 @@ export function FeedView({
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  onAuthorClick?.(resolvedUpdateAuthor);
+                  effectiveOnAuthorClick?.(resolvedUpdateAuthor);
                 }}
                 className="hover:text-foreground shrink-0"
                 aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
@@ -1013,7 +1022,7 @@ export function FeedView({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              onAuthorClick?.(resolvedAuthor);
+              effectiveOnAuthorClick?.(resolvedAuthor);
             }}
             className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
             aria-label={t("tasks.actions.filterAndMention", { authorName: resolvedAuthor.displayName })}
@@ -1041,7 +1050,7 @@ export function FeedView({
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  onAuthorClick?.(resolvedAuthor);
+                  effectiveOnAuthorClick?.(resolvedAuthor);
                 }}
                 className={cn(
                   "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
@@ -1122,7 +1131,7 @@ export function FeedView({
                     <TaskMentionChips
                       task={task}
                       people={people}
-                      onPersonClick={onAuthorClick}
+                      onPersonClick={effectiveOnAuthorClick}
                       inline
                     />
                     {task.locationGeohash && (
@@ -1138,7 +1147,7 @@ export function FeedView({
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
-                          onHashtagClick?.(tag);
+                          effectiveOnHashtagClick?.(tag);
                         }}
                         className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
                         aria-label={`Filter to #${tag}`}
@@ -1171,10 +1180,10 @@ export function FeedView({
                 isCompletedVisual && "line-through text-muted-foreground"
               )}
             >
-              {linkifyContent(task.content, onHashtagClick, {
+              {linkifyContent(task.content, effectiveOnHashtagClick, {
                 plainHashtags: isCompletedVisual,
                 people,
-                onMentionClick: onAuthorClick,
+                onMentionClick: effectiveOnAuthorClick,
                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                 getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
               })}
@@ -1204,7 +1213,7 @@ export function FeedView({
       )}
 
       <SharedViewComposer
-        visible={!isMobile && (Boolean(user) || forceShowComposer)}
+        visible={!isMobile && (Boolean(user) || effectiveForceShowComposer)}
         onSubmit={handleNewTask}
         relays={relays}
         channels={channels}
@@ -1213,10 +1222,10 @@ export function FeedView({
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
-        onSignInClick={onSignInClick}
-        onClearChannelFilter={onClearChannelFilter}
-        onClearPersonFilter={onClearPersonFilter}
-        forceExpanded={forceShowComposer}
+        onSignInClick={effectiveOnSignInClick}
+        onClearChannelFilter={effectiveOnClearChannelFilter}
+        onClearPersonFilter={effectiveOnClearPersonFilter}
+        forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         mentionRequest={mentionRequest}
         composeRestoreRequest={composeRestoreRequest}

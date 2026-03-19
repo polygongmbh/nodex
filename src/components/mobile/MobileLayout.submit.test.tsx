@@ -98,7 +98,6 @@ describe("MobileLayout submit wiring", () => {
           onRemoveRelay: () => {},
           onSignInClick: () => {},
           onGuideClick: () => {},
-          onHashtagClick: () => {},
         }}
       />
     );

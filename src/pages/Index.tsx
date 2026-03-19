@@ -57,6 +57,7 @@ import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
 import {
   Relay,
   Task,
+  TaskStatus,
 } from "@/types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -76,7 +77,11 @@ import {
 } from "@/features/feed-page/views/feed-page-ui-config";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 import { createFeedInteractionMiddlewareSkeleton } from "@/features/feed-page/interactions/feed-interaction-middleware-skeleton";
-import { createFeedInteractionBus } from "@/features/feed-page/interactions/feed-interaction-pipeline";
+import {
+  createFeedInteractionBus,
+  type FeedInteractionHandlerMap,
+} from "@/features/feed-page/interactions/feed-interaction-pipeline";
+import { FeedViewInteractionProvider } from "@/features/feed-page/interactions/feed-view-interaction-context";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
@@ -599,18 +604,11 @@ const Index = () => {
       searchQuery,
       onSearchChange: setSearchQuery,
       onNewTask: handleNewTask,
-      onToggleComplete: handleToggleComplete,
+      onToggleComplete: handleDispatchToggleComplete,
       focusedTaskId,
       onFocusTask: setFocusedTaskId,
-      onStatusChange: handleStatusChange,
+      onStatusChange: handleDispatchStatusChange,
       onListingStatusChange: handleListingStatusChange,
-      onFocusSidebar: handleFocusSidebar,
-      onSignInClick: handleOpenAuthModal,
-      onHashtagClick: handleHashtagExclusive,
-      forceShowComposer: forceShowComposeForGuide,
-      onAuthorClick: handleAuthorClick,
-      onClearChannelFilter: handleChannelClear,
-      onClearPersonFilter: handlePersonClear,
       onUndoPendingPublish: handleUndoPendingPublish,
       isPendingPublishTask,
       composeRestoreRequest,
@@ -634,18 +632,11 @@ const Index = () => {
       searchQuery,
       setSearchQuery,
       handleNewTask,
-      handleToggleComplete,
+      handleDispatchToggleComplete,
       focusedTaskId,
       setFocusedTaskId,
-      handleStatusChange,
+      handleDispatchStatusChange,
       handleListingStatusChange,
-      handleFocusSidebar,
-      handleOpenAuthModal,
-      handleHashtagExclusive,
-      forceShowComposeForGuide,
-      handleAuthorClick,
-      handleChannelClear,
-      handlePersonClear,
       handleUndoPendingPublish,
       isPendingPublishTask,
       composeRestoreRequest,
@@ -692,12 +683,103 @@ const Index = () => {
     }),
     [completionSoundEnabled, handleToggleCompletionSound]
   );
+  const feedInteractionHandlers: FeedInteractionHandlerMap = useMemo(
+    () => ({
+      "ui.openAuthModal": (intent) => {
+        if (
+          intent.initialStep === "choose" ||
+          intent.initialStep === "noas" ||
+          intent.initialStep === "noasSignUp"
+        ) {
+          handleOpenAuthModal(intent.initialStep);
+          return;
+        }
+        handleOpenAuthModal();
+      },
+      "ui.focusSidebar": () => {
+        handleFocusSidebar();
+      },
+      "ui.focusTasks": () => {
+        handleFocusTasks();
+      },
+      "filter.applyHashtagExclusive": (intent) => {
+        handleHashtagExclusive(intent.tag);
+      },
+      "filter.applyAuthorExclusive": (intent) => {
+        handleAuthorClick(intent.author);
+      },
+      "filter.clearChannel": (intent) => {
+        handleChannelClear(intent.channelId);
+      },
+      "filter.clearPerson": (intent) => {
+        handlePersonClear(intent.personId);
+      },
+      "task.toggleComplete": (intent) => {
+        handleToggleComplete(intent.taskId);
+      },
+      "task.changeStatus": (intent) => {
+        handleStatusChange(intent.taskId, intent.status);
+      },
+    }),
+    [
+      handleOpenAuthModal,
+      handleFocusSidebar,
+      handleFocusTasks,
+      handleHashtagExclusive,
+      handleAuthorClick,
+      handleChannelClear,
+      handlePersonClear,
+      handleToggleComplete,
+      handleStatusChange,
+    ]
+  );
   const feedInteractionBus = useMemo(
     () =>
       createFeedInteractionBus({
         middlewares: createFeedInteractionMiddlewareSkeleton(),
+        handlers: feedInteractionHandlers,
       }),
-    []
+    [feedInteractionHandlers]
+  );
+  const dispatchFeedInteraction = feedInteractionBus.dispatch;
+  const handleDispatchToggleComplete = useCallback(
+    (taskId: string) => {
+      void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
+    },
+    [dispatchFeedInteraction]
+  );
+  const handleDispatchOpenAuthModal = useCallback(() => {
+    void dispatchFeedInteraction({ type: "ui.openAuthModal" });
+  }, [dispatchFeedInteraction]);
+  const handleDispatchStatusChange = useCallback(
+    (taskId: string, status: TaskStatus) => {
+      void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
+    },
+    [dispatchFeedInteraction]
+  );
+  const feedViewInteractionModel = useMemo(
+    () => ({
+      forceShowComposer: forceShowComposeForGuide,
+      onFocusSidebar: () => {
+        void dispatchFeedInteraction({ type: "ui.focusSidebar" });
+      },
+      onSignInClick: () => {
+        void dispatchFeedInteraction({ type: "ui.openAuthModal" });
+      },
+      onHashtagClick: (tag: string) => {
+        void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+      },
+      onAuthorClick: (author: Task["author"]) => {
+        void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
+      },
+      onClearChannelFilter: (id: string) => {
+        void dispatchFeedInteraction({ type: "filter.clearChannel", channelId: id });
+      },
+      onClearPersonFilter: (id: string) => {
+        void dispatchFeedInteraction({ type: "filter.clearPerson", personId: id });
+      },
+    }),
+    [dispatchFeedInteraction, forceShowComposeForGuide]
   );
 
   const mobileViewState = useMemo(
@@ -747,8 +829,8 @@ const Index = () => {
       onViewChange: setCurrentView,
       onSearchChange: setSearchQuery,
       onNewTask: handleNewTask,
-      onToggleComplete: handleToggleComplete,
-      onStatusChange: handleStatusChange,
+      onToggleComplete: handleDispatchToggleComplete,
+      onStatusChange: handleDispatchStatusChange,
       onFocusTask: setFocusedTaskId,
       onRelayToggle: handleRelayToggle,
       onChannelToggle: handleChannelToggle,
@@ -756,10 +838,8 @@ const Index = () => {
       onChannelMatchModeChange: handleChannelMatchModeChange,
       onAddRelay: handleAddRelay,
       onRemoveRelay: handleRemoveRelay,
-      onSignInClick: handleOpenAuthModal,
+      onSignInClick: handleDispatchOpenAuthModal,
       onGuideClick: handleOpenGuide,
-      onHashtagClick: handleHashtagExclusive,
-      onAuthorClick: handleAuthorClick,
       onInteractionBlocked: handleBlockedInteractionAttempt,
       onManageRouteChange: setManageRouteActive,
     }),
@@ -767,8 +847,8 @@ const Index = () => {
       setCurrentView,
       setSearchQuery,
       handleNewTask,
-      handleToggleComplete,
-      handleStatusChange,
+      handleDispatchToggleComplete,
+      handleDispatchStatusChange,
       setFocusedTaskId,
       handleRelayToggle,
       handleChannelToggle,
@@ -776,10 +856,8 @@ const Index = () => {
       handleChannelMatchModeChange,
       handleAddRelay,
       handleRemoveRelay,
-      handleOpenAuthModal,
+      handleDispatchOpenAuthModal,
       handleOpenGuide,
-      handleHashtagExclusive,
-      handleAuthorClick,
       handleBlockedInteractionAttempt,
       setManageRouteActive,
     ]
@@ -807,9 +885,9 @@ const Index = () => {
     () => ({
       currentView,
       onViewChange: setCurrentView,
-      onSignInClick: handleOpenAuthModal,
+      onSignInClick: handleDispatchOpenAuthModal,
     }),
-    [currentView, setCurrentView, handleOpenAuthModal]
+    [currentView, setCurrentView, handleDispatchOpenAuthModal]
   );
 
   const desktopContent: FeedPageDesktopContentConfig = useMemo(
@@ -962,15 +1040,17 @@ const Index = () => {
     return (
       <FeedInteractionProvider bus={feedInteractionBus}>
         <FeedPageUiConfigProvider value={uiConfig}>
-          <FeedPageMobileShell
-            controller={mobileController}
-            authModalProps={{
-              isOpen: isAuthModalOpen,
-              onClose: handleCloseAuthModal,
-              initialStep: authModalInitialStep,
-            }}
-            onboardingOverlays={onboardingOverlays}
-          />
+          <FeedViewInteractionProvider value={feedViewInteractionModel}>
+            <FeedPageMobileShell
+              controller={mobileController}
+              authModalProps={{
+                isOpen: isAuthModalOpen,
+                onClose: handleCloseAuthModal,
+                initialStep: authModalInitialStep,
+              }}
+              onboardingOverlays={onboardingOverlays}
+            />
+          </FeedViewInteractionProvider>
         </FeedPageUiConfigProvider>
       </FeedInteractionProvider>
     );
@@ -980,17 +1060,19 @@ const Index = () => {
   return (
     <FeedInteractionProvider bus={feedInteractionBus}>
       <FeedPageUiConfigProvider value={uiConfig}>
-        <FeedPageDesktopShell
-          header={desktopHeader}
-          content={desktopContent}
-          shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-          authModalProps={{
-            isOpen: isAuthModalOpen,
-            onClose: handleCloseAuthModal,
-            initialStep: authModalInitialStep,
-          }}
-          onboardingOverlays={onboardingOverlays}
-        />
+        <FeedViewInteractionProvider value={feedViewInteractionModel}>
+          <FeedPageDesktopShell
+            header={desktopHeader}
+            content={desktopContent}
+            shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+            authModalProps={{
+              isOpen: isAuthModalOpen,
+              onClose: handleCloseAuthModal,
+              initialStep: authModalInitialStep,
+            }}
+            onboardingOverlays={onboardingOverlays}
+          />
+        </FeedViewInteractionProvider>
       </FeedPageUiConfigProvider>
     </FeedInteractionProvider>
   );
