@@ -104,6 +104,7 @@ interface TaskPrioritySelectProps {
   includeEmptyOption?: boolean;
   id?: string;
   ariaLabel?: string;
+  stopPropagation?: boolean;
   onUpdatePriority?: (taskId: string, priority: number) => void;
 }
 
@@ -115,6 +116,7 @@ export function TaskPrioritySelect({
   includeEmptyOption = false,
   id,
   ariaLabel,
+  stopPropagation = false,
   onUpdatePriority,
 }: TaskPrioritySelectProps) {
   const value = typeof priority === "number" ? String(priority) : "";
@@ -131,6 +133,12 @@ export function TaskPrioritySelect({
         if (Number.isFinite(parsed)) {
           onUpdatePriority?.(taskId, parsed);
         }
+      }}
+      onClick={(event) => {
+        if (stopPropagation) event.stopPropagation();
+      }}
+      onPointerDown={(event) => {
+        if (stopPropagation) event.stopPropagation();
       }}
       className={className}
     >

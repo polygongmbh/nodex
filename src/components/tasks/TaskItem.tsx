@@ -612,40 +612,20 @@ export function TaskItem({
           {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash || (typeof task.priority === "number" && !isComment)) && (
             <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-1.5")}>
               {typeof task.priority === "number" && !isComment && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      disabled={!editableMetadata}
-                      onClick={(event) => event.stopPropagation()}
-                      className={cn(
-                        "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning",
-                        editableMetadata && "cursor-pointer hover:bg-warning/20"
-                      )}
-                    >
-                      P{task.priority}
-                    </button>
-                  </PopoverTrigger>
-                  {editableMetadata && (
-                    <PopoverContent
-                      className="w-36 p-2"
-                      align="start"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <label className="sr-only" htmlFor={`task-priority-${task.id}`}>
-                        {t("composer.labels.priority")}
-                      </label>
-                      <TaskPrioritySelect
-                        id={`task-priority-${task.id}`}
-                        taskId={task.id}
-                        priority={task.priority}
-                        ariaLabel={t("composer.labels.priority")}
-                        className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground focus:outline-none"
-                        onUpdatePriority={onUpdatePriority}
-                      />
-                    </PopoverContent>
+                <TaskPrioritySelect
+                  id={`task-priority-${task.id}`}
+                  taskId={task.id}
+                  priority={task.priority}
+                  ariaLabel={t("composer.labels.priority")}
+                  disabled={!editableMetadata}
+                  stopPropagation
+                  className={cn(
+                    "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+                    editableMetadata && "cursor-pointer hover:bg-warning/20",
+                    !editableMetadata && "cursor-not-allowed opacity-60"
                   )}
-                </Popover>
+                  onUpdatePriority={onUpdatePriority}
+                />
               )}
               <TaskMentionChips
                 task={task}

@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Tree/feed priority chips now open the priority dropdown directly on click instead of opening an intermediate popover first.
+
 ## [2.3.0] - 2026-03-18
 Minor release for broad feed/task interaction upgrades, filtering reliability fixes, and kanban drag-and-drop usability improvements (3241 lines changed since `origin/main`).
 

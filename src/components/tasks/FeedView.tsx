@@ -177,40 +177,20 @@ function FeedPriorityChip({ task, editable, onUpdatePriority }: FeedPriorityChip
   if (typeof task.priority !== "number") return null;
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          disabled={!editable}
-          onClick={(event) => event.stopPropagation()}
-          className={cn(
-            "rounded bg-warning/15 px-1.5 py-0.5 text-xs text-warning transition-colors",
-            editable && "cursor-pointer hover:bg-warning/20"
-          )}
-        >
-          P{task.priority}
-        </button>
-      </PopoverTrigger>
-      {editable && (
-        <PopoverContent
-          className="w-36 p-2"
-          align="start"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <label className="sr-only" htmlFor={`feed-priority-${task.id}`}>
-            {t("composer.labels.priority")}
-          </label>
-          <TaskPrioritySelect
-            id={`feed-priority-${task.id}`}
-            taskId={task.id}
-            priority={task.priority}
-            ariaLabel={t("composer.labels.priority")}
-            className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground focus:outline-none"
-            onUpdatePriority={onUpdatePriority}
-          />
-        </PopoverContent>
+    <TaskPrioritySelect
+      id={`feed-priority-${task.id}`}
+      taskId={task.id}
+      priority={task.priority}
+      ariaLabel={t("composer.labels.priority")}
+      disabled={!editable}
+      stopPropagation
+      className={cn(
+        "rounded bg-warning/15 px-1.5 py-0.5 text-xs text-warning transition-colors focus:outline-none",
+        editable && "cursor-pointer hover:bg-warning/20",
+        !editable && "cursor-not-allowed opacity-60"
       )}
-    </Popover>
+      onUpdatePriority={onUpdatePriority}
+    />
   );
 }
 
