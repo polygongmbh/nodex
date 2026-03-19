@@ -28,6 +28,7 @@ import { buildDeterministicGuestName } from "@/lib/guest-name";
 import { getConfiguredDefaultRelays } from "@/infrastructure/nostr/default-relays";
 import { isRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { extractHashtagsFromContent } from "@/lib/hashtags";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
 import {
   hasNostrExtension,
@@ -1353,11 +1354,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
       // Extract hashtags for text content kinds only.
       if (kind === NostrEventKind.TextNote || kind === NostrEventKind.Task) {
-        const hashtagRegex = /#(\w+)/g;
-        let match;
-        while ((match = hashtagRegex.exec(content)) !== null) {
-          eventTags.push(["t", match[1].toLowerCase()]);
-        }
+        extractHashtagsFromContent(content).forEach((hashtag) => {
+          eventTags.push(["t", hashtag]);
+        });
       }
       
       event.tags = eventTags;

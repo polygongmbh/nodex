@@ -99,6 +99,18 @@ describe("nostrEventToTask", () => {
     expect(task.tags).toContain("frontend");
   });
 
+  it("ignores hashtags embedded inside words", () => {
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      content: "email#ops should not count, but #ops should",
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.tags).toContain("ops");
+    expect(task.tags.filter((tag) => tag === "ops")).toHaveLength(1);
+  });
+
   it("extracts tags from event t tags", () => {
     const event: NostrEventWithRelay = {
       ...baseEvent,

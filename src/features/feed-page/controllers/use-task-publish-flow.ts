@@ -14,6 +14,7 @@ import {
   type FailedPublishDraft,
 } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import { resolveMentionedPubkeysAsync } from "@/lib/mentions";
+import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { normalizeComposerMessageType } from "@/domain/content/task-type";
@@ -503,9 +504,7 @@ export function useTaskPublishFlow({
       attachments: normalizedAttachments.length > 0 ? normalizedAttachments : undefined,
     };
 
-    const parsedHashtagsFromContent = new Set(
-      (content.match(/#(\\w+)/g) || []).map((tag) => tag.slice(1).toLowerCase())
-    );
+    const parsedHashtagsFromContent = new Set(extractHashtagsFromContent(content));
     const composeRestoreState: ComposeRestoreState = {
       content,
       taskType: normalizedTaskType,

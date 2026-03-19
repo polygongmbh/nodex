@@ -15,6 +15,7 @@ import {
 } from "./relay-verification";
 import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { extractHashtagsFromContent } from "@/lib/hashtags";
 import type { NDKRelayStatus } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { RelayTransportCallbacks } from "./use-relay-transport";
@@ -83,11 +84,9 @@ export function usePublish(
 
       // Extract hashtags for text content kinds only.
       if (kind === NostrEventKind.TextNote || kind === NostrEventKind.Task) {
-        const hashtagRegex = /#(\w+)/g;
-        let match;
-        while ((match = hashtagRegex.exec(content)) !== null) {
-          eventTags.push(["t", match[1].toLowerCase()]);
-        }
+        extractHashtagsFromContent(content).forEach((hashtag) => {
+          eventTags.push(["t", hashtag]);
+        });
       }
 
       event.tags = eventTags;

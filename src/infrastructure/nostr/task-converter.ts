@@ -24,6 +24,7 @@ import {
   parseImetaTag,
   parseNip94AttachmentMetadataTags,
 } from "@/lib/attachments";
+import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { canPubkeyUpdateTask } from "@/domain/content/task-permissions";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { getRelayIdFromUrl } from "./relay-identity";
@@ -106,13 +107,6 @@ function getDisplayNameFromPubkey(pubkey: string): string {
   return `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`;
 }
 
-function extractHashtags(content: string): string[] {
-  const hashtagRegex = /#(\w+)/g;
-  const matches = content.match(hashtagRegex);
-  if (!matches) return [];
-  return [...new Set(matches.map((tag) => tag.slice(1).toLowerCase()))];
-}
-
 function replaceIndexedPersonMentions(content: string, tags: string[][]): string {
   return content.replace(/#\[(\d+)\]/g, (fullMatch, indexRaw: string) => {
     const index = Number.parseInt(indexRaw, 10);
@@ -159,7 +153,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
   };
 
   const normalizedContent = replaceIndexedPersonMentions(event.content, event.tags);
-  const contentTags = extractHashtags(normalizedContent);
+  const contentTags = extractHashtagsFromContent(normalizedContent);
   const eventTags = event.tags
     .filter((tag) => tag[0]?.toLowerCase() === "t")
     .map((tag) => tag[1].toLowerCase());
@@ -295,8 +289,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
 export function eventHasTags(event: NostrEvent): boolean {
   const hasTTags = event.tags.some((tag) => tag[0]?.toLowerCase() === "t" && tag[1]);
   if (hasTTags) return true;
-  const hashtagRegex = /#(\w+)/g;
-  return hashtagRegex.test(event.content);
+  return extractHashtagsFromContent(event.content).length > 0;
 }
 
 export function extractAllTags(events: NostrEvent[]): string[] {
@@ -307,7 +300,7 @@ export function extractAllTags(events: NostrEvent[]): string[] {
       .filter((tag) => tag[0]?.toLowerCase() === "t" && tag[1])
       .forEach((tag) => allTags.add(tag[1].toLowerCase()));
 
-    const contentTags = extractHashtags(event.content);
+    const contentTags = extractHashtagsFromContent(event.content);
     contentTags.forEach((tag) => allTags.add(tag));
   });
 
