@@ -1,5 +1,8 @@
 import React from "react";
 import LinkifyIt from "linkify-it";
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import type { Person } from "@/types";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
@@ -8,8 +11,10 @@ import i18n from "@/lib/i18n/config";
 
 const TOKEN_REGEX =
   /(^|[^A-Za-z0-9_])(#([A-Za-z0-9_]+)|@([A-Za-z0-9._-]+(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?))/g;
-const MARKDOWN_INLINE_REGEX = /(\[[^\]]+\]\((https?:\/\/[^\s)]+)\)|\*\*([^*]+)\*\*|`([^`]+)`|\*([^*\n]+)\*)/g;
 const linkify = new LinkifyIt();
+
+const HASH_LINK_PREFIX = "https://nodex.local/hashtag/";
+const MENTION_LINK_PREFIX = "https://nodex.local/mention/";
 
 function formatPubkeyMention(pubkey: string): string {
   return pubkey.length === 64 ? `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}` : pubkey;
@@ -242,13 +247,8 @@ export function getStandaloneEmbeddableUrls(content: string): string[] {
   return [...urls];
 }
 
-function renderTokenizedText(
-  value: string,
-  baseKey: string,
-  onHashtagClick?: (tag: string) => void,
-  options?: LinkifyOptions
-): React.ReactNode[] {
-  const nodes: React.ReactNode[] = [];
+function preprocessMarkdownTokens(value: string): string {
+  const nodes: string[] = [];
   let tokenCursor = 0;
   TOKEN_REGEX.lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -266,9 +266,35 @@ function renderTokenizedText(
     }
 
     if (token.startsWith("#") && hashtag) {
-      nodes.push(
+      nodes.push(`[#${hashtag}](${HASH_LINK_PREFIX}${encodeURIComponent(hashtag)})`);
+    } else if (token.startsWith("@") && mention) {
+      const mentionIdentifier = normalizeMentionIdentifier(mention);
+      nodes.push(`[@${mentionIdentifier}](${MENTION_LINK_PREFIX}${encodeURIComponent(mentionIdentifier)})`);
+    } else {
+      nodes.push(value.slice(tokenStart, tokenStart + token.length));
+    }
+
+    tokenCursor = tokenStart + token.length;
+  }
+
+  if (tokenCursor < value.length) {
+    nodes.push(value.slice(tokenCursor));
+  }
+
+  return nodes.length > 0 ? nodes.join("") : value;
+}
+
+function renderMarkdownLine(
+  value: string,
+  baseKey: string,
+  onHashtagClick?: (tag: string) => void,
+  options?: LinkifyOptions
+): React.ReactNode[] {
+  const MarkdownAnchor = ({ href, children }: { href?: string; children?: React.ReactNode }) => {
+    if (href?.startsWith(HASH_LINK_PREFIX)) {
+      const hashtag = decodeURIComponent(href.slice(HASH_LINK_PREFIX.length));
+      return (
         <button
-          key={`${baseKey}-tag-${tokenStart}-${token}`}
           type="button"
           onClick={(event) => {
             event.stopPropagation();
@@ -282,17 +308,18 @@ function renderTokenizedText(
           #{hashtag}
         </button>
       );
-    } else if (token.startsWith("@") && mention) {
-      const mentionIdentifier = normalizeMentionIdentifier(mention);
+    }
+
+    if (href?.startsWith(MENTION_LINK_PREFIX)) {
+      const mentionIdentifier = decodeURIComponent(href.slice(MENTION_LINK_PREFIX.length));
       const resolvedPerson = resolveMentionPerson(mentionIdentifier, options?.people);
       const mentionLabel = resolvedPerson?.name
         || resolvedPerson?.displayName
         || formatPubkeyMention(mentionIdentifier);
 
       if (resolvedPerson && options?.onMentionClick) {
-        nodes.push(
+        return (
           <button
-            key={`${baseKey}-mention-${tokenStart}-${token}`}
             type="button"
             onClick={(event) => {
               event.stopPropagation();
@@ -300,174 +327,58 @@ function renderTokenizedText(
             }}
             className={TASK_INTERACTION_STYLES.inlineLink}
             aria-label={`Open user ${mentionLabel}`}
-            title={token}
+            title={`@${mentionIdentifier}`}
           >
             @{mentionLabel}
           </button>
         );
-      } else {
-        nodes.push(
-          <span
-            key={`${baseKey}-mention-${tokenStart}-${token}`}
-            className={TASK_INTERACTION_STYLES.inlineLink}
-            title={token}
-          >
-            @{mentionLabel}
-          </span>
-        );
       }
-    } else {
-      nodes.push(value.slice(tokenStart, tokenStart + token.length));
-    }
 
-    tokenCursor = tokenStart + token.length;
-  }
-
-  if (tokenCursor < value.length) {
-    nodes.push(value.slice(tokenCursor));
-  }
-
-  return nodes.length > 0 ? nodes : [value];
-}
-
-function renderAutoLinkedText(
-  value: string,
-  baseKey: string,
-  onHashtagClick?: (tag: string) => void,
-  options?: LinkifyOptions
-): React.ReactNode[] {
-  const matches = linkify.match(value) || [];
-  if (matches.length === 0) {
-    return renderTokenizedText(value, `${baseKey}-plain`, onHashtagClick, options);
-  }
-
-  const nodes: React.ReactNode[] = [];
-  let lastIndex = 0;
-  for (const match of matches) {
-    if (match.index > lastIndex) {
-      nodes.push(
-        ...renderTokenizedText(
-          value.slice(lastIndex, match.index),
-          `${baseKey}-text-${lastIndex}`,
-          onHashtagClick,
-          options
-        )
+      return (
+        <span className={TASK_INTERACTION_STYLES.inlineLink} title={`@${mentionIdentifier}`}>
+          @{mentionLabel}
+        </span>
       );
     }
 
-    nodes.push(
+    if (!href) {
+      return <>{children}</>;
+    }
+
+    return (
       <a
-        key={`${baseKey}-url-${match.index}`}
-        href={match.url}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
         onClick={(event) => event.stopPropagation()}
         className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`}
       >
-        {match.text}
+        {children}
       </a>
     );
-    lastIndex = match.lastIndex;
-  }
+  };
 
-  if (lastIndex < value.length) {
-    nodes.push(
-      ...renderTokenizedText(
-        value.slice(lastIndex),
-        `${baseKey}-tail-${lastIndex}`,
-        onHashtagClick,
-        options
-      )
-    );
-  }
+  const MarkdownCode = ({ children }: { children?: React.ReactNode }) => (
+    <code className="rounded bg-muted/60 px-1 py-0.5 text-[0.92em] font-mono">
+      {children}
+    </code>
+  );
 
-  return nodes;
-}
-
-function renderMarkdownLine(
-  value: string,
-  baseKey: string,
-  onHashtagClick?: (tag: string) => void,
-  options?: LinkifyOptions
-): React.ReactNode[] {
-  const nodes: React.ReactNode[] = [];
-  let cursor = 0;
-  MARKDOWN_INLINE_REGEX.lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = MARKDOWN_INLINE_REGEX.exec(value)) !== null) {
-    if (match.index > cursor) {
-      nodes.push(
-        ...renderAutoLinkedText(
-          value.slice(cursor, match.index),
-          `${baseKey}-seg-${cursor}`,
-          onHashtagClick,
-          options
-        )
-      );
-    }
-
-    const full = match[0] || "";
-    const markdownUrl = match[2];
-    const boldText = match[3];
-    const codeText = match[4];
-    const italicText = match[5];
-
-    if (full.startsWith("[") && markdownUrl) {
-      const labelEnd = full.indexOf("](");
-      const label = labelEnd > 0 ? full.slice(1, labelEnd) : markdownUrl;
-      nodes.push(
-        <a
-          key={`${baseKey}-md-link-${match.index}`}
-          href={markdownUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(event) => event.stopPropagation()}
-          className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`}
-        >
-          {label}
-        </a>
-      );
-    } else if (typeof boldText === "string") {
-      nodes.push(
-        <strong key={`${baseKey}-md-bold-${match.index}`}>
-          {renderAutoLinkedText(boldText, `${baseKey}-bold-${match.index}`, onHashtagClick, options)}
-        </strong>
-      );
-    } else if (typeof codeText === "string") {
-      nodes.push(
-        <code
-          key={`${baseKey}-md-code-${match.index}`}
-          className="rounded bg-muted/60 px-1 py-0.5 text-[0.92em] font-mono"
-        >
-          {codeText}
-        </code>
-      );
-    } else if (typeof italicText === "string") {
-      nodes.push(
-        <em key={`${baseKey}-md-italic-${match.index}`}>
-          {renderAutoLinkedText(italicText, `${baseKey}-italic-${match.index}`, onHashtagClick, options)}
-        </em>
-      );
-    } else {
-      nodes.push(full);
-    }
-
-    cursor = match.index + full.length;
-  }
-
-  if (cursor < value.length) {
-    nodes.push(
-      ...renderAutoLinkedText(
-        value.slice(cursor),
-        `${baseKey}-tail-${cursor}`,
-        onHashtagClick,
-        options
-      )
-    );
-  }
-
-  return nodes;
+  return [
+    (
+      <ReactMarkdown
+        key={`${baseKey}-md`}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
+        components={{
+          p: ({ children }) => <>{children}</>,
+          a: MarkdownAnchor,
+          code: MarkdownCode,
+        }}
+      >
+        {preprocessMarkdownTokens(value)}
+      </ReactMarkdown>
+    ),
+  ];
 }
 
 export function linkifyContent(
