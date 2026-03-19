@@ -153,6 +153,14 @@ export function buildEmptyScopeModel({
   }
 
   const scopeParts = [
+    activePeople.length > 0
+      ? t("tasks.empty.scope.people", {
+          people: formatNaturalList(
+            activePeople.map((person) => person.displayName || person.name || person.id),
+            locale
+          ),
+        })
+      : null,
     includedChannels.length > 0
       ? t(
           screenState === "loading"
@@ -165,14 +173,6 @@ export function buildEmptyScopeModel({
           ),
           }
         )
-      : null,
-    activePeople.length > 0
-      ? t("tasks.empty.scope.people", {
-          people: formatNaturalList(
-            activePeople.map((person) => person.displayName || person.name || person.id),
-            locale
-          ),
-        })
       : null,
     excludedChannels.length > 0
       ? t("tasks.empty.scope.excludedChannels", {

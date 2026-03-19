@@ -55,7 +55,7 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(
-      screen.getByText("No post yet in #ops, by Alice, excluding #frontend, on relay.one.")
+      screen.getByText("No post yet by Alice, in #ops, excluding #frontend, on relay.one.")
     ).toBeInTheDocument();
     expect(screen.getByText("Broaden the scope or break the silence.")).toBeInTheDocument();
   });
@@ -73,7 +73,7 @@ describe("FilteredEmptyState", () => {
 
     expect(document.querySelector('[data-empty-mode="footer"]')).toBeInTheDocument();
     expect(
-      screen.getByText("This is all in #ops, by Alice, excluding #frontend, on relay.one.")
+      screen.getByText("This is all by Alice, in #ops, excluding #frontend, on relay.one.")
     ).toBeInTheDocument();
     expect(screen.queryByText("No post yet")).not.toBeInTheDocument();
   });
@@ -120,7 +120,7 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(
-      screen.getByText('No post yet in #ops, by Alice, excluding #frontend, on relay.one, under "Parent Task".')
+      screen.getByText('No post yet by Alice, in #ops, excluding #frontend, on relay.one, under "Parent Task".')
     ).toBeInTheDocument();
 
     rerender(
@@ -135,7 +135,7 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(
-      screen.getByText('This is all in #ops, by Alice, excluding #frontend, on relay.one, under "Parent Task".')
+      screen.getByText('This is all by Alice, in #ops, excluding #frontend, on relay.one, under "Parent Task".')
     ).toBeInTheDocument();
   });
 
@@ -193,7 +193,7 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(
-      screen.getByText("Loading posts from #ops, by Alice, excluding #frontend, on relay.one.")
+      screen.getByText("Loading posts by Alice, from #ops, excluding #frontend, on relay.one.")
     ).toBeInTheDocument();
     expect(screen.getByText("One calm breath while we pull this in.")).toBeInTheDocument();
   });
