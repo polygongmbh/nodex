@@ -44,6 +44,7 @@ interface TaskItemProps {
   task: Task;
   filteredChildren: Task[];
   allTasks: Task[];
+  childrenMap?: Map<string | undefined, Task[]>;
   people?: Person[];
   currentUser?: Person;
   depth?: number;
@@ -75,6 +76,7 @@ export function TaskItem({
   task,
   filteredChildren,
   allTasks,
+  childrenMap,
   people = [],
   currentUser,
   depth = 0,
@@ -182,7 +184,10 @@ export function TaskItem({
   }, []);
 
   // Get ALL children from allTasks for total counts
-  const allChildren = allTasks.filter(t => t.parentId === task.id);
+  const allChildren = useMemo(
+    () => childrenMap?.get(task.id) || allTasks.filter((candidate) => candidate.parentId === task.id),
+    [allTasks, childrenMap, task.id]
+  );
   const allTaskChildren = allChildren.filter(c => c.taskType === "task");
   const allCommentChildren = allChildren.filter(c => c.taskType === "comment");
   
@@ -713,7 +718,9 @@ export function TaskItem({
               <>
                 {/* Comments first (maintain original order) */}
                 {commentsToShow.map((child) => {
-                  const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
+                  const childFilteredChildren = getFilteredChildrenFn
+                    ? getFilteredChildrenFn(child.id)
+                    : childrenMap?.get(child.id) || allTasks.filter((candidate) => candidate.parentId === child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible" 
                     ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
@@ -724,6 +731,7 @@ export function TaskItem({
                       task={child}
                       filteredChildren={childFilteredChildren}
                       allTasks={allTasks}
+                      childrenMap={childrenMap}
                       people={people}
                       currentUser={currentUser}
                       depth={depth + 1}
@@ -749,7 +757,9 @@ export function TaskItem({
                 })}
                 {/* Subtasks after - now sorted */}
                 {sortedTasksToShow.map((child) => {
-                  const childFilteredChildren = getFilteredChildrenFn ? getFilteredChildrenFn(child.id) : allTasks.filter(t => t.parentId === child.id);
+                  const childFilteredChildren = getFilteredChildrenFn
+                    ? getFilteredChildrenFn(child.id)
+                    : childrenMap?.get(child.id) || allTasks.filter((candidate) => candidate.parentId === child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible"
                     ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
@@ -760,6 +770,7 @@ export function TaskItem({
                       task={child}
                       filteredChildren={childFilteredChildren}
                       allTasks={allTasks}
+                      childrenMap={childrenMap}
                       people={people}
                       currentUser={currentUser}
                       depth={depth + 1}

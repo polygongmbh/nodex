@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
+import { startTransition, useDeferredValue, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X } from "lucide-react";
 import {
@@ -249,6 +249,7 @@ export function FeedView({
   };
 
   const { user } = useNDK();
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
@@ -282,11 +283,15 @@ export function FeedView({
     focusedTaskId,
     includeFocusedTask: true,
     hideClosedTasks: true,
-    searchQuery,
+    searchQuery: deferredSearchQuery,
     people,
     channels,
     channelMatchMode,
   });
+  const neutralChannels = useMemo(
+    () => channels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
+    [channels]
+  );
   const unfilteredFeedTasks = useTaskViewFiltering({
     allTasks,
     tasks,
@@ -295,7 +300,7 @@ export function FeedView({
     hideClosedTasks: true,
     searchQuery: "",
     people,
-    channels: channels.map((channel) => ({ ...channel, filterState: "neutral" })),
+    channels: neutralChannels,
     channelMatchMode,
   });
   const feedTasks = useMemo(
@@ -353,28 +358,36 @@ export function FeedView({
   const feedDisclosureKey = useMemo(
     () => [
       focusedTaskId || "",
-      searchQuery.trim().toLowerCase(),
+      deferredSearchQuery.trim().toLowerCase(),
       channelMatchMode,
       activeChannelFiltersKey,
       selectedPeopleKey,
     ].join("|"),
-    [activeChannelFiltersKey, channelMatchMode, focusedTaskId, searchQuery, selectedPeopleKey]
+    [activeChannelFiltersKey, channelMatchMode, deferredSearchQuery, focusedTaskId, selectedPeopleKey]
   );
   const [visibleEntryCount, setVisibleEntryCount] = useState(INITIAL_VISIBLE_FEED_ENTRIES);
+  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const peopleById = useMemo(
+    () =>
+      new Map(
+        people.map((person) => [person.id.toLowerCase(), person] as const)
+      ),
+    [people]
+  );
   const scopeModel = useMemo(
     () =>
       buildEmptyScopeModel({
         relays,
         channels,
         people,
-        searchQuery,
+        searchQuery: deferredSearchQuery,
         contextTaskTitle: focusedTaskId
-          ? allTasks.find((task) => task.id === focusedTaskId)?.content
+          ? taskById.get(focusedTaskId)?.content
           : "",
         locale: i18n.resolvedLanguage || i18n.language || "en",
         t,
       }),
-    [allTasks, channels, focusedTaskId, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
+    [channels, deferredSearchQuery, focusedTaskId, i18n.language, i18n.resolvedLanguage, people, relays, t, taskById]
   );
   const hasSourceFeedContent = allFeedEntries.length > 0;
   const shouldShowMobileScopeFallback =
@@ -543,7 +556,7 @@ export function FeedView({
     const breadcrumb: { id: string; text: string }[] = [];
     let current = task;
     while (current.parentId) {
-      const parent = allTasks.find(t => t.id === current.parentId);
+      const parent = taskById.get(current.parentId);
       if (parent) {
         breadcrumb.unshift({
           id: parent.id,
@@ -557,7 +570,7 @@ export function FeedView({
     return breadcrumb;
   };
 
-  const focusedTask = focusedTaskId ? allTasks.find(t => t.id === focusedTaskId) : null;
+  const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
@@ -588,7 +601,7 @@ export function FeedView({
     if (entry.type === "state-update") {
       const { task, update } = entry;
       const resolvedUpdateAuthor =
-        people.find((person) => person.id.toLowerCase() === update.authorPubkey.toLowerCase()) || task.author;
+        peopleById.get(update.authorPubkey.toLowerCase()) || task.author;
       const updateAuthorMeta = formatAuthorMetaParts({
         personId: resolvedUpdateAuthor.id,
         displayName: resolvedUpdateAuthor.displayName,
@@ -684,7 +697,7 @@ export function FeedView({
     const breadcrumb = getParentBreadcrumb(task);
     const isKeyboardFocused = keyboardFocusedTaskId === task.id;
     const isLockedUntilStart = isTaskLockedUntilStart(task);
-    const resolvedAuthor = people.find((person) => person.id === task.author.id) ?? task.author;
+    const resolvedAuthor = peopleById.get(task.author.id.toLowerCase()) ?? task.author;
     const authorMeta = formatAuthorMetaParts({
       personId: resolvedAuthor.id,
       displayName: resolvedAuthor.displayName,

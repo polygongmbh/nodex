@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useRef } from "react";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext, Nip99Metadata, TaskStatus } from "@/types";
 import { TaskItem } from "./TaskItem";
@@ -73,6 +73,7 @@ export function TaskTree({
 }: TaskTreeProps) {
   const { t, i18n } = useTranslation();
   const { user } = useNDK();
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const {
@@ -94,6 +95,8 @@ export function TaskTree({
   // Build a map of task ID to children
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const filteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
+  const activeRelays = useMemo(() => relays.filter((relay) => relay.isActive), [relays]);
 
   const sortContext: SortContext = useMemo(() => ({
     childrenMap,
@@ -166,13 +169,13 @@ export function TaskTree({
       return { directlyMatchingIds: new Set<string>(), ancestorIds: new Set<string>(), descendantIds: new Set<string>(), allVisibleIds: new Set<string>() };
     }
     
-    const directly = getDirectlyMatchingTasks(searchQuery, includedChannels, excludedChannels);
+    const directly = getDirectlyMatchingTasks(deferredSearchQuery, includedChannels, excludedChannels);
     const ancestors = getAncestors(directly);
     const descendants = getDescendants(directly);
     const allVisible = new Set([...directly, ...ancestors, ...descendants]);
     
     return { directlyMatchingIds: directly, ancestorIds: ancestors, descendantIds: descendants, allVisibleIds: allVisible };
-  }, [hasActiveFilters, searchQuery, includedChannels, excludedChannels, getDirectlyMatchingTasks, getAncestors, getDescendants]);
+  }, [deferredSearchQuery, hasActiveFilters, includedChannels, excludedChannels, getDirectlyMatchingTasks, getAncestors, getDescendants]);
 
   // Get visible tasks based on context and filters, sorted with priority system
   const baseVisibleTasks = useMemo(() => {
@@ -184,11 +187,10 @@ export function TaskTree({
       rootTasks = (childrenMap.get(undefined) || []).filter(task => task.taskType !== "comment");
     }
 
-    const filteredTaskIds = new Set(tasks.map(t => t.id));
     rootTasks = rootTasks.filter(task => filteredTaskIds.has(task.id));
 
     return sortTasks(rootTasks, sortContext);
-  }, [currentContextId, childrenMap, sortContext, tasks]);
+  }, [currentContextId, childrenMap, filteredTaskIds, sortContext]);
 
   const visibleTasks = useMemo(() => {
     let rootTasks = baseVisibleTasks;
@@ -206,14 +208,14 @@ export function TaskTree({
         relays,
         channels,
         people,
-        searchQuery,
+        searchQuery: deferredSearchQuery,
         contextTaskTitle: currentContextId
-          ? allTasks.find((task) => task.id === currentContextId)?.content
+          ? taskById.get(currentContextId)?.content
           : "",
         locale: i18n.resolvedLanguage || i18n.language || "en",
         t,
       }),
-    [allTasks, channels, currentContextId, i18n.language, i18n.resolvedLanguage, people, relays, searchQuery, t]
+    [channels, currentContextId, deferredSearchQuery, i18n.language, i18n.resolvedLanguage, people, relays, t, taskById]
   );
   const hasSourceTaskContent = baseVisibleTasks.length > 0;
   const shouldShowMobileScopeFallback =
@@ -277,7 +279,6 @@ export function TaskTree({
     let children = childrenMap.get(parentId) || [];
     
     // Filter by pre-filtered tasks from Index (relay/person filtering)
-    const filteredTaskIds = new Set(tasks.map(t => t.id));
     children = children.filter(child => filteredTaskIds.has(child.id));
     
     if (hasActiveFilters) {
@@ -287,7 +288,7 @@ export function TaskTree({
 
     // Sort using the new priority system
     return sortTasks(children, sortContext);
-  }, [childrenMap, hasActiveFilters, allVisibleIds, sortContext, tasks]);
+  }, [childrenMap, filteredTaskIds, hasActiveFilters, allVisibleIds, sortContext]);
 
   // Check if a task directly matches the filter (for determining fold state)
   const isTaskDirectMatch = useCallback((taskId: string): boolean => {
@@ -489,6 +490,7 @@ export function TaskTree({
                 task={task}
                 filteredChildren={getFilteredChildren(task.id)}
                 allTasks={allTasks}
+                childrenMap={childrenMap}
                 people={people}
                 currentUser={currentUser}
                 onSelect={handleSelectTask}
@@ -498,7 +500,7 @@ export function TaskTree({
                 isDirectMatchFn={isTaskDirectMatch}
                 getFilteredChildrenFn={getFilteredChildren}
                 hasActiveFilters={hasActiveFilters}
-                activeRelays={relays.filter(r => r.isActive)}
+                activeRelays={activeRelays}
                 isKeyboardFocused={keyboardFocusedTaskId === task.id}
                 onHashtagClick={onHashtagClick}
                 onAuthorClick={onAuthorClick}
