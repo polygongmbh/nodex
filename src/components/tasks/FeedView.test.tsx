@@ -607,7 +607,7 @@ describe("FeedView", () => {
     );
 
     expect(document.querySelector('[data-empty-mode="inline"]')).toBeInTheDocument();
-    expect(screen.getByText("No post yet matching “nomatchquery”.")).toBeInTheDocument();
+    expect(screen.getByText("No post yet on Demo, matching “nomatchquery”.")).toBeInTheDocument();
     expect(screen.queryByText("Broaden the scope or break the silence.")).not.toBeInTheDocument();
   });
 
@@ -628,8 +628,28 @@ describe("FeedView", () => {
     );
 
     expect(document.querySelector('[data-empty-mode="footer"]')).toBeInTheDocument();
-    expect(screen.getByText("This is all by Alice Doe.")).toBeInTheDocument();
+    expect(screen.getByText("This is all by Alice Doe, on Demo.")).toBeInTheDocument();
     expect(document.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
+  });
+
+  it("renders a scope footer hint at the end for a feed-only selection", () => {
+    const singleRelay = [makeRelay({ id: "feed-example", name: "Feed Example", url: "wss://feed.example.com" })];
+    render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={singleRelay}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(document.querySelector('[data-empty-mode="footer"]')).toBeInTheDocument();
+    expect(screen.getByText("This is all on feed.example.com.")).toBeInTheDocument();
   });
 
   it("keeps showing feed posts on mobile when the current scope has no matches", () => {

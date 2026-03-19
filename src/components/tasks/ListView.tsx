@@ -337,7 +337,7 @@ export function ListView({
   const shouldShowInlineEmptyHint =
     scopeModel.hasActiveFilters && listTasks.length === 0 && hasSourceListContent;
   const shouldShowScopeFooterHint =
-    scopeModel.hasActiveFilters && listTasks.length > 0;
+    scopeModel.hasSelectedScope && listTasks.length > 0;
   const shouldShowScreenEmptyState = listTasks.length === 0 && !shouldShowInlineEmptyHint;
   const {
     mediaItems,

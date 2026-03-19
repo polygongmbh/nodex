@@ -400,7 +400,7 @@ export function FeedView({
   const shouldShowInlineEmptyHint =
     !isMobile && scopeModel.hasActiveFilters && feedEntries.length === 0 && hasSourceFeedContent;
   const shouldShowScopeFooterHint =
-    !isMobile && scopeModel.hasActiveFilters && feedEntries.length > 0;
+    !isMobile && scopeModel.hasSelectedScope && feedEntries.length > 0;
   const shouldShowScreenEmptyState = feedEntries.length === 0 && !shouldShowMobileScopeFallback && !shouldShowInlineEmptyHint;
   const {
     mediaItems,

@@ -224,7 +224,7 @@ export function TaskTree({
   const shouldShowInlineEmptyHint =
     !isMobile && scopeModel.hasActiveFilters && visibleTasks.length === 0 && hasSourceTaskContent;
   const shouldShowScopeFooterHint =
-    !isMobile && scopeModel.hasActiveFilters && visibleTasks.length > 0;
+    !isMobile && scopeModel.hasSelectedScope && visibleTasks.length > 0;
   const shouldShowScreenEmptyState =
     visibleTasks.length === 0 && !shouldShowMobileScopeFallback && !shouldShowInlineEmptyHint;
 

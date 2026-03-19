@@ -96,7 +96,11 @@ export function FilteredEmptyState({
     );
   }
 
-  if (scopeModel.hasActiveFilters) {
+  const shouldRenderScopedState = mode === "footer"
+    ? scopeModel.hasSelectedScope
+    : scopeModel.hasActiveFilters;
+
+  if (shouldRenderScopedState) {
     if (mode === "mobile") {
       return (
         <div

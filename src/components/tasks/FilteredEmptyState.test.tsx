@@ -21,6 +21,7 @@ const relays: Relay[] = [
     connectionStatus: "connected",
   },
 ];
+const singleRelay: Relay[] = [relays[0]];
 
 const channels: Channel[] = [
   { id: "ops", name: "ops", filterState: "included" },
@@ -75,6 +76,35 @@ describe("FilteredEmptyState", () => {
       screen.getByText("This is all in #ops, by Alice, excluding #frontend, on relay.one.")
     ).toBeInTheDocument();
     expect(screen.queryByText("No post yet")).not.toBeInTheDocument();
+  });
+
+  it("renders a scope footer sentence for a feed-only selection", () => {
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={singleRelay}
+        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+        people={[{ ...people[0], isSelected: false }]}
+        mode="footer"
+      />
+    );
+
+    expect(screen.getByText("This is all on relay.one.")).toBeInTheDocument();
+  });
+
+  it("keeps the default feed empty screen when only a relay is selected", () => {
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={singleRelay}
+        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+        people={[{ ...people[0], isSelected: false }]}
+      />
+    );
+
+    expect(screen.getByText("Nobody here but us chickens.")).toBeInTheDocument();
+    expect(screen.getByText("Be the first to post.")).toBeInTheDocument();
+    expect(screen.queryByText("No post yet on relay.one.")).not.toBeInTheDocument();
   });
 
   it("appends immediate parent context to empty and footer scope sentences", () => {

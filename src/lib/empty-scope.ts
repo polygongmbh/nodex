@@ -16,6 +16,7 @@ interface BuildEmptyScopeModelParams {
 
 export interface EmptyScopeModel {
   hasActiveFilters: boolean;
+  hasSelectedScope: boolean;
   scopeDescription: string | null;
   filteredSentence: string | null;
   scopeFooterSentence: string | null;
@@ -121,16 +122,25 @@ export function buildEmptyScopeModel({
         : "default";
   const hasRelayFilter = activeRelays.length > 0 && activeRelays.length < relays.length;
   const activeRelayLabels = activeRelays.map((relay) => formatRelayLabel(relay)).filter(Boolean);
+  const hasRelaySelection = activeRelayLabels.length > 0;
   const hasActiveFilters =
     Boolean(trimmedSearchQuery) ||
     hasRelayFilter ||
     includedChannels.length > 0 ||
     excludedChannels.length > 0 ||
     activePeople.length > 0;
+  const hasSelectedScope =
+    Boolean(trimmedSearchQuery) ||
+    hasRelaySelection ||
+    includedChannels.length > 0 ||
+    excludedChannels.length > 0 ||
+    activePeople.length > 0 ||
+    Boolean(formattedContextTitle);
 
-  if (!hasActiveFilters) {
+  if (!hasSelectedScope) {
     return {
       hasActiveFilters: false,
+      hasSelectedScope: false,
       scopeDescription: null,
       filteredSentence: null,
       scopeFooterSentence: null,
@@ -172,7 +182,7 @@ export function buildEmptyScopeModel({
           ),
         })
       : null,
-    hasRelayFilter && activeRelayLabels.length > 0
+    hasRelaySelection
       ? t("tasks.empty.scope.relays", {
           relays: formatNaturalList(activeRelayLabels, locale),
         })
@@ -207,7 +217,8 @@ export function buildEmptyScopeModel({
     : t("tasks.empty.error.none");
 
   return {
-    hasActiveFilters: true,
+    hasActiveFilters,
+    hasSelectedScope: true,
     scopeDescription,
     filteredSentence,
     scopeFooterSentence,
