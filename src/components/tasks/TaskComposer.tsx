@@ -2084,24 +2084,6 @@ export function TaskComposer({
           >
             <AtSign className="w-4 h-4 text-primary" />
           </button>
-          {uploadEnabled && (
-            <>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-                aria-label={t("composer.attachments.add")}
-                title={t("composer.attachments.add")}
-              >
-                <Paperclip className="w-4 h-4 text-primary" />
-              </button>
-              <span className="hidden text-xs text-muted-foreground sm:inline">
-                {isDraggingFilesOverComposer
-                  ? t("composer.attachments.dropFiles")
-                  : t("composer.attachments.dropOrPasteHint")}
-              </span>
-            </>
-          )}
           <button
             type="button"
             onClick={() => setShowLocationControls((previous) => !previous)}
@@ -2116,6 +2098,24 @@ export function TaskComposer({
           >
             <MapPin className="w-4 h-4 text-primary" />
           </button>
+          {uploadEnabled && (
+            <>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+                aria-label={t("composer.attachments.add")}
+                title={t("composer.attachments.add")}
+              >
+                <Paperclip className="w-4 h-4 text-primary" />
+              </button>
+              <span className="hidden text-xs text-muted-foreground xl:inline">
+                {isDraggingFilesOverComposer
+                  ? t("composer.attachments.dropFiles")
+                  : t("composer.attachments.dropOrPasteHint")}
+              </span>
+            </>
+          )}
         </div>
 
         <div className="ml-auto flex min-w-0 flex-col gap-1 sm:items-end">
