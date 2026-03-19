@@ -16,6 +16,7 @@ import {
 import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
+import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
 import type { NDKRelayStatus } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { RelayTransportCallbacks } from "./use-relay-transport";
@@ -86,6 +87,9 @@ export function usePublish(
       if (kind === NostrEventKind.TextNote || kind === NostrEventKind.Task) {
         extractHashtagsFromContent(content).forEach((hashtag) => {
           eventTags.push(["t", hashtag]);
+        });
+        extractNostrReferenceTagsFromContent(content).forEach((tag) => {
+          eventTags.push(tag);
         });
       }
 

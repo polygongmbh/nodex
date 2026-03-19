@@ -25,6 +25,7 @@ import {
   parseNip94AttachmentMetadataTags,
 } from "@/lib/attachments";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
+import { extractNostrContentReferences } from "@/lib/nostr/content-references";
 import { canPubkeyUpdateTask } from "@/domain/content/task-permissions";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { getRelayIdFromUrl } from "./relay-identity";
@@ -186,6 +187,8 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     .filter((tag) => tag[0]?.toLowerCase() === "p" && tag[1])
     .map((tag) => tag[1].toLowerCase());
   const mentionedHandles = extractAssignedMentionsFromContent(normalizedContent);
+  const referencedProfilePubkeys = extractNostrContentReferences(normalizedContent)
+    .flatMap((reference) => (reference.type === "profile" ? [reference.pubkey] : []));
   const priority = parsePriorityTag(event.tags);
   const imetaAttachments = event.tags
     .map((tag) => parseImetaTag(tag))
@@ -270,7 +273,7 @@ export function nostrEventToTask(event: NostrEventWithRelay): Task {
     dueDate,
     dueTime: dueTimeTag?.[1] || undefined,
     dateType,
-    mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles])),
+    mentions: Array.from(new Set([...mentionedPubkeys, ...mentionedHandles, ...referencedProfilePubkeys])),
     assigneePubkeys: isTask ? Array.from(new Set(mentionedPubkeys)) : undefined,
     priority,
     attachments: attachments.length > 0 ? attachments : undefined,

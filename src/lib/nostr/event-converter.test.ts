@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { nip19 } from "nostr-tools";
 import { Task } from "@/types";
 import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
 import { mergeTasks } from "@/domain/content/task-merge";
@@ -124,6 +125,19 @@ describe("nostrEventToTask", () => {
     
     expect(task.tags).toContain("urgent");
     expect(task.tags).toContain("bug");
+  });
+
+  it("extracts profile pubkeys from NIP-19/NIP-27 references in content", () => {
+    const pubkey = "a".repeat(64);
+    const npub = nip19.npubEncode(pubkey);
+    const event: NostrEventWithRelay = {
+      ...baseEvent,
+      content: `Assign to nostr:${npub}`,
+    };
+
+    const task = nostrEventToTask(event);
+
+    expect(task.mentions).toContain(pubkey);
   });
 
   it("extracts tags from event T tags case-insensitively", () => {

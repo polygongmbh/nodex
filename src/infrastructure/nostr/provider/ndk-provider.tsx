@@ -29,6 +29,7 @@ import { getConfiguredDefaultRelays } from "@/infrastructure/nostr/default-relay
 import { isRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
+import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
 import {
   hasNostrExtension,
@@ -1356,6 +1357,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       if (kind === NostrEventKind.TextNote || kind === NostrEventKind.Task) {
         extractHashtagsFromContent(content).forEach((hashtag) => {
           eventTags.push(["t", hashtag]);
+        });
+        extractNostrReferenceTagsFromContent(content).forEach((tag) => {
+          eventTags.push(tag);
         });
       }
       
