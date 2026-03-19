@@ -74,6 +74,9 @@ import {
   FeedPageUiConfigProvider,
   type FeedPageUiConfig,
 } from "@/features/feed-page/views/feed-page-ui-config";
+import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
+import { createFeedInteractionMiddlewareSkeleton } from "@/features/feed-page/interactions/feed-interaction-middleware-skeleton";
+import { createFeedInteractionBus } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
@@ -689,6 +692,13 @@ const Index = () => {
     }),
     [completionSoundEnabled, handleToggleCompletionSound]
   );
+  const feedInteractionBus = useMemo(
+    () =>
+      createFeedInteractionBus({
+        middlewares: createFeedInteractionMiddlewareSkeleton(),
+      }),
+    []
+  );
 
   const mobileViewState = useMemo(
     () => ({
@@ -950,9 +960,30 @@ const Index = () => {
   // Mobile layout
   if (isMobile) {
     return (
+      <FeedInteractionProvider bus={feedInteractionBus}>
+        <FeedPageUiConfigProvider value={uiConfig}>
+          <FeedPageMobileShell
+            controller={mobileController}
+            authModalProps={{
+              isOpen: isAuthModalOpen,
+              onClose: handleCloseAuthModal,
+              initialStep: authModalInitialStep,
+            }}
+            onboardingOverlays={onboardingOverlays}
+          />
+        </FeedPageUiConfigProvider>
+      </FeedInteractionProvider>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <FeedInteractionProvider bus={feedInteractionBus}>
       <FeedPageUiConfigProvider value={uiConfig}>
-        <FeedPageMobileShell
-          controller={mobileController}
+        <FeedPageDesktopShell
+          header={desktopHeader}
+          content={desktopContent}
+          shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
           authModalProps={{
             isOpen: isAuthModalOpen,
             onClose: handleCloseAuthModal,
@@ -961,24 +992,7 @@ const Index = () => {
           onboardingOverlays={onboardingOverlays}
         />
       </FeedPageUiConfigProvider>
-    );
-  }
-
-  // Desktop layout
-  return (
-    <FeedPageUiConfigProvider value={uiConfig}>
-      <FeedPageDesktopShell
-        header={desktopHeader}
-        content={desktopContent}
-        shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-        authModalProps={{
-          isOpen: isAuthModalOpen,
-          onClose: handleCloseAuthModal,
-          initialStep: authModalInitialStep,
-        }}
-        onboardingOverlays={onboardingOverlays}
-      />
-    </FeedPageUiConfigProvider>
+    </FeedInteractionProvider>
   );
 };
 
