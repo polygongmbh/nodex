@@ -179,7 +179,7 @@ export function useIndexOnboarding({
     setActiveRelayIds(new Set());
     setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
     setPeople((prev) => mapPeopleSelection(prev, () => false));
-  }, [channels, isMobile, relays, setActiveRelayIds, setChannelFilterStates, setCurrentView, setFocusedTaskId, setPeople, setSearchQuery]);
+  }, [channels, isMobile, setActiveRelayIds, setChannelFilterStates, setCurrentView, setFocusedTaskId, setPeople, setSearchQuery]);
 
   const handleOnboardingActiveSectionChange = useCallback((section: OnboardingSectionId | null) => {
     setActiveOnboardingSection(section);
