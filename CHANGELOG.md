@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 - Tree/feed priority chips now open the priority dropdown directly on click instead of opening an intermediate popover first.
+- Content rendering now uses a markdown parser pipeline (`react-markdown` with GFM) while preserving clickable `#channel` and `@mention` behavior, and publish/ingest parsing now uses shared extraction so NIP-19/NIP-27 references in content are recognized more exhaustively for Nostr tag/mention handling.
 
 ## [2.3.0] - 2026-03-18
 Minor release for broad feed/task interaction upgrades, filtering reliability fixes, and kanban drag-and-drop usability improvements (3241 lines changed since `origin/main`).
