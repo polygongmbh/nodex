@@ -85,7 +85,6 @@ import {
   createFeedInteractionBus,
   type FeedInteractionHandlerMap,
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
-import { FeedViewInteractionProvider } from "@/features/feed-page/interactions/feed-view-interaction-context";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
@@ -702,30 +701,6 @@ const Index = () => {
     },
     [dispatchFeedInteraction]
   );
-  const feedViewInteractionModel = useMemo(
-    () => ({
-      forceShowComposer: forceShowComposeForGuide,
-      onFocusSidebar: () => {
-        void dispatchFeedInteraction({ type: "ui.focusSidebar" });
-      },
-      onSignInClick: () => {
-        void dispatchFeedInteraction({ type: "ui.openAuthModal" });
-      },
-      onHashtagClick: (tag: string) => {
-        void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-      },
-      onAuthorClick: (author: Task["author"]) => {
-        void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
-      },
-      onClearChannelFilter: (id: string) => {
-        void dispatchFeedInteraction({ type: "filter.clearChannel", channelId: id });
-      },
-      onClearPersonFilter: (id: string) => {
-        void dispatchFeedInteraction({ type: "filter.clearPerson", personId: id });
-      },
-    }),
-    [dispatchFeedInteraction, forceShowComposeForGuide]
-  );
   const feedTaskViewModel: FeedTaskViewModel = useMemo(
     () => ({
       tasks: filteredTasks,
@@ -1002,19 +977,17 @@ const Index = () => {
     return (
       <FeedInteractionProvider bus={feedInteractionBus}>
         <FeedPageUiConfigProvider value={uiConfig}>
-          <FeedViewInteractionProvider value={feedViewInteractionModel}>
-            <FeedTaskViewModelProvider value={feedTaskViewModel}>
-              <FeedPageMobileShell
-                controller={mobileController}
-                authModalProps={{
-                  isOpen: isAuthModalOpen,
-                  onClose: handleCloseAuthModal,
-                  initialStep: authModalInitialStep,
-                }}
-                onboardingOverlays={onboardingOverlays}
-              />
-            </FeedTaskViewModelProvider>
-          </FeedViewInteractionProvider>
+          <FeedTaskViewModelProvider value={feedTaskViewModel}>
+            <FeedPageMobileShell
+              controller={mobileController}
+              authModalProps={{
+                isOpen: isAuthModalOpen,
+                onClose: handleCloseAuthModal,
+                initialStep: authModalInitialStep,
+              }}
+              onboardingOverlays={onboardingOverlays}
+            />
+          </FeedTaskViewModelProvider>
         </FeedPageUiConfigProvider>
       </FeedInteractionProvider>
     );
@@ -1024,21 +997,19 @@ const Index = () => {
   return (
     <FeedInteractionProvider bus={feedInteractionBus}>
       <FeedPageUiConfigProvider value={uiConfig}>
-        <FeedViewInteractionProvider value={feedViewInteractionModel}>
-          <FeedTaskViewModelProvider value={feedTaskViewModel}>
-            <FeedPageDesktopShell
-              header={desktopHeader}
-              content={desktopContent}
-              shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-              authModalProps={{
-                isOpen: isAuthModalOpen,
-                onClose: handleCloseAuthModal,
-                initialStep: authModalInitialStep,
-              }}
-              onboardingOverlays={onboardingOverlays}
-            />
-          </FeedTaskViewModelProvider>
-        </FeedViewInteractionProvider>
+        <FeedTaskViewModelProvider value={feedTaskViewModel}>
+          <FeedPageDesktopShell
+            header={desktopHeader}
+            content={desktopContent}
+            shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+            authModalProps={{
+              isOpen: isAuthModalOpen,
+              onClose: handleCloseAuthModal,
+              initialStep: authModalInitialStep,
+            }}
+            onboardingOverlays={onboardingOverlays}
+          />
+        </FeedTaskViewModelProvider>
       </FeedPageUiConfigProvider>
     </FeedInteractionProvider>
   );

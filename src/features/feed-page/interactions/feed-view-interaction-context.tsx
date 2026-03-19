@@ -1,5 +1,7 @@
-import { createContext, useContext, type PropsWithChildren } from "react";
+import { useCallback, useMemo } from "react";
 import type { Person } from "@/types";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useFeedInteractionDispatch } from "./feed-interaction-context";
 
 export interface FeedViewInteractionModel {
   forceShowComposer: boolean;
@@ -11,28 +13,47 @@ export interface FeedViewInteractionModel {
   onClearPersonFilter: (id: string) => void;
 }
 
-const noop = () => {};
-
-const defaultModel: FeedViewInteractionModel = {
-  forceShowComposer: false,
-  onFocusSidebar: noop,
-  onSignInClick: noop,
-  onHashtagClick: noop,
-  onAuthorClick: noop,
-  onClearChannelFilter: noop,
-  onClearPersonFilter: noop,
-};
-
-const FeedViewInteractionContext = createContext<FeedViewInteractionModel>(defaultModel);
-
-interface FeedViewInteractionProviderProps extends PropsWithChildren {
-  value: FeedViewInteractionModel;
-}
-
-export function FeedViewInteractionProvider({ value, children }: FeedViewInteractionProviderProps) {
-  return <FeedViewInteractionContext.Provider value={value}>{children}</FeedViewInteractionContext.Provider>;
-}
-
 export function useFeedViewInteractionModel(): FeedViewInteractionModel {
-  return useContext(FeedViewInteractionContext);
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { forceShowComposer = false } = useFeedTaskViewModel();
+
+  const onFocusSidebar = useCallback(() => {
+    void dispatchFeedInteraction({ type: "ui.focusSidebar" });
+  }, [dispatchFeedInteraction]);
+  const onSignInClick = useCallback(() => {
+    void dispatchFeedInteraction({ type: "ui.openAuthModal" });
+  }, [dispatchFeedInteraction]);
+  const onHashtagClick = useCallback((tag: string) => {
+    void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+  }, [dispatchFeedInteraction]);
+  const onAuthorClick = useCallback((author: Person) => {
+    void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
+  }, [dispatchFeedInteraction]);
+  const onClearChannelFilter = useCallback((id: string) => {
+    void dispatchFeedInteraction({ type: "filter.clearChannel", channelId: id });
+  }, [dispatchFeedInteraction]);
+  const onClearPersonFilter = useCallback((id: string) => {
+    void dispatchFeedInteraction({ type: "filter.clearPerson", personId: id });
+  }, [dispatchFeedInteraction]);
+
+  return useMemo(
+    () => ({
+      forceShowComposer,
+      onFocusSidebar,
+      onSignInClick,
+      onHashtagClick,
+      onAuthorClick,
+      onClearChannelFilter,
+      onClearPersonFilter,
+    }),
+    [
+      forceShowComposer,
+      onFocusSidebar,
+      onSignInClick,
+      onHashtagClick,
+      onAuthorClick,
+      onClearChannelFilter,
+      onClearPersonFilter,
+    ]
+  );
 }
