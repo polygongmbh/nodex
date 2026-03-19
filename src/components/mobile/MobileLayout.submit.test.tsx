@@ -72,30 +72,34 @@ describe("MobileLayout submit wiring", () => {
 
     render(
       <MobileLayout
-        relays={relays}
-        channels={channels}
-        people={people}
-        tasks={tasks}
-        allTasks={tasks}
-        searchQuery=""
-        focusedTaskId="parent-123"
-        currentUser={people[0]}
-        isSignedIn={true}
-        currentView="feed"
-        onViewChange={() => {}}
-        onSearchChange={() => {}}
-        onNewTask={onNewTask}
-        onToggleComplete={() => {}}
-        onStatusChange={() => {}}
-        onFocusTask={() => {}}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
-        onHashtagClick={() => {}}
+        viewState={{
+          relays,
+          channels,
+          people,
+          tasks,
+          allTasks: tasks,
+          searchQuery: "",
+          focusedTaskId: "parent-123",
+          currentUser: people[0],
+          isSignedIn: true,
+          currentView: "feed",
+        }}
+        actions={{
+          onViewChange: () => {},
+          onSearchChange: () => {},
+          onNewTask,
+          onToggleComplete: () => {},
+          onStatusChange: () => {},
+          onFocusTask: () => {},
+          onRelayToggle: () => {},
+          onChannelToggle: () => {},
+          onPersonToggle: () => {},
+          onAddRelay: () => {},
+          onRemoveRelay: () => {},
+          onSignInClick: () => {},
+          onGuideClick: () => {},
+          onHashtagClick: () => {},
+        }}
       />
     );
 

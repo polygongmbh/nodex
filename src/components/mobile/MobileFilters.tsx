@@ -17,6 +17,7 @@ import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
+import { useFeedPageUiConfig } from "@/features/feed-page/views/feed-page-ui-config";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -32,8 +33,6 @@ interface MobileFiltersProps {
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
   onGuideClick: () => void;
-  completionSoundEnabled?: boolean;
-  onToggleCompletionSound?: () => void;
 }
 
 const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -59,10 +58,9 @@ export function MobileFilters({
   onRemoveRelay,
   onSignInClick,
   onGuideClick,
-  completionSoundEnabled = true,
-  onToggleCompletionSound = () => {},
 }: MobileFiltersProps) {
   const { t } = useTranslation();
+  const { completionSoundEnabled, onToggleCompletionSound } = useFeedPageUiConfig();
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;

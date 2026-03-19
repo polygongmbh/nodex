@@ -60,9 +60,20 @@ import {
 } from "@/types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { FeedPageDesktopShell } from "@/features/feed-page/views/FeedPageDesktopShell";
-import { FeedPageMobileShell } from "@/features/feed-page/views/FeedPageMobileShell";
+import {
+  FeedPageDesktopShell,
+  type FeedPageDesktopContentConfig,
+  type FeedPageDesktopHeaderConfig,
+} from "@/features/feed-page/views/FeedPageDesktopShell";
+import {
+  FeedPageMobileShell,
+  type FeedPageMobileController,
+} from "@/features/feed-page/views/FeedPageMobileShell";
 import { FeedPageViewPane } from "@/features/feed-page/views/FeedPageViewPane";
+import {
+  FeedPageUiConfigProvider,
+  type FeedPageUiConfig,
+} from "@/features/feed-page/views/feed-page-ui-config";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
@@ -572,41 +583,78 @@ const Index = () => {
     };
   }, [publishEvent, user?.pubkey]);
 
-  const viewProps = {
-    tasks: filteredTasks,
-    allTasks: allTasks,
-    relays: relaysWithActiveState,
-    channels: channelsWithState,
-    channelMatchMode,
-    composeChannels: composeChannelsWithState,
-    people,
-    currentUser,
-    searchQuery,
-    onSearchChange: setSearchQuery,
-    onNewTask: handleNewTask,
-    onToggleComplete: handleToggleComplete,
-    focusedTaskId,
-    onFocusTask: setFocusedTaskId,
-    onStatusChange: handleStatusChange,
-    onListingStatusChange: handleListingStatusChange,
-    onFocusSidebar: handleFocusSidebar,
-    onSignInClick: handleOpenAuthModal,
-    onHashtagClick: handleHashtagExclusive,
-    forceShowComposer: forceShowComposeForGuide,
-    onAuthorClick: handleAuthorClick,
-    onClearChannelFilter: handleChannelClear,
-    onClearPersonFilter: handlePersonClear,
-    onUndoPendingPublish: handleUndoPendingPublish,
-    isPendingPublishTask,
-    composeRestoreRequest,
-    mentionRequest,
-    composeGuideActivationSignal,
-    onUpdateDueDate: handleDueDateChange,
-    onUpdatePriority: handlePriorityChange,
-    isInteractionBlocked,
-    onInteractionBlocked: handleBlockedInteractionAttempt,
-    isHydrating,
-  };
+  const viewProps = useMemo(
+    () => ({
+      tasks: filteredTasks,
+      allTasks,
+      relays: relaysWithActiveState,
+      channels: channelsWithState,
+      channelMatchMode,
+      composeChannels: composeChannelsWithState,
+      people,
+      currentUser,
+      searchQuery,
+      onSearchChange: setSearchQuery,
+      onNewTask: handleNewTask,
+      onToggleComplete: handleToggleComplete,
+      focusedTaskId,
+      onFocusTask: setFocusedTaskId,
+      onStatusChange: handleStatusChange,
+      onListingStatusChange: handleListingStatusChange,
+      onFocusSidebar: handleFocusSidebar,
+      onSignInClick: handleOpenAuthModal,
+      onHashtagClick: handleHashtagExclusive,
+      forceShowComposer: forceShowComposeForGuide,
+      onAuthorClick: handleAuthorClick,
+      onClearChannelFilter: handleChannelClear,
+      onClearPersonFilter: handlePersonClear,
+      onUndoPendingPublish: handleUndoPendingPublish,
+      isPendingPublishTask,
+      composeRestoreRequest,
+      mentionRequest,
+      composeGuideActivationSignal,
+      onUpdateDueDate: handleDueDateChange,
+      onUpdatePriority: handlePriorityChange,
+      isInteractionBlocked,
+      onInteractionBlocked: handleBlockedInteractionAttempt,
+      isHydrating,
+    }),
+    [
+      filteredTasks,
+      allTasks,
+      relaysWithActiveState,
+      channelsWithState,
+      channelMatchMode,
+      composeChannelsWithState,
+      people,
+      currentUser,
+      searchQuery,
+      setSearchQuery,
+      handleNewTask,
+      handleToggleComplete,
+      focusedTaskId,
+      setFocusedTaskId,
+      handleStatusChange,
+      handleListingStatusChange,
+      handleFocusSidebar,
+      handleOpenAuthModal,
+      handleHashtagExclusive,
+      forceShowComposeForGuide,
+      handleAuthorClick,
+      handleChannelClear,
+      handlePersonClear,
+      handleUndoPendingPublish,
+      isPendingPublishTask,
+      composeRestoreRequest,
+      mentionRequest,
+      composeGuideActivationSignal,
+      handleDueDateChange,
+      handlePriorityChange,
+      isInteractionBlocked,
+      handleBlockedInteractionAttempt,
+      isHydrating,
+    ]
+  );
 
   const onboardingOverlays = (
     <>
@@ -634,80 +682,129 @@ const Index = () => {
     </>
   );
 
-  // Mobile layout
-  if (isMobile) {
-    return (
-      <FeedPageMobileShell
-        mobileLayoutProps={{
-          relays: relaysWithActiveState,
-          channels: channelsWithState,
-          channelMatchMode,
-          people,
-          tasks: filteredTasks,
-          allTasks,
-          searchQuery,
-          focusedTaskId,
-          currentUser,
-          hasCachedCurrentUserProfileMetadata,
-          isSignedIn: Boolean(user),
-          currentView,
-          onViewChange: setCurrentView,
-          onSearchChange: setSearchQuery,
-          onNewTask: handleNewTask,
-          onToggleComplete: handleToggleComplete,
-          onStatusChange: handleStatusChange,
-          onFocusTask: setFocusedTaskId,
-          onRelayToggle: handleRelayToggle,
-          onChannelToggle: handleChannelToggle,
-          onPersonToggle: handlePersonToggle,
-          onChannelMatchModeChange: handleChannelMatchModeChange,
-          onAddRelay: handleAddRelay,
-          onRemoveRelay: handleRemoveRelay,
-          onSignInClick: handleOpenAuthModal,
-          onGuideClick: handleOpenGuide,
-          completionSoundEnabled,
-          onToggleCompletionSound: handleToggleCompletionSound,
-          onHashtagClick: handleHashtagExclusive,
-          forceComposeMode: forceShowComposeForGuide,
-          onAuthorClick: handleAuthorClick,
-          onUndoPendingPublish: handleUndoPendingPublish,
-          isPendingPublishTask,
-          composeRestoreRequest,
-          mentionRequest,
-          failedPublishDrafts,
-          visibleFailedPublishDrafts,
-          selectedPublishableRelayIds,
-          onRetryFailedPublish: handleRetryFailedPublish,
-          onRepostFailedPublish: handleRepostFailedPublish,
-          onDismissFailedPublish: handleDismissFailedPublish,
-          onDismissAllFailedPublish: handleDismissAllFailedPublish,
-          isInteractionBlocked,
-          onInteractionBlocked: handleBlockedInteractionAttempt,
-          isHydrating,
-          isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
-          activeOnboardingStepId,
-          isManageRouteActive,
-          onManageRouteChange: setManageRouteActive,
-        }}
-        authModalProps={{
-          isOpen: isAuthModalOpen,
-          onClose: handleCloseAuthModal,
-          initialStep: authModalInitialStep,
-        }}
-        onboardingOverlays={onboardingOverlays}
-      />
-    );
-  }
+  const uiConfig: FeedPageUiConfig = useMemo(
+    () => ({
+      completionSoundEnabled,
+      onToggleCompletionSound: handleToggleCompletionSound,
+    }),
+    [completionSoundEnabled, handleToggleCompletionSound]
+  );
 
-  // Desktop layout
-  return (
-    <FeedPageDesktopShell
-      currentView={currentView}
-      onViewChange={setCurrentView}
-      onSignInClick={handleOpenAuthModal}
-      completionSoundEnabled={completionSoundEnabled}
-      onToggleCompletionSound={handleToggleCompletionSound}
-      sidebarProps={{
+  const mobileViewState = useMemo(
+    () => ({
+      relays: relaysWithActiveState,
+      channels: channelsWithState,
+      channelMatchMode,
+      people,
+      tasks: filteredTasks,
+      allTasks,
+      searchQuery,
+      focusedTaskId,
+      currentUser,
+      hasCachedCurrentUserProfileMetadata,
+      isSignedIn: Boolean(user),
+      currentView,
+      isInteractionBlocked,
+      isHydrating,
+      isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
+      activeOnboardingStepId,
+      isManageRouteActive,
+    }),
+    [
+      relaysWithActiveState,
+      channelsWithState,
+      channelMatchMode,
+      people,
+      filteredTasks,
+      allTasks,
+      searchQuery,
+      focusedTaskId,
+      currentUser,
+      hasCachedCurrentUserProfileMetadata,
+      user,
+      currentView,
+      isInteractionBlocked,
+      isHydrating,
+      isOnboardingOpen,
+      isAuthModalOpen,
+      activeOnboardingStepId,
+      isManageRouteActive,
+    ]
+  );
+
+  const mobileActions = useMemo(
+    () => ({
+      onViewChange: setCurrentView,
+      onSearchChange: setSearchQuery,
+      onNewTask: handleNewTask,
+      onToggleComplete: handleToggleComplete,
+      onStatusChange: handleStatusChange,
+      onFocusTask: setFocusedTaskId,
+      onRelayToggle: handleRelayToggle,
+      onChannelToggle: handleChannelToggle,
+      onPersonToggle: handlePersonToggle,
+      onChannelMatchModeChange: handleChannelMatchModeChange,
+      onAddRelay: handleAddRelay,
+      onRemoveRelay: handleRemoveRelay,
+      onSignInClick: handleOpenAuthModal,
+      onGuideClick: handleOpenGuide,
+      onHashtagClick: handleHashtagExclusive,
+      onAuthorClick: handleAuthorClick,
+      onInteractionBlocked: handleBlockedInteractionAttempt,
+      onManageRouteChange: setManageRouteActive,
+    }),
+    [
+      setCurrentView,
+      setSearchQuery,
+      handleNewTask,
+      handleToggleComplete,
+      handleStatusChange,
+      setFocusedTaskId,
+      handleRelayToggle,
+      handleChannelToggle,
+      handlePersonToggle,
+      handleChannelMatchModeChange,
+      handleAddRelay,
+      handleRemoveRelay,
+      handleOpenAuthModal,
+      handleOpenGuide,
+      handleHashtagExclusive,
+      handleAuthorClick,
+      handleBlockedInteractionAttempt,
+      setManageRouteActive,
+    ]
+  );
+
+  const mobileComposer = useMemo(
+    () => ({
+      forceComposeMode: forceShowComposeForGuide,
+      composeRestoreRequest,
+      mentionRequest,
+    }),
+    [forceShowComposeForGuide, composeRestoreRequest, mentionRequest]
+  );
+
+  const mobilePublishState = useMemo(
+    () => ({
+      failedPublishDrafts,
+      visibleFailedPublishDrafts,
+      selectedPublishableRelayIds,
+    }),
+    [failedPublishDrafts, visibleFailedPublishDrafts, selectedPublishableRelayIds]
+  );
+
+  const desktopHeader: FeedPageDesktopHeaderConfig = useMemo(
+    () => ({
+      currentView,
+      onViewChange: setCurrentView,
+      onSignInClick: handleOpenAuthModal,
+    }),
+    [currentView, setCurrentView, handleOpenAuthModal]
+  );
+
+  const desktopContent: FeedPageDesktopContentConfig = useMemo(
+    () => ({
+      sidebarProps: {
         relays: relaysWithActiveState,
         channels: channelsWithState,
         channelMatchMode,
@@ -736,11 +833,15 @@ const Index = () => {
         onRecentEnabledChange: handleRecentEnabledChange,
         onMinPriorityChange: handleMinPriorityChange,
         onPriorityEnabledChange: handlePriorityEnabledChange,
-        pinnedChannelIds: getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList),
+        pinnedChannelIds: getPinnedChannelIdsForView(
+          pinnedChannelsState,
+          currentView,
+          activeRelayIdList
+        ),
         onChannelPin: handleChannelPin,
         onChannelUnpin: handleChannelUnpin,
-      }}
-      failedPublishQueueBannerProps={{
+      },
+      failedPublishQueueBannerProps: {
         drafts: failedPublishDrafts,
         selectedFeedDrafts: visibleFailedPublishDrafts,
         onRetry: handleRetryFailedPublish,
@@ -748,31 +849,136 @@ const Index = () => {
         selectedRelayIds: selectedPublishableRelayIds,
         onDismiss: handleDismissFailedPublish,
         onDismissAll: handleDismissAllFailedPublish,
-      }}
-      desktopSwipeHandlers={desktopSwipeHandlers}
-      viewPane={(
+      },
+      desktopSwipeHandlers,
+      viewPane: (
         <FeedPageViewPane
           currentView={currentView}
           kanbanDepthMode={kanbanDepthMode}
           loadingLabel={t("app.loadingView")}
           viewProps={viewProps}
         />
-      )}
-      searchDockProps={{
+      ),
+      searchDockProps: {
         searchQuery,
         onSearchChange: setSearchQuery,
         showKanbanLevels: currentView === "kanban" || currentView === "list",
         kanbanDepthMode,
         onKanbanDepthModeChange: setKanbanDepthMode,
-      }}
-      shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-      authModalProps={{
-        isOpen: isAuthModalOpen,
-        onClose: handleCloseAuthModal,
-        initialStep: authModalInitialStep,
-      }}
-      onboardingOverlays={onboardingOverlays}
-    />
+      },
+    }),
+    [
+      relaysWithActiveState,
+      channelsWithState,
+      channelMatchMode,
+      sidebarPeopleWithSelected,
+      nostrRelays,
+      handleRelayToggle,
+      handleRelayExclusive,
+      handleChannelToggle,
+      handleChannelExclusive,
+      handlePersonToggle,
+      handlePersonExclusive,
+      handleToggleAllRelays,
+      handleToggleAllChannels,
+      handleChannelMatchModeChange,
+      handleToggleAllPeople,
+      handleAddRelay,
+      handleRemoveRelay,
+      reconnectRelay,
+      isSidebarFocused,
+      handleFocusTasks,
+      shortcutsHelp.open,
+      handleOpenGuide,
+      savedFilterController,
+      quickFilters,
+      handleRecentDaysChange,
+      handleRecentEnabledChange,
+      handleMinPriorityChange,
+      handlePriorityEnabledChange,
+      pinnedChannelsState,
+      currentView,
+      activeRelayIdList,
+      handleChannelPin,
+      handleChannelUnpin,
+      failedPublishDrafts,
+      visibleFailedPublishDrafts,
+      handleRetryFailedPublish,
+      handleRepostFailedPublish,
+      selectedPublishableRelayIds,
+      handleDismissFailedPublish,
+      handleDismissAllFailedPublish,
+      desktopSwipeHandlers,
+      kanbanDepthMode,
+      t,
+      viewProps,
+      searchQuery,
+      setSearchQuery,
+      setKanbanDepthMode,
+    ]
+  );
+
+  const mobileController: FeedPageMobileController = useMemo(
+    () => ({
+      viewState: mobileViewState,
+      actions: mobileActions,
+      composerState: mobileComposer,
+      publishState: {
+        ...mobilePublishState,
+        onUndoPendingPublish: handleUndoPendingPublish,
+        isPendingPublishTask,
+        onRetryFailedPublish: handleRetryFailedPublish,
+        onRepostFailedPublish: handleRepostFailedPublish,
+        onDismissFailedPublish: handleDismissFailedPublish,
+        onDismissAllFailedPublish: handleDismissAllFailedPublish,
+      },
+    }),
+    [
+      mobileViewState,
+      mobileActions,
+      mobileComposer,
+      mobilePublishState,
+      handleUndoPendingPublish,
+      isPendingPublishTask,
+      handleRetryFailedPublish,
+      handleRepostFailedPublish,
+      handleDismissFailedPublish,
+      handleDismissAllFailedPublish,
+    ]
+  );
+
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <FeedPageUiConfigProvider value={uiConfig}>
+        <FeedPageMobileShell
+          controller={mobileController}
+          authModalProps={{
+            isOpen: isAuthModalOpen,
+            onClose: handleCloseAuthModal,
+            initialStep: authModalInitialStep,
+          }}
+          onboardingOverlays={onboardingOverlays}
+        />
+      </FeedPageUiConfigProvider>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <FeedPageUiConfigProvider value={uiConfig}>
+      <FeedPageDesktopShell
+        header={desktopHeader}
+        content={desktopContent}
+        shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+        authModalProps={{
+          isOpen: isAuthModalOpen,
+          onClose: handleCloseAuthModal,
+          initialStep: authModalInitialStep,
+        }}
+        onboardingOverlays={onboardingOverlays}
+      />
+    </FeedPageUiConfigProvider>
   );
 };
 

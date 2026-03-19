@@ -29,7 +29,7 @@ import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
 import { useTranslation } from "react-i18next";
 
-interface MobileLayoutProps {
+export interface MobileLayoutViewState {
   relays: Relay[];
   channels: Channel[];
   channelMatchMode?: ChannelMatchMode;
@@ -42,6 +42,14 @@ interface MobileLayoutProps {
   hasCachedCurrentUserProfileMetadata?: boolean;
   isSignedIn: boolean;
   currentView: ViewType;
+  isInteractionBlocked?: boolean;
+  isOnboardingOpen?: boolean;
+  activeOnboardingStepId?: string | null;
+  isManageRouteActive?: boolean;
+  isHydrating?: boolean;
+}
+
+export interface MobileLayoutActions {
   onViewChange: (view: ViewType) => void;
   onSearchChange: (query: string) => void;
   onNewTask: OnNewTask;
@@ -56,18 +64,24 @@ interface MobileLayoutProps {
   onRemoveRelay: (url: string) => void;
   onSignInClick: () => void;
   onGuideClick: () => void;
-  completionSoundEnabled?: boolean;
-  onToggleCompletionSound?: () => void;
   onHashtagClick: (tag: string) => void;
-  forceComposeMode?: boolean;
   onAuthorClick?: (author: Person) => void;
-  onUndoPendingPublish?: (taskId: string) => void;
-  isPendingPublishTask?: (taskId: string) => boolean;
+  onInteractionBlocked?: () => void;
+  onManageRouteChange?: (isActive: boolean) => void;
+}
+
+export interface MobileLayoutComposerState {
+  forceComposeMode?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   mentionRequest?: {
     mention: string;
     id: number;
   } | null;
+}
+
+export interface MobileLayoutPublishState {
+  onUndoPendingPublish?: (taskId: string) => void;
+  isPendingPublishTask?: (taskId: string) => boolean;
   failedPublishDrafts?: FailedPublishDraft[];
   visibleFailedPublishDrafts?: FailedPublishDraft[];
   selectedPublishableRelayIds?: string[];
@@ -75,13 +89,13 @@ interface MobileLayoutProps {
   onRepostFailedPublish?: (draftId: string) => void;
   onDismissFailedPublish?: (draftId: string) => void;
   onDismissAllFailedPublish?: () => void;
-  isInteractionBlocked?: boolean;
-  onInteractionBlocked?: () => void;
-  isOnboardingOpen?: boolean;
-  activeOnboardingStepId?: string | null;
-  isManageRouteActive?: boolean;
-  onManageRouteChange?: (isActive: boolean) => void;
-  isHydrating?: boolean;
+}
+
+interface MobileLayoutProps {
+  viewState: MobileLayoutViewState;
+  actions: MobileLayoutActions;
+  composerState?: MobileLayoutComposerState;
+  publishState?: MobileLayoutPublishState;
 }
 
 // Mobile view order for swipe navigation
@@ -99,56 +113,66 @@ const CalendarView = lazy(() =>
 );
 
 export function MobileLayout({
-  relays,
-  channels,
-  channelMatchMode = "and",
-  people,
-  tasks,
-  allTasks,
-  searchQuery,
-  focusedTaskId,
-  currentUser,
-  hasCachedCurrentUserProfileMetadata = true,
-  isSignedIn,
-  currentView,
-  onViewChange,
-  onSearchChange,
-  onNewTask,
-  onToggleComplete,
-  onStatusChange,
-  onFocusTask,
-  onRelayToggle,
-  onChannelToggle,
-  onPersonToggle,
-  onChannelMatchModeChange = () => {},
-  onAddRelay,
-  onRemoveRelay,
-  onSignInClick,
-  onGuideClick,
-  completionSoundEnabled = true,
-  onToggleCompletionSound = () => {},
-  onHashtagClick,
-  forceComposeMode = false,
-  onAuthorClick,
-  onUndoPendingPublish,
-  isPendingPublishTask,
-  composeRestoreRequest = null,
-  mentionRequest = null,
-  failedPublishDrafts = [],
-  visibleFailedPublishDrafts,
-  selectedPublishableRelayIds = [],
-  onRetryFailedPublish,
-  onRepostFailedPublish,
-  onDismissFailedPublish,
-  onDismissAllFailedPublish,
-  isInteractionBlocked = false,
-  onInteractionBlocked,
-  isOnboardingOpen = false,
-  activeOnboardingStepId = null,
-  isManageRouteActive = false,
-  onManageRouteChange = () => {},
-  isHydrating = false,
+  viewState,
+  actions,
+  composerState,
+  publishState,
 }: MobileLayoutProps) {
+  const {
+    relays,
+    channels,
+    channelMatchMode = "and",
+    people,
+    tasks,
+    allTasks,
+    searchQuery,
+    focusedTaskId,
+    currentUser,
+    hasCachedCurrentUserProfileMetadata = true,
+    isSignedIn,
+    currentView,
+    isInteractionBlocked = false,
+    isOnboardingOpen = false,
+    activeOnboardingStepId = null,
+    isManageRouteActive = false,
+    isHydrating = false,
+  } = viewState;
+  const {
+    onViewChange,
+    onSearchChange,
+    onNewTask,
+    onToggleComplete,
+    onStatusChange,
+    onFocusTask,
+    onRelayToggle,
+    onChannelToggle,
+    onPersonToggle,
+    onChannelMatchModeChange = () => {},
+    onAddRelay,
+    onRemoveRelay,
+    onSignInClick,
+    onGuideClick,
+    onHashtagClick,
+    onAuthorClick,
+    onInteractionBlocked,
+    onManageRouteChange = () => {},
+  } = actions;
+  const {
+    forceComposeMode = false,
+    composeRestoreRequest = null,
+    mentionRequest = null,
+  } = composerState ?? {};
+  const {
+    onUndoPendingPublish,
+    isPendingPublishTask,
+    failedPublishDrafts = [],
+    visibleFailedPublishDrafts,
+    selectedPublishableRelayIds = [],
+    onRetryFailedPublish,
+    onRepostFailedPublish,
+    onDismissFailedPublish,
+    onDismissAllFailedPublish,
+  } = publishState ?? {};
   const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
@@ -367,8 +391,6 @@ export function MobileLayout({
           onRemoveRelay={onRemoveRelay}
           onSignInClick={onSignInClick}
           onGuideClick={onGuideClick}
-          completionSoundEnabled={completionSoundEnabled}
-          onToggleCompletionSound={onToggleCompletionSound}
         />
       );
     }

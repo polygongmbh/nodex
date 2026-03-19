@@ -1,21 +1,34 @@
 import type { ComponentProps, ReactNode } from "react";
-import { MobileLayout } from "@/components/mobile/MobileLayout";
+import {
+  MobileLayout,
+  type MobileLayoutActions,
+  type MobileLayoutComposerState,
+  type MobileLayoutPublishState,
+  type MobileLayoutViewState,
+} from "@/components/mobile/MobileLayout";
 import { NostrAuthModal } from "@/components/auth/NostrAuthModal";
 
+export interface FeedPageMobileController {
+  viewState: MobileLayoutViewState;
+  actions: MobileLayoutActions;
+  composerState?: MobileLayoutComposerState;
+  publishState?: MobileLayoutPublishState;
+}
+
 interface FeedPageMobileShellProps {
-  mobileLayoutProps: ComponentProps<typeof MobileLayout>;
+  controller: FeedPageMobileController;
   authModalProps: ComponentProps<typeof NostrAuthModal>;
   onboardingOverlays: ReactNode;
 }
 
 export function FeedPageMobileShell({
-  mobileLayoutProps,
+  controller,
   authModalProps,
   onboardingOverlays,
 }: FeedPageMobileShellProps) {
   return (
     <>
-      <MobileLayout {...mobileLayoutProps} />
+      <MobileLayout {...controller} />
       <NostrAuthModal {...authModalProps} />
       {onboardingOverlays}
     </>

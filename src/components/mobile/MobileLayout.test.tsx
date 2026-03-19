@@ -110,36 +110,65 @@ const tasks: Task[] = [];
 const defaultOnNewTask = () => ({ ok: true as const, mode: "local" as const });
 
 type MobileLayoutProps = ComponentProps<typeof MobileLayout>;
-
-const baseProps: MobileLayoutProps = {
-  relays,
-  channels,
-  people,
-  tasks,
-  allTasks: tasks,
-  searchQuery: "",
-  focusedTaskId: null,
-  currentUser: people[0],
-  isSignedIn: true,
-  currentView: "tree",
-  onViewChange: () => {},
-  onSearchChange: () => {},
-  onNewTask: defaultOnNewTask,
-  onToggleComplete: () => {},
-  onStatusChange: () => {},
-  onFocusTask: () => {},
-  onRelayToggle: () => {},
-  onChannelToggle: () => {},
-  onPersonToggle: () => {},
-  onAddRelay: () => {},
-  onRemoveRelay: () => {},
-  onSignInClick: () => {},
-  onGuideClick: () => {},
-  onHashtagClick: () => {},
+type MobileLayoutOverrides = {
+  viewState?: Partial<MobileLayoutProps["viewState"]>;
+  actions?: Partial<MobileLayoutProps["actions"]>;
+  composerState?: Partial<NonNullable<MobileLayoutProps["composerState"]>>;
+  publishState?: Partial<NonNullable<MobileLayoutProps["publishState"]>>;
 };
 
-function renderMobileLayout(overrides: Partial<MobileLayoutProps> = {}) {
-  return render(<MobileLayout {...baseProps} {...overrides} />);
+const baseProps: MobileLayoutProps = {
+  viewState: {
+    relays,
+    channels,
+    people,
+    tasks,
+    allTasks: tasks,
+    searchQuery: "",
+    focusedTaskId: null,
+    currentUser: people[0],
+    isSignedIn: true,
+    currentView: "tree",
+  },
+  actions: {
+    onViewChange: () => {},
+    onSearchChange: () => {},
+    onNewTask: defaultOnNewTask,
+    onToggleComplete: () => {},
+    onStatusChange: () => {},
+    onFocusTask: () => {},
+    onRelayToggle: () => {},
+    onChannelToggle: () => {},
+    onPersonToggle: () => {},
+    onAddRelay: () => {},
+    onRemoveRelay: () => {},
+    onSignInClick: () => {},
+    onGuideClick: () => {},
+    onHashtagClick: () => {},
+  },
+};
+
+function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
+  return render(
+    <MobileLayout
+      viewState={{
+        ...baseProps.viewState,
+        ...overrides.viewState,
+      }}
+      actions={{
+        ...baseProps.actions,
+        ...overrides.actions,
+      }}
+      composerState={{
+        ...baseProps.composerState,
+        ...overrides.composerState,
+      }}
+      publishState={{
+        ...baseProps.publishState,
+        ...overrides.publishState,
+      }}
+    />
+  );
 }
 
 function setSignedInUser() {
@@ -153,8 +182,8 @@ describe("MobileLayout auth wiring", () => {
     const onSignInClick = vi.fn();
 
     renderMobileLayout({
-      isSignedIn: false,
-      onSignInClick,
+      viewState: { isSignedIn: false },
+      actions: { onSignInClick },
     });
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
@@ -169,8 +198,10 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     const { rerender } = renderMobileLayout({
-      hasCachedCurrentUserProfileMetadata: false,
-      isSignedIn: false,
+      viewState: {
+        hasCachedCurrentUserProfileMetadata: false,
+        isSignedIn: false,
+      },
     });
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
@@ -181,9 +212,12 @@ describe("MobileLayout auth wiring", () => {
 
     rerender(
       <MobileLayout
-        {...baseProps}
-        hasCachedCurrentUserProfileMetadata={false}
-        isSignedIn
+        viewState={{
+          ...baseProps.viewState,
+          hasCachedCurrentUserProfileMetadata: false,
+          isSignedIn: true,
+        }}
+        actions={baseProps.actions}
       />
     );
 
@@ -211,7 +245,7 @@ describe("MobileLayout auth wiring", () => {
     const onManageRouteChange = vi.fn();
 
     renderMobileLayout({
-      onManageRouteChange,
+      actions: { onManageRouteChange },
     });
 
     fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
@@ -223,7 +257,7 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     renderMobileLayout({
-      isManageRouteActive: true,
+      viewState: { isManageRouteActive: true },
     });
 
     expect(screen.getByPlaceholderText(/search or create task/i)).not.toBeVisible();
@@ -253,9 +287,11 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      tasks: sampleTasks,
-      allTasks: sampleTasks,
-      searchQuery: "nomatchquery",
+      viewState: {
+        tasks: sampleTasks,
+        allTasks: sampleTasks,
+        searchQuery: "nomatchquery",
+      },
     });
 
     expect(screen.getByRole("status")).toBeInTheDocument();
@@ -267,8 +303,10 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     renderMobileLayout({
-      isOnboardingOpen: true,
-      activeOnboardingStepId: "mobile-filters-properties",
+      viewState: {
+        isOnboardingOpen: true,
+        activeOnboardingStepId: "mobile-filters-properties",
+      },
     });
 
     await waitFor(() => {
@@ -283,9 +321,11 @@ describe("MobileLayout auth wiring", () => {
     const onViewChange = vi.fn();
 
     const { rerender } = renderMobileLayout({
-      onViewChange,
-      isOnboardingOpen: true,
-      activeOnboardingStepId: "mobile-filters-properties",
+      actions: { onViewChange },
+      viewState: {
+        isOnboardingOpen: true,
+        activeOnboardingStepId: "mobile-filters-properties",
+      },
     });
 
     await waitFor(() => {
@@ -294,13 +334,18 @@ describe("MobileLayout auth wiring", () => {
 
     rerender(
       <MobileLayout
-        {...baseProps}
-        currentUser={people[0]}
-        isSignedIn
-        currentView="tree"
-        onViewChange={onViewChange}
-        isOnboardingOpen
-        activeOnboardingStepId="mobile-compose-combobox"
+        viewState={{
+          ...baseProps.viewState,
+          currentUser: people[0],
+          isSignedIn: true,
+          currentView: "tree",
+          isOnboardingOpen: true,
+          activeOnboardingStepId: "mobile-compose-combobox",
+        }}
+        actions={{
+          ...baseProps.actions,
+          onViewChange,
+        }}
       />
     );
 
@@ -316,7 +361,7 @@ describe("MobileLayout auth wiring", () => {
     const onViewChange = vi.fn();
 
     const { rerender } = renderMobileLayout({
-      onViewChange,
+      actions: { onViewChange },
     });
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
@@ -326,11 +371,16 @@ describe("MobileLayout auth wiring", () => {
 
     rerender(
       <MobileLayout
-        {...baseProps}
-        currentUser={people[0]}
-        isSignedIn
-        currentView="feed"
-        onViewChange={onViewChange}
+        viewState={{
+          ...baseProps.viewState,
+          currentUser: people[0],
+          isSignedIn: true,
+          currentView: "feed",
+        }}
+        actions={{
+          ...baseProps.actions,
+          onViewChange,
+        }}
       />
     );
 
@@ -346,8 +396,10 @@ describe("MobileLayout auth wiring", () => {
     const onManageRouteChange = vi.fn();
 
     renderMobileLayout({
-      onViewChange,
-      onManageRouteChange,
+      actions: {
+        onViewChange,
+        onManageRouteChange,
+      },
     });
 
     fireEvent.click(screen.getByRole("button", { name: /switch to feed view/i }));
