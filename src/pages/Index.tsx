@@ -1,21 +1,12 @@
-import { Suspense, lazy, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Sidebar, SidebarHeader } from "@/components/layout/Sidebar";
-import { TaskTree } from "@/components/tasks/TaskTree";
-import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
-import { DesktopSearchDock, type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
-import { ViewSwitcher } from "@/components/tasks/ViewSwitcher";
-import { MobileLayout } from "@/components/mobile/MobileLayout";
+import { type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
 import { useNostrEventCache } from "@/infrastructure/nostr/use-nostr-event-cache";
-import { KeyboardShortcutsHelp, useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
+import { useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
-import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
-import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
-import { LanguageToggle } from "@/components/theme/LanguageToggle";
-import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
 import { mergeTasks } from "@/domain/content/task-merge";
@@ -69,24 +60,14 @@ import {
 } from "@/types";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { FeedPageDesktopShell } from "@/features/feed-page/views/FeedPageDesktopShell";
+import { FeedPageMobileShell } from "@/features/feed-page/views/FeedPageMobileShell";
+import { FeedPageViewPane } from "@/features/feed-page/views/FeedPageViewPane";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
 const DEMO_SEED_TASKS = mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents()));
-const FeedView = lazy(() =>
-  import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
-);
-const KanbanView = lazy(() =>
-  import("@/components/tasks/KanbanView").then((module) => ({ default: module.KanbanView }))
-);
-const CalendarView = lazy(() =>
-  import("@/components/tasks/CalendarView").then((module) => ({ default: module.CalendarView }))
-);
-const ListView = lazy(() =>
-  import("@/components/tasks/ListView").then((module) => ({ default: module.ListView }))
-);
-
 const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -627,40 +608,6 @@ const Index = () => {
     isHydrating,
   };
 
-  const renderView = () => {
-    const viewFallback = <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t("app.loadingView")}</div>;
-    switch (currentView) {
-      case "tree":
-        return <TaskTree {...viewProps} />;
-      case "feed":
-        return (
-          <Suspense fallback={viewFallback}>
-            <FeedView {...viewProps} />
-          </Suspense>
-        );
-      case "kanban":
-        return (
-          <Suspense fallback={viewFallback}>
-            <KanbanView {...viewProps} depthMode={kanbanDepthMode} />
-          </Suspense>
-        );
-      case "calendar":
-        return (
-          <Suspense fallback={viewFallback}>
-            <CalendarView {...viewProps} />
-          </Suspense>
-        );
-      case "list":
-        return (
-          <Suspense fallback={viewFallback}>
-            <ListView {...viewProps} depthMode={kanbanDepthMode} />
-          </Suspense>
-        );
-      default:
-        return <TaskTree {...viewProps} />;
-    }
-  };
-
   const onboardingOverlays = (
     <>
       <OnboardingIntroPopover
@@ -690,153 +637,142 @@ const Index = () => {
   // Mobile layout
   if (isMobile) {
     return (
-      <>
-        <MobileLayout
-          relays={relaysWithActiveState}
-          channels={channelsWithState}
-          channelMatchMode={channelMatchMode}
-          people={people}
-          tasks={filteredTasks}
-          allTasks={allTasks}
-          searchQuery={searchQuery}
-          focusedTaskId={focusedTaskId}
-          currentUser={currentUser}
-          hasCachedCurrentUserProfileMetadata={hasCachedCurrentUserProfileMetadata}
-          isSignedIn={Boolean(user)}
-          currentView={currentView}
-          onViewChange={setCurrentView}
-          onSearchChange={setSearchQuery}
-          onNewTask={handleNewTask}
-          onToggleComplete={handleToggleComplete}
-          onStatusChange={handleStatusChange}
-          onFocusTask={setFocusedTaskId}
-          onRelayToggle={handleRelayToggle}
-          onChannelToggle={handleChannelToggle}
-          onPersonToggle={handlePersonToggle}
-          onChannelMatchModeChange={handleChannelMatchModeChange}
-          onAddRelay={handleAddRelay}
-          onRemoveRelay={handleRemoveRelay}
-          onSignInClick={handleOpenAuthModal}
-          onGuideClick={handleOpenGuide}
-          completionSoundEnabled={completionSoundEnabled}
-          onToggleCompletionSound={handleToggleCompletionSound}
-          onHashtagClick={handleHashtagExclusive}
-          forceComposeMode={forceShowComposeForGuide}
-          onAuthorClick={handleAuthorClick}
-          onUndoPendingPublish={handleUndoPendingPublish}
-          isPendingPublishTask={isPendingPublishTask}
-          composeRestoreRequest={composeRestoreRequest}
-          mentionRequest={mentionRequest}
-          failedPublishDrafts={failedPublishDrafts}
-          visibleFailedPublishDrafts={visibleFailedPublishDrafts}
-          selectedPublishableRelayIds={selectedPublishableRelayIds}
-          onRetryFailedPublish={handleRetryFailedPublish}
-          onRepostFailedPublish={handleRepostFailedPublish}
-          onDismissFailedPublish={handleDismissFailedPublish}
-          onDismissAllFailedPublish={handleDismissAllFailedPublish}
-          isInteractionBlocked={isInteractionBlocked}
-          onInteractionBlocked={handleBlockedInteractionAttempt}
-          isHydrating={isHydrating}
-          isOnboardingOpen={isOnboardingOpen && !isAuthModalOpen}
-          activeOnboardingStepId={activeOnboardingStepId}
-          isManageRouteActive={isManageRouteActive}
-          onManageRouteChange={setManageRouteActive}
-        />
-        <NostrAuthModal
-          isOpen={isAuthModalOpen}
-          onClose={handleCloseAuthModal}
-          initialStep={authModalInitialStep}
-        />
-        {onboardingOverlays}
-      </>
+      <FeedPageMobileShell
+        mobileLayoutProps={{
+          relays: relaysWithActiveState,
+          channels: channelsWithState,
+          channelMatchMode,
+          people,
+          tasks: filteredTasks,
+          allTasks,
+          searchQuery,
+          focusedTaskId,
+          currentUser,
+          hasCachedCurrentUserProfileMetadata,
+          isSignedIn: Boolean(user),
+          currentView,
+          onViewChange: setCurrentView,
+          onSearchChange: setSearchQuery,
+          onNewTask: handleNewTask,
+          onToggleComplete: handleToggleComplete,
+          onStatusChange: handleStatusChange,
+          onFocusTask: setFocusedTaskId,
+          onRelayToggle: handleRelayToggle,
+          onChannelToggle: handleChannelToggle,
+          onPersonToggle: handlePersonToggle,
+          onChannelMatchModeChange: handleChannelMatchModeChange,
+          onAddRelay: handleAddRelay,
+          onRemoveRelay: handleRemoveRelay,
+          onSignInClick: handleOpenAuthModal,
+          onGuideClick: handleOpenGuide,
+          completionSoundEnabled,
+          onToggleCompletionSound: handleToggleCompletionSound,
+          onHashtagClick: handleHashtagExclusive,
+          forceComposeMode: forceShowComposeForGuide,
+          onAuthorClick: handleAuthorClick,
+          onUndoPendingPublish: handleUndoPendingPublish,
+          isPendingPublishTask,
+          composeRestoreRequest,
+          mentionRequest,
+          failedPublishDrafts,
+          visibleFailedPublishDrafts,
+          selectedPublishableRelayIds,
+          onRetryFailedPublish: handleRetryFailedPublish,
+          onRepostFailedPublish: handleRepostFailedPublish,
+          onDismissFailedPublish: handleDismissFailedPublish,
+          onDismissAllFailedPublish: handleDismissAllFailedPublish,
+          isInteractionBlocked,
+          onInteractionBlocked: handleBlockedInteractionAttempt,
+          isHydrating,
+          isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
+          activeOnboardingStepId,
+          isManageRouteActive,
+          onManageRouteChange: setManageRouteActive,
+        }}
+        authModalProps={{
+          isOpen: isAuthModalOpen,
+          onClose: handleCloseAuthModal,
+          initialStep: authModalInitialStep,
+        }}
+        onboardingOverlays={onboardingOverlays}
+      />
     );
   }
 
   // Desktop layout
   return (
-    <div className="grid app-shell-height overflow-hidden bg-background grid-cols-[auto,1fr] grid-rows-[var(--topbar-height),1fr] [--topbar-height:3rem] sm:[--topbar-height:3.5rem] xl:[--topbar-height:4rem]">
-      <SidebarHeader className="h-[var(--topbar-height)]" />
-      <div className="border-b border-border px-2 sm:px-3 bg-background/95 backdrop-blur-sm flex items-stretch justify-between gap-2 min-w-0 h-[var(--topbar-height)]">
-        <div className="flex-1 min-w-0 h-full">
-          <ViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
-        </div>
-        <div className="h-full flex items-center justify-end gap-2 w-auto pl-2">
-          <NostrUserMenu onSignInClick={handleOpenAuthModal} />
-          <LanguageToggle />
-          <CompletionFeedbackToggle
-            enabled={completionSoundEnabled}
-            onToggle={handleToggleCompletionSound}
-            className="hidden lg:inline-flex"
-          />
-          <ThemeModeToggle />
-        </div>
-      </div>
-      <Sidebar
-        relays={relaysWithActiveState}
-        channels={channelsWithState}
-        channelMatchMode={channelMatchMode}
-        people={sidebarPeopleWithSelected}
-        nostrRelays={nostrRelays}
-        onRelayToggle={handleRelayToggle}
-        onRelayExclusive={handleRelayExclusive}
-        onChannelToggle={handleChannelToggle}
-        onChannelExclusive={handleChannelExclusive}
-        onPersonToggle={handlePersonToggle}
-        onPersonExclusive={handlePersonExclusive}
-        onToggleAllRelays={handleToggleAllRelays}
-        onToggleAllChannels={handleToggleAllChannels}
-        onChannelMatchModeChange={handleChannelMatchModeChange}
-        onToggleAllPeople={handleToggleAllPeople}
-        onAddRelay={handleAddRelay}
-        onRemoveRelay={handleRemoveRelay}
-        onReconnectRelay={reconnectRelay}
-        isFocused={isSidebarFocused}
-        onFocusTasks={handleFocusTasks}
-        onShortcutsClick={shortcutsHelp.open}
-        onGuideClick={handleOpenGuide}
-        savedFilters={savedFilterController}
-        quickFilters={quickFilters}
-        onRecentDaysChange={handleRecentDaysChange}
-        onRecentEnabledChange={handleRecentEnabledChange}
-        onMinPriorityChange={handleMinPriorityChange}
-        onPriorityEnabledChange={handlePriorityEnabledChange}
-        pinnedChannelIds={getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList)}
-        onChannelPin={handleChannelPin}
-        onChannelUnpin={handleChannelUnpin}
-      />
-      <div className="min-w-0 overflow-hidden flex flex-col" {...desktopSwipeHandlers}>
-        <FailedPublishQueueBanner
-          drafts={failedPublishDrafts}
-          selectedFeedDrafts={visibleFailedPublishDrafts}
-          onRetry={handleRetryFailedPublish}
-          onRepost={handleRepostFailedPublish}
-          selectedRelayIds={selectedPublishableRelayIds}
-          onDismiss={handleDismissFailedPublish}
-          onDismissAll={handleDismissAllFailedPublish}
-        />
-        <div className="min-h-0 flex-1 overflow-hidden">
-          {renderView()}
-        </div>
-        <DesktopSearchDock
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          showKanbanLevels={currentView === "kanban" || currentView === "list"}
+    <FeedPageDesktopShell
+      currentView={currentView}
+      onViewChange={setCurrentView}
+      onSignInClick={handleOpenAuthModal}
+      completionSoundEnabled={completionSoundEnabled}
+      onToggleCompletionSound={handleToggleCompletionSound}
+      sidebarProps={{
+        relays: relaysWithActiveState,
+        channels: channelsWithState,
+        channelMatchMode,
+        people: sidebarPeopleWithSelected,
+        nostrRelays,
+        onRelayToggle: handleRelayToggle,
+        onRelayExclusive: handleRelayExclusive,
+        onChannelToggle: handleChannelToggle,
+        onChannelExclusive: handleChannelExclusive,
+        onPersonToggle: handlePersonToggle,
+        onPersonExclusive: handlePersonExclusive,
+        onToggleAllRelays: handleToggleAllRelays,
+        onToggleAllChannels: handleToggleAllChannels,
+        onChannelMatchModeChange: handleChannelMatchModeChange,
+        onToggleAllPeople: handleToggleAllPeople,
+        onAddRelay: handleAddRelay,
+        onRemoveRelay: handleRemoveRelay,
+        onReconnectRelay: reconnectRelay,
+        isFocused: isSidebarFocused,
+        onFocusTasks: handleFocusTasks,
+        onShortcutsClick: shortcutsHelp.open,
+        onGuideClick: handleOpenGuide,
+        savedFilters: savedFilterController,
+        quickFilters,
+        onRecentDaysChange: handleRecentDaysChange,
+        onRecentEnabledChange: handleRecentEnabledChange,
+        onMinPriorityChange: handleMinPriorityChange,
+        onPriorityEnabledChange: handlePriorityEnabledChange,
+        pinnedChannelIds: getPinnedChannelIdsForView(pinnedChannelsState, currentView, activeRelayIdList),
+        onChannelPin: handleChannelPin,
+        onChannelUnpin: handleChannelUnpin,
+      }}
+      failedPublishQueueBannerProps={{
+        drafts: failedPublishDrafts,
+        selectedFeedDrafts: visibleFailedPublishDrafts,
+        onRetry: handleRetryFailedPublish,
+        onRepost: handleRepostFailedPublish,
+        selectedRelayIds: selectedPublishableRelayIds,
+        onDismiss: handleDismissFailedPublish,
+        onDismissAll: handleDismissAllFailedPublish,
+      }}
+      desktopSwipeHandlers={desktopSwipeHandlers}
+      viewPane={(
+        <FeedPageViewPane
+          currentView={currentView}
           kanbanDepthMode={kanbanDepthMode}
-          onKanbanDepthModeChange={setKanbanDepthMode}
+          loadingLabel={t("app.loadingView")}
+          viewProps={viewProps}
         />
-      </div>
-
-      {/* Keyboard Shortcuts Help Dialog */}
-      <KeyboardShortcutsHelp isOpen={shortcutsHelp.isOpen} onClose={shortcutsHelp.close} />
-
-      {/* Nostr Auth Modal */}
-        <NostrAuthModal
-          isOpen={isAuthModalOpen}
-          onClose={handleCloseAuthModal}
-          initialStep={authModalInitialStep}
-        />
-      {onboardingOverlays}
-    </div>
+      )}
+      searchDockProps={{
+        searchQuery,
+        onSearchChange: setSearchQuery,
+        showKanbanLevels: currentView === "kanban" || currentView === "list",
+        kanbanDepthMode,
+        onKanbanDepthModeChange: setKanbanDepthMode,
+      }}
+      shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+      authModalProps={{
+        isOpen: isAuthModalOpen,
+        onClose: handleCloseAuthModal,
+        initialStep: authModalInitialStep,
+      }}
+      onboardingOverlays={onboardingOverlays}
+    />
   );
 };
 
