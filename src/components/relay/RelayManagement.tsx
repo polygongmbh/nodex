@@ -187,7 +187,7 @@ export function RelayManagement({
           </div>
 
           {/* Relay list */}
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="scrollbar-thin space-y-2 max-h-64 overflow-y-auto">
             {relays.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
                 {t("relay.noneConfigured")}

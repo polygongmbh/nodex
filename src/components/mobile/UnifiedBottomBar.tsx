@@ -1484,7 +1484,7 @@ export function UnifiedBottomBar({
                 }}
                 placeholder={t("composer.placeholders.mobileTask")}
                 className={cn(
-                  "block min-h-[2.75rem] w-full bg-muted/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm leading-[1.35] resize-none [scrollbar-width:thin] [-ms-overflow-style:auto] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/80 [&::-webkit-scrollbar-track]:bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50",
+                  "scrollbar-thin scrollbar-thin-inset block min-h-[2.75rem] w-full bg-muted/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm leading-[1.35] resize-none focus:outline-none focus:ring-2 focus:ring-primary/50",
                   highlightedTarget === "input" && "ring-2 ring-amber-400 border-amber-400/70"
                 )}
                 rows={1}

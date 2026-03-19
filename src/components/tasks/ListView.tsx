@@ -642,7 +642,7 @@ export function ListView({
       />
 
       {/* Table */}
-      <div ref={tableContainerRef} className="flex-1 overflow-auto">
+      <div ref={tableContainerRef} className="scrollbar-thin scrollbar-main-view flex-1 overflow-auto">
         <table className="w-full table-fixed">
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>

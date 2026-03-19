@@ -460,7 +460,7 @@ export function TaskTree({
       />
 
       {/* Task List */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-1" data-onboarding="task-list">
+      <div ref={scrollContainerRef} className="scrollbar-thin scrollbar-main-view flex-1 overflow-y-auto p-4 space-y-1" data-onboarding="task-list">
         {shouldShowMobileScopeFallback ? (
           <FilteredEmptyState
             variant="collection"

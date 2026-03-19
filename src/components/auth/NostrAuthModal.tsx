@@ -822,7 +822,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                 {t("auth.menu.profileDescription")}
               </DialogDescription>
             </DialogHeader>
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+            <div className="scrollbar-thin mt-3 min-h-0 flex-1 overflow-y-auto">
               <div className="space-y-3 px-1">
                 <div className="space-y-1.5">
                   <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>

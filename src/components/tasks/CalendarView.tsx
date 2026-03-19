@@ -530,7 +530,7 @@ export function CalendarView({
 
         {/* Mobile Upcoming Feed */}
         {isMobile && effectiveMobileTab === "upcoming" && (
-          <div className="flex-1 overflow-auto p-3">
+          <div className="scrollbar-thin scrollbar-main-view flex-1 overflow-auto p-3">
             {groupedUpcoming.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">{t("tasks.empty.noUpcoming")}</p>
             ) : (

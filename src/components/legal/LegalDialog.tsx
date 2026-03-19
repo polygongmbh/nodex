@@ -99,7 +99,7 @@ export function LegalDialog({
             </button>
           </div>
         </div>
-        <div className="max-h-[75vh] space-y-4 overflow-y-auto px-4 py-3 text-sm sm:px-6 sm:py-4">
+        <div className="scrollbar-thin max-h-[75vh] space-y-4 overflow-y-auto px-4 py-3 text-sm sm:px-6 sm:py-4">
           {section === "imprint" ? (
             <section className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">Anbieterkennzeichnung (Impressum)</h3>
