@@ -75,7 +75,9 @@
       "missingFileUrl": "La respuesta de subida no incluyó una URL de archivo",
       "maxSizeExceeded": "El archivo supera el tamaño máximo de subida de {{maxSizeMb}} MB",
       "waitForUploads": "Espera a que terminen de subirse los archivos",
-      "retryFailed": "Reintenta o elimina los archivos fallidos"
+      "retryFailed": "Reintenta o elimina los archivos fallidos",
+      "dropOrPasteHint": "Suelta archivos o pega imágenes",
+      "dropFiles": "Suelta archivos para adjuntarlos"
     },
     "nip99": {
       "title": "Título del anuncio",

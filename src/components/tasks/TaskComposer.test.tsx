@@ -84,6 +84,48 @@ const people: Person[] = [
 
 const successfulCreateResult: TaskCreateResult = { ok: true, mode: "local" };
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
+const uploadAttachmentSpy = vi.spyOn(attachmentUpload, "uploadAttachment");
+
+const successfulUploadedAttachment = {
+  url: "https://cdn.example.com/uploaded.png",
+  mimeType: "image/png",
+  size: 1234,
+  name: "uploaded.png",
+} satisfies Awaited<ReturnType<typeof attachmentUpload.uploadAttachment>>;
+
+const buildFileDropDataTransfer = (files: File[]) => ({
+  files,
+  items: files.map((file) => ({
+    kind: "file" as const,
+    type: file.type,
+    getAsFile: () => file,
+  })),
+  types: ["Files"],
+});
+
+const buildTextDropDataTransfer = (text: string) => ({
+  files: [],
+  items: [
+    {
+      kind: "string" as const,
+      type: "text/plain",
+      getAsFile: () => null,
+      getAsString: (callback: (value: string) => void) => callback(text),
+    },
+  ],
+  types: ["text/plain"],
+  getData: (type: string) => (type === "text/plain" ? text : ""),
+});
+
+const buildPasteClipboardData = (files: File[]) => ({
+  items: files.map((file) => ({
+    kind: "file" as const,
+    type: file.type,
+    getAsFile: () => file,
+  })),
+  files,
+  types: ["Files"],
+});
 const getChipButton = (kind: "mention" | "hashtag", value: string) => {
   const match = screen
     .getAllByRole("button")
@@ -114,6 +156,8 @@ describe("TaskComposer hashtag autocomplete", () => {
     vi.mocked(toast.loading).mockClear();
     vi.mocked(toast.dismiss).mockClear();
     attachmentUploadEnabledSpy.mockReturnValue(true);
+    uploadAttachmentSpy.mockReset();
+    uploadAttachmentSpy.mockResolvedValue(successfulUploadedAttachment);
   });
 
   it("shows a single attachment action", () => {
@@ -130,6 +174,119 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /add attachment/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add image attachment/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add file attachment/i })).not.toBeInTheDocument();
+  });
+
+  it("queues selected files through the existing attachment input", async () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(fileInput).not.toBeNull();
+
+    const file = new File(["image-bytes"], "picked.png", { type: "image/png" });
+    fireEvent.change(fileInput!, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(uploadAttachmentSpy).toHaveBeenCalledWith(
+        file,
+        expect.objectContaining({
+          getAuthHeader: expect.any(Function),
+        })
+      );
+    });
+    expect(screen.getByText("picked.png")).toBeInTheDocument();
+  });
+
+  it("queues dropped files as attachments", async () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const composer = getTaskComposerInput().closest("[data-onboarding='focused-compose']");
+    expect(composer).not.toBeNull();
+
+    const file = new File(["image-bytes"], "dropped.png", { type: "image/png" });
+    fireEvent.drop(composer!, {
+      dataTransfer: buildFileDropDataTransfer([file]),
+    });
+
+    await waitFor(() => {
+      expect(uploadAttachmentSpy).toHaveBeenCalledWith(
+        file,
+        expect.objectContaining({
+          getAuthHeader: expect.any(Function),
+        })
+      );
+    });
+    expect(screen.getByText("dropped.png")).toBeInTheDocument();
+  });
+
+  it("inserts dropped plain text into the composer instead of uploading it", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
+    const composer = textarea.closest("[data-onboarding='focused-compose']");
+    expect(composer).not.toBeNull();
+
+    fireEvent.change(textarea, { target: { value: "Ship " } });
+    textarea.setSelectionRange(5, 5);
+
+    fireEvent.drop(composer!, {
+      dataTransfer: buildTextDropDataTransfer("#backend now"),
+    });
+
+    expect(uploadAttachmentSpy).not.toHaveBeenCalled();
+    expect(textarea.value).toBe("Ship #backend now");
+  });
+
+  it("queues pasted files as attachments", async () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = getTaskComposerInput();
+    const file = new File(["image-bytes"], "pasted.png", { type: "image/png" });
+
+    fireEvent.paste(textarea, {
+      clipboardData: buildPasteClipboardData([file]),
+    });
+
+    await waitFor(() => {
+      expect(uploadAttachmentSpy).toHaveBeenCalledWith(
+        file,
+        expect.objectContaining({
+          getAuthHeader: expect.any(Function),
+        })
+      );
+    });
+    expect(screen.getByText("pasted.png")).toBeInTheDocument();
   });
 
   it("replaces submit action with sign in when signed out", () => {

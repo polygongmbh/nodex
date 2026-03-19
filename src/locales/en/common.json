@@ -75,7 +75,9 @@
       "missingFileUrl": "Upload response did not include a file URL",
       "maxSizeExceeded": "File exceeds maximum upload size of {{maxSizeMb}} MB",
       "waitForUploads": "Wait for attachments to finish uploading",
-      "retryFailed": "Retry or remove failed attachments"
+      "retryFailed": "Retry or remove failed attachments",
+      "dropOrPasteHint": "Drop files or paste images",
+      "dropFiles": "Drop files to attach"
     },
     "nip99": {
       "title": "Listing title",

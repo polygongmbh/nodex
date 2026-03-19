@@ -75,7 +75,9 @@
       "missingFileUrl": "Upload-Antwort enthielt keine Datei-URL",
       "maxSizeExceeded": "Datei überschreitet die maximale Upload-Größe von {{maxSizeMb}} MB",
       "waitForUploads": "Warte, bis Anhänge fertig hochgeladen sind",
-      "retryFailed": "Fehlgeschlagene Anhänge erneut versuchen oder entfernen"
+      "retryFailed": "Fehlgeschlagene Anhänge erneut versuchen oder entfernen",
+      "dropOrPasteHint": "Dateien ablegen oder Bilder einfügen",
+      "dropFiles": "Dateien zum Anhängen ablegen"
     },
     "nip99": {
       "title": "Listing-Titel",

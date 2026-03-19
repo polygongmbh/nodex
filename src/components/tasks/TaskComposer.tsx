@@ -165,6 +165,31 @@ function readComposeDraft(key: string): ComposeDraftState | null {
 const isPostableRelay = (r: Relay) =>
   r.connectionStatus === "connected" || r.connectionStatus === "read-only";
 
+function extractFilesFromDataTransfer(dataTransfer: DataTransfer | null | undefined): File[] {
+  if (!dataTransfer) return [];
+  if (dataTransfer.items && dataTransfer.items.length > 0) {
+    return Array.from(dataTransfer.items)
+      .filter((item) => item.kind === "file")
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => Boolean(file));
+  }
+  return Array.from(dataTransfer.files || []);
+}
+
+function hasFilesInDataTransfer(dataTransfer: DataTransfer | null | undefined): boolean {
+  if (!dataTransfer) return false;
+  if (dataTransfer.items && dataTransfer.items.length > 0) {
+    return Array.from(dataTransfer.items).some((item) => item.kind === "file");
+  }
+  return Array.from(dataTransfer.types || []).includes("Files") || (dataTransfer.files?.length || 0) > 0;
+}
+
+function extractPlainTextFromDataTransfer(dataTransfer: DataTransfer | null | undefined): string {
+  if (!dataTransfer) return "";
+  const text = dataTransfer.getData("text/plain");
+  return typeof text === "string" ? text : "";
+}
+
 export function TaskComposer({
   onSubmit,
   relays,
@@ -301,7 +326,9 @@ export function TaskComposer({
   const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
+  const dragDepthRef = useRef(0);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | "blocker" | null>(null);
+  const [isDraggingFilesOverComposer, setIsDraggingFilesOverComposer] = useState(false);
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current;
@@ -620,10 +647,14 @@ export function TaskComposer({
     }
   };
 
-  const queueSelectedFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const queueFiles = (selectedFiles: File[]) => {
+    if (selectedFiles.length === 0) return;
 
-    const selectedFiles = Array.from(files);
+    featureDebugLog("composer-attachments", "Queueing composer attachments", {
+      count: selectedFiles.length,
+      names: selectedFiles.map((file) => file.name),
+      sources: selectedFiles.map((file) => file.type || "unknown"),
+    });
     const imageFiles = selectedFiles.filter((file) => file.type.startsWith("image/"));
     if (imageFiles.length > 0 && loadAutoCaptionEnabled()) {
       featureDebugLog("auto-caption", "Image attachments queued for local caption inference", {
@@ -658,6 +689,35 @@ export function TaskComposer({
       if (!file) continue;
       void handleAttachmentUpload(file, entry.id);
     }
+  };
+
+  const queueSelectedFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    queueFiles(Array.from(files));
+  };
+
+  const insertDroppedText = (text: string) => {
+    const normalizedText = text.replace(/\r\n/g, "\n");
+    if (!normalizedText) return;
+    featureDebugLog("composer-attachments", "Inserting dropped plain text into composer", {
+      length: normalizedText.length,
+    });
+    if (adaptiveSize && !isExpanded) {
+      setIsExpanded(true);
+    }
+    const textarea = textareaRef.current;
+    const selectionStart = textarea?.selectionStart ?? content.length;
+    const selectionEnd = textarea?.selectionEnd ?? selectionStart;
+    const nextContent = content.slice(0, selectionStart) + normalizedText + content.slice(selectionEnd);
+    const nextCursor = selectionStart + normalizedText.length;
+    setContent(nextContent);
+    setCursorPosition(nextCursor);
+    requestAnimationFrame(() => {
+      const currentTextarea = textareaRef.current;
+      if (!currentTextarea) return;
+      currentTextarea.focus();
+      currentTextarea.setSelectionRange(nextCursor, nextCursor);
+    });
   };
 
   const retryAttachmentUpload = (attachmentId: string) => {
@@ -1400,10 +1460,60 @@ export function TaskComposer({
   return (
     <div
       ref={composerRef}
+      onDragEnter={(event) => {
+        if (!hasFilesInDataTransfer(event.dataTransfer)) return;
+        dragDepthRef.current += 1;
+        setIsDraggingFilesOverComposer(true);
+      }}
+      onDragOver={(event) => {
+        if (!hasFilesInDataTransfer(event.dataTransfer)) return;
+        event.preventDefault();
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = "copy";
+        }
+        if (!isDraggingFilesOverComposer) {
+          setIsDraggingFilesOverComposer(true);
+        }
+      }}
+      onDragLeave={(event) => {
+        if (!hasFilesInDataTransfer(event.dataTransfer)) return;
+        dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+        if (dragDepthRef.current === 0 || event.currentTarget === event.target) {
+          setIsDraggingFilesOverComposer(false);
+        }
+      }}
+      onDrop={(event) => {
+        const droppedFiles = extractFilesFromDataTransfer(event.dataTransfer);
+        dragDepthRef.current = 0;
+        setIsDraggingFilesOverComposer(false);
+        if (droppedFiles.length > 0) {
+          event.preventDefault();
+          featureDebugLog("composer-attachments", "Accepted dropped files", {
+            count: droppedFiles.length,
+          });
+          queueFiles(droppedFiles);
+          if (adaptiveSize && !isExpanded) {
+            setIsExpanded(true);
+          }
+          requestAnimationFrame(() => {
+            textareaRef.current?.focus();
+          });
+          return;
+        }
+        const droppedText = extractPlainTextFromDataTransfer(event.dataTransfer);
+        if (!droppedText) return;
+        event.preventDefault();
+        insertDroppedText(droppedText);
+      }}
       onMouseDownCapture={(event) => {
         internalMouseDownWithinComposerRef.current = event.target !== textareaRef.current;
       }}
-      className={cn("flex flex-col gap-3", compact && "gap-2", adaptiveSize && !showExpandedControls && "gap-1")}
+      className={cn(
+        "flex flex-col gap-3",
+        compact && "gap-2",
+        adaptiveSize && !showExpandedControls && "gap-1",
+        isDraggingFilesOverComposer && "rounded-2xl ring-2 ring-dashed ring-primary/60 ring-offset-2 ring-offset-background"
+      )}
       data-onboarding="focused-compose"
     >
       <div className="relative order-1">
@@ -1412,6 +1522,15 @@ export function TaskComposer({
           ref={textareaRef}
           value={content}
           onChange={handleContentChange}
+          onPaste={(event) => {
+            const pastedFiles = extractFilesFromDataTransfer(event.clipboardData);
+            if (pastedFiles.length === 0) return;
+            event.preventDefault();
+            featureDebugLog("composer-attachments", "Accepted pasted files", {
+              count: pastedFiles.length,
+            });
+            queueFiles(pastedFiles);
+          }}
           onKeyDown={handleKeyDown}
           onSelect={(event) => {
             const target = event.currentTarget;
@@ -1966,15 +2085,22 @@ export function TaskComposer({
             <AtSign className="w-4 h-4 text-primary" />
           </button>
           {uploadEnabled && (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
-              aria-label={t("composer.attachments.add")}
-              title={t("composer.attachments.add")}
-            >
-              <Paperclip className="w-4 h-4 text-primary" />
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-xl hover:bg-muted/70 transition-colors"
+                aria-label={t("composer.attachments.add")}
+                title={t("composer.attachments.add")}
+              >
+                <Paperclip className="w-4 h-4 text-primary" />
+              </button>
+              <span className="hidden text-xs text-muted-foreground sm:inline">
+                {isDraggingFilesOverComposer
+                  ? t("composer.attachments.dropFiles")
+                  : t("composer.attachments.dropOrPasteHint")}
+              </span>
+            </>
           )}
           <button
             type="button"
