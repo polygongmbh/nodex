@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Feed/list/calendar/kanban channel filters now remain authoritative inside the selected feed scope instead of being dropped when the current relay slice does not already contain a matching channel.
 - Feed/list/tree end-of-scroll scope notes now stay visible for relay-only selections as well, so scoped feeds consistently end with summaries like `This is all on feed.example.com`.
 - Noas sign-in/sign-up now discover `/.well-known/nostr.json` on the submitted Noas domain, use any advertised `noas.api_base` for API calls, and cache that resolved API base for repeat auth attempts.
 - Main app views now use a shared higher-contrast scrollbar with a reserved track, while compact surfaces keep gutter-free scrollbars and compose fields avoid clipping against rounded corners as they grow up to about half the viewport height.

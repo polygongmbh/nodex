@@ -28,7 +28,7 @@ function Harness({
 }
 
 describe("useTaskViewFiltering", () => {
-  it("ignores included channels that do not exist in the active relay-scoped tasks", () => {
+  it("keeps included channels active even when the relay-scoped task slice has no matching channel", () => {
     const generalTask = makeTask({ id: "general-task", tags: ["general"], content: "General task #general" });
     const opsTask = makeTask({ id: "ops-task", tags: ["ops"], content: "Ops task #ops" });
 
@@ -43,6 +43,6 @@ describe("useTaskViewFiltering", () => {
       />
     );
 
-    expect(screen.getByTestId("filtered-task-ids")).toHaveTextContent("general-task");
+    expect(screen.getByTestId("filtered-task-ids")).toHaveTextContent("");
   });
 });
