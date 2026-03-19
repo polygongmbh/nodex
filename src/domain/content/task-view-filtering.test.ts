@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { makePerson, makeTask } from "@/test/fixtures";
-import { filterTasksForView, getDescendantTaskIds } from "./task-view-filtering";
+import {
+  buildTaskViewFilterIndex,
+  filterTasksForView,
+  getDescendantTaskIds,
+} from "./task-view-filtering";
 
 describe("task view filtering", () => {
   it("collects all descendants for focused filtering", () => {
@@ -14,6 +18,32 @@ describe("task view filtering", () => {
     expect(getDescendantTaskIds(tasks, "root")).toEqual(
       new Set(["child-a", "child-b", "grandchild"])
     );
+  });
+
+  it("builds reusable search and descendant indexes", () => {
+    const alice = makePerson({ id: "p1", displayName: "Alice Example", name: "alice" });
+    const tasks = [
+      makeTask({
+        id: "root",
+        parentId: undefined,
+        content: "Root task #alpha",
+        tags: ["alpha"],
+        author: alice,
+      }),
+      makeTask({
+        id: "child",
+        parentId: "root",
+        content: "Discuss launch with #beta",
+        tags: ["beta"],
+        author: alice,
+      }),
+    ];
+
+    const index = buildTaskViewFilterIndex(tasks, [alice]);
+
+    expect(index.descendantIdsByTaskId.get("root")).toEqual(new Set(["child"]));
+    expect(index.searchableTextByTaskId.get("child")).toContain("alice example");
+    expect(index.searchableTextByTaskId.get("child")).toContain("#beta");
   });
 
   it("filters by prefiltered ids, focus descendants, search, and channel match mode", () => {
@@ -45,8 +75,10 @@ describe("task view filtering", () => {
       }),
     ];
 
+    const filterIndex = buildTaskViewFilterIndex(tasks, people);
     const result = filterTasksForView({
       allTasks: tasks,
+      filterIndex,
       prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
       focusedTaskId: "root",
       searchQuery: "discuss",
@@ -81,8 +113,10 @@ describe("task view filtering", () => {
       }),
     ];
 
+    const filterIndex = buildTaskViewFilterIndex(tasks);
     const result = filterTasksForView({
       allTasks: tasks,
+      filterIndex,
       prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
       focusedTaskId: "root",
       includeFocusedTask: true,
@@ -118,8 +152,10 @@ describe("task view filtering", () => {
       }),
     ];
 
+    const filterIndex = buildTaskViewFilterIndex(tasks);
     const result = filterTasksForView({
       allTasks: tasks,
+      filterIndex,
       prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
       searchQuery: "",
       people: [],

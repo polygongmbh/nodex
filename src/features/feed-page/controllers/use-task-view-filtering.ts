@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
-import { filterTasksForView } from "@/domain/content/task-view-filtering";
+import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import type { Channel, ChannelMatchMode, Person, Task } from "@/types";
 
 interface UseTaskViewFilteringParams {
@@ -28,6 +28,10 @@ export function useTaskViewFiltering({
   channelMatchMode,
   taskPredicate,
 }: UseTaskViewFilteringParams): Task[] {
+  const filterIndex = useMemo(
+    () => buildTaskViewFilterIndex(allTasks, people),
+    [allTasks, people]
+  );
   const { included, excluded } = useMemo(
     () => getIncludedExcludedChannelNames(channels),
     [channels]
@@ -38,6 +42,7 @@ export function useTaskViewFiltering({
     () =>
       filterTasksForView({
         allTasks,
+        filterIndex,
         prefilteredTaskIds,
         focusedTaskId,
         includeFocusedTask,
@@ -52,6 +57,7 @@ export function useTaskViewFiltering({
     [
       allTasks,
       channelMatchMode,
+      filterIndex,
       focusedTaskId,
       includeFocusedTask,
       hideClosedTasks,
