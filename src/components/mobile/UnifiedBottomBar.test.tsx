@@ -168,6 +168,50 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(onSearchChange).toHaveBeenLastCalledWith("hello #general");
   });
 
+  it("grows the mobile compose box with content until half the viewport height", () => {
+    const originalInnerHeight = window.innerHeight;
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      writable: true,
+      value: 800,
+    });
+
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSearchChange={() => {}}
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        onRelayToggle={() => {}}
+        onChannelToggle={() => {}}
+        onPersonToggle={() => {}}
+        isSignedIn={true}
+        onSignInClick={() => {}}
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    Object.defineProperty(field, "scrollHeight", {
+      configurable: true,
+      get: () => 520,
+    });
+
+    fireEvent.change(field, { target: { value: "line 1\nline 2\nline 3\nline 4\nline 5\nline 6" } });
+
+    expect(field.style.height).toBe("400px");
+    expect(field.style.maxHeight).toBe("400px");
+    expect(field.style.overflowY).toBe("auto");
+
+    Object.defineProperty(window, "innerHeight", {
+      configurable: true,
+      writable: true,
+      value: originalInnerHeight,
+    });
+  });
+
   it("shows a blocker panel and opens channel remediation when sending without a selected channel tag", () => {
     const onSubmit = vi.fn(async () => successResult);
 

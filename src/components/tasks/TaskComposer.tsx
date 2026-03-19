@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import {
   Hash,
   Calendar,
@@ -110,6 +110,7 @@ interface ComposeDraftState {
 const NIP99_TITLE_MAX_LENGTH = 80;
 const NIP99_SUMMARY_MAX_LENGTH = 160;
 const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
+const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.5;
 
 function normalizeListingTextFromContent(content: string): string {
   return content
@@ -301,6 +302,37 @@ export function TaskComposer({
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | "blocker" | null>(null);
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const maxHeight = Math.max(window.innerHeight * COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO, 42);
+    textarea.style.height = "0px";
+    const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.maxHeight = `${maxHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [content, adaptiveSize, compact, isExpanded]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      const maxHeight = Math.max(window.innerHeight * COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO, 42);
+      textarea.style.height = "0px";
+      const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+      textarea.style.height = `${nextHeight}px`;
+      textarea.style.maxHeight = `${maxHeight}px`;
+      textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const hasMention = (text: string, mention: string) => {
     const escaped = mention.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -1430,7 +1462,7 @@ export function TaskComposer({
                   : t("composer.placeholders.comment")
           }
           className={cn(
-            "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
+            "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none [scrollbar-width:thin] [-ms-overflow-style:auto] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/80 [&::-webkit-scrollbar-track]:bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
             highlightedTarget === "input" && "ring-2 ring-amber-400 border-amber-400/70",
             adaptiveSize && !showExpandedControls
               ? "min-h-[42px] py-2"

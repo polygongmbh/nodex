@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, MapPin, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -86,6 +86,7 @@ const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> 
 
 const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 const NIP99_TITLE_MAX_LENGTH = 80;
+const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.5;
 
 function normalizeListingTextFromContent(content: string): string {
   return content
@@ -749,6 +750,36 @@ export function UnifiedBottomBar({
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
 
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const maxHeight = Math.max(window.innerHeight * COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO, 44);
+    textarea.style.height = "0px";
+    const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.maxHeight = `${maxHeight}px`;
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [sharedText]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const maxHeight = Math.max(window.innerHeight * COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO, 44);
+      textarea.style.height = "0px";
+      const nextHeight = Math.min(textarea.scrollHeight, maxHeight);
+      textarea.style.height = `${nextHeight}px`;
+      textarea.style.maxHeight = `${maxHeight}px`;
+      textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   const pulseTarget = (target: "input" | "attachments") => {
     setHighlightedTarget(target);
     clearTrackedTimeout(remediationHighlightTimeoutRef.current);
@@ -1350,7 +1381,7 @@ export function UnifiedBottomBar({
       {/* Input Area */}
       <div className="flex items-stretch gap-2 px-3 pb-3 pt-2">
         <div className="flex-1">
-          <div className="flex h-[2.75rem] items-stretch gap-2 text-sm">
+          <div className="flex min-h-[2.75rem] items-end gap-2 text-sm">
             <div className="flex-1 relative">
               {hasComposeText ? (
                 <button
@@ -1453,7 +1484,7 @@ export function UnifiedBottomBar({
                 }}
                 placeholder={t("composer.placeholders.mobileTask")}
                 className={cn(
-                  "h-full w-full bg-muted/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm leading-[1.35] resize-none overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden focus:outline-none focus:ring-2 focus:ring-primary/50",
+                  "block min-h-[2.75rem] w-full bg-muted/30 border border-border rounded-lg pl-9 pr-3 py-2 text-sm leading-[1.35] resize-none [scrollbar-width:thin] [-ms-overflow-style:auto] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/80 [&::-webkit-scrollbar-track]:bg-transparent focus:outline-none focus:ring-2 focus:ring-primary/50",
                   highlightedTarget === "input" && "ring-2 ring-amber-400 border-amber-400/70"
                 )}
                 rows={1}
@@ -1500,13 +1531,13 @@ export function UnifiedBottomBar({
                 </div>
               )}
             </div>
-            <div className="flex h-full items-stretch gap-1.5">
+            <div className="flex items-end gap-1.5 self-end">
               <div className="relative">
                 <button
                   onClick={handlePrimarySend}
                   disabled={Boolean(taskSubmitBlock?.isHardDisabled) || isPrimarySendEmptyDisabled}
                   className={cn(
-                    "h-full w-11 inline-flex items-center justify-center rounded-lg border transition-colors",
+                    "h-11 w-11 inline-flex items-center justify-center rounded-lg border transition-colors",
                     isSignedIn
                       ? isPrimarySendEmptyDisabled
                         ? "border-primary/40 bg-primary/45 text-primary-foreground/85 disabled:opacity-100"
