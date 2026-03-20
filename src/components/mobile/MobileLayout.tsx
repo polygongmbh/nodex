@@ -422,7 +422,7 @@ export function MobileLayout({
           )}
           {!showFilters && (
             isHydrating ? (
-              <HydrationStatusRow className="px-3" />
+              <HydrationStatusRow className="h-10 px-3 text-xs" />
             ) : focusedTaskId && activePrimaryView !== "list" && activePrimaryView !== "calendar" ? (
               <FocusedTaskBreadcrumb
                 allTasks={allTasks}

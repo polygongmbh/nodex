@@ -11,13 +11,15 @@ export function HydrationStatusRow({ className }: HydrationStatusRowProps) {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       className={cn(
-        "flex items-center gap-1.5 px-4 py-1.5 text-xs text-muted-foreground bg-muted/40 border-b border-border",
+        "w-full h-12 border-b border-border/80 bg-muted/60 px-4 flex items-center gap-2 shadow-sm text-sm text-foreground/80",
         className
       )}
     >
-      <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
-      <span>{t("feed.hydrating")}</span>
+      <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+      <span className="leading-none font-medium text-foreground">{t("feed.hydrating")}</span>
     </div>
   );
 }
