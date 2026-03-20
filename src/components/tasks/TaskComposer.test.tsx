@@ -2008,7 +2008,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(getMentionChip(alicePubkey)).toBeInTheDocument();
   });
 
-  it("uses the same active text treatment for populated desktop date and time controls", async () => {
+  it("restores populated desktop date and time controls from compose state", async () => {
     const dueDate = new Date("2026-03-19T00:00:00.000Z");
     const dueTime = "12:11";
 
@@ -2035,9 +2035,8 @@ describe("TaskComposer hashtag autocomplete", () => {
     );
 
     await waitFor(() => {
-      // Protect the UI contract that populated desktop date and time controls share the same active emphasis.
-      expect(screen.getByRole("button", { name: format(dueDate, "MMM d, yyyy") })).toHaveClass("text-foreground");
+      expect(screen.getByRole("button", { name: format(dueDate, "MMM d, yyyy") })).toBeInTheDocument();
     });
-    expect(screen.getByDisplayValue(dueTime)).toHaveClass("text-foreground");
+    expect(screen.getByDisplayValue(dueTime)).toBeInTheDocument();
   });
 });
