@@ -604,6 +604,32 @@ describe("FeedView", () => {
     expect(container.querySelector('[data-task-id="task-closed"]')).not.toBeInTheDocument();
   });
 
+  it("shows a focused closed task in its own feed", () => {
+    const closedTask = makeTask({
+      id: "task-closed-focused",
+      author,
+      content: "Closed focused task #general",
+      status: "closed",
+    });
+
+    const { container } = render(
+      <FeedView
+        tasks={[closedTask]}
+        allTasks={[closedTask]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        focusedTaskId="task-closed-focused"
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(container.querySelector('[data-task-id="task-closed-focused"]')).toBeInTheDocument();
+  });
+
   it("keeps closed-task state updates visible even when the closed task row is hidden", () => {
     const openTask = makeTask({
       id: "task-open-with-updates",

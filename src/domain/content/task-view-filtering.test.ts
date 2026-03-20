@@ -167,4 +167,46 @@ describe("task view filtering", () => {
 
     expect(result.map((task) => task.id)).toEqual(["todo-task", "done-task"]);
   });
+
+  it("keeps an explicitly focused closed task visible when includeFocusedTask is enabled", () => {
+    const tasks = [
+      makeTask({
+        id: "closed-root",
+        content: "Closed root #alpha",
+        tags: ["alpha"],
+        status: "closed",
+      }),
+      makeTask({
+        id: "open-child",
+        parentId: "closed-root",
+        content: "Open child #alpha",
+        tags: ["alpha"],
+        status: "todo",
+      }),
+      makeTask({
+        id: "closed-descendant",
+        parentId: "closed-root",
+        content: "Closed descendant #alpha",
+        tags: ["alpha"],
+        status: "closed",
+      }),
+    ];
+
+    const filterIndex = buildTaskViewFilterIndex(tasks);
+    const result = filterTasksForView({
+      allTasks: tasks,
+      filterIndex,
+      prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+      focusedTaskId: "closed-root",
+      includeFocusedTask: true,
+      hideClosedTasks: true,
+      searchQuery: "",
+      people: [],
+      includedChannels: [],
+      excludedChannels: [],
+      channelMatchMode: "and",
+    });
+
+    expect(result.map((task) => task.id)).toEqual(["closed-root", "open-child"]);
+  });
 });

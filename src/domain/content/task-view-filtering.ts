@@ -160,9 +160,14 @@ export function filterTasksForView({
     : null;
 
   return allTasks.filter((task) => {
+    const isExplicitlyFocusedTask =
+      includeFocusedTask &&
+      Boolean(focusedTaskId) &&
+      task.id === focusedTaskId;
+
     if (taskPredicate && !taskPredicate(task)) return false;
     if (!prefilteredTaskIds.has(task.id)) return false;
-    if (hideClosedTasks && task.status === "closed") return false;
+    if (hideClosedTasks && task.status === "closed" && !isExplicitlyFocusedTask) return false;
 
     if (focusedTaskId) {
       if (task.id === focusedTaskId) {
