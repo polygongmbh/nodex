@@ -604,6 +604,47 @@ describe("FeedView", () => {
     expect(container.querySelector('[data-task-id="task-closed"]')).not.toBeInTheDocument();
   });
 
+  it("keeps closed-task state updates visible even when the closed task row is hidden", () => {
+    const openTask = makeTask({
+      id: "task-open-with-updates",
+      author,
+      content: "Open feed task #general",
+      status: "todo",
+    });
+    const closedTask = makeTask({
+      id: "task-closed-with-updates",
+      author,
+      content: "Closed feed task #general",
+      status: "closed",
+      stateUpdates: [
+        {
+          id: "close-update-1",
+          status: "closed",
+          timestamp: new Date(Date.now() - 30_000),
+          authorPubkey: author.id,
+        },
+      ],
+    });
+
+    const { container } = render(
+      <FeedView
+        tasks={[openTask, closedTask]}
+        allTasks={[openTask, closedTask]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    expect(container.querySelector('[data-task-id="task-closed-with-updates"]')).not.toBeInTheDocument();
+    expect(screen.getByTestId("feed-state-entry-close-update-1")).toBeInTheDocument();
+    expect(screen.getByTestId("feed-state-entry-close-update-1")).toHaveTextContent("Closed");
+  });
+
   it("omits english default in-progress description when ui language is german", async () => {
     await i18n.changeLanguage("de");
     try {

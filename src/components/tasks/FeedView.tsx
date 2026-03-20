@@ -318,14 +318,38 @@ export function FeedView({
     channels: neutralChannels,
     channelMatchMode,
   });
+  const filteredFeedTasksWithClosed = useTaskViewFiltering({
+    allTasks,
+    tasks,
+    focusedTaskId,
+    includeFocusedTask: true,
+    hideClosedTasks: false,
+    searchQuery: deferredSearchQuery,
+    people,
+    channels,
+    channelMatchMode,
+  });
+  const unfilteredFeedTasksWithClosed = useTaskViewFiltering({
+    allTasks,
+    tasks,
+    focusedTaskId,
+    includeFocusedTask: true,
+    hideClosedTasks: false,
+    searchQuery: "",
+    people,
+    channels: neutralChannels,
+    channelMatchMode,
+  });
   const feedTasks = useMemo(
     () => [...filteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
     [filteredFeedTasks]
   );
   const allFeedEntries = useMemo<FeedEntry[]>(() => {
     const entries: FeedEntry[] = [];
-    for (const task of [...unfilteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())) {
-      entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
+    for (const task of [...unfilteredFeedTasksWithClosed].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())) {
+      if (task.status !== "closed") {
+        entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
+      }
       for (const update of task.stateUpdates || []) {
         entries.push({
           type: "state-update",
@@ -337,11 +361,13 @@ export function FeedView({
       }
     }
     return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [unfilteredFeedTasks]);
+  }, [unfilteredFeedTasksWithClosed]);
   const feedEntries = useMemo<FeedEntry[]>(() => {
     const entries: FeedEntry[] = [];
-    for (const task of feedTasks) {
-      entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
+    for (const task of [...filteredFeedTasksWithClosed].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())) {
+      if (task.status !== "closed") {
+        entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
+      }
       for (const update of task.stateUpdates || []) {
         entries.push({
           type: "state-update",
@@ -353,7 +379,7 @@ export function FeedView({
       }
     }
     return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [feedTasks]);
+  }, [filteredFeedTasksWithClosed]);
   const activeChannelFiltersKey = useMemo(
     () => channels
       .filter((channel) => channel.filterState && channel.filterState !== "neutral")

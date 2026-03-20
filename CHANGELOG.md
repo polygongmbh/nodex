@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 - Restored live feed updates after initial relay hydration by keeping the cache subscription open after EOSE, fixing a regression where updates stalled until reload.
+- Feed now keeps state-update entries (including close events) visible even when the underlying task is closed and hidden from the main task rows.
 
 ## [2.4.1] - 2026-03-19
 
