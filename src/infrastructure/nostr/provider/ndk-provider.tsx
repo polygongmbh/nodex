@@ -486,15 +486,21 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
   const retryNip42RelaysAfterSignIn = useCallback(() => {
     if (!ndk) return;
-    const relayUrlsToRetry = relays
+    const relaysToRetry = relays
       .filter((relay) => shouldReconnectRelayAfterSignIn(relay))
-      .map((relay) => normalizeRelayUrl(relay.url));
+      .map((relay) => ({
+        relayUrl: normalizeRelayUrl(relay.url),
+        forceNewSocket: relay.status === "verification-failed",
+      }));
 
-    if (relayUrlsToRetry.length === 0) return;
+    if (relaysToRetry.length === 0) return;
 
-    const retrySet = new Set(relayUrlsToRetry);
+    const retrySet = new Set(relaysToRetry.map((relay) => relay.relayUrl));
     nostrDevLog("relay", "Retrying NIP-42 auth-capable relays after sign in", {
-      relayUrls: relayUrlsToRetry,
+      relayUrls: relaysToRetry.map((relay) => relay.relayUrl),
+      forceNewSocketRelayUrls: relaysToRetry
+        .filter((relay) => relay.forceNewSocket)
+        .map((relay) => relay.relayUrl),
     });
 
     setRelays((previous) =>
@@ -505,12 +511,12 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       )
     );
 
-    relayUrlsToRetry.forEach((relayUrl) => {
+    relaysToRetry.forEach(({ relayUrl, forceNewSocket }) => {
       relayAutoPausedRef.current.delete(relayUrl);
       relayInitialFailureCountsRef.current.delete(relayUrl);
       relayAuthRetryHistoryRef.current.delete(relayUrl);
       pendingRelayVerificationRef.current.delete(relayUrl);
-      connectManagedRelay(ndk, relayUrl);
+      connectManagedRelay(ndk, relayUrl, { forceNewSocket });
     });
   }, [connectManagedRelay, ndk, relays]);
 

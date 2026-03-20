@@ -201,7 +201,7 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
   NDKNip46Signer: { bunker: () => ({ blockUntilReady: async () => ({ fetchProfile: async () => {}, pubkey: "pub", npub: "npub" }) }) },
   NDKPrivateKeySigner: class {
     async user() {
-      return { pubkey: "pub", npub: "npub" };
+      return { pubkey: "pub", npub: "npub", fetchProfile: async () => {}, profile: undefined };
     }
     static generate() {
       return new this();
@@ -228,7 +228,7 @@ vi.mock("./session-restore", () => ({
 }));
 
 function Harness() {
-  const { addRelay, removeRelay, reconnectRelay, relays } = useNDK();
+  const { addRelay, removeRelay, reconnectRelay, loginAsGuest, logout, relays } = useNDK();
   return (
     <div>
       <button onClick={() => addRelay("wss://relay.two/")}>add relay</button>
@@ -237,6 +237,8 @@ function Harness() {
       <button onClick={() => removeRelay("wss://relay.one")}>remove relay</button>
       <button onClick={() => reconnectRelay("wss://relay.one")}>reconnect relay</button>
       <button onClick={() => reconnectRelay("wss://relay.one", { forceNewSocket: true })}>hard reconnect relay</button>
+      <button onClick={() => logout()}>logout</button>
+      <button onClick={() => void loginAsGuest()}>login as guest</button>
       <output data-testid="relay-state">
         {relays
           .map((relay) => `${relay.url}:${relay.status}`)
@@ -529,6 +531,43 @@ describe("NDKProvider relay lifecycle", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:verification-failed");
+    });
+  });
+
+  it("forces a fresh socket reconnect for verification-failed relays after signing in again", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      firstRelay.emitServerMessage('["CLOSED","kinds-limit-subid","auth-required: pubkey not in whitelist"]');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:verification-failed");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "logout" }));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
+    await waitFor(() => {
+      expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
+      expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
+      expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
     });
   });
 });
