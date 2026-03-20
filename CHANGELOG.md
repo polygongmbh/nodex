@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+### Fixed
+- Relay write-rejection handling now maps broader explicit reject reasons (including generic `rejected`/policy-blocked failures) to `read only`, and reconnect status mapping now avoids lingering `connecting` UI state when no websocket is actively connecting.
+
 ## [2.5.0] - 2026-03-20
 Minor release for relay/feed state-update resilience and NIP-19 `npub` identity label upgrades (2467 lines changed since `v2.4.1`).
 

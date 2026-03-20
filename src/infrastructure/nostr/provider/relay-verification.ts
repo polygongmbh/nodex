@@ -2,8 +2,8 @@ import type { RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-
 
 export type RelayVerificationFailureSource = "auth-policy" | "subscription-closed";
 
-const AUTH_REQUIRED_CLOSE_REASON_PATTERN = /(auth-required|not authorized|pubkey not in whitelist|blocked:\s*not authorized)/i;
-const WRITE_REJECT_REASON_PATTERN = /(auth-required|not authorized|pubkey not in whitelist|blocked:\s*not authorized|write\s*denied|permission\s*denied|forbidden)/i;
+const AUTH_REQUIRED_CLOSE_REASON_PATTERN = /(auth[ -]?required|not authorized|pubkey not in whitelist|blocked:\s*not authorized)/i;
+const WRITE_REJECT_REASON_PATTERN = /(auth[ -]?required|not authorized|pubkey not in whitelist|blocked(?::\s*not authorized|\s+by\s+policy)?|write\s*denied|write\s*rejected|permission\s*denied|forbidden|rejected)/i;
 const OK_REJECT_ENVELOPE_PATTERN = /\[\s*"OK"\s*,\s*"[^"]*"\s*,\s*false\s*,/i;
 export const AUTH_RETRY_COOLDOWN_MS = 10000;
 

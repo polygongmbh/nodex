@@ -46,6 +46,20 @@ describe("shouldMarkRelayReadOnlyAfterPublishReject", () => {
     })).toBe(true);
   });
 
+  it("marks read-only for write rejected rejection reasons", () => {
+    expect(shouldMarkRelayReadOnlyAfterPublishReject({
+      errorMessage: "publish rejected",
+      rejectionReason: "write rejected",
+    })).toBe(true);
+  });
+
+  it("marks read-only for blocked policy rejection reasons", () => {
+    expect(shouldMarkRelayReadOnlyAfterPublishReject({
+      errorMessage: "publish rejected",
+      rejectionReason: "blocked by policy",
+    })).toBe(true);
+  });
+
   it("marks read-only for NIP-01 OK false envelope failures", () => {
     expect(shouldMarkRelayReadOnlyAfterPublishReject({
       errorMessage: '["OK","68dd30...",false,"blocked by policy"]',

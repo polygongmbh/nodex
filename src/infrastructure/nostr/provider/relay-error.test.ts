@@ -72,7 +72,17 @@ describe("extractRelayUrlsFromErrorMessage", () => {
 
   it("extracts write-reject reasons outside OK envelopes", () => {
     const reason = extractRelayRejectionReason("blocked: not authorized");
-    expect(reason).toBe("not authorized");
+    expect(reason).toBe("blocked: not authorized");
+  });
+
+  it("extracts write rejected reason text", () => {
+    const reason = extractRelayRejectionReason("relay policy: write rejected");
+    expect(reason).toBe("write rejected");
+  });
+
+  it("extracts generic rejected reason text", () => {
+    const reason = extractRelayRejectionReason("event rejected by relay policy");
+    expect(reason).toBe("rejected");
   });
 
   it("extracts relay-specific error text from NDKPublishError-like map payloads", () => {
@@ -90,5 +100,20 @@ describe("extractRelayUrlsFromErrorMessage", () => {
 
     expect(extractRelayErrorMessage(publishError, "wss://relay.example.com")).toBe("blocked: not authorized");
     expect(extractRelayErrorMessage(publishError, "wss://relay.other")).toBeUndefined();
+  });
+
+  it("extracts relay-specific error text when the errors map key is a relay url string", () => {
+    const relayError = { reason: "auth required" };
+    const publishError = new Error("Not enough relays received the event (0 published, 1 required)") as Error & {
+      errors?: Map<string, { reason: string }>;
+    };
+    Object.defineProperty(publishError, "errors", {
+      value: new Map([["wss://relay.example.com/", relayError]]),
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    });
+
+    expect(extractRelayErrorMessage(publishError, "wss://relay.example.com")).toBe("auth required");
   });
 });

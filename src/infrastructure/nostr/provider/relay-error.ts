@@ -1,8 +1,8 @@
 const RELAY_URL_PATTERN = /\bwss?:\/\/[^\s,)"'}\]]+/gi;
 const OK_REJECTION_PATTERN = /\[\s*"OK"\s*,\s*"[^"]*"\s*,\s*false\s*,\s*"([^"]+)"\s*\]/i;
-const AUTH_REQUIRED_REASON_PATTERN = /(auth-required(?::[^\]\n]*)?)/i;
+const AUTH_REQUIRED_REASON_PATTERN = /(auth[ -]?required(?::[^\]\n]*)?)/i;
 const WRITE_REJECT_REASON_PATTERN =
-  /(not authorized|pubkey not in whitelist|write\s*denied|permission\s*denied|forbidden)/i;
+  /(not authorized|pubkey not in whitelist|blocked(?::\s*not authorized|\s+by\s+policy)?|write\s*denied|write\s*rejected|permission\s*denied|forbidden|rejected)/i;
 
 export function extractRelayUrlsFromErrorMessage(message: string): string[] {
   if (!message) return [];
@@ -31,9 +31,19 @@ interface NdkRelayErrorEntry {
 function toStringMessage(value: unknown): string {
   if (typeof value === "string") return value;
   if (value instanceof Error) return value.message || String(value);
+  if (Array.isArray(value)) return JSON.stringify(value);
   if (typeof value === "object" && value !== null) {
     const maybeMessage = (value as { message?: unknown }).message;
     if (typeof maybeMessage === "string") return maybeMessage;
+    const maybeReason = (value as { reason?: unknown }).reason;
+    if (typeof maybeReason === "string") return maybeReason;
+    const maybeError = (value as { error?: unknown }).error;
+    if (typeof maybeError === "string") return maybeError;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
   }
   return String(value || "");
 }
@@ -45,9 +55,11 @@ function extractNdkRelayErrorEntries(error: unknown): NdkRelayErrorEntry[] {
 
   const entries: NdkRelayErrorEntry[] = [];
   for (const [relay, relayError] of maybeErrors.entries()) {
-    const relayUrl = typeof relay === "object" && relay !== null && "url" in relay
-      ? String((relay as { url?: unknown }).url || "")
-      : undefined;
+    const relayUrl = typeof relay === "string"
+      ? relay
+      : typeof relay === "object" && relay !== null && "url" in relay
+        ? String((relay as { url?: unknown }).url || "")
+        : undefined;
     entries.push({
       relayUrl: relayUrl || undefined,
       message: toStringMessage(relayError),

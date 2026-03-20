@@ -59,6 +59,7 @@ import {
 } from "./relay-verification";
 import {
   extractRelayErrorMessage,
+  extractRelayUrlsFromError,
   extractRelayRejectionReason,
 } from "./relay-error";
 import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
@@ -72,6 +73,26 @@ const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
 const RELAY_PUBLISH_TIMEOUT_MS = 3000;
 type RelayOperation = "read" | "write" | "unknown";
 const normalizeRelayUrl = (url: string) => url.replace(/\/+$/, "");
+const WS_READY_STATE_CONNECTING = 0;
+const WS_READY_STATE_OPEN = 1;
+
+function mapRelayTransportStatus(relay: NDKRelay): NDKRelayStatus["status"] {
+  const mappedStatus = mapNativeRelayStatus(relay.status);
+  const connectivity = (relay as unknown as { connectivity?: { ws?: { readyState?: number } } }).connectivity;
+  if (!connectivity) return mappedStatus;
+  const wsReadyState = connectivity.ws?.readyState;
+
+  if (mappedStatus === "connecting") {
+    if (wsReadyState === WS_READY_STATE_CONNECTING) return "connecting";
+    return "disconnected";
+  }
+  if (mappedStatus === "connected") {
+    if (wsReadyState === WS_READY_STATE_OPEN) return "connected";
+    return "disconnected";
+  }
+
+  return mappedStatus;
+}
 
 export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const configuredDefaultRelays = useMemo(
@@ -351,10 +372,20 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     if (trackedRelay && !forceNewSocket) {
       relayCurrentInstanceRef.current.set(normalizedRelayUrl, trackedRelay);
-      const mappedStatus = mapNativeRelayStatus(trackedRelay.status);
+      const mappedStatus = mapRelayTransportStatus(trackedRelay);
       if (mappedStatus === "connected" || mappedStatus === "connecting") {
         return trackedRelay;
       }
+
+      // Recover from stale native CONNECTING status with no active websocket attempt.
+      if (mapNativeRelayStatus(trackedRelay.status) === "connecting") {
+        disconnectTrackedRelayInstance(ndkInstance, normalizedRelayUrl);
+        const freshRelay = ndkInstance.pool.getRelay(normalizedRelayUrl, false);
+        relayCurrentInstanceRef.current.set(normalizedRelayUrl, freshRelay);
+        freshRelay.connect();
+        return freshRelay;
+      }
+
       trackedRelay.connect();
       return trackedRelay;
     }
@@ -490,7 +521,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
             });
             return;
           }
-          const mappedStatus = mapNativeRelayStatus(relay.status);
+          const mappedStatus = mapRelayTransportStatus(relay);
           nextByUrl.set(normalized, {
             ...previousEntry,
             url: normalized,
@@ -1270,9 +1301,23 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       );
       await event.publish(relaySet);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error || "");
+      const rejectionReason = extractRelayRejectionReason(error);
+      if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason })) {
+        const failedRelayUrls = extractRelayUrlsFromError(error);
+        const relayUrlsToMark = failedRelayUrls.length > 0
+          ? failedRelayUrls
+          : relays.map((relay) => normalizeRelayUrl(relay.url));
+        relayUrlsToMark.forEach((relayUrl) => {
+          markRelayVerificationFailure(relayUrl, "write", {
+            setStatus: true,
+            showToast: false,
+          });
+        });
+      }
       console.warn("Failed to publish offline presence event during logout", error);
     }
-  }, [resolvedDefaultRelays, ndk, relays]);
+  }, [markRelayVerificationFailure, resolvedDefaultRelays, ndk, relays]);
 
   const logout = useCallback(() => {
     void publishPresenceOffline();
@@ -1334,7 +1379,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
 
     const relay = connectManagedRelay(ndk, normalized, { forceNewSocket });
-    const mappedStatus = mapNativeRelayStatus(relay.status);
+    const mappedStatus = mapRelayTransportStatus(relay);
     setRelays((previous) =>
       previous.map((entry) =>
         entry.url.replace(/\/+$/, "") === normalized
@@ -1342,9 +1387,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
               ...entry,
               status: mappedStatus === "connected"
                 ? resolveConnectedRelayStatus(normalized)
-                : mappedStatus === "connecting"
-                  ? "connecting"
-                  : "connecting",
+                : mappedStatus,
             }
           : entry
       )
@@ -1428,10 +1471,17 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
             rejectionReason = extractedReason;
           }
           const decisionErrorMessage = relayErrorMessage || errorMessage;
-          if (shouldMarkRelayReadOnlyAfterPublishReject({
-            errorMessage: decisionErrorMessage,
-            rejectionReason: extractedReason,
-          })) {
+          const shouldMarkReadOnly =
+            shouldMarkRelayReadOnlyAfterPublishReject({
+              errorMessage: decisionErrorMessage,
+              rejectionReason: extractedReason,
+            }) ||
+            (decisionErrorMessage !== errorMessage &&
+              shouldMarkRelayReadOnlyAfterPublishReject({
+                errorMessage,
+                rejectionReason: extractedReason,
+              }));
+          if (shouldMarkReadOnly) {
             markRelayVerificationFailure(relayUrl, "write", {
               setStatus: true,
               showToast: false,
