@@ -125,6 +125,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
   const relayCurrentInstanceRef = useRef<Map<string, NDKRelay>>(new Map());
+  const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
 
   const clearTrackedRelayTimeout = useCallback((timeoutId: number | undefined) => {
     if (typeof timeoutId !== "number") return;
@@ -147,6 +148,21 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       window.clearTimeout(timeoutId);
     });
     relayTimeoutIdsRef.current.clear();
+  }, []);
+
+  const detachRelayOkRejectObserver = useCallback((relayUrl: string) => {
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
+    const observer = relayOkRejectObserverRef.current.get(normalizedRelayUrl);
+    if (!observer) return;
+    observer.ws.removeEventListener("message", observer.handler);
+    relayOkRejectObserverRef.current.delete(normalizedRelayUrl);
+  }, []);
+
+  const detachAllRelayOkRejectObservers = useCallback(() => {
+    relayOkRejectObserverRef.current.forEach((observer) => {
+      observer.ws.removeEventListener("message", observer.handler);
+    });
+    relayOkRejectObserverRef.current.clear();
   }, []);
 
   const resolveRelayVerificationOperation = useCallback((): RelayOperation => {
@@ -288,6 +304,55 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
   }, [markRelayReadOutcome, markRelayWriteOutcome, shouldShowRelayVerificationToast]);
 
+  const attachRelayOkRejectObserver = useCallback((relay: NDKRelay) => {
+    const normalizedRelayUrl = normalizeRelayUrl(relay.url);
+    const connectivity = relay as unknown as { connectivity?: { ws?: WebSocket } };
+    const ws = connectivity.connectivity?.ws;
+    if (!ws) return;
+
+    const existing = relayOkRejectObserverRef.current.get(normalizedRelayUrl);
+    if (existing?.ws === ws) return;
+    if (existing) {
+      existing.ws.removeEventListener("message", existing.handler);
+      relayOkRejectObserverRef.current.delete(normalizedRelayUrl);
+    }
+
+    const handler = (event: MessageEvent) => {
+      if (typeof event.data !== "string") return;
+      try {
+        const payload = JSON.parse(event.data);
+        if (!Array.isArray(payload)) return;
+        const [command, _eventId, ok, reason] = payload as [unknown, unknown, unknown, unknown];
+        if (command !== "OK" || ok !== false || typeof reason !== "string") return;
+
+        const rejectionReason = extractRelayRejectionReason(reason) ?? reason;
+        if (!shouldMarkRelayReadOnlyAfterPublishReject({
+          errorMessage: reason,
+          rejectionReason,
+        })) {
+          return;
+        }
+        markRelayVerificationFailure(normalizedRelayUrl, "write", {
+          setStatus: true,
+          showToast: false,
+        });
+        nostrDevLog("relay", "Relay write rejection observed from websocket OK response", {
+          relayUrl: normalizedRelayUrl,
+          reason,
+          rejectionReason,
+        });
+      } catch {
+        // Ignore non-JSON relay frames.
+      }
+    };
+
+    ws.addEventListener("message", handler);
+    relayOkRejectObserverRef.current.set(normalizedRelayUrl, {
+      ws,
+      handler,
+    });
+  }, [markRelayVerificationFailure]);
+
   const notifyRelayVerificationEvent = useCallback((incoming: RelayVerificationEvent) => {
     const operation = incoming.operation === "unknown"
       ? resolveRelayVerificationOperation()
@@ -347,6 +412,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     const trackedRelay = relayCurrentInstanceRef.current.get(normalizedRelayUrl);
     const pooledRelay = ndkInstance.pool.relays.get(normalizedRelayUrl);
 
+    detachRelayOkRejectObserver(normalizedRelayUrl);
     relayCurrentInstanceRef.current.delete(normalizedRelayUrl);
 
     if (trackedRelay) {
@@ -357,7 +423,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
 
     ndkInstance.pool.removeRelay(normalizedRelayUrl);
-  }, []);
+  }, [detachRelayOkRejectObserver]);
 
   const connectManagedRelay = useCallback((
     ndkInstance: NDK,
@@ -545,6 +611,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         return;
       }
       relayCurrentInstanceRef.current.set(normalized, relay);
+      attachRelayOkRejectObserver(relay);
       nostrDevLog("relay", "Relay connected", { relayUrl: normalized });
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);
@@ -586,6 +653,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
       const normalized = normalizeRelayUrl(relay.url);
       nostrDevLog("relay", "Relay disconnected", { relayUrl: normalized });
+      detachRelayOkRejectObserver(normalized);
       const currentRelay = relayCurrentInstanceRef.current.get(normalized);
       if (currentRelay && currentRelay !== relay) {
         return;
@@ -811,13 +879,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       extensionRestoreController?.abort();
       window.clearInterval(reconcileIntervalId);
       clearAllTrackedRelayTimeouts();
+      detachAllRelayOkRejectObservers();
       ndkInstance.pool.removeAllListeners();
       ndkInstance.pool.relays.forEach((relay) => {
         relay.disconnect();
       });
       relayCurrentInstance.clear();
     };
-  }, [clearAllTrackedRelayTimeouts, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
+  }, [attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;

@@ -25,26 +25,64 @@ const mockedNdk = vi.hoisted(() => {
     AUTHENTICATED = 8,
   }
 
+  class FakeWebSocket {
+    readyState = 1;
+    private messageListeners = new Set<(event: MessageEvent) => void>();
+
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject | null) {
+      if (type !== "message" || !listener) return;
+      if (typeof listener === "function") {
+        this.messageListeners.add(listener as (event: MessageEvent) => void);
+        return;
+      }
+      this.messageListeners.add((event: MessageEvent) => listener.handleEvent(event));
+    }
+
+    removeEventListener(type: string, listener: EventListenerOrEventListenerObject | null) {
+      if (type !== "message" || !listener) return;
+      if (typeof listener === "function") {
+        this.messageListeners.delete(listener as (event: MessageEvent) => void);
+      }
+    }
+
+    emitMessage(data: string) {
+      const messageEvent = { data } as MessageEvent;
+      this.messageListeners.forEach((listener) => listener(messageEvent));
+    }
+  }
+
   class FakeRelay {
     url: string;
     status = MockNDKRelayStatus.DISCONNECTED;
     connectCalls = 0;
     disconnectCalls = 0;
     socketOpen = false;
+    connectivity: { ws?: FakeWebSocket } = {};
     constructor(url: string, private pool: FakePool) {
       this.url = url.replace(/\/+$/, "");
     }
+
+    emitServerMessage(data: string) {
+      this.connectivity.ws?.emitMessage(data);
+    }
+
     connect() {
       this.connectCalls += 1;
       this.socketOpen = true;
+      this.connectivity.ws = new FakeWebSocket();
+      this.connectivity.ws.readyState = 0;
       this.status = MockNDKRelayStatus.CONNECTING;
       this.pool.emit("relay:connecting", this);
+      this.connectivity.ws.readyState = 1;
       this.status = MockNDKRelayStatus.CONNECTED;
       this.pool.emit("relay:connect", this);
     }
     disconnect() {
       this.disconnectCalls += 1;
       this.socketOpen = false;
+      if (this.connectivity.ws) {
+        this.connectivity.ws.readyState = 3;
+      }
       this.status = MockNDKRelayStatus.DISCONNECTED;
       this.pool.emit("relay:disconnect", this);
     }
@@ -398,12 +436,7 @@ describe("NDKProvider relay lifecycle", () => {
     const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
     firstRelay.socketOpen = false;
     firstRelay.status = mockedNdk.MockNDKRelayStatus.CONNECTING;
-    Object.defineProperty(firstRelay, "connectivity", {
-      value: {},
-      configurable: true,
-      enumerable: true,
-      writable: true,
-    });
+    firstRelay.connectivity.ws = undefined;
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
@@ -416,5 +449,30 @@ describe("NDKProvider relay lifecycle", () => {
     expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
     expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
     expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
+  });
+
+  it("marks relay read-only when websocket returns OK false with auth-required reason", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      relay.emitServerMessage(
+        '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+    });
   });
 });
