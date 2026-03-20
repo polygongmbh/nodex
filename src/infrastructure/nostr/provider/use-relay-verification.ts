@@ -1,7 +1,11 @@
 import { useCallback } from "react";
 import type { MutableRefObject } from "react";
 import { normalizeRelayUrl } from "./relay-list";
-import { shouldSetVerificationFailedStatus } from "./relay-verification";
+import {
+  shouldClearReadRejectionAfterVerificationSuccess,
+  shouldClearWriteRejectionAfterVerificationSuccess,
+  shouldSetVerificationFailedStatus,
+} from "./relay-verification";
 import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import type { NDKRelayStatus } from "./contracts";
@@ -115,12 +119,10 @@ export function useRelayVerification(
   }, [relayVerificationToastHistoryRef]);
 
   const markRelayVerificationSuccess = useCallback((relayUrl: string, operation: RelayOperation) => {
-    if (operation === "read") {
+    if (shouldClearReadRejectionAfterVerificationSuccess(operation)) {
       markRelayReadOutcome(relayUrl, true);
-    } else if (operation === "write") {
-      markRelayWriteOutcome(relayUrl, true);
-    } else {
-      markRelayReadOutcome(relayUrl, true);
+    }
+    if (shouldClearWriteRejectionAfterVerificationSuccess(operation)) {
       markRelayWriteOutcome(relayUrl, true);
     }
     if (!shouldShowRelayVerificationToast(relayUrl, operation, "verified")) {

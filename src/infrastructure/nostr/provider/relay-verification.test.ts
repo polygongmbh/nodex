@@ -3,6 +3,8 @@ import {
   AUTH_RETRY_COOLDOWN_MS,
   isAuthRequiredCloseReason,
   isRelayReadAuthRequired,
+  shouldClearReadRejectionAfterVerificationSuccess,
+  shouldClearWriteRejectionAfterVerificationSuccess,
   shouldMarkRelayReadOnlyAfterPublishReject,
   shouldReconnectRelayAfterResume,
   shouldReconnectRelayAfterSignIn,
@@ -29,6 +31,20 @@ describe("shouldSetVerificationFailedStatus", () => {
     expect(shouldSetVerificationFailedStatus("auth-policy", "write")).toBe(true);
     expect(shouldSetVerificationFailedStatus("auth-policy", "unknown")).toBe(false);
     expect(shouldSetVerificationFailedStatus("subscription-closed", "write")).toBe(false);
+  });
+});
+
+describe("verification success capability clearing", () => {
+  it("clears read rejection only for explicit read verification success", () => {
+    expect(shouldClearReadRejectionAfterVerificationSuccess("read")).toBe(true);
+    expect(shouldClearReadRejectionAfterVerificationSuccess("write")).toBe(false);
+    expect(shouldClearReadRejectionAfterVerificationSuccess("unknown")).toBe(false);
+  });
+
+  it("clears write rejection only for explicit write verification success", () => {
+    expect(shouldClearWriteRejectionAfterVerificationSuccess("write")).toBe(true);
+    expect(shouldClearWriteRejectionAfterVerificationSuccess("read")).toBe(false);
+    expect(shouldClearWriteRejectionAfterVerificationSuccess("unknown")).toBe(false);
   });
 });
 

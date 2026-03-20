@@ -40,6 +40,18 @@ export function shouldSetVerificationFailedStatus(
   return false;
 }
 
+export function shouldClearReadRejectionAfterVerificationSuccess(
+  operation: RelayVerificationEvent["operation"]
+): boolean {
+  return operation === "read";
+}
+
+export function shouldClearWriteRejectionAfterVerificationSuccess(
+  operation: RelayVerificationEvent["operation"]
+): boolean {
+  return operation === "write";
+}
+
 export function shouldRetryAuthAfterReadRejection(params: {
   hasSigner: boolean;
   hadPendingAuthChallenge: boolean;

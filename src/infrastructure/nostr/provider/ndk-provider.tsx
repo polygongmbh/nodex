@@ -52,6 +52,8 @@ import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "@/infra
 import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import {
   isAuthRequiredCloseReason,
+  shouldClearReadRejectionAfterVerificationSuccess,
+  shouldClearWriteRejectionAfterVerificationSuccess,
   shouldMarkRelayReadOnlyAfterPublishReject,
   shouldReconnectRelayAfterSignIn,
   shouldRetryAuthAfterReadRejection,
@@ -254,13 +256,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   }, []);
 
   const markRelayVerificationSuccess = useCallback((relayUrl: string, operation: RelayOperation) => {
-    if (operation === "read") {
+    if (shouldClearReadRejectionAfterVerificationSuccess(operation)) {
       markRelayReadOutcome(relayUrl, true);
-    } else if (operation === "write") {
+    }
+    if (shouldClearWriteRejectionAfterVerificationSuccess(operation)) {
       markRelayWriteOutcome(relayUrl, true);
-    } else {
-      // Unknown auth challenge context: clear stale read rejection to avoid sticky red state.
-      markRelayReadOutcome(relayUrl, true);
     }
     if (!shouldShowRelayVerificationToast(relayUrl, operation, "verified")) {
       return;
