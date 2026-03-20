@@ -11,6 +11,7 @@ const mockedNdk = vi.hoisted(() => {
     signer: unknown;
     relayAuthDefaultPolicy: unknown;
     connect(): Promise<void>;
+    subscribeCalls: Array<{ filters: unknown; options: unknown }>;
     subscribe(): { on(): void; stop(): void };
   }
 
@@ -167,11 +168,13 @@ const mockedNdk = vi.hoisted(() => {
     pool: FakePool;
     signer: unknown;
     relayAuthDefaultPolicy: unknown;
+    subscribeCalls: Array<{ filters: unknown; options: unknown }>;
 
     constructor(options: { explicitRelayUrls?: string[] }) {
       this.pool = new FakePool(options.explicitRelayUrls ?? []);
       this.signer = undefined;
       this.relayAuthDefaultPolicy = undefined;
+      this.subscribeCalls = [];
       ndkInstances.push(this);
     }
 
@@ -179,7 +182,8 @@ const mockedNdk = vi.hoisted(() => {
       this.pool.connectAll();
     }
 
-    subscribe() {
+    subscribe(filters?: unknown, options?: unknown) {
+      this.subscribeCalls.push({ filters, options });
       return {
         on() {},
         stop() {},
@@ -199,6 +203,9 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
   __esModule: true,
   default: mockedNdk.FakeNDK,
   NDKRelayStatus: mockedNdk.MockNDKRelayStatus,
+  NDKSubscriptionCacheUsage: {
+    ONLY_RELAY: "ONLY_RELAY",
+  },
   NDKEvent: class {},
   NDKNip07Signer: class {},
   NDKNip46Signer: { bunker: () => ({ blockUntilReady: async () => ({ fetchProfile: async () => {}, pubkey: "pub", npub: "npub" }) }) },
@@ -670,5 +677,45 @@ describe("NDKProvider relay lifecycle", () => {
       screen.getByTestId("subscribe-identity-changes").textContent ?? "0"
     );
     expect(afterStatusUpdateIdentityChanges).toBe(baselineIdentityChanges);
+  });
+
+  it("reruns auth preflight on sign-in for connected relays that support nip-42", async () => {
+    const fetchedAt = Date.now();
+    window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({
+      "wss://relay.one": {
+        nip11: {
+          authRequired: true,
+          supportsNip42: true,
+          fetchedAt,
+        },
+      },
+    }));
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-nip11").textContent).toContain("wss://relay.one:auth");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    ndk.subscribeCalls.length = 0;
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
+    await waitFor(() => {
+      expect(ndk.subscribeCalls.some((call) => {
+        const options = (call.options || {}) as { closeOnEose?: boolean; relayUrls?: string[] };
+        return options.closeOnEose === true
+          && Array.isArray(options.relayUrls)
+          && options.relayUrls.includes("wss://relay.one");
+      })).toBe(true);
+    });
   });
 });

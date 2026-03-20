@@ -592,31 +592,47 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     const relayUrlsToRetry = relays
       .filter((relay) => shouldReconnectRelayAfterSignIn(relay))
       .map((relay) => normalizeRelayUrl(relay.url));
+    const authCapableRelayUrls = relays
+      .filter((relay) => relay.nip11?.supportsNip42 || relay.nip11?.authRequired)
+      .map((relay) => normalizeRelayUrl(relay.url));
 
-    if (relayUrlsToRetry.length === 0) return;
+    if (relayUrlsToRetry.length === 0 && authCapableRelayUrls.length === 0) return;
 
     const retrySet = new Set(relayUrlsToRetry);
-    nostrDevLog("relay", "Retrying NIP-42 auth-capable relays after sign in", {
-      relayUrls: relayUrlsToRetry,
+    const authCapableSet = new Set(authCapableRelayUrls);
+    const relayUrlsToTouch = new Set([...relayUrlsToRetry, ...authCapableRelayUrls]);
+    nostrDevLog("relay", "Refreshing relay auth state after sign in", {
+      reconnectRelayUrls: relayUrlsToRetry,
+      authCapableRelayUrls,
     });
 
-    setRelays((previous) =>
-      previous.map((relay) =>
-        retrySet.has(normalizeRelayUrl(relay.url))
-          ? { ...relay, status: "connecting" }
-          : relay
-      )
-    );
+    if (retrySet.size > 0) {
+      setRelays((previous) =>
+        previous.map((relay) =>
+          retrySet.has(normalizeRelayUrl(relay.url))
+            ? { ...relay, status: "connecting" }
+            : relay
+        )
+      );
+    }
 
-    relayUrlsToRetry.forEach((relayUrl) => {
-      relayAutoPausedRef.current.delete(relayUrl);
-      relayInitialFailureCountsRef.current.delete(relayUrl);
-      relayAuthRetryHistoryRef.current.delete(relayUrl);
-      relayAuthPreflightHistoryRef.current.delete(relayUrl);
-      pendingRelayVerificationRef.current.delete(relayUrl);
-      connectManagedRelay(ndk, relayUrl);
-      const relayInfo = relayInfoRef.current.get(relayUrl);
-      if (relayInfo?.authRequired) {
+    relayUrlsToTouch.forEach((relayUrl) => {
+      const isAuthCapable = authCapableSet.has(relayUrl);
+      if (retrySet.has(relayUrl)) {
+        relayAutoPausedRef.current.delete(relayUrl);
+        relayInitialFailureCountsRef.current.delete(relayUrl);
+        relayAuthRetryHistoryRef.current.delete(relayUrl);
+        pendingRelayVerificationRef.current.delete(relayUrl);
+      }
+      if (isAuthCapable) {
+        // Force a fresh auth challenge pass immediately after sign-in.
+        relayAuthPreflightHistoryRef.current.delete(relayUrl);
+      }
+      // Some relays emit a fresh NIP-42 challenge only on a new websocket session.
+      connectManagedRelay(ndk, relayUrl, {
+        forceNewSocket: isAuthCapable,
+      });
+      if (isAuthCapable) {
         primeRelayAuthChallenge(ndk, relayUrl);
       }
     });
