@@ -183,6 +183,16 @@ const Index = () => {
     reconnectRelay,
   });
 
+  const subscriptionRelayIds = useMemo(
+    () =>
+      new Set(
+        relays
+          .map((relay) => relay.id)
+          .filter((relayId) => relayId !== DEMO_RELAY_ID)
+      ),
+    [relays]
+  );
+
   const {
     events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
@@ -190,7 +200,7 @@ const Index = () => {
   } = useNostrEventCache({
     isConnected: isNostrConnected,
     subscribedKinds,
-    activeRelayIds: effectiveActiveRelayIds,
+    activeRelayIds: subscriptionRelayIds,
     availableRelayIds: relays.map((relay) => relay.id),
     subscribe,
   });
