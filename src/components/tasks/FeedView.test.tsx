@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
-import { formatAuthorMetaLabel } from "@/lib/person-label";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
 import i18n from "@/lib/i18n/config";
 
@@ -268,7 +267,7 @@ describe("FeedView", () => {
     expect(middleButton).toBeInTheDocument();
   });
 
-  it("shortens fallback pubkey label on slim desktop widths", async () => {
+  it("omits fallback npub text on slim desktop and keeps it available via hover title", async () => {
     const pubkeyOnlyAuthor: Person = {
       id: author.id,
       name: author.id,
@@ -305,9 +304,54 @@ describe("FeedView", () => {
     );
 
     await waitFor(() => {
-      const fallbackAuthorLabel = screen.getByTestId("feed-author-primary-task-pubkey");
-      expect(fallbackAuthorLabel.textContent?.startsWith("npub1")).toBe(true);
-      expect(fallbackAuthorLabel.textContent).toContain("…");
+      expect(screen.queryByTestId("feed-author-primary-task-pubkey")).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole("button", { name: /filter and mention npub1/i })
+    ).toHaveAttribute("title", expect.stringContaining("npub1"));
+    matchMediaSpy.mockRestore();
+  });
+
+  it("shows the full fallback npub on 2xl desktop widths", async () => {
+    const pubkeyOnlyAuthor: Person = {
+      id: author.id,
+      name: author.id,
+      displayName: author.id,
+      isOnline: true,
+      isSelected: false,
+    };
+    const pubkeyTask = makeTask({ id: "task-pubkey-2xl", author: pubkeyOnlyAuthor, status: "todo" });
+    const matchMediaSpy = vi
+      .spyOn(window, "matchMedia")
+      .mockImplementation((query: string) => ({
+        matches: query === "(min-width: 1536px)",
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      }));
+
+    render(
+      <FeedView
+        tasks={[pubkeyTask]}
+        allTasks={[pubkeyTask]}
+        relays={relays}
+        channels={channels}
+        people={[pubkeyOnlyAuthor]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      const fallbackAuthorLabel = screen.getByTestId("feed-author-primary-task-pubkey-2xl");
+      expect(fallbackAuthorLabel.textContent).toContain("npub1");
+      expect(fallbackAuthorLabel.textContent).not.toContain("…");
     });
     matchMediaSpy.mockRestore();
   });
@@ -351,7 +395,7 @@ describe("FeedView", () => {
     matchMediaSpy.mockRestore();
   });
 
-  it("shows author metadata label with username and shortened pubkey", () => {
+  it("shows author metadata label with username and feed-truncated npub", () => {
     render(
       <FeedView
         tasks={tasks}
@@ -366,14 +410,9 @@ describe("FeedView", () => {
       />
     );
 
-    const expectedLabel = formatAuthorMetaLabel({
-      personId: author.id,
-      displayName: author.displayName,
-      username: author.name,
-    });
-    expect(
-      screen.getByText((_, element) => element?.textContent === expectedLabel)
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("feed-author-primary-task-1")).toHaveTextContent("Alice Doe");
+    expect(screen.getByTestId("feed-author-secondary-task-1")).toHaveTextContent("@alice · npub1");
+    expect(screen.getByTestId("feed-author-secondary-task-1").textContent).toMatch(/…[a-z0-9]{3}\)$/i);
     expect(screen.getByTitle(/task created at/i)).toHaveAttribute(
       "title",
       expect.stringMatching(/task created at .*\d{2}:\d{2}:\d{2}/i)

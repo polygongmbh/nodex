@@ -254,19 +254,17 @@ export function FeedView({
   };
 
   const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1023px)";
-  const truncateMobilePubkey = (value: string): string => {
-    if (!isMobile) return value;
-    if (value.length <= 18) return value;
-    return `${value.slice(0, 10)}…${value.slice(-6)}`;
-  };
-  const truncateSlimDesktopPubkey = (value: string): string => {
-    if (value.length <= 24) return value;
-    return `${value.slice(0, 12)}…${value.slice(-8)}`;
+  const TWO_XL_DESKTOP_QUERY = "(min-width: 1536px)";
+  const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
+  const formatFeedNpubLabel = (value: string, showFull: boolean): string => {
+    if (showFull || value.length <= 11) return value;
+    return `${value.slice(0, 8)}…${value.slice(-3)}`;
   };
 
   const { user } = useNDK();
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
+  const [isTwoXLDesktop, setIsTwoXLDesktop] = useState(false);
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
@@ -280,6 +278,28 @@ export function FeedView({
     const mediaQuery = window.matchMedia(SLIM_DESKTOP_QUERY);
     const handleMediaQueryChange = () => {
       setIsSlimDesktop(mediaQuery.matches);
+    };
+
+    handleMediaQueryChange();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleMediaQueryChange);
+      return () => mediaQuery.removeEventListener("change", handleMediaQueryChange);
+    }
+
+    mediaQuery.addListener(handleMediaQueryChange);
+    return () => mediaQuery.removeListener(handleMediaQueryChange);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      setIsTwoXLDesktop(false);
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(TWO_XL_DESKTOP_QUERY);
+    const handleMediaQueryChange = () => {
+      setIsTwoXLDesktop(mediaQuery.matches);
     };
 
     handleMediaQueryChange();
@@ -775,16 +795,26 @@ export function FeedView({
     const isPubkeyPrimary =
       authorMeta.primary === resolvedAuthor.id ||
       authorMeta.primary === authorUserFacingId;
+    const displayNpub = formatFeedNpubLabel(authorUserFacingId, isTwoXLDesktop);
     const primaryAuthorLabelRaw = (() => {
       if (!isPubkeyPrimary) return authorMeta.primary;
-      if (isMobile) return truncateMobilePubkey(authorMeta.primary);
-      if (isSlimDesktop) return truncateSlimDesktopPubkey(authorMeta.primary);
-      return authorMeta.primary;
+      if (isSlimDesktop) return "";
+      return displayNpub;
     })();
-    const primaryAuthorLabel =
-      isMobile && primaryAuthorLabelRaw.length > 22
-        ? `${primaryAuthorLabelRaw.slice(0, 19)}…`
-        : primaryAuthorLabelRaw;
+    const primaryAuthorLabel = primaryAuthorLabelRaw;
+    const hasPrimaryAuthorLabel = primaryAuthorLabel.length > 0;
+    const secondaryAuthorLabel = (() => {
+      if (!authorMeta.secondary) return "";
+      if (!NPUB_DISPLAY_PATTERN.test(authorMeta.secondary)) return authorMeta.secondary;
+      if (isSlimDesktop) {
+        return authorMeta.secondary
+          .replace(NPUB_DISPLAY_PATTERN, "")
+          .replace(/\s*[·•]\s*$/, "")
+          .replace(/\s{2,}/g, " ")
+          .trim();
+      }
+      return authorMeta.secondary.replace(NPUB_DISPLAY_PATTERN, displayNpub);
+    })();
     const timeLabel = isMobile
       ? formatCompactRelativeTime(task.timestamp)
       : formatDistanceToNow(task.timestamp, { addSuffix: true });
@@ -1060,8 +1090,8 @@ export function FeedView({
               effectiveOnAuthorClick?.(resolvedAuthor);
             }}
             className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-            aria-label={t("tasks.actions.filterAndMention", { authorName: resolvedAuthor.displayName })}
-            title={t("tasks.actions.filterAndMention", { authorName: resolvedAuthor.displayName })}
+            aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
+            title={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
           >
             <UserAvatar
               id={resolvedAuthor.id}
@@ -1081,39 +1111,43 @@ export function FeedView({
                 "flex-wrap"
               )}
             >
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  effectiveOnAuthorClick?.(resolvedAuthor);
-                }}
-                className={cn(
-                  "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
-                  isMobile && "max-w-[45vw]"
-                )}
-                aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
-                title={authorUserFacingId}
-              >
-                <span
-                  title={authorMeta.primary}
-                  data-testid={`feed-author-primary-${task.id}`}
-                  className={cn(
-                    "truncate",
-                    isSlimDesktop ? "block" : "inline-block max-w-full align-bottom"
-                  )}
-                >
-                  {primaryAuthorLabel}
-                </span>
-                {authorMeta.secondary && !isMobile && (
-                  <span
-                    data-testid={`feed-author-secondary-${task.id}`}
-                    className={cn("opacity-60", isSlimDesktop ? "block" : "inline")}
+              {hasPrimaryAuthorLabel && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      effectiveOnAuthorClick?.(resolvedAuthor);
+                    }}
+                    className={cn(
+                      "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
+                      isMobile && "max-w-[45vw]"
+                    )}
+                    aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
+                    title={authorUserFacingId}
                   >
-                    {isSlimDesktop ? `(${authorMeta.secondary})` : ` (${authorMeta.secondary})`}
-                  </span>
-                )}
-              </button>
-              <span className="shrink-0">·</span>
+                    <span
+                      title={authorMeta.primary}
+                      data-testid={`feed-author-primary-${task.id}`}
+                      className={cn(
+                        "truncate",
+                        isSlimDesktop ? "block" : "inline-block max-w-full align-bottom"
+                      )}
+                    >
+                      {primaryAuthorLabel}
+                    </span>
+                    {secondaryAuthorLabel && !isMobile && (
+                      <span
+                        data-testid={`feed-author-secondary-${task.id}`}
+                        className={cn("opacity-60", isSlimDesktop ? "block" : "inline")}
+                      >
+                        {isSlimDesktop ? `(${secondaryAuthorLabel})` : ` (${secondaryAuthorLabel})`}
+                      </span>
+                    )}
+                  </button>
+                  <span className="shrink-0">·</span>
+                </>
+              )}
               <span
                 className="shrink-0"
                 title={isComment ? getCommentCreatedTooltip(task.timestamp) : getTaskCreatedTooltip(task.timestamp)}
