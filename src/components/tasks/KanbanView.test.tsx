@@ -21,7 +21,7 @@ vi.mock("@hello-pangea/dnd", () => ({
     children(
       {
         innerRef: () => {},
-        droppableProps: { "data-droppable-id": droppableId },
+        droppableProps: { "data-droppable-id": droppableId } as any,
       },
       { isDraggingOver: false }
     ),
