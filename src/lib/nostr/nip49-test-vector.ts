@@ -5,6 +5,8 @@
 
 import { decryptNip49PrivateKey } from './nip49-utils';
 
+type ImportMetaWithVitest = ImportMeta & { vitest?: unknown };
+
 // Test vector data
 const TEST_PASSWORD = "testpassword123";
 const TEST_SALT_HEX = "1234567890abcdef1234567890abcdef"; // 16 bytes
@@ -38,7 +40,7 @@ async function testDecryption() {
 }
 
 // Run the test if this file is executed directly
-if ((import.meta as any).vitest) {
+if ((import.meta as ImportMetaWithVitest).vitest) {
   // Running in test environment
 } else {
   testDecryption();

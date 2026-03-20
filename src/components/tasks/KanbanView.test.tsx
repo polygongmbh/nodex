@@ -32,13 +32,13 @@ vi.mock("@hello-pangea/dnd", () => ({
     children,
     droppableId,
   }: {
-    children: (provided: { innerRef: () => void; droppableProps: Record<string, never> }, snapshot: { isDraggingOver: boolean }) => ReactNode;
+    children: (provided: { innerRef: () => void; droppableProps: Record<string, unknown> }, snapshot: { isDraggingOver: boolean }) => ReactNode;
     droppableId: string;
   }) =>
     children(
       {
         innerRef: () => {},
-        droppableProps: { "data-droppable-id": droppableId } as any,
+        droppableProps: { "data-droppable-id": droppableId },
       },
       { isDraggingOver: false }
     ),
@@ -49,8 +49,8 @@ vi.mock("@hello-pangea/dnd", () => ({
     children: (
       provided: {
         innerRef: () => void;
-        draggableProps: Record<string, never>;
-        dragHandleProps: Record<string, never>;
+        draggableProps: Record<string, unknown>;
+        dragHandleProps: Record<string, unknown>;
       },
       snapshot: { isDragging: boolean }
     ) => ReactNode;
@@ -59,8 +59,8 @@ vi.mock("@hello-pangea/dnd", () => ({
     children(
       {
         innerRef: () => {},
-        draggableProps: { "data-draggable-id": draggableId } as any,
-        dragHandleProps: {} as any,
+        draggableProps: { "data-draggable-id": draggableId },
+        dragHandleProps: {},
       },
       { isDragging: false }
     ),

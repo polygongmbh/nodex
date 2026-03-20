@@ -28,11 +28,7 @@ describe('NIP-49 Utility Functions', () => {
       expect(result).toMatch(/^nsec/);
       
       // Should be a valid bech32 encoded key
-      const decoded = nip19.decode(result);
-      expect(decoded.type).toBe('nsec');
-      // decoded.data is Uint8Array, convert to hex for comparison
-      const decodedHex = uint8ArrayToHex(new Uint8Array(decoded.data as any));
-      expect(decodedHex).toBe(hexKey);
+      expect(decodeNsecToHex(result)).toBe(hexKey);
     });
 
     it('should handle 64-character hex strings', () => {
@@ -41,9 +37,7 @@ describe('NIP-49 Utility Functions', () => {
       expect(result).toMatch(/^nsec/);
       
       // Verify it can be decoded back
-      const decoded = nip19.decode(result);
-      const decodedHex = uint8ArrayToHex(new Uint8Array(decoded.data as any));
-      expect(decodedHex).toBe(hexKey);
+      expect(decodeNsecToHex(result)).toBe(hexKey);
     });
 
     it('should reject invalid hex length', () => {
@@ -100,4 +94,12 @@ function hexToUint8Array(hex: string): Uint8Array {
 // Helper function to convert Uint8Array to hex for testing
 function uint8ArrayToHex(bytes: Uint8Array): string {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function decodeNsecToHex(value: string): string {
+  const decoded = nip19.decode(value);
+  if (decoded.type !== 'nsec' || !(decoded.data instanceof Uint8Array)) {
+    throw new Error('Expected valid nsec payload');
+  }
+  return uint8ArrayToHex(decoded.data);
 }

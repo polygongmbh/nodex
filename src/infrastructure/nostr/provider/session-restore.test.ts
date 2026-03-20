@@ -2,6 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { waitForNostrExtensionAvailability } from "./session-restore";
 
 type WindowWithNostr = Window & { nostr?: unknown };
+type NostrExtensionMock = {
+  getPublicKey: () => Promise<string>;
+  signEvent: (_event: Record<string, unknown>) => Promise<{ sig: string }>;
+};
+
+const createNostrExtensionMock = (): NostrExtensionMock => ({
+  getPublicKey: async () => "",
+  signEvent: async () => ({ sig: "" }),
+});
 
 describe("waitForNostrExtensionAvailability", () => {
   beforeEach(() => {
@@ -15,14 +24,14 @@ describe("waitForNostrExtensionAvailability", () => {
   });
 
   it("resolves immediately when extension is already available", async () => {
-    (window as WindowWithNostr).nostr = { getPublicKey: async () => "", signEvent: async (e: any) => ({ sig: "" }) } as any;
+    (window as WindowWithNostr).nostr = createNostrExtensionMock();
     await expect(waitForNostrExtensionAvailability()).resolves.toBe(true);
   });
 
   it("resolves when extension becomes available after nostr#initialized", async () => {
     const pending = waitForNostrExtensionAvailability({ timeoutMs: 3000, pollIntervalMs: 200 });
     vi.advanceTimersByTime(400);
-    (window as WindowWithNostr).nostr = { getPublicKey: async () => "", signEvent: async (e: any) => ({ sig: "" }) } as any;
+    (window as WindowWithNostr).nostr = createNostrExtensionMock();
     window.dispatchEvent(new Event("nostr#initialized"));
     await expect(pending).resolves.toBe(true);
   });

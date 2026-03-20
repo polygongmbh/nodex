@@ -5,6 +5,7 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import { normalizeRelayUrl } from "./relay-list";
 import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import {
+  extractRelayErrorMessage,
   extractRelayRejectionReason,
 } from "./relay-error";
 import {
@@ -22,6 +23,7 @@ import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { RelayTransportCallbacks } from "./use-relay-transport";
 
 const RELAY_PUBLISH_TIMEOUT_MS = 3000;
+type NavigatorWithDeviceMemory = Navigator & { deviceMemory?: number };
 
 export interface PublishCallbacks {
   publishEvent: (
@@ -124,11 +126,25 @@ export function usePublish(
             .forEach((url) => publishedRelayUrlSet.add(url));
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error || "");
-          const extractedReason = extractRelayRejectionReason(error);
+          const relayErrorMessage = extractRelayErrorMessage(error, relayUrl);
+          const extractedReason =
+            extractRelayRejectionReason(relayErrorMessage || "") ??
+            extractRelayRejectionReason(error);
           if (!rejectionReason && extractedReason) {
             rejectionReason = extractedReason;
           }
-          if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason: extractedReason })) {
+          const decisionErrorMessage = relayErrorMessage || errorMessage;
+          const shouldMarkReadOnly =
+            shouldMarkRelayReadOnlyAfterPublishReject({
+              errorMessage: decisionErrorMessage,
+              rejectionReason: extractedReason,
+            }) ||
+            (decisionErrorMessage !== errorMessage &&
+              shouldMarkRelayReadOnlyAfterPublishReject({
+                errorMessage,
+                rejectionReason: extractedReason,
+              }));
+          if (shouldMarkReadOnly) {
             markRelayVerificationFailure(relayUrl, "write", {
               setStatus: true,
               showToast: false,
@@ -137,7 +153,7 @@ export function usePublish(
           nostrDevLog("publish", "Relay publish attempt failed", {
             relayUrl,
             rejectionReason: extractedReason || null,
-            error: errorMessage,
+            error: decisionErrorMessage,
           });
         }
       }
@@ -204,7 +220,7 @@ export function usePublish(
       ? undefined
       : {
         hardwareConcurrency: navigator.hardwareConcurrency,
-        deviceMemory: "deviceMemory" in navigator ? (navigator as any).deviceMemory as number | undefined : undefined,
+        deviceMemory: (navigator as NavigatorWithDeviceMemory).deviceMemory,
       });
 
     nostrDevLog("subscribe", "Creating subscription", {
