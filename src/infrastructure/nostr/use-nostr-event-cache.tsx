@@ -282,7 +282,7 @@ export function useNostrEventCache({
     const subscription = subscribe(
       [{ kinds: subscribedKinds }],
       pushEvent,
-      { closeOnEose: true }
+      { closeOnEose: false }
     );
     subscription?.on("eose", finalizeBootstrapScope);
     subscription?.on("close", finalizeBootstrapScope);

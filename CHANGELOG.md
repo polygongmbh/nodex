@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Restored live feed updates after initial relay hydration by keeping the cache subscription open after EOSE, fixing a regression where updates stalled until reload.
+
 ## [2.4.1] - 2026-03-19
 
 - Composer attachments can now be added by dragging files into the composer or pasting clipboard images/files, and dropped plain text now lands in the composer body instead of being ignored.
