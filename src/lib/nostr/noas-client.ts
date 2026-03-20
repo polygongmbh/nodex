@@ -207,10 +207,15 @@ interface NoasUserProfile {
 }
 
 export class NoasClient {
-  private baseUrl: string;
+  private apiBaseUrl: string;
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  constructor(apiBaseUrl: string) {
+    this.apiBaseUrl = normalizeNoasBaseUrl(apiBaseUrl);
+  }
+
+  private buildApiUrl(path: string): string {
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return `${this.apiBaseUrl}${normalizedPath}`;
   }
 
   /**
@@ -218,7 +223,7 @@ export class NoasClient {
    */
   async signIn(username: string, password: string): Promise<NoasSignInResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/signin`, {
+      const response = await fetch(this.buildApiUrl("/auth/signin"), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -258,7 +263,7 @@ export class NoasClient {
     relays: string[] = []
   ): Promise<NoasRegisterResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/register`, {
+      const response = await fetch(this.buildApiUrl("/auth/register"), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -301,7 +306,7 @@ export class NoasClient {
     error?: string; 
   }> {
     try {
-      const response = await fetch(`${this.baseUrl}/picture/${publicKey}`, {
+      const response = await fetch(this.buildApiUrl(`/picture/${publicKey}`), {
         method: 'GET',
         credentials: 'include',
       });
@@ -332,55 +337,17 @@ export class NoasClient {
   }
 
   /**
-   * Get NIP-05 verification data
-   */
-  async getNip05Verification(username: string): Promise<{
-    names?: Record<string, string>;
-    error?: string;
-  }> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/.well-known/nostr.json?name=${encodeURIComponent(username)}`
-      );
-
-      if (!response.ok) {
-        return {
-          error: 'NIP-05 verification failed',
-        };
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('NIP-05 verification error:', error);
-      return {
-        error: 'Network error during NIP-05 verification',
-      };
-    }
-  }
-
-  /**
    * Check if Noas server is available
    */
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/health`, {
+      const response = await fetch(this.buildApiUrl("/health"), {
         method: 'GET',
         credentials: 'include',
       });
       return response.ok;
     } catch (error) {
       return false;
-    }
-  }
-
-  /**
-   * Generate NIP-05 identifier for a username
-   */
-  getNip05Identifier(username: string): string {
-    try {
-      return `${username}@${new URL(this.baseUrl).hostname}`;
-    } catch {
-      return username;
     }
   }
 

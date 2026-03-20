@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { resolveNoasApiBaseUrl } from "./noas-client";
+import { NoasClient, resolveNoasApiBaseUrl } from "./noas-client";
 
 describe("resolveNoasApiBaseUrl", () => {
   beforeEach(() => {
@@ -45,5 +45,79 @@ describe("resolveNoasApiBaseUrl", () => {
     );
 
     await expect(resolveNoasApiBaseUrl("noas.example/custom")).resolves.toBe("https://noas.example/custom");
+  });
+});
+
+describe("NoasClient API route mapping", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("routes sign-in to /auth/signin on the discovered api_base", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    );
+
+    const client = new NoasClient("https://noas.example/api/v1/");
+    await client.signIn("alice", "hunter2");
+
+    expect(fetchSpy).toHaveBeenCalledWith("https://noas.example/api/v1/auth/signin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: "alice",
+        password: "hunter2",
+      }),
+      credentials: "include",
+    });
+  });
+
+  it("routes registration to /auth/register on the discovered api_base", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    );
+
+    const client = new NoasClient("https://noas.example/api/v1");
+    await client.register("alice", "hunter2", "nsec123", "pubkey123", ["wss://relay.example"]);
+
+    expect(fetchSpy).toHaveBeenCalledWith("https://noas.example/api/v1/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: "alice",
+        password: "hunter2",
+        nsecKey: "nsec123",
+        pubkey: "pubkey123",
+        relays: ["wss://relay.example"],
+      }),
+    });
+  });
+
+  it("routes profile-picture reads to /picture/:pubkey on the discovered api_base", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(null, { status: 404 })
+    );
+
+    const client = new NoasClient("https://noas.example/api/v1");
+    await client.getProfilePicture("abcdef123456");
+
+    expect(fetchSpy).toHaveBeenCalledWith("https://noas.example/api/v1/picture/abcdef123456", {
+      method: "GET",
+      credentials: "include",
+    });
   });
 });

@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 ### Fixed
+- Noas auth client now treats discovered `noas.api_base` as an API-root prefix and uses canonical v1 auth routes (`/auth/signin`, `/auth/register`) instead of legacy root-style paths, preventing bad requests like `/api/v1/signin` when discovery returns an API base that already includes `/api/v1`.
 - Feed/list/tree empty-state rendering now keeps hydration copy visible (`Loading events from relay…`) while the hydration indicator row is active, avoiding premature fallback to `No post yet …` text during active relay backfill.
 - NDK feed subscriptions now keep a stable provider callback across relay status updates, preventing relay `REQ`/`CLOSED` churn loops (for example `Number of subscriptions exceeds limit`) that previously spammed strict relays.
 - Sign-in now reruns NIP-42 auth preflight on all relays already known to support relay auth, even when those relays are currently connected, so relay auth state refreshes immediately after authentication.

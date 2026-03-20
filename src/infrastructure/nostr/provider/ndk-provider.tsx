@@ -1440,9 +1440,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         profilePicture = URL.createObjectURL(blob);
       }
 
-      // Get NIP-05 verification
-      const nip05Response = await noasClient.getNip05Verification(username);
-      const nip05Verified = nip05Response.names?.[username] === signInResponse.publicKey;
+      const profileNip05 = profile?.nip05?.trim();
+      const normalizedProfileNip05 = profileNip05?.toLowerCase();
+      const nip05Verified = normalizedProfileNip05
+        ? await verifyNip05(normalizedProfileNip05, ndkUser.pubkey)
+        : false;
 
       setUser({
         pubkey: ndkUser.pubkey,
@@ -1452,7 +1454,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           displayName: profile?.displayName || username,
           picture: profilePicture || profile?.picture,
           about: profile?.about,
-          nip05: noasClient.getNip05Identifier(username),
+          nip05: profileNip05 || undefined,
           nip05Verified,
         },
       });
@@ -1574,9 +1576,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         profilePicture = URL.createObjectURL(blob);
       }
 
-      // Get NIP-05 verification
-      const nip05Response = await noasClient.getNip05Verification(username);
-      const nip05Verified = nip05Response.names?.[username] === signUpResponse.user.publicKey;
+      const profileNip05 = profile?.nip05?.trim();
+      const normalizedProfileNip05 = profileNip05?.toLowerCase();
+      const nip05Verified = normalizedProfileNip05
+        ? await verifyNip05(normalizedProfileNip05, ndkUser.pubkey)
+        : false;
 
       setUser({
         pubkey: ndkUser.pubkey,
@@ -1586,7 +1590,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           displayName: profile?.displayName || username,
           picture: profilePicture || profile?.picture,
           about: profile?.about,
-          nip05: noasClient.getNip05Identifier(username),
+          nip05: profileNip05 || undefined,
           nip05Verified,
         },
       });
