@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   AUTH_RETRY_COOLDOWN_MS,
   isAuthRequiredCloseReason,
+  isPermanentAuthDenialReason,
   isRelayReadAuthRequired,
   shouldClearReadRejectionAfterVerificationSuccess,
   shouldClearWriteRejectionAfterVerificationSuccess,
   shouldMarkRelayReadOnlyAfterPublishReject,
+  shouldRetryAuthClosedSubscription,
   shouldReconnectRelayAfterResume,
   shouldReconnectRelayAfterSignIn,
   shouldForceSignInForReadAccess,
@@ -140,6 +142,53 @@ describe("shouldRetryAuthAfterReadRejection", () => {
       hadPendingAuthChallenge: false,
       lastRetryAt: 1000,
       now: 1000 + AUTH_RETRY_COOLDOWN_MS,
+    })).toBe(true);
+  });
+});
+
+describe("isPermanentAuthDenialReason", () => {
+  it("matches non-recoverable auth denials", () => {
+    expect(isPermanentAuthDenialReason("auth-required: pubkey not in whitelist")).toBe(true);
+    expect(isPermanentAuthDenialReason("blocked by policy")).toBe(true);
+    expect(isPermanentAuthDenialReason("permission denied")).toBe(true);
+  });
+
+  it("ignores recoverable auth-required challenge prompts", () => {
+    expect(isPermanentAuthDenialReason("auth-required: NIP-42 auth required")).toBe(false);
+  });
+});
+
+describe("shouldRetryAuthClosedSubscription", () => {
+  it("does not retry non-recoverable auth denials", () => {
+    expect(shouldRetryAuthClosedSubscription({
+      hasSigner: true,
+      hadPendingAuthChallenge: false,
+      lastRetryAt: undefined,
+      now: 1000,
+      reason: "auth-required: pubkey not in whitelist",
+      filters: [{ kinds: [1], limit: 100 }],
+    })).toBe(false);
+  });
+
+  it("does not retry kind-0 author lookups via relay-level closed subscription path", () => {
+    expect(shouldRetryAuthClosedSubscription({
+      hasSigner: true,
+      hadPendingAuthChallenge: false,
+      lastRetryAt: undefined,
+      now: 1000,
+      reason: "auth-required: NIP-42 auth required",
+      filters: [{ kinds: [0], authors: ["pubkey"] }],
+    })).toBe(false);
+  });
+
+  it("retries recoverable auth-required close reasons when cooldown permits", () => {
+    expect(shouldRetryAuthClosedSubscription({
+      hasSigner: true,
+      hadPendingAuthChallenge: false,
+      lastRetryAt: undefined,
+      now: 1000,
+      reason: "auth-required: NIP-42 auth required",
+      filters: [{ kinds: [1], limit: 100 }],
     })).toBe(true);
   });
 });

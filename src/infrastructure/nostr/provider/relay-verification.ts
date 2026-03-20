@@ -1,8 +1,10 @@
 import type { RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
+import type { NDKFilter } from "@nostr-dev-kit/ndk";
 
 export type RelayVerificationFailureSource = "auth-policy" | "subscription-closed";
 
 const AUTH_REQUIRED_CLOSE_REASON_PATTERN = /(auth[ -]?required|not authorized|pubkey not in whitelist|blocked:\s*not authorized)/i;
+const AUTH_PERMANENT_DENIAL_REASON_PATTERN = /(pubkey not in whitelist|blocked(?::\s*not authorized|\s+by\s+policy)?|forbidden|permission\s*denied|write\s*denied|write\s*rejected)/i;
 const WRITE_REJECT_REASON_PATTERN = /(auth[ -]?required|not authorized|pubkey not in whitelist|blocked(?::\s*not authorized|\s+by\s+policy)?|write\s*denied|write\s*rejected|permission\s*denied|forbidden|rejected)/i;
 const OK_REJECT_ENVELOPE_PATTERN = /\[\s*"OK"\s*,\s*"[^"]*"\s*,\s*false\s*,/i;
 const TRANSIENT_PUBLISH_FAILURE_PATTERN = /(timeout|timed out|network|disconnected|connection closed|unknown host|ns_error_unknown_host|not enough relays received)/i;
@@ -64,6 +66,42 @@ export function shouldRetryAuthAfterReadRejection(params: {
   if (params.hadPendingAuthChallenge) return false;
   if (!params.lastRetryAt) return true;
   return (params.now - params.lastRetryAt) >= cooldownMs;
+}
+
+export function isPermanentAuthDenialReason(reason: string): boolean {
+  return AUTH_PERMANENT_DENIAL_REASON_PATTERN.test(reason);
+}
+
+function isKind0AuthorLookupFilter(filter: NDKFilter): boolean {
+  const hasKind0 = Array.isArray(filter.kinds) && filter.kinds.some((kind) => Number(kind) === 0);
+  if (!hasKind0) return false;
+  return Array.isArray(filter.authors) && filter.authors.length > 0;
+}
+
+export function shouldRetryAuthClosedSubscription(params: {
+  hasSigner: boolean;
+  hadPendingAuthChallenge: boolean;
+  lastRetryAt: number | undefined;
+  now: number;
+  reason: string;
+  filters: NDKFilter[];
+  cooldownMs?: number;
+}): boolean {
+  if (isPermanentAuthDenialReason(params.reason)) return false;
+
+  // Centralize retry/backoff for profile metadata fetches in the profile cache path;
+  // avoid per-subscription relay-level re-subscribe loops for kind-0 author lookups.
+  if (params.filters.length > 0 && params.filters.every(isKind0AuthorLookupFilter)) {
+    return false;
+  }
+
+  return shouldRetryAuthAfterReadRejection({
+    hasSigner: params.hasSigner,
+    hadPendingAuthChallenge: params.hadPendingAuthChallenge,
+    lastRetryAt: params.lastRetryAt,
+    now: params.now,
+    cooldownMs: params.cooldownMs,
+  });
 }
 
 export function shouldReconnectRelayAfterSignIn(relay: {

@@ -55,11 +55,12 @@ import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import {
   AUTH_RETRY_COOLDOWN_MS,
   isAuthRequiredCloseReason,
+  isPermanentAuthDenialReason,
   shouldClearReadRejectionAfterVerificationSuccess,
   shouldClearWriteRejectionAfterVerificationSuccess,
   shouldMarkRelayReadOnlyAfterPublishReject,
+  shouldRetryAuthClosedSubscription,
   shouldReconnectRelayAfterSignIn,
-  shouldRetryAuthAfterReadRejection,
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
 import {
@@ -83,6 +84,8 @@ const NDKContext = createContext<NDKContextValue | null>(null);
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
 const RELAY_PUBLISH_TIMEOUT_MS = 3000;
 const RELAY_AUTH_PREFLIGHT_TIMEOUT_MS = 4000;
+const KIND0_PROFILE_CACHE_TTL_MS = 120000;
+const KIND0_PROFILE_FAILURE_COOLDOWN_MS = 15000;
 type RelayOperation = "read" | "write" | "unknown";
 const normalizeRelayUrl = (url: string) => url.replace(/\/+$/, "");
 const WS_READY_STATE_CONNECTING = 0;
@@ -144,6 +147,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
+  const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
+  const kind0ProfileCacheRef = useRef<Map<string, { profile: NostrUser["profile"] | null; fetchedAt: number }>>(new Map());
+  const kind0ProfileInFlightRef = useRef<Map<string, Promise<NostrUser["profile"] | null>>>(new Map());
+  const kind0ProfileFailureUntilRef = useRef<Map<string, number>>(new Map());
   const relayCurrentInstanceRef = useRef<Map<string, NDKRelay>>(new Map());
   const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
   const relayStatusCacheAdapter = useMemo(() => createNodexCacheAdapter(), []);
@@ -587,8 +594,38 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     return relay;
   }, [disconnectTrackedRelayInstance]);
 
+  const replayActiveSubscriptionsForRelay = useCallback((ndkInstance: NDK, relayUrl: string) => {
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
+    const relay =
+      relayCurrentInstanceRef.current.get(normalizedRelayUrl) ??
+      ndkInstance.pool.relays.get(normalizedRelayUrl);
+    if (!relay) return;
+
+    const activeSubscriptions = ndkInstance.subManager?.subscriptions;
+    if (!activeSubscriptions || activeSubscriptions.size === 0) return;
+
+    let replayedSubscriptions = 0;
+    activeSubscriptions.forEach((subscription) => {
+      const relayFilters = subscription.relayFilters?.get(normalizedRelayUrl) ?? subscription.filters;
+      if (!Array.isArray(relayFilters) || relayFilters.length === 0) return;
+      relay.subscribe(subscription, relayFilters);
+      replayedSubscriptions += 1;
+    });
+
+    if (replayedSubscriptions > 0) {
+      nostrDevLog("relay", "Replayed active subscriptions after relay authentication", {
+        relayUrl: normalizedRelayUrl,
+        replayedSubscriptions,
+      });
+    }
+  }, []);
+
   const retryNip42RelaysAfterSignIn = useCallback(() => {
     if (!ndk) return;
+    // Flush kind-0 profile request cache so post-sign-in auth can rehydrate profile metadata immediately.
+    kind0ProfileFailureUntilRef.current.clear();
+    kind0ProfileCacheRef.current.clear();
+
     const relayUrlsToRetry = relays
       .filter((relay) => shouldReconnectRelayAfterSignIn(relay))
       .map((relay) => normalizeRelayUrl(relay.url));
@@ -618,6 +655,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
     relayUrlsToTouch.forEach((relayUrl) => {
       const isAuthCapable = authCapableSet.has(relayUrl);
+      relaysPendingAuthSubscriptionReplayRef.current.add(relayUrl);
       if (retrySet.has(relayUrl)) {
         relayAutoPausedRef.current.delete(relayUrl);
         relayInitialFailureCountsRef.current.delete(relayUrl);
@@ -638,36 +676,65 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
   }, [connectManagedRelay, ndk, primeRelayAuthChallenge, relays]);
 
-  const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
+  const fetchLatestKind0Profile = useCallback(async (
+    pubkey: string,
+    options?: { force?: boolean }
+  ): Promise<NostrUser["profile"] | null> => {
     if (!ndk) return null;
 
-    return await new Promise((resolve) => {
+    const normalizedPubkey = pubkey.trim().toLowerCase();
+    if (!normalizedPubkey) return null;
+    const force = options?.force ?? false;
+    const now = Date.now();
+
+    if (!force) {
+      const cached = kind0ProfileCacheRef.current.get(normalizedPubkey);
+      if (cached && (now - cached.fetchedAt) < KIND0_PROFILE_CACHE_TTL_MS) {
+        return cached.profile;
+      }
+      const failureUntil = kind0ProfileFailureUntilRef.current.get(normalizedPubkey) ?? 0;
+      if (now < failureUntil) {
+        return null;
+      }
+      const inFlight = kind0ProfileInFlightRef.current.get(normalizedPubkey);
+      if (inFlight) {
+        return inFlight;
+      }
+    }
+
+    const request = new Promise<NostrUser["profile"] | null>((resolve) => {
       const candidates: { createdAt: number; content: string }[] = [];
       let settled = false;
-
+      const fallbackTimeout = { id: undefined as number | undefined };
       const finish = () => {
         if (settled) return;
         settled = true;
-        clearTrackedRelayTimeout(fallbackTimeoutId);
+        clearTrackedRelayTimeout(fallbackTimeout.id);
         endRelayOperation("read");
         subscription.stop();
-        if (candidates.length === 0) {
-          resolve(null);
-          return;
-        }
-        const parsed = mergeKind0Profiles(candidates);
-        resolve({
-          name: parsed.name,
-          displayName: parsed.displayName,
-          picture: parsed.picture,
-          about: parsed.about,
-          nip05: parsed.nip05,
+        const profile = candidates.length === 0
+          ? null
+          : (() => {
+            const parsed = mergeKind0Profiles(candidates);
+            return {
+              name: parsed.name,
+              displayName: parsed.displayName,
+              picture: parsed.picture,
+              about: parsed.about,
+              nip05: parsed.nip05,
+            };
+          })();
+        kind0ProfileCacheRef.current.set(normalizedPubkey, {
+          profile,
+          fetchedAt: Date.now(),
         });
+        kind0ProfileFailureUntilRef.current.delete(normalizedPubkey);
+        resolve(profile);
       };
 
       beginRelayOperation("read");
       const subscription = ndk.subscribe(
-        [{ kinds: [NostrEventKind.Metadata as number], authors: [pubkey] }],
+        [{ kinds: [NostrEventKind.Metadata as number], authors: [normalizedPubkey] }],
         { closeOnEose: true }
       );
 
@@ -676,11 +743,26 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           candidates.push({ createdAt: event.created_at || 0, content: event.content });
         }
       });
+      subscription.on("closed", (_relay: NDKRelay, reason: string) => {
+        if (!isAuthRequiredCloseReason(reason || "")) return;
+        const nowTs = Date.now();
+        const cooldown = isPermanentAuthDenialReason(reason || "")
+          ? KIND0_PROFILE_CACHE_TTL_MS
+          : KIND0_PROFILE_FAILURE_COOLDOWN_MS;
+        kind0ProfileFailureUntilRef.current.set(normalizedPubkey, nowTs + cooldown);
+        finish();
+      });
       subscription.on("eose", finish);
+      subscription.on("close", finish);
 
       // Fallback so the UI does not hang if eose never arrives.
-      const fallbackTimeoutId = scheduleRelayTimeout(finish, 12000);
+      fallbackTimeout.id = scheduleRelayTimeout(finish, 12000);
+    }).finally(() => {
+      kind0ProfileInFlightRef.current.delete(normalizedPubkey);
     });
+
+    kind0ProfileInFlightRef.current.set(normalizedPubkey, request);
+    return await request;
   }, [beginRelayOperation, clearTrackedRelayTimeout, endRelayOperation, ndk, scheduleRelayTimeout]);
 
   const userProfileSnapshot = useMemo<NostrUser["profile"] | null>(() => {
@@ -800,10 +882,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     ndkInstance.pool.on("relay:authed", (relay: NDKRelay) => {
       const normalized = normalizeRelayUrl(relay.url);
       const hadPendingVerification = pendingRelayVerificationRef.current.delete(normalized);
+      const shouldReplaySubscriptions = relaysPendingAuthSubscriptionReplayRef.current.delete(normalized);
       if (hadPendingVerification) {
         nostrDevLog("relay", "Relay authentication completed for pending verification challenge", {
           relayUrl: normalized,
         });
+      }
+      if (shouldReplaySubscriptions) {
+        replayActiveSubscriptionsForRelay(ndkInstance, normalized);
       }
     });
 
@@ -1051,6 +1137,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
     })();
     const relayCurrentInstance = relayCurrentInstanceRef.current;
+    const inFlightKind0ProfileRequests = kind0ProfileInFlightRef.current;
 
     return () => {
       disposed = true;
@@ -1062,9 +1149,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       ndkInstance.pool.relays.forEach((relay) => {
         relay.disconnect();
       });
+      inFlightKind0ProfileRequests.clear();
       relayCurrentInstance.clear();
     };
-  }, [attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
+  }, [attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, replayActiveSubscriptionsForRelay, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -1188,18 +1276,12 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       ndk.signer = signer;
 
       const ndkUser = await signer.blockUntilReady();
-      await ndkUser.fetchProfile();
+      const profile = await fetchLatestKind0Profile(ndkUser.pubkey, { force: true });
 
       setUser({
         pubkey: ndkUser.pubkey,
         npub: ndkUser.npub,
-        profile: {
-          name: ndkUser.profile?.name,
-          displayName: ndkUser.profile?.displayName,
-          picture: ndkUser.profile?.image,
-          about: ndkUser.profile?.about,
-          nip05: ndkUser.profile?.nip05,
-        },
+        profile: profile || undefined,
       });
       setAuthMethod("nostrConnect");
       localStorage.setItem(STORAGE_KEY_AUTH, "nostrConnect");
@@ -1215,7 +1297,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk, retryNip42RelaysAfterSignIn]);
+  }, [fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
 
 
 
@@ -1348,7 +1430,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         });
         return { success: false, errorCode: "key_mismatch" };
       }
-      await ndkUser.fetchProfile();
+      const profile = await fetchLatestKind0Profile(ndkUser.pubkey, { force: true });
 
       // Get profile picture if available
       let profilePicture: string | undefined;
@@ -1366,10 +1448,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         pubkey: ndkUser.pubkey,
         npub: ndkUser.npub,
         profile: {
-          name: ndkUser.profile?.name || username,
-          displayName: ndkUser.profile?.displayName || username,
-          picture: profilePicture || ndkUser.profile?.image,
-          about: ndkUser.profile?.about,
+          name: profile?.name || username,
+          displayName: profile?.displayName || username,
+          picture: profilePicture || profile?.picture,
+          about: profile?.about,
           nip05: noasClient.getNip05Identifier(username),
           nip05Verified,
         },
@@ -1398,7 +1480,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays, addRelay]);
+  }, [fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays, addRelay]);
 
   const signupWithNoas = useCallback(async (
     username: string,
@@ -1482,7 +1564,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       }
 
       const ndkUser = await signer.user();
-      await ndkUser.fetchProfile();
+      const profile = await fetchLatestKind0Profile(ndkUser.pubkey, { force: true });
 
       // Get profile picture if available
       let profilePicture: string | undefined;
@@ -1500,10 +1582,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         pubkey: ndkUser.pubkey,
         npub: ndkUser.npub,
         profile: {
-          name: ndkUser.profile?.name || username,
-          displayName: ndkUser.profile?.displayName || username,
-          picture: profilePicture || ndkUser.profile?.image,
-          about: ndkUser.profile?.about,
+          name: profile?.name || username,
+          displayName: profile?.displayName || username,
+          picture: profilePicture || profile?.picture,
+          about: profile?.about,
           nip05: noasClient.getNip05Identifier(username),
           nip05Verified,
         },
@@ -1522,7 +1604,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays]);
+  }, [fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays]);
 
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
@@ -1577,6 +1659,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     setUser(null);
     setAuthMethod(null);
     relayAuthPreflightHistoryRef.current.clear();
+    relaysPendingAuthSubscriptionReplayRef.current.clear();
+    kind0ProfileCacheRef.current.clear();
+    kind0ProfileInFlightRef.current.clear();
+    kind0ProfileFailureUntilRef.current.clear();
     localStorage.removeItem(STORAGE_KEY_AUTH);
     localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
     localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
@@ -1859,33 +1945,11 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     setIsProfileSyncing(true);
 
     const syncProfile = async () => {
-      let signerProfile: NostrUser["profile"] | null = null;
-      if (ndk?.signer) {
-        try {
-          const signerUser = await ndk.signer.user();
-          if (!isStale() && signerUser.pubkey === user.pubkey) {
-            await signerUser.fetchProfile();
-            if (!isStale()) {
-              signerProfile = {
-                name: signerUser.profile?.name,
-                displayName: signerUser.profile?.displayName,
-                picture: signerUser.profile?.image,
-                about: signerUser.profile?.about,
-                nip05: signerUser.profile?.nip05,
-              };
-            }
-          }
-        } catch (error) {
-          console.warn("Profile sync: signer profile fetch failed", error);
-        }
-      }
-
       const kind0Profile = await fetchLatestKind0Profile(user.pubkey);
       if (isStale()) return;
 
       const mergedProfile = {
         ...(userProfileSnapshot || {}),
-        ...(signerProfile || {}),
         ...(kind0Profile || {}),
       };
 
@@ -1929,7 +1993,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [ndk, fetchLatestKind0Profile, user?.pubkey, userProfileSnapshot]);
+  }, [fetchLatestKind0Profile, user?.pubkey, userProfileSnapshot]);
 
   const subscribe = useCallback((
     filters: NDKFilter[],
@@ -1981,11 +2045,14 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         reason,
       });
       const normalizedRelayUrl = relay.url.replace(/\/+$/, "");
-      const shouldRetry = shouldRetryAuthAfterReadRejection({
+      const relayFilters = subscription.relayFilters?.get(normalizedRelayUrl) ?? limitDecision.filters;
+      const shouldRetry = shouldRetryAuthClosedSubscription({
         hasSigner: Boolean(ndk.signer),
         hadPendingAuthChallenge: pendingRelayVerificationRef.current.has(normalizedRelayUrl),
         lastRetryAt: relayAuthRetryHistoryRef.current.get(normalizedRelayUrl),
         now: Date.now(),
+        reason: reason || "",
+        filters: relayFilters,
       });
       if (shouldRetry) {
         relayAuthRetryHistoryRef.current.set(normalizedRelayUrl, Date.now());
@@ -1993,8 +2060,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           relayUrl: normalizedRelayUrl,
         });
         const managedRelay = connectManagedRelay(ndk, normalizedRelayUrl);
-        const relayFilters = subscription.relayFilters?.get(normalizedRelayUrl) ?? limitDecision.filters;
         managedRelay.subscribe(subscription, relayFilters);
+      } else {
+        relaysPendingAuthSubscriptionReplayRef.current.add(normalizedRelayUrl);
+        nostrDevLog("relay", "Skipping auth-closed relay subscription retry", {
+          relayUrl: normalizedRelayUrl,
+          reason,
+        });
       }
       markRelayVerificationFailure(relay.url, "read", {
         setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),

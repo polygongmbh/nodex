@@ -10,6 +10,7 @@ const mockedNdk = vi.hoisted(() => {
     pool: FakePool;
     signer: unknown;
     relayAuthDefaultPolicy: unknown;
+    subManager: { subscriptions: Map<string, unknown> };
     connect(): Promise<void>;
     subscribeCalls: Array<{ filters: unknown; options: unknown }>;
     subscribe(): { on(): void; stop(): void };
@@ -60,6 +61,7 @@ const mockedNdk = vi.hoisted(() => {
     status = MockNDKRelayStatus.DISCONNECTED;
     connectCalls = 0;
     disconnectCalls = 0;
+    subscribeCalls: Array<{ subscription: unknown; filters: unknown }> = [];
     socketOpen = false;
     connectivity: { ws?: FakeWebSocket } = {};
     constructor(url: string, private pool: FakePool) {
@@ -89,6 +91,10 @@ const mockedNdk = vi.hoisted(() => {
       }
       this.status = MockNDKRelayStatus.DISCONNECTED;
       this.pool.emit("relay:disconnect", this);
+    }
+
+    subscribe(subscription: unknown, filters: unknown) {
+      this.subscribeCalls.push({ subscription, filters });
     }
   }
 
@@ -168,12 +174,15 @@ const mockedNdk = vi.hoisted(() => {
     pool: FakePool;
     signer: unknown;
     relayAuthDefaultPolicy: unknown;
+    subManager: { subscriptions: Map<string, unknown> };
     subscribeCalls: Array<{ filters: unknown; options: unknown }>;
+    private subscriptionCounter = 0;
 
     constructor(options: { explicitRelayUrls?: string[] }) {
       this.pool = new FakePool(options.explicitRelayUrls ?? []);
       this.signer = undefined;
       this.relayAuthDefaultPolicy = undefined;
+      this.subManager = { subscriptions: new Map() };
       this.subscribeCalls = [];
       ndkInstances.push(this);
     }
@@ -184,10 +193,23 @@ const mockedNdk = vi.hoisted(() => {
 
     subscribe(filters?: unknown, options?: unknown) {
       this.subscribeCalls.push({ filters, options });
-      return {
+      const normalizedFilters = Array.isArray(filters) ? filters : [];
+      const relayFilters = new Map<string, unknown[]>();
+      this.pool.relays.forEach((_relay, relayUrl) => {
+        relayFilters.set(relayUrl, normalizedFilters);
+      });
+      const internalId = `sub-${this.subscriptionCounter++}`;
+      const fakeSubscription = {
+        internalId,
+        filters: normalizedFilters,
+        relayFilters,
         on() {},
-        stop() {},
+        stop: () => {
+          this.subManager.subscriptions.delete(internalId);
+        },
       };
+      this.subManager.subscriptions.set(internalId, fakeSubscription);
+      return fakeSubscription;
     }
   }
 
@@ -292,6 +314,32 @@ function SubscribeIdentityHarness() {
           .join(",")}
       </output>
       <output data-testid="subscribe-identity-changes">{String(subscribeIdentityChanges)}</output>
+    </div>
+  );
+}
+
+function AuthReplayHarness() {
+  const { relays, subscribe, loginAsGuest } = useNDK();
+  return (
+    <div>
+      <button
+        onClick={() => {
+          subscribe(
+            [{ kinds: [1, 1621, 0], limit: 1500 }],
+            () => {},
+            { closeOnEose: false }
+          );
+        }}
+      >
+        start feed sub
+      </button>
+      <button onClick={() => void loginAsGuest()}>login as guest</button>
+      <output data-testid="relay-state">
+        {relays
+          .map((relay) => `${relay.url}:${relay.status}`)
+          .sort()
+          .join(",")}
+      </output>
     </div>
   );
 }
@@ -717,5 +765,57 @@ describe("NDKProvider relay lifecycle", () => {
           && options.relayUrls.includes("wss://relay.one");
       })).toBe(true);
     });
+  });
+
+  it("replays active subscriptions after relay auth succeeds on sign-in", async () => {
+    const fetchedAt = Date.now();
+    window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({
+      "wss://relay.one": {
+        nip11: {
+          authRequired: true,
+          supportsNip42: true,
+          fetchedAt,
+        },
+      },
+    }));
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <AuthReplayHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "start feed sub" }));
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    expect(ndk.subManager.subscriptions.size).toBeGreaterThan(0);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+    const subscribeCallsBeforeAuth = relay.subscribeCalls.length;
+
+    await act(async () => {
+      ndk.pool.emit("relay:authed", relay);
+    });
+
+    await waitFor(() => {
+      expect(relay.subscribeCalls.length).toBeGreaterThan(subscribeCallsBeforeAuth);
+    });
+
+    const replayedKinds = relay.subscribeCalls
+      .map((call) => (call.filters as Array<{ kinds?: number[] }> | undefined)?.[0]?.kinds ?? [])
+      .filter((kinds): kinds is number[] => Array.isArray(kinds));
+    expect(
+      replayedKinds.some((kinds) => [1, 1621, 0].every((kind) => kinds.includes(kind)))
+    ).toBe(true);
   });
 });
