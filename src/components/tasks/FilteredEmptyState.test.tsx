@@ -198,6 +198,23 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText("One calm breath while we pull this in.")).toBeInTheDocument();
   });
 
+  it("prefers hydration copy over empty-state copy when hydration is active", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays.map((relay) => ({ ...relay, isActive: true }))}
+        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+        people={[{ ...people[0], isSelected: false }]}
+        isHydrating
+      />
+    );
+
+    expect(screen.getByText("Loading events from relay…")).toBeInTheDocument();
+    expect(screen.queryByText("Nobody here but us chickens.")).not.toBeInTheDocument();
+  });
+
   it("renders a feed error message when the selected relay is unavailable", () => {
     render(
       <FilteredEmptyState

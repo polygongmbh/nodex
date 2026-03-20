@@ -9,6 +9,7 @@ interface FilteredEmptyStateProps {
   relays: Relay[];
   channels: Channel[];
   people: Person[];
+  isHydrating?: boolean;
   searchQuery?: string;
   contextTaskTitle?: string;
   mode?: "screen" | "inline" | "mobile" | "footer";
@@ -20,6 +21,7 @@ export function FilteredEmptyState({
   relays,
   channels,
   people,
+  isHydrating = false,
   searchQuery = "",
   contextTaskTitle = "",
   mode = "screen",
@@ -66,13 +68,13 @@ export function FilteredEmptyState({
     return t("tasks.empty.unfiltered.collectionTitle");
   }, [t]);
 
-  if (mode === "screen" && scopeModel.screenState === "loading") {
+  if (mode === "screen" && (isHydrating || scopeModel.screenState === "loading")) {
     return (
       <div
         className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
       >
         <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">
-          {scopeModel.loadingSentence}
+          {isHydrating ? t("feed.hydrating") : scopeModel.loadingSentence}
         </p>
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
           {loadingSubtitle}

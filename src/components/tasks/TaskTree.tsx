@@ -477,6 +477,7 @@ export function TaskTree({
             relays={relays}
             channels={channels}
             people={people}
+            isHydrating={isHydrating}
             searchQuery={searchQuery}
             contextTaskTitle={currentContextTask?.content}
             mode="mobile"
@@ -488,6 +489,7 @@ export function TaskTree({
             relays={relays}
             channels={channels}
             people={people}
+            isHydrating={isHydrating}
             searchQuery={searchQuery}
             contextTaskTitle={currentContextTask?.content}
           />
@@ -529,6 +531,7 @@ export function TaskTree({
                 relays={relays}
                 channels={channels}
                 people={people}
+                isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={currentContextTask?.content}
                 mode="footer"
@@ -540,6 +543,7 @@ export function TaskTree({
                 relays={relays}
                 channels={channels}
                 people={people}
+                isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={currentContextTask?.content}
                 mode="inline"

@@ -717,6 +717,7 @@ export function ListView({
                     relays={relays}
                     channels={channels}
                     people={people}
+                    isHydrating={isHydrating}
                     searchQuery={searchQuery}
                     contextTaskTitle={focusedTask?.content}
                     className="py-8"
@@ -927,6 +928,7 @@ export function ListView({
                         relays={relays}
                         channels={channels}
                         people={people}
+                        isHydrating={isHydrating}
                         searchQuery={searchQuery}
                         contextTaskTitle={focusedTask?.content}
                         mode="footer"
@@ -943,6 +945,7 @@ export function ListView({
                         relays={relays}
                         channels={channels}
                         people={people}
+                        isHydrating={isHydrating}
                         searchQuery={searchQuery}
                         contextTaskTitle={focusedTask?.content}
                         mode="inline"

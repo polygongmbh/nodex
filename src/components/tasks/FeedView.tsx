@@ -1332,6 +1332,7 @@ export function FeedView({
             relays={relays}
             channels={channels}
             people={people}
+            isHydrating={isHydrating}
             searchQuery={searchQuery}
             contextTaskTitle={focusedTask?.content}
             mode="mobile"
@@ -1343,6 +1344,7 @@ export function FeedView({
             relays={relays}
             channels={channels}
             people={people}
+            isHydrating={isHydrating}
             searchQuery={searchQuery}
             contextTaskTitle={focusedTask?.content}
           />
@@ -1355,6 +1357,7 @@ export function FeedView({
                 relays={relays}
                 channels={channels}
                 people={people}
+                isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={focusedTask?.content}
                 mode="footer"
@@ -1366,6 +1369,7 @@ export function FeedView({
                 relays={relays}
                 channels={channels}
                 people={people}
+                isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={focusedTask?.content}
                 mode="inline"
