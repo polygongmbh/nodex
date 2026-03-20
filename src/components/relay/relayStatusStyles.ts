@@ -15,6 +15,7 @@ export function getRelayStatusDotClass(status: RelayConnectionStatus): string {
     case "connecting":
       return "bg-warning animate-pulse";
     case "connection-error":
+      return "bg-slate-400";
     case "verification-failed":
       return "bg-destructive";
     case "disconnected":
@@ -32,6 +33,7 @@ export function getRelayStatusTextClass(status: RelayConnectionStatus): string {
     case "connecting":
       return "text-warning";
     case "connection-error":
+      return "text-slate-400";
     case "verification-failed":
       return "text-destructive";
     case "disconnected":

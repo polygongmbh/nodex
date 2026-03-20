@@ -85,6 +85,16 @@ describe("extractRelayUrlsFromErrorMessage", () => {
     expect(reason).toBe("rejected");
   });
 
+  it("falls back to generic non-transient rejection text when no known keyword is matched", () => {
+    const reason = extractRelayRejectionReason("kind not allowed for this relay");
+    expect(reason).toBe("kind not allowed for this relay");
+  });
+
+  it("does not treat generic transport failure text as a rejection reason", () => {
+    const reason = extractRelayRejectionReason("Not enough relays received the event (0 published, 1 required)");
+    expect(reason).toBeUndefined();
+  });
+
   it("extracts relay-specific error text from NDKPublishError-like map payloads", () => {
     const relay = { url: "wss://relay.example.com/" };
     const relayError = new Error("blocked: not authorized");

@@ -3,6 +3,8 @@ const OK_REJECTION_PATTERN = /\[\s*"OK"\s*,\s*"[^"]*"\s*,\s*false\s*,\s*"([^"]+)
 const AUTH_REQUIRED_REASON_PATTERN = /(auth[ -]?required(?::[^\]\n]*)?)/i;
 const WRITE_REJECT_REASON_PATTERN =
   /(not authorized|pubkey not in whitelist|blocked(?::\s*not authorized|\s+by\s+policy)?|write\s*denied|write\s*rejected|permission\s*denied|forbidden|rejected)/i;
+const TRANSIENT_FAILURE_PATTERN =
+  /(timeout|timed out|network|disconnected|connection closed|unknown host|ns_error_unknown_host|not enough relays received)/i;
 
 export function extractRelayUrlsFromErrorMessage(message: string): string[] {
   if (!message) return [];
@@ -93,6 +95,21 @@ function extractReasonFromMessage(message: string): string | undefined {
   return undefined;
 }
 
+function normalizeGenericReasonCandidate(message: string): string | undefined {
+  const trimmed = message.trim();
+  if (!trimmed) return undefined;
+  if (TRANSIENT_FAILURE_PATTERN.test(trimmed)) return undefined;
+
+  if (trimmed.startsWith("Error: ")) {
+    const withoutPrefix = trimmed.slice("Error: ".length).trim();
+    if (!withoutPrefix) return undefined;
+    if (TRANSIENT_FAILURE_PATTERN.test(withoutPrefix)) return undefined;
+    return withoutPrefix;
+  }
+
+  return trimmed;
+}
+
 export function extractRelayUrlsFromError(error: unknown): string[] {
   const candidates: string[] = [extractErrorMessage(error)];
   const ndkRelayErrors = extractNdkRelayErrorEntries(error);
@@ -124,6 +141,11 @@ export function extractRelayRejectionReason(error: unknown): string | undefined 
   for (const candidate of candidates) {
     const reason = extractReasonFromMessage(candidate);
     if (reason) return reason;
+  }
+
+  for (const candidate of candidates) {
+    const fallbackReason = normalizeGenericReasonCandidate(candidate);
+    if (fallbackReason) return fallbackReason;
   }
 
   return undefined;

@@ -5,6 +5,7 @@ export type RelayVerificationFailureSource = "auth-policy" | "subscription-close
 const AUTH_REQUIRED_CLOSE_REASON_PATTERN = /(auth[ -]?required|not authorized|pubkey not in whitelist|blocked:\s*not authorized)/i;
 const WRITE_REJECT_REASON_PATTERN = /(auth[ -]?required|not authorized|pubkey not in whitelist|blocked(?::\s*not authorized|\s+by\s+policy)?|write\s*denied|write\s*rejected|permission\s*denied|forbidden|rejected)/i;
 const OK_REJECT_ENVELOPE_PATTERN = /\[\s*"OK"\s*,\s*"[^"]*"\s*,\s*false\s*,/i;
+const TRANSIENT_PUBLISH_FAILURE_PATTERN = /(timeout|timed out|network|disconnected|connection closed|unknown host|ns_error_unknown_host|not enough relays received)/i;
 export const AUTH_RETRY_COOLDOWN_MS = 10000;
 
 export function isAuthRequiredCloseReason(reason: string): boolean {
@@ -16,7 +17,13 @@ export function shouldMarkRelayReadOnlyAfterPublishReject(params: {
   rejectionReason?: string;
 }): boolean {
   if (isAuthRequiredCloseReason(params.errorMessage)) return true;
-  if (params.rejectionReason && WRITE_REJECT_REASON_PATTERN.test(params.rejectionReason)) return true;
+  if (params.rejectionReason) {
+    if (TRANSIENT_PUBLISH_FAILURE_PATTERN.test(params.rejectionReason)) return false;
+    if (WRITE_REJECT_REASON_PATTERN.test(params.rejectionReason)) return true;
+    return true;
+  }
+  if (TRANSIENT_PUBLISH_FAILURE_PATTERN.test(params.errorMessage)) return false;
+  if (WRITE_REJECT_REASON_PATTERN.test(params.errorMessage)) return true;
   return OK_REJECT_ENVELOPE_PATTERN.test(params.errorMessage);
 }
 

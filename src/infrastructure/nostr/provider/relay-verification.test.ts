@@ -60,6 +60,13 @@ describe("shouldMarkRelayReadOnlyAfterPublishReject", () => {
     })).toBe(true);
   });
 
+  it("marks read-only for generic non-transient rejection reasons", () => {
+    expect(shouldMarkRelayReadOnlyAfterPublishReject({
+      errorMessage: "publish failed",
+      rejectionReason: "kind not allowed for this relay",
+    })).toBe(true);
+  });
+
   it("marks read-only for NIP-01 OK false envelope failures", () => {
     expect(shouldMarkRelayReadOnlyAfterPublishReject({
       errorMessage: '["OK","68dd30...",false,"blocked by policy"]',
@@ -70,6 +77,12 @@ describe("shouldMarkRelayReadOnlyAfterPublishReject", () => {
     expect(shouldMarkRelayReadOnlyAfterPublishReject({
       errorMessage: "network timeout",
       rejectionReason: "temporary upstream timeout",
+    })).toBe(false);
+  });
+
+  it("does not mark read-only for transient transport error messages without rejection reasons", () => {
+    expect(shouldMarkRelayReadOnlyAfterPublishReject({
+      errorMessage: "Not enough relays received the event (0 published, 1 required)",
     })).toBe(false);
   });
 });
