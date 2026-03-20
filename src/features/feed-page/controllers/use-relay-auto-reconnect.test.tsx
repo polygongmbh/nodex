@@ -62,8 +62,8 @@ describe("useRelayAutoReconnect", () => {
     });
 
     expect(reconnectRelay).toHaveBeenCalledTimes(2);
-    expect(reconnectRelay).toHaveBeenCalledWith("wss://relay.one");
-    expect(reconnectRelay).toHaveBeenCalledWith("wss://relay.two");
+    expect(reconnectRelay).toHaveBeenCalledWith("wss://relay.one", { forceNewSocket: false });
+    expect(reconnectRelay).toHaveBeenCalledWith("wss://relay.two", { forceNewSocket: false });
   });
 
   it("retries only failed selected relays when some relays are healthy", () => {
@@ -89,7 +89,7 @@ describe("useRelayAutoReconnect", () => {
     });
 
     expect(reconnectRelay).toHaveBeenCalledTimes(1);
-    expect(reconnectRelay).toHaveBeenCalledWith("wss://relay.one");
+    expect(reconnectRelay).toHaveBeenCalledWith("wss://relay.one", { forceNewSocket: false });
   });
 
   it("uses progressive cooldown backoff", () => {
@@ -280,7 +280,7 @@ describe("useRelayAutoReconnect", () => {
     });
 
     expect(reconnectRelay).toHaveBeenCalledTimes(1);
-    expect(reconnectRelay).toHaveBeenCalledWith("wss://relay.real");
+    expect(reconnectRelay).toHaveBeenCalledWith("wss://relay.real", { forceNewSocket: false });
   });
 
   it("does not retry when no trigger condition is met", () => {

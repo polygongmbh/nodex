@@ -1,6 +1,8 @@
 const RELAY_URL_PATTERN = /\bwss?:\/\/[^\s,)"'}\]]+/gi;
 const OK_REJECTION_PATTERN = /\[\s*"OK"\s*,\s*"[^"]*"\s*,\s*false\s*,\s*"([^"]+)"\s*\]/i;
-const AUTH_REQUIRED_REASON_PATTERN = /(auth-required:[^\]\n]+)/i;
+const AUTH_REQUIRED_REASON_PATTERN = /(auth-required(?::[^\]\n]*)?)/i;
+const WRITE_REJECT_REASON_PATTERN =
+  /(not authorized|pubkey not in whitelist|write\s*denied|permission\s*denied|forbidden)/i;
 
 export function extractRelayUrlsFromErrorMessage(message: string): string[] {
   if (!message) return [];
@@ -54,12 +56,28 @@ function extractNdkRelayErrorEntries(error: unknown): NdkRelayErrorEntry[] {
   return entries;
 }
 
+export function extractRelayErrorMessage(error: unknown, relayUrl: string): string | undefined {
+  const normalizedRelayUrl = relayUrl.replace(/\/+$/, "");
+  const entries = extractNdkRelayErrorEntries(error);
+
+  for (const entry of entries) {
+    const normalizedEntryRelayUrl = entry.relayUrl?.replace(/\/+$/, "");
+    if (!normalizedEntryRelayUrl || normalizedEntryRelayUrl !== normalizedRelayUrl) continue;
+    if (!entry.message) continue;
+    return entry.message;
+  }
+
+  return undefined;
+}
+
 function extractReasonFromMessage(message: string): string | undefined {
   if (!message) return undefined;
   const okMatch = message.match(OK_REJECTION_PATTERN);
   if (okMatch?.[1]) return okMatch[1];
   const authMatch = message.match(AUTH_REQUIRED_REASON_PATTERN);
   if (authMatch?.[1]) return authMatch[1];
+  const writeRejectMatch = message.match(WRITE_REJECT_REASON_PATTERN);
+  if (writeRejectMatch?.[1]) return writeRejectMatch[1];
   return undefined;
 }
 

@@ -6,7 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-- Relay auto-reconnect now retries failed selected feeds (or all feeds when all are failed) with progressive backoff, keeps retry count unlimited while capping cooldown length, and resets retry cooldowns when the tab regains focus to recover faster after idle/network wakeups.
+- Relay reconnect now defaults to a soft reconnect path (preserving live relay/subscription continuity) while keeping hard reconnect available when explicitly requested; auto-retries continue using progressive backoff with unlimited retry count, capped cooldown length, and focus-reset recovery.
+- Relay write-rejection detection now also handles relay-specific NDK publish-error map payloads more reliably, improving status transitions when relays reject writes with authorization/policy reasons.
 - Restored live feed updates after initial relay hydration by keeping the cache subscription open after EOSE, fixing a regression where updates stalled until reload.
 - Feed now keeps state-update entries (including close events) visible even when the underlying task is closed and hidden from the main task rows.
 - Feed now keeps an explicitly focused closed task visible in its own focused thread view while still hiding non-focused closed tasks in normal feed listings.

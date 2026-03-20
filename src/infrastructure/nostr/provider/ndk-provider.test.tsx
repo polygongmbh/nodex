@@ -198,6 +198,7 @@ function Harness() {
       <button onClick={() => addRelay("wss://relay.one")}>re-add relay no slash</button>
       <button onClick={() => removeRelay("wss://relay.one")}>remove relay</button>
       <button onClick={() => reconnectRelay("wss://relay.one")}>reconnect relay</button>
+      <button onClick={() => reconnectRelay("wss://relay.one", { forceNewSocket: true })}>hard reconnect relay</button>
       <output data-testid="relay-state">
         {relays
           .map((relay) => `${relay.url}:${relay.status}`)
@@ -326,7 +327,7 @@ describe("NDKProvider relay lifecycle", () => {
     expect(ndk.pool.getOpenSocketCount("wss://relay.two")).toBe(1);
   });
 
-  it("reconnects a relay without leaving multiple open sockets for the same url", async () => {
+  it("soft-reconnects a relay without creating additional sockets for the same url", async () => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
         <Harness />
@@ -342,6 +343,35 @@ describe("NDKProvider relay lifecycle", () => {
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
+      fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
+      fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    expect(firstRelay.disconnectCalls).toBe(0);
+    expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(1);
+    expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
+  });
+
+  it("hard-reconnects a relay without leaving multiple open sockets for the same url", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const firstRelay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "hard reconnect relay" }));
     });
 
     await waitFor(() => {

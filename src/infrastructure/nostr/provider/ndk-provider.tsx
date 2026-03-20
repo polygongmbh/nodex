@@ -58,6 +58,7 @@ import {
   shouldSetVerificationFailedStatus,
 } from "./relay-verification";
 import {
+  extractRelayErrorMessage,
   extractRelayRejectionReason,
 } from "./relay-error";
 import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
@@ -395,7 +396,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       relayAuthRetryHistoryRef.current.delete(relayUrl);
       pendingRelayVerificationRef.current.delete(relayUrl);
       relayReadRejectedRef.current.delete(relayUrl);
-      connectManagedRelay(ndk, relayUrl, { forceNewSocket: true });
+      connectManagedRelay(ndk, relayUrl);
     });
   }, [connectManagedRelay, ndk, relays]);
 
@@ -1315,9 +1316,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     disconnectTrackedRelayInstance(ndk, normalized);
   }, [disconnectTrackedRelayInstance, ndk]);
 
-  const reconnectRelay = useCallback((url: string) => {
+  const reconnectRelay = useCallback((url: string, options?: { forceNewSocket?: boolean }) => {
     if (!ndk) return;
     const normalized = normalizeRelayUrl(url);
+    const forceNewSocket = options?.forceNewSocket ?? false;
     removedRelaysRef.current.delete(normalized);
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
@@ -1326,18 +1328,28 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayWriteRejectedRef.current.delete(normalized);
     pendingRelayVerificationRef.current.delete(normalized);
     relayAuthRetryHistoryRef.current.delete(normalized);
-    nostrDevLog("relay", "Manual relay reconnect requested", { relayUrl: normalized });
+    nostrDevLog("relay", "Relay reconnect requested", {
+      relayUrl: normalized,
+      reconnectMode: forceNewSocket ? "hard" : "soft",
+    });
 
+    const relay = connectManagedRelay(ndk, normalized, { forceNewSocket });
+    const mappedStatus = mapNativeRelayStatus(relay.status);
     setRelays((previous) =>
-      previous.map((relay) =>
-        relay.url.replace(/\/+$/, "") === normalized
-          ? { ...relay, status: "connecting" }
-          : relay
+      previous.map((entry) =>
+        entry.url.replace(/\/+$/, "") === normalized
+          ? {
+              ...entry,
+              status: mappedStatus === "connected"
+                ? resolveConnectedRelayStatus(normalized)
+                : mappedStatus === "connecting"
+                  ? "connecting"
+                  : "connecting",
+            }
+          : entry
       )
     );
-
-    connectManagedRelay(ndk, normalized, { forceNewSocket: true });
-  }, [connectManagedRelay, ndk]);
+  }, [connectManagedRelay, ndk, resolveConnectedRelayStatus]);
 
   const publishEvent = useCallback(async (
     kind: NostrEventKind,
@@ -1408,11 +1420,18 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
             .forEach((url) => publishedRelayUrlSet.add(url));
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error || "");
-          const extractedReason = extractRelayRejectionReason(error);
+          const relayErrorMessage = extractRelayErrorMessage(error, relayUrl);
+          const extractedReason =
+            extractRelayRejectionReason(relayErrorMessage || "") ??
+            extractRelayRejectionReason(error);
           if (!rejectionReason && extractedReason) {
             rejectionReason = extractedReason;
           }
-          if (shouldMarkRelayReadOnlyAfterPublishReject({ errorMessage, rejectionReason: extractedReason })) {
+          const decisionErrorMessage = relayErrorMessage || errorMessage;
+          if (shouldMarkRelayReadOnlyAfterPublishReject({
+            errorMessage: decisionErrorMessage,
+            rejectionReason: extractedReason,
+          })) {
             markRelayVerificationFailure(relayUrl, "write", {
               setStatus: true,
               showToast: false,
@@ -1421,7 +1440,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           nostrDevLog("publish", "Relay publish attempt failed", {
             relayUrl,
             rejectionReason: extractedReason || null,
-            error: errorMessage,
+            error: decisionErrorMessage,
           });
         }
       }
@@ -1660,7 +1679,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         nostrDevLog("relay", "Retrying relay connection to trigger NIP-42 auth challenge", {
           relayUrl: normalizedRelayUrl,
         });
-        connectManagedRelay(ndk, normalizedRelayUrl, { forceNewSocket: true });
+        connectManagedRelay(ndk, normalizedRelayUrl);
       }
       markRelayVerificationFailure(relay.url, "read", {
         setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),

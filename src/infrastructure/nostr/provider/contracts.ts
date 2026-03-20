@@ -57,7 +57,7 @@ export interface NDKContextValue {
   logout: () => void;
   addRelay: (url: string) => void;
   removeRelay: (url: string) => void;
-  reconnectRelay: (url: string) => void;
+  reconnectRelay: (url: string, options?: { forceNewSocket?: boolean }) => void;
   publishEvent: (
     kind: NostrEventKind,
     content: string,

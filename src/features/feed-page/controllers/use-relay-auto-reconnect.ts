@@ -21,7 +21,7 @@ const DEFAULT_FOCUS_RESET_DEBOUNCE_MS = 500;
 interface UseRelayAutoReconnectOptions {
   relays: Relay[];
   activeRelayIds: Set<string>;
-  reconnectRelay: (url: string) => void;
+  reconnectRelay: (url: string, options?: { forceNewSocket?: boolean }) => void;
   retryBaseMs?: number;
   retryMultiplier?: number;
   retryMaxMs?: number;
@@ -113,7 +113,7 @@ export function useRelayAutoReconnect({
       const nextEligibleAt = nextEligibleAtByRelayRef.current.get(relayUrl) ?? 0;
       if (!options?.force && now < nextEligibleAt) return;
 
-      reconnectRelay(relayUrl);
+      reconnectRelay(relayUrl, { forceNewSocket: false });
 
       const nextAttemptCount = (attemptCountByRelayRef.current.get(relayUrl) ?? 0) + 1;
       attemptCountByRelayRef.current.set(relayUrl, nextAttemptCount);

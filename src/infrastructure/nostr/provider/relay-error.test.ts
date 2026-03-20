@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  extractRelayErrorMessage,
   extractRelayRejectionReason,
   extractRelayUrlsFromError,
   extractRelayUrlsFromErrorMessage,
@@ -62,5 +63,32 @@ describe("extractRelayUrlsFromErrorMessage", () => {
     expect(extractRelayRejectionReason(publishError)).toBe(
       "auth-required: event author pubkey not in whitelist"
     );
+  });
+
+  it("extracts plain auth-required reason when no extended suffix is present", () => {
+    const reason = extractRelayRejectionReason("auth-required");
+    expect(reason).toBe("auth-required");
+  });
+
+  it("extracts write-reject reasons outside OK envelopes", () => {
+    const reason = extractRelayRejectionReason("blocked: not authorized");
+    expect(reason).toBe("not authorized");
+  });
+
+  it("extracts relay-specific error text from NDKPublishError-like map payloads", () => {
+    const relay = { url: "wss://relay.example.com/" };
+    const relayError = new Error("blocked: not authorized");
+    const publishError = new Error("Not enough relays received the event (0 published, 1 required)") as Error & {
+      errors?: Map<{ url: string }, Error>;
+    };
+    Object.defineProperty(publishError, "errors", {
+      value: new Map([[relay, relayError]]),
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    });
+
+    expect(extractRelayErrorMessage(publishError, "wss://relay.example.com")).toBe("blocked: not authorized");
+    expect(extractRelayErrorMessage(publishError, "wss://relay.other")).toBeUndefined();
   });
 });
