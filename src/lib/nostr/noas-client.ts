@@ -6,6 +6,9 @@
 import { safeLocalStorageSetItem } from "@/lib/safe-local-storage";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { nip19 } from 'nostr-tools';
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
+import * as nip49 from 'nostr-tools/nip49';
 import { decryptNip49PrivateKey, isNip49EncryptedKey } from './nip49-utils';
 
 export type NoasAuthErrorCode =
@@ -249,6 +252,11 @@ interface NoasRegisterResponse {
     username: string;
     publicKey: string;
   };
+  status?: string;
+  nip05?: string;
+  message?: string;
+  public_key?: string;
+  public_npub?: string;
   error?: string;
   errorCode?: NoasAuthErrorCode;
 }
@@ -260,6 +268,77 @@ interface NoasUserProfile {
   relays?: string[];
   profilePicture?: string;
   profilePictureType?: string;
+}
+
+function hexToBytes(hexValue: string): Uint8Array {
+  const normalized = hexValue.trim();
+  if (!/^[a-f0-9]{64}$/i.test(normalized)) {
+    throw new Error("Private key must be a 64-character hex string or nsec");
+  }
+
+  const bytes = new Uint8Array(32);
+  for (let index = 0; index < 32; index += 1) {
+    bytes[index] = parseInt(normalized.slice(index * 2, index * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+function decodePrivateKeyToBytes(privateKey: string): Uint8Array {
+  const normalized = String(privateKey || "").trim();
+  if (!normalized) {
+    throw new Error("Private key is required");
+  }
+
+  if (/^[a-f0-9]{64}$/i.test(normalized)) {
+    return hexToBytes(normalized);
+  }
+
+  const decoded = nip19.decode(normalized);
+  if (decoded.type === "nsec" && decoded.data instanceof Uint8Array) {
+    return decoded.data;
+  }
+
+  throw new Error("Private key must be a valid nsec or 64-character hex key");
+}
+
+function hashNoasPassword(password: string): string {
+  return bytesToHex(sha256(new TextEncoder().encode(password)));
+}
+
+function resolveRegisterRedirect(redirect?: string): string | undefined {
+  const providedRedirect = String(redirect || "").trim();
+  if (providedRedirect) {
+    return providedRedirect;
+  }
+
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return window.location.origin;
+  }
+
+  return undefined;
+}
+
+function normalizeResponsePublicKey(publicKeyRaw: unknown): string | undefined {
+  if (typeof publicKeyRaw !== "string") return undefined;
+  const normalized = publicKeyRaw.trim();
+  if (!normalized) return undefined;
+
+  if (/^[a-f0-9]{64}$/i.test(normalized)) {
+    return normalized.toLowerCase();
+  }
+
+  if (normalized.startsWith("npub1")) {
+    try {
+      const decoded = nip19.decode(normalized);
+      if (decoded.type === "npub" && typeof decoded.data === "string") {
+        return decoded.data.toLowerCase();
+      }
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
 }
 
 export class NoasClient {
@@ -314,23 +393,29 @@ export class NoasClient {
   async register(
     username: string,
     password: string,
-    nsecKey: string,
+    privateKey: string,
     pubkey: string,
-    relays: string[] = []
+    options?: { redirect?: string }
   ): Promise<NoasRegisterResponse> {
     try {
+      const privateKeyBytes = decodePrivateKeyToBytes(privateKey);
+      const payload: Record<string, string> = {
+        username,
+        password_hash: hashNoasPassword(password),
+        public_key: pubkey,
+        private_key_encrypted: await nip49.encrypt(privateKeyBytes, password),
+      };
+      const redirect = resolveRegisterRedirect(options?.redirect);
+      if (redirect) {
+        payload.redirect = redirect;
+      }
+
       const response = await fetch(this.buildApiUrl("/auth/register"), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          username,
-          password,
-          nsecKey,
-          pubkey,
-          relays,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -342,7 +427,29 @@ export class NoasClient {
         };
       }
 
-      return await response.json();
+      const responseData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+      const responsePublicKey = normalizeResponsePublicKey(responseData.public_key)
+        || normalizeResponsePublicKey(responseData.public_npub)
+        || normalizeResponsePublicKey(pubkey)
+        || pubkey;
+      const userFromResponse = responseData.user as { username?: unknown; publicKey?: unknown } | undefined;
+      const responseUsername = typeof userFromResponse?.username === "string" && userFromResponse.username.trim()
+        ? userFromResponse.username
+        : username;
+      const userPublicKey = normalizeResponsePublicKey(userFromResponse?.publicKey) || responsePublicKey;
+
+      return {
+        success: responseData.success === false ? false : true,
+        user: {
+          username: responseUsername,
+          publicKey: userPublicKey,
+        },
+        status: typeof responseData.status === "string" ? responseData.status : undefined,
+        nip05: typeof responseData.nip05 === "string" ? responseData.nip05 : undefined,
+        message: typeof responseData.message === "string" ? responseData.message : undefined,
+        public_key: typeof responseData.public_key === "string" ? responseData.public_key : undefined,
+        public_npub: typeof responseData.public_npub === "string" ? responseData.public_npub : undefined,
+      };
     } catch (error) {
       console.error('Noas registration error:', error);
       return {

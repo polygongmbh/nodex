@@ -113,20 +113,61 @@ describe("NoasClient API route mapping", () => {
     );
 
     const client = new NoasClient("https://noas.example/api/v1");
-    await client.register("alice", "hunter2", "nsec123", "pubkey123", ["wss://relay.example"]);
+    await client.register(
+      "alice",
+      "hunter2",
+      "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "pubkey123",
+      { redirect: "https://nodex.polygon.gmbh" }
+    );
 
-    expect(fetchSpy).toHaveBeenCalledWith("https://noas.example/api/v1/auth/register", {
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchSpy.mock.calls[0] ?? [];
+    expect(url).toBe("https://noas.example/api/v1/auth/register");
+    expect(init).toMatchObject({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        username: "alice",
-        password: "hunter2",
-        nsecKey: "nsec123",
-        pubkey: "pubkey123",
-        relays: ["wss://relay.example"],
-      }),
+    });
+
+    const parsedBody = JSON.parse(String((init as RequestInit).body ?? "{}"));
+    expect(parsedBody).toMatchObject({
+      username: "alice",
+      password_hash: "f52fbd32b2b3b86ff88ef6c490628285f482af15ddcb29541f94bcf526a3f6c7",
+      public_key: "pubkey123",
+      redirect: "https://nodex.polygon.gmbh",
+    });
+    expect(parsedBody.private_key_encrypted).toMatch(/^ncryptsec/);
+  });
+
+  it("normalizes v1 registration responses into the legacy user shape", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({
+        success: true,
+        status: "unverified_email",
+        public_key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    );
+
+    const client = new NoasClient("https://noas.example/api/v1");
+    const response = await client.register(
+      "alice",
+      "hunter2",
+      "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    );
+
+    expect(response.success).toBe(true);
+    expect(response.status).toBe("unverified_email");
+    expect(response.user).toEqual({
+      username: "alice",
+      publicKey: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     });
   });
 

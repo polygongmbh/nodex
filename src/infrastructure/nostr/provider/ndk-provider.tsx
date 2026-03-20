@@ -1536,7 +1536,9 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       }
 
       // Register the user
-      const signUpResponse = await noasClient.register(username, password, nsecKey, pubkey, resolvedDefaultRelays);
+      const signUpResponse = await noasClient.register(username, password, nsecKey, pubkey, {
+        redirect: typeof window !== "undefined" ? window.location.origin : undefined,
+      });
 
       if (!signUpResponse.success || !signUpResponse.user) {
         console.error("Noas sign-up failed:", signUpResponse.error);
@@ -1608,7 +1610,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays]);
+  }, [fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
 
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
