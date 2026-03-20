@@ -4,10 +4,12 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+type OutsideInteractionEvent = { preventDefault: () => void };
+
 export function handleDialogOutsideInteraction(
   dismissOnOutsideInteract: boolean,
-  event: { preventDefault: () => void },
-  handler?: (event: typeof event) => void,
+  event: OutsideInteractionEvent,
+  handler?: (event: OutsideInteractionEvent) => void,
 ) {
   if (!dismissOnOutsideInteract) {
     event.preventDefault();

@@ -1,6 +1,7 @@
 import { useMemo, useRef } from "react";
 import type { Task, Channel, Person, Relay, TaskStatus } from "@/types";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
+import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
 import type { NostrUser } from "@/infrastructure/nostr/ndk-context";
 import {
   nostrEventsToTasks,
@@ -34,7 +35,7 @@ export interface UseIndexDerivedDataOptions {
   suppressedNostrEventIds: Set<string>;
   people: Person[];
   supplementalLatestActivityByAuthor: Map<string, number>;
-  cachedKind0Events: CachedNostrEvent[];
+  cachedKind0Events: Kind0LikeEvent[];
   user: NostrUser | null;
   effectiveActiveRelayIds: Set<string>;
   relays: Relay[];

@@ -48,10 +48,11 @@ export function loadPinnedChannelsState(pubkey?: string): PinnedChannelsState {
     if (!raw) return createEmptyPinnedChannelsState();
     const parsed = pinnedChannelsStateSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) return createEmptyPinnedChannelsState();
+    const validData = parsed.data as PinnedChannelsState;
     return {
       version: 2,
-      updatedAt: parsed.data.updatedAt,
-      byView: stripInvalidEntries(parsed.data),
+      updatedAt: validData.updatedAt,
+      byView: stripInvalidEntries(validData),
     };
   } catch {
     return createEmptyPinnedChannelsState();

@@ -355,7 +355,7 @@ export function removeRelayUrlFromCachedEvents(
         ...event,
         relayUrl: remainingRelayUrls[0],
         relayUrls: remainingRelayUrls,
-      } satisfies CachedNostrEvent;
+      } as CachedNostrEvent;
     })
     .filter((event): event is CachedNostrEvent => event !== null);
 }

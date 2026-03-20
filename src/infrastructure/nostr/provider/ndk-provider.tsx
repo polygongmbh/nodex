@@ -203,7 +203,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const shouldShowRelayVerificationToast = useCallback((
     relayUrl: string,
     operation: RelayOperation,
-    outcome: RelayVerificationEvent["outcome"]
+    outcome: RelayVerificationEvent["outcome"] | "verified"
   ): boolean => {
     const now = Date.now();
     const key = `${relayUrl}|${operation}|${outcome}`;
@@ -428,7 +428,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
       beginRelayOperation("read");
       const subscription = ndk.subscribe(
-        [{ kinds: [NostrEventKind.Metadata], authors: [pubkey] }],
+        [{ kinds: [NostrEventKind.Metadata as number], authors: [pubkey] }],
         { closeOnEose: true }
       );
 
@@ -1074,7 +1074,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       let profilePicture: string | undefined;
       const pictureResponse = await noasClient.getProfilePicture(signInResponse.publicKey);
       if (pictureResponse.profilePicture && pictureResponse.profilePictureType) {
-        const blob = new Blob([pictureResponse.profilePicture], { type: pictureResponse.profilePictureType });
+        const blob = new Blob([pictureResponse.profilePicture as BlobPart], { type: pictureResponse.profilePictureType });
         profilePicture = URL.createObjectURL(blob);
       }
 
@@ -1208,7 +1208,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       let profilePicture: string | undefined;
       const pictureResponse = await noasClient.getProfilePicture(signUpResponse.user.publicKey);
       if (pictureResponse.profilePicture && pictureResponse.profilePictureType) {
-        const blob = new Blob([pictureResponse.profilePicture], { type: pictureResponse.profilePictureType });
+        const blob = new Blob([pictureResponse.profilePicture as BlobPart], { type: pictureResponse.profilePictureType });
         profilePicture = URL.createObjectURL(blob);
       }
 

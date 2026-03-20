@@ -204,7 +204,7 @@ export function usePublish(
       ? undefined
       : {
         hardwareConcurrency: navigator.hardwareConcurrency,
-        deviceMemory: "deviceMemory" in navigator ? navigator.deviceMemory : undefined,
+        deviceMemory: "deviceMemory" in navigator ? (navigator as any).deviceMemory as number | undefined : undefined,
       });
 
     nostrDevLog("subscribe", "Creating subscription", {

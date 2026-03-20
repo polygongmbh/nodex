@@ -31,7 +31,7 @@ describe('NIP-49 Utility Functions', () => {
       const decoded = nip19.decode(result);
       expect(decoded.type).toBe('nsec');
       // decoded.data is Uint8Array, convert to hex for comparison
-      const decodedHex = uint8ArrayToHex(new Uint8Array(decoded.data));
+      const decodedHex = uint8ArrayToHex(new Uint8Array(decoded.data as any));
       expect(decodedHex).toBe(hexKey);
     });
 
@@ -42,7 +42,7 @@ describe('NIP-49 Utility Functions', () => {
       
       // Verify it can be decoded back
       const decoded = nip19.decode(result);
-      const decodedHex = uint8ArrayToHex(new Uint8Array(decoded.data));
+      const decodedHex = uint8ArrayToHex(new Uint8Array(decoded.data as any));
       expect(decodedHex).toBe(hexKey);
     });
 

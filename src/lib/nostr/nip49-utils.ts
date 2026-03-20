@@ -29,7 +29,7 @@ async function deriveKey(password: string, salt: Uint8Array, iterations: number 
   const derivedKey = await crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt: salt as BufferSource,
       iterations: iterations,
       hash: 'SHA-256'
     },
@@ -54,7 +54,7 @@ async function deriveKey(password: string, salt: Uint8Array, iterations: number 
 async function decryptAESGCM(encryptedData: Uint8Array, key: Uint8Array, iv: Uint8Array): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
-    key,
+    key as BufferSource,
     { name: 'AES-GCM' },
     false,
     ['decrypt']
@@ -63,10 +63,10 @@ async function decryptAESGCM(encryptedData: Uint8Array, key: Uint8Array, iv: Uin
   const decrypted = await crypto.subtle.decrypt(
     {
       name: 'AES-GCM',
-      iv: iv
+      iv: iv as BufferSource
     },
     cryptoKey,
-    encryptedData
+    encryptedData as BufferSource
   );
   
   return new Uint8Array(decrypted);
@@ -141,7 +141,7 @@ export async function decryptNip49PrivateKey(encryptedKey: string, password: str
 
     // Already an nsec private key.
     try {
-      const decoded = nip19.decode(encryptedKey);
+      const decoded = nip19.decode(encryptedKey) as any;
       if (decoded.type === 'nsec') {
         return uint8ArrayToHex(new Uint8Array(decoded.data));
       }
@@ -163,10 +163,10 @@ export async function decryptNip49PrivateKey(encryptedKey: string, password: str
 
     // Standard NIP-49 format from nostr-tools (bech32 ncryptsec1...).
     if (encryptedKey.startsWith('ncryptsec')) {
-      const decrypted = await nip49.decrypt(encryptedKey, password);
+      const decrypted: any = await nip49.decrypt(encryptedKey, password);
       if (typeof decrypted === 'string') {
         if (/^[0-9a-f]{64}$/i.test(decrypted)) return decrypted.toLowerCase();
-        const maybeNsec = nip19.decode(decrypted);
+        const maybeNsec = nip19.decode(decrypted) as any;
         if (maybeNsec.type === 'nsec') return uint8ArrayToHex(new Uint8Array(maybeNsec.data));
         throw new Error('NIP-49 decrypt returned unsupported key string format');
       }
@@ -195,7 +195,7 @@ export async function decryptNip49PrivateKey(encryptedKey: string, password: str
  */
 export function isNip49EncryptedKey(key: string): boolean {
   try {
-    const { type } = nip19.decode(key);
+    const { type } = nip19.decode(key) as any;
     return type === 'ncryptsec';
   } catch {
     return false;
