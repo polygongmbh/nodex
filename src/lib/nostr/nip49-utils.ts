@@ -54,7 +54,7 @@ async function deriveKey(password: string, salt: Uint8Array, iterations: number 
 async function decryptAESGCM(encryptedData: Uint8Array, key: Uint8Array, iv: Uint8Array): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
-    key,
+    key as BufferSource,
     { name: 'AES-GCM' },
     false,
     ['decrypt']
@@ -63,10 +63,10 @@ async function decryptAESGCM(encryptedData: Uint8Array, key: Uint8Array, iv: Uin
   const decrypted = await crypto.subtle.decrypt(
     {
       name: 'AES-GCM',
-      iv: iv
+      iv: iv as BufferSource
     },
     cryptoKey,
-    encryptedData
+    encryptedData as BufferSource
   );
   
   return new Uint8Array(decrypted);
