@@ -37,6 +37,19 @@ interface NoasApiBaseCacheEntry {
   cachedAt: number;
 }
 
+function resolveDiscoveredNoasApiBaseUrl(discoveryOrigin: string, rawApiBase: unknown): string {
+  if (typeof rawApiBase !== "string") return "";
+
+  const trimmed = rawApiBase.trim();
+  if (!trimmed) return "";
+
+  if (trimmed.startsWith("/")) {
+    return normalizeNoasBaseUrl(`${discoveryOrigin}${trimmed}`);
+  }
+
+  return normalizeNoasBaseUrl(trimmed);
+}
+
 export function normalizeNoasBaseUrl(rawValue: string): string {
   const trimmed = rawValue.trim();
   if (!trimmed) return "";
@@ -149,14 +162,16 @@ export async function resolveNoasApiBaseUrl(rawValue: string): Promise<string> {
     }
 
     const discoveryDocument = await response.json() as NoasDiscoveryDocument;
-    const discoveredApiBaseUrl = typeof discoveryDocument.noas?.api_base === "string"
-      ? normalizeNoasBaseUrl(discoveryDocument.noas.api_base)
-      : "";
+    const discoveredApiBaseUrl = resolveDiscoveredNoasApiBaseUrl(
+      discoveryOrigin,
+      discoveryDocument.noas?.api_base
+    );
 
     if (!isValidNoasBaseUrl(discoveredApiBaseUrl)) {
       nostrDevLog("noas", "NoaS API base discovery missing a valid api_base entry", {
         submittedBaseUrl: normalizedBaseUrl,
         discoveryOrigin,
+        discoveredApiBase: discoveryDocument.noas?.api_base,
       });
       return normalizedBaseUrl;
     }

@@ -46,6 +46,23 @@ describe("resolveNoasApiBaseUrl", () => {
 
     await expect(resolveNoasApiBaseUrl("noas.example/custom")).resolves.toBe("https://noas.example/custom");
   });
+
+  it("resolves relative api_base values against the discovery origin", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({
+        noas: {
+          api_base: "/api/v1",
+        },
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    );
+
+    await expect(resolveNoasApiBaseUrl("https://noas.example")).resolves.toBe("https://noas.example/api/v1");
+  });
 });
 
 describe("NoasClient API route mapping", () => {
