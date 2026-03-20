@@ -364,6 +364,25 @@ function renderMarkdownLine(
     </code>
   );
 
+  const MarkdownHeading = ({
+    level,
+    children,
+  }: {
+    level: 1 | 2 | 3 | 4 | 5 | 6;
+    children?: React.ReactNode;
+  }) => {
+    const headingClassName = level === 1
+      ? "text-base font-semibold tracking-tight"
+      : level === 2
+        ? "text-[0.95rem] font-semibold tracking-tight"
+        : "text-sm font-medium";
+    return (
+      <span className={headingClassName}>
+        {children}
+      </span>
+    );
+  };
+
   return [
     (
       <ReactMarkdown
@@ -373,6 +392,12 @@ function renderMarkdownLine(
           p: ({ children }) => <>{children}</>,
           a: MarkdownAnchor,
           code: MarkdownCode,
+          h1: ({ children }) => <MarkdownHeading level={1}>{children}</MarkdownHeading>,
+          h2: ({ children }) => <MarkdownHeading level={2}>{children}</MarkdownHeading>,
+          h3: ({ children }) => <MarkdownHeading level={3}>{children}</MarkdownHeading>,
+          h4: ({ children }) => <MarkdownHeading level={4}>{children}</MarkdownHeading>,
+          h5: ({ children }) => <MarkdownHeading level={5}>{children}</MarkdownHeading>,
+          h6: ({ children }) => <MarkdownHeading level={6}>{children}</MarkdownHeading>,
         }}
       >
         {preprocessMarkdownTokens(value)}
