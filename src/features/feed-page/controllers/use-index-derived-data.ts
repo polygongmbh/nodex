@@ -34,7 +34,7 @@ export interface UseIndexDerivedDataOptions {
   suppressedNostrEventIds: Set<string>;
   people: Person[];
   supplementalLatestActivityByAuthor: Map<string, number>;
-  cachedKind0Events: CachedNostrEvent[];
+  cachedKind0Events: Kind0LikeEvent[];
   user: NostrUser | null;
   effectiveActiveRelayIds: Set<string>;
   relays: Relay[];

@@ -141,7 +141,7 @@ export async function decryptNip49PrivateKey(encryptedKey: string, password: str
 
     // Already an nsec private key.
     try {
-      const decoded = nip19.decode(encryptedKey);
+      const decoded = nip19.decode(encryptedKey) as any;
       if (decoded.type === 'nsec') {
         return uint8ArrayToHex(new Uint8Array(decoded.data));
       }
