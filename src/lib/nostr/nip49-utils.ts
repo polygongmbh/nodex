@@ -163,7 +163,7 @@ export async function decryptNip49PrivateKey(encryptedKey: string, password: str
 
     // Standard NIP-49 format from nostr-tools (bech32 ncryptsec1...).
     if (encryptedKey.startsWith('ncryptsec')) {
-      const decrypted = await nip49.decrypt(encryptedKey, password);
+      const decrypted: any = await nip49.decrypt(encryptedKey, password);
       if (typeof decrypted === 'string') {
         if (/^[0-9a-f]{64}$/i.test(decrypted)) return decrypted.toLowerCase();
         const maybeNsec = nip19.decode(decrypted) as any;
