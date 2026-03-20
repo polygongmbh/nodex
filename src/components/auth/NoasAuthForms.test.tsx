@@ -254,7 +254,7 @@ describe("Noas auth forms", () => {
 
     expect(screen.getByText(/your keys are encrypted/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /more options/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/64-character pubkey/i)).toBeInTheDocument();
+    expect(screen.getByText(/npub1\.\.\./i)).toBeInTheDocument();
   });
 
   it("shows shared tabs on the sign-up form and lets users switch back to sign-in", () => {

@@ -9,6 +9,7 @@ import { getPublicKey } from "nostr-tools";
 import { NoasSharedFields, validateNoasUsername } from "./NoasSharedFields";
 import { NoasAuthPanelShell } from "./NoasAuthPanelShell";
 import { resolveNoasBaseUrlForSubmit } from "./noas-form-helpers";
+import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 interface NoasSignUpFormProps {
   onSignUp: (
@@ -53,6 +54,7 @@ export function NoasSignUpForm({
   const [localError, setLocalError] = useState<string | null>(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const displayedError = localError ?? error;
+  const userFacingPubkey = toUserFacingPubkey(pubkey);
 
   const derivePublicKeyFromHex = (hexPrivateKey: string): string | null => {
     try {
@@ -207,9 +209,9 @@ export function NoasSignUpForm({
                 <div
                   id="noas-public-key"
                   className="overflow-x-auto whitespace-nowrap font-mono text-[11px] text-foreground/85"
-                  title={pubkey || t("auth.noas.publicKeyPlaceholder")}
+                  title={userFacingPubkey || t("auth.noas.publicKeyPlaceholder")}
                 >
-                  {pubkey || t("auth.noas.publicKeyPlaceholder")}
+                  {userFacingPubkey || t("auth.noas.publicKeyPlaceholder")}
                 </div>
               </div>
               {pubkey ? (
@@ -218,7 +220,7 @@ export function NoasSignUpForm({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    navigator.clipboard.writeText(pubkey);
+                    navigator.clipboard.writeText(userFacingPubkey);
                     toast.success(t("auth.noas.publicKeyCopied"));
                   }}
                   disabled={isLoading}

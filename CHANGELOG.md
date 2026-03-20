@@ -13,6 +13,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Feed merge now preserves relay-delivered state update messages instead of dropping them behind local task copies, while task status itself updates optimistically in local UI without synthesizing a separate local state-event row.
 - List view tables now use the full content width again instead of reserving a permanent scrollbar gutter that left a visible right-side gap.
 - Kanban drag-and-drop now keeps dropped cards in their destination column immediately (instead of briefly snapping back) while upstream status state settles.
+- User-facing identity fallback labels and key hints now prefer NIP-19 `npub` identifiers instead of raw hex pubkeys across feed/mention/auth surfaces, while internal relay/tag logic continues using hex pubkeys.
 
 ## [2.4.1] - 2026-03-19
 

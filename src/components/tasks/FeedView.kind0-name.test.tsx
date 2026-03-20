@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import "@testing-library/jest-dom/vitest";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
@@ -46,9 +47,7 @@ describe("FeedView kind:0 author labels", () => {
       />
     );
 
-    expect(
-      screen.getByText((_, element) => element?.textContent === "Janek (012345…cdef)")
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("feed-author-secondary-task-1")).toHaveTextContent("(npub");
     expect(screen.queryByText(/You/)).not.toBeInTheDocument();
   });
 });

@@ -387,7 +387,7 @@
       "privateKey": "Private Key",
       "publicKey": "Public Key",
       "privateKeyPlaceholder": "64-character hex or nsec...",
-      "publicKeyPlaceholder": "64-character pubkey",
+      "publicKeyPlaceholder": "npub1... public key",
       "privateKeyWarning": "Your private key is stored securely. Keep it safe and never share it.",
       "generate": "Generate",
       "privateKeyCopied": "Private key copied to clipboard",

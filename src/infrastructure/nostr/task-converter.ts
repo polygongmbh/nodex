@@ -26,6 +26,7 @@ import {
 } from "@/lib/attachments";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrContentReferences } from "@/lib/nostr/content-references";
+import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { canPubkeyUpdateTask } from "@/domain/content/task-permissions";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "@/lib/nostr/types";
 import { getRelayIdFromUrl } from "./relay-identity";
@@ -105,7 +106,7 @@ function getRelayIdsFromEvent(event: NostrEventWithRelay): string[] {
 }
 
 function getDisplayNameFromPubkey(pubkey: string): string {
-  return `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`;
+  return formatUserFacingPubkey(pubkey);
 }
 
 function replaceIndexedPersonMentions(content: string, tags: string[][]): string {
@@ -145,9 +146,10 @@ function getFeedMessageType(event: NostrEventWithRelay): FeedMessageType | undef
 }
 
 export function nostrEventToTask(event: NostrEventWithRelay): Task {
+  const authorFallbackLabel = formatUserFacingPubkey(event.pubkey);
   const author: Person = {
     id: event.pubkey,
-    name: event.pubkey.slice(0, 8),
+    name: authorFallbackLabel,
     displayName: getDisplayNameFromPubkey(event.pubkey),
     isOnline: true,
     isSelected: false,

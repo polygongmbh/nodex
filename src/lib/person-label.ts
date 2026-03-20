@@ -1,3 +1,5 @@
+import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+
 interface AuthorMetaLabelInput {
   personId: string;
   displayName: string;
@@ -10,29 +12,40 @@ interface AuthorMetaLabelParts {
 }
 
 function abbreviatePubkey(pubkey: string): string {
-  if (pubkey.length <= 10) return pubkey;
-  return `${pubkey.slice(0, 6)}…${pubkey.slice(-4)}`;
+  return formatUserFacingPubkey(pubkey, { prefix: 6, suffix: 4, ellipsis: "…" });
 }
 
 function isPubkeyDerivedPlaceholder(value: string, personId: string): boolean {
   const normalizedValue = value.trim().toLowerCase();
   const normalizedPubkey = personId.trim().toLowerCase();
-  const prefix8 = normalizedPubkey.slice(0, 8);
-  const prefix6 = normalizedPubkey.slice(0, 6);
-  const suffix4 = normalizedPubkey.slice(-4);
-  const suffix8 = normalizedPubkey.slice(-8);
+  const normalizedUserFacingPubkey = toUserFacingPubkey(normalizedPubkey).toLowerCase();
+  const placeholders = new Set<string>();
 
-  const placeholders = new Set([
-    normalizedPubkey,
-    prefix8,
-    prefix6,
-    `${prefix8}...${suffix4}`,
-    `${prefix8}…${suffix4}`,
-    `${prefix6}...${suffix4}`,
-    `${prefix6}…${suffix4}`,
-    `${prefix8}...${suffix8}`,
-    `${prefix8}…${suffix8}`,
-  ]);
+  const addVariants = (identifier: string) => {
+    if (!identifier) return;
+    const prefix10 = identifier.slice(0, 10);
+    const prefix8 = identifier.slice(0, 8);
+    const prefix6 = identifier.slice(0, 6);
+    const suffix8 = identifier.slice(-8);
+    const suffix6 = identifier.slice(-6);
+    const suffix4 = identifier.slice(-4);
+
+    placeholders.add(identifier);
+    placeholders.add(prefix10);
+    placeholders.add(prefix8);
+    placeholders.add(prefix6);
+    placeholders.add(`${prefix10}...${suffix6}`);
+    placeholders.add(`${prefix10}…${suffix6}`);
+    placeholders.add(`${prefix8}...${suffix4}`);
+    placeholders.add(`${prefix8}…${suffix4}`);
+    placeholders.add(`${prefix6}...${suffix4}`);
+    placeholders.add(`${prefix6}…${suffix4}`);
+    placeholders.add(`${prefix8}...${suffix8}`);
+    placeholders.add(`${prefix8}…${suffix8}`);
+  };
+
+  addVariants(normalizedPubkey);
+  addVariants(normalizedUserFacingPubkey);
 
   return placeholders.has(normalizedValue);
 }
@@ -65,7 +78,7 @@ export function formatAuthorMetaParts({
     (!hasHumanDisplayName || normalizedUsername.toLowerCase() !== normalizedName.toLowerCase());
 
   if (!hasHumanDisplayName && !hasHumanUsername) {
-    return { primary: personId };
+    return { primary: toUserFacingPubkey(personId) };
   }
 
   const abbreviatedPubkey = abbreviatePubkey(personId);

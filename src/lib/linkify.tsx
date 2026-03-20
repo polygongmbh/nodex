@@ -8,6 +8,7 @@ import type { Person } from "@/types";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
 import { guessMimeTypeFromUrl, isSafeHttpUrl } from "@/lib/attachments";
 import i18n from "@/lib/i18n/config";
+import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 const TOKEN_REGEX =
   /(^|[^A-Za-z0-9_])(#([A-Za-z0-9_]+)|@([A-Za-z0-9._-]+(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?))/g;
@@ -17,7 +18,7 @@ const HASH_LINK_PREFIX = "https://nodex.local/hashtag/";
 const MENTION_LINK_PREFIX = "https://nodex.local/mention/";
 
 function formatPubkeyMention(pubkey: string): string {
-  return pubkey.length === 64 ? `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}` : pubkey;
+  return formatUserFacingPubkey(pubkey);
 }
 
 function resolveMentionPerson(identifier: string, people: Person[] | undefined): Person | null {
@@ -313,6 +314,7 @@ function renderMarkdownLine(
 
     if (href?.startsWith(MENTION_LINK_PREFIX)) {
       const mentionIdentifier = decodeURIComponent(href.slice(MENTION_LINK_PREFIX.length));
+      const userFacingMentionIdentifier = toUserFacingPubkey(mentionIdentifier);
       const resolvedPerson = resolveMentionPerson(mentionIdentifier, options?.people);
       const mentionLabel = resolvedPerson?.name
         || resolvedPerson?.displayName
@@ -328,7 +330,7 @@ function renderMarkdownLine(
             }}
             className={TASK_INTERACTION_STYLES.inlineLink}
             aria-label={`Open user ${mentionLabel}`}
-            title={`@${mentionIdentifier}`}
+            title={`@${userFacingMentionIdentifier}`}
           >
             @{mentionLabel}
           </button>
@@ -336,7 +338,7 @@ function renderMarkdownLine(
       }
 
       return (
-        <span className={TASK_INTERACTION_STYLES.inlineLink} title={`@${mentionIdentifier}`}>
+        <span className={TASK_INTERACTION_STYLES.inlineLink} title={`@${userFacingMentionIdentifier}`}>
           @{mentionLabel}
         </span>
       );

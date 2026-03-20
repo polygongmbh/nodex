@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { NDKEvent, NDKFilter, NDKKind } from "@nostr-dev-kit/ndk";
+import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 export interface NostrProfile {
   pubkey: string;
@@ -146,8 +147,8 @@ export function useNostrProfiles(pubkeys: string[]) {
           // Create placeholder profile
           profileCache[pk] = {
             pubkey: pk,
-            name: pk.slice(0, 8),
-            displayName: `${pk.slice(0, 8)}...${pk.slice(-4)}`,
+            name: formatUserFacingPubkey(pk),
+            displayName: formatUserFacingPubkey(pk),
           };
         }
       });
@@ -189,5 +190,5 @@ export function getDefaultAvatarUrl(pubkey: string): string {
 
 // Generate display name from pubkey (fallback)
 export function getDefaultDisplayName(pubkey: string): string {
-  return `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`;
+  return formatUserFacingPubkey(pubkey);
 }

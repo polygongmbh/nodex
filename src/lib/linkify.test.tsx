@@ -66,6 +66,16 @@ describe("linkifyContent interaction styles", () => {
     expect(screen.getByText("@alice")).toHaveAttribute("title", "@alice@example.com");
   });
 
+  it("formats raw pubkey mention labels as npub", () => {
+    const hexMention = "b".repeat(64);
+
+    render(<div>{linkifyContent(`Assign to @${hexMention}`)}</div>);
+
+    const mention = screen.getByText((value) => value.startsWith("@npub1"));
+    expect(mention).toBeInTheDocument();
+    expect(mention).toHaveAttribute("title", expect.stringContaining("@npub1"));
+  });
+
   it("replaces a standalone embeddable URL line with an embed", () => {
     render(<div>{linkifyContent("https://youtu.be/dQw4w9WgXcQ")}</div>);
 

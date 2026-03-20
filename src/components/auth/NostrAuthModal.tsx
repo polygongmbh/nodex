@@ -26,6 +26,7 @@ import { nip19 } from "nostr-tools";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
+import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
@@ -643,10 +644,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     );
   }
 
-  const displayName = effectiveProfile.displayName || effectiveProfile.name || `${user.npub.slice(0, 8)}...`;
+  const displayName = effectiveProfile.displayName || effectiveProfile.name || formatUserFacingPubkey(user.npub);
   const profileTriggerHint = t("auth.menu.profileHint", {
     name: displayName,
-    pubkey: user.pubkey,
+    pubkey: toUserFacingPubkey(user.npub || user.pubkey),
   });
   const methodLabel = authMethod === "extension"
     ? t("filters.authMethod.extension")

@@ -387,7 +387,7 @@
       "privateKey": "Clave privada",
       "publicKey": "Clave pública",
       "privateKeyPlaceholder": "Clave hex de 64 caracteres o nsec...",
-      "publicKeyPlaceholder": "Clave pública de 64 caracteres",
+      "publicKeyPlaceholder": "Clave pública npub1...",
       "privateKeyWarning": "Tu clave privada se almacena de forma segura. Nunca la compartas.",
       "generate": "Generar",
       "privateKeyCopied": "Clave privada copiada al portapapeles",

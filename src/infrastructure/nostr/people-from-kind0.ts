@@ -1,5 +1,6 @@
 import type { Person } from "@/types";
 import { normalizeCachedRelayUrl } from "@/infrastructure/nostr/event-cache";
+import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { parseKind0Content } from "./profile-metadata";
 
@@ -273,8 +274,9 @@ export function derivePeopleFromKind0Events(
   const people = normalizedVisiblePubkeys.map((pubkey) => {
     const event = resolveKind0EventForPubkey(pubkey, selectedEvents, fallbackEvents);
     const parsed = event ? parseKind0Content(event.content) : {};
-    const name = (parsed.name || parsed.displayName || pubkey.slice(0, 8)).trim();
-    const displayName = (parsed.displayName || parsed.name || `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`).trim();
+    const fallbackPubkeyLabel = formatUserFacingPubkey(pubkey);
+    const name = (parsed.name || parsed.displayName || fallbackPubkeyLabel).trim();
+    const displayName = (parsed.displayName || parsed.name || fallbackPubkeyLabel).trim();
 
     return {
       id: pubkey,

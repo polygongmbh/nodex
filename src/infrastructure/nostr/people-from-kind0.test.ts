@@ -91,7 +91,7 @@ describe("derivePeopleFromKind0Events", () => {
   it("falls back to a pubkey placeholder when no metadata exists", () => {
     const pubkey = "c".repeat(64);
     const people = derivePeopleFromKind0Events([pubkey], [], [], []);
-    expect(people[0].name).toBe(pubkey.slice(0, 8));
+    expect(people[0].name.startsWith("npub1")).toBe(true);
   });
 
   it("prioritizes locally remembered identities before alphabetical order", () => {

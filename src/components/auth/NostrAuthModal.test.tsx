@@ -256,7 +256,7 @@ describe("NostrAuthModal", () => {
     expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
   });
 
-  it("adds a profile trigger hint including the logged-in pubkey", () => {
+  it("adds a profile trigger hint including the logged-in npub", () => {
     ndkMock.user = {
       npub: "npub1hint",
       pubkey: "b".repeat(64),
@@ -267,7 +267,7 @@ describe("NostrAuthModal", () => {
     render(<NostrUserMenu onSignInClick={vi.fn()} />);
 
     const profileTrigger = screen.getByRole("button", { name: /profile: hint user/i });
-    expect(profileTrigger).toHaveAttribute("title", expect.stringContaining("b".repeat(64)));
+    expect(profileTrigger).toHaveAttribute("title", expect.stringContaining("npub1"));
   });
 
   it("ignores outside click when auth form input is dirty", () => {

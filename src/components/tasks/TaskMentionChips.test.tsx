@@ -51,5 +51,19 @@ describe("TaskMentionChips", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open user alice" }));
     expect(onPersonClick).toHaveBeenCalledWith(alice);
   });
-});
 
+  it("renders npub fallback when mention has no matched person", () => {
+    const unmatchedPubkey = "b".repeat(64);
+
+    render(
+      <TaskMentionChips
+        task={{ ...baseTask, mentions: [unmatchedPubkey] }}
+        people={[]}
+      />
+    );
+
+    const mentionChip = screen.getByText((value) => value.includes("npub1"));
+    expect(mentionChip).toBeInTheDocument();
+    expect(mentionChip.closest("span")).toHaveAttribute("title", expect.stringContaining("@npub1"));
+  });
+});

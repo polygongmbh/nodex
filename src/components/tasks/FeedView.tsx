@@ -54,6 +54,7 @@ import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import {
@@ -673,6 +674,7 @@ export function FeedView({
         displayName: resolvedUpdateAuthor.displayName,
         username: resolvedUpdateAuthor.name,
       });
+      const updateAuthorUserFacingId = toUserFacingPubkey(resolvedUpdateAuthor.id);
       const updateTimeLabel = isMobile
         ? formatCompactRelativeTime(update.timestamp)
         : formatDistanceToNow(update.timestamp, { addSuffix: true });
@@ -734,7 +736,7 @@ export function FeedView({
                 }}
                 className="hover:text-foreground shrink-0"
                 aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
-                title={resolvedUpdateAuthor.id}
+                title={updateAuthorUserFacingId}
               >
                 {updateAuthorMeta.primary}
               </button>
@@ -769,7 +771,10 @@ export function FeedView({
       displayName: resolvedAuthor.displayName,
       username: resolvedAuthor.name,
     });
-    const isPubkeyPrimary = authorMeta.primary === resolvedAuthor.id;
+    const authorUserFacingId = toUserFacingPubkey(resolvedAuthor.id);
+    const isPubkeyPrimary =
+      authorMeta.primary === resolvedAuthor.id ||
+      authorMeta.primary === authorUserFacingId;
     const primaryAuthorLabelRaw = (() => {
       if (!isPubkeyPrimary) return authorMeta.primary;
       if (isMobile) return truncateMobilePubkey(authorMeta.primary);
@@ -1087,7 +1092,7 @@ export function FeedView({
                   isMobile && "max-w-[45vw]"
                 )}
                 aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
-                title={resolvedAuthor.id}
+                title={authorUserFacingId}
               >
                 <span
                   title={authorMeta.primary}

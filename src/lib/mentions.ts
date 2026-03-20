@@ -1,8 +1,13 @@
 import type { Person } from "@/types";
+import {
+  formatUserFacingPubkey,
+  isHexPubkey,
+  isNpub,
+  npubToHexPubkey,
+  toUserFacingPubkey,
+} from "@/lib/nostr/user-facing-pubkey";
 
-const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
 const NIP05_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
-const NPUB_PATTERN = /^npub1[023456789acdefghjklmnpqrstuvwxyz]+$/i;
 
 export function normalizeMentionIdentifier(value: string): string {
   return value.trim().toLowerCase().replace(/[.,!?;:]+$/g, "");
@@ -23,8 +28,8 @@ export function getPreferredMentionIdentifier(person: Person): string {
   }
 
   const normalizedId = normalizeMentionIdentifier(person.id);
-  if (PUBKEY_PATTERN.test(normalizedId)) {
-    return normalizedId;
+  if (isHexPubkey(normalizedId) || isNpub(normalizedId)) {
+    return toUserFacingPubkey(normalizedId);
   }
 
   return normalizedId || normalizeMentionIdentifier(person.name) || normalizeMentionIdentifier(person.displayName);
@@ -41,6 +46,10 @@ export function getMentionAliases(person: Person): string[] {
   push(person.name);
   push(person.displayName);
   push(person.nip05);
+  const userFacingPubkey = toUserFacingPubkey(person.id || "");
+  if (isNpub(userFacingPubkey)) {
+    push(userFacingPubkey);
+  }
 
   const nip05 = normalizeMentionIdentifier(person.nip05 || "");
   if (nip05.includes("@")) {
@@ -63,14 +72,23 @@ export function resolveMentionedPubkeys(content: string, people: Person[]): stri
   const resolved = new Set<string>();
 
   for (const mentionIdentifier of mentionIdentifiers) {
-    if (PUBKEY_PATTERN.test(mentionIdentifier)) {
+    if (isHexPubkey(mentionIdentifier)) {
       resolved.add(mentionIdentifier);
+      continue;
+    }
+
+    const decodedNpub = npubToHexPubkey(mentionIdentifier);
+    if (decodedNpub) {
+      resolved.add(decodedNpub);
     }
   }
 
   for (const person of people) {
-    const pubkey = normalizeMentionIdentifier(person.id);
-    if (!PUBKEY_PATTERN.test(pubkey)) continue;
+    const normalizedPersonId = normalizeMentionIdentifier(person.id);
+    const pubkey = isHexPubkey(normalizedPersonId)
+      ? normalizedPersonId
+      : npubToHexPubkey(normalizedPersonId);
+    if (!pubkey) continue;
     const aliases = new Set(getMentionAliases(person));
     if (mentionIdentifiers.some((identifier) => aliases.has(identifier))) {
       resolved.add(pubkey);
@@ -113,8 +131,13 @@ export async function resolveMentionedPubkeysAsync(
   );
   lookupResults.forEach((pubkey) => {
     const normalized = normalizeMentionIdentifier(pubkey || "");
-    if (PUBKEY_PATTERN.test(normalized)) {
+    if (isHexPubkey(normalized)) {
       resolved.add(normalized);
+      return;
+    }
+    const decodedNpub = npubToHexPubkey(normalized);
+    if (decodedNpub) {
+      resolved.add(decodedNpub);
     }
   });
 
@@ -123,9 +146,9 @@ export async function resolveMentionedPubkeysAsync(
 
 export function formatMentionIdentifierForDisplay(identifier: string): string {
   const normalized = normalizeMentionIdentifier(identifier);
-  if (PUBKEY_PATTERN.test(normalized) || NPUB_PATTERN.test(normalized)) {
-    if (normalized.length <= 18) return normalized;
-    return `${normalized.slice(0, 10)}…${normalized.slice(-6)}`;
+  const userFacing = toUserFacingPubkey(normalized);
+  if (isHexPubkey(normalized) || isNpub(userFacing)) {
+    return formatUserFacingPubkey(userFacing, { prefix: 10, suffix: 6, ellipsis: "…" });
   }
   return normalized;
 }

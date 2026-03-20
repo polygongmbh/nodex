@@ -12,10 +12,12 @@ import {
 } from "@/infrastructure/nostr/task-converter";
 import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "./types";
 
+const DEFAULT_TEST_PUBKEY = "a".repeat(64);
+
 function makeRelayEvent(overrides: Partial<NostrEventWithRelay> & Pick<NostrEventWithRelay, "id">): NostrEventWithRelay {
   return {
     id: overrides.id,
-    pubkey: "pubkey123456789012345678901234567890",
+    pubkey: DEFAULT_TEST_PUBKEY,
     created_at: 1700000000,
     kind: NostrEventKind.TextNote,
     tags: [],
@@ -29,7 +31,7 @@ function makeRelayEvent(overrides: Partial<NostrEventWithRelay> & Pick<NostrEven
 describe("nostrEventToTask", () => {
   const baseEvent: NostrEventWithRelay = {
     id: "abc123",
-    pubkey: "pubkey123456789012345678901234567890",
+    pubkey: DEFAULT_TEST_PUBKEY,
     created_at: 1700000000,
     kind: NostrEventKind.TextNote,
     tags: [],
@@ -200,9 +202,8 @@ describe("nostrEventToTask", () => {
 
   it("generates display name from pubkey", () => {
     const task = nostrEventToTask(baseEvent);
-    
-    expect(task.author.displayName).toContain(baseEvent.pubkey.slice(0, 8));
-    expect(task.author.displayName).toContain(baseEvent.pubkey.slice(-4));
+
+    expect(task.author.displayName.startsWith("npub1")).toBe(true);
   });
 
   it("converts timestamp correctly", () => {

@@ -1,11 +1,12 @@
 import type { Person, Task } from "@/types";
 import { AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
 
 function toDisplayPubkey(value: string): string {
-  return value.length === 64 ? `${value.slice(0, 8)}...${value.slice(-4)}` : value;
+  return formatUserFacingPubkey(value);
 }
 
 function collectMentionPubkeys(task: Task): string[] {
@@ -56,7 +57,7 @@ export function TaskMentionChips({
           }}
           className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
           aria-label={`Open user ${label}`}
-          title={`@${pubkey}`}
+          title={`@${toUserFacingPubkey(pubkey)}`}
         >
           <AtSign className="w-3 h-3" />
           {label}
@@ -68,7 +69,7 @@ export function TaskMentionChips({
       <span
         key={pubkey}
         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
-        title={`@${pubkey}`}
+        title={`@${toUserFacingPubkey(pubkey)}`}
       >
         <AtSign className="w-3 h-3" />
         {label}

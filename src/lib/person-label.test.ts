@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { nip19 } from "@nostr-dev-kit/ndk";
 import { formatAuthorMetaLabel, formatAuthorMetaParts } from "./person-label";
 
 describe("formatAuthorMetaLabel", () => {
@@ -12,7 +13,7 @@ describe("formatAuthorMetaLabel", () => {
 
     expect(label).toContain("Alice Doe");
     expect(label).toContain("@alice");
-    expect(label).toContain("012345…cdef");
+    expect(label).toContain("npub1");
   });
 
   it("includes display name with abbreviated pubkey when username is not distinct", () => {
@@ -23,7 +24,7 @@ describe("formatAuthorMetaLabel", () => {
       username: "alice",
     });
 
-    expect(label).toBe("alice (npub1q…qqqq)");
+    expect(label).toContain("alice (npub");
     expect(label).not.toContain("@alice");
   });
 
@@ -46,7 +47,7 @@ describe("formatAuthorMetaLabel", () => {
       username: "e752d82f",
     });
 
-    expect(label).toBe(pubkey);
+    expect(label).toBe(nip19.npubEncode(pubkey));
   });
 
   it("returns structured parts so secondary metadata can be styled separately", () => {
@@ -58,6 +59,6 @@ describe("formatAuthorMetaLabel", () => {
     });
 
     expect(parts.primary).toBe("Alice Doe");
-    expect(parts.secondary).toBe("@alice · 012345…cdef");
+    expect(parts.secondary?.startsWith("@alice · npub")).toBe(true);
   });
 });

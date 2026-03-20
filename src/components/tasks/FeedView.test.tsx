@@ -305,7 +305,9 @@ describe("FeedView", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("0123456789ab…89abcdef")).toBeInTheDocument();
+      const fallbackAuthorLabel = screen.getByTestId("feed-author-primary-task-pubkey");
+      expect(fallbackAuthorLabel.textContent?.startsWith("npub1")).toBe(true);
+      expect(fallbackAuthorLabel.textContent).toContain("…");
     });
     matchMediaSpy.mockRestore();
   });

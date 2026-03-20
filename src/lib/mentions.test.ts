@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { nip19 } from "@nostr-dev-kit/ndk";
 import type { Person } from "@/types";
 import {
   extractMentionIdentifiersFromContent,
@@ -35,7 +36,7 @@ describe("mentions", () => {
 
   it("prefers NIP-05 identifier for mention insertion", () => {
     expect(getPreferredMentionIdentifier(alice)).toBe("alice@example.com");
-    expect(getPreferredMentionIdentifier(bob)).toBe("b".repeat(64));
+    expect(getPreferredMentionIdentifier(bob)).toBe(nip19.npubEncode("b".repeat(64)));
   });
 
   it("matches mention query against aliases", () => {
@@ -46,11 +47,12 @@ describe("mentions", () => {
 
   it("resolves mentioned pubkeys from nip05, username, or pubkey mentions", () => {
     const pubkeyMention = "c".repeat(64);
+    const npubMention = nip19.npubEncode("d".repeat(64));
     const resolved = resolveMentionedPubkeys(
-      `@alice@example.com @bob @${pubkeyMention}`,
+      `@alice@example.com @bob @${pubkeyMention} @${npubMention}`,
       [alice, bob]
     );
-    expect(resolved).toEqual([pubkeyMention, "a".repeat(64), "b".repeat(64)]);
+    expect(resolved).toEqual([pubkeyMention, "d".repeat(64), "a".repeat(64), "b".repeat(64)]);
   });
 
   it("resolves unresolved NIP-05 mentions via async lookup", async () => {
@@ -59,7 +61,7 @@ describe("mentions", () => {
       [bob],
       {
         resolveNip05: async (identifier) =>
-          identifier === "carol@example.com" ? "c".repeat(64) : null,
+          identifier === "carol@example.com" ? nip19.npubEncode("c".repeat(64)) : null,
       }
     );
 
@@ -68,10 +70,13 @@ describe("mentions", () => {
 
   it("truncates pubkey-like identifiers for compact display", () => {
     const hex = "f".repeat(64);
-    const npub = "npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
+    const npub = nip19.npubEncode(hex);
+    const formattedFromHex = formatMentionIdentifierForDisplay(hex);
+    const formattedFromNpub = formatMentionIdentifierForDisplay(npub);
 
-    expect(formatMentionIdentifierForDisplay(hex)).toBe("ffffffffff…ffffff");
-    expect(formatMentionIdentifierForDisplay(npub)).toBe("npub1qqqqq…qqqqqq");
+    expect(formattedFromHex.startsWith("npub1")).toBe(true);
+    expect(formattedFromHex).toContain("…");
+    expect(formattedFromNpub).toBe(formattedFromHex);
     expect(formatMentionIdentifierForDisplay("alice@example.com")).toBe("alice@example.com");
   });
 });

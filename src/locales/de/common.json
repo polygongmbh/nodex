@@ -387,7 +387,7 @@
       "privateKey": "Privatschlüssel",
       "publicKey": "Öffentlicher Schlüssel",
       "privateKeyPlaceholder": "64-stelliger Hex- oder nsec-Schlüssel...",
-      "publicKeyPlaceholder": "64-stelliger öffentlicher Schlüssel",
+      "publicKeyPlaceholder": "npub1... öffentlicher Schlüssel",
       "privateKeyWarning": "Dein privater Schlüssel wird sicher gespeichert. Teile ihn niemals.",
       "generate": "Generieren",
       "privateKeyCopied": "Privatschlüssel in die Zwischenablage kopiert",
