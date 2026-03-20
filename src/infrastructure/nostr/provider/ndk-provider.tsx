@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo, u
 import NDK, {
   type NDKCacheRelayInfo,
   NDKEvent,
+  NDKSubscriptionCacheUsage,
   NDKNip07Signer,
   NDKNip46Signer,
   NDKPrivateKeySigner,
@@ -52,6 +53,7 @@ import { verifyNip05 } from "@/lib/nostr/nip05-verify";
 import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
 import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import {
+  AUTH_RETRY_COOLDOWN_MS,
   isAuthRequiredCloseReason,
   shouldClearReadRejectionAfterVerificationSuccess,
   shouldClearWriteRejectionAfterVerificationSuccess,
@@ -80,6 +82,7 @@ export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./c
 const NDKContext = createContext<NDKContextValue | null>(null);
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
 const RELAY_PUBLISH_TIMEOUT_MS = 3000;
+const RELAY_AUTH_PREFLIGHT_TIMEOUT_MS = 4000;
 type RelayOperation = "read" | "write" | "unknown";
 const normalizeRelayUrl = (url: string) => url.replace(/\/+$/, "");
 const WS_READY_STATE_CONNECTING = 0;
@@ -133,6 +136,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayVerificationToastHistoryRef = useRef<Map<string, number>>(new Map());
   const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
+  const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
   const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
   const relayInfoFetchedAtRef = useRef<Map<string, number>>(new Map());
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
@@ -488,6 +492,38 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
   }, [relayStatusCacheAdapter]);
 
+  const primeRelayAuthChallenge = useCallback((ndkInstance: NDK, relayUrl: string) => {
+    if (!ndkInstance.signer) return;
+
+    const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
+    const now = Date.now();
+    const lastPrimedAt = relayAuthPreflightHistoryRef.current.get(normalizedRelayUrl) ?? 0;
+    if ((now - lastPrimedAt) < AUTH_RETRY_COOLDOWN_MS) return;
+    relayAuthPreflightHistoryRef.current.set(normalizedRelayUrl, now);
+
+    // Ask the relay for a tiny relay-scoped read to trigger NIP-42 auth flow
+    // before heavier feed subscriptions fan out.
+    const probeSubscription = ndkInstance.subscribe(
+      [{ kinds: [NostrEventKind.Metadata as number], limit: 1 }],
+      {
+        closeOnEose: true,
+        relayUrls: [normalizedRelayUrl],
+        cacheUsage: NDKSubscriptionCacheUsage.ONLY_RELAY,
+        groupable: false,
+      }
+    );
+    const timeoutId = scheduleRelayTimeout(() => {
+      probeSubscription.stop();
+    }, RELAY_AUTH_PREFLIGHT_TIMEOUT_MS);
+    probeSubscription.on("close", () => {
+      clearTrackedRelayTimeout(timeoutId);
+    });
+
+    nostrDevLog("relay", "Priming relay auth challenge before scoped subscriptions", {
+      relayUrl: normalizedRelayUrl,
+    });
+  }, [clearTrackedRelayTimeout, scheduleRelayTimeout]);
+
   const disconnectTrackedRelayInstance = useCallback((ndkInstance: NDK, relayUrl: string) => {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
     const trackedRelay = relayCurrentInstanceRef.current.get(normalizedRelayUrl);
@@ -549,21 +585,15 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
   const retryNip42RelaysAfterSignIn = useCallback(() => {
     if (!ndk) return;
-    const relaysToRetry = relays
+    const relayUrlsToRetry = relays
       .filter((relay) => shouldReconnectRelayAfterSignIn(relay))
-      .map((relay) => ({
-        relayUrl: normalizeRelayUrl(relay.url),
-        forceNewSocket: relay.status === "verification-failed",
-      }));
+      .map((relay) => normalizeRelayUrl(relay.url));
 
-    if (relaysToRetry.length === 0) return;
+    if (relayUrlsToRetry.length === 0) return;
 
-    const retrySet = new Set(relaysToRetry.map((relay) => relay.relayUrl));
+    const retrySet = new Set(relayUrlsToRetry);
     nostrDevLog("relay", "Retrying NIP-42 auth-capable relays after sign in", {
-      relayUrls: relaysToRetry.map((relay) => relay.relayUrl),
-      forceNewSocketRelayUrls: relaysToRetry
-        .filter((relay) => relay.forceNewSocket)
-        .map((relay) => relay.relayUrl),
+      relayUrls: relayUrlsToRetry,
     });
 
     setRelays((previous) =>
@@ -574,14 +604,19 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       )
     );
 
-    relaysToRetry.forEach(({ relayUrl, forceNewSocket }) => {
+    relayUrlsToRetry.forEach((relayUrl) => {
       relayAutoPausedRef.current.delete(relayUrl);
       relayInitialFailureCountsRef.current.delete(relayUrl);
       relayAuthRetryHistoryRef.current.delete(relayUrl);
+      relayAuthPreflightHistoryRef.current.delete(relayUrl);
       pendingRelayVerificationRef.current.delete(relayUrl);
-      connectManagedRelay(ndk, relayUrl, { forceNewSocket });
+      connectManagedRelay(ndk, relayUrl);
+      const relayInfo = relayInfoRef.current.get(relayUrl);
+      if (relayInfo?.authRequired) {
+        primeRelayAuthChallenge(ndk, relayUrl);
+      }
     });
-  }, [connectManagedRelay, ndk, relays]);
+  }, [connectManagedRelay, ndk, primeRelayAuthChallenge, relays]);
 
   const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
     if (!ndk) return null;
@@ -703,6 +738,10 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       relayConnectedOnceRef.current.add(normalized);
       relayInitialFailureCountsRef.current.delete(normalized);
       relayAutoPausedRef.current.delete(normalized);
+      const relayInfo = relayInfoRef.current.get(normalized);
+      if (relayInfo?.authRequired) {
+        primeRelayAuthChallenge(ndkInstance, normalized);
+      }
       const pendingVerification = pendingRelayVerificationRef.current.get(normalized);
       if (pendingVerification) {
         pendingRelayVerificationRef.current.delete(normalized);
@@ -736,6 +775,16 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
             : undefined,
         }];
       });
+    });
+
+    ndkInstance.pool.on("relay:authed", (relay: NDKRelay) => {
+      const normalized = normalizeRelayUrl(relay.url);
+      const hadPendingVerification = pendingRelayVerificationRef.current.delete(normalized);
+      if (hadPendingVerification) {
+        nostrDevLog("relay", "Relay authentication completed for pending verification challenge", {
+          relayUrl: normalized,
+        });
+      }
     });
 
     ndkInstance.pool.on("relay:disconnect", (relay: NDKRelay) => {
@@ -995,7 +1044,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       relayCurrentInstance.clear();
     };
-  }, [attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
+  }, [attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, primeRelayAuthChallenge, probeRelayInfo, relayStatusCacheAdapter, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -1507,6 +1556,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     }
     setUser(null);
     setAuthMethod(null);
+    relayAuthPreflightHistoryRef.current.clear();
     localStorage.removeItem(STORAGE_KEY_AUTH);
     localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
     localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
@@ -1530,6 +1580,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
     relayAutoPausedRef.current.delete(normalized);
+    relayAuthPreflightHistoryRef.current.delete(normalized);
     relayReadRejectedRef.current.delete(normalized);
     relayWriteRejectedRef.current.delete(normalized);
     relayInfoRef.current.delete(normalized);
@@ -1866,6 +1917,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     options?: { closeOnEose?: boolean }
   ): NDKSubscription | null => {
     if (!ndk) return null;
+    const authScope = authMethod || "signed-out";
 
     const limitDecision = applyPerformanceAwareSubscriptionLimits(filters, typeof navigator === "undefined"
       ? undefined
@@ -1880,7 +1932,17 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       performanceClass: limitDecision.performanceClass,
       subscriptionLimitCap: limitDecision.cap,
       appliedPerformanceCap: limitDecision.changed,
+      authScope,
     });
+
+    if (ndk.signer) {
+      relays
+        .filter((relay) => relay.nip11?.authRequired)
+        .map((relay) => normalizeRelayUrl(relay.url))
+        .forEach((relayUrl) => {
+          primeRelayAuthChallenge(ndk, relayUrl);
+        });
+    }
 
     beginRelayOperation("read");
     const subscription = ndk.subscribe(limitDecision.filters, { closeOnEose: options?.closeOnEose ?? false });
@@ -1906,10 +1968,12 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       if (shouldRetry) {
         relayAuthRetryHistoryRef.current.set(normalizedRelayUrl, Date.now());
-        nostrDevLog("relay", "Retrying relay connection to trigger NIP-42 auth challenge", {
+        nostrDevLog("relay", "Retrying auth-closed relay subscription without forcing a new socket", {
           relayUrl: normalizedRelayUrl,
         });
-        connectManagedRelay(ndk, normalizedRelayUrl);
+        const managedRelay = connectManagedRelay(ndk, normalizedRelayUrl);
+        const relayFilters = subscription.relayFilters?.get(normalizedRelayUrl) ?? limitDecision.filters;
+        managedRelay.subscribe(subscription, relayFilters);
       }
       markRelayVerificationFailure(relay.url, "read", {
         setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),
@@ -1926,7 +1990,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     subscription.on("close", finishRead);
 
     return subscription;
-  }, [beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayReadOutcome, markRelayVerificationFailure, ndk]);
+  }, [authMethod, beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayReadOutcome, markRelayVerificationFailure, ndk, primeRelayAuthChallenge, relays]);
 
   const isConnected = useMemo(() => {
     return relays.some((r) => r.status === "connected" || r.status === "read-only");

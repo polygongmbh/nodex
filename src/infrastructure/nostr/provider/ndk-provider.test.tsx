@@ -551,7 +551,7 @@ describe("NDKProvider relay lifecycle", () => {
     });
   });
 
-  it("forces a fresh socket reconnect for verification-failed relays after signing in again", async () => {
+  it("retries verification-failed relays after signing in again without forcing a new socket", async () => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
         <Harness />
@@ -582,8 +582,8 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await waitFor(() => {
-      expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(2);
-      expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
+      expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(1);
+      expect(firstRelay.disconnectCalls).toBe(0);
       expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
     });
   });
