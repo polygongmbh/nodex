@@ -179,38 +179,23 @@ describe("useIndexFilters", () => {
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");
   });
 
-  it("keeps channel filter state when the channel falls out of the compact sidebar list but remains available in real scoped compose data", () => {
-    renderHarness();
+  it.each([
+    ["KeepGeneralComposeRealOnly", "included"],
+    ["HideGeneralEverywhere", "neutral"],
+    ["KeepGeneralComposeForcedOnly", "neutral"],
+  ] as const)(
+    "resolves selected channel state for scoped availability source %s",
+    (scopeActionButtonName, expectedState) => {
+      renderHarness();
 
-    fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
-    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+      fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
+      expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
 
-    fireEvent.click(screen.getByRole("button", { name: "KeepGeneralComposeRealOnly" }));
+      fireEvent.click(screen.getByRole("button", { name: scopeActionButtonName }));
 
-    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
-  });
-
-  it("clears channel filter state when the channel is no longer available anywhere in the current feed scope", () => {
-    renderHarness();
-
-    fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
-    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
-
-    fireEvent.click(screen.getByRole("button", { name: "HideGeneralEverywhere" }));
-
-    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("neutral");
-  });
-
-  it("clears channel filter state when the channel remains only as a metadata-only compose fallback", () => {
-    renderHarness();
-
-    fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
-    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
-
-    fireEvent.click(screen.getByRole("button", { name: "KeepGeneralComposeForcedOnly" }));
-
-    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("neutral");
-  });
+      expect(screen.getByTestId("channel-state-general")).toHaveTextContent(expectedState);
+    }
+  );
 
   it("deselects people who are no longer available in the current sidebar scope", () => {
     renderHarness();

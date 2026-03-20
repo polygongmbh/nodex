@@ -243,7 +243,9 @@ describe("NDKProvider relay lifecycle", () => {
     expect(ndk.pool.getRelay("wss://relay.two", false).connectCalls).toBe(1);
   });
 
-  it("ignores a stale disconnect from the removed relay after re-adding the same normalized URL", async () => {
+  it.each(["re-add relay slash", "re-add relay no slash"] as const)(
+    "re-adds a normalized relay with %s and ignores stale disconnects from the removed instance",
+    async (reAddButtonLabel) => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
         <Harness />
@@ -266,14 +268,16 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "re-add relay slash" }));
+      fireEvent.click(screen.getByRole("button", { name: reAddButtonLabel }));
     });
 
     const readdedRelay = ndk.pool.getRelay("wss://relay.one", false);
     expect(readdedRelay).not.toBe(removedRelay);
 
     await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      const relayState = screen.getByTestId("relay-state").textContent ?? "";
+      expect(relayState).toContain("wss://relay.one:connected");
+      expect(relayState.match(/wss:\/\/relay\.one:/g)).toHaveLength(1);
     });
 
     await act(async () => {
@@ -284,37 +288,8 @@ describe("NDKProvider relay lifecycle", () => {
       expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     });
     expect(readdedRelay.connectCalls).toBe(1);
-  });
-
-  it("re-adds the same relay on the first attempt regardless of trailing slash normalization", async () => {
-    render(
-      <NDKProvider defaultRelays={["wss://relay.one/"]}>
-        <Harness />
-      </NDKProvider>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "remove relay" }));
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId("relay-state").textContent).not.toContain("wss://relay.one:");
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "re-add relay no slash" }));
-    });
-
-    await waitFor(() => {
-      const relayState = screen.getByTestId("relay-state").textContent ?? "";
-      expect(relayState).toContain("wss://relay.one:connected");
-      expect(relayState.match(/wss:\/\/relay\.one:/g)).toHaveLength(1);
-    });
-  });
+    }
+  );
 
   it("removes one relay without reconnecting healthy survivors", async () => {
     render(

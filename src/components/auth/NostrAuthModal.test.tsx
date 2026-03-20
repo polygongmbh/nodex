@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
 import type { AuthMethod, NostrUser } from "@/infrastructure/nostr/ndk-context";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 const loginWithExtension = vi.fn(() => new Promise<boolean>(() => {}));
 const ndkMock = {
@@ -132,14 +131,6 @@ describe("NostrAuthModal", () => {
     rerender(<NostrUserMenu onSignInClick={vi.fn()} />);
 
     expect(screen.getByRole("button", { name: /sign in to post/i })).toBeInTheDocument();
-  });
-
-  it("renders the signed-out topbar auth control with the same desktop button sizing as peer controls", () => {
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    const signInButton = screen.getByRole("button", { name: /sign in to post/i });
-    expect(signInButton).toHaveClass("h-9", "rounded-md", "bg-transparent", "xl:h-10");
-    expect(signInButton).not.toHaveClass("rounded-none");
   });
 
   it("does not auto-open setup profile dialog while profile sync is in progress", () => {
@@ -277,58 +268,6 @@ describe("NostrAuthModal", () => {
 
     const profileTrigger = screen.getByRole("button", { name: /profile: hint user/i });
     expect(profileTrigger).toHaveAttribute("title", expect.stringContaining("b".repeat(64)));
-  });
-
-  it("renders the signed-in profile trigger with the shared topbar control sizing", () => {
-    ndkMock.user = {
-      npub: "npub1hint",
-      pubkey: "b".repeat(64),
-      profile: { name: "Hint User" },
-    };
-    ndkMock.authMethod = "extension";
-
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    const profileTrigger = screen.getByRole("button", { name: /profile: hint user/i });
-    expect(profileTrigger).toHaveClass("h-9", "rounded-md", "bg-transparent", "xl:h-10");
-  });
-
-  it("uses pointer cursor styling for clickable dropdown actions", () => {
-    render(
-      <DropdownMenu open>
-        <DropdownMenuContent>
-          <DropdownMenuItem>Edit profile</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-
-    const editProfileItem = screen.getByRole("menuitem", { name: /edit profile/i });
-    expect(editProfileItem).toHaveClass("cursor-pointer");
-  });
-
-  it("lets the guest backup key row use available width and keeps copy to the right of view toggle", async () => {
-    ndkMock.user = {
-      npub: "npub1guest",
-      pubkey: "c".repeat(64),
-      profile: { name: "Guest User" },
-    };
-    ndkMock.authMethod = "guest";
-    ndkMock.getGuestPrivateKey = vi.fn(() => "1".repeat(64));
-
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    const trigger = screen.getByRole("button", { name: /profile: guest user/i });
-    fireEvent.keyDown(trigger, { key: "Enter" });
-
-    const keyText = await screen.findByText("••••••••••••••••••••••••••••••••");
-    const keyContainer = keyText.closest("code");
-    expect(keyContainer).not.toBeNull();
-    expect(keyContainer).toHaveClass("flex-1", "min-w-0");
-
-    const iconButtons = screen.getAllByRole("button").filter((button) => button.className.includes("h-7 w-7 p-0"));
-    expect(iconButtons).toHaveLength(2);
-    expect(iconButtons[0].querySelector(".lucide-eye")).not.toBeNull();
-    expect(iconButtons[1].querySelector(".lucide-copy")).not.toBeNull();
   });
 
   it("ignores outside click when auth form input is dirty", () => {

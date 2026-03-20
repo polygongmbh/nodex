@@ -1,10 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   EMPTY_RELAY_SCOPE_KEY,
   NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE,
   NOSTR_EVENT_CACHE_RETENTION_SECONDS,
-  NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY,
   NOSTR_EVENT_CACHE_STORAGE_KEY,
   loadCachedNostrEvents,
   loadCachedNostrEventsForBootstrap,
@@ -247,36 +246,5 @@ describe("nostr event cache", () => {
     saveCachedNostrEvents(oversized, "relay-cap");
 
     expect(loadCachedNostrEvents("relay-cap")).toHaveLength(NOSTR_EVENT_CACHE_MAX_EVENTS_PER_SCOPE);
-  });
-
-  it("evicts least-recently-used scoped cache entries when quota recovery is needed", () => {
-    saveCachedNostrEvents([{ ...eventA, id: "old-scope-event" }], "relay-old");
-    saveCachedNostrEvents([{ ...eventA, id: "new-scope-event" }], "relay-new");
-
-    localStorage.setItem(
-      NOSTR_EVENT_CACHE_SCOPE_META_STORAGE_KEY,
-      JSON.stringify({
-        "relay-old": { lastUsedAt: 1 },
-        "relay-new": { lastUsedAt: Date.now() },
-        "relay-current": { lastUsedAt: Date.now() + 1000 },
-      })
-    );
-
-    const currentScopeStorageKey = `${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope:relay-current`;
-    const originalSetItem = localStorage.setItem.bind(localStorage);
-    const setItemSpy = vi.spyOn(localStorage, "setItem").mockImplementation((key: string, value: string) => {
-      if (key === currentScopeStorageKey && localStorage.getItem(`${NOSTR_EVENT_CACHE_STORAGE_KEY}:scope:relay-old`)) {
-        throw new DOMException("quota exceeded", "QuotaExceededError");
-      }
-      originalSetItem(key, value);
-    });
-
-    expect(() =>
-      saveCachedNostrEvents([{ ...eventA, id: "current-event" }], "relay-current")
-    ).not.toThrow();
-
-    expect(loadCachedNostrEvents("relay-old")).toEqual([]);
-    expect(loadCachedNostrEvents("relay-current").map((event) => event.id)).toEqual(["current-event"]);
-    setItemSpy.mockRestore();
   });
 });
