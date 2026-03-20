@@ -166,7 +166,7 @@ export async function decryptNip49PrivateKey(encryptedKey: string, password: str
       const decrypted = await nip49.decrypt(encryptedKey, password);
       if (typeof decrypted === 'string') {
         if (/^[0-9a-f]{64}$/i.test(decrypted)) return decrypted.toLowerCase();
-        const maybeNsec = nip19.decode(decrypted);
+        const maybeNsec = nip19.decode(decrypted) as any;
         if (maybeNsec.type === 'nsec') return uint8ArrayToHex(new Uint8Array(maybeNsec.data));
         throw new Error('NIP-49 decrypt returned unsupported key string format');
       }
