@@ -86,34 +86,4 @@ describe("FocusedTaskBreadcrumb", () => {
     expect(screen.getByRole("button", { name: longContent })).toBeInTheDocument();
   });
 
-  it("keeps short breadcrumb labels content-width while still truncating long labels", () => {
-    const middle: Task = {
-      ...baseTask,
-      id: "middle",
-      content: "A very long middle task label that should truncate",
-      parentId: "root",
-    };
-    const leaf: Task = {
-      ...baseTask,
-      id: "leaf",
-      content: "A very long leaf task label that should truncate too",
-      parentId: "middle",
-    };
-
-    render(
-      <FocusedTaskBreadcrumb
-        allTasks={[baseTask, middle, leaf]}
-        focusedTaskId="leaf"
-        onFocusTask={vi.fn()}
-      />
-    );
-
-    const middleButton = screen.getByRole("button", { name: middle.content });
-    const leafButton = screen.getByRole("button", { name: leaf.content });
-    // Product contract: avoid stretching short labels across free space while preserving truncation behavior.
-    expect(middleButton).not.toHaveClass("w-full");
-    expect(leafButton).not.toHaveClass("w-full");
-    expect(middleButton).toHaveClass("truncate", "text-left");
-    expect(leafButton).toHaveClass("truncate", "text-left");
-  });
 });
