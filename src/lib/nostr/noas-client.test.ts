@@ -34,7 +34,7 @@ describe("resolveNoasApiBaseUrl", () => {
     });
   });
 
-  it("falls back to the submitted host when discovery does not expose a valid api_base", async () => {
+  it("falls back to a canonical api base when discovery does not expose a valid api_base", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ names: {} }), {
         status: 200,
@@ -44,7 +44,7 @@ describe("resolveNoasApiBaseUrl", () => {
       })
     );
 
-    await expect(resolveNoasApiBaseUrl("noas.example/custom")).resolves.toBe("https://noas.example/custom");
+    await expect(resolveNoasApiBaseUrl("noas.example/custom")).resolves.toBe("https://noas.example/custom/api/v1");
   });
 
   it("resolves relative api_base values against the discovery origin", async () => {
@@ -62,6 +62,12 @@ describe("resolveNoasApiBaseUrl", () => {
     );
 
     await expect(resolveNoasApiBaseUrl("https://noas.example")).resolves.toBe("https://noas.example/api/v1");
+  });
+
+  it("falls back to origin /api/v1 when a submitted URL points at a legacy endpoint path", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("network failure"));
+
+    await expect(resolveNoasApiBaseUrl("https://noas.example/signin")).resolves.toBe("https://noas.example/api/v1");
   });
 });
 

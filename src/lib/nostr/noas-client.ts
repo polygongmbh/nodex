@@ -50,6 +50,43 @@ function resolveDiscoveredNoasApiBaseUrl(discoveryOrigin: string, rawApiBase: un
   return normalizeNoasBaseUrl(trimmed);
 }
 
+function resolveFallbackNoasApiBaseUrl(rawValue: string): string {
+  const normalized = normalizeNoasBaseUrl(rawValue);
+  if (!normalized) return "";
+
+  try {
+    const parsed = new URL(normalized);
+    const rawPath = parsed.pathname.replace(/\/+$/, "");
+    const lowerPath = rawPath.toLowerCase();
+    const looksLikeEndpointPath = [
+      "/signin",
+      "/register",
+      "/auth/signin",
+      "/auth/register",
+      "/picture",
+      "/health",
+    ].some((candidate) => lowerPath.endsWith(candidate));
+
+    let apiPath = rawPath;
+    if (!apiPath || apiPath === "/") {
+      apiPath = "/api/v1";
+    } else if (lowerPath.endsWith("/api/v1")) {
+      apiPath = rawPath;
+    } else if (looksLikeEndpointPath) {
+      apiPath = "/api/v1";
+    } else {
+      apiPath = `${rawPath}/api/v1`;
+    }
+
+    parsed.pathname = apiPath.replace(/\/{2,}/g, "/");
+    parsed.search = "";
+    parsed.hash = "";
+    return normalizeNoasBaseUrl(parsed.toString());
+  } catch {
+    return normalized;
+  }
+}
+
 export function normalizeNoasBaseUrl(rawValue: string): string {
   const trimmed = rawValue.trim();
   if (!trimmed) return "";
@@ -132,6 +169,7 @@ function cacheNoasApiBaseUrl(rawValue: string, apiBaseUrl: string): void {
 export async function resolveNoasApiBaseUrl(rawValue: string): Promise<string> {
   const normalizedBaseUrl = normalizeNoasBaseUrl(rawValue);
   if (!normalizedBaseUrl || !isValidNoasBaseUrl(normalizedBaseUrl)) return normalizedBaseUrl;
+  const fallbackApiBaseUrl = resolveFallbackNoasApiBaseUrl(normalizedBaseUrl);
 
   const cachedApiBaseUrl = loadCachedNoasApiBaseUrl(normalizedBaseUrl);
   if (cachedApiBaseUrl) {
@@ -155,10 +193,11 @@ export async function resolveNoasApiBaseUrl(rawValue: string): Promise<string> {
     if (!response.ok) {
       nostrDevLog("noas", "NoaS API base discovery returned a non-OK response", {
         submittedBaseUrl: normalizedBaseUrl,
+        fallbackApiBaseUrl,
         discoveryOrigin,
         status: response.status,
       });
-      return normalizedBaseUrl;
+      return fallbackApiBaseUrl;
     }
 
     const discoveryDocument = await response.json() as NoasDiscoveryDocument;
@@ -170,10 +209,11 @@ export async function resolveNoasApiBaseUrl(rawValue: string): Promise<string> {
     if (!isValidNoasBaseUrl(discoveredApiBaseUrl)) {
       nostrDevLog("noas", "NoaS API base discovery missing a valid api_base entry", {
         submittedBaseUrl: normalizedBaseUrl,
+        fallbackApiBaseUrl,
         discoveryOrigin,
         discoveredApiBase: discoveryDocument.noas?.api_base,
       });
-      return normalizedBaseUrl;
+      return fallbackApiBaseUrl;
     }
 
     cacheNoasApiBaseUrl(normalizedBaseUrl, discoveredApiBaseUrl);
@@ -186,10 +226,11 @@ export async function resolveNoasApiBaseUrl(rawValue: string): Promise<string> {
   } catch (error) {
     nostrDevLog("noas", "NoaS API base discovery failed, falling back to submitted host", {
       submittedBaseUrl: normalizedBaseUrl,
+      fallbackApiBaseUrl,
       discoveryOrigin,
       error: error instanceof Error ? error.message : String(error),
     });
-    return normalizedBaseUrl;
+    return fallbackApiBaseUrl;
   }
 }
 
