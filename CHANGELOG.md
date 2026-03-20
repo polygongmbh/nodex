@@ -6,16 +6,18 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-03-20
+Minor release for Noas auth endpoint routing, relay auth/subscription recovery (NIP-42), and feed hydration loading clarity (1028 lines changed since `v2.5.0`).
+
+### Changed
+- Sign-in now re-runs NIP-42 relay auth preflight for known auth-capable relays, then replays the active subscription set after successful re-auth so normal feed kinds resume immediately.
+
 ### Fixed
-- Noas auth client now treats discovered `noas.api_base` as an API-root prefix and uses canonical v1 auth routes (`/auth/signin`, `/auth/register`) instead of legacy root-style paths, preventing bad requests like `/api/v1/signin` when discovery returns an API base that already includes `/api/v1`.
-- Feed/list/tree empty-state rendering now keeps hydration copy visible (`Loading events from relay…`) while the hydration indicator row is active, avoiding premature fallback to `No post yet …` text during active relay backfill.
-- NDK feed subscriptions now keep a stable provider callback across relay status updates, preventing relay `REQ`/`CLOSED` churn loops (for example `Number of subscriptions exceeds limit`) that previously spammed strict relays.
-- Sign-in now reruns NIP-42 auth preflight on all relays already known to support relay auth, even when those relays are currently connected, so relay auth state refreshes immediately after authentication.
-- Relay write-rejection handling now maps broader explicit reject reasons (including generic `rejected`/policy-blocked failures) to `read only` and additionally observes relay websocket `OK false` responses directly so auth-required write rejects no longer get lost behind later publish timeouts; websocket `CLOSED ... auth-required` responses now also map to `read rejected`, reconnect status mapping now avoids lingering `connecting` UI state when no websocket is actively connecting, transport connection errors render with neutral/grey styling again, feed selection toggles keep the live relay subscription stable (no unnecessary `CLOSE`/`REQ` churn) while filtering only the displayed scope, reconnect attempts no longer clear read/write rejection flags prematurely, selecting a `read only` relay no longer forces reconnect that would clear its state, and unknown-scope auth success no longer clears `read rejected` until read access actually succeeds.
-- Signing in again after logout now retries `read rejected` relays by renewing subscriptions on the existing relay pipeline (without forcing new sockets), and relay auth preflight now runs for cached auth-required relays so NIP-42 challenges can start before feed-scale reads.
-- Relay NIP-11 auth/capability metadata is now cached across sessions and restored at startup, so relays can show auth-required capability state immediately and skip redundant fresh NIP-11 probes while cache entries remain within TTL.
-- Kind-0 metadata/profile reads now use a centralized cached request path in the provider (including in-flight dedupe and auth-failure cooldown), and auth-closed relay auto-retry now skips permanent denials plus kind-0 author-lookup subscriptions to prevent rapid `REQ`/`CLOSED` spam loops on private relays.
-- After successful NIP-42 re-auth on sign-in, relays now replay the active subscription set so full feed/event kinds resume immediately instead of staying on auth-preflight-only traffic.
+- Noas auth discovery now resolves relative `noas.api_base` values correctly and uses canonical API-root auth routes (`/auth/signin`, `/auth/register`) instead of malformed legacy paths.
+- Feed/list/tree hydration now keeps loading copy visible while relay backfill is active, preventing early fallback to empty-state text before hydration completes.
+- Relay subscriptions now keep stable provider callback wiring across relay status and feed-scope updates, removing repeated `REQ`/`CLOSED` churn on strict relays.
+- Relay rejection/status handling now better maps explicit rejection reasons plus websocket `OK false` and `CLOSED ... auth-required` responses, while preserving rejection state across reconnect attempts and avoiding stale `connecting` UI state.
+- Kind-0 profile reads now use centralized provider caching with in-flight dedupe/cooldown, reducing auth-closed retry loops and noisy author-lookup subscription churn.
 
 ## [2.5.0] - 2026-03-20
 Minor release for relay/feed state-update resilience and NIP-19 `npub` identity label upgrades (2467 lines changed since `v2.4.1`).
