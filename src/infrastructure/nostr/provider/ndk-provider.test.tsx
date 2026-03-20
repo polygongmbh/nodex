@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NDKProvider, useNDK } from "./ndk-provider";
+import { fetchRelayInfo } from "../relay-info";
+import { RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 
 const mockedNdk = vi.hoisted(() => {
   interface NdkLike {
@@ -217,6 +219,13 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
 
 vi.mock("../relay-info", () => ({
   fetchRelayInfo: vi.fn(async () => null),
+  summarizeRelayInfo: (doc: { supported_nips?: number[]; limitation?: { auth_required?: boolean }; limitations?: { auth_required?: boolean } }) => {
+    const authRequired = Boolean(doc.limitations?.auth_required ?? doc.limitation?.auth_required);
+    return {
+      authRequired,
+      supportsNip42: (doc.supported_nips ?? []).includes(42) || authRequired,
+    };
+  },
 }));
 
 vi.mock("../nip42-relay-auth-policy", () => ({
@@ -245,6 +254,12 @@ function Harness() {
           .sort()
           .join(",")}
       </output>
+      <output data-testid="relay-nip11">
+        {relays
+          .map((relay) => `${relay.url}:${relay.nip11?.authRequired ? "auth" : "no-auth"}`)
+          .sort()
+          .join(",")}
+      </output>
     </div>
   );
 }
@@ -253,6 +268,8 @@ describe("NDKProvider relay lifecycle", () => {
   beforeEach(() => {
     mockedNdk.ndkInstances.length = 0;
     window.localStorage.clear();
+    vi.mocked(fetchRelayInfo).mockReset();
+    vi.mocked(fetchRelayInfo).mockResolvedValue(null);
   });
 
   it("adds a relay without rebuilding the provider or reconnecting healthy relays", async () => {
@@ -569,5 +586,31 @@ describe("NDKProvider relay lifecycle", () => {
       expect(firstRelay.disconnectCalls).toBeGreaterThanOrEqual(1);
       expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
     });
+  });
+
+  it("preloads cached nip11 relay auth metadata on startup and skips fresh probe", async () => {
+    const fetchedAt = Date.now();
+    window.localStorage.setItem(RELAY_STATUS_CACHE_STORAGE_KEY, JSON.stringify({
+      "wss://relay.one": {
+        nip11: {
+          authRequired: true,
+          supportsNip42: true,
+          fetchedAt,
+        },
+      },
+    }));
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-nip11").textContent).toContain("wss://relay.one:auth");
+    });
+
+    expect(fetchRelayInfo).not.toHaveBeenCalled();
   });
 });

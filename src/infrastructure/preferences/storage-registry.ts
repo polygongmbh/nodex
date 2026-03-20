@@ -36,6 +36,7 @@ export const KIND0_CACHE_STORAGE_KEY = "nodex.kind0.cache.v2:local";
 /** Legacy kind0 cache key kept for one-time migration reads */
 export const KIND0_CACHE_LEGACY_STORAGE_KEY = "nodex.kind0.cache.v1";
 export const NIP05_CACHE_STORAGE_KEY = "nodex.nip05-resolver.cache.v1";
+export const RELAY_STATUS_CACHE_STORAGE_KEY = "nodex.relay-status-cache.v1";
 export const CHANNEL_FRECENCY_STORAGE_KEY = "nodex.channel-frecency.v1";
 export const COMPOSE_DRAFT_STORAGE_KEY = "nodex.compose-draft.feed-tree";
 /** Prefix for per-relay host fallback cache: append `.${hostname}` */

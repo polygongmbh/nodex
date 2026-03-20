@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import NDK, {
+  type NDKCacheRelayInfo,
   NDKEvent,
   NDKNip07Signer,
   NDKNip46Signer,
@@ -68,6 +69,12 @@ import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
 import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
+import {
+  createNodexCacheAdapter,
+  getFreshRelayInfoSummaryFromCache,
+  RELAY_NIP11_CACHE_TTL_MS,
+  relayInfoSummaryToNip11Document,
+} from "@/infrastructure/cache/ndk-cache-adapter";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
@@ -77,6 +84,10 @@ type RelayOperation = "read" | "write" | "unknown";
 const normalizeRelayUrl = (url: string) => url.replace(/\/+$/, "");
 const WS_READY_STATE_CONNECTING = 0;
 const WS_READY_STATE_OPEN = 1;
+
+function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
+  return typeof value === "object" && value !== null && "then" in value;
+}
 
 function mapRelayTransportStatus(relay: NDKRelay): NDKRelayStatus["status"] {
   const mappedStatus = mapNativeRelayStatus(relay.status);
@@ -123,11 +134,13 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
   const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
+  const relayInfoFetchedAtRef = useRef<Map<string, number>>(new Map());
   const relayReadRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
   const relayCurrentInstanceRef = useRef<Map<string, NDKRelay>>(new Map());
   const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
+  const relayStatusCacheAdapter = useMemo(() => createNodexCacheAdapter(), []);
 
   const clearTrackedRelayTimeout = useCallback((timeoutId: number | undefined) => {
     if (typeof timeoutId !== "number") return;
@@ -396,6 +409,48 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
 
   const probeRelayInfo = useCallback(async (relayUrl: string) => {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
+    const inMemoryFetchedAt = relayInfoFetchedAtRef.current.get(normalizedRelayUrl);
+    const hasFreshInMemoryInfo = typeof inMemoryFetchedAt === "number"
+      && relayInfoRef.current.has(normalizedRelayUrl)
+      && (Date.now() - inMemoryFetchedAt) <= RELAY_NIP11_CACHE_TTL_MS;
+
+    if (hasFreshInMemoryInfo) {
+      return;
+    }
+
+    const cachedRelayStatus = relayStatusCacheAdapter.getRelayStatus?.(normalizedRelayUrl);
+    const resolvedCachedRelayStatus = isPromiseLike<NDKCacheRelayInfo | undefined>(cachedRelayStatus)
+      ? await cachedRelayStatus
+      : cachedRelayStatus;
+    const cached = getFreshRelayInfoSummaryFromCache(resolvedCachedRelayStatus, {
+      now: Date.now(),
+      maxAgeMs: RELAY_NIP11_CACHE_TTL_MS,
+    });
+    if (cached) {
+      relayInfoRef.current.set(normalizedRelayUrl, cached.summary);
+      relayInfoFetchedAtRef.current.set(normalizedRelayUrl, cached.fetchedAt);
+      setRelays((previous) =>
+        previous.map((relay) =>
+          relay.url.replace(/\/+$/, "") === normalizedRelayUrl
+            ? {
+                ...relay,
+                nip11: {
+                  authRequired: cached.summary.authRequired,
+                  supportsNip42: cached.summary.supportsNip42,
+                  checkedAt: cached.fetchedAt,
+                },
+              }
+            : relay
+        )
+      );
+      nostrDevLog("relay", "Relay NIP-11 info restored from cache", {
+        relayUrl: normalizedRelayUrl,
+        authRequired: cached.summary.authRequired,
+        supportsNip42: cached.summary.supportsNip42,
+      });
+      return;
+    }
+
     const info = await fetchRelayInfo(normalizedRelayUrl);
     if (!info) {
       nostrDevLog("relay", "Relay NIP-11 info unavailable", {
@@ -403,7 +458,15 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       return;
     }
+    const checkedAt = Date.now();
     relayInfoRef.current.set(normalizedRelayUrl, info);
+    relayInfoFetchedAtRef.current.set(normalizedRelayUrl, checkedAt);
+    void relayStatusCacheAdapter.updateRelayStatus?.(normalizedRelayUrl, {
+      nip11: {
+        data: relayInfoSummaryToNip11Document(info),
+        fetchedAt: checkedAt,
+      },
+    });
     setRelays((previous) =>
       previous.map((relay) =>
         relay.url.replace(/\/+$/, "") === normalizedRelayUrl
@@ -412,7 +475,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
               nip11: {
                 authRequired: info.authRequired,
                 supportsNip42: info.supportsNip42,
-                checkedAt: Date.now(),
+                checkedAt,
               },
             }
           : relay
@@ -423,7 +486,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       authRequired: info.authRequired,
       supportsNip42: info.supportsNip42,
     });
-  }, []);
+  }, [relayStatusCacheAdapter]);
 
   const disconnectTrackedRelayInstance = useCallback((ndkInstance: NDK, relayUrl: string) => {
     const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
@@ -587,6 +650,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
     const ndkInstance = new NDK({
       explicitRelayUrls: resolvedDefaultRelays,
+      cacheAdapter: relayStatusCacheAdapter,
     });
 
     ndkInstance.relayAuthDefaultPolicy = createRelayNip42AuthPolicy(ndkInstance, notifyRelayVerificationEvent);
@@ -659,6 +723,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           );
         }
         const info = relayInfoRef.current.get(normalized);
+        const checkedAt = relayInfoFetchedAtRef.current.get(normalized);
         return [...prev, {
           url: normalized,
           status: resolveConnectedRelayStatus(normalized),
@@ -666,7 +731,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
             ? {
                 authRequired: info.authRequired,
                 supportsNip42: info.supportsNip42,
-                checkedAt: Date.now(),
+                checkedAt: checkedAt ?? Date.now(),
               }
             : undefined,
         }];
@@ -761,9 +826,30 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     // Initialize relay states
     removedRelaysRef.current.clear();
     relayCurrentInstanceRef.current.clear();
+    relayInfoFetchedAtRef.current.clear();
+    resolvedDefaultRelays.forEach((relayUrl) => {
+      const normalizedRelayUrl = normalizeRelayUrl(relayUrl);
+      const cachedRelayStatus = relayStatusCacheAdapter.getRelayStatus?.(normalizedRelayUrl);
+      if (isPromiseLike<NDKCacheRelayInfo | undefined>(cachedRelayStatus)) {
+        return;
+      }
+      const cached = getFreshRelayInfoSummaryFromCache(cachedRelayStatus, {
+        now: Date.now(),
+        maxAgeMs: RELAY_NIP11_CACHE_TTL_MS,
+      });
+      if (!cached) return;
+      relayInfoRef.current.set(normalizedRelayUrl, cached.summary);
+      relayInfoFetchedAtRef.current.set(normalizedRelayUrl, cached.fetchedAt);
+      nostrDevLog("relay", "Relay NIP-11 info restored from startup cache", {
+        relayUrl: normalizedRelayUrl,
+        authRequired: cached.summary.authRequired,
+        supportsNip42: cached.summary.supportsNip42,
+      });
+    });
     setRelays(resolvedDefaultRelays.map((url) => {
       const normalizedUrl = normalizeRelayUrl(url);
       const info = relayInfoRef.current.get(normalizedUrl);
+      const checkedAt = relayInfoFetchedAtRef.current.get(normalizedUrl);
       return {
         url,
         status: "connecting",
@@ -771,7 +857,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           ? {
               authRequired: info.authRequired,
               supportsNip42: info.supportsNip42,
-              checkedAt: Date.now(),
+              checkedAt: checkedAt ?? Date.now(),
             }
           : undefined,
       };
@@ -909,7 +995,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       });
       relayCurrentInstance.clear();
     };
-  }, [attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
+  }, [attachRelayOkRejectObserver, clearAllTrackedRelayTimeouts, detachAllRelayOkRejectObservers, detachRelayOkRejectObserver, markRelayVerificationSuccess, notifyRelayVerificationEvent, probeRelayInfo, relayStatusCacheAdapter, resolveConnectedRelayStatus, resolvedDefaultRelays, scheduleRelayTimeout]);
 
   const loginWithExtension = useCallback(async (): Promise<boolean> => {
     if (!ndk) return false;
@@ -1097,6 +1183,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
         return next;
       }
       const info = relayInfoRef.current.get(normalized);
+      const checkedAt = relayInfoFetchedAtRef.current.get(normalized);
       next = [...prev, {
         url: normalized,
         status: "connecting",
@@ -1104,7 +1191,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           ? {
               authRequired: info.authRequired,
               supportsNip42: info.supportsNip42,
-              checkedAt: Date.now(),
+              checkedAt: checkedAt ?? Date.now(),
             }
           : undefined,
       }];
@@ -1445,13 +1532,16 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayAutoPausedRef.current.delete(normalized);
     relayReadRejectedRef.current.delete(normalized);
     relayWriteRejectedRef.current.delete(normalized);
+    relayInfoRef.current.delete(normalized);
+    relayInfoFetchedAtRef.current.delete(normalized);
+    void relayStatusCacheAdapter.updateRelayStatus?.(normalized, {});
     nostrDevLog("relay", "Removing relay and disconnecting", { relayUrl: normalized });
 
     // Remove from NDK's explicit relay list so subscriptions stop routing to it.
     ndk.explicitRelayUrls = ndk.explicitRelayUrls?.filter((u) => normalizeRelayUrl(u) !== normalized);
 
     disconnectTrackedRelayInstance(ndk, normalized);
-  }, [disconnectTrackedRelayInstance, ndk]);
+  }, [disconnectTrackedRelayInstance, ndk, relayStatusCacheAdapter]);
 
   const reconnectRelay = useCallback((url: string, options?: { forceNewSocket?: boolean }) => {
     if (!ndk) return;
