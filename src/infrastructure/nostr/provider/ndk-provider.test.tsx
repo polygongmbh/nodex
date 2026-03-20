@@ -475,4 +475,60 @@ describe("NDKProvider relay lifecycle", () => {
       expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
     });
   });
+
+  it("keeps relay read-only across soft reconnect until write succeeds", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      relay.emitServerMessage(
+        '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+    });
+  });
+
+  it("marks relay verification-failed when websocket returns CLOSED auth-required reason", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      relay.emitServerMessage('["CLOSED","kinds-limit-subid","auth-required: pubkey not in whitelist"]');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:verification-failed");
+    });
+  });
 });

@@ -322,8 +322,26 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       try {
         const payload = JSON.parse(event.data);
         if (!Array.isArray(payload)) return;
-        const [command, _eventId, ok, reason] = payload as [unknown, unknown, unknown, unknown];
-        if (command !== "OK" || ok !== false || typeof reason !== "string") return;
+        const [command] = payload as [unknown, ...unknown[]];
+
+        if (command === "CLOSED") {
+          const closeReason = typeof payload[2] === "string" ? payload[2] : "";
+          if (!isAuthRequiredCloseReason(closeReason)) return;
+          markRelayVerificationFailure(normalizedRelayUrl, "read", {
+            setStatus: shouldSetVerificationFailedStatus("subscription-closed", "read"),
+            showToast: false,
+          });
+          nostrDevLog("relay", "Relay read rejection observed from websocket CLOSED response", {
+            relayUrl: normalizedRelayUrl,
+            reason: closeReason,
+          });
+          return;
+        }
+
+        if (command !== "OK") return;
+        const ok = payload[2];
+        const reason = payload[3];
+        if (ok !== false || typeof reason !== "string") return;
 
         const rejectionReason = extractRelayRejectionReason(reason) ?? reason;
         if (!shouldMarkRelayReadOnlyAfterPublishReject({
@@ -492,7 +510,6 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       relayInitialFailureCountsRef.current.delete(relayUrl);
       relayAuthRetryHistoryRef.current.delete(relayUrl);
       pendingRelayVerificationRef.current.delete(relayUrl);
-      relayReadRejectedRef.current.delete(relayUrl);
       connectManagedRelay(ndk, relayUrl);
     });
   }, [connectManagedRelay, ndk, relays]);
@@ -1438,8 +1455,6 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     relayInitialFailureCountsRef.current.delete(normalized);
     relayConnectedOnceRef.current.delete(normalized);
     relayAutoPausedRef.current.delete(normalized);
-    relayReadRejectedRef.current.delete(normalized);
-    relayWriteRejectedRef.current.delete(normalized);
     pendingRelayVerificationRef.current.delete(normalized);
     relayAuthRetryHistoryRef.current.delete(normalized);
     nostrDevLog("relay", "Relay reconnect requested", {
