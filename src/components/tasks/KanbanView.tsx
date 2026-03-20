@@ -92,6 +92,7 @@ export function KanbanView({
   const columns = useMemo(() => getColumns((key) => t(key)), [t]);
   const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
+  const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskStatus>>({});
 
   // Build children map
   const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
@@ -173,7 +174,7 @@ export function KanbanView({
     };
     
     kanbanTasks.forEach(task => {
-      const status = task.status || "todo";
+      const status = optimisticStatusByTaskId[task.id] || task.status || "todo";
       grouped[status].push(task);
     });
 
@@ -185,7 +186,38 @@ export function KanbanView({
     grouped["closed"] = sortByLatestModified(grouped["closed"]);
 
     return grouped;
-  }, [kanbanTasks, sortContext]);
+  }, [kanbanTasks, optimisticStatusByTaskId, sortContext]);
+  const canonicalStatusByTaskId = useMemo(() => {
+    const map = new Map<string, TaskStatus>();
+    for (const task of kanbanTasks) {
+      map.set(task.id, task.status || "todo");
+    }
+    return map;
+  }, [kanbanTasks]);
+
+  useEffect(() => {
+    setOptimisticStatusByTaskId((previous) => {
+      const next: Record<string, TaskStatus> = {};
+      let changed = false;
+      for (const [taskId, status] of Object.entries(previous)) {
+        const canonicalStatus = canonicalStatusByTaskId.get(taskId);
+        if (!canonicalStatus) {
+          changed = true;
+          continue;
+        }
+        if (canonicalStatus === status) {
+          changed = true;
+          continue;
+        }
+        next[taskId] = status;
+      }
+      return changed ? next : previous;
+    });
+  }, [canonicalStatusByTaskId]);
+  const getTaskEffectiveStatus = useCallback(
+    (task: Task): TaskStatus => optimisticStatusByTaskId[task.id] || task.status || "todo",
+    [optimisticStatusByTaskId]
+  );
   const orderedKanbanTasks = useMemo(
     () => [
       ...tasksByStatus["todo"],
@@ -220,6 +252,10 @@ export function KanbanView({
     const newStatus = result.destination.droppableId as TaskStatus;
     const task = kanbanTasks.find((item) => item.id === taskId);
     if (!task || !canUserChangeTaskStatus(task, currentUser)) return;
+    const currentStatus = getTaskEffectiveStatus(task);
+    if (newStatus === currentStatus) return;
+
+    setOptimisticStatusByTaskId((previous) => ({ ...previous, [taskId]: newStatus }));
     
     if (onStatusChange) {
       onStatusChange(taskId, newStatus);
@@ -303,7 +339,7 @@ export function KanbanView({
     if (!task) return;
     if (!canUserChangeTaskStatus(task, currentUser)) return;
     
-    const currentStatus = task.status || "todo";
+    const currentStatus = getTaskEffectiveStatus(task);
     let newStatus: TaskStatus;
     
     if (currentStatus === "closed") newStatus = "done";
@@ -313,7 +349,7 @@ export function KanbanView({
     
     pendingRefocusRef.current = focusedId;
     onStatusChange?.(focusedId, newStatus);
-  }, [currentUser, isInteractionBlocked, kanbanTasks, onInteractionBlocked, onStatusChange]);
+  }, [currentUser, getTaskEffectiveStatus, isInteractionBlocked, kanbanTasks, onInteractionBlocked, onStatusChange]);
 
   // Handle moving task right (to next column) - preserves focus
   const handleMoveRight = useCallback(() => {
@@ -327,7 +363,7 @@ export function KanbanView({
     if (!task) return;
     if (!canUserChangeTaskStatus(task, currentUser)) return;
     
-    const currentStatus = task.status || "todo";
+    const currentStatus = getTaskEffectiveStatus(task);
     let newStatus: TaskStatus;
     
     if (currentStatus === "todo") newStatus = "in-progress";
@@ -337,7 +373,7 @@ export function KanbanView({
     
     pendingRefocusRef.current = focusedId;
     onStatusChange?.(focusedId, newStatus);
-  }, [currentUser, isInteractionBlocked, kanbanTasks, onInteractionBlocked, onStatusChange]);
+  }, [currentUser, getTaskEffectiveStatus, isInteractionBlocked, kanbanTasks, onInteractionBlocked, onStatusChange]);
 
   // Keyboard navigation - Kanban mode: arrows navigate, Shift+arrows/HJKL move tasks
   const { focusedTaskId: navFocusedTaskId, setFocusByTaskId } = useTaskNavigation({
@@ -470,7 +506,8 @@ export function KanbanView({
                       >
                         {tasksByStatus[column.id].map((task, index) => {
                           const ancestorChain = showContext ? getAncestorChain(task.id) : [];
-                          const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
+                          const displayStatus = getTaskEffectiveStatus(task);
+                          const dueDateColor = getDueDateColorClass(task.dueDate, displayStatus);
                           const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                           const isLockedUntilStart = isTaskLockedUntilStart(task);
                           const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
@@ -512,7 +549,7 @@ export function KanbanView({
                                     `relative bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "",
                                     !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
-                                    isTaskTerminalStatus(task.status) && "opacity-70",
+                                    isTaskTerminalStatus(displayStatus) && "opacity-70",
                                     isLockedUntilStart && "opacity-50 grayscale",
                                     isKeyboardFocused && !snapshot.isDragging && "ring-2 ring-primary ring-offset-1 ring-offset-background"
                                   )}
@@ -553,11 +590,11 @@ export function KanbanView({
                                   <div
                                     className={cn(
                                       `text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
-                                      isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
+                                      isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
                                     )}
                                   >
                                     {linkifyContent(task.content, effectiveOnHashtagClick, {
-                                      plainHashtags: isTaskTerminalStatus(task.status),
+                                      plainHashtags: isTaskTerminalStatus(displayStatus),
                                       people,
                                       disableStandaloneEmbeds: true,
                                       onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),

@@ -38,6 +38,9 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
       <button type="button" onClick={() => controller.handleStatusChange("task-1", "done")}>
         SetDone
       </button>
+      <button type="button" onClick={() => controller.handleStatusChange("task-1", "in-progress")}>
+        SetInProgress
+      </button>
       <output data-testid="status">{localTasks[0]?.status || ""}</output>
       <output data-testid="state-update-count">{String(localTasks[0]?.stateUpdates?.length ?? 0)}</output>
       <output data-testid="sort-hold">{controller.sortStatusHoldByTaskId["task-1"] || ""}</output>
@@ -74,6 +77,26 @@ describe("useTaskStatusController", () => {
 
     expect(screen.getByTestId("status")).toHaveTextContent("done");
     expect(screen.getByTestId("state-update-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("sort-hold")).toBeEmptyDOMElement();
+  });
+
+  it("keeps only the latest pending status when status changes happen quickly", () => {
+    const publishTaskStateUpdate = vi.fn(async () => undefined);
+    render(<Harness publishTaskStateUpdate={publishTaskStateUpdate} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "SetDone" }));
+    fireEvent.click(screen.getByRole("button", { name: "SetInProgress" }));
+
+    expect(screen.getByTestId("status")).toHaveTextContent("in-progress");
+    expect(screen.getByTestId("sort-hold")).toHaveTextContent("done");
+    expect(publishTaskStateUpdate).toHaveBeenNthCalledWith(1, "task-1", "done");
+    expect(publishTaskStateUpdate).toHaveBeenNthCalledWith(2, "task-1", "in-progress");
+
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(screen.getByTestId("status")).toHaveTextContent("in-progress");
     expect(screen.getByTestId("sort-hold")).toBeEmptyDOMElement();
   });
 });
