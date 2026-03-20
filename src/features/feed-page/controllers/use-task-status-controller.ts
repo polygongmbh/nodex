@@ -99,10 +99,11 @@ export function useTaskStatusController({
         }));
       }
 
+      setLocalTasks((previous) =>
+        applyTaskStatusUpdate(previous, allTasks, taskId, status, currentUser?.name)
+      );
+
       const timeoutId = window.setTimeout(() => {
-        setLocalTasks((previous) =>
-          applyTaskStatusUpdate(previous, allTasks, taskId, status, currentUser?.name)
-        );
         pendingTaskStatusesRef.current.delete(taskId);
         pendingStatusUpdateTimeoutsRef.current.delete(taskId);
         setSortStatusHoldByTaskId((previous) => {

@@ -24,18 +24,19 @@ export function applyTaskStatusUpdate(
   completedBy?: string
 ): Task[] {
   const now = new Date();
+  const toLocalStatusUpdatedTask = (task: Task): Task => {
+    return {
+      ...task,
+      status: newStatus,
+      lastEditedAt: now,
+      completedBy: isTaskCompletedStatus(newStatus) ? completedBy : undefined,
+    };
+  };
   const existingIndex = localTasks.findIndex((task) => task.id === taskId);
 
   if (existingIndex >= 0) {
     return localTasks.map((task) =>
-      task.id === taskId
-        ? {
-            ...task,
-            status: newStatus,
-            lastEditedAt: now,
-            completedBy: isTaskCompletedStatus(newStatus) ? completedBy : undefined,
-          }
-        : task
+      task.id === taskId ? toLocalStatusUpdatedTask(task) : task
     );
   }
 
@@ -43,12 +44,7 @@ export function applyTaskStatusUpdate(
   if (!sourceTask) return localTasks;
 
   return [
-    {
-      ...sourceTask,
-      status: newStatus,
-      lastEditedAt: now,
-      completedBy: isTaskCompletedStatus(newStatus) ? completedBy : undefined,
-    },
+    toLocalStatusUpdatedTask(sourceTask),
     ...localTasks,
   ];
 }

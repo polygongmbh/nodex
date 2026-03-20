@@ -37,7 +37,9 @@ describe("applyTaskStatusUpdate", () => {
 
     const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "done", "me");
 
-    expect(updated.find((t) => t.id === "n1")?.status).toBe("done");
+    const task = updated.find((t) => t.id === "n1");
+    expect(task?.status).toBe("done");
+    expect(task?.stateUpdates).toBeUndefined();
   });
 
   it("updates lastEditedAt when status changes", () => {
@@ -60,5 +62,26 @@ describe("applyTaskStatusUpdate", () => {
 
     expect(updated.find((t) => t.id === "n1")?.status).toBe("closed");
     expect(updated.find((t) => t.id === "n1")?.completedBy).toBeUndefined();
+  });
+
+  it("does not synthesize a local state update when updating an existing local task", () => {
+    const existingLocal = {
+      ...baseTask,
+      stateUpdates: [
+        {
+          id: "relay-state-1",
+          status: "todo",
+          timestamp: new Date("2026-01-01T00:00:00.000Z"),
+          authorPubkey: "relay-author",
+        },
+      ],
+    };
+    const localTasks: Task[] = [existingLocal];
+    const allTasks: Task[] = [existingLocal];
+
+    const updated = applyTaskStatusUpdate(localTasks, allTasks, "n1", "in-progress", "me");
+    const task = updated.find((t) => t.id === "n1");
+
+    expect(task?.stateUpdates?.map((update) => update.id)).toEqual(["relay-state-1"]);
   });
 });

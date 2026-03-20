@@ -9,6 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Restored live feed updates after initial relay hydration by keeping the cache subscription open after EOSE, fixing a regression where updates stalled until reload.
 - Feed now keeps state-update entries (including close events) visible even when the underlying task is closed and hidden from the main task rows.
 - Feed now keeps an explicitly focused closed task visible in its own focused thread view while still hiding non-focused closed tasks in normal feed listings.
+- Feed merge now preserves relay-delivered state update messages instead of dropping them behind local task copies, while task status itself updates optimistically in local UI without synthesizing a separate local state-event row.
 - List view tables now use the full content width again instead of reserving a permanent scrollbar gutter that left a visible right-side gap.
 
 ## [2.4.1] - 2026-03-19

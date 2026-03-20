@@ -38,4 +38,47 @@ describe("mergeTasks", () => {
 
     expect(merged.map((task) => task.id)).toEqual(["newer", "older"]);
   });
+
+  it("preserves relay state update messages when local and relay copies collide", () => {
+    const existing = {
+      id: "task-1",
+      timestamp: new Date("2026-02-17T10:00:00.000Z"),
+      relays: ["relay-a"],
+      status: "todo",
+      stateUpdates: [
+        {
+          id: "local-state-1",
+          status: "in-progress",
+          timestamp: new Date("2026-02-17T10:01:00.000Z"),
+          authorPubkey: "local-author",
+        },
+      ],
+    } as Task;
+    const incoming = {
+      id: "task-1",
+      timestamp: new Date("2026-02-17T10:00:00.000Z"),
+      relays: ["relay-b"],
+      status: "done",
+      stateUpdates: [
+        {
+          id: "relay-state-1",
+          status: "done",
+          timestamp: new Date("2026-02-17T10:02:00.000Z"),
+          authorPubkey: "relay-author",
+        },
+      ],
+      lastEditedAt: new Date("2026-02-17T10:02:00.000Z"),
+    } as Task;
+
+    const merged = mergeTasks([existing], [incoming]);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0].status).toBe("done");
+    expect(merged[0].stateUpdates?.map((update) => update.id)).toEqual([
+      "relay-state-1",
+      "local-state-1",
+    ]);
+    expect(merged[0].lastEditedAt?.toISOString()).toBe("2026-02-17T10:02:00.000Z");
+    expect(merged[0].relays).toEqual(["relay-a", "relay-b"]);
+  });
 });
