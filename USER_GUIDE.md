@@ -9,6 +9,12 @@
 - Optional: set task priority before posting.
 - Optional: switch UI language (`EN`/`DE`/`ES`) from the language dropdown in the desktop top-right controls.
 
+## What's New in 2.5.0
+- Relay reconnect now defaults to a soft reconnect strategy, with retry behavior tuned to preserve live subscriptions more reliably during transient failures.
+- Feed now keeps status-update timeline rows visible for closed-task contexts (including focused closed tasks), so close/state transitions remain inspectable.
+- User-facing identity fallback labels now prefer NIP-19 `npub` identifiers over raw hex pubkeys in feed, mention, and auth-facing surfaces.
+- List and Kanban interaction polish: list view uses full content width again, and cross-column Kanban drops no longer snap back before settling.
+
 ## Core Concepts
 - Tasks and comments are Nostr events.
 - Channels are hashtag-based labels and filters.

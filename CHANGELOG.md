@@ -6,16 +6,22 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-03-20
+Minor release for relay/feed state-update resilience and NIP-19 `npub` identity label upgrades (2467 lines changed since `v2.4.1`).
+
+### Changed
 - Relay reconnect now defaults to a soft reconnect path (preserving live relay/subscription continuity) while keeping hard reconnect available when explicitly requested; auto-retries continue using progressive backoff with unlimited retry count, capped cooldown length, and focus-reset recovery.
-- Relay write-rejection detection now also handles relay-specific NDK publish-error map payloads more reliably, improving status transitions when relays reject writes with authorization/policy reasons.
-- Restored live feed updates after initial relay hydration by keeping the cache subscription open after EOSE, fixing a regression where updates stalled until reload.
 - Feed now keeps state-update entries (including close events) visible even when the underlying task is closed and hidden from the main task rows.
+- User-facing identity fallback labels and key hints now prefer NIP-19 `npub` identifiers instead of raw hex pubkeys across feed/mention/auth surfaces, while internal relay/tag logic continues using hex pubkeys.
+- Feed task-card identity labels now render `npub` as first-8/last-3 by default, show full `npub` on `2xl` screens, and hide slim-layout fallback `npub` text from inline rows while keeping username metadata inline and full identifiers available via hover title.
+
+### Fixed
+- Relay write-rejection detection now also handles relay-specific NDK publish-error map payloads more reliably (including string-keyed map entries and generic relay errors with top-level fallback parsing), improving status transitions when relays reject writes with authorization/policy reasons such as `write rejected`.
+- Restored live feed updates after initial relay hydration by keeping the cache subscription open after EOSE, fixing a regression where updates stalled until reload.
 - Feed now keeps an explicitly focused closed task visible in its own focused thread view while still hiding non-focused closed tasks in normal feed listings.
 - Feed merge now preserves relay-delivered state update messages instead of dropping them behind local task copies, while task status itself updates optimistically in local UI without synthesizing a separate local state-event row.
 - List view tables now use the full content width again instead of reserving a permanent scrollbar gutter that left a visible right-side gap.
 - Kanban drag-and-drop now keeps dropped cards in their destination column immediately (instead of briefly snapping back) while upstream status state settles.
-- User-facing identity fallback labels and key hints now prefer NIP-19 `npub` identifiers instead of raw hex pubkeys across feed/mention/auth surfaces, while internal relay/tag logic continues using hex pubkeys.
-- Feed task-card identity labels now render `npub` as first-8/last-3 by default, show full `npub` on `2xl` screens, and hide slim-layout fallback `npub` text from inline rows while keeping username metadata inline and full identifiers available via hover title.
 
 ## [2.4.1] - 2026-03-19
 
