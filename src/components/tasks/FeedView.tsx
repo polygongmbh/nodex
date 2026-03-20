@@ -67,6 +67,7 @@ import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
+import { getCollapsedTaskContentPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -610,6 +611,7 @@ export function FeedView({
 
   const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
+  const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
   const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
@@ -757,6 +759,11 @@ export function FeedView({
       : formatDistanceToNow(task.timestamp, { addSuffix: true });
     const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
     const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
+    const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
+    const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
+    const displayedContent = hasCollapsibleContent && !isContentExpanded
+      ? getCollapsedTaskContentPreview(task.content)
+      : task.content;
     const canUpdateListingStatus =
       Boolean(onListingStatusChange) &&
       !isInteractionBlocked &&
@@ -1180,7 +1187,7 @@ export function FeedView({
                 isCompletedVisual && "line-through text-muted-foreground"
               )}
             >
-              {linkifyContent(task.content, effectiveOnHashtagClick, {
+              {linkifyContent(displayedContent, effectiveOnHashtagClick, {
                 plainHashtags: isCompletedVisual,
                 people,
                 onMentionClick: effectiveOnAuthorClick,
@@ -1188,6 +1195,21 @@ export function FeedView({
                 getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
               })}
             </div>
+            {hasCollapsibleContent && (
+              <button
+                type="button"
+                className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setExpandedContentByTaskId((prev) => ({
+                    ...prev,
+                    [task.id]: !isContentExpanded,
+                  }));
+                }}
+              >
+                {isContentExpanded ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
+              </button>
+            )}
             <TaskAttachmentList
               attachments={attachmentsWithoutInlineEmbeds}
               onMediaClick={(url) => openTaskMedia(task.id, url)}

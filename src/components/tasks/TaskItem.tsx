@@ -36,6 +36,7 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
+import { getCollapsedTaskContentPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -122,6 +123,7 @@ export function TaskItem({
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isCheering, setIsCheering] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
   const statusTriggerPointerDownRef = useRef(false);
   const allowStatusMenuOpenRef = useRef(false);
   const statusMenuOpenedOnPointerDownRef = useRef(false);
@@ -213,6 +215,10 @@ export function TaskItem({
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
+  const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
+  const displayedContent = hasCollapsibleContent && !isContentExpanded
+    ? getCollapsedTaskContentPreview(task.content)
+    : task.content;
   const standaloneEmbedUrls = new Set(
     getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
   );
@@ -247,6 +253,10 @@ export function TaskItem({
     });
     onToggleExpand?.();
   };
+
+  useEffect(() => {
+    setIsContentExpanded(false);
+  }, [task.id]);
 
   const handleSelect = () => {
     onSelect?.(task.id);
@@ -557,7 +567,7 @@ export function TaskItem({
             `text-sm leading-relaxed whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText}`,
             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
           )}>
-            {linkifyContent(task.content, onHashtagClick, {
+            {linkifyContent(displayedContent, onHashtagClick, {
               plainHashtags: isTaskTerminalStatus(task.status),
               people,
               onMentionClick: onAuthorClick,
@@ -565,6 +575,18 @@ export function TaskItem({
               getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
             })}
           </div>
+          {hasCollapsibleContent && (
+            <button
+              type="button"
+              className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsContentExpanded((prev) => !prev);
+              }}
+            >
+              {isContentExpanded ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
+            </button>
+          )}
           <TaskAttachmentList
             attachments={attachmentsWithoutInlineEmbeds}
             onMediaClick={(url) => onMediaClick?.(task.id, url)}

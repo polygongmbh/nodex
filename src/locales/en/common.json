@@ -894,7 +894,9 @@
       "filterTag": "Filter to #{{tag}}",
       "collapse": "Collapse",
       "expandAll": "Expand (all)",
-      "expandMatchingOnly": "Expand (matching only)"
+      "expandMatchingOnly": "Expand (matching only)",
+      "showMore": "Show more",
+      "showLess": "Show less"
     },
     "rawEvent": {
       "title": "Raw Nostr Event",

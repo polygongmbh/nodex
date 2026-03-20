@@ -894,7 +894,9 @@
       "filterTag": "Filtrar por #{{tag}}",
       "collapse": "Contraer",
       "expandAll": "Expandir (todo)",
-      "expandMatchingOnly": "Expandir (solo coincidentes)"
+      "expandMatchingOnly": "Expandir (solo coincidentes)",
+      "showMore": "Mostrar más",
+      "showLess": "Mostrar menos"
     },
     "rawEvent": {
       "title": "Evento Nostr bruto",

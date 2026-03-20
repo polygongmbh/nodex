@@ -22,6 +22,7 @@ Minor release for markdown rendering and content-reference parsing upgrades, plu
 - Tree/feed priority chips now open the priority dropdown directly on click instead of opening an intermediate popover first.
 - Content rendering now uses a markdown parser pipeline (`react-markdown` with GFM) while preserving clickable `#channel` and `@mention` behavior, and publish/ingest parsing now uses shared extraction so NIP-19/NIP-27 references in content are recognized more exhaustively for Nostr tag/mention handling.
 - Markdown heading syntax now renders with subtle heading emphasis in task content instead of appearing identical to body text.
+- Kanban cards now always show only the first content line, while feed/tree/calendar cards now collapse long content to a three-line preview (for posts above four lines) with localized show-more/show-less toggles.
 - Startup onboarding now uses current relay callback references consistently, preventing stale relay state from persisting in the onboarding controller.
 
 ## [2.3.0] - 2026-03-18

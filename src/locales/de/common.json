@@ -894,7 +894,9 @@
       "filterTag": "Auf #{{tag}} filtern",
       "collapse": "Einklappen",
       "expandAll": "Ausklappen (alle)",
-      "expandMatchingOnly": "Ausklappen (nur Treffer)"
+      "expandMatchingOnly": "Ausklappen (nur Treffer)",
+      "showMore": "Mehr anzeigen",
+      "showLess": "Weniger anzeigen"
     },
     "rawEvent": {
       "title": "Rohes Nostr-Event",

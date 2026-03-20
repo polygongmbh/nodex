@@ -60,6 +60,7 @@ import {
 } from "@/lib/task-status-toggle";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
+import { getCollapsedTaskContentPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -119,6 +120,7 @@ export function CalendarView({
   const [isComposingEvent, setIsComposingEvent] = useState(false);
   const [mobileTab, setMobileTab] = useState<"calendar" | "upcoming">("upcoming");
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
+  const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
   const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
   const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
@@ -949,6 +951,11 @@ export function CalendarView({
                       const normalizedUrl = attachment.url?.trim().toLowerCase();
                       return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
                     });
+                    const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
+                    const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
+                    const displayedContent = hasCollapsibleContent && !isContentExpanded
+                      ? getCollapsedTaskContentPreview(task.content)
+                      : task.content;
                    
                     return (
                         <div
@@ -1128,7 +1135,7 @@ export function CalendarView({
                                 isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                               )}
                             >
-                              {linkifyContent(task.content, effectiveOnHashtagClick, {
+                              {linkifyContent(displayedContent, effectiveOnHashtagClick, {
                                 plainHashtags: isTaskTerminalStatus(task.status),
                                 people,
                                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
@@ -1136,6 +1143,21 @@ export function CalendarView({
                                   mediaCaptionByUrl.get(url.trim().toLowerCase()),
                               })}
                             </div>
+                            {hasCollapsibleContent && (
+                              <button
+                                type="button"
+                                className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setExpandedContentByTaskId((prev) => ({
+                                    ...prev,
+                                    [task.id]: !isContentExpanded,
+                                  }));
+                                }}
+                              >
+                                {isContentExpanded ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
+                              </button>
+                            )}
                             <TaskAttachmentList
                               attachments={attachmentsWithoutInlineEmbeds}
                               className="mt-1.5 space-y-1"
