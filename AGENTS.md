@@ -136,6 +136,10 @@ policies:
     conventional_commits_required: true
     squash_fixup_into_previous_when_local: true
     preferred_contiguous_tip_rewrite_method: git_reset_soft_then_recommit
+    ignore_paths_by_default:
+      - package-lock.json
+      - .env
+      - plans/**
   testing:
     test_first_default: true
     skip_test_first_for:
@@ -242,7 +246,7 @@ policies:
 - Keep unrelated changes in separate commits even if they are discovered while working on an unpushed local commit.
 - If a commit only fixes the immediately previous local commit, squash it before handoff.
 - Use Conventional Commits (`feat:`, `fix:`, `enhance:`, `refactor:`, `test:`, `docs:`, `chore:`).
-- Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) changed, ignore changes in `.env`.
+- Ignore changes in `package-lock.json` unless dependencies (or dependency-affecting scripts) changed, ignore changes in `.env`, and ignore incidental changes under `plans/` unless the current task explicitly requires committing them.
 
 ### Changelog Discipline
 - Keep `CHANGELOG.md` continuously updated.
