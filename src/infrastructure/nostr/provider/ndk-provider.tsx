@@ -1395,6 +1395,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           success: false,
           errorCode: signInResponse.errorCode || "server_error",
           errorMessage: signInResponse.error,
+          httpStatus: signInResponse.httpStatus,
         };
       }
 
@@ -1547,6 +1548,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
           success: false,
           errorCode: signUpResponse.errorCode || "server_error",
           errorMessage: signUpResponse.error,
+          httpStatus: signUpResponse.httpStatus,
         };
       }
 

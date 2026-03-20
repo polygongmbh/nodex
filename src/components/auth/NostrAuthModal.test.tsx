@@ -337,6 +337,54 @@ describe("NostrAuthModal", () => {
     expect(screen.queryByText(/invalid username or password/i)).not.toBeInTheDocument();
   });
 
+  it("shows the raw Noas sign-in error payload with HTTP status when provided", async () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+    ndkMock.loginWithNoas = vi.fn(async () => ({
+      success: false,
+      errorCode: "server_error",
+      errorMessage: "Username already active. Sign in.",
+      httpStatus: 409,
+    }));
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    openNoasEntryIfNeeded();
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
+    expect(screen.getByText("409 Conflict: Username already active. Sign in.")).toBeInTheDocument();
+  });
+
+  it("shows the raw Noas sign-up error payload with HTTP status when provided", async () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+    ndkMock.signupWithNoas = vi.fn(async () => ({
+      success: false,
+      errorCode: "server_error",
+      errorMessage: "Username already active. Sign in.",
+      httpStatus: 409,
+    }));
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    openNoasEntryIfNeeded();
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.change(screen.getByLabelText(/private key/i), {
+      target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+
+    await waitFor(() => expect(ndkMock.signupWithNoas).toHaveBeenCalled());
+    expect(screen.getByText("409 Conflict: Username already active. Sign in.")).toBeInTheDocument();
+  });
+
   it("opens directly to noas sign up when requested and still allows switching to sign in", () => {
     render(<NostrAuthModal isOpen onClose={vi.fn()} initialStep="noasSignUp" />);
 

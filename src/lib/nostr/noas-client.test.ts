@@ -102,6 +102,24 @@ describe("NoasClient API route mapping", () => {
     });
   });
 
+  it("returns raw sign-in error text and HTTP status for non-OK responses", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: "Username already active. Sign in." }), {
+        status: 409,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    );
+
+    const client = new NoasClient("https://noas.example/api/v1");
+    const result = await client.signIn("alice", "hunter2");
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Username already active. Sign in.");
+    expect(result.httpStatus).toBe(409);
+  });
+
   it("routes registration to /auth/register on the discovered api_base", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ success: true }), {
@@ -139,6 +157,30 @@ describe("NoasClient API route mapping", () => {
       redirect: "https://nodex.polygon.gmbh",
     });
     expect(parsedBody.private_key_encrypted).toMatch(/^ncryptsec/);
+  });
+
+  it("returns raw register error text and HTTP status for non-OK responses", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: "Username already active. Sign in." }), {
+        status: 409,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    );
+
+    const client = new NoasClient("https://noas.example/api/v1");
+    const result = await client.register(
+      "alice",
+      "hunter2",
+      "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "pubkey123",
+      { redirect: "https://nodex.polygon.gmbh" }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Username already active. Sign in.");
+    expect(result.httpStatus).toBe(409);
   });
 
   it("normalizes v1 registration responses into the legacy user shape", async () => {

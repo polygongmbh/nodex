@@ -9,6 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ### Fixed
 - Noas API-base fallback now normalizes discovery failures to canonical API roots (for example `.../api/v1`) instead of reusing legacy endpoint host inputs directly, avoiding malformed auth-route fallbacks when `/.well-known/nostr.json` is blocked by edge CORS policy.
 - Noas sign-up registration now sends the v1 payload shape (`password_hash`, `public_key`, `private_key_encrypted`, `redirect`) so account creation succeeds against current Noas auth/register validation.
+- Noas sign-in and sign-up now surface server HTTP status plus reason text (for example `403 Forbidden`) together with Noas error details, instead of collapsing these failures into generic modal server-error copy.
 
 ## [2.6.0] - 2026-03-20
 Minor release for Noas auth endpoint routing, relay auth/subscription recovery (NIP-42), and feed hydration loading clarity (1028 lines changed since `v2.5.0`).

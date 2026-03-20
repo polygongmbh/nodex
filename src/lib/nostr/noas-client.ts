@@ -24,6 +24,7 @@ export interface NoasAuthResult {
   success: boolean;
   errorCode?: NoasAuthErrorCode;
   errorMessage?: string;
+  httpStatus?: number;
 }
 
 const NOAS_API_BASE_CACHE_PREFIX = "nostr_noas_api_base_cache";
@@ -244,6 +245,7 @@ interface NoasSignInResponse {
   relays?: string[];
   error?: string;
   errorCode?: NoasAuthErrorCode;
+  httpStatus?: number;
 }
 
 interface NoasRegisterResponse {
@@ -259,6 +261,7 @@ interface NoasRegisterResponse {
   public_npub?: string;
   error?: string;
   errorCode?: NoasAuthErrorCode;
+  httpStatus?: number;
 }
 
 interface NoasUserProfile {
@@ -371,8 +374,9 @@ export class NoasClient {
         const errorData = await response.json().catch(() => ({}));
         return {
           success: false,
-          error: errorData.error || 'Sign in failed',
+          error: typeof errorData.error === "string" ? errorData.error : undefined,
           errorCode: response.status === 401 || response.status === 403 ? "invalid_credentials" : "server_error",
+          httpStatus: response.status,
         };
       }
 
@@ -381,7 +385,6 @@ export class NoasClient {
       console.error('Noas sign-in error:', error);
       return {
         success: false,
-        error: 'Network error during sign in',
         errorCode: "connection_failed",
       };
     }
@@ -422,8 +425,9 @@ export class NoasClient {
         const errorData = await response.json().catch(() => ({}));
         return {
           success: false,
-          error: errorData.error || 'Registration failed',
+          error: typeof errorData.error === "string" ? errorData.error : undefined,
           errorCode: response.status === 400 ? "invalid_credentials" : "server_error",
+          httpStatus: response.status,
         };
       }
 
@@ -454,7 +458,6 @@ export class NoasClient {
       console.error('Noas registration error:', error);
       return {
         success: false,
-        error: 'Network error during registration',
         errorCode: "connection_failed",
       };
     }

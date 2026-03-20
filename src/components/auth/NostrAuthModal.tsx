@@ -42,6 +42,49 @@ type AuthStep = "choose" | "privateKey" | "nostrConnect" | "noas" | "noasSignUp"
 type PendingAuthMethod = "extension" | "guest" | "privateKey" | "nostrConnect" | "noas" | null;
 type WindowWithNostr = Window & { nostr?: unknown };
 
+const HTTP_STATUS_REASON_TEXT: Record<number, string> = {
+  400: "Bad Request",
+  401: "Unauthorized",
+  402: "Payment Required",
+  403: "Forbidden",
+  404: "Not Found",
+  405: "Method Not Allowed",
+  406: "Not Acceptable",
+  407: "Proxy Authentication Required",
+  408: "Request Timeout",
+  409: "Conflict",
+  410: "Gone",
+  411: "Length Required",
+  412: "Precondition Failed",
+  413: "Payload Too Large",
+  414: "URI Too Long",
+  415: "Unsupported Media Type",
+  416: "Range Not Satisfiable",
+  417: "Expectation Failed",
+  418: "I'm a teapot",
+  421: "Misdirected Request",
+  422: "Unprocessable Entity",
+  423: "Locked",
+  424: "Failed Dependency",
+  425: "Too Early",
+  426: "Upgrade Required",
+  428: "Precondition Required",
+  429: "Too Many Requests",
+  431: "Request Header Fields Too Large",
+  451: "Unavailable For Legal Reasons",
+  500: "Internal Server Error",
+  501: "Not Implemented",
+  502: "Bad Gateway",
+  503: "Service Unavailable",
+  504: "Gateway Timeout",
+  505: "HTTP Version Not Supported",
+  506: "Variant Also Negotiates",
+  507: "Insufficient Storage",
+  508: "Loop Detected",
+  510: "Not Extended",
+  511: "Network Authentication Required",
+};
+
 function resolveNoasErrorMessage(
   errorCode: NoasAuthErrorCode | undefined,
   t: ReturnType<typeof useTranslation>["t"],
@@ -74,6 +117,27 @@ function resolveNoasErrorMessage(
     default:
       return t("auth.modal.errors.noasFailed");
   }
+}
+
+function formatNoasServerErrorPayload(errorMessage: string | undefined, httpStatus: number | undefined): string | null {
+  if (typeof httpStatus !== "number" || !Number.isFinite(httpStatus)) {
+    return null;
+  }
+
+  let statusText = "";
+  try {
+    statusText = new Response(null, { status: httpStatus }).statusText.trim();
+  } catch {
+    statusText = "";
+  }
+  if (!statusText) {
+    statusText = HTTP_STATUS_REASON_TEXT[httpStatus] || "";
+  }
+
+  const normalizedError = String(errorMessage || "").trim();
+  const statusPrefix = statusText ? `${httpStatus} ${statusText}` : `${httpStatus}`;
+  if (!normalizedError) return statusPrefix;
+  return `${statusPrefix}: ${normalizedError}`;
 }
 
 const hasNostrExtension = (): boolean =>
@@ -205,7 +269,8 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
         onClose();
         return true;
       } else {
-        setError(resolveNoasErrorMessage(result.errorCode, t, "signIn"));
+        const serverPayloadError = formatNoasServerErrorPayload(result.errorMessage, result.httpStatus);
+        setError(serverPayloadError || resolveNoasErrorMessage(result.errorCode, t, "signIn"));
         return false;
       }
     } finally {
@@ -229,7 +294,8 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
         onClose();
         return true;
       } else {
-        setError(resolveNoasErrorMessage(result.errorCode, t, "signUp"));
+        const serverPayloadError = formatNoasServerErrorPayload(result.errorMessage, result.httpStatus);
+        setError(serverPayloadError || resolveNoasErrorMessage(result.errorCode, t, "signUp"));
         return false;
       }
     } finally {
