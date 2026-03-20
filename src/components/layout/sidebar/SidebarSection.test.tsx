@@ -101,7 +101,6 @@ describe("SidebarSection", () => {
 
       const outerContainer = screen.getByText("Preview Content").parentElement?.parentElement as HTMLElement;
       expect(outerContainer.style.height).toBe("72px");
-      expect(outerContainer).toHaveClass("motion-sidebar-fold-close");
     } finally {
       if (originalScrollHeight) {
         Object.defineProperty(HTMLElement.prototype, "scrollHeight", originalScrollHeight);

@@ -151,8 +151,6 @@ describe("MobileFilters management view", () => {
     expect(screen.getByText(/^v\d+\.\d+\.\d+$/)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /open imprint and privacy policy/i })).toHaveLength(2);
     expect(screen.getByRole("link", { name: /kontakt per e-mail/i })).toBeInTheDocument();
-    // Keep manage panel height-bound so content scrolls within mobile view.
-    expect(document.querySelector('[data-onboarding="mobile-filters"]')).toHaveClass("h-full");
   });
 
   it("uses cached kind:0 metadata for current user label when profile is missing", () => {

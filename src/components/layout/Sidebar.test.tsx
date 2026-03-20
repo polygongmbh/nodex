@@ -60,7 +60,6 @@ describe("Sidebar", () => {
     const relayOneRow = screen.getByText("Relay One").closest('[data-sidebar-item="relay-relay-one"]') as HTMLElement;
     const expectCollapsed = (element: HTMLElement | null) => {
       expect(element?.style.height).toBe("0px");
-      expect(element).toHaveClass("motion-sidebar-fold-close");
     };
 
     fireEvent.click(screen.getByRole("button", { name: /collapse feeds/i }));

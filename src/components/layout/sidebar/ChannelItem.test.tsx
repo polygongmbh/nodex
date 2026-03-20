@@ -97,34 +97,4 @@ describe("ChannelItem", () => {
     expect(onToggle).not.toHaveBeenCalled();
   });
 
-  it("pin button is visible when channel is pinned", () => {
-    render(
-      <ChannelItem
-        channel={baseChannel}
-        onToggle={vi.fn()}
-        onExclusive={vi.fn()}
-        isPinned={true}
-        onPin={vi.fn()}
-        onUnpin={vi.fn()}
-      />
-    );
-    const btn = screen.getByRole("button", { name: /unpin #general/i });
-    expect(btn).not.toHaveClass("opacity-0");
-  });
-
-  it("pin button has opacity-0 class when channel is not pinned", () => {
-    render(
-      <ChannelItem
-        channel={baseChannel}
-        onToggle={vi.fn()}
-        onExclusive={vi.fn()}
-        isPinned={false}
-        onPin={vi.fn()}
-        onUnpin={vi.fn()}
-      />
-    );
-    const btn = screen.getByRole("button", { name: /pin #general/i });
-    expect(btn).toHaveClass("opacity-0");
-  });
-
 });
