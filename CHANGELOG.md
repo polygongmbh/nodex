@@ -7,7 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 ### Fixed
-- Relay write-rejection handling now maps broader explicit reject reasons (including generic `rejected`/policy-blocked failures) to `read only` and additionally observes relay websocket `OK false` responses directly so auth-required write rejects no longer get lost behind later publish timeouts; reconnect status mapping now avoids lingering `connecting` UI state when no websocket is actively connecting, transport connection errors render with neutral/grey styling again, and feed selection toggles now keep the live relay subscription stable (no unnecessary `CLOSE`/`REQ` churn) while filtering only the displayed scope.
+- Relay write-rejection handling now maps broader explicit reject reasons (including generic `rejected`/policy-blocked failures) to `read only` and additionally observes relay websocket `OK false` responses directly so auth-required write rejects no longer get lost behind later publish timeouts; reconnect status mapping now avoids lingering `connecting` UI state when no websocket is actively connecting, transport connection errors render with neutral/grey styling again, feed selection toggles keep the live relay subscription stable (no unnecessary `CLOSE`/`REQ` churn) while filtering only the displayed scope, and selecting a `read only` relay no longer forces reconnect that would clear its state.
 
 ## [2.5.0] - 2026-03-20
 Minor release for relay/feed state-update resilience and NIP-19 `npub` identity label upgrades (2467 lines changed since `v2.4.1`).

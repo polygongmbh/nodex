@@ -51,6 +51,7 @@ import { useListingStatusPublish } from "@/features/feed-page/controllers/use-li
 import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-relay-auto-reconnect";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
+import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -170,8 +171,7 @@ const Index = () => {
       if (
         relay.id !== DEMO_RELAY_ID &&
         relay.url &&
-        relay.connectionStatus &&
-        relay.connectionStatus !== "connected"
+        shouldReconnectRelayOnSelection(relay.connectionStatus)
       ) {
         reconnectRelay(relay.url);
       }
