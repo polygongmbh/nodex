@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useEffect, useRef, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NDKProvider, useNDK } from "./ndk-provider";
 import { fetchRelayInfo } from "../relay-info";
@@ -260,6 +261,30 @@ function Harness() {
           .sort()
           .join(",")}
       </output>
+    </div>
+  );
+}
+
+function SubscribeIdentityHarness() {
+  const { relays, subscribe } = useNDK();
+  const previousSubscribeRef = useRef(subscribe);
+  const [subscribeIdentityChanges, setSubscribeIdentityChanges] = useState(0);
+
+  useEffect(() => {
+    if (previousSubscribeRef.current === subscribe) return;
+    previousSubscribeRef.current = subscribe;
+    setSubscribeIdentityChanges((count) => count + 1);
+  }, [subscribe]);
+
+  return (
+    <div>
+      <output data-testid="relay-state">
+        {relays
+          .map((relay) => `${relay.url}:${relay.status}`)
+          .sort()
+          .join(",")}
+      </output>
+      <output data-testid="subscribe-identity-changes">{String(subscribeIdentityChanges)}</output>
     </div>
   );
 }
@@ -612,5 +637,38 @@ describe("NDKProvider relay lifecycle", () => {
     });
 
     expect(fetchRelayInfo).not.toHaveBeenCalled();
+  });
+
+  it("keeps subscribe callback identity stable across relay status updates", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <SubscribeIdentityHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+    const baselineIdentityChanges = Number(
+      screen.getByTestId("subscribe-identity-changes").textContent ?? "0"
+    );
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      relay.emitServerMessage(
+        '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+    });
+
+    const afterStatusUpdateIdentityChanges = Number(
+      screen.getByTestId("subscribe-identity-changes").textContent ?? "0"
+    );
+    expect(afterStatusUpdateIdentityChanges).toBe(baselineIdentityChanges);
   });
 });

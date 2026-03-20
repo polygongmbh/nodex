@@ -124,6 +124,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [relays, setRelays] = useState<NDKRelayStatus[]>([]);
+  const relaysRef = useRef<NDKRelayStatus[]>([]);
+  relaysRef.current = relays;
   const removedRelaysRef = useRef<Set<string>>(new Set());
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
   const [isProfileSyncing, setIsProfileSyncing] = useState(false);
@@ -145,6 +147,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   const relayCurrentInstanceRef = useRef<Map<string, NDKRelay>>(new Map());
   const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
   const relayStatusCacheAdapter = useMemo(() => createNodexCacheAdapter(), []);
+  const authMethodRef = useRef<AuthMethod>(null);
+  authMethodRef.current = authMethod;
 
   const clearTrackedRelayTimeout = useCallback((timeoutId: number | undefined) => {
     if (typeof timeoutId !== "number") return;
@@ -1917,7 +1921,8 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     options?: { closeOnEose?: boolean }
   ): NDKSubscription | null => {
     if (!ndk) return null;
-    const authScope = authMethod || "signed-out";
+    const authScope = authMethodRef.current || "signed-out";
+    const activeRelays = relaysRef.current;
 
     const limitDecision = applyPerformanceAwareSubscriptionLimits(filters, typeof navigator === "undefined"
       ? undefined
@@ -1936,7 +1941,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     });
 
     if (ndk.signer) {
-      relays
+      activeRelays
         .filter((relay) => relay.nip11?.authRequired)
         .map((relay) => normalizeRelayUrl(relay.url))
         .forEach((relayUrl) => {
@@ -1990,7 +1995,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     subscription.on("close", finishRead);
 
     return subscription;
-  }, [authMethod, beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayReadOutcome, markRelayVerificationFailure, ndk, primeRelayAuthChallenge, relays]);
+  }, [beginRelayOperation, connectManagedRelay, endRelayOperation, markRelayReadOutcome, markRelayVerificationFailure, ndk, primeRelayAuthChallenge]);
 
   const isConnected = useMemo(() => {
     return relays.some((r) => r.status === "connected" || r.status === "read-only");
