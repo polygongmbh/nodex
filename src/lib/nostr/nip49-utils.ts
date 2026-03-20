@@ -195,7 +195,7 @@ export async function decryptNip49PrivateKey(encryptedKey: string, password: str
  */
 export function isNip49EncryptedKey(key: string): boolean {
   try {
-    const { type } = nip19.decode(key);
+    const { type } = nip19.decode(key) as any;
     return type === 'ncryptsec';
   } catch {
     return false;

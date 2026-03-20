@@ -38,7 +38,7 @@ async function testDecryption() {
 }
 
 // Run the test if this file is executed directly
-if (import.meta.vitest) {
+if ((import.meta as any).vitest) {
   // Running in test environment
 } else {
   testDecryption();

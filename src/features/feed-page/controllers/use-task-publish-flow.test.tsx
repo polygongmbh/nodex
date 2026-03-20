@@ -46,7 +46,7 @@ function Harness({
   publishTaskDueUpdate?: ReturnType<typeof vi.fn>;
   publishTaskPriorityUpdate?: ReturnType<typeof vi.fn>;
   forceLocalMode?: boolean;
-  queryClient: QueryClient;
+  queryClient?: QueryClient;
 }) {
   const [localTasks, setLocalTasks] = useState<Task[]>(initialTasks);
   const [postedTags, setPostedTags] = useState<string[]>([]);

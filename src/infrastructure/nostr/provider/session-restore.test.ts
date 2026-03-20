@@ -22,7 +22,7 @@ describe("waitForNostrExtensionAvailability", () => {
   it("resolves when extension becomes available after nostr#initialized", async () => {
     const pending = waitForNostrExtensionAvailability({ timeoutMs: 3000, pollIntervalMs: 200 });
     vi.advanceTimersByTime(400);
-    (window as WindowWithNostr).nostr = {} as unknown;
+    (window as WindowWithNostr).nostr = { getPublicKey: async () => "", signEvent: async (e: any) => ({ sig: "" }) } as any;
     window.dispatchEvent(new Event("nostr#initialized"));
     await expect(pending).resolves.toBe(true);
   });

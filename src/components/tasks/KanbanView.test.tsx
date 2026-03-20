@@ -42,8 +42,8 @@ vi.mock("@hello-pangea/dnd", () => ({
     children(
       {
         innerRef: () => {},
-        draggableProps: { "data-draggable-id": draggableId },
-        dragHandleProps: {},
+        draggableProps: { "data-draggable-id": draggableId } as any,
+        dragHandleProps: {} as any,
       },
       { isDragging: false }
     ),
