@@ -41,6 +41,7 @@ interface LinkifyOptions {
   onMentionClick?: (person: Person) => void;
   onStandaloneMediaClick?: (url: string) => void;
   getStandaloneMediaCaption?: (url: string) => string | undefined;
+  disableStandaloneEmbeds?: boolean;
 }
 
 const IMAGE_MIME_PREFIX = "image/";
@@ -413,7 +414,9 @@ export function linkifyContent(
 ): React.ReactNode[] {
   const lines = content.split(/\r?\n/);
   const nodes: React.ReactNode[] = [];
-  const standaloneEmbedsByLine = lines.map((line) => getStandaloneEmbeddableUrlForLine(line));
+  const standaloneEmbedsByLine = options?.disableStandaloneEmbeds
+    ? lines.map(() => null)
+    : lines.map((line) => getStandaloneEmbeddableUrlForLine(line));
 
   for (let index = 0; index < lines.length; index += 1) {
     if (index > 0) {

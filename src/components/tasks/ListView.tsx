@@ -78,7 +78,7 @@ interface PriorityCellProps {
 }
 
 function getTableContentPreview(content: string): string {
-  return content.split(/\r?\n/, 1)[0]?.trim() ?? "";
+  return content.trim();
 }
 
 const PriorityCell = memo(function PriorityCell({
@@ -889,7 +889,7 @@ export function ListView({
                         <div
                           onClick={() => onFocusTask?.(task.id)}
                           className={cn(
-                            `text-sm cursor-pointer truncate ${TASK_INTERACTION_STYLES.hoverText}`,
+                            `text-sm cursor-pointer whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
                             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                           )}
                           title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}

@@ -20,6 +20,11 @@ describe("task-content-preview", () => {
     expect(shouldCollapseTaskContent("1\n2\n3\n4\n5")).toBe(true);
   });
 
+  it("collapses when content exceeds 500 characters even without many newlines", () => {
+    expect(shouldCollapseTaskContent("a".repeat(500))).toBe(false);
+    expect(shouldCollapseTaskContent("a".repeat(501))).toBe(true);
+  });
+
   it("returns the first three lines for collapsed preview", () => {
     expect(getCollapsedTaskContentPreview("1\n2\n3\n4\n5")).toBe("1\n2\n3");
   });

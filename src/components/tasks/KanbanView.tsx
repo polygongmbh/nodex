@@ -36,7 +36,6 @@ import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
-import { getFirstTaskContentLine } from "@/lib/task-content-preview";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
@@ -553,13 +552,14 @@ export function KanbanView({
                                   {/* Content */}
                                   <div
                                     className={cn(
-                                      `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
+                                      `text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
                                       isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                                     )}
                                   >
-                                    {linkifyContent(getFirstTaskContentLine(task.content), effectiveOnHashtagClick, {
+                                    {linkifyContent(task.content, effectiveOnHashtagClick, {
                                       plainHashtags: isTaskTerminalStatus(task.status),
                                       people,
+                                      disableStandaloneEmbeds: true,
                                       onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                                       getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
                                     })}

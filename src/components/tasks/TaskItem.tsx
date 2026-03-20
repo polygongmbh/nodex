@@ -36,7 +36,7 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
-import { getCollapsedTaskContentPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -216,9 +216,6 @@ export function TaskItem({
   const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
-  const displayedContent = hasCollapsibleContent && !isContentExpanded
-    ? getCollapsedTaskContentPreview(task.content)
-    : task.content;
   const standaloneEmbedUrls = new Set(
     getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
   );
@@ -564,13 +561,17 @@ export function TaskItem({
 
           {/* Task content */}
           <div className={cn(
-            `text-sm leading-relaxed whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText}`,
+            `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
+            hasCollapsibleContent && !isContentExpanded
+              ? "whitespace-pre-line line-clamp-3 overflow-hidden"
+              : "whitespace-pre-wrap",
             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
           )}>
-            {linkifyContent(displayedContent, onHashtagClick, {
+            {linkifyContent(task.content, onHashtagClick, {
               plainHashtags: isTaskTerminalStatus(task.status),
               people,
               onMentionClick: onAuthorClick,
+              disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
               onStandaloneMediaClick: (url) => onMediaClick?.(task.id, url),
               getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
             })}

@@ -60,7 +60,7 @@ import {
 } from "@/lib/task-status-toggle";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
-import { getCollapsedTaskContentPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   onToggleComplete: (taskId: string) => void;
@@ -953,9 +953,6 @@ export function CalendarView({
                     });
                     const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
                     const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
-                    const displayedContent = hasCollapsibleContent && !isContentExpanded
-                      ? getCollapsedTaskContentPreview(task.content)
-                      : task.content;
                    
                     return (
                         <div
@@ -1131,13 +1128,17 @@ export function CalendarView({
                           <div className="flex-1 min-w-0">
                             <div
                               className={cn(
-                                "text-sm whitespace-pre-wrap",
+                                "text-sm",
+                                hasCollapsibleContent && !isContentExpanded
+                                  ? "whitespace-pre-line line-clamp-3 overflow-hidden"
+                                  : "whitespace-pre-wrap",
                                 isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                               )}
                             >
-                              {linkifyContent(displayedContent, effectiveOnHashtagClick, {
+                              {linkifyContent(task.content, effectiveOnHashtagClick, {
                                 plainHashtags: isTaskTerminalStatus(task.status),
                                 people,
+                                disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
                                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                                 getStandaloneMediaCaption: (url) =>
                                   mediaCaptionByUrl.get(url.trim().toLowerCase()),

@@ -274,7 +274,7 @@ describe("ListView priority control", () => {
     expect(screen.getByText("In Progress")).toBeInTheDocument();
   });
 
-  it("renders only first content line as plain text in table rows", () => {
+  it("renders plain text content previews without autolink in table rows", () => {
     mockUser = { id: "me" };
     const task = makeTask({
       id: "task-first-line",
@@ -297,8 +297,10 @@ describe("ListView priority control", () => {
       />
     );
 
-    expect(screen.getByText("Top line https://example.com/image.png")).toBeInTheDocument();
-    expect(screen.queryByText("Second line should be hidden")).not.toBeInTheDocument();
+    const preview = screen.getByText((value) => value.includes("Top line https://example.com/image.png"));
+    expect(preview).toBeInTheDocument();
+    expect(preview).toHaveTextContent("Second line should be hidden");
+    expect(preview.className).toContain("line-clamp-2");
     expect(screen.queryByRole("link", { name: "https://example.com/image.png" })).not.toBeInTheDocument();
   });
 });

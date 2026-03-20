@@ -67,7 +67,7 @@ import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
-import { getCollapsedTaskContentPreview, shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -761,9 +761,6 @@ export function FeedView({
     const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
     const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
     const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
-    const displayedContent = hasCollapsibleContent && !isContentExpanded
-      ? getCollapsedTaskContentPreview(task.content)
-      : task.content;
     const canUpdateListingStatus =
       Boolean(onListingStatusChange) &&
       !isInteractionBlocked &&
@@ -1183,14 +1180,18 @@ export function FeedView({
 
             <div
               className={cn(
-                `text-sm leading-relaxed whitespace-pre-wrap ${TASK_INTERACTION_STYLES.hoverText}`,
+                `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
+                hasCollapsibleContent && !isContentExpanded
+                  ? "whitespace-pre-line line-clamp-3 overflow-hidden"
+                  : "whitespace-pre-wrap",
                 isCompletedVisual && "line-through text-muted-foreground"
               )}
             >
-              {linkifyContent(displayedContent, effectiveOnHashtagClick, {
+              {linkifyContent(task.content, effectiveOnHashtagClick, {
                 plainHashtags: isCompletedVisual,
                 people,
                 onMentionClick: effectiveOnAuthorClick,
+                disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                 getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
               })}
