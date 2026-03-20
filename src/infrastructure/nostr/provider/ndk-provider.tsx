@@ -998,7 +998,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
       let profilePicture: string | undefined;
       const pictureResponse = await noasClient.getProfilePicture(signInResponse.publicKey);
       if (pictureResponse.profilePicture && pictureResponse.profilePictureType) {
-        const blob = new Blob([pictureResponse.profilePicture], { type: pictureResponse.profilePictureType });
+        const blob = new Blob([pictureResponse.profilePicture as BlobPart], { type: pictureResponse.profilePictureType });
         profilePicture = URL.createObjectURL(blob);
       }
 
