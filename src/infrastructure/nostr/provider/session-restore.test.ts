@@ -15,7 +15,7 @@ describe("waitForNostrExtensionAvailability", () => {
   });
 
   it("resolves immediately when extension is already available", async () => {
-    (window as WindowWithNostr).nostr = {} as unknown;
+    (window as WindowWithNostr).nostr = { getPublicKey: async () => "", signEvent: async (e: any) => ({ sig: "" }) } as any;
     await expect(waitForNostrExtensionAvailability()).resolves.toBe(true);
   });
 
