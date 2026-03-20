@@ -356,6 +356,45 @@ describe("FeedView", () => {
     matchMediaSpy.mockRestore();
   });
 
+  it("keeps username metadata inline on slim desktop", async () => {
+    const matchMediaSpy = vi
+      .spyOn(window, "matchMedia")
+      .mockImplementation((query: string) => ({
+        matches: query === "(min-width: 768px) and (max-width: 1023px)",
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      }));
+
+    render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onToggleComplete={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("feed-author-primary-task-1")).toBeInTheDocument();
+    });
+
+    // Product contract: slim desktop should keep username metadata inline beside the display name.
+    expect(screen.getByTestId("feed-author-primary-task-1")).not.toHaveClass("block");
+    expect(screen.getByTestId("feed-author-secondary-task-1")).not.toHaveClass("block");
+
+    matchMediaSpy.mockRestore();
+  });
+
   it("keeps author metadata inline when desktop is beyond slim breakpoint", async () => {
     const matchMediaSpy = vi
       .spyOn(window, "matchMedia")

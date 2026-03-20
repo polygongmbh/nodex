@@ -1129,19 +1129,16 @@ export function FeedView({
                     <span
                       title={authorMeta.primary}
                       data-testid={`feed-author-primary-${task.id}`}
-                      className={cn(
-                        "truncate",
-                        isSlimDesktop ? "block" : "inline-block max-w-full align-bottom"
-                      )}
+                      className="inline-block max-w-full align-bottom truncate"
                     >
                       {primaryAuthorLabel}
                     </span>
                     {secondaryAuthorLabel && !isMobile && (
                       <span
                         data-testid={`feed-author-secondary-${task.id}`}
-                        className={cn("opacity-60", isSlimDesktop ? "block" : "inline")}
+                        className="opacity-60 inline"
                       >
-                        {isSlimDesktop ? `(${secondaryAuthorLabel})` : ` (${secondaryAuthorLabel})`}
+                        {` (${secondaryAuthorLabel})`}
                       </span>
                     )}
                   </button>
