@@ -307,6 +307,10 @@
     background: hsl(var(--foreground) / 0.06);
   }
 
+  .scrollbar-main-view-no-gutter {
+    scrollbar-gutter: auto;
+  }
+
   .scrollbar-thin-inset {
     scrollbar-gutter: stable;
   }

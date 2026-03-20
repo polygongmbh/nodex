@@ -651,8 +651,8 @@ export function ListView({
       />
 
       {/* Table */}
-      <div ref={tableContainerRef} className="scrollbar-thin scrollbar-main-view flex-1 overflow-auto">
-        <table className="w-full table-fixed">
+      <div ref={tableContainerRef} className="scrollbar-thin scrollbar-main-view scrollbar-main-view-no-gutter flex-1 overflow-auto">
+        <table className="w-full min-w-full table-auto 2xl:table-fixed">
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>
               <th className="text-left p-2 2xl:p-3 w-10">
@@ -742,7 +742,7 @@ export function ListView({
                       isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
                     )}
                   >
-                    <td className="p-2 2xl:p-3">
+                    <td className="p-2 2xl:p-3 w-10">
                       <DropdownMenu
                         open={Boolean(statusMenuOpenByTaskId[task.id])}
                         onOpenChange={(open) => {
@@ -863,7 +863,7 @@ export function ListView({
                         )}
                       </DropdownMenu>
                     </td>
-                    <td className="p-2 2xl:p-3 min-w-0">
+                    <td className="p-2 2xl:p-3 w-auto min-w-[22rem]">
                       <div className="space-y-1">
                         {/* Parent context */}
                         {ancestorChain.length > 0 && (
@@ -904,7 +904,7 @@ export function ListView({
                     <td className="p-2 2xl:p-3 w-36 md:w-40 lg:w-44 xl:w-56 2xl:w-[19rem]">
                       <DueDateCell task={task} />
                     </td>
-                    <td className="p-2 2xl:p-3">
+                    <td className="p-2 2xl:p-3 w-16 sm:w-20 md:w-24">
                       <PriorityCell
                         taskId={task.id}
                         taskContent={task.content}
