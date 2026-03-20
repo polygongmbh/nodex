@@ -693,7 +693,7 @@ export function FeedView({
           data-testid={`feed-state-entry-${update.id}`}
           onClick={() => onFocusTask?.(task.id)}
           className={cn(
-            "border-b border-border px-4 py-1.5 hover:bg-card/50 transition-colors cursor-pointer",
+            `border-b border-border px-4 py-1.5 transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
             isMobile && "px-3 py-1.5"
           )}
         >
@@ -823,7 +823,7 @@ export function FeedView({
           onFocusTask?.(task.id);
         }}
         className={cn(
-          "border-b border-border hover:bg-card/50 transition-colors cursor-pointer",
+          `border-b border-border transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
           isMobile
             ? "p-3"
             : breadcrumb.length > 0

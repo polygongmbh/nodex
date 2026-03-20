@@ -509,8 +509,8 @@ export function KanbanView({
                                   data-task-id={task.id}
                                   onClick={() => onFocusTask?.(task.id)}
                                   className={cn(
-                                    "relative bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer",
-                                    snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "hover:shadow-md",
+                                    `relative bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
+                                    snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "",
                                     !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
                                     isTaskTerminalStatus(task.status) && "opacity-70",
                                     isLockedUntilStart && "opacity-50 grayscale",

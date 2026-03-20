@@ -960,7 +960,7 @@ export function CalendarView({
                         data-task-id={task.id}
                         onClick={() => onFocusTask?.(task.id)}
                         className={cn(
-                          "p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card hover:bg-muted/50 transition-colors cursor-pointer",
+                          `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                           isTaskTerminalStatus(task.status) && "opacity-60",
                           isLockedUntilStart && "opacity-50 grayscale"
                         )}

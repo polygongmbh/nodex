@@ -27,6 +27,7 @@ Minor release for markdown rendering and content-reference parsing upgrades, plu
 - Content rendering now uses a markdown parser pipeline (`react-markdown` with GFM) while preserving clickable `#channel` and `@mention` behavior, and publish/ingest parsing now uses shared extraction so NIP-19/NIP-27 references in content are recognized more exhaustively for Nostr tag/mention handling.
 - Markdown heading syntax now renders with subtle heading emphasis in task content instead of appearing identical to body text.
 - Kanban and table cards now clamp content to two display lines, while feed/tree/calendar cards now clamp collapsed content to three display lines and show localized show-more/show-less toggles when posts exceed four lines or 500 characters.
+- Task hover treatment now uses a subtler card-surface highlight (soft background + light shadow) instead of emphasizing the task text color directly.
 - Startup onboarding now uses current relay callback references consistently, preventing stale relay state from persisting in the onboarding controller.
 
 ## [2.3.0] - 2026-03-18

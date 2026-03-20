@@ -284,10 +284,10 @@ export function TaskItem({
     <div className={cn(!matchedByFilter && "opacity-50", isCheering && "motion-completion-cheer")} data-task-id={task.id}>
       <div
         className={cn(
-          "group flex items-start gap-3 py-2.5 px-3 rounded-lg transition-colors cursor-pointer",
+          `group flex items-start gap-3 py-2.5 px-3 rounded-lg transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
           isComment 
-            ? "bg-muted/30 hover:bg-muted/50" 
-            : "hover:bg-card/80",
+            ? "bg-muted/30"
+            : "",
           isTaskTerminalStatus(task.status) && "opacity-60",
           isLockedUntilStart && "opacity-50 grayscale",
           depth > 0 && "border-l-2 border-muted ml-1.5 pl-4",

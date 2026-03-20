@@ -226,7 +226,16 @@
   }
 
   .task-hover-text:hover {
-    color: hsl(var(--task-hover-blue));
+    color: inherit;
+  }
+
+  .task-card-surface {
+    transition: background-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .task-card-surface:hover {
+    background-color: hsl(0 0% 50% / 0.11);
+    box-shadow: 0 1px 6px hsl(215 25% 40% / 0.1);
   }
 
   .task-hover-link {
