@@ -48,6 +48,7 @@ import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-r
 import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-modal-route";
 import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-demo-bootstrap";
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
+import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-relay-auto-reconnect";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
@@ -156,6 +157,7 @@ const Index = () => {
 
   const isMobile = useIsMobile();
   const {
+    activeRelayIds,
     setActiveRelayIds,
     effectiveActiveRelayIds,
     handleRelayToggle,
@@ -174,6 +176,11 @@ const Index = () => {
         reconnectRelay(relay.url);
       }
     },
+  });
+  useRelayAutoReconnect({
+    relays,
+    activeRelayIds,
+    reconnectRelay,
   });
 
   const {
