@@ -58,7 +58,6 @@ interface ListViewProps extends SharedTaskViewContext {
   onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
   onUpdatePriority?: (taskId: string, priority: number) => void;
   onFocusSidebar?: () => void;
-  onSignInClick?: () => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   isInteractionBlocked?: boolean;
@@ -128,7 +127,6 @@ export function ListView({
   onFocusSidebar,
   onHashtagClick,
   onAuthorClick,
-  onSignInClick,
   onClearChannelFilter,
   onClearPersonFilter,
   forceShowComposer,
@@ -143,7 +141,6 @@ export function ListView({
   const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
   const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
   const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
-  const effectiveOnSignInClick = onSignInClick ?? interactionModel.onSignInClick;
   const effectiveOnClearChannelFilter = onClearChannelFilter ?? interactionModel.onClearChannelFilter;
   const effectiveOnClearPersonFilter = onClearPersonFilter ?? interactionModel.onClearPersonFilter;
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
@@ -639,7 +636,6 @@ export function ListView({
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
-        onSignInClick={effectiveOnSignInClick}
         onClearChannelFilter={effectiveOnClearChannelFilter}
         onClearPersonFilter={effectiveOnClearPersonFilter}
         forceExpanded={effectiveForceShowComposer}

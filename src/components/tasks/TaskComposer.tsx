@@ -72,7 +72,6 @@ interface TaskComposerProps {
   defaultDueDate?: Date;
   defaultContent?: string;
   parentId?: string;
-  onSignInClick?: () => void;
   onClearChannelFilter?: (id: string) => void;
   onClearPersonFilter?: (id: string) => void;
   adaptiveSize?: boolean;
@@ -200,7 +199,6 @@ export function TaskComposer({
   defaultDueDate, 
   defaultContent = "",
   parentId,
-  onSignInClick,
   onClearChannelFilter,
   onClearPersonFilter,
   adaptiveSize = false,
@@ -897,15 +895,7 @@ export function TaskComposer({
         alt: attachment.alt,
         name: attachment.name || attachment.fileName,
       }));
-    
-    // Require authentication for any posting action (including demo-only local posts).
-    if (!user) {
-      if (onSignInClick) {
-        onSignInClick();
-      }
-      return;
-    }
-    
+
     // Also add locally (and publish in parent handler)
     const publishingToastId = "task-composer-publishing";
     setIsPublishing(true);
@@ -2220,7 +2210,9 @@ export function TaskComposer({
                 return (
                   <button
                     type="button"
-                    onClick={onSignInClick}
+                    onClick={() => {
+                      void handleSubmit();
+                    }}
                     className="min-w-[12.5rem] px-4 py-2 bg-primary text-primary-foreground text-sm hover:bg-primary/90 flex items-center justify-center gap-2"
                     aria-label={t("composer.actions.signin")}
                     title={t("composer.blocked.signin")}

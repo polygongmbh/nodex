@@ -6,7 +6,6 @@ import { useFeedInteractionDispatch } from "./feed-interaction-context";
 export interface FeedViewInteractionModel {
   forceShowComposer: boolean;
   onFocusSidebar: () => void;
-  onSignInClick: () => void;
   onHashtagClick: (tag: string) => void;
   onAuthorClick: (author: Person) => void;
   onClearChannelFilter: (id: string) => void;
@@ -19,9 +18,6 @@ export function useFeedViewInteractionModel(): FeedViewInteractionModel {
 
   const onFocusSidebar = useCallback(() => {
     void dispatchFeedInteraction({ type: "ui.focusSidebar" });
-  }, [dispatchFeedInteraction]);
-  const onSignInClick = useCallback(() => {
-    void dispatchFeedInteraction({ type: "ui.openAuthModal" });
   }, [dispatchFeedInteraction]);
   const onHashtagClick = useCallback((tag: string) => {
     void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
@@ -40,7 +36,6 @@ export function useFeedViewInteractionModel(): FeedViewInteractionModel {
     () => ({
       forceShowComposer,
       onFocusSidebar,
-      onSignInClick,
       onHashtagClick,
       onAuthorClick,
       onClearChannelFilter,
@@ -49,7 +44,6 @@ export function useFeedViewInteractionModel(): FeedViewInteractionModel {
     [
       forceShowComposer,
       onFocusSidebar,
-      onSignInClick,
       onHashtagClick,
       onAuthorClick,
       onClearChannelFilter,

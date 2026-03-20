@@ -305,6 +305,37 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.queryByRole("button", { name: /create task/i })).not.toBeInTheDocument();
   });
 
+  it("routes signed-out submit attempts through onSubmit", async () => {
+    mockUser = null;
+    const onSubmit = vi.fn().mockResolvedValue({ ok: false, reason: "not-authenticated" } as TaskCreateResult);
+
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Ship #backend now" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    const [content, tags, relayIds, taskType] = onSubmit.mock.calls[0];
+    expect(content).toBe("Ship #backend now");
+    expect(tags).toContain("backend");
+    expect(Array.isArray(relayIds)).toBe(true);
+    expect(taskType).toBe("task");
+  });
+
   it("disables the desktop submit button when the textbox is actually empty", () => {
     render(
       <TaskComposer

@@ -87,7 +87,6 @@ interface FeedViewProps extends SharedTaskViewContext {
   onListingStatusChange?: (taskId: string, status: Nip99ListingStatus) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
-  onSignInClick?: () => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   onUndoPendingPublish?: (taskId: string) => void;
@@ -222,7 +221,6 @@ export function FeedView({
   onFocusTask,
   onFocusSidebar,
   isMobile = false,
-  onSignInClick,
   onHashtagClick,
   forceShowComposer,
   composeGuideActivationSignal,
@@ -239,7 +237,6 @@ export function FeedView({
   const { t, i18n } = useTranslation();
   const interactionModel = useFeedViewInteractionModel();
   const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
-  const effectiveOnSignInClick = onSignInClick ?? interactionModel.onSignInClick;
   const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
   const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
   const effectiveOnClearChannelFilter = onClearChannelFilter ?? interactionModel.onClearChannelFilter;
@@ -1307,7 +1304,6 @@ export function FeedView({
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
-        onSignInClick={effectiveOnSignInClick}
         onClearChannelFilter={effectiveOnClearChannelFilter}
         onClearPersonFilter={effectiveOnClearPersonFilter}
         forceExpanded={effectiveForceShowComposer}

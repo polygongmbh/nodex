@@ -51,12 +51,12 @@ vi.mock("./UnifiedBottomBar", () => ({
     searchQuery,
     onSearchChange,
     isSignedIn,
-    onSignInClick,
+    onSubmit,
   }: {
     searchQuery: string;
     onSearchChange: (value: string) => void;
     isSignedIn: boolean;
-    onSignInClick: () => void;
+    onSubmit: (...args: unknown[]) => unknown;
   }) => {
     const [value, setValue] = useState(searchQuery);
 
@@ -76,7 +76,12 @@ vi.mock("./UnifiedBottomBar", () => ({
           }}
         />
         {!isSignedIn ? (
-          <button type="button" onClick={onSignInClick}>
+          <button
+            type="button"
+            onClick={() => {
+              void onSubmit(value, ["general"], ["demo"], "task");
+            }}
+          >
             Sign in to create
           </button>
         ) : null}
@@ -195,17 +200,20 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
     const onSignInClick = vi.fn();
+    const onNewTask = vi.fn().mockResolvedValue({ ok: false, reason: "not-authenticated" });
 
     renderMobileLayout({
       viewState: { isSignedIn: false },
       actions: { onSignInClick },
+      taskViewModel: { onNewTask },
     });
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
-    expect(onSignInClick).toHaveBeenCalledTimes(1);
+    expect(onNewTask).toHaveBeenCalledTimes(1);
+    expect(onSignInClick).not.toHaveBeenCalled();
   });
 
   it("redirects to manage view and opens profile editor after sign-in when cached profile metadata is missing", async () => {

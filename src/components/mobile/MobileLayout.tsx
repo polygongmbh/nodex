@@ -462,7 +462,6 @@ export function MobileLayout({
           onPersonToggle={onPersonToggle}
           defaultContent={defaultContent}
           isSignedIn={isSignedIn}
-          onSignInClick={onSignInClick}
           forceComposeMode={forceComposeMode}
           composeRestoreRequest={composeRestoreRequest}
         />

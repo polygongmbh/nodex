@@ -85,7 +85,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -94,14 +93,14 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(screen.queryByRole("button", { name: /add file attachment/i })).not.toBeInTheDocument();
   });
 
-  it("opens sign-in when create is tapped while signed out", () => {
-    const onSignInClick = vi.fn();
+  it("routes signed-out create attempts through onSubmit", () => {
+    const onSubmit = vi.fn().mockResolvedValue({ ok: false, reason: "not-authenticated" });
 
     render(
       <UnifiedBottomBar
         searchQuery=""
         onSearchChange={() => {}}
-        onSubmit={() => ({ ok: true, mode: "local" })}
+        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -110,7 +109,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={false}
-        onSignInClick={onSignInClick}
       />
     );
 
@@ -118,7 +116,7 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
-    expect(onSignInClick).toHaveBeenCalledTimes(1);
+    expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
   it("disables the mobile primary send button when the textbox is actually empty", () => {
@@ -135,7 +133,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -159,7 +156,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -189,7 +185,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -228,7 +223,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -259,7 +253,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -291,7 +284,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -328,7 +320,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -359,7 +350,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -399,7 +389,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -429,7 +418,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -469,7 +457,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -524,7 +511,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -563,7 +549,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -610,7 +595,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -634,7 +618,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -665,7 +648,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -688,7 +670,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -713,7 +694,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -732,7 +712,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -753,7 +732,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn={true}
-        onSignInClick={() => {}}
       />
     );
 
@@ -791,7 +769,6 @@ describe("UnifiedBottomBar auth gating", () => {
           }}
           onPersonToggle={() => {}}
           isSignedIn={true}
-          onSignInClick={() => {}}
         />
       );
     };
@@ -838,7 +815,6 @@ describe("UnifiedBottomBar auth gating", () => {
           }}
           onPersonToggle={() => {}}
           isSignedIn={true}
-          onSignInClick={() => {}}
         />
       );
     };
@@ -868,7 +844,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -897,7 +872,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -925,7 +899,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -970,7 +943,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -1017,7 +989,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -1049,7 +1020,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -1103,7 +1073,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -1139,7 +1108,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -1184,7 +1152,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -1219,7 +1186,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 
@@ -1252,7 +1218,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
         composeRestoreRequest={{
           id: 1,
           state: {
@@ -1288,7 +1253,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
         composeRestoreRequest={{
           id: 2,
           state: {
@@ -1333,7 +1297,6 @@ describe("UnifiedBottomBar auth gating", () => {
         onChannelToggle={() => {}}
         onPersonToggle={() => {}}
         isSignedIn
-        onSignInClick={() => {}}
       />
     );
 

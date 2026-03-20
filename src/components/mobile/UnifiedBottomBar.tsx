@@ -68,7 +68,6 @@ interface UnifiedBottomBarProps {
   // Default content for composing
   defaultContent?: string;
   isSignedIn: boolean;
-  onSignInClick: () => void;
   forceComposeMode?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
@@ -121,7 +120,6 @@ export function UnifiedBottomBar({
   onPersonToggle,
   defaultContent = "",
   isSignedIn,
-  onSignInClick,
   composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
   const { t } = useTranslation();
@@ -885,7 +883,7 @@ export function UnifiedBottomBar({
 
   const handlePrimarySend = () => {
     if (!isSignedIn) {
-      onSignInClick();
+      void handleSubmit("task");
       return;
     }
     if (taskSubmitBlock && !taskSubmitBlock.isHardDisabled && !canSendComment && !canSendListing) {

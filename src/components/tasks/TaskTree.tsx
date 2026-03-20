@@ -26,7 +26,6 @@ interface TaskTreeProps extends SharedTaskViewContext {
   onUpdatePriority?: (taskId: string, priority: number) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
-  onSignInClick?: () => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   onUndoPendingPublish?: (taskId: string) => void;
@@ -58,7 +57,6 @@ export function TaskTree({
   onFocusTask,
   onFocusSidebar,
   isMobile = false,
-  onSignInClick,
   onHashtagClick,
   forceShowComposer,
   composeGuideActivationSignal,
@@ -76,7 +74,6 @@ export function TaskTree({
   const interactionModel = useFeedViewInteractionModel();
   const { user } = useNDK();
   const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
-  const effectiveOnSignInClick = onSignInClick ?? interactionModel.onSignInClick;
   const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
   const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
   const effectiveOnClearChannelFilter = onClearChannelFilter ?? interactionModel.onClearChannelFilter;
@@ -456,7 +453,6 @@ export function TaskTree({
         onCancel={() => setIsComposerExpanded(false)}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={currentContextId || undefined}
-        onSignInClick={effectiveOnSignInClick}
         onClearChannelFilter={effectiveOnClearChannelFilter}
         onClearPersonFilter={effectiveOnClearPersonFilter}
         forceExpanded={effectiveForceShowComposer}
