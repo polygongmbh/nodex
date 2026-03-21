@@ -107,7 +107,7 @@ export function FilteredEmptyState({
       return (
         <div
           data-empty-mode="mobile"
-          className={cn("px-3 pt-2 pb-1 text-center text-xs leading-snug text-muted-foreground", className)}
+          className={cn("mx-auto w-full px-3 pt-2 pb-1 text-center text-xs leading-snug text-muted-foreground", className)}
         >
           {scopeModel.mobileFallbackHint}
         </div>

@@ -942,14 +942,16 @@
       "noUpcoming": "No hay tareas próximas",
       "noneScheduledForDay": "No hay tareas programadas para este día",
       "selectDay": "Selecciona un día para ver tareas",
-      "mobileQuickFilterFallback": "Ninguna tarea coincide con el filtro rápido; se muestran todas las tareas.",
+      "mobileQuickFilterFallback": "No hay coincidencias para el filtro rápido; se muestran todas las tareas.",
+      "mobileQuickFilterFallbackScoped": "No hay coincidencias para el filtro rápido; se muestran tareas {{scope}}.",
       "matchFilters": "No hay tareas que coincidan con tus filtros",
       "noSubtasks": "Aún no hay subtareas",
       "noneYet": "Aún no hay tareas",
       "filtered": {
         "scopeOnly": "Aún no hay ninguna publicación {{scope}}.",
         "showingOnlyScope": "Esto es todo {{scope}}.",
-        "mobileFallback": "Nada coincide con el alcance actual, así que esta vista muestra todo en su lugar.",
+        "mobileFallback": "Aún no hay nada en el alcance actual; se muestra todo.",
+        "mobileFallbackScoped": "Aún no hay nada {{scope}}; se muestra todo.",
         "action": "Amplía el alcance o rompe el silencio."
       },
       "loading": {

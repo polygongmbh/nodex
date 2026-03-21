@@ -942,14 +942,16 @@
       "noUpcoming": "Keine anstehenden Aufgaben",
       "noneScheduledForDay": "Keine Aufgaben für diesen Tag geplant",
       "selectDay": "Wähle einen Tag, um Aufgaben anzuzeigen",
-      "mobileQuickFilterFallback": "Keine Aufgaben entsprechen dem Schnellfilter, alle Aufgaben werden angezeigt.",
+      "mobileQuickFilterFallback": "Keine Treffer für den Schnellfilter, alle Aufgaben werden angezeigt.",
+      "mobileQuickFilterFallbackScoped": "Keine Treffer für den Schnellfilter, es werden Aufgaben {{scope}} angezeigt.",
       "matchFilters": "Keine Aufgaben entsprechen deinen Filtern",
       "noSubtasks": "Noch keine Unteraufgaben",
       "noneYet": "Noch keine Aufgaben",
       "filtered": {
         "scopeOnly": "Noch kein Beitrag {{scope}}.",
         "showingOnlyScope": "Das ist alles {{scope}}.",
-        "mobileFallback": "Nichts entspricht dem aktuellen Bereich, deshalb zeigt diese Ansicht stattdessen alles an.",
+        "mobileFallback": "Noch nichts im aktuellen Bereich, alles wird angezeigt.",
+        "mobileFallbackScoped": "Noch nichts {{scope}}, alles wird angezeigt.",
         "action": "Erweitere den Bereich oder brich die Stille."
       },
       "loading": {

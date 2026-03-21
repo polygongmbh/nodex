@@ -308,7 +308,37 @@ describe("MobileLayout auth wiring", () => {
       },
     });
 
-    expect(screen.getByRole("status")).toBeInTheDocument();
+    const status = screen.getByRole("status");
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveTextContent("No matches for the quick filter, showing tasks on Demo.");
+    expect(status).toHaveClass("text-center");
+    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
+  });
+
+  it("does not show quick-filter fallback text when scope also has no matches", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const sampleTasks: Task[] = [
+      makeTask({ id: "task-1", content: "Ship #general", tags: ["general"] }),
+    ];
+
+    renderMobileLayout({
+      viewState: {
+        channels: [
+          makeChannel({ id: "nodex", name: "nodex", filterState: "included" }),
+          makeChannel({ id: "nostr", name: "nostr", filterState: "included" }),
+          makeChannel({ id: "tech", name: "tech", filterState: "excluded" }),
+        ],
+      },
+      taskViewModel: {
+        tasks: sampleTasks,
+        allTasks: sampleTasks,
+        searchQuery: "nomatchquery",
+      },
+    });
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
 

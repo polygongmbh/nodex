@@ -24,9 +24,12 @@ import {
 import { cn } from "@/lib/utils";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
+import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
+import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useTranslation } from "react-i18next";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { buildEmptyScopeModel } from "@/lib/empty-scope";
 
 export interface MobileLayoutViewState {
   relays: Relay[];
@@ -140,7 +143,7 @@ export function MobileLayout({
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds = [],
   } = publishState ?? {};
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
@@ -241,6 +244,79 @@ export function MobileLayout({
   }, [hasSearchQuery, tasks, searchQuery, people]);
   const isQuickFilterFallbackActive = !showFilters && hasSearchQuery && !hasQuickFilterMatch;
   const effectiveSearchQuery = isQuickFilterFallbackActive ? "" : searchQuery;
+  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
+  const taskFilterIndex = useMemo(() => buildTaskViewFilterIndex(allTasks, people), [allTasks, people]);
+  const { included: includedChannelNames, excluded: excludedChannelNames } = useMemo(
+    () => getIncludedExcludedChannelNames(channels),
+    [channels]
+  );
+  const quickFilterScopeModel = useMemo(
+    () =>
+      buildEmptyScopeModel({
+        relays,
+        channels,
+        people,
+        searchQuery: effectiveSearchQuery,
+        contextTaskTitle: focusedTaskId
+          ? taskById.get(focusedTaskId)?.content
+          : "",
+        locale: i18n.resolvedLanguage || i18n.language || "en",
+        t,
+      }),
+    [
+      channels,
+      effectiveSearchQuery,
+      focusedTaskId,
+      i18n.language,
+      i18n.resolvedLanguage,
+      people,
+      relays,
+      t,
+      taskById,
+    ]
+  );
+  const scopeMatchesWithoutQuickFilter = useMemo(() => {
+    const isFeedLikeView = activePrimaryView === "feed";
+    const isTreeLikeView = activePrimaryView === "tree";
+    if (!isFeedLikeView && !isTreeLikeView) {
+      return tasks;
+    }
+
+    return filterTasksForView({
+      allTasks,
+      filterIndex: taskFilterIndex,
+      prefilteredTaskIds,
+      focusedTaskId,
+      includeFocusedTask: isFeedLikeView,
+      hideClosedTasks: isFeedLikeView,
+      searchQuery: "",
+      people,
+      includedChannels: includedChannelNames,
+      excludedChannels: excludedChannelNames,
+      channelMatchMode,
+    });
+  }, [
+    activePrimaryView,
+    allTasks,
+    taskFilterIndex,
+    prefilteredTaskIds,
+    focusedTaskId,
+    people,
+    includedChannelNames,
+    excludedChannelNames,
+    channelMatchMode,
+    tasks,
+  ]);
+  const shouldShowQuickFilterFallback =
+    isQuickFilterFallbackActive &&
+    !(
+      quickFilterScopeModel.hasActiveFilters &&
+      scopeMatchesWithoutQuickFilter.length === 0
+    );
+  const quickFilterFallbackMessage = quickFilterScopeModel.scopeDescription
+    ? t("tasks.empty.mobileQuickFilterFallbackScoped", { scope: quickFilterScopeModel.scopeDescription })
+    : t("tasks.empty.mobileQuickFilterFallback");
   const effectiveTaskViewModel = useMemo(
     () => ({
       ...feedTaskViewModel,
@@ -378,13 +454,13 @@ export function MobileLayout({
         {...swipeHandlers}
       >
         <div className="h-full flex flex-col">
-          {isQuickFilterFallbackActive && (
+          {shouldShowQuickFilterFallback && (
             <div
               role="status"
               aria-live="polite"
-              className="px-3 pt-2 pb-1 text-xs leading-none text-muted-foreground"
+              className="w-full px-3 pt-2 pb-1 text-center text-xs leading-none text-muted-foreground"
             >
-              {t("tasks.empty.mobileQuickFilterFallback")}
+              {quickFilterFallbackMessage}
             </div>
           )}
           {!showFilters && (

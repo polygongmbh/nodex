@@ -92,6 +92,23 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText("This is all on relay.one.")).toBeInTheDocument();
   });
 
+  it("renders a scoped mobile fallback hint when filtered content is empty", () => {
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        mode="mobile"
+      />
+    );
+
+    expect(document.querySelector('[data-empty-mode="mobile"]')).toBeInTheDocument();
+    expect(
+      screen.getByText("Nothing yet by Alice, in #ops, excluding #frontend, on relay.one, showing everything.")
+    ).toBeInTheDocument();
+  });
+
   it("keeps the default feed empty screen when only a relay is selected", () => {
     render(
       <FilteredEmptyState

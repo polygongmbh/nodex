@@ -222,7 +222,9 @@ export function buildEmptyScopeModel({
     scopeDescription,
     filteredSentence,
     scopeFooterSentence,
-    mobileFallbackHint: t("tasks.empty.filtered.mobileFallback"),
+    mobileFallbackHint: scopeDescription
+      ? t("tasks.empty.filtered.mobileFallbackScoped", { scope: scopeDescription })
+      : t("tasks.empty.filtered.mobileFallback"),
     loadingSentence,
     errorSentence,
     errorSubtitle,
