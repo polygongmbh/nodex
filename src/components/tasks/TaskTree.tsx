@@ -443,13 +443,13 @@ export function TaskTree({
         onExpandedChange={setIsComposerExpanded}
         mentionRequest={mentionRequest}
         composeRestoreRequest={composeRestoreRequest}
-        className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
+        className="relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, currentContextTask?.tags)}
         allowComment={Boolean(currentContextId)}
       />
 
       {/* Task List */}
-      <div ref={scrollContainerRef} className="scrollbar-thin scrollbar-main-view flex-1 overflow-y-auto p-4 space-y-1" data-onboarding="task-list">
+      <div ref={scrollContainerRef} className="scrollbar-thin scrollbar-main-view flex-1 overflow-y-auto px-2 sm:px-3 py-4 space-y-1" data-onboarding="task-list">
         {shouldShowMobileScopeFallback ? (
           <FilteredEmptyState
             variant="collection"

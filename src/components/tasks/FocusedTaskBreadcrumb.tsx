@@ -49,7 +49,7 @@ export function FocusedTaskBreadcrumb({
     <div
       data-onboarding="focused-breadcrumb"
       className={cn(
-        "w-full h-12 border-b border-border/80 bg-muted/60 px-4 flex items-center gap-3 shadow-sm",
+        "w-full h-12 border-b border-border/80 bg-muted/60 px-2 sm:px-3 flex items-center gap-3 shadow-sm",
         className
       )}
     >

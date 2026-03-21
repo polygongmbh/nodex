@@ -697,7 +697,7 @@ export function FeedView({
           data-testid={`feed-state-entry-${update.id}`}
           onClick={() => focusTask(task.id)}
           className={cn(
-            `border-b border-border px-4 py-1.5 transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
+            `border-b border-border px-2 sm:px-3 py-1.5 transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
             isMobile && "px-3 py-1.5"
           )}
         >
@@ -843,8 +843,8 @@ export function FeedView({
           isMobile
             ? "p-3"
             : breadcrumb.length > 0
-              ? "px-4 pb-4 pt-2.5"
-              : "p-4",
+              ? "px-2 sm:px-3 pb-4 pt-2.5"
+              : "px-2 sm:px-3 py-4",
           isCompletedVisual && "opacity-60",
           isLockedUntilStart && "opacity-50 grayscale",
           isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
@@ -1299,7 +1299,7 @@ export function FeedView({
         forceExpandSignal={composeGuideActivationSignal}
         mentionRequest={mentionRequest}
         composeRestoreRequest={composeRestoreRequest}
-        className="relative z-20 border-b border-border px-4 py-3 bg-background/95 backdrop-blur-sm"
+        className="relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
         allowFeedMessageTypes
       />
