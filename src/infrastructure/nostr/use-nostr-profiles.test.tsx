@@ -21,7 +21,7 @@ describe("useNostrProfile stability", () => {
   it("does not rerender in a loop when pubkey is null", async () => {
     let renderCount = 0;
 
-    function Harness() {
+    function Harness(): null {
       renderCount += 1;
       useNostrProfile(null);
       return null;
@@ -66,7 +66,7 @@ describe("useNostrProfile stability", () => {
     });
 
     let renderCount = 0;
-    function Harness() {
+    function Harness(): null {
       renderCount += 1;
       useNostrProfile(pubkey);
       return null;

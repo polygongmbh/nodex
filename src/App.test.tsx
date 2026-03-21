@@ -13,11 +13,11 @@ const ndkContextModule = vi.hoisted(() => ({
 }));
 
 vi.mock("@/components/ui/toaster", () => ({
-  Toaster: () => null,
+  Toaster: (): null => null,
 }));
 
 vi.mock("@/components/ui/sonner", () => ({
-  Toaster: () => null,
+  Toaster: (): null => null,
 }));
 
 vi.mock("@/components/ui/tooltip", () => ({

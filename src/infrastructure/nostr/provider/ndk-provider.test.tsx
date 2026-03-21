@@ -232,7 +232,12 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
   NDKNip07Signer: class {},
   NDKNip46Signer: { bunker: () => ({ blockUntilReady: async () => ({ fetchProfile: async () => {}, pubkey: "pub", npub: "npub" }) }) },
   NDKPrivateKeySigner: class {
-    async user() {
+    async user(): Promise<{
+      pubkey: string;
+      npub: string;
+      fetchProfile: () => Promise<void>;
+      profile: undefined;
+    }> {
       return { pubkey: "pub", npub: "npub", fetchProfile: async () => {}, profile: undefined };
     }
     static generate() {

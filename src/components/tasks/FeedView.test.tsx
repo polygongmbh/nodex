@@ -7,7 +7,7 @@ import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
 import i18n from "@/lib/i18n/config";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
-  useNDK: () => ({ user: null }),
+  useNDK: (): { user: null } => ({ user: null }),
 }));
 
 vi.mock("@/components/ui/popover", () => ({

@@ -416,9 +416,9 @@ export function linkifyContent(
 ): React.ReactNode[] {
   const lines = content.split(/\r?\n/);
   const nodes: React.ReactNode[] = [];
-  const standaloneEmbedsByLine = options?.disableStandaloneEmbeds
-    ? lines.map(() => null)
-    : lines.map((line) => getStandaloneEmbeddableUrlForLine(line));
+  const standaloneEmbedsByLine: Array<string | null> = options?.disableStandaloneEmbeds
+    ? lines.map((): null => null)
+    : lines.map((line): string | null => getStandaloneEmbeddableUrlForLine(line));
 
   for (let index = 0; index < lines.length; index += 1) {
     if (index > 0) {

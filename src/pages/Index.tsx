@@ -140,7 +140,7 @@ const Index = () => {
 
   // Convert relay statuses to app Relay format - combine demo relay with nostr relays
   const relays: Relay[] = useMemo(() => {
-    const nostrRelayItems = ndkRelays.map((r) => ({
+    const nostrRelayItems: Relay[] = ndkRelays.map((r): Relay => ({
       id: getRelayIdFromUrl(r.url),
       name: getRelayNameFromUrl(r.url),
       icon: "radio",

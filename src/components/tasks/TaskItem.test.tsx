@@ -6,7 +6,7 @@ import type { Task } from "@/types";
 import { makePerson, makeTask } from "@/test/fixtures";
 
 vi.mock("@/infrastructure/nostr/use-nostr-profiles", () => ({
-  useNostrProfile: () => ({ profile: null }),
+  useNostrProfile: (): { profile: null } => ({ profile: null }),
 }));
 
 vi.mock("@/components/ui/dropdown-menu", () => ({

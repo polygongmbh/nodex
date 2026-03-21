@@ -6,7 +6,7 @@ import { Task, Channel, Relay, Person } from "@/types";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
-  useNDK: () => ({ user: null }),
+  useNDK: (): { user: null } => ({ user: null }),
 }));
 
 const authorId = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";

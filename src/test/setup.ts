@@ -117,7 +117,11 @@ function buildListenerKey(
 }
 
 function installTrackedTimerWrappers(): void {
-  const trackedSetTimeout: typeof window.setTimeout = ((handler, timeout, ...args) => {
+  const trackedSetTimeout: typeof window.setTimeout = ((
+    handler: TimerHandler,
+    timeout?: number,
+    ...args: unknown[]
+  ): number => {
     const handle = originalSetTimeout(((...callbackArgs: unknown[]) => {
       activeTimeouts.delete(handle);
       if (typeof handler === "function") {
@@ -137,7 +141,11 @@ function installTrackedTimerWrappers(): void {
     return originalClearTimeout(handle);
   }) as typeof window.clearTimeout;
 
-  const trackedSetInterval: typeof window.setInterval = ((handler, timeout, ...args) => {
+  const trackedSetInterval: typeof window.setInterval = ((
+    handler: TimerHandler,
+    timeout?: number,
+    ...args: unknown[]
+  ): number => {
     const handle = originalSetInterval(handler, timeout, ...args);
     activeIntervals.set(handle, captureStack());
     return handle;
@@ -179,22 +187,43 @@ function installTrackedTimerWrappers(): void {
 }
 
 function installTrackedEventListenerWrappers(): void {
-  window.addEventListener = ((type, listener, options) => {
+  type WindowAddEventListenerArgs = Parameters<typeof window.addEventListener>;
+  type WindowRemoveEventListenerArgs = Parameters<typeof window.removeEventListener>;
+  type DocumentAddEventListenerArgs = Parameters<typeof document.addEventListener>;
+  type DocumentRemoveEventListenerArgs = Parameters<typeof document.removeEventListener>;
+
+  window.addEventListener = ((
+    type: WindowAddEventListenerArgs[0],
+    listener: WindowAddEventListenerArgs[1],
+    options?: WindowAddEventListenerArgs[2]
+  ) => {
     activeEventListeners.set(buildListenerKey("window", type, listener, options), captureStack());
     return originalWindowAddEventListener(type, listener, options);
   }) as typeof window.addEventListener;
 
-  window.removeEventListener = ((type, listener, options) => {
+  window.removeEventListener = ((
+    type: WindowRemoveEventListenerArgs[0],
+    listener: WindowRemoveEventListenerArgs[1],
+    options?: WindowRemoveEventListenerArgs[2]
+  ) => {
     activeEventListeners.delete(buildListenerKey("window", type, listener, options));
     return originalWindowRemoveEventListener(type, listener, options);
   }) as typeof window.removeEventListener;
 
-  document.addEventListener = ((type, listener, options) => {
+  document.addEventListener = ((
+    type: DocumentAddEventListenerArgs[0],
+    listener: DocumentAddEventListenerArgs[1],
+    options?: DocumentAddEventListenerArgs[2]
+  ) => {
     activeEventListeners.set(buildListenerKey("document", type, listener, options), captureStack());
     return originalDocumentAddEventListener(type, listener, options);
   }) as typeof document.addEventListener;
 
-  document.removeEventListener = ((type, listener, options) => {
+  document.removeEventListener = ((
+    type: DocumentRemoveEventListenerArgs[0],
+    listener: DocumentRemoveEventListenerArgs[1],
+    options?: DocumentRemoveEventListenerArgs[2]
+  ) => {
     activeEventListeners.delete(buildListenerKey("document", type, listener, options));
     return originalDocumentRemoveEventListener(type, listener, options);
   }) as typeof document.removeEventListener;
@@ -313,15 +342,15 @@ installTrackedObserverWrappers();
 // Mock matchMedia for tests
 Object.defineProperty(window, "matchMedia", {
   writable: true,
-  value: (query: string) => ({
+  value: (query: string): MediaQueryList => ({
     matches: false,
     media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
+    onchange: null as MediaQueryList["onchange"],
+    addListener: (_listener: ((event: MediaQueryListEvent) => void) | null): void => {},
+    removeListener: (_listener: ((event: MediaQueryListEvent) => void) | null): void => {},
+    addEventListener: (_type: string, _listener: EventListenerOrEventListenerObject | null): void => {},
+    removeEventListener: (_type: string, _listener: EventListenerOrEventListenerObject | null): void => {},
+    dispatchEvent: (_event: Event): boolean => false,
   }),
 });
 

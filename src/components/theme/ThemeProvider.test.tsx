@@ -28,16 +28,16 @@ class MatchMediaController {
   createQuery = (query: string): MediaQueryList => {
     const queryList = {
       media: query,
-      onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: (_eventName, listener) => {
+      onchange: null as MediaQueryList["onchange"],
+      addListener: (_listener: ((event: MediaQueryListEvent) => void) | null) => {},
+      removeListener: (_listener: ((event: MediaQueryListEvent) => void) | null) => {},
+      addEventListener: (_eventName: string, listener: EventListenerOrEventListenerObject) => {
         this.listeners.add(listener as MatchMediaListener);
       },
-      removeEventListener: (_eventName, listener) => {
+      removeEventListener: (_eventName: string, listener: EventListenerOrEventListenerObject) => {
         this.listeners.delete(listener as MatchMediaListener);
       },
-      dispatchEvent: () => true,
+      dispatchEvent: (_event: Event): boolean => true,
     };
     Object.defineProperty(queryList, "matches", {
       get: () => this.isDark,

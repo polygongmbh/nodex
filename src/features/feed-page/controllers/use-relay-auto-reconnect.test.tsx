@@ -13,7 +13,7 @@ interface HarnessProps {
   retryTickMs?: number;
 }
 
-function Harness(props: HarnessProps) {
+function Harness(props: HarnessProps): null {
   useRelayAutoReconnect(props);
   return null;
 }

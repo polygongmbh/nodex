@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
 import type { Channel, Person, Relay, Task, TaskCreateResult } from "@/types";
+import type { NDKContextValue } from "@/infrastructure/nostr/ndk-context";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
 import {
   FeedTaskViewModelProvider,
@@ -10,7 +11,10 @@ import {
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
-const ndkMock = {
+const ndkMock: Pick<
+  NDKContextValue,
+  "user" | "needsProfileSetup" | "authMethod" | "logout" | "getGuestPrivateKey" | "updateUserProfile" | "isProfileSyncing"
+> = {
   user: null,
   needsProfileSetup: false,
   authMethod: "guest",

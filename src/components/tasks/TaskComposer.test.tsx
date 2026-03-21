@@ -93,7 +93,21 @@ const successfulUploadedAttachment = {
   name: "uploaded.png",
 } satisfies Awaited<ReturnType<typeof attachmentUpload.uploadAttachment>>;
 
-const buildFileDropDataTransfer = (files: File[]) => ({
+interface MockDataTransferItem {
+  kind: "file" | "string";
+  type: string;
+  getAsFile: () => File | null;
+  getAsString?: (callback: (value: string) => void) => void;
+}
+
+interface MockDataTransfer {
+  files: File[];
+  items: MockDataTransferItem[];
+  types: string[];
+  getData?: (type: string) => string;
+}
+
+const buildFileDropDataTransfer = (files: File[]): MockDataTransfer => ({
   files,
   items: files.map((file) => ({
     kind: "file" as const,
@@ -103,7 +117,7 @@ const buildFileDropDataTransfer = (files: File[]) => ({
   types: ["Files"],
 });
 
-const buildTextDropDataTransfer = (text: string) => ({
+const buildTextDropDataTransfer = (text: string): MockDataTransfer => ({
   files: [],
   items: [
     {
@@ -117,7 +131,7 @@ const buildTextDropDataTransfer = (text: string) => ({
   getData: (type: string) => (type === "text/plain" ? text : ""),
 });
 
-const buildPasteClipboardData = (files: File[]) => ({
+const buildPasteClipboardData = (files: File[]): MockDataTransfer => ({
   items: files.map((file) => ({
     kind: "file" as const,
     type: file.type,
