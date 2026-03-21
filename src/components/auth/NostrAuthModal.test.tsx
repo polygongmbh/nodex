@@ -63,6 +63,7 @@ describe("NostrAuthModal", () => {
   beforeEach(() => {
     window.localStorage.clear();
     vi.unstubAllEnvs();
+    vi.stubEnv("VITE_ALLOW_GUEST_SIGN_IN", "true");
     ndkMock.isConnected = true;
     ndkMock.user = null;
     ndkMock.authMethod = null;
@@ -82,6 +83,33 @@ describe("NostrAuthModal", () => {
     expect(screen.getByText(/choose how you want to authenticate/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /noas authentication/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^more options$/i })).not.toBeInTheDocument();
+  });
+
+  it("renders chooser options in the requested order", () => {
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    openChooserIfNeeded();
+
+    const noasOption = screen.getByRole("button", { name: /noas authentication/i });
+    const extensionOption = screen.getByRole("button", { name: /browser extension/i });
+    const signerOption = screen.getByRole("button", { name: /signer app/i });
+    const privateKeyOption = screen.getByRole("button", { name: /private key/i });
+    const guestOption = screen.getByRole("button", { name: /guest identity/i });
+    const orderedOptions = [noasOption, extensionOption, signerOption, privateKeyOption, guestOption];
+
+    orderedOptions.slice(0, -1).forEach((option, index) => {
+      expect(option.compareDocumentPosition(orderedOptions[index + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    });
+  });
+
+  it("hides guest identity sign-in when disabled by env", () => {
+    vi.stubEnv("VITE_ALLOW_GUEST_SIGN_IN", "false");
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    openChooserIfNeeded();
+
+    expect(screen.queryByRole("button", { name: /guest identity/i })).not.toBeInTheDocument();
   });
 
   it("shows loading indicator only on extension option when extension login starts", async () => {

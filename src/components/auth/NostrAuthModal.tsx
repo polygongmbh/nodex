@@ -143,6 +143,14 @@ function formatNoasServerErrorPayload(errorMessage: string | undefined, httpStat
 const hasNostrExtension = (): boolean =>
   typeof window !== "undefined" && Boolean((window as WindowWithNostr).nostr);
 
+function resolveBooleanEnvFlag(value: unknown, defaultValue: boolean): boolean {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) return defaultValue;
+  if (["1", "true", "yes", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  return defaultValue;
+}
+
 export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalProps) {
   const { t } = useTranslation();
   const { 
@@ -157,6 +165,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
 
   const noasApiUrl = import.meta.env.VITE_NOAS_API_URL as string | undefined;
   const noasHostUrl = import.meta.env.VITE_NOAS_HOST_URL as string | undefined;
+  const allowGuestSignIn = resolveBooleanEnvFlag(import.meta.env.VITE_ALLOW_GUEST_SIGN_IN, true);
   const hasConfiguredNoasHost = Boolean(noasApiUrl || noasHostUrl);
   const resolvedDefaultStep = useMemo<AuthStep>(() => {
     if (initialStep === "noasSignUp") return "noasSignUp";
@@ -323,144 +332,160 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
   }, [isOpen, resolvedDefaultStep]);
 
   const shouldShowModalHeader = step !== "noas" && step !== "noasSignUp";
+  const authMethodOptionClassName =
+    "w-full flex items-center gap-2.5 rounded-md border p-3 text-left transition-colors sm:p-3.5";
+  const authMethodOptionIconClassName =
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full sm:h-10 sm:w-10";
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md" dismissOnOutsideInteract={!hasUnsavedAuthInput}>
-        {shouldShowModalHeader ? (
-          <DialogHeader>
-            <DialogTitle>{t("auth.modal.title")}</DialogTitle>
-            <DialogDescription>
-              {step === "choose"
-                ? t("auth.modal.descriptionChoose")
-                : step === "privateKey"
-                  ? t("auth.modal.descriptionPrivateKey")
-                  : t("auth.modal.descriptionNostrConnect")
-              }
-            </DialogDescription>
-          </DialogHeader>
-        ) : (
-          <DialogHeader className="sr-only">
-            <DialogTitle>{t("auth.modal.title")}</DialogTitle>
-            <DialogDescription>{t("auth.noas.description")}</DialogDescription>
-          </DialogHeader>
-        )}
+      <DialogContent
+        className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-2xl"
+        dismissOnOutsideInteract={!hasUnsavedAuthInput}
+      >
+        <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-3 sm:p-4">
+          {shouldShowModalHeader ? (
+            <DialogHeader className="shrink-0">
+              <DialogTitle>{t("auth.modal.title")}</DialogTitle>
+              <DialogDescription>
+                {step === "choose"
+                  ? t("auth.modal.descriptionChoose")
+                  : step === "privateKey"
+                    ? t("auth.modal.descriptionPrivateKey")
+                    : t("auth.modal.descriptionNostrConnect")
+                }
+              </DialogDescription>
+            </DialogHeader>
+          ) : (
+            <DialogHeader className="sr-only">
+              <DialogTitle>{t("auth.modal.title")}</DialogTitle>
+              <DialogDescription>{t("auth.noas.description")}</DialogDescription>
+            </DialogHeader>
+          )}
 
-        {error && step !== "noas" && step !== "noasSignUp" && (
-          <div className="flex items-start gap-2 p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
-            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
+          {error && step !== "noas" && step !== "noasSignUp" && (
+            <div className="mt-2 flex items-start gap-2 rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
-        {step === "choose" ? (
-          <div className="space-y-3">
-            {/* Browser Extension */}
-            <button
-              onClick={handleExtensionLogin}
-              disabled={isAuthenticating || !hasExtension || isMobile}
-              aria-busy={pendingAuthMethod === "extension"}
-              className={cn(
-                "w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-left",
-                hasExtension && !isMobile
-                  ? "border-border hover:bg-muted hover:border-primary/50" 
-                  : "border-border/50 opacity-50 cursor-not-allowed"
-              )}
-            >
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium">{t("auth.modal.browserExtension")}</div>
-                <div className="text-sm text-muted-foreground">
-                  {isMobile
-                    ? t("auth.modal.extensionMobileUnavailable")
-                    : hasExtension 
-                      ? t("auth.modal.extensionSignInHint")
-                      : t("auth.modal.extensionMissing")
-                  }
+          <div className="scrollbar-thin mt-2 min-h-0 flex-1 overflow-y-auto pr-1">
+            {step === "choose" ? (
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {/* Noas Authentication */}
+                  <button
+                    onClick={() => setStep("noas")}
+                    disabled={isAuthenticating}
+                    aria-busy={pendingAuthMethod === "noas"}
+                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
+                  >
+                    <div className={cn(authMethodOptionIconClassName, "bg-blue-100")}>
+                      <LogIn className="h-4 w-4 text-blue-600 sm:h-5 sm:w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">{t("auth.modal.noasAuth")}</div>
+                      <div className="text-xs text-muted-foreground sm:text-sm">
+                        {t("auth.modal.noasAuthHint")}
+                      </div>
+                    </div>
+                    {pendingAuthMethod === "noas" && <Loader2 className="h-4 w-4 animate-spin" />}
+                  </button>
+
+                  {/* Browser Extension */}
+                  <button
+                    onClick={handleExtensionLogin}
+                    disabled={isAuthenticating || !hasExtension || isMobile}
+                    aria-busy={pendingAuthMethod === "extension"}
+                    className={cn(
+                      authMethodOptionClassName,
+                      hasExtension && !isMobile
+                        ? "border-border hover:bg-muted hover:border-primary/50"
+                        : "cursor-not-allowed border-border/50 opacity-50"
+                    )}
+                  >
+                    <div className={cn(authMethodOptionIconClassName, "bg-primary/10")}>
+                      <Zap className="h-4 w-4 text-primary sm:h-5 sm:w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">{t("auth.modal.browserExtension")}</div>
+                      <div className="text-xs text-muted-foreground sm:text-sm">
+                        {isMobile
+                          ? t("auth.modal.extensionMobileUnavailable")
+                          : hasExtension
+                            ? t("auth.modal.extensionSignInHint")
+                            : t("auth.modal.extensionMissing")
+                        }
+                      </div>
+                    </div>
+                    {pendingAuthMethod === "extension" && <Loader2 className="h-4 w-4 animate-spin" />}
+                  </button>
+
+                  {/* Nostr Connect (Signer App) */}
+                  <button
+                    onClick={() => setStep("nostrConnect")}
+                    disabled={isAuthenticating}
+                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
+                  >
+                    <div className={cn(authMethodOptionIconClassName, "bg-secondary")}>
+                      <Key className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">{t("auth.modal.signerApp")}</div>
+                      <div className="text-xs text-muted-foreground sm:text-sm">
+                        {t("auth.modal.signerAppHint")}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Private Key */}
+                  <button
+                    onClick={() => setStep("privateKey")}
+                    disabled={isAuthenticating}
+                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
+                  >
+                    <div className={cn(authMethodOptionIconClassName, "bg-warning/10")}>
+                      <Key className="h-4 w-4 text-warning sm:h-5 sm:w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">{t("auth.modal.privateKey")}</div>
+                      <div className="text-xs text-muted-foreground sm:text-sm">
+                        {t("auth.modal.privateKeyHint")}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Guest Identity */}
+                  {allowGuestSignIn ? (
+                    <button
+                      onClick={handleGuestLogin}
+                      disabled={isAuthenticating}
+                      aria-busy={pendingAuthMethod === "guest"}
+                      className={cn(
+                        authMethodOptionClassName,
+                        "border-border hover:bg-muted hover:border-primary/50 sm:col-span-2"
+                      )}
+                    >
+                      <div className={cn(authMethodOptionIconClassName, "bg-secondary")}>
+                        <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium">{t("auth.modal.guestIdentity")}</div>
+                        <div className="text-xs text-muted-foreground sm:text-sm">
+                          {t("auth.modal.guestIdentityHint")}
+                        </div>
+                      </div>
+                      {pendingAuthMethod === "guest" && <Loader2 className="h-4 w-4 animate-spin" />}
+                    </button>
+                  ) : null}
                 </div>
-              </div>
-              {pendingAuthMethod === "extension" && <Loader2 className="w-4 h-4 animate-spin" />}
-            </button>
 
-            {/* Nostr Connect (Signer App) */}
-            <button
-              onClick={() => setStep("nostrConnect")}
-              disabled={isAuthenticating}
-              className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
-            >
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                <Key className="w-5 h-5 text-muted-foreground" />
+                <p className="pt-1 text-center text-xs text-muted-foreground">
+                  {t("auth.modal.securityHint")}
+                </p>
               </div>
-              <div className="flex-1">
-                <div className="font-medium">{t("auth.modal.signerApp")}</div>
-                <div className="text-sm text-muted-foreground">
-                  {t("auth.modal.signerAppHint")}
-                </div>
-              </div>
-            </button>
-
-            {/* Noas Authentication */}
-            <button
-              onClick={() => setStep("noas")}
-              disabled={isAuthenticating}
-              aria-busy={pendingAuthMethod === "noas"}
-              className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
-            >
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <LogIn className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium">{t("auth.modal.noasAuth")}</div>
-                <div className="text-sm text-muted-foreground">
-                  {t("auth.modal.noasAuthHint")}
-                </div>
-              </div>
-              {pendingAuthMethod === "noas" && <Loader2 className="w-4 h-4 animate-spin" />}
-            </button>
-
-            {/* Private Key */}
-            <button
-              onClick={() => setStep("privateKey")}
-              disabled={isAuthenticating}
-              className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
-            >
-              <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
-                <Key className="w-5 h-5 text-warning" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium">{t("auth.modal.privateKey")}</div>
-                <div className="text-sm text-muted-foreground">
-                  {t("auth.modal.privateKeyHint")}
-                </div>
-              </div>
-            </button>
-
-            {/* Guest Identity */}
-            <button
-              onClick={handleGuestLogin}
-              disabled={isAuthenticating}
-              aria-busy={pendingAuthMethod === "guest"}
-              className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted hover:border-primary/50 transition-colors text-left"
-            >
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                <User className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium">{t("auth.modal.guestIdentity")}</div>
-                <div className="text-sm text-muted-foreground">
-                  {t("auth.modal.guestIdentityHint")}
-                </div>
-              </div>
-              {pendingAuthMethod === "guest" && <Loader2 className="w-4 h-4 animate-spin" />}
-            </button>
-
-            <p className="text-xs text-muted-foreground text-center pt-2">
-              {t("auth.modal.securityHint")}
-            </p>
-          </div>
-        ) : step === "privateKey" ? (
+            ) : step === "privateKey" ? (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="privateKey">{t("auth.modal.privateKey")}</Label>
@@ -569,6 +594,8 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             </div>
           </div>
         )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

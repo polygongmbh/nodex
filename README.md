@@ -45,6 +45,7 @@ Key env values:
 - `RNOSTR_WS_PORT`: websocket port exposed by `rnostr`.
 - `VITE_DEFAULT_RELAYS`: optional comma-separated relay URLs to include in addition to the domain-derived relay.
 - `VITE_ENABLE_DEMO_FEED`: optional `true`/`false` flag to show the local demo feed relay (`false` by default).
+- `VITE_ALLOW_GUEST_SIGN_IN`: optional `true`/`false` flag for showing guest identity sign-in in the auth modal (`true` by default).
 - `VITE_NIP96_UPLOAD_URL`: NIP-96 upload endpoint used by attachment buttons.
 
 Nodex now derives default relays from env only (`VITE_DEFAULT_RELAYS` and/or `VITE_DEFAULT_RELAY_DOMAIN` + protocol/port), with no hardcoded relay URLs in source.
