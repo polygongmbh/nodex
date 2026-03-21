@@ -127,7 +127,7 @@ const DialogScrollBody = React.forwardRef<HTMLDivElement, DialogScrollBodyProps>
   ({ className, innerClassName, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("scrollbar-thin scrollbar-thin-inset min-h-0 flex-1 overflow-y-auto pr-1", className)}
+      className={cn("min-h-0 flex-1 overflow-y-auto pr-1", className)}
       {...props}
     >
       <div className={cn("px-1 sm:px-1.5", innerClassName)}>{children}</div>

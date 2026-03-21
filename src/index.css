@@ -171,6 +171,25 @@
 
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.6) hsl(var(--foreground) / 0.03);
+  }
+
+  *::-webkit-scrollbar {
+    width: 0.625rem;
+    height: 0.625rem;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: hsl(var(--foreground) / 0.03);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.6);
+    border: 0.125rem solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+    min-height: 3rem;
   }
 
   body {
@@ -268,56 +287,14 @@
     background-color: hsl(var(--task-hashtag-bg-hover));
   }
 
-  .scrollbar-thin {
+  .scrollbar-main-view {
+    overflow-y: scroll;
     scrollbar-width: auto;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.45) transparent;
   }
 
-  .scrollbar-thin::-webkit-scrollbar {
+  .scrollbar-main-view::-webkit-scrollbar {
     width: 0.875rem;
     height: 0.875rem;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.45);
-    border: 0.125rem solid transparent;
-    border-radius: 9999px;
-    background-clip: padding-box;
-    min-height: 3rem;
-  }
-
-  .scrollbar-thin:hover::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--muted-foreground) / 0.6);
-  }
-
-  .scrollbar-thin::-webkit-scrollbar-thumb:active {
-    background-color: hsl(var(--foreground) / 0.72);
-  }
-
-  .scrollbar-main-view {
-    scrollbar-gutter: stable;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.5) hsl(var(--foreground) / 0.06);
-  }
-
-  .scrollbar-main-view::-webkit-scrollbar-track {
-    background: hsl(var(--foreground) / 0.06);
-  }
-
-  .scrollbar-main-view-no-gutter {
-    scrollbar-gutter: auto;
-    scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
-  }
-
-  .scrollbar-main-view-no-gutter::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-thin-inset {
-    scrollbar-gutter: stable;
   }
 
   .glow-primary {

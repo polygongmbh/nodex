@@ -487,7 +487,7 @@ export function KanbanView({
                   {(provided, snapshot) => (
                     <div
                       className={cn(
-                        "scrollbar-thin scrollbar-main-view flex-1 min-h-0 overflow-y-auto p-2",
+                        "flex-1 min-h-0 overflow-y-auto p-2",
                         snapshot.isDraggingOver && "bg-primary/5"
                       )}
                     >

@@ -295,7 +295,7 @@ export function Sidebar({
       )}
     >
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto scrollbar-thin py-1.5 pb-3">
+      <nav className="flex-1 overflow-y-auto py-1.5 pb-3">
         <div className="px-2 sm:px-2.5 lg:px-3 pb-2">
           <SavedFilterPresetRow
             configurations={savedFilterConfigurations}

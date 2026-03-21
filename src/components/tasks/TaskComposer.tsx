@@ -1569,7 +1569,7 @@ export function TaskComposer({
                   : t("composer.placeholders.comment")
           }
           className={cn(
-            "scrollbar-thin scrollbar-thin-inset w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
+            "w-full bg-muted/60 border border-border/50 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm",
             highlightedTarget === "input" && "ring-2 ring-amber-400 border-amber-400/70",
             adaptiveSize && !showExpandedControls
               ? "min-h-[42px] py-2"
