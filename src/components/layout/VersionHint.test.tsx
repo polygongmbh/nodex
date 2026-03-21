@@ -6,7 +6,7 @@ describe("VersionHint", () => {
   it("opens changelog dialog when version is clicked", () => {
     render(<VersionHint />);
 
-    fireEvent.click(screen.getByText(/^v\d+\.\d+\.\d+$/i));
+    fireEvent.click(screen.getByRole("button"));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
