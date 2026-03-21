@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
+  DialogScrollBody,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -99,7 +100,7 @@ export function LegalDialog({
             </button>
           </div>
         </div>
-        <div className="scrollbar-thin max-h-[75vh] space-y-4 overflow-y-auto px-4 py-3 text-sm sm:px-6 sm:py-4">
+        <DialogScrollBody className="max-h-[75vh]" innerClassName="space-y-4 px-4 py-3 text-sm sm:px-6 sm:py-4">
           {section === "imprint" ? (
             <section className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">Anbieterkennzeichnung (Impressum)</h3>
@@ -219,7 +220,7 @@ export function LegalDialog({
               </section>
             </section>
           )}
-        </div>
+        </DialogScrollBody>
       </DialogContent>
     </Dialog>
   );

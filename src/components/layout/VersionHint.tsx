@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
+  DialogScrollBody,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -40,7 +41,7 @@ export function VersionHint({ className }: VersionHintProps) {
             Version history and release highlights.
           </DialogDescription>
         </DialogHeader>
-        <div className="scrollbar-thin max-h-[75vh] overflow-y-auto px-4 py-3 sm:px-6 sm:py-4">
+        <DialogScrollBody className="max-h-[75vh]" innerClassName="px-4 py-3 sm:px-6 sm:py-4">
           <div className="space-y-4">
             {releases.map((release) => (
               <article key={`${release.version}-${release.date || "undated"}`} className="rounded-lg border border-border/70 bg-muted/20 p-3 sm:p-4">
@@ -75,7 +76,7 @@ export function VersionHint({ className }: VersionHintProps) {
               </article>
             ))}
           </div>
-        </div>
+        </DialogScrollBody>
       </DialogContent>
     </Dialog>
   );

@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
+  DialogScrollBody,
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
@@ -370,10 +371,9 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             </div>
           )}
 
-          <div className="scrollbar-thin mt-2 min-h-0 flex-1 overflow-y-auto">
-            <div className="px-1">
-              {step === "choose" ? (
-                <div className="space-y-2.5">
+          <DialogScrollBody className="mt-2">
+            {step === "choose" ? (
+              <div className="space-y-2.5">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {/* Noas Authentication */}
                   <button
@@ -485,118 +485,117 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                 <p className="pt-1 text-center text-xs text-muted-foreground">
                   {t("auth.modal.securityHint")}
                 </p>
-                </div>
-              ) : step === "privateKey" ? (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="privateKey">{t("auth.modal.privateKey")}</Label>
-              <Input
-                id="privateKey"
-                type="password"
-                placeholder={t("auth.modal.privateKeyPlaceholder")}
-                value={privateKey}
-                onChange={(e) => setPrivateKey(e.target.value)}
-                autoComplete="off"
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("auth.modal.privateKeyLocalOnly")}
-              </p>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setStep("choose")}
-                disabled={isAuthenticating}
-                className="flex-1"
-              >
-                {t("auth.modal.back")}
-              </Button>
-              <Button
-                onClick={handlePrivateKeyLogin}
-                disabled={isAuthenticating || !privateKey.trim()}
-                className="flex-1"
-              >
-                {pendingAuthMethod === "privateKey" ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
-                {t("auth.modal.signIn")}
-              </Button>
-            </div>
-          </div>
-        ) : step === "noas" ? (
-          <NoasAuthForm
-            onLogin={handleNoasLogin}
-            onSignUp={() => setStep("noasSignUp")}
-            onBack={() => setStep("choose")}
-            username={noasUsername}
-            password={noasPassword}
-            isEditingHostUrl={isEditingNoasHost}
-            allowDirectHostEdit={!hasConfiguredNoasHost}
-            isLoading={isAuthenticating}
-            error={error || undefined}
-            noasHostUrl={editableNoasUrl}
-            onUsernameChange={setNoasUsername}
-            onPasswordChange={setNoasPassword}
-            onNoasHostUrlChange={setEditableNoasUrl}
-            onToggleHostEdit={() => setIsEditingNoasHost((current) => !current)}
-          />
-        ) : step === "noasSignUp" ? (
-          <NoasSignUpForm
-            onSignUp={handleNoasSignUp}
-            onSignIn={() => setStep("noas")}
-            username={noasUsername}
-            password={noasPassword}
-            isEditingHostUrl={isEditingNoasHost}
-            allowDirectHostEdit={!hasConfiguredNoasHost}
-            isLoading={isAuthenticating}
-            error={error || undefined}
-            noasHostUrl={editableNoasUrl}
-            onUsernameChange={setNoasUsername}
-            onPasswordChange={setNoasPassword}
-            onNoasHostUrlChange={setEditableNoasUrl}
-            onToggleHostEdit={() => setIsEditingNoasHost((current) => !current)}
-          />
-        ) : (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="bunkerUrl">{t("auth.modal.signerConnection")}</Label>
-              <Input
-                id="bunkerUrl"
-                type="text"
-                placeholder={t("auth.modal.signerPlaceholder")}
-                value={bunkerUrl}
-                onChange={(e) => setBunkerUrl(e.target.value)}
-                autoComplete="off"
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("auth.modal.signerHint")}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setStep("choose")}
-                disabled={isAuthenticating}
-                className="flex-1"
-              >
-                {t("auth.modal.back")}
-              </Button>
-              <Button
-                onClick={handleNostrConnectLogin}
-                disabled={isAuthenticating || !bunkerUrl.trim()}
-                className="flex-1"
-              >
-                {pendingAuthMethod === "nostrConnect" ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
-                {t("auth.modal.connect")}
-              </Button>
-            </div>
-          </div>
-        )}
               </div>
-            </div>
+            ) : step === "privateKey" ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="privateKey">{t("auth.modal.privateKey")}</Label>
+                  <Input
+                    id="privateKey"
+                    type="password"
+                    placeholder={t("auth.modal.privateKeyPlaceholder")}
+                    value={privateKey}
+                    onChange={(e) => setPrivateKey(e.target.value)}
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("auth.modal.privateKeyLocalOnly")}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep("choose")}
+                    disabled={isAuthenticating}
+                    className="flex-1"
+                  >
+                    {t("auth.modal.back")}
+                  </Button>
+                  <Button
+                    onClick={handlePrivateKeyLogin}
+                    disabled={isAuthenticating || !privateKey.trim()}
+                    className="flex-1"
+                  >
+                    {pendingAuthMethod === "privateKey" ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    {t("auth.modal.signIn")}
+                  </Button>
+                </div>
+              </div>
+            ) : step === "noas" ? (
+              <NoasAuthForm
+                onLogin={handleNoasLogin}
+                onSignUp={() => setStep("noasSignUp")}
+                onBack={() => setStep("choose")}
+                username={noasUsername}
+                password={noasPassword}
+                isEditingHostUrl={isEditingNoasHost}
+                allowDirectHostEdit={!hasConfiguredNoasHost}
+                isLoading={isAuthenticating}
+                error={error || undefined}
+                noasHostUrl={editableNoasUrl}
+                onUsernameChange={setNoasUsername}
+                onPasswordChange={setNoasPassword}
+                onNoasHostUrlChange={setEditableNoasUrl}
+                onToggleHostEdit={() => setIsEditingNoasHost((current) => !current)}
+              />
+            ) : step === "noasSignUp" ? (
+              <NoasSignUpForm
+                onSignUp={handleNoasSignUp}
+                onSignIn={() => setStep("noas")}
+                username={noasUsername}
+                password={noasPassword}
+                isEditingHostUrl={isEditingNoasHost}
+                allowDirectHostEdit={!hasConfiguredNoasHost}
+                isLoading={isAuthenticating}
+                error={error || undefined}
+                noasHostUrl={editableNoasUrl}
+                onUsernameChange={setNoasUsername}
+                onPasswordChange={setNoasPassword}
+                onNoasHostUrlChange={setEditableNoasUrl}
+                onToggleHostEdit={() => setIsEditingNoasHost((current) => !current)}
+              />
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bunkerUrl">{t("auth.modal.signerConnection")}</Label>
+                  <Input
+                    id="bunkerUrl"
+                    type="text"
+                    placeholder={t("auth.modal.signerPlaceholder")}
+                    value={bunkerUrl}
+                    onChange={(e) => setBunkerUrl(e.target.value)}
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("auth.modal.signerHint")}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep("choose")}
+                    disabled={isAuthenticating}
+                    className="flex-1"
+                  >
+                    {t("auth.modal.back")}
+                  </Button>
+                  <Button
+                    onClick={handleNostrConnectLogin}
+                    disabled={isAuthenticating || !bunkerUrl.trim()}
+                    className="flex-1"
+                  >
+                    {pendingAuthMethod === "nostrConnect" ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    {t("auth.modal.connect")}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogScrollBody>
         </div>
       </DialogContent>
     </Dialog>
@@ -918,51 +917,49 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                 {t("auth.menu.profileDescription")}
               </DialogDescription>
             </DialogHeader>
-            <div className="scrollbar-thin mt-3 min-h-0 flex-1 overflow-y-auto">
-              <div className="space-y-3 px-1">
-                <div className="space-y-1.5">
-                  <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
-                  <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="profile-name">{t("filters.profile.name")}</Label>
-                  <Input
-                    id="profile-name"
-                    value={profileName}
-                    onChange={(e) => setProfileName(e.target.value)}
-                    aria-invalid={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken}
-                    aria-describedby={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken ? "profile-name-error" : undefined}
-                  />
-                  {showProfileNameRequired && (
-                    <p id="profile-name-error" className="text-xs text-destructive">
-                      {t("filters.profile.nameRequired")}
-                    </p>
-                  )}
-                  {!showProfileNameRequired && showProfileNameInvalid && (
-                    <p id="profile-name-error" className="text-xs text-destructive">
-                      {t("filters.profile.nameInvalidNip05")}
-                    </p>
-                  )}
-                  {!showProfileNameRequired && !showProfileNameInvalid && showProfileNameTaken && (
-                    <p id="profile-name-error" className="text-xs text-destructive">
-                      {t("filters.profile.nameTaken")}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="profile-picture">{t("filters.profile.picture")}</Label>
-                  <Input id="profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="profile-nip05">{t("filters.profile.nip05")}</Label>
-                  <Input id="profile-nip05" value={profileNip05} onChange={(e) => setProfileNip05(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="profile-about">{t("filters.profile.about")}</Label>
-                  <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
-                </div>
+            <DialogScrollBody className="mt-3" innerClassName="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-display-name">{t("filters.profile.displayName")}</Label>
+                <Input id="profile-display-name" value={profileDisplayName} onChange={(e) => setProfileDisplayName(e.target.value)} />
               </div>
-            </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-name">{t("filters.profile.name")}</Label>
+                <Input
+                  id="profile-name"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  aria-invalid={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken}
+                  aria-describedby={showProfileNameRequired || showProfileNameInvalid || showProfileNameTaken ? "profile-name-error" : undefined}
+                />
+                {showProfileNameRequired && (
+                  <p id="profile-name-error" className="text-xs text-destructive">
+                    {t("filters.profile.nameRequired")}
+                  </p>
+                )}
+                {!showProfileNameRequired && showProfileNameInvalid && (
+                  <p id="profile-name-error" className="text-xs text-destructive">
+                    {t("filters.profile.nameInvalidNip05")}
+                  </p>
+                )}
+                {!showProfileNameRequired && !showProfileNameInvalid && showProfileNameTaken && (
+                  <p id="profile-name-error" className="text-xs text-destructive">
+                    {t("filters.profile.nameTaken")}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-picture">{t("filters.profile.picture")}</Label>
+                <Input id="profile-picture" value={profilePicture} onChange={(e) => setProfilePicture(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-nip05">{t("filters.profile.nip05")}</Label>
+                <Input id="profile-nip05" value={profileNip05} onChange={(e) => setProfileNip05(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="profile-about">{t("filters.profile.about")}</Label>
+                <Textarea id="profile-about" value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={4} />
+              </div>
+            </DialogScrollBody>
             <div className="mt-3 flex shrink-0 justify-end gap-2 bg-background/95 pt-2">
               {!needsProfileSetup && (
                 <Button variant="outline" onClick={() => setIsProfileEditorOpen(false)} disabled={isSavingProfile}>

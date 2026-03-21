@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { Dialog, DialogContent, DialogDescription, DialogTitle, handleDialogOutsideInteraction } from "./dialog";
+import { Dialog, DialogContent, DialogDescription, DialogScrollBody, DialogTitle, handleDialogOutsideInteraction } from "./dialog";
 
 function DialogHarness({ dismissOnOutsideInteract = true }: { dismissOnOutsideInteract?: boolean }) {
   const [open, setOpen] = useState(true);
@@ -64,6 +64,21 @@ describe("handleDialogOutsideInteraction", () => {
     fireEvent.click(overlay);
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("provides a shared padded scroll-body wrapper", () => {
+    render(
+      <DialogScrollBody data-testid="dialog-scroll-body">
+        <div data-testid="dialog-scroll-content">content</div>
+      </DialogScrollBody>,
+    );
+
+    const body = screen.getByTestId("dialog-scroll-body");
+    expect(body.className).toContain("overflow-y-auto");
+
+    const paddedInner = screen.getByTestId("dialog-scroll-content").parentElement;
+    expect(paddedInner).not.toBeNull();
+    expect(paddedInner?.className).toContain("px-1");
   });
 
 });

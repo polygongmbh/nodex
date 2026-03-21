@@ -119,6 +119,19 @@ const DialogDescription = React.forwardRef<
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
+interface DialogScrollBodyProps extends React.HTMLAttributes<HTMLDivElement> {
+  innerClassName?: string;
+}
+
+const DialogScrollBody = React.forwardRef<HTMLDivElement, DialogScrollBodyProps>(
+  ({ className, innerClassName, children, ...props }, ref) => (
+    <div ref={ref} className={cn("scrollbar-thin min-h-0 flex-1 overflow-y-auto", className)} {...props}>
+      <div className={cn("px-1", innerClassName)}>{children}</div>
+    </div>
+  ),
+);
+DialogScrollBody.displayName = "DialogScrollBody";
+
 export {
   Dialog,
   DialogPortal,
@@ -130,4 +143,5 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  DialogScrollBody,
 };

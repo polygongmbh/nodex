@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogScrollBody,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -139,7 +140,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
           </DialogTitle>
         </DialogHeader>
         
-        <div ref={scrollContainerRef} className="space-y-6 py-2 overflow-auto flex-1">
+        <DialogScrollBody ref={scrollContainerRef} innerClassName="space-y-6 py-2">
           {shortcutGroups.map((group) => (
             <div key={group.title}>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">
@@ -160,7 +161,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
               </div>
             </div>
           ))}
-        </div>
+        </DialogScrollBody>
       </DialogContent>
     </Dialog>
   );
