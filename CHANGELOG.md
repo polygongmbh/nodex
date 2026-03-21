@@ -8,23 +8,23 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Sidebar space rows now truncate long space names so relay status dots remain visible, active space icons now tint to match each relay's current connection state instead of always staying blue, and relay rows no longer show the extra left-side active dot.
 - Sidebar channel pins now sit in a separate far-left gutter so the hashtag column stays fixed instead of shifting right.
 - Chip-added and newly posted channels now stay scoped to the relay/feed they were created from instead of appearing in unrelated relay scopes.
-- When no Noas host/API env is configured, startup now derives the site root domain, validates `/.well-known/nostr.json` for a `noas.api_base`, caches the resolved API base plus default host, and pre-fills Noas auth with that discovered root-domain server on subsequent loads.
+- When no Noas server is preconfigured, Nodex now tries the current site's matching Noas server automatically and reuses it on later visits.
 - Noas sign-up now surfaces the server-returned success message as the toast source of truth, keeps auto-sign-in only for `status: active`, and otherwise switches back to sign-in while keeping the returned message visible in the dialog.
 - Guest guest-identity private-key backup UI now uses one shared single-row compact layout on desktop and mobile, with unified `Backup Private Key` copy and matching action buttons on both surfaces.
 - Mobile Manage app preferences now use the same primary labels as the desktop profile menu, keep desktop help copy as inline subtitles on mobile, flatten the nested preference-card treatment, and remove the local image captions toggle from mobile Manage.
-- Mobile Manage relay add now uses the shared relay-add pipeline used across surfaces, so bare relay hosts are normalized to `wss://...` consistently, mobile relay input supports Enter-to-add, the Manage language switcher is now shown as a larger guide-sized control, the mobile mute/completion toggle is removed, and the version hint now sits in the `Impressum`/`Datenschutz`/`Kontakt` row with a `Changelog` label; legal/contact button labels and desktop legal hint text are now localized.
-- User-facing `Feed(s)` terminology is now standardized to `Space(s)` across localized app copy (English, German, and Spanish), relay display names now derive from domain-minus-TLD host labels (with configurable common-prefix stripping via `VITE_RELAY_COMMON_PREFIXES`), and host-derived startup relay discovery prefixes are now env-configurable through `VITE_RELAY_DISCOVERY_PREFIXES`.
+- Mobile Manage relay add now accepts bare relay hosts more gracefully, supports Enter-to-add, shows a larger language switcher, removes the mute/completion toggle, and moves the version hint into the `Impressum`/`Datenschutz`/`Kontakt` row with a `Changelog` label; legal/contact button labels and desktop legal hint text are now localized.
+- User-facing `Feed(s)` terminology is now standardized to `Space(s)` across English, German, and Spanish, relay display names are now shorter and more readable, and startup relay discovery is easier to adapt to different host setups.
 - Mobile fallback hints now use scope-aware copy on both empty-scope and quick-filter fallback paths (for example `Nothing yet ... showing everything` / `No matches for the quick filter, showing tasks ...`), and both mobile hint rows are centered horizontally for readability.
 
 ## [2.6.2] - 2026-03-21
-- Auth dialogs now use consistently rounded corners across the app, and the sign-in chooser now has a compact width-constrained layout with a larger default Noas entry, Noas full-width first, Signer/Extension and Guest/Private row ordering, renamed `Remote Signer` copy with a connect-style icon, guest-entry env gating (`VITE_ALLOW_GUEST_SIGN_IN`), and a persistent horizontal `username @ host` Noas field layout with a simplified host placeholder (`example.com`).
+- Auth dialogs now use consistently rounded corners across the app, and the sign-in chooser now has a tighter layout with Noas emphasized first, clearer Signer/Extension and Guest/Private options, renamed `Remote Signer` copy, and a simpler `username @ host` Noas field.
 - Dialog scrollable content now uses a shared `DialogScrollBody` wrapper (including clipping-safe inner padding), and auth/profile/legal/changelog/shortcuts dialogs now consume the shared pattern instead of duplicating per-modal scroll-shell markup.
 - Dialog close affordances and scroll gutters now reserve consistent right-side space so modal close buttons and scrollbars no longer overlap field edges in compact auth/profile forms.
 - Profile dropdown now uses a tuned compact layout with an icon-only pencil `Edit profile` affordance beside the profile preview, flatter denser app-preference toggles (no nested card wrappers), and clearer preference labels with explanatory hover tooltips.
 
 ## [2.6.1] - 2026-03-21
-- Noas API-base fallback now normalizes discovery failures to canonical API roots (for example `.../api/v1`) instead of reusing legacy endpoint host inputs directly, avoiding malformed auth-route fallbacks when `/.well-known/nostr.json` is blocked by edge CORS policy.
-- Noas sign-up registration now sends the v1 payload shape (`password_hash`, `public_key`, `private_key_encrypted`, `redirect`) so account creation succeeds against current Noas auth/register validation.
+- Noas sign-in now falls back to the correct API base more reliably when automatic server discovery is unavailable.
+- Noas sign-up now works again with current Noas account registration requirements.
 - Noas sign-in and sign-up now surface server HTTP status plus reason text (for example `403 Forbidden`) together with Noas error details, instead of collapsing these failures into generic modal server-error copy.
 
 ## [2.6.0] - 2026-03-20
@@ -34,7 +34,7 @@ Minor release for Noas auth endpoint routing, relay auth/subscription recovery (
 - Sign-in now re-runs NIP-42 relay auth preflight for known auth-capable relays, then replays the active subscription set after successful re-auth so normal feed kinds resume immediately.
 
 ### Fixed
-- Noas auth discovery now resolves relative `noas.api_base` values correctly and uses canonical API-root auth routes (`/auth/signin`, `/auth/register`) instead of malformed legacy paths.
+- Noas auth discovery now follows advertised server endpoints correctly, avoiding broken sign-in and sign-up routes.
 - Feed/list/tree hydration now keeps loading copy visible while relay backfill is active, preventing early fallback to empty-state text before hydration completes.
 - Relay subscriptions now keep stable provider callback wiring across relay status and feed-scope updates, removing repeated `REQ`/`CLOSED` churn on strict relays.
 - Relay rejection/status handling now better maps explicit rejection reasons plus websocket `OK false` and `CLOSED ... auth-required` responses, while preserving rejection state across reconnect attempts and avoiding stale `connecting` UI state.
@@ -51,7 +51,7 @@ Minor release for relay/feed state-update resilience and NIP-19 `npub` identity 
 
 ### Fixed
 - Relay write-rejection detection now also handles relay-specific NDK publish-error map payloads more reliably (including string-keyed map entries and generic relay errors with top-level fallback parsing), improving status transitions when relays reject writes with authorization/policy reasons such as `write rejected`.
-- Restored live feed updates after initial relay hydration by keeping the cache subscription open after EOSE, fixing a regression where updates stalled until reload.
+- Restored live feed updates after initial relay hydration, fixing a regression where updates stalled until reload.
 - Feed now keeps an explicitly focused closed task visible in its own focused thread view while still hiding non-focused closed tasks in normal feed listings.
 - Feed merge now preserves relay-delivered state update messages instead of dropping them behind local task copies, while task status itself updates optimistically in local UI without synthesizing a separate local state-event row.
 - List view tables now use the full content width again instead of reserving a permanent scrollbar gutter that left a visible right-side gap.
@@ -62,7 +62,7 @@ Minor release for relay/feed state-update resilience and NIP-19 `npub` identity 
 - Composer attachments can now be added by dragging files into the composer or pasting clipboard images/files, and dropped plain text now lands in the composer body instead of being ignored.
 - Feed/list/calendar/kanban channel filters now remain authoritative inside the selected feed scope instead of being dropped when the current relay slice does not already contain a matching channel.
 - Feed/list/tree end-of-scroll scope notes now stay visible for relay-only selections as well, so scoped feeds consistently end with summaries like `This is all on feed.example.com`.
-- Noas sign-in/sign-up now discover `/.well-known/nostr.json` on the submitted Noas domain, use any advertised `noas.api_base` for API calls, and cache that resolved API base for repeat auth attempts.
+- Noas sign-in and sign-up now pick up the correct server settings automatically from the submitted Noas domain and remember them for later attempts.
 - Main app views now use a shared higher-contrast scrollbar with a reserved track, while compact surfaces keep gutter-free scrollbars and compose fields avoid clipping against rounded corners as they grow up to about half the viewport height.
 - Clearing feed filters now falls back to the initial incremental feed window before revealing more posts, reducing lag when broadening back out to large feeds.
 - Feed and tree views now avoid several repeated task/person scans during render, and search filtering is deferred slightly so large task sets feel more responsive while typing and expanding nested work.
@@ -88,11 +88,11 @@ Minor release for broad feed/task interaction upgrades, filtering reliability fi
 - Clicking a task from an empty focused composer now activates the task on the first click instead of losing the activation while the composer collapses.
 - Sidebar saved filters now include two permanent compact quick filters (`Recent` and `Important`) with text toggles, inline number controls, defaults of `7` days and `P50+`, and recency matching based on latest task/state-update activity.
 - URL-initialized people filters now hydrate once and remain user-controllable, fixing a regression where startup `p=` selections could not be deselected after profiles loaded.
-- Feed/person filters now keep URL-selected channels and people during initial relay hydration, clicked authors can stay visible as active sidebar people filters, scoped cache bootstraps from existing relay caches when entering a cold scope, and all task views now show the same loading row in place of breadcrumbs while hydrating.
+- Feed/person filters now keep URL-selected channels and people during initial relay hydration, clicked authors can stay visible as active sidebar people filters, cold scopes load more smoothly, and all task views now show the same loading row in place of breadcrumbs while hydrating.
 - Sidebar filter toasts now use clearer natural-language phrasing (including relay domains instead of relay display names), and people filters now include posts authored by selected people as well as posts tagging them even when assignee metadata is also present.
 - Feed switches now ignore selected channel filters that have no posts in the newly active feed, restoring the original feed-local filtering behavior instead of leaving the new feed empty.
 - Relay-load failure empty states now show feed-only source hints (`Could not load posts from ...`) and use status-aware informational subtitles that distinguish read rejection from connection failures.
-- Startup relay fallback probing now runs again when no relays are configured via env, fixing a regression introduced in `v2.0` that left the app booting with an empty relay list on fallback-only deployments.
+- Startup relay fallback discovery now runs again when no relays are preconfigured, fixing a regression that could leave the app booting with an empty relay list.
 - Loading empty-state microcopy now rotates through a larger set of wellness-style waiting prompts with updated localization tone in English, German, and Spanish.
 - Feed/tree/table scope hints now show a true end-of-content footer (`This is all ...`) when filtered results are visible, while `No post yet ...` remains reserved for actual zero-result states.
 - Unfiltered collection empty states now rotate through poetic localized variants, with new curated copy for English, German, and Spanish.
@@ -127,10 +127,10 @@ Major release focused on auth/onboarding refinement, broader localization covera
 - Standardized the desktop top-right auth/profile controls so signed-out and signed-in states now use matching button treatment and height, and profile dropdown actions show pointer cursor affordance again.
 - Reordered profile editor identity fields to show display name before username, fixed clipped profile inputs in the desktop editor, removed the stray divider above save actions, and auto-generate a sanitized username from display name while the username field is still blank.
 - Completed an i18n sweep across auth, compose, media preview, theme toggle, and attachment flows so user-facing strings now come from locale bundles in English, German, and Spanish, while the legal dialog remains intentionally German-only.
-- Split the startup onboarding dialog into separate `Create account` and `Sign in` actions, with `Create account` opening Noas sign-up directly when Noas env configuration is present and staying hidden otherwise.
+- Split the startup onboarding dialog into separate `Create account` and `Sign in` actions, with `Create account` shown only when Noas sign-up is available.
 - Noas sign-in/sign-up now accept full custom host URLs, normalize bare hosts to `https://`, and show clearer host/connection/server errors instead of collapsing failures into generic invalid-credential messages.
 - The Noas host field now uses a flexible layout so long custom URLs no longer clip in the sign-in/sign-up forms.
-- Kept Noas sign-in/sign-up available without Noas env configuration by defaulting the auth modal to the method chooser and showing an empty editable host field in the Noas forms.
+- Kept Noas sign-in and sign-up available even without preset server configuration by showing the method chooser first and leaving the host field editable.
 - Updated the Nostr sign-in dialog copy across English, Spanish, and German so the username/password option no longer refers to a "Noas account" in its description text.
 - Added a distinct `Closed` task state with separate Nostr status-event mapping, explicit task status menu selection, and a fourth Kanban column to the right of `Done` without adding `Closed` to the normal click cycle.
 - Fixed a feed startup crash caused by task status sorting state initializing before the main Index task data graph was ready.
@@ -145,7 +145,7 @@ Major release focused on auth/onboarding refinement, broader localization covera
 - Fixed a number of small usability issues and errors.
 
 ## [1.17.2] - 2026-03-13
-- Added a runtime persistence guard that can be enabled via `?nodexNoStorage=1` (or `VITE_DISABLE_CLIENT_PERSISTENCE=true`) to disable browser local/session storage, cookie writes, and browser cache APIs for the active session.
+- Added a runtime privacy mode that can disable browser local/session storage, cookie writes, and browser cache APIs for the active session.
 - Desktop onboarding now starts with task focus and keeps navigation guidance ordered as task focus -> breadcrumbs -> view switching.
 - Breadcrumb onboarding flow is now stable across first pass and revisits: task auto-focus runs once when needed, breadcrumb interaction advances the step, revisits auto-advance only after breadcrumb context disappears, and the channels step no longer gets skipped.
 - Breadcrumb auto-activation now works consistently across views (including non-feed layouts) by targeting focusable task descendants when row wrappers are not directly clickable.
@@ -167,10 +167,10 @@ Promoted Feed-first navigation defaults, improved publish/filter ergonomics, and
 
 ## [1.16.5] - 2026-03-06
 - Relay connections now auto-attempt reconnect when returning to a previously inactive tab (visibility/focus/online resume), improving recovery after idle background periods.
-- Startup host fallback relay discovery now probes host-derived relay candidates in deterministic order (`nostr.`, `feed.`, `tasks.`, `base.`), while still auto-connecting only to reachable relays.
-- Successful host-fallback probe results are now cached for 30 minutes per host/protocol so discovered relays reconnect quickly on repeat loads.
+- Startup relay fallback discovery is now more reliable when deriving likely relay hosts from the current site.
+- Successfully discovered relay hosts are now reused on repeat loads so reconnects feel faster.
 - Host-fallback WebSocket probe timeout handling no longer force-closes in-flight sockets, reducing Firefox "connection interrupted while page was loading" console noise during fallback discovery.
-- Host-fallback cache now ignores stale cached relay URLs that no longer match current host-derived candidates, preventing empty relay lists when valid probes should run.
+- Cached relay discoveries now ignore stale results that no longer match the current site, preventing empty relay lists.
 - Feed filter state now auto-initializes to currently available relays when persisted relay IDs do not match discovered relays, so newly discovered feeds are immediately active and usable.
 - NDK provider now mirrors resolved default/discovered relay URLs into relay state immediately, so discovered feeds show in the sidebar even before relay-pool status events arrive.
 - Successful host-fallback relay discoveries are now persisted into relay storage and automatically reused on subsequent app loads.
@@ -185,9 +185,9 @@ Promoted Feed-first navigation defaults, improved publish/filter ergonomics, and
 
 ## [1.16.3] - 2026-03-05
 Refined relay bootstrapping defaults and mobile compose location flow while reducing default demo noise.
-- When no default relays are configured via env and no relay list is persisted, startup now probes host-derived relay candidates (`base.`, `feed.`, `nostr.`, `tasks.`) based on the current domain and auto-connects only to reachable relays.
+- When no relays are preconfigured and none are saved locally, Nodex now tries likely relay hosts based on the current domain and connects only to the ones that respond.
 - After sign-in, complementary relay enrichment now prefers NIP-65 (`kind:10002`) relay lists and only falls back to verified NIP-05 relay hints when no NIP-65 relay list is available.
-- The demo feed relay and seeded demo tasks are now hidden by default and can be explicitly enabled with `VITE_ENABLE_DEMO_FEED=true`.
+- The demo feed relay and seeded demo tasks are now hidden by default unless demo content is explicitly enabled.
 - Mobile composer location now captures and attaches device geolocation directly from the location button instead of opening a separate location selector panel.
 - Undo-send delay now defaults to off for new installs until explicitly enabled in preferences.
 
@@ -247,7 +247,7 @@ Added local image captioning support and an in-app changelog viewer, while impro
 - Fixed mobile tab/swipe view syncing so top-bar switches stay consistent when opening and closing Manage.
 - Improved incoming Blossom/NIP-94 attachment handling, including hash-metadata matching for Blossom URLs.
 - Reduced iOS Safari extra-scroll issues by using dynamic viewport sizing with safe-area handling.
-- Unified composer attachments into a single `Attach` action and added a client-side per-file upload limit (default 100 MB, configurable).
+- Unified composer attachments into a single `Attach` action and added a per-file upload size limit.
 - Mobile composer draft state (including attachment chips) now persists when toggling Manage.
 - Tree view now only allows comment posting when a parent task is focused.
 
@@ -256,7 +256,7 @@ Expanded attachment publishing and embed behavior, with managed/self-hosted uplo
 - When depth mode is set to `Projects only` and no project containers match, Kanban/Table now fall back to showing all levels instead of an empty result.
 - Standalone embeddable URLs on their own line now render as embeds (replacing the raw URL text) without duplicate attachment chips, and task/comment content preserves multiline formatting with basic markdown rendering and tighter spacing around embeds.
 - Added image/file attachment controls in desktop and mobile composers with NIP-92 `imeta` publish tags, plus automatic inline rendering for direct image/file URLs in task content across views.
-- Switched default managed upload endpoint to `nostr.build`, passed `VITE_NIP96_UPLOAD_URL` into Docker build args, and added an optional `docker-compose.upload.yml` Route96 stack for self-hosted uploads.
+- Attachment uploads now default to `nostr.build`, and Docker users can swap in a self-hosted upload service more easily.
 - Added NIP-98 HTTP auth signing for attachment uploads so NIP-96 servers that require authenticated `Authorization: Nostr ...` requests can accept composer image/file uploads.
 - Fixed attachment uploads being marked `Failed` when providers returned successful responses with URLs in alternate NIP-96 payload shapes (such as stringified `nip94_event` or nested `data` URLs).
 
@@ -313,10 +313,10 @@ Expanded channel filtering controls with global include match mode and improved 
 Added containerized local relay runtime setup and consolidated internal compose/relay state handling.
 
 ### Added
-- Added Docker support (`Dockerfile` + `docker-compose.yml`) to run Nodex alongside an `rnostr` relay with env-configurable relay defaults.
+- Added Docker support (`Dockerfile` + `docker-compose.yml`) to run Nodex alongside an `rnostr` relay.
 
 ### Changed
-- Default Nostr relays are now env-driven (`VITE_DEFAULT_RELAYS`), replacing hardcoded app relay defaults.
+- Default Nostr relays are now configurable instead of being hardcoded in the app.
 
 ## [1.9.0] - 2026-02-19
 Improved compose safety and metadata ergonomics, and expanded cross-view task depth controls.
