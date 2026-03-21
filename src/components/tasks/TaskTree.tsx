@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useRef } from "react";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
-import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext, Nip99Metadata, TaskStatus } from "@/types";
+import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext, Nip99Metadata } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
@@ -20,15 +20,10 @@ import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 
 interface TaskTreeProps extends SharedTaskViewContext {
-  onToggleComplete: (taskId: string) => void;
-  onStatusChange?: (taskId: string, status: TaskStatus) => void;
-  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
-  onUpdatePriority?: (taskId: string, priority: number) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
-  onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   mentionRequest?: {
     mention: string;
@@ -49,10 +44,6 @@ export function TaskTree({
   currentUser,
   searchQuery,
   onNewTask,
-  onToggleComplete,
-  onStatusChange,
-  onUpdateDueDate,
-  onUpdatePriority,
   focusedTaskId,
   onFocusTask,
   onFocusSidebar,
@@ -61,9 +52,6 @@ export function TaskTree({
   forceShowComposer,
   composeGuideActivationSignal,
   onAuthorClick,
-  onClearChannelFilter,
-  onClearPersonFilter,
-  onUndoPendingPublish,
   isPendingPublishTask,
   composeRestoreRequest = null,
   mentionRequest = null,
@@ -76,8 +64,6 @@ export function TaskTree({
   const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
   const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
   const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
-  const effectiveOnClearChannelFilter = onClearChannelFilter ?? interactionModel.onClearChannelFilter;
-  const effectiveOnClearPersonFilter = onClearPersonFilter ?? interactionModel.onClearPersonFilter;
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
@@ -453,8 +439,6 @@ export function TaskTree({
         onCancel={() => setIsComposerExpanded(false)}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={currentContextId || undefined}
-        onClearChannelFilter={effectiveOnClearChannelFilter}
-        onClearPersonFilter={effectiveOnClearPersonFilter}
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         onExpandedChange={setIsComposerExpanded}
@@ -501,8 +485,6 @@ export function TaskTree({
                 people={people}
                 currentUser={currentUser}
                 onSelect={handleSelectTask}
-                onToggleComplete={onToggleComplete}
-                onStatusChange={onStatusChange}
                 matchedByFilter={isTaskDirectMatch(task.id)}
                 isDirectMatchFn={isTaskDirectMatch}
                 getFilteredChildrenFn={getFilteredChildren}
@@ -511,12 +493,9 @@ export function TaskTree({
                 isKeyboardFocused={keyboardFocusedTaskId === task.id}
                 onHashtagClick={effectiveOnHashtagClick}
                 onAuthorClick={effectiveOnAuthorClick}
-                onUndoPendingPublish={onUndoPendingPublish}
                 isPendingPublishTask={isPendingPublishTask}
                 isInteractionBlocked={isInteractionBlocked}
                 onMediaClick={openTaskMedia}
-                onUpdateDueDate={onUpdateDueDate}
-                onUpdatePriority={onUpdatePriority}
                 sortContext={sortContext}
                 authorProfiles={authorProfiles}
               />

@@ -17,10 +17,7 @@ export interface FeedPageDesktopHeaderConfig {
 }
 
 export interface FeedPageDesktopContentConfig {
-  failedPublishQueueBannerState: Omit<
-    ComponentProps<typeof FailedPublishQueueBanner>,
-    "onRetry" | "onRepost" | "onDismiss" | "onDismissAll"
-  >;
+  failedPublishQueueBannerState: ComponentProps<typeof FailedPublishQueueBanner>;
   desktopSwipeHandlers: HTMLAttributes<HTMLDivElement>;
   viewPane: ReactNode;
   searchDockState: Omit<
@@ -76,21 +73,7 @@ export function FeedPageDesktopShell({
       </div>
       <FeedPageSidebar />
       <div className="min-w-0 overflow-hidden flex flex-col" {...content.desktopSwipeHandlers}>
-        <FailedPublishQueueBanner
-          {...content.failedPublishQueueBannerState}
-          onRetry={async (draftId) => {
-            await dispatchFeedInteraction({ type: "publish.failed.retry", draftId });
-          }}
-          onRepost={async (draftId) => {
-            await dispatchFeedInteraction({ type: "publish.failed.repost", draftId });
-          }}
-          onDismiss={(draftId) => {
-            void dispatchFeedInteraction({ type: "publish.failed.dismiss", draftId });
-          }}
-          onDismissAll={() => {
-            void dispatchFeedInteraction({ type: "publish.failed.dismissAll" });
-          }}
-        />
+        <FailedPublishQueueBanner {...content.failedPublishQueueBannerState} />
         <div className="min-h-0 flex-1 overflow-hidden">{content.viewPane}</div>
         <DesktopSearchDock
           {...content.searchDockState}

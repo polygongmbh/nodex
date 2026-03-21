@@ -50,13 +50,10 @@ import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
-  onToggleComplete: (taskId: string) => void;
-  onStatusChange?: (taskId: string, status: TaskStatus) => void;
-  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
-  onUpdatePriority?: (taskId: string, priority: number) => void;
   onFocusSidebar?: () => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
@@ -73,7 +70,6 @@ interface PriorityCellProps {
   taskContent: string;
   priority?: number;
   editable: boolean;
-  onUpdatePriority?: (taskId: string, priority: number) => void;
 }
 
 function getTableContentPreview(content: string): string {
@@ -85,7 +81,6 @@ const PriorityCell = memo(function PriorityCell({
   taskContent,
   priority,
   editable,
-  onUpdatePriority,
 }: PriorityCellProps) {
   return (
     <TaskPrioritySelect
@@ -95,15 +90,13 @@ const PriorityCell = memo(function PriorityCell({
       disabled={!editable}
       includeEmptyOption
       className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground"
-      onUpdatePriority={onUpdatePriority}
     />
   );
 }, (prev, next) =>
   prev.taskId === next.taskId &&
   prev.taskContent === next.taskContent &&
   prev.priority === next.priority &&
-  prev.editable === next.editable &&
-  prev.onUpdatePriority === next.onUpdatePriority
+  prev.editable === next.editable
 );
 
 export function ListView({
@@ -118,17 +111,11 @@ export function ListView({
   searchQuery,
   depthMode = "leaves",
   onNewTask,
-  onToggleComplete,
-  onStatusChange,
-  onUpdateDueDate,
-  onUpdatePriority,
   focusedTaskId,
   onFocusTask,
   onFocusSidebar,
   onHashtagClick,
   onAuthorClick,
-  onClearChannelFilter,
-  onClearPersonFilter,
   forceShowComposer,
   composeGuideActivationSignal,
   composeRestoreRequest = null,
@@ -136,13 +123,12 @@ export function ListView({
   isHydrating = false,
 }: ListViewProps) {
   const { t, i18n } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const interactionModel = useFeedViewInteractionModel();
   const { user } = useNDK();
   const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
   const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
   const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
-  const effectiveOnClearChannelFilter = onClearChannelFilter ?? interactionModel.onClearChannelFilter;
-  const effectiveOnClearPersonFilter = onClearPersonFilter ?? interactionModel.onClearPersonFilter;
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const [sortField, setSortField] = useState<SortField>("priority");
@@ -427,6 +413,12 @@ export function ListView({
   const canCompleteTask = (task: Task) => {
     return Boolean(user) && !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
+  const dispatchStatusChange = (taskId: string, status: TaskStatus) => {
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
+  };
+  const dispatchToggleComplete = (taskId: string) => {
+    void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
+  };
   const getStatusButtonTitle = (task: Task) => {
     if (canCompleteTask(task)) return t("tasks.actions.setStatus");
     return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || t("tasks.actions.setStatus");
@@ -510,28 +502,28 @@ export function ListView({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
           <DropdownMenuItem 
-            onClick={() => onStatusChange?.(task.id, "todo")}
+            onClick={() => dispatchStatusChange(task.id, "todo")}
             className={cn(status === "todo" && "bg-muted")}
           >
             <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
             {t("listView.status.todo")}
           </DropdownMenuItem>
           <DropdownMenuItem 
-            onClick={() => onStatusChange?.(task.id, "in-progress")}
+            onClick={() => dispatchStatusChange(task.id, "in-progress")}
             className={cn(status === "in-progress" && "bg-muted")}
           >
             <CircleDot className="w-4 h-4 mr-2 text-warning" />
             {t("listView.status.inProgress")}
           </DropdownMenuItem>
           <DropdownMenuItem 
-            onClick={() => onStatusChange?.(task.id, "done")}
+            onClick={() => dispatchStatusChange(task.id, "done")}
             className={cn(status === "done" && "bg-muted")}
           >
             <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
             {t("listView.status.done")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => onStatusChange?.(task.id, "closed")}
+            onClick={() => dispatchStatusChange(task.id, "closed")}
             className={cn(status === "closed" && "bg-muted")}
           >
             <X className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -589,7 +581,6 @@ export function ListView({
             dueTime={task.dueTime}
             dateType={task.dateType}
             idPrefix="list"
-            onUpdateDueDate={onUpdateDueDate}
           />
         </PopoverContent>
       </Popover>
@@ -636,8 +627,6 @@ export function ListView({
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
-        onClearChannelFilter={effectiveOnClearChannelFilter}
-        onClearPersonFilter={effectiveOnClearPersonFilter}
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         composeRestoreRequest={composeRestoreRequest}
@@ -768,13 +757,13 @@ export function ListView({
                               }
                               handleTaskStatusToggleClick(event, {
                                 status: task.status,
-                                hasStatusChangeHandler: Boolean(onStatusChange),
+                                hasStatusChangeHandler: canCompleteTask(task),
                                 isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
                                 openMenu: () => openStatusMenu(task.id),
                                 closeMenu: () => closeStatusMenu(task.id),
                                 allowMenuOpen: () => allowStatusMenuOpen(task.id),
                                 clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                                toggleStatus: () => onToggleComplete(task.id),
+                                toggleStatus: () => dispatchToggleComplete(task.id),
                                 focusTask: () => onFocusTask?.(task.id),
                                 focusOnQuickToggle: false,
                               });
@@ -786,7 +775,7 @@ export function ListView({
                                 shouldOpenStatusMenuForDirectSelection({
                                   status: task.status,
                                   altKey: event.altKey,
-                                  hasStatusChangeHandler: Boolean(onStatusChange),
+                                  hasStatusChangeHandler: canCompleteTask(task),
                                 })
                               ) {
                                 event.preventDefault();
@@ -814,12 +803,12 @@ export function ListView({
                             )}
                           </button>
                         </DropdownMenuTrigger>
-                        {onStatusChange && canCompleteTask(task) && (
+                        {canCompleteTask(task) && (
                           <DropdownMenuContent align="start">
                             <DropdownMenuItem
                               onClick={(event) => {
                                 event.stopPropagation();
-                                onStatusChange(task.id, "todo");
+                                dispatchStatusChange(task.id, "todo");
                               }}
                               className={cn((task.status || "todo") === "todo" && "bg-muted")}
                             >
@@ -829,7 +818,7 @@ export function ListView({
                             <DropdownMenuItem
                               onClick={(event) => {
                                 event.stopPropagation();
-                                onStatusChange(task.id, "in-progress");
+                                dispatchStatusChange(task.id, "in-progress");
                               }}
                               className={cn(task.status === "in-progress" && "bg-muted")}
                             >
@@ -839,7 +828,7 @@ export function ListView({
                             <DropdownMenuItem
                               onClick={(event) => {
                                 event.stopPropagation();
-                                onStatusChange(task.id, "done");
+                                dispatchStatusChange(task.id, "done");
                               }}
                               className={cn(task.status === "done" && "bg-muted")}
                             >
@@ -849,7 +838,7 @@ export function ListView({
                             <DropdownMenuItem
                               onClick={(event) => {
                                 event.stopPropagation();
-                                onStatusChange(task.id, "closed");
+                                dispatchStatusChange(task.id, "closed");
                               }}
                               className={cn(task.status === "closed" && "bg-muted")}
                             >
@@ -907,7 +896,6 @@ export function ListView({
                         taskContent={task.content}
                         priority={task.priority}
                         editable={canCompleteTask(task)}
-                        onUpdatePriority={onUpdatePriority}
                       />
                     </td>
                     <td className="p-2 2xl:p-3 min-w-0 w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]">

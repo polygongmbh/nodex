@@ -61,6 +61,7 @@ import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/l
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
 import { countHashtagsInContent, extractHashtagsFromContent, getHashtagQueryAtCursor } from "@/lib/hashtags";
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface TaskComposerProps {
   onSubmit: ComposerSubmit;
@@ -72,8 +73,6 @@ interface TaskComposerProps {
   defaultDueDate?: Date;
   defaultContent?: string;
   parentId?: string;
-  onClearChannelFilter?: (id: string) => void;
-  onClearPersonFilter?: (id: string) => void;
   adaptiveSize?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   draftStorageKey?: string;
@@ -199,8 +198,6 @@ export function TaskComposer({
   defaultDueDate, 
   defaultContent = "",
   parentId,
-  onClearChannelFilter,
-  onClearPersonFilter,
   adaptiveSize = false,
   onExpandedChange,
   draftStorageKey,
@@ -212,6 +209,7 @@ export function TaskComposer({
   composeRestoreRequest = null,
 }: TaskComposerProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { user, createHttpAuthHeader } = useNDK();
   const includedChannels = channels
     .filter((c) => c.filterState === "included")
@@ -1420,7 +1418,7 @@ export function TaskComposer({
     const channel = channels.find((entry) => entry.name.trim().toLowerCase() === normalizedTag);
     if (channel?.filterState === "included") {
       autoManagedFilterTagNamesRef.current.delete(normalizedTag);
-      onClearChannelFilter?.(channel.id);
+      void dispatchFeedInteraction({ type: "filter.clearChannel", channelId: channel.id });
     }
     setExplicitTagNames((previous) => previous.filter((tag) => tag !== normalizedTag));
   };
@@ -1431,7 +1429,7 @@ export function TaskComposer({
     const person = people.find((entry) => entry.id.trim().toLowerCase() === normalizedPubkey);
     if (person?.isSelected) {
       autoManagedFilterMentionPubkeysRef.current.delete(normalizedPubkey);
-      onClearPersonFilter?.(person.id);
+      void dispatchFeedInteraction({ type: "filter.clearPerson", personId: person.id });
     }
     setExplicitMentionPubkeys((previous) => previous.filter((value) => value !== normalizedPubkey));
   };

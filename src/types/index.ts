@@ -200,15 +200,11 @@ export interface SharedTaskViewContext {
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
-  onSearchChange: (query: string) => void;
   onNewTask: OnNewTask;
-  onToggleComplete: (taskId: string) => void;
   focusedTaskId?: string | null;
   onFocusTask?: (taskId: string | null) => void;
   onHashtagClick?: (tag: string) => void;
   onAuthorClick?: (author: Person) => void;
-  onClearChannelFilter?: (id: string) => void;
-  onClearPersonFilter?: (id: string) => void;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 

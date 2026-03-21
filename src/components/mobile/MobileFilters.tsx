@@ -18,6 +18,7 @@ import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeTog
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { useFeedPageUiConfig } from "@/features/feed-page/views/feed-page-ui-config";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -25,14 +26,6 @@ interface MobileFiltersProps {
   channelMatchMode?: ChannelMatchMode;
   people: Person[];
   profileEditorOpenSignal?: number;
-  onRelayToggle: (id: string) => void;
-  onChannelToggle: (id: string) => void;
-  onPersonToggle: (id: string) => void;
-  onChannelMatchModeChange?: (mode: ChannelMatchMode) => void;
-  onAddRelay: (url: string) => void;
-  onRemoveRelay: (url: string) => void;
-  onSignInClick: () => void;
-  onGuideClick: () => void;
 }
 
 const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -50,17 +43,10 @@ export function MobileFilters({
   channelMatchMode = "and",
   people,
   profileEditorOpenSignal = 0,
-  onRelayToggle,
-  onChannelToggle,
-  onPersonToggle,
-  onChannelMatchModeChange = () => {},
-  onAddRelay,
-  onRemoveRelay,
-  onSignInClick,
-  onGuideClick,
 }: MobileFiltersProps) {
   const { t } = useTranslation();
   const { completionSoundEnabled, onToggleCompletionSound } = useFeedPageUiConfig();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
@@ -151,7 +137,7 @@ export function MobileFilters({
   const handleAddRelay = () => {
     const trimmed = newRelayUrl.trim();
     if (!trimmed) return;
-    onAddRelay(trimmed);
+    void dispatchFeedInteraction({ type: "sidebar.relay.add", url: trimmed });
     setNewRelayUrl("");
   };
 
@@ -167,7 +153,9 @@ export function MobileFilters({
         <section>
           <div className="flex items-center gap-2">
             <button
-              onClick={onGuideClick}
+              onClick={() => {
+                void dispatchFeedInteraction({ type: "ui.openGuide" });
+              }}
               className="flex-1 rounded-lg border border-border px-3 py-2.5 text-sm text-left hover:bg-muted/50 active:bg-muted transition-colors inline-flex items-center gap-2 touch-target-sm"
               aria-label={t("sidebar.actions.openGuide")}
               title={t("sidebar.actions.openGuide")}
@@ -225,7 +213,9 @@ export function MobileFilters({
               </div>
               {!user ? (
                 <button
-                  onClick={onSignInClick}
+                  onClick={() => {
+                    void dispatchFeedInteraction({ type: "ui.openAuthModal" });
+                  }}
                   className="px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5 touch-target-sm active:scale-95 transition-transform"
                 >
                   <LogIn className="w-4 h-4" />
@@ -463,7 +453,9 @@ export function MobileFilters({
                   )}
                 >
                   <button
-                    onClick={() => onRelayToggle(relay.id)}
+                    onClick={() => {
+                      void dispatchFeedInteraction({ type: "sidebar.relay.toggle", relayId: relay.id });
+                    }}
                     className="flex items-center gap-2 flex-1 min-w-0"
                   >
                     <RelayIcon className="w-4 h-4 shrink-0" />
@@ -480,7 +472,9 @@ export function MobileFilters({
                   </button>
                   {relay.url && relay.id !== "demo" && (
                     <button
-                      onClick={() => onRemoveRelay(relay.url!)}
+                      onClick={() => {
+                        void dispatchFeedInteraction({ type: "sidebar.relay.remove", url: relay.url! });
+                      }}
                       className="ml-1 p-1.5 rounded text-muted-foreground hover:text-destructive active:bg-destructive/10 inline-flex items-center gap-1 touch-target-sm"
                       aria-label={t("filters.feeds.removeAria", { name: relay.name })}
                     >
@@ -500,7 +494,9 @@ export function MobileFilters({
             <h2 className="font-semibold text-sm">{t("filters.channels.title")}</h2>
             <ChannelMatchModeToggle
               mode={channelMatchMode}
-              onChange={onChannelMatchModeChange}
+              onChange={(mode) => {
+                void dispatchFeedInteraction({ type: "sidebar.channel.matchMode.change", mode });
+              }}
               size="mobile"
               className="ml-auto"
             />
@@ -510,7 +506,9 @@ export function MobileFilters({
             {channels.map((channel) => (
               <button
                 key={channel.id}
-                onClick={() => onChannelToggle(channel.id)}
+                onClick={() => {
+                  void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
+                }}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm active:scale-95",
                   channel.filterState === "included" && "bg-success/10 border-success text-success motion-filter-pop",
@@ -540,7 +538,9 @@ export function MobileFilters({
               return (
                 <button
                   key={person.id}
-                  onClick={() => onPersonToggle(person.id)}
+                  onClick={() => {
+                    void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.id });
+                  }}
                   className={cn(
                     "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors border touch-target-sm active:scale-95",
                     person.isSelected

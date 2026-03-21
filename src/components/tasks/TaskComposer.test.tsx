@@ -3,6 +3,7 @@ import { beforeEach, describe, it, expect, vi } from "vitest";
 import { format } from "date-fns";
 import { TaskComposer } from "./TaskComposer";
 import type { Channel, Relay, Person, TaskCreateResult } from "@/types";
+import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import {
@@ -16,6 +17,15 @@ let mockUser: { id: string } | null = { id: "me" };
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: mockUser, createHttpAuthHeader: vi.fn(async () => null) }),
+}));
+
+const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => ({
+  envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
+  outcome: { status: "handled" as const },
+}));
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
 }));
 
 vi.mock("sonner", () => ({
@@ -165,6 +175,7 @@ const queryMentionChip = (value: string) => queryChipButton("mention", value);
 describe("TaskComposer hashtag autocomplete", () => {
   beforeEach(() => {
     mockUser = { id: "me" };
+    dispatchFeedInteraction.mockClear();
     vi.mocked(toast.error).mockClear();
     vi.mocked(toast.success).mockClear();
     vi.mocked(toast.loading).mockClear();
@@ -1415,7 +1426,6 @@ describe("TaskComposer hashtag autocomplete", () => {
   });
 
   it("clears an included channel filter when removing its filter-backed chip", () => {
-    const onClearChannelFilter = vi.fn();
     render(
       <TaskComposer
         onSubmit={() => successfulCreateResult}
@@ -1423,7 +1433,6 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={[{ id: "backend", name: "backend", filterState: "included" }]}
         people={people}
         onCancel={() => {}}
-        onClearChannelFilter={onClearChannelFilter}
       />
     );
 
@@ -1432,11 +1441,13 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
     fireEvent.click(getHashtagChip("backend"));
 
-    expect(onClearChannelFilter).toHaveBeenCalledWith("backend");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "filter.clearChannel",
+      channelId: "backend",
+    });
   });
 
   it("clears a selected person filter when removing its filter-backed chip", () => {
-    const onClearPersonFilter = vi.fn();
     render(
       <TaskComposer
         onSubmit={() => successfulCreateResult}
@@ -1444,7 +1455,6 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={[{ ...people[0], isSelected: true }]}
         onCancel={() => {}}
-        onClearPersonFilter={onClearPersonFilter}
       />
     );
 
@@ -1453,7 +1463,10 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
     fireEvent.click(getMentionChip(alicePubkey));
 
-    expect(onClearPersonFilter).toHaveBeenCalledWith(alicePubkey);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "filter.clearPerson",
+      personId: alicePubkey,
+    });
   });
 
   it("renders parsed mention chips before hashtag chips", () => {

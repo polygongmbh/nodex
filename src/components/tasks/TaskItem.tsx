@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2, BadgeCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Task, Person, TaskStatus, Relay, TaskDateType } from "@/types";
+import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
@@ -37,6 +37,7 @@ import {
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -52,8 +53,6 @@ interface TaskItemProps {
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   onSelect?: (taskId: string) => void;
-  onToggleComplete?: (taskId: string) => void;
-  onStatusChange?: (taskId: string, status: TaskStatus) => void;
   matchedByFilter?: boolean;
   isDirectMatchFn?: (taskId: string) => boolean;
   getFilteredChildrenFn?: (parentId: string) => Task[];
@@ -63,12 +62,9 @@ interface TaskItemProps {
   isKeyboardFocused?: boolean; // For keyboard navigation highlight
   onHashtagClick?: (tag: string) => void;
   onAuthorClick?: (author: Person) => void;
-  onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   onMediaClick?: (taskId: string, url: string) => void;
-  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
-  onUpdatePriority?: (taskId: string, priority: number) => void;
   sortContext?: SortContext;
   authorProfiles?: Record<string, NostrProfile>;
 }
@@ -84,8 +80,6 @@ export function TaskItem({
   isExpanded,
   onToggleExpand,
   onSelect,
-  onToggleComplete,
-  onStatusChange,
   matchedByFilter = true,
   isDirectMatchFn,
   getFilteredChildrenFn,
@@ -95,16 +89,14 @@ export function TaskItem({
   isKeyboardFocused = false,
   onHashtagClick,
   onAuthorClick,
-  onUndoPendingPublish,
   isPendingPublishTask,
   isInteractionBlocked = false,
   onMediaClick,
-  onUpdateDueDate,
-  onUpdatePriority,
   sortContext,
   authorProfiles,
 }: TaskItemProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const getStatusToggleHint = (status?: TaskStatus): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -351,24 +343,26 @@ export function TaskItem({
                     e.stopPropagation();
                     return;
                   }
-                  handleTaskStatusToggleClick(e, {
-                    status: task.status,
-                    hasStatusChangeHandler: Boolean(onStatusChange),
-                    isMenuOpen: statusMenuOpen,
-                    openMenu: () => setStatusMenuOpen(true),
-                    closeMenu: () => setStatusMenuOpen(false),
-                    allowMenuOpen: () => {
-                      allowStatusMenuOpenRef.current = true;
+                    handleTaskStatusToggleClick(e, {
+                      status: task.status,
+                      hasStatusChangeHandler: canCompleteTask(),
+                      isMenuOpen: statusMenuOpen,
+                      openMenu: () => setStatusMenuOpen(true),
+                      closeMenu: () => setStatusMenuOpen(false),
+                      allowMenuOpen: () => {
+                        allowStatusMenuOpenRef.current = true;
                     },
-                    clearMenuOpenIntent: () => {
-                      allowStatusMenuOpenRef.current = false;
-                    },
-                    toggleStatus: () => onToggleComplete?.(task.id),
-                    focusTask: () => onSelect?.(task.id),
-                  });
-                }}
+                      clearMenuOpenIntent: () => {
+                        allowStatusMenuOpenRef.current = false;
+                      },
+                      toggleStatus: () => {
+                        void dispatchFeedInteraction({ type: "task.toggleComplete", taskId: task.id });
+                      },
+                      focusTask: () => onSelect?.(task.id),
+                    });
+                  }}
                 onFocus={(e) => {
-                  if (!onStatusChange || !canCompleteTask()) return;
+                  if (!canCompleteTask()) return;
                   if (
                     shouldAutoOpenStatusMenuOnFocus(
                       e.currentTarget,
@@ -391,7 +385,7 @@ export function TaskItem({
                     shouldOpenStatusMenuForDirectSelection({
                       status: task.status,
                       altKey: e.altKey,
-                      hasStatusChangeHandler: Boolean(onStatusChange),
+                      hasStatusChangeHandler: canCompleteTask(),
                     })
                   ) {
                     e.preventDefault();
@@ -424,12 +418,12 @@ export function TaskItem({
                 )}
               </button>
             </DropdownMenuTrigger>
-            {onStatusChange && canCompleteTask() && (
+            {canCompleteTask() && (
               <DropdownMenuContent align="start">
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    onStatusChange(task.id, "todo");
+                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "todo" });
                   }}
                   className={cn((task.status || "todo") === "todo" && "bg-muted")}
                 >
@@ -439,7 +433,7 @@ export function TaskItem({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    onStatusChange(task.id, "in-progress");
+                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "in-progress" });
                   }}
                   className={cn(task.status === "in-progress" && "bg-muted")}
                 >
@@ -449,7 +443,7 @@ export function TaskItem({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    onStatusChange(task.id, "done");
+                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "done" });
                   }}
                   className={cn(task.status === "done" && "bg-muted")}
                 >
@@ -459,7 +453,7 @@ export function TaskItem({
                 <DropdownMenuItem
                   onClick={(e) => {
                     e.stopPropagation();
-                    onStatusChange(task.id, "closed");
+                    void dispatchFeedInteraction({ type: "task.changeStatus", taskId: task.id, status: "closed" });
                   }}
                   className={cn(task.status === "closed" && "bg-muted")}
                 >
@@ -548,7 +542,7 @@ export function TaskItem({
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
-                    onUndoPendingPublish?.(task.id);
+                    void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
                   }}
                   className="ml-auto shrink-0 font-medium text-warning hover:text-warning/80"
                   title={t("toasts.actions.undo")}
@@ -630,7 +624,6 @@ export function TaskItem({
                     dueTime={task.dueTime}
                     dateType={task.dateType}
                     idPrefix="task"
-                    onUpdateDueDate={onUpdateDueDate}
                   />
                 </PopoverContent>
               )}
@@ -652,7 +645,6 @@ export function TaskItem({
                     editableMetadata && "cursor-pointer hover:bg-warning/20",
                     !editableMetadata && "cursor-not-allowed opacity-60"
                   )}
-                  onUpdatePriority={onUpdatePriority}
                 />
               )}
               <TaskMentionChips
@@ -759,7 +751,6 @@ export function TaskItem({
                       currentUser={currentUser}
                       depth={depth + 1}
                       onSelect={onSelect}
-                      onToggleComplete={onToggleComplete}
                       matchedByFilter={childMatched}
                       isDirectMatchFn={isDirectMatchFn}
                       getFilteredChildrenFn={getFilteredChildrenFn}
@@ -768,11 +759,8 @@ export function TaskItem({
                       activeRelays={activeRelays}
                       onHashtagClick={onHashtagClick}
                       onAuthorClick={onAuthorClick}
-                      onUndoPendingPublish={onUndoPendingPublish}
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
-                      onUpdateDueDate={onUpdateDueDate}
-                      onUpdatePriority={onUpdatePriority}
                       sortContext={sortContext}
                       authorProfiles={authorProfiles}
                     />
@@ -798,7 +786,6 @@ export function TaskItem({
                       currentUser={currentUser}
                       depth={depth + 1}
                       onSelect={onSelect}
-                      onToggleComplete={onToggleComplete}
                       matchedByFilter={childMatched}
                       isDirectMatchFn={isDirectMatchFn}
                       getFilteredChildrenFn={getFilteredChildrenFn}
@@ -807,11 +794,8 @@ export function TaskItem({
                       activeRelays={activeRelays}
                       onHashtagClick={onHashtagClick}
                       onAuthorClick={onAuthorClick}
-                      onUndoPendingPublish={onUndoPendingPublish}
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
-                      onUpdateDueDate={onUpdateDueDate}
-                      onUpdatePriority={onUpdatePriority}
                       sortContext={sortContext}
                       authorProfiles={authorProfiles}
                     />

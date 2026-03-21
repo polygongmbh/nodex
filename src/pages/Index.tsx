@@ -852,22 +852,6 @@ const Index = () => {
       }),
     [feedInteractionHandlers]
   );
-  const dispatchFeedInteraction = feedInteractionBus.dispatch;
-  const handleDispatchToggleComplete = useCallback(
-    (taskId: string) => {
-      void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
-    },
-    [dispatchFeedInteraction]
-  );
-  const handleDispatchOpenAuthModal = useCallback(() => {
-    void dispatchFeedInteraction({ type: "ui.openAuthModal" });
-  }, [dispatchFeedInteraction]);
-  const handleDispatchStatusChange = useCallback(
-    (taskId: string, status: TaskStatus) => {
-      void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
-    },
-    [dispatchFeedInteraction]
-  );
   const feedTaskViewModel: FeedTaskViewModel = useMemo(
     () => ({
       tasks: filteredTasks,
@@ -879,21 +863,14 @@ const Index = () => {
       people,
       currentUser,
       searchQuery,
-      onSearchChange: setSearchQuery,
       onNewTask: handleNewTask,
-      onToggleComplete: handleDispatchToggleComplete,
       focusedTaskId,
       onFocusTask: setFocusedTaskId,
-      onStatusChange: handleDispatchStatusChange,
-      onListingStatusChange: handleListingStatusChange,
-      onUndoPendingPublish: handleUndoPendingPublish,
       isPendingPublishTask,
       composeRestoreRequest,
       mentionRequest,
       forceShowComposer: forceShowComposeForGuide,
       composeGuideActivationSignal,
-      onUpdateDueDate: handleDueDateChange,
-      onUpdatePriority: handlePriorityChange,
       isInteractionBlocked,
       onInteractionBlocked: handleBlockedInteractionAttempt,
       isHydrating,
@@ -908,21 +885,14 @@ const Index = () => {
       people,
       currentUser,
       searchQuery,
-      setSearchQuery,
       handleNewTask,
-      handleDispatchToggleComplete,
       focusedTaskId,
       setFocusedTaskId,
-      handleDispatchStatusChange,
-      handleListingStatusChange,
-      handleUndoPendingPublish,
       isPendingPublishTask,
       composeRestoreRequest,
       mentionRequest,
       forceShowComposeForGuide,
       composeGuideActivationSignal,
-      handleDueDateChange,
-      handlePriorityChange,
       isInteractionBlocked,
       handleBlockedInteractionAttempt,
       isHydrating,
@@ -954,33 +924,6 @@ const Index = () => {
       isAuthModalOpen,
       activeOnboardingStepId,
       isManageRouteActive,
-    ]
-  );
-
-  const mobileActions = useMemo(
-    () => ({
-      onViewChange: setCurrentView,
-      onRelayToggle: handleRelayToggle,
-      onChannelToggle: handleChannelToggle,
-      onPersonToggle: handlePersonToggle,
-      onChannelMatchModeChange: handleChannelMatchModeChange,
-      onAddRelay: handleAddRelay,
-      onRemoveRelay: handleRemoveRelay,
-      onSignInClick: handleDispatchOpenAuthModal,
-      onGuideClick: handleOpenGuide,
-      onManageRouteChange: setManageRouteActive,
-    }),
-    [
-      setCurrentView,
-      handleRelayToggle,
-      handleChannelToggle,
-      handlePersonToggle,
-      handleChannelMatchModeChange,
-      handleAddRelay,
-      handleRemoveRelay,
-      handleDispatchOpenAuthModal,
-      handleOpenGuide,
-      setManageRouteActive,
     ]
   );
 
@@ -1069,23 +1012,13 @@ const Index = () => {
   const mobileController: FeedPageMobileController = useMemo(
     () => ({
       viewState: mobileViewState,
-      actions: mobileActions,
       publishState: {
         ...mobilePublishState,
-        onRetryFailedPublish: handleRetryFailedPublish,
-        onRepostFailedPublish: handleRepostFailedPublish,
-        onDismissFailedPublish: handleDismissFailedPublish,
-        onDismissAllFailedPublish: handleDismissAllFailedPublish,
       },
     }),
     [
       mobileViewState,
-      mobileActions,
       mobilePublishState,
-      handleRetryFailedPublish,
-      handleRepostFailedPublish,
-      handleDismissFailedPublish,
-      handleDismissAllFailedPublish,
     ]
   );
 

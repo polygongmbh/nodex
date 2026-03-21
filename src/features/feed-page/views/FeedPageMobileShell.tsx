@@ -10,7 +10,7 @@ import { NostrAuthModal } from "@/components/auth/NostrAuthModal";
 
 export interface FeedPageMobileController {
   viewState: MobileLayoutViewState;
-  actions: MobileLayoutActions;
+  actions?: MobileLayoutActions;
   composerState?: MobileLayoutComposerState;
   publishState?: MobileLayoutPublishState;
 }

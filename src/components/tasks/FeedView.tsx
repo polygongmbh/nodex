@@ -69,6 +69,7 @@ import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -80,16 +81,10 @@ function formatCompactRelativeTime(date: Date): string {
 }
 
 interface FeedViewProps extends SharedTaskViewContext {
-  onToggleComplete: (taskId: string) => void;
-  onStatusChange?: (taskId: string, status: TaskStatus) => void;
-  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
-  onUpdatePriority?: (taskId: string, priority: number) => void;
-  onListingStatusChange?: (taskId: string, status: Nip99ListingStatus) => void;
   onFocusSidebar?: () => void;
   isMobile?: boolean;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
-  onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   mentionRequest?: {
     mention: string;
@@ -112,7 +107,6 @@ interface FeedDueDateChipProps {
   task: Task;
   editable: boolean;
   dueDateColor: string;
-  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
 }
 
 interface FeedDisclosureState {
@@ -124,7 +118,6 @@ function FeedDueDateChip({
   task,
   editable,
   dueDateColor,
-  onUpdateDueDate,
 }: FeedDueDateChipProps) {
   if (!task.dueDate) return null;
 
@@ -164,7 +157,6 @@ function FeedDueDateChip({
             dueTime={task.dueTime}
             dateType={task.dateType}
             idPrefix="feed"
-            onUpdateDueDate={onUpdateDueDate}
           />
         </PopoverContent>
       )}
@@ -175,10 +167,9 @@ function FeedDueDateChip({
 interface FeedPriorityChipProps {
   task: Task;
   editable: boolean;
-  onUpdatePriority?: (taskId: string, priority: number) => void;
 }
 
-function FeedPriorityChip({ task, editable, onUpdatePriority }: FeedPriorityChipProps) {
+function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
   const { t } = useTranslation();
 
   if (typeof task.priority !== "number") return null;
@@ -196,7 +187,6 @@ function FeedPriorityChip({ task, editable, onUpdatePriority }: FeedPriorityChip
         editable && "cursor-pointer hover:bg-warning/20",
         !editable && "cursor-not-allowed opacity-60"
       )}
-      onUpdatePriority={onUpdatePriority}
     />
   );
 }
@@ -212,11 +202,6 @@ export function FeedView({
   currentUser,
   searchQuery,
   onNewTask,
-  onToggleComplete,
-  onStatusChange,
-  onUpdateDueDate,
-  onUpdatePriority,
-  onListingStatusChange,
   focusedTaskId,
   onFocusTask,
   onFocusSidebar,
@@ -225,9 +210,6 @@ export function FeedView({
   forceShowComposer,
   composeGuideActivationSignal,
   onAuthorClick,
-  onClearChannelFilter,
-  onClearPersonFilter,
-  onUndoPendingPublish,
   isPendingPublishTask,
   composeRestoreRequest = null,
   mentionRequest = null,
@@ -235,12 +217,11 @@ export function FeedView({
   isHydrating = false,
 }: FeedViewProps) {
   const { t, i18n } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const interactionModel = useFeedViewInteractionModel();
   const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
   const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
   const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
-  const effectiveOnClearChannelFilter = onClearChannelFilter ?? interactionModel.onClearChannelFilter;
-  const effectiveOnClearPersonFilter = onClearPersonFilter ?? interactionModel.onClearPersonFilter;
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
@@ -618,6 +599,12 @@ export function FeedView({
   const canCompleteTask = (task: Task) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
+  const dispatchStatusChange = (taskId: string, status: TaskStatus) => {
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
+  };
+  const dispatchToggleComplete = (taskId: string) => {
+    void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
+  };
   const getStatusButtonTitle = (task: Task) => {
     if (canCompleteTask(task)) return getStatusToggleHint(task.status);
     return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || getStatusToggleHint(task.status);
@@ -820,7 +807,6 @@ export function FeedView({
     const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
     const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
     const canUpdateListingStatus =
-      Boolean(onListingStatusChange) &&
       !isInteractionBlocked &&
       isListing &&
       Boolean(currentUser?.id && currentUser.id.toLowerCase() === task.author.id.toLowerCase());
@@ -923,18 +909,18 @@ export function FeedView({
                     }
                     handleTaskStatusToggleClick(e, {
                       status: task.status,
-                      hasStatusChangeHandler: Boolean(onStatusChange),
+                      hasStatusChangeHandler: canCompleteTask(task),
                       isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
                       openMenu: () => openStatusMenu(task.id),
                       closeMenu: () => closeStatusMenu(task.id),
                       allowMenuOpen: () => allowStatusMenuOpen(task.id),
                       clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                      toggleStatus: () => onToggleComplete(task.id),
+                      toggleStatus: () => dispatchToggleComplete(task.id),
                       focusTask: () => onFocusTask?.(task.id),
                     });
                   }}
                   onFocus={(e) => {
-                    if (!onStatusChange || !canCompleteTask(task)) return;
+                    if (!canCompleteTask(task)) return;
                     if (
                       shouldAutoOpenStatusMenuOnFocus(
                         e.currentTarget,
@@ -957,7 +943,7 @@ export function FeedView({
                       shouldOpenStatusMenuForDirectSelection({
                         status: task.status,
                         altKey: e.altKey,
-                        hasStatusChangeHandler: Boolean(onStatusChange),
+                        hasStatusChangeHandler: canCompleteTask(task),
                       })
                     ) {
                       e.preventDefault();
@@ -991,12 +977,12 @@ export function FeedView({
                   )}
                 </button>
               </DropdownMenuTrigger>
-              {onStatusChange && canCompleteTask(task) && (
+              {canCompleteTask(task) && (
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem
                     onClick={(event) => {
                       event.stopPropagation();
-                      onStatusChange(task.id, "todo");
+                      dispatchStatusChange(task.id, "todo");
                     }}
                   >
                     <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -1005,7 +991,7 @@ export function FeedView({
                   <DropdownMenuItem
                     onClick={(event) => {
                       event.stopPropagation();
-                      onStatusChange(task.id, "in-progress");
+                      dispatchStatusChange(task.id, "in-progress");
                     }}
                   >
                     <CircleDot className="w-4 h-4 mr-2 text-warning" />
@@ -1014,7 +1000,7 @@ export function FeedView({
                   <DropdownMenuItem
                     onClick={(event) => {
                       event.stopPropagation();
-                      onStatusChange(task.id, "done");
+                      dispatchStatusChange(task.id, "done");
                     }}
                   >
                     <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
@@ -1023,7 +1009,7 @@ export function FeedView({
                   <DropdownMenuItem
                     onClick={(event) => {
                       event.stopPropagation();
-                      onStatusChange(task.id, "closed");
+                      dispatchStatusChange(task.id, "closed");
                     }}
                   >
                     <X className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -1039,8 +1025,12 @@ export function FeedView({
                 disabled={!canUpdateListingStatus}
                 onClick={(event) => {
                   event.stopPropagation();
-                  if (!canUpdateListingStatus || !onListingStatusChange) return;
-                  onListingStatusChange(task.id, listingStatus === "sold" ? "active" : "sold");
+                  if (!canUpdateListingStatus) return;
+                  void dispatchFeedInteraction({
+                    type: "task.listingStatus.change",
+                    taskId: task.id,
+                    status: listingStatus === "sold" ? "active" : "sold",
+                  });
                 }}
                 title={
                   canUpdateListingStatus
@@ -1154,7 +1144,6 @@ export function FeedView({
                   <FeedPriorityChip
                     task={task}
                     editable={canCompleteTask(task)}
-                    onUpdatePriority={onUpdatePriority}
                   />
                 </>
               )}
@@ -1183,7 +1172,6 @@ export function FeedView({
                     task={task}
                     editable={canCompleteTask(task)}
                     dueDateColor={dueDateColor}
-                    onUpdateDueDate={onUpdateDueDate}
                   />
                 </>
               )}
@@ -1227,7 +1215,7 @@ export function FeedView({
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
-                    onUndoPendingPublish?.(task.id);
+                    void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
                   }}
                   className="ml-auto shrink-0 text-warning hover:text-warning/80 font-medium"
                   title={t("toasts.actions.undo")}
@@ -1304,8 +1292,6 @@ export function FeedView({
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
-        onClearChannelFilter={effectiveOnClearChannelFilter}
-        onClearPersonFilter={effectiveOnClearPersonFilter}
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         mentionRequest={mentionRequest}

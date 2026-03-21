@@ -36,13 +36,11 @@ import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
-  onToggleComplete: (taskId: string) => void;
-  onStatusChange?: (taskId: string, newStatus: TaskStatus) => void;
   onFocusSidebar?: () => void;
-  onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
@@ -69,14 +67,11 @@ export function KanbanView({
   searchQuery,
   depthMode,
   onNewTask,
-  onToggleComplete,
   focusedTaskId,
   onFocusTask,
-  onStatusChange,
   onFocusSidebar,
   onHashtagClick,
   onAuthorClick,
-  onUndoPendingPublish,
   isPendingPublishTask,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
@@ -84,6 +79,7 @@ export function KanbanView({
   isHydrating = false,
 }: KanbanViewProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const interactionModel = useFeedViewInteractionModel();
   const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
   const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
@@ -218,6 +214,12 @@ export function KanbanView({
     (task: Task): TaskStatus => optimisticStatusByTaskId[task.id] || task.status || "todo",
     [optimisticStatusByTaskId]
   );
+  const dispatchStatusChange = useCallback(
+    (taskId: string, newStatus: TaskStatus) => {
+      void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status: newStatus });
+    },
+    [dispatchFeedInteraction]
+  );
   const orderedKanbanTasks = useMemo(
     () => [
       ...tasksByStatus["todo"],
@@ -257,12 +259,7 @@ export function KanbanView({
 
     setOptimisticStatusByTaskId((previous) => ({ ...previous, [taskId]: newStatus }));
     
-    if (onStatusChange) {
-      onStatusChange(taskId, newStatus);
-    } else {
-      // Fallback to toggle if no status change handler
-      onToggleComplete(taskId);
-    }
+    dispatchStatusChange(taskId, newStatus);
   };
 
   const handleNewTask = async (
@@ -348,8 +345,8 @@ export function KanbanView({
     else return; // Already at leftmost
     
     pendingRefocusRef.current = focusedId;
-    onStatusChange?.(focusedId, newStatus);
-  }, [currentUser, getTaskEffectiveStatus, isInteractionBlocked, kanbanTasks, onInteractionBlocked, onStatusChange]);
+    dispatchStatusChange(focusedId, newStatus);
+  }, [currentUser, dispatchStatusChange, getTaskEffectiveStatus, isInteractionBlocked, kanbanTasks, onInteractionBlocked]);
 
   // Handle moving task right (to next column) - preserves focus
   const handleMoveRight = useCallback(() => {
@@ -372,8 +369,8 @@ export function KanbanView({
     else return; // Already at rightmost
     
     pendingRefocusRef.current = focusedId;
-    onStatusChange?.(focusedId, newStatus);
-  }, [currentUser, getTaskEffectiveStatus, isInteractionBlocked, kanbanTasks, onInteractionBlocked, onStatusChange]);
+    dispatchStatusChange(focusedId, newStatus);
+  }, [currentUser, dispatchStatusChange, getTaskEffectiveStatus, isInteractionBlocked, kanbanTasks, onInteractionBlocked]);
 
   // Keyboard navigation - Kanban mode: arrows navigate, Shift+arrows/HJKL move tasks
   const { focusedTaskId: navFocusedTaskId, setFocusByTaskId } = useTaskNavigation({
@@ -644,7 +641,7 @@ export function KanbanView({
                                         type="button"
                                         onClick={(event) => {
                                           event.stopPropagation();
-                                          onUndoPendingPublish?.(task.id);
+                                          void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
                                         }}
                                         className="text-xs font-medium text-warning hover:text-warning/80"
                                         title={t("toasts.actions.undo")}

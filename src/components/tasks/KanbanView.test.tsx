@@ -1,6 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { KanbanView } from "./KanbanView";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { TaskCreateResult } from "@/types";
@@ -14,9 +14,14 @@ const dndMockState: {
 } = {
   onDragEnd: null,
 };
+const dispatchFeedInteraction = vi.fn();
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
+}));
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
 }));
 
 vi.mock("@hello-pangea/dnd", () => ({
@@ -65,6 +70,10 @@ vi.mock("@hello-pangea/dnd", () => ({
       { isDragging: false }
     ),
 }));
+
+beforeEach(() => {
+  dispatchFeedInteraction.mockClear();
+});
 
 describe("KanbanView closed column", () => {
   it("renders a closed column to the right of done", () => {
@@ -232,7 +241,6 @@ describe("KanbanView closed column", () => {
   it("optimistically places dropped cards in destination column before parent props refresh", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const task = makeTask({ id: "drag-task", author, status: "todo", content: "Drag me #general" });
-    const onStatusChange = vi.fn();
     const { container } = render(
       <KanbanView
         tasks={[task]}
@@ -246,7 +254,7 @@ describe("KanbanView closed column", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
         onToggleComplete={vi.fn()}
-        onStatusChange={onStatusChange}
+        onStatusChange={vi.fn()}
       />
     );
 
@@ -265,7 +273,11 @@ describe("KanbanView closed column", () => {
 
     const todoDropTargetAfter = container.querySelector('[data-droppable-id="todo"]');
     const doneDropTargetAfter = container.querySelector('[data-droppable-id="done"]');
-    expect(onStatusChange).toHaveBeenCalledWith("drag-task", "done");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.changeStatus",
+      taskId: "drag-task",
+      status: "done",
+    });
     expect(doneDropTargetAfter?.querySelector('[data-draggable-id="drag-task"]')).toBeInTheDocument();
     expect(todoDropTargetAfter?.querySelector('[data-draggable-id="drag-task"]')).not.toBeInTheDocument();
   });

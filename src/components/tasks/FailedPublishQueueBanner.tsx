@@ -4,15 +4,12 @@ import { cn } from "@/lib/utils";
 import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import { useTranslation } from "react-i18next";
 import { relayUrlToId } from "@/infrastructure/nostr/relay-url";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface FailedPublishQueueBannerProps {
   drafts: FailedPublishDraft[];
   selectedFeedDrafts?: FailedPublishDraft[];
   selectedRelayIds?: string[];
-  onRetry: (draftId: string) => Promise<void> | void;
-  onRepost?: (draftId: string) => Promise<void> | void;
-  onDismiss: (draftId: string) => void;
-  onDismissAll?: () => void;
   isMobile?: boolean;
 }
 
@@ -20,13 +17,10 @@ export function FailedPublishQueueBanner({
   drafts,
   selectedFeedDrafts,
   selectedRelayIds = [],
-  onRetry,
-  onRepost,
-  onDismiss,
-  onDismissAll,
   isMobile = false,
 }: FailedPublishQueueBannerProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [scope, setScope] = useState<"selected" | "all">("selected");
   const [pendingActionByDraftId, setPendingActionByDraftId] = useState<Record<string, "retry" | "repost" | undefined>>({});
   const selectedRelayIdSet = useMemo(() => new Set(selectedRelayIds), [selectedRelayIds]);
@@ -48,17 +42,16 @@ export function FailedPublishQueueBanner({
   const handleRetry = async (draftId: string) => {
     setPendingActionByDraftId((previous) => ({ ...previous, [draftId]: "retry" }));
     try {
-      await onRetry(draftId);
+      await dispatchFeedInteraction({ type: "publish.failed.retry", draftId });
     } finally {
       setPendingActionByDraftId((previous) => ({ ...previous, [draftId]: undefined }));
     }
   };
 
   const handleRepost = async (draftId: string) => {
-    if (!onRepost) return;
     setPendingActionByDraftId((previous) => ({ ...previous, [draftId]: "repost" }));
     try {
-      await onRepost(draftId);
+      await dispatchFeedInteraction({ type: "publish.failed.repost", draftId });
     } finally {
       setPendingActionByDraftId((previous) => ({ ...previous, [draftId]: undefined }));
     }
@@ -70,10 +63,12 @@ export function FailedPublishQueueBanner({
         <p className="text-xs font-medium text-destructive">
           {t("publishQueue.failedCount", { count: activeDrafts.length })}
         </p>
-        {onDismissAll && activeDrafts.length > 0 && (
+        {activeDrafts.length > 0 && (
           <button
             type="button"
-            onClick={onDismissAll}
+            onClick={() => {
+              void dispatchFeedInteraction({ type: "publish.failed.dismissAll" });
+            }}
             className="rounded px-2 py-0.5 text-[11px] font-medium text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
             title={t("publishQueue.dismissAll")}
             aria-label={t("publishQueue.dismissAll")}
@@ -154,33 +149,33 @@ export function FailedPublishQueueBanner({
                   {pendingAction === "retry" ? t("publishQueue.retrying") : t("publishQueue.retry")}
                 </span>
               </button>
-              {onRepost && (
-                <button
-                  type="button"
-                  onClick={() => void handleRepost(draft.id)}
-                  disabled={!canRepost || isPending}
-                  className={cn(
-                    "rounded px-2 py-1 text-xs font-medium text-destructive transition-colors",
-                    canRepost && !isPending
-                      ? "hover:bg-destructive/15"
-                      : "cursor-not-allowed opacity-50"
-                  )}
-                  title={canRepost ? t("publishQueue.repostHint") : t("publishQueue.repostUnavailable")}
-                  aria-label={t("publishQueue.repostHint")}
-                >
-                  {pendingAction === "repost" ? (
-                    <span className="inline-flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      {t("publishQueue.reposting")}
-                    </span>
-                  ) : (
-                    t("publishQueue.repost")
-                  )}
-                </button>
-              )}
               <button
                 type="button"
-                onClick={() => onDismiss(draft.id)}
+                onClick={() => void handleRepost(draft.id)}
+                disabled={!canRepost || isPending}
+                className={cn(
+                  "rounded px-2 py-1 text-xs font-medium text-destructive transition-colors",
+                  canRepost && !isPending
+                    ? "hover:bg-destructive/15"
+                    : "cursor-not-allowed opacity-50"
+                )}
+                title={canRepost ? t("publishQueue.repostHint") : t("publishQueue.repostUnavailable")}
+                aria-label={t("publishQueue.repostHint")}
+              >
+                {pendingAction === "repost" ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {t("publishQueue.reposting")}
+                  </span>
+                ) : (
+                  t("publishQueue.repost")
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void dispatchFeedInteraction({ type: "publish.failed.dismiss", draftId: draft.id });
+                }}
                 disabled={isPending}
                 className="rounded p-1 text-destructive/80 transition-colors hover:bg-destructive/15 hover:text-destructive"
                 title={t("publishQueue.dismiss")}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, MapPin, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -47,11 +47,11 @@ import {
   getHashtagQueryAtCursor,
 } from "@/lib/hashtags";
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface UnifiedBottomBarProps {
   // Search props
   searchQuery: string;
-  onSearchChange: (query: string) => void;
   // Compose props
   onSubmit: ComposerSubmit;
   currentView: ViewType;
@@ -61,10 +61,6 @@ interface UnifiedBottomBarProps {
   relays: Relay[];
   channels: Channel[];
   people: Person[];
-  // Filter handlers
-  onRelayToggle: (id: string) => void;
-  onChannelToggle: (id: string) => void;
-  onPersonToggle: (id: string) => void;
   // Default content for composing
   defaultContent?: string;
   isSignedIn: boolean;
@@ -107,7 +103,6 @@ function truncateWordSafe(value: string, maxLength: number): string {
 
 export function UnifiedBottomBar({
   searchQuery,
-  onSearchChange,
   onSubmit,
   currentView,
   focusedTaskId = null,
@@ -115,14 +110,18 @@ export function UnifiedBottomBar({
   relays,
   channels,
   people,
-  onRelayToggle,
-  onChannelToggle,
-  onPersonToggle,
   defaultContent = "",
   isSignedIn,
   composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const dispatchSearchChange = useCallback(
+    (query: string) => {
+      void dispatchFeedInteraction({ type: "ui.search.change", query });
+    },
+    [dispatchFeedInteraction]
+  );
   const { createHttpAuthHeader } = useNDK();
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;
@@ -227,19 +226,19 @@ export function UnifiedBottomBar({
 
       if (shouldBeIncluded) {
         if (channel.filterState === "neutral") {
-          onChannelToggle(channel.id);
+          void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
         } else if (channel.filterState === "excluded") {
-          onChannelToggle(channel.id);
-          onChannelToggle(channel.id);
+          void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
+          void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
         }
         continue;
       }
 
       if (channel.filterState === "included") {
-        onChannelToggle(channel.id);
-        onChannelToggle(channel.id);
+        void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
+        void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
       } else if (channel.filterState === "excluded") {
-        onChannelToggle(channel.id);
+        void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
       }
     }
   };
@@ -271,7 +270,7 @@ export function UnifiedBottomBar({
     lastAppliedRestoreRequestIdRef.current = composeRestoreRequest.id;
     const restoreState = composeRestoreRequest.state;
     setSharedText(restoreState.content || "");
-    onSearchChange(restoreState.content || "");
+    dispatchSearchChange(restoreState.content || "");
     setDueDate(restoreState.dueDate);
     setDueTime(restoreState.dueTime || "");
     setDateType(restoreState.dateType || "due");
@@ -306,7 +305,7 @@ export function UnifiedBottomBar({
       textarea.setSelectionRange(end, end);
       cursorPositionRef.current = end;
     });
-  }, [composeRestoreRequest, onSearchChange]);
+  }, [composeRestoreRequest, dispatchSearchChange]);
 
   useEffect(() => {
     if (currentView === "calendar") {
@@ -539,7 +538,7 @@ export function UnifiedBottomBar({
       ])
     ).join(" ");
     setSharedText(hashtagOnlyContent);
-    onSearchChange(hashtagOnlyContent);
+    dispatchSearchChange(hashtagOnlyContent);
     prevIncludedChannelsRef.current = [...includedChannels];
     autoManagedChannelsRef.current = new Set(includedChannels);
     setLocationGeohash(undefined);
@@ -688,7 +687,7 @@ export function UnifiedBottomBar({
 
   const handleCancel = () => {
     setSharedText("");
-    onSearchChange("");
+    dispatchSearchChange("");
     setActiveSelector(null);
     setShowSendOptions(false);
     setShowMentionSuggestions(false);
@@ -861,7 +860,7 @@ export function UnifiedBottomBar({
     if (mentionStart < 0) return;
     const newText = textBeforeCursor.slice(0, mentionStart) + `@${mentionToken} ` + textAfterCursor;
     setSharedText(newText);
-    onSearchChange(newText);
+    dispatchSearchChange(newText);
     setShowMentionSuggestions(false);
     setActiveMentionIndex(0);
     scheduleTrackedTimeout(() => {
@@ -949,7 +948,7 @@ export function UnifiedBottomBar({
     const newText = (sharedText.slice(0, mentionStart) + sharedText.slice(mentionEnd))
       .replace(/[ \t]{2,}/g, " ");
     setSharedText(newText);
-    onSearchChange(newText);
+    dispatchSearchChange(newText);
     scheduleTrackedTimeout(() => {
       const textarea = textareaRef.current;
       if (!textarea) return;
@@ -989,7 +988,7 @@ export function UnifiedBottomBar({
     const newText = (sharedText.slice(0, hashtagStart) + sharedText.slice(hashtagEnd))
       .replace(/[ \t]{2,}/g, " ");
     setSharedText(newText);
-    onSearchChange(newText);
+    dispatchSearchChange(newText);
     scheduleTrackedTimeout(() => {
       const textarea = textareaRef.current;
       if (!textarea) return;
@@ -1028,7 +1027,9 @@ export function UnifiedBottomBar({
                 return (
                   <button
                     key={relay.id}
-                    onClick={() => onRelayToggle(relay.id)}
+                    onClick={() => {
+                      void dispatchFeedInteraction({ type: "sidebar.relay.toggle", relayId: relay.id });
+                    }}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
                       relay.isActive
@@ -1049,7 +1050,9 @@ export function UnifiedBottomBar({
               {channels.map((channel) => (
                 <button
                   key={channel.id}
-                  onClick={() => onChannelToggle(channel.id)}
+                  onClick={() => {
+                    void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
+                  }}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
                     channel.filterState === "included" && "bg-success/10 border-success text-success motion-filter-pop",
@@ -1073,7 +1076,9 @@ export function UnifiedBottomBar({
                 return (
                   <button
                     key={person.id}
-                    onClick={() => onPersonToggle(person.id)}
+                    onClick={() => {
+                      void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.id });
+                    }}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-target-sm active:scale-95",
                       person.isSelected
@@ -1414,7 +1419,7 @@ export function UnifiedBottomBar({
                   }
                   syncChannelFiltersFromContent(value, sharedText);
                   setSharedText(value);
-                  onSearchChange(value);
+                  dispatchSearchChange(value);
                 }}
                 onKeyDown={(e) => {
                   if (isMetadataOnlyAutocompleteKey(e)) {

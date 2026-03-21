@@ -1,9 +1,11 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import type { ReactNode } from "react";
 import { TaskItem } from "./TaskItem";
 import type { Task } from "@/types";
 import { makePerson, makeTask } from "@/test/fixtures";
+
+const dispatchFeedInteraction = vi.fn();
 
 vi.mock("@/infrastructure/nostr/use-nostr-profiles", () => ({
   useNostrProfile: (): { profile: null } => ({ profile: null }),
@@ -32,6 +34,10 @@ vi.mock("@/components/ui/calendar", () => ({
   ),
 }));
 
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
 const baseTask: Task = makeTask({
   id: "t1",
   author: makePerson({ id: "me", name: "me", displayName: "Me" }),
@@ -40,10 +46,12 @@ const baseTask: Task = makeTask({
   status: "todo",
 });
 
+beforeEach(() => {
+  dispatchFeedInteraction.mockClear();
+});
+
 describe("TaskItem status actions", () => {
   it("cycles status on plain click even when status menu exists", () => {
-    const onStatusChange = vi.fn();
-    const onToggleComplete = vi.fn();
     const onSelect = vi.fn();
 
     render(
@@ -52,22 +60,17 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
-        onToggleComplete={onToggleComplete}
         onSelect={onSelect}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
-    expect(onToggleComplete).toHaveBeenCalledWith("t1");
-    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
     expect(onSelect).toHaveBeenCalledWith("t1");
   });
 
   it("does not enter the task when toggling from in progress to done", () => {
-    const onStatusChange = vi.fn();
-    const onToggleComplete = vi.fn();
     const onSelect = vi.fn();
 
     render(
@@ -76,22 +79,17 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
-        onToggleComplete={onToggleComplete}
         onSelect={onSelect}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
-    expect(onToggleComplete).toHaveBeenCalledWith("t1");
-    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
     expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("does not enter the task on option-click", () => {
-    const onStatusChange = vi.fn();
-    const onToggleComplete = vi.fn();
     const onSelect = vi.fn();
 
     render(
@@ -100,16 +98,13 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
-        onToggleComplete={onToggleComplete}
         onSelect={onSelect}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
 
-    expect(onToggleComplete).not.toHaveBeenCalled();
-    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
     expect(onSelect).not.toHaveBeenCalled();
   });
 
@@ -150,7 +145,6 @@ describe("TaskItem status actions", () => {
   });
 
   it("does not enter the task when selecting a status from the dropdown", () => {
-    const onStatusChange = vi.fn();
     const onSelect = vi.fn();
 
     render(
@@ -159,7 +153,6 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
         onSelect={onSelect}
       />
     );
@@ -167,86 +160,80 @@ describe("TaskItem status actions", () => {
     fireEvent.click(screen.getByLabelText("Set status"));
     fireEvent.click(screen.getByText("In Progress"));
 
-    expect(onStatusChange).toHaveBeenCalledWith("t1", "in-progress");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.changeStatus",
+      taskId: "t1",
+      status: "in-progress",
+    });
     expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("allows directly marking a task as done", () => {
-    const onStatusChange = vi.fn();
-
     render(
       <TaskItem
         task={baseTask}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
       />
     );
 
     fireEvent.click(screen.getByText("Done"));
 
-    expect(onStatusChange).toHaveBeenCalledWith("t1", "done");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.changeStatus",
+      taskId: "t1",
+      status: "done",
+    });
   });
 
   it("allows directly marking a task as closed", () => {
-    const onStatusChange = vi.fn();
-
     render(
       <TaskItem
         task={baseTask}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
       />
     );
 
     fireEvent.click(screen.getByText("Closed"));
 
-    expect(onStatusChange).toHaveBeenCalledWith("t1", "closed");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.changeStatus",
+      taskId: "t1",
+      status: "closed",
+    });
   });
 
   it("does not cycle done tasks on click when status menu is available", () => {
-    const onStatusChange = vi.fn();
-    const onToggleComplete = vi.fn();
-
     render(
       <TaskItem
         task={{ ...baseTask, status: "done" }}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
-        onToggleComplete={onToggleComplete}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
-    expect(onToggleComplete).not.toHaveBeenCalled();
-    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
   });
 
   it("does not cycle closed tasks on click when status menu is available", () => {
-    const onStatusChange = vi.fn();
-    const onToggleComplete = vi.fn();
-
     render(
       <TaskItem
         task={{ ...baseTask, status: "closed" }}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
-        onToggleComplete={onToggleComplete}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
-    expect(onToggleComplete).not.toHaveBeenCalled();
-    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
   });
 
   it("shows a status hover hint on the task checkbox", () => {
@@ -266,9 +253,6 @@ describe("TaskItem status actions", () => {
   });
 
   it("blocks status changes when task is assigned to another user", () => {
-    const onStatusChange = vi.fn();
-    const onToggleComplete = vi.fn();
-
     render(
       <TaskItem
         task={{
@@ -279,8 +263,6 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
-        onToggleComplete={onToggleComplete}
       />
     );
 
@@ -288,14 +270,10 @@ describe("TaskItem status actions", () => {
     expect(statusButton).toBeDisabled();
     expect(statusButton).toHaveAttribute("title", expect.stringContaining("assigned to"));
     fireEvent.click(statusButton);
-    expect(onStatusChange).not.toHaveBeenCalled();
-    expect(onToggleComplete).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
   });
 
   it("allows status changes when an unassigned task belongs to another user", () => {
-    const onStatusChange = vi.fn();
-    const onToggleComplete = vi.fn();
-
     render(
       <TaskItem
         task={{
@@ -305,21 +283,16 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
-        onToggleComplete={onToggleComplete}
       />
     );
 
     const statusButton = screen.getByLabelText("Set status");
     expect(statusButton).not.toBeDisabled();
     fireEvent.click(statusButton);
-    expect(onToggleComplete).toHaveBeenCalledWith("t1");
-    expect(onStatusChange).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
   });
 
   it("uses people context to show enriched identity details in blocked reason", () => {
-    const onStatusChange = vi.fn();
-    const onToggleComplete = vi.fn();
     const sparseAuthor = makePerson({
       id: "ad9cb1b0f13f54e84214e7dc809bcf6968a4e255c57c6a588eb976b4e8141318",
       name: "ad9cb1b0",
@@ -343,8 +316,6 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onStatusChange={onStatusChange}
-        onToggleComplete={onToggleComplete}
       />
     );
 
@@ -411,14 +382,12 @@ describe("TaskItem status actions", () => {
   });
 
   it("updates task priority from the priority chip", () => {
-    const onUpdatePriority = vi.fn();
     render(
       <TaskItem
         task={{ ...baseTask, priority: 40 }}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onUpdatePriority={onUpdatePriority}
       />
     );
 
@@ -426,11 +395,14 @@ describe("TaskItem status actions", () => {
       target: { value: "80" },
     });
 
-    expect(onUpdatePriority).toHaveBeenCalledWith("t1", 80);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.updatePriority",
+      taskId: "t1",
+      priority: 80,
+    });
   });
 
   it("updates date type from the due date chip controls", () => {
-    const onUpdateDueDate = vi.fn();
     const dueDate = new Date("2026-05-01T00:00:00.000Z");
     render(
       <TaskItem
@@ -438,7 +410,6 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onUpdateDueDate={onUpdateDueDate}
       />
     );
 
@@ -446,6 +417,12 @@ describe("TaskItem status actions", () => {
       target: { value: "scheduled" },
     });
 
-    expect(onUpdateDueDate).toHaveBeenCalledWith("t1", dueDate, undefined, "scheduled");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.updateDueDate",
+      taskId: "t1",
+      dueDate,
+      dueTime: undefined,
+      dateType: "scheduled",
+    });
   });
 });

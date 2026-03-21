@@ -54,7 +54,7 @@ vi.mock("./UnifiedBottomBar", () => ({
     onSubmit,
   }: {
     searchQuery: string;
-    onSearchChange: (value: string) => void;
+    onSearchChange?: (value: string) => void;
     isSignedIn: boolean;
     onSubmit: (...args: unknown[]) => unknown;
   }) => {
@@ -72,7 +72,7 @@ vi.mock("./UnifiedBottomBar", () => ({
           value={value}
           onChange={(event) => {
             setValue(event.target.value);
-            onSearchChange(event.target.value);
+            onSearchChange?.(event.target.value);
           }}
         />
         {!isSignedIn ? (
@@ -137,13 +137,6 @@ const baseProps: MobileLayoutProps = {
   },
   actions: {
     onViewChange: () => {},
-    onRelayToggle: () => {},
-    onChannelToggle: () => {},
-    onPersonToggle: () => {},
-    onAddRelay: () => {},
-    onRemoveRelay: () => {},
-    onSignInClick: () => {},
-    onGuideClick: () => {},
   },
 };
 const baseTaskViewModel: FeedTaskViewModel = {
@@ -199,12 +192,10 @@ describe("MobileLayout auth wiring", () => {
   it("uses auth state (not current user) to gate compose", () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
-    const onSignInClick = vi.fn();
     const onNewTask = vi.fn().mockResolvedValue({ ok: false, reason: "not-authenticated" });
 
     renderMobileLayout({
       viewState: { isSignedIn: false },
-      actions: { onSignInClick },
       taskViewModel: { onNewTask },
     });
 
@@ -213,7 +204,6 @@ describe("MobileLayout auth wiring", () => {
     fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
     expect(onNewTask).toHaveBeenCalledTimes(1);
-    expect(onSignInClick).not.toHaveBeenCalled();
   });
 
   it("redirects to manage view and opens profile editor after sign-in when cached profile metadata is missing", async () => {

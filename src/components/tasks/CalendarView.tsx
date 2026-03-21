@@ -61,10 +61,9 @@ import {
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface CalendarViewProps extends SharedTaskViewContext {
-  onToggleComplete: (taskId: string) => void;
-  onStatusChange?: (taskId: string, status: TaskStatus) => void;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
@@ -85,8 +84,6 @@ export function CalendarView({
   currentUser,
   searchQuery,
   onNewTask,
-  onToggleComplete,
-  onStatusChange,
   focusedTaskId,
   onFocusTask,
   selectedDate: controlledSelectedDate,
@@ -99,6 +96,7 @@ export function CalendarView({
   isHydrating = false,
 }: CalendarViewProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const interactionModel = useFeedViewInteractionModel();
   const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
   const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
@@ -414,6 +412,12 @@ export function CalendarView({
   const canCompleteTask = (task: Task) => {
     return canUserChangeTaskStatus(task, currentUser);
   };
+  const dispatchStatusChange = (taskId: string, status: TaskStatus) => {
+    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
+  };
+  const dispatchToggleComplete = (taskId: string) => {
+    void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
+  };
   const getStatusButtonTitle = (task: Task) => {
     if (canCompleteTask(task)) return getStatusToggleHint(task.status);
     return getTaskStatusChangeBlockedReason(task, currentUser, false, people) || getStatusToggleHint(task.status);
@@ -586,18 +590,18 @@ export function CalendarView({
                                     }
                                     handleTaskStatusToggleClick(e, {
                                       status: task.status,
-                                      hasStatusChangeHandler: Boolean(onStatusChange),
+                                      hasStatusChangeHandler: canCompleteTask(task),
                                       isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
                                       openMenu: () => openStatusMenu(task.id),
                                       closeMenu: () => closeStatusMenu(task.id),
                                       allowMenuOpen: () => allowStatusMenuOpen(task.id),
                                       clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                                      toggleStatus: () => onToggleComplete(task.id),
+                                      toggleStatus: () => dispatchToggleComplete(task.id),
                                       focusTask: () => onFocusTask?.(task.id),
                                     });
                                   }}
                                   onFocus={(e) => {
-                                    if (!onStatusChange || !canCompleteTask(task)) return;
+                                    if (!canCompleteTask(task)) return;
                                     if (
                                       shouldAutoOpenStatusMenuOnFocus(
                                         e.currentTarget,
@@ -620,7 +624,7 @@ export function CalendarView({
                                       shouldOpenStatusMenuForDirectSelection({
                                         status: task.status,
                                         altKey: e.altKey,
-                                        hasStatusChangeHandler: Boolean(onStatusChange),
+                                        hasStatusChangeHandler: canCompleteTask(task),
                                       })
                                     ) {
                                       e.preventDefault();
@@ -653,12 +657,12 @@ export function CalendarView({
                                   )}
                                 </button>
                               </DropdownMenuTrigger>
-                              {onStatusChange && canCompleteTask(task) && (
+                              {canCompleteTask(task) && (
                                 <DropdownMenuContent align="start">
                                   <DropdownMenuItem
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      onStatusChange(task.id, "todo");
+                                      dispatchStatusChange(task.id, "todo");
                                     }}
                                   >
                                     <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -667,7 +671,7 @@ export function CalendarView({
                                   <DropdownMenuItem
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      onStatusChange(task.id, "in-progress");
+                                      dispatchStatusChange(task.id, "in-progress");
                                     }}
                                   >
                                     <CircleDot className="w-4 h-4 mr-2 text-warning" />
@@ -676,7 +680,7 @@ export function CalendarView({
                                   <DropdownMenuItem
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      onStatusChange(task.id, "done");
+                                      dispatchStatusChange(task.id, "done");
                                     }}
                                   >
                                     <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
@@ -1017,18 +1021,18 @@ export function CalendarView({
                                   }
                                   handleTaskStatusToggleClick(e, {
                                     status: task.status,
-                                    hasStatusChangeHandler: Boolean(onStatusChange),
+                                    hasStatusChangeHandler: canCompleteTask(task),
                                     isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
                                     openMenu: () => openStatusMenu(task.id),
                                     closeMenu: () => closeStatusMenu(task.id),
                                     allowMenuOpen: () => allowStatusMenuOpen(task.id),
                                     clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                                    toggleStatus: () => onToggleComplete(task.id),
+                                    toggleStatus: () => dispatchToggleComplete(task.id),
                                     focusTask: () => onFocusTask?.(task.id),
                                   });
                                 }}
                                 onFocus={(e) => {
-                                  if (!onStatusChange || !canCompleteTask(task)) return;
+                                  if (!canCompleteTask(task)) return;
                                   if (
                                     shouldAutoOpenStatusMenuOnFocus(
                                       e.currentTarget,
@@ -1051,7 +1055,7 @@ export function CalendarView({
                                     shouldOpenStatusMenuForDirectSelection({
                                       status: task.status,
                                       altKey: e.altKey,
-                                      hasStatusChangeHandler: Boolean(onStatusChange),
+                                      hasStatusChangeHandler: canCompleteTask(task),
                                     })
                                   ) {
                                     e.preventDefault();
@@ -1084,12 +1088,12 @@ export function CalendarView({
                                 )}
                               </button>
                             </DropdownMenuTrigger>
-                            {onStatusChange && canCompleteTask(task) && (
+                            {canCompleteTask(task) && (
                               <DropdownMenuContent align="start">
                                 <DropdownMenuItem
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    onStatusChange(task.id, "todo");
+                                    dispatchStatusChange(task.id, "todo");
                                   }}
                                 >
                                   <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
@@ -1098,7 +1102,7 @@ export function CalendarView({
                                 <DropdownMenuItem
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    onStatusChange(task.id, "in-progress");
+                                    dispatchStatusChange(task.id, "in-progress");
                                   }}
                                 >
                                   <CircleDot className="w-4 h-4 mr-2 text-warning" />
@@ -1107,7 +1111,7 @@ export function CalendarView({
                                 <DropdownMenuItem
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    onStatusChange(task.id, "done");
+                                    dispatchStatusChange(task.id, "done");
                                   }}
                                 >
                                   <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
@@ -1116,7 +1120,7 @@ export function CalendarView({
                                 <DropdownMenuItem
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    onStatusChange(task.id, "closed");
+                                    dispatchStatusChange(task.id, "closed");
                                   }}
                                 >
                                   <X className="w-4 h-4 mr-2 text-muted-foreground" />

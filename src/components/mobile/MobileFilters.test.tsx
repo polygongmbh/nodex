@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileFilters } from "./MobileFilters";
 import type { Channel, Person, Relay } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
+import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 
 const ndkMock = {
   user: {
@@ -93,6 +94,15 @@ vi.mock("@/hooks/use-profile-editor", () => ({
   }),
 }));
 
+const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => ({
+  envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
+  outcome: { status: "handled" as const },
+}));
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
 const relays: Relay[] = [
   { id: "demo", name: "Demo", icon: "D", isActive: true },
 ];
@@ -115,6 +125,7 @@ const people: Person[] = [
 describe("MobileFilters management view", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    dispatchFeedInteraction.mockClear();
     ndkMock.user = {
       pubkey: "abc123",
       npub: "npub1abc",
@@ -123,20 +134,11 @@ describe("MobileFilters management view", () => {
   });
 
   it("supports adding a new feed and showing profile controls", () => {
-    const onAddRelay = vi.fn();
-
     render(
       <MobileFilters
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={onAddRelay}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
       />
     );
 
@@ -145,7 +147,10 @@ describe("MobileFilters management view", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /add feed/i }));
 
-    expect(onAddRelay).toHaveBeenCalledWith("wss://relay.example.com");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "sidebar.relay.add",
+      url: "wss://relay.example.com",
+    });
     expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
     expect(screen.getByText(/^v\d+\.\d+\.\d+$/)).toBeInTheDocument();
@@ -177,13 +182,6 @@ describe("MobileFilters management view", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
       />
     );
 
@@ -191,28 +189,21 @@ describe("MobileFilters management view", () => {
   });
 
   it("allows switching channel include match mode", () => {
-    const onChannelMatchModeChange = vi.fn();
-
     render(
       <MobileFilters
         relays={relays}
         channels={channels}
         channelMatchMode="and"
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onChannelMatchModeChange={onChannelMatchModeChange}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
       />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /included channel match mode/i }));
 
-    expect(onChannelMatchModeChange).toHaveBeenCalledWith("or");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "sidebar.channel.matchMode.change",
+      mode: "or",
+    });
   });
 
   it("renders app preferences outside the profile editor card", () => {
@@ -221,13 +212,6 @@ describe("MobileFilters management view", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onSignInClick={() => {}}
-        onGuideClick={() => {}}
       />
     );
 

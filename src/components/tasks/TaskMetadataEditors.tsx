@@ -3,6 +3,7 @@ import { Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { TaskDateType } from "@/types";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const TASK_DATE_TYPE_OPTION_KEYS: Array<{ value: TaskDateType; labelKey: string }> = [
   { value: "due", labelKey: "composer.dates.due" },
@@ -20,7 +21,6 @@ interface TaskDueDateEditorFormProps {
   dueTime?: string;
   dateType?: TaskDateType;
   idPrefix?: string;
-  onUpdateDueDate?: (taskId: string, dueDate: Date | undefined, dueTime?: string, dateType?: TaskDateType) => void;
 }
 
 export function TaskDueDateEditorForm({
@@ -29,11 +29,24 @@ export function TaskDueDateEditorForm({
   dueTime,
   dateType,
   idPrefix = "task",
-  onUpdateDueDate,
 }: TaskDueDateEditorFormProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [localDueTime, setLocalDueTime] = useState(dueTime || "");
   const [localDateType, setLocalDateType] = useState<TaskDateType>(dateType || "due");
+  const dispatchDueDateUpdate = (
+    nextDueDate: Date | undefined,
+    nextDueTime: string | undefined,
+    nextDateType: TaskDateType
+  ) => {
+    void dispatchFeedInteraction({
+      type: "task.updateDueDate",
+      taskId,
+      dueDate: nextDueDate,
+      dueTime: nextDueTime,
+      dateType: nextDateType,
+    });
+  };
 
   useEffect(() => {
     setLocalDueTime(dueTime || "");
@@ -57,7 +70,7 @@ export function TaskDueDateEditorForm({
             const nextType = event.target.value as TaskDateType;
             setLocalDateType(nextType);
             if (dueDate) {
-              onUpdateDueDate?.(taskId, dueDate, localDueTime || undefined, nextType);
+              dispatchDueDateUpdate(dueDate, localDueTime || undefined, nextType);
             }
           }}
           className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
@@ -73,7 +86,7 @@ export function TaskDueDateEditorForm({
         mode="single"
         selected={dueDate}
         onSelect={(date) => {
-          onUpdateDueDate?.(taskId, date, localDueTime || undefined, localDateType);
+          dispatchDueDateUpdate(date, localDueTime || undefined, localDateType);
         }}
         initialFocus
       />
@@ -86,7 +99,7 @@ export function TaskDueDateEditorForm({
             const value = event.target.value;
             setLocalDueTime(value);
             if (dueDate) {
-              onUpdateDueDate?.(taskId, dueDate, value || undefined, localDateType);
+              dispatchDueDateUpdate(dueDate, value || undefined, localDateType);
             }
           }}
           className="rounded border border-border bg-background px-2 py-1 text-xs"
@@ -105,7 +118,6 @@ interface TaskPrioritySelectProps {
   id?: string;
   ariaLabel?: string;
   stopPropagation?: boolean;
-  onUpdatePriority?: (taskId: string, priority: number) => void;
 }
 
 export function TaskPrioritySelect({
@@ -117,8 +129,8 @@ export function TaskPrioritySelect({
   id,
   ariaLabel,
   stopPropagation = false,
-  onUpdatePriority,
 }: TaskPrioritySelectProps) {
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const value = typeof priority === "number" ? String(priority) : "";
   return (
     <select
@@ -131,7 +143,7 @@ export function TaskPrioritySelect({
         if (!next) return;
         const parsed = Number.parseInt(next, 10);
         if (Number.isFinite(parsed)) {
-          onUpdatePriority?.(taskId, parsed);
+          void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: parsed });
         }
       }}
       onClick={(event) => {

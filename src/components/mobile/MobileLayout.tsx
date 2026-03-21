@@ -26,6 +26,7 @@ import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
 import { useTranslation } from "react-i18next";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 export interface MobileLayoutViewState {
   relays: Relay[];
@@ -42,14 +43,6 @@ export interface MobileLayoutViewState {
 
 export interface MobileLayoutActions {
   onViewChange: (view: ViewType) => void;
-  onRelayToggle: (id: string) => void;
-  onChannelToggle: (id: string) => void;
-  onPersonToggle: (id: string) => void;
-  onChannelMatchModeChange?: (mode: ChannelMatchMode) => void;
-  onAddRelay: (url: string) => void;
-  onRemoveRelay: (url: string) => void;
-  onSignInClick: () => void;
-  onGuideClick: () => void;
   onManageRouteChange?: (isActive: boolean) => void;
 }
 
@@ -63,20 +56,15 @@ export interface MobileLayoutComposerState {
 }
 
 export interface MobileLayoutPublishState {
-  onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   failedPublishDrafts?: FailedPublishDraft[];
   visibleFailedPublishDrafts?: FailedPublishDraft[];
   selectedPublishableRelayIds?: string[];
-  onRetryFailedPublish?: (draftId: string) => void;
-  onRepostFailedPublish?: (draftId: string) => void;
-  onDismissFailedPublish?: (draftId: string) => void;
-  onDismissAllFailedPublish?: () => void;
 }
 
 interface MobileLayoutProps {
   viewState: MobileLayoutViewState;
-  actions: MobileLayoutActions;
+  actions?: MobileLayoutActions;
   composerState?: MobileLayoutComposerState;
   publishState?: MobileLayoutPublishState;
 }
@@ -101,6 +89,7 @@ export function MobileLayout({
   composerState,
   publishState,
 }: MobileLayoutProps) {
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const {
     relays,
     channels,
@@ -113,31 +102,31 @@ export function MobileLayout({
     activeOnboardingStepId = null,
     isManageRouteActive = false,
   } = viewState;
-  const {
-    onViewChange,
-    onRelayToggle,
-    onChannelToggle,
-    onPersonToggle,
-    onChannelMatchModeChange = () => {},
-    onAddRelay,
-    onRemoveRelay,
-    onSignInClick,
-    onGuideClick,
-    onManageRouteChange = () => {},
-  } = actions;
+  const dispatchViewChange = useCallback((view: ViewType) => {
+    void dispatchFeedInteraction({ type: "ui.view.change", view });
+  }, [dispatchFeedInteraction]);
+  const dispatchManageRouteChange = useCallback((isActive: boolean) => {
+    void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
+  }, [dispatchFeedInteraction]);
+  const onViewChange = useMemo(
+    () => actions?.onViewChange ?? dispatchViewChange,
+    [actions?.onViewChange, dispatchViewChange]
+  );
+  const onManageRouteChange = useMemo(
+    () => actions?.onManageRouteChange ?? dispatchManageRouteChange,
+    [actions?.onManageRouteChange, dispatchManageRouteChange]
+  );
   const feedTaskViewModel = useFeedTaskViewModel();
   const {
     tasks,
     allTasks,
     searchQuery,
     focusedTaskId = null,
-    onSearchChange,
     onNewTask,
     onFocusTask,
     composeRestoreRequest: contextComposeRestoreRequest = null,
     mentionRequest: contextMentionRequest = null,
     forceShowComposer: contextForceShowComposer = false,
-    onUndoPendingPublish: contextOnUndoPendingPublish,
     isPendingPublishTask: contextIsPendingPublishTask,
     isHydrating = false,
   } = feedTaskViewModel;
@@ -147,15 +136,10 @@ export function MobileLayout({
     mentionRequest = contextMentionRequest,
   } = composerState ?? {};
   const {
-    onUndoPendingPublish = contextOnUndoPendingPublish,
     isPendingPublishTask = contextIsPendingPublishTask,
     failedPublishDrafts = [],
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds = [],
-    onRetryFailedPublish,
-    onRepostFailedPublish,
-    onDismissFailedPublish,
-    onDismissAllFailedPublish,
   } = publishState ?? {};
   const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
@@ -265,7 +249,6 @@ export function MobileLayout({
       composeRestoreRequest,
       mentionRequest,
       forceShowComposer: forceComposeMode,
-      onUndoPendingPublish,
       isPendingPublishTask,
     }),
     [
@@ -274,7 +257,6 @@ export function MobileLayout({
       composeRestoreRequest,
       mentionRequest,
       forceComposeMode,
-      onUndoPendingPublish,
       isPendingPublishTask,
     ]
   );
@@ -358,14 +340,6 @@ export function MobileLayout({
           channelMatchMode={channelMatchMode}
           people={people}
           profileEditorOpenSignal={profileEditorOpenSignal}
-          onRelayToggle={onRelayToggle}
-          onChannelToggle={onChannelToggle}
-          onPersonToggle={onPersonToggle}
-          onChannelMatchModeChange={onChannelMatchModeChange}
-          onAddRelay={onAddRelay}
-          onRemoveRelay={onRemoveRelay}
-          onSignInClick={onSignInClick}
-          onGuideClick={onGuideClick}
         />
       );
     }
@@ -386,18 +360,12 @@ export function MobileLayout({
   return (
     <div className="flex flex-col app-shell-height bg-background overflow-hidden">
       <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} />
-      {onRetryFailedPublish && onDismissFailedPublish && (
-        <FailedPublishQueueBanner
-          drafts={failedPublishDrafts}
-          selectedFeedDrafts={visibleFailedPublishDrafts}
-          selectedRelayIds={selectedPublishableRelayIds}
-          onRetry={onRetryFailedPublish}
-          onRepost={onRepostFailedPublish}
-          onDismiss={onDismissFailedPublish}
-          onDismissAll={onDismissAllFailedPublish}
-          isMobile
-        />
-      )}
+      <FailedPublishQueueBanner
+        drafts={failedPublishDrafts}
+        selectedFeedDrafts={visibleFailedPublishDrafts}
+        selectedRelayIds={selectedPublishableRelayIds}
+        isMobile
+      />
       
       {/* Swipe indicator */}
       <SwipeIndicator 
@@ -449,7 +417,6 @@ export function MobileLayout({
       <div hidden={showFilters}>
         <UnifiedBottomBar
           searchQuery={searchQuery}
-          onSearchChange={onSearchChange}
           onSubmit={handleMobileSubmit}
           currentView={activePrimaryView}
           focusedTaskId={focusedTaskId}
@@ -457,9 +424,6 @@ export function MobileLayout({
           relays={relays}
           channels={channels}
           people={people}
-          onRelayToggle={onRelayToggle}
-          onChannelToggle={onChannelToggle}
-          onPersonToggle={onPersonToggle}
           defaultContent={defaultContent}
           isSignedIn={isSignedIn}
           forceComposeMode={forceComposeMode}

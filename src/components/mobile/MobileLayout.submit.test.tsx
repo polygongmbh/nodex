@@ -105,13 +105,6 @@ describe("MobileLayout submit wiring", () => {
           }}
           actions={{
             onViewChange: () => {},
-            onRelayToggle: () => {},
-            onChannelToggle: () => {},
-            onPersonToggle: () => {},
-            onAddRelay: () => {},
-            onRemoveRelay: () => {},
-            onSignInClick: () => {},
-            onGuideClick: () => {},
           }}
         />
       </FeedTaskViewModelProvider>

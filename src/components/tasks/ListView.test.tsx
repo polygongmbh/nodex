@@ -1,14 +1,23 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ListView } from "./ListView";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { TaskCreateResult } from "@/types";
 
 let mockUser: { id: string } | null = { id: "me" };
+const dispatchFeedInteraction = vi.fn();
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: mockUser }),
 }));
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
+beforeEach(() => {
+  dispatchFeedInteraction.mockClear();
+});
 
 describe("ListView priority control", () => {
   it("focuses ancestor from breadcrumb without selecting current row task", () => {
@@ -145,7 +154,6 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
     const onFocusTask = vi.fn();
-    const onToggleComplete = vi.fn();
 
     render(
       <ListView
@@ -158,14 +166,17 @@ describe("ListView priority control", () => {
         searchQuery=""
         onSearchChange={vi.fn()}
         onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={onToggleComplete}
+        onToggleComplete={vi.fn()}
         onFocusTask={onFocusTask}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
-    expect(onToggleComplete).toHaveBeenCalledWith("task-focus");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.toggleComplete",
+      taskId: "task-focus",
+    });
     expect(onFocusTask).not.toHaveBeenCalled();
   });
 
@@ -216,7 +227,6 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
     const onFocusTask = vi.fn();
-    const onStatusChange = vi.fn();
 
     render(
       <ListView
@@ -230,7 +240,7 @@ describe("ListView priority control", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
         onToggleComplete={vi.fn()}
-        onStatusChange={onStatusChange}
+        onStatusChange={vi.fn()}
         onFocusTask={onFocusTask}
       />
     );
@@ -238,7 +248,11 @@ describe("ListView priority control", () => {
     fireEvent.click(screen.getByLabelText("Set status"));
     fireEvent.click(screen.getByText("In Progress"));
 
-    expect(onStatusChange).toHaveBeenCalledWith("task-dropdown", "in-progress");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.changeStatus",
+      taskId: "task-dropdown",
+      status: "in-progress",
+    });
     expect(onFocusTask).not.toHaveBeenCalled();
   });
 

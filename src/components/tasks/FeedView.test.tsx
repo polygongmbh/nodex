@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
@@ -35,6 +35,15 @@ const author: Person = {
 const tasks: Task[] = [makeTask({ id: "task-1", author, status: "todo" })];
 const channels: Channel[] = [makeChannel()];
 const relays: Relay[] = [makeRelay()];
+const dispatchFeedInteraction = vi.fn();
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
+beforeEach(() => {
+  dispatchFeedInteraction.mockClear();
+});
 
 describe("FeedView", () => {
   it("focuses breadcrumb target without bubbling card focus", () => {
@@ -866,7 +875,6 @@ describe("FeedView", () => {
   });
 
   it("updates task priority from the feed priority chip", () => {
-    const onUpdatePriority = vi.fn();
     const taskWithPriority = makeTask({
       id: "task-priority",
       author,
@@ -886,7 +894,6 @@ describe("FeedView", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn()}
         onToggleComplete={vi.fn()}
-        onUpdatePriority={onUpdatePriority}
       />
     );
 
@@ -894,11 +901,14 @@ describe("FeedView", () => {
       target: { value: "80" },
     });
 
-    expect(onUpdatePriority).toHaveBeenCalledWith("task-priority", 80);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.updatePriority",
+      taskId: "task-priority",
+      priority: 80,
+    });
   });
 
   it("updates date type from the feed due-date chip", () => {
-    const onUpdateDueDate = vi.fn();
     const dueDate = new Date("2026-05-01T00:00:00.000Z");
     const taskWithDueDate = makeTask({
       id: "task-due-date",
@@ -920,7 +930,6 @@ describe("FeedView", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn()}
         onToggleComplete={vi.fn()}
-        onUpdateDueDate={onUpdateDueDate}
       />
     );
 
@@ -928,7 +937,13 @@ describe("FeedView", () => {
       target: { value: "scheduled" },
     });
 
-    expect(onUpdateDueDate).toHaveBeenCalledWith("task-due-date", dueDate, undefined, "scheduled");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.updateDueDate",
+      taskId: "task-due-date",
+      dueDate,
+      dueTime: undefined,
+      dateType: "scheduled",
+    });
   });
 
 });

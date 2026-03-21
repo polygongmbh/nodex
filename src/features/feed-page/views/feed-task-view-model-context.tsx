@@ -1,33 +1,18 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
 import type {
-  Nip99ListingStatus,
-  Person,
   SharedTaskViewContext,
-  TaskDateType,
-  TaskStatus,
 } from "@/types";
 
 export interface FeedTaskViewModel extends SharedTaskViewContext {
-  onStatusChange?: (taskId: string, status: TaskStatus) => void;
-  onListingStatusChange?: (taskId: string, status: Nip99ListingStatus) => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
-  onUndoPendingPublish?: (taskId: string) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   mentionRequest?: {
     mention: string;
     id: number;
   } | null;
-  onUpdateDueDate?: (
-    taskId: string,
-    dueDate: Date | undefined,
-    dueTime?: string,
-    dateType?: TaskDateType
-  ) => void;
-  onUpdatePriority?: (taskId: string, priority: number) => void;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
-  onAuthorClick?: (author: Person) => void;
   isHydrating?: boolean;
 }
 
@@ -40,9 +25,7 @@ const defaultModel: FeedTaskViewModel = {
   composeChannels: [],
   people: [],
   searchQuery: "",
-  onSearchChange: noop,
   onNewTask: async () => ({ ok: false, reason: "unexpected-error" }),
-  onToggleComplete: noop,
   onFocusTask: noop,
 };
 

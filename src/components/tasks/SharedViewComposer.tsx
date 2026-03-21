@@ -17,8 +17,6 @@ interface SharedViewComposerProps {
   onCancel?: () => void;
   draftStorageKey: string;
   parentId?: string;
-  onClearChannelFilter?: (id: string) => void;
-  onClearPersonFilter?: (id: string) => void;
   forceExpanded?: boolean;
   forceExpandSignal?: number;
   onExpandedChange?: (expanded: boolean) => void;
@@ -43,8 +41,6 @@ export function SharedViewComposer({
   onCancel,
   draftStorageKey,
   parentId,
-  onClearChannelFilter,
-  onClearPersonFilter,
   forceExpanded = false,
   forceExpandSignal,
   onExpandedChange,
@@ -69,8 +65,6 @@ export function SharedViewComposer({
         adaptiveSize
         draftStorageKey={draftStorageKey}
         parentId={parentId}
-        onClearChannelFilter={onClearChannelFilter}
-        onClearPersonFilter={onClearPersonFilter}
         forceExpanded={forceExpanded}
         forceExpandSignal={forceExpandSignal}
         onExpandedChange={onExpandedChange}

@@ -1,12 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import type { Channel, Person, Relay, TaskCreateResult } from "@/types";
 import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash } from "@/infrastructure/nostr/geohash-location";
+import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import {
   getMobileCommentAction,
   getMobilePrimaryAction,
@@ -20,6 +21,17 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({
     createHttpAuthHeader: vi.fn(async () => null),
   }),
+}));
+
+const buildDispatchEvent = (intent: FeedInteractionIntent) => ({
+  envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
+  outcome: { status: "handled" as const },
+});
+
+const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => buildDispatchEvent(intent));
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
 }));
 
 const relays: Relay[] = [
@@ -62,6 +74,8 @@ function createPosition(latitude: number, longitude: number): GeolocationPositio
 
 describe("UnifiedBottomBar auth gating", () => {
   beforeEach(() => {
+    dispatchFeedInteraction.mockReset();
+    dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) => buildDispatchEvent(intent));
     attachmentUploadEnabledSpy.mockReturnValue(true);
     Object.defineProperty(navigator, "geolocation", {
       configurable: true,
@@ -81,9 +95,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -105,9 +116,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={false}
       />
     );
@@ -129,9 +137,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -142,26 +147,25 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("searches as user types in combined field", () => {
-    const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={onSearchChange}
+        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "hello #general" } });
-    expect(onSearchChange).toHaveBeenLastCalledWith("hello #general");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "ui.search.change",
+      query: "hello #general",
+    });
   });
 
   it("grows the mobile compose box with content until half the viewport height", () => {
@@ -181,9 +185,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -219,9 +220,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -249,9 +247,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -280,9 +275,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -302,7 +294,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
   it("opens relay selection when task posting is blocked by multiple active feeds", () => {
     const onSubmit = vi.fn(async () => successResult);
-    const relayToggle = vi.fn();
 
     render(
       <UnifiedBottomBar
@@ -316,9 +307,6 @@ describe("UnifiedBottomBar auth gating", () => {
         ]}
         channels={channels}
         people={people}
-        onRelayToggle={relayToggle}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -329,7 +317,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     expect(screen.getByRole("button", { name: /relay one/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /relay two/i })).toBeInTheDocument();
-    expect(relayToggle).not.toHaveBeenCalled();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -346,9 +333,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -385,9 +369,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -414,9 +395,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -453,9 +431,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -507,9 +482,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -545,9 +517,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -591,9 +560,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -614,9 +580,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -644,9 +607,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -666,9 +626,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -690,9 +647,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -708,9 +662,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -728,9 +679,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn={true}
       />
     );
@@ -740,11 +688,28 @@ describe("UnifiedBottomBar auth gating", () => {
 
   it("syncs channel filters when hashtags are completed or removed", () => {
     const toggleCalls: string[] = [];
+    const setChannelsRef: { current: Dispatch<SetStateAction<Channel[]>> | null } = { current: null };
+
+    dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) => {
+      if (intent.type === "sidebar.channel.toggle") {
+        toggleCalls.push(intent.channelId);
+        setChannelsRef.current?.((previous) =>
+          previous.map((channel) => {
+            if (channel.id !== intent.channelId) return channel;
+            if (channel.filterState === "neutral") return { ...channel, filterState: "included" };
+            if (channel.filterState === "included") return { ...channel, filterState: "excluded" };
+            return { ...channel, filterState: "neutral" };
+          })
+        );
+      }
+      return buildDispatchEvent(intent);
+    });
 
     const StatefulBar = () => {
       const [statefulChannels, setStatefulChannels] = useState<Channel[]>([
         { id: "general", name: "general", filterState: "neutral" },
       ]);
+      setChannelsRef.current = setStatefulChannels;
 
       return (
         <UnifiedBottomBar
@@ -755,19 +720,6 @@ describe("UnifiedBottomBar auth gating", () => {
           relays={relays}
           channels={statefulChannels}
           people={people}
-          onRelayToggle={() => {}}
-          onChannelToggle={(id) => {
-            toggleCalls.push(id);
-            setStatefulChannels((prev) =>
-              prev.map((channel) => {
-                if (channel.id !== id) return channel;
-                if (channel.filterState === "neutral") return { ...channel, filterState: "included" };
-                if (channel.filterState === "included") return { ...channel, filterState: "excluded" };
-                return { ...channel, filterState: "neutral" };
-              })
-            );
-          }}
-          onPersonToggle={() => {}}
           isSignedIn={true}
         />
       );
@@ -785,12 +737,29 @@ describe("UnifiedBottomBar auth gating", () => {
 
   it("does not touch unrelated channel filters when editing specific hashtags", () => {
     const toggleCalls: string[] = [];
+    const setChannelsRef: { current: Dispatch<SetStateAction<Channel[]>> | null } = { current: null };
+
+    dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) => {
+      if (intent.type === "sidebar.channel.toggle") {
+        toggleCalls.push(intent.channelId);
+        setChannelsRef.current?.((previous) =>
+          previous.map((channel) => {
+            if (channel.id !== intent.channelId) return channel;
+            if (channel.filterState === "neutral") return { ...channel, filterState: "included" };
+            if (channel.filterState === "included") return { ...channel, filterState: "excluded" };
+            return { ...channel, filterState: "neutral" };
+          })
+        );
+      }
+      return buildDispatchEvent(intent);
+    });
 
     const StatefulBar = () => {
       const [statefulChannels, setStatefulChannels] = useState<Channel[]>([
         { id: "general", name: "general", filterState: "neutral" },
         { id: "ops", name: "ops", filterState: "excluded" },
       ]);
+      setChannelsRef.current = setStatefulChannels;
 
       return (
         <UnifiedBottomBar
@@ -801,19 +770,6 @@ describe("UnifiedBottomBar auth gating", () => {
           relays={relays}
           channels={statefulChannels}
           people={people}
-          onRelayToggle={() => {}}
-          onChannelToggle={(id) => {
-            toggleCalls.push(id);
-            setStatefulChannels((prev) =>
-              prev.map((channel) => {
-                if (channel.id !== id) return channel;
-                if (channel.filterState === "neutral") return { ...channel, filterState: "included" };
-                if (channel.filterState === "included") return { ...channel, filterState: "excluded" };
-                return { ...channel, filterState: "neutral" };
-              })
-            );
-          }}
-          onPersonToggle={() => {}}
           isSignedIn={true}
         />
       );
@@ -830,19 +786,15 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("supports @mention autocomplete in the combined search/compose field", () => {
-    const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={onSearchChange}
+        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -855,7 +807,10 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.keyDown(field, { key: "Enter" });
 
     expect(field.value).toBe("ping @alice@example.com ");
-    expect(onSearchChange).toHaveBeenLastCalledWith("ping @alice@example.com ");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "ui.search.change",
+      query: "ping @alice@example.com ",
+    });
   });
 
   it("closes mention autocomplete when compose is cancelled", () => {
@@ -868,9 +823,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -885,19 +837,15 @@ describe("UnifiedBottomBar auth gating", () => {
 
   it("adds mention tag via Alt+Enter without inserting mention text", async () => {
     const onSubmit = vi.fn(async () => successResult);
-    const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={onSearchChange}
+        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -909,7 +857,10 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(field.value).toBe("Ship #general ");
     });
-    expect(onSearchChange).toHaveBeenLastCalledWith("Ship #general ");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "ui.search.change",
+      query: "Ship #general ",
+    });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
     expect(onSubmit).toHaveBeenLastCalledWith(
@@ -929,19 +880,15 @@ describe("UnifiedBottomBar auth gating", () => {
 
   it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
     const onSubmit = vi.fn(async () => successResult);
-    const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={onSearchChange}
+        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -956,7 +903,10 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(field.value).toBe("Ship #general ");
     });
-    expect(onSearchChange).toHaveBeenLastCalledWith("Ship #general ");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "ui.search.change",
+      query: "Ship #general ",
+    });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
     expect(onSubmit).toHaveBeenLastCalledWith(
@@ -985,9 +935,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -1006,19 +953,15 @@ describe("UnifiedBottomBar auth gating", () => {
 
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
     const onSubmit = vi.fn(async () => successResult);
-    const onSearchChange = vi.fn();
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={onSearchChange}
+        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -1031,7 +974,10 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(field.value).toBe("Ship ");
     });
-    expect(onSearchChange).toHaveBeenLastCalledWith("Ship ");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "ui.search.change",
+      query: "Ship ",
+    });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
     expect(onSubmit).toHaveBeenLastCalledWith(
@@ -1069,9 +1015,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -1104,9 +1047,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -1148,9 +1088,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -1182,9 +1119,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );
@@ -1214,9 +1148,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
         composeRestoreRequest={{
           id: 1,
@@ -1249,9 +1180,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
         composeRestoreRequest={{
           id: 2,
@@ -1293,9 +1221,6 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        onRelayToggle={() => {}}
-        onChannelToggle={() => {}}
-        onPersonToggle={() => {}}
         isSignedIn
       />
     );

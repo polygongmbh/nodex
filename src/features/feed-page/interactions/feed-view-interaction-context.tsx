@@ -8,8 +8,6 @@ export interface FeedViewInteractionModel {
   onFocusSidebar: () => void;
   onHashtagClick: (tag: string) => void;
   onAuthorClick: (author: Person) => void;
-  onClearChannelFilter: (id: string) => void;
-  onClearPersonFilter: (id: string) => void;
 }
 
 export function useFeedViewInteractionModel(): FeedViewInteractionModel {
@@ -25,12 +23,6 @@ export function useFeedViewInteractionModel(): FeedViewInteractionModel {
   const onAuthorClick = useCallback((author: Person) => {
     void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
   }, [dispatchFeedInteraction]);
-  const onClearChannelFilter = useCallback((id: string) => {
-    void dispatchFeedInteraction({ type: "filter.clearChannel", channelId: id });
-  }, [dispatchFeedInteraction]);
-  const onClearPersonFilter = useCallback((id: string) => {
-    void dispatchFeedInteraction({ type: "filter.clearPerson", personId: id });
-  }, [dispatchFeedInteraction]);
 
   return useMemo(
     () => ({
@@ -38,16 +30,12 @@ export function useFeedViewInteractionModel(): FeedViewInteractionModel {
       onFocusSidebar,
       onHashtagClick,
       onAuthorClick,
-      onClearChannelFilter,
-      onClearPersonFilter,
     }),
     [
       forceShowComposer,
       onFocusSidebar,
       onHashtagClick,
       onAuthorClick,
-      onClearChannelFilter,
-      onClearPersonFilter,
     ]
   );
 }
