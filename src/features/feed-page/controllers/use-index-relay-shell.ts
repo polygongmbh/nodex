@@ -3,6 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Relay } from "@/types";
 import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
+import {
+  ensureRelayProtocol,
+  isRelayUrl,
+  normalizeRelayUrl,
+} from "@/infrastructure/nostr/relay-url";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {
   removeCachedNostrEventsByRelayUrl,
@@ -30,6 +35,28 @@ export interface UseIndexRelayShellResult {
   relaysWithActiveState: Relay[];
   handleAddRelay: (url: string) => void;
   handleRemoveRelay: (url: string) => void;
+}
+
+export function normalizeRelayAddUrl(url: string): string | null {
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  const lower = trimmed.toLowerCase();
+  if (trimmed.includes("://") && !lower.startsWith("ws://") && !lower.startsWith("wss://")) {
+    return null;
+  }
+
+  const withProtocol = ensureRelayProtocol(trimmed, "wss");
+  if (!withProtocol || !isRelayUrl(withProtocol)) return null;
+
+  try {
+    const parsed = new URL(withProtocol);
+    if (!parsed.hostname) return null;
+  } catch {
+    return null;
+  }
+
+  return normalizeRelayUrl(withProtocol);
 }
 
 export function useIndexRelayShell({
@@ -61,8 +88,11 @@ export function useIndexRelayShell({
 
   const handleAddRelay = useCallback(
     (url: string) => {
-      addRelay(url);
-      const relayId = getRelayIdFromUrl(url);
+      const normalizedRelayUrl = normalizeRelayAddUrl(url);
+      if (!normalizedRelayUrl) return;
+
+      addRelay(normalizedRelayUrl);
+      const relayId = getRelayIdFromUrl(normalizedRelayUrl);
       if (!relayId) return;
       setActiveRelayIds((previous) => {
         if (previous.has(relayId)) return previous;

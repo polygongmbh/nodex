@@ -163,11 +163,16 @@ export function MobileFilters({
               <Sparkles className="w-4 h-4 text-primary" />
               {t("navigation.mobile.openGuide")}
             </button>
-            <LanguageToggle />
             <VersionHint className="shrink-0" />
             <CompletionFeedbackToggle
               enabled={completionSoundEnabled}
               onToggle={onToggleCompletionSound}
+            />
+          </div>
+          <div className="mt-2 rounded-lg border border-border/80 bg-muted/20 p-1.5">
+            <LanguageToggle
+              className="h-10 w-full justify-between rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-muted/70 data-[state=open]:bg-muted/70"
+              showLabelOnMobile
             />
           </div>
           <div className="mt-2 grid grid-cols-3 gap-2">
@@ -423,6 +428,11 @@ export function MobileFilters({
             <Input
               value={newRelayUrl}
               onChange={(e) => setNewRelayUrl(e.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return;
+                event.preventDefault();
+                handleAddRelay();
+              }}
               placeholder={t("filters.feeds.placeholder")}
               className="h-9"
             />

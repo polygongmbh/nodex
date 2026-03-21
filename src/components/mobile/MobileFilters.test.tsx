@@ -158,6 +158,27 @@ describe("MobileFilters management view", () => {
     expect(screen.getByRole("link", { name: /kontakt per e-mail/i })).toBeInTheDocument();
   });
 
+  it("adds a new feed when pressing Enter in relay input", () => {
+    render(
+      <MobileFilters
+        relays={relays}
+        channels={channels}
+        people={people}
+      />
+    );
+
+    const relayInput = screen.getByPlaceholderText(/wss:\/\/relay\.example\.com/i);
+    fireEvent.change(relayInput, {
+      target: { value: "relay.example.com" },
+    });
+    fireEvent.keyDown(relayInput, { key: "Enter" });
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "sidebar.relay.add",
+      url: "relay.example.com",
+    });
+  });
+
   it("uses cached kind:0 metadata for current user label when profile is missing", () => {
     const pubkey = "c".repeat(64);
     window.localStorage.setItem(

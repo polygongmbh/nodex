@@ -137,4 +137,22 @@ describe("RelayManagement", () => {
     expect(dispatch).not.toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
   });
 
+  it("dispatches trimmed relay input for shared add normalization", () => {
+    const dispatch = renderWithBus(
+      <RelayManagement
+        relays={[
+          { url: "wss://relay.one", status: "connected" },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    fireEvent.change(screen.getByPlaceholderText(/wss:\/\/relay\.example\.com/i), {
+      target: { value: " relay.example.com " },
+    });
+    fireEvent.keyDown(screen.getByPlaceholderText(/wss:\/\/relay\.example\.com/i), { key: "Enter" });
+
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.add", url: "relay.example.com" });
+  });
+
 });

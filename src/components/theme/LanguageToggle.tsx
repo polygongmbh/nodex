@@ -11,6 +11,7 @@ const LANGUAGE_FLAGS: Record<SupportedLanguage, string> = {
 
 interface LanguageToggleProps {
   className?: string;
+  showLabelOnMobile?: boolean;
 }
 
 function resolveCurrentLanguage(language: string): SupportedLanguage {
@@ -18,7 +19,7 @@ function resolveCurrentLanguage(language: string): SupportedLanguage {
   return SUPPORTED_LANGUAGES.find((candidate) => lower.startsWith(candidate)) ?? DEFAULT_LANGUAGE;
 }
 
-export function LanguageToggle({ className }: LanguageToggleProps) {
+export function LanguageToggle({ className, showLabelOnMobile = false }: LanguageToggleProps) {
   const { i18n, t } = useTranslation();
   const current = resolveCurrentLanguage(i18n.resolvedLanguage || i18n.language);
 
@@ -34,8 +35,14 @@ export function LanguageToggle({ className }: LanguageToggleProps) {
       >
         <div className="flex items-center gap-1.5">
           <span aria-hidden>{LANGUAGE_FLAGS[current]}</span>
-          <span className="hidden lg:inline xl:hidden">{current.toUpperCase()}</span>
-          <span className="hidden xl:inline">{t(`language.${current}`)}</span>
+          {showLabelOnMobile ? (
+            <span>{t(`language.${current}`)}</span>
+          ) : (
+            <>
+              <span className="hidden lg:inline xl:hidden">{current.toUpperCase()}</span>
+              <span className="hidden xl:inline">{t(`language.${current}`)}</span>
+            </>
+          )}
         </div>
       </SelectTrigger>
       <SelectContent>

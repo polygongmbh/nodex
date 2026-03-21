@@ -28,7 +28,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
-import { ensureRelayProtocol, stripRelayProtocol } from "@/infrastructure/nostr/relay-url";
+import { stripRelayProtocol } from "@/infrastructure/nostr/relay-url";
 import { useTranslation } from "react-i18next";
 import { getRelayStatusDotClass, getRelayStatusTextClass } from "./relayStatusStyles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -50,11 +50,10 @@ export function RelayManagement({
   const [expandedRelayUrl, setExpandedRelayUrl] = useState<string | null>(null);
 
   const handleAddRelay = () => {
-    if (!newRelayUrl.trim()) return;
-    
-    const url = ensureRelayProtocol(newRelayUrl, "wss");
-    
-    void dispatchFeedInteraction({ type: "sidebar.relay.add", url });
+    const trimmed = newRelayUrl.trim();
+    if (!trimmed) return;
+
+    void dispatchFeedInteraction({ type: "sidebar.relay.add", url: trimmed });
     setNewRelayUrl("");
   };
 
