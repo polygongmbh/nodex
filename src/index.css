@@ -309,6 +309,11 @@
 
   .scrollbar-main-view-no-gutter {
     scrollbar-gutter: auto;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
+  }
+
+  .scrollbar-main-view-no-gutter::-webkit-scrollbar-track {
+    background: transparent;
   }
 
   .scrollbar-thin-inset {

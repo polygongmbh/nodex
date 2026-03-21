@@ -101,6 +101,7 @@ const INITIAL_VISIBLE_FEED_ENTRIES = 40;
 const FEED_REVEAL_BATCH_SIZE = 30;
 const FEED_REVEAL_DELAY_MS = 80;
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
+const DESKTOP_FEED_ROW_CONTENT_PADDING = "pl-2 pr-3 sm:pl-3 sm:pr-4";
 
 interface FeedDueDateChipProps {
   task: Task;
@@ -697,55 +698,56 @@ export function FeedView({
           data-testid={`feed-state-entry-${update.id}`}
           onClick={() => focusTask(task.id)}
           className={cn(
-            `border-b border-border px-2 sm:px-3 py-1.5 transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-            isMobile && "px-3 py-1.5"
+            `border-b border-border py-1.5 transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`
           )}
         >
-          <div className="flex items-center gap-2 min-w-0">
-            {update.status === "done" ? (
-              <CheckCircle2 className={cn("text-primary flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
-            ) : update.status === "closed" ? (
-              <X className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
-            ) : update.status === "in-progress" ? (
-              <CircleDot className={cn("text-warning flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
-            ) : (
-              <Circle className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
-            )}
-            <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-1 overflow-hidden whitespace-nowrap">
-              <span>{stateLabel}</span>
-              {showStatusDescription && (
-                <span className="truncate">{`: ${statusDescription}`}</span>
+          <div className={cn(isMobile ? "px-3" : DESKTOP_FEED_ROW_CONTENT_PADDING)}>
+            <div className="flex items-center gap-2 min-w-0">
+              {update.status === "done" ? (
+                <CheckCircle2 className={cn("text-primary flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
+              ) : update.status === "closed" ? (
+                <X className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
+              ) : update.status === "in-progress" ? (
+                <CircleDot className={cn("text-warning flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
+              ) : (
+                <Circle className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
               )}
-              <span className="shrink-0">·</span>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  focusTask(task.id);
-                }}
-                className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "font-semibold text-foreground shrink-0")}
-                title={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
-                aria-label={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
-              >
-                {taskSummary}
-              </button>
-              <span className="shrink-0">·</span>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedUpdateAuthor });
-                }}
-                className="hover:text-foreground shrink-0"
-                aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
-                title={updateAuthorUserFacingId}
-              >
-                {updateAuthorMeta.primary}
-              </button>
-              <span className="shrink-0">·</span>
-              <span className="shrink-0" title={getStatusUpdatedTooltip(update.timestamp)}>
-                {updateTimeLabel}
-              </span>
+              <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-1 overflow-hidden whitespace-nowrap">
+                <span>{stateLabel}</span>
+                {showStatusDescription && (
+                  <span className="truncate">{`: ${statusDescription}`}</span>
+                )}
+                <span className="shrink-0">·</span>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    focusTask(task.id);
+                  }}
+                  className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "font-semibold text-foreground shrink-0")}
+                  title={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
+                  aria-label={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
+                >
+                  {taskSummary}
+                </button>
+                <span className="shrink-0">·</span>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedUpdateAuthor });
+                  }}
+                  className="hover:text-foreground shrink-0"
+                  aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
+                  title={updateAuthorUserFacingId}
+                >
+                  {updateAuthorMeta.primary}
+                </button>
+                <span className="shrink-0">·</span>
+                <span className="shrink-0" title={getStatusUpdatedTooltip(update.timestamp)}>
+                  {updateTimeLabel}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -841,42 +843,43 @@ export function FeedView({
         className={cn(
           `border-b border-border transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
           isMobile
-            ? "p-3"
+            ? "py-3"
             : breadcrumb.length > 0
-              ? "px-2 sm:px-3 pb-4 pt-2.5"
-              : "px-2 sm:px-3 py-4",
+              ? "pb-4 pt-2.5"
+              : "py-4",
           isCompletedVisual && "opacity-60",
           isLockedUntilStart && "opacity-50 grayscale",
           isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
         )}
       >
-        {/* Parent breadcrumb - clickable */}
-        {breadcrumb.length > 0 && (
-          <div className="mb-1.5 flex min-w-0 items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-            {breadcrumb.map((crumb, i) => (
-              <span key={crumb.id} className="flex min-w-0 items-center gap-1">
-                {i > 0 && <span className="shrink-0">/</span>}
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    focusTask(crumb.id);
-                  }}
-                  className={cn(
-                    TASK_INTERACTION_STYLES.hoverLinkText,
-                    "min-w-0 cursor-pointer truncate whitespace-nowrap text-left",
-                    breadcrumb.length > 1 ? "max-w-[18rem] sm:max-w-[22rem]" : "max-w-full"
-                  )}
-                  title={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
-                  aria-label={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
-                >
-                  {crumb.text}
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
+        <div className={cn(isMobile ? "px-3" : DESKTOP_FEED_ROW_CONTENT_PADDING)}>
+          {/* Parent breadcrumb - clickable */}
+          {breadcrumb.length > 0 && (
+            <div className="mb-1.5 flex min-w-0 items-center gap-1 overflow-hidden text-xs text-muted-foreground">
+              {breadcrumb.map((crumb, i) => (
+                <span key={crumb.id} className="flex min-w-0 items-center gap-1">
+                  {i > 0 && <span className="shrink-0">/</span>}
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      focusTask(crumb.id);
+                    }}
+                    className={cn(
+                      TASK_INTERACTION_STYLES.hoverLinkText,
+                      "min-w-0 cursor-pointer truncate whitespace-nowrap text-left",
+                      breadcrumb.length > 1 ? "max-w-[18rem] sm:max-w-[22rem]" : "max-w-full"
+                    )}
+                    title={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
+                    aria-label={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
+                  >
+                    {crumb.text}
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
 
-        <div className={cn("flex items-start gap-3", isMobile && "gap-2.5")}>
+          <div className={cn("flex items-start gap-3", isMobile && "gap-2.5")}>
           {/* Status toggle or comment icon */}
           {!isComment ? (
             <DropdownMenu
@@ -1267,6 +1270,7 @@ export function FeedView({
               onMediaClick={(url) => openTaskMedia(task.id, url)}
             />
           </div>
+          </div>
         </div>
       </div>
     );
@@ -1307,7 +1311,7 @@ export function FeedView({
       {/* Feed List */}
       <div
         ref={scrollContainerRef}
-        className="scrollbar-thin scrollbar-main-view flex-1 overflow-y-auto"
+        className="scrollbar-thin scrollbar-main-view scrollbar-main-view-no-gutter flex-1 overflow-y-auto"
         data-onboarding="task-list"
         onScroll={handleFeedScroll}
       >

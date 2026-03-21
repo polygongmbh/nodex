@@ -63,6 +63,8 @@ interface ListViewProps extends SharedTaskViewContext {
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
 type SortDirection = "asc" | "desc";
+const TABLE_CELL_PADDING_CLASS = "px-2 sm:px-3 py-2";
+const TABLE_LAST_CELL_PADDING_CLASS = "py-2 pl-2 sm:pl-3 pr-3 sm:pr-4";
 
 interface PriorityCellProps {
   taskId: string;
@@ -648,7 +650,7 @@ export function ListView({
                   )}
                 </div>
               </th>
-              <th className="text-left p-2 2xl:p-3 w-auto min-w-[22rem]">
+              <th className={cn("text-left w-auto min-w-[22rem]", TABLE_CELL_PADDING_CLASS)}>
                 <SortButton field="content">
                   <span className="inline-flex items-center gap-1">
                     <ListTodo className="w-3 h-3 text-muted-foreground" />
@@ -656,7 +658,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className="hidden 2xl:table-cell text-left p-2 2xl:p-3 2xl:w-28">
+              <th className={cn("hidden 2xl:table-cell text-left 2xl:w-28", TABLE_CELL_PADDING_CLASS)}>
                 <SortButton field="status">
                   <span className="inline-flex items-center gap-1">
                     <Activity className="w-3 h-3 text-muted-foreground" />
@@ -664,7 +666,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className="text-left p-2 2xl:p-3 w-36 md:w-40 lg:w-44 xl:w-56 2xl:w-[19rem]">
+              <th className={cn("text-left w-36 md:w-40 lg:w-44 xl:w-56 2xl:w-[19rem]", TABLE_CELL_PADDING_CLASS)}>
                 <SortButton field="dueDate">
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-muted-foreground" />
@@ -672,7 +674,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className="text-left p-2 2xl:p-3 w-16 sm:w-20 md:w-24">
+              <th className={cn("text-left w-16 sm:w-20 md:w-24", TABLE_CELL_PADDING_CLASS)}>
                 <SortButton field="priority">
                   <span className="inline-flex items-center gap-1">
                     <Flag className="w-3 h-3 text-muted-foreground" />
@@ -680,7 +682,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className="text-left p-2 2xl:p-3 w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]">
+              <th className={cn("text-left w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]", TABLE_LAST_CELL_PADDING_CLASS)}>
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
                   <Tags className="w-3 h-3" />
                   {t("tasks.tags")}
@@ -844,7 +846,7 @@ export function ListView({
                         )}
                       </DropdownMenu>
                     </td>
-                    <td className="p-2 2xl:p-3 w-auto min-w-[22rem]">
+                    <td className={cn("w-auto min-w-[22rem]", TABLE_CELL_PADDING_CLASS)}>
                       <div className="space-y-1">
                         {/* Parent context */}
                         {ancestorChain.length > 0 && (
@@ -879,13 +881,13 @@ export function ListView({
                         </div>
                       </div>
                     </td>
-                    <td className="hidden 2xl:table-cell p-2 2xl:p-3">
+                    <td className={cn("hidden 2xl:table-cell", TABLE_CELL_PADDING_CLASS)}>
                       <StatusCell task={task} />
                     </td>
-                    <td className="p-2 2xl:p-3 w-36 md:w-40 lg:w-44 xl:w-56 2xl:w-[19rem]">
+                    <td className={cn("w-36 md:w-40 lg:w-44 xl:w-56 2xl:w-[19rem]", TABLE_CELL_PADDING_CLASS)}>
                       <DueDateCell task={task} />
                     </td>
-                    <td className="p-2 2xl:p-3 w-16 sm:w-20 md:w-24">
+                    <td className={cn("w-16 sm:w-20 md:w-24", TABLE_CELL_PADDING_CLASS)}>
                       <PriorityCell
                         taskId={task.id}
                         taskContent={task.content}
@@ -893,7 +895,7 @@ export function ListView({
                         editable={canCompleteTask(task)}
                       />
                     </td>
-                    <td className="p-2 2xl:p-3 min-w-0 w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]">
+                    <td className={cn("min-w-0 w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]", TABLE_LAST_CELL_PADDING_CLASS)}>
                       <TagsCell task={task} />
                     </td>
                   </tr>
