@@ -31,8 +31,36 @@ export function ChannelItem({
     <SidebarFilterRow
       itemId={`channel-${channel.id}`}
       isKeyboardFocused={isKeyboardFocused}
-      className={cn("gap-2 py-1", className)}
+      className={cn("relative gap-2 py-1.5", className)}
     >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isPinned) {
+            void dispatchFeedInteraction({ type: "sidebar.channel.unpin", channelId: channel.id });
+            return;
+          }
+          void dispatchFeedInteraction({ type: "sidebar.channel.pin", channelId: channel.id });
+        }}
+        title={isPinned
+          ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
+          : t("sidebar.filters.pinChannelToView", { name: channel.name })}
+        aria-label={isPinned
+          ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
+          : t("sidebar.filters.pinChannelToView", { name: channel.name })}
+        className={cn(
+          "absolute inset-y-0 left-1 z-10 my-auto flex h-6 w-6 items-center justify-center transition-opacity",
+          isPinned ? "opacity-100" : "opacity-0 group-hover:opacity-50 hover:!opacity-100"
+        )}
+      >
+        <Pin
+          className={cn(
+            "w-3 h-3",
+            isPinned ? "text-primary fill-primary" : "text-muted-foreground"
+          )}
+        />
+      </button>
+
       {/* Icon - click for toggle */}
       <button
         onClick={(e) => {
@@ -41,13 +69,13 @@ export function ChannelItem({
         }}
         title={t("sidebar.filters.toggleChannelTo", { name: channel.name, nextState: nextFilterStateLabel })}
         aria-label={t("sidebar.filters.toggleChannelFilter", { name: channel.name })}
-        className="hover:ring-2 hover:ring-primary/50 rounded"
+        className="rounded transition-colors hover:ring-2 hover:ring-primary/50"
       >
         <Hash
           className={cn(
             "w-4 h-4 transition-colors",
-            channel.filterState === "included" && "text-channel-included motion-filter-pop",
-            channel.filterState === "excluded" && "text-channel-excluded motion-filter-pop-alt",
+            channel.filterState === "included" && "text-channel-included",
+            channel.filterState === "excluded" && "text-channel-excluded",
             channel.filterState === "neutral" && "text-channel-neutral group-hover:text-sidebar-foreground"
           )}
         />
@@ -58,13 +86,13 @@ export function ChannelItem({
         onClick={() => {
           void dispatchFeedInteraction({ type: "sidebar.channel.exclusive", channelId: channel.id });
         }}
-        className="flex-1 text-left"
+        className="flex flex-1 min-w-0 items-center text-left"
         aria-label={t("sidebar.filters.showOnlyChannel", { name: channel.name })}
         title={t("sidebar.filters.showOnlyChannel", { name: channel.name })}
       >
         <span
           className={cn(
-            "text-sm transition-colors hover:text-primary",
+            "block max-w-full truncate text-sm transition-colors hover:text-primary",
             channel.filterState === "included" && "text-channel-included font-medium",
             channel.filterState === "excluded" && "text-channel-excluded line-through opacity-60",
             channel.filterState === "neutral" && "text-sidebar-foreground"
@@ -83,34 +111,6 @@ export function ChannelItem({
           )}
         />
       )}
-
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          if (isPinned) {
-            void dispatchFeedInteraction({ type: "sidebar.channel.unpin", channelId: channel.id });
-            return;
-          }
-          void dispatchFeedInteraction({ type: "sidebar.channel.pin", channelId: channel.id });
-        }}
-        title={isPinned
-          ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
-          : t("sidebar.filters.pinChannelToView", { name: channel.name })}
-        aria-label={isPinned
-          ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
-          : t("sidebar.filters.pinChannelToView", { name: channel.name })}
-        className={cn(
-          "flex-shrink-0 transition-opacity",
-          isPinned ? "opacity-100" : "opacity-0 group-hover:opacity-50 hover:!opacity-100"
-        )}
-      >
-        <Pin
-          className={cn(
-            "w-3 h-3",
-            isPinned ? "text-primary fill-primary" : "text-muted-foreground"
-          )}
-        />
-      </button>
     </SidebarFilterRow>
   );
 }
