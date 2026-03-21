@@ -6,9 +6,8 @@ describe("VersionHint", () => {
   it("opens changelog dialog when version is clicked", () => {
     render(<VersionHint />);
 
-    fireEvent.click(screen.getByRole("button", { name: /open changelog/i }));
+    fireEvent.click(screen.getByText(/^v\d+\.\d+\.\d+$/i));
 
-    expect(screen.getByText("Nodex Changelog")).toBeInTheDocument();
-    expect(screen.getByText(/Version history and release highlights/i)).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 });

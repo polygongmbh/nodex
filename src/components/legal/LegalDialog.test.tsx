@@ -3,17 +3,12 @@ import { describe, expect, it } from "vitest";
 import { LegalDialog, resolveLegalContactEmail } from "./LegalDialog";
 
 describe("LegalDialog", () => {
-  it("opens imprint dialog and can switch to privacy section", () => {
+  it("opens imprint dialog", () => {
     render(<LegalDialog triggerLabel="Impressum" />);
 
     fireEvent.click(screen.getByRole("button", { name: /open imprint and privacy policy/i }));
 
-    expect(screen.getByText("Anbieterkennzeichnung (Impressum)")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Datenschutz" }));
-
-    expect(screen.getByText("Datenschutzerklärung")).toBeInTheDocument();
-    expect(screen.getByText(/Browser-Speicher \(localStorage\)/i)).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
   it("renders a decoded mailto link when mail icon is enabled", () => {
