@@ -793,38 +793,38 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[20.5rem] p-2">
+        <DropdownMenuContent align="end" className="w-[21rem] p-2">
           <TooltipProvider delayDuration={200}>
             <DropdownMenuLabel className="px-2 py-1">
-              <div className="flex items-stretch justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2">
-                <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-6 h-6" />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-medium truncate">{displayName}</span>
-                    {effectiveProfile.nip05Verified && (
-                      <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${effectiveProfile.nip05}`}>
-                        <BadgeCheck className="w-3.5 h-3.5" />
-                      </span>
-                    )}
-                    {effectiveProfile.nip05 && !effectiveProfile.nip05Verified && (
-                      <span className="text-xs text-muted-foreground" title={effectiveProfile.nip05}>
-                        ✓
-                      </span>
-                    )}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-6 h-6" />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-medium truncate">{displayName}</span>
+                      {effectiveProfile.nip05Verified && (
+                        <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${effectiveProfile.nip05}`}>
+                          <BadgeCheck className="w-3.5 h-3.5" />
+                        </span>
+                      )}
+                      {effectiveProfile.nip05 && !effectiveProfile.nip05Verified && (
+                        <span className="text-xs text-muted-foreground" title={effectiveProfile.nip05}>
+                          ✓
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {authMethod === "guest"
+                        ? t("auth.menu.signedInAs", { method: methodLabel })
+                        : t("auth.menu.signedInVia", { method: methodLabel })}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {authMethod === "guest"
-                      ? t("auth.menu.signedInAs", { method: methodLabel })
-                      : t("auth.menu.signedInVia", { method: methodLabel })}
-                  </span>
                 </div>
-              </div>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <DropdownMenuItem
                       aria-label={t("auth.menu.editProfile")}
-                      className="h-auto min-h-[2.75rem] w-8 shrink-0 self-stretch justify-center rounded-md border border-border/70 p-0 text-muted-foreground"
+                      className="h-8 w-8 shrink-0 justify-center rounded-md border border-border/70 p-0 text-muted-foreground"
                       onSelect={(event) => {
                         event.preventDefault();
                         openProfileEditor();
