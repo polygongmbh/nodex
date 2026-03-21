@@ -41,7 +41,7 @@ const defaultModel: FeedTaskViewModel = {
   people: [],
   searchQuery: "",
   onSearchChange: noop,
-  onNewTask: async () => ({ ok: false, error: "missing-feed-task-view-model" }),
+  onNewTask: async () => ({ ok: false, reason: "unexpected-error" }),
   onToggleComplete: noop,
   onFocusTask: noop,
 };

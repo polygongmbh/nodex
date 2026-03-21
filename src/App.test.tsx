@@ -79,7 +79,11 @@ describe("App routes", () => {
   });
 
   it("waits for async fallback relay bootstrap before mounting the provider", async () => {
-    let resolveBootstrap: ((value: { relayUrls: string[]; source: "fallback"; needsAsyncFallback: false }) => void) | null = null;
+    let resolveBootstrap!: (value: {
+      relayUrls: string[];
+      source: "fallback";
+      needsAsyncFallback: false;
+    }) => void;
     startupRelaysModule.readStartupRelayBootstrap.mockReturnValue({
       relayUrls: [],
       source: "fallback",
@@ -96,7 +100,7 @@ describe("App routes", () => {
 
     expect(ndkContextModule.NDKProvider).not.toHaveBeenCalled();
 
-    resolveBootstrap?.({
+    resolveBootstrap({
       relayUrls: ["wss://relay.fallback"],
       source: "fallback",
       needsAsyncFallback: false,

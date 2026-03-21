@@ -143,7 +143,7 @@ interface FilterTasksForViewParams {
 
 export function filterTasksForView({
   allTasks,
-  filterIndex = buildTaskViewFilterIndex(allTasks, people),
+  filterIndex,
   prefilteredTaskIds,
   focusedTaskId,
   includeFocusedTask = false,
@@ -155,8 +155,9 @@ export function filterTasksForView({
   channelMatchMode,
   taskPredicate,
 }: FilterTasksForViewParams): Task[] {
+  const effectiveFilterIndex = filterIndex ?? buildTaskViewFilterIndex(allTasks, people);
   const descendantIds = focusedTaskId
-    ? filterIndex.descendantIdsByTaskId.get(focusedTaskId) ?? new Set<string>()
+    ? effectiveFilterIndex.descendantIdsByTaskId.get(focusedTaskId) ?? new Set<string>()
     : null;
 
   return allTasks.filter((task) => {
@@ -177,7 +178,7 @@ export function filterTasksForView({
       }
     }
 
-    if (!taskMatchesSearchIndex(task.id, searchQuery, filterIndex)) {
+    if (!taskMatchesSearchIndex(task.id, searchQuery, effectiveFilterIndex)) {
       return false;
     }
 
@@ -186,7 +187,7 @@ export function filterTasksForView({
       includedChannels,
       excludedChannels,
       channelMatchMode,
-      filterIndex
+      effectiveFilterIndex
     );
   });
 }

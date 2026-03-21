@@ -4,12 +4,20 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-type OutsideInteractionEvent = { preventDefault: () => void };
+type PointerDownOutsideHandler = NonNullable<
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>["onPointerDownOutside"]
+>;
+type InteractOutsideHandler = NonNullable<
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>["onInteractOutside"]
+>;
+type PointerDownOutsideEvent = Parameters<PointerDownOutsideHandler>[0];
+type InteractOutsideEvent = Parameters<InteractOutsideHandler>[0];
+type OutsideInteractionEvent = PointerDownOutsideEvent | InteractOutsideEvent;
 
-export function handleDialogOutsideInteraction(
+export function handleDialogOutsideInteraction<TEvent extends OutsideInteractionEvent>(
   dismissOnOutsideInteract: boolean,
-  event: OutsideInteractionEvent,
-  handler?: (event: OutsideInteractionEvent) => void,
+  event: TEvent,
+  handler?: (event: TEvent) => void,
 ) {
   if (!dismissOnOutsideInteract) {
     event.preventDefault();

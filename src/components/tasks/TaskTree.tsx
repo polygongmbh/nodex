@@ -268,7 +268,7 @@ export function TaskTree({
       dueDate,
       dueTime,
       dateType,
-      currentContextId,
+      currentContextId ?? undefined,
       undefined,
       explicitMentionPubkeys,
       priority,

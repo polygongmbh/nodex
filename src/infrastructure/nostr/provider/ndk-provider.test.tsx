@@ -329,11 +329,8 @@ function AuthReplayHarness() {
     <div>
       <button
         onClick={() => {
-          subscribe(
-            [{ kinds: [1, 1621, 0], limit: 1500 }],
-            () => {},
-            { closeOnEose: false }
-          );
+          const feedFilters = [{ kinds: [1, 1621, 0], limit: 1500 }] as unknown as Parameters<typeof subscribe>[0];
+          subscribe(feedFilters, () => {}, { closeOnEose: false });
         }}
       >
         start feed sub

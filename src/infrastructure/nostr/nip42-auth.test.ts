@@ -66,7 +66,7 @@ describe("NIP-42 Authentication", () => {
       } as unknown as NDKPrivateKeySigner;
 
       await expect(
-        createNIP42Response(null, mockSigner, "test-challenge")
+        createNIP42Response(undefined as unknown as NDK, mockSigner, "test-challenge")
       ).rejects.toThrow("NDK instance not available");
     });
   });

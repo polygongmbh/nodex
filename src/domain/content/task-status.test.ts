@@ -65,7 +65,7 @@ describe("applyTaskStatusUpdate", () => {
   });
 
   it("does not synthesize a local state update when updating an existing local task", () => {
-    const existingLocal = {
+    const existingLocal: Task = {
       ...baseTask,
       stateUpdates: [
         {

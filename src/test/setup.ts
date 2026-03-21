@@ -45,9 +45,13 @@ function installStorageFallbackIfNeeded(): void {
 installStorageFallbackIfNeeded();
 
 const DEBUG_ASYNC_LEAKS = process.env.VITEST_DEBUG_ASYNC_LEAKS === "true";
-const activeTimeouts = new Map<unknown, string>();
-const activeIntervals = new Map<unknown, string>();
-const activeAnimationFrames = new Map<unknown, string>();
+type TimeoutHandle = ReturnType<typeof setTimeout> | number;
+type IntervalHandle = ReturnType<typeof setInterval> | number;
+type AnimationFrameHandle = ReturnType<typeof window.requestAnimationFrame>;
+
+const activeTimeouts = new Map<TimeoutHandle, string>();
+const activeIntervals = new Map<IntervalHandle, string>();
+const activeAnimationFrames = new Map<AnimationFrameHandle, string>();
 const activeEventListeners = new Map<string, string>();
 const activeMutationObservers = new Map<object, string>();
 const activeResizeObservers = new Map<object, string>();
@@ -57,10 +61,10 @@ const originalSetTimeout = window.setTimeout.bind(window);
 const originalClearTimeout = window.clearTimeout.bind(window);
 const originalSetInterval = window.setInterval.bind(window);
 const originalClearInterval = window.clearInterval.bind(window);
-const originalRequestAnimationFrame = (callback: FrameRequestCallback) =>
-  originalSetTimeout(() => callback(Date.now()), 16);
-const originalCancelAnimationFrame = (handle: ReturnType<typeof originalSetTimeout>) =>
-  originalClearTimeout(handle);
+const originalRequestAnimationFrame = (callback: FrameRequestCallback): AnimationFrameHandle =>
+  window.setTimeout(() => callback(Date.now()), 16) as AnimationFrameHandle;
+const originalCancelAnimationFrame = (handle: AnimationFrameHandle): void =>
+  window.clearTimeout(handle);
 const originalWindowAddEventListener = window.addEventListener.bind(window);
 const originalWindowRemoveEventListener = window.removeEventListener.bind(window);
 const originalDocumentAddEventListener = document.addEventListener.bind(document);
@@ -169,7 +173,7 @@ function installTrackedTimerWrappers(): void {
 
   const trackedCancelAnimationFrame: typeof window.cancelAnimationFrame = ((handle: number) => {
     activeAnimationFrames.delete(handle);
-    return originalCancelAnimationFrame(handle);
+    originalCancelAnimationFrame(handle as AnimationFrameHandle);
   }) as typeof window.cancelAnimationFrame;
 
   window.setTimeout = trackedSetTimeout;
@@ -301,9 +305,9 @@ function clearTrackedAsyncWork(): {
     resizeObservers: Array.from(activeResizeObservers.values()).filter((stack) => !shouldIgnoreStack(stack)),
     intersectionObservers: Array.from(activeIntersectionObservers.values()).filter((stack) => !shouldIgnoreStack(stack)),
   };
-  activeTimeouts.forEach((handle) => originalClearTimeout(handle));
-  activeIntervals.forEach((handle) => originalClearInterval(handle));
-  activeAnimationFrames.forEach((handle) => originalCancelAnimationFrame(handle));
+  activeTimeouts.forEach((_stack, handle) => originalClearTimeout(handle));
+  activeIntervals.forEach((_stack, handle) => originalClearInterval(handle));
+  activeAnimationFrames.forEach((_stack, handle) => originalCancelAnimationFrame(handle));
   activeMutationObservers.forEach((_stack, observer) => {
     if ("disconnect" in observer && typeof observer.disconnect === "function") {
       observer.disconnect();

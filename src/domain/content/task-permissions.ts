@@ -7,18 +7,24 @@ export function extractAssignedMentionsFromContent(content: string): string[] {
 
 function getTaskAssignees(task: Task): string[] {
   const explicitAssigneePubkeys =
-    task.assigneePubkeys?.map((value) => value.trim().toLowerCase()).filter(Boolean) || [];
+    task.assigneePubkeys
+      ?.map((value) => value.trim().toLowerCase())
+      .filter((value): value is string => Boolean(value)) || [];
   if (explicitAssigneePubkeys.length > 0) return explicitAssigneePubkeys;
 
   const explicitMentions =
-    task.mentions?.map((value) => value.trim().toLowerCase()).filter(Boolean) || [];
+    task.mentions
+      ?.map((value) => value.trim().toLowerCase())
+      .filter((value): value is string => Boolean(value)) || [];
   if (explicitMentions.length > 0) return explicitMentions;
   return extractAssignedMentionsFromContent(task.content);
 }
 
 function getTaskAssigneePubkeys(task: Task): string[] {
   const explicitAssigneePubkeys =
-    task.assigneePubkeys?.map((value) => value.trim().toLowerCase()).filter(Boolean) || [];
+    task.assigneePubkeys
+      ?.map((value) => value.trim().toLowerCase())
+      .filter((value): value is string => Boolean(value)) || [];
   if (explicitAssigneePubkeys.length > 0) return explicitAssigneePubkeys;
 
   const explicitMentionPubkeys =
@@ -46,7 +52,7 @@ function findMatchingPerson(identifier: string, people: Person[]): Person | unde
 function getNormalizedUserIdentifiers(user?: Person): Set<string> {
   return new Set(
     [user?.id, user?.name, user?.displayName, user?.nip05]
-      .filter(Boolean)
+      .filter((value): value is string => Boolean(value))
       .map((value) => value.toLowerCase())
   );
 }
@@ -55,7 +61,7 @@ function isTaskOwnedByUser(task: Task, currentUser?: Person): boolean {
   const userIdentifiers = getNormalizedUserIdentifiers(currentUser);
   if (userIdentifiers.size === 0) return false;
   const ownerIdentifiers = [task.author.id, task.author.name, task.author.displayName, task.author.nip05]
-    .filter(Boolean)
+    .filter((value): value is string => Boolean(value))
     .map((value) => value.toLowerCase());
   return ownerIdentifiers.some((value) => userIdentifiers.has(value));
 }
@@ -151,7 +157,7 @@ export function getTaskStatusChangeBlockedReason(
     const assignee = assignees[0];
     const ownerIdentifiers = new Set(
       [task.author.id, task.author.name, task.author.displayName, task.author.nip05]
-        .filter(Boolean)
+        .filter((value): value is string => Boolean(value))
         .map((value) => value.toLowerCase())
     );
     const matchedPerson = findMatchingPerson(assignee, knownPeople);

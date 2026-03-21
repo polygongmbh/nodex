@@ -439,7 +439,7 @@ describe("TaskComposer hashtag autocomplete", () => {
   });
 
   it("prevents duplicate submits while publishing is in flight", async () => {
-    let resolveSubmit: ((result: TaskCreateResult) => void) | null = null;
+    let resolveSubmit!: (result: TaskCreateResult) => void;
     const onSubmit = vi.fn(
       () =>
         new Promise<TaskCreateResult>((resolve) => {
@@ -467,7 +467,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
     });
 
-    resolveSubmit?.(successfulCreateResult);
+    resolveSubmit(successfulCreateResult);
     await waitFor(() => {
       expect(toast.dismiss).toHaveBeenCalledWith("task-composer-publishing");
     });

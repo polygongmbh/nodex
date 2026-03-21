@@ -52,7 +52,6 @@ function Harness({
   const [postedTags, setPostedTags] = useState<string[]>([]);
   const relayState = useRelayFilterState({
     relays,
-    defaultRelayIds: [],
     t: ((key: string) => key) as unknown as TFunction,
   });
   const filters = useIndexFilters({

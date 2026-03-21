@@ -37,7 +37,7 @@ function Harness({
   publishTaskDueUpdate = vi.fn(async () => true),
   publishTaskPriorityUpdate = vi.fn(async () => true),
   forceLocalMode = false,
-  queryClient,
+  queryClient = new QueryClient(),
 }: {
   publishEvent?: ReturnType<typeof vi.fn>;
   initialTasks?: Task[];
@@ -307,7 +307,13 @@ describe("useTaskPublishFlow", () => {
       expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
     });
     expect(publishEvent).toHaveBeenCalledTimes(1);
-    const [, , publishTags, publishParentId, relayUrls] = publishEvent.mock.calls[0];
+    const [, , publishTags, publishParentId, relayUrls] = publishEvent.mock.calls[0] as unknown as [
+      number,
+      string,
+      string[][] | undefined,
+      string | undefined,
+      string[] | undefined
+    ];
     expect(publishTags).toEqual(expect.arrayContaining([["t", "backend"]]));
     expect(publishParentId).toBe(parentTask.id);
     expect(relayUrls).toEqual(["wss://relay.one"]);

@@ -27,12 +27,12 @@ describe("mergeTasks", () => {
       id: "older",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
       relays: [],
-    } as Task;
+    } as unknown as Task;
     const newer = {
       id: "newer",
       timestamp: new Date("2026-02-17T11:00:00.000Z"),
       relays: [],
-    } as Task;
+    } as unknown as Task;
 
     const merged = mergeTasks([older], [newer]);
 

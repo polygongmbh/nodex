@@ -15,8 +15,9 @@ import { NostrEvent, NostrEventKind, type NostrEventWithRelay } from "./types";
 const DEFAULT_TEST_PUBKEY = "a".repeat(64);
 
 function makeRelayEvent(overrides: Partial<NostrEventWithRelay> & Pick<NostrEventWithRelay, "id">): NostrEventWithRelay {
+  const { id, ...rest } = overrides;
   return {
-    id: overrides.id,
+    id,
     pubkey: DEFAULT_TEST_PUBKEY,
     created_at: 1700000000,
     kind: NostrEventKind.TextNote,
@@ -24,7 +25,7 @@ function makeRelayEvent(overrides: Partial<NostrEventWithRelay> & Pick<NostrEven
     content: "",
     sig: "sig",
     relayUrl: "wss://relay.test.com",
-    ...overrides,
+    ...rest,
   };
 }
 

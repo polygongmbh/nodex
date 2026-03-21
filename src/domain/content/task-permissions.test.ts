@@ -10,7 +10,7 @@ import {
 
 function makeTestPerson(overrides: Partial<Person> = {}): Person {
   const id = overrides.id ?? "person-id";
-  const name = overrides.name;
+  const name = overrides.name ?? id;
 
   return {
     id,

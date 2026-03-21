@@ -5,6 +5,7 @@
     "jsx": "react-jsx",
     "lib": [
       "ES2020",
+      "ES2021.Intl",
       "DOM",
       "DOM.Iterable"
     ],
@@ -23,7 +24,7 @@
       ]
     },
     "skipLibCheck": true,
-    "strict": false,
+    "strict": true,
     "target": "ES2020",
     "types": ["vitest/globals"],
     "useDefineForClassFields": true

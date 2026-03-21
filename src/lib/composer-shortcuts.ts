@@ -1,16 +1,20 @@
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+
+type ModifierKeyName = Parameters<ReactKeyboardEvent["getModifierState"]>[0];
+
 type ModifierStateLike = {
   altKey: boolean;
   ctrlKey: boolean;
   metaKey: boolean;
   shiftKey: boolean;
-  getModifierState?: (keyArg: string) => boolean;
+  getModifierState?: (keyArg: ModifierKeyName) => boolean;
 };
 
 type KeyEventLike = ModifierStateLike & {
   key: string;
 };
 
-function hasModifierState(event: ModifierStateLike, key: string): boolean {
+function hasModifierState(event: ModifierStateLike, key: ModifierKeyName): boolean {
   return Boolean(event.getModifierState?.(key));
 }
 
