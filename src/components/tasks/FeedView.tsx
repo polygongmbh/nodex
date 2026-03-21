@@ -1311,7 +1311,7 @@ export function FeedView({
       {/* Feed List */}
       <div
         ref={scrollContainerRef}
-        className="scrollbar-thin scrollbar-main-view scrollbar-main-view-no-gutter flex-1 overflow-y-auto"
+        className="scrollbar-thin scrollbar-main-view-no-gutter flex-1 overflow-y-auto"
         data-onboarding="task-list"
         onScroll={handleFeedScroll}
       >
