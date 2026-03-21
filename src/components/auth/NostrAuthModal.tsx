@@ -370,9 +370,10 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             </div>
           )}
 
-          <div className="scrollbar-thin mt-2 min-h-0 flex-1 overflow-y-auto pr-1">
-            {step === "choose" ? (
-              <div className="space-y-2.5">
+          <div className="scrollbar-thin mt-2 min-h-0 flex-1 overflow-y-auto">
+            <div className="px-1">
+              {step === "choose" ? (
+                <div className="space-y-2.5">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {/* Noas Authentication */}
                   <button
@@ -484,8 +485,8 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                 <p className="pt-1 text-center text-xs text-muted-foreground">
                   {t("auth.modal.securityHint")}
                 </p>
-              </div>
-            ) : step === "privateKey" ? (
+                </div>
+              ) : step === "privateKey" ? (
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="privateKey">{t("auth.modal.privateKey")}</Label>
@@ -594,7 +595,8 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             </div>
           </div>
         )}
-          </div>
+              </div>
+            </div>
         </div>
       </DialogContent>
     </Dialog>
