@@ -17,7 +17,6 @@ describe("GuestPrivateKeyRow", () => {
     );
 
     expect(screen.getByText(/backup private key/i)).toBeInTheDocument();
-    expect(screen.getByText(/keep secret/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /show private key/i }));
     expect(onToggleShow).toHaveBeenCalled();

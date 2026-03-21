@@ -256,7 +256,6 @@ describe("MobileFilters management view", () => {
     );
 
     expect(screen.getByText(/backup private key/i)).toBeInTheDocument();
-    expect(screen.getByText(/keep secret/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /show private key/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
   });

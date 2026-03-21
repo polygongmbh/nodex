@@ -18,16 +18,19 @@ export function GuestPrivateKeyRow({
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-2.5 py-1.5">
-      <span className="inline-flex shrink-0 items-center gap-2 text-xs font-medium">
+    <div className="flex min-w-0 items-center gap-1.5 text-xs">
+      <span
+        className="inline-flex shrink-0 items-center gap-1.5 font-medium"
+        title={t("auth.menu.keepSecret")}
+      >
         <Key className="h-3.5 w-3.5 text-muted-foreground" />
-        <span>{t("auth.menu.backupPrivateKey")}</span>
-      </span>
-      <span className="hidden shrink-0 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-warning sm:inline-flex">
-        {t("auth.menu.keepSecret")}
+        <span className="max-w-[8rem] truncate sm:max-w-none">{t("auth.menu.backupPrivateKey")}</span>
       </span>
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <code className="block min-w-0 flex-1 overflow-x-auto rounded bg-muted px-2 py-1.5 text-xs font-mono whitespace-nowrap">
+        <code
+          className="block min-w-0 flex-1 overflow-x-auto rounded-sm bg-muted px-1.5 py-1 text-[11px] font-mono whitespace-nowrap"
+          title={t("auth.menu.keepSecret")}
+        >
           {showKey ? value : "••••••••••••••••••••••••••••••••"}
         </code>
         <div className="flex shrink-0 items-center gap-1">
@@ -37,7 +40,7 @@ export function GuestPrivateKeyRow({
             size="sm"
             onClick={onToggleShow}
             aria-label={showKey ? t("filters.profile.hidePrivateKey") : t("filters.profile.showPrivateKey")}
-            className="h-7 w-7 rounded-md border border-border/70 p-0"
+            className="h-6 w-6 rounded-sm p-0 text-muted-foreground hover:text-foreground"
           >
             {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
           </Button>
@@ -47,7 +50,7 @@ export function GuestPrivateKeyRow({
             size="sm"
             onClick={onCopy}
             aria-label={t("filters.profile.copyPrivateKey")}
-            className="h-7 w-7 rounded-md border border-border/70 p-0"
+            className="h-6 w-6 rounded-sm p-0 text-muted-foreground hover:text-foreground"
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
