@@ -53,7 +53,7 @@ export function FeedPageDesktopShell({
             }}
           />
         </div>
-        <div className="h-full flex items-center justify-end gap-1 sm:gap-1.5 w-auto pl-1 sm:pl-1.5">
+        <div className="h-full flex items-center justify-end gap-0.5 sm:gap-1 lg:gap-1.5 w-auto">
           <NostrUserMenu
             onSignInClick={() => {
               void dispatchFeedInteraction({ type: "ui.openAuthModal" });
