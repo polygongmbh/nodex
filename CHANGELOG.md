@@ -5,7 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Mobile Manage relay add now uses the shared relay-add pipeline used across surfaces, so bare relay hosts are normalized to `wss://...` consistently, mobile relay input supports Enter-to-add, and the Manage language switcher is now shown as a more prominent full-width control.
+- Mobile Manage relay add now uses the shared relay-add pipeline used across surfaces, so bare relay hosts are normalized to `wss://...` consistently, mobile relay input supports Enter-to-add, the Manage language switcher is now shown as a larger guide-sized control, the mobile mute/completion toggle is removed, and the version hint now sits in the `Impressum`/`Datenschutz`/`Kontakt` row with a `Changelog` label; legal/contact button labels and desktop legal hint text are now localized.
 - User-facing `Feed(s)` terminology is now standardized to `Space(s)` across localized app copy (English, German, and Spanish), relay display names now derive from domain-minus-TLD host labels (with configurable common-prefix stripping via `VITE_RELAY_COMMON_PREFIXES`), and host-derived startup relay discovery prefixes are now env-configurable through `VITE_RELAY_DISCOVERY_PREFIXES`.
 
 ## [2.6.2] - 2026-03-21

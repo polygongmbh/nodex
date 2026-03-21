@@ -19,7 +19,7 @@ describe("LegalDialog", () => {
   it("renders a decoded mailto link when mail icon is enabled", () => {
     render(<LegalDialog triggerLabel="Impressum" showMailIcon />);
 
-    const mailLink = screen.getByRole("link", { name: /kontakt per e-mail/i });
+    const mailLink = screen.getByRole("link", { name: /contact by email/i });
     expect(mailLink).toHaveAttribute("href", `mailto:${resolveLegalContactEmail()}`);
     expect(resolveLegalContactEmail()).toBe("mail@nodex.nexus");
   });

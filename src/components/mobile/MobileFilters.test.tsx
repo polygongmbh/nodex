@@ -24,7 +24,9 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
 }));
 
 vi.mock("@/components/layout/VersionHint", () => ({
-  VersionHint: () => <button type="button">v2.0.0</button>,
+  VersionHint: ({ showChangelogLabel = false }: { showChangelogLabel?: boolean }) => (
+    <button type="button">{showChangelogLabel ? "v2.0.0 Changelog" : "v2.0.0"}</button>
+  ),
 }));
 
 vi.mock("@/components/legal/LegalDialog", () => ({
@@ -153,9 +155,10 @@ describe("MobileFilters management view", () => {
     });
     expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
-    expect(screen.getByText(/^v\d+\.\d+\.\d+$/)).toBeInTheDocument();
+    expect(screen.getByText(/^v\d+\.\d+\.\d+\s+changelog$/i)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /open imprint and privacy policy/i })).toHaveLength(2);
-    expect(screen.getByRole("link", { name: /kontakt per e-mail/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /contact by email/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /completion feedback/i })).not.toBeInTheDocument();
   });
 
   it("adds a new space when pressing Enter in relay input", () => {

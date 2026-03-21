@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -28,15 +29,17 @@ function resolveEmailAddress() {
 }
 
 export function LegalDialog({
-  triggerLabel = "Impressum & Datenschutz",
+  triggerLabel,
   triggerClassName,
   defaultSection = "imprint",
   showMailIcon = false,
   mailIconClassName,
 }: LegalDialogProps) {
+  const { t } = useTranslation();
   // Legal copy is intentionally German-only for the current jurisdiction/compliance scope.
   const [section, setSection] = useState<LegalSection>(defaultSection);
   const emailAddress = useMemo(() => resolveEmailAddress(), []);
+  const resolvedTriggerLabel = triggerLabel ?? t("legal.buttons.imprintPrivacy");
 
   return (
     <Dialog>
@@ -49,17 +52,17 @@ export function LegalDialog({
               "text-xs text-muted-foreground/80 transition-colors hover:text-foreground",
               triggerClassName
             )}
-            aria-label="Open imprint and privacy policy"
-            title="Impressum und Datenschutzerklärung"
+            aria-label={t("legal.hints.openImprintAndPrivacy")}
+            title={t("legal.hints.openImprintAndPrivacy")}
           >
-            {triggerLabel}
+            {resolvedTriggerLabel}
           </button>
         </DialogTrigger>
         {showMailIcon ? (
           <a
             href={`mailto:${emailAddress}`}
-            aria-label="Kontakt per E-Mail"
-            title="Kontakt per E-Mail"
+            aria-label={t("legal.hints.contactByEmail")}
+            title={t("legal.hints.contactByEmail")}
             className={cn(
               "inline-flex items-center justify-center rounded p-1 text-muted-foreground/80 transition-colors hover:text-foreground",
               mailIconClassName

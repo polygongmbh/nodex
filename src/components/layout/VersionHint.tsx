@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { APP_VERSION } from "@/lib/app-version";
 import { APP_CHANGELOG } from "@/lib/changelog";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -13,11 +14,17 @@ import {
 
 interface VersionHintProps {
   className?: string;
+  showChangelogLabel?: boolean;
 }
 
-export function VersionHint({ className }: VersionHintProps) {
+export function VersionHint({ className, showChangelogLabel = false }: VersionHintProps) {
+  const { t } = useTranslation();
   const version = APP_VERSION || "0.0.0";
   const releases = APP_CHANGELOG.slice(0, 16);
+  const openChangelogLabel = t("version.openChangelogAria", { version });
+  const buttonText = showChangelogLabel
+    ? t("version.hintWithChangelog", { version })
+    : `v${version}`;
 
   return (
     <Dialog>
@@ -28,10 +35,10 @@ export function VersionHint({ className }: VersionHintProps) {
             "text-xs text-muted-foreground/80 transition-colors hover:text-foreground",
             className
           )}
-          title={`Nodex version ${version} (open changelog)`}
-          aria-label={`Nodex version ${version} (open changelog)`}
+          title={openChangelogLabel}
+          aria-label={openChangelogLabel}
         >
-          v{version}
+          {buttonText}
         </button>
       </DialogTrigger>
       <DialogContent className="w-[calc(100%-1rem)] max-w-3xl p-0">

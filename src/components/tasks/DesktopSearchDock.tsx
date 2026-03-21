@@ -108,7 +108,7 @@ export function DesktopSearchDock({
         )}
         <div className="flex flex-shrink-0 items-center gap-1.5">
           <LegalDialog
-            triggerLabel="Impressum"
+            triggerLabel={t("legal.buttons.imprint")}
             triggerClassName="rounded bg-background/70 px-1.5 py-0.5 backdrop-blur-sm border border-border/60"
             showMailIcon
             mailIconClassName="rounded bg-background/70 backdrop-blur-sm border border-border/60"

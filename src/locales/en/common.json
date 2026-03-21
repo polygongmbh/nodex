@@ -5,6 +5,22 @@
     "de": "Deutsch",
     "es": "Español"
   },
+  "legal": {
+    "buttons": {
+      "imprint": "Imprint",
+      "privacy": "Privacy",
+      "contact": "Contact",
+      "imprintPrivacy": "Imprint & Privacy"
+    },
+    "hints": {
+      "openImprintAndPrivacy": "Open imprint and privacy policy",
+      "contactByEmail": "Contact by email"
+    }
+  },
+  "version": {
+    "openChangelogAria": "Nodex version {{version}} (open changelog)",
+    "hintWithChangelog": "v{{version}} Changelog"
+  },
   "composer": {
     "placeholders": {
       "task": "What's up? Use #channels and @mentions...",

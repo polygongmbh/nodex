@@ -12,12 +12,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { VersionHint } from "@/components/layout/VersionHint";
 import { LegalDialog, resolveLegalContactEmail } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
-import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
-import { useFeedPageUiConfig } from "@/features/feed-page/views/feed-page-ui-config";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
 
@@ -46,7 +44,6 @@ export function MobileFilters({
   profileEditorOpenSignal = 0,
 }: MobileFiltersProps) {
   const { t } = useTranslation();
-  const { completionSoundEnabled, onToggleCompletionSound } = useFeedPageUiConfig();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
   const truncateMobilePubkey = (value: string): string => {
@@ -164,38 +161,35 @@ export function MobileFilters({
               <Sparkles className="w-4 h-4 text-primary" />
               {t("navigation.mobile.openGuide")}
             </button>
-            <VersionHint className="shrink-0" />
-            <CompletionFeedbackToggle
-              enabled={completionSoundEnabled}
-              onToggle={onToggleCompletionSound}
-            />
-          </div>
-          <div className="mt-2 rounded-lg border border-border/80 bg-muted/20 p-1.5">
             <LanguageToggle
-              className="h-10 w-full justify-between rounded-md border border-border bg-background px-3 text-sm font-medium hover:bg-muted/70 data-[state=open]:bg-muted/70"
+              className="h-10 flex-1 justify-between rounded-lg border border-border bg-background px-3 text-sm font-medium hover:bg-muted/70 data-[state=open]:bg-muted/70"
               showLabelOnMobile
             />
           </div>
-          <div className="mt-2 grid grid-cols-3 gap-2">
+          <div className="mt-2 grid grid-cols-4 gap-2">
             <LegalDialog
-              triggerLabel="Impressum"
+              triggerLabel={t("legal.buttons.imprint")}
               triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
               defaultSection="imprint"
             />
             <LegalDialog
-              triggerLabel="Datenschutz"
+              triggerLabel={t("legal.buttons.privacy")}
               triggerClassName="w-full rounded-lg border border-border px-2 py-2 text-xs text-center hover:bg-muted/50 active:bg-muted touch-target-sm"
               defaultSection="privacy"
             />
             <a
               href={`mailto:${legalContactEmail}`}
               className="inline-flex items-center justify-center gap-1 rounded-lg border border-border px-2 py-2 text-xs text-center text-muted-foreground hover:bg-muted/50 active:bg-muted hover:text-foreground touch-target-sm"
-              aria-label="Kontakt per E-Mail"
-              title="Kontakt per E-Mail"
+              aria-label={t("legal.hints.contactByEmail")}
+              title={t("legal.hints.contactByEmail")}
             >
               <Mail className="h-3.5 w-3.5" />
-              Kontakt
+              {t("legal.buttons.contact")}
             </a>
+            <VersionHint
+              className="w-full rounded-lg border border-border px-2 py-2 text-xs text-center text-muted-foreground/80 hover:bg-muted/50 hover:text-foreground touch-target-sm"
+              showChangelogLabel
+            />
           </div>
         </section>
 
