@@ -8,6 +8,7 @@ import {
 describe("default relay env resolution", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
     window.localStorage.clear();
   });
 
@@ -30,43 +31,40 @@ describe("default relay env resolution", () => {
         probeRelay,
       })
     ).resolves.toEqual(["wss://feed.example.test"]);
-    expect(probeRelay).toHaveBeenCalledTimes(4);
-    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.example.test");
-    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.example.test");
-    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.example.test");
-    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.example.test");
+    expect(probeRelay).toHaveBeenCalledTimes(3);
+    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://feed.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://nostr.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://relay.example.test");
   });
 
   it("probes all prefixes even when the first candidate succeeds", async () => {
-    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://nostr.example.test");
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.example.test");
 
     await expect(
       resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "app.example.test",
         probeRelay,
       })
-    ).resolves.toEqual(["wss://nostr.example.test"]);
-    expect(probeRelay).toHaveBeenCalledTimes(4);
-    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.example.test");
-    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.example.test");
-    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.example.test");
-    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.example.test");
+    ).resolves.toEqual(["wss://feed.example.test"]);
+    expect(probeRelay).toHaveBeenCalledTimes(3);
+    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://feed.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://nostr.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://relay.example.test");
   });
 
   it("falls back by prefixing the current host when no subdomain exists", async () => {
-    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://nostr.project.test");
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.project.test");
 
     await expect(
       resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "project.test",
         probeRelay,
       })
-    ).resolves.toEqual(["wss://nostr.project.test"]);
-    expect(probeRelay).toHaveBeenCalledTimes(4);
-    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://nostr.project.test");
-    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://feed.project.test");
-    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://tasks.project.test");
-    expect(probeRelay).toHaveBeenNthCalledWith(4, "wss://base.project.test");
+    ).resolves.toEqual(["wss://feed.project.test"]);
+    expect(probeRelay).toHaveBeenCalledTimes(3);
+    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://feed.project.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://nostr.project.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://relay.project.test");
   });
 
   it("reuses recent fallback probe results from cache and skips re-probing", async () => {
@@ -78,7 +76,7 @@ describe("default relay env resolution", () => {
         probeRelay,
       })
     ).resolves.toEqual(["wss://feed.example.test"]);
-    expect(probeRelay).toHaveBeenCalledTimes(4);
+    expect(probeRelay).toHaveBeenCalledTimes(3);
 
     await expect(
       resolveDefaultRelayUrlsWithDomainFallback({
@@ -86,7 +84,7 @@ describe("default relay env resolution", () => {
         probeRelay,
       })
     ).resolves.toEqual(["wss://feed.example.test"]);
-    expect(probeRelay).toHaveBeenCalledTimes(4);
+    expect(probeRelay).toHaveBeenCalledTimes(3);
   });
 
   it("ignores stale cached relays when none match current host candidates", async () => {
@@ -105,7 +103,7 @@ describe("default relay env resolution", () => {
         probeRelay,
       })
     ).resolves.toEqual(["wss://feed.example.test"]);
-    expect(probeRelay).toHaveBeenCalledTimes(4);
+    expect(probeRelay).toHaveBeenCalledTimes(3);
   });
 
   it("does not cache empty fallback probe results", async () => {
@@ -117,12 +115,11 @@ describe("default relay env resolution", () => {
         probeRelay,
       })
     ).resolves.toEqual([
-      "wss://nostr.example.test",
       "wss://feed.example.test",
-      "wss://tasks.example.test",
-      "wss://base.example.test",
+      "wss://nostr.example.test",
+      "wss://relay.example.test",
     ]);
-    expect(probeRelay).toHaveBeenCalledTimes(8);
+    expect(probeRelay).toHaveBeenCalledTimes(6);
 
     await expect(
       resolveDefaultRelayUrlsWithDomainFallback({
@@ -130,12 +127,11 @@ describe("default relay env resolution", () => {
         probeRelay,
       })
     ).resolves.toEqual([
-      "wss://nostr.example.test",
       "wss://feed.example.test",
-      "wss://tasks.example.test",
-      "wss://base.example.test",
+      "wss://nostr.example.test",
+      "wss://relay.example.test",
     ]);
-    expect(probeRelay).toHaveBeenCalledTimes(16);
+    expect(probeRelay).toHaveBeenCalledTimes(12);
   });
 
   it("returns discovered relays even when cache writes fail", async () => {
@@ -163,6 +159,21 @@ describe("default relay env resolution", () => {
       })
     ).resolves.toEqual(["wss://relay.example.com"]);
     expect(probeRelay).not.toHaveBeenCalled();
+  });
+
+  it("uses configured startup discovery prefixes from env", async () => {
+    vi.stubEnv("VITE_RELAY_DISCOVERY_PREFIXES", "tasks,base");
+    const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://base.example.test");
+
+    await expect(
+      resolveDefaultRelayUrlsWithDomainFallback({
+        hostname: "app.example.test",
+        probeRelay,
+      })
+    ).resolves.toEqual(["wss://base.example.test"]);
+    expect(probeRelay).toHaveBeenCalledTimes(2);
+    expect(probeRelay).toHaveBeenNthCalledWith(1, "wss://tasks.example.test");
+    expect(probeRelay).toHaveBeenNthCalledWith(2, "wss://base.example.test");
   });
 
   it("generates relay ids compatible with existing relay id format", () => {

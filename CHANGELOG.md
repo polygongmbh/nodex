@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Mobile Manage relay add now uses the shared relay-add pipeline used across surfaces, so bare relay hosts are normalized to `wss://...` consistently, mobile relay input supports Enter-to-add, and the Manage language switcher is now shown as a more prominent full-width control.
+- User-facing `Feed(s)` terminology is now standardized to `Space(s)` across localized app copy (English, German, and Spanish), relay display names now derive from domain-minus-TLD host labels (with configurable common-prefix stripping via `VITE_RELAY_COMMON_PREFIXES`), and host-derived startup relay discovery prefixes are now env-configurable through `VITE_RELAY_DISCOVERY_PREFIXES`.
 
 ## [2.6.2] - 2026-03-21
 - Auth dialogs now use consistently rounded corners across the app, and the sign-in chooser now has a compact width-constrained layout with a larger default Noas entry, Noas full-width first, Signer/Extension and Guest/Private row ordering, renamed `Remote Signer` copy with a connect-style icon, guest-entry env gating (`VITE_ALLOW_GUEST_SIGN_IN`), and a persistent horizontal `username @ host` Noas field layout with a simplified host placeholder (`example.com`).

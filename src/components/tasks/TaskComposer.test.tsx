@@ -1776,8 +1776,8 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Ship #backend now" },
     });
 
-    expect(screen.getByText("Select a single feed or a parent task to create a new task")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select feed");
+    expect(screen.getByText("Select a single space or a parent task to create a new task")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select space");
   });
 
   it("blocks submit when composer content has only tags and mentions", () => {
@@ -1929,8 +1929,8 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Ship #backend now" },
     });
 
-    expect(screen.getByText("Select a single feed or a parent task to create a new task")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select feed");
+    expect(screen.getByText("Select a single space or a parent task to create a new task")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select space");
   });
 
   it("blocks root task submit when relay is connected but not toggled active", () => {
@@ -1956,8 +1956,8 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Ship #backend now" },
     });
 
-    expect(screen.getByText("Select a single feed or a parent task to create a new task")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select feed");
+    expect(screen.getByText("Select a single space or a parent task to create a new task")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select space");
   });
 
   it("allows root-level comment submit when a tag and postable relay are present", () => {
@@ -2000,12 +2000,12 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Looks good #backend" },
     });
 
-    expect(screen.getByText("Select at least one green feed to post a comment")).toBeInTheDocument();
+    expect(screen.getByText("Select at least one green space to post a comment")).toBeInTheDocument();
     expect(
-      screen.queryByText("Select a single feed or a parent task to create a new task")
+      screen.queryByText("Select a single space or a parent task to create a new task")
     ).not.toBeInTheDocument();
-    expect(screen.queryByText("Comments can be posted to any green feed.")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select feed");
+    expect(screen.queryByText("Comments can be posted to any green space.")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select space");
   });
 
   it("allows comment submit when parentId is provided", () => {

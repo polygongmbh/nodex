@@ -1,7 +1,11 @@
-import { ensureRelayProtocol, relayUrlToId as toRelayId, RelayProtocol } from "@/infrastructure/nostr/relay-url";
+import {
+  ensureRelayProtocol,
+  getRelayDiscoveryPrefixes,
+  relayUrlToId as toRelayId,
+  RelayProtocol,
+} from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
-const HOST_DERIVED_RELAY_PREFIXES = ["nostr", "feed", "tasks", "base"] as const;
 const DEFAULT_RELAY_PROBE_TIMEOUT_MS = 1200;
 const DEFAULT_RELAY_PROBE_RETRY_COUNT = 1;
 const HOST_FALLBACK_SUCCESS_CACHE_TTL_MS = 30 * 60 * 1000;
@@ -40,7 +44,8 @@ function getHostDerivedRelayCandidates(hostname: string, protocol: RelayProtocol
   if (labels.length === 0) return [];
 
   const targetBase = labels.length >= 3 ? labels.slice(1).join(".") : normalizedHostname;
-  return HOST_DERIVED_RELAY_PREFIXES.map((prefix) => `${protocol}://${prefix}.${targetBase}`);
+  const discoveryPrefixes = getRelayDiscoveryPrefixes();
+  return discoveryPrefixes.map((prefix) => `${protocol}://${prefix}.${targetBase}`);
 }
 
 function getHostFallbackCacheKey(hostname: string, protocol: RelayProtocol): string {

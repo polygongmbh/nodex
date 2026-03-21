@@ -19,8 +19,8 @@
       "signin": "Sign in required",
       "write": "Write a message first",
       "tag": "Add or select at least one #channel",
-      "commentRelay": "Select at least one green feed to post a comment",
-      "relay": "Select a single feed or a parent task to create a new task",
+      "commentRelay": "Select at least one green space to post a comment",
+      "relay": "Select a single space or a parent task to create a new task",
       "selectTask": "Select a task to reply to",
       "publishing": "Publishing..."
     },
@@ -30,8 +30,8 @@
         "signin": "Sign in to publish this post.",
         "write": "Add some text first, then try again.",
         "tag": "Add at least one channel tag like #design, or use an included channel filter.",
-        "commentRelay": "Comments can be posted to any green feed.",
-        "relay": "Choose exactly one green feed for a new task, or post from inside an existing task.",
+        "commentRelay": "Comments can be posted to any green space.",
+        "relay": "Choose exactly one green space for a new task, or post from inside an existing task.",
         "selectTask": "Open a task first if you want to post a comment.",
         "uploading": "Your attachments are still uploading. Posting will unlock automatically when they finish.",
         "uploadFailed": "Retry or remove failed attachments before posting.",
@@ -40,8 +40,8 @@
       "cta": {
         "write": "Write message",
         "tag": "Add #channel",
-        "commentRelay": "Select feed",
-        "relay": "Select feed",
+        "commentRelay": "Select space",
+        "relay": "Select space",
         "selectTask": "Select task",
         "uploading": "Wait for uploads",
         "uploadFailed": "Fix attachments",
@@ -151,7 +151,7 @@
       "needSigninPost": "Sign in required to post",
       "needSigninModify": "Sign in required to modify tasks",
       "statusRestricted": "Task updates are restricted to tagged assignees and the creator",
-      "selectRelayOrParent": "Select a single feed or a parent task to create a new task",
+      "selectRelayOrParent": "Select a single space or a parent task to create a new task",
       "publishStatusFailed": "Failed to publish status update to relays",
       "publishDateFailed": "Failed to publish date update to relay",
       "publishPriorityFailed": "Failed to publish priority update to relay",
@@ -159,9 +159,9 @@
       "publishSavedForRetry": "Failed to publish to Nostr; saved for retry",
       "publishSavedForRetryWithReason": "Failed to publish to Nostr; saved for retry ({{reason}})",
       "publishSavedForRetryWithRelayReason": "Failed to publish to {{relayUrl}}; saved for retry ({{reason}})",
-      "retryRelayMissing": "Retry failed: feed is no longer configured",
-      "retryRejectedByRelay": "Retry failed: publish was not accepted by feed",
-      "retryRejectedByRelayWithReason": "Retry failed: publish was not accepted by feed ({{reason}})",
+      "retryRelayMissing": "Retry failed: space is no longer configured",
+      "retryRejectedByRelay": "Retry failed: publish was not accepted by space",
+      "retryRejectedByRelayWithReason": "Retry failed: publish was not accepted by space ({{reason}})",
       "publishListingStatusFailed": "Failed to publish listing status update to relay",
       "locationUnavailable": "Location services are unavailable on this device",
       "locationCaptureFailed": "Unable to capture your current location",
@@ -175,11 +175,11 @@
       "localTask": "Task added locally (demo only)",
       "localComment": "Comment added locally (demo only)",
       "publishUndone": "Post canceled before publish",
-      "relayFilterEnabled": "Showing {{relayDomain}} feed",
-      "relayFilterDisabled": "Hiding {{relayDomain}} feed",
-      "showingOnlyRelay": "Showing {{relayDomain}} feed",
-      "relayFiltersCleared": "Cleared active feeds",
-      "allRelaysSelected": "Showing all connected feeds",
+      "relayFilterEnabled": "Showing {{relayDomain}} space",
+      "relayFilterDisabled": "Hiding {{relayDomain}} space",
+      "showingOnlyRelay": "Showing {{relayDomain}} space",
+      "relayFiltersCleared": "Cleared active spaces",
+      "allRelaysSelected": "Showing all connected spaces",
       "showingOnlyChannel": "Showing channel #{{channelName}}",
       "allChannelsIncluded": "Showing all channels",
       "allChannelsReset": "Cleared active channels",
@@ -203,8 +203,8 @@
     },
     "warnings": {
       "parentLocalOnly": "Parent reference is local-only; publishing task without parent link",
-      "disconnectedSelectedFeeds": "Reconnect selected feeds before modifying or posting",
-      "partialPublish": "Published to {{publishedCount}} of {{targetCount}} selected feeds"
+      "disconnectedSelectedFeeds": "Reconnect selected spaces before modifying or posting",
+      "partialPublish": "Published to {{publishedCount}} of {{targetCount}} selected spaces"
     }
   },
   "listView": {
@@ -235,7 +235,7 @@
     "views": {
       "manage": "Manage",
       "tree": "Tree",
-      "feed": "Feed",
+      "feed": "Space",
       "kanban": "Kanban",
       "calendar": "Calendar",
       "list": "Table",
@@ -250,7 +250,7 @@
   "sidebar": {
     "tagline": "Collaboration Platform",
     "sections": {
-      "feeds": "Feeds",
+      "feeds": "Spaces",
       "channels": "Channels",
       "people": "People"
     },
@@ -275,8 +275,8 @@
       "unfiltered": "unfiltered"
     },
     "filters": {
-      "toggleRelay": "Toggle {{name}} feed",
-      "showOnlyRelay": "Show only {{name}} feed",
+      "toggleRelay": "Toggle {{name}} space",
+      "showOnlyRelay": "Show only {{name}} space",
       "toggleChannelTo": "Toggle #{{name}} to {{nextState}}",
       "toggleChannelFilter": "Toggle #{{name}} filter",
       "showOnlyChannel": "Show only #{{name}}",
@@ -334,7 +334,7 @@
     },
     "items": {
       "treeView": "Tree view",
-      "feedView": "Feed view",
+      "feedView": "Space view",
       "kanbanView": "Kanban view",
       "calendarView": "Calendar view",
       "tableView": "Table view",
@@ -479,7 +479,7 @@
       "signOut": "Sign out",
       "profileSetupTitle": "Set up your profile",
       "profileEditTitle": "Edit profile",
-      "profileDescription": "Your Nostr metadata (`kind:0`) will be published to connected feeds. Username is required.",
+      "profileDescription": "Your Nostr metadata (`kind:0`) will be published to connected spaces. Username is required.",
       "copySuccessNsec": "Private key copied to clipboard!",
       "copySuccessHex": "Private key (hex) copied to clipboard!"
     }
@@ -489,7 +489,7 @@
       "ariaLabel": "Welcome to Nodex",
       "title": "Welcome to Nodex",
       "description": "Nodex is a Nostr-native workspace for tasks and discussions.",
-      "features": "Use channels, people filters, and relay controls to shape your feed while composing tasks and comments in one flow.",
+      "features": "Use channels, people filters, and relay controls to shape your space while composing tasks and comments in one flow.",
       "startTour": "Start the Tour",
       "createAccount": "Create account",
       "signIn": "Sign in"
@@ -543,7 +543,7 @@
     "steps": {
       "navigationSwitcher": {
         "title": "Switch views",
-        "description": "Use the view switcher to move between Tree, Feed, Kanban, Calendar, and Table.",
+        "description": "Use the view switcher to move between Tree, Space, Kanban, Calendar, and Table.",
         "action": "Click any view tab to continue."
       },
       "navigationFocus": {
@@ -557,9 +557,9 @@
         "action": "Click a breadcrumb item to continue."
       },
       "filtersRelays": {
-        "title": "Feed selection",
-        "description": "Use *Feeds* to select which feeds are visible. Click a feed icon to toggle it, or click its name for exclusive feed focus.",
-        "action": "Click a feed control to continue."
+        "title": "Space selection",
+        "description": "Use *Spaces* to select which spaces are visible. Click a space icon to toggle it, or click its name for exclusive space focus.",
+        "action": "Click a space control to continue."
       },
       "filtersChannels": {
         "title": "Channel filters",
@@ -590,7 +590,7 @@
       },
       "mobileNavigationNav": {
         "title": "Mobile views",
-        "description": "Use the top navigation to switch between Tree, Feed, List, and Calendar.",
+        "description": "Use the top navigation to switch between Tree, Space, List, and Calendar.",
         "action": "Tap a navigation tab to continue."
       },
       "mobileNavigationFocus": {
@@ -605,7 +605,7 @@
       },
       "mobileFiltersOpen": {
         "title": "Open Manage",
-        "description": "Tap *Manage* in the top navigation to open feed, channel, and people filters.",
+        "description": "Tap *Manage* in the top navigation to open space, channel, and people filters.",
         "action": "Tap *Manage* to continue."
       },
       "mobileFiltersProperties": {
@@ -614,7 +614,7 @@
       },
       "mobileFiltersUse": {
         "title": "Use filters",
-        "description": "In *Manage*, tap feed chips to select feeds, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters. Combine these controls to narrow timeline visibility before composing."
+        "description": "In *Manage*, tap space chips to select spaces, channel chips to cycle neutral -> include -> exclude, and people chips to toggle people filters. Combine these controls to narrow timeline visibility before composing."
       },
       "mobileComposeCombobox": {
         "title": "Search/Compose combobox",
@@ -677,23 +677,23 @@
       "nameRequired": "Username is required",
       "nameInvalidNip05": "Username must use lowercase letters, numbers, dots, underscores, or hyphens",
       "nameTaken": "This username is already known. Please choose another.",
-      "noRelayConnected": "Connect to at least one feed before editing profile",
+      "noRelayConnected": "Connect to at least one space before editing profile",
       "presenceTitle": "Share live status",
       "presenceDescription": "Broadcast your current view and active task (NIP-38). Disable for privacy.",
       "undoSendTitle": "Allow undo before sending",
       "undoSendDescription": "Delay Nostr publish by a few seconds so you can undo from the toast or post card.",
       "autoCaptionTitle": "Enable local image captions (tiny model, experimental)",
       "autoCaptionDescription": "Generate image alt text on this device. One-time model download may use roughly 30-80 MB.",
-      "updated": "Profile updated on connected feeds",
-      "updateFailed": "Failed to update profile. Check feed connectivity and try again."
+      "updated": "Profile updated on connected spaces",
+      "updateFailed": "Failed to update profile. Check space connectivity and try again."
     },
     "feeds": {
-      "title": "Feeds",
+      "title": "Spaces",
       "placeholder": "wss://relay.example.com",
       "add": "Add",
-      "addAria": "Add feed",
+      "addAria": "Add space",
       "remove": "Remove",
-      "removeAria": "Remove feed {{name}}"
+      "removeAria": "Remove space {{name}}"
     },
     "channels": {
       "title": "Channels",
@@ -779,12 +779,12 @@
     "retry": "Retry",
     "retrying": "Retrying...",
     "retryHint": "Retry on original relay targets",
-    "retryUnavailable": "Select an original feed to enable retry",
+    "retryUnavailable": "Select an original space to enable retry",
     "repost": "Repost",
     "reposting": "Reposting...",
-    "repostHint": "Repost to currently selected feed relays",
-    "repostUnavailable": "Select a different feed to enable repost",
-    "scopeSelected": "Selected feeds",
+    "repostHint": "Repost to currently selected space relays",
+    "repostUnavailable": "Select a different space to enable repost",
+    "scopeSelected": "Selected spaces",
     "scopeAll": "All failed",
     "hiddenCount": "{{count}} hidden",
     "dismissAll": "Dismiss all",
@@ -954,11 +954,11 @@
       },
       "error": {
         "scopeOnly": "Could not load posts {{scope}}.",
-        "none": "Could not load posts from the selected feed.",
-        "action": "The selected feed is currently unavailable.",
-        "unableToConnect": "Unable to connect to the selected feed.",
-        "readRejected": "Read access was rejected by the selected feed.",
-        "mixed": "Some selected feeds are unavailable, and others rejected read access."
+        "none": "Could not load posts from the selected space.",
+        "action": "The selected space is currently unavailable.",
+        "unableToConnect": "Unable to connect to the selected space.",
+        "readRejected": "Read access was rejected by the selected space.",
+        "mixed": "Some selected spaces are unavailable, and others rejected read access."
       },
       "unfiltered": {
         "feedTitle": "Nobody here but us chickens.",

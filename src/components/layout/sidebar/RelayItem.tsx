@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "building-2": Building2,
@@ -23,6 +24,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const Icon = iconMap[relay.icon] || Building2;
+  const relayDisplayName = relay.url ? relayUrlToName(relay.url) : relay.name || relay.id;
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
   const isConnectionActive = resolvedConnectionStatus === "connected";
   const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
@@ -44,8 +46,8 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           void dispatchFeedInteraction({ type: "sidebar.relay.toggle", relayId: relay.id });
         }}
         className="relative"
-        title={t("sidebar.filters.toggleRelay", { name: relay.name })}
-        aria-label={t("sidebar.filters.toggleRelay", { name: relay.name })}
+        title={t("sidebar.filters.toggleRelay", { name: relayDisplayName })}
+        aria-label={t("sidebar.filters.toggleRelay", { name: relayDisplayName })}
       >
         <div
           className={cn(
@@ -68,8 +70,8 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           void dispatchFeedInteraction({ type: "sidebar.relay.exclusive", relayId: relay.id });
         }}
         className="flex-1 text-left"
-        title={t("sidebar.filters.showOnlyRelay", { name: relay.name })}
-        aria-label={t("sidebar.filters.showOnlyRelay", { name: relay.name })}
+        title={t("sidebar.filters.showOnlyRelay", { name: relayDisplayName })}
+        aria-label={t("sidebar.filters.showOnlyRelay", { name: relayDisplayName })}
       >
         <span
           className={cn(
@@ -77,7 +79,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
             relay.isActive ? "text-foreground font-medium" : "text-sidebar-foreground"
           )}
         >
-          {relay.name}
+          {relayDisplayName}
           {resolvedConnectionStatus === "read-only" ? (
             <TooltipProvider>
               <Tooltip>

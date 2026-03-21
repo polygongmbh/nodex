@@ -19,8 +19,8 @@
       "signin": "Se requiere iniciar sesión",
       "write": "Escribe primero un mensaje",
       "tag": "Añade o selecciona al menos un #canal",
-      "commentRelay": "Selecciona al menos un feed verde para publicar un comentario",
-      "relay": "Selecciona un único feed o una tarea padre para crear una nueva tarea",
+      "commentRelay": "Selecciona al menos un space verde para publicar un comentario",
+      "relay": "Selecciona un único space o una tarea padre para crear una nueva tarea",
       "selectTask": "Selecciona una tarea para responder",
       "publishing": "Publicando..."
     },
@@ -30,8 +30,8 @@
         "signin": "Inicia sesión para publicar esta entrada.",
         "write": "Añade primero algo de texto y vuelve a intentarlo.",
         "tag": "Añade al menos una etiqueta de canal como #design o usa un filtro de canal incluido.",
-        "commentRelay": "Los comentarios pueden publicarse en cualquier feed verde.",
-        "relay": "Elige exactamente un feed verde para una tarea nueva o publica desde una tarea existente.",
+        "commentRelay": "Los comentarios pueden publicarse en cualquier space verde.",
+        "relay": "Elige exactamente un space verde para una tarea nueva o publica desde una tarea existente.",
         "selectTask": "Abre primero una tarea si quieres publicar un comentario.",
         "uploading": "Tus archivos todavía se están subiendo. La publicación se habilitará automáticamente cuando terminen.",
         "uploadFailed": "Reintenta o elimina los archivos fallidos antes de publicar.",
@@ -40,8 +40,8 @@
       "cta": {
         "write": "Escribir mensaje",
         "tag": "Añadir #canal",
-        "commentRelay": "Seleccionar feed",
-        "relay": "Seleccionar feed",
+        "commentRelay": "Seleccionar space",
+        "relay": "Seleccionar space",
         "selectTask": "Seleccionar tarea",
         "uploading": "Esperar subidas",
         "uploadFailed": "Corregir archivos",
@@ -151,7 +151,7 @@
       "needSigninPost": "Se requiere iniciar sesión para publicar",
       "needSigninModify": "Se requiere iniciar sesión para modificar tareas",
       "statusRestricted": "Las actualizaciones de tareas están restringidas a los asignados etiquetados y al creador",
-      "selectRelayOrParent": "Selecciona un único feed o una tarea padre para crear una nueva tarea",
+      "selectRelayOrParent": "Selecciona un único space o una tarea padre para crear una nueva tarea",
       "publishStatusFailed": "No se pudo publicar la actualización de estado en los relays",
       "publishDateFailed": "No se pudo publicar la actualización de fecha en el relay",
       "publishPriorityFailed": "No se pudo publicar la actualización de prioridad en el relay",
@@ -159,9 +159,9 @@
       "publishSavedForRetry": "No se pudo publicar en Nostr; se guardó para reintento",
       "publishSavedForRetryWithReason": "No se pudo publicar en Nostr; se guardó para reintento ({{reason}})",
       "publishSavedForRetryWithRelayReason": "No se pudo publicar en {{relayUrl}}; se guardó para reintento ({{reason}})",
-      "retryRelayMissing": "Reintento fallido: el feed ya no está configurado",
-      "retryRejectedByRelay": "Reintento fallido: el feed no aceptó la publicación",
-      "retryRejectedByRelayWithReason": "Reintento fallido: el feed no aceptó la publicación ({{reason}})",
+      "retryRelayMissing": "Reintento fallido: el space ya no está configurado",
+      "retryRejectedByRelay": "Reintento fallido: el space no aceptó la publicación",
+      "retryRejectedByRelayWithReason": "Reintento fallido: el space no aceptó la publicación ({{reason}})",
       "publishListingStatusFailed": "No se pudo publicar la actualización del estado del anuncio en el relay",
       "locationUnavailable": "Los servicios de ubicación no están disponibles en este dispositivo",
       "locationCaptureFailed": "No se pudo obtener tu ubicación actual",
@@ -175,11 +175,11 @@
       "localTask": "Tarea añadida localmente (solo demo)",
       "localComment": "Comentario añadido localmente (solo demo)",
       "publishUndone": "Publicación cancelada antes de enviar",
-      "relayFilterEnabled": "Mostrando el feed {{relayDomain}}",
-      "relayFilterDisabled": "Ocultando el feed {{relayDomain}}",
-      "showingOnlyRelay": "Mostrando el feed {{relayDomain}}",
-      "relayFiltersCleared": "Se limpiaron los feeds activos",
-      "allRelaysSelected": "Mostrando todos los feeds conectados",
+      "relayFilterEnabled": "Mostrando el space {{relayDomain}}",
+      "relayFilterDisabled": "Ocultando el space {{relayDomain}}",
+      "showingOnlyRelay": "Mostrando el space {{relayDomain}}",
+      "relayFiltersCleared": "Se limpiaron los spaces activos",
+      "allRelaysSelected": "Mostrando todos los spaces conectados",
       "showingOnlyChannel": "Mostrando el canal #{{channelName}}",
       "allChannelsIncluded": "Mostrando todos los canales",
       "allChannelsReset": "Se limpiaron los canales activos",
@@ -203,8 +203,8 @@
     },
     "warnings": {
       "parentLocalOnly": "La referencia al padre es solo local; se publicará la tarea sin enlace al padre",
-      "disconnectedSelectedFeeds": "Vuelve a conectar los feeds seleccionados antes de modificar o publicar",
-      "partialPublish": "Publicado en {{publishedCount}} de {{targetCount}} feeds seleccionados"
+      "disconnectedSelectedFeeds": "Vuelve a conectar los spaces seleccionados antes de modificar o publicar",
+      "partialPublish": "Publicado en {{publishedCount}} de {{targetCount}} spaces seleccionados"
     }
   },
   "listView": {
@@ -235,7 +235,7 @@
     "views": {
       "manage": "Gestionar",
       "tree": "Árbol",
-      "feed": "Feed",
+      "feed": "Space",
       "kanban": "Kanban",
       "calendar": "Calendario",
       "list": "Tabla",
@@ -250,7 +250,7 @@
   "sidebar": {
     "tagline": "Plataforma de colaboración",
     "sections": {
-      "feeds": "Feeds",
+      "feeds": "Spaces",
       "channels": "Canales",
       "people": "Personas"
     },
@@ -275,8 +275,8 @@
       "unfiltered": "sin filtrar"
     },
     "filters": {
-      "toggleRelay": "Activar/desactivar feed {{name}}",
-      "showOnlyRelay": "Mostrar solo feed {{name}}",
+      "toggleRelay": "Activar/desactivar space {{name}}",
+      "showOnlyRelay": "Mostrar solo space {{name}}",
       "toggleChannelTo": "Cambiar #{{name}} a {{nextState}}",
       "toggleChannelFilter": "Activar/desactivar filtro de #{{name}}",
       "showOnlyChannel": "Mostrar solo #{{name}}",
@@ -334,7 +334,7 @@
     },
     "items": {
       "treeView": "Vista de árbol",
-      "feedView": "Vista de feed",
+      "feedView": "Vista de space",
       "kanbanView": "Vista kanban",
       "calendarView": "Vista de calendario",
       "tableView": "Vista de tabla",
@@ -479,7 +479,7 @@
       "signOut": "Cerrar sesión",
       "profileSetupTitle": "Configura tu perfil",
       "profileEditTitle": "Editar perfil",
-      "profileDescription": "Tus metadatos de Nostr (`kind:0`) se publicarán en los feeds conectados. El nombre de usuario es obligatorio.",
+      "profileDescription": "Tus metadatos de Nostr (`kind:0`) se publicarán en los spaces conectados. El nombre de usuario es obligatorio.",
       "copySuccessNsec": "¡Clave privada copiada al portapapeles!",
       "copySuccessHex": "¡Clave privada (hex) copiada al portapapeles!"
     }
@@ -489,7 +489,7 @@
       "ariaLabel": "Bienvenido a Nodex",
       "title": "Bienvenido a Nodex",
       "description": "Nodex es un espacio de trabajo nativo de Nostr para tareas y conversaciones.",
-      "features": "Usa canales, filtros de personas y controles de feeds para moldear tu vista mientras publicas tareas y comentarios en un solo flujo.",
+      "features": "Usa canales, filtros de personas y controles de spaces para moldear tu vista mientras publicas tareas y comentarios en un solo flujo.",
       "startTour": "Iniciar tour",
       "createAccount": "Crear cuenta",
       "signIn": "Iniciar sesión"
@@ -543,7 +543,7 @@
     "steps": {
       "navigationSwitcher": {
         "title": "Cambiar vistas",
-        "description": "Usa el selector de vista para pasar entre Árbol, Feed, Kanban, Calendario y Tabla.",
+        "description": "Usa el selector de vista para pasar entre Árbol, Space, Kanban, Calendario y Tabla.",
         "action": "Haz clic en cualquier pestaña de vista para continuar."
       },
       "navigationFocus": {
@@ -557,9 +557,9 @@
         "action": "Haz clic en un elemento del breadcrumb para continuar."
       },
       "filtersRelays": {
-        "title": "Selección de feed",
-        "description": "Usa *Feeds* para seleccionar qué feeds son visibles. Haz clic en el icono de feed para alternarlo, o en su nombre para enfoque exclusivo.",
-        "action": "Haz clic en un control de feed para continuar."
+        "title": "Selección de space",
+        "description": "Usa *Spaces* para seleccionar qué spaces son visibles. Haz clic en el icono de space para alternarlo, o en su nombre para enfoque exclusivo.",
+        "action": "Haz clic en un control de space para continuar."
       },
       "filtersChannels": {
         "title": "Filtros de canales",
@@ -590,7 +590,7 @@
       },
       "mobileNavigationNav": {
         "title": "Vistas móviles",
-        "description": "Usa la navegación superior para cambiar entre Árbol, Feed, Lista y Calendario.",
+        "description": "Usa la navegación superior para cambiar entre Árbol, Space, Lista y Calendario.",
         "action": "Toca una pestaña de navegación para continuar."
       },
       "mobileNavigationFocus": {
@@ -605,7 +605,7 @@
       },
       "mobileFiltersOpen": {
         "title": "Abrir Gestionar",
-        "description": "Toca *Gestionar* en la navegación superior para abrir filtros de feed, canal y personas.",
+        "description": "Toca *Gestionar* en la navegación superior para abrir filtros de space, canal y personas.",
         "action": "Toca *Gestionar* para continuar."
       },
       "mobileFiltersProperties": {
@@ -614,7 +614,7 @@
       },
       "mobileFiltersUse": {
         "title": "Usar filtros",
-        "description": "En *Gestionar*, toca chips de feed para seleccionar feeds, chips de canal para cambiar entre neutral → incluir → excluir, y chips de personas para activar/desactivar filtros de personas. Combina estos controles para acotar la visibilidad antes de redactar."
+        "description": "En *Gestionar*, toca chips de space para seleccionar spaces, chips de canal para cambiar entre neutral → incluir → excluir, y chips de personas para activar/desactivar filtros de personas. Combina estos controles para acotar la visibilidad antes de redactar."
       },
       "mobileComposeCombobox": {
         "title": "Caja combinada búsqueda/redacción",
@@ -677,23 +677,23 @@
       "nameRequired": "El nombre de usuario es obligatorio",
       "nameInvalidNip05": "El nombre de usuario debe usar letras minúsculas, números, puntos, guiones bajos o guiones",
       "nameTaken": "Este nombre de usuario ya es conocido. Elige otro.",
-      "noRelayConnected": "Conéctate al menos a un feed antes de editar el perfil",
+      "noRelayConnected": "Conéctate al menos a un space antes de editar el perfil",
       "presenceTitle": "Compartir estado en vivo",
       "presenceDescription": "Difunde tu vista actual y tarea activa (NIP-38). Desactívalo por privacidad.",
       "undoSendTitle": "Permitir deshacer antes de enviar",
       "undoSendDescription": "Retrasa unos segundos la publicación en Nostr para poder deshacer desde el toast o la tarjeta.",
       "autoCaptionTitle": "Activar subtítulos locales para imágenes (modelo pequeño, experimental)",
       "autoCaptionDescription": "Genera texto alternativo en este dispositivo. La descarga única del modelo puede usar aproximadamente 30-80 MB.",
-      "updated": "Perfil actualizado en feeds conectados",
-      "updateFailed": "No se pudo actualizar el perfil. Revisa la conectividad de feed e inténtalo de nuevo."
+      "updated": "Perfil actualizado en spaces conectados",
+      "updateFailed": "No se pudo actualizar el perfil. Revisa la conectividad de space e inténtalo de nuevo."
     },
     "feeds": {
-      "title": "Feeds",
+      "title": "Spaces",
       "placeholder": "wss://relay.example.com",
       "add": "Añadir",
-      "addAria": "Añadir feed",
+      "addAria": "Añadir space",
       "remove": "Eliminar",
-      "removeAria": "Eliminar feed {{name}}"
+      "removeAria": "Eliminar space {{name}}"
     },
     "channels": {
       "title": "Canales",
@@ -779,12 +779,12 @@
     "retry": "Reintentar",
     "retrying": "Reintentando...",
     "retryHint": "Reintentar en los relays de destino originales",
-    "retryUnavailable": "Selecciona un feed original para habilitar reintentar",
+    "retryUnavailable": "Selecciona un space original para habilitar reintentar",
     "repost": "Republicar",
     "reposting": "Republicando...",
-    "repostHint": "Republicar en los relays de feeds seleccionados actualmente",
-    "repostUnavailable": "Selecciona un feed distinto para habilitar republicar",
-    "scopeSelected": "Feeds seleccionados",
+    "repostHint": "Republicar en los relays de spaces seleccionados actualmente",
+    "repostUnavailable": "Selecciona un space distinto para habilitar republicar",
+    "scopeSelected": "Spaces seleccionados",
     "scopeAll": "Todas fallidas",
     "hiddenCount": "{{count}} ocultas",
     "dismissAll": "Descartar todas",
@@ -954,11 +954,11 @@
       },
       "error": {
         "scopeOnly": "No se pudieron cargar las publicaciones {{scope}}.",
-        "none": "No se pudieron cargar las publicaciones del feed seleccionado.",
-        "action": "El feed seleccionado no está disponible en este momento.",
-        "unableToConnect": "No se pudo establecer conexión con el feed seleccionado.",
-        "readRejected": "El feed seleccionado rechazó el acceso de lectura.",
-        "mixed": "Algunos feeds seleccionados no están disponibles y otros rechazaron el acceso de lectura."
+        "none": "No se pudieron cargar las publicaciones del space seleccionado.",
+        "action": "El space seleccionado no está disponible en este momento.",
+        "unableToConnect": "No se pudo establecer conexión con el space seleccionado.",
+        "readRejected": "El space seleccionado rechazó el acceso de lectura.",
+        "mixed": "Algunos spaces seleccionados no están disponibles y otros rechazaron el acceso de lectura."
       },
       "unfiltered": {
         "feedTitle": "No hay nadie aquí salvo nuestras gallinas.",

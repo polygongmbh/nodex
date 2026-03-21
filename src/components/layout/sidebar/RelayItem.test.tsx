@@ -9,6 +9,7 @@ const baseRelay: Relay = {
   name: "Main Relay",
   icon: "cpu",
   isActive: true,
+  url: "wss://relay.damus.io",
 };
 
 describe("RelayItem", () => {
@@ -24,8 +25,8 @@ describe("RelayItem", () => {
       </FeedInteractionProvider>
     );
 
-    const exclusiveButton = screen.getByRole("button", { name: "Show only Main Relay feed" });
-    const toggleButton = screen.getByRole("button", { name: "Toggle Main Relay feed" });
+    const exclusiveButton = screen.getByRole("button", { name: "Show only damus space" });
+    const toggleButton = screen.getByRole("button", { name: "Toggle damus space" });
 
     fireEvent.click(exclusiveButton);
     fireEvent.click(toggleButton);

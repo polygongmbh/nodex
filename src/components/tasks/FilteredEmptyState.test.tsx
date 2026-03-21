@@ -229,7 +229,7 @@ describe("FilteredEmptyState", () => {
     expect(
       screen.getByText("Could not load posts from relay.one.")
     ).toBeInTheDocument();
-    expect(screen.getByText("Unable to connect to the selected feed.")).toBeInTheDocument();
+    expect(screen.getByText("Unable to connect to the selected space.")).toBeInTheDocument();
     expect(screen.queryByText(/#ops/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/alice/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/#frontend/i)).not.toBeInTheDocument();
@@ -247,7 +247,7 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(screen.getByText("Could not load posts from relay.one.")).toBeInTheDocument();
-    expect(screen.getByText("Read access was rejected by the selected feed.")).toBeInTheDocument();
+    expect(screen.getByText("Read access was rejected by the selected space.")).toBeInTheDocument();
   });
 
   it("renders the playful unfiltered feed message", () => {

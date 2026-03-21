@@ -35,7 +35,7 @@ beforeEach(() => {
 });
 
 describe("FailedPublishQueueBanner", () => {
-  it("shows selected feed scope and hidden count by default", () => {
+  it("shows selected space scope and hidden count by default", () => {
     const drafts: FailedPublishDraft[] = [
       { ...baseDraft, id: "1", content: "selected one" },
       { ...baseDraft, id: "2", content: "hidden one" },
@@ -125,7 +125,7 @@ describe("FailedPublishQueueBanner", () => {
     );
 
     expect(screen.getByRole("button", { name: "Retry on original relay targets" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Repost to currently selected feed relays" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Repost to currently selected space relays" })).toBeDisabled();
 
     view.rerender(
       <FailedPublishQueueBanner
@@ -136,7 +136,7 @@ describe("FailedPublishQueueBanner", () => {
     );
 
     expect(screen.getByRole("button", { name: "Retry on original relay targets" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Repost to currently selected feed relays" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Repost to currently selected space relays" })).toBeEnabled();
   });
 
   it("shows retry progress state while retry is in flight", () => {

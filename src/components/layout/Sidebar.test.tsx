@@ -44,22 +44,22 @@ function renderSidebar(relays: Relay[]) {
 }
 
 describe("Sidebar", () => {
-  it("preserves feeds section expansion state across remounts while relay lists change", () => {
+  it("preserves spaces section expansion state across remounts while relay lists change", () => {
     const firstRender = renderSidebar(baseRelays);
-    const relayOneRow = screen.getByText("Relay One").closest('[data-sidebar-item="relay-relay-one"]') as HTMLElement;
+    const relayOneRow = document.querySelector('[data-sidebar-item="relay-relay-one"]') as HTMLElement;
     const expectCollapsed = (element: HTMLElement | null) => {
       expect(element?.style.height).toBe("0px");
     };
 
-    fireEvent.click(screen.getByRole("button", { name: /collapse feeds/i }));
+    fireEvent.click(screen.getByRole("button", { name: /collapse spaces/i }));
     expectCollapsed(relayOneRow.parentElement?.parentElement as HTMLElement);
 
     firstRender.unmount();
 
     renderSidebar([...baseRelays, extraRelay]);
 
-    const remountedRelayOneRow = screen.getByText("Relay One").closest('[data-sidebar-item="relay-relay-one"]') as HTMLElement;
-    const remountedRelayTwoRow = screen.getByText("Relay Two").closest('[data-sidebar-item="relay-relay-two"]') as HTMLElement;
+    const remountedRelayOneRow = document.querySelector('[data-sidebar-item="relay-relay-one"]') as HTMLElement;
+    const remountedRelayTwoRow = document.querySelector('[data-sidebar-item="relay-relay-two"]') as HTMLElement;
 
     expectCollapsed(remountedRelayOneRow.parentElement?.parentElement as HTMLElement);
     expectCollapsed(remountedRelayTwoRow.parentElement?.parentElement as HTMLElement);

@@ -133,7 +133,7 @@ describe("MobileFilters management view", () => {
     };
   });
 
-  it("supports adding a new feed and showing profile controls", () => {
+  it("supports adding a new space and showing profile controls", () => {
     render(
       <MobileFilters
         relays={relays}
@@ -145,7 +145,7 @@ describe("MobileFilters management view", () => {
     fireEvent.change(screen.getByPlaceholderText(/wss:\/\/relay\.example\.com/i), {
       target: { value: "wss://relay.example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /add feed/i }));
+    fireEvent.click(screen.getByRole("button", { name: /add space/i }));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "sidebar.relay.add",
@@ -158,7 +158,7 @@ describe("MobileFilters management view", () => {
     expect(screen.getByRole("link", { name: /kontakt per e-mail/i })).toBeInTheDocument();
   });
 
-  it("adds a new feed when pressing Enter in relay input", () => {
+  it("adds a new space when pressing Enter in relay input", () => {
     render(
       <MobileFilters
         relays={relays}

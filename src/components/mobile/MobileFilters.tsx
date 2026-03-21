@@ -19,6 +19,7 @@ import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { useFeedPageUiConfig } from "@/features/feed-page/views/feed-page-ui-config";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
 
 interface MobileFiltersProps {
   relays: Relay[];
@@ -448,6 +449,7 @@ export function MobileFilters({
           <div className="flex flex-wrap gap-2">
             {relays.map((relay) => {
               const RelayIcon = relayIconMap[relay.icon] || Building2;
+              const relayDisplayName = relay.url ? relayUrlToName(relay.url) : relay.name || relay.id;
               const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
               const isConnectionActive = resolvedConnectionStatus === "connected";
               const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
@@ -469,7 +471,7 @@ export function MobileFilters({
                     className="flex items-center gap-2 flex-1 min-w-0"
                   >
                     <RelayIcon className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{relay.name}</span>
+                    <span className="truncate">{relayDisplayName}</span>
                     <span
                       className={cn(
                         "inline-block h-2 w-2 rounded-full shrink-0",
@@ -486,7 +488,7 @@ export function MobileFilters({
                         void dispatchFeedInteraction({ type: "sidebar.relay.remove", url: relay.url! });
                       }}
                       className="ml-1 p-1.5 rounded text-muted-foreground hover:text-destructive active:bg-destructive/10 inline-flex items-center gap-1 touch-target-sm"
-                      aria-label={t("filters.feeds.removeAria", { name: relay.name })}
+                      aria-label={t("filters.feeds.removeAria", { name: relayDisplayName })}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
