@@ -90,7 +90,6 @@ describe("MobileLayout submit wiring", () => {
       onSearchChange: () => {},
       onNewTask,
       onToggleComplete: () => {},
-      onFocusTask: () => {},
     };
 
     render(

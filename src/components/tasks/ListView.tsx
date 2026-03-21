@@ -54,7 +54,6 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
-  onFocusSidebar?: () => void;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   isInteractionBlocked?: boolean;
@@ -112,10 +111,6 @@ export function ListView({
   depthMode = "leaves",
   onNewTask,
   focusedTaskId,
-  onFocusTask,
-  onFocusSidebar,
-  onHashtagClick,
-  onAuthorClick,
   forceShowComposer,
   composeGuideActivationSignal,
   composeRestoreRequest = null,
@@ -126,10 +121,13 @@ export function ListView({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const interactionModel = useFeedViewInteractionModel();
   const { user } = useNDK();
-  const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
-  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
-  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
+  const focusTask = (taskId: string | null) => {
+    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
+  };
+  const focusSidebar = () => {
+    void dispatchFeedInteraction({ type: "ui.focusSidebar" });
+  };
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -431,9 +429,9 @@ export function ListView({
   // Keyboard navigation
   const { focusedTaskId: keyboardFocusedTaskId } = useTaskNavigation({
     taskIds,
-    onSelectTask: (id) => onFocusTask?.(id),
-    onGoBack: () => onFocusTask?.(null),
-    onFocusSidebar: effectiveOnFocusSidebar,
+    onSelectTask: focusTask,
+    onGoBack: () => focusTask(null),
+    onFocusSidebar: focusSidebar,
     enabled: true,
   });
 
@@ -599,8 +597,6 @@ export function ListView({
         onToggleExpanded={(expanded) =>
           setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
         }
-        onHashtagClick={effectiveOnHashtagClick}
-        onPersonClick={effectiveOnAuthorClick}
       />
     );
   };
@@ -613,7 +609,6 @@ export function ListView({
         <FocusedTaskBreadcrumb
           allTasks={allTasks}
           focusedTaskId={focusedTaskId}
-          onFocusTask={onFocusTask}
         />
       ) : null}
 
@@ -764,7 +759,7 @@ export function ListView({
                                 allowMenuOpen: () => allowStatusMenuOpen(task.id),
                                 clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
                                 toggleStatus: () => dispatchToggleComplete(task.id),
-                                focusTask: () => onFocusTask?.(task.id),
+                                focusTask: () => focusTask(task.id),
                                 focusOnQuickToggle: false,
                               });
                             }}
@@ -860,7 +855,7 @@ export function ListView({
                                 <button
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    onFocusTask?.(ancestor.id);
+                                    focusTask(ancestor.id);
                                   }}
                                   className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[100px]`}
                                   title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
@@ -873,7 +868,7 @@ export function ListView({
                           </div>
                         )}
                         <div
-                          onClick={() => onFocusTask?.(task.id)}
+                          onClick={() => focusTask(task.id)}
                           className={cn(
                             `text-sm cursor-pointer whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
                             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
@@ -957,7 +952,7 @@ export function ListView({
         onNext={goToNextMedia}
         onPreviousPost={goToPreviousPost}
         onNextPost={goToNextPost}
-        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+        onOpenTask={focusTask}
       />
 
     </main>

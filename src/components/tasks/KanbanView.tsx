@@ -35,12 +35,10 @@ import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
-import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
-  onFocusSidebar?: () => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   onInteractionBlocked?: () => void;
@@ -68,10 +66,6 @@ export function KanbanView({
   depthMode,
   onNewTask,
   focusedTaskId,
-  onFocusTask,
-  onFocusSidebar,
-  onHashtagClick,
-  onAuthorClick,
   isPendingPublishTask,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
@@ -80,10 +74,12 @@ export function KanbanView({
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const interactionModel = useFeedViewInteractionModel();
-  const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
-  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
-  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
+  const focusTask = (taskId: string | null) => {
+    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
+  };
+  const focusSidebar = () => {
+    void dispatchFeedInteraction({ type: "ui.focusSidebar" });
+  };
   const { user } = useNDK();
   const columns = useMemo(() => getColumns((key) => t(key)), [t]);
   const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
@@ -325,7 +321,7 @@ export function KanbanView({
   }, [keyboardFocusedTaskId]);
 
   // Handle moving task left (to previous column) - preserves focus
-  const handleMoveLeft = useCallback(() => {
+  const handleMoveLeft = () => {
     if (isInteractionBlocked) {
       onInteractionBlocked?.();
       return;
@@ -346,10 +342,10 @@ export function KanbanView({
     
     pendingRefocusRef.current = focusedId;
     dispatchStatusChange(focusedId, newStatus);
-  }, [currentUser, dispatchStatusChange, getTaskEffectiveStatus, isInteractionBlocked, kanbanTasks, onInteractionBlocked]);
+  };
 
   // Handle moving task right (to next column) - preserves focus
-  const handleMoveRight = useCallback(() => {
+  const handleMoveRight = () => {
     if (isInteractionBlocked) {
       onInteractionBlocked?.();
       return;
@@ -370,15 +366,15 @@ export function KanbanView({
     
     pendingRefocusRef.current = focusedId;
     dispatchStatusChange(focusedId, newStatus);
-  }, [currentUser, dispatchStatusChange, getTaskEffectiveStatus, isInteractionBlocked, kanbanTasks, onInteractionBlocked]);
+  };
 
   // Keyboard navigation - Kanban mode: arrows navigate, Shift+arrows/HJKL move tasks
   const { focusedTaskId: navFocusedTaskId, setFocusByTaskId } = useTaskNavigation({
     taskIds: allVisibleTaskIds,
-    onSelectTask: (id) => onFocusTask?.(id),
+    onSelectTask: focusTask,
     onMoveLeft: handleMoveLeft,
     onMoveRight: handleMoveRight,
-    onFocusSidebar: effectiveOnFocusSidebar,
+    onFocusSidebar: focusSidebar,
     enabled: composingColumn === null,
     kanbanMode: true,
     columnTaskIds,
@@ -425,7 +421,6 @@ export function KanbanView({
         <FocusedTaskBreadcrumb
           allTasks={allTasks}
           focusedTaskId={focusedTaskId}
-          onFocusTask={onFocusTask}
         />
       ) : null}
 
@@ -541,7 +536,7 @@ export function KanbanView({
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   data-task-id={task.id}
-                                  onClick={() => onFocusTask?.(task.id)}
+                                  onClick={() => focusTask(task.id)}
                                   className={cn(
                                     `relative bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "",
@@ -570,7 +565,7 @@ export function KanbanView({
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                            onFocusTask?.(ancestor.id);
+                                              focusTask(ancestor.id);
                                           }}
                                           className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[80px]`}
                                           title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
@@ -590,7 +585,9 @@ export function KanbanView({
                                       isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
                                     )}
                                   >
-                                    {linkifyContent(task.content, effectiveOnHashtagClick, {
+                                    {linkifyContent(task.content, (tag) => {
+                                      void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+                                    }, {
                                       plainHashtags: isTaskTerminalStatus(displayStatus),
                                       people,
                                       disableStandaloneEmbeds: true,
@@ -628,8 +625,6 @@ export function KanbanView({
                                       onToggleExpanded={(expanded) =>
                                         setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
                                       }
-                                      onHashtagClick={effectiveOnHashtagClick}
-                                      onPersonClick={effectiveOnAuthorClick}
                                       className="mt-2"
                                       showEmptyPlaceholder={false}
                                       testId={`kanban-chip-row-${task.id}`}
@@ -688,7 +683,7 @@ export function KanbanView({
         onNext={goToNextMedia}
         onPreviousPost={goToPreviousPost}
         onNextPost={goToNextPost}
-        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+        onOpenTask={focusTask}
       />
 
     </main>

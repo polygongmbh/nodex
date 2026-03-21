@@ -329,7 +329,6 @@ describe("TaskItem status actions", () => {
   });
 
   it("calls author quick action for comment avatar/name clicks", () => {
-    const onAuthorClick = vi.fn();
     const commentTask: Task = {
       ...baseTask,
       id: "c1",
@@ -348,13 +347,15 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[commentTask]}
         currentUser={baseTask.author}
-        onAuthorClick={onAuthorClick}
       />
     );
 
     fireEvent.click(screen.getAllByRole("button", { name: /filter and mention alice/i })[0]);
 
-    expect(onAuthorClick).toHaveBeenCalledWith(commentTask.author);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "filter.applyAuthorExclusive",
+      author: commentTask.author,
+    });
   });
 
   it("shows a precise hover timestamp for comment created time", () => {

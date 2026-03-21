@@ -1,7 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import type { Task } from "@/types";
+
+const dispatchFeedInteraction = vi.fn();
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
 
 const baseTask: Task = {
   id: "root",
@@ -23,9 +29,13 @@ const baseTask: Task = {
   status: "todo",
 };
 
+beforeEach(() => {
+  dispatchFeedInteraction.mockClear();
+});
+
 describe("FocusedTaskBreadcrumb", () => {
   it("renders all tasks breadcrumb even when no task is focused", () => {
-    render(<FocusedTaskBreadcrumb allTasks={[baseTask]} focusedTaskId={null} onFocusTask={vi.fn()} />);
+    render(<FocusedTaskBreadcrumb allTasks={[baseTask]} focusedTaskId={null} />);
     expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Up" })).toBeDisabled();
   });
@@ -43,13 +53,11 @@ describe("FocusedTaskBreadcrumb", () => {
       content: "Leaf task",
       parentId: "middle",
     };
-    const onFocusTask = vi.fn();
 
     render(
       <FocusedTaskBreadcrumb
         allTasks={[baseTask, middle, leaf]}
         focusedTaskId="leaf"
-        onFocusTask={onFocusTask}
       />
     );
 
@@ -59,11 +67,11 @@ describe("FocusedTaskBreadcrumb", () => {
     fireEvent.click(screen.getByRole("button", { name: "Leaf task" }));
     fireEvent.click(screen.getByRole("button", { name: "Up" }));
 
-    expect(onFocusTask).toHaveBeenNthCalledWith(1, null);
-    expect(onFocusTask).toHaveBeenNthCalledWith(2, "root");
-    expect(onFocusTask).toHaveBeenNthCalledWith(3, "middle");
-    expect(onFocusTask).toHaveBeenNthCalledWith(4, "leaf");
-    expect(onFocusTask).toHaveBeenNthCalledWith(5, "middle");
+    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(1, { type: "task.focus.change", taskId: null });
+    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(2, { type: "task.focus.change", taskId: "root" });
+    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(3, { type: "task.focus.change", taskId: "middle" });
+    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(4, { type: "task.focus.change", taskId: "leaf" });
+    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(5, { type: "task.focus.change", taskId: "middle" });
   });
 
   it("does not pre-abbreviate long breadcrumb labels", () => {
@@ -79,7 +87,6 @@ describe("FocusedTaskBreadcrumb", () => {
       <FocusedTaskBreadcrumb
         allTasks={[baseTask, longTask]}
         focusedTaskId="long"
-        onFocusTask={vi.fn()}
       />
     );
 

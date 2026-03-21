@@ -59,7 +59,6 @@ import {
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
-import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
@@ -85,21 +84,18 @@ export function CalendarView({
   searchQuery,
   onNewTask,
   focusedTaskId,
-  onFocusTask,
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
   isMobile = false,
   mobileView,
-  onHashtagClick,
-  onAuthorClick,
   composeRestoreRequest = null,
   isHydrating = false,
 }: CalendarViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const interactionModel = useFeedViewInteractionModel();
-  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
-  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
+  const focusTask = (taskId: string | null) => {
+    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
+  };
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -498,7 +494,6 @@ export function CalendarView({
         <FocusedTaskBreadcrumb
           allTasks={allTasks}
           focusedTaskId={focusedTaskId}
-          onFocusTask={onFocusTask}
         />
       ) : null}
 
@@ -597,7 +592,7 @@ export function CalendarView({
                                       allowMenuOpen: () => allowStatusMenuOpen(task.id),
                                       clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
                                       toggleStatus: () => dispatchToggleComplete(task.id),
-                                      focusTask: () => onFocusTask?.(task.id),
+                                      focusTask: () => focusTask(task.id),
                                     });
                                   }}
                                   onFocus={(e) => {
@@ -691,7 +686,7 @@ export function CalendarView({
                             </DropdownMenu>
                             <div className="flex-1 min-w-0">
                               <p
-                                onClick={() => onFocusTask?.(task.id)}
+                                onClick={() => focusTask(task.id)}
                                 className={`text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`}
                               >
                                 {task.content}
@@ -962,7 +957,7 @@ export function CalendarView({
                         <div
                         key={task.id}
                         data-task-id={task.id}
-                        onClick={() => onFocusTask?.(task.id)}
+                        onClick={() => focusTask(task.id)}
                         className={cn(
                           `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                           isTaskTerminalStatus(task.status) && "opacity-60",
@@ -979,7 +974,7 @@ export function CalendarView({
                                 <button
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    onFocusTask?.(ancestor.id);
+                                    focusTask(ancestor.id);
                                   }}
                                   className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[60px]`}
                                   title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
@@ -1028,7 +1023,7 @@ export function CalendarView({
                                     allowMenuOpen: () => allowStatusMenuOpen(task.id),
                                     clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
                                     toggleStatus: () => dispatchToggleComplete(task.id),
-                                    focusTask: () => onFocusTask?.(task.id),
+                                    focusTask: () => focusTask(task.id),
                                   });
                                 }}
                                 onFocus={(e) => {
@@ -1139,9 +1134,14 @@ export function CalendarView({
                                 isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                               )}
                             >
-                              {linkifyContent(task.content, effectiveOnHashtagClick, {
+                              {linkifyContent(task.content, (tag) => {
+                                void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+                              }, {
                                 plainHashtags: isTaskTerminalStatus(task.status),
                                 people,
+                                onMentionClick: (author) => {
+                                  void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
+                                },
                                 disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
                                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                                 getStandaloneMediaCaption: (url) =>
@@ -1185,8 +1185,6 @@ export function CalendarView({
                                 priority={task.priority}
                                 className="mt-1"
                                 tagClassName="px-1 py-0.5 rounded text-xs"
-                                onHashtagClick={effectiveOnHashtagClick}
-                                onPersonClick={effectiveOnAuthorClick}
                                 showEmptyPlaceholder={false}
                                 testId={`calendar-chip-row-${task.id}`}
                               />
@@ -1220,7 +1218,7 @@ export function CalendarView({
         onNext={goToNextMedia}
         onPreviousPost={goToPreviousPost}
         onNextPost={goToNextPost}
-        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+        onOpenTask={focusTask}
       />
 
     </main>

@@ -60,8 +60,6 @@ interface TaskItemProps {
   parentFoldState?: FoldState; // Propagate parent's fold state for recursive expansion
   activeRelays?: Relay[]; // For showing relay source when multiple are active
   isKeyboardFocused?: boolean; // For keyboard navigation highlight
-  onHashtagClick?: (tag: string) => void;
-  onAuthorClick?: (author: Person) => void;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   onMediaClick?: (taskId: string, url: string) => void;
@@ -87,8 +85,6 @@ export function TaskItem({
   parentFoldState,
   activeRelays = [],
   isKeyboardFocused = false,
-  onHashtagClick,
-  onAuthorClick,
   isPendingPublishTask,
   isInteractionBlocked = false,
   onMediaClick,
@@ -133,6 +129,12 @@ export function TaskItem({
     name: nostrProfile?.name || task.author.name,
     displayName: authorName,
     avatar: authorAvatar,
+  };
+  const dispatchHashtagExclusive = (tag: string) => {
+    void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+  };
+  const dispatchAuthorExclusive = (author: Person) => {
+    void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
   };
 
   // Reset fold state when filters change
@@ -476,7 +478,7 @@ export function TaskItem({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              onAuthorClick?.(authorPerson);
+              dispatchAuthorExclusive(authorPerson);
             }}
             className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
             aria-label={t("tasks.actions.filterAndMention", { authorName })}
@@ -503,7 +505,7 @@ export function TaskItem({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
-                      onAuthorClick?.(authorPerson);
+                      dispatchAuthorExclusive(authorPerson);
                     }}
                     className="font-medium text-foreground/80 flex items-center gap-1 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
                     aria-label={t("tasks.actions.filterAndMention", { authorName })}
@@ -561,10 +563,10 @@ export function TaskItem({
               : "whitespace-pre-wrap",
             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
           )}>
-            {linkifyContent(task.content, onHashtagClick, {
+            {linkifyContent(task.content, dispatchHashtagExclusive, {
               plainHashtags: isTaskTerminalStatus(task.status),
               people,
-              onMentionClick: onAuthorClick,
+              onMentionClick: dispatchAuthorExclusive,
               disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
               onStandaloneMediaClick: (url) => onMediaClick?.(task.id, url),
               getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
@@ -650,7 +652,7 @@ export function TaskItem({
               <TaskMentionChips
                 task={task}
                 people={people}
-                onPersonClick={onAuthorClick}
+                onPersonClick={dispatchAuthorExclusive}
                 inline
               />
               {activeRelays.length > 1 && task.relays.length > 0 && (
@@ -671,7 +673,7 @@ export function TaskItem({
                   type="button"
                   onClick={(event) => {
                     event.stopPropagation();
-                    onHashtagClick?.(tag);
+                    dispatchHashtagExclusive(tag);
                   }}
                   className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
                   aria-label={t("tasks.actions.filterTag", { tag })}
@@ -757,8 +759,6 @@ export function TaskItem({
                       hasActiveFilters={hasActiveFilters}
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
-                      onHashtagClick={onHashtagClick}
-                      onAuthorClick={onAuthorClick}
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
                       sortContext={sortContext}
@@ -792,8 +792,6 @@ export function TaskItem({
                       hasActiveFilters={hasActiveFilters}
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
-                      onHashtagClick={onHashtagClick}
-                      onAuthorClick={onAuthorClick}
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
                       sortContext={sortContext}

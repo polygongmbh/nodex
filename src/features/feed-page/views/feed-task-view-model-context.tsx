@@ -16,7 +16,6 @@ export interface FeedTaskViewModel extends SharedTaskViewContext {
   isHydrating?: boolean;
 }
 
-const noop = () => {};
 const defaultModel: FeedTaskViewModel = {
   tasks: [],
   allTasks: [],
@@ -26,7 +25,6 @@ const defaultModel: FeedTaskViewModel = {
   people: [],
   searchQuery: "",
   onNewTask: async () => ({ ok: false, reason: "unexpected-error" }),
-  onFocusTask: noop,
 };
 
 const FeedTaskViewModelContext = createContext<FeedTaskViewModel>(defaultModel);

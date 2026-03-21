@@ -55,8 +55,6 @@ describe("FeedView", () => {
       author,
       status: "todo",
     });
-    const onFocusTask = vi.fn();
-
     render(
       <FeedView
         tasks={[child]}
@@ -68,17 +66,15 @@ describe("FeedView", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn()}
         onToggleComplete={vi.fn()}
-        onFocusTask={onFocusTask}
       />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /focus task: root task #general/i }));
-    expect(onFocusTask).toHaveBeenCalledWith("root");
-    expect(onFocusTask).not.toHaveBeenCalledWith("child");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });
 
   it("opens raw nostr event dialog on shift+alt+click and does not focus the task", () => {
-    const onFocusTask = vi.fn();
     const rawTask = makeTask({
       id: "task-raw",
       author,
@@ -105,7 +101,6 @@ describe("FeedView", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn()}
         onToggleComplete={vi.fn()}
-        onFocusTask={onFocusTask}
       />
     );
 
@@ -115,7 +110,7 @@ describe("FeedView", () => {
 
     expect(screen.getByText("Raw Nostr Event")).toBeInTheDocument();
     expect(screen.getByText(/"id": "event-raw-1"/)).toBeInTheDocument();
-    expect(onFocusTask).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-raw" });
   });
 
   it("hydrates the feed incrementally instead of mounting all entries at once", () => {
@@ -484,8 +479,6 @@ describe("FeedView", () => {
   });
 
   it("calls author quick action when clicking the author label", () => {
-    const onAuthorClick = vi.fn();
-
     render(
       <FeedView
         tasks={tasks}
@@ -497,17 +490,18 @@ describe("FeedView", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn()}
         onToggleComplete={vi.fn()}
-        onAuthorClick={onAuthorClick}
       />
     );
 
     fireEvent.click(screen.getAllByRole("button", { name: /filter and mention/i })[0]);
 
-    expect(onAuthorClick).toHaveBeenCalledWith(author);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "filter.applyAuthorExclusive",
+      author,
+    });
   });
 
   it("renders pubkey mentions as @name links and triggers author quick action", () => {
-    const onAuthorClick = vi.fn();
     const mentionedPubkey = author.id;
     const mentionTask = makeTask({
       id: "task-mention",
@@ -527,7 +521,6 @@ describe("FeedView", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn()}
         onToggleComplete={vi.fn()}
-        onAuthorClick={onAuthorClick}
       />
     );
 
@@ -535,7 +528,10 @@ describe("FeedView", () => {
     expect(mention).toHaveTextContent("@alice");
 
     fireEvent.click(mention);
-    expect(onAuthorClick).toHaveBeenCalledWith(author);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "filter.applyAuthorExclusive",
+      author,
+    });
   });
 
   it("shows non-text mention chips from assignee pubkeys", () => {

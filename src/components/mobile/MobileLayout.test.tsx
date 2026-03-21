@@ -151,7 +151,6 @@ const baseTaskViewModel: FeedTaskViewModel = {
   onSearchChange: () => {},
   onNewTask: defaultOnNewTask,
   onToggleComplete: () => {},
-  onFocusTask: () => {},
 };
 
 function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {

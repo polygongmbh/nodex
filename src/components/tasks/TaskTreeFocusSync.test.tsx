@@ -7,6 +7,12 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
 }));
 
+const dispatchFeedInteraction = vi.fn();
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
 const relays: Relay[] = [{ id: "demo", name: "Demo", icon: "R", isActive: true }];
 const channels: Channel[] = [{ id: "general", name: "general", filterState: "neutral" }];
 const people: Person[] = [];
@@ -39,8 +45,8 @@ const childTask: Task = {
 };
 
 describe("TaskTree focus sync", () => {
-  it("uses focusedTaskId as context and supports going up through onFocusTask", () => {
-    const onFocusTask = vi.fn();
+  it("uses focusedTaskId as context and supports going up through focus dispatch", () => {
+    dispatchFeedInteraction.mockClear();
     render(
       <TaskTree
         tasks={[rootTask, childTask]}
@@ -53,17 +59,16 @@ describe("TaskTree focus sync", () => {
         onNewTask={vi.fn()}
         onToggleComplete={vi.fn()}
         focusedTaskId="root"
-        onFocusTask={onFocusTask}
       />
     );
 
     expect(screen.getByText("Child task")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /up/i }));
-    expect(onFocusTask).toHaveBeenCalledWith(null);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: null });
   });
 
   it("activates a task when clicking it from the focused composer", () => {
-    const onFocusTask = vi.fn();
+    dispatchFeedInteraction.mockClear();
     render(
       <TaskTree
         tasks={[rootTask, childTask]}
@@ -76,7 +81,6 @@ describe("TaskTree focus sync", () => {
         onNewTask={vi.fn()}
         onToggleComplete={vi.fn()}
         focusedTaskId="root"
-        onFocusTask={onFocusTask}
       />
     );
 
@@ -93,6 +97,6 @@ describe("TaskTree focus sync", () => {
     fireEvent.mouseDown(taskButton);
     fireEvent.click(taskButton);
 
-    expect(onFocusTask).toHaveBeenCalledWith("child");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });
 });

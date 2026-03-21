@@ -18,9 +18,9 @@ import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface TaskTreeProps extends SharedTaskViewContext {
-  onFocusSidebar?: () => void;
   isMobile?: boolean;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
@@ -45,13 +45,9 @@ export function TaskTree({
   searchQuery,
   onNewTask,
   focusedTaskId,
-  onFocusTask,
-  onFocusSidebar,
   isMobile = false,
-  onHashtagClick,
   forceShowComposer,
   composeGuideActivationSignal,
-  onAuthorClick,
   isPendingPublishTask,
   composeRestoreRequest = null,
   mentionRequest = null,
@@ -59,12 +55,16 @@ export function TaskTree({
   isHydrating = false,
 }: TaskTreeProps) {
   const { t, i18n } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const interactionModel = useFeedViewInteractionModel();
   const { user } = useNDK();
-  const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
-  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
-  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
+  const focusTask = (taskId: string | null) => {
+    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
+  };
+  const focusSidebar = () => {
+    void dispatchFeedInteraction({ type: "ui.focusSidebar" });
+  };
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
@@ -222,15 +222,15 @@ export function TaskTree({
 
   const currentContextTask = currentContextId ? taskById.get(currentContextId) || null : null;
   const handleSelectTask = (taskId: string) => {
-    onFocusTask?.(taskId);
+    focusTask(taskId);
   };
 
   const handleGoUp = () => {
     if (!currentContextTask) {
-      onFocusTask?.(null);
+      focusTask(null);
       return;
     }
-    onFocusTask?.(currentContextTask.parentId || null);
+    focusTask(currentContextTask.parentId || null);
   };
 
   const handleNewTask = async (
@@ -267,7 +267,7 @@ export function TaskTree({
     return result;
   };
 
-  const getFilteredChildren = useCallback((parentId: string): Task[] => {
+  const getFilteredChildren = (parentId: string): Task[] => {
     let children = childrenMap.get(parentId) || [];
     
     // Filter by pre-filtered tasks from Index (relay/person filtering)
@@ -280,13 +280,13 @@ export function TaskTree({
 
     // Sort using the new priority system
     return sortTasks(children, sortContext);
-  }, [childrenMap, filteredTaskIds, hasActiveFilters, allVisibleIds, sortContext]);
+  };
 
   // Check if a task directly matches the filter (for determining fold state)
-  const isTaskDirectMatch = useCallback((taskId: string): boolean => {
+  const isTaskDirectMatch = (taskId: string): boolean => {
     if (!hasActiveFilters) return true;
     return directlyMatchingIds.has(taskId);
-  }, [hasActiveFilters, directlyMatchingIds]);
+  };
 
   // Flatten visible task IDs for keyboard navigation
   const flattenedTaskIds = useMemo(() => {
@@ -312,7 +312,7 @@ export function TaskTree({
     taskIds: flattenedTaskIds,
     onSelectTask: handleSelectTask,
     onGoBack: handleGoUp,
-    onFocusSidebar: effectiveOnFocusSidebar,
+    onFocusSidebar: focusSidebar,
     enabled: !isMobile && !isComposerExpanded,
   });
 
@@ -424,7 +424,6 @@ export function TaskTree({
           <FocusedTaskBreadcrumb
             allTasks={allTasks}
             focusedTaskId={currentContextId}
-            onFocusTask={onFocusTask}
           />
         ) : null
       )}
@@ -491,8 +490,6 @@ export function TaskTree({
                 hasActiveFilters={hasActiveFilters}
                 activeRelays={activeRelays}
                 isKeyboardFocused={keyboardFocusedTaskId === task.id}
-                onHashtagClick={effectiveOnHashtagClick}
-                onAuthorClick={effectiveOnAuthorClick}
                 isPendingPublishTask={isPendingPublishTask}
                 isInteractionBlocked={isInteractionBlocked}
                 onMediaClick={openTaskMedia}
@@ -541,7 +538,7 @@ export function TaskTree({
         onNext={goToNextMedia}
         onPreviousPost={goToPreviousPost}
         onNextPost={goToNextPost}
-        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+        onOpenTask={focusTask}
       />
 
     </main>

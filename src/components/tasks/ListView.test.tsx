@@ -27,8 +27,6 @@ describe("ListView priority control", () => {
     const relays = [makeRelay()];
     const channels = [makeChannel()];
     const people = [makePerson({ id: root.author.id, name: root.author.name, displayName: root.author.displayName })];
-    const onFocusTask = vi.fn();
-
     render(
       <ListView
         tasks={[child]}
@@ -41,13 +39,12 @@ describe("ListView priority control", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
         onToggleComplete={vi.fn()}
-        onFocusTask={onFocusTask}
       />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /focus task: root task #general/i }));
-    expect(onFocusTask).toHaveBeenCalledWith("root");
-    expect(onFocusTask).not.toHaveBeenCalledWith("child");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });
 
   it("keeps priority select focused across unrelated parent rerenders", () => {
@@ -153,8 +150,6 @@ describe("ListView priority control", () => {
     const relays = [makeRelay()];
     const channels = [makeChannel()];
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
-    const onFocusTask = vi.fn();
-
     render(
       <ListView
         tasks={[task]}
@@ -167,7 +162,6 @@ describe("ListView priority control", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
         onToggleComplete={vi.fn()}
-        onFocusTask={onFocusTask}
       />
     );
 
@@ -177,7 +171,7 @@ describe("ListView priority control", () => {
       type: "task.toggleComplete",
       taskId: "task-focus",
     });
-    expect(onFocusTask).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-focus" });
   });
 
   it("does not focus a task after option-clicking its checkbox", () => {
@@ -190,7 +184,6 @@ describe("ListView priority control", () => {
     const relays = [makeRelay()];
     const channels = [makeChannel()];
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
-    const onFocusTask = vi.fn();
     const onToggleComplete = vi.fn();
 
     render(
@@ -206,14 +199,13 @@ describe("ListView priority control", () => {
         onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
         onToggleComplete={onToggleComplete}
         onStatusChange={vi.fn()}
-        onFocusTask={onFocusTask}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
 
     expect(onToggleComplete).not.toHaveBeenCalled();
-    expect(onFocusTask).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-option" });
   });
 
   it("does not focus a task after selecting a dropdown status in table view", () => {
@@ -226,8 +218,6 @@ describe("ListView priority control", () => {
     const relays = [makeRelay()];
     const channels = [makeChannel()];
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
-    const onFocusTask = vi.fn();
-
     render(
       <ListView
         tasks={[task]}
@@ -241,7 +231,6 @@ describe("ListView priority control", () => {
         onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
         onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
-        onFocusTask={onFocusTask}
       />
     );
 
@@ -253,7 +242,7 @@ describe("ListView priority control", () => {
       taskId: "task-dropdown",
       status: "in-progress",
     });
-    expect(onFocusTask).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-dropdown" });
   });
 
   it("opens the status dropdown on pointer down for direct-selection cases", () => {

@@ -202,9 +202,6 @@ export interface SharedTaskViewContext {
   searchQuery: string;
   onNewTask: OnNewTask;
   focusedTaskId?: string | null;
-  onFocusTask?: (taskId: string | null) => void;
-  onHashtagClick?: (tag: string) => void;
-  onAuthorClick?: (author: Person) => void;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 

@@ -8,6 +8,12 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
 }));
 
+const dispatchFeedInteraction = vi.fn();
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
+  useFeedInteractionDispatch: () => dispatchFeedInteraction,
+}));
+
 const relays: Relay[] = [
   {
     id: "demo",
@@ -35,6 +41,7 @@ const tasks: Task[] = [];
 
 describe("CalendarView responsiveness", () => {
   it("focuses ancestor from day-card breadcrumb without selecting current card task", () => {
+    dispatchFeedInteraction.mockClear();
     const root: Task = {
       id: "root",
       author: people[0],
@@ -56,8 +63,6 @@ describe("CalendarView responsiveness", () => {
       parentId: "root",
       timestamp: new Date("2026-02-17T10:00:00.000Z"),
     };
-    const onFocusTask = vi.fn();
-
     render(
       <CalendarView
         tasks={[child]}
@@ -69,7 +74,6 @@ describe("CalendarView responsiveness", () => {
         onSearchChange={vi.fn()}
         onNewTask={vi.fn()}
         onToggleComplete={vi.fn()}
-        onFocusTask={onFocusTask}
         isMobile
         mobileView="calendar"
         selectedDate={new Date("2026-02-18T10:00:00.000Z")}
@@ -77,8 +81,8 @@ describe("CalendarView responsiveness", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /focus task: root/i }));
-    expect(onFocusTask).toHaveBeenCalledWith("root");
-    expect(onFocusTask).not.toHaveBeenCalledWith("child");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   }, 10000);
 
   it("shows week numbers and stacked month sections on desktop", () => {

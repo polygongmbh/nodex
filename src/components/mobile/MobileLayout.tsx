@@ -123,7 +123,6 @@ export function MobileLayout({
     searchQuery,
     focusedTaskId = null,
     onNewTask,
-    onFocusTask,
     composeRestoreRequest: contextComposeRestoreRequest = null,
     mentionRequest: contextMentionRequest = null,
     forceShowComposer: contextForceShowComposer = false,
@@ -395,7 +394,6 @@ export function MobileLayout({
               <FocusedTaskBreadcrumb
                 allTasks={allTasks}
                 focusedTaskId={focusedTaskId}
-                onFocusTask={onFocusTask}
                 className="h-10 px-3 text-xs"
               />
             ) : null

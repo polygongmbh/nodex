@@ -3,11 +3,11 @@ import { ChevronUp } from "lucide-react";
 import { Task } from "@/types";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface FocusedTaskBreadcrumbProps {
   allTasks: Task[];
   focusedTaskId?: string | null;
-  onFocusTask?: (taskId: string | null) => void;
   className?: string;
   rightSlot?: ReactNode;
 }
@@ -15,11 +15,14 @@ interface FocusedTaskBreadcrumbProps {
 export function FocusedTaskBreadcrumb({
   allTasks,
   focusedTaskId,
-  onFocusTask,
   className,
   rightSlot,
 }: FocusedTaskBreadcrumbProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const focusTask = (taskId: string | null) => {
+    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
+  };
   const path = useMemo(() => {
     if (!focusedTaskId) return [] as Task[];
     const byId = new Map(allTasks.map((task) => [task.id, task]));
@@ -52,7 +55,7 @@ export function FocusedTaskBreadcrumb({
     >
       <button
         type="button"
-        onClick={() => onFocusTask?.(parentFocusId)}
+        onClick={() => focusTask(parentFocusId)}
         disabled={!focusedTaskId}
         aria-label={t("breadcrumbs.up")}
         title={t("breadcrumbs.goToParent")}
@@ -68,7 +71,7 @@ export function FocusedTaskBreadcrumb({
       </button>
       <div className="min-w-0 flex flex-1 items-center gap-1.5 overflow-hidden text-sm text-foreground/80 whitespace-nowrap">
         <button
-          onClick={() => onFocusTask?.(null)}
+          onClick={() => focusTask(null)}
           className={cn(
             "shrink-0 rounded px-1.5 py-0.5 text-left transition-colors hover:text-foreground hover:bg-background/70",
             path.length === 0 && "text-foreground font-semibold"
@@ -82,7 +85,7 @@ export function FocusedTaskBreadcrumb({
           <span key={task.id} className="flex min-w-0 shrink items-center gap-1">
             <span className="shrink-0 text-foreground/50">/</span>
             <button
-              onClick={() => onFocusTask?.(task.id)}
+              onClick={() => focusTask(task.id)}
               className={cn(
                 "max-w-full shrink truncate rounded px-1.5 py-0.5 text-left transition-colors hover:text-foreground hover:bg-background/70",
                 index === path.length - 1 && "text-foreground font-semibold"

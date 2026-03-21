@@ -81,7 +81,6 @@ function formatCompactRelativeTime(date: Date): string {
 }
 
 interface FeedViewProps extends SharedTaskViewContext {
-  onFocusSidebar?: () => void;
   isMobile?: boolean;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
@@ -203,13 +202,9 @@ export function FeedView({
   searchQuery,
   onNewTask,
   focusedTaskId,
-  onFocusTask,
-  onFocusSidebar,
   isMobile = false,
-  onHashtagClick,
   forceShowComposer,
   composeGuideActivationSignal,
-  onAuthorClick,
   isPendingPublishTask,
   composeRestoreRequest = null,
   mentionRequest = null,
@@ -219,10 +214,13 @@ export function FeedView({
   const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const interactionModel = useFeedViewInteractionModel();
-  const effectiveOnFocusSidebar = onFocusSidebar ?? interactionModel.onFocusSidebar;
-  const effectiveOnHashtagClick = onHashtagClick ?? interactionModel.onHashtagClick;
-  const effectiveOnAuthorClick = onAuthorClick ?? interactionModel.onAuthorClick;
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
+  const focusTask = (taskId: string | null) => {
+    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
+  };
+  const focusSidebar = () => {
+    void dispatchFeedInteraction({ type: "ui.focusSidebar" });
+  };
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -469,9 +467,9 @@ export function FeedView({
   // Keyboard navigation
   const { focusedTaskId: keyboardFocusedTaskId } = useTaskNavigation({
     taskIds,
-    onSelectTask: (id) => onFocusTask?.(id),
-    onGoBack: () => onFocusTask?.(null),
-    onFocusSidebar: effectiveOnFocusSidebar,
+    onSelectTask: focusTask,
+    onGoBack: () => focusTask(null),
+    onFocusSidebar: focusSidebar,
     enabled: !isMobile,
   });
 
@@ -548,12 +546,12 @@ export function FeedView({
     });
   }, [activeFeedEntries, feedDisclosureKey, focusedTaskId, visibleEntryCount]);
 
-  const handleFeedScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
+  const handleFeedScroll = (event: UIEvent<HTMLDivElement>) => {
     const container = event.currentTarget;
     const remainingDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
     if (remainingDistance > FEED_REVEAL_SCROLL_THRESHOLD_PX) return;
     revealMoreEntries("scroll");
-  }, [revealMoreEntries]);
+  };
 
   useEffect(() => {
     if (keyboardFocusedTaskId && scrollContainerRef.current) {
@@ -697,7 +695,7 @@ export function FeedView({
         <div
           key={entry.id}
           data-testid={`feed-state-entry-${update.id}`}
-          onClick={() => onFocusTask?.(task.id)}
+          onClick={() => focusTask(task.id)}
           className={cn(
             `border-b border-border px-4 py-1.5 transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
             isMobile && "px-3 py-1.5"
@@ -723,7 +721,7 @@ export function FeedView({
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  onFocusTask?.(task.id);
+                  focusTask(task.id);
                 }}
                 className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "font-semibold text-foreground shrink-0")}
                 title={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
@@ -736,7 +734,7 @@ export function FeedView({
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  effectiveOnAuthorClick?.(resolvedUpdateAuthor);
+                  void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedUpdateAuthor });
                 }}
                 className="hover:text-foreground shrink-0"
                 aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
@@ -838,7 +836,7 @@ export function FeedView({
             setRawEventDialogOpen(true);
             return;
           }
-          onFocusTask?.(task.id);
+          focusTask(task.id);
         }}
         className={cn(
           `border-b border-border transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
@@ -861,7 +859,7 @@ export function FeedView({
                 <button
                   onClick={(event) => {
                     event.stopPropagation();
-                    onFocusTask?.(crumb.id);
+                    focusTask(crumb.id);
                   }}
                   className={cn(
                     TASK_INTERACTION_STYLES.hoverLinkText,
@@ -916,7 +914,7 @@ export function FeedView({
                       allowMenuOpen: () => allowStatusMenuOpen(task.id),
                       clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
                       toggleStatus: () => dispatchToggleComplete(task.id),
-                      focusTask: () => onFocusTask?.(task.id),
+                      focusTask: () => focusTask(task.id),
                     });
                   }}
                   onFocus={(e) => {
@@ -1074,7 +1072,7 @@ export function FeedView({
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              effectiveOnAuthorClick?.(resolvedAuthor);
+              void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedAuthor });
             }}
             className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
             aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
@@ -1104,7 +1102,7 @@ export function FeedView({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
-                      effectiveOnAuthorClick?.(resolvedAuthor);
+                      void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedAuthor });
                     }}
                     className={cn(
                       "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
@@ -1182,7 +1180,9 @@ export function FeedView({
                     <TaskMentionChips
                       task={task}
                       people={people}
-                      onPersonClick={effectiveOnAuthorClick}
+                      onPersonClick={(author) => {
+                        void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
+                      }}
                       inline
                     />
                     {task.locationGeohash && (
@@ -1198,7 +1198,7 @@ export function FeedView({
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
-                          effectiveOnHashtagClick?.(tag);
+                          void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
                         }}
                         className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
                         aria-label={`Filter to #${tag}`}
@@ -1234,10 +1234,14 @@ export function FeedView({
                 isCompletedVisual && "line-through text-muted-foreground"
               )}
             >
-              {linkifyContent(task.content, effectiveOnHashtagClick, {
+              {linkifyContent(task.content, (tag) => {
+                void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+              }, {
                 plainHashtags: isCompletedVisual,
                 people,
-                onMentionClick: effectiveOnAuthorClick,
+                onMentionClick: (author) => {
+                  void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
+                },
                 disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                 getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
@@ -1277,7 +1281,6 @@ export function FeedView({
           <FocusedTaskBreadcrumb
             allTasks={allTasks}
             focusedTaskId={focusedTaskId}
-            onFocusTask={onFocusTask}
           />
         ) : null
       )}
@@ -1374,7 +1377,7 @@ export function FeedView({
         onNext={goToNextMedia}
         onPreviousPost={goToPreviousPost}
         onNextPost={goToNextPost}
-        onOpenTask={(taskId) => onFocusTask?.(taskId)}
+        onOpenTask={focusTask}
       />
       <RawNostrEventDialog
         open={rawEventDialogOpen}
