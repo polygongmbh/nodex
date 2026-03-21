@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useIndexFilters } from "./use-index-filters";
 import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Person, PostedTag, Relay } from "@/types";
 
 vi.mock("sonner", () => ({
   toast: vi.fn(),
@@ -49,13 +49,17 @@ function Harness({
     startWithEmptyScope ? [] : peopleSeed
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [postedTags, setPostedTags] = useState<string[]>([]);
+  const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const relayState = useRelayFilterState({
     relays,
     t: ((key: string) => key) as unknown as TFunction,
   });
+  const relaysWithActiveState = relays.map((relay) => ({
+    ...relay,
+    isActive: relayState.effectiveActiveRelayIds.has(relay.id),
+  }));
   const filters = useIndexFilters({
-    relays,
+    relays: relaysWithActiveState,
     setActiveRelayIds: relayState.setActiveRelayIds,
     channels: visibleChannels,
     composeChannels: visibleComposeChannels,
@@ -116,7 +120,7 @@ function Harness({
       <output data-testid="selected-people">
         {people.filter((person) => person.isSelected).map((person) => person.id).join(",")}
       </output>
-      <output data-testid="posted-tags">{postedTags.join(",")}</output>
+      <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
       <output data-testid="mention-request">{filters.mentionRequest?.mention ?? ""}</output>
       <output data-testid="search-query">{searchQuery}</output>
     </>
@@ -146,9 +150,10 @@ describe("useIndexFilters", () => {
   it("adds a missing hashtag to postedTags and applies an exclusive channel filter", () => {
     renderHarness();
 
+    fireEvent.click(screen.getByRole("button", { name: "RelayExclusive" }));
     fireEvent.click(screen.getByRole("button", { name: "HashtagExclusive" }));
 
-    expect(screen.getByTestId("posted-tags")).toHaveTextContent("urgent");
+    expect(screen.getByTestId("posted-tags")).toHaveTextContent("urgent:relay-one");
     expect(screen.getByTestId("channel-state-urgent")).toHaveTextContent("included");
     expect(screen.getByTestId("channel-state-general")).toHaveTextContent("neutral");
   });

@@ -58,6 +58,7 @@ import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/moc
 import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
 import {
   Relay,
+  PostedTag,
   Task,
   TaskStatus,
 } from "@/types";
@@ -242,7 +243,7 @@ const Index = () => {
   });
 
   const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? DEMO_SEED_TASKS : []));
-  const [postedTags, setPostedTags] = useState<string[]>([]);
+  const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
     () => loadChannelFrecencyState()
   );

@@ -49,6 +49,7 @@ import type {
   Nip99ListingStatus,
   Person,
   PublishedAttachment,
+  PostedTag,
   Relay,
   Task,
   TaskCreateResult,
@@ -89,7 +90,7 @@ interface UseTaskPublishFlowOptions {
   queryClient: QueryClient;
   t: TFunction;
   setLocalTasks: Dispatch<SetStateAction<Task[]>>;
-  setPostedTags: Dispatch<SetStateAction<string[]>>;
+  setPostedTags: Dispatch<SetStateAction<PostedTag[]>>;
   suppressedNostrEventIds: Set<string>;
   setSuppressedNostrEventIds: Dispatch<SetStateAction<Set<string>>>;
   bumpChannelFrecency: (tag: string, weight?: number) => void;
@@ -300,9 +301,6 @@ export function useTaskPublishFlow({
       return { ok: false, reason: "missing-tag" };
     }
 
-    setPostedTags((prev) => Array.from(new Set([...prev, ...resolvedSubmissionTags])));
-    resolvedSubmissionTags.forEach((tag) => bumpChannelFrecency(tag, 1.1));
-
     const resolvedRelaySelection = resolveRelaySelectionForSubmission({
       taskType: normalizedTaskType,
       selectedRelayIds: requestedRelayIds,
@@ -322,6 +320,14 @@ export function useTaskPublishFlow({
     }
 
     const targetRelayIds = resolvedRelaySelection.relayIds;
+    setPostedTags((prev) => {
+      const preserved = prev.filter((entry) => !resolvedSubmissionTags.includes(entry.name));
+      return [
+        ...preserved,
+        ...resolvedSubmissionTags.map((tag) => ({ name: tag, relayIds: targetRelayIds })),
+      ];
+    });
+    resolvedSubmissionTags.forEach((tag) => bumpChannelFrecency(tag, 1.1));
     const hasNonDemoRelay = demoFeedActive
       ? targetRelayIds.some((id) => id !== demoRelayId)
       : targetRelayIds.length > 0;

@@ -7,7 +7,7 @@ import { useIndexDerivedData } from "./use-index-derived-data";
 import { useIndexFilters } from "./use-index-filters";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Person, Relay } from "@/types";
+import type { Person, PostedTag, Relay } from "@/types";
 
 vi.mock("sonner", () => ({
   toast: vi.fn(),
@@ -45,9 +45,13 @@ const nostrEvents: CachedNostrEvent[] = [
 
 function Harness() {
   const [people, setPeople] = useState<Person[]>([]);
-  const [postedTags, setPostedTags] = useState<string[]>([]);
+  const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
+  const relaysWithActiveState = relays.map((relay) => ({
+    ...relay,
+    isActive: activeRelayIds.has(relay.id),
+  }));
 
   const derived = useIndexDerivedData({
     nostrEvents,
@@ -59,13 +63,13 @@ function Harness() {
     cachedKind0Events: [],
     user: null,
     effectiveActiveRelayIds: activeRelayIds,
-    relays,
+    relays: relaysWithActiveState,
     channelFrecencyState: {},
     isHydrating: false,
   });
 
   const filters = useIndexFilters({
-    relays,
+    relays: relaysWithActiveState,
     setActiveRelayIds,
     channels: derived.channels,
     composeChannels: derived.composeChannels,
@@ -89,7 +93,9 @@ function Harness() {
   return (
     <>
       <button onClick={() => filters.handleChannelToggle("ops")}>ToggleOps</button>
+      <button onClick={() => setActiveRelayIds(new Set(["relay-one"]))}>RelayOne</button>
       <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
+      <button onClick={() => filters.handleHashtagExclusive("urgent")}>HashtagExclusive</button>
       <output data-testid="search-query">{searchQuery}</output>
       <output data-testid="compose-channel-names">
         {filters.composeChannelsWithState.map((channel) => channel.name).join(",")}
@@ -121,6 +127,25 @@ describe("useIndexDerivedData compose channels", () => {
     expect(screen.getByTestId("compose-channel-names")).toHaveTextContent("general");
     expect(screen.getByTestId("compose-channel-names")).not.toHaveTextContent("ops");
     expect(screen.getByTestId("compose-included-channel-names")).toHaveTextContent("");
+  });
+
+  it("keeps chip-added channels scoped to the relay they were added from", () => {
+    render(
+      <MemoryRouter>
+        <Harness />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "RelayOne" }));
+    fireEvent.click(screen.getByRole("button", { name: "HashtagExclusive" }));
+
+    expect(screen.getByTestId("compose-channel-names")).toHaveTextContent("ops");
+    expect(screen.getByTestId("compose-channel-names")).toHaveTextContent("urgent");
+
+    fireEvent.click(screen.getByRole("button", { name: "SwitchRelay" }));
+
+    expect(screen.getByTestId("compose-channel-names")).toHaveTextContent("general");
+    expect(screen.getByTestId("compose-channel-names")).not.toHaveTextContent("urgent");
   });
 });
 

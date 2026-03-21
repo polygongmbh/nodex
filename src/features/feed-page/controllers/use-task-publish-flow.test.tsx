@@ -5,7 +5,7 @@ import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskPublishFlow } from "./use-task-publish-flow";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Person, Relay, Task } from "@/types";
+import type { Person, PostedTag, Relay, Task } from "@/types";
 
 vi.mock("sonner", () => ({
   toast: Object.assign(vi.fn(() => "toast-id"), {
@@ -49,7 +49,7 @@ function Harness({
   queryClient?: QueryClient;
 }) {
   const [localTasks, setLocalTasks] = useState<Task[]>(initialTasks);
-  const [postedTags, setPostedTags] = useState<string[]>([]);
+  const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
   const relay = makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" });
   const availablePeople = people.length > 0 ? people : [currentUser];
@@ -147,7 +147,7 @@ function Harness({
       <output data-testid="first-priority">{String(localTasks[0]?.priority ?? "")}</output>
       <output data-testid="first-due-date">{localTasks[0]?.dueDate?.toISOString() || ""}</output>
       <output data-testid="first-assignees">{(localTasks[0]?.assigneePubkeys || []).join(",")}</output>
-      <output data-testid="posted-tags">{postedTags.join(",")}</output>
+      <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
     </>
   );
 }
@@ -189,7 +189,7 @@ describe("useTaskPublishFlow", () => {
     });
     expect(screen.getByTestId("visible-draft-count")).toHaveTextContent("1");
     expect(screen.getByTestId("suppressed-count")).toHaveTextContent("1");
-    expect(screen.getByTestId("posted-tags")).toHaveTextContent("general");
+    expect(screen.getByTestId("posted-tags")).toHaveTextContent("general:relay-one");
     expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "queued" });
   });
 

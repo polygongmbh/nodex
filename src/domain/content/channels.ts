@@ -1,4 +1,4 @@
-import { Channel, Task } from "@/types";
+import { Channel, PostedTag, Task } from "@/types";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 
 interface NostrEventLike {
@@ -35,7 +35,7 @@ function resolveDeriveOptions(
 export function deriveChannels(
   localTasks: Pick<Task, "tags">[],
   nostrEvents: NostrEventLike[],
-  userPostedTags: string[],
+  userPostedTags: PostedTag[],
   minCountOrOptions: number | DeriveChannelsOptions = 6
 ): Channel[] {
   const options = resolveDeriveOptions(minCountOrOptions);
@@ -62,7 +62,7 @@ export function deriveChannels(
     }
   });
 
-  const forceInclude = new Set(userPostedTags.map((tag) => tag.toLowerCase()));
+  const forceInclude = new Set(userPostedTags.map((tag) => tag.name.toLowerCase()));
   forceInclude.forEach((tag) => {
     if (!tagCounts.has(tag)) {
       tagCounts.set(tag, 0);

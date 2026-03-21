@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 - Sidebar space rows now truncate long space names so relay status dots remain visible, active space icons now tint to match each relay's current connection state instead of always staying blue, and relay rows no longer show the extra left-side active dot.
 - Sidebar channel pins now sit in a separate far-left gutter so the hashtag column stays fixed instead of shifting right.
+- Chip-added and newly posted channels now stay scoped to the relay/feed they were created from instead of appearing in unrelated relay scopes.
 - When no Noas host/API env is configured, startup now derives the site root domain, validates `/.well-known/nostr.json` for a `noas.api_base`, caches the resolved API base plus default host, and pre-fills Noas auth with that discovered root-domain server on subsequent loads.
 - Noas sign-up now surfaces the server-returned success message as the toast source of truth, keeps auto-sign-in only for `status: active`, and otherwise switches back to sign-in while keeping the returned message visible in the dialog.
 - Guest guest-identity private-key backup UI now uses one shared single-row compact layout on desktop and mobile, with unified `Backup Private Key` copy and matching action buttons on both surfaces.

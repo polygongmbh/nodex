@@ -16,6 +16,11 @@ export interface Channel {
   filterState: 'included' | 'excluded' | 'neutral';
 }
 
+export interface PostedTag {
+  name: string;
+  relayIds: string[];
+}
+
 export type ChannelMatchMode = "and" | "or";
 
 // Legacy alias for compatibility

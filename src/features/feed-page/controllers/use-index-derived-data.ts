@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import type { Task, Channel, Person, Relay, TaskStatus } from "@/types";
+import type { Task, Channel, Person, Relay, TaskStatus, PostedTag } from "@/types";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
 import type { NostrUser } from "@/infrastructure/nostr/ndk-context";
@@ -31,7 +31,7 @@ const INITIAL_CHANNEL_SEED_LIMIT = 16;
 export interface UseIndexDerivedDataOptions {
   nostrEvents: CachedNostrEvent[];
   localTasks: Task[];
-  postedTags: string[];
+  postedTags: PostedTag[];
   suppressedNostrEventIds: Set<string>;
   people: Person[];
   supplementalLatestActivityByAuthor: Map<string, number>;
@@ -55,6 +55,19 @@ export interface UseIndexDerivedDataResult {
   sidebarPeople: Person[];
   currentUser: Person | undefined;
   hasCachedCurrentUserProfileMetadata: boolean;
+}
+
+function getPostedTagsForRelayScope(
+  postedTags: PostedTag[],
+  activeRelayIds: Set<string>,
+  allRelayIds: string[]
+): PostedTag[] {
+  if (postedTags.length === 0) return postedTags;
+  const scopedRelayIds = resolveChannelRelayScopeIds(activeRelayIds, allRelayIds);
+  return postedTags.filter((tag) => {
+    if (tag.relayIds.length === 0) return true;
+    return tag.relayIds.some((relayId) => scopedRelayIds.has(relayId));
+  });
 }
 
 export function useIndexDerivedData({
@@ -155,10 +168,15 @@ export function useIndexDerivedData({
   }, [effectiveActiveRelayIds, filteredNostrEvents, relays]);
 
   const channels: Channel[] = useMemo(() => {
+    const scopedPostedTags = getPostedTagsForRelayScope(
+      postedTags,
+      effectiveActiveRelayIds,
+      relays.map((relay) => relay.id)
+    );
     return deriveChannels(
       scopedLocalTasksForChannels,
       scopedNostrEventsForChannels,
-      postedTags,
+      scopedPostedTags,
       {
         minCount: 6,
         personalizeScores: personalizedChannelScores,
@@ -170,12 +188,19 @@ export function useIndexDerivedData({
     scopedLocalTasksForChannels,
     scopedNostrEventsForChannels,
     postedTags,
+    effectiveActiveRelayIds,
     personalizedChannelScores,
+    relays,
   ]);
 
   const composeChannels: Channel[] = useMemo(() => {
-    return deriveChannels(scopedLocalTasksForChannels, scopedNostrEventsForChannels, postedTags, 1);
-  }, [postedTags, scopedLocalTasksForChannels, scopedNostrEventsForChannels]);
+    const scopedPostedTags = getPostedTagsForRelayScope(
+      postedTags,
+      effectiveActiveRelayIds,
+      relays.map((relay) => relay.id)
+    );
+    return deriveChannels(scopedLocalTasksForChannels, scopedNostrEventsForChannels, scopedPostedTags, 1);
+  }, [postedTags, scopedLocalTasksForChannels, scopedNostrEventsForChannels, effectiveActiveRelayIds, relays]);
 
   const scopedTasksForSidebarPeople = useMemo(() => {
     const sidebarRelayScopeIds = resolveChannelRelayScopeIds(

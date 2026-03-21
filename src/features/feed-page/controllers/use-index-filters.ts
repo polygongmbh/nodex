@@ -23,15 +23,15 @@ import {
 } from "@/domain/content/quick-filter-constraints";
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import { featureDebugLog } from "@/lib/feature-debug";
-import type { Channel, ChannelMatchMode, Person, QuickFilterState, Relay } from "@/types";
+import type { Channel, ChannelMatchMode, Person, PostedTag, QuickFilterState, Relay } from "@/types";
 
 interface UseIndexFiltersOptions {
   relays: Relay[];
   setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
   channels: Channel[];
   composeChannels: Channel[];
-  postedTags: string[];
-  setPostedTags: Dispatch<SetStateAction<string[]>>;
+  postedTags: PostedTag[];
+  setPostedTags: Dispatch<SetStateAction<PostedTag[]>>;
   people: Person[];
   setPeople: Dispatch<SetStateAction<Person[]>>;
   sidebarPeople: Person[];
@@ -48,7 +48,6 @@ export function useIndexFilters({
   setActiveRelayIds,
   channels,
   composeChannels,
-  postedTags,
   setPostedTags,
   people,
   setPeople,
@@ -197,9 +196,13 @@ export function useIndexFilters({
 
     bumpChannelFrecency(normalizedTag, 1.9);
     const existsInSidebar = channels.some((channel) => channel.name.toLowerCase() === normalizedTag);
+    const scopedRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
 
     if (!existsInSidebar) {
-      setPostedTags((prev) => Array.from(new Set([...prev, normalizedTag])));
+      setPostedTags((prev) => {
+        const next = prev.filter((entry) => entry.name !== normalizedTag);
+        return [...next, { name: normalizedTag, relayIds: scopedRelayIds }];
+      });
     }
 
     setChannelFilterStates(() => {
@@ -211,7 +214,7 @@ export function useIndexFilters({
     });
 
     toast(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
-  }, [bumpChannelFrecency, channels, setPostedTags, t]);
+  }, [bumpChannelFrecency, channels, relays, setPostedTags, t]);
 
   const handlePersonToggle = useCallback((id: string) => {
     setPeople((prev) =>
