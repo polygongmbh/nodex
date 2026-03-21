@@ -101,7 +101,7 @@ const INITIAL_VISIBLE_FEED_ENTRIES = 40;
 const FEED_REVEAL_BATCH_SIZE = 30;
 const FEED_REVEAL_DELAY_MS = 80;
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
-const DESKTOP_FEED_ROW_CONTENT_PADDING = "pl-2 pr-3 sm:pl-3 sm:pr-4";
+const DESKTOP_FEED_ROW_CONTENT_PADDING = "px-2 sm:px-3";
 
 interface FeedDueDateChipProps {
   task: Task;

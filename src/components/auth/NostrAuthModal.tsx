@@ -164,20 +164,21 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     loginWithNostrConnect,
     loginWithNoas,
     signupWithNoas,
-    isAuthenticating 
+    isAuthenticating,
+    defaultNoasHostUrl,
   } = useNDK();
 
   const noasApiUrl = import.meta.env.VITE_NOAS_API_URL as string | undefined;
   const noasHostUrl = import.meta.env.VITE_NOAS_HOST_URL as string | undefined;
   const allowGuestSignIn = resolveBooleanEnvFlag(import.meta.env.VITE_ALLOW_GUEST_SIGN_IN, true);
-  const hasConfiguredNoasHost = Boolean(noasApiUrl || noasHostUrl);
+  const hasConfiguredNoasHost = Boolean(noasApiUrl || noasHostUrl || defaultNoasHostUrl);
   const resolvedDefaultStep = useMemo<AuthStep>(() => {
     if (initialStep === "noasSignUp") return "noasSignUp";
     if (initialStep === "noas") return "noas";
     if (initialStep === "choose") return "choose";
     return hasConfiguredNoasHost ? "noas" : "choose";
   }, [hasConfiguredNoasHost, initialStep]);
-  const defaultNoasUrl = noasHostUrl || noasApiUrl || "";
+  const defaultNoasUrl = defaultNoasHostUrl || noasHostUrl || noasApiUrl || "";
   
   const [step, setStep] = useState<AuthStep>(resolvedDefaultStep);
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);

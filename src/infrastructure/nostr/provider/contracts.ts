@@ -35,6 +35,7 @@ export interface NDKContextValue {
   ndk: NDK | null;
   isConnected: boolean;
   relays: NDKRelayStatus[];
+  defaultNoasHostUrl: string;
   user: NostrUser | null;
   authMethod: AuthMethod;
   isAuthenticating: boolean;
@@ -83,4 +84,5 @@ export interface NDKContextValue {
 export interface NDKProviderProps {
   children: ReactNode;
   defaultRelays?: string[];
+  defaultNoasHostUrl?: string;
 }

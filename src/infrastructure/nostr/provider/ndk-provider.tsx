@@ -35,6 +35,7 @@ import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-refere
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
 import {
   hasNostrExtension,
+  loadPersistedNoasDefaultHostUrl,
   loadPersistedRelayUrls,
   savePersistedRelayUrls,
   STORAGE_KEY_AUTH,
@@ -113,10 +114,21 @@ function mapRelayTransportStatus(relay: NDKRelay): NDKRelayStatus["status"] {
   return mappedStatus;
 }
 
-export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
+export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDKProviderProps) {
   const configuredDefaultRelays = useMemo(
     () => defaultRelays || getConfiguredDefaultRelays(),
     [defaultRelays]
+  );
+  const configuredDefaultNoasHostUrl = useMemo(
+    () =>
+      normalizeNoasBaseUrl(
+        defaultNoasHostUrl
+        || import.meta.env.VITE_NOAS_HOST_URL
+        || import.meta.env.VITE_NOAS_API_URL
+        || loadPersistedNoasDefaultHostUrl()
+        || ""
+      ),
+    [defaultNoasHostUrl]
   );
   const resolvedDefaultRelays = useMemo(() => {
     const persisted = loadPersistedRelayUrls();
@@ -1365,7 +1377,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   ): Promise<NoasAuthResult> => {
     if (!ndk) return { success: false, errorCode: "server_error" };
 
-    const submittedNoasBaseUrl = normalizeNoasBaseUrl(config?.baseUrl || import.meta.env.VITE_NOAS_HOST_URL || import.meta.env.VITE_NOAS_API_URL || "");
+    const submittedNoasBaseUrl = normalizeNoasBaseUrl(config?.baseUrl || configuredDefaultNoasHostUrl || "");
 
     if (!submittedNoasBaseUrl) {
       console.error("Noas configuration missing");
@@ -1483,7 +1495,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn, resolvedDefaultRelays, addRelay]);
+  }, [addRelay, configuredDefaultNoasHostUrl, fetchLatestKind0Profile, ndk, resolvedDefaultRelays, retryNip42RelaysAfterSignIn]);
 
   const signupWithNoas = useCallback(async (
     username: string,
@@ -1494,7 +1506,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
   ): Promise<NoasAuthResult> => {
     if (!ndk) return { success: false, errorCode: "server_error" };
 
-    const submittedNoasBaseUrl = normalizeNoasBaseUrl(config?.baseUrl || import.meta.env.VITE_NOAS_HOST_URL || import.meta.env.VITE_NOAS_API_URL || "");
+    const submittedNoasBaseUrl = normalizeNoasBaseUrl(config?.baseUrl || configuredDefaultNoasHostUrl || "");
 
     if (!submittedNoasBaseUrl) {
       console.error("Noas configuration missing");
@@ -1612,7 +1624,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     } finally {
       setIsAuthenticating(false);
     }
-  }, [fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
+  }, [configuredDefaultNoasHostUrl, fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
 
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
@@ -2101,6 +2113,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     ndk,
     isConnected,
     relays,
+    defaultNoasHostUrl: configuredDefaultNoasHostUrl,
     user,
     authMethod,
     isAuthenticating,
@@ -2126,6 +2139,7 @@ export function NDKProvider({ children, defaultRelays }: NDKProviderProps) {
     ndk,
     isConnected,
     relays,
+    configuredDefaultNoasHostUrl,
     user,
     authMethod,
     isAuthenticating,

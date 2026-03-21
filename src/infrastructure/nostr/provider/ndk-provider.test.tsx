@@ -346,6 +346,11 @@ function AuthReplayHarness() {
   );
 }
 
+function NoasHostHarness() {
+  const { defaultNoasHostUrl } = useNDK();
+  return <output data-testid="default-noas-host">{defaultNoasHostUrl}</output>;
+}
+
 describe("NDKProvider relay lifecycle", () => {
   beforeEach(() => {
     mockedNdk.ndkInstances.length = 0;
@@ -381,6 +386,21 @@ describe("NDKProvider relay lifecycle", () => {
     expect(mockedNdk.ndkInstances).toHaveLength(1);
     expect(firstRelay.connectCalls).toBe(1);
     expect(ndk.pool.getRelay("wss://relay.two", false).connectCalls).toBe(1);
+  });
+
+  it("exposes the startup-resolved default Noas host through context", async () => {
+    render(
+      <NDKProvider
+        defaultRelays={["wss://relay.one/"]}
+        defaultNoasHostUrl="https://example.com"
+      >
+        <NoasHostHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("default-noas-host")).toHaveTextContent("https://example.com");
+    });
   });
 
   it.each(["re-add relay slash", "re-add relay no slash"] as const)(

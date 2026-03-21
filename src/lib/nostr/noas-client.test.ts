@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { NoasClient, resolveNoasApiBaseUrl } from "./noas-client";
+import { discoverNoasApiBaseUrl, NoasClient, resolveNoasApiBaseUrl } from "./noas-client";
 
 describe("resolveNoasApiBaseUrl", () => {
   beforeEach(() => {
@@ -68,6 +68,19 @@ describe("resolveNoasApiBaseUrl", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("network failure"));
 
     await expect(resolveNoasApiBaseUrl("https://noas.example/signin")).resolves.toBe("https://noas.example/api/v1");
+  });
+
+  it("returns null discovery results when nostr.json has no valid Noas api_base", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ names: {} }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    );
+
+    await expect(discoverNoasApiBaseUrl("https://noas.example")).resolves.toBeNull();
   });
 });
 

@@ -8,6 +8,7 @@ import { NDKProvider } from "@/infrastructure/nostr/ndk-context";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { resolveStartupRelayBootstrap, readStartupRelayBootstrap } from "@/infrastructure/nostr/startup-relays";
+import { readStartupNoasBootstrap, resolveStartupNoasBootstrap } from "@/infrastructure/nostr/startup-noas";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -15,7 +16,9 @@ const queryClient = new QueryClient();
 
 function NostrBootstrapProvider({ children }: { children: ReactNode }) {
   const initialBootstrap = readStartupRelayBootstrap();
+  const initialNoasBootstrap = readStartupNoasBootstrap();
   const [relayUrls, setRelayUrls] = useState(initialBootstrap.relayUrls);
+  const [defaultNoasHostUrl, setDefaultNoasHostUrl] = useState(initialNoasBootstrap.defaultHostUrl);
   const [isReady, setIsReady] = useState(!initialBootstrap.needsAsyncFallback);
 
   useEffect(() => {
@@ -42,9 +45,34 @@ function NostrBootstrapProvider({ children }: { children: ReactNode }) {
     };
   }, [initialBootstrap.needsAsyncFallback]);
 
+  useEffect(() => {
+    if (!initialNoasBootstrap.needsAsyncFallback) return;
+
+    let cancelled = false;
+    void (async () => {
+      const resolvedBootstrap = await resolveStartupNoasBootstrap();
+      if (cancelled) return;
+      setDefaultNoasHostUrl(resolvedBootstrap.defaultHostUrl);
+      if (resolvedBootstrap.defaultHostUrl) {
+        nostrDevLog("noas", "Resolved startup NoaS host from app bootstrap", {
+          source: resolvedBootstrap.source,
+          defaultHostUrl: resolvedBootstrap.defaultHostUrl,
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialNoasBootstrap.needsAsyncFallback]);
+
   if (!isReady) return null;
 
-  return <NDKProvider defaultRelays={relayUrls}>{children}</NDKProvider>;
+  return (
+    <NDKProvider defaultRelays={relayUrls} defaultNoasHostUrl={defaultNoasHostUrl}>
+      {children}
+    </NDKProvider>
+  );
 }
 
 const App = () => (

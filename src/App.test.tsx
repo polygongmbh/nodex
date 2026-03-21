@@ -8,6 +8,11 @@ const startupRelaysModule = vi.hoisted(() => ({
   resolveStartupRelayBootstrap: vi.fn(),
 }));
 
+const startupNoasModule = vi.hoisted(() => ({
+  readStartupNoasBootstrap: vi.fn(),
+  resolveStartupNoasBootstrap: vi.fn(),
+}));
+
 const ndkContextModule = vi.hoisted(() => ({
   NDKProvider: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
 }));
@@ -30,6 +35,7 @@ vi.mock("@/components/theme/ThemeProvider", () => ({
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ndkContextModule);
 vi.mock("@/infrastructure/nostr/startup-relays", () => startupRelaysModule);
+vi.mock("@/infrastructure/nostr/startup-noas", () => startupNoasModule);
 vi.mock("@/lib/nostr/dev-logs", () => ({
   nostrDevLog: vi.fn(),
 }));
@@ -55,6 +61,16 @@ describe("App routes", () => {
       source: "fallback",
       needsAsyncFallback: false,
     });
+    startupNoasModule.readStartupNoasBootstrap.mockReturnValue({
+      defaultHostUrl: "",
+      source: "fallback",
+      needsAsyncFallback: false,
+    });
+    startupNoasModule.resolveStartupNoasBootstrap.mockResolvedValue({
+      defaultHostUrl: "https://example.test",
+      source: "fallback",
+      needsAsyncFallback: false,
+    });
     window.history.pushState({}, "", "/");
   });
 
@@ -65,7 +81,7 @@ describe("App routes", () => {
 
     expect(screen.getByTestId("index-page")).toBeInTheDocument();
     expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
-      expect.objectContaining({ defaultRelays: ["wss://relay.env"] }),
+      expect.objectContaining({ defaultRelays: ["wss://relay.env"], defaultNoasHostUrl: "" }),
       expect.anything()
     );
   });
@@ -108,7 +124,30 @@ describe("App routes", () => {
 
     await waitFor(() => {
       expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
-        expect.objectContaining({ defaultRelays: ["wss://relay.fallback"] }),
+        expect.objectContaining({ defaultRelays: ["wss://relay.fallback"], defaultNoasHostUrl: "" }),
+        expect.anything()
+      );
+    });
+  });
+
+  it("updates the NDK provider with a discovered startup Noas host without blocking app boot", async () => {
+    startupNoasModule.readStartupNoasBootstrap.mockReturnValue({
+      defaultHostUrl: "",
+      source: "fallback",
+      needsAsyncFallback: true,
+    });
+
+    render(<App />);
+
+    expect(screen.getByTestId("index-page")).toBeInTheDocument();
+    expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
+      expect.objectContaining({ defaultNoasHostUrl: "" }),
+      expect.anything()
+    );
+
+    await waitFor(() => {
+      expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
+        expect.objectContaining({ defaultNoasHostUrl: "https://example.test" }),
         expect.anything()
       );
     });

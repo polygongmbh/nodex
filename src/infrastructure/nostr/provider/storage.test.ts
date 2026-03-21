@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  loadPersistedNoasDefaultHostUrl,
   loadPersistedRelayUrls,
+  savePersistedNoasDefaultHostUrl,
+  STORAGE_KEY_NOAS_DEFAULT_HOST,
   savePersistedRelayUrls,
   STORAGE_KEY_RELAYS,
 } from "./storage";
@@ -43,5 +46,21 @@ describe("relay list persistence", () => {
 
     setItemSpy.mockRestore();
     warnSpy.mockRestore();
+  });
+
+  it("normalizes a persisted Noas default host URL", () => {
+    savePersistedNoasDefaultHostUrl("example.com///");
+
+    expect(loadPersistedNoasDefaultHostUrl()).toBe("https://example.com");
+  });
+
+  it("returns an empty Noas default host when none is stored", () => {
+    expect(loadPersistedNoasDefaultHostUrl()).toBe("");
+  });
+
+  it("returns an empty Noas default host for malformed persisted values", () => {
+    window.localStorage.setItem(STORAGE_KEY_NOAS_DEFAULT_HOST, "://bad url");
+
+    expect(loadPersistedNoasDefaultHostUrl()).toBe("");
   });
 });

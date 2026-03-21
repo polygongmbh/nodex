@@ -64,7 +64,6 @@ interface ListViewProps extends SharedTaskViewContext {
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
 type SortDirection = "asc" | "desc";
 const TABLE_CELL_PADDING_CLASS = "px-2 sm:px-3 py-2";
-const TABLE_LAST_CELL_PADDING_CLASS = "py-2 pl-2 sm:pl-3 pr-3 sm:pr-4";
 
 interface PriorityCellProps {
   taskId: string;
@@ -682,7 +681,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className={cn("text-left w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]", TABLE_LAST_CELL_PADDING_CLASS)}>
+              <th className={cn("text-left w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]", TABLE_CELL_PADDING_CLASS)}>
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
                   <Tags className="w-3 h-3" />
                   {t("tasks.tags")}
@@ -895,7 +894,7 @@ export function ListView({
                         editable={canCompleteTask(task)}
                       />
                     </td>
-                    <td className={cn("min-w-0 w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]", TABLE_LAST_CELL_PADDING_CLASS)}>
+                    <td className={cn("min-w-0 w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]", TABLE_CELL_PADDING_CLASS)}>
                       <TagsCell task={task} />
                     </td>
                   </tr>

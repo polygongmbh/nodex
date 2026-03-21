@@ -12,6 +12,7 @@ const ndkMock = {
   loginWithNostrConnect: vi.fn(async () => true),
   loginWithNoas: vi.fn(async () => ({ success: true })),
   signupWithNoas: vi.fn(async () => ({ success: true })),
+  defaultNoasHostUrl: "",
   isAuthenticating: false,
   isConnected: true,
   user: null as NostrUser | null,
@@ -72,6 +73,7 @@ describe("NostrAuthModal", () => {
     ndkMock.updateUserProfile = vi.fn(async () => true);
     ndkMock.loginWithNoas = vi.fn(async () => ({ success: true }));
     ndkMock.signupWithNoas = vi.fn(async () => ({ success: true }));
+    ndkMock.defaultNoasHostUrl = "";
   });
 
   it("starts on the auth chooser and still shows Noas when no Noas env is configured", () => {
@@ -345,6 +347,17 @@ describe("NostrAuthModal", () => {
     expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/advanced only/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/only change this if you know what you're doing/i)).not.toBeInTheDocument();
+  });
+
+  it("prefills the Noas host and opens directly to Noas when startup discovery resolved a host", () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+    ndkMock.defaultNoasHostUrl = "https://example.com";
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    expect(screen.queryByText(/choose how you want to authenticate/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^host$/i)).toHaveValue("https://example.com");
   });
 
   it("shows a connection-specific Noas error when the host request fails", async () => {
