@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - When no Noas host/API env is configured, startup now derives the site root domain, validates `/.well-known/nostr.json` for a `noas.api_base`, caches the resolved API base plus default host, and pre-fills Noas auth with that discovered root-domain server on subsequent loads.
+- Noas sign-up now surfaces the server-returned success message as the toast source of truth, keeps auto-sign-in only for `status: active`, and otherwise switches back to sign-in while keeping the returned message visible in the dialog.
 - Guest guest-identity private-key backup UI now uses one shared single-row compact layout on desktop and mobile, with unified `Backup Private Key` copy and matching action buttons on both surfaces.
 - Mobile Manage app preferences now use the same primary labels as the desktop profile menu, keep desktop help copy as inline subtitles on mobile, flatten the nested preference-card treatment, and remove the local image captions toggle from mobile Manage.
 - Mobile Manage relay add now uses the shared relay-add pipeline used across surfaces, so bare relay hosts are normalized to `wss://...` consistently, mobile relay input supports Enter-to-add, the Manage language switcher is now shown as a larger guide-sized control, the mobile mute/completion toggle is removed, and the version hint now sits in the `Impressum`/`Datenschutz`/`Kontakt` row with a `Changelog` label; legal/contact button labels and desktop legal hint text are now localized.

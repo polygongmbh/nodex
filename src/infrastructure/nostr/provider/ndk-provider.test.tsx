@@ -221,6 +221,37 @@ const mockedNdk = vi.hoisted(() => {
   };
 });
 
+const noasClientModule = vi.hoisted(() => {
+  class MockNoasClient {
+    signIn = vi.fn(async () => ({ success: true }));
+    register = vi.fn(async () => noasClientModule.nextRegisterResponse);
+    getProfilePicture = vi.fn(async () => ({}));
+    decryptPrivateKey = vi.fn(async () => "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
+  }
+
+  return {
+    instances: [] as MockNoasClient[],
+    nextRegisterResponse: {
+      success: true,
+      user: { username: "alice", publicKey: "pub" },
+      status: "active",
+      message: "Account activated.",
+    },
+    resolveNoasApiBaseUrl: vi.fn(async () => "https://noas.example/api/v1"),
+    normalizeNoasBaseUrl: vi.fn((value: string) => {
+      const trimmed = value.trim();
+      if (!trimmed) return "";
+      return /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed.replace(/\/+$/, "") : `https://${trimmed}`.replace(/\/+$/, "");
+    }),
+    isValidNoasBaseUrl: vi.fn((value: string) => Boolean(value)),
+    NoasClient: vi.fn().mockImplementation(() => {
+      const instance = new MockNoasClient();
+      noasClientModule.instances.push(instance);
+      return instance;
+    }),
+  };
+});
+
 vi.mock("@nostr-dev-kit/ndk", () => ({
   __esModule: true,
   default: mockedNdk.FakeNDK,
@@ -250,6 +281,13 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
   NDKRelaySet: { fromRelayUrls: () => ({}) },
   NDKUser: class {},
   NDKRelay: mockedNdk.FakeRelay,
+}));
+
+vi.mock("@/lib/nostr/noas-client", () => ({
+  NoasClient: noasClientModule.NoasClient,
+  resolveNoasApiBaseUrl: noasClientModule.resolveNoasApiBaseUrl,
+  normalizeNoasBaseUrl: noasClientModule.normalizeNoasBaseUrl,
+  isValidNoasBaseUrl: noasClientModule.isValidNoasBaseUrl,
 }));
 
 vi.mock("../relay-info", () => ({
@@ -351,9 +389,41 @@ function NoasHostHarness() {
   return <output data-testid="default-noas-host">{defaultNoasHostUrl}</output>;
 }
 
+function NoasSignupHarness() {
+  const { authMethod, signupWithNoas, user } = useNDK();
+  const [result, setResult] = useState<string>("");
+
+  return (
+    <div>
+      <button
+        onClick={() => {
+          void signupWithNoas(
+            "alice",
+            "hunter2",
+            "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            "pub"
+          ).then((value) => setResult(JSON.stringify(value)));
+        }}
+      >
+        sign up with noas
+      </button>
+      <output data-testid="signup-result">{result}</output>
+      <output data-testid="auth-method">{authMethod ?? ""}</output>
+      <output data-testid="user-pubkey">{user?.pubkey ?? ""}</output>
+    </div>
+  );
+}
+
 describe("NDKProvider relay lifecycle", () => {
   beforeEach(() => {
     mockedNdk.ndkInstances.length = 0;
+    noasClientModule.instances.length = 0;
+    noasClientModule.nextRegisterResponse = {
+      success: true,
+      user: { username: "alice", publicKey: "pub" },
+      status: "active",
+      message: "Account activated.",
+    };
     window.localStorage.clear();
     vi.mocked(fetchRelayInfo).mockReset();
     vi.mocked(fetchRelayInfo).mockResolvedValue(null);
@@ -401,6 +471,37 @@ describe("NDKProvider relay lifecycle", () => {
     await waitFor(() => {
       expect(screen.getByTestId("default-noas-host")).toHaveTextContent("https://example.com");
     });
+  });
+
+  it("keeps successful non-active Noas signup out of the authenticated session", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]} defaultNoasHostUrl="https://noas.example">
+        <NoasSignupHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth-method")).toHaveTextContent("");
+    });
+
+    noasClientModule.nextRegisterResponse = {
+      success: true,
+      user: { username: "alice", publicKey: "pub" },
+      status: "pending_email_verification",
+      message: "Check your inbox.",
+    };
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "sign up with noas" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("signup-result")).toHaveTextContent("\"registrationSucceeded\":true");
+    });
+    expect(screen.getByTestId("signup-result")).toHaveTextContent("\"status\":\"pending_email_verification\"");
+    expect(screen.getByTestId("signup-result")).toHaveTextContent("\"message\":\"Check your inbox.\"");
+    expect(screen.getByTestId("auth-method")).toHaveTextContent("");
+    expect(screen.getByTestId("user-pubkey")).toHaveTextContent("");
   });
 
   it.each(["re-add relay slash", "re-add relay no slash"] as const)(

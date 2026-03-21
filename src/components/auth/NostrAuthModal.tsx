@@ -303,15 +303,23 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     setPendingAuthMethod("noas");
     try {
       const result = await signupWithNoas(username, password, privateKey, pubkey, config);
+      if (result.message) {
+        toast.success(result.message);
+      }
       if (result.success) {
-        toast.success(t("auth.modal.success.noasSignUp"));
         onClose();
         return true;
-      } else {
-        const serverPayloadError = formatNoasServerErrorPayload(result.errorMessage, result.httpStatus);
-        setError(serverPayloadError || resolveNoasErrorMessage(result.errorCode, t, "signUp"));
+      }
+
+      if (result.registrationSucceeded) {
+        setError(result.message || null);
+        setStep("noas");
         return false;
       }
+
+      const serverPayloadError = formatNoasServerErrorPayload(result.errorMessage, result.httpStatus);
+      setError(serverPayloadError || resolveNoasErrorMessage(result.errorCode, t, "signUp"));
+      return false;
     } finally {
       setPendingAuthMethod(null);
     }
@@ -368,7 +376,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
             </DialogHeader>
           )}
 
-          {error && step !== "noas" && step !== "noasSignUp" && (
+          {error && (
             <div className="mt-2 flex items-start gap-2 rounded-lg bg-destructive/10 p-2.5 text-sm text-destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <span>{error}</span>

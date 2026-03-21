@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
 import type { AuthMethod, NostrUser } from "@/infrastructure/nostr/ndk-context";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -374,7 +375,7 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
-    expect(screen.getAllByText(/connection to the noas host failed/i)).toHaveLength(1);
+    expect(screen.getAllByText(/connection to the noas host failed/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/invalid username or password/i)).not.toBeInTheDocument();
   });
 
@@ -397,7 +398,7 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
-    expect(screen.getByText("409 Conflict: Username already active. Sign in.")).toBeInTheDocument();
+    expect(screen.getAllByText("409 Conflict: Username already active. Sign in.").length).toBeGreaterThan(0);
   });
 
   it("shows the raw Noas sign-up error payload with HTTP status when provided", async () => {
@@ -423,7 +424,65 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
 
     await waitFor(() => expect(ndkMock.signupWithNoas).toHaveBeenCalled());
-    expect(screen.getByText("409 Conflict: Username already active. Sign in.")).toBeInTheDocument();
+    expect(screen.getAllByText("409 Conflict: Username already active. Sign in.").length).toBeGreaterThan(0);
+  });
+
+  it("toasts the returned Noas message and switches to sign in when signup succeeds without active status", async () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+    ndkMock.signupWithNoas = vi.fn(async () => ({
+      success: false,
+      registrationSucceeded: true,
+      status: "pending_email_verification",
+      message: "Check your inbox to activate your account.",
+    }));
+    const onClose = vi.fn();
+
+    render(<NostrAuthModal isOpen onClose={onClose} />);
+
+    openNoasEntryIfNeeded();
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.change(screen.getByLabelText(/private key/i), {
+      target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+
+    await waitFor(() => expect(ndkMock.signupWithNoas).toHaveBeenCalled());
+    expect(toast.success).toHaveBeenCalledWith("Check your inbox to activate your account.");
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getAllByText("Check your inbox to activate your account.").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: /^sign in$/i })).toHaveLength(2);
+  });
+
+  it("suppresses the generic signup toast when the Noas server returns an active signup message", async () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+    ndkMock.signupWithNoas = vi.fn(async () => ({
+      success: true,
+      registrationSucceeded: true,
+      status: "active",
+      message: "Account activated.",
+    }));
+    const onClose = vi.fn();
+
+    render(<NostrAuthModal isOpen onClose={onClose} />);
+
+    openNoasEntryIfNeeded();
+    fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.change(screen.getByLabelText(/private key/i), {
+      target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(toast.success).toHaveBeenCalledWith("Account activated.");
+    expect(toast.success).not.toHaveBeenCalledWith("Account created successfully");
   });
 
   it("opens directly to noas sign up when requested and still allows switching to sign in", () => {

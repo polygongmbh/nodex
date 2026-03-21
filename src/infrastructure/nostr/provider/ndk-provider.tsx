@@ -1564,6 +1564,15 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         };
       }
 
+      if (signUpResponse.status !== "active") {
+        return {
+          success: false,
+          registrationSucceeded: true,
+          status: signUpResponse.status,
+          message: signUpResponse.message,
+        };
+      }
+
       // Create signer with the private key
       let signer: NDKPrivateKeySigner | null = null;
       try {
@@ -1617,7 +1626,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
 
       retryNip42RelaysAfterSignIn();
-      return { success: true };
+      return {
+        success: true,
+        registrationSucceeded: true,
+        status: signUpResponse.status,
+        message: signUpResponse.message,
+      };
     } catch (error) {
       console.error("Noas sign-up failed:", error);
       return { success: false, errorCode: "connection_failed" };

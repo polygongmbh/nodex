@@ -22,6 +22,9 @@ export type NoasAuthErrorCode =
 
 export interface NoasAuthResult {
   success: boolean;
+  registrationSucceeded?: boolean;
+  status?: string;
+  message?: string;
   errorCode?: NoasAuthErrorCode;
   errorMessage?: string;
   httpStatus?: number;
