@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [2.6.2] - 2026-03-21
 - Auth dialogs now use consistently rounded corners across the app, and the sign-in chooser now has a compact width-constrained layout with a larger default Noas entry, Noas full-width first, Signer/Extension and Guest/Private row ordering, renamed `Remote Signer` copy with a connect-style icon, guest-entry env gating (`VITE_ALLOW_GUEST_SIGN_IN`), and a persistent horizontal `username @ host` Noas field layout with a simplified host placeholder (`example.com`).
 - Dialog scrollable content now uses a shared `DialogScrollBody` wrapper (including clipping-safe inner padding), and auth/profile/legal/changelog/shortcuts dialogs now consume the shared pattern instead of duplicating per-modal scroll-shell markup.
 - Dialog close affordances and scroll gutters now reserve consistent right-side space so modal close buttons and scrollbars no longer overlap field edges in compact auth/profile forms.
