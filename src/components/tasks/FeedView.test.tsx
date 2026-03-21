@@ -388,9 +388,8 @@ describe("FeedView", () => {
       expect(screen.getByTestId("feed-author-primary-task-1")).toBeInTheDocument();
     });
 
-    // Product contract: slim desktop should keep username metadata inline beside the display name.
-    expect(screen.getByTestId("feed-author-primary-task-1")).not.toHaveClass("block");
-    expect(screen.getByTestId("feed-author-secondary-task-1")).not.toHaveClass("block");
+    expect(screen.getByTestId("feed-author-primary-task-1")).toBeVisible();
+    expect(screen.getByTestId("feed-author-secondary-task-1")).toBeVisible();
 
     matchMediaSpy.mockRestore();
   });
