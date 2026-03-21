@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn, Smartphone } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn, Link2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -379,10 +379,13 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                     onClick={() => setStep("noas")}
                     disabled={isAuthenticating}
                     aria-busy={pendingAuthMethod === "noas"}
-                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50 sm:col-span-2")}
+                    className={cn(
+                      authMethodOptionClassName,
+                      "border-border p-4 hover:bg-muted hover:border-primary/50 sm:col-span-2 sm:p-4"
+                    )}
                   >
-                    <div className={cn(authMethodOptionIconClassName, "bg-blue-100")}>
-                      <LogIn className="h-4 w-4 text-blue-600 sm:h-5 sm:w-5" />
+                    <div className={cn(authMethodOptionIconClassName, "h-10 w-10 bg-blue-100 sm:h-11 sm:w-11")}>
+                      <LogIn className="h-5 w-5 text-blue-600 sm:h-5 sm:w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">{t("auth.modal.noasAuth")}</div>
@@ -400,7 +403,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                     className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
                   >
                     <div className={cn(authMethodOptionIconClassName, "bg-secondary")}>
-                      <Smartphone className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                      <Link2 className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">{t("auth.modal.signerApp")}</div>

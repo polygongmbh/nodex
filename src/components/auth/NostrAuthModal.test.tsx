@@ -91,7 +91,7 @@ describe("NostrAuthModal", () => {
     openChooserIfNeeded();
 
     const noasOption = screen.getByRole("button", { name: /noas authentication/i });
-    const signerOption = screen.getByRole("button", { name: /signer app/i });
+    const signerOption = screen.getByRole("button", { name: /remote signer/i });
     const extensionOption = screen.getByRole("button", { name: /browser extension/i });
     const guestOption = screen.getByRole("button", { name: /guest identity/i });
     const privateKeyOption = screen.getByRole("button", { name: /private key/i });
