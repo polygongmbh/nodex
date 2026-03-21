@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 - Auth dialogs now use consistently rounded corners across the app, and the sign-in chooser now has a compact width-constrained layout with a larger default Noas entry, Noas full-width first, Signer/Extension and Guest/Private row ordering, renamed `Remote Signer` copy with a connect-style icon, guest-entry env gating (`VITE_ALLOW_GUEST_SIGN_IN`), and a persistent horizontal `username @ host` Noas field layout with a simplified host placeholder (`example.com`).
 - Dialog scrollable content now uses a shared `DialogScrollBody` wrapper (including clipping-safe inner padding), and auth/profile/legal/changelog/shortcuts dialogs now consume the shared pattern instead of duplicating per-modal scroll-shell markup.
+- Dialog close affordances and scroll gutters now reserve consistent right-side space so modal close buttons and scrollbars no longer overlap field edges in compact auth/profile forms.
 
 ## [2.6.1] - 2026-03-21
 - Noas API-base fallback now normalizes discovery failures to canonical API roots (for example `.../api/v1`) instead of reusing legacy endpoint host inputs directly, avoiding malformed auth-route fallbacks when `/.well-known/nostr.json` is blocked by edge CORS policy.

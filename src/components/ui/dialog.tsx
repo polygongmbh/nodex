@@ -79,7 +79,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
       {showCloseButton ? (
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-accent data-[state=open]:text-muted-foreground hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+        <DialogPrimitive.Close className="absolute right-2 top-2 z-20 rounded-md border border-border/70 bg-background/90 p-1 text-muted-foreground opacity-80 shadow-sm backdrop-blur-sm ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
@@ -125,8 +125,12 @@ interface DialogScrollBodyProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const DialogScrollBody = React.forwardRef<HTMLDivElement, DialogScrollBodyProps>(
   ({ className, innerClassName, children, ...props }, ref) => (
-    <div ref={ref} className={cn("scrollbar-thin min-h-0 flex-1 overflow-y-auto", className)} {...props}>
-      <div className={cn("px-1", innerClassName)}>{children}</div>
+    <div
+      ref={ref}
+      className={cn("scrollbar-thin scrollbar-thin-inset min-h-0 flex-1 overflow-y-auto pr-1", className)}
+      {...props}
+    >
+      <div className={cn("px-1 sm:px-1.5", innerClassName)}>{children}</div>
     </div>
   ),
 );
