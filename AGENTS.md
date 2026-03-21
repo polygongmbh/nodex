@@ -201,6 +201,10 @@ policies:
       breaking_change: major
     line_churn_since_last_release_minor_threshold: 1000
     line_churn_measurement: total_insertions_plus_deletions_since_previous_release_or_pushed_version
+    changelog_release_scope_source: unreleased_section
+    changelog_release_scope_includes:
+      - unpushed_commits
+      - already_pushed_but_unreleased_changes
     minor_requires:
       - multiple_feats
       - significant_scope_or_impact
@@ -261,6 +265,7 @@ policies:
 - Use semantic version sections (`MAJOR.MINOR.PATCH`) and ISO dates (`YYYY-MM-DD`).
 - For major/minor releases (for example `2.0.0`, `1.7.0`), include a concise update summary line directly under the version heading before any bullet lists/subsections.
 - On release, move grouped entries from `Unreleased` into the new versioned section.
+- Determine release scope from `CHANGELOG.md` `Unreleased`, not only from `origin/<branch>..HEAD`; already-pushed changes that remain unreleased still belong to the pending version unless explicitly deferred.
 - Before every push, prune redundant or iteration-level changelog bullets and reclassify genuinely new user-facing capabilities into `### Added` while keeping refinements and regressions under `### Changed` or `### Fixed`.
 
 ### Release Scope
@@ -315,6 +320,7 @@ When asked to create a plan to fix or implement something:
 - update user-facing guides before release or push when behavior changed
 - list unpushed commits: `git log origin/<branch>..HEAD --oneline`
 - provide one high-level summary across all unpushed commits
+- also reconcile the pending release against `CHANGELOG.md` `Unreleased` so already-pushed-but-unreleased entries are included in the version scope unless explicitly deferred
 - omit cosmetic-only low-level details unless asked
 - update `package.json` version semantically based on the release policy above
 - when bumping a patch/minor version, include a short explicit rationale in release/push notes (for example: "patch for fixes only" or "minor for broader user-facing feature scope")
