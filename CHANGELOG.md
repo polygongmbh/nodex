@@ -5,6 +5,10 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [2.7.0] - 2026-03-22
+Minor release for mobile manage polish, sidebar/feed scope fixes, terminology cleanup, and Noas UX updates (6041 lines changed since `v2.6.2`).
+
 - Sidebar space rows now truncate long space names so relay status dots remain visible, active space icons now tint to match each relay's current connection state instead of always staying blue, and relay rows no longer show the extra left-side active dot.
 - Sidebar channel pins now sit in a separate far-left gutter so the hashtag column stays fixed instead of shifting right.
 - Chip-added and newly posted channels now stay scoped to the relay/feed they were created from instead of appearing in unrelated relay scopes.
