@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn, Link2 } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn, Link2, CircleHelp } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -752,6 +753,29 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         : authMethod === "noas"
           ? t("filters.authMethod.noas")
           : t("filters.authMethod.privateKey");
+  const appPreferenceRows = [
+    {
+      id: "menu-presence-enabled",
+      checked: presencePublishingEnabled,
+      onChange: handlePresencePublishingChange,
+      label: t("auth.menu.preferences.presenceLabel"),
+      description: t("filters.profile.presenceDescription"),
+    },
+    {
+      id: "menu-publish-delay-enabled",
+      checked: publishDelayEnabled,
+      onChange: handlePublishDelayChange,
+      label: t("auth.menu.preferences.undoSendLabel"),
+      description: t("filters.profile.undoSendDescription"),
+    },
+    {
+      id: "menu-auto-caption-enabled",
+      checked: autoCaptionEnabled,
+      onChange: handleAutoCaptionChange,
+      label: t("auth.menu.preferences.autoCaptionLabel"),
+      description: t("filters.profile.autoCaptionDescription"),
+    },
+  ];
 
   return (
     <>
@@ -769,83 +793,79 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80 p-2">
+        <DropdownMenuContent align="end" className="w-84 p-2">
           <DropdownMenuLabel className="px-2 py-1">
-            <div className="flex items-center gap-2">
-              <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-6 h-6" />
-              <div className="min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-medium truncate">{displayName}</span>
-                  {effectiveProfile.nip05Verified && (
-                    <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${effectiveProfile.nip05}`}>
-                      <BadgeCheck className="w-3.5 h-3.5" />
-                    </span>
-                  )}
-                  {effectiveProfile.nip05 && !effectiveProfile.nip05Verified && (
-                    <span className="text-xs text-muted-foreground" title={effectiveProfile.nip05}>
-                      ✓
-                    </span>
-                  )}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-6 h-6" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium truncate">{displayName}</span>
+                    {effectiveProfile.nip05Verified && (
+                      <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${effectiveProfile.nip05}`}>
+                        <BadgeCheck className="w-3.5 h-3.5" />
+                      </span>
+                    )}
+                    {effectiveProfile.nip05 && !effectiveProfile.nip05Verified && (
+                      <span className="text-xs text-muted-foreground" title={effectiveProfile.nip05}>
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {authMethod === "guest"
+                      ? t("auth.menu.signedInAs", { method: methodLabel })
+                      : t("auth.menu.signedInVia", { method: methodLabel })}
+                  </span>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {authMethod === "guest"
-                    ? t("auth.menu.signedInAs", { method: methodLabel })
-                    : t("auth.menu.signedInVia", { method: methodLabel })}
-                </span>
               </div>
+              <DropdownMenuItem
+                className="h-7 shrink-0 rounded-md border border-border/70 px-2 text-xs font-medium"
+                onSelect={(event) => {
+                  event.preventDefault();
+                  openProfileEditor();
+                }}
+              >
+                <User className="mr-1.5 h-3.5 w-3.5" />
+                {t("auth.menu.editProfile")}
+              </DropdownMenuItem>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              openProfileEditor();
-            }}
-          >
-            <User className="w-4 h-4 mr-2" />
-            {t("auth.menu.editProfile")}
-          </DropdownMenuItem>
-          <div className="px-2 py-2 space-y-2" onClick={(event) => event.stopPropagation()}>
+          <div className="px-2 py-2 space-y-1.5" onClick={(event) => event.stopPropagation()}>
             <p className="text-xs font-medium text-muted-foreground">{t("auth.menu.appPreferences")}</p>
-            <label htmlFor="menu-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
-              <input
-                id="menu-presence-enabled"
-                type="checkbox"
-                checked={presencePublishingEnabled}
-                onChange={(event) => handlePresencePublishingChange(event.target.checked)}
-                className="mt-0.5 h-4 w-4 accent-primary"
-              />
-              <span className="space-y-0.5">
-                <span className="block text-xs font-medium">{t("filters.profile.presenceTitle")}</span>
-                <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
-              </span>
-            </label>
-            <label htmlFor="menu-publish-delay-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
-              <input
-                id="menu-publish-delay-enabled"
-                type="checkbox"
-                checked={publishDelayEnabled}
-                onChange={(event) => handlePublishDelayChange(event.target.checked)}
-                className="mt-0.5 h-4 w-4 accent-primary"
-              />
-              <span className="space-y-0.5">
-                <span className="block text-xs font-medium">{t("filters.profile.undoSendTitle")}</span>
-                <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
-              </span>
-            </label>
-            <label htmlFor="menu-auto-caption-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
-              <input
-                id="menu-auto-caption-enabled"
-                type="checkbox"
-                checked={autoCaptionEnabled}
-                onChange={(event) => handleAutoCaptionChange(event.target.checked)}
-                className="mt-0.5 h-4 w-4 accent-primary"
-              />
-              <span className="space-y-0.5">
-                <span className="block text-xs font-medium">{t("filters.profile.autoCaptionTitle")}</span>
-                <span className="block text-xs text-muted-foreground">{t("filters.profile.autoCaptionDescription")}</span>
-              </span>
-            </label>
+            <TooltipProvider delayDuration={200}>
+              {appPreferenceRows.map((preference) => (
+                <div key={preference.id} className="flex items-center gap-2 rounded-md px-1.5 py-1.5">
+                  <input
+                    id={preference.id}
+                    type="checkbox"
+                    checked={preference.checked}
+                    onChange={(event) => preference.onChange(event.target.checked)}
+                    className="h-4 w-4 shrink-0 accent-primary"
+                  />
+                  <label htmlFor={preference.id} className="min-w-0 flex-1 text-xs font-medium leading-tight">
+                    {preference.label}
+                  </label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={t("auth.menu.preferenceHelp", { setting: preference.label })}
+                        onClick={(event) => event.preventDefault()}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                      >
+                        <CircleHelp className="h-3.5 w-3.5" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" align="center" className="max-w-[18rem] text-xs leading-relaxed">
+                      {preference.description}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              ))}
+            </TooltipProvider>
           </div>
           {authMethod === "guest" && (
             <div className="px-2 py-2 space-y-2">

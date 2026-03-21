@@ -466,7 +466,13 @@
       "signedInVia": "Signed in via {{method}}",
       "signedInAs": "Signed in as {{method}}",
       "editProfile": "Edit profile",
+      "preferenceHelp": "More info about {{setting}}",
       "appPreferences": "App preferences",
+      "preferences": {
+        "presenceLabel": "Share current status",
+        "undoSendLabel": "Delay send so you can undo",
+        "autoCaptionLabel": "Generate image captions on this device"
+      },
       "backupPrivateKey": "Backup Private Key",
       "keepSecret": "Keep secret",
       "importKeyHint": "Import this key in other Nostr clients to access this identity.",

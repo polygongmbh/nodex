@@ -466,7 +466,13 @@
       "signedInVia": "Angemeldet über {{method}}",
       "signedInAs": "Angemeldet als {{method}}",
       "editProfile": "Profil bearbeiten",
+      "preferenceHelp": "Mehr Infos zu {{setting}}",
       "appPreferences": "App-Einstellungen",
+      "preferences": {
+        "presenceLabel": "Aktuellen Status teilen",
+        "undoSendLabel": "Senden verzögern, um rückgängig zu machen",
+        "autoCaptionLabel": "Bildbeschreibungen auf diesem Gerät erzeugen"
+      },
       "backupPrivateKey": "Privatschlüssel sichern",
       "keepSecret": "Geheim halten",
       "importKeyHint": "Importiere diesen Schlüssel in andere Nostr-Clients, um auf diese Identität zuzugreifen.",

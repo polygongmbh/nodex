@@ -466,7 +466,13 @@
       "signedInVia": "Sesión iniciada vía {{method}}",
       "signedInAs": "Sesión iniciada como {{method}}",
       "editProfile": "Editar perfil",
+      "preferenceHelp": "Más información sobre {{setting}}",
       "appPreferences": "Preferencias de la app",
+      "preferences": {
+        "presenceLabel": "Compartir estado actual",
+        "undoSendLabel": "Retrasar el envío para poder deshacer",
+        "autoCaptionLabel": "Generar descripciones de imágenes en este dispositivo"
+      },
       "backupPrivateKey": "Respaldar clave privada",
       "keepSecret": "No compartir",
       "importKeyHint": "Importa esta clave en otros clientes Nostr para acceder a esta identidad.",
