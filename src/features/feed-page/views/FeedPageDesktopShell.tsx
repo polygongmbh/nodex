@@ -7,9 +7,7 @@ import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
 import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
-import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useFeedPageUiConfig } from "./feed-page-ui-config";
 import { FeedPageSidebar } from "./FeedPageSidebar";
 
 export interface FeedPageDesktopHeaderConfig {
@@ -41,13 +39,12 @@ export function FeedPageDesktopShell({
   authModalProps,
   onboardingOverlays,
 }: FeedPageDesktopShellProps) {
-  const { completionSoundEnabled, onToggleCompletionSound } = useFeedPageUiConfig();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
 
   return (
     <div className="grid app-shell-height overflow-hidden bg-background grid-cols-[auto,1fr] grid-rows-[var(--topbar-height),1fr] [--topbar-height:3rem] sm:[--topbar-height:3.5rem] xl:[--topbar-height:4rem]">
       <SidebarHeader className="h-[var(--topbar-height)]" />
-      <div className="border-b border-border px-2 sm:px-3 bg-background/95 backdrop-blur-sm flex items-stretch justify-between gap-2 min-w-0 h-[var(--topbar-height)]">
+      <div className="border-b border-border px-2 sm:px-3 bg-background/95 backdrop-blur-sm flex items-stretch justify-between gap-1.5 min-w-0 h-[var(--topbar-height)]">
         <div className="flex-1 min-w-0 h-full">
           <ViewSwitcher
             currentView={header.currentView}
@@ -56,18 +53,13 @@ export function FeedPageDesktopShell({
             }}
           />
         </div>
-        <div className="h-full flex items-center justify-end gap-2 w-auto pl-2">
+        <div className="h-full flex items-center justify-end gap-1 sm:gap-1.5 w-auto pl-1 sm:pl-1.5">
           <NostrUserMenu
             onSignInClick={() => {
               void dispatchFeedInteraction({ type: "ui.openAuthModal" });
             }}
           />
           <LanguageToggle />
-          <CompletionFeedbackToggle
-            enabled={completionSoundEnabled}
-            onToggle={onToggleCompletionSound}
-            className="hidden lg:inline-flex"
-          />
           <ThemeModeToggle />
         </div>
       </div>
