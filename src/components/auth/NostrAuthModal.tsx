@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn, Smartphone } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -340,7 +340,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
-        className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-2xl"
+        className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] p-0 sm:max-w-xl"
         dismissOnOutsideInteract={!hasUnsavedAuthInput}
       >
         <div className="flex max-h-[calc(100dvh-1rem)] flex-col p-3 sm:p-4">
@@ -379,7 +379,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                     onClick={() => setStep("noas")}
                     disabled={isAuthenticating}
                     aria-busy={pendingAuthMethod === "noas"}
-                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
+                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50 sm:col-span-2")}
                   >
                     <div className={cn(authMethodOptionIconClassName, "bg-blue-100")}>
                       <LogIn className="h-4 w-4 text-blue-600 sm:h-5 sm:w-5" />
@@ -391,6 +391,23 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                       </div>
                     </div>
                     {pendingAuthMethod === "noas" && <Loader2 className="h-4 w-4 animate-spin" />}
+                  </button>
+
+                  {/* Nostr Connect (Signer App) */}
+                  <button
+                    onClick={() => setStep("nostrConnect")}
+                    disabled={isAuthenticating}
+                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
+                  >
+                    <div className={cn(authMethodOptionIconClassName, "bg-secondary")}>
+                      <Smartphone className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">{t("auth.modal.signerApp")}</div>
+                      <div className="text-xs text-muted-foreground sm:text-sm">
+                        {t("auth.modal.signerAppHint")}
+                      </div>
+                    </div>
                   </button>
 
                   {/* Browser Extension */}
@@ -422,50 +439,13 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                     {pendingAuthMethod === "extension" && <Loader2 className="h-4 w-4 animate-spin" />}
                   </button>
 
-                  {/* Nostr Connect (Signer App) */}
-                  <button
-                    onClick={() => setStep("nostrConnect")}
-                    disabled={isAuthenticating}
-                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
-                  >
-                    <div className={cn(authMethodOptionIconClassName, "bg-secondary")}>
-                      <Key className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium">{t("auth.modal.signerApp")}</div>
-                      <div className="text-xs text-muted-foreground sm:text-sm">
-                        {t("auth.modal.signerAppHint")}
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Private Key */}
-                  <button
-                    onClick={() => setStep("privateKey")}
-                    disabled={isAuthenticating}
-                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
-                  >
-                    <div className={cn(authMethodOptionIconClassName, "bg-warning/10")}>
-                      <Key className="h-4 w-4 text-warning sm:h-5 sm:w-5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium">{t("auth.modal.privateKey")}</div>
-                      <div className="text-xs text-muted-foreground sm:text-sm">
-                        {t("auth.modal.privateKeyHint")}
-                      </div>
-                    </div>
-                  </button>
-
                   {/* Guest Identity */}
                   {allowGuestSignIn ? (
                     <button
                       onClick={handleGuestLogin}
                       disabled={isAuthenticating}
                       aria-busy={pendingAuthMethod === "guest"}
-                      className={cn(
-                        authMethodOptionClassName,
-                        "border-border hover:bg-muted hover:border-primary/50 sm:col-span-2"
-                      )}
+                      className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
                     >
                       <div className={cn(authMethodOptionIconClassName, "bg-secondary")}>
                         <User className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
@@ -479,6 +459,23 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
                       {pendingAuthMethod === "guest" && <Loader2 className="h-4 w-4 animate-spin" />}
                     </button>
                   ) : null}
+
+                  {/* Private Key */}
+                  <button
+                    onClick={() => setStep("privateKey")}
+                    disabled={isAuthenticating}
+                    className={cn(authMethodOptionClassName, "border-border hover:bg-muted hover:border-primary/50")}
+                  >
+                    <div className={cn(authMethodOptionIconClassName, "bg-secondary")}>
+                      <Key className="h-4 w-4 text-muted-foreground sm:h-5 sm:w-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium">{t("auth.modal.privateKey")}</div>
+                      <div className="text-xs text-muted-foreground sm:text-sm">
+                        {t("auth.modal.privateKeyHint")}
+                      </div>
+                    </div>
+                  </button>
                 </div>
 
                 <p className="pt-1 text-center text-xs text-muted-foreground">

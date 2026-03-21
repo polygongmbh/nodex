@@ -76,6 +76,16 @@ describe("Noas auth forms", () => {
     expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example/api");
   });
 
+  it("keeps username@host inline and uses the simplified host placeholder", () => {
+    render(<ControlledNoasAuthForm initialNoasHostUrl="" />);
+
+    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
+    expect(hostInput).toHaveAttribute("placeholder", "example.com");
+
+    const atDivider = screen.getByText("@");
+    expect(atDivider.className).not.toContain("hidden");
+  });
+
   it("preserves the port in the displayed and edited noas host", () => {
     const onNoasHostUrlChange = vi.fn();
 

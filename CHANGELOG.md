@@ -5,7 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Sign-in modal now uses a more compact, wider layout on constrained screens, reorders auth methods to Noas/Extension/Signer/Private Key/Guest, and supports a new `VITE_ALLOW_GUEST_SIGN_IN` env toggle to disable guest sign-in entry.
+- Auth dialogs now use consistently rounded corners across the app, and the sign-in chooser now has a compact width-constrained layout with Noas full-width first, Signer/Extension and Guest/Private row ordering, refreshed signer icon treatment, guest-entry env gating (`VITE_ALLOW_GUEST_SIGN_IN`), and a persistent horizontal `username @ host` Noas field layout with a simplified host placeholder (`example.com`).
 
 ## [2.6.1] - 2026-03-21
 - Noas API-base fallback now normalizes discovery failures to canonical API roots (for example `.../api/v1`) instead of reusing legacy endpoint host inputs directly, avoiding malformed auth-route fallbacks when `/.well-known/nostr.json` is blocked by edge CORS policy.

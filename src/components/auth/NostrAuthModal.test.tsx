@@ -91,11 +91,11 @@ describe("NostrAuthModal", () => {
     openChooserIfNeeded();
 
     const noasOption = screen.getByRole("button", { name: /noas authentication/i });
-    const extensionOption = screen.getByRole("button", { name: /browser extension/i });
     const signerOption = screen.getByRole("button", { name: /signer app/i });
-    const privateKeyOption = screen.getByRole("button", { name: /private key/i });
+    const extensionOption = screen.getByRole("button", { name: /browser extension/i });
     const guestOption = screen.getByRole("button", { name: /guest identity/i });
-    const orderedOptions = [noasOption, extensionOption, signerOption, privateKeyOption, guestOption];
+    const privateKeyOption = screen.getByRole("button", { name: /private key/i });
+    const orderedOptions = [noasOption, signerOption, extensionOption, guestOption, privateKeyOption];
 
     orderedOptions.slice(0, -1).forEach((option, index) => {
       expect(option.compareDocumentPosition(orderedOptions[index + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);

@@ -5,7 +5,7 @@ import { Label } from "../ui/label";
 import { Pencil } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import type { TFunction } from "i18next";
-import { isValidNoasBaseUrl, normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
+import { isValidNoasBaseUrl } from "@/lib/nostr/noas-client";
 
 export function validateNoasUsername(username: string, t: TFunction): string | null {
   const trimmedUsername = username.trim();
@@ -71,7 +71,7 @@ export function NoasSharedFields({
   const hostReadOnly = allowDirectHostEdit ? false : !isEditingHostUrl;
   const shouldShowHostEditButton = !allowDirectHostEdit && hostReadOnly;
   const hostValue = noasHostUrl;
-  const normalizedPlaceholder = normalizeNoasBaseUrl("noas.example.com");
+  const normalizedPlaceholder = "example.com";
   const hostInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ export function NoasSharedFields({
     <>
       <div className="space-y-2">
         <Label htmlFor="noas-username">{t("auth.username")}</Label>
-        <div className="grid items-start gap-2 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           <div className={showUsernameHint ? "space-y-1 min-w-0" : "min-w-0"}>
             <Input
               id="noas-username"
@@ -100,10 +100,7 @@ export function NoasSharedFields({
               <p className="text-xs text-muted-foreground">{t("auth.noas.usernameHint")}</p>
             ) : null}
           </div>
-          <div
-            className="hidden h-10 items-center justify-center text-sm font-medium text-muted-foreground md:flex"
-            aria-hidden="true"
-          >
+          <div className="flex h-10 items-center justify-center text-sm font-medium text-muted-foreground" aria-hidden="true">
             @
           </div>
           <div className="space-y-1 min-w-0">
