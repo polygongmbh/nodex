@@ -34,4 +34,51 @@ describe("RelayItem", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.exclusive", relayId: "relay-1" });
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.toggle", relayId: "relay-1" });
   });
+
+  it("keeps the status dot visible while allowing long names to truncate", () => {
+    render(
+      <FeedInteractionProvider bus={{ dispatch: vi.fn().mockResolvedValue(undefined), dispatchBatch: vi.fn().mockResolvedValue([]) }}>
+        <RelayItem
+          relay={{
+            ...baseRelay,
+            name: "very-long-space-name-that-should-not-push-the-status-indicator-out-of-view.example",
+            url: undefined,
+          }}
+        />
+      </FeedInteractionProvider>
+    );
+
+    const exclusiveButton = screen.getByRole("button", {
+      name: /show only very-long-space-name-that-should-not-push-the-status-indicator-out-of-view\.example/i,
+    });
+    const relayLabel = screen.getByText(
+      "very-long-space-name-that-should-not-push-the-status-indicator-out-of-view.example"
+    );
+    const statusDot = screen.getByLabelText("connected");
+
+    expect(exclusiveButton.className).toContain("min-w-0");
+    expect(relayLabel.className).toContain("truncate");
+    expect(statusDot.className).toContain("flex-shrink-0");
+  });
+
+  it("tints the active relay icon by relay status instead of always using the primary color", () => {
+    render(
+      <FeedInteractionProvider bus={{ dispatch: vi.fn().mockResolvedValue(undefined), dispatchBatch: vi.fn().mockResolvedValue([]) }}>
+        <RelayItem
+          relay={{
+            ...baseRelay,
+            connectionStatus: "verification-failed",
+          }}
+        />
+      </FeedInteractionProvider>
+    );
+
+    const toggleButton = screen.getByRole("button", { name: "Toggle damus space" });
+    const iconChip = toggleButton.querySelector("div");
+
+    expect(iconChip).not.toBeNull();
+    expect(iconChip?.className).toContain("text-destructive");
+    expect(iconChip?.className).toContain("bg-destructive/15");
+    expect(iconChip?.className).not.toContain("text-primary");
+  });
 });

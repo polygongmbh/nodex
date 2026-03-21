@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Relay } from "@/types";
 import { SidebarFilterRow } from "./SidebarFilterRow";
 import { useTranslation } from "react-i18next";
-import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
+import { getRelayStatusDotClass, getRelayStatusSurfaceClass } from "@/components/relay/relayStatusStyles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
@@ -28,6 +28,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
   const isConnectionActive = resolvedConnectionStatus === "connected";
   const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
+  const connectionSurfaceClass = getRelayStatusSurfaceClass(resolvedConnectionStatus);
 
   return (
     <SidebarFilterRow
@@ -45,7 +46,6 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           e.stopPropagation();
           void dispatchFeedInteraction({ type: "sidebar.relay.toggle", relayId: relay.id });
         }}
-        className="relative"
         title={t("sidebar.filters.toggleRelay", { name: relayDisplayName })}
         aria-label={t("sidebar.filters.toggleRelay", { name: relayDisplayName })}
       >
@@ -53,15 +53,12 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           className={cn(
             "w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:ring-2 hover:ring-primary/50",
             relay.isActive
-              ? "bg-primary/20 text-primary motion-filter-pop"
+              ? cn(connectionSurfaceClass, "motion-filter-pop")
               : "bg-muted/50 text-muted-foreground group-hover:text-sidebar-foreground"
           )}
         >
           <Icon className="w-4 h-4" />
         </div>
-        {relay.isActive && (
-          <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary" />
-        )}
       </button>
 
       {/* Name - click for exclusive */}
@@ -69,24 +66,24 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
         onClick={() => {
           void dispatchFeedInteraction({ type: "sidebar.relay.exclusive", relayId: relay.id });
         }}
-        className="flex-1 text-left"
+        className="flex-1 min-w-0 text-left"
         title={t("sidebar.filters.showOnlyRelay", { name: relayDisplayName })}
         aria-label={t("sidebar.filters.showOnlyRelay", { name: relayDisplayName })}
       >
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 text-sm transition-colors hover:text-primary",
+            "flex items-center gap-1.5 text-sm transition-colors hover:text-primary",
             relay.isActive ? "text-foreground font-medium" : "text-sidebar-foreground"
           )}
         >
-          {relayDisplayName}
+          <span className="min-w-0 flex-1 truncate">{relayDisplayName}</span>
           {resolvedConnectionStatus === "read-only" ? (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
                     className={cn(
-                      "inline-block h-1.5 w-1.5 rounded-full",
+                      "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
                       connectionDotClass
                     )}
                     aria-label={t("relay.statusHints.readOnly")}
@@ -100,7 +97,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           ) : (
             <span
               className={cn(
-                "inline-block h-1.5 w-1.5 rounded-full",
+                "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
                 connectionDotClass
               )}
               title={resolvedConnectionStatus}
