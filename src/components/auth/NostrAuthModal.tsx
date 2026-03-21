@@ -29,6 +29,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
@@ -753,29 +754,27 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
         : authMethod === "noas"
           ? t("filters.authMethod.noas")
           : t("filters.authMethod.privateKey");
-  const appPreferenceRows = [
-    {
-      id: "menu-presence-enabled",
+  const preferenceState = {
+    presence: {
       checked: presencePublishingEnabled,
       onChange: handlePresencePublishingChange,
-      label: t("auth.menu.preferences.presenceLabel"),
-      description: t("filters.profile.presenceDescription"),
     },
-    {
-      id: "menu-publish-delay-enabled",
+    undoSend: {
       checked: publishDelayEnabled,
       onChange: handlePublishDelayChange,
-      label: t("auth.menu.preferences.undoSendLabel"),
-      description: t("filters.profile.undoSendDescription"),
     },
-    {
-      id: "menu-auto-caption-enabled",
+    autoCaption: {
       checked: autoCaptionEnabled,
       onChange: handleAutoCaptionChange,
-      label: t("auth.menu.preferences.autoCaptionLabel"),
-      description: t("filters.profile.autoCaptionDescription"),
     },
-  ];
+  } as const;
+  const appPreferenceRows = getAppPreferenceDefinitions("desktop").map((preference) => ({
+    id: `menu-${preference.id}`,
+    checked: preferenceState[preference.key].checked,
+    onChange: preferenceState[preference.key].onChange,
+    label: t(preference.labelKey),
+    description: t(preference.descriptionKey),
+  }));
 
   return (
     <>

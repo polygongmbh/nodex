@@ -694,11 +694,8 @@
       "nameInvalidNip05": "Der Benutzername muss Kleinbuchstaben, Zahlen, Punkte, Unterstriche oder Bindestriche verwenden",
       "nameTaken": "Dieser Benutzername ist bereits bekannt. Bitte wähle einen anderen.",
       "noRelayConnected": "Verbinde mindestens einen Space, bevor du das Profil bearbeitest",
-      "presenceTitle": "Live-Status teilen",
       "presenceDescription": "Aktuelle Ansicht und aktive Aufgabe als NIP-38-Status senden. Für mehr Privatsphäre deaktivieren.",
-      "undoSendTitle": "Rückgängig vor dem Senden erlauben",
       "undoSendDescription": "Nostr-Veröffentlichung um ein paar Sekunden verzögern, damit sie im Toast oder auf der Karte rückgängig gemacht werden kann.",
-      "autoCaptionTitle": "Lokale Bildbeschriftungen aktivieren (kleines Modell, experimentell)",
       "autoCaptionDescription": "Erzeugt Alt-Text auf diesem Gerät. Ein einmaliger Modelldownload kann ungefähr 30-80 MB verbrauchen.",
       "updated": "Profil auf verbundenen Spaces aktualisiert",
       "updateFailed": "Profil konnte nicht aktualisiert werden. Space-Verbindung prüfen und erneut versuchen."

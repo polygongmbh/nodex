@@ -694,11 +694,8 @@
       "nameInvalidNip05": "El nombre de usuario debe usar letras minúsculas, números, puntos, guiones bajos o guiones",
       "nameTaken": "Este nombre de usuario ya es conocido. Elige otro.",
       "noRelayConnected": "Conéctate al menos a un space antes de editar el perfil",
-      "presenceTitle": "Compartir estado en vivo",
       "presenceDescription": "Difunde tu vista actual y tarea activa (NIP-38). Desactívalo por privacidad.",
-      "undoSendTitle": "Permitir deshacer antes de enviar",
       "undoSendDescription": "Retrasa unos segundos la publicación en Nostr para poder deshacer desde el toast o la tarjeta.",
-      "autoCaptionTitle": "Activar subtítulos locales para imágenes (modelo pequeño, experimental)",
       "autoCaptionDescription": "Genera texto alternativo en este dispositivo. La descarga única del modelo puede usar aproximadamente 30-80 MB.",
       "updated": "Perfil actualizado en spaces conectados",
       "updateFailed": "No se pudo actualizar el perfil. Revisa la conectividad de space e inténtalo de nuevo."

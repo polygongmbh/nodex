@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
+import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
@@ -116,6 +117,27 @@ export function MobileFilters({
           : t("filters.authMethod.unknown");
 
   const guestPrivateKey = getGuestPrivateKey();
+  const preferenceState = {
+    presence: {
+      checked: presencePublishingEnabled,
+      onChange: handlePresencePublishingChange,
+    },
+    undoSend: {
+      checked: publishDelayEnabled,
+      onChange: handlePublishDelayChange,
+    },
+    autoCaption: {
+      checked: autoCaptionEnabled,
+      onChange: handleAutoCaptionChange,
+    },
+  } as const;
+  const appPreferenceRows = getAppPreferenceDefinitions("mobile").map((preference) => ({
+    id: `manage-preference-${preference.id}`,
+    checked: preferenceState[preference.key].checked,
+    onChange: preferenceState[preference.key].onChange,
+    label: t(preference.labelKey),
+    description: t(preference.descriptionKey),
+  }));
 
   useEffect(() => {
     resetFromProfile(effectiveProfile);
@@ -369,46 +391,26 @@ export function MobileFilters({
               <User className="w-4 h-4 text-primary" />
               <h2 className="font-semibold text-sm">{t("filters.profile.appPreferencesTitle")}</h2>
             </div>
-            <div className="space-y-2 rounded-lg border border-border p-3">
-              <label htmlFor="manage-preference-presence-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
-                <input
-                  id="manage-preference-presence-enabled"
-                  type="checkbox"
-                  checked={presencePublishingEnabled}
-                  onChange={(event) => handlePresencePublishingChange(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-primary"
-                />
-                <span className="space-y-0.5">
-                  <span className="block text-xs font-medium">{t("filters.profile.presenceTitle")}</span>
-                  <span className="block text-xs text-muted-foreground">{t("filters.profile.presenceDescription")}</span>
-                </span>
-              </label>
-              <label htmlFor="manage-preference-publish-delay-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
-                <input
-                  id="manage-preference-publish-delay-enabled"
-                  type="checkbox"
-                  checked={publishDelayEnabled}
-                  onChange={(event) => handlePublishDelayChange(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-primary"
-                />
-                <span className="space-y-0.5">
-                  <span className="block text-xs font-medium">{t("filters.profile.undoSendTitle")}</span>
-                  <span className="block text-xs text-muted-foreground">{t("filters.profile.undoSendDescription")}</span>
-                </span>
-              </label>
-              <label htmlFor="manage-preference-auto-caption-enabled" className="flex items-start gap-2 rounded-md border border-border/70 px-2.5 py-2">
-                <input
-                  id="manage-preference-auto-caption-enabled"
-                  type="checkbox"
-                  checked={autoCaptionEnabled}
-                  onChange={(event) => handleAutoCaptionChange(event.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-primary"
-                />
-                <span className="space-y-0.5">
-                  <span className="block text-xs font-medium">{t("filters.profile.autoCaptionTitle")}</span>
-                  <span className="block text-xs text-muted-foreground">{t("filters.profile.autoCaptionDescription")}</span>
-                </span>
-              </label>
+            <div className="rounded-lg border border-border p-3">
+              <div className="space-y-3">
+                {appPreferenceRows.map((preference, index) => (
+                  <div key={preference.id} className={cn(index > 0 && "border-t border-border/60 pt-3")}>
+                    <label htmlFor={preference.id} className="flex items-start gap-2.5">
+                      <input
+                        id={preference.id}
+                        type="checkbox"
+                        checked={preference.checked}
+                        onChange={(event) => preference.onChange(event.target.checked)}
+                        className="mt-0.5 h-4 w-4 accent-primary"
+                      />
+                      <span className="space-y-0.5">
+                        <span className="block text-xs font-medium leading-tight">{preference.label}</span>
+                        <span className="block text-xs leading-relaxed text-muted-foreground">{preference.description}</span>
+                      </span>
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         )}

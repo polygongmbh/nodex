@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Mobile Manage app preferences now use the same primary labels as the desktop profile menu, keep desktop help copy as inline subtitles on mobile, flatten the nested preference-card treatment, and remove the local image captions toggle from mobile Manage.
 - Mobile Manage relay add now uses the shared relay-add pipeline used across surfaces, so bare relay hosts are normalized to `wss://...` consistently, mobile relay input supports Enter-to-add, the Manage language switcher is now shown as a larger guide-sized control, the mobile mute/completion toggle is removed, and the version hint now sits in the `Impressum`/`Datenschutz`/`Kontakt` row with a `Changelog` label; legal/contact button labels and desktop legal hint text are now localized.
 - User-facing `Feed(s)` terminology is now standardized to `Space(s)` across localized app copy (English, German, and Spanish), relay display names now derive from domain-minus-TLD host labels (with configurable common-prefix stripping via `VITE_RELAY_COMMON_PREFIXES`), and host-derived startup relay discovery prefixes are now env-configurable through `VITE_RELAY_DISCOVERY_PREFIXES`.
 - Mobile fallback hints now use scope-aware copy on both empty-scope and quick-filter fallback paths (for example `Nothing yet ... showing everything` / `No matches for the quick filter, showing tasks ...`), and both mobile hint rows are centered horizontally for readability.
