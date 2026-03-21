@@ -251,7 +251,7 @@
     "views": {
       "manage": "Manage",
       "tree": "Tree",
-      "feed": "Space",
+      "feed": "Timeline",
       "kanban": "Kanban",
       "calendar": "Calendar",
       "list": "Table",
@@ -350,7 +350,7 @@
     },
     "items": {
       "treeView": "Tree view",
-      "feedView": "Space view",
+      "feedView": "Timeline view",
       "kanbanView": "Kanban view",
       "calendarView": "Calendar view",
       "tableView": "Table view",
