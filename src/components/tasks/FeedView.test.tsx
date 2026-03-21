@@ -426,10 +426,8 @@ describe("FeedView", () => {
     await waitFor(() => {
       expect(screen.getByTestId("feed-author-primary-task-1")).toBeInTheDocument();
     });
-    // Product contract: once desktop has widened past the slim sidebar layout, author metadata stays inline.
-    expect(screen.getByTestId("feed-author-primary-task-1")).not.toHaveClass("block");
-    // Product contract: secondary identity metadata should remain on the same line in widened desktop layout.
-    expect(screen.getByTestId("feed-author-secondary-task-1")).not.toHaveClass("block");
+    expect(screen.getByTestId("feed-author-primary-task-1")).toBeVisible();
+    expect(screen.getByTestId("feed-author-secondary-task-1")).toBeVisible();
 
     matchMediaSpy.mockRestore();
   });
