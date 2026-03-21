@@ -87,6 +87,7 @@ import {
   createFeedInteractionBus,
   type FeedInteractionHandlerMap,
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
+import { FeedSidebarControllerProvider } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
@@ -657,6 +658,12 @@ const Index = () => {
         }
         handleOpenAuthModal();
       },
+      "ui.openShortcutsHelp": () => {
+        shortcutsHelp.open();
+      },
+      "ui.openGuide": () => {
+        handleOpenGuide();
+      },
       "ui.focusSidebar": () => {
         handleFocusSidebar();
       },
@@ -675,6 +682,75 @@ const Index = () => {
       "filter.clearPerson": (intent) => {
         handlePersonClear(intent.personId);
       },
+      "sidebar.relay.toggle": (intent) => {
+        handleRelayToggle(intent.relayId);
+      },
+      "sidebar.relay.exclusive": (intent) => {
+        handleRelayExclusive(intent.relayId);
+      },
+      "sidebar.relay.toggleAll": () => {
+        handleToggleAllRelays();
+      },
+      "sidebar.relay.add": (intent) => {
+        handleAddRelay(intent.url);
+      },
+      "sidebar.relay.remove": (intent) => {
+        handleRemoveRelay(intent.url);
+      },
+      "sidebar.relay.reconnect": (intent) => {
+        reconnectRelay(intent.url);
+      },
+      "sidebar.channel.toggle": (intent) => {
+        handleChannelToggle(intent.channelId);
+      },
+      "sidebar.channel.exclusive": (intent) => {
+        handleChannelExclusive(intent.channelId);
+      },
+      "sidebar.channel.toggleAll": () => {
+        handleToggleAllChannels();
+      },
+      "sidebar.channel.matchMode.change": (intent) => {
+        handleChannelMatchModeChange(intent.mode);
+      },
+      "sidebar.channel.pin": (intent) => {
+        handleChannelPin(intent.channelId);
+      },
+      "sidebar.channel.unpin": (intent) => {
+        handleChannelUnpin(intent.channelId);
+      },
+      "sidebar.person.toggle": (intent) => {
+        handlePersonToggle(intent.personId);
+      },
+      "sidebar.person.exclusive": (intent) => {
+        handlePersonExclusive(intent.personId);
+      },
+      "sidebar.person.toggleAll": () => {
+        handleToggleAllPeople();
+      },
+      "sidebar.savedFilter.apply": (intent) => {
+        savedFilterController.onApplyConfiguration(intent.configurationId);
+      },
+      "sidebar.savedFilter.saveCurrent": (intent) => {
+        savedFilterController.onSaveCurrentConfiguration(intent.name);
+      },
+      "sidebar.savedFilter.rename": (intent) => {
+        savedFilterController.onRenameConfiguration(intent.configurationId, intent.name);
+      },
+      "sidebar.savedFilter.delete": (intent) => {
+        savedFilterController.onDeleteConfiguration(intent.configurationId);
+      },
+      "sidebar.quickFilter.recentDays.change": (intent) => {
+        handleRecentDaysChange(intent.days);
+      },
+      "sidebar.quickFilter.recentEnabled.change": (intent) => {
+        handleRecentEnabledChange(intent.enabled);
+      },
+      "sidebar.quickFilter.minPriority.change": (intent) => {
+        handleMinPriorityChange(intent.priority);
+      },
+      "sidebar.quickFilter.priorityEnabled.change": (intent) => {
+        handlePriorityEnabledChange(intent.enabled);
+      },
       "task.toggleComplete": (intent) => {
         handleToggleComplete(intent.taskId);
       },
@@ -684,12 +760,34 @@ const Index = () => {
     }),
     [
       handleOpenAuthModal,
+      shortcutsHelp,
+      handleOpenGuide,
       handleFocusSidebar,
       handleFocusTasks,
       handleHashtagExclusive,
       handleAuthorClick,
       handleChannelClear,
       handlePersonClear,
+      handleRelayToggle,
+      handleRelayExclusive,
+      handleToggleAllRelays,
+      handleAddRelay,
+      handleRemoveRelay,
+      reconnectRelay,
+      handleChannelToggle,
+      handleChannelExclusive,
+      handleToggleAllChannels,
+      handleChannelMatchModeChange,
+      handleChannelPin,
+      handleChannelUnpin,
+      handlePersonToggle,
+      handlePersonExclusive,
+      handleToggleAllPeople,
+      savedFilterController,
+      handleRecentDaysChange,
+      handleRecentEnabledChange,
+      handleMinPriorityChange,
+      handlePriorityEnabledChange,
       handleToggleComplete,
       handleStatusChange,
     ]
@@ -852,45 +950,41 @@ const Index = () => {
     [currentView, setCurrentView, handleDispatchOpenAuthModal]
   );
 
+  const desktopSidebarController = useMemo(
+    () => ({
+      relays: relaysWithActiveState,
+      channels: channelsWithState,
+      channelMatchMode,
+      people: sidebarPeopleWithSelected,
+      nostrRelays,
+      isFocused: isSidebarFocused,
+      quickFilters,
+      savedFilterConfigurations: savedFilterController.configurations,
+      activeSavedFilterConfigurationId: savedFilterController.activeConfigurationId,
+      pinnedChannelIds: getPinnedChannelIdsForView(
+        pinnedChannelsState,
+        currentView,
+        activeRelayIdList
+      ),
+    }),
+    [
+      relaysWithActiveState,
+      channelsWithState,
+      channelMatchMode,
+      sidebarPeopleWithSelected,
+      nostrRelays,
+      isSidebarFocused,
+      quickFilters,
+      savedFilterController.configurations,
+      savedFilterController.activeConfigurationId,
+      pinnedChannelsState,
+      currentView,
+      activeRelayIdList,
+    ]
+  );
+
   const desktopContent: FeedPageDesktopContentConfig = useMemo(
     () => ({
-      sidebarProps: {
-        relays: relaysWithActiveState,
-        channels: channelsWithState,
-        channelMatchMode,
-        people: sidebarPeopleWithSelected,
-        nostrRelays,
-        onRelayToggle: handleRelayToggle,
-        onRelayExclusive: handleRelayExclusive,
-        onChannelToggle: handleChannelToggle,
-        onChannelExclusive: handleChannelExclusive,
-        onPersonToggle: handlePersonToggle,
-        onPersonExclusive: handlePersonExclusive,
-        onToggleAllRelays: handleToggleAllRelays,
-        onToggleAllChannels: handleToggleAllChannels,
-        onChannelMatchModeChange: handleChannelMatchModeChange,
-        onToggleAllPeople: handleToggleAllPeople,
-        onAddRelay: handleAddRelay,
-        onRemoveRelay: handleRemoveRelay,
-        onReconnectRelay: reconnectRelay,
-        isFocused: isSidebarFocused,
-        onFocusTasks: handleFocusTasks,
-        onShortcutsClick: shortcutsHelp.open,
-        onGuideClick: handleOpenGuide,
-        savedFilters: savedFilterController,
-        quickFilters,
-        onRecentDaysChange: handleRecentDaysChange,
-        onRecentEnabledChange: handleRecentEnabledChange,
-        onMinPriorityChange: handleMinPriorityChange,
-        onPriorityEnabledChange: handlePriorityEnabledChange,
-        pinnedChannelIds: getPinnedChannelIdsForView(
-          pinnedChannelsState,
-          currentView,
-          activeRelayIdList
-        ),
-        onChannelPin: handleChannelPin,
-        onChannelUnpin: handleChannelUnpin,
-      },
       failedPublishQueueBannerProps: {
         drafts: failedPublishDrafts,
         selectedFeedDrafts: visibleFailedPublishDrafts,
@@ -917,39 +1011,6 @@ const Index = () => {
       },
     }),
     [
-      relaysWithActiveState,
-      channelsWithState,
-      channelMatchMode,
-      sidebarPeopleWithSelected,
-      nostrRelays,
-      handleRelayToggle,
-      handleRelayExclusive,
-      handleChannelToggle,
-      handleChannelExclusive,
-      handlePersonToggle,
-      handlePersonExclusive,
-      handleToggleAllRelays,
-      handleToggleAllChannels,
-      handleChannelMatchModeChange,
-      handleToggleAllPeople,
-      handleAddRelay,
-      handleRemoveRelay,
-      reconnectRelay,
-      isSidebarFocused,
-      handleFocusTasks,
-      shortcutsHelp.open,
-      handleOpenGuide,
-      savedFilterController,
-      quickFilters,
-      handleRecentDaysChange,
-      handleRecentEnabledChange,
-      handleMinPriorityChange,
-      handlePriorityEnabledChange,
-      pinnedChannelsState,
-      currentView,
-      activeRelayIdList,
-      handleChannelPin,
-      handleChannelUnpin,
       failedPublishDrafts,
       visibleFailedPublishDrafts,
       handleRetryFailedPublish,
@@ -958,6 +1019,7 @@ const Index = () => {
       handleDismissFailedPublish,
       handleDismissAllFailedPublish,
       desktopSwipeHandlers,
+      currentView,
       kanbanDepthMode,
       t,
       searchQuery,
@@ -1015,17 +1077,19 @@ const Index = () => {
     <FeedInteractionProvider bus={feedInteractionBus}>
       <FeedPageUiConfigProvider value={uiConfig}>
         <FeedTaskViewModelProvider value={feedTaskViewModel}>
-          <FeedPageDesktopShell
-            header={desktopHeader}
-            content={desktopContent}
-            shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-            authModalProps={{
-              isOpen: isAuthModalOpen,
-              onClose: handleCloseAuthModal,
-              initialStep: authModalInitialStep,
-            }}
-            onboardingOverlays={onboardingOverlays}
-          />
+          <FeedSidebarControllerProvider value={desktopSidebarController}>
+            <FeedPageDesktopShell
+              header={desktopHeader}
+              content={desktopContent}
+              shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+              authModalProps={{
+                isOpen: isAuthModalOpen,
+                onClose: handleCloseAuthModal,
+                initialStep: authModalInitialStep,
+              }}
+              onboardingOverlays={onboardingOverlays}
+            />
+          </FeedSidebarControllerProvider>
         </FeedTaskViewModelProvider>
       </FeedPageUiConfigProvider>
     </FeedInteractionProvider>

@@ -39,17 +39,6 @@ function renderSidebar(relays: Relay[]) {
       channels={channels}
       people={people}
       nostrRelays={nostrRelays}
-      onRelayToggle={() => {}}
-      onRelayExclusive={() => {}}
-      onChannelToggle={() => {}}
-      onChannelExclusive={() => {}}
-      onPersonToggle={() => {}}
-      onPersonExclusive={() => {}}
-      onToggleAllRelays={() => {}}
-      onToggleAllChannels={() => {}}
-      onToggleAllPeople={() => {}}
-      onAddRelay={() => {}}
-      onRemoveRelay={() => {}}
     />
   );
 }
@@ -97,17 +86,6 @@ describe("Sidebar", () => {
         channels={foldedChannels}
         people={people}
         nostrRelays={nostrRelays}
-        onRelayToggle={() => {}}
-        onRelayExclusive={() => {}}
-        onChannelToggle={() => {}}
-        onChannelExclusive={() => {}}
-        onPersonToggle={() => {}}
-        onPersonExclusive={() => {}}
-        onToggleAllRelays={() => {}}
-        onToggleAllChannels={() => {}}
-        onToggleAllPeople={() => {}}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
         pinnedChannelIds={["release"]}
       />
     );

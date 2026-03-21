@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next";
 import type { ChannelMatchMode } from "@/types";
 import { cn } from "@/lib/utils";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface ChannelMatchModeToggleProps {
   mode: ChannelMatchMode;
-  onChange: (mode: ChannelMatchMode) => void;
+  onChange?: (mode: ChannelMatchMode) => void;
   size?: "sidebar" | "mobile";
   className?: string;
 }
@@ -16,12 +17,20 @@ export function ChannelMatchModeToggle({
   className,
 }: ChannelMatchModeToggleProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const isSidebar = size === "sidebar";
 
   return (
     <button
       type="button"
-      onClick={() => onChange(mode === "and" ? "or" : "and")}
+      onClick={() => {
+        const nextMode = mode === "and" ? "or" : "and";
+        if (onChange) {
+          onChange(nextMode);
+          return;
+        }
+        void dispatchFeedInteraction({ type: "sidebar.channel.matchMode.change", mode: nextMode });
+      }}
       className={cn(
         "relative inline-flex items-center rounded-full border border-border/90 bg-muted/50",
         isSidebar ? "h-5 w-11 shrink-0 lg:h-6 lg:w-16" : "h-8 w-24",

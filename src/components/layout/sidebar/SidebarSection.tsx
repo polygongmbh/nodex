@@ -2,8 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 type SidebarSectionAnimationMode = "none" | "previewCollapse" | "fullCollapse";
+type SidebarSectionIconIntent =
+  | "sidebar.relay.toggleAll"
+  | "sidebar.channel.toggleAll"
+  | "sidebar.person.toggleAll";
 
 export interface SidebarSectionProps {
   title: string;
@@ -11,6 +16,7 @@ export interface SidebarSectionProps {
   isExpanded: boolean;
   onToggle: () => void;
   onIconClick?: () => void;
+  iconIntent?: SidebarSectionIconIntent;
   hint?: string;
   action?: React.ReactNode;
   animationMode?: SidebarSectionAnimationMode;
@@ -23,12 +29,14 @@ export function SidebarSection({
   isExpanded,
   onToggle,
   onIconClick,
+  iconIntent,
   hint,
   action,
   animationMode = "previewCollapse",
   children,
 }: SidebarSectionProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [contentHeight, setContentHeight] = useState(0);
   const toggleLabel = `${isExpanded ? t("tasks.actions.collapse") : t("tasks.actions.expandAll")} ${title}`;
@@ -56,7 +64,15 @@ export function SidebarSection({
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <button
             type="button"
-            onClick={() => onIconClick?.()}
+            onClick={() => {
+              if (onIconClick) {
+                onIconClick();
+                return;
+              }
+              if (iconIntent) {
+                void dispatchFeedInteraction({ type: iconIntent });
+              }
+            }}
             className="hover:ring-2 hover:ring-primary/50 rounded p-0.5 focus:outline-none focus:ring-2 focus:ring-primary/50"
             title={t("sidebar.actions.toggleAll")}
             aria-label={t("sidebar.actions.toggleAllFor", { title: title.toLowerCase() })}

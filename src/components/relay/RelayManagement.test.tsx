@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { RelayManagement } from "./RelayManagement";
 import { toast } from "sonner";
+import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -11,6 +13,18 @@ vi.mock("sonner", () => ({
 }));
 
 describe("RelayManagement", () => {
+  const renderWithBus = (ui: ReactNode, dispatch = vi.fn().mockResolvedValue({
+    envelope: { id: 1, dispatchedAtMs: Date.now(), intent: { type: "ui.focusTasks" } },
+    outcome: { status: "handled" },
+  })) => {
+    render(
+      <FeedInteractionProvider bus={{ dispatch, dispatchBatch: vi.fn().mockResolvedValue([]) }}>
+        {ui}
+      </FeedInteractionProvider>
+    );
+    return dispatch;
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     Object.defineProperty(navigator, "clipboard", {
@@ -20,14 +34,12 @@ describe("RelayManagement", () => {
   });
 
   it("copies diagnostics from relay debug utilities", async () => {
-    render(
+    renderWithBus(
       <RelayManagement
         relays={[
           { url: "wss://relay.one", status: "connected", latency: 123 },
           { url: "wss://relay.two", status: "disconnected" },
         ]}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
       />
     );
 
@@ -41,14 +53,12 @@ describe("RelayManagement", () => {
   });
 
   it("shows distinct labels for connection issues and read rejections", () => {
-    render(
+    renderWithBus(
       <RelayManagement
         relays={[
           { url: "wss://relay.one", status: "connection-error" },
           { url: "wss://relay.two", status: "verification-failed" },
         ]}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
       />
     );
 
@@ -58,13 +68,11 @@ describe("RelayManagement", () => {
   });
 
   it("explains read-only relays as readable but not publishable", () => {
-    render(
+    renderWithBus(
       <RelayManagement
         relays={[
           { url: "wss://relay.one", status: "read-only" },
         ]}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
       />
     );
 
@@ -73,7 +81,7 @@ describe("RelayManagement", () => {
   });
 
   it("shows relay capability details from nip11 metadata", () => {
-    render(
+    renderWithBus(
       <RelayManagement
         relays={[
           {
@@ -86,8 +94,6 @@ describe("RelayManagement", () => {
             },
           },
         ]}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
       />
     );
 
@@ -100,46 +106,35 @@ describe("RelayManagement", () => {
     expect(screen.getByText("connected (auth required)")).toBeInTheDocument();
   });
 
-  it("allows reconnecting an individual relay from the management panel", () => {
-    const onReconnectRelay = vi.fn();
-
-    render(
+  it("dispatches relay reconnect intent from the management panel", () => {
+    const dispatch = renderWithBus(
       <RelayManagement
         relays={[
           { url: "wss://relay.one", status: "read-only" },
         ]}
-        onAddRelay={() => {}}
-        onRemoveRelay={() => {}}
-        onReconnectRelay={onReconnectRelay}
       />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
     fireEvent.click(screen.getByRole("button", { name: /reconnect relay/i }));
 
-    expect(onReconnectRelay).toHaveBeenCalledWith("wss://relay.one");
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
   });
 
-  it("removes an individual relay without triggering reconnect", () => {
-    const onRemoveRelay = vi.fn();
-    const onReconnectRelay = vi.fn();
-
-    render(
+  it("dispatches relay remove intent without reconnect intent", () => {
+    const dispatch = renderWithBus(
       <RelayManagement
         relays={[
           { url: "wss://relay.one", status: "connected" },
         ]}
-        onAddRelay={() => {}}
-        onRemoveRelay={onRemoveRelay}
-        onReconnectRelay={onReconnectRelay}
       />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
     fireEvent.click(screen.getByRole("button", { name: /remove relay/i }));
 
-    expect(onRemoveRelay).toHaveBeenCalledWith("wss://relay.one");
-    expect(onReconnectRelay).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.remove", url: "wss://relay.one" });
+    expect(dispatch).not.toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
   });
 
 });

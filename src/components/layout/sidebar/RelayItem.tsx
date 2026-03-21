@@ -5,6 +5,7 @@ import { SidebarFilterRow } from "./SidebarFilterRow";
 import { useTranslation } from "react-i18next";
 import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "building-2": Building2,
@@ -15,13 +16,12 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 interface RelayItemProps {
   relay: Relay;
-  onToggle: () => void;
-  onExclusive: () => void;
   isKeyboardFocused?: boolean;
 }
 
-export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = false }: RelayItemProps) {
+export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const Icon = iconMap[relay.icon] || Building2;
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
   const isConnectionActive = resolvedConnectionStatus === "connected";
@@ -41,7 +41,7 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onToggle();
+          void dispatchFeedInteraction({ type: "sidebar.relay.toggle", relayId: relay.id });
         }}
         className="relative"
         title={t("sidebar.filters.toggleRelay", { name: relay.name })}
@@ -64,7 +64,9 @@ export function RelayItem({ relay, onToggle, onExclusive, isKeyboardFocused = fa
 
       {/* Name - click for exclusive */}
       <button
-        onClick={onExclusive}
+        onClick={() => {
+          void dispatchFeedInteraction({ type: "sidebar.relay.exclusive", relayId: relay.id });
+        }}
         className="flex-1 text-left"
         title={t("sidebar.filters.showOnlyRelay", { name: relay.name })}
         aria-label={t("sidebar.filters.showOnlyRelay", { name: relay.name })}

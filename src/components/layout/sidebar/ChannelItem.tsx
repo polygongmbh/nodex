@@ -3,29 +3,23 @@ import { cn } from "@/lib/utils";
 import { Channel } from "@/types";
 import { SidebarFilterRow } from "./SidebarFilterRow";
 import { useTranslation } from "react-i18next";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface ChannelItemProps {
   channel: Channel;
-  onToggle: () => void;
-  onExclusive: () => void;
   isPinned?: boolean;
-  onPin?: () => void;
-  onUnpin?: () => void;
   isKeyboardFocused?: boolean;
   className?: string;
 }
 
 export function ChannelItem({
   channel,
-  onToggle,
-  onExclusive,
   isPinned = false,
-  onPin,
-  onUnpin,
   isKeyboardFocused = false,
   className,
 }: ChannelItemProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const nextFilterStateLabel =
     channel.filterState === "neutral"
       ? t("sidebar.filterStates.include")
@@ -43,7 +37,7 @@ export function ChannelItem({
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onToggle();
+          void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
         }}
         title={t("sidebar.filters.toggleChannelTo", { name: channel.name, nextState: nextFilterStateLabel })}
         aria-label={t("sidebar.filters.toggleChannelFilter", { name: channel.name })}
@@ -61,7 +55,9 @@ export function ChannelItem({
 
       {/* Name - click for exclusive */}
       <button
-        onClick={onExclusive}
+        onClick={() => {
+          void dispatchFeedInteraction({ type: "sidebar.channel.exclusive", channelId: channel.id });
+        }}
         className="flex-1 text-left"
         aria-label={t("sidebar.filters.showOnlyChannel", { name: channel.name })}
         title={t("sidebar.filters.showOnlyChannel", { name: channel.name })}
@@ -88,35 +84,33 @@ export function ChannelItem({
         />
       )}
 
-      {(onPin || onUnpin) && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isPinned) {
-              onUnpin?.();
-              return;
-            }
-            onPin?.();
-          }}
-          title={isPinned
-            ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
-            : t("sidebar.filters.pinChannelToView", { name: channel.name })}
-          aria-label={isPinned
-            ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
-            : t("sidebar.filters.pinChannelToView", { name: channel.name })}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isPinned) {
+            void dispatchFeedInteraction({ type: "sidebar.channel.unpin", channelId: channel.id });
+            return;
+          }
+          void dispatchFeedInteraction({ type: "sidebar.channel.pin", channelId: channel.id });
+        }}
+        title={isPinned
+          ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
+          : t("sidebar.filters.pinChannelToView", { name: channel.name })}
+        aria-label={isPinned
+          ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
+          : t("sidebar.filters.pinChannelToView", { name: channel.name })}
+        className={cn(
+          "flex-shrink-0 transition-opacity",
+          isPinned ? "opacity-100" : "opacity-0 group-hover:opacity-50 hover:!opacity-100"
+        )}
+      >
+        <Pin
           className={cn(
-            "flex-shrink-0 transition-opacity",
-            isPinned ? "opacity-100" : "opacity-0 group-hover:opacity-50 hover:!opacity-100"
+            "w-3 h-3",
+            isPinned ? "text-primary fill-primary" : "text-muted-foreground"
           )}
-        >
-          <Pin
-            className={cn(
-              "w-3 h-3",
-              isPinned ? "text-primary fill-primary" : "text-muted-foreground"
-            )}
-          />
-        </button>
-      )}
+        />
+      </button>
     </SidebarFilterRow>
   );
 }

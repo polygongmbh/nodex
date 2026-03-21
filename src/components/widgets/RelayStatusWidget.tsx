@@ -10,11 +10,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface RelayStatusWidgetProps {
   relays: NDKRelayStatus[];
-  onAddRelay: (url: string) => void;
-  onRemoveRelay: (url: string) => void;
 }
 
-export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelayStatusWidgetProps) {
+export function RelayStatusWidget({ relays }: RelayStatusWidgetProps) {
   const { t } = useTranslation();
   const getStatusColor = (status: NDKRelayStatus["status"]) => {
     return getRelayStatusDotClass(status);
@@ -80,11 +78,7 @@ export function RelayStatusWidget({ relays, onAddRelay, onRemoveRelay }: RelaySt
             ))
           )}
         </div>
-        <RelayManagement
-          relays={relays}
-          onAddRelay={onAddRelay}
-          onRemoveRelay={onRemoveRelay}
-        />
+        <RelayManagement relays={relays} />
       </div>
     </TooltipProvider>
   );

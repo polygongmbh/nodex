@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
-import { Relay, Channel, ChannelMatchMode, Person, QuickFilterState, SavedFilterController } from "@/types";
+import {
+  Relay,
+  Channel,
+  ChannelMatchMode,
+  Person,
+  QuickFilterState,
+  SavedFilterConfiguration,
+} from "@/types";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
@@ -21,6 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const DEFAULT_EXPANDED_SECTIONS = {
   feeds: true,
@@ -60,38 +68,17 @@ export function SidebarHeader({ className }: SidebarHeaderProps) {
   );
 }
 
-interface SidebarProps {
+export interface SidebarProps {
   relays: Relay[];
   channels: Channel[];
   channelMatchMode?: ChannelMatchMode;
   people: Person[];
   nostrRelays: NDKRelayStatus[];
-  onRelayToggle: (id: string) => void;
-  onRelayExclusive: (id: string) => void;
-  onChannelToggle: (id: string) => void;
-  onChannelExclusive: (id: string) => void;
-  onPersonToggle: (id: string) => void;
-  onPersonExclusive: (id: string) => void;
-  onToggleAllRelays: () => void;
-  onToggleAllChannels: () => void;
-  onChannelMatchModeChange?: (mode: ChannelMatchMode) => void;
-  onToggleAllPeople: () => void;
-  onAddRelay: (url: string) => void;
-  onRemoveRelay: (url: string) => void;
-  onReconnectRelay?: (url: string) => void;
   isFocused?: boolean;
-  onFocusTasks?: () => void;
-  onShortcutsClick?: () => void;
-  onGuideClick?: () => void;
-  savedFilters?: SavedFilterController;
   quickFilters?: QuickFilterState;
-  onRecentDaysChange?: (days: number) => void;
-  onRecentEnabledChange?: (enabled: boolean) => void;
-  onMinPriorityChange?: (priority: number) => void;
-  onPriorityEnabledChange?: (enabled: boolean) => void;
   pinnedChannelIds?: string[];
-  onChannelPin?: (id: string) => void;
-  onChannelUnpin?: (id: string) => void;
+  savedFilterConfigurations?: SavedFilterConfiguration[];
+  activeSavedFilterConfigurationId?: string | null;
 }
 
 export function Sidebar({
@@ -100,34 +87,14 @@ export function Sidebar({
   channelMatchMode = "and",
   people,
   nostrRelays,
-  onRelayToggle,
-  onRelayExclusive,
-  onChannelToggle,
-  onChannelExclusive,
-  onPersonToggle,
-  onPersonExclusive,
-  onToggleAllRelays,
-  onToggleAllChannels,
-  onChannelMatchModeChange = () => {},
-  onToggleAllPeople,
-  onAddRelay,
-  onRemoveRelay,
-  onReconnectRelay,
   isFocused = false,
-  onFocusTasks,
-  onShortcutsClick,
-  onGuideClick,
-  savedFilters,
   quickFilters,
-  onRecentDaysChange = () => {},
-  onRecentEnabledChange = () => {},
-  onMinPriorityChange = () => {},
-  onPriorityEnabledChange = () => {},
   pinnedChannelIds = [],
-  onChannelPin,
-  onChannelUnpin,
+  savedFilterConfigurations = [],
+  activeSavedFilterConfigurationId = null,
 }: SidebarProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [expandedSections, setExpandedSections] = useState(() => sidebarExpandedSectionsSnapshot);
   const [screenHeight, setScreenHeight] = useState(() =>
     typeof window === "undefined" ? 900 : window.innerHeight
@@ -236,7 +203,7 @@ export function Sidebar({
       // L or ArrowRight or Enter - return focus to tasks
       if (key === "l" || e.key === "ArrowRight" || e.key === "Enter") {
         e.preventDefault();
-        onFocusTasks?.();
+        void dispatchFeedInteraction({ type: "ui.focusTasks" });
         return;
       }
 
@@ -259,9 +226,13 @@ export function Sidebar({
         e.preventDefault();
         const item = items[focusedItemIndex];
         if (item) {
-          if (item.type === 'relay') onRelayToggle(item.id);
-          else if (item.type === 'channel') onChannelToggle(item.id);
-          else if (item.type === 'person') onPersonToggle(item.id);
+          if (item.type === "relay") {
+            void dispatchFeedInteraction({ type: "sidebar.relay.toggle", relayId: item.id });
+          } else if (item.type === "channel") {
+            void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: item.id });
+          } else if (item.type === "person") {
+            void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: item.id });
+          }
         }
         return;
       }
@@ -282,14 +253,14 @@ export function Sidebar({
 
       // Escape - return to tasks
       if (e.key === "Escape") {
-        onFocusTasks?.();
+        void dispatchFeedInteraction({ type: "ui.focusTasks" });
         return;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFocused, focusedItemIndex, getFocusableItems, onFocusTasks, onRelayToggle, onChannelToggle, onPersonToggle]);
+  }, [isFocused, focusedItemIndex, getFocusableItems, dispatchFeedInteraction]);
 
   // Scroll focused item into view
   useEffect(() => {
@@ -326,15 +297,14 @@ export function Sidebar({
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto scrollbar-thin py-1.5 pb-3">
         <div className="px-2 sm:px-2.5 lg:px-3 pb-2">
-          {savedFilters && <SavedFilterPresetRow savedFilters={savedFilters} />}
+          <SavedFilterPresetRow
+            configurations={savedFilterConfigurations}
+            activeConfigurationId={activeSavedFilterConfigurationId}
+          />
           {quickFilters && (
             <SidebarQuickConstraintRow
               quickFilters={quickFilters}
-              onRecentDaysChange={onRecentDaysChange}
-              onRecentEnabledChange={onRecentEnabledChange}
-              onMinPriorityChange={onMinPriorityChange}
-              onPriorityEnabledChange={onPriorityEnabledChange}
-              className={savedFilters ? "pt-1" : undefined}
+              className={savedFilterConfigurations.length > 0 ? "pt-1" : undefined}
             />
           )}
         </div>
@@ -346,16 +316,13 @@ export function Sidebar({
           isExpanded={expandedSections.feeds}
           animationMode="fullCollapse"
           onToggle={() => toggleSection("feeds")}
-          onIconClick={onToggleAllRelays}
+          iconIntent="sidebar.relay.toggleAll"
           hint={t("sidebar.hints.relays")}
           action={
             <TooltipProvider>
               <Tooltip>
                 <RelayManagement
                   relays={nostrRelays}
-                  onAddRelay={onAddRelay}
-                  onRemoveRelay={onRemoveRelay}
-                  onReconnectRelay={onReconnectRelay}
                   trigger={
                     <TooltipTrigger asChild>
                       <Button
@@ -382,8 +349,6 @@ export function Sidebar({
             <RelayItem
               key={relay.id}
               relay={relay}
-              onToggle={() => onRelayToggle(relay.id)}
-              onExclusive={() => onRelayExclusive(relay.id)}
               isKeyboardFocused={focusedItem?.type === 'relay' && focusedItem?.id === relay.id}
             />
           ))}
@@ -397,11 +362,10 @@ export function Sidebar({
           icon={Hash}
           isExpanded={expandedSections.channels}
           onToggle={() => toggleSection("channels")}
-          onIconClick={onToggleAllChannels}
+          iconIntent="sidebar.channel.toggleAll"
           action={
             <ChannelMatchModeToggle
               mode={channelMatchMode}
-              onChange={onChannelMatchModeChange}
               size="sidebar"
               className="ml-1 mr-1"
             />
@@ -411,11 +375,7 @@ export function Sidebar({
             <ChannelItem
               key={channel.id}
               channel={channel}
-              onToggle={() => onChannelToggle(channel.id)}
-              onExclusive={() => onChannelExclusive(channel.id)}
               isPinned={pinnedChannelSet.has(channel.id)}
-              onPin={onChannelPin ? () => onChannelPin(channel.id) : undefined}
-              onUnpin={onChannelUnpin ? () => onChannelUnpin(channel.id) : undefined}
               isKeyboardFocused={focusedItem?.type === 'channel' && focusedItem?.id === channel.id}
               className={!expandedSections.channels && !collapsedPreviewChannelIds.has(channel.id) ? "hidden" : undefined}
             />
@@ -430,14 +390,12 @@ export function Sidebar({
           icon={Users}
           isExpanded={expandedSections.people}
           onToggle={() => toggleSection("people")}
-          onIconClick={onToggleAllPeople}
+          iconIntent="sidebar.person.toggleAll"
         >
           {people.map((person) => (
             <PersonItem
               key={person.id}
               person={person}
-              onToggle={() => onPersonToggle(person.id)}
-              onExclusive={() => onPersonExclusive(person.id)}
               isKeyboardFocused={focusedItem?.type === 'person' && focusedItem?.id === person.id}
               className={!expandedSections.people && !collapsedPreviewPersonIds.has(person.id) ? "hidden" : undefined}
             />
@@ -448,31 +406,29 @@ export function Sidebar({
 
       {/* Footer: utility tiles */}
       <div className="border-t border-sidebar-border flex-shrink-0 p-2">
-        {(onShortcutsClick || onGuideClick) && (
-          <div className="flex w-full flex-col gap-1 lg:flex-row lg:gap-2">
-            {onShortcutsClick && (
-              <button
-                onClick={onShortcutsClick}
-                className="hidden h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:inline-flex lg:w-auto lg:flex-1"
-                aria-label={t("sidebar.actions.openShortcuts")}
-              >
-                <Keyboard className="w-4 h-4" />
-                <span className="text-xs font-medium">{t("sidebar.actions.shortcuts")}</span>
-              </button>
-            )}
+        <div className="flex w-full flex-col gap-1 lg:flex-row lg:gap-2">
+          <button
+            onClick={() => {
+              void dispatchFeedInteraction({ type: "ui.openShortcutsHelp" });
+            }}
+            className="hidden h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:inline-flex lg:w-auto lg:flex-1"
+            aria-label={t("sidebar.actions.openShortcuts")}
+          >
+            <Keyboard className="w-4 h-4" />
+            <span className="text-xs font-medium">{t("sidebar.actions.shortcuts")}</span>
+          </button>
 
-            {onGuideClick && (
-              <button
-                onClick={onGuideClick}
-                className="inline-flex h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:w-auto lg:flex-1"
-                aria-label={t("sidebar.actions.openGuide")}
-              >
-                <BookOpen className="w-4 h-4" />
-                <span className="text-xs font-medium">{t("sidebar.actions.guide")}</span>
-              </button>
-            )}
-          </div>
-        )}
+          <button
+            onClick={() => {
+              void dispatchFeedInteraction({ type: "ui.openGuide" });
+            }}
+            className="inline-flex h-8 w-full items-center justify-start gap-2 rounded-none bg-transparent px-1.5 text-muted-foreground transition-colors hover:text-foreground lg:w-auto lg:flex-1"
+            aria-label={t("sidebar.actions.openGuide")}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span className="text-xs font-medium">{t("sidebar.actions.guide")}</span>
+          </button>
+        </div>
       </div>
     </aside>
   );

@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { ChannelItem } from "./ChannelItem";
 import type { Channel } from "@/types";
+import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const baseChannel: Channel = {
   id: "general",
@@ -10,91 +12,55 @@ const baseChannel: Channel = {
 };
 
 describe("ChannelItem", () => {
-  it("enables exclusive filter when clicking the channel text", () => {
-    const onToggle = vi.fn();
-    const onExclusive = vi.fn();
+  const renderChannelItem = (ui: ReactNode, dispatch = vi.fn().mockResolvedValue({
+    envelope: { id: 1, dispatchedAtMs: Date.now(), intent: { type: "ui.focusTasks" } },
+    outcome: { status: "handled" },
+  })) => {
+    render(
+      <FeedInteractionProvider bus={{ dispatch, dispatchBatch: vi.fn().mockResolvedValue([]) }}>
+        {ui}
+      </FeedInteractionProvider>
+    );
+    return dispatch;
+  };
 
-    render(<ChannelItem channel={baseChannel} onToggle={onToggle} onExclusive={onExclusive} />);
+  it("enables exclusive filter when clicking the channel text", () => {
+    const dispatch = renderChannelItem(<ChannelItem channel={baseChannel} />);
 
     const exclusiveButton = screen.getByRole("button", { name: "Show only #general" });
 
     fireEvent.click(exclusiveButton);
 
-    expect(onExclusive).toHaveBeenCalledTimes(1);
-    expect(onToggle).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.channel.exclusive", channelId: "general" });
   });
 
   it("toggles filter when clicking the hashtag icon", () => {
-    const onToggle = vi.fn();
-    const onExclusive = vi.fn();
-
-    render(<ChannelItem channel={baseChannel} onToggle={onToggle} onExclusive={onExclusive} />);
+    const dispatch = renderChannelItem(<ChannelItem channel={baseChannel} />);
     const toggleButton = screen.getByRole("button", { name: "Toggle #general filter" });
 
     fireEvent.click(toggleButton);
 
-    expect(onToggle).toHaveBeenCalledTimes(1);
-    expect(onExclusive).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.channel.toggle", channelId: "general" });
   });
 
-  it("renders pin button when onPin is provided", () => {
-    render(
-      <ChannelItem
-        channel={baseChannel}
-        onToggle={vi.fn()}
-        onExclusive={vi.fn()}
-        onPin={vi.fn()}
-      />
-    );
+  it("renders pin button", () => {
+    renderChannelItem(<ChannelItem channel={baseChannel} />);
     expect(screen.getByRole("button", { name: /pin #general/i })).toBeInTheDocument();
   });
 
-  it("does not render pin button when neither onPin nor onUnpin is provided", () => {
-    render(<ChannelItem channel={baseChannel} onToggle={vi.fn()} onExclusive={vi.fn()} />);
-    expect(screen.queryByRole("button", { name: /pin #general/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /unpin #general/i })).not.toBeInTheDocument();
-  });
-
-  it("calls onPin when pin button is clicked and channel is not pinned", () => {
-    const onPin = vi.fn();
-    const onToggle = vi.fn();
-
-    render(
-      <ChannelItem
-        channel={baseChannel}
-        onToggle={onToggle}
-        onExclusive={vi.fn()}
-        isPinned={false}
-        onPin={onPin}
-        onUnpin={vi.fn()}
-      />
-    );
+  it("dispatches pin when pin button is clicked and channel is not pinned", () => {
+    const dispatch = renderChannelItem(<ChannelItem channel={baseChannel} isPinned={false} />);
 
     fireEvent.click(screen.getByRole("button", { name: /pin #general/i }));
 
-    expect(onPin).toHaveBeenCalledTimes(1);
-    expect(onToggle).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.channel.pin", channelId: "general" });
   });
 
-  it("calls onUnpin when pin button is clicked and channel is pinned", () => {
-    const onUnpin = vi.fn();
-    const onToggle = vi.fn();
-
-    render(
-      <ChannelItem
-        channel={baseChannel}
-        onToggle={onToggle}
-        onExclusive={vi.fn()}
-        isPinned={true}
-        onPin={vi.fn()}
-        onUnpin={onUnpin}
-      />
-    );
+  it("dispatches unpin when pin button is clicked and channel is pinned", () => {
+    const dispatch = renderChannelItem(<ChannelItem channel={baseChannel} isPinned={true} />);
 
     fireEvent.click(screen.getByRole("button", { name: /unpin #general/i }));
 
-    expect(onUnpin).toHaveBeenCalledTimes(1);
-    expect(onToggle).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.channel.unpin", channelId: "general" });
   });
-
 });

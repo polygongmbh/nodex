@@ -3,23 +3,21 @@ import { Person } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { SidebarFilterRow } from "./SidebarFilterRow";
 import { useTranslation } from "react-i18next";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface PersonItemProps {
   person: Person;
-  onToggle: () => void;
-  onExclusive: () => void;
   isKeyboardFocused?: boolean;
   className?: string;
 }
 
 export function PersonItem({
   person,
-  onToggle,
-  onExclusive,
   isKeyboardFocused = false,
   className,
 }: PersonItemProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const personName = person.id === "me" ? t("sidebar.filters.me") : person.displayName;
   const onlineStatus = person.onlineStatus ?? (person.isOnline ? "online" : "offline");
   const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-warning" : null;
@@ -37,7 +35,7 @@ export function PersonItem({
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onToggle();
+          void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.id });
         }}
         title={t("sidebar.filters.togglePerson", { name: personName })}
         aria-label={t("sidebar.filters.togglePerson", { name: personName })}
@@ -60,7 +58,9 @@ export function PersonItem({
         )}
       </button>
       <button
-        onClick={onExclusive}
+        onClick={() => {
+          void dispatchFeedInteraction({ type: "sidebar.person.exclusive", personId: person.id });
+        }}
         className="flex-1 text-left"
         aria-label={t("sidebar.filters.showOnlyPerson", { name: personName })}
         title={t("sidebar.filters.showOnlyPerson", { name: personName })}

@@ -1,6 +1,6 @@
 import { Bookmark, EllipsisVertical } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { SavedFilterController, SavedFilterConfiguration } from "@/types";
+import type { SavedFilterConfiguration } from "@/types";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -8,26 +8,29 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface SavedFilterPresetRowProps {
-  savedFilters?: SavedFilterController;
+  configurations: SavedFilterConfiguration[];
+  activeConfigurationId?: string | null;
   className?: string;
 }
 
-export function SavedFilterPresetRow({ savedFilters, className }: SavedFilterPresetRowProps) {
+export function SavedFilterPresetRow({
+  configurations,
+  activeConfigurationId = null,
+  className,
+}: SavedFilterPresetRowProps) {
   const { t } = useTranslation();
-  if (!savedFilters) return null;
-  const hasItems =
-    savedFilters.configurations.length > 0 || Boolean(savedFilters.onSaveCurrentConfiguration);
-  if (!hasItems) return null;
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
 
   const promptAndSaveCurrent = () => {
-    const initialName = `Preset ${savedFilters.configurations.length + 1}`;
+    const initialName = `Preset ${configurations.length + 1}`;
     const name = window.prompt(t("composer.savedFilters.prompts.save"), initialName);
     if (!name) return;
     const trimmed = name.trim();
     if (!trimmed) return;
-    savedFilters.onSaveCurrentConfiguration(trimmed);
+    void dispatchFeedInteraction({ type: "sidebar.savedFilter.saveCurrent", name: trimmed });
   };
 
   const promptAndRename = (configuration: SavedFilterConfiguration) => {
@@ -35,7 +38,11 @@ export function SavedFilterPresetRow({ savedFilters, className }: SavedFilterPre
     if (!name) return;
     const trimmed = name.trim();
     if (!trimmed) return;
-    savedFilters.onRenameConfiguration(configuration.id, trimmed);
+    void dispatchFeedInteraction({
+      type: "sidebar.savedFilter.rename",
+      configurationId: configuration.id,
+      name: trimmed,
+    });
   };
 
   return (
@@ -48,8 +55,8 @@ export function SavedFilterPresetRow({ savedFilters, className }: SavedFilterPre
         <Bookmark className="h-3.5 w-3.5" />
         <span>{t("composer.savedFilters.actions.saveCurrent")}</span>
       </button>
-      {savedFilters.configurations.map((configuration) => {
-        const isActive = configuration.id === savedFilters.activeConfigurationId;
+      {configurations.map((configuration) => {
+        const isActive = configuration.id === activeConfigurationId;
         return (
           <div
             key={configuration.id}
@@ -62,7 +69,12 @@ export function SavedFilterPresetRow({ savedFilters, className }: SavedFilterPre
           >
             <button
               type="button"
-              onClick={() => savedFilters.onApplyConfiguration(configuration.id)}
+              onClick={() => {
+                void dispatchFeedInteraction({
+                  type: "sidebar.savedFilter.apply",
+                  configurationId: configuration.id,
+                });
+              }}
               className="inline-flex items-center rounded-full px-2 text-xs font-medium hover:text-foreground"
               title={configuration.name}
             >
@@ -83,7 +95,12 @@ export function SavedFilterPresetRow({ savedFilters, className }: SavedFilterPre
                   {t("composer.savedFilters.actions.rename")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() => savedFilters.onDeleteConfiguration(configuration.id)}
+                  onSelect={() => {
+                    void dispatchFeedInteraction({
+                      type: "sidebar.savedFilter.delete",
+                      configurationId: configuration.id,
+                    });
+                  }}
                   className="text-destructive focus:text-destructive"
                 >
                   {t("composer.savedFilters.actions.delete")}

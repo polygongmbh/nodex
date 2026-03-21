@@ -32,23 +32,19 @@ import { ensureRelayProtocol, stripRelayProtocol } from "@/infrastructure/nostr/
 import { useTranslation } from "react-i18next";
 import { getRelayStatusDotClass, getRelayStatusTextClass } from "./relayStatusStyles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface RelayManagementProps {
   relays: NDKRelayStatus[];
-  onAddRelay: (url: string) => void;
-  onRemoveRelay: (url: string) => void;
-  onReconnectRelay?: (url: string) => void;
   trigger?: ReactNode;
 }
 
 export function RelayManagement({
   relays,
-  onAddRelay,
-  onRemoveRelay,
-  onReconnectRelay,
   trigger,
 }: RelayManagementProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [expandedRelayUrl, setExpandedRelayUrl] = useState<string | null>(null);
@@ -58,7 +54,7 @@ export function RelayManagement({
     
     const url = ensureRelayProtocol(newRelayUrl, "wss");
     
-    onAddRelay(url);
+    void dispatchFeedInteraction({ type: "sidebar.relay.add", url });
     setNewRelayUrl("");
   };
 
@@ -272,7 +268,9 @@ export function RelayManagement({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={() => onReconnectRelay?.(relay.url)}
+                      onClick={() => {
+                        void dispatchFeedInteraction({ type: "sidebar.relay.reconnect", url: relay.url });
+                      }}
                       aria-label={t("relay.reconnect")}
                       title={t("relay.reconnect")}
                       disabled={relay.status === "connecting"}
@@ -285,7 +283,9 @@ export function RelayManagement({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => onRemoveRelay(relay.url)}
+                      onClick={() => {
+                        void dispatchFeedInteraction({ type: "sidebar.relay.remove", url: relay.url });
+                      }}
                       aria-label={t("relay.remove")}
                       title={t("relay.remove")}
                     >

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PersonItem } from "./PersonItem";
 import type { Person } from "@/types";
+import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const basePerson: Person = {
   id: "npub123",
@@ -12,35 +13,40 @@ const basePerson: Person = {
 };
 
 describe("PersonItem", () => {
+  const renderPersonItem = (person: Person) => {
+    const dispatch = vi.fn().mockResolvedValue({
+      envelope: { id: 1, dispatchedAtMs: Date.now(), intent: { type: "ui.focusTasks" } },
+      outcome: { status: "handled" },
+    });
+    render(
+      <FeedInteractionProvider bus={{ dispatch, dispatchBatch: vi.fn().mockResolvedValue([]) }}>
+        <PersonItem person={person} />
+      </FeedInteractionProvider>
+    );
+    return dispatch;
+  };
+
   it("renders beam avatar fallback when person has no profile image", () => {
-    render(<PersonItem person={basePerson} onToggle={vi.fn()} onExclusive={vi.fn()} />);
+    renderPersonItem(basePerson);
 
     expect(screen.getByTestId("sidebar-person-beam-npub123")).toBeInTheDocument();
   });
 
   it("enables exclusive filter when clicking the person text", () => {
-    const onToggle = vi.fn();
-    const onExclusive = vi.fn();
-
-    render(<PersonItem person={basePerson} onToggle={onToggle} onExclusive={onExclusive} />);
+    const dispatch = renderPersonItem(basePerson);
 
     const exclusiveButton = screen.getByRole("button", { name: "Show only Alice" });
 
     fireEvent.click(exclusiveButton);
 
-    expect(onExclusive).toHaveBeenCalledTimes(1);
-    expect(onToggle).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.person.exclusive", personId: "npub123" });
   });
 
   it("toggles filter when clicking the avatar", () => {
-    const onToggle = vi.fn();
-    const onExclusive = vi.fn();
-
-    render(<PersonItem person={basePerson} onToggle={onToggle} onExclusive={onExclusive} />);
+    const dispatch = renderPersonItem(basePerson);
 
     fireEvent.click(screen.getByRole("button", { name: "Toggle Alice" }));
 
-    expect(onToggle).toHaveBeenCalledTimes(1);
-    expect(onExclusive).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.person.toggle", personId: "npub123" });
   });
 });

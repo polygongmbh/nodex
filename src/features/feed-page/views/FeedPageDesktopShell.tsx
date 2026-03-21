@@ -1,5 +1,5 @@
 import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
-import { Sidebar, SidebarHeader } from "@/components/layout/Sidebar";
+import { SidebarHeader } from "@/components/layout/Sidebar";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { DesktopSearchDock } from "@/components/tasks/DesktopSearchDock";
 import { ViewSwitcher, type ViewType } from "@/components/tasks/ViewSwitcher";
@@ -9,6 +9,7 @@ import { ThemeModeToggle } from "@/components/theme/ThemeModeToggle";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { CompletionFeedbackToggle } from "@/components/theme/CompletionFeedbackToggle";
 import { useFeedPageUiConfig } from "./feed-page-ui-config";
+import { FeedPageSidebar } from "./FeedPageSidebar";
 
 export interface FeedPageDesktopHeaderConfig {
   currentView: ViewType;
@@ -17,7 +18,6 @@ export interface FeedPageDesktopHeaderConfig {
 }
 
 export interface FeedPageDesktopContentConfig {
-  sidebarProps: ComponentProps<typeof Sidebar>;
   failedPublishQueueBannerProps: ComponentProps<typeof FailedPublishQueueBanner>;
   desktopSwipeHandlers: HTMLAttributes<HTMLDivElement>;
   viewPane: ReactNode;
@@ -59,7 +59,7 @@ export function FeedPageDesktopShell({
           <ThemeModeToggle />
         </div>
       </div>
-      <Sidebar {...content.sidebarProps} />
+      <FeedPageSidebar />
       <div className="min-w-0 overflow-hidden flex flex-col" {...content.desktopSwipeHandlers}>
         <FailedPublishQueueBanner {...content.failedPublishQueueBannerProps} />
         <div className="min-h-0 flex-1 overflow-hidden">{content.viewPane}</div>
