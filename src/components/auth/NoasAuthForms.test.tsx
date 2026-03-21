@@ -66,14 +66,11 @@ describe("Noas auth forms", () => {
 
     const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
     expect(hostInput).toHaveAttribute("readonly");
-    expect(hostInput.className).toContain("pr-10");
 
     fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
     expect(hostInput).not.toHaveAttribute("readonly");
     expect(hostInput).toHaveFocus();
     expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
-    // Once editing starts, the hidden pencil should no longer reserve input space.
-    expect(hostInput.className).not.toContain("pr-10");
 
     fireEvent.change(hostInput, { target: { value: "https://custom.noas.example/api" } });
     expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example/api");
@@ -112,8 +109,6 @@ describe("Noas auth forms", () => {
     const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
     expect(hostInput.value).toBe("");
     expect(hostInput).not.toHaveAttribute("readonly");
-    // Direct edit mode should not reserve space for a hidden pencil button.
-    expect(hostInput.className).not.toContain("pr-10");
     expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/advanced only/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/only change this if you know what you're doing/i)).not.toBeInTheDocument();

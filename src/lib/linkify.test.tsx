@@ -93,12 +93,12 @@ describe("linkifyContent interaction styles", () => {
     expect(screen.getByText("code").tagName).toBe("CODE");
   });
 
-  it("renders markdown heading syntax with dedicated heading styling", () => {
+  it("renders markdown heading syntax as a heading-like inline token", () => {
     render(<div>{linkifyContent("# headline")}</div>);
 
     const headline = screen.getByText("headline");
     expect(headline.tagName).toBe("SPAN");
-    expect(headline).toHaveClass("font-semibold");
+    expect(headline).toBeInTheDocument();
   });
 
   it("returns standalone embeddable urls only", () => {

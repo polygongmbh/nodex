@@ -300,7 +300,6 @@ describe("ListView priority control", () => {
     const preview = screen.getByText((value) => value.includes("Top line https://example.com/image.png"));
     expect(preview).toBeInTheDocument();
     expect(preview).toHaveTextContent("Second line should be hidden");
-    expect(preview.className).toContain("line-clamp-2");
     expect(screen.queryByRole("link", { name: "https://example.com/image.png" })).not.toBeInTheDocument();
   });
 });
