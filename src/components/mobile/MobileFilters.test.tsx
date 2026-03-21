@@ -245,4 +245,19 @@ describe("MobileFilters management view", () => {
     expect(document.getElementById("manage-profile-publish-delay-enabled")).toBeNull();
     expect(document.getElementById("manage-profile-auto-caption-enabled")).toBeNull();
   });
+
+  it("uses the shared guest private key row copy", () => {
+    render(
+      <MobileFilters
+        relays={relays}
+        channels={channels}
+        people={people}
+      />
+    );
+
+    expect(screen.getByText(/backup private key/i)).toBeInTheDocument();
+    expect(screen.getByText(/keep secret/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /show private key/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
+  });
 });

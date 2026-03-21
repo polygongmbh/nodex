@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Key, Copy, Eye, EyeOff, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown, Mail } from "lucide-react";
+import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown, Mail } from "lucide-react";
 import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
 import { cn } from "@/lib/utils";
 import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
@@ -14,6 +14,7 @@ import { LegalDialog, resolveLegalContactEmail } from "@/components/legal/LegalD
 import { useTranslation } from "react-i18next";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
+import { GuestPrivateKeyRow } from "@/components/auth/GuestPrivateKeyRow";
 import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
@@ -356,31 +357,12 @@ export function MobileFilters({
             )}
 
             {authMethod === "guest" && guestPrivateKey && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Key className="w-3.5 h-3.5" />
-                  {t("filters.profile.privateKey")}
-                </div>
-                <div className="flex items-start gap-2">
-                  <code className="block max-w-[10rem] w-full text-xs bg-muted p-2 rounded font-mono whitespace-nowrap overflow-x-auto">
-                    {showKey ? guestPrivateKey : "••••••••••••••••••••••••••••••••"}
-                  </code>
-                  <button
-                    onClick={() => setShowKey((prev) => !prev)}
-                    className="p-2 rounded-md border border-border"
-                    aria-label={showKey ? t("filters.profile.hidePrivateKey") : t("filters.profile.showPrivateKey")}
-                  >
-                    {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                  <button
-                    onClick={handleCopyPrivateKey}
-                    className="p-2 rounded-md border border-border"
-                    aria-label={t("filters.profile.copyPrivateKey")}
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+              <GuestPrivateKeyRow
+                value={guestPrivateKey}
+                showKey={showKey}
+                onToggleShow={() => setShowKey((prev) => !prev)}
+                onCopy={handleCopyPrivateKey}
+              />
             )}
           </div>
         </section>

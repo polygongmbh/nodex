@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn, Link2, CircleHelp, Pencil } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, ChevronDown, LogIn, Link2, CircleHelp, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
+import { GuestPrivateKeyRow } from "./GuestPrivateKeyRow";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
 import type { NoasAuthErrorCode } from "@/lib/nostr/noas-client";
@@ -875,40 +876,13 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             </div>
           </TooltipProvider>
           {authMethod === "guest" && (
-            <div className="px-2 py-2 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium flex items-center gap-2">
-                  <Key className="w-4 h-4 text-muted-foreground" />
-                  {t("auth.menu.backupPrivateKey")}
-                </span>
-                <span className="text-xs text-warning">{t("auth.menu.keepSecret")}</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <code className="block min-w-0 flex-1 text-xs bg-muted p-2 rounded font-mono whitespace-nowrap overflow-x-auto">
-                  {showKey ? getDisplayKey() : "••••••••••••••••••••••••••••••••"}
-                </code>
-                <div className="flex shrink-0 items-start gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowKey(!showKey)}
-                    className="h-7 w-7 p-0"
-                  >
-                    {showKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopyKey}
-                    className="h-7 w-7 p-0"
-                  >
-                    <Copy className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("auth.menu.importKeyHint")}
-              </p>
+            <div className="px-2 py-2">
+              <GuestPrivateKeyRow
+                value={getDisplayKey()}
+                showKey={showKey}
+                onToggleShow={() => setShowKey((prev) => !prev)}
+                onCopy={handleCopyKey}
+              />
             </div>
           )}
           <DropdownMenuSeparator />

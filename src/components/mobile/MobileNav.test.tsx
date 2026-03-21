@@ -8,7 +8,7 @@ describe("MobileNav", () => {
 
     render(<MobileNav currentView="tree" onViewChange={onViewChange} />);
 
-    const feedButton = screen.getByRole("tab", { name: "Switch to Space view" });
+    const feedButton = screen.getByRole("tab", { name: "Switch to Timeline view" });
 
     fireEvent.click(feedButton);
     expect(onViewChange).toHaveBeenCalledWith("feed");
