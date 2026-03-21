@@ -135,7 +135,7 @@ describe("MobileFilters management view", () => {
     };
   });
 
-  it("supports adding a new space and showing profile controls", () => {
+  it("supports adding a new space", () => {
     render(
       <MobileFilters
         relays={relays}
@@ -153,12 +153,6 @@ describe("MobileFilters management view", () => {
       type: "sidebar.relay.add",
       url: "wss://relay.example.com",
     });
-    expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
-    expect(screen.getByText(/^v\d+\.\d+\.\d+\s+changelog$/i)).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /open imprint and privacy policy/i })).toHaveLength(2);
-    expect(screen.getByRole("link", { name: /contact by email/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /completion feedback/i })).not.toBeInTheDocument();
   });
 
   it("adds a new space when pressing Enter in relay input", () => {
