@@ -470,7 +470,7 @@
       "appPreferences": "App-Einstellungen",
       "preferences": {
         "presenceLabel": "Aktuellen Status teilen",
-        "undoSendLabel": "Senden verzögern, um rückgängig zu machen",
+        "undoSendLabel": "Rückgängig vor dem Senden erlauben",
         "autoCaptionLabel": "Bildbeschreibungen auf diesem Gerät erzeugen"
       },
       "backupPrivateKey": "Privatschlüssel sichern",

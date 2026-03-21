@@ -470,7 +470,7 @@
       "appPreferences": "Preferencias de la app",
       "preferences": {
         "presenceLabel": "Compartir estado actual",
-        "undoSendLabel": "Retrasar el envío para poder deshacer",
+        "undoSendLabel": "Permitir deshacer antes de enviar",
         "autoCaptionLabel": "Generar descripciones de imágenes en este dispositivo"
       },
       "backupPrivateKey": "Respaldar clave privada",

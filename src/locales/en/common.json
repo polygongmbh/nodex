@@ -470,7 +470,7 @@
       "appPreferences": "App preferences",
       "preferences": {
         "presenceLabel": "Share current status",
-        "undoSendLabel": "Delay send so you can undo",
+        "undoSendLabel": "Allow undo before sending",
         "autoCaptionLabel": "Generate image captions on this device"
       },
       "backupPrivateKey": "Backup Private Key",

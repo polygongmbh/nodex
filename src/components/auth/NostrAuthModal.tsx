@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn, Link2, CircleHelp } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, Copy, Eye, EyeOff, ChevronDown, LogIn, Link2, CircleHelp, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -793,9 +793,10 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
             <ChevronDown className="w-4 h-4 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-84 p-2">
-          <DropdownMenuLabel className="px-2 py-1">
-            <div className="flex items-start justify-between gap-2">
+        <DropdownMenuContent align="end" className="w-[20.5rem] p-2">
+          <TooltipProvider delayDuration={200}>
+            <DropdownMenuLabel className="px-2 py-1">
+              <div className="flex items-stretch justify-between gap-2">
               <div className="flex min-w-0 items-center gap-2">
                 <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-6 h-6" />
                 <div className="min-w-0">
@@ -819,30 +820,37 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   </span>
                 </div>
               </div>
-              <DropdownMenuItem
-                className="h-7 shrink-0 rounded-md border border-border/70 px-2 text-xs font-medium"
-                onSelect={(event) => {
-                  event.preventDefault();
-                  openProfileEditor();
-                }}
-              >
-                <User className="mr-1.5 h-3.5 w-3.5" />
-                {t("auth.menu.editProfile")}
-              </DropdownMenuItem>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <div className="px-2 py-2 space-y-1.5" onClick={(event) => event.stopPropagation()}>
-            <p className="text-xs font-medium text-muted-foreground">{t("auth.menu.appPreferences")}</p>
-            <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuItem
+                      aria-label={t("auth.menu.editProfile")}
+                      className="h-auto min-h-[2.75rem] w-8 shrink-0 self-stretch justify-center rounded-md border border-border/70 p-0 text-muted-foreground"
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        openProfileEditor();
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      <span className="sr-only">{t("auth.menu.editProfile")}</span>
+                    </DropdownMenuItem>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" align="center" className="text-xs">
+                    {t("auth.menu.editProfile")}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="space-y-1 px-2 py-1.5" onClick={(event) => event.stopPropagation()}>
+              <p className="text-[11px] font-medium text-muted-foreground">{t("auth.menu.appPreferences")}</p>
               {appPreferenceRows.map((preference) => (
-                <div key={preference.id} className="flex items-center gap-2 rounded-md px-1.5 py-1.5">
+                <div key={preference.id} className="flex items-center gap-1.5 rounded-sm px-1 py-1">
                   <input
                     id={preference.id}
                     type="checkbox"
                     checked={preference.checked}
                     onChange={(event) => preference.onChange(event.target.checked)}
-                    className="h-4 w-4 shrink-0 accent-primary"
+                    className="h-3.5 w-3.5 shrink-0 accent-primary"
                   />
                   <label htmlFor={preference.id} className="min-w-0 flex-1 text-xs font-medium leading-tight">
                     {preference.label}
@@ -854,9 +862,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                         aria-label={t("auth.menu.preferenceHelp", { setting: preference.label })}
                         onClick={(event) => event.preventDefault()}
                         onPointerDown={(event) => event.stopPropagation()}
-                        className="inline-flex h-5 w-5 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+                        className="inline-flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                       >
-                        <CircleHelp className="h-3.5 w-3.5" />
+                        <CircleHelp className="h-3 w-3" />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="left" align="center" className="max-w-[18rem] text-xs leading-relaxed">
@@ -865,8 +873,8 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   </Tooltip>
                 </div>
               ))}
-            </TooltipProvider>
-          </div>
+            </div>
+          </TooltipProvider>
           {authMethod === "guest" && (
             <div className="px-2 py-2 space-y-2">
               <div className="flex items-center justify-between">
