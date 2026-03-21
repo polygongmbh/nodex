@@ -8,40 +8,20 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const uploadUrl = (env.VITE_NIP96_UPLOAD_URL || "").trim();
-  const defaultRelayList = (env.VITE_DEFAULT_RELAYS || "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-  const defaultRelayDomain = (env.VITE_DEFAULT_RELAY_DOMAIN || "").trim();
-  const defaultRelayProtocol = (env.VITE_DEFAULT_RELAY_PROTOCOL || "").trim() || "wss";
-  const defaultRelayPort = (env.VITE_DEFAULT_RELAY_PORT || "").trim();
   const demoFeedEnabled = String(env.VITE_ENABLE_DEMO_FEED || "").toLowerCase() === "true";
   const debugAttachmentsEnabled = String(env.VITE_DEBUG_ATTACHMENTS || "").toLowerCase() === "true";
   const hasUploadUrl = Boolean(uploadUrl);
-  const hasRelayList = defaultRelayList.length > 0;
-  const hasRelayDomain = Boolean(defaultRelayDomain);
 
   console.info("[vite] Startup config", {
     mode,
     nip96UploadConfigured: hasUploadUrl,
     debugAttachmentsEnabled,
-    defaultRelaysConfiguredViaList: hasRelayList,
-    defaultRelaysListCount: defaultRelayList.length,
-    defaultRelayDomainConfigured: hasRelayDomain,
-    defaultRelayProtocol,
-    defaultRelayPortConfigured: Boolean(defaultRelayPort),
     demoFeedEnabled,
-    relaySource: hasRelayList ? "VITE_DEFAULT_RELAYS" : hasRelayDomain ? "VITE_DEFAULT_RELAY_DOMAIN" : "fallback",
   });
 
   if (!hasUploadUrl) {
     console.warn(
       "[vite] VITE_NIP96_UPLOAD_URL is not set. Attachment upload UI will be hidden."
-    );
-  }
-  if (hasRelayList && hasRelayDomain) {
-    console.info(
-      "[vite] Both VITE_DEFAULT_RELAYS and VITE_DEFAULT_RELAY_DOMAIN are set. VITE_DEFAULT_RELAYS takes precedence."
     );
   }
 

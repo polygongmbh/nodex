@@ -304,7 +304,7 @@ Added containerized local relay runtime setup and consolidated internal compose/
 - Added Docker support (`Dockerfile` + `docker-compose.yml`) to run Nodex alongside an `rnostr` relay with env-configurable relay defaults.
 
 ### Changed
-- Default Nostr relays are now env-driven (`VITE_DEFAULT_RELAYS` and/or `VITE_DEFAULT_RELAY_DOMAIN` + protocol/port), replacing hardcoded app relay defaults.
+- Default Nostr relays are now env-driven (`VITE_DEFAULT_RELAYS`), replacing hardcoded app relay defaults.
 
 ## [1.9.0] - 2026-02-19
 Improved compose safety and metadata ergonomics, and expanded cross-view task depth controls.

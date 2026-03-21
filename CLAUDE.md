@@ -80,7 +80,6 @@ High-impact areas that require test coverage:
 ### Environment Variables (`.env`)
 All `VITE_*` vars are injected at build time via `vite.config.ts`:
 - `VITE_DEFAULT_RELAYS` — comma-separated relay WebSocket URLs
-- `VITE_DEFAULT_RELAY_DOMAIN` + `VITE_DEFAULT_RELAY_PROTOCOL` + `VITE_DEFAULT_RELAY_PORT` — alternative relay config
 - `VITE_NIP96_UPLOAD_URL` — attachment upload endpoint (hides upload UI if unset)
 - `VITE_ENABLE_DEMO_FEED` — `true` to show local demo feed relay
 

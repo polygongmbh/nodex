@@ -1,13 +1,6 @@
 import { ensureRelayProtocol, relayUrlToId as toRelayId, RelayProtocol } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
-interface DefaultRelayEnv {
-  VITE_DEFAULT_RELAYS?: string;
-  VITE_DEFAULT_RELAY_DOMAIN?: string;
-  VITE_DEFAULT_RELAY_PROTOCOL?: string;
-  VITE_DEFAULT_RELAY_PORT?: string;
-}
-
 const HOST_DERIVED_RELAY_PREFIXES = ["nostr", "feed", "tasks", "base"] as const;
 const DEFAULT_RELAY_PROBE_TIMEOUT_MS = 1200;
 const DEFAULT_RELAY_PROBE_RETRY_COUNT = 1;
@@ -25,25 +18,11 @@ function normalizeRelayUrl(raw: string, fallbackProtocol: RelayProtocol): string
   return normalized || null;
 }
 
-function toRelayProtocol(value?: string): RelayProtocol {
-  return value?.trim().toLowerCase() === "ws" ? "ws" : "wss";
-}
-
-export function resolveDefaultRelayUrls(env: DefaultRelayEnv): string[] {
-  const protocol = toRelayProtocol(env.VITE_DEFAULT_RELAY_PROTOCOL);
-  const fromList = (env.VITE_DEFAULT_RELAYS || "")
-    .split(",")
-    .map((entry) => normalizeRelayUrl(entry, protocol))
+export function resolveDefaultRelayUrls(relayUrls?: string[]): string[] {
+  const normalized = (relayUrls ?? [])
+    .map((entry) => normalizeRelayUrl(entry, "wss"))
     .filter((value): value is string => Boolean(value));
-
-  const domain = env.VITE_DEFAULT_RELAY_DOMAIN?.trim();
-  const port = env.VITE_DEFAULT_RELAY_PORT?.trim();
-  const fromDomain = domain
-    ? normalizeRelayUrl(`${domain}${port ? `:${port}` : ""}`, protocol)
-    : null;
-
-  const merged = [...fromList, ...(fromDomain ? [fromDomain] : [])];
-  return Array.from(new Set(merged));
+  return Array.from(new Set(normalized));
 }
 
 function isIpAddress(hostname: string): boolean {
@@ -168,6 +147,7 @@ async function probeRelayAvailability(relayUrl: string, timeoutMs: number): Prom
 }
 
 interface ResolveRelayFallbackOptions {
+  relayUrls?: string[];
   hostname?: string;
   probeRelay?: (relayUrl: string) => Promise<boolean>;
   probeTimeoutMs?: number;
@@ -213,14 +193,13 @@ async function probeHostFallbackCandidates(options: {
 }
 
 export async function resolveDefaultRelayUrlsWithDomainFallback(
-  env: DefaultRelayEnv,
   options?: ResolveRelayFallbackOptions
 ): Promise<string[]> {
-  const configuredRelays = resolveDefaultRelayUrls(env);
+  const configuredRelays = resolveDefaultRelayUrls(options?.relayUrls);
   if (configuredRelays.length > 0) return configuredRelays;
   if (typeof window === "undefined") return [];
 
-  const protocol = toRelayProtocol(env.VITE_DEFAULT_RELAY_PROTOCOL);
+  const protocol: RelayProtocol = "wss";
   const hostname = (options?.hostname ?? window.location.hostname).trim().toLowerCase().replace(/\.$/, "");
   const candidates = getHostDerivedRelayCandidates(hostname, protocol);
   nostrDevLog("relay-discovery", "Resolved host fallback candidates", {
@@ -293,22 +272,16 @@ export async function resolveDefaultRelayUrlsWithDomainFallback(
   return candidates;
 }
 
+const CONFIGURED_RELAY_URLS: string[] = (import.meta.env.VITE_DEFAULT_RELAYS || "")
+  .split(/[,;\s]+/)
+  .filter(Boolean);
+
 export function getConfiguredDefaultRelays(): string[] {
-  return resolveDefaultRelayUrls({
-    VITE_DEFAULT_RELAYS: import.meta.env.VITE_DEFAULT_RELAYS,
-    VITE_DEFAULT_RELAY_DOMAIN: import.meta.env.VITE_DEFAULT_RELAY_DOMAIN,
-    VITE_DEFAULT_RELAY_PROTOCOL: import.meta.env.VITE_DEFAULT_RELAY_PROTOCOL,
-    VITE_DEFAULT_RELAY_PORT: import.meta.env.VITE_DEFAULT_RELAY_PORT,
-  });
+  return resolveDefaultRelayUrls(CONFIGURED_RELAY_URLS);
 }
 
 export async function getConfiguredDefaultRelaysWithFallback(): Promise<string[]> {
-  return await resolveDefaultRelayUrlsWithDomainFallback({
-    VITE_DEFAULT_RELAYS: import.meta.env.VITE_DEFAULT_RELAYS,
-    VITE_DEFAULT_RELAY_DOMAIN: import.meta.env.VITE_DEFAULT_RELAY_DOMAIN,
-    VITE_DEFAULT_RELAY_PROTOCOL: import.meta.env.VITE_DEFAULT_RELAY_PROTOCOL,
-    VITE_DEFAULT_RELAY_PORT: import.meta.env.VITE_DEFAULT_RELAY_PORT,
-  });
+  return await resolveDefaultRelayUrlsWithDomainFallback({ relayUrls: CONFIGURED_RELAY_URLS });
 }
 
 export function relayUrlToId(url: string): string {

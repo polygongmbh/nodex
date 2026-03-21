@@ -11,33 +11,21 @@ describe("default relay env resolution", () => {
     window.localStorage.clear();
   });
 
-  it("returns an empty list when no relay env values are provided", () => {
-    expect(resolveDefaultRelayUrls({})).toEqual([]);
+  it("returns an empty list when no relay urls are provided", () => {
+    expect(resolveDefaultRelayUrls()).toEqual([]);
   });
 
-  it("parses comma-separated relay urls and dedupes normalized values", () => {
+  it("normalizes and dedupes relay urls", () => {
     expect(
-      resolveDefaultRelayUrls({
-        VITE_DEFAULT_RELAYS: "wss://relay.example.com, relay.example.com/ ,wss://relay.example.com",
-      })
+      resolveDefaultRelayUrls(["wss://relay.example.com", "relay.example.com/", "wss://relay.example.com"])
     ).toEqual(["wss://relay.example.com"]);
-  });
-
-  it("builds a relay url from domain, protocol, and port", () => {
-    expect(
-      resolveDefaultRelayUrls({
-        VITE_DEFAULT_RELAY_DOMAIN: "nostr.example.com",
-        VITE_DEFAULT_RELAY_PROTOCOL: "ws",
-        VITE_DEFAULT_RELAY_PORT: "7447",
-      })
-    ).toEqual(["ws://nostr.example.com:7447"]);
   });
 
   it("falls back to host-derived relay candidates and keeps only available relays", async () => {
     const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.example.test");
 
     await expect(
-      resolveDefaultRelayUrlsWithDomainFallback({}, {
+      resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "app.example.test",
         probeRelay,
       })
@@ -53,7 +41,7 @@ describe("default relay env resolution", () => {
     const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://nostr.example.test");
 
     await expect(
-      resolveDefaultRelayUrlsWithDomainFallback({}, {
+      resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "app.example.test",
         probeRelay,
       })
@@ -69,7 +57,7 @@ describe("default relay env resolution", () => {
     const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://nostr.project.test");
 
     await expect(
-      resolveDefaultRelayUrlsWithDomainFallback({}, {
+      resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "project.test",
         probeRelay,
       })
@@ -85,7 +73,7 @@ describe("default relay env resolution", () => {
     const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.example.test");
 
     await expect(
-      resolveDefaultRelayUrlsWithDomainFallback({}, {
+      resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "app.example.test",
         probeRelay,
       })
@@ -93,7 +81,7 @@ describe("default relay env resolution", () => {
     expect(probeRelay).toHaveBeenCalledTimes(4);
 
     await expect(
-      resolveDefaultRelayUrlsWithDomainFallback({}, {
+      resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "app.example.test",
         probeRelay,
       })
@@ -112,7 +100,7 @@ describe("default relay env resolution", () => {
     const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.example.test");
 
     await expect(
-      resolveDefaultRelayUrlsWithDomainFallback({}, {
+      resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "app.example.test",
         probeRelay,
       })
@@ -124,7 +112,7 @@ describe("default relay env resolution", () => {
     const probeRelay = vi.fn(async () => false);
 
     await expect(
-      resolveDefaultRelayUrlsWithDomainFallback({}, {
+      resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "app.example.test",
         probeRelay,
       })
@@ -137,7 +125,7 @@ describe("default relay env resolution", () => {
     expect(probeRelay).toHaveBeenCalledTimes(8);
 
     await expect(
-      resolveDefaultRelayUrlsWithDomainFallback({}, {
+      resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "app.example.test",
         probeRelay,
       })
@@ -157,7 +145,7 @@ describe("default relay env resolution", () => {
     const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.example.test");
 
     await expect(
-      resolveDefaultRelayUrlsWithDomainFallback({}, {
+      resolveDefaultRelayUrlsWithDomainFallback({
         hostname: "app.example.test",
         probeRelay,
       })
@@ -169,8 +157,7 @@ describe("default relay env resolution", () => {
 
     await expect(
       resolveDefaultRelayUrlsWithDomainFallback({
-        VITE_DEFAULT_RELAYS: "wss://relay.example.com",
-      }, {
+        relayUrls: ["wss://relay.example.com"],
         hostname: "app.example.test",
         probeRelay,
       })
