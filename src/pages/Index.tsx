@@ -670,6 +670,18 @@ const Index = () => {
       "ui.focusTasks": () => {
         handleFocusTasks();
       },
+      "ui.view.change": (intent) => {
+        setCurrentView(intent.view);
+      },
+      "ui.search.change": (intent) => {
+        setSearchQuery(intent.query);
+      },
+      "ui.kanbanDepth.change": (intent) => {
+        setKanbanDepthMode(intent.mode);
+      },
+      "ui.manageRoute.change": (intent) => {
+        setManageRouteActive(intent.isActive);
+      },
       "filter.applyHashtagExclusive": (intent) => {
         handleHashtagExclusive(intent.tag);
       },
@@ -751,11 +763,38 @@ const Index = () => {
       "sidebar.quickFilter.priorityEnabled.change": (intent) => {
         handlePriorityEnabledChange(intent.enabled);
       },
+      "task.focus.change": (intent) => {
+        setFocusedTaskId(intent.taskId);
+      },
       "task.toggleComplete": (intent) => {
         handleToggleComplete(intent.taskId);
       },
       "task.changeStatus": (intent) => {
         handleStatusChange(intent.taskId, intent.status);
+      },
+      "task.updateDueDate": (intent) => {
+        handleDueDateChange(intent.taskId, intent.dueDate, intent.dueTime, intent.dateType);
+      },
+      "task.updatePriority": (intent) => {
+        handlePriorityChange(intent.taskId, intent.priority);
+      },
+      "task.listingStatus.change": (intent) => {
+        handleListingStatusChange(intent.taskId, intent.status);
+      },
+      "task.undoPendingPublish": (intent) => {
+        handleUndoPendingPublish(intent.taskId);
+      },
+      "publish.failed.retry": (intent) => {
+        handleRetryFailedPublish(intent.draftId);
+      },
+      "publish.failed.repost": (intent) => {
+        handleRepostFailedPublish(intent.draftId);
+      },
+      "publish.failed.dismiss": (intent) => {
+        handleDismissFailedPublish(intent.draftId);
+      },
+      "publish.failed.dismissAll": () => {
+        handleDismissAllFailedPublish();
       },
     }),
     [
@@ -764,6 +803,10 @@ const Index = () => {
       handleOpenGuide,
       handleFocusSidebar,
       handleFocusTasks,
+      setCurrentView,
+      setSearchQuery,
+      setKanbanDepthMode,
+      setManageRouteActive,
       handleHashtagExclusive,
       handleAuthorClick,
       handleChannelClear,
@@ -788,8 +831,17 @@ const Index = () => {
       handleRecentEnabledChange,
       handleMinPriorityChange,
       handlePriorityEnabledChange,
+      setFocusedTaskId,
       handleToggleComplete,
       handleStatusChange,
+      handleDueDateChange,
+      handlePriorityChange,
+      handleListingStatusChange,
+      handleUndoPendingPublish,
+      handleRetryFailedPublish,
+      handleRepostFailedPublish,
+      handleDismissFailedPublish,
+      handleDismissAllFailedPublish,
     ]
   );
   const feedInteractionBus = useMemo(
@@ -944,10 +996,8 @@ const Index = () => {
   const desktopHeader: FeedPageDesktopHeaderConfig = useMemo(
     () => ({
       currentView,
-      onViewChange: setCurrentView,
-      onSignInClick: handleDispatchOpenAuthModal,
     }),
-    [currentView, setCurrentView, handleDispatchOpenAuthModal]
+    [currentView]
   );
 
   const desktopSidebarController = useMemo(
@@ -985,14 +1035,10 @@ const Index = () => {
 
   const desktopContent: FeedPageDesktopContentConfig = useMemo(
     () => ({
-      failedPublishQueueBannerProps: {
+      failedPublishQueueBannerState: {
         drafts: failedPublishDrafts,
         selectedFeedDrafts: visibleFailedPublishDrafts,
-        onRetry: handleRetryFailedPublish,
-        onRepost: handleRepostFailedPublish,
         selectedRelayIds: selectedPublishableRelayIds,
-        onDismiss: handleDismissFailedPublish,
-        onDismissAll: handleDismissAllFailedPublish,
       },
       desktopSwipeHandlers,
       viewPane: (
@@ -1002,29 +1048,21 @@ const Index = () => {
           loadingLabel={t("app.loadingView")}
         />
       ),
-      searchDockProps: {
+      searchDockState: {
         searchQuery,
-        onSearchChange: setSearchQuery,
         showKanbanLevels: currentView === "kanban" || currentView === "list",
         kanbanDepthMode,
-        onKanbanDepthModeChange: setKanbanDepthMode,
       },
     }),
     [
       failedPublishDrafts,
       visibleFailedPublishDrafts,
-      handleRetryFailedPublish,
-      handleRepostFailedPublish,
       selectedPublishableRelayIds,
-      handleDismissFailedPublish,
-      handleDismissAllFailedPublish,
       desktopSwipeHandlers,
       currentView,
       kanbanDepthMode,
       t,
       searchQuery,
-      setSearchQuery,
-      setKanbanDepthMode,
     ]
   );
 
