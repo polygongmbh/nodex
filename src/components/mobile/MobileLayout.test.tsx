@@ -310,12 +310,33 @@ describe("MobileLayout auth wiring", () => {
 
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent("No matches for the quick filter, showing tasks on Demo.");
+    expect(status).toHaveTextContent("No matches for the quick filter, showing all tasks on Demo.");
     expect(status).toHaveClass("text-center");
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
 
-  it("does not show quick-filter fallback text when scope also has no matches", () => {
+  it("hides fallback notices while hydration is active", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const sampleTasks: Task[] = [
+      makeTask({ id: "task-1", content: "Ship #general", tags: ["general"] }),
+    ];
+
+    renderMobileLayout({
+      taskViewModel: {
+        tasks: sampleTasks,
+        allTasks: sampleTasks,
+        searchQuery: "nomatchquery",
+        isHydrating: true,
+      },
+    });
+
+    expect(screen.queryByText("No matches for the quick filter, showing all tasks.")).not.toBeInTheDocument();
+    expect(screen.getByText("Loading events from relay…")).toBeInTheDocument();
+  });
+
+  it("shows scope fallback text when scope and quick filter both have no matches", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
 
@@ -338,8 +359,43 @@ describe("MobileLayout auth wiring", () => {
       },
     });
 
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    const status = screen.getByRole("status");
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveTextContent(
+      "Nothing yet in #nodex and #nostr, excluding #tech, on Demo, showing everything."
+    );
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
+  });
+
+  it("uses the same scoped fallback contract on mobile upcoming view", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const datedTasks: Task[] = [
+      makeTask({
+        id: "task-upcoming",
+        content: "Upcoming #general",
+        tags: ["general"],
+        dueDate: new Date("2026-05-10T10:00:00.000Z"),
+      }),
+    ];
+
+    renderMobileLayout({
+      viewState: {
+        currentView: "list",
+        channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+      },
+      taskViewModel: {
+        tasks: datedTasks,
+        allTasks: datedTasks,
+        searchQuery: "nomatchquery",
+      },
+    });
+
+    const status = screen.getByRole("status");
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveTextContent("Nothing yet in #nodex, on Demo, showing everything.");
+    expect(status).toHaveClass("text-center");
   });
 
   it("opens Manage and unfolds profile editor on mobile onboarding step 5", async () => {

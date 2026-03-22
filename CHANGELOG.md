@@ -23,7 +23,7 @@ Minor release for mobile manage polish, sidebar/feed scope fixes, terminology cl
 - Mobile Manage app preferences now use the same primary labels as the desktop profile menu, keep desktop help copy as inline subtitles on mobile, flatten the nested preference-card treatment, and remove the local image captions toggle from mobile Manage.
 - Mobile Manage relay add now accepts bare relay hosts more gracefully, supports Enter-to-add, shows a larger language switcher, removes the mute/completion toggle, and moves the version hint into the `Impressum`/`Datenschutz`/`Kontakt` row with a `Changelog` label; legal/contact button labels and desktop legal hint text are now localized.
 - User-facing `Feed(s)` terminology is now standardized to `Space(s)` across English, German, and Spanish, relay display names are now shorter and more readable, and startup relay discovery is easier to adapt to different host setups.
-- Mobile fallback hints now use scope-aware copy on both empty-scope and quick-filter fallback paths (for example `Nothing yet ... showing everything` / `No matches for the quick filter, showing tasks ...`), and both mobile hint rows are centered horizontally for readability.
+- Mobile fallback hints now use a single scope-aware contract across mobile views (including upcoming), with consistent centered shell-level notice rendering and strict precedence so scope-empty fallback replaces quick-filter fallback when both conditions apply.
 
 ## [2.6.2] - 2026-03-21
 - Auth dialogs now use consistently rounded corners across the app, and the sign-in chooser now has a tighter layout with Noas emphasized first, clearer Signer/Extension and Guest/Private options, renamed `Remote Signer` copy, and a simpler `username @ host` Noas field.

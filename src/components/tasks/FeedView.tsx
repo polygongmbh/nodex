@@ -1315,18 +1315,6 @@ export function FeedView({
         data-onboarding="task-list"
         onScroll={handleFeedScroll}
       >
-        {shouldShowMobileScopeFallback ? (
-          <FilteredEmptyState
-            variant="feed"
-            relays={relays}
-            channels={channels}
-            people={people}
-            isHydrating={isHydrating}
-            searchQuery={searchQuery}
-            contextTaskTitle={focusedTask?.content}
-            mode="mobile"
-          />
-        ) : null}
         {shouldShowScreenEmptyState ? (
           <FilteredEmptyState
             variant="feed"

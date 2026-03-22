@@ -940,7 +940,7 @@
       "noneScheduledForDay": "Keine Aufgaben für diesen Tag geplant",
       "selectDay": "Wähle einen Tag, um Aufgaben anzuzeigen",
       "mobileQuickFilterFallback": "Keine Treffer für den Schnellfilter, alle Aufgaben werden angezeigt.",
-      "mobileQuickFilterFallbackScoped": "Keine Treffer für den Schnellfilter, es werden Aufgaben {{scope}} angezeigt.",
+      "mobileQuickFilterFallbackScoped": "Keine Treffer für den Schnellfilter, es werden alle Aufgaben {{scope}} angezeigt.",
       "matchFilters": "Keine Aufgaben entsprechen deinen Filtern",
       "noSubtasks": "Noch keine Unteraufgaben",
       "noneYet": "Noch keine Aufgaben",

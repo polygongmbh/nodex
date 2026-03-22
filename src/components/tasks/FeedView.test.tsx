@@ -866,8 +866,7 @@ describe("FeedView", () => {
       />
     );
 
-    expect(document.querySelector('[data-empty-mode="mobile"]')).toBeInTheDocument();
-    expect(screen.getByText(/Nothing yet .*showing everything\./)).toBeInTheDocument();
+    expect(document.querySelector('[data-empty-mode="mobile"]')).not.toBeInTheDocument();
     expect(container.querySelector('[data-task-id="task-1"]')).toBeInTheDocument();
   });
 

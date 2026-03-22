@@ -940,7 +940,7 @@
       "noneScheduledForDay": "No tasks scheduled for this day",
       "selectDay": "Select a day to view tasks",
       "mobileQuickFilterFallback": "No matches for the quick filter, showing all tasks.",
-      "mobileQuickFilterFallbackScoped": "No matches for the quick filter, showing tasks {{scope}}.",
+      "mobileQuickFilterFallbackScoped": "No matches for the quick filter, showing all tasks {{scope}}.",
       "matchFilters": "No tasks match your filters",
       "noSubtasks": "No subtasks yet",
       "noneYet": "No tasks yet",

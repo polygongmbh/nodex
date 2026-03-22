@@ -450,18 +450,6 @@ export function TaskTree({
 
       {/* Task List */}
       <div ref={scrollContainerRef} className="scrollbar-main-view flex-1 px-2 sm:px-3 py-4 space-y-1" data-onboarding="task-list">
-        {shouldShowMobileScopeFallback ? (
-          <FilteredEmptyState
-            variant="collection"
-            relays={relays}
-            channels={channels}
-            people={people}
-            isHydrating={isHydrating}
-            searchQuery={searchQuery}
-            contextTaskTitle={currentContextTask?.content}
-            mode="mobile"
-          />
-        ) : null}
         {shouldShowScreenEmptyState ? (
           <FilteredEmptyState
             variant="collection"
