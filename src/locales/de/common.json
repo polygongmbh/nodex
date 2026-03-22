@@ -560,12 +560,12 @@
     "steps": {
       "navigationSwitcher": {
         "title": "Ansicht wechseln",
-        "description": "Nutze den Ansichtsumschalter, um zwischen Hierarchisch, Space, Kanban, Kalender und Tabelle zu wechseln.",
+        "description": "Wechsle über die Ansichtsleiste zwischen Timeline, Hierarchisch, Kanban, Tabelle und Kalender.",
         "action": "Klicke auf einen Ansichtstab, um fortzufahren."
       },
       "navigationFocus": {
         "title": "Aufgabenkontext öffnen",
-        "description": "Klicke auf eine Aufgabe, um in ihren Kontext zu wechseln und den Breadcrumb-Pfad anzuzeigen.",
+        "description": "Klicke auf einen beliebigen Beitrag, um seine Unterelemente zu sehen und ihn zu kommentieren oder Unteraufgaben zu erstellen.",
         "action": "Klicke auf eine Aufgabe, um fortzufahren."
       },
       "navigationBreadcrumb": {
@@ -607,7 +607,7 @@
       },
       "mobileNavigationNav": {
         "title": "Mobile Ansichten",
-        "description": "Nutze die obere Navigation, um zwischen Hierarchisch, Space, Tabelle und Kalender zu wechseln.",
+        "description": "Navigiere oben zwischen Timeline, Hierarchisch, Anstehend und Kalender.",
         "action": "Tippe auf einen Navigations-Tab, um fortzufahren."
       },
       "mobileNavigationFocus": {

@@ -560,12 +560,12 @@
     "steps": {
       "navigationSwitcher": {
         "title": "Switch views",
-        "description": "Use the view switcher to move between Tree, Space, Kanban, Calendar, and Table.",
+        "description": "Use the view switcher to move between Timeline, Tree, Kanban, Table, and Calendar.",
         "action": "Click any view tab to continue."
       },
       "navigationFocus": {
         "title": "Open task context",
-        "description": "Click a task to navigate into its context and reveal the breadcrumb path.",
+        "description": "Click any post to view its subitems and comment on it or create subtasks.",
         "action": "Click a task item to continue."
       },
       "navigationBreadcrumb": {
@@ -607,7 +607,7 @@
       },
       "mobileNavigationNav": {
         "title": "Mobile views",
-        "description": "Use the top navigation to switch between Tree, Space, List, and Calendar.",
+        "description": "Use the top navigation to switch between Timeline, Tree, Upcoming, and Calendar.",
         "action": "Tap a navigation tab to continue."
       },
       "mobileNavigationFocus": {

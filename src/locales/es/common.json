@@ -560,12 +560,12 @@
     "steps": {
       "navigationSwitcher": {
         "title": "Cambiar vistas",
-        "description": "Usa el selector de vista para pasar entre Árbol, Space, Kanban, Calendario y Tabla.",
+        "description": "Usa el selector de vista para pasar entre Cronología, Árbol, Kanban, Tabla y Calendario.",
         "action": "Haz clic en cualquier pestaña de vista para continuar."
       },
       "navigationFocus": {
         "title": "Abrir contexto de tarea",
-        "description": "Haz clic en una tarea para navegar a su contexto y mostrar la ruta de breadcrumb.",
+        "description": "Haz clic en cualquier publicación para ver sus subelementos y comentarla o crear subtareas.",
         "action": "Haz clic en una tarea para continuar."
       },
       "navigationBreadcrumb": {
@@ -607,7 +607,7 @@
       },
       "mobileNavigationNav": {
         "title": "Vistas móviles",
-        "description": "Usa la navegación superior para cambiar entre Árbol, Space, Lista y Calendario.",
+        "description": "Usa la navegación superior para cambiar entre Cronología, Árbol, Próximas y Calendario.",
         "action": "Toca una pestaña de navegación para continuar."
       },
       "mobileNavigationFocus": {
