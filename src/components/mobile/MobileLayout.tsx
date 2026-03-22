@@ -125,6 +125,7 @@ export function MobileLayout({
     allTasks,
     searchQuery,
     focusedTaskId = null,
+    onNewTask,
     composeRestoreRequest: contextComposeRestoreRequest = null,
     mentionRequest: contextMentionRequest = null,
     forceShowComposer: contextForceShowComposer = false,
@@ -424,7 +425,7 @@ export function MobileLayout({
     locationGeohash?: string
   ): Promise<TaskCreateResult> => {
     return Promise.resolve(
-      feedTaskViewModel.onNewTask(
+      onNewTask(
         content,
         tags,
         relayIds,
@@ -441,7 +442,7 @@ export function MobileLayout({
         locationGeohash
       )
     );
-  }, [feedTaskViewModel.onNewTask, focusedTaskId]);
+  }, [focusedTaskId, onNewTask]);
 
   useEffect(() => {
     if (isManageRouteActive) {
