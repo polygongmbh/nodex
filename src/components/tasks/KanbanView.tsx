@@ -14,7 +14,6 @@ import {
   Nip99Metadata,
 } from "@/types";
 import { TaskComposer } from "./TaskComposer";
-import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { hasTaskMentionChips } from "./TaskMentionChips";
@@ -34,7 +33,6 @@ import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
-import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface KanbanViewProps extends SharedTaskViewContext {
@@ -415,15 +413,6 @@ export function KanbanView({
 
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
-      {isHydrating ? (
-        <HydrationStatusRow />
-      ) : focusedTaskId ? (
-        <FocusedTaskBreadcrumb
-          allTasks={allTasks}
-          focusedTaskId={focusedTaskId}
-        />
-      ) : null}
-
       {/* Kanban Columns */}
       <div
         ref={columnsContainerRef}

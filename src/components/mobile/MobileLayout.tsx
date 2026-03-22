@@ -4,8 +4,7 @@ import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
 import { SwipeIndicator } from "./SwipeIndicator";
 import { TaskTree } from "@/components/tasks/TaskTree";
-import { FocusedTaskBreadcrumb } from "@/components/tasks/FocusedTaskBreadcrumb";
-import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
+import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
@@ -390,6 +389,10 @@ export function MobileLayout({
       ? quickFilterFallbackMessage
       : null;
   const shouldShowMobileFallbackNotice = !showFilters && !isHydrating && Boolean(mobileFallbackMessage);
+  const mobileShellFocusedTaskId =
+    activePrimaryView !== "list" && activePrimaryView !== "calendar"
+      ? focusedTaskId
+      : null;
   const effectiveTaskViewModel = useMemo(
     () => ({
       ...feedTaskViewModel,
@@ -527,17 +530,13 @@ export function MobileLayout({
         {...swipeHandlers}
       >
         <div className="h-full flex flex-col">
-          {!showFilters && (
-            isHydrating ? (
-              <HydrationStatusRow className="h-10 px-3 text-xs" />
-            ) : focusedTaskId && activePrimaryView !== "list" && activePrimaryView !== "calendar" ? (
-              <FocusedTaskBreadcrumb
-                allTasks={allTasks}
-                focusedTaskId={focusedTaskId}
-                className="h-10 px-3 text-xs"
-              />
-            ) : null
-          )}
+          <TaskViewStatusRow
+            allTasks={allTasks}
+            focusedTaskId={mobileShellFocusedTaskId}
+            isHydrating={isHydrating}
+            className="h-10 px-3 text-xs"
+            visible={!showFilters}
+          />
           {shouldShowMobileFallbackNotice && (
             <div
               role="status"

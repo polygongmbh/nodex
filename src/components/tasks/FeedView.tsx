@@ -20,7 +20,6 @@ import {
   RawNostrEvent,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
-import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
@@ -63,7 +62,6 @@ import {
 } from "@/lib/task-status-toggle";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
-import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
@@ -1278,17 +1276,6 @@ export function FeedView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {!isMobile && (
-        isHydrating ? (
-          <HydrationStatusRow />
-        ) : focusedTaskId ? (
-          <FocusedTaskBreadcrumb
-            allTasks={allTasks}
-            focusedTaskId={focusedTaskId}
-          />
-        ) : null
-      )}
-
       <SharedViewComposer
         visible={!isMobile && (Boolean(user) || effectiveForceShowComposer)}
         onSubmit={handleNewTask}

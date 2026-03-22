@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TaskTree } from "./TaskTree";
+import { TaskViewStatusRow } from "./TaskViewStatusRow";
 import type { Channel, Person, Relay, Task } from "@/types";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
@@ -48,18 +49,21 @@ describe("TaskTree focus sync", () => {
   it("uses focusedTaskId as context and supports going up through focus dispatch", () => {
     dispatchFeedInteraction.mockClear();
     render(
-      <TaskTree
-        tasks={[rootTask, childTask]}
-        allTasks={[rootTask, childTask]}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
-        focusedTaskId="root"
-      />
+      <>
+        <TaskViewStatusRow allTasks={[rootTask, childTask]} focusedTaskId="root" />
+        <TaskTree
+          tasks={[rootTask, childTask]}
+          allTasks={[rootTask, childTask]}
+          relays={relays}
+          channels={channels}
+          people={people}
+          searchQuery=""
+          onSearchChange={vi.fn()}
+          onNewTask={vi.fn()}
+          onToggleComplete={vi.fn()}
+          focusedTaskId="root"
+        />
+      </>
     );
 
     expect(screen.getByText("Child task")).toBeInTheDocument();
@@ -70,18 +74,21 @@ describe("TaskTree focus sync", () => {
   it("activates a task when clicking it from the focused composer", () => {
     dispatchFeedInteraction.mockClear();
     render(
-      <TaskTree
-        tasks={[rootTask, childTask]}
-        allTasks={[rootTask, childTask]}
-        relays={relays}
-        channels={channels}
-        people={people}
-        searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
-        focusedTaskId="root"
-      />
+      <>
+        <TaskViewStatusRow allTasks={[rootTask, childTask]} focusedTaskId="root" />
+        <TaskTree
+          tasks={[rootTask, childTask]}
+          allTasks={[rootTask, childTask]}
+          relays={relays}
+          channels={channels}
+          people={people}
+          searchQuery=""
+          onSearchChange={vi.fn()}
+          onNewTask={vi.fn()}
+          onToggleComplete={vi.fn()}
+          focusedTaskId="root"
+        />
+      </>
     );
 
     const composerInput = screen.getByRole("textbox", {

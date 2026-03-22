@@ -12,7 +12,6 @@ import {
   TaskStatus,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
-import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -47,7 +46,6 @@ import {
 } from "@/lib/task-status-toggle";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
-import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -604,15 +602,6 @@ export function ListView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {isHydrating ? (
-        <HydrationStatusRow />
-      ) : focusedTaskId ? (
-        <FocusedTaskBreadcrumb
-          allTasks={allTasks}
-          focusedTaskId={focusedTaskId}
-        />
-      ) : null}
-
       <SharedViewComposer
         visible={Boolean(user) || effectiveForceShowComposer}
         onSubmit={handleNewTask}

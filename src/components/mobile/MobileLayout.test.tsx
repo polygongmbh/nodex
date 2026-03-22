@@ -310,7 +310,7 @@ describe("MobileLayout auth wiring", () => {
 
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent("No matches for the quick filter, showing all tasks on Demo.");
+    expect(status).toHaveTextContent("No matches for the quick filter, showing all posts on Demo.");
     expect(status).toHaveClass("text-center");
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
@@ -332,7 +332,7 @@ describe("MobileLayout auth wiring", () => {
       },
     });
 
-    expect(screen.queryByText("No matches for the quick filter, showing all tasks.")).not.toBeInTheDocument();
+    expect(screen.queryByText("No matches for the quick filter, showing all posts.")).not.toBeInTheDocument();
     expect(screen.getByText("Loading events from relay…")).toBeInTheDocument();
   });
 
@@ -396,6 +396,22 @@ describe("MobileLayout auth wiring", () => {
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent("Nothing yet in #nodex, on Demo, showing everything.");
     expect(status).toHaveClass("text-center");
+  });
+
+  it("shows a single loading row on mobile upcoming while hydrating", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    renderMobileLayout({
+      viewState: {
+        currentView: "list",
+      },
+      taskViewModel: {
+        isHydrating: true,
+      },
+    });
+
+    expect(screen.getAllByText("Loading events from relay…")).toHaveLength(1);
   });
 
   it("opens Manage and unfolds profile editor on mobile onboarding step 5", async () => {

@@ -3,7 +3,6 @@ import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext, Nip99Metadata } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
-import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { sortTasks, buildChildrenMap, SortContext } from "@/domain/content/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
@@ -16,7 +15,6 @@ import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
-import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
@@ -416,18 +414,6 @@ export function TaskTree({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {/* Top composer with context controls - hidden on mobile */}
-      {!isMobile && (
-        isHydrating ? (
-          <HydrationStatusRow />
-        ) : currentContextId ? (
-          <FocusedTaskBreadcrumb
-            allTasks={allTasks}
-            focusedTaskId={currentContextId}
-          />
-        ) : null
-      )}
-
       <SharedViewComposer
         visible={!isMobile && (Boolean(user) || effectiveForceShowComposer)}
         onSubmit={handleNewTask}

@@ -33,7 +33,6 @@ import { cn } from "@/lib/utils";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { hasTaskMentionChips } from "./TaskMentionChips";
 import { TaskComposer } from "./TaskComposer";
-import { FocusedTaskBreadcrumb } from "./FocusedTaskBreadcrumb";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { getAuthorColor } from "@/lib/author-color";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
@@ -58,7 +57,6 @@ import {
   handleTaskStatusToggleClick,
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
-import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
@@ -488,15 +486,6 @@ export function CalendarView({
 
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
-      {isHydrating ? (
-        <HydrationStatusRow />
-      ) : focusedTaskId ? (
-        <FocusedTaskBreadcrumb
-          allTasks={allTasks}
-          focusedTaskId={focusedTaskId}
-        />
-      ) : null}
-
       <div
         className={cn(
           "flex-1 flex overflow-hidden min-h-0",
