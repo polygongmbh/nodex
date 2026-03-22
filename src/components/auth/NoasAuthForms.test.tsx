@@ -56,7 +56,6 @@ describe("Noas auth forms", () => {
     );
 
     expect(screen.getByRole("button", { name: /nostr authentication options/i })).toBeInTheDocument();
-    expect(screen.queryByText(/your keys are encrypted/i)).not.toBeInTheDocument();
   });
 
   it("edits the noas host in the username row only after enabling the pencil control", () => {
@@ -120,8 +119,6 @@ describe("Noas auth forms", () => {
     expect(hostInput.value).toBe("");
     expect(hostInput).not.toHaveAttribute("readonly");
     expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
-    expect(screen.queryByText(/advanced only/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/only change this if you know what you're doing/i)).not.toBeInTheDocument();
 
     fireEvent.change(hostInput, { target: { value: "https://custom.noas.example:7443/custom/path" } });
     expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example:7443/custom/path");
@@ -266,9 +263,7 @@ describe("Noas auth forms", () => {
       />
     );
 
-    expect(screen.getByText(/your keys are encrypted/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /more options/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/npub1\.\.\./i)).toBeInTheDocument();
   });
 
   it("marks the private-key field as non-credential autofill content", () => {

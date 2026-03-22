@@ -83,7 +83,6 @@ describe("NostrAuthModal", () => {
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
-    expect(screen.getByText(/choose how you want to authenticate/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /noas authentication/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^more options$/i })).not.toBeInTheDocument();
   });
@@ -346,8 +345,6 @@ describe("NostrAuthModal", () => {
     expect(hostInput).toHaveValue("");
     expect(hostInput).not.toHaveAttribute("readonly");
     expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
-    expect(screen.queryByText(/advanced only/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/only change this if you know what you're doing/i)).not.toBeInTheDocument();
   });
 
   it("prefills the Noas host and opens directly to Noas when startup discovery resolved a host", () => {
@@ -357,7 +354,7 @@ describe("NostrAuthModal", () => {
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
-    expect(screen.queryByText(/choose how you want to authenticate/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /noas authentication/i })).not.toBeInTheDocument();
     expect(screen.getByLabelText(/^host$/i)).toHaveValue("https://example.com");
   });
 

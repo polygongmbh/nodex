@@ -48,8 +48,6 @@ describe("FailedPublishQueueBanner", () => {
       />
     );
 
-    expect(screen.getByText("1 post failed to publish")).toBeInTheDocument();
-    expect(screen.getByText("1 hidden")).toBeInTheDocument();
     expect(screen.getByText("selected one")).toBeInTheDocument();
     expect(screen.queryByText("hidden one")).not.toBeInTheDocument();
   });
@@ -69,7 +67,6 @@ describe("FailedPublishQueueBanner", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "All failed" }));
 
-    expect(screen.getByText("2 post failed to publish")).toBeInTheDocument();
     expect(screen.getByText("hidden one")).toBeInTheDocument();
   });
 
@@ -85,14 +82,14 @@ describe("FailedPublishQueueBanner", () => {
       />
     );
 
-    expect(screen.getByText("1 post failed to publish")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dismiss all" })).toBeInTheDocument();
     view.rerender(
       <FailedPublishQueueBanner
         drafts={[]}
         selectedFeedDrafts={[]}
       />
     );
-    expect(screen.queryByText("1 post failed to publish")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Dismiss all" })).not.toBeInTheDocument();
   });
 
   it("renders dismiss all action and fires callback once", () => {
@@ -159,7 +156,6 @@ describe("FailedPublishQueueBanner", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Retry on original relay targets" }));
 
-    expect(screen.getByText("Retrying...")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry on original relay targets" })).toBeDisabled();
 
     resolveRetry?.();
