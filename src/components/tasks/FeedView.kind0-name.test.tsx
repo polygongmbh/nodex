@@ -41,9 +41,6 @@ describe("FeedView kind:0 author labels", () => {
         channels={channels}
         people={[peopleAuthor]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 

@@ -36,9 +36,6 @@ describe("ListView priority control", () => {
         people={people}
         currentUser={people[0]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -72,9 +69,7 @@ describe("ListView priority control", () => {
         people={people}
         currentUser={people[0]}
         searchQuery=""
-        onSearchChange={onSearchChange}
         onNewTask={onNewTask}
-        onToggleComplete={onToggleComplete}
         onUpdatePriority={onUpdatePriority}
       />
     );
@@ -94,9 +89,7 @@ describe("ListView priority control", () => {
         people={people}
         currentUser={people[0]}
         searchQuery=""
-        onSearchChange={() => {}}
         onNewTask={onNewTask}
-        onToggleComplete={onToggleComplete}
         onUpdatePriority={onUpdatePriority}
       />
     );
@@ -129,9 +122,7 @@ describe("ListView priority control", () => {
         channels={channels}
         people={people}
         searchQuery=""
-        onSearchChange={() => {}}
         onNewTask={onNewTask}
-        onToggleComplete={vi.fn()}
         onUpdatePriority={vi.fn()}
       />
     );
@@ -159,9 +150,6 @@ describe("ListView priority control", () => {
         people={people}
         currentUser={people[0]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -195,9 +183,6 @@ describe("ListView priority control", () => {
         people={people}
         currentUser={people[0]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={onToggleComplete}
         onStatusChange={vi.fn()}
       />
     );
@@ -227,9 +212,6 @@ describe("ListView priority control", () => {
         people={people}
         currentUser={people[0]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
       />
     );
@@ -265,9 +247,6 @@ describe("ListView priority control", () => {
         people={people}
         currentUser={people[0]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
       />
     );
@@ -294,9 +273,6 @@ describe("ListView priority control", () => {
         people={[makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })]}
         currentUser={task.author}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
       />
     );
 

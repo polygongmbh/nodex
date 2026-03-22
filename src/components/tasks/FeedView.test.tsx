@@ -63,9 +63,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -98,9 +95,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -133,9 +127,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -174,9 +165,6 @@ describe("FeedView", () => {
         channels={[makeChannel({ id: "frontend", name: "frontend", filterState: "included" })]}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -190,9 +178,6 @@ describe("FeedView", () => {
         channels={[makeChannel({ id: "frontend", name: "frontend", filterState: "neutral" })]}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -224,9 +209,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -259,9 +241,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -301,9 +280,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[pubkeyOnlyAuthor]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -346,9 +322,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[pubkeyOnlyAuthor]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -382,9 +355,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -420,9 +390,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -444,9 +411,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -468,9 +432,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
         isMobile
       />
     );
@@ -487,9 +448,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -518,9 +476,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -552,9 +507,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -593,9 +545,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -634,9 +583,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -671,9 +617,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -699,9 +642,6 @@ describe("FeedView", () => {
         people={[author]}
         focusedTaskId="task-closed-focused"
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -738,9 +678,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -776,9 +713,6 @@ describe("FeedView", () => {
           channels={channels}
           people={[author]}
           searchQuery=""
-          onSearchChange={vi.fn()}
-          onNewTask={vi.fn()}
-          onToggleComplete={vi.fn()}
         />
       );
 
@@ -798,9 +732,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery="nomatchquery"
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -819,9 +750,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[selectedAuthor]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -840,9 +768,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -859,9 +784,6 @@ describe("FeedView", () => {
         channels={channels}
         people={[author]}
         searchQuery="nomatchquery"
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
         isMobile
       />
     );
@@ -887,9 +809,6 @@ describe("FeedView", () => {
         people={[author]}
         currentUser={author}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -923,9 +842,6 @@ describe("FeedView", () => {
         people={[author]}
         currentUser={author}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 

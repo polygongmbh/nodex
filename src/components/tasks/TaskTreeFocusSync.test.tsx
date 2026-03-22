@@ -58,9 +58,6 @@ describe("TaskTree focus sync", () => {
           channels={channels}
           people={people}
           searchQuery=""
-          onSearchChange={vi.fn()}
-          onNewTask={vi.fn()}
-          onToggleComplete={vi.fn()}
           focusedTaskId="root"
         />
       </>
@@ -83,9 +80,6 @@ describe("TaskTree focus sync", () => {
           channels={channels}
           people={people}
           searchQuery=""
-          onSearchChange={vi.fn()}
-          onNewTask={vi.fn()}
-          onToggleComplete={vi.fn()}
           focusedTaskId="root"
         />
       </>

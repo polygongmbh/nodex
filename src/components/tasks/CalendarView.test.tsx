@@ -71,9 +71,6 @@ describe("CalendarView responsiveness", () => {
         channels={channels}
         people={people}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
         isMobile
         mobileView="calendar"
         selectedDate={new Date("2026-02-18T10:00:00.000Z")}
@@ -97,9 +94,6 @@ describe("CalendarView responsiveness", () => {
         channels={channels}
         people={people}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -123,9 +117,6 @@ describe("CalendarView responsiveness", () => {
         channels={channels}
         people={people}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
         isMobile
         mobileView="calendar"
       />
@@ -147,9 +138,6 @@ describe("CalendarView responsiveness", () => {
         channels={channels}
         people={people}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
       />
     );
 
@@ -188,9 +176,6 @@ describe("CalendarView responsiveness", () => {
         channels={channels}
         people={people}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
         selectedDate={new Date("2026-02-18T00:00:00.000Z")}
       />
     );
@@ -219,9 +204,6 @@ describe("CalendarView responsiveness", () => {
         channels={channels}
         people={people}
         searchQuery=""
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn()}
-        onToggleComplete={vi.fn()}
         selectedDate={new Date("2026-02-18T00:00:00.000Z")}
       />
     );

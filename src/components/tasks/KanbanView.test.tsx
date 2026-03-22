@@ -90,9 +90,6 @@ describe("KanbanView closed column", () => {
         currentUser={author}
         searchQuery=""
         depthMode="leaves"
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
       />
     );
@@ -120,9 +117,6 @@ describe("KanbanView closed column", () => {
         currentUser={author}
         searchQuery=""
         depthMode="leaves"
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
       />
     );
@@ -162,9 +156,6 @@ describe("KanbanView closed column", () => {
         currentUser={author}
         searchQuery=""
         depthMode="leaves"
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
       />
     );
@@ -194,9 +185,6 @@ describe("KanbanView closed column", () => {
         currentUser={author}
         searchQuery=""
         depthMode="leaves"
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
       />
     );
@@ -230,9 +218,6 @@ describe("KanbanView closed column", () => {
         currentUser={author}
         searchQuery=""
         depthMode="leaves"
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
       />
     );
@@ -255,9 +240,6 @@ describe("KanbanView closed column", () => {
         currentUser={author}
         searchQuery=""
         depthMode="leaves"
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
       />
     );
@@ -279,9 +261,6 @@ describe("KanbanView closed column", () => {
         currentUser={author}
         searchQuery=""
         depthMode="leaves"
-        onSearchChange={vi.fn()}
-        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
-        onToggleComplete={vi.fn()}
         onStatusChange={vi.fn()}
       />
     );

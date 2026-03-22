@@ -126,7 +126,6 @@ export function MobileLayout({
     allTasks,
     searchQuery,
     focusedTaskId = null,
-    onNewTask,
     composeRestoreRequest: contextComposeRestoreRequest = null,
     mentionRequest: contextMentionRequest = null,
     forceShowComposer: contextForceShowComposer = false,
@@ -426,23 +425,25 @@ export function MobileLayout({
     nip99?: Nip99Metadata,
     locationGeohash?: string
   ): Promise<TaskCreateResult> => {
-    return Promise.resolve(onNewTask(
-      content,
-      tags,
-      relayIds,
-      taskType,
-      dueDate,
-      dueTime,
-      dateType,
-      focusedTaskId || undefined,
-      undefined,
-      explicitMentionPubkeys,
-      priority,
-      attachments,
-      nip99,
-      locationGeohash
-    ));
-  }, [onNewTask, focusedTaskId]);
+    return Promise.resolve(
+      feedTaskViewModel.onNewTask(
+        content,
+        tags,
+        relayIds,
+        taskType,
+        dueDate,
+        dueTime,
+        dateType,
+        focusedTaskId || undefined,
+        undefined,
+        explicitMentionPubkeys,
+        priority,
+        attachments,
+        nip99,
+        locationGeohash
+      )
+    );
+  }, [feedTaskViewModel.onNewTask, focusedTaskId]);
 
   useEffect(() => {
     if (isManageRouteActive) {
