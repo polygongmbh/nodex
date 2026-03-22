@@ -1,7 +1,7 @@
 import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
 import { SidebarHeader } from "@/components/layout/Sidebar";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
-import { DesktopSearchDock, type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
+import { DesktopSearchDock } from "@/components/tasks/DesktopSearchDock";
 import { ViewSwitcher, type ViewType } from "@/components/tasks/ViewSwitcher";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { NostrAuthModal, NostrUserMenu } from "@/components/auth/NostrAuthModal";
@@ -18,10 +18,7 @@ export interface FeedPageDesktopContentConfig {
   failedPublishQueueBannerState: ComponentProps<typeof FailedPublishQueueBanner>;
   desktopSwipeHandlers: HTMLAttributes<HTMLDivElement>;
   viewPane: ReactNode;
-  searchDockState: Omit<
-    ComponentProps<typeof DesktopSearchDock>,
-    "onSearchChange" | "onKanbanDepthModeChange"
-  >;
+  searchDockState: ComponentProps<typeof DesktopSearchDock>;
 }
 
 interface FeedPageDesktopShellProps {
@@ -67,15 +64,7 @@ export function FeedPageDesktopShell({
       <div className="min-w-0 overflow-hidden flex flex-col" {...content.desktopSwipeHandlers}>
         <FailedPublishQueueBanner {...content.failedPublishQueueBannerState} />
         <div className="min-h-0 flex-1 overflow-hidden">{content.viewPane}</div>
-        <DesktopSearchDock
-          {...content.searchDockState}
-          onSearchChange={(query) => {
-            void dispatchFeedInteraction({ type: "ui.search.change", query });
-          }}
-          onKanbanDepthModeChange={(mode) => {
-            void dispatchFeedInteraction({ type: "ui.kanbanDepth.change", mode: mode as KanbanDepthMode });
-          }}
-        />
+        <DesktopSearchDock {...content.searchDockState} />
       </div>
 
       <KeyboardShortcutsHelp {...shortcutsHelpProps} />

@@ -9,25 +9,23 @@ import {
 import { VersionHint } from "@/components/layout/VersionHint";
 import { LegalDialog } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 export type KanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
 interface DesktopSearchDockProps {
   searchQuery: string;
-  onSearchChange: (query: string) => void;
   showKanbanLevels?: boolean;
   kanbanDepthMode?: KanbanDepthMode;
-  onKanbanDepthModeChange?: (mode: KanbanDepthMode) => void;
 }
 
 export function DesktopSearchDock({
   searchQuery,
-  onSearchChange,
   showKanbanLevels = false,
   kanbanDepthMode = "leaves",
-  onKanbanDepthModeChange,
 }: DesktopSearchDockProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   return (
     <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
       <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -38,14 +36,18 @@ export function DesktopSearchDock({
             data-onboarding="search-bar"
             type="text"
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={(e) => {
+              void dispatchFeedInteraction({ type: "ui.search.change", query: e.target.value });
+            }}
             placeholder={t("search.desktop.placeholder")}
             className="w-full bg-muted/60 border border-border/50 rounded-xl pl-9 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-sm"
           />
           {searchQuery.length > 0 && (
             <button
               type="button"
-              onClick={() => onSearchChange("")}
+              onClick={() => {
+                void dispatchFeedInteraction({ type: "ui.search.change", query: "" });
+              }}
               aria-label={t("search.desktop.clear")}
               title={t("search.desktop.clear")}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -54,10 +56,15 @@ export function DesktopSearchDock({
             </button>
           )}
         </div>
-        {showKanbanLevels && onKanbanDepthModeChange && (
+        {showKanbanLevels && (
           <div className="flex items-center gap-1.5 flex-shrink-0" data-onboarding="kanban-levels">
             <Layers className="w-4 h-4 text-muted-foreground" />
-            <Select value={kanbanDepthMode} onValueChange={(v) => onKanbanDepthModeChange(v as KanbanDepthMode)}>
+            <Select
+              value={kanbanDepthMode}
+              onValueChange={(v) => {
+                void dispatchFeedInteraction({ type: "ui.kanbanDepth.change", mode: v as KanbanDepthMode });
+              }}
+            >
               <SelectTrigger
                 className="w-[150px] h-8 rounded-md border-border/50 bg-transparent text-sm shadow-none focus:ring-1 focus:ring-primary/30"
                 aria-label={t("search.kanban.depthHint")}
