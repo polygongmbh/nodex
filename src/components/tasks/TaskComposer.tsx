@@ -1034,19 +1034,24 @@ export function TaskComposer({
     const normalized = chip.identifier.trim().toLowerCase();
     const matchingPerson = people.find((person) => getMentionAliases(person).includes(normalized));
     const resolvedLabel = (matchingPerson?.name || matchingPerson?.displayName || "").trim();
+    const filterBacked = chip.metadataOnly && Boolean(chip.explicitPubkey && selectedPeoplePubkeys.includes(chip.explicitPubkey));
     return {
       ...chip,
       label: resolvedLabel || formatMentionIdentifierForDisplay(chip.identifier),
-      filterBacked: chip.metadataOnly && Boolean(chip.explicitPubkey && selectedPeoplePubkeys.includes(chip.explicitPubkey)),
+      filterBacked,
+      isRemovable: chip.metadataOnly || filterBacked,
     };
   });
   const parsedHashtags = extractHashtagsFromContent(content);
   const parsedHashtagSet = new Set(parsedHashtags);
   const hashtagChipItems = [
-    ...parsedHashtags.map((tag) => ({ tag, metadataOnly: false, filterBacked: false })),
+    ...parsedHashtags.map((tag) => ({ tag, metadataOnly: false, filterBacked: false, isRemovable: false })),
     ...explicitTagNames
       .filter((tag) => !parsedHashtagSet.has(tag))
-      .map((tag) => ({ tag, metadataOnly: true, filterBacked: includedChannels.includes(tag) })),
+      .map((tag) => {
+        const filterBacked = includedChannels.includes(tag);
+        return { tag, metadataOnly: true, filterBacked, isRemovable: true };
+      }),
   ];
   const hasAtLeastOneTag = countHashtagsInContent(content) + explicitTagNames.length > 0;
   const canInheritParentTags = Boolean(parentId);
@@ -1746,19 +1751,24 @@ export function TaskComposer({
               type="button"
               data-chip-kind="mention"
               data-chip-value={mention.explicitPubkey ?? mention.identifier}
-              onClick={() => removeExplicitMention(mention.explicitPubkey)}
+              onClick={() => {
+                if (mention.isRemovable) {
+                  removeExplicitMention(mention.explicitPubkey);
+                  return;
+                }
+                focusComposerInput();
+              }}
               className={cn(
                 "group inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs",
                 mention.filterBacked
                   ? "cursor-pointer bg-primary/15 text-primary hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
                   : mention.metadataOnly
                     ? "cursor-pointer bg-primary/10 text-primary hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
-                    : "bg-primary/10 text-primary"
+                    : "cursor-text bg-primary/10 text-primary hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
               )}
-              disabled={!mention.metadataOnly && !mention.filterBacked}
               title={`${t("composer.labels.mentions")}: @${mention.identifier}`}
             >
-              {mention.metadataOnly || mention.filterBacked ? (
+              {mention.isRemovable ? (
                 <>
                   <AtSign className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
                   <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />
@@ -1775,18 +1785,23 @@ export function TaskComposer({
               type="button"
               data-chip-kind="hashtag"
               data-chip-value={tagChip.tag}
-              onClick={() => removeExplicitHashtag(tagChip.tag)}
+              onClick={() => {
+                if (tagChip.isRemovable) {
+                  removeExplicitHashtag(tagChip.tag);
+                  return;
+                }
+                focusComposerInput();
+              }}
               className={cn(
                 "group inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs",
                 tagChip.filterBacked
                   ? "cursor-pointer bg-foreground/10 text-foreground hover:bg-foreground/15 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
                   : tagChip.metadataOnly
                     ? "cursor-pointer bg-muted text-muted-foreground hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
-                    : "bg-muted text-muted-foreground"
+                    : "cursor-text bg-muted text-muted-foreground hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
               )}
-              disabled={!tagChip.metadataOnly && !tagChip.filterBacked}
             >
-              {tagChip.metadataOnly || tagChip.filterBacked ? (
+              {tagChip.isRemovable ? (
                 <>
                   <Hash className="w-3 h-3 group-hover:hidden group-focus-visible:hidden" />
                   <X className="hidden w-3 h-3 group-hover:block group-focus-visible:block" />

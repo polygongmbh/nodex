@@ -1345,6 +1345,70 @@ describe("TaskComposer hashtag autocomplete", () => {
     });
   });
 
+  it("focuses and highlights the composer input when clicking a parsed hashtag chip", async () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: { value: "Ship #backend now" },
+    });
+
+    const outsideButton = document.createElement("button");
+    document.body.appendChild(outsideButton);
+    outsideButton.focus();
+    expect(document.activeElement).toBe(outsideButton);
+
+    fireEvent.click(getHashtagChip("backend"));
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(textarea);
+      expect(textarea).toHaveClass("ring-amber-400");
+    });
+    expect(getHashtagChip("backend")).toBeInTheDocument();
+
+    outsideButton.remove();
+  });
+
+  it("focuses and highlights the composer input when clicking a parsed mention chip", async () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: { value: "Pair with @alice@example.com on #backend" },
+    });
+
+    const outsideButton = document.createElement("button");
+    document.body.appendChild(outsideButton);
+    outsideButton.focus();
+    expect(document.activeElement).toBe(outsideButton);
+
+    fireEvent.click(getMentionChip("alice@example.com"));
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(textarea);
+      expect(textarea).toHaveClass("ring-amber-400");
+    });
+    expect(getMentionChip("alice@example.com")).toBeInTheDocument();
+
+    outsideButton.remove();
+  });
+
   it("adds included channel filters as metadata-only hashtag chips", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     const channelsWithIncluded: Channel[] = [
