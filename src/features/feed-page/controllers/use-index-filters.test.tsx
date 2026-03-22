@@ -7,6 +7,20 @@ import { useIndexFilters } from "./use-index-filters";
 import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
 import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
 import type { Channel, Person, PostedTag, Relay } from "@/types";
+import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
+import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
+
+const mockApi: FeedInteractionPipelineApi = {
+  dispatch: () => Promise.resolve({ envelope: { id: 0, dispatchedAtMs: 0, intent: { type: "ui.openGuide" } }, outcome: { status: "handled" } }),
+  dispatchBatch: () => Promise.resolve([]),
+};
+
+function callHandler(handlers: FeedInteractionHandlerMap, intent: FeedInteractionIntent) {
+  const handler = handlers[intent.type as FeedInteractionIntentType] as
+    | ((intent: FeedInteractionIntent, api: FeedInteractionPipelineApi) => void)
+    | undefined;
+  handler?.(intent, mockApi);
+}
 
 vi.mock("sonner", () => ({
   toast: vi.fn(),
@@ -63,7 +77,6 @@ function Harness({
     setActiveRelayIds: relayState.setActiveRelayIds,
     channels: visibleChannels,
     composeChannels: visibleComposeChannels,
-    postedTags,
     setPostedTags,
     people,
     setPeople,
@@ -79,10 +92,10 @@ function Harness({
   return (
     <>
       <button onClick={() => relayState.handleRelayExclusive("relay-one")}>RelayExclusive</button>
-      <button onClick={() => filters.handleChannelToggle("general")}>ChannelToggle</button>
-      <button onClick={() => filters.handleChannelMatchModeChange("or")}>ModeOr</button>
-      <button onClick={() => filters.handlePersonExclusive("alice")}>PersonExclusive</button>
-      <button onClick={() => filters.handleHashtagExclusive("urgent")}>HashtagExclusive</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.toggle", channelId: "general" })}>ChannelToggle</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.matchMode.change", mode: "or" })}>ModeOr</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.person.exclusive", personId: "alice" })}>PersonExclusive</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagExclusive", tag: "urgent" })}>HashtagExclusive</button>
       <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralSidebarChannel</button>
       <button onClick={() => {
         setVisibleChannels([channels[1]]);
@@ -103,7 +116,7 @@ function Harness({
         ]);
       }}>KeepGeneralComposeForcedOnly</button>
       <button onClick={() => setVisibleSidebarPeople([peopleSeed[1]])}>HideAliceSidebarPerson</button>
-      <button onClick={() => filters.handleAuthorClick(makePerson({ id: "alice", name: "alice", displayName: "Alice" }))}>
+      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyAuthorExclusive", author: makePerson({ id: "alice", name: "alice", displayName: "Alice" }) })}>
         AuthorClick
       </button>
       <button onClick={() => setPeople(peopleSeed)}>LoadPeople</button>

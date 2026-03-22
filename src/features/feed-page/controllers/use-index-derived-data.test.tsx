@@ -9,6 +9,20 @@ import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Person, PostedTag, Relay } from "@/types";
+import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
+import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
+
+const mockApi: FeedInteractionPipelineApi = {
+  dispatch: () => Promise.resolve({ envelope: { id: 0, dispatchedAtMs: 0, intent: { type: "ui.openGuide" } }, outcome: { status: "handled" } }),
+  dispatchBatch: () => Promise.resolve([]),
+};
+
+function callHandler(handlers: FeedInteractionHandlerMap, intent: FeedInteractionIntent) {
+  const handler = handlers[intent.type as FeedInteractionIntentType] as
+    | ((intent: FeedInteractionIntent, api: FeedInteractionPipelineApi) => void)
+    | undefined;
+  handler?.(intent, mockApi);
+}
 
 vi.mock("sonner", () => ({
   toast: vi.fn(),
@@ -75,7 +89,6 @@ function Harness() {
     setActiveRelayIds,
     channels: derived.channels,
     composeChannels: derived.composeChannels,
-    postedTags,
     setPostedTags,
     people,
     setPeople,
@@ -93,10 +106,10 @@ function Harness() {
 
   return (
     <>
-      <button onClick={() => filters.handleChannelToggle("ops")}>ToggleOps</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.toggle", channelId: "ops" })}>ToggleOps</button>
       <button onClick={() => setActiveRelayIds(new Set(["relay-one"]))}>RelayOne</button>
       <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
-      <button onClick={() => filters.handleHashtagExclusive("urgent")}>HashtagExclusive</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagExclusive", tag: "urgent" })}>HashtagExclusive</button>
       <output data-testid="search-query">{searchQuery}</output>
       <output data-testid="compose-channel-names">
         {filters.composeChannelsWithState.map((channel) => channel.name).join(",")}

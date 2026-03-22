@@ -288,30 +288,15 @@ const Index = () => {
     channelMatchMode,
     setChannelMatchMode,
     composeChannelsWithState,
-    handleChannelToggle,
-    handleChannelClear,
-    handleChannelExclusive,
-    handleToggleAllChannels,
-    handleChannelMatchModeChange,
-    handleHashtagExclusive,
-    handlePersonToggle,
-    handlePersonClear,
-    handlePersonExclusive,
-    handleToggleAllPeople,
-    handleAuthorClick,
     quickFilters,
     setQuickFilters,
-    handleRecentDaysChange,
-    handleRecentEnabledChange,
-    handleMinPriorityChange,
-    handlePriorityEnabledChange,
+    handlers: filterHandlers,
     resetFiltersToDefault,
   } = useIndexFilters({
     relays,
     setActiveRelayIds,
     channels,
     composeChannels,
-    postedTags,
     setPostedTags,
     people,
     setPeople,
@@ -697,18 +682,7 @@ const Index = () => {
       "ui.manageRoute.change": (intent) => {
         setManageRouteActive(intent.isActive);
       },
-      "filter.applyHashtagExclusive": (intent) => {
-        handleHashtagExclusive(intent.tag);
-      },
-      "filter.applyAuthorExclusive": (intent) => {
-        handleAuthorClick(intent.author);
-      },
-      "filter.clearChannel": (intent) => {
-        handleChannelClear(intent.channelId);
-      },
-      "filter.clearPerson": (intent) => {
-        handlePersonClear(intent.personId);
-      },
+      ...filterHandlers,
       "sidebar.relay.toggle": (intent) => {
         handleRelayToggle(intent.relayId);
       },
@@ -727,32 +701,11 @@ const Index = () => {
       "sidebar.relay.reconnect": (intent) => {
         reconnectRelay(intent.url);
       },
-      "sidebar.channel.toggle": (intent) => {
-        handleChannelToggle(intent.channelId);
-      },
-      "sidebar.channel.exclusive": (intent) => {
-        handleChannelExclusive(intent.channelId);
-      },
-      "sidebar.channel.toggleAll": () => {
-        handleToggleAllChannels();
-      },
-      "sidebar.channel.matchMode.change": (intent) => {
-        handleChannelMatchModeChange(intent.mode);
-      },
       "sidebar.channel.pin": (intent) => {
         handleChannelPin(intent.channelId);
       },
       "sidebar.channel.unpin": (intent) => {
         handleChannelUnpin(intent.channelId);
-      },
-      "sidebar.person.toggle": (intent) => {
-        handlePersonToggle(intent.personId);
-      },
-      "sidebar.person.exclusive": (intent) => {
-        handlePersonExclusive(intent.personId);
-      },
-      "sidebar.person.toggleAll": () => {
-        handleToggleAllPeople();
       },
       "sidebar.person.pin": (intent) => {
         handlePersonPin(intent.personId);
@@ -771,18 +724,6 @@ const Index = () => {
       },
       "sidebar.savedFilter.delete": (intent) => {
         savedFilterController.onDeleteConfiguration(intent.configurationId);
-      },
-      "sidebar.quickFilter.recentDays.change": (intent) => {
-        handleRecentDaysChange(intent.days);
-      },
-      "sidebar.quickFilter.recentEnabled.change": (intent) => {
-        handleRecentEnabledChange(intent.enabled);
-      },
-      "sidebar.quickFilter.minPriority.change": (intent) => {
-        handleMinPriorityChange(intent.priority);
-      },
-      "sidebar.quickFilter.priorityEnabled.change": (intent) => {
-        handlePriorityEnabledChange(intent.enabled);
       },
       "task.focus.change": (intent) => {
         setFocusedTaskId(intent.taskId);
@@ -829,32 +770,18 @@ const Index = () => {
       setSearchQuery,
       setKanbanDepthMode,
       setManageRouteActive,
-      handleHashtagExclusive,
-      handleAuthorClick,
-      handleChannelClear,
-      handlePersonClear,
+      filterHandlers,
       handleRelayToggle,
       handleRelayExclusive,
       handleToggleAllRelays,
       handleAddRelay,
       handleRemoveRelay,
       reconnectRelay,
-      handleChannelToggle,
-      handleChannelExclusive,
-      handleToggleAllChannels,
-      handleChannelMatchModeChange,
       handleChannelPin,
       handleChannelUnpin,
-      handlePersonToggle,
-      handlePersonExclusive,
-      handleToggleAllPeople,
       handlePersonPin,
       handlePersonUnpin,
       savedFilterController,
-      handleRecentDaysChange,
-      handleRecentEnabledChange,
-      handleMinPriorityChange,
-      handlePriorityEnabledChange,
       setFocusedTaskId,
       handleToggleComplete,
       handleStatusChange,
