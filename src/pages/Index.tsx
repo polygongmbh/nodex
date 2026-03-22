@@ -247,7 +247,7 @@ const Index = () => {
   const {
     channelFrecencyState,
     personFrecencyState,
-    bumpChannelFrecency,
+    dispatchFrecencyIntent,
     interactionEffects: frecencyInteractionEffects,
   } = useFeedInteractionFrecency();
 
@@ -557,7 +557,7 @@ const Index = () => {
     setPostedTags,
     suppressedNostrEventIds,
     setSuppressedNostrEventIds,
-    bumpChannelFrecency,
+    dispatchFrecencyIntent,
     guardInteraction,
     hasDisconnectedSelectedRelays,
     resolveRelayUrlsFromIds,

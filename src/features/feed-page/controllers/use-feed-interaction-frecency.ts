@@ -13,10 +13,14 @@ import {
   type PersonFrecencyState,
 } from "@/lib/person-frecency";
 
+export type FeedInteractionFrecencyIntent =
+  | { type: "channel.bump"; tag: string; weight?: number }
+  | { type: "person.bump"; personId: string; weight?: number };
+
 export interface UseFeedInteractionFrecencyResult {
   channelFrecencyState: ChannelFrecencyState;
   personFrecencyState: PersonFrecencyState;
-  bumpChannelFrecency: (tag: string, weight?: number) => void;
+  dispatchFrecencyIntent: (intent: FeedInteractionFrecencyIntent) => void;
   interactionEffects: FeedInteractionEffect[];
 }
 
@@ -36,12 +40,19 @@ export function useFeedInteractionFrecency(): UseFeedInteractionFrecencyResult {
     savePersonFrecencyState(personFrecencyState);
   }, [personFrecencyState]);
 
-  const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
-    setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
-  }, []);
-
-  const bumpPersonFrecency = useCallback((personId: string, weight = 1) => {
-    setPersonFrecencyState((previous) => recordPersonInteraction(previous, personId, weight));
+  const dispatchFrecencyIntent = useCallback((intent: FeedInteractionFrecencyIntent) => {
+    switch (intent.type) {
+      case "channel.bump":
+        setChannelFrecencyState((previous) =>
+          recordChannelInteraction(previous, intent.tag, intent.weight ?? 1)
+        );
+        return;
+      case "person.bump":
+        setPersonFrecencyState((previous) =>
+          recordPersonInteraction(previous, intent.personId, intent.weight ?? 1)
+        );
+        return;
+    }
   }, []);
 
   const interactionEffects = useMemo<FeedInteractionEffect[]>(
@@ -51,35 +62,59 @@ export function useFeedInteractionFrecency(): UseFeedInteractionFrecencyResult {
 
         switch (event.envelope.intent.type) {
           case "filter.applyHashtagExclusive":
-            bumpChannelFrecency(event.envelope.intent.tag, 1.9);
+            dispatchFrecencyIntent({
+              type: "channel.bump",
+              tag: event.envelope.intent.tag,
+              weight: 1.9,
+            });
             return;
           case "sidebar.channel.toggle":
-            bumpChannelFrecency(event.envelope.intent.channelId, 1.25);
+            dispatchFrecencyIntent({
+              type: "channel.bump",
+              tag: event.envelope.intent.channelId,
+              weight: 1.25,
+            });
             return;
           case "sidebar.channel.exclusive":
-            bumpChannelFrecency(event.envelope.intent.channelId, 1.6);
+            dispatchFrecencyIntent({
+              type: "channel.bump",
+              tag: event.envelope.intent.channelId,
+              weight: 1.6,
+            });
             return;
           case "filter.applyAuthorExclusive":
-            bumpPersonFrecency(event.envelope.intent.author.id, 1.9);
+            dispatchFrecencyIntent({
+              type: "person.bump",
+              personId: event.envelope.intent.author.id,
+              weight: 1.9,
+            });
             return;
           case "sidebar.person.toggle":
-            bumpPersonFrecency(event.envelope.intent.personId, 1.25);
+            dispatchFrecencyIntent({
+              type: "person.bump",
+              personId: event.envelope.intent.personId,
+              weight: 1.25,
+            });
             return;
           case "sidebar.person.exclusive":
-            bumpPersonFrecency(event.envelope.intent.personId, 1.6);
+            dispatchFrecencyIntent({
+              type: "person.bump",
+              personId: event.envelope.intent.personId,
+              weight: 1.6,
+            });
             return;
           default:
             return;
         }
       },
     ],
-    [bumpChannelFrecency, bumpPersonFrecency]
+    [dispatchFrecencyIntent]
   );
 
   return {
     channelFrecencyState,
     personFrecencyState,
-    bumpChannelFrecency,
+    dispatchFrecencyIntent,
     interactionEffects,
   };
 }

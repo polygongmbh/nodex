@@ -34,6 +34,7 @@ function Harness({
   initialTasks = [] as Task[],
   currentUser = makePerson({ id: "a".repeat(64), name: "Alice", displayName: "Alice" }),
   people = [] as Person[],
+  dispatchFrecencyIntent = vi.fn(),
   publishTaskDueUpdate = vi.fn(async () => true),
   publishTaskPriorityUpdate = vi.fn(async () => true),
   forceLocalMode = false,
@@ -43,6 +44,7 @@ function Harness({
   initialTasks?: Task[];
   currentUser?: Person;
   people?: Person[];
+  dispatchFrecencyIntent?: ReturnType<typeof vi.fn>;
   publishTaskDueUpdate?: ReturnType<typeof vi.fn>;
   publishTaskPriorityUpdate?: ReturnType<typeof vi.fn>;
   forceLocalMode?: boolean;
@@ -69,7 +71,7 @@ function Harness({
     setPostedTags,
     suppressedNostrEventIds,
     setSuppressedNostrEventIds,
-    bumpChannelFrecency: vi.fn(),
+    dispatchFrecencyIntent,
     guardInteraction: vi.fn(() => false),
     hasDisconnectedSelectedRelays: false,
     resolveRelayUrlsFromIds: (relayIds: string[]) =>
@@ -191,6 +193,21 @@ describe("useTaskPublishFlow", () => {
     expect(screen.getByTestId("suppressed-count")).toHaveTextContent("1");
     expect(screen.getByTestId("posted-tags")).toHaveTextContent("general:relay-one");
     expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "queued" });
+  });
+
+  it("dispatches channel frecency intents for submitted tags", async () => {
+    const dispatchFrecencyIntent = vi.fn();
+
+    renderHarness({ dispatchFrecencyIntent });
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+
+    await waitFor(() => {
+      expect(dispatchFrecencyIntent).toHaveBeenCalledWith({
+        type: "channel.bump",
+        tag: "general",
+        weight: 1.1,
+      });
+    });
   });
 
   it("retries a failed draft and restores it into local tasks", async () => {

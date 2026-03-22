@@ -42,6 +42,7 @@ import {
   notifyPublishSavedForRetry,
   notifyStatusRestricted,
 } from "@/lib/notifications";
+import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import type {
   ComposeRestoreRequest,
   ComposeRestoreState,
@@ -93,7 +94,7 @@ interface UseTaskPublishFlowOptions {
   setPostedTags: Dispatch<SetStateAction<PostedTag[]>>;
   suppressedNostrEventIds: Set<string>;
   setSuppressedNostrEventIds: Dispatch<SetStateAction<Set<string>>>;
-  bumpChannelFrecency: (tag: string, weight?: number) => void;
+  dispatchFrecencyIntent: (intent: FeedInteractionFrecencyIntent) => void;
   guardInteraction: (mode: "post" | "modify") => boolean;
   hasDisconnectedSelectedRelays: boolean;
   resolveRelayUrlsFromIds: (relayIds: string[]) => string[];
@@ -141,7 +142,7 @@ export function useTaskPublishFlow({
   setPostedTags,
   suppressedNostrEventIds,
   setSuppressedNostrEventIds,
-  bumpChannelFrecency,
+  dispatchFrecencyIntent,
   guardInteraction,
   hasDisconnectedSelectedRelays,
   resolveRelayUrlsFromIds,
@@ -327,7 +328,9 @@ export function useTaskPublishFlow({
         ...resolvedSubmissionTags.map((tag) => ({ name: tag, relayIds: targetRelayIds })),
       ];
     });
-    resolvedSubmissionTags.forEach((tag) => bumpChannelFrecency(tag, 1.1));
+    resolvedSubmissionTags.forEach((tag) =>
+      dispatchFrecencyIntent({ type: "channel.bump", tag, weight: 1.1 })
+    );
     const hasNonDemoRelay = demoFeedActive
       ? targetRelayIds.some((id) => id !== demoRelayId)
       : targetRelayIds.length > 0;
@@ -683,7 +686,7 @@ export function useTaskPublishFlow({
     return { ok: true, mode: "published" };
   }, [
     allTasks,
-    bumpChannelFrecency,
+    dispatchFrecencyIntent,
     currentUser,
     demoFeedActive,
     demoRelayId,
