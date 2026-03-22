@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import { useIndexDerivedData } from "./use-index-derived-data";
 import { useIndexFilters } from "./use-index-filters";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
+import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import type { Person, PostedTag, Relay } from "@/types";
 
@@ -65,6 +66,7 @@ function Harness() {
     effectiveActiveRelayIds: activeRelayIds,
     relays: relaysWithActiveState,
     channelFrecencyState: {},
+    personFrecencyState: {},
     isHydrating: false,
   });
 
@@ -81,6 +83,7 @@ function Harness() {
     isMobile: false,
     setSearchQuery,
     bumpChannelFrecency: vi.fn(),
+    bumpPersonFrecency: vi.fn(),
     t: ((key: string, values?: Record<string, unknown>) =>
       values ? `${key}:${JSON.stringify(values)}` : key) as unknown as TFunction,
   });
@@ -151,6 +154,7 @@ describe("useIndexDerivedData compose channels", () => {
 
 function SidebarPeopleHarness() {
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
+  const [personFrecencyState, setPersonFrecencyState] = useState<PersonFrecencyState>({});
 
   const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice" });
   const bob = makePerson({ id: "bob", name: "bob", displayName: "Bob" });
@@ -175,12 +179,22 @@ function SidebarPeopleHarness() {
     effectiveActiveRelayIds: activeRelayIds,
     relays,
     channelFrecencyState: {},
+    personFrecencyState,
     isHydrating: false,
   });
 
   return (
     <>
       <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
+      <button
+        onClick={() =>
+          setPersonFrecencyState({
+            alice: { score: 2, lastInteractedAt: Date.now() },
+          })
+        }
+      >
+        RefreshAlice
+      </button>
       <output data-testid="sidebar-people-ids">
         {derived.sidebarPeople.map((person) => person.id).join(",")}
       </output>
@@ -203,5 +217,22 @@ describe("useIndexDerivedData sidebar people", () => {
 
     expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("bob");
     expect(screen.getByTestId("sidebar-people-ids")).not.toHaveTextContent("alice");
+  });
+
+  it("keeps manually interacted people visible through person frecency", () => {
+    render(
+      <MemoryRouter>
+        <SidebarPeopleHarness />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "SwitchRelay" }));
+    expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("bob");
+    expect(screen.getByTestId("sidebar-people-ids")).not.toHaveTextContent("alice");
+
+    fireEvent.click(screen.getByRole("button", { name: "RefreshAlice" }));
+
+    expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("alice");
+    expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("bob");
   });
 });

@@ -22,6 +22,12 @@ import {
   recordChannelInteraction,
   type ChannelFrecencyState,
 } from "@/lib/channel-frecency";
+import {
+  savePersonFrecencyState,
+  loadPersonFrecencyState,
+  recordPersonInteraction,
+  type PersonFrecencyState,
+} from "@/lib/person-frecency";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
@@ -249,6 +255,9 @@ const Index = () => {
   const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
     () => loadChannelFrecencyState()
   );
+  const [personFrecencyState, setPersonFrecencyState] = useState<PersonFrecencyState>(
+    () => loadPersonFrecencyState()
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
@@ -272,6 +281,7 @@ const Index = () => {
     effectiveActiveRelayIds,
     relays,
     channelFrecencyState,
+    personFrecencyState,
     isHydrating,
   });
 
@@ -284,10 +294,16 @@ const Index = () => {
   const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
     setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
   }, []);
+  const bumpPersonFrecency = useCallback((personId: string, weight = 1) => {
+    setPersonFrecencyState((previous) => recordPersonInteraction(previous, personId, weight));
+  }, []);
 
   useEffect(() => {
     saveChannelFrecencyState(channelFrecencyState);
   }, [channelFrecencyState]);
+  useEffect(() => {
+    savePersonFrecencyState(personFrecencyState);
+  }, [personFrecencyState]);
 
   const {
     mentionRequest,
@@ -329,6 +345,7 @@ const Index = () => {
     isHydrating,
     setSearchQuery,
     bumpChannelFrecency,
+    bumpPersonFrecency,
     t,
   });
 

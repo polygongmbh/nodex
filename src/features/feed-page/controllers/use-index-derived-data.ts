@@ -18,6 +18,10 @@ import {
   getChannelFrecencyScores,
   type ChannelFrecencyState,
 } from "@/lib/channel-frecency";
+import {
+  getPersonFrecencyScores,
+  type PersonFrecencyState,
+} from "@/lib/person-frecency";
 import { resolveCurrentUser } from "@/lib/current-user";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { isTaskStateEventKind } from "@/infrastructure/nostr/task-state-events";
@@ -40,6 +44,7 @@ export interface UseIndexDerivedDataOptions {
   effectiveActiveRelayIds: Set<string>;
   relays: Relay[];
   channelFrecencyState: ChannelFrecencyState;
+  personFrecencyState: PersonFrecencyState;
   isHydrating?: boolean;
 }
 
@@ -82,6 +87,7 @@ export function useIndexDerivedData({
   effectiveActiveRelayIds,
   relays,
   channelFrecencyState,
+  personFrecencyState,
   isHydrating = false,
 }: UseIndexDerivedDataOptions): UseIndexDerivedDataResult {
   const filteredNostrEvents = useMemo(() => {
@@ -134,6 +140,10 @@ export function useIndexDerivedData({
   const personalizedChannelScores = useMemo(
     () => getChannelFrecencyScores(channelFrecencyState),
     [channelFrecencyState]
+  );
+  const personalizedPersonScores = useMemo(
+    () => getPersonFrecencyScores(personFrecencyState),
+    [personFrecencyState]
   );
 
   const scopedLocalTasksForChannels = useMemo(() => {
@@ -216,8 +226,14 @@ export function useIndexDerivedData({
   }, [allTasks, effectiveActiveRelayIds, relays]);
 
   const sidebarPeople = useMemo(() => {
-    return deriveSidebarPeople(people, scopedTasksForSidebarPeople, supplementalLatestActivityByAuthor);
-  }, [people, scopedTasksForSidebarPeople, supplementalLatestActivityByAuthor]);
+    return deriveSidebarPeople(
+      people,
+      scopedTasksForSidebarPeople,
+      supplementalLatestActivityByAuthor,
+      new Date(),
+      { personalizeScores: personalizedPersonScores }
+    );
+  }, [people, scopedTasksForSidebarPeople, supplementalLatestActivityByAuthor, personalizedPersonScores]);
 
   const currentUser = resolveCurrentUser(people, user);
 

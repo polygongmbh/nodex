@@ -4,6 +4,11 @@ const DEFAULT_MIN_POSTS = 3;
 const ONLINE_WINDOW_MS = 3 * 60 * 1000;
 const RECENT_WINDOW_MS = 60 * 60 * 1000;
 
+interface DeriveSidebarPeopleOptions {
+  minPosts?: number;
+  personalizeScores?: Map<string, number>;
+}
+
 interface SidebarPersonStats {
   count: number;
   latestTimestampMs: number;
@@ -14,8 +19,10 @@ export function deriveSidebarPeople(
   tasks: Task[],
   latestPresenceByAuthorId: Map<string, number> = new Map(),
   now: Date = new Date(),
-  minPosts: number = DEFAULT_MIN_POSTS
+  options: DeriveSidebarPeopleOptions = {}
 ): Person[] {
+  const minPosts = options.minPosts ?? DEFAULT_MIN_POSTS;
+  const personalizeScores = options.personalizeScores ?? new Map();
   const statsByAuthorId = new Map<string, SidebarPersonStats>();
 
   for (const task of tasks) {
@@ -44,19 +51,22 @@ export function deriveSidebarPeople(
 
   return people
     .map((person) => {
-      const stats = statsByAuthorId.get(person.id.trim().toLowerCase());
-      if (!stats || stats.count < minPosts) {
+      const normalizedId = person.id.trim().toLowerCase();
+      const stats = statsByAuthorId.get(normalizedId);
+      const personalScore = personalizeScores.get(normalizedId) || 0;
+      if ((!stats || stats.count < minPosts) && personalScore <= 0) {
         return null;
       }
 
-      const latestPresenceTimestampMs = latestPresenceByAuthorId.get(
-        person.id.trim().toLowerCase()
-      );
+      const latestPresenceTimestampMs = latestPresenceByAuthorId.get(normalizedId);
       const latestActivityTimestampMs = Math.max(
-        stats.latestTimestampMs,
+        stats?.latestTimestampMs ?? Number.NEGATIVE_INFINITY,
         latestPresenceTimestampMs ?? Number.NEGATIVE_INFINITY
       );
-      const ageMs = nowMs - latestActivityTimestampMs;
+      const ageMs =
+        latestActivityTimestampMs === Number.NEGATIVE_INFINITY
+          ? Number.POSITIVE_INFINITY
+          : nowMs - latestActivityTimestampMs;
       const onlineStatus: Person["onlineStatus"] =
         ageMs <= ONLINE_WINDOW_MS ? "online" : ageMs <= RECENT_WINDOW_MS ? "recent" : "offline";
 
@@ -67,12 +77,16 @@ export function deriveSidebarPeople(
           onlineStatus,
         },
         latestTimestampMs: latestActivityTimestampMs,
+        personalScore,
       };
     })
     .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
     .sort((a, b) => {
       if (b.latestTimestampMs !== a.latestTimestampMs) {
         return b.latestTimestampMs - a.latestTimestampMs;
+      }
+      if (b.personalScore !== a.personalScore) {
+        return b.personalScore - a.personalScore;
       }
       return a.person.displayName.localeCompare(b.person.displayName, undefined, {
         sensitivity: "base",

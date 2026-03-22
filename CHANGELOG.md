@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 - Noas auth now keeps server messages to a single inline alert inside the Noas panel and uses clearer username/password/private-key field semantics so password managers target the actual password field instead of the private-key input.
 - Desktop kanban now uses the wider auto scrollbar on the board itself while preventing stray horizontal scrollbars inside individual columns, including the Firefox first-column case.
+- People sidebar suggestions now use the same frecency-backed persistence model as channels, so manually interacted people stay visible longer instead of disappearing as soon as they are deselected.
 - People can now be pinned in the sidebar with the same relay-scoped behavior as channels, and pinned people stay visible at the top of the People list for the current view.
 
 ## [2.7.0] - 2026-03-22

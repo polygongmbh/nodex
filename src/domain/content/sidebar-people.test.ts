@@ -80,4 +80,27 @@ describe("deriveSidebarPeople", () => {
     expect(sidebarPeople[0].isOnline).toBe(true);
     expect(sidebarPeople[0].onlineStatus).toBe("online");
   });
+
+  it("keeps manually interacted people visible below the normal post threshold", () => {
+    const now = new Date("2026-02-17T12:00:00.000Z");
+    const frequent = makePerson({ id: "frequent-pk", name: "frequent", displayName: "Frequent" });
+    const manual = makePerson({ id: "manual-pk", name: "manual", displayName: "Manual" });
+    const tasks = [
+      makeTask({ id: "f1", author: frequent, timestamp: new Date("2026-02-17T11:59:30.000Z") }),
+      makeTask({ id: "f2", author: frequent, timestamp: new Date("2026-02-17T11:58:10.000Z") }),
+      makeTask({ id: "f3", author: frequent, timestamp: new Date("2026-02-17T11:57:50.000Z") }),
+      makeTask({ id: "m1", author: manual, timestamp: new Date("2026-02-17T10:57:50.000Z") }),
+    ];
+
+    const sidebarPeople = deriveSidebarPeople(
+      [manual, frequent],
+      tasks,
+      new Map(),
+      now,
+      { personalizeScores: new Map([["manual-pk", 2]]) }
+    );
+
+    expect(sidebarPeople.map((person) => person.id)).toEqual(["frequent-pk", "manual-pk"]);
+    expect(sidebarPeople.find((person) => person.id === "manual-pk")?.onlineStatus).toBe("offline");
+  });
 });

@@ -40,6 +40,7 @@ interface UseIndexFiltersOptions {
   isHydrating?: boolean;
   setSearchQuery: Dispatch<SetStateAction<string>>;
   bumpChannelFrecency: (tag: string, weight?: number) => void;
+  bumpPersonFrecency: (personId: string, weight?: number) => void;
   t: TFunction;
 }
 
@@ -57,6 +58,7 @@ export function useIndexFilters({
   isHydrating = false,
   setSearchQuery,
   bumpChannelFrecency,
+  bumpPersonFrecency,
   t,
 }: UseIndexFiltersOptions) {
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
@@ -217,12 +219,13 @@ export function useIndexFilters({
   }, [bumpChannelFrecency, channels, relays, setPostedTags, t]);
 
   const handlePersonToggle = useCallback((id: string) => {
+    bumpPersonFrecency(id, 1.25);
     setPeople((prev) =>
       prev.map((person) =>
         person.id === id ? { ...person, isSelected: !person.isSelected } : person
       )
     );
-  }, [setPeople]);
+  }, [bumpPersonFrecency, setPeople]);
 
   const handlePersonClear = useCallback((id: string) => {
     setPeople((prev) =>
@@ -233,6 +236,7 @@ export function useIndexFilters({
   }, [setPeople]);
 
   const handlePersonExclusive = useCallback((id: string) => {
+    bumpPersonFrecency(id, 1.6);
     if (shouldToggleOffExclusivePerson(people, id)) {
       setPeople((prev) => mapPeopleSelection(prev, () => false));
       return;
@@ -245,9 +249,10 @@ export function useIndexFilters({
         personName: person?.displayName || person?.name || t("toasts.success.selectedUserFallback"),
       })
     );
-  }, [people, setPeople, t]);
+  }, [bumpPersonFrecency, people, setPeople, t]);
 
   const upsertAndSelectPerson = useCallback((author: Person) => {
+    bumpPersonFrecency(author.id, 1.9);
     setPeople((prev) => {
       const exists = prev.some((person) => person.id === author.id);
       const next = exists
@@ -268,7 +273,7 @@ export function useIndexFilters({
         isSelected: person.id === author.id,
       }));
     });
-  }, [setPeople]);
+  }, [bumpPersonFrecency, setPeople]);
 
   const handleAuthorClick = useCallback((author: Person) => {
     upsertAndSelectPerson(author);
