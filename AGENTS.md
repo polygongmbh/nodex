@@ -222,6 +222,8 @@ policies:
 - Close any background terminal sessions started for the task once they are no longer needed, and always clean them up after each commit before handoff or further workflow steps.
 - When changing shared user-facing copy in locale files, propagate equivalent updates across all supported languages in `src/locales/` in the same change unless an omission is explicitly documented.
 - Do not leave hardcoded user-facing strings in production code; route them through i18n and keep `en`, `de`, and `es` in sync unless a documented compliance/jurisdiction exception applies.
+- If unrelated files change while working, ignore incidental changes unless they directly conflict with target files.
+- Include blockers/uncertainty with `⚠️` and revised estimates.
 
 ### Test and Verification
 - Follow the verification matrix above for required commands.
@@ -229,15 +231,8 @@ policies:
 - Before adjusting existing tests, first determine whether failures indicate regressions or deliberate behavior changes.
 - Prefer behavior/outcome tests over implementation-detail tests.
 - Keep UI tests focused on key flows and accessibility contracts.
-- Prefer semantics-based queries (`getByRole` with accessible names or stable `data-testid`) instead of literal text searches and keep copy-specific assertions inside dedicated i18n/messaging suites.
-- Avoid adding new `data-testid` selectors when stable semantic queries (`getByRole`, labels, landmarks, accessible names) are available.
-- Use `data-testid` only when semantics are genuinely unstable or absent, and keep those usages narrowly scoped and documented in the related test or review notes.
-- Keep runtime `data-testid` usage limited to explicit exceptions:
-  - dynamic per-entity selectors where stable accessible names are not deterministic (`feed-state-entry-*`, `feed-author-*`, `kanban-due-row-*`)
-  - deterministic visual seed checks (`beam-avatar` / `user-avatar` generator output)
-  - reusable helper components that support optional caller-provided test hooks (`TaskTagChipRow`)
-- During reviews and before handoff, run `rg -n "data-testid" src --glob '!**/*.test.*' --glob '!**/__tests__/**'` and reject net-new runtime test ids outside the exception list.
 - Do not add cosmetic-only assertions unless explicitly required; any class/style assertion must include a short comment explaining the protected product contract.
+- Prefer semantics-based queries (`getByRole` with accessible names or stable `data-testid`) instead of literal text searches and keep copy-specific assertions inside dedicated i18n/messaging suites. Avoid adding new `data-testid` selectors when stable semantic queries (`getByRole`, labels, landmarks, accessible names) are available. Use `data-testid` only when semantics are genuinely unstable or absent, and keep those usages narrowly scoped and documented in the related test or review notes.
 - Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
 - Treat lint warnings as actionable backlog; do not introduce new warnings. If a lint rule is intentionally relaxed or disabled, document scope and rationale in the same commit.
 
@@ -343,20 +338,6 @@ When asked to create a plan to fix or implement something:
   - `🧪` tests/verification
 - Use color when supported to reinforce status categories.
 - Prefer concise bullets over verbose prose.
-
-### Progress Reporting Expectations
-- Provide progress estimates during active work.
-- Use staged labels when suitable:
-  - `🔍 Researching (stage 1/5)`
-  - `🧭 Planning (stage 2/5)`
-  - `🛠️ Implementing (stage 3/5)`
-  - `🧪 Testing (stage 4/5)`
-  - `✅ Finalizing (stage 5/5)`
-- If staged labels are not suitable, use approximate percentage (for example `~40% complete`).
-- Pair updates with status icons and keep them concise.
-- Prefer milestone-only updates over repetitive phase labels.
-- Include blockers/uncertainty with `⚠️` and revised estimates.
-- If unrelated files change while working, ignore incidental changes unless they directly conflict with target files.
 
 ### AGENTS Maintenance
 - When the user gives new standing workflow/process instructions, update `AGENTS.md` in the same session.

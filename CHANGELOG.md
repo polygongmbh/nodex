@@ -5,11 +5,14 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [2.7.1] - 2026-03-22
 - Compose preview chips that are part of the current message (and therefore not removable) now focus the composer and flash the existing input highlight guidance when clicked, while removable chips continue to remove tags/mentions.
 - Noas auth now keeps server messages to a single inline alert inside the Noas panel and uses clearer username/password/private-key field semantics so password managers target the actual password field instead of the private-key input.
 - Desktop kanban now uses the wider auto scrollbar on the board itself while preventing stray horizontal scrollbars inside individual columns, including the Firefox first-column case.
 - People sidebar suggestions now use the same frecency-backed persistence model as channels, so manually interacted people stay visible longer instead of disappearing as soon as they are deselected.
 - People can now be pinned in the sidebar with the same relay-scoped behavior as channels, and pinned people stay visible at the top of the People list for the current view.
+- Mobile fallback hints now use a single scope-aware contract across mobile views with strict precedence, and the outdated exclusive-mode helper note is no longer shown.
 
 ## [2.7.0] - 2026-03-22
 Minor release for mobile manage polish, sidebar/feed scope fixes, terminology cleanup, and Noas UX updates (6041 lines changed since `v2.6.2`).
