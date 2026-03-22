@@ -4,6 +4,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { RelayManagement } from "./RelayManagement";
 import { toast } from "sonner";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
+import i18n from "@/lib/i18n/config";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -27,6 +28,7 @@ describe("RelayManagement", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    void i18n.changeLanguage("en");
     Object.defineProperty(navigator, "clipboard", {
       value: { writeText: vi.fn().mockResolvedValue(undefined) },
       configurable: true,
@@ -52,7 +54,7 @@ describe("RelayManagement", () => {
     expect(vi.mocked(toast.success)).toHaveBeenCalled();
   });
 
-  it("renders relay rows for error-status relays", () => {
+  it("shows distinct status labels for connection issues and read rejections", () => {
     renderWithBus(
       <RelayManagement
         relays={[
@@ -63,11 +65,11 @@ describe("RelayManagement", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-    expect(screen.getByText("relay.one")).toBeInTheDocument();
-    expect(screen.getByText("relay.two")).toBeInTheDocument();
+    expect(screen.getByText(i18n.t("relay.status.connectionError"))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t("relay.status.readRejected"))).toBeInTheDocument();
   });
 
-  it("renders relay row for read-only relays", () => {
+  it("shows the read-only relay explanatory hint", () => {
     renderWithBus(
       <RelayManagement
         relays={[
@@ -77,10 +79,10 @@ describe("RelayManagement", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-    expect(screen.getByText("relay.one")).toBeInTheDocument();
+    expect(screen.getByText(i18n.t("relay.statusHints.readOnly"))).toBeInTheDocument();
   });
 
-  it("expands relay capability details from nip11 metadata", () => {
+  it("shows relay capability metadata fields when details are expanded", () => {
     renderWithBus(
       <RelayManagement
         relays={[
@@ -101,6 +103,10 @@ describe("RelayManagement", () => {
     fireEvent.click(screen.getByRole("button", { name: /show relay details/i }));
 
     expect(screen.getByRole("button", { name: /hide relay details/i })).toBeInTheDocument();
+    expect(screen.getByText(i18n.t("relay.details.title"))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t("relay.details.authRequired"))).toBeInTheDocument();
+    expect(screen.getByText(i18n.t("relay.details.supportsNip42"))).toBeInTheDocument();
+    expect(screen.getAllByText(i18n.t("relay.details.yes"))).toHaveLength(2);
   });
 
   it("dispatches relay reconnect intent from the management panel", () => {
