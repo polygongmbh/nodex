@@ -339,7 +339,7 @@ const Index = () => {
     relays,
     effectiveActiveRelayIds,
     demoFeedActive,
-    user,
+    canModifyContent: authPolicy.canModifyContent,
     handleOpenAuthModal,
     publishEvent,
     t,

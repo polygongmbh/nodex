@@ -13,12 +13,12 @@ vi.mock("@/lib/notifications", () => ({
 }));
 
 function Harness({
-  user = { pubkey: "a".repeat(64) },
+  canModifyContent = true,
   relays = [makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" })],
   tasks = [makeTask({ id: "a".repeat(64), relays: ["relay-one"] }) as Task],
   effectiveActiveRelayIds = new Set(["relay-one"]),
 }: {
-  user?: { pubkey?: string } | null;
+  canModifyContent?: boolean;
   relays?: Relay[];
   tasks?: Task[];
   effectiveActiveRelayIds?: Set<string>;
@@ -30,7 +30,7 @@ function Harness({
     relays,
     effectiveActiveRelayIds,
     demoFeedActive: false,
-    user,
+    canModifyContent,
     handleOpenAuthModal: () => setAuthCount((count) => count + 1),
     publishEvent: async () => {
       setPublishCount((count) => count + 1);
@@ -58,7 +58,7 @@ describe("useTaskPublishControls", () => {
   });
 
   it("opens auth when interaction is attempted while signed out", () => {
-    render(<Harness user={null} />);
+    render(<Harness canModifyContent={false} />);
     fireEvent.click(screen.getByRole("button", { name: "GuardModify" }));
     expect(screen.getByTestId("auth-count")).toHaveTextContent("1");
     expect(screen.getByTestId("interaction-blocked")).toHaveTextContent("true");

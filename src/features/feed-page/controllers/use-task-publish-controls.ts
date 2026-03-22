@@ -24,7 +24,7 @@ interface UseTaskPublishControlsOptions {
   relays: Relay[];
   effectiveActiveRelayIds: Set<string>;
   demoFeedActive: boolean;
-  user: { pubkey?: string } | null | undefined;
+  canModifyContent: boolean;
   handleOpenAuthModal: () => void;
   publishEvent: (
     kind: number,
@@ -41,7 +41,7 @@ export function useTaskPublishControls({
   relays,
   effectiveActiveRelayIds,
   demoFeedActive,
-  user,
+  canModifyContent,
   handleOpenAuthModal,
   publishEvent,
   t,
@@ -59,14 +59,14 @@ export function useTaskPublishControls({
     notifyDisconnectedSelectedFeeds(t);
   }, [t]);
 
-  const isInteractionBlocked = !user || hasDisconnectedSelectedRelays;
+  const isInteractionBlocked = !canModifyContent || hasDisconnectedSelectedRelays;
 
   const guardInteraction = useCallback((mode: "post" | "modify"): boolean => {
     if (hasDisconnectedSelectedRelays) {
       notifyModifyBlockedByDisconnectedFeeds();
       return true;
     }
-    if (!user) {
+    if (!canModifyContent) {
       handleOpenAuthModal();
       if (mode === "post") {
         notifyNeedSigninPost(t);
@@ -76,7 +76,7 @@ export function useTaskPublishControls({
       return true;
     }
     return false;
-  }, [handleOpenAuthModal, hasDisconnectedSelectedRelays, notifyModifyBlockedByDisconnectedFeeds, t, user]);
+  }, [canModifyContent, handleOpenAuthModal, hasDisconnectedSelectedRelays, notifyModifyBlockedByDisconnectedFeeds, t]);
 
   const handleBlockedInteractionAttempt = useCallback(() => {
     guardInteraction("modify");

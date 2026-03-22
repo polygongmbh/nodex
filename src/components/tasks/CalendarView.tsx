@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
-import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import {
   Task,
@@ -59,6 +58,7 @@ import {
 } from "@/lib/task-status-toggle";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   selectedDate?: Date | null;
@@ -91,6 +91,7 @@ export function CalendarView({
 }: CalendarViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const authPolicy = useAuthActionPolicy();
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
   };
@@ -102,7 +103,6 @@ export function CalendarView({
     return t("hints.statusToggle.todo", { alternateKey });
   };
 
-  const { user } = useNDK();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [desktopMonths, setDesktopMonths] = useState<Date[]>(() => {
     const now = startOfMonth(new Date());
@@ -876,7 +876,7 @@ export function CalendarView({
                 <h3 className="font-medium">
                   {format(selectedDate, "EEEE, MMMM d")}
                 </h3>
-                {user && (
+                {authPolicy.canCreateContent && (
                   <button
                     onClick={() => setIsComposingEvent(true)}
                     className="flex items-center gap-1 px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"

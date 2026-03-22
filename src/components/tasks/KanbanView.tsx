@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Lock } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import {
@@ -34,6 +33,7 @@ import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
@@ -76,7 +76,7 @@ export function KanbanView({
   const focusSidebar = () => {
     void dispatchFeedInteraction({ type: "ui.focusSidebar" });
   };
-  const { user } = useNDK();
+  const authPolicy = useAuthActionPolicy();
   const columns = useMemo(() => getColumns((key) => t(key)), [t]);
   const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
@@ -433,7 +433,7 @@ export function KanbanView({
                       {tasksByStatus[column.id].length}
                     </span>
                   </div>
-                  {user && !isInteractionBlocked && column.id !== "closed" && (
+                  {authPolicy.canOpenCompose && !isInteractionBlocked && column.id !== "closed" && (
                     <button
                       onClick={() => setComposingColumn(column.id as TaskInitialStatus)}
                       className="p-1 rounded hover:bg-muted transition-colors"
