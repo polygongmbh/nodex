@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.7.2] - 2026-03-22
+- Onboarding navigation guidance now uses the actual view order and labels (`Timeline`, `Tree`, `Kanban`, `Table`, `Calendar`) in English, German, and Spanish, and the task-focus step now clearly explains post interactions (view subitems, comment, create subtasks) without breadcrumb jargon.
+
 ## [2.7.1] - 2026-03-22
 - Compose preview chips that are part of the current message (and therefore not removable) now focus the composer and flash the existing input highlight guidance when clicked, while removable chips continue to remove tags/mentions.
 - Noas auth now keeps server messages to a single inline alert inside the Noas panel and uses clearer username/password/private-key field semantics so password managers target the actual password field instead of the private-key input.
