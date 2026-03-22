@@ -297,6 +297,15 @@
     height: 0.875rem;
   }
 
+  .scrollbar-auto {
+    scrollbar-width: auto;
+  }
+
+  .scrollbar-auto::-webkit-scrollbar {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
   .glow-primary {
     box-shadow: var(--shadow-glow);
   }

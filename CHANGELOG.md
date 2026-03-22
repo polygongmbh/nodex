@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Noas auth now keeps server messages to a single inline alert inside the Noas panel and uses clearer username/password/private-key field semantics so password managers target the actual password field instead of the private-key input.
+- Desktop kanban now uses the wider auto scrollbar on the board itself while preventing stray horizontal scrollbars inside individual columns, including the Firefox first-column case.
 
 ## [2.7.0] - 2026-03-22
 Minor release for mobile manage polish, sidebar/feed scope fixes, terminology cleanup, and Noas UX updates (6041 lines changed since `v2.6.2`).

@@ -427,7 +427,7 @@ export function KanbanView({
       {/* Kanban Columns */}
       <div
         ref={columnsContainerRef}
-        className="flex-1 overflow-x-auto overflow-y-hidden p-4"
+        className="scrollbar-auto flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4"
         data-onboarding="kanban-board"
       >
         <DragDropContext onDragEnd={handleDragEnd}>
@@ -487,14 +487,14 @@ export function KanbanView({
                   {(provided, snapshot) => (
                     <div
                       className={cn(
-                        "flex-1 min-h-0 overflow-y-auto p-2",
+                        "flex-1 min-h-0 overflow-x-hidden overflow-y-auto p-2",
                         snapshot.isDraggingOver && "bg-primary/5"
                       )}
                     >
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className="h-full min-h-full flex flex-col gap-2"
+                        className="flex h-full min-h-full min-w-0 flex-col gap-2"
                       >
                         {tasksByStatus[column.id].map((task, index) => {
                           const ancestorChain = showContext ? getAncestorChain(task.id) : [];
@@ -538,7 +538,7 @@ export function KanbanView({
                                   data-task-id={task.id}
                                   onClick={() => focusTask(task.id)}
                                   className={cn(
-                                    `relative bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
+                                    `relative min-w-0 bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "",
                                     !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
                                     isTaskTerminalStatus(displayStatus) && "opacity-70",

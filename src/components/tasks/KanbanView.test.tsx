@@ -76,6 +76,34 @@ beforeEach(() => {
 });
 
 describe("KanbanView closed column", () => {
+  it("uses an auto-width board scrollbar and hides horizontal overflow inside columns", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const todoTask = makeTask({ id: "todo-task", author, status: "todo", content: "Todo task #general" });
+
+    const { container } = render(
+      <KanbanView
+        tasks={[todoTask]}
+        allTasks={[todoTask]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        depthMode="leaves"
+        onSearchChange={vi.fn()}
+        onNewTask={vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }))}
+        onToggleComplete={vi.fn()}
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    const board = container.querySelector('[data-onboarding="kanban-board"]');
+    const todoColumnList = container.querySelector('[data-droppable-id="todo"]')?.parentElement;
+
+    expect(board?.className).toContain("scrollbar-auto");
+    expect(todoColumnList?.className).toContain("overflow-x-hidden");
+  });
+
   it("renders a closed column to the right of done", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const todoTask = makeTask({ id: "todo-task", author, status: "todo", content: "Todo task #general" });
