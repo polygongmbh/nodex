@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useRef } from "react";
-import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext, Nip99Metadata } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -17,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   isMobile?: boolean;
@@ -55,7 +55,7 @@ export function TaskTree({
   const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const interactionModel = useFeedViewInteractionModel();
-  const { user } = useNDK();
+  const authPolicy = useAuthActionPolicy();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
@@ -411,7 +411,7 @@ export function TaskTree({
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       <SharedViewComposer
-        visible={!isMobile && (Boolean(user) || effectiveForceShowComposer)}
+        visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onSubmit={handleNewTask}
         relays={relays}
         channels={channels}

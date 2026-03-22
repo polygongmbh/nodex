@@ -1,5 +1,4 @@
 import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags, X } from "lucide-react";
 import {
   Task,
@@ -49,6 +48,7 @@ import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -118,7 +118,7 @@ export function ListView({
   const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const interactionModel = useFeedViewInteractionModel();
-  const { user } = useNDK();
+  const authPolicy = useAuthActionPolicy();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
@@ -407,7 +407,7 @@ export function ListView({
   };
 
   const canCompleteTask = (task: Task) => {
-    return Boolean(user) && !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
+    return authPolicy.canModifyContent && !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
   const dispatchStatusChange = (taskId: string, status: TaskStatus) => {
     void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
@@ -602,7 +602,7 @@ export function ListView({
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       <SharedViewComposer
-        visible={Boolean(user) || effectiveForceShowComposer}
+        visible={authPolicy.canOpenCompose || effectiveForceShowComposer}
         onSubmit={handleNewTask}
         relays={relays}
         channels={channels}

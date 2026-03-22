@@ -1,5 +1,4 @@
 import { startTransition, useDeferredValue, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
-import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X } from "lucide-react";
 import {
   Task,
@@ -68,6 +67,7 @@ import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -236,7 +236,7 @@ export function FeedView({
     return `${value.slice(0, 8)}…${value.slice(-3)}`;
   };
 
-  const { user } = useNDK();
+  const authPolicy = useAuthActionPolicy();
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
   const [isTwoXLDesktop, setIsTwoXLDesktop] = useState(false);
@@ -1277,7 +1277,7 @@ export function FeedView({
   return (
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       <SharedViewComposer
-        visible={!isMobile && (Boolean(user) || effectiveForceShowComposer)}
+        visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onSubmit={handleNewTask}
         relays={relays}
         channels={channels}

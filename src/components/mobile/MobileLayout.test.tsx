@@ -49,11 +49,11 @@ vi.mock("./SwipeIndicator", () => ({
 vi.mock("./UnifiedBottomBar", () => ({
   UnifiedBottomBar: ({
     searchQuery,
-    isSignedIn,
+    canCreateContent,
     onSubmit,
   }: {
     searchQuery: string;
-    isSignedIn: boolean;
+    canCreateContent: boolean;
     onSubmit: (...args: unknown[]) => unknown;
   }) => {
     const [value, setValue] = useState(searchQuery);
@@ -72,7 +72,7 @@ vi.mock("./UnifiedBottomBar", () => ({
             setValue(event.target.value);
           }}
         />
-        {!isSignedIn ? (
+        {!canCreateContent ? (
           <button
             type="button"
             onClick={() => {
@@ -129,7 +129,7 @@ const baseProps: MobileLayoutProps = {
     relays,
     channels,
     people,
-    isSignedIn: true,
+    canCreateContent: true,
     currentView: "tree",
   },
   actions: {
@@ -189,7 +189,7 @@ describe("MobileLayout auth wiring", () => {
     const onNewTask = vi.fn().mockResolvedValue({ ok: false, reason: "not-authenticated" });
 
     renderMobileLayout({
-      viewState: { isSignedIn: false },
+      viewState: { canCreateContent: false },
       taskViewModel: { onNewTask },
     });
 
@@ -200,14 +200,14 @@ describe("MobileLayout auth wiring", () => {
     expect(onNewTask).toHaveBeenCalledTimes(1);
   });
 
-  it("redirects to manage view and opens profile editor after sign-in when cached profile metadata is missing", async () => {
+  it("redirects to manage view and opens profile editor when profile completion prompt signal increments", async () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
 
     const { rerender } = renderMobileLayout({
       viewState: {
-        hasCachedCurrentUserProfileMetadata: false,
-        isSignedIn: false,
+        canCreateContent: false,
+        profileCompletionPromptSignal: 0,
       },
     });
 
@@ -222,8 +222,8 @@ describe("MobileLayout auth wiring", () => {
         <MobileLayout
           viewState={{
             ...baseProps.viewState,
-            hasCachedCurrentUserProfileMetadata: false,
-            isSignedIn: true,
+            canCreateContent: true,
+            profileCompletionPromptSignal: 1,
           }}
           actions={baseProps.actions}
         />
@@ -448,7 +448,7 @@ describe("MobileLayout auth wiring", () => {
         <MobileLayout
           viewState={{
             ...baseProps.viewState,
-            isSignedIn: true,
+            canCreateContent: true,
             currentView: "tree",
             isOnboardingOpen: true,
             activeOnboardingStepId: "mobile-compose-combobox",
@@ -486,7 +486,7 @@ describe("MobileLayout auth wiring", () => {
         <MobileLayout
           viewState={{
             ...baseProps.viewState,
-            isSignedIn: true,
+            canCreateContent: true,
             currentView: "feed",
           }}
           actions={{

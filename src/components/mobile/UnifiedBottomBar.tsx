@@ -63,7 +63,7 @@ interface UnifiedBottomBarProps {
   people: Person[];
   // Default content for composing
   defaultContent?: string;
-  isSignedIn: boolean;
+  canCreateContent: boolean;
   forceComposeMode?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
@@ -111,7 +111,7 @@ export function UnifiedBottomBar({
   channels,
   people,
   defaultContent = "",
-  isSignedIn,
+  canCreateContent,
   composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
   const { t } = useTranslation();
@@ -715,7 +715,7 @@ export function UnifiedBottomBar({
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
   const taskSubmitBlock = resolveComposeSubmitBlock({
-    isSignedIn,
+    isSignedIn: canCreateContent,
     hasMeaningfulContent: hasMeaningfulComposeText,
     hasAtLeastOneTag,
     canInheritParentTags,
@@ -730,11 +730,11 @@ export function UnifiedBottomBar({
     || taskSubmitBlock?.code === "selectTask"
     || taskSubmitBlock?.code === "uploading"
     || taskSubmitBlock?.code === "uploadFailed";
-  const isPrimarySendEmptyDisabled = isSignedIn && sharedText.trim().length === 0;
+  const isPrimarySendEmptyDisabled = canCreateContent && sharedText.trim().length === 0;
   const primarySendTitle = isPrimarySendEmptyDisabled
     ? (taskSubmitBlock?.reason
       ?? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")))
-    : !isSignedIn
+    : !canCreateContent
       ? t("composer.hints.signInToCreate")
       : taskSubmitBlock
         ? taskSubmitBlock.reason
@@ -876,12 +876,12 @@ export function UnifiedBottomBar({
   const canSendTask = hasMeaningfulComposeText && !hasInvalidRootTaskRelaySelection && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canSendComment = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canSendListing = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
-  const canOpenSendOptions = isSignedIn && canOfferComment && hasComposeText;
+  const canOpenSendOptions = canCreateContent && canOfferComment && hasComposeText;
   const hasTaskSubmitBlock = taskSubmitBlock !== null;
   const showInlineTaskSubmitBlock = hasTaskSubmitBlock && hasComposeText;
 
   const handlePrimarySend = () => {
-    if (!isSignedIn) {
+    if (!canCreateContent) {
       void handleSubmit("task");
       return;
     }
@@ -1541,7 +1541,7 @@ export function UnifiedBottomBar({
                   disabled={Boolean(taskSubmitBlock?.isHardDisabled) || isPrimarySendEmptyDisabled}
                   className={cn(
                     "h-11 w-11 inline-flex items-center justify-center rounded-lg border transition-colors",
-                    isSignedIn
+                    canCreateContent
                       ? isPrimarySendEmptyDisabled
                         ? "border-primary/40 bg-primary/45 text-primary-foreground/85 disabled:opacity-100"
                         : taskSubmitBlock && !taskSubmitBlock.isHardDisabled
@@ -1549,11 +1549,11 @@ export function UnifiedBottomBar({
                           : "border-primary bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-100"
                       : "border-border text-foreground hover:bg-muted"
                   )}
-                  aria-label={isSignedIn ? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")) : t("composer.hints.signInToCreate")}
+                  aria-label={canCreateContent ? (canOfferComment ? `${t("composer.actions.createTask")} / ${t("composer.actions.addComment")}` : t("composer.actions.createTask")) : t("composer.hints.signInToCreate")}
                   title={primarySendTitle}
                 >
                   <span className={cn(isSendLaunching && "motion-send-launch")}>
-                    {!isSignedIn ? <LogIn className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
+                    {!canCreateContent ? <LogIn className="w-5 h-5" /> : canOfferComment ? <Send className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
                   </span>
                 </button>
 

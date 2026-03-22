@@ -94,7 +94,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -114,7 +114,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={false}
+        canCreateContent={false}
       />
     );
 
@@ -134,7 +134,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -152,7 +152,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -180,7 +180,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -214,7 +214,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -240,7 +240,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -267,7 +267,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -298,7 +298,7 @@ describe("UnifiedBottomBar auth gating", () => {
         ]}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -323,7 +323,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -358,7 +358,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -383,7 +383,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -418,7 +418,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -468,7 +468,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -502,7 +502,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -544,7 +544,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -563,7 +563,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -589,7 +589,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -607,7 +607,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -627,7 +627,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -641,7 +641,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -657,7 +657,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn={true}
+        canCreateContent={true}
       />
     );
 
@@ -697,7 +697,7 @@ describe("UnifiedBottomBar auth gating", () => {
           relays={relays}
           channels={statefulChannels}
           people={people}
-          isSignedIn={true}
+          canCreateContent={true}
         />
       );
     };
@@ -746,7 +746,7 @@ describe("UnifiedBottomBar auth gating", () => {
           relays={relays}
           channels={statefulChannels}
           people={people}
-          isSignedIn={true}
+          canCreateContent={true}
         />
       );
     };
@@ -770,7 +770,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -797,7 +797,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -819,7 +819,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -861,7 +861,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -906,7 +906,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -932,7 +932,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -984,7 +984,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -1015,7 +1015,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -1055,7 +1055,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -1085,7 +1085,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 
@@ -1113,7 +1113,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
         composeRestoreRequest={{
           id: 1,
           state: {
@@ -1144,7 +1144,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
         composeRestoreRequest={{
           id: 2,
           state: {
@@ -1184,7 +1184,7 @@ describe("UnifiedBottomBar auth gating", () => {
         relays={relays}
         channels={channels}
         people={people}
-        isSignedIn
+        canCreateContent
       />
     );
 

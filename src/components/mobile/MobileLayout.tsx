@@ -22,7 +22,6 @@ import {
   Nip99Metadata,
 } from "@/types";
 import { cn } from "@/lib/utils";
-import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
@@ -37,8 +36,8 @@ export interface MobileLayoutViewState {
   channels: Channel[];
   channelMatchMode?: ChannelMatchMode;
   people: Person[];
-  hasCachedCurrentUserProfileMetadata?: boolean;
-  isSignedIn: boolean;
+  canCreateContent: boolean;
+  profileCompletionPromptSignal?: number;
   currentView: ViewType;
   isOnboardingOpen?: boolean;
   activeOnboardingStepId?: string | null;
@@ -99,8 +98,8 @@ export function MobileLayout({
     channels,
     channelMatchMode = "and",
     people,
-    hasCachedCurrentUserProfileMetadata = true,
-    isSignedIn,
+    canCreateContent,
+    profileCompletionPromptSignal = 0,
     currentView,
     isOnboardingOpen = false,
     activeOnboardingStepId = null,
@@ -147,9 +146,8 @@ export function MobileLayout({
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
-  const previousSignedInRef = useRef(isSignedIn);
+  const lastHandledProfilePromptSignalRef = useRef(0);
   const lastHandledGuideStepIdRef = useRef<string | null>(null);
-  const { needsProfileSetup } = useNDK();
   const activePrimaryView: MobileViewType = isPrimaryMobileView(currentView) ? currentView : "feed";
 
   // Build default content from active channel filters
@@ -475,13 +473,12 @@ export function MobileLayout({
   }, [activeOnboardingStepId, isOnboardingOpen, closeManageView, openManageView]);
 
   useEffect(() => {
-    const justSignedIn = !previousSignedInRef.current && isSignedIn;
-    if (justSignedIn && (needsProfileSetup || !hasCachedCurrentUserProfileMetadata)) {
-      openManageView();
-      setProfileEditorOpenSignal((previous) => previous + 1);
-    }
-    previousSignedInRef.current = isSignedIn;
-  }, [isSignedIn, needsProfileSetup, hasCachedCurrentUserProfileMetadata, openManageView]);
+    if (profileCompletionPromptSignal <= 0) return;
+    if (profileCompletionPromptSignal === lastHandledProfilePromptSignalRef.current) return;
+    lastHandledProfilePromptSignalRef.current = profileCompletionPromptSignal;
+    openManageView();
+    setProfileEditorOpenSignal((previous) => previous + 1);
+  }, [openManageView, profileCompletionPromptSignal]);
 
   const renderView = () => {
     if (showFilters) {
@@ -572,7 +569,7 @@ export function MobileLayout({
           channels={channels}
           people={people}
           defaultContent={defaultContent}
-          isSignedIn={isSignedIn}
+          canCreateContent={canCreateContent}
           forceComposeMode={forceComposeMode}
           composeRestoreRequest={composeRestoreRequest}
         />

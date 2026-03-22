@@ -46,6 +46,7 @@ import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-mod
 import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-demo-bootstrap";
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
 import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-relay-auto-reconnect";
+import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
@@ -328,6 +329,12 @@ const Index = () => {
       relays: ndkRelays,
     });
   }, [ndkRelays, user]);
+  const {
+    authPolicy,
+    profileCompletionPromptSignal,
+  } = useFeedAuthPolicy({
+    hasCachedCurrentUserProfileMetadata,
+  });
 
   const shortcutsHelp = useKeyboardShortcutsHelp();
   const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
@@ -919,8 +926,8 @@ const Index = () => {
       channels: channelsWithState,
       channelMatchMode,
       people,
-      hasCachedCurrentUserProfileMetadata,
-      isSignedIn: Boolean(user),
+      canCreateContent: authPolicy.canCreateContent,
+      profileCompletionPromptSignal,
       currentView,
       isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
       activeOnboardingStepId,
@@ -931,8 +938,8 @@ const Index = () => {
       channelsWithState,
       channelMatchMode,
       people,
-      hasCachedCurrentUserProfileMetadata,
-      user,
+      authPolicy.canCreateContent,
+      profileCompletionPromptSignal,
       currentView,
       isOnboardingOpen,
       isAuthModalOpen,

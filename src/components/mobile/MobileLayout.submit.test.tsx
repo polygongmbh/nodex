@@ -97,7 +97,7 @@ describe("MobileLayout submit wiring", () => {
             relays,
             channels,
             people,
-            isSignedIn: true,
+            canCreateContent: true,
             currentView: "feed",
           }}
           actions={{

@@ -62,6 +62,7 @@ import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/in
 import { countHashtagsInContent, extractHashtagsFromContent, getHashtagQueryAtCursor } from "@/lib/hashtags";
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 
 interface TaskComposerProps {
   onSubmit: ComposerSubmit;
@@ -211,6 +212,7 @@ export function TaskComposer({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { user, createHttpAuthHeader } = useNDK();
+  const authPolicy = useAuthActionPolicy();
   const includedChannels = channels
     .filter((c) => c.filterState === "included")
     .map((c) => c.name.trim().toLowerCase())
@@ -1066,7 +1068,7 @@ export function TaskComposer({
   const hasInvalidRootCommentRelaySelection =
     isCommentLikeRootPostType && !parentId && hasNoConnectedRelay;
   const submitBlock = resolveComposeSubmitBlock({
-    isSignedIn: Boolean(user),
+    isSignedIn: authPolicy.canCreateContent,
     hasMeaningfulContent,
     hasAtLeastOneTag,
     canInheritParentTags,
@@ -1082,7 +1084,7 @@ export function TaskComposer({
     || submitBlock?.code === "selectTask"
     || submitBlock?.code === "uploading"
     || submitBlock?.code === "uploadFailed";
-  const isSubmitButtonEmptyDisabled = user && content.trim().length === 0;
+  const isSubmitButtonEmptyDisabled = authPolicy.canCreateContent && content.trim().length === 0;
   const submitButtonLabel = isSubmitButtonEmptyDisabled ? null : submitBlock?.ctaLabel;
 
   const pulseTarget = (target: "input" | "attachments" | "blocker") => {
@@ -1738,7 +1740,7 @@ export function TaskComposer({
         </div>
       )}
 
-      {(hasPersistentChipTray || (showExpandedControls && Boolean(submitBlockedReason && user))) && (
+      {(hasPersistentChipTray || (showExpandedControls && Boolean(submitBlockedReason && authPolicy.canCreateContent))) && (
         <div
           className={cn(
             "order-7 flex flex-wrap items-center gap-2 border-t border-border/50 pt-2",
@@ -1815,7 +1817,7 @@ export function TaskComposer({
         </div>
       )}
 
-      {showExpandedControls && submitBlock && user && submitBlock.code !== "signin" && showSubmitBlockBanner && (
+      {showExpandedControls && submitBlock && authPolicy.canCreateContent && submitBlock.code !== "signin" && showSubmitBlockBanner && (
         <div
           ref={blockerPanelRef}
           role="alert"
@@ -2219,7 +2221,7 @@ export function TaskComposer({
                       ? <HandHelping className="w-4 h-4" />
                       : <MessageSquare className="w-4 h-4" />;
               const submitButtonTitle = submitBlock?.reason || submitActionLabel;
-              if (!user) {
+              if (!authPolicy.canCreateContent) {
                 return (
                   <button
                     type="button"
