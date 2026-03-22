@@ -12,6 +12,7 @@ import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";
 import { SidebarSection } from "./sidebar/SidebarSection";
+import { SidebarInset } from "./sidebar/SidebarInset";
 import { SavedFilterPresetRow } from "@/components/tasks/SavedFilterPresetRow";
 import { SidebarQuickConstraintRow } from "@/components/tasks/SidebarQuickConstraintRow";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
@@ -300,8 +301,8 @@ export function Sidebar({
       )}
     >
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-1.5 pb-3">
-        <div className="px-2 sm:px-2.5 lg:px-3 pb-2">
+      <nav className="flex-1 overflow-y-auto py-2">
+        <SidebarInset>
           <SavedFilterPresetRow
             configurations={savedFilterConfigurations}
             activeConfigurationId={activeSavedFilterConfigurationId}
@@ -312,10 +313,10 @@ export function Sidebar({
               className={savedFilterConfigurations.length > 0 ? "pt-1" : undefined}
             />
           )}
-        </div>
+        </SidebarInset>
         {/* Feeds/Relays */}
-        <div data-onboarding="relays-section">
         <SidebarSection
+          dataOnboarding="relays-section"
           title={t("sidebar.sections.feeds")}
           icon={Radio}
           isExpanded={expandedSections.feeds}
@@ -358,11 +359,10 @@ export function Sidebar({
             />
           ))}
         </SidebarSection>
-        </div>
 
         {/* Channels */}
-        <div data-onboarding="channels-section">
         <SidebarSection
+          dataOnboarding="channels-section"
           title={t("sidebar.sections.channels")}
           icon={Hash}
           isExpanded={expandedSections.channels}
@@ -386,11 +386,10 @@ export function Sidebar({
             />
           ))}
         </SidebarSection>
-        </div>
 
         {/* People */}
-        <div data-onboarding="people-section">
         <SidebarSection
+          dataOnboarding="people-section"
           title={t("sidebar.sections.people")}
           icon={Users}
           isExpanded={expandedSections.people}
@@ -407,7 +406,6 @@ export function Sidebar({
             />
           ))}
         </SidebarSection>
-        </div>
       </nav>
 
       {/* Footer: utility tiles */}

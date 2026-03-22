@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { SidebarInset } from "./SidebarInset";
 
 type SidebarSectionAnimationMode = "none" | "previewCollapse" | "fullCollapse";
 type SidebarSectionIconIntent =
@@ -20,6 +21,7 @@ export interface SidebarSectionProps {
   hint?: string;
   action?: React.ReactNode;
   animationMode?: SidebarSectionAnimationMode;
+  dataOnboarding?: string;
   children: React.ReactNode;
 }
 
@@ -33,6 +35,7 @@ export function SidebarSection({
   hint,
   action,
   animationMode = "previewCollapse",
+  dataOnboarding,
   children,
 }: SidebarSectionProps) {
   const { t } = useTranslation();
@@ -59,8 +62,8 @@ export function SidebarSection({
   }, [animationMode, children, isExpanded]);
 
   return (
-    <div className="mb-3">
-      <div className="w-full flex items-center justify-between gap-2 px-3 py-2.5 hover:bg-sidebar-accent/50 transition-colors group">
+    <section data-onboarding={dataOnboarding}>
+      <SidebarInset className="w-full flex items-center justify-between gap-2 py-2.5 hover:bg-sidebar-accent/50 transition-colors group">
         <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <button
             type="button"
@@ -109,7 +112,7 @@ export function SidebarSection({
             {action}
           </div>
         )}
-      </div>
+      </SidebarInset>
       <div
         className={cn(
           animationMode === "none"
@@ -140,6 +143,6 @@ export function SidebarSection({
           {children}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

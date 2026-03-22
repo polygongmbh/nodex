@@ -49,6 +49,26 @@ describe("SidebarSection", () => {
     expect(onToggle).not.toHaveBeenCalled();
   });
 
+  it("applies onboarding data attributes to the section element without an mb-3 wrapper", () => {
+    const { container } = render(
+      <SidebarSection
+        title="People"
+        icon={Hash}
+        isExpanded
+        onToggle={vi.fn()}
+        dataOnboarding="people-section"
+      >
+        <div>Content</div>
+      </SidebarSection>
+    );
+
+    const section = container.querySelector('[data-onboarding="people-section"]');
+
+    expect(section?.tagName).toBe("SECTION");
+    expect(section).not.toHaveClass("mb-3");
+    expect(container.querySelector("div.mb-3")).toBeNull();
+  });
+
   it("uses measured height animation for full-collapse mode", () => {
     const originalScrollHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollHeight");
     Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
