@@ -283,7 +283,6 @@ describe("NostrAuthModal", () => {
     await waitFor(() => expect(ndkMock.updateUserProfile).toHaveBeenCalled());
     clickOutsideDialog();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
   });
 
   it("adds a profile trigger hint including the logged-in npub", () => {

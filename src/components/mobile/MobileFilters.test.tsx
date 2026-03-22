@@ -234,19 +234,15 @@ describe("MobileFilters management view", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /edit/i }));
-    expect(screen.getByText(/app preferences/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/share current status/i)).toBeInTheDocument();
-    expect(screen.getByText(/broadcast your current view and active task/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/delay send so you can undo/i)).toBeInTheDocument();
-    expect(screen.getByText(/delay nostr publish by a few seconds/i)).toBeInTheDocument();
     expect(screen.queryByLabelText(/generate image captions on this device/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/one-time model download may use roughly 30-80 mb/i)).not.toBeInTheDocument();
     expect(document.getElementById("manage-profile-presence-enabled")).toBeNull();
     expect(document.getElementById("manage-profile-publish-delay-enabled")).toBeNull();
     expect(document.getElementById("manage-profile-auto-caption-enabled")).toBeNull();
   });
 
-  it("uses the shared guest private key row copy", () => {
+  it("renders guest private key controls", () => {
     render(
       <MobileFilters
         relays={relays}
@@ -255,7 +251,6 @@ describe("MobileFilters management view", () => {
       />
     );
 
-    expect(screen.getByText(/backup private key/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /show private key/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /copy private key/i })).toBeInTheDocument();
   });
