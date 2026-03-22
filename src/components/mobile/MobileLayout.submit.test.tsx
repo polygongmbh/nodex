@@ -87,9 +87,7 @@ describe("MobileLayout submit wiring", () => {
       currentUser: people[0],
       searchQuery: "",
       focusedTaskId: "parent-123",
-      onSearchChange: () => {},
       onNewTask,
-      onToggleComplete: () => {},
     };
 
     render(

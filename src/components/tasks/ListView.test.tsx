@@ -56,8 +56,6 @@ describe("ListView priority control", () => {
     const channels = [makeChannel()];
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
     const onNewTask = vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }));
-    const onToggleComplete = vi.fn();
-    const onSearchChange = vi.fn();
     const onUpdatePriority = vi.fn();
 
     const { rerender } = render(
@@ -172,7 +170,6 @@ describe("ListView priority control", () => {
     const relays = [makeRelay()];
     const channels = [makeChannel()];
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
-    const onToggleComplete = vi.fn();
 
     render(
       <ListView
@@ -189,7 +186,6 @@ describe("ListView priority control", () => {
 
     fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
 
-    expect(onToggleComplete).not.toHaveBeenCalled();
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "task-option" });
   });
 

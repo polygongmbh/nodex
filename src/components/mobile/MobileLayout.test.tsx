@@ -49,12 +49,10 @@ vi.mock("./SwipeIndicator", () => ({
 vi.mock("./UnifiedBottomBar", () => ({
   UnifiedBottomBar: ({
     searchQuery,
-    onSearchChange,
     isSignedIn,
     onSubmit,
   }: {
     searchQuery: string;
-    onSearchChange?: (value: string) => void;
     isSignedIn: boolean;
     onSubmit: (...args: unknown[]) => unknown;
   }) => {
@@ -72,7 +70,6 @@ vi.mock("./UnifiedBottomBar", () => ({
           value={value}
           onChange={(event) => {
             setValue(event.target.value);
-            onSearchChange?.(event.target.value);
           }}
         />
         {!isSignedIn ? (
@@ -148,9 +145,7 @@ const baseTaskViewModel: FeedTaskViewModel = {
   people,
   currentUser: people[0],
   searchQuery: "",
-  onSearchChange: () => {},
   onNewTask: defaultOnNewTask,
-  onToggleComplete: () => {},
 };
 
 function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {

@@ -89,7 +89,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -110,7 +109,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -131,7 +129,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -150,7 +147,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -179,7 +175,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -214,7 +209,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -241,7 +235,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -267,7 +260,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="calendar"
         defaultContent="Ship #general"
@@ -298,7 +290,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="tree"
         relays={[
@@ -326,7 +317,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="tree"
         focusedTaskId="parent-task"
@@ -363,7 +353,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -389,7 +378,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -425,7 +413,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -476,7 +463,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -511,7 +497,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -553,7 +538,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="tree"
         focusedTaskId={null}
@@ -573,7 +557,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="tree"
         focusedTaskId="parent-1"
@@ -601,7 +584,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         relays={relays}
@@ -619,7 +601,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         defaultContent="Ship #general"
@@ -639,7 +620,6 @@ describe("UnifiedBottomBar auth gating", () => {
     const { rerender } = render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         defaultContent="Ship #general"
@@ -654,7 +634,6 @@ describe("UnifiedBottomBar auth gating", () => {
     rerender(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         defaultContent="Ship #general"
@@ -673,7 +652,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -714,7 +692,6 @@ describe("UnifiedBottomBar auth gating", () => {
       return (
         <UnifiedBottomBar
           searchQuery=""
-          onSearchChange={() => {}}
           onSubmit={() => ({ ok: true, mode: "local" })}
           currentView="feed"
           relays={relays}
@@ -764,7 +741,6 @@ describe("UnifiedBottomBar auth gating", () => {
       return (
         <UnifiedBottomBar
           searchQuery=""
-          onSearchChange={() => {}}
           onSubmit={() => ({ ok: true, mode: "local" })}
           currentView="feed"
           relays={relays}
@@ -789,7 +765,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -817,7 +792,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -840,7 +814,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -883,7 +856,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -929,7 +901,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -956,7 +927,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -1009,7 +979,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -1041,7 +1010,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -1082,7 +1050,6 @@ describe("UnifiedBottomBar auth gating", () => {
     const { unmount } = render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -1113,7 +1080,6 @@ describe("UnifiedBottomBar auth gating", () => {
     const { unmount } = render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
@@ -1142,7 +1108,6 @@ describe("UnifiedBottomBar auth gating", () => {
     const { unmount } = render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -1174,7 +1139,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
@@ -1215,7 +1179,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSearchChange={() => {}}
         onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
