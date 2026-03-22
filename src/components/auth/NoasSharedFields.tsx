@@ -88,12 +88,16 @@ export function NoasSharedFields({
           <div className={showUsernameHint ? "space-y-1 min-w-0" : "min-w-0"}>
             <Input
               id="noas-username"
+              name="username"
               type="text"
               value={username}
               onChange={(e) => onUsernameChange(e.target.value.toLowerCase())}
               placeholder={t("auth.usernamePlaceholder")}
               disabled={isLoading}
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               className="h-10"
             />
             {showUsernameHint ? (
@@ -152,12 +156,16 @@ export function NoasSharedFields({
         <Label htmlFor="noas-password">{t("auth.password")}</Label>
         <Input
           id="noas-password"
+          name="password"
           type="password"
           value={password}
           onChange={(e) => onPasswordChange(e.target.value)}
           placeholder={t("auth.passwordPlaceholder")}
           disabled={isLoading}
           autoComplete={passwordAutoComplete}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           className="w-full"
         />
         <p className="text-xs text-muted-foreground">{t("auth.noas.passwordHint")}</p>

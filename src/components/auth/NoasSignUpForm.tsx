@@ -176,11 +176,16 @@ export function NoasSignUpForm({
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
             <Input
               id="noas-private-key"
+              name="privateKey"
               type={showPrivateKey ? "text" : "password"}
               value={privateKey}
               onChange={(e) => setPrivateKey(e.target.value)}
               placeholder={t("auth.noas.privateKeyPlaceholder")}
               disabled={isLoading}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               className="w-full min-w-0 font-mono text-[11px] sm:text-xs"
             />
             {privateKey ? (

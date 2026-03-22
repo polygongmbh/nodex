@@ -375,7 +375,7 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
-    expect(screen.getAllByText(/connection to the noas host failed/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/connection to the noas host failed/i)).toHaveLength(1);
     expect(screen.queryByText(/invalid username or password/i)).not.toBeInTheDocument();
   });
 
@@ -398,7 +398,7 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
     await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
-    expect(screen.getAllByText("409 Conflict: Username already active. Sign in.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("409 Conflict: Username already active. Sign in.")).toHaveLength(1);
   });
 
   it("shows the raw Noas sign-up error payload with HTTP status when provided", async () => {
@@ -424,7 +424,7 @@ describe("NostrAuthModal", () => {
     fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
 
     await waitFor(() => expect(ndkMock.signupWithNoas).toHaveBeenCalled());
-    expect(screen.getAllByText("409 Conflict: Username already active. Sign in.").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("409 Conflict: Username already active. Sign in.")).toHaveLength(1);
   });
 
   it("toasts the returned Noas message and switches to sign in when signup succeeds without active status", async () => {

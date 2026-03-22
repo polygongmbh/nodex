@@ -142,6 +142,15 @@ describe("Noas auth forms", () => {
     });
   });
 
+  it("uses explicit credential semantics for username and password fields", () => {
+    render(<ControlledNoasAuthForm />);
+
+    expect(screen.getByLabelText(/^username$/i)).toHaveAttribute("name", "username");
+    expect(screen.getByLabelText(/^username$/i)).toHaveAttribute("autocomplete", "username");
+    expect(screen.getByLabelText(/^password$/i)).toHaveAttribute("name", "password");
+    expect(screen.getByLabelText(/^password$/i)).toHaveAttribute("autocomplete", "current-password");
+  });
+
   it("normalizes a bare custom host to https on submit", () => {
     const onLogin = vi.fn(async () => true);
 
@@ -260,6 +269,27 @@ describe("Noas auth forms", () => {
     expect(screen.getByText(/your keys are encrypted/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /more options/i })).not.toBeInTheDocument();
     expect(screen.getByText(/npub1\.\.\./i)).toBeInTheDocument();
+  });
+
+  it("marks the private-key field as non-credential autofill content", () => {
+    render(
+      <NoasSignUpForm
+        onSignUp={vi.fn(async () => true)}
+        onSignIn={vi.fn()}
+        username=""
+        password=""
+        isEditingHostUrl={false}
+        isLoading={false}
+        noasHostUrl="https://noas.example.com"
+        onUsernameChange={vi.fn()}
+        onPasswordChange={vi.fn()}
+        onToggleHostEdit={vi.fn()}
+      />
+    );
+
+    expect(screen.getByLabelText(/private key/i)).toHaveAttribute("name", "privateKey");
+    expect(screen.getByLabelText(/private key/i)).toHaveAttribute("autocomplete", "off");
+    expect(screen.getByLabelText(/^password$/i)).toHaveAttribute("autocomplete", "new-password");
   });
 
   it("shows shared tabs on the sign-up form and lets users switch back to sign-in", () => {
