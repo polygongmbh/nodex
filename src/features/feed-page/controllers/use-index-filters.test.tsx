@@ -50,7 +50,6 @@ function Harness({
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
-  const [bumpPersonFrecency] = useState(() => vi.fn());
   const relayState = useRelayFilterState({
     relays,
     t: ((key: string) => key) as unknown as TFunction,
@@ -73,8 +72,6 @@ function Harness({
     hasLiveHydratedScope,
     isHydrating,
     setSearchQuery,
-    bumpChannelFrecency: vi.fn(),
-    bumpPersonFrecency,
     t: ((key: string, values?: Record<string, unknown>) =>
       values ? `${key}:${JSON.stringify(values)}` : key) as unknown as TFunction,
   });
@@ -125,7 +122,6 @@ function Harness({
       <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
       <output data-testid="mention-request">{filters.mentionRequest?.mention ?? ""}</output>
       <output data-testid="search-query">{searchQuery}</output>
-      <output data-testid="person-frecency-calls">{bumpPersonFrecency.mock.calls.map(([id, weight]) => `${id}:${String(weight)}`).join(",")}</output>
     </>
   );
 }
@@ -169,7 +165,6 @@ describe("useIndexFilters", () => {
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
     expect(screen.getByTestId("mention-request")).toHaveTextContent("@alice");
     expect(screen.getByTestId("search-query")).toHaveTextContent("@alice");
-    expect(screen.getByTestId("person-frecency-calls")).toHaveTextContent("alice:1.9");
   });
 
   it("resets relay, channel, people, and match-mode filters to defaults", () => {

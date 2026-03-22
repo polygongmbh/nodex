@@ -16,18 +16,6 @@ import {
   getPinnedChannelIdsForView,
 } from "@/domain/preferences/pinned-channel-state";
 import { getPinnedPersonIdsForView } from "@/domain/preferences/pinned-person-state";
-import {
-  saveChannelFrecencyState,
-  loadChannelFrecencyState,
-  recordChannelInteraction,
-  type ChannelFrecencyState,
-} from "@/lib/channel-frecency";
-import {
-  savePersonFrecencyState,
-  loadPersonFrecencyState,
-  recordPersonInteraction,
-  type PersonFrecencyState,
-} from "@/lib/person-frecency";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
@@ -52,6 +40,7 @@ import { useKind0People } from "@/infrastructure/nostr/use-kind0-people";
 import { useIndexDerivedData } from "@/features/feed-page/controllers/use-index-derived-data";
 import { usePinnedSidebarChannels } from "@/features/feed-page/controllers/use-pinned-sidebar-channels";
 import { usePinnedSidebarPeople } from "@/features/feed-page/controllers/use-pinned-sidebar-people";
+import { useFeedInteractionFrecency } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
 import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-modal-route";
 import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-demo-bootstrap";
@@ -252,15 +241,15 @@ const Index = () => {
 
   const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? DEMO_SEED_TASKS : []));
   const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
-  const [channelFrecencyState, setChannelFrecencyState] = useState<ChannelFrecencyState>(
-    () => loadChannelFrecencyState()
-  );
-  const [personFrecencyState, setPersonFrecencyState] = useState<PersonFrecencyState>(
-    () => loadPersonFrecencyState()
-  );
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
+  const {
+    channelFrecencyState,
+    personFrecencyState,
+    bumpChannelFrecency,
+    interactionEffects: frecencyInteractionEffects,
+  } = useFeedInteractionFrecency();
 
   const {
     allTasks: baseAllTasks,
@@ -290,20 +279,6 @@ const Index = () => {
     const selectedMissing = people.filter((person) => person.isSelected && !sidebarIds.has(person.id));
     return [...selectedMissing, ...sidebarPeople];
   }, [people, sidebarPeople]);
-
-  const bumpChannelFrecency = useCallback((tag: string, weight = 1) => {
-    setChannelFrecencyState((previous) => recordChannelInteraction(previous, tag, weight));
-  }, []);
-  const bumpPersonFrecency = useCallback((personId: string, weight = 1) => {
-    setPersonFrecencyState((previous) => recordPersonInteraction(previous, personId, weight));
-  }, []);
-
-  useEffect(() => {
-    saveChannelFrecencyState(channelFrecencyState);
-  }, [channelFrecencyState]);
-  useEffect(() => {
-    savePersonFrecencyState(personFrecencyState);
-  }, [personFrecencyState]);
 
   const {
     mentionRequest,
@@ -344,8 +319,6 @@ const Index = () => {
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
     isHydrating,
     setSearchQuery,
-    bumpChannelFrecency,
-    bumpPersonFrecency,
     t,
   });
 
@@ -890,8 +863,9 @@ const Index = () => {
       createFeedInteractionBus({
         middlewares: createFeedInteractionMiddlewareSkeleton(),
         handlers: feedInteractionHandlers,
+        effects: frecencyInteractionEffects,
       }),
-    [feedInteractionHandlers]
+    [feedInteractionHandlers, frecencyInteractionEffects]
   );
   const feedTaskViewModel: FeedTaskViewModel = useMemo(
     () => ({

@@ -82,8 +82,6 @@ function Harness() {
     sidebarPeople: [],
     isMobile: false,
     setSearchQuery,
-    bumpChannelFrecency: vi.fn(),
-    bumpPersonFrecency: vi.fn(),
     t: ((key: string, values?: Record<string, unknown>) =>
       values ? `${key}:${JSON.stringify(values)}` : key) as unknown as TFunction,
   });

@@ -39,8 +39,6 @@ interface UseIndexFiltersOptions {
   hasLiveHydratedScope?: boolean;
   isHydrating?: boolean;
   setSearchQuery: Dispatch<SetStateAction<string>>;
-  bumpChannelFrecency: (tag: string, weight?: number) => void;
-  bumpPersonFrecency: (personId: string, weight?: number) => void;
   t: TFunction;
 }
 
@@ -57,8 +55,6 @@ export function useIndexFilters({
   hasLiveHydratedScope = false,
   isHydrating = false,
   setSearchQuery,
-  bumpChannelFrecency,
-  bumpPersonFrecency,
   t,
 }: UseIndexFiltersOptions) {
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
@@ -143,7 +139,6 @@ export function useIndexFilters({
   }, [channelMatchMode]);
 
   const handleChannelToggle = useCallback((id: string) => {
-    bumpChannelFrecency(id, 1.25);
     setChannelFilterStates((prev) => {
       const next = new Map(prev);
       const currentState = next.get(id) || "neutral";
@@ -152,7 +147,7 @@ export function useIndexFilters({
       next.set(id, states[(currentIndex + 1) % states.length]);
       return next;
     });
-  }, [bumpChannelFrecency]);
+  }, []);
 
   const handleChannelClear = useCallback((id: string) => {
     setChannelFilterStates((prev) => {
@@ -164,7 +159,6 @@ export function useIndexFilters({
   }, []);
 
   const handleChannelExclusive = useCallback((id: string) => {
-    bumpChannelFrecency(id, 1.6);
     const shouldToggleOff = shouldToggleOffExclusiveChannel(channels, channelFilterStates, id);
     if (shouldToggleOff) {
       setChannelFilterStates((prev) => {
@@ -178,7 +172,7 @@ export function useIndexFilters({
     setChannelFilterStates(() => setExclusiveChannelFilter(channels, id));
     const channel = channelsWithState.find((entry) => entry.id === id);
     toast(t("toasts.success.showingOnlyChannel", { channelName: channel?.name || id }));
-  }, [bumpChannelFrecency, channelFilterStates, channels, channelsWithState, t]);
+  }, [channelFilterStates, channels, channelsWithState, t]);
 
   const handleToggleAllChannels = useCallback(() => {
     const allNeutral =
@@ -195,8 +189,6 @@ export function useIndexFilters({
   const handleHashtagExclusive = useCallback((tag: string) => {
     const normalizedTag = tag.trim().toLowerCase();
     if (!normalizedTag) return;
-
-    bumpChannelFrecency(normalizedTag, 1.9);
     const existsInSidebar = channels.some((channel) => channel.name.toLowerCase() === normalizedTag);
     const scopedRelayIds = relays.filter((relay) => relay.isActive).map((relay) => relay.id);
 
@@ -216,16 +208,15 @@ export function useIndexFilters({
     });
 
     toast(t("toasts.success.showingOnlyTag", { tag: normalizedTag }));
-  }, [bumpChannelFrecency, channels, relays, setPostedTags, t]);
+  }, [channels, relays, setPostedTags, t]);
 
   const handlePersonToggle = useCallback((id: string) => {
-    bumpPersonFrecency(id, 1.25);
     setPeople((prev) =>
       prev.map((person) =>
         person.id === id ? { ...person, isSelected: !person.isSelected } : person
       )
     );
-  }, [bumpPersonFrecency, setPeople]);
+  }, [setPeople]);
 
   const handlePersonClear = useCallback((id: string) => {
     setPeople((prev) =>
@@ -236,7 +227,6 @@ export function useIndexFilters({
   }, [setPeople]);
 
   const handlePersonExclusive = useCallback((id: string) => {
-    bumpPersonFrecency(id, 1.6);
     if (shouldToggleOffExclusivePerson(people, id)) {
       setPeople((prev) => mapPeopleSelection(prev, () => false));
       return;
@@ -249,10 +239,9 @@ export function useIndexFilters({
         personName: person?.displayName || person?.name || t("toasts.success.selectedUserFallback"),
       })
     );
-  }, [bumpPersonFrecency, people, setPeople, t]);
+  }, [people, setPeople, t]);
 
   const upsertAndSelectPerson = useCallback((author: Person) => {
-    bumpPersonFrecency(author.id, 1.9);
     setPeople((prev) => {
       const exists = prev.some((person) => person.id === author.id);
       const next = exists
@@ -273,7 +262,7 @@ export function useIndexFilters({
         isSelected: person.id === author.id,
       }));
     });
-  }, [bumpPersonFrecency, setPeople]);
+  }, [setPeople]);
 
   const handleAuthorClick = useCallback((author: Person) => {
     upsertAndSelectPerson(author);
