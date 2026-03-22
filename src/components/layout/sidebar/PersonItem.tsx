@@ -2,17 +2,20 @@ import { cn } from "@/lib/utils";
 import { Person } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { SidebarFilterRow } from "./SidebarFilterRow";
+import { SidebarPinButton } from "./SidebarPinButton";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 interface PersonItemProps {
   person: Person;
+  isPinned?: boolean;
   isKeyboardFocused?: boolean;
   className?: string;
 }
 
 export function PersonItem({
   person,
+  isPinned = false,
   isKeyboardFocused = false,
   className,
 }: PersonItemProps) {
@@ -27,11 +30,28 @@ export function PersonItem({
       itemId={`person-${person.id}`}
       isKeyboardFocused={isKeyboardFocused}
       className={cn(
-        "gap-3 py-1.5",
+        "relative gap-3 py-1.5",
         person.isSelected && "bg-sidebar-accent/80 border-l-2 border-l-primary pl-[1.625rem]",
         className
       )}
     >
+      <SidebarPinButton
+        isPinned={isPinned}
+        onClick={(e) => {
+          e.stopPropagation();
+          void dispatchFeedInteraction(
+            isPinned
+              ? { type: "sidebar.person.unpin", personId: person.id }
+              : { type: "sidebar.person.pin", personId: person.id }
+          );
+        }}
+        title={isPinned
+          ? t("sidebar.filters.unpinPersonFromView", { name: personName })
+          : t("sidebar.filters.pinPersonToView", { name: personName })}
+        ariaLabel={isPinned
+          ? t("sidebar.filters.unpinPersonFromView", { name: personName })
+          : t("sidebar.filters.pinPersonToView", { name: personName })}
+      />
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -61,13 +81,13 @@ export function PersonItem({
         onClick={() => {
           void dispatchFeedInteraction({ type: "sidebar.person.exclusive", personId: person.id });
         }}
-        className="flex-1 text-left"
+        className="flex-1 min-w-0 text-left"
         aria-label={t("sidebar.filters.showOnlyPerson", { name: personName })}
         title={t("sidebar.filters.showOnlyPerson", { name: personName })}
       >
         <span
           className={cn(
-            "text-sm transition-colors",
+            "block truncate text-sm transition-colors",
             person.isSelected ? "text-foreground font-semibold" : "text-sidebar-foreground hover:text-primary"
           )}
         >

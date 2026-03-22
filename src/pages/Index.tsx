@@ -15,6 +15,7 @@ import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
 import {
   getPinnedChannelIdsForView,
 } from "@/domain/preferences/pinned-channel-state";
+import { getPinnedPersonIdsForView } from "@/domain/preferences/pinned-person-state";
 import {
   saveChannelFrecencyState,
   loadChannelFrecencyState,
@@ -44,6 +45,7 @@ import { useTaskStatusController } from "@/features/feed-page/controllers/use-ta
 import { useKind0People } from "@/infrastructure/nostr/use-kind0-people";
 import { useIndexDerivedData } from "@/features/feed-page/controllers/use-index-derived-data";
 import { usePinnedSidebarChannels } from "@/features/feed-page/controllers/use-pinned-sidebar-channels";
+import { usePinnedSidebarPeople } from "@/features/feed-page/controllers/use-pinned-sidebar-people";
 import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
 import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-modal-route";
 import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-demo-bootstrap";
@@ -432,6 +434,19 @@ const Index = () => {
     allTasks,
   });
 
+  const {
+    pinnedPeopleState,
+    peopleWithState,
+    handlePersonPin,
+    handlePersonUnpin,
+  } = usePinnedSidebarPeople({
+    userPubkey: user?.pubkey,
+    currentView,
+    effectiveActiveRelayIds,
+    people: sidebarPeopleWithSelected,
+    allTasks,
+  });
+
   const filteredTasks = useMemo(
     () =>
       filterTasksByRelayAndPeople({
@@ -740,6 +755,12 @@ const Index = () => {
       "sidebar.person.toggleAll": () => {
         handleToggleAllPeople();
       },
+      "sidebar.person.pin": (intent) => {
+        handlePersonPin(intent.personId);
+      },
+      "sidebar.person.unpin": (intent) => {
+        handlePersonUnpin(intent.personId);
+      },
       "sidebar.savedFilter.apply": (intent) => {
         savedFilterController.onApplyConfiguration(intent.configurationId);
       },
@@ -827,6 +848,8 @@ const Index = () => {
       handlePersonToggle,
       handlePersonExclusive,
       handleToggleAllPeople,
+      handlePersonPin,
+      handlePersonUnpin,
       savedFilterController,
       handleRecentDaysChange,
       handleRecentEnabledChange,
@@ -947,7 +970,7 @@ const Index = () => {
       relays: relaysWithActiveState,
       channels: channelsWithState,
       channelMatchMode,
-      people: sidebarPeopleWithSelected,
+      people: peopleWithState,
       nostrRelays,
       isFocused: isSidebarFocused,
       quickFilters,
@@ -958,18 +981,24 @@ const Index = () => {
         currentView,
         activeRelayIdList
       ),
+      pinnedPersonIds: getPinnedPersonIdsForView(
+        pinnedPeopleState,
+        currentView,
+        activeRelayIdList
+      ),
     }),
     [
       relaysWithActiveState,
       channelsWithState,
       channelMatchMode,
-      sidebarPeopleWithSelected,
+      peopleWithState,
       nostrRelays,
       isSidebarFocused,
       quickFilters,
       savedFilterController.configurations,
       savedFilterController.activeConfigurationId,
       pinnedChannelsState,
+      pinnedPeopleState,
       currentView,
       activeRelayIdList,
     ]

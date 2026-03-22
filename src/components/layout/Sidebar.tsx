@@ -77,6 +77,7 @@ export interface SidebarProps {
   isFocused?: boolean;
   quickFilters?: QuickFilterState;
   pinnedChannelIds?: string[];
+  pinnedPersonIds?: string[];
   savedFilterConfigurations?: SavedFilterConfiguration[];
   activeSavedFilterConfigurationId?: string | null;
 }
@@ -90,6 +91,7 @@ export function Sidebar({
   isFocused = false,
   quickFilters,
   pinnedChannelIds = [],
+  pinnedPersonIds = [],
   savedFilterConfigurations = [],
   activeSavedFilterConfigurationId = null,
 }: SidebarProps) {
@@ -122,6 +124,7 @@ export function Sidebar({
   );
 
   const pinnedChannelSet = useMemo(() => new Set(pinnedChannelIds), [pinnedChannelIds]);
+  const pinnedPersonSet = useMemo(() => new Set(pinnedPersonIds), [pinnedPersonIds]);
 
   const collapsedPreviewChannelIds = useMemo(
     () =>
@@ -148,10 +151,12 @@ export function Sidebar({
         buildCollapsedPreviewItems({
           items: people,
           isSelected: (person) => person.isSelected,
+          isPinned: (person) => pinnedPersonSet.has(person.id),
           maxItems: collapsedPreviewLimit,
+          alwaysIncludePinned: true,
         }).map((person) => person.id)
       ),
-    [collapsedPreviewLimit, people]
+    [collapsedPreviewLimit, people, pinnedPersonSet]
   );
 
   // Build a flat list of all focusable items
@@ -396,6 +401,7 @@ export function Sidebar({
             <PersonItem
               key={person.id}
               person={person}
+              isPinned={pinnedPersonSet.has(person.id)}
               isKeyboardFocused={focusedItem?.type === 'person' && focusedItem?.id === person.id}
               className={!expandedSections.people && !collapsedPreviewPersonIds.has(person.id) ? "hidden" : undefined}
             />

@@ -301,7 +301,9 @@
       "selected": "{{name}} seleccionado",
       "me": "Yo",
       "pinChannelToView": "Fijar #{{name}} a esta vista",
-      "unpinChannelFromView": "Desfijar #{{name}} de esta vista"
+      "unpinChannelFromView": "Desfijar #{{name}} de esta vista",
+      "pinPersonToView": "Fijar {{name}} a esta vista",
+      "unpinPersonFromView": "Desfijar {{name}} de esta vista"
     },
     "quickFilters": {
       "chips": {

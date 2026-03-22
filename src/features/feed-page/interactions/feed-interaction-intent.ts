@@ -38,6 +38,8 @@ export type FeedInteractionIntent =
   | { type: "sidebar.person.toggle"; personId: string }
   | { type: "sidebar.person.exclusive"; personId: string }
   | { type: "sidebar.person.toggleAll" }
+  | { type: "sidebar.person.pin"; personId: string }
+  | { type: "sidebar.person.unpin"; personId: string }
   | { type: "sidebar.savedFilter.apply"; configurationId: string }
   | { type: "sidebar.savedFilter.saveCurrent"; name: string }
   | { type: "sidebar.savedFilter.rename"; configurationId: string; name: string }

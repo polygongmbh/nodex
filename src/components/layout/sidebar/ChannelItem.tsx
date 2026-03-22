@@ -1,7 +1,8 @@
-import { Hash, Pin } from "lucide-react";
+import { Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Channel } from "@/types";
 import { SidebarFilterRow } from "./SidebarFilterRow";
+import { SidebarPinButton } from "./SidebarPinButton";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
@@ -33,33 +34,23 @@ export function ChannelItem({
       isKeyboardFocused={isKeyboardFocused}
       className={cn("relative gap-2 py-1.5", className)}
     >
-      <button
+      <SidebarPinButton
+        isPinned={isPinned}
         onClick={(e) => {
           e.stopPropagation();
-          if (isPinned) {
-            void dispatchFeedInteraction({ type: "sidebar.channel.unpin", channelId: channel.id });
-            return;
-          }
-          void dispatchFeedInteraction({ type: "sidebar.channel.pin", channelId: channel.id });
+          void dispatchFeedInteraction(
+            isPinned
+              ? { type: "sidebar.channel.unpin", channelId: channel.id }
+              : { type: "sidebar.channel.pin", channelId: channel.id }
+          );
         }}
         title={isPinned
           ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
           : t("sidebar.filters.pinChannelToView", { name: channel.name })}
-        aria-label={isPinned
+        ariaLabel={isPinned
           ? t("sidebar.filters.unpinChannelFromView", { name: channel.name })
           : t("sidebar.filters.pinChannelToView", { name: channel.name })}
-        className={cn(
-          "absolute inset-y-0 left-1 z-10 my-auto flex h-6 w-6 items-center justify-center transition-opacity",
-          isPinned ? "opacity-100" : "opacity-0 group-hover:opacity-50 hover:!opacity-100"
-        )}
-      >
-        <Pin
-          className={cn(
-            "w-3 h-3",
-            isPinned ? "text-primary fill-primary" : "text-muted-foreground"
-          )}
-        />
-      </button>
+      />
 
       {/* Icon - click for toggle */}
       <button

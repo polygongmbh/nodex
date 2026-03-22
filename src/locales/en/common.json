@@ -301,7 +301,9 @@
       "selected": "{{name}} selected",
       "me": "Me",
       "pinChannelToView": "Pin #{{name}} to this view",
-      "unpinChannelFromView": "Unpin #{{name}} from this view"
+      "unpinChannelFromView": "Unpin #{{name}} from this view",
+      "pinPersonToView": "Pin {{name}} to this view",
+      "unpinPersonFromView": "Unpin {{name}} from this view"
     },
     "quickFilters": {
       "chips": {
