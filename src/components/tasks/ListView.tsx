@@ -55,7 +55,6 @@ interface ListViewProps extends SharedTaskViewContext {
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   isInteractionBlocked?: boolean;
-  onInteractionBlocked?: () => void;
   isHydrating?: boolean;
 }
 

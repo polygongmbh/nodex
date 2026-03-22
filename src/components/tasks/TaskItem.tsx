@@ -52,7 +52,6 @@ interface TaskItemProps {
   depth?: number;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
-  onSelect?: (taskId: string) => void;
   matchedByFilter?: boolean;
   isDirectMatchFn?: (taskId: string) => boolean;
   getFilteredChildrenFn?: (parentId: string) => Task[];
@@ -77,7 +76,6 @@ export function TaskItem({
   depth = 0,
   isExpanded,
   onToggleExpand,
-  onSelect,
   matchedByFilter = true,
   isDirectMatchFn,
   getFilteredChildrenFn,
@@ -250,7 +248,7 @@ export function TaskItem({
   }, [task.id]);
 
   const handleSelect = () => {
-    onSelect?.(task.id);
+    void dispatchFeedInteraction({ type: "task.focus.change", taskId: task.id });
   };
 
   const [isRawEventDialogOpen, setIsRawEventDialogOpen] = useState(false);
@@ -360,7 +358,7 @@ export function TaskItem({
                       toggleStatus: () => {
                         void dispatchFeedInteraction({ type: "task.toggleComplete", taskId: task.id });
                       },
-                      focusTask: () => onSelect?.(task.id),
+                      focusTask: () => void dispatchFeedInteraction({ type: "task.focus.change", taskId: task.id }),
                     });
                   }}
                 onFocus={(e) => {
@@ -752,7 +750,7 @@ export function TaskItem({
                       people={people}
                       currentUser={currentUser}
                       depth={depth + 1}
-                      onSelect={onSelect}
+
                       matchedByFilter={childMatched}
                       isDirectMatchFn={isDirectMatchFn}
                       getFilteredChildrenFn={getFilteredChildrenFn}
@@ -785,7 +783,7 @@ export function TaskItem({
                       people={people}
                       currentUser={currentUser}
                       depth={depth + 1}
-                      onSelect={onSelect}
+
                       matchedByFilter={childMatched}
                       isDirectMatchFn={isDirectMatchFn}
                       getFilteredChildrenFn={getFilteredChildrenFn}

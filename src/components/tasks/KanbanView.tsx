@@ -39,7 +39,6 @@ interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
-  onInteractionBlocked?: () => void;
   isHydrating?: boolean;
 }
 
@@ -67,7 +66,6 @@ export function KanbanView({
   isPendingPublishTask,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
-  onInteractionBlocked,
   isHydrating = false,
 }: KanbanViewProps) {
   const { t } = useTranslation();
@@ -240,7 +238,7 @@ export function KanbanView({
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     if (isInteractionBlocked) {
-      onInteractionBlocked?.();
+      void dispatchFeedInteraction({ type: "ui.interaction.guardModify" });
       return;
     }
     
@@ -321,7 +319,7 @@ export function KanbanView({
   // Handle moving task left (to previous column) - preserves focus
   const handleMoveLeft = () => {
     if (isInteractionBlocked) {
-      onInteractionBlocked?.();
+      void dispatchFeedInteraction({ type: "ui.interaction.guardModify" });
       return;
     }
     const focusedId = keyboardFocusedTaskIdRef.current;
@@ -345,7 +343,7 @@ export function KanbanView({
   // Handle moving task right (to next column) - preserves focus
   const handleMoveRight = () => {
     if (isInteractionBlocked) {
-      onInteractionBlocked?.();
+      void dispatchFeedInteraction({ type: "ui.interaction.guardModify" });
       return;
     }
     const focusedId = keyboardFocusedTaskIdRef.current;

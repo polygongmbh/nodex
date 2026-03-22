@@ -219,10 +219,6 @@ export function TaskTree({
     visibleTasks.length === 0 && !shouldShowMobileScopeFallback && !shouldShowInlineEmptyHint;
 
   const currentContextTask = currentContextId ? taskById.get(currentContextId) || null : null;
-  const handleSelectTask = (taskId: string) => {
-    focusTask(taskId);
-  };
-
   const handleGoUp = () => {
     if (!currentContextTask) {
       focusTask(null);
@@ -308,7 +304,7 @@ export function TaskTree({
   // Task navigation with keyboard
   const { focusedTaskId: keyboardFocusedTaskId } = useTaskNavigation({
     taskIds: flattenedTaskIds,
-    onSelectTask: handleSelectTask,
+    onSelectTask: focusTask,
     onGoBack: handleGoUp,
     onFocusSidebar: focusSidebar,
     enabled: !isMobile && !isComposerExpanded,
@@ -457,7 +453,6 @@ export function TaskTree({
                 childrenMap={childrenMap}
                 people={people}
                 currentUser={currentUser}
-                onSelect={handleSelectTask}
                 matchedByFilter={isTaskDirectMatch(task.id)}
                 isDirectMatchFn={isTaskDirectMatch}
                 getFilteredChildrenFn={getFilteredChildren}

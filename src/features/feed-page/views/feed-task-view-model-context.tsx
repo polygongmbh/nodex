@@ -12,7 +12,6 @@ export interface FeedTaskViewModel extends SharedTaskViewContext {
     id: number;
   } | null;
   isInteractionBlocked?: boolean;
-  onInteractionBlocked?: () => void;
   isHydrating?: boolean;
 }
 

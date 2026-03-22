@@ -15,6 +15,7 @@ export type FeedInteractionIntent =
   | { type: "ui.openGuide" }
   | { type: "ui.focusSidebar" }
   | { type: "ui.focusTasks" }
+  | { type: "ui.interaction.guardModify" }
   | { type: "ui.view.change"; view: FeedViewType }
   | { type: "ui.search.change"; query: string }
   | { type: "ui.kanbanDepth.change"; mode: FeedKanbanDepthMode }

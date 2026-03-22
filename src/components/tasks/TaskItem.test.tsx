@@ -52,64 +52,53 @@ beforeEach(() => {
 
 describe("TaskItem status actions", () => {
   it("cycles status on plain click even when status menu exists", () => {
-    const onSelect = vi.fn();
-
     render(
       <TaskItem
         task={baseTask}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onSelect={onSelect}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
-    expect(onSelect).toHaveBeenCalledWith("t1");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
   });
 
   it("does not enter the task when toggling from in progress to done", () => {
-    const onSelect = vi.fn();
-
     render(
       <TaskItem
         task={{ ...baseTask, status: "in-progress" }}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onSelect={onSelect}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.toggleComplete", taskId: "t1" });
-    expect(onSelect).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
   });
 
   it("does not enter the task on option-click", () => {
-    const onSelect = vi.fn();
-
     render(
       <TaskItem
         task={baseTask}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onSelect={onSelect}
       />
     );
 
     fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
 
     expect(dispatchFeedInteraction).not.toHaveBeenCalled();
-    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("opens raw nostr event dialog on shift+alt+click and skips task selection", () => {
-    const onSelect = vi.fn();
     const taskWithRawEvent: Task = {
       ...baseTask,
       rawNostrEvent: {
@@ -129,7 +118,6 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[taskWithRawEvent]}
         currentUser={baseTask.author}
-        onSelect={onSelect}
       />
     );
 
@@ -141,19 +129,16 @@ describe("TaskItem status actions", () => {
 
     expect(screen.getByText("Raw Nostr Event")).toBeInTheDocument();
     expect(screen.getByText(/"id": "event-1"/)).toBeInTheDocument();
-    expect(onSelect).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
   });
 
   it("does not enter the task when selecting a status from the dropdown", () => {
-    const onSelect = vi.fn();
-
     render(
       <TaskItem
         task={{ ...baseTask, status: "done" }}
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
-        onSelect={onSelect}
       />
     );
 
@@ -165,7 +150,7 @@ describe("TaskItem status actions", () => {
       taskId: "t1",
       status: "in-progress",
     });
-    expect(onSelect).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "t1" });
   });
 
   it("allows directly marking a task as done", () => {
@@ -270,7 +255,12 @@ describe("TaskItem status actions", () => {
     expect(statusButton).toBeDisabled();
     expect(statusButton).toHaveAttribute("title", expect.stringContaining("assigned to"));
     fireEvent.click(statusButton);
-    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: "task.toggleComplete" })
+    );
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: "task.changeStatus" })
+    );
   });
 
   it("allows status changes when an unassigned task belongs to another user", () => {

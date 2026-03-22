@@ -336,7 +336,6 @@ const Index = () => {
     hasDisconnectedSelectedRelays,
     isInteractionBlocked,
     guardInteraction,
-    handleBlockedInteractionAttempt,
     resolveRelayUrlsFromIds,
     resolveTaskOriginRelay,
     publishTaskStateUpdate,
@@ -676,6 +675,9 @@ const Index = () => {
       "ui.focusTasks": () => {
         handleFocusTasks();
       },
+      "ui.interaction.guardModify": () => {
+        guardInteraction("modify");
+      },
       "ui.view.change": (intent) => {
         setCurrentView(intent.view);
       },
@@ -815,6 +817,7 @@ const Index = () => {
       handleOpenGuide,
       handleFocusSidebar,
       handleFocusTasks,
+      guardInteraction,
       setCurrentView,
       setSearchQuery,
       setKanbanDepthMode,
@@ -886,7 +889,6 @@ const Index = () => {
       forceShowComposer: forceShowComposeForGuide,
       composeGuideActivationSignal,
       isInteractionBlocked,
-      onInteractionBlocked: handleBlockedInteractionAttempt,
       isHydrating,
     }),
     [
@@ -907,7 +909,6 @@ const Index = () => {
       forceShowComposeForGuide,
       composeGuideActivationSignal,
       isInteractionBlocked,
-      handleBlockedInteractionAttempt,
       isHydrating,
     ]
   );
