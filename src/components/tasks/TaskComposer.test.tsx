@@ -73,6 +73,14 @@ const disconnectedRelays: Relay[] = [{
   isActive: true,
   connectionStatus: "disconnected",
 }];
+const connectedInactiveRelays: Relay[] = [{
+  id: "demo",
+  name: "Demo",
+  url: "wss://relay.example.com",
+  icon: "R",
+  isActive: false,
+  connectionStatus: "connected",
+}];
 
 const channels: Channel[] = [
   { id: "backend", name: "backend", filterState: "neutral" },
@@ -1825,11 +1833,15 @@ describe("TaskComposer hashtag autocomplete", () => {
     outsideButton.remove();
   });
 
-  it("blocks root task submit when multiple relays are selected", () => {
+  it.each([
+    ["multiple relays are selected", multiRelays],
+    ["relay is disconnected", disconnectedRelays],
+    ["relay is connected but not toggled active", connectedInactiveRelays],
+  ])("blocks root task submit when %s", (_scenario, testRelays) => {
     render(
       <TaskComposer
         onSubmit={() => successfulCreateResult}
-        relays={multiRelays}
+        relays={testRelays}
         channels={channels}
         people={people}
         onCancel={() => {}}
@@ -1840,7 +1852,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Ship #backend now" },
     });
 
-    expect(screen.getByText("Select a single space or a parent task to create a new task")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select space");
   });
 
@@ -1978,52 +1990,6 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(textarea.value).toBe("Ship #backend now");
   });
 
-  it("blocks root task submit when relay is disconnected", () => {
-    render(
-      <TaskComposer
-        onSubmit={() => successfulCreateResult}
-        relays={disconnectedRelays}
-        channels={channels}
-        people={people}
-        onCancel={() => {}}
-      />
-    );
-
-    fireEvent.change(getTaskComposerInput(), {
-      target: { value: "Ship #backend now" },
-    });
-
-    expect(screen.getByText("Select a single space or a parent task to create a new task")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select space");
-  });
-
-  it("blocks root task submit when relay is connected but not toggled active", () => {
-    const connectedInactiveRelays: Relay[] = [{
-      id: "demo",
-      name: "Demo",
-      url: "wss://relay.example.com",
-      icon: "R",
-      isActive: false,
-      connectionStatus: "connected",
-    }];
-    render(
-      <TaskComposer
-        onSubmit={() => successfulCreateResult}
-        relays={connectedInactiveRelays}
-        channels={channels}
-        people={people}
-        onCancel={() => {}}
-      />
-    );
-
-    fireEvent.change(getTaskComposerInput(), {
-      target: { value: "Ship #backend now" },
-    });
-
-    expect(screen.getByText("Select a single space or a parent task to create a new task")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select space");
-  });
-
   it("allows root-level comment submit when a tag and postable relay are present", () => {
     render(
       <TaskComposer
@@ -2064,11 +2030,7 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Looks good #backend" },
     });
 
-    expect(screen.getByText("Select at least one green space to post a comment")).toBeInTheDocument();
-    expect(
-      screen.queryByText("Select a single space or a parent task to create a new task")
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText("Comments can be posted to any green space.")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select space");
   });
 

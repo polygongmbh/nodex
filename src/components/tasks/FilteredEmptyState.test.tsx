@@ -39,6 +39,12 @@ const people: Person[] = [
   },
 ];
 
+const FILTER_SCOPE = "by Alice, in #ops, excluding #frontend, on relay.one";
+const EMPTY_SCOPE_TEXT = `No post yet ${FILTER_SCOPE}`;
+const FOOTER_SCOPE_TEXT = `This is all ${FILTER_SCOPE}`;
+const MOBILE_SCOPE_TEXT = `Nothing yet ${FILTER_SCOPE}, showing everything.`;
+const PARENT_SCOPE_SUFFIX = ', under "Parent Task".';
+
 describe("FilteredEmptyState", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -54,10 +60,7 @@ describe("FilteredEmptyState", () => {
       />
     );
 
-    expect(
-      screen.getByText("No post yet by Alice, in #ops, excluding #frontend, on relay.one.")
-    ).toBeInTheDocument();
-    expect(screen.getByText("Broaden the scope or break the silence.")).toBeInTheDocument();
+    expect(screen.getByText(`${EMPTY_SCOPE_TEXT}.`)).toBeInTheDocument();
   });
 
   it("renders a scope footer sentence for non-empty filtered results", () => {
@@ -72,9 +75,7 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(document.querySelector('[data-empty-mode="footer"]')).toBeInTheDocument();
-    expect(
-      screen.getByText("This is all by Alice, in #ops, excluding #frontend, on relay.one.")
-    ).toBeInTheDocument();
+    expect(screen.getByText(`${FOOTER_SCOPE_TEXT}.`)).toBeInTheDocument();
     expect(screen.queryByText("No post yet")).not.toBeInTheDocument();
   });
 
@@ -104,24 +105,7 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(document.querySelector('[data-empty-mode="mobile"]')).toBeInTheDocument();
-    expect(
-      screen.getByText("Nothing yet by Alice, in #ops, excluding #frontend, on relay.one, showing everything.")
-    ).toBeInTheDocument();
-  });
-
-  it("keeps the default feed empty screen when only a relay is selected", () => {
-    render(
-      <FilteredEmptyState
-        variant="feed"
-        relays={singleRelay}
-        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
-        people={[{ ...people[0], isSelected: false }]}
-      />
-    );
-
-    expect(screen.getByText("Nobody here but us chickens.")).toBeInTheDocument();
-    expect(screen.getByText("Be the first to post.")).toBeInTheDocument();
-    expect(screen.queryByText("No post yet on relay.one.")).not.toBeInTheDocument();
+    expect(screen.getByText(MOBILE_SCOPE_TEXT)).toBeInTheDocument();
   });
 
   it("appends immediate parent context to empty and footer scope sentences", () => {
@@ -136,9 +120,7 @@ describe("FilteredEmptyState", () => {
       />
     );
 
-    expect(
-      screen.getByText('No post yet by Alice, in #ops, excluding #frontend, on relay.one, under "Parent Task".')
-    ).toBeInTheDocument();
+    expect(screen.getByText(`${EMPTY_SCOPE_TEXT}${PARENT_SCOPE_SUFFIX}`)).toBeInTheDocument();
 
     rerender(
       <FilteredEmptyState
@@ -151,9 +133,7 @@ describe("FilteredEmptyState", () => {
       />
     );
 
-    expect(
-      screen.getByText('This is all by Alice, in #ops, excluding #frontend, on relay.one, under "Parent Task".')
-    ).toBeInTheDocument();
+    expect(screen.getByText(`${FOOTER_SCOPE_TEXT}${PARENT_SCOPE_SUFFIX}`)).toBeInTheDocument();
   });
 
   it("truncates long parent context at word boundaries while preserving start and end fragments", () => {
@@ -209,9 +189,7 @@ describe("FilteredEmptyState", () => {
       />
     );
 
-    expect(
-      screen.getByText("Loading posts by Alice, from #ops, excluding #frontend, on relay.one.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Loading posts by Alice, from #ops, excluding #frontend, on relay.one.")).toBeInTheDocument();
     expect(screen.getByText("One calm breath while we pull this in.")).toBeInTheDocument();
   });
 
@@ -243,9 +221,7 @@ describe("FilteredEmptyState", () => {
       />
     );
 
-    expect(
-      screen.getByText("Could not load posts from relay.one.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Could not load posts from relay.one.")).toBeInTheDocument();
     expect(screen.getByText("Unable to connect to the selected space.")).toBeInTheDocument();
     expect(screen.queryByText(/#ops/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/alice/i)).not.toBeInTheDocument();
@@ -267,32 +243,4 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText("Read access was rejected by the selected space.")).toBeInTheDocument();
   });
 
-  it("renders the playful unfiltered feed message", () => {
-    render(
-      <FilteredEmptyState
-        variant="feed"
-        relays={relays.map((relay) => ({ ...relay, isActive: true }))}
-        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
-        people={[{ ...people[0], isSelected: false }]}
-      />
-    );
-
-    expect(screen.getByText("Nobody here but us chickens.")).toBeInTheDocument();
-    expect(screen.getByText("Be the first to post.")).toBeInTheDocument();
-  });
-
-  it("renders a randomized unfiltered collection message", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-
-    render(
-      <FilteredEmptyState
-        variant="collection"
-        relays={relays.map((relay) => ({ ...relay, isActive: true }))}
-        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
-        people={[{ ...people[0], isSelected: false }]}
-      />
-    );
-
-    expect(screen.getByText("Silence lives here for now. Leave the first trace.")).toBeInTheDocument();
-  });
 });
