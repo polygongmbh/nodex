@@ -580,11 +580,11 @@
       },
       "filtersChannels": {
         "title": "Kanalfilter",
-        "description": "In *Kanäle* zeigt ein Klick auf den Kanalnamen nur Beiträge mit diesem Kanal (erneut klicken beendet den Exklusivmodus). Klicke auf das #-Icon, um neutral -> einschließen -> ausschließen zu wechseln. Klicke auf das Hashtag-Icon links von *Kanäle*, um Kanalfilter zurückzusetzen."
+        "description": "In *Kanäle* zeigt ein Klick auf den Kanalnamen nur Beiträge mit diesem Kanal. Klicke auf das #-Icon, um neutral -> einschließen -> ausschließen zu wechseln. Klicke auf das Hashtag-Icon links von *Kanäle*, um Kanalfilter zurückzusetzen."
       },
       "filtersPeople": {
         "title": "Personenfilter",
-        "description": "In *Personen* zeigt ein Klick auf einen Namen nur Beiträge dieser Person (erneut klicken beendet den Exklusivmodus). Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen."
+        "description": "In *Personen* zeigt ein Klick auf einen Namen nur Beiträge dieser Person. Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen."
       },
       "filtersSearch": {
         "title": "Suchleiste",

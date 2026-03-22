@@ -580,11 +580,11 @@
       },
       "filtersChannels": {
         "title": "Filtros de canales",
-        "description": "En *Canales*, haz clic en el nombre de un canal para mostrar solo publicaciones con ese canal (haz clic otra vez para salir del modo exclusivo). Haz clic en el icono # para alternar neutral -> incluir -> excluir para ese canal. Haz clic en el icono hashtag a la izquierda de *Canales* para restablecer filtros de canal."
+        "description": "En *Canales*, haz clic en el nombre de un canal para mostrar solo publicaciones con ese canal. Haz clic en el icono # para alternar neutral -> incluir -> excluir para ese canal. Haz clic en el icono hashtag a la izquierda de *Canales* para restablecer filtros de canal."
       },
       "filtersPeople": {
         "title": "Filtros de personas",
-        "description": "En *Personas*, haz clic en el nombre de una persona para mostrar solo sus publicaciones (haz clic otra vez para salir del modo exclusivo). Haz clic en el avatar/icono para alternar esa persona. Haz clic en el icono a la izquierda de *Personas* para restablecer filtros de personas."
+        "description": "En *Personas*, haz clic en el nombre de una persona para mostrar solo sus publicaciones. Haz clic en el avatar/icono para alternar esa persona. Haz clic en el icono a la izquierda de *Personas* para restablecer filtros de personas."
       },
       "filtersSearch": {
         "title": "Barra de búsqueda",
