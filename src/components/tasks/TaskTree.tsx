@@ -443,7 +443,7 @@ export function TaskTree({
         onExpandedChange={setIsComposerExpanded}
         mentionRequest={mentionRequest}
         composeRestoreRequest={composeRestoreRequest}
-        className="relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
+        className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, currentContextTask?.tags)}
         allowComment={Boolean(currentContextId)}
       />

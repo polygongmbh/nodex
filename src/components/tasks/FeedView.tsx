@@ -101,7 +101,7 @@ const INITIAL_VISIBLE_FEED_ENTRIES = 40;
 const FEED_REVEAL_BATCH_SIZE = 30;
 const FEED_REVEAL_DELAY_MS = 80;
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
-const DESKTOP_FEED_ROW_CONTENT_PADDING = "px-2 sm:px-3";
+const DESKTOP_FEED_ROW_CONTENT_PADDING = "px-3";
 
 interface FeedDueDateChipProps {
   task: Task;
@@ -1303,7 +1303,7 @@ export function FeedView({
         forceExpandSignal={composeGuideActivationSignal}
         mentionRequest={mentionRequest}
         composeRestoreRequest={composeRestoreRequest}
-        className="relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm"
+        className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
         allowFeedMessageTypes
       />

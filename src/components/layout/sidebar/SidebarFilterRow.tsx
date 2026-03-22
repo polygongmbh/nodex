@@ -19,7 +19,7 @@ export function SidebarFilterRow({
     <SidebarInset
       data-sidebar-item={itemId}
       className={cn(
-        "w-full flex items-center pl-6 sm:pl-[1.625rem] lg:pl-7 transition-all group hover:bg-sidebar-accent/50",
+        "w-full flex items-center pl-[1.625rem] lg:pl-7 transition-all group hover:bg-sidebar-accent/50",
         isKeyboardFocused && "ring-2 ring-primary ring-inset bg-sidebar-accent",
         className
       )}

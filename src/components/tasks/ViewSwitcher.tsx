@@ -21,7 +21,7 @@ export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
 
   return (
     <div
-      className="h-full flex items-stretch justify-center gap-1 sm:gap-2 lg:gap-3 xl:gap-4 2xl:gap-5 min-w-0 overflow-hidden"
+      className="h-full flex items-stretch justify-center gap-2 lg:gap-3 xl:gap-4 2xl:gap-5 min-w-0 overflow-hidden"
       data-onboarding="view-switcher"
       aria-label={t("navigation.aria.viewSwitcher")}
     >
@@ -40,7 +40,7 @@ export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
           aria-current={currentView === view.id ? "page" : undefined}
         >
           {view.icon}
-          <span className="hidden md:inline truncate max-w-24 lg:max-w-none">{view.label}</span>
+          <span className="inline truncate max-w-24 lg:max-w-none">{view.label}</span>
         </button>
       ))}
     </div>

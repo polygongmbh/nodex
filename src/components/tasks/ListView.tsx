@@ -63,7 +63,7 @@ interface ListViewProps extends SharedTaskViewContext {
 
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
 type SortDirection = "asc" | "desc";
-const TABLE_CELL_PADDING_CLASS = "px-2 sm:px-3 py-2";
+const TABLE_CELL_PADDING_CLASS = "px-3 py-2";
 
 interface PriorityCellProps {
   taskId: string;
@@ -467,7 +467,7 @@ export function ListView({
     const status = task.status || "todo";
     const editable = canCompleteTask(task);
     const statusClassName = cn(
-      "text-xs px-1.5 sm:px-2 py-1 rounded-full font-medium whitespace-nowrap",
+      "text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap",
       status === "done" ? "bg-primary/10 text-primary" :
       status === "closed" ? "bg-muted/80 text-muted-foreground" :
       status === "in-progress" ? "bg-warning/15 text-warning" :
@@ -626,7 +626,7 @@ export function ListView({
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         composeRestoreRequest={composeRestoreRequest}
-        className="relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
+        className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
         defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
         allowComment={false}
       />
@@ -665,7 +665,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className={cn("text-left w-36 md:w-40 lg:w-44 xl:w-56 2xl:w-[19rem]", TABLE_CELL_PADDING_CLASS)}>
+              <th className={cn("text-left w-40 lg:w-44 xl:w-56 2xl:w-[19rem]", TABLE_CELL_PADDING_CLASS)}>
                 <SortButton field="dueDate">
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-muted-foreground" />
@@ -673,7 +673,7 @@ export function ListView({
                   </span>
                 </SortButton>
               </th>
-              <th className={cn("text-left w-16 sm:w-20 md:w-24", TABLE_CELL_PADDING_CLASS)}>
+              <th className={cn("text-left w-24", TABLE_CELL_PADDING_CLASS)}>
                 <SortButton field="priority">
                   <span className="inline-flex items-center gap-1">
                     <Flag className="w-3 h-3 text-muted-foreground" />
@@ -883,10 +883,10 @@ export function ListView({
                     <td className={cn("hidden 2xl:table-cell", TABLE_CELL_PADDING_CLASS)}>
                       <StatusCell task={task} />
                     </td>
-                    <td className={cn("w-36 md:w-40 lg:w-44 xl:w-56 2xl:w-[19rem]", TABLE_CELL_PADDING_CLASS)}>
+                    <td className={cn("w-40 lg:w-44 xl:w-56 2xl:w-[19rem]", TABLE_CELL_PADDING_CLASS)}>
                       <DueDateCell task={task} />
                     </td>
-                    <td className={cn("w-16 sm:w-20 md:w-24", TABLE_CELL_PADDING_CLASS)}>
+                    <td className={cn("w-24", TABLE_CELL_PADDING_CLASS)}>
                       <PriorityCell
                         taskId={task.id}
                         taskContent={task.content}

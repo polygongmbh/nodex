@@ -58,7 +58,7 @@ export function FailedPublishQueueBanner({
   };
 
   return (
-    <div className={cn("border-b border-destructive/40 bg-destructive/10", isMobile ? "px-3 py-2" : "px-2 sm:px-3 py-2")}>
+    <div className={cn("border-b border-destructive/40 bg-destructive/10", isMobile ? "px-3 py-2" : "px-3 py-2")}>
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-medium text-destructive">
           {t("publishQueue.failedCount", { count: activeDrafts.length })}

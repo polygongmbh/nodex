@@ -42,9 +42,9 @@ export function FeedPageDesktopShell({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
 
   return (
-    <div className="grid app-shell-height overflow-hidden bg-background grid-cols-[auto,1fr] grid-rows-[var(--topbar-height),1fr] [--topbar-height:3rem] sm:[--topbar-height:3.5rem] xl:[--topbar-height:4rem]">
+    <div className="grid app-shell-height overflow-hidden bg-background grid-cols-[auto,1fr] grid-rows-[var(--topbar-height),1fr] [--topbar-height:3.5rem] xl:[--topbar-height:4rem]">
       <SidebarHeader className="h-[var(--topbar-height)]" />
-      <div className="border-b border-border px-2 sm:px-3 bg-background/95 backdrop-blur-sm flex items-stretch justify-between gap-1.5 min-w-0 h-[var(--topbar-height)]">
+      <div className="border-b border-border px-3 bg-background/95 backdrop-blur-sm flex items-stretch justify-between gap-1.5 min-w-0 h-[var(--topbar-height)]">
         <div className="flex-1 min-w-0 h-full">
           <ViewSwitcher
             currentView={header.currentView}
@@ -53,7 +53,7 @@ export function FeedPageDesktopShell({
             }}
           />
         </div>
-        <div className="h-full flex items-center justify-end gap-0.5 sm:gap-1 lg:gap-1.5 w-auto">
+        <div className="h-full flex items-center justify-end gap-1 lg:gap-1.5 w-auto">
           <NostrUserMenu
             onSignInClick={() => {
               void dispatchFeedInteraction({ type: "ui.openAuthModal" });
