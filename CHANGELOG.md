@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Task content markdown now keeps bullet and numbered lists in a single rendered block with proper markers and tighter spacing, and long inline Nostr identifiers such as `npub` references wrap more cleanly instead of disturbing card layout.
 
 ## [2.7.2] - 2026-03-22
 - Onboarding navigation guidance now uses the actual view order and labels (`Timeline`, `Tree`, `Kanban`, `Table`, `Calendar`) in English, German, and Spanish, and the task-focus step now clearly explains post interactions (view subitems, comment, create subtasks) without breadcrumb jargon.

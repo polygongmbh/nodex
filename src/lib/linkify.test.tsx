@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "./linkify";
 import type { Person } from "@/types";
@@ -99,6 +99,25 @@ describe("linkifyContent interaction styles", () => {
     const headline = screen.getByText("headline");
     expect(headline.tagName).toBe("SPAN");
     expect(headline).toBeInTheDocument();
+  });
+
+  it("renders consecutive markdown bullet items inside a single list", () => {
+    const { container } = render(<div>{linkifyContent("Overview\n- first item\n- second item")}</div>);
+
+    const list = container.querySelector("ul");
+    expect(list).toBeInTheDocument();
+    expect(list).toHaveClass("list-disc");
+    expect(container.querySelectorAll("ul")).toHaveLength(1);
+    expect(within(list as HTMLUListElement).getByText("first item")).toBeInTheDocument();
+    expect(within(list as HTMLUListElement).getByText("second item")).toBeInTheDocument();
+  });
+
+  it("renders long nostr identifiers inside a breakable markdown block", () => {
+    const npub = `nostr:npub1${"q".repeat(58)}`;
+    const { container } = render(<div>{linkifyContent(`Assign to ${npub}`)}</div>);
+
+    expect(screen.getByText(`Assign to ${npub}`)).toBeInTheDocument();
+    expect(container.querySelector(".break-words")).toBeInTheDocument();
   });
 
   it("returns standalone embeddable urls only", () => {

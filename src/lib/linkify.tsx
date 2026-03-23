@@ -286,12 +286,12 @@ function preprocessMarkdownTokens(value: string): string {
   return nodes.length > 0 ? nodes.join("") : value;
 }
 
-function renderMarkdownLine(
+function renderMarkdownBlock(
   value: string,
   baseKey: string,
   onHashtagClick?: (tag: string) => void,
   options?: LinkifyOptions
-): React.ReactNode[] {
+): React.ReactNode {
   const MarkdownAnchor = ({ href, children }: { href?: string; children?: React.ReactNode }) => {
     if (href?.startsWith(HASH_LINK_PREFIX)) {
       const hashtag = decodeURIComponent(href.slice(HASH_LINK_PREFIX.length));
@@ -328,7 +328,7 @@ function renderMarkdownLine(
               event.stopPropagation();
               options.onMentionClick?.(resolvedPerson);
             }}
-            className={TASK_INTERACTION_STYLES.inlineLink}
+            className={`${TASK_INTERACTION_STYLES.inlineLink} break-all text-left`}
             aria-label={`Open user ${mentionLabel}`}
             title={`@${userFacingMentionIdentifier}`}
           >
@@ -338,7 +338,7 @@ function renderMarkdownLine(
       }
 
       return (
-        <span className={TASK_INTERACTION_STYLES.inlineLink} title={`@${userFacingMentionIdentifier}`}>
+        <span className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`} title={`@${userFacingMentionIdentifier}`}>
           @{mentionLabel}
         </span>
       );
@@ -367,6 +367,32 @@ function renderMarkdownLine(
     </code>
   );
 
+  const MarkdownParagraph = ({ children }: { children?: React.ReactNode }) => (
+    <p className="mb-2 break-words last:mb-0">
+      {children}
+    </p>
+  );
+
+  const MarkdownList = ({
+    ordered,
+    children,
+  }: {
+    ordered?: boolean;
+    children?: React.ReactNode;
+  }) => {
+    const className = "mb-2 break-words space-y-1 pl-5 last:mb-0";
+    if (ordered) {
+      return <ol className={`${className} list-decimal`}>{children}</ol>;
+    }
+    return <ul className={`${className} list-disc`}>{children}</ul>;
+  };
+
+  const MarkdownListItem = ({ children }: { children?: React.ReactNode }) => (
+    <li className="break-words">
+      {children}
+    </li>
+  );
+
   const MarkdownHeading = ({
     level,
     children,
@@ -380,33 +406,34 @@ function renderMarkdownLine(
         ? "text-[0.95rem] font-semibold tracking-tight"
         : "text-sm font-medium";
     return (
-      <span className={headingClassName}>
+      <span className={`${headingClassName} mb-1 block break-words last:mb-0`}>
         {children}
       </span>
     );
   };
 
-  return [
-    (
-      <ReactMarkdown
-        key={`${baseKey}-md`}
-        remarkPlugins={[remarkGfm, remarkBreaks]}
-        components={{
-          p: ({ children }) => <>{children}</>,
-          a: MarkdownAnchor,
-          code: MarkdownCode,
-          h1: ({ children }) => <MarkdownHeading level={1}>{children}</MarkdownHeading>,
-          h2: ({ children }) => <MarkdownHeading level={2}>{children}</MarkdownHeading>,
-          h3: ({ children }) => <MarkdownHeading level={3}>{children}</MarkdownHeading>,
-          h4: ({ children }) => <MarkdownHeading level={4}>{children}</MarkdownHeading>,
-          h5: ({ children }) => <MarkdownHeading level={5}>{children}</MarkdownHeading>,
-          h6: ({ children }) => <MarkdownHeading level={6}>{children}</MarkdownHeading>,
-        }}
-      >
-        {preprocessMarkdownTokens(value)}
-      </ReactMarkdown>
-    ),
-  ];
+  return (
+    <ReactMarkdown
+      key={`${baseKey}-md`}
+      remarkPlugins={[remarkGfm, remarkBreaks]}
+      components={{
+        p: MarkdownParagraph,
+        ul: ({ children }) => <MarkdownList>{children}</MarkdownList>,
+        ol: ({ children }) => <MarkdownList ordered>{children}</MarkdownList>,
+        li: MarkdownListItem,
+        a: MarkdownAnchor,
+        code: MarkdownCode,
+        h1: ({ children }) => <MarkdownHeading level={1}>{children}</MarkdownHeading>,
+        h2: ({ children }) => <MarkdownHeading level={2}>{children}</MarkdownHeading>,
+        h3: ({ children }) => <MarkdownHeading level={3}>{children}</MarkdownHeading>,
+        h4: ({ children }) => <MarkdownHeading level={4}>{children}</MarkdownHeading>,
+        h5: ({ children }) => <MarkdownHeading level={5}>{children}</MarkdownHeading>,
+        h6: ({ children }) => <MarkdownHeading level={6}>{children}</MarkdownHeading>,
+      }}
+    >
+      {preprocessMarkdownTokens(value)}
+    </ReactMarkdown>
+  );
 }
 
 export function linkifyContent(
@@ -416,22 +443,32 @@ export function linkifyContent(
 ): React.ReactNode[] {
   const lines = content.split(/\r?\n/);
   const nodes: React.ReactNode[] = [];
+  const pendingMarkdownLines: string[] = [];
   const standaloneEmbedsByLine: Array<string | null> = options?.disableStandaloneEmbeds
     ? lines.map((): null => null)
     : lines.map((line): string | null => getStandaloneEmbeddableUrlForLine(line));
 
-  for (let index = 0; index < lines.length; index += 1) {
-    if (index > 0) {
-      const prevIsEmbed = Boolean(standaloneEmbedsByLine[index - 1]);
-      const currentIsEmbed = Boolean(standaloneEmbedsByLine[index]);
-      if (!prevIsEmbed && !currentIsEmbed) {
-        nodes.push(<br key={`line-break-${index}`} />);
-      }
-    }
+  const flushMarkdownBlock = (blockIndex: number) => {
+    if (pendingMarkdownLines.length === 0) return;
+    nodes.push(
+      renderMarkdownBlock(
+        pendingMarkdownLines.join("\n"),
+        `block-${blockIndex}`,
+        onHashtagClick,
+        options
+      )
+    );
+    pendingMarkdownLines.length = 0;
+  };
 
+  let markdownBlockIndex = 0;
+
+  for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
     const standaloneUrl = standaloneEmbedsByLine[index];
     if (standaloneUrl) {
+      flushMarkdownBlock(markdownBlockIndex);
+      markdownBlockIndex += 1;
       const embedNode = renderStandaloneEmbed(standaloneUrl, `embed-${index}`, options);
       if (embedNode) {
         nodes.push(embedNode);
@@ -439,8 +476,10 @@ export function linkifyContent(
       }
     }
 
-    nodes.push(...renderMarkdownLine(line, `line-${index}`, onHashtagClick, options));
+    pendingMarkdownLines.push(line);
   }
+
+  flushMarkdownBlock(markdownBlockIndex);
 
   return nodes;
 }
