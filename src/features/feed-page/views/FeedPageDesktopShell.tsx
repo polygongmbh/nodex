@@ -43,12 +43,7 @@ export function FeedPageDesktopShell({
       <SidebarHeader className="h-[var(--topbar-height)]" />
       <div className="border-b border-border px-3 bg-background/95 backdrop-blur-sm flex items-stretch justify-between gap-1.5 min-w-0 h-[var(--topbar-height)]">
         <div className="flex-1 min-w-0 h-full">
-          <ViewSwitcher
-            currentView={header.currentView}
-            onViewChange={(view) => {
-              void dispatchFeedInteraction({ type: "ui.view.change", view });
-            }}
-          />
+          <ViewSwitcher currentView={header.currentView} />
         </div>
         <div className="h-full flex items-center justify-end gap-1 lg:gap-1.5 w-auto">
           <NostrUserMenu

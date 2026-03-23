@@ -205,7 +205,6 @@ export interface SharedTaskViewContext {
   people: Person[];
   currentUser?: Person;
   searchQuery: string;
-  onNewTask: OnNewTask;
   focusedTaskId?: string | null;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }

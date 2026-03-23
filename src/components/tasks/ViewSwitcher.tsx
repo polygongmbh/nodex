@@ -1,16 +1,17 @@
 import { LayoutList, Columns3, GitBranch, Calendar, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 
 export type ViewType = "tree" | "feed" | "kanban" | "calendar" | "list";
 
 interface ViewSwitcherProps {
   currentView: ViewType;
-  onViewChange: (view: ViewType) => void;
 }
 
-export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
+export function ViewSwitcher({ currentView }: ViewSwitcherProps) {
   const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
   const views: { id: ViewType; label: string; icon: React.ReactNode }[] = [
     { id: "feed", label: t("navigation.views.feed"), icon: <LayoutList className="w-4 h-4 xl:w-5 xl:h-5" /> },
     { id: "tree", label: t("navigation.views.tree"), icon: <GitBranch className="w-4 h-4 xl:w-5 xl:h-5" /> },
@@ -28,7 +29,9 @@ export function ViewSwitcher({ currentView, onViewChange }: ViewSwitcherProps) {
       {views.map((view) => (
         <button
           key={view.id}
-          onClick={() => onViewChange(view.id)}
+          onClick={() => {
+            void dispatchFeedInteraction({ type: "ui.view.change", view: view.id });
+          }}
           className={cn(
             "h-full min-w-0 flex items-center gap-1 xl:gap-2 px-1 lg:px-2 xl:px-4 2xl:px-5 text-sm font-medium transition-colors border-b-2 xl:text-base",
             currentView === view.id

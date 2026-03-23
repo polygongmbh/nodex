@@ -80,6 +80,7 @@ import {
   FeedTaskViewModelProvider,
   type FeedTaskViewModel,
 } from "@/features/feed-page/views/feed-task-view-model-context";
+import { FeedTaskCommandProvider } from "@/features/feed-page/views/feed-task-command-context";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 import { createFeedInteractionMiddlewareSkeleton } from "@/features/feed-page/interactions/feed-interaction-middleware-skeleton";
 import {
@@ -815,7 +816,6 @@ const Index = () => {
       people,
       currentUser,
       searchQuery,
-      onNewTask: handleNewTask,
       focusedTaskId,
       isPendingPublishTask,
       composeRestoreRequest,
@@ -835,7 +835,6 @@ const Index = () => {
       people,
       currentUser,
       searchQuery,
-      handleNewTask,
       focusedTaskId,
       isPendingPublishTask,
       composeRestoreRequest,
@@ -981,17 +980,19 @@ const Index = () => {
     return (
       <FeedInteractionProvider bus={feedInteractionBus}>
         <FeedPageUiConfigProvider value={uiConfig}>
-          <FeedTaskViewModelProvider value={feedTaskViewModel}>
-            <FeedPageMobileShell
-              controller={mobileController}
-              authModalProps={{
-                isOpen: isAuthModalOpen,
-                onClose: handleCloseAuthModal,
-                initialStep: authModalInitialStep,
-              }}
-              onboardingOverlays={onboardingOverlays}
-            />
-          </FeedTaskViewModelProvider>
+          <FeedTaskCommandProvider value={{ onNewTask: handleNewTask }}>
+            <FeedTaskViewModelProvider value={feedTaskViewModel}>
+              <FeedPageMobileShell
+                controller={mobileController}
+                authModalProps={{
+                  isOpen: isAuthModalOpen,
+                  onClose: handleCloseAuthModal,
+                  initialStep: authModalInitialStep,
+                }}
+                onboardingOverlays={onboardingOverlays}
+              />
+            </FeedTaskViewModelProvider>
+          </FeedTaskCommandProvider>
         </FeedPageUiConfigProvider>
       </FeedInteractionProvider>
     );
@@ -1001,21 +1002,23 @@ const Index = () => {
   return (
     <FeedInteractionProvider bus={feedInteractionBus}>
       <FeedPageUiConfigProvider value={uiConfig}>
-        <FeedTaskViewModelProvider value={feedTaskViewModel}>
-          <FeedSidebarControllerProvider value={desktopSidebarController}>
-            <FeedPageDesktopShell
-              header={desktopHeader}
-              content={desktopContent}
-              shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-              authModalProps={{
-                isOpen: isAuthModalOpen,
-                onClose: handleCloseAuthModal,
-                initialStep: authModalInitialStep,
-              }}
-              onboardingOverlays={onboardingOverlays}
-            />
-          </FeedSidebarControllerProvider>
-        </FeedTaskViewModelProvider>
+        <FeedTaskCommandProvider value={{ onNewTask: handleNewTask }}>
+          <FeedTaskViewModelProvider value={feedTaskViewModel}>
+            <FeedSidebarControllerProvider value={desktopSidebarController}>
+              <FeedPageDesktopShell
+                header={desktopHeader}
+                content={desktopContent}
+                shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+                authModalProps={{
+                  isOpen: isAuthModalOpen,
+                  onClose: handleCloseAuthModal,
+                  initialStep: authModalInitialStep,
+                }}
+                onboardingOverlays={onboardingOverlays}
+              />
+            </FeedSidebarControllerProvider>
+          </FeedTaskViewModelProvider>
+        </FeedTaskCommandProvider>
       </FeedPageUiConfigProvider>
     </FeedInteractionProvider>
   );

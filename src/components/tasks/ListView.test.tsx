@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ListView } from "./ListView";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { TaskCreateResult } from "@/types";
 
 let mockUser: { id: string } | null = { id: "me" };
 const dispatchFeedInteraction = vi.fn();
@@ -55,7 +54,6 @@ describe("ListView priority control", () => {
     const relays = [makeRelay()];
     const channels = [makeChannel()];
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
-    const onNewTask = vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }));
     const onUpdatePriority = vi.fn();
 
     const { rerender } = render(
@@ -67,7 +65,6 @@ describe("ListView priority control", () => {
         people={people}
         currentUser={people[0]}
         searchQuery=""
-        onNewTask={onNewTask}
         onUpdatePriority={onUpdatePriority}
       />
     );
@@ -87,7 +84,6 @@ describe("ListView priority control", () => {
         people={people}
         currentUser={people[0]}
         searchQuery=""
-        onNewTask={onNewTask}
         onUpdatePriority={onUpdatePriority}
       />
     );
@@ -110,8 +106,6 @@ describe("ListView priority control", () => {
     const relays = [makeRelay()];
     const channels = [makeChannel()];
     const people = [makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })];
-    const onNewTask = vi.fn(async (): Promise<TaskCreateResult> => ({ ok: true, mode: "local" }));
-
     render(
       <ListView
         tasks={tasks}
@@ -120,7 +114,6 @@ describe("ListView priority control", () => {
         channels={channels}
         people={people}
         searchQuery=""
-        onNewTask={onNewTask}
         onUpdatePriority={vi.fn()}
       />
     );

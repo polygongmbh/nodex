@@ -23,7 +23,6 @@ const defaultModel: FeedTaskViewModel = {
   composeChannels: [],
   people: [],
   searchQuery: "",
-  onNewTask: async () => ({ ok: false, reason: "unexpected-error" }),
 };
 
 const FeedTaskViewModelContext = createContext<FeedTaskViewModel>(defaultModel);

@@ -59,6 +59,7 @@ import {
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
+import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   selectedDate?: Date | null;
@@ -80,7 +81,6 @@ export function CalendarView({
   people,
   currentUser,
   searchQuery,
-  onNewTask,
   focusedTaskId,
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
@@ -91,6 +91,7 @@ export function CalendarView({
 }: CalendarViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { onNewTask } = useFeedTaskCommands();
   const authPolicy = useAuthActionPolicy();
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });

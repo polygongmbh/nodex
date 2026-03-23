@@ -7,7 +7,6 @@ import {
   ChannelMatchMode,
   Person,
   TaskCreateResult,
-  OnNewTask,
   SharedTaskViewContext,
   TaskDateType,
   Nip99ListingStatus,
@@ -68,6 +67,7 @@ import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/f
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
+import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -199,7 +199,6 @@ export function FeedView({
   people,
   currentUser,
   searchQuery,
-  onNewTask,
   focusedTaskId,
   isMobile = false,
   forceShowComposer,
@@ -212,6 +211,7 @@ export function FeedView({
 }: FeedViewProps) {
   const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { onNewTask } = useFeedTaskCommands();
   const interactionModel = useFeedViewInteractionModel();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const focusTask = (taskId: string | null) => {

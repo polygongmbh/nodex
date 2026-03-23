@@ -17,6 +17,7 @@ import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
+import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   isMobile?: boolean;
@@ -41,7 +42,6 @@ export function TaskTree({
   people,
   currentUser,
   searchQuery,
-  onNewTask,
   focusedTaskId,
   isMobile = false,
   forceShowComposer,
@@ -54,6 +54,7 @@ export function TaskTree({
 }: TaskTreeProps) {
   const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { onNewTask } = useFeedTaskCommands();
   const interactionModel = useFeedViewInteractionModel();
   const authPolicy = useAuthActionPolicy();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;

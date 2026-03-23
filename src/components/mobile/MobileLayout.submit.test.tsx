@@ -8,6 +8,7 @@ import {
   FeedTaskViewModelProvider,
   type FeedTaskViewModel,
 } from "@/features/feed-page/views/feed-task-view-model-context";
+import { FeedTaskCommandProvider } from "@/features/feed-page/views/feed-task-command-context";
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
@@ -87,24 +88,23 @@ describe("MobileLayout submit wiring", () => {
       currentUser: people[0],
       searchQuery: "",
       focusedTaskId: "parent-123",
-      onNewTask,
     };
 
     render(
-      <FeedTaskViewModelProvider value={taskViewModel}>
-        <MobileLayout
-          viewState={{
-            relays,
-            channels,
-            people,
-            canCreateContent: true,
-            currentView: "feed",
-          }}
-          actions={{
-            onViewChange: () => {},
-          }}
-        />
-      </FeedTaskViewModelProvider>
+      <FeedTaskCommandProvider value={{ onNewTask }}>
+        <FeedTaskViewModelProvider value={taskViewModel}>
+          <MobileLayout
+            viewState={{
+              relays,
+              channels,
+              people,
+              canCreateContent: true,
+              currentView: "feed",
+            }}
+            actions={{}}
+          />
+        </FeedTaskViewModelProvider>
+      </FeedTaskCommandProvider>
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Submit" }));

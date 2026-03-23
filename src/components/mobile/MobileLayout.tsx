@@ -28,6 +28,7 @@ import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { useTranslation } from "react-i18next";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
 
@@ -45,7 +46,6 @@ export interface MobileLayoutViewState {
 }
 
 export interface MobileLayoutActions {
-  onViewChange: (view: ViewType) => void;
   onManageRouteChange?: (isActive: boolean) => void;
 }
 
@@ -93,6 +93,7 @@ export function MobileLayout({
   publishState,
 }: MobileLayoutProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { onNewTask } = useFeedTaskCommands();
   const {
     relays,
     channels,
@@ -105,16 +106,9 @@ export function MobileLayout({
     activeOnboardingStepId = null,
     isManageRouteActive = false,
   } = viewState;
-  const dispatchViewChange = useCallback((view: ViewType) => {
-    void dispatchFeedInteraction({ type: "ui.view.change", view });
-  }, [dispatchFeedInteraction]);
   const dispatchManageRouteChange = useCallback((isActive: boolean) => {
     void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
   }, [dispatchFeedInteraction]);
-  const onViewChange = useMemo(
-    () => actions?.onViewChange ?? dispatchViewChange,
-    [actions?.onViewChange, dispatchViewChange]
-  );
   const onManageRouteChange = useMemo(
     () => actions?.onManageRouteChange ?? dispatchManageRouteChange,
     [actions?.onManageRouteChange, dispatchManageRouteChange]
@@ -125,7 +119,6 @@ export function MobileLayout({
     allTasks,
     searchQuery,
     focusedTaskId = null,
-    onNewTask,
     composeRestoreRequest: contextComposeRestoreRequest = null,
     mentionRequest: contextMentionRequest = null,
     forceShowComposer: contextForceShowComposer = false,
@@ -163,10 +156,10 @@ export function MobileLayout({
   const closeManageView = useCallback((nextView?: ViewType) => {
     setShowFilters(false);
     if (nextView) {
-      onViewChange(nextView);
+      void dispatchFeedInteraction({ type: "ui.view.change", view: nextView });
     }
     onManageRouteChange(false);
-  }, [onManageRouteChange, onViewChange]);
+  }, [dispatchFeedInteraction, onManageRouteChange]);
 
   const handleMobileViewChange = useCallback((view: MobileViewType) => {
     if (view === "filters") {
@@ -177,8 +170,8 @@ export function MobileLayout({
       closeManageView(view);
       return;
     }
-    onViewChange(view);
-  }, [closeManageView, onViewChange, openManageView, showFilters]);
+    void dispatchFeedInteraction({ type: "ui.view.change", view });
+  }, [closeManageView, dispatchFeedInteraction, openManageView, showFilters]);
 
   // Swipe navigation handlers
   const handleSwipeLeft = useCallback(() => {

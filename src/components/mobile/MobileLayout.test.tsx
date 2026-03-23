@@ -2,12 +2,13 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect, useState, type ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
-import type { Channel, Person, Relay, Task } from "@/types";
+import type { Channel, OnNewTask, Person, Relay, Task } from "@/types";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import {
   FeedTaskViewModelProvider,
   type FeedTaskViewModel,
 } from "@/features/feed-page/views/feed-task-view-model-context";
+import { FeedTaskCommandProvider } from "@/features/feed-page/views/feed-task-command-context";
 
 const ndkMock = {
   user: null as null | {
@@ -25,6 +26,21 @@ const ndkMock = {
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ndkMock,
 }));
+
+const dispatchFeedInteraction = vi.fn().mockResolvedValue({
+  envelope: { id: 1, dispatchedAtMs: 0, intent: { type: "ui.focusTasks" } },
+  outcome: { status: "handled" as const },
+});
+
+vi.mock("@/features/feed-page/interactions/feed-interaction-context", async () => {
+  const actual = await vi.importActual<typeof import("@/features/feed-page/interactions/feed-interaction-context")>(
+    "@/features/feed-page/interactions/feed-interaction-context"
+  );
+  return {
+    ...actual,
+    useFeedInteractionDispatch: () => dispatchFeedInteraction,
+  };
+});
 
 vi.mock("./MobileNav", () => ({
   MobileNav: ({ onViewChange }: { onViewChange: (view: "tree" | "feed" | "list" | "calendar" | "filters") => void }) => (
@@ -122,6 +138,7 @@ type MobileLayoutOverrides = {
   composerState?: Partial<NonNullable<MobileLayoutProps["composerState"]>>;
   publishState?: Partial<NonNullable<MobileLayoutProps["publishState"]>>;
   taskViewModel?: Partial<FeedTaskViewModel>;
+  onNewTask?: OnNewTask;
 };
 
 const baseProps: MobileLayoutProps = {
@@ -132,9 +149,7 @@ const baseProps: MobileLayoutProps = {
     canCreateContent: true,
     currentView: "tree",
   },
-  actions: {
-    onViewChange: () => {},
-  },
+  actions: {},
 };
 const baseTaskViewModel: FeedTaskViewModel = {
   tasks,
@@ -145,7 +160,6 @@ const baseTaskViewModel: FeedTaskViewModel = {
   people,
   currentUser: people[0],
   searchQuery: "",
-  onNewTask: defaultOnNewTask,
 };
 
 function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
@@ -153,28 +167,31 @@ function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
     ...baseTaskViewModel,
     ...overrides.taskViewModel,
   };
+  const onNewTask = overrides.onNewTask ?? defaultOnNewTask;
 
   return render(
-    <FeedTaskViewModelProvider value={taskViewModel}>
-      <MobileLayout
-        viewState={{
-          ...baseProps.viewState,
-          ...overrides.viewState,
-        }}
-        actions={{
-          ...baseProps.actions,
-          ...overrides.actions,
-        }}
-        composerState={{
-          ...baseProps.composerState,
-          ...overrides.composerState,
-        }}
-        publishState={{
-          ...baseProps.publishState,
-          ...overrides.publishState,
-        }}
-      />
-    </FeedTaskViewModelProvider>
+    <FeedTaskCommandProvider value={{ onNewTask }}>
+      <FeedTaskViewModelProvider value={taskViewModel}>
+        <MobileLayout
+          viewState={{
+            ...baseProps.viewState,
+            ...overrides.viewState,
+          }}
+          actions={{
+            ...baseProps.actions,
+            ...overrides.actions,
+          }}
+          composerState={{
+            ...baseProps.composerState,
+            ...overrides.composerState,
+          }}
+          publishState={{
+            ...baseProps.publishState,
+            ...overrides.publishState,
+          }}
+        />
+      </FeedTaskViewModelProvider>
+    </FeedTaskCommandProvider>
   );
 }
 
@@ -190,7 +207,7 @@ describe("MobileLayout auth wiring", () => {
 
     renderMobileLayout({
       viewState: { canCreateContent: false },
-      taskViewModel: { onNewTask },
+      onNewTask,
     });
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
@@ -218,16 +235,18 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     rerender(
-      <FeedTaskViewModelProvider value={baseTaskViewModel}>
-        <MobileLayout
-          viewState={{
-            ...baseProps.viewState,
-            canCreateContent: true,
-            profileCompletionPromptSignal: 1,
-          }}
-          actions={baseProps.actions}
-        />
-      </FeedTaskViewModelProvider>
+      <FeedTaskCommandProvider value={{ onNewTask: defaultOnNewTask }}>
+        <FeedTaskViewModelProvider value={baseTaskViewModel}>
+          <MobileLayout
+            viewState={{
+              ...baseProps.viewState,
+              canCreateContent: true,
+              profileCompletionPromptSignal: 1,
+            }}
+            actions={baseProps.actions}
+          />
+        </FeedTaskViewModelProvider>
+      </FeedTaskCommandProvider>
     );
 
     await waitFor(() => {
@@ -429,10 +448,9 @@ describe("MobileLayout auth wiring", () => {
   it("switches to feed on mobile onboarding step 7", async () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
-    const onViewChange = vi.fn();
+    dispatchFeedInteraction.mockClear();
 
     const { rerender } = renderMobileLayout({
-      actions: { onViewChange },
       viewState: {
         isOnboardingOpen: true,
         activeOnboardingStepId: "mobile-filters-properties",
@@ -444,25 +462,24 @@ describe("MobileLayout auth wiring", () => {
     });
 
     rerender(
-      <FeedTaskViewModelProvider value={baseTaskViewModel}>
-        <MobileLayout
-          viewState={{
-            ...baseProps.viewState,
-            canCreateContent: true,
-            currentView: "tree",
-            isOnboardingOpen: true,
-            activeOnboardingStepId: "mobile-compose-combobox",
-          }}
-          actions={{
-            ...baseProps.actions,
-            onViewChange,
-          }}
-        />
-      </FeedTaskViewModelProvider>
+      <FeedTaskCommandProvider value={{ onNewTask: defaultOnNewTask }}>
+        <FeedTaskViewModelProvider value={baseTaskViewModel}>
+          <MobileLayout
+            viewState={{
+              ...baseProps.viewState,
+              canCreateContent: true,
+              currentView: "tree",
+              isOnboardingOpen: true,
+              activeOnboardingStepId: "mobile-compose-combobox",
+            }}
+            actions={baseProps.actions}
+          />
+        </FeedTaskViewModelProvider>
+      </FeedTaskCommandProvider>
     );
 
     await waitFor(() => {
-      expect(onViewChange).toHaveBeenCalledWith("feed");
+      expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
       expect(document.querySelector('[data-onboarding="mobile-filters"]')).not.toBeInTheDocument();
     });
   });
@@ -470,31 +487,28 @@ describe("MobileLayout auth wiring", () => {
   it("uses currentView as the source of truth for rendered mobile view", async () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
-    const onViewChange = vi.fn();
+    dispatchFeedInteraction.mockClear();
 
-    const { rerender } = renderMobileLayout({
-      actions: { onViewChange },
-    });
+    const { rerender } = renderMobileLayout();
 
     expect(screen.getByTestId("task-tree")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /switch to feed view/i }));
-    expect(onViewChange).toHaveBeenCalledWith("feed");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
     expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
 
     rerender(
-      <FeedTaskViewModelProvider value={baseTaskViewModel}>
-        <MobileLayout
-          viewState={{
-            ...baseProps.viewState,
-            canCreateContent: true,
-            currentView: "feed",
-          }}
-          actions={{
-            ...baseProps.actions,
-            onViewChange,
-          }}
-        />
-      </FeedTaskViewModelProvider>
+      <FeedTaskCommandProvider value={{ onNewTask: defaultOnNewTask }}>
+        <FeedTaskViewModelProvider value={baseTaskViewModel}>
+          <MobileLayout
+            viewState={{
+              ...baseProps.viewState,
+              canCreateContent: true,
+              currentView: "feed",
+            }}
+            actions={baseProps.actions}
+          />
+        </FeedTaskViewModelProvider>
+      </FeedTaskCommandProvider>
     );
 
     await waitFor(() => {
@@ -505,19 +519,18 @@ describe("MobileLayout auth wiring", () => {
   it("switches top-bar views without closing manage route when not in manage", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
-    const onViewChange = vi.fn();
+    dispatchFeedInteraction.mockClear();
     const onManageRouteChange = vi.fn();
 
     renderMobileLayout({
       actions: {
-        onViewChange,
         onManageRouteChange,
       },
     });
 
     fireEvent.click(screen.getByRole("button", { name: /switch to feed view/i }));
 
-    expect(onViewChange).toHaveBeenCalledWith("feed");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
     expect(onManageRouteChange).not.toHaveBeenCalledWith(false);
   });
 });

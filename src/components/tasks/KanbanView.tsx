@@ -34,6 +34,7 @@ import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
+import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
@@ -61,7 +62,6 @@ export function KanbanView({
   currentUser,
   searchQuery,
   depthMode,
-  onNewTask,
   focusedTaskId,
   isPendingPublishTask,
   composeRestoreRequest = null,
@@ -70,6 +70,7 @@ export function KanbanView({
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { onNewTask } = useFeedTaskCommands();
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
   };
