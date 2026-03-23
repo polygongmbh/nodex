@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Task content markdown now keeps bullet and numbered lists in a single rendered block with proper markers and tighter spacing, and long inline Nostr identifiers such as `npub` references wrap more cleanly instead of disturbing card layout.
 - Desktop mention autocomplete now only suggests authors/profile metadata from the current relay scope, while existing mention chips still resolve labels from the broader cached people list.
 - Feed/task surfaces now avoid no-op rerenders from periodic relay-status reconciliation when relay state has not actually changed.
+- Task markdown blocks now render inside a `whitespace-normal` boundary so container-level `whitespace-pre-wrap` no longer introduces extra blank lines between list/paragraph blocks, and feed surface relay snapshots now ignore connection-status churn to reduce periodic post rerenders.
 
 ## [2.7.2] - 2026-03-22
 - Onboarding navigation guidance now uses the actual view order and labels (`Timeline`, `Tree`, `Kanban`, `Table`, `Calendar`) in English, German, and Spanish, and the task-focus step now clearly explains post interactions (view subitems, comment, create subtasks) without breadcrumb jargon.

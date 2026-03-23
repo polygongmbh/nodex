@@ -163,7 +163,7 @@ function readComposeDraft(key: string): ComposeDraftState | null {
 }
 
 const isPostableRelay = (r: Relay) =>
-  r.connectionStatus === "connected" || r.connectionStatus === "read-only";
+  r.connectionStatus === undefined || r.connectionStatus === "connected" || r.connectionStatus === "read-only";
 
 function extractFilesFromDataTransfer(dataTransfer: DataTransfer | null | undefined): File[] {
   if (!dataTransfer) return [];

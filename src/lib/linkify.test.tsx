@@ -131,6 +131,7 @@ describe("linkifyContent interaction styles", () => {
 
     expect(screen.getByText(`Assign to ${npub}`)).toBeInTheDocument();
     expect(container.querySelector(".break-words")).toBeInTheDocument();
+    expect(container.querySelector(".whitespace-normal")).toBeInTheDocument();
   });
 
   it("returns standalone embeddable urls only", () => {

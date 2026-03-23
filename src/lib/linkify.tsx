@@ -413,26 +413,28 @@ function renderMarkdownBlock(
   };
 
   return (
-    <ReactMarkdown
-      key={`${baseKey}-md`}
-      remarkPlugins={[remarkGfm, remarkBreaks]}
-      components={{
-        p: MarkdownParagraph,
-        ul: ({ children }) => <MarkdownList>{children}</MarkdownList>,
-        ol: ({ children }) => <MarkdownList ordered>{children}</MarkdownList>,
-        li: MarkdownListItem,
-        a: MarkdownAnchor,
-        code: MarkdownCode,
-        h1: ({ children }) => <MarkdownHeading level={1}>{children}</MarkdownHeading>,
-        h2: ({ children }) => <MarkdownHeading level={2}>{children}</MarkdownHeading>,
-        h3: ({ children }) => <MarkdownHeading level={3}>{children}</MarkdownHeading>,
-        h4: ({ children }) => <MarkdownHeading level={4}>{children}</MarkdownHeading>,
-        h5: ({ children }) => <MarkdownHeading level={5}>{children}</MarkdownHeading>,
-        h6: ({ children }) => <MarkdownHeading level={6}>{children}</MarkdownHeading>,
-      }}
-    >
-      {preprocessMarkdownTokens(value)}
-    </ReactMarkdown>
+    <div className="whitespace-normal">
+      <ReactMarkdown
+        key={`${baseKey}-md`}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
+        components={{
+          p: MarkdownParagraph,
+          ul: ({ children }) => <MarkdownList>{children}</MarkdownList>,
+          ol: ({ children }) => <MarkdownList ordered>{children}</MarkdownList>,
+          li: MarkdownListItem,
+          a: MarkdownAnchor,
+          code: MarkdownCode,
+          h1: ({ children }) => <MarkdownHeading level={1}>{children}</MarkdownHeading>,
+          h2: ({ children }) => <MarkdownHeading level={2}>{children}</MarkdownHeading>,
+          h3: ({ children }) => <MarkdownHeading level={3}>{children}</MarkdownHeading>,
+          h4: ({ children }) => <MarkdownHeading level={4}>{children}</MarkdownHeading>,
+          h5: ({ children }) => <MarkdownHeading level={5}>{children}</MarkdownHeading>,
+          h6: ({ children }) => <MarkdownHeading level={6}>{children}</MarkdownHeading>,
+        }}
+      >
+        {preprocessMarkdownTokens(value)}
+      </ReactMarkdown>
+    </div>
   );
 }
 

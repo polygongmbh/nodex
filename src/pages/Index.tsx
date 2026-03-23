@@ -836,9 +836,29 @@ const Index = () => {
     ]
   );
 
+  const feedSurfaceRelayKey = useMemo(
+    () =>
+      relaysWithActiveState
+        .map((relay) => [relay.id, relay.name, relay.icon, relay.url || "", relay.isActive ? "1" : "0"].join("|"))
+        .join("||"),
+    [relaysWithActiveState]
+  );
+
+  const feedSurfaceRelays = useMemo(
+    () =>
+      relaysWithActiveState.map((relay) => ({
+        id: relay.id,
+        name: relay.name,
+        icon: relay.icon,
+        isActive: relay.isActive,
+        url: relay.url,
+      })),
+    [feedSurfaceRelayKey]
+  );
+
   const feedSurfaceState = useMemo(
     () => ({
-      relays: relaysWithActiveState,
+      relays: feedSurfaceRelays,
       channels: channelsWithState,
       composeChannels: composeChannelsWithState,
       people,
@@ -847,7 +867,7 @@ const Index = () => {
       channelMatchMode,
     }),
     [
-      relaysWithActiveState,
+      feedSurfaceRelays,
       channelsWithState,
       composeChannelsWithState,
       people,
