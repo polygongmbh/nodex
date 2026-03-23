@@ -1,8 +1,10 @@
 import { NDKRelayStatus as NativeNDKRelayStatus } from "@nostr-dev-kit/ndk";
 import { describe, expect, it } from "vitest";
 import {
+  areRelayStatusesEqual,
   inferMappedStatusFromUiStatus,
   mapNativeRelayStatus,
+  mergeRelayStatusUpdates,
   RELAY_CONNECTING_GRACE_MS,
   resolveRelayLifecycleStatus,
   resolveRelayStatus,
@@ -114,5 +116,54 @@ describe("inferMappedStatusFromUiStatus", () => {
   it("maps error and missing states to disconnected transport", () => {
     expect(inferMappedStatusFromUiStatus("connection-error")).toBe("disconnected");
     expect(inferMappedStatusFromUiStatus(undefined)).toBe("disconnected");
+  });
+});
+
+describe("mergeRelayStatusUpdates", () => {
+  it("returns the previous array when updates do not change relay fields", () => {
+    const previous = [{
+      url: "wss://relay.example",
+      status: "connected" as const,
+      nip11: {
+        authRequired: false,
+        supportsNip42: true,
+        checkedAt: 123,
+      },
+    }];
+
+    const next = mergeRelayStatusUpdates(previous, [{
+      url: "wss://relay.example",
+      status: "connected",
+      nip11: {
+        authRequired: false,
+        supportsNip42: true,
+        checkedAt: 123,
+      },
+    }]);
+
+    expect(next).toBe(previous);
+    expect(areRelayStatusesEqual(previous[0], next[0])).toBe(true);
+  });
+
+  it("replaces only the changed relay entry when status differs", () => {
+    const unchanged = {
+      url: "wss://relay.one",
+      status: "connected" as const,
+    };
+    const changed = {
+      url: "wss://relay.two",
+      status: "connecting" as const,
+    };
+    const previous = [unchanged, changed];
+
+    const next = mergeRelayStatusUpdates(previous, [{
+      url: "wss://relay.two",
+      status: "disconnected",
+    }]);
+
+    expect(next).not.toBe(previous);
+    expect(next[0]).toBe(unchanged);
+    expect(next[1]).not.toBe(changed);
+    expect(next[1].status).toBe("disconnected");
   });
 });

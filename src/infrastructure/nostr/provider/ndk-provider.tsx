@@ -46,6 +46,7 @@ import {
 } from "./storage";
 import {
   mapNativeRelayStatus,
+  mergeRelayStatusUpdates,
   MAX_INITIAL_CONNECT_FAILURES,
   RELAY_STATUS_RECONCILE_INTERVAL_MS,
 } from "./relay-status";
@@ -807,16 +808,19 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     // Set up relay event handlers
     const syncRelayStatusesFromPool = () => {
       setRelays((prev) => {
-        const nextByUrl = new Map(prev.map((entry) => [normalizeRelayUrl(entry.url), entry]));
+        const previousEntryByUrl = new Map(
+          prev.map((entry) => [normalizeRelayUrl(entry.url), entry] as const)
+        );
+        const updates: typeof prev = [];
         ndkInstance.pool.relays.forEach((relay: NDKRelay) => {
           const normalized = normalizeRelayUrl(relay.url);
           const currentRelay = relayCurrentInstanceRef.current.get(normalized);
           if (currentRelay && currentRelay !== relay) return;
           relayCurrentInstanceRef.current.set(normalized, relay);
           if (removedRelaysRef.current.has(normalized)) return;
-          const previousEntry = nextByUrl.get(normalized);
+          const previousEntry = previousEntryByUrl.get(normalized);
           if (relayAutoPausedRef.current.has(normalized)) {
-            nextByUrl.set(normalized, {
+            updates.push({
               ...previousEntry,
               url: normalized,
               status: "connection-error",
@@ -824,7 +828,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
             return;
           }
           const mappedStatus = mapRelayTransportStatus(relay);
-          nextByUrl.set(normalized, {
+          updates.push({
             ...previousEntry,
             url: normalized,
             status: mappedStatus === "connected"
@@ -832,7 +836,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
               : mappedStatus,
           });
         });
-        return Array.from(nextByUrl.values());
+        return mergeRelayStatusUpdates(prev, updates);
       });
     };
 

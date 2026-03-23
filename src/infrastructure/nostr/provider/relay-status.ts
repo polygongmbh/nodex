@@ -79,3 +79,52 @@ export function inferMappedStatusFromUiStatus(
       return "disconnected";
   }
 }
+
+function areRelayNip11SummariesEqual(
+  left: NDKRelayStatus["nip11"],
+  right: NDKRelayStatus["nip11"]
+): boolean {
+  if (left === right) return true;
+  if (!left || !right) return !left && !right;
+  return left.authRequired === right.authRequired
+    && left.supportsNip42 === right.supportsNip42
+    && left.checkedAt === right.checkedAt;
+}
+
+export function areRelayStatusesEqual(left: NDKRelayStatus, right: NDKRelayStatus): boolean {
+  return left.url === right.url
+    && left.status === right.status
+    && left.latency === right.latency
+    && areRelayNip11SummariesEqual(left.nip11, right.nip11);
+}
+
+export function mergeRelayStatusUpdates(
+  previous: NDKRelayStatus[],
+  updates: NDKRelayStatus[]
+): NDKRelayStatus[] {
+  if (updates.length === 0) return previous;
+
+  const next = [...previous];
+  const indexByUrl = new Map(previous.map((relay, index) => [relay.url, index] as const));
+  let changed = false;
+
+  updates.forEach((update) => {
+    const existingIndex = indexByUrl.get(update.url);
+    if (existingIndex === undefined) {
+      next.push(update);
+      indexByUrl.set(update.url, next.length - 1);
+      changed = true;
+      return;
+    }
+
+    const existing = next[existingIndex];
+    if (areRelayStatusesEqual(existing, update)) {
+      return;
+    }
+
+    next[existingIndex] = update;
+    changed = true;
+  });
+
+  return changed ? next : previous;
+}
