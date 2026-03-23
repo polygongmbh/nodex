@@ -59,7 +59,6 @@ import {
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
-import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
@@ -68,6 +67,7 @@ import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
+import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -209,7 +209,7 @@ export function FeedView({
   isInteractionBlocked = false,
   isHydrating = false,
 }: FeedViewProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
   const interactionModel = useFeedViewInteractionModel();
@@ -414,21 +414,14 @@ export function FeedView({
       ),
     [people]
   );
-  const scopeModel = useMemo(
-    () =>
-      buildEmptyScopeModel({
-        relays,
-        channels,
-        people,
-        searchQuery: deferredSearchQuery,
-        contextTaskTitle: focusedTaskId
-          ? taskById.get(focusedTaskId)?.content
-          : "",
-        locale: i18n.resolvedLanguage || i18n.language || "en",
-        t,
-      }),
-    [channels, deferredSearchQuery, focusedTaskId, i18n.language, i18n.resolvedLanguage, people, relays, t, taskById]
-  );
+  const scopeModel = useEmptyScopeModel({
+    relays,
+    channels,
+    people,
+    searchQuery: deferredSearchQuery,
+    focusedTaskId,
+    taskById,
+  });
   const hasSourceFeedContent = allFeedEntries.length > 0;
   const shouldShowMobileScopeFallback =
     isMobile && scopeModel.hasActiveFilters && feedEntries.length === 0 && hasSourceFeedContent;

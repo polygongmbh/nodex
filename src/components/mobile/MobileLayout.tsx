@@ -29,8 +29,8 @@ import { useTranslation } from "react-i18next";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
-import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
+import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 
 export interface MobileLayoutViewState {
   relays: Relay[];
@@ -136,7 +136,7 @@ export function MobileLayout({
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds = [],
   } = publishState ?? {};
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
@@ -340,30 +340,14 @@ export function MobileLayout({
   const hasSourceContent = sourceMatchesWithoutScope.length > 0;
   const shouldOmitSearchQuery = !showFilters && hasSearchQuery && !hasScopedMatchesWithSearch && hasSourceContent;
   const effectiveSearchQuery = shouldOmitSearchQuery ? "" : searchQuery;
-  const scopeModelWithoutQuickSearch = useMemo(
-    () =>
-      buildEmptyScopeModel({
-        relays,
-        channels,
-        people,
-        searchQuery: "",
-        contextTaskTitle: focusedTaskId
-          ? taskById.get(focusedTaskId)?.content
-          : "",
-        locale: i18n.resolvedLanguage || i18n.language || "en",
-        t,
-      }),
-    [
-      channels,
-      focusedTaskId,
-      i18n.language,
-      i18n.resolvedLanguage,
-      people,
-      relays,
-      t,
-      taskById,
-    ]
-  );
+  const scopeModelWithoutQuickSearch = useEmptyScopeModel({
+    relays,
+    channels,
+    people,
+    searchQuery: "",
+    focusedTaskId,
+    taskById,
+  });
   const quickFilterFallbackMessage = scopeModelWithoutQuickSearch.scopeDescription
     ? t("tasks.empty.mobileQuickFilterFallbackScoped", { scope: scopeModelWithoutQuickSearch.scopeDescription })
     : t("tasks.empty.mobileQuickFilterFallback");

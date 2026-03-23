@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import type { Channel, Person, Relay } from "@/types";
+import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 
 interface FilteredEmptyStateProps {
   variant: "feed" | "collection";
@@ -27,15 +27,13 @@ export function FilteredEmptyState({
   mode = "screen",
   className,
 }: FilteredEmptyStateProps) {
-  const { t, i18n } = useTranslation();
-  const scopeModel = buildEmptyScopeModel({
+  const { t } = useTranslation();
+  const scopeModel = useEmptyScopeModel({
     relays,
     channels,
     people,
     searchQuery,
     contextTaskTitle,
-    locale: i18n.resolvedLanguage || i18n.language || "en",
-    t,
   });
   const loadingSubtitle = useMemo(() => {
     const waitingPromptKeys = [

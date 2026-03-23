@@ -13,11 +13,11 @@ import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { useTranslation } from "react-i18next";
-import { buildEmptyScopeModel } from "@/lib/empty-scope";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
+import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   isMobile?: boolean;
@@ -52,7 +52,7 @@ export function TaskTree({
   isInteractionBlocked = false,
   isHydrating = false,
 }: TaskTreeProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
   const interactionModel = useFeedViewInteractionModel();
@@ -193,21 +193,14 @@ export function TaskTree({
     return rootTasks;
   }, [allVisibleIds, baseVisibleTasks, hasActiveFilters]);
 
-  const scopeModel = useMemo(
-    () =>
-      buildEmptyScopeModel({
-        relays,
-        channels,
-        people,
-        searchQuery: deferredSearchQuery,
-        contextTaskTitle: currentContextId
-          ? taskById.get(currentContextId)?.content
-          : "",
-        locale: i18n.resolvedLanguage || i18n.language || "en",
-        t,
-      }),
-    [channels, currentContextId, deferredSearchQuery, i18n.language, i18n.resolvedLanguage, people, relays, t, taskById]
-  );
+  const scopeModel = useEmptyScopeModel({
+    relays,
+    channels,
+    people,
+    searchQuery: deferredSearchQuery,
+    focusedTaskId: currentContextId,
+    taskById,
+  });
   const hasSourceTaskContent = baseVisibleTasks.length > 0;
   const shouldShowMobileScopeFallback =
     isMobile && scopeModel.hasActiveFilters && visibleTasks.length === 0 && hasSourceTaskContent;
