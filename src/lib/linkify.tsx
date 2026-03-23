@@ -368,7 +368,7 @@ function renderMarkdownBlock(
   );
 
   const MarkdownParagraph = ({ children }: { children?: React.ReactNode }) => (
-    <p className="mb-2 break-words last:mb-0">
+    <p className="mb-1 break-words last:mb-0">
       {children}
     </p>
   );
@@ -380,7 +380,7 @@ function renderMarkdownBlock(
     ordered?: boolean;
     children?: React.ReactNode;
   }) => {
-    const className = "mb-2 break-words space-y-1 pl-5 last:mb-0";
+    const className = "mb-1 break-words space-y-0.5 pl-5 last:mb-0";
     if (ordered) {
       return <ol className={`${className} list-decimal`}>{children}</ol>;
     }
@@ -388,7 +388,7 @@ function renderMarkdownBlock(
   };
 
   const MarkdownListItem = ({ children }: { children?: React.ReactNode }) => (
-    <li className="break-words">
+    <li className="break-words [&>p]:mb-0">
       {children}
     </li>
   );

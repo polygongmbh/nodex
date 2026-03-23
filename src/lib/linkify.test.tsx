@@ -112,6 +112,19 @@ describe("linkifyContent interaction styles", () => {
     expect(within(list as HTMLUListElement).getByText("second item")).toBeInTheDocument();
   });
 
+  it("keeps loose markdown list items from adding extra paragraph spacing", () => {
+    const { container } = render(<div>{linkifyContent("- first item\n\n- second item")}</div>);
+
+    const list = container.querySelector("ul");
+    const listItems = container.querySelectorAll("li");
+
+    expect(list).toHaveClass("space-y-0.5");
+    expect(listItems).toHaveLength(2);
+    expect(listItems[0]).toHaveClass("[&>p]:mb-0");
+    expect(within(listItems[0] as HTMLLIElement).getByText("first item")).toBeInTheDocument();
+    expect(within(listItems[1] as HTMLLIElement).getByText("second item")).toBeInTheDocument();
+  });
+
   it("renders long nostr identifiers inside a breakable markdown block", () => {
     const npub = `nostr:npub1${"q".repeat(58)}`;
     const { container } = render(<div>{linkifyContent(`Assign to ${npub}`)}</div>);
