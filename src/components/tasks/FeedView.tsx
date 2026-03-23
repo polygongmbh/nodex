@@ -68,6 +68,11 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
+import {
+  FeedSurfaceProvider,
+  useFeedPersonLookup,
+  useFeedSurfaceState,
+} from "@/features/feed-page/views/feed-surface-context";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -192,13 +197,12 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
 export function FeedView({
   tasks,
   allTasks,
-  relays,
-  channels,
-  channelMatchMode = "and",
-  composeChannels,
-  people,
+  relays: relaysProp,
+  channels: channelsProp,
+  channelMatchMode: channelMatchModeProp,
+  people: peopleProp,
   currentUser,
-  searchQuery,
+  searchQuery: searchQueryProp,
   focusedTaskId,
   isMobile = false,
   forceShowComposer,
@@ -212,6 +216,13 @@ export function FeedView({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
+  const surface = useFeedSurfaceState();
+  const { peopleById } = useFeedPersonLookup();
+  const relays = relaysProp ?? surface.relays;
+  const channels = channelsProp ?? surface.channels;
+  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
+  const people = peopleProp ?? surface.people;
+  const searchQuery = searchQueryProp ?? surface.searchQuery;
   const interactionModel = useFeedViewInteractionModel();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const focusTask = (taskId: string | null) => {
@@ -407,12 +418,12 @@ export function FeedView({
     visibleEntryCount: INITIAL_VISIBLE_FEED_ENTRIES,
   }));
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
-  const peopleById = useMemo(
+  const propPeopleById = useMemo(
     () =>
-      new Map(
-        people.map((person) => [person.id.toLowerCase(), person] as const)
-      ),
-    [people]
+      peopleProp
+        ? new Map(peopleProp.map((person) => [person.id.toLowerCase(), person] as const))
+        : null,
+    [peopleProp]
   );
   const scopeModel = useEmptyScopeModel({
     relays,
@@ -662,7 +673,9 @@ export function FeedView({
     if (entry.type === "state-update") {
       const { task, update } = entry;
       const resolvedUpdateAuthor =
-        peopleById.get(update.authorPubkey.toLowerCase()) || task.author;
+        propPeopleById?.get(update.authorPubkey.toLowerCase()) ||
+        peopleById.get(update.authorPubkey.toLowerCase()) ||
+        task.author;
       const updateAuthorMeta = formatAuthorMetaParts({
         personId: resolvedUpdateAuthor.id,
         displayName: resolvedUpdateAuthor.displayName,
@@ -760,7 +773,10 @@ export function FeedView({
     const breadcrumb = getParentBreadcrumb(task);
     const isKeyboardFocused = keyboardFocusedTaskId === task.id;
     const isLockedUntilStart = isTaskLockedUntilStart(task);
-    const resolvedAuthor = peopleById.get(task.author.id.toLowerCase()) ?? task.author;
+    const resolvedAuthor =
+      propPeopleById?.get(task.author.id.toLowerCase()) ??
+      peopleById.get(task.author.id.toLowerCase()) ??
+      task.author;
     const authorMeta = formatAuthorMetaParts({
       personId: resolvedAuthor.id,
       displayName: resolvedAuthor.displayName,
@@ -1173,7 +1189,6 @@ export function FeedView({
                   <span className="inline-flex flex-wrap items-center gap-1">
                     <TaskMentionChips
                       task={task}
-                      people={people}
                       onPersonClick={(author) => {
                         void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
                       }}
@@ -1267,15 +1282,24 @@ export function FeedView({
     );
   };
 
+  const viewSurfaceValue = useMemo(
+    () => ({
+      ...surface,
+      relays,
+      channels,
+      people,
+      searchQuery,
+      channelMatchMode,
+    }),
+    [channelMatchMode, channels, people, relays, searchQuery, surface]
+  );
+
   return (
-    <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
+    <FeedSurfaceProvider value={viewSurfaceValue}>
+      <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       <SharedViewComposer
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onSubmit={handleNewTask}
-        relays={relays}
-        channels={channels}
-        composeChannels={composeChannels}
-        people={people}
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
@@ -1298,9 +1322,6 @@ export function FeedView({
         {shouldShowScreenEmptyState ? (
           <FilteredEmptyState
             variant="feed"
-            relays={relays}
-            channels={channels}
-            people={people}
             isHydrating={isHydrating}
             searchQuery={searchQuery}
             contextTaskTitle={focusedTask?.content}
@@ -1311,9 +1332,6 @@ export function FeedView({
             {shouldShowScopeFooterHint ? (
               <FilteredEmptyState
                 variant="feed"
-                relays={relays}
-                channels={channels}
-                people={people}
                 isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={focusedTask?.content}
@@ -1323,9 +1341,6 @@ export function FeedView({
             {shouldShowInlineEmptyHint ? (
               <FilteredEmptyState
                 variant="feed"
-                relays={relays}
-                channels={channels}
-                people={people}
                 isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={focusedTask?.content}
@@ -1357,6 +1372,7 @@ export function FeedView({
         event={activeRawEvent}
       />
 
-    </main>
+      </main>
+    </FeedSurfaceProvider>
   );
 }

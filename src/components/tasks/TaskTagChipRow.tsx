@@ -7,7 +7,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 
 interface TaskTagChipRowProps {
   task: Task;
-  people: Person[];
+  people?: Person[];
   priority?: number;
   expanded?: boolean;
   maxVisibleTags?: number;
@@ -22,7 +22,7 @@ interface TaskTagChipRowProps {
 
 export function TaskTagChipRow({
   task,
-  people,
+  people: peopleProp,
   priority,
   expanded = false,
   maxVisibleTags = 3,
@@ -52,7 +52,7 @@ export function TaskTagChipRow({
       )}
       <TaskMentionChips
         task={task}
-        people={people}
+        people={peopleProp}
         onPersonClick={(author) => {
           void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
         }}

@@ -63,12 +63,13 @@ import { countHashtagsInContent, extractHashtagsFromContent, getHashtagQueryAtCu
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
+import { useFeedComposerOptions } from "@/features/feed-page/views/feed-surface-context";
 
 interface TaskComposerProps {
   onSubmit: ComposerSubmit;
-  relays: Relay[];
-  channels: Channel[];
-  people: Person[];
+  relays?: Relay[];
+  channels?: Channel[];
+  people?: Person[];
   onCancel: () => void;
   compact?: boolean;
   defaultDueDate?: Date;
@@ -191,9 +192,9 @@ function extractPlainTextFromDataTransfer(dataTransfer: DataTransfer | null | un
 
 export function TaskComposer({
   onSubmit,
-  relays,
-  channels, 
-  people, 
+  relays: relaysProp,
+  channels: channelsProp,
+  people: peopleProp,
   onCancel, 
   compact = false, 
   defaultDueDate, 
@@ -211,6 +212,10 @@ export function TaskComposer({
 }: TaskComposerProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const composerOptions = useFeedComposerOptions();
+  const relays = relaysProp ?? composerOptions.relays;
+  const channels = channelsProp ?? composerOptions.channels;
+  const people = peopleProp ?? composerOptions.people;
   const { user, createHttpAuthHeader } = useNDK();
   const authPolicy = useAuthActionPolicy();
   const includedChannels = channels

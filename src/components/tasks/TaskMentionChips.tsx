@@ -2,6 +2,7 @@ import type { Person, Task } from "@/types";
 import { AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { useFeedPersonLookup, useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
 
@@ -26,7 +27,7 @@ export function hasTaskMentionChips(task: Task): boolean {
 
 interface TaskMentionChipsProps {
   task: Task;
-  people: Person[];
+  people?: Person[];
   onPersonClick?: (person: Person) => void;
   className?: string;
   inline?: boolean;
@@ -34,16 +35,21 @@ interface TaskMentionChipsProps {
 
 export function TaskMentionChips({
   task,
-  people,
+  people: peopleProp,
   onPersonClick,
   className,
   inline = false,
 }: TaskMentionChipsProps) {
+  const { people: contextPeople } = useFeedSurfaceState();
+  const { getPersonById } = useFeedPersonLookup();
+  const people = peopleProp ?? contextPeople;
   const mentionPubkeys = collectMentionPubkeys(task);
   if (mentionPubkeys.length === 0) return null;
 
   const chips = mentionPubkeys.map((pubkey) => {
-    const matchedPerson = people.find((person) => person.id.toLowerCase() === pubkey);
+    const matchedPerson = peopleProp
+      ? people.find((person) => person.id.toLowerCase() === pubkey)
+      : getPersonById(pubkey);
     const label = matchedPerson?.name || matchedPerson?.displayName || toDisplayPubkey(pubkey);
 
     if (matchedPerson && onPersonClick) {

@@ -1,18 +1,11 @@
 import { TaskComposer } from "./TaskComposer";
 import type {
-  Channel,
-  Person,
-  Relay,
   ComposerSubmit,
   ComposeRestoreRequest,
 } from "@/types";
 
 interface SharedViewComposerProps {
   visible: boolean;
-  relays: Relay[];
-  channels: Channel[];
-  composeChannels?: Channel[];
-  people: Person[];
   onSubmit: ComposerSubmit;
   onCancel?: () => void;
   draftStorageKey: string;
@@ -33,10 +26,6 @@ interface SharedViewComposerProps {
 
 export function SharedViewComposer({
   visible,
-  relays,
-  channels,
-  composeChannels,
-  people,
   onSubmit,
   onCancel,
   draftStorageKey,
@@ -57,9 +46,6 @@ export function SharedViewComposer({
     <div className={className} data-onboarding="focused-compose">
       <TaskComposer
         onSubmit={onSubmit}
-        relays={relays}
-        channels={composeChannels || channels}
-        people={people}
         onCancel={onCancel ?? (() => {})}
         compact
         adaptiveSize

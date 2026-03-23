@@ -18,6 +18,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface TaskTreeProps extends SharedTaskViewContext {
   isMobile?: boolean;
@@ -35,13 +36,12 @@ interface TaskTreeProps extends SharedTaskViewContext {
 export function TaskTree({
   tasks,
   allTasks,
-  relays,
-  channels,
-  channelMatchMode = "and",
-  composeChannels,
-  people,
+  relays: relaysProp,
+  channels: channelsProp,
+  channelMatchMode: channelMatchModeProp,
+  people: peopleProp,
   currentUser,
-  searchQuery,
+  searchQuery: searchQueryProp,
   focusedTaskId,
   isMobile = false,
   forceShowComposer,
@@ -55,6 +55,12 @@ export function TaskTree({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
+  const surface = useFeedSurfaceState();
+  const relays = relaysProp ?? surface.relays;
+  const channels = channelsProp ?? surface.channels;
+  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
+  const people = peopleProp ?? surface.people;
+  const searchQuery = searchQueryProp ?? surface.searchQuery;
   const interactionModel = useFeedViewInteractionModel();
   const authPolicy = useAuthActionPolicy();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
@@ -407,10 +413,6 @@ export function TaskTree({
       <SharedViewComposer
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onSubmit={handleNewTask}
-        relays={relays}
-        channels={channels}
-        composeChannels={composeChannels}
-        people={people}
         onCancel={() => setIsComposerExpanded(false)}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={currentContextId || undefined}
@@ -429,9 +431,6 @@ export function TaskTree({
         {shouldShowScreenEmptyState ? (
           <FilteredEmptyState
             variant="collection"
-            relays={relays}
-            channels={channels}
-            people={people}
             isHydrating={isHydrating}
             searchQuery={searchQuery}
             contextTaskTitle={currentContextTask?.content}
@@ -445,7 +444,6 @@ export function TaskTree({
                 filteredChildren={getFilteredChildren(task.id)}
                 allTasks={allTasks}
                 childrenMap={childrenMap}
-                people={people}
                 currentUser={currentUser}
                 matchedByFilter={isTaskDirectMatch(task.id)}
                 isDirectMatchFn={isTaskDirectMatch}
@@ -463,9 +461,6 @@ export function TaskTree({
             {shouldShowScopeFooterHint ? (
               <FilteredEmptyState
                 variant="collection"
-                relays={relays}
-                channels={channels}
-                people={people}
                 isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={currentContextTask?.content}
@@ -475,9 +470,6 @@ export function TaskTree({
             {shouldShowInlineEmptyHint ? (
               <FilteredEmptyState
                 variant="collection"
-                relays={relays}
-                channels={channels}
-                people={people}
                 isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={currentContextTask?.content}

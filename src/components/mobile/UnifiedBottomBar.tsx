@@ -48,19 +48,18 @@ import {
 } from "@/lib/hashtags";
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface UnifiedBottomBarProps {
-  // Search props
-  searchQuery: string;
+  searchQuery?: string;
   // Compose props
   onSubmit: ComposerSubmit;
   currentView: ViewType;
   focusedTaskId?: string | null;
   selectedCalendarDate?: Date | null;
-  // Filter data (dual-purpose)
-  relays: Relay[];
-  channels: Channel[];
-  people: Person[];
+  relays?: Relay[];
+  channels?: Channel[];
+  people?: Person[];
   // Default content for composing
   defaultContent?: string;
   canCreateContent: boolean;
@@ -102,20 +101,25 @@ function truncateWordSafe(value: string, maxLength: number): string {
 }
 
 export function UnifiedBottomBar({
-  searchQuery,
+  searchQuery: searchQueryProp,
   onSubmit,
   currentView,
   focusedTaskId = null,
   selectedCalendarDate = null,
-  relays,
-  channels,
-  people,
+  relays: relaysProp,
+  channels: channelsProp,
+  people: peopleProp,
   defaultContent = "",
   canCreateContent,
   composeRestoreRequest = null,
 }: UnifiedBottomBarProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const surface = useFeedSurfaceState();
+  const relays = relaysProp ?? surface.relays;
+  const channels = channelsProp ?? surface.channels;
+  const people = peopleProp ?? surface.people;
+  const searchQuery = searchQueryProp ?? surface.searchQuery;
   const dispatchSearchChange = useCallback(
     (query: string) => {
       void dispatchFeedInteraction({ type: "ui.search.change", query });

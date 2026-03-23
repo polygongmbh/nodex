@@ -60,6 +60,7 @@ import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   selectedDate?: Date | null;
@@ -74,13 +75,11 @@ const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 export function CalendarView({
   tasks,
   allTasks,
-  relays,
-  channels,
-  channelMatchMode = "and",
-  composeChannels,
-  people,
+  channels: channelsProp,
+  channelMatchMode: channelMatchModeProp,
+  people: peopleProp,
   currentUser,
-  searchQuery,
+  searchQuery: searchQueryProp,
   focusedTaskId,
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
@@ -92,6 +91,11 @@ export function CalendarView({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
+  const surface = useFeedSurfaceState();
+  const channels = channelsProp ?? surface.channels;
+  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
+  const people = peopleProp ?? surface.people;
+  const searchQuery = searchQueryProp ?? surface.searchQuery;
   const authPolicy = useAuthActionPolicy();
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
@@ -905,9 +909,6 @@ export function CalendarView({
                   </div>
                   <TaskComposer
                     onSubmit={handleCreateEvent}
-                    relays={relays}
-                    channels={composeChannels || channels}
-                    people={people}
                     onCancel={() => setIsComposingEvent(false)}
                     compact
                     allowComment={false}
@@ -1171,7 +1172,6 @@ export function CalendarView({
                             {(typeof task.priority === "number" || hasTaskMentionChips(task) || task.tags.length > 0) && (
                               <TaskTagChipRow
                                 task={task}
-                                people={people}
                                 priority={task.priority}
                                 className="mt-1"
                                 tagClassName="px-1 py-0.5 rounded text-xs"

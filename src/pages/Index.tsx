@@ -81,6 +81,7 @@ import {
   type FeedTaskViewModel,
 } from "@/features/feed-page/views/feed-task-view-model-context";
 import { FeedTaskCommandProvider } from "@/features/feed-page/views/feed-task-command-context";
+import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 import { createFeedInteractionMiddlewareSkeleton } from "@/features/feed-page/interactions/feed-interaction-middleware-skeleton";
 import {
@@ -809,13 +810,7 @@ const Index = () => {
     () => ({
       tasks: filteredTasks,
       allTasks,
-      relays: relaysWithActiveState,
-      channels: channelsWithState,
-      channelMatchMode,
-      composeChannels: composeChannelsWithState,
-      people,
       currentUser,
-      searchQuery,
       focusedTaskId,
       isPendingPublishTask,
       composeRestoreRequest,
@@ -828,13 +823,7 @@ const Index = () => {
     [
       filteredTasks,
       allTasks,
-      relaysWithActiveState,
-      channelsWithState,
-      channelMatchMode,
-      composeChannelsWithState,
-      people,
       currentUser,
-      searchQuery,
       focusedTaskId,
       isPendingPublishTask,
       composeRestoreRequest,
@@ -846,12 +835,27 @@ const Index = () => {
     ]
   );
 
-  const mobileViewState = useMemo(
+  const feedSurfaceState = useMemo(
     () => ({
       relays: relaysWithActiveState,
       channels: channelsWithState,
-      channelMatchMode,
+      composeChannels: composeChannelsWithState,
       people,
+      searchQuery,
+      channelMatchMode,
+    }),
+    [
+      relaysWithActiveState,
+      channelsWithState,
+      composeChannelsWithState,
+      people,
+      searchQuery,
+      channelMatchMode,
+    ]
+  );
+
+  const mobileViewState = useMemo(
+    () => ({
       canCreateContent: authPolicy.canCreateContent,
       profileCompletionPromptSignal,
       currentView,
@@ -860,10 +864,6 @@ const Index = () => {
       isManageRouteActive,
     }),
     [
-      relaysWithActiveState,
-      channelsWithState,
-      channelMatchMode,
-      people,
       authPolicy.canCreateContent,
       profileCompletionPromptSignal,
       currentView,
@@ -981,17 +981,19 @@ const Index = () => {
       <FeedInteractionProvider bus={feedInteractionBus}>
         <FeedPageUiConfigProvider value={uiConfig}>
           <FeedTaskCommandProvider value={{ onNewTask: handleNewTask }}>
-            <FeedTaskViewModelProvider value={feedTaskViewModel}>
-              <FeedPageMobileShell
-                controller={mobileController}
-                authModalProps={{
-                  isOpen: isAuthModalOpen,
-                  onClose: handleCloseAuthModal,
-                  initialStep: authModalInitialStep,
-                }}
-                onboardingOverlays={onboardingOverlays}
-              />
-            </FeedTaskViewModelProvider>
+            <FeedSurfaceProvider value={feedSurfaceState}>
+              <FeedTaskViewModelProvider value={feedTaskViewModel}>
+                <FeedPageMobileShell
+                  controller={mobileController}
+                  authModalProps={{
+                    isOpen: isAuthModalOpen,
+                    onClose: handleCloseAuthModal,
+                    initialStep: authModalInitialStep,
+                  }}
+                  onboardingOverlays={onboardingOverlays}
+                />
+              </FeedTaskViewModelProvider>
+            </FeedSurfaceProvider>
           </FeedTaskCommandProvider>
         </FeedPageUiConfigProvider>
       </FeedInteractionProvider>
@@ -1003,21 +1005,23 @@ const Index = () => {
     <FeedInteractionProvider bus={feedInteractionBus}>
       <FeedPageUiConfigProvider value={uiConfig}>
         <FeedTaskCommandProvider value={{ onNewTask: handleNewTask }}>
-          <FeedTaskViewModelProvider value={feedTaskViewModel}>
-            <FeedSidebarControllerProvider value={desktopSidebarController}>
-              <FeedPageDesktopShell
-                header={desktopHeader}
-                content={desktopContent}
-                shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-                authModalProps={{
-                  isOpen: isAuthModalOpen,
-                  onClose: handleCloseAuthModal,
-                  initialStep: authModalInitialStep,
-                }}
-                onboardingOverlays={onboardingOverlays}
-              />
-            </FeedSidebarControllerProvider>
-          </FeedTaskViewModelProvider>
+          <FeedSurfaceProvider value={feedSurfaceState}>
+            <FeedTaskViewModelProvider value={feedTaskViewModel}>
+              <FeedSidebarControllerProvider value={desktopSidebarController}>
+                <FeedPageDesktopShell
+                  header={desktopHeader}
+                  content={desktopContent}
+                  shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+                  authModalProps={{
+                    isOpen: isAuthModalOpen,
+                    onClose: handleCloseAuthModal,
+                    initialStep: authModalInitialStep,
+                  }}
+                  onboardingOverlays={onboardingOverlays}
+                />
+              </FeedSidebarControllerProvider>
+            </FeedTaskViewModelProvider>
+          </FeedSurfaceProvider>
         </FeedTaskCommandProvider>
       </FeedPageUiConfigProvider>
     </FeedInteractionProvider>

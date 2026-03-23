@@ -31,12 +31,13 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 export interface MobileLayoutViewState {
-  relays: Relay[];
-  channels: Channel[];
+  relays?: Relay[];
+  channels?: Channel[];
   channelMatchMode?: ChannelMatchMode;
-  people: Person[];
+  people?: Person[];
   canCreateContent: boolean;
   profileCompletionPromptSignal?: number;
   currentView: ViewType;
@@ -94,11 +95,12 @@ export function MobileLayout({
 }: MobileLayoutProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
+  const surface = useFeedSurfaceState();
   const {
-    relays,
-    channels,
-    channelMatchMode = "and",
-    people,
+    relays: relaysProp,
+    channels: channelsProp,
+    channelMatchMode: channelMatchModeProp,
+    people: peopleProp,
     canCreateContent,
     profileCompletionPromptSignal = 0,
     currentView,
@@ -106,6 +108,10 @@ export function MobileLayout({
     activeOnboardingStepId = null,
     isManageRouteActive = false,
   } = viewState;
+  const relays = relaysProp ?? surface.relays;
+  const channels = channelsProp ?? surface.channels;
+  const people = peopleProp ?? surface.people;
+  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
   const dispatchManageRouteChange = useCallback((isActive: boolean) => {
     void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
   }, [dispatchFeedInteraction]);
@@ -117,8 +123,8 @@ export function MobileLayout({
   const {
     tasks,
     allTasks,
-    searchQuery,
     focusedTaskId = null,
+    searchQuery: viewModelSearchQuery,
     composeRestoreRequest: contextComposeRestoreRequest = null,
     mentionRequest: contextMentionRequest = null,
     forceShowComposer: contextForceShowComposer = false,
@@ -136,6 +142,7 @@ export function MobileLayout({
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds = [],
   } = publishState ?? {};
+  const searchQuery = viewModelSearchQuery ?? surface.searchQuery;
   const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
@@ -461,13 +468,7 @@ export function MobileLayout({
   const renderView = () => {
     if (showFilters) {
       return (
-        <MobileFilters
-          relays={relays}
-          channels={channels}
-          channelMatchMode={channelMatchMode}
-          people={people}
-          profileEditorOpenSignal={profileEditorOpenSignal}
-        />
+        <MobileFilters profileEditorOpenSignal={profileEditorOpenSignal} />
       );
     }
     switch (activePrimaryView) {
@@ -538,14 +539,10 @@ export function MobileLayout({
       
       <div hidden={showFilters}>
         <UnifiedBottomBar
-          searchQuery={searchQuery}
           onSubmit={handleMobileSubmit}
           currentView={activePrimaryView}
           focusedTaskId={focusedTaskId}
           selectedCalendarDate={activePrimaryView === "calendar" ? selectedCalendarDate : null}
-          relays={relays}
-          channels={channels}
-          people={people}
           defaultContent={defaultContent}
           canCreateContent={canCreateContent}
           forceComposeMode={forceComposeMode}

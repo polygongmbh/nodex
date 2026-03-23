@@ -35,6 +35,7 @@ import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
@@ -54,13 +55,11 @@ const ACTIVE_KANBAN_STATUSES: TaskStatus[] = ["todo", "in-progress"];
 export function KanbanView({
   tasks,
   allTasks,
-  relays,
-  channels,
-  channelMatchMode = "and",
-  composeChannels,
-  people,
+  channels: channelsProp,
+  channelMatchMode: channelMatchModeProp,
+  people: peopleProp,
   currentUser,
-  searchQuery,
+  searchQuery: searchQueryProp,
   depthMode,
   focusedTaskId,
   isPendingPublishTask,
@@ -71,6 +70,11 @@ export function KanbanView({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
+  const surface = useFeedSurfaceState();
+  const channels = channelsProp ?? surface.channels;
+  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
+  const people = peopleProp ?? surface.people;
+  const searchQuery = searchQueryProp ?? surface.searchQuery;
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
   };
@@ -459,14 +463,11 @@ export function KanbanView({
                     </div>
                       <TaskComposer
                         onSubmit={handleNewTask}
-                        relays={relays}
-                        channels={composeChannels || channels}
-                        people={people}
-                      onCancel={() => setComposingColumn(null)}
-                      compact
-                      allowComment={false}
-                      composeRestoreRequest={composeRestoreRequest}
-                    />
+                        onCancel={() => setComposingColumn(null)}
+                        compact
+                        allowComment={false}
+                        composeRestoreRequest={composeRestoreRequest}
+                      />
                   </div>
                 )}
 
@@ -607,7 +608,6 @@ export function KanbanView({
                                   {hasMetadataChips && (
                                     <TaskTagChipRow
                                       task={task}
-                                      people={people}
                                       priority={task.priority}
                                       expanded={Boolean(expandedChipRows[task.id])}
                                       onToggleExpanded={(expanded) =>

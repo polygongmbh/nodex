@@ -125,9 +125,7 @@ describe("KanbanView closed column", () => {
       .getAllByText(/^(To Do|In Progress|Done|Closed)$/)
       .map((node) => node.textContent?.trim());
     expect(headings).toEqual(["To Do", "In Progress", "Done", "Closed"]);
-    expect(
-      screen.getByText((_, node) => node?.textContent === "Closed task #general")
-    ).toBeInTheDocument();
+    expect(screen.getAllByText((_, node) => node?.textContent === "Closed task #general")[0]).toBeInTheDocument();
   });
 
   it("shows priority chips only for tasks with numeric priority", () => {

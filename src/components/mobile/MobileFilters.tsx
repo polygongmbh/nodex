@@ -20,12 +20,13 @@ import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface MobileFiltersProps {
-  relays: Relay[];
-  channels: Channel[];
+  relays?: Relay[];
+  channels?: Channel[];
   channelMatchMode?: ChannelMatchMode;
-  people: Person[];
+  people?: Person[];
   profileEditorOpenSignal?: number;
 }
 
@@ -39,14 +40,19 @@ const relayIconMap: Record<string, React.ComponentType<{ className?: string }>> 
 };
 
 export function MobileFilters({
-  relays,
-  channels,
-  channelMatchMode = "and",
-  people,
+  relays: relaysProp,
+  channels: channelsProp,
+  channelMatchMode: channelMatchModeProp,
+  people: peopleProp,
   profileEditorOpenSignal = 0,
 }: MobileFiltersProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const surface = useFeedSurfaceState();
+  const relays = relaysProp ?? surface.relays;
+  const channels = channelsProp ?? surface.channels;
+  const people = peopleProp ?? surface.people;
+  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
   const truncateMobilePubkey = (value: string): string => {
     if (value.length <= 18) return value;

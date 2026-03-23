@@ -18,11 +18,6 @@ export interface FeedTaskViewModel extends SharedTaskViewContext {
 const defaultModel: FeedTaskViewModel = {
   tasks: [],
   allTasks: [],
-  relays: [],
-  channels: [],
-  composeChannels: [],
-  people: [],
-  searchQuery: "",
 };
 
 const FeedTaskViewModelContext = createContext<FeedTaskViewModel>(defaultModel);

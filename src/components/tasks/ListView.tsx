@@ -50,6 +50,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -100,13 +101,12 @@ const PriorityCell = memo(function PriorityCell({
 export function ListView({
   tasks,
   allTasks,
-  relays,
-  channels,
-  channelMatchMode = "and",
-  composeChannels,
-  people,
+  relays: relaysProp,
+  channels: channelsProp,
+  channelMatchMode: channelMatchModeProp,
+  people: peopleProp,
   currentUser,
-  searchQuery,
+  searchQuery: searchQueryProp,
   depthMode = "leaves",
   focusedTaskId,
   forceShowComposer,
@@ -118,6 +118,12 @@ export function ListView({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
+  const surface = useFeedSurfaceState();
+  const relays = relaysProp ?? surface.relays;
+  const channels = channelsProp ?? surface.channels;
+  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
+  const people = peopleProp ?? surface.people;
+  const searchQuery = searchQueryProp ?? surface.searchQuery;
   const interactionModel = useFeedViewInteractionModel();
   const authPolicy = useAuthActionPolicy();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
@@ -582,7 +588,6 @@ export function ListView({
     return (
       <TaskTagChipRow
         task={task}
-        people={people}
         expanded={Boolean(expandedChipRows[task.id])}
         maxVisibleTags={2}
         showAllTags={showAllTagsOnWideScreens}
@@ -598,10 +603,6 @@ export function ListView({
       <SharedViewComposer
         visible={authPolicy.canOpenCompose || effectiveForceShowComposer}
         onSubmit={handleNewTask}
-        relays={relays}
-        channels={channels}
-        composeChannels={composeChannels}
-        people={people}
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}
@@ -677,9 +678,6 @@ export function ListView({
                 <td colSpan={6} className="p-0">
                   <FilteredEmptyState
                     variant="collection"
-                    relays={relays}
-                    channels={channels}
-                    people={people}
                     isHydrating={isHydrating}
                     searchQuery={searchQuery}
                     contextTaskTitle={focusedTask?.content}
@@ -887,9 +885,6 @@ export function ListView({
                     <td colSpan={6} className="p-0">
                       <FilteredEmptyState
                         variant="collection"
-                        relays={relays}
-                        channels={channels}
-                        people={people}
                         isHydrating={isHydrating}
                         searchQuery={searchQuery}
                         contextTaskTitle={focusedTask?.content}
@@ -904,9 +899,6 @@ export function ListView({
                     <td colSpan={6} className="p-0">
                       <FilteredEmptyState
                         variant="collection"
-                        relays={relays}
-                        channels={channels}
-                        people={people}
                         isHydrating={isHydrating}
                         searchQuery={searchQuery}
                         contextTaskTitle={focusedTask?.content}

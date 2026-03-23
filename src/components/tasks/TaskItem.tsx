@@ -38,6 +38,7 @@ import {
 } from "@/lib/task-status-toggle";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -71,7 +72,7 @@ export function TaskItem({
   filteredChildren,
   allTasks,
   childrenMap,
-  people = [],
+  people: peopleProp,
   currentUser,
   depth = 0,
   isExpanded,
@@ -91,6 +92,8 @@ export function TaskItem({
 }: TaskItemProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { people: contextPeople } = useFeedSurfaceState();
+  const people = peopleProp ?? contextPeople;
   const getStatusToggleHint = (status?: TaskStatus): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -649,7 +652,6 @@ export function TaskItem({
               )}
               <TaskMentionChips
                 task={task}
-                people={people}
                 onPersonClick={dispatchAuthorExclusive}
                 inline
               />
@@ -747,7 +749,6 @@ export function TaskItem({
                       filteredChildren={childFilteredChildren}
                       allTasks={allTasks}
                       childrenMap={childrenMap}
-                      people={people}
                       currentUser={currentUser}
                       depth={depth + 1}
 
@@ -780,7 +781,6 @@ export function TaskItem({
                       filteredChildren={childFilteredChildren}
                       allTasks={allTasks}
                       childrenMap={childrenMap}
-                      people={people}
                       currentUser={currentUser}
                       depth={depth + 1}
 
