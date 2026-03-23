@@ -216,6 +216,7 @@ export function TaskComposer({
   const relays = relaysProp ?? composerOptions.relays;
   const channels = channelsProp ?? composerOptions.channels;
   const people = peopleProp ?? composerOptions.people;
+  const mentionablePeople = peopleProp ?? composerOptions.mentionablePeople ?? people;
   const { user, createHttpAuthHeader } = useNDK();
   const authPolicy = useAuthActionPolicy();
   const includedChannels = channels
@@ -1005,7 +1006,7 @@ export function TaskComposer({
 
       return aName.localeCompare(bName);
     });
-  const filteredPeople = people.filter((person) => {
+  const filteredPeople = mentionablePeople.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
   const parsedMentions = extractMentionIdentifiersFromContent(content);

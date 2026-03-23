@@ -29,6 +29,7 @@ import { isPriorityPropertyEvent } from "@/infrastructure/nostr/task-property-ev
 import { deriveSidebarPeople } from "@/domain/content/sidebar-people";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
+import { derivePeopleFromKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 
 const INITIAL_CHANNEL_SEED_LIMIT = 16;
 
@@ -57,6 +58,7 @@ export interface UseIndexDerivedDataResult {
   scopedNostrEventsForChannels: CachedNostrEvent[];
   channels: Channel[];
   composeChannels: Channel[];
+  mentionAutocompletePeople: Person[];
   sidebarPeople: Person[];
   currentUser: Person | undefined;
   hasCachedCurrentUserProfileMetadata: boolean;
@@ -212,6 +214,26 @@ export function useIndexDerivedData({
     return deriveChannels(scopedLocalTasksForChannels, scopedNostrEventsForChannels, scopedPostedTags, 1);
   }, [postedTags, scopedLocalTasksForChannels, scopedNostrEventsForChannels, effectiveActiveRelayIds, relays]);
 
+  const mentionAutocompletePeople = useMemo(() => {
+    const visiblePubkeys = Array.from(
+      new Set(
+        [
+          ...scopedNostrEventsForChannels.map((event) => event.pubkey?.trim().toLowerCase()),
+          ...cachedKind0Events.map((event) => event.pubkey?.trim().toLowerCase()),
+        ].filter((pubkey): pubkey is string => Boolean(pubkey))
+      )
+    );
+
+    if (visiblePubkeys.length === 0) return [];
+
+    return derivePeopleFromKind0Events(
+      visiblePubkeys,
+      cachedKind0Events,
+      cachedKind0Events,
+      people
+    );
+  }, [cachedKind0Events, people, scopedNostrEventsForChannels]);
+
   const scopedTasksForSidebarPeople = useMemo(() => {
     const sidebarRelayScopeIds = resolveChannelRelayScopeIds(
       effectiveActiveRelayIds,
@@ -256,6 +278,7 @@ export function useIndexDerivedData({
     scopedNostrEventsForChannels,
     channels,
     composeChannels,
+    mentionAutocompletePeople,
     sidebarPeople,
     currentUser,
     hasCachedCurrentUserProfileMetadata,

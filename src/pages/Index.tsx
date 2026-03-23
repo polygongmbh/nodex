@@ -258,6 +258,7 @@ const Index = () => {
     allTasks: baseAllTasks,
     channels,
     composeChannels,
+    mentionAutocompletePeople,
     sidebarPeople,
     currentUser,
     hasCachedCurrentUserProfileMetadata,
@@ -841,6 +842,7 @@ const Index = () => {
       channels: channelsWithState,
       composeChannels: composeChannelsWithState,
       people,
+      mentionablePeople: mentionAutocompletePeople,
       searchQuery,
       channelMatchMode,
     }),
@@ -849,6 +851,7 @@ const Index = () => {
       channelsWithState,
       composeChannelsWithState,
       people,
+      mentionAutocompletePeople,
       searchQuery,
       channelMatchMode,
     ]

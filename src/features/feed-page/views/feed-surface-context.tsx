@@ -6,6 +6,7 @@ export interface FeedSurfaceState {
   channels: Channel[];
   composeChannels?: Channel[];
   people: Person[];
+  mentionablePeople?: Person[];
   searchQuery: string;
   channelMatchMode?: ChannelMatchMode;
 }
@@ -15,6 +16,7 @@ const defaultFeedSurfaceState: FeedSurfaceState = {
   channels: [],
   composeChannels: [],
   people: [],
+  mentionablePeople: [],
   searchQuery: "",
   channelMatchMode: "and",
 };
@@ -34,14 +36,15 @@ export function useFeedSurfaceState(): FeedSurfaceState {
 }
 
 export function useFeedComposerOptions() {
-  const { relays, channels, composeChannels, people } = useFeedSurfaceState();
+  const { relays, channels, composeChannels, people, mentionablePeople } = useFeedSurfaceState();
   return useMemo(
     () => ({
       relays,
       channels: composeChannels || channels,
       people,
+      mentionablePeople: mentionablePeople || people,
     }),
-    [channels, composeChannels, people, relays]
+    [channels, composeChannels, mentionablePeople, people, relays]
   );
 }
 

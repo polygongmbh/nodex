@@ -247,3 +247,63 @@ describe("useIndexDerivedData sidebar people", () => {
     expect(screen.getByTestId("sidebar-people-ids")).toHaveTextContent("bob");
   });
 });
+
+function MentionAutocompleteHarness() {
+  const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(new Set(["relay-one"]));
+
+  const alice = makePerson({ id: "a".repeat(64), name: "alice", displayName: "Alice" });
+  const bobPubkey = "b".repeat(64);
+  const carol = makePerson({ id: "c".repeat(64), name: "carol", displayName: "Carol" });
+
+  const derived = useIndexDerivedData({
+    nostrEvents,
+    localTasks: [],
+    postedTags: [],
+    suppressedNostrEventIds: new Set(),
+    people: [alice, carol],
+    supplementalLatestActivityByAuthor: new Map(),
+    cachedKind0Events: [
+      {
+        kind: 0,
+        pubkey: bobPubkey,
+        created_at: 5,
+        content: JSON.stringify({ name: "bob", displayName: "Bob", nip05: "bob@example.com" }),
+      },
+    ],
+    user: null,
+    effectiveActiveRelayIds: activeRelayIds,
+    relays,
+    channelFrecencyState: {},
+    personFrecencyState: {},
+    isHydrating: false,
+  });
+
+  return (
+    <>
+      <button onClick={() => setActiveRelayIds(new Set(["relay-two"]))}>SwitchRelay</button>
+      <output data-testid="mention-autocomplete-people-ids">
+        {derived.mentionAutocompletePeople.map((person) => person.id).join(",")}
+      </output>
+    </>
+  );
+}
+
+describe("useIndexDerivedData mention autocomplete people", () => {
+  it("combines active-scope message authors with active-scope cached kind0 profiles", () => {
+    render(
+      <MemoryRouter>
+        <MentionAutocompleteHarness />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId("mention-autocomplete-people-ids")).toHaveTextContent("a".repeat(64));
+    expect(screen.getByTestId("mention-autocomplete-people-ids")).toHaveTextContent("b".repeat(64));
+    expect(screen.getByTestId("mention-autocomplete-people-ids")).not.toHaveTextContent("c".repeat(64));
+
+    fireEvent.click(screen.getByRole("button", { name: "SwitchRelay" }));
+
+    expect(screen.getByTestId("mention-autocomplete-people-ids")).toHaveTextContent("c".repeat(64));
+    expect(screen.getByTestId("mention-autocomplete-people-ids")).not.toHaveTextContent("a".repeat(64));
+    expect(screen.getByTestId("mention-autocomplete-people-ids")).toHaveTextContent("b".repeat(64));
+  });
+});

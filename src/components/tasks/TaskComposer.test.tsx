@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { TaskComposer } from "./TaskComposer";
 import type { Channel, Relay, Person, TaskCreateResult } from "@/types";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
+import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
 import {
@@ -1158,6 +1159,51 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.keyDown(textarea, { key: "Enter" });
 
     expect(textarea.value).toBe("Need input from @alice@example.com ");
+  });
+
+  it("uses scoped mention candidates from context while keeping parsed mention labels from full people", () => {
+    const bobPubkey = "e".repeat(64);
+    const bob: Person = {
+      id: bobPubkey,
+      name: "bob",
+      displayName: "Bob",
+      nip05: "bob@example.com",
+      avatar: "",
+      isOnline: true,
+      isSelected: false,
+    };
+
+    render(
+      <FeedSurfaceProvider
+        value={{
+          relays,
+          channels,
+          composeChannels: channels,
+          people: [...people, bob],
+          mentionablePeople: people,
+          searchQuery: "",
+          channelMatchMode: "and",
+        }}
+      >
+        <TaskComposer
+          onSubmit={() => successfulCreateResult}
+          relays={relays}
+          channels={channels}
+          onCancel={() => {}}
+          defaultContent="Already asked @bob@example.com"
+        />
+      </FeedSurfaceProvider>
+    );
+
+    expect(getMentionChip("bob@example.com")).toHaveTextContent("bob");
+
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: { value: "Need input from @al", selectionStart: 19 },
+    });
+
+    expect(screen.getByText("@alice")).toBeInTheDocument();
+    expect(screen.queryByText("@bob")).not.toBeInTheDocument();
   });
 
   it("adds mention pubkey tags via Alt+Enter without inserting mention text", async () => {
