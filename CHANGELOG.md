@@ -5,6 +5,9 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [2.7.3] - 2026-03-23
+Patch release for markdown rendering stability, relay-scoped mention suggestions, and feed rerender suppression.
 - Task content markdown now keeps bullet and numbered lists in a single rendered block with proper markers and tighter spacing, and long inline Nostr identifiers such as `npub` references wrap more cleanly instead of disturbing card layout.
 - Desktop mention autocomplete now only suggests authors/profile metadata from the current relay scope, while existing mention chips still resolve labels from the broader cached people list.
 - Feed/task surfaces now avoid no-op rerenders from periodic relay-status reconciliation when relay state has not actually changed.

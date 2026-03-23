@@ -197,18 +197,17 @@ policies:
     bump_from_commit_types:
       fix: patch
       enhance: patch
-      feat: patch_default_minor_if_substantial
+      feat: patch_default_minor_if_boundary_met
       breaking_change: major
-    line_churn_since_last_release_minor_threshold: 1000
-    line_churn_measurement: total_insertions_plus_deletions_since_previous_release_or_pushed_version
+    line_churn_since_last_release_minor_threshold: 2000
+    line_churn_measurement: production_code_insertions_plus_deletions_since_previous_release_or_pushed_version
     changelog_release_scope_source: unreleased_section
     changelog_release_scope_includes:
       - unpushed_commits
       - already_pushed_but_unreleased_changes
-    minor_requires:
-      - multiple_feats
-      - significant_scope_or_impact
-      - line_churn_at_or_above_minor_threshold
+    minor_requires_any:
+      - at_least_two_feat_commits
+      - production_code_line_churn_at_or_above_minor_threshold
 ```
 
 ## General Workflow Policies
@@ -264,8 +263,8 @@ policies:
 - Before every push, prune redundant or iteration-level changelog bullets and reclassify genuinely new user-facing capabilities into `### Added` while keeping refinements and regressions under `### Changed` or `### Fixed`.
 
 ### Release Scope
-- When choosing between patch and minor for an unpushed release, include total line churn since the previous release or currently pushed version as an explicit signal.
-- If total insertions plus deletions reaches 1000 lines or more, default to at least a minor bump even when the user-visible summary is relatively compact.
+- When choosing between patch and minor for an unpushed release, treat minor as opt-in and require at least one of: two or more `feat:` commits, or production-code churn reaching the configured minor threshold.
+- For churn-based minor decisions, measure only production-code insertions plus deletions since the previous release or currently pushed version (exclude tests/docs/process-only files).
 
 ### Refactoring Cadence
 - After each major milestone, run a cleanup pass for duplication, consistency, complex components, and discovered debt.
