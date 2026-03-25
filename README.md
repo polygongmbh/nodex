@@ -44,6 +44,7 @@ Key env values:
 - `VITE_DEFAULT_RELAYS`: comma-separated relay WebSocket URLs (e.g. `ws://localhost:7447` for the local relay).
 - `VITE_ENABLE_DEMO_FEED`: optional `true`/`false` flag to show the local demo feed relay (`false` by default).
 - `VITE_ALLOW_GUEST_SIGN_IN`: optional `true`/`false` flag for showing guest identity sign-in in the auth modal (`true` by default).
+- `VITE_NODEX_MOTD`: optional message-of-the-day text shown as a dismissible top banner.
 - `VITE_NIP96_UPLOAD_URL`: NIP-96 upload endpoint used by attachment buttons.
 
 Nodex derives default relays from `VITE_DEFAULT_RELAYS`, with no hardcoded relay URLs in source.

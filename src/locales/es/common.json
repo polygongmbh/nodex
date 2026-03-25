@@ -21,6 +21,9 @@
     "openChangelogAria": "Versión de Nodex {{version}} (abrir registro de cambios)",
     "hintWithChangelog": "v{{version}} Cambios"
   },
+  "motd": {
+    "dismiss": "Cerrar mensaje"
+  },
   "composer": {
     "placeholders": {
       "task": "¿Qué pasa? Usa #canales y @menciones...",

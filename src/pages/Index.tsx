@@ -89,6 +89,7 @@ import {
   type FeedInteractionHandlerMap,
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import { FeedSidebarControllerProvider } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
+import { MotdBanner } from "@/components/MotdBanner";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
@@ -1006,6 +1007,7 @@ const Index = () => {
           <FeedTaskCommandProvider value={{ onNewTask: handleNewTask }}>
             <FeedSurfaceProvider value={feedSurfaceState}>
               <FeedTaskViewModelProvider value={feedTaskViewModel}>
+                <MotdBanner />
                 <FeedPageMobileShell
                   controller={mobileController}
                   authModalProps={{
@@ -1031,6 +1033,7 @@ const Index = () => {
           <FeedSurfaceProvider value={feedSurfaceState}>
             <FeedTaskViewModelProvider value={feedTaskViewModel}>
               <FeedSidebarControllerProvider value={desktopSidebarController}>
+                <MotdBanner />
                 <FeedPageDesktopShell
                   header={desktopHeader}
                   content={desktopContent}
