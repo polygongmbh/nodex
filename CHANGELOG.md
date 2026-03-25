@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Creating a new task directly in the Kanban `To do` column no longer publishes an additional separate status-update event; tasks now keep the default `todo` status without redundant follow-up status publishing.
 
 ## [2.7.3] - 2026-03-23
 Patch release for markdown rendering stability, relay-scoped mention suggestions, and feed rerender suppression.

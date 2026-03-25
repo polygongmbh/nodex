@@ -249,7 +249,7 @@ export function useTaskPublishControls({
         : fallbackRelayUrls
     ).slice(0, 1);
 
-    if (initialStatus) {
+    if (initialStatus && initialStatus !== "todo") {
       await publishTaskStateUpdate(publishedEventId, initialStatus, followUpRelayUrls);
     }
     if (dueDate) {

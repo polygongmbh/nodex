@@ -43,6 +43,19 @@ function Harness({
     <>
       <button onClick={() => controls.guardInteraction("modify")}>GuardModify</button>
       <button onClick={() => controls.publishTaskStateUpdate("a".repeat(64), "done")}>PublishState</button>
+      <button
+        onClick={() =>
+          controls.publishTaskCreateFollowUps({
+            publishedEventId: "a".repeat(64),
+            taskType: "task",
+            initialStatus: "todo",
+            content: "Task content",
+            fallbackRelayUrls: ["wss://relay.one"],
+          })
+        }
+      >
+        PublishCreateFollowUpsTodo
+      </button>
       <output data-testid="interaction-blocked">{String(controls.isInteractionBlocked)}</output>
       <output data-testid="relay-url">{controls.resolveTaskOriginRelay("a".repeat(64)).relayUrls.join(",")}</output>
       <output data-testid="publish-count">{String(publishCount)}</output>
@@ -69,6 +82,14 @@ describe("useTaskPublishControls", () => {
     fireEvent.click(screen.getByRole("button", { name: "PublishState" }));
     await waitFor(() => {
       expect(screen.getByTestId("publish-count")).toHaveTextContent("1");
+    });
+  });
+
+  it("does not publish a follow-up status update for new todo tasks", async () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole("button", { name: "PublishCreateFollowUpsTodo" }));
+    await waitFor(() => {
+      expect(screen.getByTestId("publish-count")).toHaveTextContent("0");
     });
   });
 });
