@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [2.7.4] - 2026-03-25
 - Creating a new task directly in the Kanban `To do` column no longer publishes an additional separate status-update event; tasks now keep the default `todo` status without redundant follow-up status publishing.
 - Compose now defaults root task/comment/offer/request submissions to the single active connected space when no space is explicitly selected, so posting no longer requires manual space or parent selection in that one-space state.
 - Noas sign-up now refreshes the public-key preview immediately when the private-key input changes, instead of updating only after using the generate action.
