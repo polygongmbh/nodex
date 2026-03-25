@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Automatic Noas sign-in/sign-up now prefill the host as a bare NIP-05 domain (without `https://`) while still internally defaulting submitted hosts to HTTPS.
 
 ## [2.7.5] - 2026-03-25
 - Noas sign-in now submits `password_hash` (SHA-256) and correctly reads Noas snake_case response keys (`public_key`, `private_key_encrypted`) even when `success` is omitted, preventing false server/key-error failures on valid sign-ins.

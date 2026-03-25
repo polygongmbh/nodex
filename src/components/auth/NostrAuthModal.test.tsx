@@ -361,7 +361,7 @@ describe("NostrAuthModal", () => {
     expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
   });
 
-  it("prefills the Noas host and opens directly to Noas when startup discovery resolved a host", () => {
+  it("prefills the Noas host as a bare domain and opens directly to Noas when startup discovery resolved a host", () => {
     vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.defaultNoasHostUrl = "https://example.com";
@@ -369,7 +369,34 @@ describe("NostrAuthModal", () => {
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
     expect(screen.queryByRole("button", { name: /noas authentication/i })).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/^host$/i)).toHaveValue("https://example.com");
+    expect(screen.getByLabelText(/^host$/i)).toHaveValue("example.com");
+  });
+
+  it("submits a configured noas https host with internal protocol normalization", async () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+    ndkMock.defaultNoasHostUrl = "https://example.com";
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
+    expect(ndkMock.loginWithNoas).toHaveBeenCalledWith("alice", "password123", {
+      baseUrl: "https://example.com",
+    });
+  });
+
+  it("keeps explicit http noas hosts unchanged in the prefilled host field", () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+    ndkMock.defaultNoasHostUrl = "http://localhost:3000/custom/noas/path?mode=dev";
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    expect(screen.getByLabelText(/^host$/i)).toHaveValue("http://localhost:3000/custom/noas/path?mode=dev");
   });
 
   it("shows a connection-specific Noas error when the host request fails", async () => {

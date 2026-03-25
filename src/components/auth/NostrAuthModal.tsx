@@ -35,6 +35,7 @@ import { GuestPrivateKeyRow } from "./GuestPrivateKeyRow";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
 import type { NoasAuthErrorCode } from "@/lib/nostr/noas-client";
+import { resolveNoasHostDisplayValue } from "./noas-form-helpers";
 
 interface NostrAuthModalProps {
   isOpen: boolean;
@@ -179,7 +180,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
     if (initialStep === "choose") return "choose";
     return hasConfiguredNoasHost ? "noas" : "choose";
   }, [hasConfiguredNoasHost, initialStep]);
-  const defaultNoasUrl = defaultNoasHostUrl || noasHostUrl || noasApiUrl || "";
+  const defaultNoasUrl = resolveNoasHostDisplayValue(defaultNoasHostUrl || noasHostUrl || noasApiUrl || "");
   
   const [step, setStep] = useState<AuthStep>(resolvedDefaultStep);
   const [pendingAuthMethod, setPendingAuthMethod] = useState<PendingAuthMethod>(null);
