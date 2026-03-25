@@ -109,4 +109,28 @@ describe("resolveRelaySelectionForSubmission", () => {
     });
     expect(result.errorKey).toBe(RELAY_SELECTION_ERROR_KEY);
   });
+
+  it("defaults to the only active postable relay when none is explicitly selected", () => {
+    const singleActiveRelays = [
+      makeRelay("relay-a", "wss://a.example"),
+      { ...makeRelay("relay-b", "wss://b.example"), isActive: false, connectionStatus: "connected" },
+    ];
+    const taskResult = resolveRelaySelectionForSubmission({
+      taskType: "task",
+      selectedRelayIds: [],
+      relays: singleActiveRelays,
+      demoRelayId: undefined,
+    });
+    const commentResult = resolveRelaySelectionForSubmission({
+      taskType: "comment",
+      selectedRelayIds: [],
+      relays: singleActiveRelays,
+      demoRelayId: undefined,
+    });
+
+    expect(taskResult.relayIds).toEqual(["relay-a"]);
+    expect(commentResult.relayIds).toEqual(["relay-a"]);
+    expect(taskResult.errorKey).toBeUndefined();
+    expect(commentResult.errorKey).toBeUndefined();
+  });
 });

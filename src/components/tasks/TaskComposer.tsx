@@ -914,7 +914,7 @@ export function TaskComposer({
           ? onSubmit(
               content,
               submitTags,
-              selectedRelays,
+              effectiveSelectedRelayIds,
               effectiveTaskType,
               submissionDueDate,
               submissionDueTime,
@@ -928,7 +928,7 @@ export function TaskComposer({
           : onSubmit(
               content,
               submitTags,
-              selectedRelays,
+              effectiveSelectedRelayIds,
               effectiveTaskType,
               submissionDueDate,
               submissionDueTime,
@@ -1066,10 +1066,17 @@ export function TaskComposer({
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
-  const selectedRelayObjects = relays.filter(r => selectedRelays.includes(r.id));
+  const fallbackDefaultRelayIds = (() => {
+    const activePostableRelayIds = relays
+      .filter((relay) => relay.isActive && isPostableRelay(relay))
+      .map((relay) => relay.id);
+    return activePostableRelayIds.length === 1 ? [activePostableRelayIds[0]] : [];
+  })();
+  const effectiveSelectedRelayIds = selectedRelays.length > 0 ? selectedRelays : fallbackDefaultRelayIds;
+  const selectedRelayObjects = relays.filter((relay) => effectiveSelectedRelayIds.includes(relay.id));
   const hasNoConnectedRelay = !selectedRelayObjects.some(isPostableRelay);
   const hasInvalidRootTaskRelaySelection =
-    taskType === "task" && !parentId && (selectedRelays.length !== 1 || hasNoConnectedRelay);
+    taskType === "task" && !parentId && (effectiveSelectedRelayIds.length !== 1 || hasNoConnectedRelay);
   const isCommentLikeRootPostType = taskType === "comment" || taskType === "offer" || taskType === "request";
   const hasInvalidRootCommentRelaySelection =
     isCommentLikeRootPostType && !parentId && hasNoConnectedRelay;

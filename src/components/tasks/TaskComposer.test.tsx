@@ -1902,6 +1902,55 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select space");
   });
 
+  it("allows submit when a single active relay exists even if stored relay selection is empty", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    const singleRelay = [{
+      id: "relay-a",
+      name: "Relay A",
+      url: "wss://relay-a.example.com",
+      icon: "R",
+      isActive: true,
+      connectionStatus: "connected" as const,
+    }];
+    const draftStorageKey = "task-composer-single-relay-default";
+    localStorage.setItem(draftStorageKey, JSON.stringify({
+      selectedRelays: [],
+    }));
+
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={singleRelay}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        draftStorageKey={draftStorageKey}
+      />
+    );
+
+    fireEvent.change(getTaskComposerInput(), {
+      target: { value: "Ship #backend now" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Ship #backend now",
+        ["backend"],
+        ["relay-a"],
+        "task",
+        undefined,
+        undefined,
+        "due",
+        [],
+        undefined,
+        [],
+        undefined
+      );
+    });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("blocks submit when composer content has only tags and mentions", () => {
     render(
       <TaskComposer

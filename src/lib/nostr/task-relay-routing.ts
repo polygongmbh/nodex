@@ -7,6 +7,21 @@ function dedupeRelayIds(relayIds: string[]): string[] {
   return Array.from(new Set(relayIds.filter(Boolean)));
 }
 
+function isPostableRelay(relay: Relay): boolean {
+  return relay.connectionStatus === undefined
+    || relay.connectionStatus === "connected"
+    || relay.connectionStatus === "read-only";
+}
+
+function resolveSingleActivePostableRelayId(relays: Relay[], demoRelayId?: string): string | undefined {
+  const candidates = relays.filter((relay) =>
+    relay.isActive
+    && isPostableRelay(relay)
+    && (!demoRelayId || relay.id !== demoRelayId)
+  );
+  return candidates.length === 1 ? candidates[0]?.id : undefined;
+}
+
 export function resolveOriginRelayIdForTask(task: Task | undefined, demoRelayId?: string): string | undefined {
   if (!task || task.relays.length === 0) return undefined;
   const nonDemoRelay = demoRelayId
@@ -27,11 +42,13 @@ export function resolveRelaySelectionForSubmission(params: {
   const normalizedSelectedRelayIds = dedupeRelayIds(selectedRelayIds).filter((relayId) =>
     availableRelayIds.has(relayId)
   );
+  const fallbackSingleRelayId = resolveSingleActivePostableRelayId(relays, demoRelayId);
   nostrDevLog("routing", "Evaluating relay selection for submission", {
     taskType,
     selectedRelayIds,
     normalizedSelectedRelayIds,
     hasParentTask: Boolean(parentTask),
+    fallbackSingleRelayId: fallbackSingleRelayId || null,
   });
 
   if (parentTask) {
@@ -49,6 +66,9 @@ export function resolveRelaySelectionForSubmission(params: {
     const selectedNonDemoRelays = demoRelayId
       ? normalizedSelectedRelayIds.filter((relayId) => relayId !== demoRelayId)
       : normalizedSelectedRelayIds;
+    if (selectedNonDemoRelays.length === 0 && fallbackSingleRelayId) {
+      return { relayIds: [fallbackSingleRelayId] };
+    }
     if (selectedNonDemoRelays.length !== 1) {
       nostrDevLog("routing", "Task submission rejected due to invalid non-demo relay count", {
         selectedNonDemoRelays,
@@ -60,6 +80,9 @@ export function resolveRelaySelectionForSubmission(params: {
   }
 
   if (normalizedSelectedRelayIds.length === 0) {
+    if (fallbackSingleRelayId) {
+      return { relayIds: [fallbackSingleRelayId] };
+    }
     nostrDevLog("routing", "Comment-like submission rejected due to empty relay selection", {
       taskType,
     });

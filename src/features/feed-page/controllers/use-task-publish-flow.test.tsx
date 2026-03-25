@@ -290,7 +290,7 @@ describe("useTaskPublishFlow", () => {
     expect(screen.getByTestId("first-assignees")).toBeEmptyDOMElement();
   });
 
-  it("requires a relay for root offer submissions", async () => {
+  it("defaults root offer submissions to the only active relay when none is explicitly selected", async () => {
     const publishEvent = vi.fn(async () => ({
       success: true,
       eventId: "e".repeat(64),
@@ -300,9 +300,17 @@ describe("useTaskPublishFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferNoRelay" }));
 
     await waitFor(() => {
-      expect(window.__TEST_RESULT__).toEqual({ ok: false, reason: "relay-selection" });
+      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
     });
-    expect(publishEvent).not.toHaveBeenCalled();
+    expect(publishEvent).toHaveBeenCalledTimes(1);
+    const [, , , , relayUrls] = publishEvent.mock.calls[0] as unknown as [
+      number,
+      string,
+      string[][] | undefined,
+      string | undefined,
+      string[] | undefined
+    ];
+    expect(relayUrls).toEqual(["wss://relay.one"]);
   });
 
   it("inherits parent tags and parent relay for child offer submissions", async () => {
