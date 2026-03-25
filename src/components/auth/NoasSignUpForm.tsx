@@ -57,16 +57,26 @@ export function NoasSignUpForm({
   const userFacingPubkey = toUserFacingPubkey(pubkey);
 
   const derivePublicKeyFromHex = (hexPrivateKey: string): string | null => {
+    const normalizedPrivateKey = hexPrivateKey.trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(normalizedPrivateKey)) {
+      return null;
+    }
     try {
       const privateKeyBytes = new Uint8Array(32);
       for (let i = 0; i < 32; i++) {
-        privateKeyBytes[i] = parseInt(hexPrivateKey.substr(i * 2, 2), 16);
+        privateKeyBytes[i] = parseInt(normalizedPrivateKey.substr(i * 2, 2), 16);
       }
       return getPublicKey(privateKeyBytes);
     } catch (deriveError) {
       console.error("Failed to derive public key:", deriveError);
       return null;
     }
+  };
+
+  const handlePrivateKeyChange = (value: string) => {
+    setPrivateKey(value);
+    const derivedPubkey = derivePublicKeyFromHex(value);
+    setPubkey(derivedPubkey || "");
   };
 
   const generatePrivateKey = () => {
@@ -179,7 +189,7 @@ export function NoasSignUpForm({
               name="privateKey"
               type={showPrivateKey ? "text" : "password"}
               value={privateKey}
-              onChange={(e) => setPrivateKey(e.target.value)}
+              onChange={(e) => handlePrivateKeyChange(e.target.value)}
               placeholder={t("auth.noas.privateKeyPlaceholder")}
               disabled={isLoading}
               autoComplete="off"

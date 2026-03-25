@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { getPublicKey } from "nostr-tools";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
+import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 function ControlledNoasAuthForm({
   onLogin = vi.fn(async () => true),
@@ -305,5 +307,36 @@ describe("Noas auth forms", () => {
 
     expect(screen.getByRole("button", { name: /^sign in$/i })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /^sign up$/i }).length).toBeGreaterThan(0);
+  });
+
+  it("updates public key preview when private key input changes", async () => {
+    render(
+      <NoasSignUpForm
+        onSignUp={vi.fn(async () => true)}
+        onSignIn={vi.fn()}
+        username=""
+        password=""
+        isEditingHostUrl={false}
+        isLoading={false}
+        noasHostUrl="https://noas.example.com"
+        onUsernameChange={vi.fn()}
+        onPasswordChange={vi.fn()}
+        onToggleHostEdit={vi.fn()}
+      />
+    );
+
+    const privateKey = "1".repeat(64);
+    const privateKeyBytes = new Uint8Array(32);
+    for (let index = 0; index < 32; index += 1) {
+      privateKeyBytes[index] = parseInt(privateKey.slice(index * 2, index * 2 + 2), 16);
+    }
+    const expectedPubkey = getPublicKey(privateKeyBytes);
+    const expectedUserFacingPubkey = toUserFacingPubkey(expectedPubkey);
+    const privateKeyInput = screen.getByLabelText(/private key/i);
+    fireEvent.change(privateKeyInput, { target: { value: privateKey } });
+
+    await waitFor(() => {
+      expect(screen.getByText(expectedUserFacingPubkey)).toBeInTheDocument();
+    });
   });
 });
