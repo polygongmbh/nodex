@@ -109,17 +109,17 @@ describe("NoasClient API route mapping", () => {
       },
       body: JSON.stringify({
         username: "alice",
-        password: "hunter2",
+        password_hash: "f52fbd32b2b3b86ff88ef6c490628285f482af15ddcb29541f94bcf526a3f6c7",
       }),
       credentials: "include",
     });
   });
 
-  it("normalizes successful sign-in payloads that use snake_case fields", async () => {
+  it("normalizes successful sign-in payloads that use Noas snake_case fields", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({
         public_key: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-        encrypted_private_key: "ncryptsec1example",
+        private_key_encrypted: "ncryptsec1example",
         relays: ["wss://relay.example"],
       }), {
         status: 200,

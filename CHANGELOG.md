@@ -5,7 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
-- Noas sign-in now accepts successful `200` responses that return snake_case payload keys (for example `public_key`, `encrypted_private_key`) and no explicit `success` flag, preventing false server/key-error failures on valid sign-ins.
+- Noas sign-in now submits `password_hash` (SHA-256) and correctly reads Noas snake_case response keys (`public_key`, `private_key_encrypted`) even when `success` is omitted, preventing false server/key-error failures on valid sign-ins.
 
 ## [2.7.4] - 2026-03-25
 - Creating a new task directly in the Kanban `To do` column no longer publishes an additional separate status-update event; tasks now keep the default `todo` status without redundant follow-up status publishing.

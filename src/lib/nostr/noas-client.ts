@@ -405,7 +405,10 @@ export class NoasClient {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          username,
+          password_hash: hashNoasPassword(password),
+        }),
         credentials: 'include',
       });
 
@@ -429,8 +432,10 @@ export class NoasClient {
         || normalizeResponsePublicKey(userFromResponse?.public_npub);
       const encryptedPrivateKey = normalizeEncryptedPrivateKey(responseData.encryptedPrivateKey)
         || normalizeEncryptedPrivateKey(responseData.encrypted_private_key)
+        || normalizeEncryptedPrivateKey(responseData.private_key_encrypted)
         || normalizeEncryptedPrivateKey(userFromResponse?.encryptedPrivateKey)
-        || normalizeEncryptedPrivateKey(userFromResponse?.encrypted_private_key);
+        || normalizeEncryptedPrivateKey(userFromResponse?.encrypted_private_key)
+        || normalizeEncryptedPrivateKey(userFromResponse?.private_key_encrypted);
       const relays = normalizeRelayList(responseData.relays) || normalizeRelayList(userFromResponse?.relays);
       const errorMessage = typeof responseData.error === "string"
         ? responseData.error
