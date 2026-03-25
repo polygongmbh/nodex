@@ -284,8 +284,10 @@ describe("Noas auth forms", () => {
       />
     );
 
-    expect(screen.getByLabelText(/private key/i)).toHaveAttribute("name", "privateKey");
-    expect(screen.getByLabelText(/private key/i)).toHaveAttribute("autocomplete", "off");
+    const privateKeyInput = screen.getByRole("textbox", { name: /^private key$/i });
+    expect(privateKeyInput).toHaveAttribute("name", "nostrPrivateKey");
+    expect(privateKeyInput).toHaveAttribute("type", "text");
+    expect(privateKeyInput).toHaveAttribute("autocomplete", "off");
     expect(screen.getByLabelText(/^password$/i)).toHaveAttribute("autocomplete", "new-password");
   });
 
@@ -332,7 +334,7 @@ describe("Noas auth forms", () => {
     }
     const expectedPubkey = getPublicKey(privateKeyBytes);
     const expectedUserFacingPubkey = toUserFacingPubkey(expectedPubkey);
-    const privateKeyInput = screen.getByLabelText(/private key/i);
+    const privateKeyInput = screen.getByRole("textbox", { name: /^private key$/i });
     fireEvent.change(privateKeyInput, { target: { value: privateKey } });
 
     await waitFor(() => {

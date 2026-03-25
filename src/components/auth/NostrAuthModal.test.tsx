@@ -316,6 +316,21 @@ describe("NostrAuthModal", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("marks private-key sign-in input as non-credential content", () => {
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    openChooserIfNeeded();
+    fireEvent.click(screen.getByRole("button", { name: /private key/i }));
+
+    const privateKeyInput = screen.getByLabelText(/^private key$/i);
+    expect(privateKeyInput).toHaveAttribute("type", "text");
+    expect(privateKeyInput).toHaveAttribute("name", "nostrPrivateKey");
+    expect(privateKeyInput).toHaveAttribute("autocomplete", "off");
+    expect(privateKeyInput).toHaveAttribute("autocapitalize", "none");
+    expect(privateKeyInput).toHaveAttribute("autocorrect", "off");
+    expect(privateKeyInput).toHaveAttribute("spellcheck", "false");
+  });
+
   it("preserves shared noas credentials when switching between sign in and sign up", () => {
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
@@ -434,7 +449,7 @@ describe("NostrAuthModal", () => {
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.change(screen.getByLabelText(/private key/i), {
+    fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
     });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
@@ -461,7 +476,7 @@ describe("NostrAuthModal", () => {
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.change(screen.getByLabelText(/private key/i), {
+    fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
     });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
@@ -491,7 +506,7 @@ describe("NostrAuthModal", () => {
     fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
     fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
-    fireEvent.change(screen.getByLabelText(/private key/i), {
+    fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
     });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);

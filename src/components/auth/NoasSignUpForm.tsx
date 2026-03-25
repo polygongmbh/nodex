@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Loader2, UserPlus, Copy, RefreshCw } from "lucide-react";
+import { Loader2, UserPlus, Copy, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { getPublicKey } from "nostr-tools";
@@ -186,8 +186,8 @@ export function NoasSignUpForm({
           <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
             <Input
               id="noas-private-key"
-              name="privateKey"
-              type={showPrivateKey ? "text" : "password"}
+              name="nostrPrivateKey"
+              type="text"
               value={privateKey}
               onChange={(e) => handlePrivateKeyChange(e.target.value)}
               placeholder={t("auth.noas.privateKeyPlaceholder")}
@@ -196,20 +196,34 @@ export function NoasSignUpForm({
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
+              style={{ WebkitTextSecurity: showPrivateKey ? "none" : "disc" }}
               className="w-full min-w-0 font-mono text-[11px] sm:text-xs"
             />
-            {privateKey ? (
+            <div className="flex shrink-0 items-center gap-1">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={copyToClipboard}
+                onClick={() => setShowPrivateKey((current) => !current)}
                 disabled={isLoading}
-                className="shrink-0"
+                aria-label={showPrivateKey ? t("filters.profile.hidePrivateKey") : t("filters.profile.showPrivateKey")}
+                title={showPrivateKey ? t("filters.profile.hidePrivateKey") : t("filters.profile.showPrivateKey")}
               >
-                <Copy className="h-4 w-4" />
+                {showPrivateKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
-            ) : null}
+              {privateKey ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyToClipboard}
+                  disabled={isLoading}
+                  className="shrink-0"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              ) : null}
+            </div>
           </div>
           <p className="text-[11px] leading-4 text-muted-foreground">
             {t("auth.noas.footerText")}

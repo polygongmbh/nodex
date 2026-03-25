@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, ChevronDown, LogIn, Link2, CircleHelp, Pencil } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, ChevronDown, LogIn, Link2, CircleHelp, Pencil, Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -190,6 +190,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
   const [noasUsername, setNoasUsername] = useState("");
   const [noasPassword, setNoasPassword] = useState("");
   const [isEditingNoasHost, setIsEditingNoasHost] = useState(false);
+  const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false);
   const hasUnsavedAuthInput = privateKey.trim().length > 0 || bunkerUrl.trim().length > 0;
 
   const hasExtension = hasNostrExtension();
@@ -224,6 +225,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
       if (success) {
         toast.success(t("auth.modal.success.privateKey"));
         setPrivateKey("");
+        setShowPrivateKeyInput(false);
         onClose();
       } else {
         setError(t("auth.modal.errors.privateKeyInvalid"));
@@ -329,6 +331,7 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
   const handleClose = () => {
     setStep(resolvedDefaultStep);
     setPrivateKey("");
+    setShowPrivateKeyInput(false);
     setBunkerUrl("");
     setPendingAuthMethod(null);
     setError(null);
@@ -503,14 +506,40 @@ export function NostrAuthModal({ isOpen, onClose, initialStep }: NostrAuthModalP
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="privateKey">{t("auth.modal.privateKey")}</Label>
-                  <Input
-                    id="privateKey"
-                    type="password"
-                    placeholder={t("auth.modal.privateKeyPlaceholder")}
-                    value={privateKey}
-                    onChange={(e) => setPrivateKey(e.target.value)}
-                    autoComplete="off"
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="privateKey"
+                      name="nostrPrivateKey"
+                      type="text"
+                      placeholder={t("auth.modal.privateKeyPlaceholder")}
+                      value={privateKey}
+                      onChange={(e) => setPrivateKey(e.target.value)}
+                      autoComplete="off"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      style={{ WebkitTextSecurity: showPrivateKeyInput ? "none" : "disc" }}
+                      className="font-mono"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowPrivateKeyInput((current) => !current)}
+                      aria-label={
+                        showPrivateKeyInput
+                          ? t("filters.profile.hidePrivateKey")
+                          : t("filters.profile.showPrivateKey")
+                      }
+                      title={
+                        showPrivateKeyInput
+                          ? t("filters.profile.hidePrivateKey")
+                          : t("filters.profile.showPrivateKey")
+                      }
+                    >
+                      {showPrivateKeyInput ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {t("auth.modal.privateKeyLocalOnly")}
                   </p>

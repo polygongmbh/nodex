@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 - Noas sign-in now submits `password_hash` (SHA-256) and correctly reads Noas snake_case response keys (`public_key`, `private_key_encrypted`) even when `success` is omitted, preventing false server/key-error failures on valid sign-ins.
 - Noas sign-in now shows a dedicated key-mismatch error when the decrypted signer pubkey does not match the server response, instead of showing the generic server/key failure message.
+- Private-key auth fields now use non-credential input semantics (text + masked rendering) instead of password-type semantics, so Safari no longer treats Nostr private keys as password autofill/save targets during sign-in and Noas sign-up flows.
 
 ## [2.7.4] - 2026-03-25
 - Creating a new task directly in the Kanban `To do` column no longer publishes an additional separate status-update event; tasks now keep the default `todo` status without redundant follow-up status publishing.
