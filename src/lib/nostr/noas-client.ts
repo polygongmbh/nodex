@@ -368,6 +368,21 @@ function normalizeResponsePublicKey(publicKeyRaw: unknown): string | undefined {
   return undefined;
 }
 
+function normalizeEncryptedPrivateKey(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim();
+  return normalized || undefined;
+}
+
+function normalizeRelayList(relaysRaw: unknown): string[] | undefined {
+  if (!Array.isArray(relaysRaw)) return undefined;
+  const relays = relaysRaw
+    .filter((relay): relay is string => typeof relay === "string")
+    .map((relay) => relay.trim())
+    .filter(Boolean);
+  return relays.length ? relays : undefined;
+}
+
 export class NoasClient {
   private apiBaseUrl: string;
 
@@ -404,7 +419,32 @@ export class NoasClient {
         };
       }
 
-      return await response.json();
+      const responseData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+      const userFromResponse = responseData.user as Record<string, unknown> | undefined;
+      const publicKey = normalizeResponsePublicKey(responseData.publicKey)
+        || normalizeResponsePublicKey(responseData.public_key)
+        || normalizeResponsePublicKey(responseData.public_npub)
+        || normalizeResponsePublicKey(userFromResponse?.publicKey)
+        || normalizeResponsePublicKey(userFromResponse?.public_key)
+        || normalizeResponsePublicKey(userFromResponse?.public_npub);
+      const encryptedPrivateKey = normalizeEncryptedPrivateKey(responseData.encryptedPrivateKey)
+        || normalizeEncryptedPrivateKey(responseData.encrypted_private_key)
+        || normalizeEncryptedPrivateKey(userFromResponse?.encryptedPrivateKey)
+        || normalizeEncryptedPrivateKey(userFromResponse?.encrypted_private_key);
+      const relays = normalizeRelayList(responseData.relays) || normalizeRelayList(userFromResponse?.relays);
+      const errorMessage = typeof responseData.error === "string"
+        ? responseData.error
+        : typeof responseData.message === "string"
+          ? responseData.message
+          : undefined;
+
+      return {
+        success: responseData.success === false ? false : true,
+        publicKey,
+        encryptedPrivateKey,
+        relays,
+        error: errorMessage,
+      };
     } catch (error) {
       console.error('Noas sign-in error:', error);
       return {

@@ -115,6 +115,31 @@ describe("NoasClient API route mapping", () => {
     });
   });
 
+  it("normalizes successful sign-in payloads that use snake_case fields", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({
+        public_key: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+        encrypted_private_key: "ncryptsec1example",
+        relays: ["wss://relay.example"],
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    );
+
+    const client = new NoasClient("https://noas.example/api/v1");
+    const result = await client.signIn("alice", "hunter2");
+
+    expect(result).toMatchObject({
+      success: true,
+      publicKey: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      encryptedPrivateKey: "ncryptsec1example",
+      relays: ["wss://relay.example"],
+    });
+  });
+
   it("returns raw sign-in error text and HTTP status for non-OK responses", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ error: "Username already active. Sign in." }), {
