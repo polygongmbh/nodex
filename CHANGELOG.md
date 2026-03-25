@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 - Noas sign-in now submits `password_hash` (SHA-256) and correctly reads Noas snake_case response keys (`public_key`, `private_key_encrypted`) even when `success` is omitted, preventing false server/key-error failures on valid sign-ins.
 - Noas sign-in now shows a dedicated key-mismatch error when the decrypted signer pubkey does not match the server response, instead of showing the generic server/key failure message.
+- Noas API-base discovery cache is now session-only (in-memory) and no longer persisted in browser storage, so host-side `noas.api_base` changes are picked up after app restart.
 - Private-key auth fields now use non-credential input semantics (text + masked rendering) instead of password-type semantics, so Safari no longer treats Nostr private keys as password autofill/save targets during sign-in and Noas sign-up flows.
 - Added deploy-configurable `VITE_NODEX_MOTD` support for a dismissible top-of-app message banner shown across desktop and mobile shells.
 

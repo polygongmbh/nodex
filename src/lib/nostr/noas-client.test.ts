@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { discoverNoasApiBaseUrl, NoasClient, resolveNoasApiBaseUrl } from "./noas-client";
+import {
+  clearNoasApiBaseDiscoverySessionCacheForTests,
+  discoverNoasApiBaseUrl,
+  NoasClient,
+  resolveNoasApiBaseUrl,
+} from "./noas-client";
 
 describe("resolveNoasApiBaseUrl", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    clearNoasApiBaseDiscoverySessionCacheForTests();
     vi.restoreAllMocks();
   });
 
-  it("discovers and caches the NoaS API base URL from nostr.json", async () => {
+  it("discovers and caches the NoaS API base URL for the current session only", async () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(
@@ -32,6 +38,7 @@ describe("resolveNoasApiBaseUrl", () => {
         Accept: "application/nostr+json, application/json",
       },
     });
+    expect(window.localStorage.getItem("nostr_noas_api_base_cache:https://noas.example")).toBeNull();
   });
 
   it("falls back to a canonical api base when discovery does not expose a valid api_base", async () => {

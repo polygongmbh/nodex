@@ -3,7 +3,6 @@
  * Handles communication with the Noas authentication server
  */
 
-import { safeLocalStorageSetItem } from "@/lib/safe-local-storage";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { nip19 } from 'nostr-tools';
 import { sha256 } from "@noble/hashes/sha2.js";
@@ -30,24 +29,18 @@ export interface NoasAuthResult {
   httpStatus?: number;
 }
 
-const NOAS_API_BASE_CACHE_PREFIX = "nostr_noas_api_base_cache";
-const NOAS_API_BASE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-
 interface NoasDiscoveryDocument {
   noas?: {
     api_base?: unknown;
   };
 }
 
-interface NoasApiBaseCacheEntry {
-  apiBaseUrl: string;
-  cachedAt: number;
-}
-
 interface NoasDiscoveryResult {
   discoveryOrigin: string;
   discoveredApiBaseUrl: string;
 }
+
+const noasApiBaseDiscoverySessionCache = new Map<string, string>();
 
 function resolveDiscoveredNoasApiBaseUrl(discoveryOrigin: string, rawApiBase: unknown): string {
   if (typeof rawApiBase !== "string") return "";
@@ -133,61 +126,30 @@ function resolveNoasDiscoveryOrigin(rawValue: string): string {
   }
 }
 
-function getNoasApiBaseCacheKey(rawValue: string): string {
-  return `${NOAS_API_BASE_CACHE_PREFIX}:${resolveNoasDiscoveryOrigin(rawValue)}`;
+function loadSessionCachedNoasApiBaseUrl(discoveryOrigin: string): string {
+  const cachedApiBaseUrl = noasApiBaseDiscoverySessionCache.get(discoveryOrigin) || "";
+  const normalizedApiBaseUrl = normalizeNoasBaseUrl(cachedApiBaseUrl);
+  return isValidNoasBaseUrl(normalizedApiBaseUrl) ? normalizedApiBaseUrl : "";
 }
 
-function loadCachedNoasApiBaseUrl(rawValue: string): string {
-  if (typeof window === "undefined" || !window.localStorage) return "";
-
-  const cacheKey = getNoasApiBaseCacheKey(rawValue);
-  if (!cacheKey.endsWith(":")) {
-    try {
-      const rawEntry = window.localStorage.getItem(cacheKey);
-      if (!rawEntry) return "";
-
-      const parsed = JSON.parse(rawEntry) as Partial<NoasApiBaseCacheEntry>;
-      if (typeof parsed.apiBaseUrl !== "string" || typeof parsed.cachedAt !== "number") return "";
-      if (Date.now() - parsed.cachedAt > NOAS_API_BASE_CACHE_TTL_MS) return "";
-
-      const normalizedApiBaseUrl = normalizeNoasBaseUrl(parsed.apiBaseUrl);
-      return isValidNoasBaseUrl(normalizedApiBaseUrl) ? normalizedApiBaseUrl : "";
-    } catch {
-      return "";
-    }
-  }
-
-  return "";
+function cacheNoasApiBaseUrlInSession(discoveryOrigin: string, apiBaseUrl: string): void {
+  noasApiBaseDiscoverySessionCache.set(discoveryOrigin, apiBaseUrl);
 }
 
-function cacheNoasApiBaseUrl(rawValue: string, apiBaseUrl: string): void {
-  if (typeof window === "undefined" || !window.localStorage) return;
-
-  const cacheKey = getNoasApiBaseCacheKey(rawValue);
-  if (!cacheKey.endsWith(":")) {
-    safeLocalStorageSetItem(
-      cacheKey,
-      JSON.stringify({
-        apiBaseUrl,
-        cachedAt: Date.now(),
-      } satisfies NoasApiBaseCacheEntry),
-      {
-        context: "noas-api-base-discovery",
-      }
-    );
-  }
+export function clearNoasApiBaseDiscoverySessionCacheForTests(): void {
+  noasApiBaseDiscoverySessionCache.clear();
 }
 
 export async function discoverNoasApiBaseUrl(rawValue: string): Promise<NoasDiscoveryResult | null> {
   const normalizedBaseUrl = normalizeNoasBaseUrl(rawValue);
   if (!normalizedBaseUrl || !isValidNoasBaseUrl(normalizedBaseUrl)) return null;
 
-  const cachedApiBaseUrl = loadCachedNoasApiBaseUrl(normalizedBaseUrl);
   const discoveryOrigin = resolveNoasDiscoveryOrigin(normalizedBaseUrl);
   if (!discoveryOrigin) return null;
+  const cachedApiBaseUrl = loadSessionCachedNoasApiBaseUrl(discoveryOrigin);
 
   if (cachedApiBaseUrl) {
-    nostrDevLog("noas", "Using cached NoaS API base URL", {
+    nostrDevLog("noas", "Using in-session cached NoaS API base URL", {
       submittedBaseUrl: normalizedBaseUrl,
       apiBaseUrl: cachedApiBaseUrl,
     });
@@ -227,7 +189,7 @@ export async function discoverNoasApiBaseUrl(rawValue: string): Promise<NoasDisc
     return null;
   }
 
-  cacheNoasApiBaseUrl(normalizedBaseUrl, discoveredApiBaseUrl);
+  cacheNoasApiBaseUrlInSession(discoveryOrigin, discoveredApiBaseUrl);
   nostrDevLog("noas", "Discovered NoaS API base URL", {
     submittedBaseUrl: normalizedBaseUrl,
     discoveryOrigin,
