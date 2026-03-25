@@ -462,6 +462,7 @@
         "noasFailed": "Noas sign-in failed. Please check your username and password.",
         "noasConnectionFailed": "Connection to the Noas host failed. Check the host URL and try again.",
         "noasInvalidHost": "Enter a valid Noas host URL.",
+        "noasKeyMismatch": "Noas sign-in failed because the returned key does not match your account. Please contact your Noas host admin.",
         "noasServerFailed": "Noas sign-in failed due to a server or key error. Please try again.",
         "noasSignUpFailed": "Sign up failed",
         "noasSignUpConnectionFailed": "Connection to the Noas host failed during sign-up. Check the host URL and try again.",

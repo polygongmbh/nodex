@@ -114,9 +114,10 @@ function resolveNoasErrorMessage(
       return t("auth.modal.errors.noasInvalidHost");
     case "connection_failed":
       return t("auth.modal.errors.noasConnectionFailed");
+    case "key_mismatch":
+      return t("auth.modal.errors.noasKeyMismatch");
     case "server_error":
     case "decryption_failed":
-    case "key_mismatch":
       return t("auth.modal.errors.noasServerFailed");
     default:
       return t("auth.modal.errors.noasFailed");

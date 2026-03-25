@@ -462,6 +462,7 @@
         "noasFailed": "No se pudo iniciar sesión con Noas. Revisa tu nombre de usuario y contraseña.",
         "noasConnectionFailed": "Falló la conexión con el host de Noas. Revisa la URL e inténtalo de nuevo.",
         "noasInvalidHost": "Introduce una URL válida del host de Noas.",
+        "noasKeyMismatch": "No se pudo iniciar sesión con Noas porque la clave devuelta no coincide con tu cuenta. Contacta al administrador de tu host de Noas.",
         "noasServerFailed": "El inicio de sesión con Noas falló por un problema del servidor o de claves. Inténtalo de nuevo.",
         "noasSignUpFailed": "El registro falló",
         "noasSignUpConnectionFailed": "Falló la conexión con el host de Noas durante el registro. Revisa la URL e inténtalo de nuevo.",

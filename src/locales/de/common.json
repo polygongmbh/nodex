@@ -462,6 +462,7 @@
         "noasFailed": "Noas-Anmeldung fehlgeschlagen. Bitte prüfe Benutzername und Passwort.",
         "noasConnectionFailed": "Verbindung zum Noas-Host fehlgeschlagen. Prüfe die Host-URL und versuche es erneut.",
         "noasInvalidHost": "Gib eine gültige Noas-Host-URL ein.",
+        "noasKeyMismatch": "Noas-Anmeldung fehlgeschlagen, weil der zurückgegebene Schlüssel nicht zu deinem Konto passt. Bitte kontaktiere den Admin deines Noas-Hosts.",
         "noasServerFailed": "Noas-Anmeldung ist wegen eines Server- oder Schlüsselfehlers fehlgeschlagen. Bitte versuche es erneut.",
         "noasSignUpFailed": "Registrierung fehlgeschlagen",
         "noasSignUpConnectionFailed": "Verbindung zum Noas-Host während der Registrierung fehlgeschlagen. Prüfe die Host-URL und versuche es erneut.",

@@ -375,6 +375,26 @@ describe("NostrAuthModal", () => {
     expect(screen.queryByText(/invalid username or password/i)).not.toBeInTheDocument();
   });
 
+  it("shows a key-mismatch-specific Noas error when decrypted and returned pubkeys differ", async () => {
+    vi.stubEnv("VITE_NOAS_API_URL", "");
+    vi.stubEnv("VITE_NOAS_HOST_URL", "");
+    ndkMock.loginWithNoas = vi.fn(async () => ({ success: false, errorCode: "key_mismatch" }));
+
+    render(<NostrAuthModal isOpen onClose={vi.fn()} />);
+
+    openNoasEntryIfNeeded();
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    await waitFor(() => expect(ndkMock.loginWithNoas).toHaveBeenCalled());
+    expect(
+      screen.getAllByText(/returned key does not match your account/i)
+    ).toHaveLength(1);
+    expect(screen.queryByText(/server or key error/i)).not.toBeInTheDocument();
+  });
+
   it("shows the raw Noas sign-in error payload with HTTP status when provided", async () => {
     vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
