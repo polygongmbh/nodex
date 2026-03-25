@@ -524,6 +524,43 @@ describe("FeedView", () => {
       type: "filter.applyAuthorExclusive",
       author,
     });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
+      type: "task.focus.change",
+      taskId: "task-mention",
+    });
+  });
+
+  it("uses fallback person activation for unresolved mention tokens and does not focus row", () => {
+    const unresolvedPubkey = "b".repeat(64);
+    const mentionTask = makeTask({
+      id: "task-mention-fallback",
+      author,
+      content: `Please review @${unresolvedPubkey} #frontend`,
+      status: "todo",
+    });
+
+    render(
+      <FeedView
+        tasks={[mentionTask]}
+        allTasks={[mentionTask]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /open user npub1/i }));
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "filter.applyAuthorExclusive",
+      author: expect.objectContaining({
+        id: unresolvedPubkey,
+      }),
+    });
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
+      type: "task.focus.change",
+      taskId: "task-mention-fallback",
+    });
   });
 
   it("shows non-text mention chips from assignee pubkeys", () => {

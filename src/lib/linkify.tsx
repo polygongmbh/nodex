@@ -8,10 +8,15 @@ import type { Person } from "@/types";
 import { getMentionAliases, normalizeMentionIdentifier } from "@/lib/mentions";
 import { guessMimeTypeFromUrl, isSafeHttpUrl } from "@/lib/attachments";
 import i18n from "@/lib/i18n/config";
-import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import {
+  formatUserFacingPubkey,
+  isHexPubkey,
+  npubToHexPubkey,
+  toUserFacingPubkey,
+} from "@/lib/nostr/user-facing-pubkey";
 
 const TOKEN_REGEX =
-  /(^|[^A-Za-z0-9_])(#([A-Za-z0-9_]+)|@([A-Za-z0-9._-]+(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?))/g;
+  /(^|[^A-Za-z0-9_])(#([A-Za-z0-9_]+)|@([A-Za-z0-9._-]+(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?)|nostr:(npub1[023456789acdefghjklmnpqrstuvwxyz]+))/gi;
 const linkify = new LinkifyIt();
 
 const HASH_LINK_PREFIX = "https://nodex.local/hashtag/";
@@ -34,6 +39,23 @@ function resolveMentionPerson(identifier: string, people: Person[] | undefined):
   }
 
   return null;
+}
+
+function buildFallbackMentionPerson(identifier: string): Person | null {
+  const normalizedIdentifier = normalizeMentionIdentifier(identifier);
+  const pubkey = isHexPubkey(normalizedIdentifier)
+    ? normalizedIdentifier
+    : npubToHexPubkey(normalizedIdentifier);
+  if (!pubkey) return null;
+
+  const label = formatUserFacingPubkey(pubkey);
+  return {
+    id: pubkey,
+    name: label,
+    displayName: label,
+    isOnline: false,
+    isSelected: false,
+  };
 }
 
 interface LinkifyOptions {
@@ -261,6 +283,7 @@ function preprocessMarkdownTokens(value: string): string {
     const token = match[2] ?? "";
     const hashtag = match[3];
     const mention = match[4];
+    const nostrNpub = match[5];
     const tokenStart = matchIndex + prefix.length;
 
     if (tokenStart > tokenCursor) {
@@ -271,6 +294,9 @@ function preprocessMarkdownTokens(value: string): string {
       nodes.push(`[#${hashtag}](${HASH_LINK_PREFIX}${encodeURIComponent(hashtag)})`);
     } else if (token.startsWith("@") && mention) {
       const mentionIdentifier = normalizeMentionIdentifier(mention);
+      nodes.push(`[@${mentionIdentifier}](${MENTION_LINK_PREFIX}${encodeURIComponent(mentionIdentifier)})`);
+    } else if (token.toLowerCase().startsWith("nostr:") && nostrNpub) {
+      const mentionIdentifier = normalizeMentionIdentifier(nostrNpub);
       nodes.push(`[@${mentionIdentifier}](${MENTION_LINK_PREFIX}${encodeURIComponent(mentionIdentifier)})`);
     } else {
       nodes.push(value.slice(tokenStart, tokenStart + token.length));
@@ -314,19 +340,22 @@ function renderMarkdownBlock(
 
     if (href?.startsWith(MENTION_LINK_PREFIX)) {
       const mentionIdentifier = decodeURIComponent(href.slice(MENTION_LINK_PREFIX.length));
-      const userFacingMentionIdentifier = toUserFacingPubkey(mentionIdentifier);
       const resolvedPerson = resolveMentionPerson(mentionIdentifier, options?.people);
+      const fallbackPerson = buildFallbackMentionPerson(mentionIdentifier);
+      const clickablePerson = resolvedPerson || fallbackPerson;
       const mentionLabel = resolvedPerson?.name
         || resolvedPerson?.displayName
-        || formatPubkeyMention(mentionIdentifier);
+        || (fallbackPerson ? formatPubkeyMention(fallbackPerson.id) : formatPubkeyMention(mentionIdentifier));
+      const userFacingMentionIdentifier = toUserFacingPubkey(mentionIdentifier);
 
-      if (resolvedPerson && options?.onMentionClick) {
+      if (clickablePerson && options?.onMentionClick) {
         return (
           <button
             type="button"
             onClick={(event) => {
+              event.preventDefault();
               event.stopPropagation();
-              options.onMentionClick?.(resolvedPerson);
+              options.onMentionClick?.(clickablePerson);
             }}
             className={`${TASK_INTERACTION_STYLES.inlineLink} break-all text-left`}
             aria-label={`Open user ${mentionLabel}`}

@@ -10,6 +10,17 @@ function toDisplayPubkey(value: string): string {
   return formatUserFacingPubkey(value);
 }
 
+function buildFallbackPersonFromPubkey(pubkey: string): Person {
+  const label = toDisplayPubkey(pubkey);
+  return {
+    id: pubkey,
+    name: label,
+    displayName: label,
+    isOnline: false,
+    isSelected: false,
+  };
+}
+
 function collectMentionPubkeys(task: Task): string[] {
   const values = [
     ...(task.assigneePubkeys || []),
@@ -50,16 +61,19 @@ export function TaskMentionChips({
     const matchedPerson = peopleProp
       ? people.find((person) => person.id.toLowerCase() === pubkey)
       : getPersonById(pubkey);
-    const label = matchedPerson?.name || matchedPerson?.displayName || toDisplayPubkey(pubkey);
+    const fallbackPerson = buildFallbackPersonFromPubkey(pubkey);
+    const clickablePerson = matchedPerson || fallbackPerson;
+    const label = matchedPerson?.name || matchedPerson?.displayName || fallbackPerson.displayName;
 
-    if (matchedPerson && onPersonClick) {
+    if (onPersonClick && clickablePerson) {
       return (
         <button
           key={pubkey}
           type="button"
           onClick={(event) => {
+            event.preventDefault();
             event.stopPropagation();
-            onPersonClick(matchedPerson);
+            onPersonClick(clickablePerson);
           }}
           className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
           aria-label={`Open user ${label}`}

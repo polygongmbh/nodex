@@ -2,6 +2,7 @@ import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "./linkify";
 import type { Person } from "@/types";
+import { hexPubkeyToNpub } from "@/lib/nostr/user-facing-pubkey";
 
 const alice: Person = {
   id: "a".repeat(64),
@@ -52,6 +53,50 @@ describe("linkifyContent interaction styles", () => {
 
     fireEvent.click(mention);
     expect(onMentionClick).toHaveBeenCalledWith(alice);
+  });
+
+  it("supports unresolved pubkey mention clicks via fallback person", () => {
+    const unresolvedPubkey = "b".repeat(64);
+    const onMentionClick = vi.fn();
+
+    render(
+      <div>
+        {linkifyContent(`Assign to @${unresolvedPubkey}`, undefined, {
+          onMentionClick,
+        })}
+      </div>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /open user npub1/i }));
+    expect(onMentionClick).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: unresolvedPubkey,
+        isOnline: false,
+        isSelected: false,
+      })
+    );
+  });
+
+  it("linkifies nostr:npub mentions and routes clicks via mention callback", () => {
+    const unresolvedPubkey = "b".repeat(64);
+    const npub = hexPubkeyToNpub(unresolvedPubkey);
+    expect(npub).toBeTruthy();
+    const onMentionClick = vi.fn();
+
+    render(
+      <div>
+        {linkifyContent(`Assign to nostr:${npub}`, undefined, {
+          onMentionClick,
+        })}
+      </div>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /open user npub1/i }));
+    expect(onMentionClick).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: unresolvedPubkey,
+      })
+    );
   });
 
   it("keeps original mention token as hover title after resolving display label", () => {
@@ -125,11 +170,11 @@ describe("linkifyContent interaction styles", () => {
     expect(within(listItems[1] as HTMLLIElement).getByText("second item")).toBeInTheDocument();
   });
 
-  it("renders long nostr identifiers inside a breakable markdown block", () => {
+  it("renders long nostr identifiers as mention tokens inside a breakable markdown block", () => {
     const npub = `nostr:npub1${"q".repeat(58)}`;
     const { container } = render(<div>{linkifyContent(`Assign to ${npub}`)}</div>);
 
-    expect(screen.getByText(`Assign to ${npub}`)).toBeInTheDocument();
+    expect(screen.getByText((value) => value.startsWith("@npub1"))).toBeInTheDocument();
     expect(container.querySelector(".break-words")).toBeInTheDocument();
     expect(container.querySelector(".whitespace-normal")).toBeInTheDocument();
   });
