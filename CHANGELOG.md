@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Creating a new task directly in the Kanban `To do` column no longer publishes an additional separate status-update event; tasks now keep the default `todo` status without redundant follow-up status publishing.
 - Compose now defaults root task/comment/offer/request submissions to the single active connected space when no space is explicitly selected, so posting no longer requires manual space or parent selection in that one-space state.
 - Noas sign-up now refreshes the public-key preview immediately when the private-key input changes, instead of updating only after using the generate action.
+- Active (focused) feed items now show full text without line truncation, while inactive items keep the existing collapsed preview behavior.
 
 ## [2.7.3] - 2026-03-23
 Patch release for markdown rendering stability, relay-scoped mention suggestions, and feed rerender suppression.

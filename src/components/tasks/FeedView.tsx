@@ -813,6 +813,7 @@ export function FeedView({
     const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
     const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
     const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
+    const isActiveTask = focusedTaskId === task.id;
     const canUpdateListingStatus =
       !isInteractionBlocked &&
       isListing &&
@@ -1237,7 +1238,7 @@ export function FeedView({
             <div
               className={cn(
                 `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
-                hasCollapsibleContent && !isContentExpanded
+                hasCollapsibleContent && !isContentExpanded && !isActiveTask
                   ? "whitespace-pre-line line-clamp-3 overflow-hidden"
                   : "whitespace-pre-wrap",
                 isCompletedVisual && "line-through text-muted-foreground"
@@ -1251,12 +1252,12 @@ export function FeedView({
                 onMentionClick: (author) => {
                   void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
                 },
-                disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
+                disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded && !isActiveTask,
                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                 getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
               })}
             </div>
-            {hasCollapsibleContent && (
+            {hasCollapsibleContent && !isActiveTask && (
               <button
                 type="button"
                 className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"

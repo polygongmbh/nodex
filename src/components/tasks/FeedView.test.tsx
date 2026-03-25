@@ -439,6 +439,43 @@ describe("FeedView", () => {
     expect(screen.queryByTestId("feed-author-secondary-task-1")).not.toBeInTheDocument();
   });
 
+  it("does not truncate content for the active focused task", () => {
+    const longTask = makeTask({
+      id: "task-long-active",
+      author,
+      content: `${"Long content #general ".repeat(40)}end`,
+      status: "todo",
+    });
+    const { container, rerender } = render(
+      <FeedView
+        tasks={[longTask]}
+        allTasks={[longTask]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+      />
+    );
+
+    const row = container.querySelector('[data-task-id="task-long-active"]');
+    expect(row?.querySelector(".line-clamp-3")).not.toBeNull();
+
+    rerender(
+      <FeedView
+        tasks={[longTask]}
+        allTasks={[longTask]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        focusedTaskId="task-long-active"
+      />
+    );
+
+    const focusedRow = container.querySelector('[data-task-id="task-long-active"]');
+    expect(focusedRow?.querySelector(".line-clamp-3")).toBeNull();
+  });
+
   it("calls author quick action when clicking the author label", () => {
     render(
       <FeedView
