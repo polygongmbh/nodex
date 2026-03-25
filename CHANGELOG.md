@@ -9,6 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Compose now defaults root task/comment/offer/request submissions to the single active connected space when no space is explicitly selected, so posting no longer requires manual space or parent selection in that one-space state.
 - Noas sign-up now refreshes the public-key preview immediately when the private-key input changes, instead of updating only after using the generate action.
 - Active (focused) feed items now show full text without line truncation, while inactive items keep the existing collapsed preview behavior.
+- Breadcrumb labels now use only the first content line, remove `@mentions`, drop hashtag markers, and strip formatting/symbol characters so focus breadcrumbs show plain text labels.
 
 ## [2.7.3] - 2026-03-23
 Patch release for markdown rendering stability, relay-scoped mention suggestions, and feed rerender suppression.

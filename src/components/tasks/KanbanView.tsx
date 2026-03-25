@@ -36,6 +36,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 interface KanbanViewProps extends SharedTaskViewContext {
   depthMode: KanbanDepthMode;
@@ -120,7 +121,7 @@ export function KanbanView({
       if (parent) {
         chain.unshift({
           id: parent.id,
-          text: parent.content.slice(0, 20) + (parent.content.length > 20 ? "..." : "")
+          text: formatBreadcrumbLabel(parent.content)
         });
         current = parent;
       } else {

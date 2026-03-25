@@ -64,6 +64,7 @@ import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
@@ -631,7 +632,7 @@ export function FeedView({
       if (parent) {
         breadcrumb.unshift({
           id: parent.id,
-          text: parent.content
+          text: formatBreadcrumbLabel(parent.content)
         });
         current = parent;
       } else {
@@ -685,7 +686,8 @@ export function FeedView({
       const updateTimeLabel = isMobile
         ? formatCompactRelativeTime(update.timestamp)
         : formatDistanceToNow(update.timestamp, { addSuffix: true });
-      const taskSummary = task.content.slice(0, 40) + (task.content.length > 40 ? "..." : "");
+      const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
+      const taskSummary = breadcrumbTaskSummary.slice(0, 40) + (breadcrumbTaskSummary.length > 40 ? "..." : "");
       const stateLabel = getStateLabel(update.status);
       const statusDescription = update.statusDescription?.trim();
       const isDefaultInProgressDescription =

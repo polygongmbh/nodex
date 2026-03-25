@@ -51,6 +51,7 @@ import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 interface ListViewProps extends SharedTaskViewContext {
   depthMode?: KanbanDepthMode;
@@ -209,7 +210,7 @@ export function ListView({
       if (parent) {
         chain.unshift({
           id: parent.id,
-          text: parent.content.slice(0, 20) + (parent.content.length > 20 ? "..." : "")
+          text: formatBreadcrumbLabel(parent.content)
         });
         current = parent;
       } else {

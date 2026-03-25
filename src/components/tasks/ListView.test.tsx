@@ -38,7 +38,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /focus task: root task #general/i }));
+    fireEvent.click(screen.getByRole("button", { name: /focus task: root task general/i }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });

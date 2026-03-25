@@ -61,6 +61,7 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 interface CalendarViewProps extends SharedTaskViewContext {
   selectedDate?: Date | null;
@@ -148,7 +149,7 @@ export function CalendarView({
       if (parent) {
         chain.unshift({
           id: parent.id,
-          text: parent.content.slice(0, 15) + (parent.content.length > 15 ? "..." : "")
+          text: formatBreadcrumbLabel(parent.content)
         });
         current = parent;
       } else {

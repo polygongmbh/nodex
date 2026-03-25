@@ -66,7 +66,7 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /focus task: root task #general/i }));
+    fireEvent.click(screen.getByRole("button", { name: /focus task: root task general/i }));
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "root" });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });
@@ -591,7 +591,7 @@ describe("FeedView", () => {
     expect(screen.getAllByTestId(/feed-state-entry-/)).toHaveLength(2);
     expect(screen.getAllByTitle(/status updated at/i)).toHaveLength(2);
     expect(
-      screen.getAllByRole("button", { name: /focus task: reconnect relays after resume #infra/i })
+      screen.getAllByRole("button", { name: /focus task: reconnect relays after resume infra/i })
     ).toHaveLength(2);
   });
 

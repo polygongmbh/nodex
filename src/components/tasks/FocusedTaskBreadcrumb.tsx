@@ -4,6 +4,7 @@ import { Task } from "@/types";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 interface FocusedTaskBreadcrumbProps {
   allTasks: Task[];
@@ -91,9 +92,9 @@ export function FocusedTaskBreadcrumb({
                 index === path.length - 1 && "text-foreground font-semibold"
               )}
               type="button"
-              title={task.content}
+              title={formatBreadcrumbLabel(task.content)}
             >
-              {task.content}
+              {formatBreadcrumbLabel(task.content)}
             </button>
           </span>
         ))}
