@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, PointerEvent, useEffect } from "react";
+import { useRef, useCallback, useState, PointerEvent, useLayoutEffect } from "react";
 import { Menu, Rss, GitBranch, List, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -14,16 +14,18 @@ interface MobileNavProps {
 }
 
 const allSegments: MobileViewType[] = ["feed", "tree", "list", "calendar"];
+const DRAG_THRESHOLD_PX = 12;
 
 export function MobileNav({ currentView, onViewChange, onManageOpen, isManageActive = false }: MobileNavProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
+  const activePointerIdRef = useRef<number | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isDraggingRef = useRef(false);
+  const suppressClickRef = useRef(false);
+  const lastDraggedSegmentRef = useRef<MobileViewType | null>(null);
   const [isPressed, setIsPressed] = useState(false);
-  // Track whether we just came from manage view to skip pill transition
-  const wasManageActive = useRef(isManageActive);
-  const skipTransition = useRef(false);
 
   const segmentLabels: Partial<Record<MobileViewType, string>> = {
     feed: t("navigation.views.feed"),
@@ -34,19 +36,6 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
 
   const activeIndex = allSegments.indexOf(currentView);
 
-  // Detect transition from manage → view to skip pill animation
-  useEffect(() => {
-    if (wasManageActive.current && !isManageActive) {
-      skipTransition.current = true;
-      // Reset after a frame so next navigation animates normally
-      requestAnimationFrame(() => {
-        skipTransition.current = false;
-      });
-    }
-    wasManageActive.current = isManageActive;
-  }, [isManageActive]);
-
-  // Position pill by measuring actual button positions
   const updatePillPosition = useCallback(() => {
     const container = containerRef.current;
     const pill = pillRef.current;
@@ -61,70 +50,85 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
     const buttonRect = activeButton.getBoundingClientRect();
 
     pill.style.width = `${buttonRect.width}px`;
-    pill.style.setProperty('--pill-x', `${buttonRect.left - containerRect.left - 3}px`);
-
-    // If we should skip transition (coming from manage), remove transition temporarily
-    if (skipTransition.current) {
-      pill.style.transition = 'none';
-      // Force reflow then restore transition
-      void pill.offsetHeight;
-      requestAnimationFrame(() => {
-        pill.style.transition = '';
-      });
-    }
+    pill.style.setProperty("--pill-x", `${buttonRect.left - containerRect.left - 3}px`);
   }, [activeIndex]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     updatePillPosition();
     window.addEventListener("resize", updatePillPosition);
     return () => window.removeEventListener("resize", updatePillPosition);
   }, [updatePillPosition]);
 
-  const getSegmentFromX = useCallback((clientX: number): MobileViewType | null => {
-    const container = containerRef.current;
-    if (!container) return null;
-    const x = clientX - container.getBoundingClientRect().left;
-    const children = container.querySelectorAll<HTMLElement>("[data-segment-index]");
-    for (let i = 0; i < children.length; i++) {
-      const childRect = children[i].getBoundingClientRect();
-      if (clientX >= childRect.left && clientX <= childRect.right) {
-        return allSegments[i];
-      }
-    }
-    if (x <= 0) return allSegments[0];
-    return allSegments[allSegments.length - 1];
+  const resetPointerState = useCallback(() => {
+    activePointerIdRef.current = null;
+    dragStartRef.current = null;
+    isDraggingRef.current = false;
+    lastDraggedSegmentRef.current = null;
+    setIsPressed(false);
+
+    requestAnimationFrame(() => {
+      suppressClickRef.current = false;
+    });
+  }, []);
+
+  const getSegmentFromPointer = useCallback((clientX: number, clientY: number): MobileViewType | null => {
+    const element = document.elementFromPoint(clientX, clientY);
+    const button = element?.closest<HTMLElement>("[data-segment-view]");
+    const segment = button?.dataset.segmentView as MobileViewType | undefined;
+    return segment ?? null;
   }, []);
 
   const handlePointerDown = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
-    isDragging.current = true;
+    activePointerIdRef.current = e.pointerId;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    isDraggingRef.current = false;
+    suppressClickRef.current = false;
+    lastDraggedSegmentRef.current = currentView;
     setIsPressed(true);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    // Don't select segment on pointer down — let onClick handle taps
-    // This prevents double-firing and wrong segment from X coordinate
-  }, []);
+  }, [currentView]);
 
   const handlePointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
-    if (!isDragging.current) return;
-    const seg = getSegmentFromX(e.clientX);
-    if (seg && seg !== currentView) {
-      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-        navigator.vibrate(10);
+    if (activePointerIdRef.current !== e.pointerId || !dragStartRef.current) return;
+
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    if (!isDraggingRef.current) {
+      if (absDy > absDx && absDy > DRAG_THRESHOLD_PX) {
+        resetPointerState();
+        return;
       }
-      onViewChange(seg);
+
+      if (absDx < DRAG_THRESHOLD_PX || absDx <= absDy) {
+        return;
+      }
+
+      isDraggingRef.current = true;
+      suppressClickRef.current = true;
     }
-  }, [currentView, getSegmentFromX, onViewChange]);
+
+    const seg = getSegmentFromPointer(e.clientX, e.clientY);
+    if (!seg || seg === lastDraggedSegmentRef.current) return;
+
+    lastDraggedSegmentRef.current = seg;
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(10);
+    }
+    onViewChange(seg);
+  }, [getSegmentFromPointer, onViewChange, resetPointerState]);
 
   const handlePointerUp = useCallback((e: PointerEvent<HTMLDivElement>) => {
-    isDragging.current = false;
-    setIsPressed(false);
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-  }, []);
+    if (activePointerIdRef.current !== e.pointerId) return;
+    resetPointerState();
+  }, [resetPointerState]);
 
-  const handlePointerCancel = useCallback(() => {
-    isDragging.current = false;
-    setIsPressed(false);
-  }, []);
+  const handlePointerCancel = useCallback((e: PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== e.pointerId) return;
+    resetPointerState();
+  }, [resetPointerState]);
 
   return (
     <nav
@@ -134,7 +138,6 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
       data-onboarding="mobile-nav"
     >
       <div className="flex items-center gap-1.5">
-        {/* Hamburger menu button */}
         <button
           type="button"
           data-onboarding="mobile-nav-manage"
@@ -152,33 +155,31 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
           <Menu className="w-[18px] h-[18px]" />
         </button>
 
-        {/* Segmented control */}
         <div
           ref={containerRef}
-          className="relative flex items-center flex-1 min-w-0 rounded-lg bg-muted/80 dark:bg-muted/60 p-[3px] select-none touch-none"
+          className="relative flex items-center flex-1 min-w-0 rounded-lg bg-muted/80 dark:bg-muted/60 p-[3px] select-none touch-pan-y"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerCancel}
         >
-          {/* Sliding pill */}
           <div
             ref={pillRef}
             className={cn(
-              "absolute top-[3px] bottom-[3px] rounded-md will-change-transform",
-              isManageActive ? "opacity-0" : "bg-primary"
+              "absolute top-[3px] bottom-[3px] rounded-md bg-primary will-change-transform",
+              isManageActive && "opacity-0"
             )}
             style={{
-              left: '3px',
+              left: "3px",
               transform: isPressed
-                ? 'translateX(var(--pill-x, 0px)) scaleX(0.95) scaleY(0.88)'
-                : 'translateX(var(--pill-x, 0px))',
+                ? "translateX(var(--pill-x, 0px)) scaleX(0.95) scaleY(0.88)"
+                : "translateX(var(--pill-x, 0px))",
               transition: isPressed
-                ? 'transform 150ms ease-out, width 150ms ease-out, box-shadow 150ms ease-out, opacity 150ms ease-out'
-                : 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out, opacity 150ms ease-out',
+                ? "box-shadow 150ms ease-out, opacity 150ms ease-out"
+                : "transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out, opacity 150ms ease-out",
               boxShadow: isPressed
-                ? '0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)'
-                : '0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)',
+                ? "0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)"
+                : "0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)",
             }}
             aria-hidden="true"
           />
@@ -188,6 +189,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               key={seg}
               type="button"
               data-segment-index={i}
+              data-segment-view={seg}
               role="tab"
               aria-selected={currentView === seg && !isManageActive}
               aria-label={t("navigation.views.switchTo", { view: segmentLabels[seg] })}
@@ -201,6 +203,10 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               )}
               onClick={(e) => {
                 e.stopPropagation();
+                if (suppressClickRef.current) {
+                  e.preventDefault();
+                  return;
+                }
                 onViewChange(seg);
               }}
               tabIndex={currentView === seg ? 0 : -1}
