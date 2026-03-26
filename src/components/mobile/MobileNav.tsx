@@ -25,6 +25,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
   const isDraggingRef = useRef(false);
   const suppressClickRef = useRef(false);
   const lastDraggedSegmentRef = useRef<MobileViewType | null>(null);
+  const pillStartXRef = useRef<number>(0);
   const [isPressed, setIsPressed] = useState(false);
 
   const segmentLabels: Partial<Record<MobileViewType, string>> = {
@@ -36,22 +37,33 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
 
   const activeIndex = allSegments.indexOf(currentView);
 
-  const updatePillPosition = useCallback(() => {
+  const getButtonRects = useCallback(() => {
     const container = containerRef.current;
-    const pill = pillRef.current;
-    if (!container || !pill) return;
-
+    if (!container) return null;
     const buttons = container.querySelectorAll<HTMLElement>("[data-segment-index]");
-    const idx = activeIndex >= 0 ? activeIndex : 0;
-    const activeButton = buttons[idx];
-    if (!activeButton) return;
-
     const containerRect = container.getBoundingClientRect();
-    const buttonRect = activeButton.getBoundingClientRect();
+    return Array.from(buttons).map(btn => {
+      const r = btn.getBoundingClientRect();
+      return {
+        left: r.left - containerRect.left - 3,
+        width: r.width,
+        centerX: r.left + r.width / 2,
+      };
+    });
+  }, []);
 
-    pill.style.width = `${buttonRect.width}px`;
-    pill.style.setProperty("--pill-x", `${buttonRect.left - containerRect.left - 3}px`);
-  }, [activeIndex]);
+  const updatePillPosition = useCallback(() => {
+    const pill = pillRef.current;
+    if (!pill) return;
+    const rects = getButtonRects();
+    if (!rects) return;
+    const idx = activeIndex >= 0 ? activeIndex : 0;
+    const rect = rects[idx];
+    if (!rect) return;
+
+    pill.style.width = `${rect.width}px`;
+    pill.style.setProperty("--pill-x", `${rect.left}px`);
+  }, [activeIndex, getButtonRects]);
 
   useLayoutEffect(() => {
     updatePillPosition();
@@ -65,11 +77,13 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
     isDraggingRef.current = false;
     lastDraggedSegmentRef.current = null;
     setIsPressed(false);
+    // Snap pill back to current active segment
+    updatePillPosition();
 
     requestAnimationFrame(() => {
       suppressClickRef.current = false;
     });
-  }, []);
+  }, [updatePillPosition]);
 
   const getSegmentFromPointer = useCallback((clientX: number, clientY: number): MobileViewType | null => {
     const element = document.elementFromPoint(clientX, clientY);
@@ -85,8 +99,12 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
     isDraggingRef.current = false;
     suppressClickRef.current = false;
     lastDraggedSegmentRef.current = currentView;
+    // Store pill's current X for drag offset tracking
+    const rects = getButtonRects();
+    const idx = activeIndex >= 0 ? activeIndex : 0;
+    pillStartXRef.current = rects?.[idx]?.left ?? 0;
     setIsPressed(true);
-  }, [currentView]);
+  }, [currentView, activeIndex, getButtonRects]);
 
   const handlePointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (activePointerIdRef.current !== e.pointerId || !dragStartRef.current) return;
@@ -110,6 +128,19 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
       suppressClickRef.current = true;
     }
 
+    // Move pill to follow pointer X
+    const pill = pillRef.current;
+    const rects = getButtonRects();
+    if (pill && rects && rects.length > 0) {
+      const pillWidth = pill.offsetWidth;
+      const minX = rects[0].left;
+      const maxX = rects[rects.length - 1].left;
+      const rawX = pillStartXRef.current + dx;
+      const clampedX = Math.max(minX, Math.min(maxX, rawX));
+      pill.style.setProperty("--pill-x", `${clampedX}px`);
+    }
+
+    // Detect which segment the pointer is over for haptic + view change
     const seg = getSegmentFromPointer(e.clientX, e.clientY);
     if (!seg || seg === lastDraggedSegmentRef.current) return;
 
@@ -118,7 +149,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
       navigator.vibrate(10);
     }
     onViewChange(seg);
-  }, [getSegmentFromPointer, onViewChange, resetPointerState]);
+  }, [getSegmentFromPointer, onViewChange, resetPointerState, getButtonRects]);
 
   const handlePointerUp = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (activePointerIdRef.current !== e.pointerId) return;
