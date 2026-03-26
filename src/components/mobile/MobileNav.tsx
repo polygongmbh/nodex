@@ -121,7 +121,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
             "active:scale-90",
             isManageActive
-              ? "bg-background text-foreground shadow-sm"
+              ? "bg-primary text-primary-foreground shadow-md"
               : "bg-muted/80 dark:bg-muted/60 text-muted-foreground/70 dark:text-muted-foreground"
           )}
           onClick={onManageOpen}
@@ -141,7 +141,10 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
           {/* Sliding pill */}
           <div
             ref={pillRef}
-            className="absolute top-[3px] bottom-[3px] rounded-md bg-background will-change-transform"
+            className={cn(
+              "absolute top-[3px] bottom-[3px] rounded-md bg-background will-change-transform",
+              isManageActive && "opacity-0"
+            )}
             style={{
               left: '3px',
               transform: isPressed
