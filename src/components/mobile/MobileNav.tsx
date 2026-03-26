@@ -44,7 +44,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
     const buttonRect = activeButton.getBoundingClientRect();
 
     pill.style.width = `${buttonRect.width}px`;
-    pill.style.transform = `translateX(${buttonRect.left - containerRect.left - 3}px)`;
+    pill.style.setProperty('--pill-x', `${buttonRect.left - containerRect.left - 3}px`);
   }, [activeIndex]);
 
   useEffect(() => {
@@ -123,13 +123,15 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
           className="absolute top-[3px] bottom-[3px] rounded-md bg-background will-change-transform"
           style={{
             left: '3px',
+            transform: isPressed
+              ? 'translateX(var(--pill-x, 0px)) scaleX(0.95) scaleY(0.88)'
+              : 'translateX(var(--pill-x, 0px))',
             transition: isPressed
               ? 'transform 150ms ease-out, width 150ms ease-out, box-shadow 150ms ease-out'
               : 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out',
             boxShadow: isPressed
               ? '0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)'
               : '0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)',
-            ...(isPressed ? { transform: (pillRef.current?.style.transform || '') + ' scaleX(0.95) scaleY(0.88)' } : {}),
           }}
           aria-hidden="true"
         />
