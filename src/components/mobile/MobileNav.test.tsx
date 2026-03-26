@@ -13,4 +13,15 @@ describe("MobileNav", () => {
     fireEvent.click(feedButton);
     expect(onViewChange).toHaveBeenCalledWith("feed");
   });
+
+  it("calls onManageOpen when hamburger button is clicked", () => {
+    const onManageOpen = vi.fn();
+
+    render(<MobileNav currentView="feed" onViewChange={vi.fn()} onManageOpen={onManageOpen} />);
+
+    const menuButton = screen.getByLabelText("Switch to Manage view");
+
+    fireEvent.click(menuButton);
+    expect(onManageOpen).toHaveBeenCalledOnce();
+  });
 });
