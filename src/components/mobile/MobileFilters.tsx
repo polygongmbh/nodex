@@ -3,7 +3,6 @@ import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Sparkles, LogI
 import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
 import { cn } from "@/lib/utils";
 import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
@@ -175,8 +174,7 @@ export function MobileFilters({
   };
 
   return (
-    <ScrollArea className="h-full" data-onboarding="mobile-filters">
-      <div className="p-4 space-y-5">
+    <div className="h-full overflow-y-auto p-4 space-y-4" data-onboarding="mobile-filters">
         <section>
           <div className="flex items-center gap-2">
             <button
@@ -560,7 +558,6 @@ export function MobileFilters({
           </div>
         </section>
 
-      </div>
-    </ScrollArea>
+    </div>
   );
 }
