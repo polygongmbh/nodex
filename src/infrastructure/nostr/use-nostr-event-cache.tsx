@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
+import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription } from "@nostr-dev-kit/ndk";
 import {
   ALL_RELAYS_SCOPE_KEY,
   EMPTY_RELAY_SCOPE_KEY,
@@ -73,10 +73,34 @@ export function getNostrEventsQueryKey(feedScopeKey: string): readonly [...typeo
   return [...NOSTR_EVENTS_QUERY_KEY, feedScopeKey] as const;
 }
 
-function toCachedEvent(event: NDKEvent): CachedNostrEvent | null {
+type RelayLike = Pick<NDKRelay, "url"> | null | undefined;
+
+type EventLike = Pick<NDKEvent, "id" | "pubkey" | "created_at" | "kind" | "tags" | "content" | "sig"> & {
+  relay?: RelayLike;
+  onRelays?: RelayLike[];
+};
+
+function normalizeRelayUrl(url?: string): string | null {
+  if (!url) return null;
+  const normalized = url.trim().replace(/\/+$/, "");
+  return normalized || null;
+}
+
+function getRelayUrlsFromEvent(event: EventLike, relayOverride?: RelayLike): string[] {
+  return Array.from(
+    new Set(
+      [
+        normalizeRelayUrl(relayOverride?.url),
+        normalizeRelayUrl(event.relay?.url),
+        ...(event.onRelays || []).map((relay) => normalizeRelayUrl(relay?.url)),
+      ].filter((url): url is string => Boolean(url))
+    )
+  ).sort();
+}
+
+function toCachedEvent(event: EventLike, relayOverride?: RelayLike): CachedNostrEvent | null {
   if (!event.id) return null;
-  const relayUrl = event.relay?.url?.trim().replace(/\/+$/, "");
-  const relayUrls = relayUrl ? [relayUrl] : undefined;
+  const relayUrls = getRelayUrlsFromEvent(event, relayOverride);
   return {
     id: event.id,
     pubkey: event.pubkey,
@@ -85,8 +109,8 @@ function toCachedEvent(event: NDKEvent): CachedNostrEvent | null {
     tags: event.tags,
     content: event.content || "",
     sig: event.sig || undefined,
-    relayUrl,
-    relayUrls,
+    relayUrl: relayUrls[0],
+    relayUrls: relayUrls.length > 0 ? relayUrls : undefined,
   };
 }
 
@@ -264,8 +288,8 @@ export function useNostrEventCache({
     markLiveHydratedScope();
   }, [flushPendingEvents, markLiveHydratedScope]);
 
-  const pushEvent = useCallback((event: NDKEvent) => {
-    const cachedEvent = toCachedEvent(event);
+  const pushEvent = useCallback((event: EventLike, relayOverride?: RelayLike) => {
+    const cachedEvent = toCachedEvent(event, relayOverride);
     if (!cachedEvent) return;
     markLiveHydratedScope();
     pendingHydrationEventsRef.current = [...pendingHydrationEventsRef.current, cachedEvent];
@@ -284,6 +308,9 @@ export function useNostrEventCache({
       pushEvent,
       { closeOnEose: false }
     );
+    subscription?.on("event:dup", (event, relay) => {
+      pushEvent(event as EventLike, relay);
+    });
     subscription?.on("eose", finalizeBootstrapScope);
     subscription?.on("close", finalizeBootstrapScope);
     return () => {

@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
+import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription } from "@nostr-dev-kit/ndk";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ALL_RELAYS_SCOPE_KEY } from "@/infrastructure/nostr/event-cache";
 import {
@@ -80,7 +80,7 @@ describe("nostr event cache feed scope helpers", () => {
   });
 });
 
-type SubscriptionEventName = "eose" | "close";
+type SubscriptionEventName = "eose" | "close" | "event:dup";
 
 interface MockSubscriptionControls {
   subscribe: (
@@ -89,10 +89,12 @@ interface MockSubscriptionControls {
     options?: { closeOnEose?: boolean }
   ) => NDKSubscription | null;
   emitEvent: (event: NDKEvent) => void;
+  emitDuplicateEvent: (event: NDKEvent, relayUrl: string) => void;
   emit: (eventName: SubscriptionEventName) => void;
 }
 
-function makeNostrEvent(id: string): NDKEvent {
+function makeNostrEvent(id: string, relayUrls: string[] = ["wss://relay.one/"]): NDKEvent {
+  const normalizedRelayUrls = relayUrls.map((relayUrl) => relayUrl.replace(/\/+$/, ""));
   return {
     id,
     pubkey: `pubkey-${id}`,
@@ -100,20 +102,21 @@ function makeNostrEvent(id: string): NDKEvent {
     kind: 1,
     tags: [],
     content: `content-${id}`,
-    relay: { url: "wss://relay.one/" },
+    relay: { url: relayUrls[0] },
+    onRelays: normalizedRelayUrls.map((relayUrl) => ({ url: relayUrl })),
   } as unknown as NDKEvent;
 }
 
 function createMockSubscriptionControls(): MockSubscriptionControls {
-  const listeners: Partial<Record<SubscriptionEventName, () => void>> = {};
+  const listeners: Partial<Record<SubscriptionEventName, (...args: unknown[]) => void>> = {};
   let onEvent: ((event: NDKEvent) => void) | null = null;
   let isClosed = false;
   let closeOnEose = false;
 
   const subscription: NDKSubscription = {
     on: ((eventName: string, callback: (...args: unknown[]) => void) => {
-      if (eventName === "eose" || eventName === "close") {
-        listeners[eventName] = callback as () => void;
+      if (eventName === "eose" || eventName === "close" || eventName === "event:dup") {
+        listeners[eventName] = callback;
       }
     }) as unknown as NDKSubscription["on"],
     stop: vi.fn(() => {
@@ -137,6 +140,10 @@ function createMockSubscriptionControls(): MockSubscriptionControls {
     emitEvent: (event: NDKEvent) => {
       if (isClosed || !onEvent) return;
       onEvent(event);
+    },
+    emitDuplicateEvent: (event: NDKEvent, relayUrl: string) => {
+      if (isClosed) return;
+      listeners["event:dup"]?.(event, { url: relayUrl } satisfies Partial<NDKRelay>);
     },
     emit: (eventName: SubscriptionEventName) => {
       listeners[eventName]?.();
@@ -165,6 +172,9 @@ function Harness({ subscribe }: { subscribe: MockSubscriptionControls["subscribe
       <output data-testid="hydrating">{String(result.isHydrating)}</output>
       <output data-testid="event-ids">
         {result.events.map((event: CachedNostrEvent) => event.id).join(",")}
+      </output>
+      <output data-testid="relay-urls">
+        {result.events.map((event: CachedNostrEvent) => (event.relayUrls || []).join("|")).join(",")}
       </output>
     </>
   );
@@ -210,6 +220,33 @@ describe("useNostrEventCache live subscription behavior", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("event-ids").textContent).toContain("post-eose-event");
+    });
+  });
+
+  it("merges relay URLs when duplicate deliveries arrive from another relay", async () => {
+    const controls = createMockSubscriptionControls();
+    const queryClient = new QueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness subscribe={controls.subscribe} />
+      </QueryClientProvider>
+    );
+
+    await waitFor(() => expect(controls.subscribe).toHaveBeenCalled());
+
+    act(() => {
+      controls.emitEvent(makeNostrEvent("dupe-event", ["wss://relay.one/"]));
+      controls.emitDuplicateEvent(makeNostrEvent("dupe-event", ["wss://relay.one/"]), "wss://relay.two/");
+      controls.emit("eose");
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("event-ids").textContent).toBe("dupe-event");
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-urls").textContent).toBe("wss://relay.one|wss://relay.two");
     });
   });
 });
