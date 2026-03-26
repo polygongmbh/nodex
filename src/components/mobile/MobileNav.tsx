@@ -1,4 +1,4 @@
-import { useRef, useCallback, PointerEvent } from "react";
+import { useRef, useCallback, useState, PointerEvent } from "react";
 import { Filter, Rss, GitBranch, List, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -17,6 +17,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
+  const [isPressed, setIsPressed] = useState(false);
 
   const segmentLabels: Partial<Record<MobileViewType, string>> = {
     filters: "",
@@ -33,8 +34,6 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
     if (!container) return null;
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
-    // First segment (filters/manage) is an icon-only segment, narrower
-    // We use the children's bounding rects for accuracy
     const children = container.children;
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
@@ -44,15 +43,14 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
         return allSegments[parseInt(child.dataset.segmentIndex)];
       }
     }
-    // Fallback: clamp to edges
     if (x <= 0) return allSegments[0];
     return allSegments[allSegments.length - 1];
   }, []);
 
   const handlePointerDown = useCallback((e: PointerEvent<HTMLDivElement>) => {
-    // Only respond to primary pointer (touch or mouse button)
     if (e.button !== 0) return;
     isDragging.current = true;
+    setIsPressed(true);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const seg = getSegmentFromX(e.clientX);
     if (seg && seg !== currentView) {
@@ -64,7 +62,6 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
     if (!isDragging.current) return;
     const seg = getSegmentFromX(e.clientX);
     if (seg && seg !== currentView) {
-      // Haptic feedback on segment change
       if (typeof navigator !== "undefined" && "vibrate" in navigator) {
         navigator.vibrate(10);
       }
@@ -74,14 +71,15 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
 
   const handlePointerUp = useCallback((e: PointerEvent<HTMLDivElement>) => {
     isDragging.current = false;
+    setIsPressed(false);
     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
   }, []);
 
-  const handlePointerCancel = useCallback((e: PointerEvent<HTMLDivElement>) => {
+  const handlePointerCancel = useCallback(() => {
     isDragging.current = false;
+    setIsPressed(false);
   }, []);
 
-  // Pill position: each segment is flex-1, so pill offset = activeIndex / total * 100%
   const segmentCount = allSegments.length;
 
   return (
@@ -93,7 +91,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
     >
       <div
         ref={containerRef}
-        className="relative flex items-center rounded-lg bg-muted/60 p-[3px] select-none touch-none"
+        className="relative flex items-center rounded-lg bg-muted/80 dark:bg-muted/60 p-[3px] select-none touch-none"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -101,11 +99,17 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
       >
         {/* Sliding pill */}
         <div
-          className="absolute top-[3px] bottom-[3px] rounded-md bg-background shadow-sm transition-transform duration-200 ease-out will-change-transform"
+          className={cn(
+            "absolute top-[3px] bottom-[3px] left-[3px] right-[3px] rounded-md bg-background shadow-sm will-change-transform",
+            isPressed
+              ? "transition-[transform,box-shadow] duration-150 ease-out shadow-md scale-[0.97]"
+              : "transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-sm"
+          )}
           style={{
-            width: `calc(${100 / segmentCount}% - ${(segmentCount > 1 ? 2 : 0)}px)`,
-            left: `${3 + (activeIndex === 0 ? 0 : 1)}px`,
-            transform: `translateX(calc(${activeIndex} * (100% + ${segmentCount > 1 ? 2 : 0}px)))`,
+            width: `calc(${100 / segmentCount}% - 6px / ${segmentCount})`,
+            left: '3px',
+            transform: `translateX(calc(${activeIndex} * (${100 / segmentCount}% + 6px / ${segmentCount} * ${segmentCount - 1} / ${segmentCount})))`,
+            // Simpler: use percentage of container width
           }}
           aria-hidden="true"
         />
@@ -123,13 +127,13 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
               : t("navigation.views.switchTo", { view: segmentLabels[seg] })
             }
             className={cn(
-              "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-colors duration-150 flex-1 min-w-0 rounded-md",
+              "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "active:scale-95",
               currentView === seg
                 ? "text-foreground"
-                : "text-muted-foreground"
+                : "text-muted-foreground/70 dark:text-muted-foreground"
             )}
-            // Click handler as fallback for accessibility (keyboard, screen readers)
             onClick={(e) => {
               e.stopPropagation();
               if (seg !== currentView) onViewChange(seg);
