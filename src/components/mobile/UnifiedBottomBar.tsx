@@ -46,6 +46,11 @@ import {
   extractHashtagsFromContent,
   getHashtagQueryAtCursor,
 } from "@/lib/hashtags";
+import {
+  filterChannelsForAutocomplete,
+  getComposerAutocompleteMatch,
+  hasMentionQueryAtCursor,
+} from "@/lib/composer-autocomplete";
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
@@ -138,6 +143,9 @@ export function UnifiedBottomBar({
   const [isBottomBarFocused, setIsBottomBarFocused] = useState(false);
   const [isBottomBarInteracting, setIsBottomBarInteracting] = useState(false);
   const [isComposeFocused, setIsComposeFocused] = useState(false);
+  const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
+  const [hashtagFilter, setHashtagFilter] = useState("");
+  const [activeHashtagIndex, setActiveHashtagIndex] = useState(0);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const [activeMentionIndex, setActiveMentionIndex] = useState(0);
@@ -694,6 +702,9 @@ export function UnifiedBottomBar({
     dispatchSearchChange("");
     setActiveSelector(null);
     setShowSendOptions(false);
+    setShowHashtagSuggestions(false);
+    setHashtagFilter("");
+    setActiveHashtagIndex(0);
     setShowMentionSuggestions(false);
     setMentionFilter("");
     setActiveMentionIndex(0);
@@ -747,6 +758,7 @@ export function UnifiedBottomBar({
           : hasInvalidRootTaskRelaySelection
             ? t("toasts.errors.selectRelayOrParent")
             : t("composer.hints.createFromText");
+  const filteredChannels = filterChannelsForAutocomplete(channels, hashtagFilter, 8);
   const filteredPeople = people.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
@@ -877,6 +889,68 @@ export function UnifiedBottomBar({
     }, 0);
   };
 
+  const insertHashtag = (tagName: string) => {
+    const cursorPos = cursorPositionRef.current;
+    const textBeforeCursor = sharedText.slice(0, cursorPos);
+    const textAfterCursor = sharedText.slice(cursorPos);
+    const hashtagStart = textBeforeCursor.lastIndexOf("#");
+    if (hashtagStart < 0) return;
+    const newText = textBeforeCursor.slice(0, hashtagStart) + `#${tagName} ` + textAfterCursor;
+    setSharedText(newText);
+    dispatchSearchChange(newText);
+    setShowHashtagSuggestions(false);
+    setActiveHashtagIndex(0);
+    scheduleTrackedTimeout(() => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+      const pos = hashtagStart + tagName.length + 2;
+      textarea.focus();
+      textarea.setSelectionRange(pos, pos);
+      cursorPositionRef.current = pos;
+    }, 0);
+  };
+
+  const clearAutocomplete = () => {
+    setShowHashtagSuggestions(false);
+    setShowMentionSuggestions(false);
+    setActiveHashtagIndex(0);
+    setActiveMentionIndex(0);
+  };
+
+  const updateAutocompleteFromCursor = (textValue: string, nextCursorPosition: number, focused: boolean) => {
+    if (!focused) {
+      clearAutocomplete();
+      return;
+    }
+
+    const textBeforeCursor = textValue.slice(0, nextCursorPosition);
+    const autocompleteMatch = getComposerAutocompleteMatch(textBeforeCursor);
+    if (autocompleteMatch?.kind === "hashtag") {
+      const shouldResetHashtagIndex = !showHashtagSuggestions || hashtagFilter !== autocompleteMatch.query;
+      setHashtagFilter(autocompleteMatch.query);
+      setShowHashtagSuggestions(true);
+      setShowMentionSuggestions(false);
+      if (shouldResetHashtagIndex) {
+        setActiveHashtagIndex(0);
+      }
+      setActiveMentionIndex(0);
+      return;
+    }
+    if (autocompleteMatch?.kind === "mention") {
+      const shouldResetMentionIndex = !showMentionSuggestions || mentionFilter !== autocompleteMatch.query;
+      setMentionFilter(autocompleteMatch.query);
+      setShowMentionSuggestions(true);
+      setShowHashtagSuggestions(false);
+      if (shouldResetMentionIndex) {
+        setActiveMentionIndex(0);
+      }
+      setActiveHashtagIndex(0);
+      return;
+    }
+
+    clearAutocomplete();
+  };
+
   const canSendTask = hasMeaningfulComposeText && !hasInvalidRootTaskRelaySelection && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canSendComment = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
   const canSendListing = hasMeaningfulComposeText && (hasAtLeastOneTag || canInheritParentTags) && !hasPendingAttachmentUploads && !hasFailedAttachmentUploads;
@@ -1000,6 +1074,9 @@ export function UnifiedBottomBar({
       textarea.setSelectionRange(hashtagStart, hashtagStart);
       cursorPositionRef.current = hashtagStart;
     }, 0);
+    setShowHashtagSuggestions(false);
+    setActiveHashtagIndex(0);
+    setHashtagFilter("");
   };
 
   return (
@@ -1406,36 +1483,69 @@ export function UnifiedBottomBar({
                 data-onboarding="compose-input"
                 ref={textareaRef}
                 value={sharedText}
-                onFocus={() => setIsComposeFocused(true)}
-                onBlur={() => setIsComposeFocused(false)}
+                onFocus={(event) => {
+                  setIsComposeFocused(true);
+                  const nextCursor = event.currentTarget.selectionStart ?? event.currentTarget.value.length;
+                  cursorPositionRef.current = nextCursor;
+                  updateAutocompleteFromCursor(event.currentTarget.value, nextCursor, true);
+                }}
+                onBlur={() => {
+                  setIsComposeFocused(false);
+                  updateAutocompleteFromCursor(sharedText, cursorPositionRef.current, false);
+                }}
                 onChange={(e) => {
                   const value = e.target.value;
-                  cursorPositionRef.current = e.target.selectionStart;
-                  const textBeforeCursor = value.slice(0, e.target.selectionStart);
-                  const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
-                  if (mentionMatch) {
-                    setMentionFilter((mentionMatch[1] || "").toLowerCase());
-                    setShowMentionSuggestions(true);
-                    setActiveMentionIndex(0);
-                  } else {
-                    setShowMentionSuggestions(false);
-                    setActiveMentionIndex(0);
-                  }
+                  const nextCursor = e.target.selectionStart ?? value.length;
+                  cursorPositionRef.current = nextCursor;
+                  updateAutocompleteFromCursor(value, nextCursor, true);
                   syncChannelFiltersFromContent(value, sharedText);
                   setSharedText(value);
                   dispatchSearchChange(value);
                 }}
+                onSelect={(event) => {
+                  const nextCursor = event.currentTarget.selectionStart ?? event.currentTarget.value.length;
+                  cursorPositionRef.current = nextCursor;
+                  updateAutocompleteFromCursor(event.currentTarget.value, nextCursor, isComposeFocused);
+                }}
                 onKeyDown={(e) => {
-                  if (isMetadataOnlyAutocompleteKey(e)) {
-                    const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPositionRef.current;
-                    const textBeforeCursor = sharedText.slice(0, effectiveCursor);
-                    const tagName = getHashtagQueryAtCursor(textBeforeCursor);
-                    if (tagName !== null) {
-                      if (tagName) {
-                        e.preventDefault();
-                        addHashtagTagOnly(tagName);
-                        return;
+                  if (showHashtagSuggestions) {
+                    if (filteredChannels.length > 0 && e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setActiveHashtagIndex((prev) => (prev + 1) % filteredChannels.length);
+                      return;
+                    }
+                    if (filteredChannels.length > 0 && e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setActiveHashtagIndex((prev) => (prev - 1 + filteredChannels.length) % filteredChannels.length);
+                      return;
+                    }
+                    if (filteredChannels.length > 0 && isAutocompleteAcceptKey(e)) {
+                      e.preventDefault();
+                      const selected = filteredChannels[Math.max(activeHashtagIndex, 0)] || filteredChannels[0];
+                      if (selected) {
+                        insertHashtag(selected.name);
                       }
+                      return;
+                    }
+                    if (isMetadataOnlyAutocompleteKey(e)) {
+                      const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPositionRef.current;
+                      const textBeforeCursor = sharedText.slice(0, effectiveCursor);
+                      const typedHashtag = getHashtagQueryAtCursor(textBeforeCursor);
+                      if (typedHashtag !== null) {
+                        const selected = filteredChannels[Math.max(activeHashtagIndex, 0)] || filteredChannels[0];
+                        const metadataTag = selected?.name || typedHashtag;
+                        if (metadataTag) {
+                          e.preventDefault();
+                          addHashtagTagOnly(metadataTag);
+                          return;
+                        }
+                      }
+                    }
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      setShowHashtagSuggestions(false);
+                      setActiveHashtagIndex(0);
+                      return;
                     }
                   }
                   if (showMentionSuggestions && filteredPeople.length > 0) {
@@ -1458,15 +1568,15 @@ export function UnifiedBottomBar({
                       return;
                     }
                     if (isMetadataOnlyAutocompleteKey(e)) {
-                        const textBeforeCursor = sharedText.slice(0, cursorPositionRef.current);
-                        if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(sharedText)) {
-                          e.preventDefault();
-                          const selected = filteredPeople[Math.max(activeMentionIndex, 0)] || filteredPeople[0];
-                          if (selected) {
-                            addMentionTagOnly(selected);
-                          }
-                          return;
+                      const textBeforeCursor = sharedText.slice(0, cursorPositionRef.current);
+                      if (hasMentionQueryAtCursor(textBeforeCursor) || /@[^\s@]*$/.test(sharedText)) {
+                        e.preventDefault();
+                        const selected = filteredPeople[Math.max(activeMentionIndex, 0)] || filteredPeople[0];
+                        if (selected) {
+                          addMentionTagOnly(selected);
                         }
+                        return;
+                      }
                     }
                     if (e.key === "Escape") {
                       e.preventDefault();
@@ -1496,8 +1606,40 @@ export function UnifiedBottomBar({
                 )}
                 rows={1}
               />
+              {showHashtagSuggestions && filteredChannels.length > 0 && (
+                <div
+                  data-testid="mobile-autocomplete-panel"
+                  className="motion-selector-panel absolute bottom-full left-0 mb-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1 max-h-72 overflow-y-auto overscroll-contain"
+                >
+                  {filteredChannels.map((channel, index) => (
+                    <button
+                      key={channel.id}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (isMetadataOnlyAutocompleteClick(e)) {
+                          addHashtagTagOnly(channel.name);
+                          return;
+                        }
+                        insertHashtag(channel.name);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-2 text-left",
+                        activeHashtagIndex === index ? "bg-muted motion-magnet-active" : "hover:bg-muted"
+                      )}
+                    >
+                      <Hash className="w-4 h-4 text-primary" />
+                      <span className="text-sm truncate">{channel.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               {showMentionSuggestions && filteredPeople.length > 0 && (
-                <div className="motion-selector-panel absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1 max-h-72 overflow-y-auto overscroll-contain">
+                <div
+                  data-testid="mobile-autocomplete-panel"
+                  className="motion-selector-panel absolute bottom-full left-0 mb-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-full py-1 max-h-72 overflow-y-auto overscroll-contain"
+                >
                   {filteredPeople.map((person, index) => {
                     const mentionIdentifier = getPreferredMentionIdentifier(person);
                     const mentionDisplay = formatMentionIdentifierForDisplay(mentionIdentifier);

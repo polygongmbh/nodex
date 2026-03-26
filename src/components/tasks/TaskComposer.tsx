@@ -60,6 +60,7 @@ import { featureDebugLog } from "@/lib/feature-debug";
 import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/local-image-caption";
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
 import { countHashtagsInContent, extractHashtagsFromContent, getHashtagQueryAtCursor } from "@/lib/hashtags";
+import { filterChannelsForAutocomplete, getComposerAutocompleteMatch, hasMentionQueryAtCursor } from "@/lib/composer-autocomplete";
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
@@ -984,28 +985,7 @@ export function TaskComposer({
     }
   };
 
-  const normalizedHashtagFilter = hashtagFilter.trim().toLowerCase();
-  const filteredChannels = channels
-    .filter((channel) => channel.name.toLowerCase().includes(normalizedHashtagFilter))
-    .sort((a, b) => {
-      const aName = a.name.toLowerCase();
-      const bName = b.name.toLowerCase();
-      const aExact = aName === normalizedHashtagFilter ? 1 : 0;
-      const bExact = bName === normalizedHashtagFilter ? 1 : 0;
-      if (aExact !== bExact) return bExact - aExact;
-
-      const aPrefix = aName.startsWith(normalizedHashtagFilter) ? 1 : 0;
-      const bPrefix = bName.startsWith(normalizedHashtagFilter) ? 1 : 0;
-      if (aPrefix !== bPrefix) return bPrefix - aPrefix;
-
-      if (aName.length !== bName.length) return aName.length - bName.length;
-
-      const aIndex = aName.indexOf(normalizedHashtagFilter);
-      const bIndex = bName.indexOf(normalizedHashtagFilter);
-      if (aIndex !== bIndex) return aIndex - bIndex;
-
-      return aName.localeCompare(bName);
-    });
+  const filteredChannels = filterChannelsForAutocomplete(channels, hashtagFilter);
   const filteredPeople = mentionablePeople.filter((person) => {
     return personMatchesMentionQuery(person, mentionFilter);
   }).slice(0, 8);
@@ -1223,7 +1203,7 @@ export function TaskComposer({
       if (isMetadataOnlyAutocompleteKey(e)) {
         const effectiveCursor = textareaRef.current?.selectionStart ?? cursorPosition;
         const textBeforeCursor = content.slice(0, effectiveCursor);
-        if (/@[^\s@]*$/.test(textBeforeCursor) || /@[^\s@]*$/.test(content)) {
+        if (hasMentionQueryAtCursor(textBeforeCursor) || /@[^\s@]*$/.test(content)) {
           e.preventDefault();
           const selected = filteredPeople[Math.max(activeSuggestionIndex, 0)] || filteredPeople[0];
           if (selected) {
@@ -1273,17 +1253,16 @@ export function TaskComposer({
     setCursorPosition(cursorPos);
 
     const textBeforeCursor = newContent.slice(0, cursorPos);
-    const hashtagQuery = getHashtagQueryAtCursor(textBeforeCursor);
-    const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
-    if (hashtagQuery !== null) {
-      setHashtagFilter(hashtagQuery);
+    const autocompleteMatch = getComposerAutocompleteMatch(textBeforeCursor);
+    if (autocompleteMatch?.kind === "hashtag") {
+      setHashtagFilter(autocompleteMatch.query);
       setShowHashtagSuggestions(true);
       setShowMentionSuggestions(false);
       setActiveSuggestionIndex(0);
       return;
     }
-    if (mentionMatch) {
-      setMentionFilter((mentionMatch[1] || "").toLowerCase());
+    if (autocompleteMatch?.kind === "mention") {
+      setMentionFilter(autocompleteMatch.query);
       setShowMentionSuggestions(true);
       setShowHashtagSuggestions(false);
       setActiveSuggestionIndex(0);
@@ -1302,17 +1281,16 @@ export function TaskComposer({
       return;
     }
     const textBeforeCursor = textValue.slice(0, nextCursorPosition);
-    const hashtagQuery = getHashtagQueryAtCursor(textBeforeCursor);
-    const mentionMatch = textBeforeCursor.match(/@([^\s@]*)$/);
-    if (hashtagQuery !== null) {
-      setHashtagFilter(hashtagQuery);
+    const autocompleteMatch = getComposerAutocompleteMatch(textBeforeCursor);
+    if (autocompleteMatch?.kind === "hashtag") {
+      setHashtagFilter(autocompleteMatch.query);
       setShowHashtagSuggestions(true);
       setShowMentionSuggestions(false);
       setActiveSuggestionIndex(0);
       return;
     }
-    if (mentionMatch) {
-      setMentionFilter((mentionMatch[1] || "").toLowerCase());
+    if (autocompleteMatch?.kind === "mention") {
+      setMentionFilter(autocompleteMatch.query);
       setShowMentionSuggestions(true);
       setShowHashtagSuggestions(false);
       setActiveSuggestionIndex(0);

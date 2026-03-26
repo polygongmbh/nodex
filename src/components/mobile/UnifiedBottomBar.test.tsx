@@ -42,6 +42,12 @@ const channels: Channel[] = [
   { id: "general", name: "general", filterState: "neutral" },
 ];
 
+const autocompleteChannels: Channel[] = [
+  { id: "general", name: "general", filterState: "neutral" },
+  { id: "growth", name: "growth", filterState: "neutral" },
+  { id: "ops", name: "ops", filterState: "neutral" },
+];
+
 const people: Person[] = [
   {
     id: "e".repeat(64),
@@ -788,6 +794,54 @@ describe("UnifiedBottomBar auth gating", () => {
     });
   });
 
+  it("anchors mobile mention autocomplete above the composer", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={channels}
+        people={people}
+        canCreateContent
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "ping @al", selectionStart: 8 } });
+
+    const panel = screen.getByTestId("mobile-autocomplete-panel");
+    // The mobile composer is bottom-docked, so suggestions must open upward to stay usable.
+    expect(panel.className).toContain("bottom-full");
+  });
+
+  it("supports #channel autocomplete in the combined search/compose field", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={autocompleteChannels}
+        people={people}
+        canCreateContent
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #ge", selectionStart: 8 } });
+
+    expect(screen.getByText("general")).toBeInTheDocument();
+
+    fireEvent.keyDown(field, { key: "Enter" });
+
+    expect(field.value).toBe("Ship #general ");
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "ui.search.change",
+      query: "Ship #general ",
+    });
+  });
+
   it("closes mention autocomplete when compose is cancelled", () => {
     render(
       <UnifiedBottomBar
@@ -807,6 +861,28 @@ describe("UnifiedBottomBar auth gating", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /clear compose/i }));
     expect(screen.queryByText("@alice")).not.toBeInTheDocument();
+  });
+
+  it("closes hashtag autocomplete on escape", () => {
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSubmit={() => ({ ok: true, mode: "local" })}
+        currentView="feed"
+        relays={relays}
+        channels={autocompleteChannels}
+        people={people}
+        canCreateContent
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #ge", selectionStart: 8 } });
+    expect(screen.getByText("general")).toBeInTheDocument();
+
+    fireEvent.keyDown(field, { key: "Escape" });
+
+    expect(screen.queryByText("general")).not.toBeInTheDocument();
   });
 
   it("adds mention tag via Alt+Enter without inserting mention text", async () => {
@@ -953,6 +1029,51 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(onSubmit).toHaveBeenLastCalledWith(
       "Ship ",
       ["brandnew"],
+      ["demo"],
+      "task",
+      undefined,
+      undefined,
+      "due",
+      [],
+      undefined,
+      [],
+      undefined
+    );
+  });
+
+  it("uses Alt+Click on hashtag autocomplete option to add tag-only", async () => {
+    const onSubmit = vi.fn(async () => successResult);
+    render(
+      <UnifiedBottomBar
+        searchQuery=""
+        onSubmit={onSubmit}
+        currentView="feed"
+        relays={relays}
+        channels={autocompleteChannels}
+        people={people}
+        canCreateContent
+      />
+    );
+
+    const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: "Ship #ge", selectionStart: 8 } });
+
+    const hashtagOption = screen.getByText("general").closest("button");
+    expect(hashtagOption).toBeTruthy();
+    fireEvent.click(hashtagOption!, { altKey: true });
+
+    await waitFor(() => {
+      expect(field.value).toBe("Ship ");
+    });
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "ui.search.change",
+      query: "Ship ",
+    });
+
+    fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      "Ship ",
+      ["general"],
       ["demo"],
       "task",
       undefined,
