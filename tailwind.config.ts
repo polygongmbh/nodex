@@ -108,11 +108,21 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        "slide-in-from-right": {
+          from: { transform: "translateX(30%)", opacity: "0.4" },
+          to: { transform: "translateX(0)", opacity: "1" },
+        },
+        "slide-in-from-left": {
+          from: { transform: "translateX(-30%)", opacity: "0.4" },
+          to: { transform: "translateX(0)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "slide-in-from-right": "slide-in-from-right 0.2s ease-out",
+        "slide-in-from-left": "slide-in-from-left 0.2s ease-out",
       },
     },
   },
