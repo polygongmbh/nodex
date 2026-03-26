@@ -191,7 +191,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
           )}
           onClick={onManageOpen}
         >
-          <Menu className="w-[18px] h-[18px]" />
+          <Menu className="w-[18px] h-[18px] sm:w-5 sm:h-5" />
         </button>
 
         {/* Segmented control */}
@@ -234,7 +234,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               aria-selected={currentView === seg && !isManageActive}
               aria-label={t("navigation.views.switchTo", { view: segmentLabels[seg] })}
               className={cn(
-                "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",
+                "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] sm:text-[14px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 "active:scale-90",
                 currentView === seg && !isManageActive
@@ -247,10 +247,10 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               }}
               tabIndex={currentView === seg ? 0 : -1}
             >
-              {seg === "feed" && <Rss className="w-3.5 h-3.5 shrink-0" />}
-              {seg === "tree" && <GitBranch className="w-3.5 h-3.5 shrink-0" />}
-              {seg === "list" && <List className="w-3.5 h-3.5 shrink-0" />}
-              {seg === "calendar" && <Calendar className="w-3.5 h-3.5 shrink-0" />}
+              {seg === "feed" && <Rss className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
+              {seg === "tree" && <GitBranch className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
+              {seg === "list" && <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
+              {seg === "calendar" && <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
               <span className="truncate">{segmentLabels[seg]}</span>
             </button>
           ))}
