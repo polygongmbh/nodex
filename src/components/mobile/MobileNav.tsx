@@ -18,7 +18,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
-  const segmentLabels: Record<MobileViewType, string> = {
+  const segmentLabels: Partial<Record<MobileViewType, string>> = {
     filters: "",
     feed: t("navigation.views.feed"),
     tree: t("navigation.views.tree"),

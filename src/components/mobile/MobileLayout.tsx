@@ -495,12 +495,6 @@ export function MobileLayout({
         isMobile
       />
       
-      {/* Swipe indicator */}
-      <SwipeIndicator 
-        views={mobileViews} 
-        currentView={mobileCurrentView} 
-        showFilters={showFilters} 
-      />
       
       <main 
         className="flex-1 overflow-hidden relative"
