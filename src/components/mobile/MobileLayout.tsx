@@ -203,34 +203,32 @@ export function MobileLayout({
     }
   }, [activePrimaryView, handleMobileViewChange, openManageView]);
 
-  // Swipe animation state
-  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
+  // Gesture-following swipe state
+  const viewContainerRef = useRef<HTMLDivElement>(null);
+  const swipeDeltaRef = useRef(0);
+  const [swipeTransition, setSwipeTransition] = useState<"left" | "right" | null>(null);
 
   const animatedSwipeLeft = useCallback(() => {
-    setSwipeDirection("left");
-    setIsAnimating(true);
-    setTimeout(() => {
+    setSwipeTransition("left");
+    requestAnimationFrame(() => {
       handleSwipeLeft();
-      setIsAnimating(false);
-      setSwipeDirection(null);
-    }, 150);
+      // Let the CSS transition play, then clear
+      setTimeout(() => setSwipeTransition(null), 200);
+    });
   }, [handleSwipeLeft]);
 
   const animatedSwipeRight = useCallback(() => {
-    setSwipeDirection("right");
-    setIsAnimating(true);
-    setTimeout(() => {
+    setSwipeTransition("right");
+    requestAnimationFrame(() => {
       handleSwipeRight();
-      setIsAnimating(false);
-      setSwipeDirection(null);
-    }, 150);
+      setTimeout(() => setSwipeTransition(null), 200);
+    });
   }, [handleSwipeRight]);
 
   const swipeHandlers = useSwipeNavigation({
     onSwipeLeft: animatedSwipeLeft,
     onSwipeRight: animatedSwipeRight,
-    threshold: 60,
+    threshold: 50,
     enableHaptics: true,
   });
 
