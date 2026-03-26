@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, PointerEvent, useLayoutEffect } from "react";
+import { useRef, useCallback, PointerEvent, useLayoutEffect, useEffect } from "react";
 import { Menu, Rss, GitBranch, List, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -26,7 +26,8 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
   const suppressClickRef = useRef(false);
   const lastDraggedSegmentRef = useRef<MobileViewType | null>(null);
   const pillStartXRef = useRef<number>(0);
-  const [isPressed, setIsPressed] = useState(false);
+  const cachedRectsRef = useRef<{ left: number; width: number; centerX: number }[] | null>(null);
+  const isPressedRef = useRef(false);
 
   const segmentLabels: Partial<Record<MobileViewType, string>> = {
     feed: t("navigation.views.feed"),
@@ -53,6 +54,8 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
   }, []);
 
   const updatePillPosition = useCallback(() => {
+    // Don't update during drag — the drag handler owns pill position
+    if (isDraggingRef.current) return;
     const pill = pillRef.current;
     if (!pill) return;
     const rects = getButtonRects();
@@ -71,26 +74,49 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
     return () => window.removeEventListener("resize", updatePillPosition);
   }, [updatePillPosition]);
 
+  // Sync pill pressed visual via DOM to avoid re-renders
+  const setPillPressed = useCallback((pressed: boolean) => {
+    isPressedRef.current = pressed;
+    const pill = pillRef.current;
+    if (!pill) return;
+    if (pressed) {
+      pill.style.transform = "translateX(var(--pill-x, 0px)) scaleX(0.95) scaleY(0.88)";
+      pill.style.transition = "transform 16ms linear, box-shadow 150ms ease-out, opacity 150ms ease-out";
+      pill.style.boxShadow = "0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)";
+    } else {
+      pill.style.transform = "translateX(var(--pill-x, 0px))";
+      pill.style.transition = "transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out, opacity 150ms ease-out";
+      pill.style.boxShadow = "0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)";
+    }
+  }, []);
+
+  // Set initial pill styles on mount
+  useEffect(() => {
+    setPillPressed(false);
+  }, [setPillPressed]);
+
   const resetPointerState = useCallback(() => {
+    const draggedSeg = lastDraggedSegmentRef.current;
     activePointerIdRef.current = null;
     dragStartRef.current = null;
+    const wasDragging = isDraggingRef.current;
     isDraggingRef.current = false;
     lastDraggedSegmentRef.current = null;
-    setIsPressed(false);
-    // Snap pill back to current active segment
-    updatePillPosition();
+    cachedRectsRef.current = null;
+    setPillPressed(false);
+
+    // If we dragged to a different segment, commit the view change now
+    if (wasDragging && draggedSeg && draggedSeg !== currentView) {
+      onViewChange(draggedSeg);
+    } else {
+      // Snap pill back
+      updatePillPosition();
+    }
 
     requestAnimationFrame(() => {
       suppressClickRef.current = false;
     });
-  }, [updatePillPosition]);
-
-  const getSegmentFromPointer = useCallback((clientX: number, clientY: number): MobileViewType | null => {
-    const element = document.elementFromPoint(clientX, clientY);
-    const button = element?.closest<HTMLElement>("[data-segment-view]");
-    const segment = button?.dataset.segmentView as MobileViewType | undefined;
-    return segment ?? null;
-  }, []);
+  }, [updatePillPosition, setPillPressed, currentView, onViewChange]);
 
   const handlePointerDown = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
@@ -99,12 +125,13 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
     isDraggingRef.current = false;
     suppressClickRef.current = false;
     lastDraggedSegmentRef.current = currentView;
-    // Store pill's current X for drag offset tracking
-    const rects = getButtonRects();
+    // Cache rects for the entire gesture
+    cachedRectsRef.current = getButtonRects();
+    const rects = cachedRectsRef.current;
     const idx = activeIndex >= 0 ? activeIndex : 0;
     pillStartXRef.current = rects?.[idx]?.left ?? 0;
-    setIsPressed(true);
-  }, [currentView, activeIndex, getButtonRects]);
+    setPillPressed(true);
+  }, [currentView, activeIndex, getButtonRects, setPillPressed]);
 
   const handlePointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (activePointerIdRef.current !== e.pointerId || !dragStartRef.current) return;
@@ -116,7 +143,13 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
 
     if (!isDraggingRef.current) {
       if (absDy > absDx && absDy > DRAG_THRESHOLD_PX) {
-        resetPointerState();
+        activePointerIdRef.current = null;
+        dragStartRef.current = null;
+        isDraggingRef.current = false;
+        lastDraggedSegmentRef.current = null;
+        cachedRectsRef.current = null;
+        setPillPressed(false);
+        updatePillPosition();
         return;
       }
 
@@ -128,28 +161,39 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
       suppressClickRef.current = true;
     }
 
-    // Move pill to follow pointer X
+    // Move pill directly via DOM — no React state
     const pill = pillRef.current;
-    const rects = getButtonRects();
+    const rects = cachedRectsRef.current;
     if (pill && rects && rects.length > 0) {
-      const pillWidth = pill.offsetWidth;
       const minX = rects[0].left;
       const maxX = rects[rects.length - 1].left;
       const rawX = pillStartXRef.current + dx;
       const clampedX = Math.max(minX, Math.min(maxX, rawX));
       pill.style.setProperty("--pill-x", `${clampedX}px`);
-    }
 
-    // Detect which segment the pointer is over for haptic + view change
-    const seg = getSegmentFromPointer(e.clientX, e.clientY);
-    if (!seg || seg === lastDraggedSegmentRef.current) return;
+      // Snap pill width to nearest segment
+      const pillCenter = clampedX + pill.offsetWidth / 2;
+      let nearestIdx = 0;
+      let nearestDist = Infinity;
+      for (let i = 0; i < rects.length; i++) {
+        const segCenter = rects[i].left + rects[i].width / 2;
+        const dist = Math.abs(pillCenter - segCenter);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestIdx = i;
+        }
+      }
+      pill.style.width = `${rects[nearestIdx].width}px`;
 
-    lastDraggedSegmentRef.current = seg;
-    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(10);
+      const seg = allSegments[nearestIdx];
+      if (seg && seg !== lastDraggedSegmentRef.current) {
+        lastDraggedSegmentRef.current = seg;
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          navigator.vibrate(10);
+        }
+      }
     }
-    onViewChange(seg);
-  }, [getSegmentFromPointer, onViewChange, resetPointerState, getButtonRects]);
+  }, [setPillPressed, updatePillPosition]);
 
   const handlePointerUp = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (activePointerIdRef.current !== e.pointerId) return;
@@ -200,18 +244,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               "absolute top-[3px] bottom-[3px] rounded-md bg-primary will-change-transform",
               isManageActive && "opacity-0"
             )}
-            style={{
-              left: "3px",
-              transform: isPressed
-                ? "translateX(var(--pill-x, 0px)) scaleX(0.95) scaleY(0.88)"
-                : "translateX(var(--pill-x, 0px))",
-              transition: isPressed
-                ? "transform 16ms linear, box-shadow 150ms ease-out, opacity 150ms ease-out"
-                : "transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out, opacity 150ms ease-out",
-              boxShadow: isPressed
-                ? "0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)"
-                : "0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)",
-            }}
+            style={{ left: "3px" }}
             aria-hidden="true"
           />
 
