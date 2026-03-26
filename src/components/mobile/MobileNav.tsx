@@ -1,5 +1,5 @@
 import { useRef, useCallback, PointerEvent } from "react";
-import { Filter } from "lucide-react";
+import { Filter, Rss, GitBranch, List, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useTranslation } from "react-i18next";
@@ -123,7 +123,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
               : t("navigation.views.switchTo", { view: segmentLabels[seg] })
             }
             className={cn(
-              "relative z-10 flex items-center justify-center py-1.5 text-xs font-medium transition-colors duration-150 flex-1 min-w-0 rounded-md",
+              "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-colors duration-150 flex-1 min-w-0 rounded-md",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
               currentView === seg
                 ? "text-foreground"
@@ -139,7 +139,13 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
             {seg === "filters" ? (
               <Filter className="w-4 h-4" />
             ) : (
-              <span className="truncate px-1">{segmentLabels[seg]}</span>
+              <>
+                {seg === "feed" && <Rss className="w-3.5 h-3.5 shrink-0" />}
+                {seg === "tree" && <GitBranch className="w-3.5 h-3.5 shrink-0" />}
+                {seg === "list" && <List className="w-3.5 h-3.5 shrink-0" />}
+                {seg === "calendar" && <Calendar className="w-3.5 h-3.5 shrink-0" />}
+                <span className="truncate">{segmentLabels[seg]}</span>
+              </>
             )}
           </button>
         ))}
