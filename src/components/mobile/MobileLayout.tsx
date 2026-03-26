@@ -2,7 +2,7 @@ import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } fro
 import { MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
-import { SwipeIndicator } from "./SwipeIndicator";
+
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";

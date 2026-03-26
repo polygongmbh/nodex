@@ -1,4 +1,5 @@
-import { Filter, GitBranch, LayoutList, Calendar, List } from "lucide-react";
+import { useRef, useCallback, PointerEvent } from "react";
+import { Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useTranslation } from "react-i18next";
@@ -10,42 +11,139 @@ interface MobileNavProps {
   onViewChange: (view: MobileViewType) => void;
 }
 
+const allSegments: MobileViewType[] = ["filters", "feed", "tree", "list", "calendar"];
+
 export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   const { t } = useTranslation();
-  const navItems: { id: MobileViewType; label: string; icon: React.ReactNode }[] = [
-    { id: "filters", label: t("navigation.views.manage"), icon: <Filter className="w-5 h-5" /> },
-    { id: "feed", label: t("navigation.views.feed"), icon: <LayoutList className="w-5 h-5" /> },
-    { id: "tree", label: t("navigation.views.tree"), icon: <GitBranch className="w-5 h-5" /> },
-    { id: "list", label: t("navigation.views.upcoming"), icon: <List className="w-5 h-5" /> },
-    { id: "calendar", label: t("navigation.views.calendar"), icon: <Calendar className="w-5 h-5" /> },
-  ];
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const segmentLabels: Record<MobileViewType, string> = {
+    filters: "",
+    feed: t("navigation.views.feed"),
+    tree: t("navigation.views.tree"),
+    list: t("navigation.views.upcoming"),
+    calendar: t("navigation.views.calendar"),
+  };
+
+  const activeIndex = allSegments.indexOf(currentView);
+
+  const getSegmentFromX = useCallback((clientX: number): MobileViewType | null => {
+    const container = containerRef.current;
+    if (!container) return null;
+    const rect = container.getBoundingClientRect();
+    const x = clientX - rect.left;
+    // First segment (filters/manage) is an icon-only segment, narrower
+    // We use the children's bounding rects for accuracy
+    const children = container.children;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement;
+      if (child.dataset.segmentIndex === undefined) continue;
+      const childRect = child.getBoundingClientRect();
+      if (clientX >= childRect.left && clientX <= childRect.right) {
+        return allSegments[parseInt(child.dataset.segmentIndex)];
+      }
+    }
+    // Fallback: clamp to edges
+    if (x <= 0) return allSegments[0];
+    return allSegments[allSegments.length - 1];
+  }, []);
+
+  const handlePointerDown = useCallback((e: PointerEvent<HTMLDivElement>) => {
+    // Only respond to primary pointer (touch or mouse button)
+    if (e.button !== 0) return;
+    isDragging.current = true;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const seg = getSegmentFromX(e.clientX);
+    if (seg && seg !== currentView) {
+      onViewChange(seg);
+    }
+  }, [currentView, getSegmentFromX, onViewChange]);
+
+  const handlePointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    const seg = getSegmentFromX(e.clientX);
+    if (seg && seg !== currentView) {
+      // Haptic feedback on segment change
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(10);
+      }
+      onViewChange(seg);
+    }
+  }, [currentView, getSegmentFromX, onViewChange]);
+
+  const handlePointerUp = useCallback((e: PointerEvent<HTMLDivElement>) => {
+    isDragging.current = false;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+  }, []);
+
+  const handlePointerCancel = useCallback((e: PointerEvent<HTMLDivElement>) => {
+    isDragging.current = false;
+  }, []);
+
+  // Pill position: each segment is flex-1, so pill offset = activeIndex / total * 100%
+  const segmentCount = allSegments.length;
+
   return (
-    <nav 
-      className="flex items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm mt-2 px-2 py-2.5 safe-area-top gap-1"
+    <nav
+      className="mx-2 mt-2 mb-1 safe-area-top"
       role="tablist"
       aria-label={t("navigation.aria.views")}
       data-onboarding="mobile-nav"
     >
-      {navItems.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onViewChange(item.id)}
-          data-onboarding={item.id === "filters" ? "mobile-nav-manage" : undefined}
-          role="tab"
-          aria-selected={currentView === item.id}
-          aria-label={t("navigation.views.switchTo", { view: item.label })}
-          title={t("navigation.views.switchTo", { view: item.label })}
-          className={cn(
-            "flex flex-col items-center justify-center gap-1.5 rounded-lg transition-colors flex-1 min-w-0 touch-target focus:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-95 py-1",
-            currentView === item.id
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:text-foreground active:bg-muted/50"
-          )}
-        >
-          {item.icon}
-          <span className="text-[0.65rem] font-medium truncate leading-none px-0.5">{item.label}</span>
-        </button>
-      ))}
+      <div
+        ref={containerRef}
+        className="relative flex items-center rounded-lg bg-muted/60 p-[3px] select-none touch-none"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
+      >
+        {/* Sliding pill */}
+        <div
+          className="absolute top-[3px] bottom-[3px] rounded-md bg-background shadow-sm transition-transform duration-200 ease-out will-change-transform"
+          style={{
+            width: `calc(${100 / segmentCount}% - ${(segmentCount > 1 ? 2 : 0)}px)`,
+            left: `${3 + (activeIndex === 0 ? 0 : 1)}px`,
+            transform: `translateX(calc(${activeIndex} * (100% + ${segmentCount > 1 ? 2 : 0}px)))`,
+          }}
+          aria-hidden="true"
+        />
+
+        {allSegments.map((seg, i) => (
+          <button
+            key={seg}
+            type="button"
+            data-segment-index={i}
+            data-onboarding={seg === "filters" ? "mobile-nav-manage" : undefined}
+            role="tab"
+            aria-selected={currentView === seg}
+            aria-label={seg === "filters"
+              ? t("navigation.views.switchTo", { view: t("navigation.views.manage") })
+              : t("navigation.views.switchTo", { view: segmentLabels[seg] })
+            }
+            className={cn(
+              "relative z-10 flex items-center justify-center py-1.5 text-xs font-medium transition-colors duration-150 flex-1 min-w-0 rounded-md",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              currentView === seg
+                ? "text-foreground"
+                : "text-muted-foreground"
+            )}
+            // Click handler as fallback for accessibility (keyboard, screen readers)
+            onClick={(e) => {
+              e.stopPropagation();
+              if (seg !== currentView) onViewChange(seg);
+            }}
+            tabIndex={currentView === seg ? 0 : -1}
+          >
+            {seg === "filters" ? (
+              <Filter className="w-4 h-4" />
+            ) : (
+              <span className="truncate px-1">{segmentLabels[seg]}</span>
+            )}
+          </button>
+        ))}
+      </div>
     </nav>
   );
 }
