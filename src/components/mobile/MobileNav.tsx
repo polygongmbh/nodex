@@ -21,6 +21,9 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
   const pillRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const [isPressed, setIsPressed] = useState(false);
+  // Track whether we just came from manage view to skip pill transition
+  const wasManageActive = useRef(isManageActive);
+  const skipTransition = useRef(false);
 
   const segmentLabels: Partial<Record<MobileViewType, string>> = {
     feed: t("navigation.views.feed"),
@@ -30,6 +33,18 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
   };
 
   const activeIndex = allSegments.indexOf(currentView);
+
+  // Detect transition from manage → view to skip pill animation
+  useEffect(() => {
+    if (wasManageActive.current && !isManageActive) {
+      skipTransition.current = true;
+      // Reset after a frame so next navigation animates normally
+      requestAnimationFrame(() => {
+        skipTransition.current = false;
+      });
+    }
+    wasManageActive.current = isManageActive;
+  }, [isManageActive]);
 
   // Position pill by measuring actual button positions
   const updatePillPosition = useCallback(() => {
@@ -47,6 +62,16 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
 
     pill.style.width = `${buttonRect.width}px`;
     pill.style.setProperty('--pill-x', `${buttonRect.left - containerRect.left - 3}px`);
+
+    // If we should skip transition (coming from manage), remove transition temporarily
+    if (skipTransition.current) {
+      pill.style.transition = 'none';
+      // Force reflow then restore transition
+      void pill.offsetHeight;
+      requestAnimationFrame(() => {
+        pill.style.transition = '';
+      });
+    }
   }, [activeIndex]);
 
   useEffect(() => {
@@ -75,11 +100,9 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
     isDragging.current = true;
     setIsPressed(true);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    const seg = getSegmentFromX(e.clientX);
-    if (seg && seg !== currentView) {
-      onViewChange(seg);
-    }
-  }, [currentView, getSegmentFromX, onViewChange]);
+    // Don't select segment on pointer down — let onClick handle taps
+    // This prevents double-firing and wrong segment from X coordinate
+  }, []);
 
   const handlePointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
     if (!isDragging.current) return;
@@ -142,8 +165,8 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
           <div
             ref={pillRef}
             className={cn(
-              "absolute top-[3px] bottom-[3px] rounded-md bg-background will-change-transform",
-              isManageActive && "opacity-0"
+              "absolute top-[3px] bottom-[3px] rounded-md will-change-transform",
+              isManageActive ? "opacity-0" : "bg-primary"
             )}
             style={{
               left: '3px',
@@ -151,8 +174,8 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
                 ? 'translateX(var(--pill-x, 0px)) scaleX(0.95) scaleY(0.88)'
                 : 'translateX(var(--pill-x, 0px))',
               transition: isPressed
-                ? 'transform 150ms ease-out, width 150ms ease-out, box-shadow 150ms ease-out'
-                : 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out',
+                ? 'transform 150ms ease-out, width 150ms ease-out, box-shadow 150ms ease-out, opacity 150ms ease-out'
+                : 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out, opacity 150ms ease-out',
               boxShadow: isPressed
                 ? '0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)'
                 : '0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)',
@@ -166,19 +189,19 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
               type="button"
               data-segment-index={i}
               role="tab"
-              aria-selected={currentView === seg}
+              aria-selected={currentView === seg && !isManageActive}
               aria-label={t("navigation.views.switchTo", { view: segmentLabels[seg] })}
               className={cn(
                 "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",
                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 "active:scale-90",
-                currentView === seg
-                  ? "text-foreground"
+                currentView === seg && !isManageActive
+                  ? "text-primary-foreground"
                   : "text-muted-foreground/70 dark:text-muted-foreground"
               )}
               onClick={(e) => {
                 e.stopPropagation();
-                if (seg !== currentView) onViewChange(seg);
+                onViewChange(seg);
               }}
               tabIndex={currentView === seg ? 0 : -1}
             >
