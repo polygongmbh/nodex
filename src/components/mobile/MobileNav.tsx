@@ -149,8 +149,9 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
               : t("navigation.views.switchTo", { view: segmentLabels[seg] })
             }
             className={cn(
-              "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-colors duration-150 flex-1 min-w-0 rounded-md",
+              "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "active:scale-90",
               currentView === seg
                 ? "text-foreground"
                 : "text-muted-foreground/70 dark:text-muted-foreground"
