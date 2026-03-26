@@ -4,6 +4,7 @@ import {
   filterAutoAddRelayUrls,
   mergeConfiguredRelayStatuses,
   normalizeRelayUrl,
+  reorderResolvedRelayStatuses,
   removeResolvedRelayUrl,
 } from "./relay-list";
 
@@ -59,5 +60,35 @@ describe("filterAutoAddRelayUrls", () => {
       existingRelayUrls: ["wss://relay.one"],
       removedRelayUrls: ["wss://relay.two/"],
     })).toEqual(["wss://relay.three"]);
+  });
+});
+
+describe("reorderResolvedRelayStatuses", () => {
+  it("reorders relays by normalized requested urls while preserving remaining relays", () => {
+    expect(reorderResolvedRelayStatuses({
+      relays: [
+        { url: "wss://relay.one", status: "connected" },
+        { url: "wss://relay.two", status: "disconnected" },
+        { url: "wss://relay.three", status: "connecting" },
+      ],
+      orderedRelayUrls: ["wss://relay.three/", "wss://relay.one"],
+    })).toEqual([
+      { url: "wss://relay.three", status: "connecting" },
+      { url: "wss://relay.one", status: "connected" },
+      { url: "wss://relay.two", status: "disconnected" },
+    ]);
+  });
+
+  it("ignores duplicate and unknown requested urls", () => {
+    expect(reorderResolvedRelayStatuses({
+      relays: [
+        { url: "wss://relay.one", status: "connected" },
+        { url: "wss://relay.two", status: "disconnected" },
+      ],
+      orderedRelayUrls: ["wss://relay.two", "wss://relay.two/", "wss://relay.missing"],
+    })).toEqual([
+      { url: "wss://relay.two", status: "disconnected" },
+      { url: "wss://relay.one", status: "connected" },
+    ]);
   });
 });

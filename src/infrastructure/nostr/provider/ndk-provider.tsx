@@ -50,6 +50,7 @@ import {
   MAX_INITIAL_CONNECT_FAILURES,
   RELAY_STATUS_RECONCILE_INTERVAL_MS,
 } from "./relay-status";
+import { reorderResolvedRelayStatuses } from "./relay-list";
 import { waitForNostrExtensionAvailability } from "./session-restore";
 import { verifyNip05 } from "@/lib/nostr/nip05-verify";
 import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
@@ -1374,6 +1375,26 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     connectManagedRelay(ndk, normalized);
   }, [connectManagedRelay, ndk, probeRelayInfo]);
 
+  const reorderRelays = useCallback((orderedUrls: string[]) => {
+    if (!ndk) return;
+
+    setRelays((previous) => {
+      const next = reorderResolvedRelayStatuses({
+        relays: previous,
+        orderedRelayUrls: orderedUrls,
+      });
+      if (next === previous) {
+        return previous;
+      }
+
+      const nextRelayUrls = next.map((relay) => relay.url);
+      ndk.explicitRelayUrls = nextRelayUrls;
+      savePersistedRelayUrls(nextRelayUrls);
+      nostrDevLog("relay", "Relay order updated", { relayUrls: nextRelayUrls });
+      return next;
+    });
+  }, [ndk]);
+
   const loginWithNoas = useCallback(async (
     username: string,
     password: string,
@@ -2143,6 +2164,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     signupWithNoas,
     logout,
     addRelay,
+    reorderRelays,
     removeRelay,
     reconnectRelay,
     publishEvent,
@@ -2169,6 +2191,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     signupWithNoas,
     logout,
     addRelay,
+    reorderRelays,
     removeRelay,
     reconnectRelay,
     publishEvent,

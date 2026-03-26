@@ -140,6 +140,26 @@ describe("RelayManagement", () => {
     expect(dispatch).not.toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
   });
 
+  it("dispatches relay reorder intent with the next ordered relay urls", () => {
+    const dispatch = renderWithBus(
+      <RelayManagement
+        relays={[
+          { url: "wss://relay.one", status: "connected" },
+          { url: "wss://relay.two", status: "connected" },
+          { url: "wss://relay.three", status: "connected" },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+    fireEvent.click(screen.getByRole("button", { name: /move relay\.one down/i }));
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "sidebar.relay.reorder",
+      orderedUrls: ["wss://relay.two", "wss://relay.one", "wss://relay.three"],
+    });
+  });
+
   it("dispatches trimmed relay input for shared add normalization", () => {
     const dispatch = renderWithBus(
       <RelayManagement

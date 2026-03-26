@@ -845,6 +845,8 @@
     },
     "copyDebug": "Copiar diagnóstico",
     "copyUrls": "Copiar URLs de relay",
+    "moveUp": "Mover {{relay}} hacia arriba",
+    "moveDown": "Mover {{relay}} hacia abajo",
     "reconnect": "Reconectar relay",
     "remove": "Eliminar relay",
     "debugCopied": "Diagnóstico de relays copiado",

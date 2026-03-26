@@ -57,6 +57,7 @@ export interface NDKContextValue {
   ) => Promise<NoasAuthResult>;
   logout: () => void;
   addRelay: (url: string) => void;
+  reorderRelays: (orderedUrls: string[]) => void;
   removeRelay: (url: string) => void;
   reconnectRelay: (url: string, options?: { forceNewSocket?: boolean }) => void;
   publishEvent: (

@@ -105,6 +105,7 @@ const Index = () => {
     relays: ndkRelays,
     isConnected: isNostrConnected,
     addRelay,
+    reorderRelays,
     removeRelay,
     reconnectRelay,
     subscribe,
@@ -699,6 +700,9 @@ const Index = () => {
       "sidebar.relay.add": (intent) => {
         handleAddRelay(intent.url);
       },
+      "sidebar.relay.reorder": (intent) => {
+        reorderRelays(intent.orderedUrls);
+      },
       "sidebar.relay.remove": (intent) => {
         handleRemoveRelay(intent.url);
       },
@@ -779,6 +783,7 @@ const Index = () => {
       handleRelayExclusive,
       handleToggleAllRelays,
       handleAddRelay,
+      reorderRelays,
       handleRemoveRelay,
       reconnectRelay,
       handleChannelPin,

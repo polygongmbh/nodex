@@ -845,6 +845,8 @@
     },
     "copyDebug": "Diagnose kopieren",
     "copyUrls": "Relay-URLs kopieren",
+    "moveUp": "{{relay}} nach oben verschieben",
+    "moveDown": "{{relay}} nach unten verschieben",
     "reconnect": "Relay neu verbinden",
     "remove": "Relay entfernen",
     "debugCopied": "Relay-Diagnose kopiert",

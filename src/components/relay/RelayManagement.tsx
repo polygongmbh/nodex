@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   Info,
   RotateCcw,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +56,20 @@ export function RelayManagement({
 
     void dispatchFeedInteraction({ type: "sidebar.relay.add", url: trimmed });
     setNewRelayUrl("");
+  };
+
+  const handleRelayReorder = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= relays.length || fromIndex === toIndex) return;
+
+    const nextRelays = [...relays];
+    const [movedRelay] = nextRelays.splice(fromIndex, 1);
+    if (!movedRelay) return;
+    nextRelays.splice(toIndex, 0, movedRelay);
+
+    void dispatchFeedInteraction({
+      type: "sidebar.relay.reorder",
+      orderedUrls: nextRelays.map((relay) => relay.url),
+    });
   };
 
   const connectedCount = relays.filter((r) => r.status === "connected").length;
@@ -150,7 +165,7 @@ export function RelayManagement({
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Radio className="w-5 h-5 text-primary" />
@@ -188,12 +203,42 @@ export function RelayManagement({
                 {t("relay.noneConfigured")}
               </p>
             ) : (
-              relays.map((relay) => (
-                <div
-                  key={relay.url}
-                  className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors space-y-2"
-                >
-                  <div className="flex items-center gap-3">
+              relays.map((relay, index) => {
+                const relayName = stripRelayProtocol(relay.url);
+
+                return (
+                  <div
+                    key={relay.url}
+                    className="p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors space-y-2"
+                  >
+                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleRelayReorder(index, index - 1)}
+                        aria-label={t("relay.moveUp", { relay: relayName })}
+                        title={t("relay.moveUp", { relay: relayName })}
+                        disabled={index === 0}
+                      >
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                        onClick={() => handleRelayReorder(index, index + 1)}
+                        aria-label={t("relay.moveDown", { relay: relayName })}
+                        title={t("relay.moveDown", { relay: relayName })}
+                        disabled={index === relays.length - 1}
+                      >
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
                     {/* Status indicator */}
                     <div
                       className={cn(
@@ -290,38 +335,39 @@ export function RelayManagement({
                     >
                       <X className="w-4 h-4" />
                     </Button>
-                  </div>
-
-                  {expandedRelayUrl === relay.url && (
-                    <div className="rounded-md border border-border/60 bg-background/40 p-2 text-xs space-y-2">
-                      <div className="flex items-center gap-1.5 text-foreground">
-                        {relay.nip11?.authRequired ? (
-                          <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
-                        ) : (
-                          <ShieldCheck className="h-3.5 w-3.5 text-success" />
-                        )}
-                        <span className="font-medium">{t("relay.details.title")}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1 text-muted-foreground">
-                        <span>{t("relay.details.authRequired")}</span>
-                        <span className="text-foreground">
-                          {getCapabilityLabel(relay.nip11?.authRequired)}
-                        </span>
-                        <span>{t("relay.details.supportsNip42")}</span>
-                        <span className="text-foreground">
-                          {getCapabilityLabel(relay.nip11?.supportsNip42)}
-                        </span>
-                        <span>{t("relay.details.nip11Checked")}</span>
-                        <span className="text-foreground">
-                          {relay.nip11?.checkedAt
-                            ? new Date(relay.nip11.checkedAt).toLocaleTimeString()
-                            : t("relay.details.unknown")}
-                        </span>
-                      </div>
                     </div>
-                  )}
-                </div>
-              ))
+
+                    {expandedRelayUrl === relay.url && (
+                      <div className="rounded-md border border-border/60 bg-background/40 p-2 text-xs space-y-2">
+                        <div className="flex items-center gap-1.5 text-foreground">
+                          {relay.nip11?.authRequired ? (
+                            <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
+                          ) : (
+                            <ShieldCheck className="h-3.5 w-3.5 text-success" />
+                          )}
+                          <span className="font-medium">{t("relay.details.title")}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1 text-muted-foreground">
+                          <span>{t("relay.details.authRequired")}</span>
+                          <span className="text-foreground">
+                            {getCapabilityLabel(relay.nip11?.authRequired)}
+                          </span>
+                          <span>{t("relay.details.supportsNip42")}</span>
+                          <span className="text-foreground">
+                            {getCapabilityLabel(relay.nip11?.supportsNip42)}
+                          </span>
+                          <span>{t("relay.details.nip11Checked")}</span>
+                          <span className="text-foreground">
+                            {relay.nip11?.checkedAt
+                              ? new Date(relay.nip11.checkedAt).toLocaleTimeString()
+                              : t("relay.details.unknown")}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
 

@@ -18,6 +18,39 @@ export function removeResolvedRelayUrl(relayUrls: string[], relayUrl: string): s
   return relayUrls.filter((entry) => normalizeRelayUrl(entry) !== normalized);
 }
 
+export function reorderResolvedRelayStatuses(params: {
+  relays: NDKRelayStatus[];
+  orderedRelayUrls: string[];
+}): NDKRelayStatus[] {
+  const relayByUrl = new Map(
+    params.relays.map((relay) => [normalizeRelayUrl(relay.url), relay] as const)
+  );
+  const seenRelayUrls = new Set<string>();
+  const reordered: NDKRelayStatus[] = [];
+
+  params.orderedRelayUrls
+    .map(normalizeRelayUrl)
+    .forEach((relayUrl) => {
+      if (!relayUrl || seenRelayUrls.has(relayUrl)) return;
+      const relay = relayByUrl.get(relayUrl);
+      if (!relay) return;
+      reordered.push(relay.url === relayUrl ? relay : { ...relay, url: relayUrl });
+      seenRelayUrls.add(relayUrl);
+    });
+
+  params.relays.forEach((relay) => {
+    const normalizedRelayUrl = normalizeRelayUrl(relay.url);
+    if (!normalizedRelayUrl || seenRelayUrls.has(normalizedRelayUrl)) return;
+    reordered.push(relay.url === normalizedRelayUrl ? relay : { ...relay, url: normalizedRelayUrl });
+    seenRelayUrls.add(normalizedRelayUrl);
+  });
+
+  const unchanged = reordered.length === params.relays.length
+    && reordered.every((relay, index) => relay === params.relays[index]);
+
+  return unchanged ? params.relays : reordered;
+}
+
 export function filterAutoAddRelayUrls(params: {
   candidateRelayUrls: string[];
   existingRelayUrls: Iterable<string>;

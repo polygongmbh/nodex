@@ -28,6 +28,7 @@ export type FeedInteractionIntent =
   | { type: "sidebar.relay.exclusive"; relayId: string }
   | { type: "sidebar.relay.toggleAll" }
   | { type: "sidebar.relay.add"; url: string }
+  | { type: "sidebar.relay.reorder"; orderedUrls: string[] }
   | { type: "sidebar.relay.remove"; url: string }
   | { type: "sidebar.relay.reconnect"; url: string }
   | { type: "sidebar.channel.toggle"; channelId: string }
