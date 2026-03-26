@@ -11,30 +11,22 @@ Reshape the current feed-centric architecture so the same core logic can power m
 
 ## Layer Model
 
-Use a pragmatic layered model. Do not force classic MVC literally.
-
 ```text
 domain      -> pure business logic; no React, no localStorage, no Nostr wire format
 infrastructure -> adapters for storage, Nostr transport, external APIs; may depend on domain
-feature controllers -> React hooks that assemble domain + infrastructure for one frontend
-views/pages -> rendering and event wiring; depend only on feature controllers
+features/<name>/controllers -> React hooks that assemble domain + infrastructure for one frontend
+features/<name>/views       -> React components; depend only on feature controllers
+pages/Index.tsx             -> route wiring + layout composition only
 ```
 
 Dependency direction:
 
 ```text
-domain/content
-domain/listings       (none import infrastructure or React)
-domain/relays
-domain/preferences
-
-infrastructure/nostr       (imports domain, no pages, no feature controllers)
-infrastructure/preferences (imports domain/preferences, no React)
-
-features/feed-page/controllers  (imports domain + infrastructure)
-features/feed-page/views
-
-pages/Index.tsx         (imports only feature controllers + layout components)
+domain/*            (no imports from infrastructure, React, or features)
+infrastructure/*    (imports domain; no feature or page imports)
+features/*/controllers  (imports domain + infrastructure)
+features/*/views        (imports feature controllers)
+pages/Index.tsx         (imports feature controllers + layout primitives only)
 ```
 
 Quick heuristic:
@@ -43,246 +35,167 @@ Quick heuristic:
 - "how do we fetch/store/send it?" → `infrastructure`
 - "how does this specific page orchestrate it?" → `features/<name>/controllers`
 
-## `domain/preferences` — Emergent Layer
-
-The original plan put all preferences under `infrastructure`. During implementation a cleaner pattern emerged: split each preference module into two files:
-
-- `domain/preferences/<name>-state.ts` — pure state model, mutation helpers, business rules; no I/O
-- `infrastructure/preferences/<name>-storage.ts` — zod parsing, localStorage read/write; imports domain type
-
-`pinned-channels` already follows this pattern. Apply the same split to all remaining preference modules.
-
-## Target Structure
+## Current Structure (as of this writing)
 
 ```text
 src/
   domain/
-    content/          ✅ established
-    listings/         ✗ not started
-    relays/           ✅ established
-    preferences/      ✅ established (pinned-channel-state.ts)
+    content/        ✅ complete — task rules, filtering, sorting, channel derivation
+    listings/       ~ started — listing-identity.ts only
+    relays/         ~ started — relay-scope.ts, relay-reconnect-policy.ts
+    preferences/    ✅ complete — pinned-entity, pinned-channel, pinned-person,
+                                  filter-state, saved-filter-state
   infrastructure/
-    nostr/            ~ started (relay-identity, task-converter only)
-    preferences/      ~ started (pinned-channels-storage only)
+    nostr/          ✅ complete — event cache, converter, publish tags, relay auth,
+                                  NIP parsing, subscription hooks, provider/
+    cache/          ~ started — ndk-cache-adapter.ts
+    preferences/    ✅ complete — all *-storage.ts adapters, storage-registry
   features/
     feed-page/
-      controllers/    ✅ established (13 files)
-      views/          ✗ not started
-    marketplace/      ✗ future
-    listings-map/     ✗ future
-    social-feed/      ✗ future
+      controllers/  ✅ complete — 17+ hooks covering filters, publish, navigation,
+                                  relay state, sidebar, status, onboarding
+      interactions/ ~ new — interaction pipeline, intents, middleware skeleton
+      views/        ~ started — desktop/mobile shells, sidebar, view pane
+  hooks/            ~ clean — cross-cutting UI hooks only
+  lib/              ~ residual — still has unclassified modules
+  lib/nostr/        ~ residual — some files still need moving or deletion
+  pages/
+    Index.tsx       ✗ needs slimming — 1089 lines / 59 imports, grew during feature work
 ```
-
-## Current State
-
-### Already in place
-
-**`domain/content/`**
-- `task-merge.ts` — merge + deduplication of Task arrays
-- `task-collections.ts` — pending-publish dedup key, relay/listing deduplication, sort overlays
-- `channels.ts` — channel derivation from tasks
-- `sidebar-people.ts` — author/people derivation
-
-**`domain/relays/`**
-- `relay-scope.ts` — relay scope resolution and visibility checks
-
-**`domain/preferences/`**
-- `pinned-channel-state.ts` — pinned channel state model and mutation helpers
-
-**`infrastructure/nostr/`**
-- `relay-identity.ts` — relay URL → id/name mapping
-- `task-converter.ts` — Nostr wire events → Task/Person domain objects
-
-**`infrastructure/preferences/`**
-- `pinned-channels-storage.ts` — zod-parsed localStorage adapter for pinned channel state
-
-**`features/feed-page/controllers/`** (13 files)
-- `use-auth-modal-route`, `use-feed-demo-bootstrap`, `use-feed-navigation`
-- `use-index-derived-data`, `use-index-filters`, `use-index-onboarding`
-- `use-index-relay-shell`, `use-listing-status-publish`, `use-pinned-sidebar-channels`
-- `use-saved-filter-configs`, `use-task-publish-controls`, `use-task-publish-flow`
-- `use-task-status-controller`
-
-### Ghost test files to delete
-
-These were left behind after their source moved to `domain/`. The domain folders already have their own test files.
-
-- `src/lib/channels.test.ts` (source now in `domain/content/channels.ts`)
-- `src/lib/relay-scope.test.ts` (source now in `domain/relays/relay-scope.ts`)
-- `src/lib/sidebar-people.test.ts` (source now in `domain/content/sidebar-people.ts`)
-- `src/hooks/use-index-derived-data.test.ts` (source now in `features/feed-page/controllers/`)
 
 ## Remaining Work
 
-### Milestone A: Finish `domain/content`
+### 1. Rename `features/feed-page/controllers/` → `features/feed-page/hooks/`
 
-Move the following pure files from `src/lib/` to `src/domain/content/`:
+The word "controllers" is not React-idiomatic. The feature directory already provides the scope signal; the subdirectory name should use the same vocabulary as the rest of the React codebase.
 
-| File | Dependencies | Note |
-|------|-------------|------|
-| `task-status.ts` | `@/types` only | trivially pure |
-| `task-type.ts` | `@/types` only | trivially pure |
-| `task-permissions.ts` | `@/types`, `mentions.ts` | `mentions.ts` may follow or be re-imported from lib |
-| `task-filtering.ts` | `@/types`, `channel-filtering`, `person-filter` | depends on next two |
-| `channel-filtering.ts` | `@/types` only | pure |
-| `person-filter.ts` | `@/types` only | pure |
-| `task-sorting.ts` | likely `@/types` only | verify |
-| `task-text-filter.ts` | likely `@/types` only | verify |
-| `depth-mode-filter.ts` | likely `@/types` only | verify |
-| `task-view-filtering.ts` | wraps several above | move after its dependencies |
-| `filter-state-utils.ts` | pure state derivation | verify no storage deps |
-| `filter-snapshot.ts` | pure snapshot building | verify no storage deps |
+This is a mechanical rename — no logic changes.
 
-`task-dates.ts` imports `i18n` for date formatting. Split if needed: pure date parsing/calculation → `domain/content/task-dates.ts`; display formatting → leave in `lib` or move to a view utility.
+### 2. Finish `lib/nostr/` classification
 
-Also address: `task-collections.ts` imports `NostrEventKind.ClassifiedListing` from `@/lib/nostr/types`. This is a wire-format constant leaking into domain. Define a local domain constant (`LISTING_KIND = 30402`) and remove the infrastructure import.
+**Move to `infrastructure/nostr/`:**
+- `event-id.ts` — Nostr event ID format validator (wire format concern)
+- `utils.ts` — NIP-01 event creation, serialization, validation utilities
+- `content-references.ts` — NIP-19/27 content reference parsing (uses nostr-tools)
+- `user-facing-pubkey.ts` — NDKUser pubkey formatting (uses NDK)
 
-### Milestone B: Migrate `infrastructure/preferences`
+**Move to `domain/relays/`:**
+- `task-relay-routing.ts` → rename to `submission-routing.ts`
+  - Pure relay selection policy for submission: which relay to target based on task type, parent task, and selected relays
+  - Remove the `nostrDevLog` call before moving (domain must not import logging infrastructure)
+  - The `RELAY_SELECTION_ERROR_KEY` i18n string can stay as a typed constant
 
-Apply the same `domain/preferences` + `infrastructure/preferences` split used for pinned-channels to every remaining preference module.
+**Delete:**
+- `event-converter.test.ts` — ghost test; source moved to `infrastructure/nostr/task-converter.ts`
 
-**Modules to split:**
+**Leave in `lib/nostr/`** (not worth moving):
+- `types.ts` — shared Nostr type definitions used everywhere; moving requires touching all importers
+- `dev-logs.ts` — debug logging utility; infrastructure-adjacent but fine here
+- `nip05-resolver.ts`, `nip05-verify.ts`, `nip49-utils.ts`, `nip49-test-vector.ts`
+- `nip96-attachment-upload.ts`, `nip98-http-auth.ts`, `noas-client.ts`
 
-`filter-preferences.ts` → split into:
-- `domain/preferences/filter-state.ts` — Channel/Person filter state model and defaults
-- `infrastructure/preferences/filter-preferences-storage.ts` — zod + localStorage
+### 3. Finish `lib/` classification
 
-`saved-filter-configurations.ts` → split into:
-- `domain/preferences/saved-filter-configurations-state.ts` — SavedFilterConfiguration model and rules
-- `infrastructure/preferences/saved-filter-configurations-storage.ts` — zod + localStorage
+**Move to `domain/content/`:**
+- `kanban-sorting.ts` — already imports from `domain/content/task-sorting`; move it there
+- `task-dates.ts` — imports `i18n` only for display formatting; extract the pure date logic (parsing, comparison, type narrowing) to `domain/content/task-dates.ts` and leave display formatting in `lib/`
+- `mentions.ts` — pure text parsing, no I/O; move to `domain/content/mentions.ts` (currently used by `domain/content/task-permissions.ts` via `@/lib/mentions`)
+- `hashtags.ts` — pure regex-based hashtag parsing; move to `domain/content/hashtags.ts`
 
-`failed-publish-drafts.ts` → `infrastructure/preferences/failed-publish-drafts-storage.ts`
-(state type can stay in `@/types`; no separate domain model needed unless business rules emerge)
+**Move to `infrastructure/preferences/`:**
+- `person-frecency.ts` — imports storage-registry, has load/save I/O; move as `person-frecency-storage.ts`
+- `channel-frecency.ts` — same pattern; move as `channel-frecency-storage.ts`
 
-**Thin adapters — move directly to `infrastructure/preferences/`:**
-- `theme-preferences.ts` → `infrastructure/preferences/theme-preferences-storage.ts`
-- `user-preferences.ts` → `infrastructure/preferences/user-preferences-storage.ts`
-- `storage-registry.ts` → `infrastructure/preferences/storage-registry.ts`
-(storage-registry is a pure key table; it belongs in infrastructure, not domain)
+**Assess before moving:**
+- `app-preferences.ts` — currently just type definitions (`AppPreferenceKey`, `AppPreferenceSurface`); if it stays pure types, move to `domain/preferences/app-preference-types.ts` or merge into `@/types`
+- `submission-tags.ts` — check if pure; if so, `domain/content/` or `infrastructure/nostr/`
+- `compose-prefill.ts`, `composer-content.ts` — likely domain/content if pure
+- `completion-cheer.ts`, `completion-feedback.ts` — check for I/O; may be domain/content
 
-### Milestone C: Bulk-migrate `infrastructure/nostr`
+**Leave in `lib/`** (UI or narrow-scope utilities that don't need migration):
+- `author-color.ts`, `task-interaction-styles.ts`, `task-timestamp-tooltip.ts` — UI presentation helpers
+- `sidebar-collapsed-preview.ts`, `status-menu-focus.ts` — UI state helpers
+- `keyboard-platform.ts` — platform detection utility
+- `onboarding-*.ts` — onboarding flow logic; could move to features eventually but not blocking
+- `current-user.ts`, `current-user-profile-cache.ts`, `guest-name.ts` — identity helpers
+- `presence-status.ts` — Nostr presence event building; could go to infrastructure/nostr eventually
+- `safe-local-storage.ts`, `runtime-storage-guard.ts` — storage utilities used by infrastructure
+- `attachments.ts` — attachment helpers used across features
 
-Move the following from `src/lib/nostr/` to `src/infrastructure/nostr/`. Most are self-contained.
+### 4. Slim `Index.tsx`
 
-**Wire format / parsing:**
-- `nip99-metadata.ts` — NIP-99 tag parsing
-- `nip52-task-calendar-events.ts` — calendar event parsing
-- `task-property-events.ts` — priority/property event parsing
-- `task-state-events.ts` — status event kind checks
-- `task-publish-tags.ts` — tag building for publishing
-- `people-from-kind0.ts` — Kind-0 → Person mapping
-- `profile-metadata.ts` — profile metadata parsing
-- `geohash-location.ts` — geohash tag parsing (Note: pure geo math belongs here; keep or move pure geo helpers to `domain/listings` once that layer exists)
+Currently **1089 lines / 59 imports** — it grew during feature work instead of shrinking. The views/ layer was added to features/feed-page but Index.tsx wasn't updated to delegate to it.
 
-**Subscriptions / cache:**
-- `event-cache.ts` — in-memory event cache
-- `ndk-context.tsx` — NDK React context (infrastructure with React; fine here)
+Target: route wiring + layout composition only (~100–150 lines).
 
-**Relays / config:**
-- `default-relays.ts` — env-var relay URL resolution
-- `relay-url.ts` — URL normalization utilities
-- `relay-info.ts`, `relay-enrichment.ts` — relay metadata
-- `nip42-auth.ts`, `nip42-relay-auth-policy.ts` — relay auth
-- `replaceable-events.ts` — replaceable event key rules
+Steps:
+- Audit which imports in Index.tsx still come from `@/lib/*` and `@/hooks/*` directly — each is a candidate for moving into a feature controller
+- Move presence publishing orchestration into a dedicated controller hook
+- Move guide/demo bootstrap logic (already partially in `use-feed-demo-bootstrap`) fully out of Index.tsx
+- Once `features/feed-page/views/` shells are complete, Index.tsx should only instantiate controllers and render the appropriate shell
 
-**Leave in `src/lib/nostr/`** (these are utility/auth concerns that don't cleanly belong in infra):
-- `nip05-resolver.ts`, `nip05-verify.ts`
-- `nip49-utils.ts`, `nip49-test-vector.ts`
-- `nip96-attachment-upload.ts`
-- `nip98-http-auth.ts`
-- `noas-client.ts`
-- `dev-logs.ts`
-- `utils.ts`
-- `types.ts` (shared Nostr type definitions; moving requires updating all importers)
+Do not create a single mega-hook to reduce the import count. The goal is genuine delegation, not cosmetic consolidation.
 
-**Move Nostr subscription hooks from `src/hooks/` to `src/infrastructure/nostr/`:**
-- `use-nostr-event-cache.tsx` — NDK subscription wrapper
-- `use-kind0-people.ts` — Kind-0 subscription → Person[]
-- `use-nostr-profiles.tsx` — profile subscription
+### 5. Establish `domain/listings` (Milestone F)
 
-These are infrastructure adapters that happen to use React hooks. They are not page-shaped controllers.
+`listing-identity.ts` is the only file so far. Add:
+- `location.ts` — pure geohash math and location display helpers (split from `infrastructure/nostr/geohash-location.ts`)
+- `listing-status.ts` — listing status rules and transition policies (currently embedded in controller code)
+- `listing-projections.ts` — view-model projection helpers for listing cards and markers
 
-### Milestone D: Move remaining feed-page hooks
+This is the prerequisite for the listings-map and marketplace frontends.
 
-These three files in `src/hooks/` are feed-page-specific controllers:
+### 6. Clarify `features/feed-page/interactions/`
 
-- `use-relay-filter-state.ts` → `features/feed-page/controllers/`
-- `use-filter-url-sync.ts` → `features/feed-page/controllers/`
-- `use-task-view-filtering.ts` → `features/feed-page/controllers/`
+This new subdirectory (`feed-interaction-context.tsx`, `feed-interaction-intent.ts`, `feed-interaction-pipeline.ts`, `feed-interaction-middleware-skeleton.ts`) represents an interaction pipeline pattern not described in the original plan. Before it grows further, document what the intended boundary is:
 
-After this, `src/hooks/` should contain only genuinely cross-cutting hooks:
-`use-keyboard-shortcuts`, `use-mobile`, `use-swipe-navigation`, `use-task-navigation`,
-`use-task-media-preview`, `use-toast`, `use-profile-editor`
+- Is this the right layer for interaction orchestration, or does it belong in `controllers/`?
+- What distinguishes an "interaction" from a "controller hook"?
+- Is the middleware skeleton expected to grow into a general pattern used by other features?
 
-### Milestone E: Slim `Index.tsx`
+Without a clear rule, this directory risks becoming a second `lib/` inside `features/`.
 
-Currently 807 lines / 55 imports. Target: route wiring + layout composition only.
+### 7. Validate `infrastructure/cache/`
 
-`Index.tsx` should:
-- read route params
-- instantiate the feed page controller (one hook call or small set)
-- render desktop/mobile layouts
+`ndk-cache-adapter.ts` appeared as a new subdirectory not in the original plan. Confirm it belongs there and not in `infrastructure/nostr/` (which already has `event-cache.ts`). If it's an NDK cache adapter specifically, it may be a better fit as `infrastructure/nostr/ndk-cache-adapter.ts`.
 
-Remaining direct `@/lib/*` and `@/hooks/*` imports in `Index.tsx` after milestones A–D complete should all resolve to the new locations. Use that as the integration check.
+### 8. Prototype second frontend (Milestone G)
 
-Do not create a single `useFeedPageController` mega-hook unless it actually simplifies `Index.tsx`. The existing controller decomposition is fine; just ensure none of it lives in `src/hooks/` or is imported directly from `src/lib/` by the page.
+Do not wait for all the above to be complete. Build a thin listings-map frontend once `domain/listings` has the location and projection files (step 5).
 
-### Milestone F: Establish `domain/listings`
+Best proof: a map view that renders listing markers using `domain/listings` projections and `domain/relays` scope — without importing any feed-page controllers or Index.tsx logic.
 
-Once `domain/content` is stable, extract listing-specific pure logic:
+## Dependency Check
 
-- Move `listing-replaceable-key.ts` from `src/lib/nostr/` — split out the pure identity function into `domain/listings/listing-identity.ts`; keep Nostr tag-building in `infrastructure/nostr/`
-- Move listing status rules and projections out of controller code
-- Move pure geo/geohash rules from `geohash-location.ts` into `domain/listings/location.ts`
-
-This creates the foundation for the listings-map and marketplace frontends.
-
-### Milestone G: Prototype second frontend
-
-Validate the architecture by building one small second frontend.
-
-Best candidate: **listings map**
-
-- stresses location projections
-- reuses `domain/listings` and `domain/relays`
-- forces clearer separation from feed UI assumptions
-
-Do not wait until the rest of the migration is 100% complete. Build this once `domain/listings` is established (Milestone F) to prove the seam.
-
-## Dependency Check Points
-
-After each milestone, verify:
+Run after each step:
 
 ```sh
-# No domain files import React, infrastructure, or page code
+# Domain must be clean
 grep -r "from.*react\|from.*@/infrastructure\|from.*@/features\|from.*@/pages" src/domain/
 
-# No infrastructure/preferences files import React
+# No domain files import from lib/nostr
+grep -r "from.*@/lib/nostr" src/domain/
+
+# infrastructure/preferences must not import React
 grep -r "from.*react" src/infrastructure/preferences/
 
-# No domain files import from src/lib/nostr
-grep -r "from.*@/lib/nostr" src/domain/
-```
-
-After Milestone C:
-```sh
-# task-collections.ts should no longer import NostrEventKind
-grep "NostrEventKind" src/domain/
+# Index.tsx should only import from features/, components/, and @/types
+grep "^import" src/pages/Index.tsx | grep -v "from.*@/features\|from.*@/components\|from.*@/types\|from.*react\|from.*react-router"
 ```
 
 ## What To Avoid
 
-- More root-level `src/hooks/use-index-*` files — any new feed-page hook goes under `features/feed-page/controllers/` from this point forward
-- Letting `src/domain` become a renamed `src/lib` — every file moved to domain must be React-free and storage-free
-- Pushing toasts, navigation, or localStorage into pure logic
-- Moving `infrastructure/nostr` files in bulk without verifying their import graphs first
-- Creating a `features/feed-page/views/` directory just to have it — only create it when the second frontend makes the separation load-bearing
-- Extracting internal packages (`packages/nodex-domain`) before two frontends prove the boundary
+- Adding more files to `features/feed-page/controllers/` without renaming to `hooks/` first — establishes the wrong pattern for future features
+- Growing Index.tsx further before slimming it — the gap between goal and reality is already large
+- Letting `features/feed-page/interactions/` expand without a clear definition of what it owns
+- Moving `lib/nostr/types.ts` — the import blast radius is not worth it; leave it in place
+- Creating `domain/listings` files that are too thin to be meaningful — wait until there is real listing logic to extract, not just stubs
+- Extracting internal packages (`packages/nodex-domain`) before two frontends prove the seam
 
 ## Success Criteria
 
-- Alternate frontends can be built without importing `Index.tsx` logic or `src/lib/` directly
-- Pure business logic is testable without React, without localStorage, without NDK
-- `Index.tsx` becomes a layout adapter, not the app's implicit domain center
+- Alternate frontends can import `domain/*` and `infrastructure/*` without touching `features/feed-page/` or `pages/Index.tsx`
+- `Index.tsx` is route wiring and layout composition, not an orchestration hub
+- `src/lib/` contains only narrow-scope utilities with no clear domain home
 - `src/hooks/` contains only genuinely cross-cutting UI hooks
-- `src/lib/` is a residual holding area, not the primary location for new logic
+- Pure business logic is testable without React, localStorage, or NDK
