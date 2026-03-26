@@ -169,16 +169,12 @@ export function MobileLayout({
   }, [dispatchFeedInteraction, onManageRouteChange]);
 
   const handleMobileViewChange = useCallback((view: MobileViewType) => {
-    if (view === "filters") {
-      openManageView();
-      return;
-    }
     if (showFilters) {
       closeManageView(view);
       return;
     }
     void dispatchFeedInteraction({ type: "ui.view.change", view });
-  }, [closeManageView, dispatchFeedInteraction, openManageView, showFilters]);
+  }, [closeManageView, dispatchFeedInteraction, showFilters]);
 
   // Swipe navigation handlers
   const handleSwipeLeft = useCallback(() => {
@@ -232,7 +228,7 @@ export function MobileLayout({
     enableHaptics: true,
   });
 
-  const mobileCurrentView: MobileViewType = showFilters ? "filters" : activePrimaryView;
+  const mobileCurrentView: MobileViewType = activePrimaryView;
   const hasSearchQuery = searchQuery.trim().length > 0;
   const viewFallback = <div className="h-full" aria-hidden="true" />;
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
@@ -485,7 +481,7 @@ export function MobileLayout({
 
   return (
     <div className="flex flex-col app-shell-height bg-background overflow-hidden">
-      <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} />
+      <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} onManageOpen={openManageView} isManageActive={showFilters} />
       <FailedPublishQueueBanner
         drafts={failedPublishDrafts}
         selectedFeedDrafts={visibleFailedPublishDrafts}

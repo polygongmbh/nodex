@@ -1,19 +1,21 @@
 import { useRef, useCallback, useState, PointerEvent, useEffect } from "react";
-import { Filter, Rss, GitBranch, List, Calendar } from "lucide-react";
+import { Menu, Rss, GitBranch, List, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useTranslation } from "react-i18next";
 
-export type MobileViewType = ViewType | "filters";
+export type MobileViewType = ViewType;
 
 interface MobileNavProps {
   currentView: MobileViewType;
   onViewChange: (view: MobileViewType) => void;
+  onManageOpen?: () => void;
+  isManageActive?: boolean;
 }
 
-const allSegments: MobileViewType[] = ["filters", "feed", "tree", "list", "calendar"];
+const allSegments: MobileViewType[] = ["feed", "tree", "list", "calendar"];
 
-export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
+export function MobileNav({ currentView, onViewChange, onManageOpen, isManageActive = false }: MobileNavProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const pillRef = useRef<HTMLDivElement>(null);
@@ -21,7 +23,6 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   const [isPressed, setIsPressed] = useState(false);
 
   const segmentLabels: Partial<Record<MobileViewType, string>> = {
-    filters: "",
     feed: t("navigation.views.feed"),
     tree: t("navigation.views.tree"),
     list: t("navigation.views.upcoming"),
@@ -37,7 +38,8 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
     if (!container || !pill) return;
 
     const buttons = container.querySelectorAll<HTMLElement>("[data-segment-index]");
-    const activeButton = buttons[activeIndex];
+    const idx = activeIndex >= 0 ? activeIndex : 0;
+    const activeButton = buttons[idx];
     if (!activeButton) return;
 
     const containerRect = container.getBoundingClientRect();
@@ -56,8 +58,7 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   const getSegmentFromX = useCallback((clientX: number): MobileViewType | null => {
     const container = containerRef.current;
     if (!container) return null;
-    const rect = container.getBoundingClientRect();
-    const x = clientX - rect.left;
+    const x = clientX - container.getBoundingClientRect().left;
     const children = container.querySelectorAll<HTMLElement>("[data-segment-index]");
     for (let i = 0; i < children.length; i++) {
       const childRect = children[i].getBoundingClientRect();
@@ -109,72 +110,83 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
       aria-label={t("navigation.aria.views")}
       data-onboarding="mobile-nav"
     >
-      <div
-        ref={containerRef}
-        className="relative flex items-center rounded-lg bg-muted/80 dark:bg-muted/60 p-[3px] select-none touch-none"
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
-      >
-        {/* Sliding pill */}
-        <div
-          ref={pillRef}
-          className="absolute top-[3px] bottom-[3px] rounded-md bg-background will-change-transform"
-          style={{
-            left: '3px',
-            transform: isPressed
-              ? 'translateX(var(--pill-x, 0px)) scaleX(0.95) scaleY(0.88)'
-              : 'translateX(var(--pill-x, 0px))',
-            transition: isPressed
-              ? 'transform 150ms ease-out, width 150ms ease-out, box-shadow 150ms ease-out'
-              : 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out',
-            boxShadow: isPressed
-              ? '0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)'
-              : '0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)',
-          }}
-          aria-hidden="true"
-        />
+      <div className="flex items-center gap-1.5">
+        {/* Hamburger menu button */}
+        <button
+          type="button"
+          data-onboarding="mobile-nav-manage"
+          aria-label={t("navigation.views.switchTo", { view: t("navigation.views.manage") })}
+          className={cn(
+            "flex items-center justify-center w-11 h-9 rounded-lg shrink-0 transition-colors duration-150",
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            "active:scale-90",
+            isManageActive
+              ? "bg-background text-foreground shadow-sm"
+              : "bg-muted/80 dark:bg-muted/60 text-muted-foreground/70 dark:text-muted-foreground"
+          )}
+          onClick={onManageOpen}
+        >
+          <Menu className="w-[18px] h-[18px]" />
+        </button>
 
-        {allSegments.map((seg, i) => (
-          <button
-            key={seg}
-            type="button"
-            data-segment-index={i}
-            data-onboarding={seg === "filters" ? "mobile-nav-manage" : undefined}
-            role="tab"
-            aria-selected={currentView === seg}
-            aria-label={seg === "filters"
-              ? t("navigation.views.switchTo", { view: t("navigation.views.manage") })
-              : t("navigation.views.switchTo", { view: segmentLabels[seg] })
-            }
-            className={cn(
-              "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              "active:scale-90",
-              currentView === seg
-                ? "text-foreground"
-                : "text-muted-foreground/70 dark:text-muted-foreground"
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (seg !== currentView) onViewChange(seg);
+        {/* Segmented control */}
+        <div
+          ref={containerRef}
+          className="relative flex items-center flex-1 min-w-0 rounded-lg bg-muted/80 dark:bg-muted/60 p-[3px] select-none touch-none"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
+        >
+          {/* Sliding pill */}
+          <div
+            ref={pillRef}
+            className="absolute top-[3px] bottom-[3px] rounded-md bg-background will-change-transform"
+            style={{
+              left: '3px',
+              transform: isPressed
+                ? 'translateX(var(--pill-x, 0px)) scaleX(0.95) scaleY(0.88)'
+                : 'translateX(var(--pill-x, 0px))',
+              transition: isPressed
+                ? 'transform 150ms ease-out, width 150ms ease-out, box-shadow 150ms ease-out'
+                : 'transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out',
+              boxShadow: isPressed
+                ? '0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)'
+                : '0 2px 8px -2px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.08)',
             }}
-            tabIndex={currentView === seg ? 0 : -1}
-          >
-            {seg === "filters" ? (
-              <Filter className="w-4 h-4" />
-            ) : (
-              <>
-                {seg === "feed" && <Rss className="w-3.5 h-3.5 shrink-0" />}
-                {seg === "tree" && <GitBranch className="w-3.5 h-3.5 shrink-0" />}
-                {seg === "list" && <List className="w-3.5 h-3.5 shrink-0" />}
-                {seg === "calendar" && <Calendar className="w-3.5 h-3.5 shrink-0" />}
-                <span className="truncate">{segmentLabels[seg]}</span>
-              </>
-            )}
-          </button>
-        ))}
+            aria-hidden="true"
+          />
+
+          {allSegments.map((seg, i) => (
+            <button
+              key={seg}
+              type="button"
+              data-segment-index={i}
+              role="tab"
+              aria-selected={currentView === seg}
+              aria-label={t("navigation.views.switchTo", { view: segmentLabels[seg] })}
+              className={cn(
+                "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                "active:scale-90",
+                currentView === seg
+                  ? "text-foreground"
+                  : "text-muted-foreground/70 dark:text-muted-foreground"
+              )}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (seg !== currentView) onViewChange(seg);
+              }}
+              tabIndex={currentView === seg ? 0 : -1}
+            >
+              {seg === "feed" && <Rss className="w-3.5 h-3.5 shrink-0" />}
+              {seg === "tree" && <GitBranch className="w-3.5 h-3.5 shrink-0" />}
+              {seg === "list" && <List className="w-3.5 h-3.5 shrink-0" />}
+              {seg === "calendar" && <Calendar className="w-3.5 h-3.5 shrink-0" />}
+              <span className="truncate">{segmentLabels[seg]}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </nav>
   );
