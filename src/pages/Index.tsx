@@ -837,14 +837,6 @@ const Index = () => {
     ]
   );
 
-  const feedSurfaceRelayKey = useMemo(
-    () =>
-      relaysWithActiveState
-        .map((relay) => [relay.id, relay.name, relay.icon, relay.url || "", relay.isActive ? "1" : "0"].join("|"))
-        .join("||"),
-    [relaysWithActiveState]
-  );
-
   const feedSurfaceRelays = useMemo(
     () =>
       relaysWithActiveState.map((relay) => ({
@@ -854,7 +846,7 @@ const Index = () => {
         isActive: relay.isActive,
         url: relay.url,
       })),
-    [feedSurfaceRelayKey]
+    [relaysWithActiveState]
   );
 
   const feedSurfaceState = useMemo(
