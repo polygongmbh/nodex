@@ -94,6 +94,22 @@ const normalizeRelayUrl = (url: string) => url.replace(/\/+$/, "");
 const WS_READY_STATE_CONNECTING = 0;
 const WS_READY_STATE_OPEN = 1;
 
+function dedupeNormalizedRelayUrls(relayUrls: string[]): string[] {
+  return Array.from(
+    new Set(relayUrls.map((relayUrl) => normalizeRelayUrl(relayUrl)).filter(Boolean))
+  );
+}
+
+function resolveOfflinePresenceRelayUrls(params: {
+  relayUrlsOverride?: string[];
+  registeredRelayUrls?: string[];
+}): string[] {
+  return dedupeNormalizedRelayUrls([
+    ...(params.relayUrlsOverride || []),
+    ...(params.registeredRelayUrls || []),
+  ]);
+}
+
 function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
   return typeof value === "object" && value !== null && "then" in value;
 }
@@ -155,6 +171,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const relayVerificationToastHistoryRef = useRef<Map<string, number>>(new Map());
   const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
+  const presenceRelayUrlsRef = useRef<string[]>([]);
   const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
   const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
   const relayInfoFetchedAtRef = useRef<Map<string, number>>(new Map());
@@ -1670,7 +1687,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     return localStorage.getItem(STORAGE_KEY_NSEC);
   }, [authMethod]);
 
-  const publishPresenceOffline = useCallback(async () => {
+  const publishPresenceOffline = useCallback(async (relayUrlsOverride?: string[]) => {
     if (!ndk || !ndk.signer) return;
 
     try {
@@ -1682,9 +1699,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       );
       await event.sign();
 
-      const relayUrls = relays.map((relay) => relay.url);
+      const relayUrls = resolveOfflinePresenceRelayUrls({
+        relayUrlsOverride,
+        registeredRelayUrls: presenceRelayUrlsRef.current,
+      });
+      if (relayUrls.length === 0) return;
       const relaySet = NDKRelaySet.fromRelayUrls(
-        relayUrls.length > 0 ? relayUrls : resolvedDefaultRelays,
+        relayUrls,
         ndk,
         true
       );
@@ -1706,7 +1727,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
       console.warn("Failed to publish offline presence event during logout", error);
     }
-  }, [markRelayVerificationFailure, resolvedDefaultRelays, ndk, relays]);
+  }, [markRelayVerificationFailure, ndk, relays]);
+
+  const setPresenceRelayUrls = useCallback((relayUrls: string[]) => {
+    presenceRelayUrlsRef.current = dedupeNormalizedRelayUrls(relayUrls);
+    nostrDevLog("presence", "Registered presence relay cleanup scope", {
+      relayUrls: presenceRelayUrlsRef.current,
+    });
+  }, []);
 
   const logout = useCallback(() => {
     void publishPresenceOffline();
@@ -2167,6 +2195,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     reorderRelays,
     removeRelay,
     reconnectRelay,
+    setPresenceRelayUrls,
     publishEvent,
     createHttpAuthHeader,
     updateUserProfile,
@@ -2194,6 +2223,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     reorderRelays,
     removeRelay,
     reconnectRelay,
+    setPresenceRelayUrls,
     publishEvent,
     createHttpAuthHeader,
     updateUserProfile,

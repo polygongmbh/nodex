@@ -17,6 +17,7 @@ const mockedNdk = vi.hoisted(() => {
   }
 
   const ndkInstances: NdkLike[] = [];
+  const publishedEvents: Array<{ kind?: number; content?: string; tags?: string[][]; relayUrls: string[] }> = [];
 
   enum MockNDKRelayStatus {
     DISCONNECTING = 0,
@@ -218,6 +219,7 @@ const mockedNdk = vi.hoisted(() => {
     FakeRelay,
     MockNDKRelayStatus,
     ndkInstances,
+    publishedEvents,
   };
 });
 
@@ -259,7 +261,27 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
   NDKSubscriptionCacheUsage: {
     ONLY_RELAY: "ONLY_RELAY",
   },
-  NDKEvent: class {},
+  NDKEvent: class {
+    kind?: number;
+    content = "";
+    tags: string[][] = [];
+    id = `mock-event-${Math.random().toString(36).slice(2, 10)}`;
+
+    async sign() {
+      return undefined;
+    }
+
+    async publish(relaySet: { relayUrls?: string[] }) {
+      const relayUrls = relaySet.relayUrls ?? [];
+      mockedNdk.publishedEvents.push({
+        kind: this.kind,
+        content: this.content,
+        tags: this.tags,
+        relayUrls,
+      });
+      return new Set(relayUrls.map((relayUrl) => ({ url: relayUrl })));
+    }
+  },
   NDKNip07Signer: class {},
   NDKNip46Signer: { bunker: () => ({ blockUntilReady: async () => ({ fetchProfile: async () => {}, pubkey: "pub", npub: "npub" }) }) },
   NDKPrivateKeySigner: class {
@@ -278,7 +300,7 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
       return "nsec";
     }
   },
-  NDKRelaySet: { fromRelayUrls: () => ({}) },
+  NDKRelaySet: { fromRelayUrls: (relayUrls: string[]) => ({ relayUrls }) },
   NDKUser: class {},
   NDKRelay: mockedNdk.FakeRelay,
 }));
@@ -310,7 +332,15 @@ vi.mock("./session-restore", () => ({
 }));
 
 function Harness() {
-  const { addRelay, removeRelay, reconnectRelay, loginAsGuest, logout, relays } = useNDK();
+  const {
+    addRelay,
+    removeRelay,
+    reconnectRelay,
+    loginAsGuest,
+    logout,
+    relays,
+    setPresenceRelayUrls,
+  } = useNDK();
   return (
     <div>
       <button onClick={() => addRelay("wss://relay.two/")}>add relay</button>
@@ -319,6 +349,7 @@ function Harness() {
       <button onClick={() => removeRelay("wss://relay.one")}>remove relay</button>
       <button onClick={() => reconnectRelay("wss://relay.one")}>reconnect relay</button>
       <button onClick={() => reconnectRelay("wss://relay.one", { forceNewSocket: true })}>hard reconnect relay</button>
+      <button onClick={() => setPresenceRelayUrls(["wss://relay.two"])}>set presence relays</button>
       <button onClick={() => logout()}>logout</button>
       <button onClick={() => void loginAsGuest()}>login as guest</button>
       <output data-testid="relay-state">
@@ -417,6 +448,7 @@ function NoasSignupHarness() {
 describe("NDKProvider relay lifecycle", () => {
   beforeEach(() => {
     mockedNdk.ndkInstances.length = 0;
+    mockedNdk.publishedEvents.length = 0;
     noasClientModule.instances.length = 0;
     noasClientModule.nextRegisterResponse = {
       success: true,
@@ -788,6 +820,37 @@ describe("NDKProvider relay lifecycle", () => {
       expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(1);
       expect(firstRelay.disconnectCalls).toBe(0);
       expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
+    });
+  });
+
+  it("publishes logout offline presence only to the registered presence relays", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/", "wss://relay.two/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two:connected");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "set presence relays" }));
+      fireEvent.click(screen.getByRole("button", { name: "logout" }));
+    });
+
+    await waitFor(() => {
+      expect(mockedNdk.publishedEvents).toContainEqual(
+        expect.objectContaining({
+          kind: 30315,
+          relayUrls: ["wss://relay.two"],
+        })
+      );
     });
   });
 

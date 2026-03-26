@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Presence status now publishes only to the currently selected relays, delays relay-switch updates briefly to avoid churn, refreshes unchanged presence less aggressively, and only includes a focused item id on relays where that item is actually present.
 - Mobile top navigation view tabs now switch reliably on direct taps again by avoiding drag pointer capture during ordinary tap starts, while preserving slide-across view switching.
 - Language selectors now use a consistent dropdown trigger pattern across desktop and mobile, with the chevron grouped inside the same padded control content as the active language label and profile-style desktop topbar alignment.
 - Relay Management now lets you reorder relays with inline up/down controls, and the new order persists into the sidebar and future startups.

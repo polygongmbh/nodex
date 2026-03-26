@@ -60,6 +60,7 @@ export interface NDKContextValue {
   reorderRelays: (orderedUrls: string[]) => void;
   removeRelay: (url: string) => void;
   reconnectRelay: (url: string, options?: { forceNewSocket?: boolean }) => void;
+  setPresenceRelayUrls: (relayUrls: string[]) => void;
   publishEvent: (
     kind: NostrEventKind,
     content: string,

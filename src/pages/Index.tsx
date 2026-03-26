@@ -20,13 +20,6 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { loadPresencePublishingEnabled } from "@/infrastructure/preferences/user-preferences-storage";
-import {
-  NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
-  NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
-  buildActivePresenceContent,
-  buildOfflinePresenceContent,
-  buildPresenceTags,
-} from "@/lib/presence-status";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import type { Nip99ListingStatus } from "@/types";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
@@ -47,6 +40,7 @@ import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
 import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-relay-auto-reconnect";
 import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
+import { useRelayScopedPresence } from "@/features/feed-page/controllers/use-relay-scoped-presence";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
@@ -110,6 +104,7 @@ const Index = () => {
     reconnectRelay,
     subscribe,
     publishEvent,
+    setPresenceRelayUrls,
     user,
   } = useNDK();
 
@@ -209,16 +204,26 @@ const Index = () => {
     subscribe,
   });
 
+  const selectedRelayScopeIds = useMemo(
+    () =>
+      resolveChannelRelayScopeIds(
+        effectiveActiveRelayIds,
+        relays.map((relay) => relay.id)
+      ),
+    [effectiveActiveRelayIds, relays]
+  );
+
   // Compute selected relay URLs for profile hydration
-  const selectedRelayUrls = useMemo(() => {
-    const selectedRelayScopeIds = resolveChannelRelayScopeIds(
-      effectiveActiveRelayIds,
-      relays.map((relay) => relay.id)
-    );
-    return relays
-      .filter((relay) => relay.id !== DEMO_RELAY_ID && relay.url && selectedRelayScopeIds.has(relay.id))
-      .map((relay) => relay.url as string);
-  }, [effectiveActiveRelayIds, relays]);
+  const selectedRelayUrls = useMemo(
+    () =>
+      relays
+        .filter(
+          (relay) =>
+            relay.id !== DEMO_RELAY_ID && relay.url && selectedRelayScopeIds.has(relay.id)
+        )
+        .map((relay) => relay.url as string),
+    [relays, selectedRelayScopeIds]
+  );
 
   const {
     people,
@@ -379,6 +384,7 @@ const Index = () => {
   const {
     currentView,
     focusedTaskId,
+    focusedTask,
     isManageRouteActive,
     setCurrentView,
     setFocusedTaskId,
@@ -571,39 +577,22 @@ const Index = () => {
     setIsSidebarFocused(false);
   }, []);
 
-  const lastPublishedPresenceRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!user?.pubkey) {
-      lastPublishedPresenceRef.current = null;
-      return;
-    }
-
-    if (!loadPresencePublishingEnabled()) return;
-
-    const snapshot = `${currentView}:${focusedTaskId || ""}`;
-    if (lastPublishedPresenceRef.current === snapshot) return;
-    lastPublishedPresenceRef.current = snapshot;
-
-    const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS;
-    void publishEvent(
-      NostrEventKind.UserStatus,
-      buildActivePresenceContent(currentView, focusedTaskId),
-      buildPresenceTags(expirationUnix)
-    );
-  }, [currentView, focusedTaskId, publishEvent, user?.pubkey]);
+  const { publishOfflinePresenceNow } = useRelayScopedPresence({
+    userPubkey: user?.pubkey,
+    presenceEnabled: loadPresencePublishingEnabled(),
+    currentView,
+    focusedTask,
+    relayScopeIds: selectedRelayScopeIds,
+    relays,
+    publishEvent,
+    setPresenceRelayUrls,
+  });
 
   useEffect(() => {
     if (!user?.pubkey) return;
 
     const publishOfflinePresence = () => {
-      if (!loadPresencePublishingEnabled()) return;
-      const expirationUnix = Math.floor(Date.now() / 1000) + NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS;
-      void publishEvent(
-        NostrEventKind.UserStatus,
-        buildOfflinePresenceContent(),
-        buildPresenceTags(expirationUnix)
-      );
+      void publishOfflinePresenceNow();
     };
 
     window.addEventListener("pagehide", publishOfflinePresence);
@@ -612,7 +601,7 @@ const Index = () => {
       window.removeEventListener("pagehide", publishOfflinePresence);
       window.removeEventListener("beforeunload", publishOfflinePresence);
     };
-  }, [publishEvent, user?.pubkey]);
+  }, [publishOfflinePresenceNow, user?.pubkey]);
 
   const onboardingOverlays = (
     <>
