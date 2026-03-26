@@ -21,4 +21,12 @@ describe("LanguageToggle", () => {
     });
     expect(trigger).toHaveAttribute("title", expect.stringMatching(/Deutsch/));
   });
+
+  it("shows the full current language label in the mobile variant trigger", () => {
+    render(<LanguageToggle showLabelOnMobile />);
+
+    const trigger = screen.getByLabelText(/language/i);
+
+    expect(trigger).toHaveTextContent("English");
+  });
 });

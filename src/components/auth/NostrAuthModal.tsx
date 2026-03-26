@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, ChevronDown, LogIn, Link2, CircleHelp, Pencil, Eye, EyeOff } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, LogIn, Link2, CircleHelp, Pencil, Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
+import { DropdownTriggerContent } from "@/components/ui/dropdown-trigger-content";
 import { GuestPrivateKeyRow } from "./GuestPrivateKeyRow";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
@@ -824,13 +825,18 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
           <Button
             variant="ghost"
             size="sm"
-            className={desktopTopbarControlClassName}
+            className={cn(desktopTopbarControlClassName, "xl:px-3")}
             title={profileTriggerHint}
             aria-label={profileTriggerHint}
           >
-            <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-5 h-5" />
-            <span className="text-sm font-medium truncate max-w-[8rem]">{displayName}</span>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            <DropdownTriggerContent
+              className="max-w-full"
+              leading={
+                <UserAvatar id={user.pubkey} displayName={displayName} avatarUrl={effectiveProfile.picture} className="w-5 h-5" />
+              }
+              label={displayName}
+              labelClassName="max-w-[8rem] text-sm font-medium"
+            />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[21rem] p-2">

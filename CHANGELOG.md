@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 - Mobile top navigation view tabs now switch reliably on direct taps again by avoiding drag pointer capture during ordinary tap starts, while preserving slide-across view switching.
+- Language selectors now use a consistent dropdown trigger pattern across desktop and mobile, with the chevron grouped inside the same padded control content as the active language label and profile-style desktop topbar alignment.
 
 ## [2.7.6] - 2026-03-26
 - Automatic Noas sign-in/sign-up now prefill the host as a bare NIP-05 domain (without `https://`) while still internally defaulting submitted hosts to HTTPS.
