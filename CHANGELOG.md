@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Mobile top navigation view tabs now switch reliably on direct taps again by avoiding drag pointer capture during ordinary tap starts, while preserving slide-across view switching.
 
 ## [2.7.6] - 2026-03-26
 - Automatic Noas sign-in/sign-up now prefill the host as a bare NIP-05 domain (without `https://`) while still internally defaulting submitted hosts to HTTPS.
