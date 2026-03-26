@@ -206,7 +206,7 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
                 ? "translateX(var(--pill-x, 0px)) scaleX(0.95) scaleY(0.88)"
                 : "translateX(var(--pill-x, 0px))",
               transition: isPressed
-                ? "box-shadow 150ms ease-out, opacity 150ms ease-out"
+                ? "transform 16ms linear, box-shadow 150ms ease-out, opacity 150ms ease-out"
                 : "transform 300ms cubic-bezier(0.25, 1, 0.5, 1), width 300ms cubic-bezier(0.25, 1, 0.5, 1), box-shadow 300ms ease-out, opacity 150ms ease-out",
               boxShadow: isPressed
                 ? "0 8px 25px -4px rgba(0,0,0,0.25), 0 4px 10px -4px rgba(0,0,0,0.15)"
