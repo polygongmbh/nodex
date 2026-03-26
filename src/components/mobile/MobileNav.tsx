@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState, PointerEvent } from "react";
+import { useRef, useCallback, useState, PointerEvent, useEffect } from "react";
 import { Filter, Rss, GitBranch, List, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
@@ -16,6 +16,7 @@ const allSegments: MobileViewType[] = ["filters", "feed", "tree", "list", "calen
 export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
+  const pillRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const [isPressed, setIsPressed] = useState(false);
 
@@ -29,18 +30,39 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
 
   const activeIndex = allSegments.indexOf(currentView);
 
+  // Position pill by measuring actual button positions
+  const updatePillPosition = useCallback(() => {
+    const container = containerRef.current;
+    const pill = pillRef.current;
+    if (!container || !pill) return;
+
+    const buttons = container.querySelectorAll<HTMLElement>("[data-segment-index]");
+    const activeButton = buttons[activeIndex];
+    if (!activeButton) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const buttonRect = activeButton.getBoundingClientRect();
+
+    pill.style.width = `${buttonRect.width}px`;
+    pill.style.transform = `translateX(${buttonRect.left - containerRect.left - 3}px)`;
+  }, [activeIndex]);
+
+  useEffect(() => {
+    updatePillPosition();
+    window.addEventListener("resize", updatePillPosition);
+    return () => window.removeEventListener("resize", updatePillPosition);
+  }, [updatePillPosition]);
+
   const getSegmentFromX = useCallback((clientX: number): MobileViewType | null => {
     const container = containerRef.current;
     if (!container) return null;
     const rect = container.getBoundingClientRect();
     const x = clientX - rect.left;
-    const children = container.children;
+    const children = container.querySelectorAll<HTMLElement>("[data-segment-index]");
     for (let i = 0; i < children.length; i++) {
-      const child = children[i] as HTMLElement;
-      if (child.dataset.segmentIndex === undefined) continue;
-      const childRect = child.getBoundingClientRect();
+      const childRect = children[i].getBoundingClientRect();
       if (clientX >= childRect.left && clientX <= childRect.right) {
-        return allSegments[parseInt(child.dataset.segmentIndex)];
+        return allSegments[i];
       }
     }
     if (x <= 0) return allSegments[0];
@@ -80,8 +102,6 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
     setIsPressed(false);
   }, []);
 
-  const segmentCount = allSegments.length;
-
   return (
     <nav
       className="mx-2 mt-2 mb-1 safe-area-top"
@@ -99,18 +119,14 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
       >
         {/* Sliding pill */}
         <div
+          ref={pillRef}
           className={cn(
-            "absolute top-[3px] bottom-[3px] left-[3px] right-[3px] rounded-md bg-background shadow-sm will-change-transform",
+            "absolute top-[3px] bottom-[3px] rounded-md bg-background will-change-transform",
             isPressed
-              ? "transition-[transform,box-shadow] duration-150 ease-out shadow-md scale-[0.97]"
-              : "transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-sm"
+              ? "transition-[transform,width,box-shadow,scale] duration-150 ease-out shadow-lg scale-y-[0.92] scale-x-[0.96]"
+              : "transition-[transform,width,box-shadow,scale] duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] shadow-sm scale-100"
           )}
-          style={{
-            width: `calc(${100 / segmentCount}% - 6px / ${segmentCount})`,
-            left: '3px',
-            transform: `translateX(calc(${activeIndex} * (${100 / segmentCount}% + 6px / ${segmentCount} * ${segmentCount - 1} / ${segmentCount})))`,
-            // Simpler: use percentage of container width
-          }}
+          style={{ left: '3px' }}
           aria-hidden="true"
         />
 
@@ -127,9 +143,8 @@ export function MobileNav({ currentView, onViewChange }: MobileNavProps) {
               : t("navigation.views.switchTo", { view: segmentLabels[seg] })
             }
             className={cn(
-              "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-all duration-150 flex-1 min-w-0 rounded-md",
+              "relative z-10 flex items-center justify-center gap-1 py-1.5 text-[13px] font-medium transition-colors duration-150 flex-1 min-w-0 rounded-md",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              "active:scale-95",
               currentView === seg
                 ? "text-foreground"
                 : "text-muted-foreground/70 dark:text-muted-foreground"
