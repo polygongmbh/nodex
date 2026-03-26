@@ -145,6 +145,7 @@ export function MobileLayout({
   const searchQuery = viewModelSearchQuery ?? surface.searchQuery;
   const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
+  const [pendingManageView, setPendingManageView] = useState<MobileViewType | null>(null);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
   const lastHandledProfilePromptSignalRef = useRef(0);
@@ -156,15 +157,17 @@ export function MobileLayout({
   const defaultContent = includedChannels.map(c => `#${c.name}`).join(" ");
 
   const openManageView = useCallback(() => {
+    setPendingManageView(null);
     setShowFilters(true);
     onManageRouteChange(true);
   }, [onManageRouteChange]);
 
   const closeManageView = useCallback((nextView?: ViewType) => {
-    setShowFilters(false);
-    if (nextView) {
+    if (nextView && isPrimaryMobileView(nextView)) {
+      setPendingManageView(nextView);
       void dispatchFeedInteraction({ type: "ui.view.change", view: nextView });
     }
+    setShowFilters(false);
     onManageRouteChange(false);
   }, [dispatchFeedInteraction, onManageRouteChange]);
 
@@ -173,8 +176,15 @@ export function MobileLayout({
       closeManageView(view);
       return;
     }
+    setPendingManageView(null);
     void dispatchFeedInteraction({ type: "ui.view.change", view });
   }, [closeManageView, dispatchFeedInteraction, showFilters]);
+
+  useEffect(() => {
+    if (!showFilters && pendingManageView === activePrimaryView) {
+      setPendingManageView(null);
+    }
+  }, [activePrimaryView, pendingManageView, showFilters]);
 
   // Swipe navigation handlers
   const handleSwipeLeft = useCallback(() => {
@@ -228,7 +238,7 @@ export function MobileLayout({
     enableHaptics: true,
   });
 
-  const mobileCurrentView: MobileViewType = activePrimaryView;
+  const mobileCurrentView: MobileViewType = pendingManageView ?? activePrimaryView;
   const hasSearchQuery = searchQuery.trim().length > 0;
   const viewFallback = <div className="h-full" aria-hidden="true" />;
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
