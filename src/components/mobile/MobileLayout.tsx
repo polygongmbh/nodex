@@ -2,7 +2,7 @@ import { Suspense, lazy, useState, useCallback, useRef, useEffect, useMemo } fro
 import { MobileNav, MobileViewType } from "./MobileNav";
 import { MobileFilters } from "./MobileFilters";
 import { UnifiedBottomBar } from "./UnifiedBottomBar";
-import { SwipeIndicator } from "./SwipeIndicator";
+
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
@@ -203,34 +203,32 @@ export function MobileLayout({
     }
   }, [activePrimaryView, handleMobileViewChange, openManageView]);
 
-  // Swipe animation state
-  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
+  // Gesture-following swipe state
+  const viewContainerRef = useRef<HTMLDivElement>(null);
+  const swipeDeltaRef = useRef(0);
+  const [swipeTransition, setSwipeTransition] = useState<"left" | "right" | null>(null);
 
   const animatedSwipeLeft = useCallback(() => {
-    setSwipeDirection("left");
-    setIsAnimating(true);
-    setTimeout(() => {
+    setSwipeTransition("left");
+    requestAnimationFrame(() => {
       handleSwipeLeft();
-      setIsAnimating(false);
-      setSwipeDirection(null);
-    }, 150);
+      // Let the CSS transition play, then clear
+      setTimeout(() => setSwipeTransition(null), 200);
+    });
   }, [handleSwipeLeft]);
 
   const animatedSwipeRight = useCallback(() => {
-    setSwipeDirection("right");
-    setIsAnimating(true);
-    setTimeout(() => {
+    setSwipeTransition("right");
+    requestAnimationFrame(() => {
       handleSwipeRight();
-      setIsAnimating(false);
-      setSwipeDirection(null);
-    }, 150);
+      setTimeout(() => setSwipeTransition(null), 200);
+    });
   }, [handleSwipeRight]);
 
   const swipeHandlers = useSwipeNavigation({
     onSwipeLeft: animatedSwipeLeft,
     onSwipeRight: animatedSwipeRight,
-    threshold: 60,
+    threshold: 50,
     enableHaptics: true,
   });
 
@@ -495,12 +493,6 @@ export function MobileLayout({
         isMobile
       />
       
-      {/* Swipe indicator */}
-      <SwipeIndicator 
-        views={mobileViews} 
-        currentView={mobileCurrentView} 
-        showFilters={showFilters} 
-      />
       
       <main 
         className="flex-1 overflow-hidden relative"
@@ -524,10 +516,11 @@ export function MobileLayout({
             </div>
           )}
           <div 
+            ref={viewContainerRef}
             className={cn(
-              "flex-1 min-h-0 w-full transition-transform duration-150 ease-out",
-              isAnimating && swipeDirection === "left" && "-translate-x-4 opacity-80",
-              isAnimating && swipeDirection === "right" && "translate-x-4 opacity-80"
+              "flex-1 min-h-0 w-full transition-all duration-200 ease-out",
+              swipeTransition === "left" && "animate-slide-in-from-right",
+              swipeTransition === "right" && "animate-slide-in-from-left"
             )}
           >
             <Suspense fallback={viewFallback}>
