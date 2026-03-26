@@ -5,6 +5,8 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [2.7.6] - 2026-03-26
 - Automatic Noas sign-in/sign-up now prefill the host as a bare NIP-05 domain (without `https://`) while still internally defaulting submitted hosts to HTTPS.
 - Language detection now uses `i18next-browser-languagedetector` with URL query/path support plus persisted browser fallback, replacing the custom language bootstrap logic.
 - Mobile Manage now uses a native scroll container (instead of Radix ScrollArea internals) and guest private-key backup rows clamp to container width, preventing horizontal panel stretch.
