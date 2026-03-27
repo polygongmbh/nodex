@@ -43,7 +43,13 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", async () =
 });
 
 vi.mock("./MobileNav", () => ({
-  MobileNav: ({ onViewChange }: { onViewChange: (view: "tree" | "feed" | "list" | "calendar" | "filters") => void }) => (
+  MobileNav: ({
+    onViewChange,
+    onManageOpen,
+  }: {
+    onViewChange: (view: "tree" | "feed" | "list" | "calendar") => void;
+    onManageOpen?: () => void;
+  }) => (
     <div data-testid="mobile-nav">
       <button onClick={() => onViewChange("feed")} aria-label="Switch to feed view">
         Feed
@@ -51,7 +57,7 @@ vi.mock("./MobileNav", () => ({
       <button onClick={() => onViewChange("tree")} aria-label="Switch to tree view">
         Tree
       </button>
-      <button onClick={() => onViewChange("filters")} aria-label="Switch to Manage view">
+      <button onClick={onManageOpen} aria-label="Switch to Manage view">
         Manage
       </button>
     </div>
