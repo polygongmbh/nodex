@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Cold-start app loads now mount immediately while startup relay discovery continues in the background, and host-fallback relay probing now fans out concurrently to reduce first-visit delays.
 - Relay-scoped feeds now keep events visible under every relay that actually delivered them, instead of attributing duplicate receipts only to the first relay that saw the event.
 - Presence status now publishes only to the currently selected relays, delays relay-switch updates briefly to avoid churn, refreshes unchanged presence less aggressively, and only includes a focused item id on relays where that item is actually present.
 - Mobile top navigation view tabs now switch reliably on direct taps again by avoiding drag pointer capture during ordinary tap starts, while preserving slide-across view switching.

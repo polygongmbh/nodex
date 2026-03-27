@@ -19,7 +19,6 @@ function NostrBootstrapProvider({ children }: { children: ReactNode }) {
   const initialNoasBootstrap = readStartupNoasBootstrap();
   const [relayUrls, setRelayUrls] = useState(initialBootstrap.relayUrls);
   const [defaultNoasHostUrl, setDefaultNoasHostUrl] = useState(initialNoasBootstrap.defaultHostUrl);
-  const [isReady, setIsReady] = useState(!initialBootstrap.needsAsyncFallback);
 
   useEffect(() => {
     if (!initialBootstrap.needsAsyncFallback) return;
@@ -29,7 +28,6 @@ function NostrBootstrapProvider({ children }: { children: ReactNode }) {
       const resolvedBootstrap = await resolveStartupRelayBootstrap();
       if (cancelled) return;
       setRelayUrls(resolvedBootstrap.relayUrls);
-      setIsReady(true);
       if (resolvedBootstrap.relayUrls.length > 0) {
         nostrDevLog("relay", "Resolved startup relays from app bootstrap", {
           source: resolvedBootstrap.source,
@@ -65,8 +63,6 @@ function NostrBootstrapProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [initialNoasBootstrap.needsAsyncFallback]);
-
-  if (!isReady) return null;
 
   return (
     <NDKProvider defaultRelays={relayUrls} defaultNoasHostUrl={defaultNoasHostUrl}>

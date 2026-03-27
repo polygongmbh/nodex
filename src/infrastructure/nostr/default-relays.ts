@@ -163,35 +163,44 @@ async function probeHostFallbackCandidates(options: {
   probe: (relayUrl: string) => Promise<boolean>;
   retryCount: number;
 }): Promise<string[]> {
-  const failedRelayUrls: string[] = [];
-  const resolvedRelayUrls: string[] = [];
+  const probeBatch = async (relayUrls: string[]) => {
+    const results = await Promise.all(
+      relayUrls.map(async (relayUrl) => ({
+        relayUrl,
+        isAvailable: await options.probe(relayUrl),
+      }))
+    );
 
-  for (const relayUrl of options.candidates) {
-    const isAvailable = await options.probe(relayUrl);
-    if (isAvailable) {
-      resolvedRelayUrls.push(relayUrl);
-      continue;
-    }
-    failedRelayUrls.push(relayUrl);
-  }
+    const resolvedRelayUrls = results
+      .filter((result) => result.isAvailable)
+      .map((result) => result.relayUrl);
+    const failedRelayUrls = results
+      .filter((result) => !result.isAvailable)
+      .map((result) => result.relayUrl);
 
-  if (resolvedRelayUrls.length > 0 || failedRelayUrls.length === 0 || options.retryCount <= 0) {
+    return {
+      resolvedRelayUrls,
+      failedRelayUrls,
+    };
+  };
+
+  const firstAttempt = await probeBatch(options.candidates);
+  const resolvedRelayUrls = [...firstAttempt.resolvedRelayUrls];
+
+  if (
+    resolvedRelayUrls.length > 0
+    || firstAttempt.failedRelayUrls.length === 0
+    || options.retryCount <= 0
+  ) {
     return resolvedRelayUrls;
   }
 
-  let remaining = failedRelayUrls;
+  let remaining = firstAttempt.failedRelayUrls;
   for (let attempt = 1; attempt <= options.retryCount; attempt += 1) {
-    const retryFailures: string[] = [];
-    for (const relayUrl of remaining) {
-      const isAvailable = await options.probe(relayUrl);
-      if (isAvailable) {
-        resolvedRelayUrls.push(relayUrl);
-      } else {
-        retryFailures.push(relayUrl);
-      }
-    }
-    if (resolvedRelayUrls.length > 0 || retryFailures.length === 0) break;
-    remaining = retryFailures;
+    const retryAttempt = await probeBatch(remaining);
+    resolvedRelayUrls.push(...retryAttempt.resolvedRelayUrls);
+    if (resolvedRelayUrls.length > 0 || retryAttempt.failedRelayUrls.length === 0) break;
+    remaining = retryAttempt.failedRelayUrls;
   }
 
   return resolvedRelayUrls;

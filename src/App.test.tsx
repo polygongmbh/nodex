@@ -94,7 +94,7 @@ describe("App routes", () => {
     expect(screen.getByTestId("index-page")).toBeInTheDocument();
   });
 
-  it("waits for async fallback relay bootstrap before mounting the provider", async () => {
+  it("mounts immediately while async fallback relay bootstrap continues in the background", async () => {
     let resolveBootstrap!: (value: {
       relayUrls: string[];
       source: "fallback";
@@ -114,7 +114,11 @@ describe("App routes", () => {
 
     render(<App />);
 
-    expect(ndkContextModule.NDKProvider).not.toHaveBeenCalled();
+    expect(screen.getByTestId("index-page")).toBeInTheDocument();
+    expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
+      expect.objectContaining({ defaultRelays: [], defaultNoasHostUrl: "" }),
+      expect.anything()
+    );
 
     resolveBootstrap({
       relayUrls: ["wss://relay.fallback"],

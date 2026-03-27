@@ -52,6 +52,31 @@ describe("default relay env resolution", () => {
     expect(probeRelay).toHaveBeenNthCalledWith(3, "wss://relay.example.test");
   });
 
+  it("starts the first fallback probe batch concurrently", async () => {
+    const pending = new Map<string, (value: boolean) => void>();
+    const probeRelay = vi.fn((relayUrl: string) => new Promise<boolean>((resolve) => {
+      pending.set(relayUrl, resolve);
+    }));
+
+    const resolution = resolveDefaultRelayUrlsWithDomainFallback({
+      hostname: "app.example.test",
+      probeRelay,
+    });
+
+    expect(probeRelay).toHaveBeenCalledTimes(3);
+    expect(Array.from(pending.keys())).toEqual([
+      "wss://feed.example.test",
+      "wss://nostr.example.test",
+      "wss://relay.example.test",
+    ]);
+
+    pending.get("wss://feed.example.test")?.(true);
+    pending.get("wss://nostr.example.test")?.(false);
+    pending.get("wss://relay.example.test")?.(false);
+
+    await expect(resolution).resolves.toEqual(["wss://feed.example.test"]);
+  });
+
   it("falls back by prefixing the current host when no subdomain exists", async () => {
     const probeRelay = vi.fn(async (relayUrl: string) => relayUrl === "wss://feed.project.test");
 
