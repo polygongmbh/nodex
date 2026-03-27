@@ -7,6 +7,10 @@ describe("formatBreadcrumbLabel", () => {
     expect(label).toBe("Ship frontend now");
   });
 
+  it("ignores leading blank lines and whitespace before taking the first line", () => {
+    expect(formatBreadcrumbLabel("\n \n   Ship #frontend now\nSecond line")).toBe("Ship frontend now");
+  });
+
   it("keeps hashtag words while removing hashtag markers", () => {
     expect(formatBreadcrumbLabel("#backend #ops rollout")).toBe("backend ops rollout");
   });

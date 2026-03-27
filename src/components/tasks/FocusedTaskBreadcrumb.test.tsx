@@ -93,4 +93,45 @@ describe("FocusedTaskBreadcrumb", () => {
     expect(screen.getByRole("button", { name: "Task delegated to with enough room to display frontend" })).toBeInTheDocument();
   });
 
+  it("keeps short ancestor items visible while capping each breadcrumb item at half the available row width", () => {
+    const middle: Task = {
+      ...baseTask,
+      id: "middle",
+      content: "Middle task",
+      parentId: "root",
+    };
+    const leaf: Task = {
+      ...baseTask,
+      id: "leaf",
+      content: "Leaf task",
+      parentId: "middle",
+    };
+
+    render(
+      <FocusedTaskBreadcrumb
+        allTasks={[baseTask, middle, leaf]}
+        focusedTaskId="leaf"
+      />
+    );
+
+    const rootButton = screen.getByRole("button", { name: "Root task" });
+    const middleButton = screen.getByRole("button", { name: "Middle task" });
+    const leafButton = screen.getByRole("button", { name: "Leaf task" });
+
+    const rootItem = rootButton.parentElement;
+    const middleItem = middleButton.parentElement;
+    const leafItem = leafButton.parentElement;
+
+    // Protect the focused breadcrumb layout contract so short ancestor items do not collapse.
+    expect(rootButton.className).toContain("shrink-0");
+    expect(middleButton.className).toContain("shrink-0");
+    expect(leafButton.className).toContain("shrink-0");
+    // Protect the breadcrumb layout contract so no single item consumes more than half the row.
+    expect(rootItem?.className).toContain("max-w-[50%]");
+    expect(middleItem?.className).toContain("max-w-[50%]");
+    expect(leafItem?.className).toContain("max-w-[50%]");
+    expect(rootButton.className).toContain("max-w-full");
+    expect(middleButton.className).toContain("max-w-full");
+    expect(leafButton.className).toContain("max-w-full");
+  });
 });

@@ -961,14 +961,14 @@ export function CalendarView({
                         {ancestorChain.length > 0 && (
                           <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground mb-2">
                             {ancestorChain.map((ancestor, i) => (
-                              <span key={ancestor.id} className="flex items-center gap-1">
+                              <span key={ancestor.id} className="flex max-w-[50%] items-center gap-1">
                                 {i > 0 && <span className="text-muted-foreground/50">›</span>}
                                 <button
                                   onClick={(event) => {
                                     event.stopPropagation();
                                     focusTask(ancestor.id);
                                   }}
-                                  className={`${TASK_INTERACTION_STYLES.hoverLinkText} truncate max-w-[60px]`}
+                                  className={`${TASK_INTERACTION_STYLES.hoverLinkText} max-w-full truncate`}
                                   title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
                                   aria-label={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
                                 >

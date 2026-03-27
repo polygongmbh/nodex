@@ -214,6 +214,9 @@ describe("FeedView", () => {
 
     const breadcrumbButton = screen.getByRole("button", { name: /focus task: root breadcrumb label that should not wrap/i });
     expect(breadcrumbButton).toBeInTheDocument();
+    // Protect the breadcrumb layout contract so one item cannot dominate the row.
+    expect(breadcrumbButton.parentElement?.className).toContain("max-w-[50%]");
+    expect(breadcrumbButton.className).toContain("max-w-full");
   });
 
   it("renders ancestor breadcrumb levels for multi-level task cards", () => {

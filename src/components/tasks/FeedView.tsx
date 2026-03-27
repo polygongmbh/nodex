@@ -867,7 +867,7 @@ export function FeedView({
           {breadcrumb.length > 0 && (
             <div className="mb-1.5 flex min-w-0 items-center gap-1 overflow-hidden text-xs text-muted-foreground">
               {breadcrumb.map((crumb, i) => (
-                <span key={crumb.id} className="flex min-w-0 items-center gap-1">
+                <span key={crumb.id} className="flex min-w-0 max-w-[50%] items-center gap-1">
                   {i > 0 && <span className="shrink-0">/</span>}
                   <button
                     onClick={(event) => {
@@ -876,8 +876,7 @@ export function FeedView({
                     }}
                     className={cn(
                       TASK_INTERACTION_STYLES.hoverLinkText,
-                      "min-w-0 cursor-pointer truncate whitespace-nowrap text-left",
-                      breadcrumb.length > 1 ? "max-w-[18rem] sm:max-w-[22rem]" : "max-w-full"
+                      "min-w-0 max-w-full cursor-pointer truncate whitespace-nowrap text-left"
                     )}
                     title={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
                     aria-label={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
