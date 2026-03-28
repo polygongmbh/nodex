@@ -61,6 +61,7 @@ import {
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
+import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";

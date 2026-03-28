@@ -31,6 +31,7 @@ import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/domain/content/task-status";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
+import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import {
   handleTaskStatusToggleClick,
