@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
+import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import {
   Task,

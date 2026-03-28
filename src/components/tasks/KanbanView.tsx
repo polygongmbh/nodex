@@ -23,6 +23,7 @@ import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { hasTextSelection } from "@/lib/click-intent";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
