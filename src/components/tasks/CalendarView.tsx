@@ -681,7 +681,7 @@ export function CalendarView({
                             </DropdownMenu>
                             <div className="flex-1 min-w-0">
                               <p
-                                onClick={() => focusTask(task.id)}
+                                onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
                                 className={`text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`}
                               >
                                 {task.content}
@@ -949,7 +949,7 @@ export function CalendarView({
                         <div
                         key={task.id}
                         data-task-id={task.id}
-                        onClick={() => focusTask(task.id)}
+                        onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
                         className={cn(
                           `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                           isTaskTerminalStatus(task.status) && "opacity-60",

@@ -263,6 +263,7 @@ export function TaskItem({
       setIsRawEventDialogOpen(true);
       return;
     }
+    if (hasTextSelection()) return;
     handleSelect();
   };
 

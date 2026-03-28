@@ -702,7 +702,7 @@ export function FeedView({
         <div
           key={entry.id}
           data-testid={`feed-state-entry-${update.id}`}
-          onClick={() => focusTask(task.id)}
+          onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
           className={cn(
             `border-b border-border py-1.5 transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`
           )}
@@ -848,6 +848,7 @@ export function FeedView({
             setRawEventDialogOpen(true);
             return;
           }
+          if (hasTextSelection()) return;
           focusTask(task.id);
         }}
         className={cn(

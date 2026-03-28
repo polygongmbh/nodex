@@ -850,7 +850,7 @@ export function ListView({
                           </div>
                         )}
                         <div
-                          onClick={() => focusTask(task.id)}
+                          onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
                           className={cn(
                             `text-sm cursor-pointer whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
                             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
