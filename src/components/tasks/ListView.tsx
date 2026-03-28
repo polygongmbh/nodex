@@ -19,6 +19,7 @@ import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { hasTextSelection } from "@/lib/click-intent";
 import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
@@ -850,7 +851,7 @@ export function ListView({
                           </div>
                         )}
                         <div
-                          onClick={() => focusTask(task.id)}
+                          onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
                           className={cn(
                             `text-sm cursor-pointer whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
                             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"

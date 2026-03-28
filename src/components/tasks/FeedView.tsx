@@ -61,6 +61,7 @@ import {
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
+import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
@@ -702,7 +703,7 @@ export function FeedView({
         <div
           key={entry.id}
           data-testid={`feed-state-entry-${update.id}`}
-          onClick={() => focusTask(task.id)}
+          onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
           className={cn(
             `border-b border-border py-1.5 transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`
           )}
@@ -848,6 +849,7 @@ export function FeedView({
             setRawEventDialogOpen(true);
             return;
           }
+          if (hasTextSelection()) return;
           focusTask(task.id);
         }}
         className={cn(

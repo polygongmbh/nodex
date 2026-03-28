@@ -23,6 +23,7 @@ import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { hasTextSelection } from "@/lib/click-intent";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
@@ -526,7 +527,7 @@ export function KanbanView({
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   data-task-id={task.id}
-                                  onClick={() => focusTask(task.id)}
+                                  onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
                                   className={cn(
                                     `relative min-w-0 bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "",
