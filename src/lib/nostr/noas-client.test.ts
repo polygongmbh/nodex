@@ -181,7 +181,10 @@ describe("NoasClient API route mapping", () => {
       "hunter2",
       "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
       "pubkey123",
-      { redirect: "https://nodex.polygon.gmbh" }
+      {
+        redirect: "https://nodex.polygon.gmbh",
+        relays: ["wss://relay.one", "wss://relay.two/"],
+      }
     );
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -200,6 +203,7 @@ describe("NoasClient API route mapping", () => {
       password_hash: "f52fbd32b2b3b86ff88ef6c490628285f482af15ddcb29541f94bcf526a3f6c7",
       public_key: "pubkey123",
       redirect: "https://nodex.polygon.gmbh",
+      relays: ["wss://relay.one", "wss://relay.two/"],
     });
     expect(parsedBody.private_key_encrypted).toMatch(/^ncryptsec/);
   });
@@ -256,6 +260,32 @@ describe("NoasClient API route mapping", () => {
       username: "alice",
       publicKey: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     });
+  });
+
+  it("normalizes signup relay lists from Noas register responses", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({
+        success: true,
+        status: "active",
+        public_key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        relays: ["wss://relay.one/", "wss://relay.two"],
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+    );
+
+    const client = new NoasClient("https://noas.example/api/v1");
+    const response = await client.register(
+      "alice",
+      "hunter2",
+      "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    );
+
+    expect(response.relays).toEqual(["wss://relay.one/", "wss://relay.two"]);
   });
 
   it("routes profile-picture reads to /picture/:pubkey on the discovered api_base", async () => {

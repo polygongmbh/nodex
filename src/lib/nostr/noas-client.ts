@@ -24,6 +24,7 @@ export interface NoasAuthResult {
   registrationSucceeded?: boolean;
   status?: string;
   message?: string;
+  relays?: string[];
   errorCode?: NoasAuthErrorCode;
   errorMessage?: string;
   httpStatus?: number;
@@ -243,6 +244,7 @@ interface NoasRegisterResponse {
   status?: string;
   nip05?: string;
   message?: string;
+  relays?: string[];
   public_key?: string;
   public_npub?: string;
   error?: string;
@@ -429,16 +431,20 @@ export class NoasClient {
     password: string,
     privateKey: string,
     pubkey: string,
-    options?: { redirect?: string }
+    options?: { redirect?: string; relays?: string[] }
   ): Promise<NoasRegisterResponse> {
     try {
       const privateKeyBytes = decodePrivateKeyToBytes(privateKey);
-      const payload: Record<string, string> = {
+      const payload: Record<string, string | string[]> = {
         username,
         password_hash: hashNoasPassword(password),
         public_key: pubkey,
         private_key_encrypted: await nip49.encrypt(privateKeyBytes, password),
       };
+      const submittedRelays = normalizeRelayList(options?.relays);
+      if (submittedRelays) {
+        payload.relays = submittedRelays;
+      }
       const redirect = resolveRegisterRedirect(options?.redirect);
       if (redirect) {
         payload.redirect = redirect;
@@ -472,6 +478,8 @@ export class NoasClient {
         ? userFromResponse.username
         : username;
       const userPublicKey = normalizeResponsePublicKey(userFromResponse?.publicKey) || responsePublicKey;
+      const responseRelays = normalizeRelayList(responseData.relays)
+        || normalizeRelayList((userFromResponse as { relays?: unknown } | undefined)?.relays);
 
       return {
         success: responseData.success === false ? false : true,
@@ -482,6 +490,7 @@ export class NoasClient {
         status: typeof responseData.status === "string" ? responseData.status : undefined,
         nip05: typeof responseData.nip05 === "string" ? responseData.nip05 : undefined,
         message: typeof responseData.message === "string" ? responseData.message : undefined,
+        relays: responseRelays,
         public_key: typeof responseData.public_key === "string" ? responseData.public_key : undefined,
         public_npub: typeof responseData.public_npub === "string" ? responseData.public_npub : undefined,
       };

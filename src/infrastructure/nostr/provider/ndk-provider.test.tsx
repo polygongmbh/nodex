@@ -225,7 +225,7 @@ const mockedNdk = vi.hoisted(() => {
 
 const noasClientModule = vi.hoisted(() => {
   class MockNoasClient {
-    signIn = vi.fn(async () => ({ success: true }));
+    signIn = vi.fn(async () => noasClientModule.nextSignInResponse);
     register = vi.fn(async () => noasClientModule.nextRegisterResponse);
     getProfilePicture = vi.fn(async () => ({}));
     decryptPrivateKey = vi.fn(async () => "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
@@ -233,6 +233,11 @@ const noasClientModule = vi.hoisted(() => {
 
   return {
     instances: [] as MockNoasClient[],
+    nextSignInResponse: {
+      success: true,
+      publicKey: "pub",
+      encryptedPrivateKey: "ncryptsec1example",
+    },
     nextRegisterResponse: {
       success: true,
       user: { username: "alice", publicKey: "pub" },
@@ -450,6 +455,11 @@ describe("NDKProvider relay lifecycle", () => {
     mockedNdk.ndkInstances.length = 0;
     mockedNdk.publishedEvents.length = 0;
     noasClientModule.instances.length = 0;
+    noasClientModule.nextSignInResponse = {
+      success: true,
+      publicKey: "pub",
+      encryptedPrivateKey: "ncryptsec1example",
+    };
     noasClientModule.nextRegisterResponse = {
       success: true,
       user: { username: "alice", publicKey: "pub" },
@@ -534,6 +544,35 @@ describe("NDKProvider relay lifecycle", () => {
     expect(screen.getByTestId("signup-result")).toHaveTextContent("\"message\":\"Check your inbox.\"");
     expect(screen.getByTestId("auth-method")).toHaveTextContent("");
     expect(screen.getByTestId("user-pubkey")).toHaveTextContent("");
+  });
+
+  it("sends currently connected relays when signing up with Noas", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/", "wss://relay.two/"]} defaultNoasHostUrl="https://noas.example">
+        <NoasSignupHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      const relayState = mockedNdk.ndkInstances[0]?.pool.relays;
+      expect(relayState?.get("wss://relay.one")?.status).toBe(mockedNdk.MockNDKRelayStatus.CONNECTED);
+      expect(relayState?.get("wss://relay.two")?.status).toBe(mockedNdk.MockNDKRelayStatus.CONNECTED);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "sign up with noas" }));
+    });
+
+    const noasClient = noasClientModule.instances.at(-1);
+    expect(noasClient?.register).toHaveBeenCalledWith(
+      "alice",
+      "hunter2",
+      expect.stringMatching(/^nsec1/),
+      "pub",
+      expect.objectContaining({
+        relays: ["wss://relay.one", "wss://relay.two"],
+      })
+    );
   });
 
   it.each(["re-add relay slash", "re-add relay no slash"] as const)(

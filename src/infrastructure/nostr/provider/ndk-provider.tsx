@@ -1392,6 +1392,22 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     connectManagedRelay(ndk, normalized);
   }, [connectManagedRelay, ndk, probeRelayInfo]);
 
+  const connectNoasRelayList = useCallback((relayUrls?: string[]) => {
+    dedupeNormalizedRelayUrls(relayUrls || [])
+      .filter((relayUrl) => isRelayUrl(relayUrl))
+      .forEach((relayUrl) => {
+        addRelay(relayUrl);
+      });
+  }, [addRelay]);
+
+  const resolveConnectedRelayUrls = useCallback(() => (
+    dedupeNormalizedRelayUrls(
+      relays
+        .filter((relay) => relay.status === "connected" || relay.status === "read-only")
+        .map((relay) => relay.url)
+    )
+  ), [relays]);
+
   const reorderRelays = useCallback((orderedUrls: string[]) => {
     if (!ndk) return;
 
@@ -1519,15 +1535,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       localStorage.setItem(STORAGE_KEY_AUTH, "noas");
       localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
       
-      // Store relays if provided
-      if (signInResponse.relays && signInResponse.relays.length > 0) {
-        const relaySet = new Set([...resolvedDefaultRelays, ...signInResponse.relays]);
-        signInResponse.relays.forEach((relayUrl) => {
-          if (isRelayUrl(relayUrl)) {
-            addRelay(relayUrl);
-          }
-        });
-      }
+      connectNoasRelayList(signInResponse.relays);
 
       retryNip42RelaysAfterSignIn();
       return { success: true };
@@ -1537,7 +1545,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [addRelay, configuredDefaultNoasHostUrl, fetchLatestKind0Profile, ndk, resolvedDefaultRelays, retryNip42RelaysAfterSignIn]);
+  }, [configuredDefaultNoasHostUrl, connectNoasRelayList, fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
 
   const signupWithNoas = useCallback(async (
     username: string,
@@ -1593,6 +1601,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       // Register the user
       const signUpResponse = await noasClient.register(username, password, nsecKey, pubkey, {
         redirect: typeof window !== "undefined" ? window.location.origin : undefined,
+        relays: resolveConnectedRelayUrls(),
       });
 
       if (!signUpResponse.success || !signUpResponse.user) {
@@ -1666,6 +1675,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       setAuthMethod("noas");
       localStorage.setItem(STORAGE_KEY_AUTH, "noas");
       localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
+      connectNoasRelayList(signUpResponse.relays);
 
       retryNip42RelaysAfterSignIn();
       return {
@@ -1673,6 +1683,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         registrationSucceeded: true,
         status: signUpResponse.status,
         message: signUpResponse.message,
+        relays: signUpResponse.relays,
       };
     } catch (error) {
       console.error("Noas sign-up failed:", error);
@@ -1680,7 +1691,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [configuredDefaultNoasHostUrl, fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
+  }, [configuredDefaultNoasHostUrl, connectNoasRelayList, fetchLatestKind0Profile, ndk, relays, resolveConnectedRelayUrls, retryNip42RelaysAfterSignIn]);
 
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
