@@ -1060,7 +1060,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
     setNdk(ndkInstance);
 
-    // Restore session first, then connect so protected REQs don't race ahead of signer readiness.
+    // Connect relays immediately; session restore runs in parallel and sets ndkInstance.signer
+    // when ready. NIP-42 auth challenges are handled per-relay on-demand, so relays that require
+    // auth will challenge after EOSE once the signer is available.
     let extensionRestoreController: AbortController | undefined;
     const reconcileIntervalId = window.setInterval(
       syncRelayStatusesFromPool,
@@ -1162,14 +1164,11 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
     };
 
-    void (async () => {
-      await restoreSession();
-      if (disposed) return;
-      ndkInstance.connect().then(() => {
-        nostrDevLog("provider", "NDK connected to relay pool");
-        syncRelayStatusesFromPool();
-      });
-    })();
+    ndkInstance.connect().then(() => {
+      nostrDevLog("provider", "NDK connected to relay pool");
+      syncRelayStatusesFromPool();
+    });
+    void restoreSession();
     const relayCurrentInstance = relayCurrentInstanceRef.current;
     const inFlightKind0ProfileRequests = kind0ProfileInFlightRef.current;
 
