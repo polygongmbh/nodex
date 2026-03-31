@@ -81,6 +81,7 @@ import {
   RELAY_NIP11_CACHE_TTL_MS,
   relayInfoSummaryToNip11Document,
 } from "@/infrastructure/cache/ndk-cache-adapter";
+import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
@@ -1391,21 +1392,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     connectManagedRelay(ndk, normalized);
   }, [connectManagedRelay, ndk, probeRelayInfo]);
 
-  const connectNoasRelayList = useCallback((relayUrls?: string[]) => {
-    dedupeNormalizedRelayUrls(relayUrls || [])
-      .filter((relayUrl) => isRelayUrl(relayUrl))
+  const connectResolvedAuthRelayUrls = useCallback((relayUrls: string[]) => {
+    relayUrls
       .forEach((relayUrl) => {
         addRelay(relayUrl);
       });
   }, [addRelay]);
-
-  const resolveConnectedRelayUrls = useCallback(() => (
-    dedupeNormalizedRelayUrls(
-      relays
-        .filter((relay) => relay.status === "connected" || relay.status === "read-only")
-        .map((relay) => relay.url)
-    )
-  ), [relays]);
 
   const reorderRelays = useCallback((orderedUrls: string[]) => {
     if (!ndk) return;
@@ -1534,7 +1526,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       localStorage.setItem(STORAGE_KEY_AUTH, "noas");
       localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
       
-      connectNoasRelayList(signInResponse.relays);
+      connectResolvedAuthRelayUrls(resolveNoasAuthRelayUrls(signInResponse));
 
       retryNip42RelaysAfterSignIn();
       return { success: true };
@@ -1544,7 +1536,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [configuredDefaultNoasHostUrl, connectNoasRelayList, fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
+  }, [configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
 
   const signupWithNoas = useCallback(async (
     username: string,
@@ -1598,10 +1590,18 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
 
       // Register the user
-      const signUpResponse = await noasClient.register(username, password, nsecKey, pubkey, {
-        redirect: typeof window !== "undefined" ? window.location.origin : undefined,
-        relays: resolveConnectedRelayUrls(),
-      });
+      const signUpResponse = await noasClient.register(
+        username,
+        password,
+        nsecKey,
+        pubkey,
+        buildNoasSignupOptions(
+          relays
+            .filter((relay) => relay.status === "connected" || relay.status === "read-only")
+            .map((relay) => relay.url),
+          typeof window !== "undefined" ? window.location.origin : undefined
+        )
+      );
 
       if (!signUpResponse.success || !signUpResponse.user) {
         console.error("Noas sign-up failed:", signUpResponse.error);
@@ -1674,7 +1674,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       setAuthMethod("noas");
       localStorage.setItem(STORAGE_KEY_AUTH, "noas");
       localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
-      connectNoasRelayList(signUpResponse.relays);
+      connectResolvedAuthRelayUrls(resolveNoasAuthRelayUrls(signUpResponse));
 
       retryNip42RelaysAfterSignIn();
       return {
@@ -1690,7 +1690,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [configuredDefaultNoasHostUrl, connectNoasRelayList, fetchLatestKind0Profile, ndk, relays, resolveConnectedRelayUrls, retryNip42RelaysAfterSignIn]);
+  }, [configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, fetchLatestKind0Profile, ndk, relays, retryNip42RelaysAfterSignIn]);
 
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
