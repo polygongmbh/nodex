@@ -1,6 +1,6 @@
 import { hasNostrExtension } from "./storage";
 
-const DEFAULT_EXTENSION_RESTORE_TIMEOUT_MS = 5000;
+const DEFAULT_EXTENSION_RESTORE_TIMEOUT_MS = 1500;
 const DEFAULT_EXTENSION_RESTORE_POLL_INTERVAL_MS = 200;
 
 interface WaitForNostrExtensionOptions {
