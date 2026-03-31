@@ -74,24 +74,24 @@ describe("App routes", () => {
     window.history.pushState({}, "", "/");
   });
 
-  it("renders Index for /signin", () => {
+  it("renders Index for /signin", async () => {
     window.history.pushState({}, "", "/signin");
 
     render(<App />);
 
-    expect(screen.getByTestId("index-page")).toBeInTheDocument();
+    await screen.findByTestId("index-page");
     expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
       expect.objectContaining({ defaultRelays: ["wss://relay.env"], defaultNoasHostUrl: "" }),
       expect.anything()
     );
   });
 
-  it("renders Index for /signup", () => {
+  it("renders Index for /signup", async () => {
     window.history.pushState({}, "", "/signup");
 
     render(<App />);
 
-    expect(screen.getByTestId("index-page")).toBeInTheDocument();
+    await screen.findByTestId("index-page");
   });
 
   it("mounts immediately while async fallback relay bootstrap continues in the background", async () => {
@@ -114,7 +114,7 @@ describe("App routes", () => {
 
     render(<App />);
 
-    expect(screen.getByTestId("index-page")).toBeInTheDocument();
+    await screen.findByTestId("index-page");
     expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
       expect.objectContaining({ defaultRelays: [], defaultNoasHostUrl: "" }),
       expect.anything()
@@ -143,7 +143,7 @@ describe("App routes", () => {
 
     render(<App />);
 
-    expect(screen.getByTestId("index-page")).toBeInTheDocument();
+    await screen.findByTestId("index-page");
     expect(ndkContextModule.NDKProvider).toHaveBeenCalledWith(
       expect.objectContaining({ defaultNoasHostUrl: "" }),
       expect.anything()
