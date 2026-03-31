@@ -88,7 +88,10 @@ import { MotdBanner } from "@/components/MotdBanner";
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
-const DEMO_SEED_TASKS = mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents()));
+let _demoSeedTasksCache: ReturnType<typeof mergeTasks> | undefined;
+function getDemoSeedTasks() {
+  return (_demoSeedTasksCache ??= mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents())));
+}
 const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -249,7 +252,7 @@ const Index = () => {
     removeCachedRelayProfile,
   });
 
-  const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? DEMO_SEED_TASKS : []));
+  const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? getDemoSeedTasks() : []));
   const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
@@ -454,7 +457,7 @@ const Index = () => {
     totalTasks: allTasks.length,
     demoFeedActive,
     demoRelayId: DEMO_RELAY_ID,
-    demoSeedTasks: DEMO_SEED_TASKS,
+    getDemoSeedTasks,
     demoKind0Events: mockKind0Events,
     setGuideDemoFeedEnabled,
     setLocalTasks,

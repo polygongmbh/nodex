@@ -7,7 +7,7 @@ interface UseFeedDemoBootstrapOptions<Kind0Event> {
   totalTasks: number;
   demoFeedActive: boolean;
   demoRelayId: string;
-  demoSeedTasks: Task[];
+  getDemoSeedTasks: () => Task[];
   demoKind0Events: Kind0Event[];
   setGuideDemoFeedEnabled: Dispatch<SetStateAction<boolean>>;
   setLocalTasks: Dispatch<SetStateAction<Task[]>>;
@@ -20,7 +20,7 @@ export function useFeedDemoBootstrap<Kind0Event>({
   totalTasks,
   demoFeedActive,
   demoRelayId,
-  demoSeedTasks,
+  getDemoSeedTasks,
   demoKind0Events,
   setGuideDemoFeedEnabled,
   setLocalTasks,
@@ -32,7 +32,7 @@ export function useFeedDemoBootstrap<Kind0Event>({
     if (!shouldBootstrapGuideDemoFeed({ totalTasks, demoFeedActive })) return;
 
     setGuideDemoFeedEnabled(true);
-    setLocalTasks((previous) => (previous.length === 0 ? demoSeedTasks : previous));
+    setLocalTasks((previous) => (previous.length === 0 ? getDemoSeedTasks() : previous));
     seedCachedKind0Events(demoKind0Events);
     setActiveRelayIds((previous) => {
       const next = new Set(previous);
@@ -44,7 +44,7 @@ export function useFeedDemoBootstrap<Kind0Event>({
     demoFeedActive,
     demoKind0Events,
     demoRelayId,
-    demoSeedTasks,
+    getDemoSeedTasks,
     navigate,
     seedCachedKind0Events,
     setActiveRelayIds,

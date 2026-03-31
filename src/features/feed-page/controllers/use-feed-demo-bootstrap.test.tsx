@@ -22,7 +22,7 @@ function Harness({
     totalTasks,
     demoFeedActive,
     demoRelayId: "demo",
-    demoSeedTasks: [makeTask({ id: "demo-task" })],
+    getDemoSeedTasks: () => [makeTask({ id: "demo-task" })],
     demoKind0Events: [{ kind: 0 }],
     setGuideDemoFeedEnabled,
     setLocalTasks,
