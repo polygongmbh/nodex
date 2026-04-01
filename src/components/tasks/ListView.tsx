@@ -88,7 +88,7 @@ const PriorityCell = memo(function PriorityCell({
       ariaLabel={`Priority for ${taskContent}`}
       disabled={!editable}
       includeEmptyOption
-      className="h-7 rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground"
+      className="h-7 w-full min-w-0 max-w-full rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none disabled:cursor-not-allowed disabled:text-muted-foreground"
     />
   );
 }, (prev, next) =>
@@ -541,7 +541,7 @@ export function ListView({
 
       {/* Table */}
       <div ref={tableContainerRef} className="scrollbar-main-view flex-1 overflow-x-auto">
-        <table className="w-full min-w-full table-auto 2xl:table-fixed">
+        <table className="w-full min-w-full table-fixed">
           <thead className="sticky top-0 bg-background border-b border-border z-10">
             <tr>
               <th className="text-left p-2 2xl:p-3 w-10">
@@ -557,7 +557,7 @@ export function ListView({
                   )}
                 </div>
               </th>
-              <th className={cn("text-left w-auto min-w-[22rem]", TABLE_CELL_PADDING_CLASS)}>
+              <th className={cn("text-left w-auto", TABLE_CELL_PADDING_CLASS)}>
                 <SortButton field="content">
                   <span className="inline-flex items-center gap-1">
                     <ListTodo className="w-3 h-3 text-muted-foreground" />
@@ -750,7 +750,7 @@ export function ListView({
                         )}
                       </DropdownMenu>
                     </td>
-                    <td className={cn("w-auto min-w-[22rem]", TABLE_CELL_PADDING_CLASS)}>
+                    <td className={cn("min-w-0 w-auto", TABLE_CELL_PADDING_CLASS)}>
                       <div className="space-y-1">
                         {/* Parent context */}
                         {ancestorChain.length > 0 && (
@@ -776,7 +776,7 @@ export function ListView({
                         <div
                           onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
                           className={cn(
-                            `text-sm cursor-pointer whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
+                            `text-sm cursor-pointer break-words whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
                             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
                           )}
                           title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
@@ -791,7 +791,7 @@ export function ListView({
                     <td className={cn("w-40 lg:w-44 xl:w-56 2xl:w-[19rem]", TABLE_CELL_PADDING_CLASS)}>
                       <DueDateCell task={task} />
                     </td>
-                    <td className={cn("w-24", TABLE_CELL_PADDING_CLASS)}>
+                    <td className={cn("w-28 xl:w-32", TABLE_CELL_PADDING_CLASS)}>
                       <PriorityCell
                         taskId={task.id}
                         taskContent={task.content}

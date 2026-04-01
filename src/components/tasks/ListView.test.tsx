@@ -95,6 +95,41 @@ describe("ListView priority control", () => {
     expect(prioritySelectAfter).toHaveFocus();
   });
 
+  it("keeps table columns bounded so task text and priority controls do not overrun the row", () => {
+    mockUser = { id: "me" };
+    const task = makeTask({
+      id: "task-layout",
+      priority: 80,
+      content: "Task content with a longer preview #general",
+    });
+
+    const { container } = render(
+      <ListView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })]}
+        currentUser={task.author}
+        searchQuery=""
+      />
+    );
+
+    // Protect the responsive table contract: non-content columns stay bounded below 2xl.
+    const table = container.querySelector("table");
+    expect(table).toHaveClass("table-fixed");
+
+    const taskRow = container.querySelector('tr[data-task-id="task-layout"]');
+    const cells = taskRow?.querySelectorAll("td");
+    expect(cells?.[1]).toHaveClass("min-w-0");
+    expect(cells?.[4]).toHaveClass("w-28", "xl:w-32");
+
+    const prioritySelect = screen.getByRole("combobox", {
+      name: /priority for task content with a longer preview/i,
+    });
+    expect(prioritySelect).toHaveClass("w-full", "min-w-0", "max-w-full");
+  });
+
   it("disables task change controls when signed out", () => {
     mockUser = null;
     const task = makeTask({
