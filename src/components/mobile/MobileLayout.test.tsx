@@ -133,7 +133,9 @@ vi.mock("@/components/tasks/FeedView", () => ({
 }));
 
 vi.mock("@/components/tasks/CalendarView", () => ({
-  CalendarView: () => <div data-testid="calendar-view" />,
+  CalendarView: ({ mobileView }: { mobileView?: "calendar" | "upcoming" }) => (
+    <div data-testid="calendar-view" data-mobile-view={mobileView ?? "calendar"} />
+  ),
 }));
 
 const relays: Relay[] = [makeRelay()];
@@ -456,6 +458,74 @@ describe("MobileLayout auth wiring", () => {
     expect(status).toBeInTheDocument();
     expect(status).toHaveTextContent("Nothing yet in #nodex, on Demo, showing everything.");
     expect(status).toHaveClass("text-center");
+  });
+
+  it("shows the focused breadcrumb on mobile upcoming", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const rootTask = makeTask({
+      id: "root-task",
+      content: "Root task #general",
+      tags: ["general"],
+    });
+    const childTask = makeTask({
+      id: "child-task",
+      content: "Child task #general",
+      tags: ["general"],
+      parentId: "root-task",
+    });
+
+    renderMobileLayout({
+      viewState: {
+        currentView: "list",
+      },
+      taskViewModel: {
+        tasks: [childTask],
+        allTasks: [rootTask, childTask],
+        focusedTaskId: "child-task",
+      },
+    });
+
+    expect(screen.getByTestId("calendar-view")).toHaveAttribute("data-mobile-view", "upcoming");
+    expect(screen.getByRole("button", { name: /up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^all$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Root task general" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Child task general" })).toBeInTheDocument();
+  });
+
+  it("shows the focused breadcrumb on mobile calendar", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const rootTask = makeTask({
+      id: "root-task",
+      content: "Root task #general",
+      tags: ["general"],
+    });
+    const childTask = makeTask({
+      id: "child-task",
+      content: "Child task #general",
+      tags: ["general"],
+      parentId: "root-task",
+    });
+
+    renderMobileLayout({
+      viewState: {
+        currentView: "calendar",
+      },
+      taskViewModel: {
+        tasks: [childTask],
+        allTasks: [rootTask, childTask],
+        focusedTaskId: "child-task",
+      },
+    });
+
+    expect(screen.getByTestId("calendar-view")).toHaveAttribute("data-mobile-view", "calendar");
+    expect(screen.getByRole("button", { name: /up/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^all$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Root task general" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Child task general" })).toBeInTheDocument();
   });
 
   it("shows the mobile scope fallback notice when selected people and channels remove all scoped matches", () => {

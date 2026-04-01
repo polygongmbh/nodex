@@ -804,6 +804,6 @@ export function useMobileFallbackNoticeState({
     effectiveSearchQuery,
     mobileFallbackMessage,
     shouldShowMobileFallbackNotice: !showFilters && !isHydrating && Boolean(mobileFallbackMessage),
-    mobileShellFocusedTaskId: currentView !== "list" && currentView !== "calendar" ? focusedTaskId || null : null,
+    mobileShellFocusedTaskId: focusedTaskId || null,
   };
 }

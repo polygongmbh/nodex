@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Mobile calendar and upcoming views now keep the focused-task breadcrumb visible again, so parent-task navigation is available consistently across mobile task views.
 - Desktop timelines and feeds now keep channel and quick-filter empty states scoped instead of broadening to unrelated posts, while mobile fallback keeps the existing “showing everything” notice and now truly ignores both people and hashtag filters when it broadens.
 - Feed rows now keep a visible fallback `npub` label for nameless authors on `md` and `lg` desktop widths, and switch to the full user-facing pubkey starting at `xl` instead of waiting until `2xl`.
 - Added desktop shortcuts to toggle channel match mode (`AND`/`OR`), recent and priority quick filters, and compact tree/kanban cards; tree and kanban cards now drop rich media previews so attachments stay feed-only, and kanban keeps priority pinned on the right edge of each card.
