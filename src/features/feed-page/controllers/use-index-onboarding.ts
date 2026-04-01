@@ -25,6 +25,7 @@ interface UseIndexOnboardingOptions {
   openedWithFocusedTaskRef: MutableRefObject<boolean>;
   shouldForceAuthAfterOnboarding: boolean;
   ensureGuideDataAvailable: () => void;
+  onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
   setSearchQuery: Dispatch<SetStateAction<string>>;
@@ -44,6 +45,7 @@ export function useIndexOnboarding({
   openedWithFocusedTaskRef,
   shouldForceAuthAfterOnboarding,
   ensureGuideDataAvailable,
+  onBeforeResetFocusedTaskScope,
   setCurrentView,
   setFocusedTaskId,
   setSearchQuery,
@@ -160,6 +162,7 @@ export function useIndexOnboarding({
 
     if (shouldForceFeedAndResetFiltersOnStep(payload.id, isMobile)) {
       setCurrentView("feed");
+      onBeforeResetFocusedTaskScope?.();
       setFocusedTaskId(null);
       setSearchQuery("");
       setActiveRelayIds(new Set());
@@ -174,12 +177,23 @@ export function useIndexOnboarding({
     }
     if (!isFilterResetStep(payload.id)) return;
 
+    onBeforeResetFocusedTaskScope?.();
     setFocusedTaskId(null);
     setSearchQuery("");
     setActiveRelayIds(new Set());
     setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
     setPeople((prev) => mapPeopleSelection(prev, () => false));
-  }, [channels, isMobile, setActiveRelayIds, setChannelFilterStates, setCurrentView, setFocusedTaskId, setPeople, setSearchQuery]);
+  }, [
+    channels,
+    isMobile,
+    onBeforeResetFocusedTaskScope,
+    setActiveRelayIds,
+    setChannelFilterStates,
+    setCurrentView,
+    setFocusedTaskId,
+    setPeople,
+    setSearchQuery,
+  ]);
 
   const handleOnboardingActiveSectionChange = useCallback((section: OnboardingSectionId | null) => {
     setActiveOnboardingSection(section);

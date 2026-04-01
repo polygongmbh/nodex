@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
+import { useTaskScopeSpecificFilters } from "@/features/feed-page/controllers/use-task-scope-specific-filters";
 import { useNostrEventCache } from "@/infrastructure/nostr/use-nostr-event-cache";
 import { useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
@@ -396,6 +397,26 @@ const Index = () => {
     openedWithFocusedTaskRef,
   } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
 
+  const currentFilterSnapshot = useMemo<FilterSnapshot>(
+    () =>
+      buildFilterSnapshot({
+        activeRelayIds: effectiveActiveRelayIds,
+        channelFilterStates,
+        people,
+        channelMatchMode,
+        quickFilters,
+      }),
+    [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
+  );
+
+  const { discardTaskScopeFilterRestore } = useTaskScopeSpecificFilters({
+    focusedTaskId,
+    currentFilterSnapshot,
+    setChannelFilterStates,
+    setChannelMatchMode,
+    setPeople,
+  });
+
   const sidebarChannels = useMemo(() => {
     const activeChannelIds = new Set(
       Array.from(channelFilterStates.entries())
@@ -491,6 +512,7 @@ const Index = () => {
     openedWithFocusedTaskRef,
     shouldForceAuthAfterOnboarding,
     ensureGuideDataAvailable,
+    onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,
     setSearchQuery,
@@ -500,18 +522,6 @@ const Index = () => {
     setIsAuthModalOpen,
     t,
   });
-
-  const currentFilterSnapshot = useMemo<FilterSnapshot>(
-    () =>
-      buildFilterSnapshot({
-        activeRelayIds: effectiveActiveRelayIds,
-        channelFilterStates,
-        people,
-        channelMatchMode,
-        quickFilters,
-      }),
-    [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
-  );
   const { savedFilterController } = useSavedFilterConfigs({
     currentFilterSnapshot,
     relays,
