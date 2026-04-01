@@ -63,6 +63,11 @@ interface ListViewProps {
 type SortField = "priority" | "content" | "status" | "dueDate" | "timestamp";
 type SortDirection = "asc" | "desc";
 const TABLE_CELL_PADDING_CLASS = "px-3 py-2";
+const LIST_HEADER_CELL_CLASS = `${TABLE_CELL_PADDING_CLASS} min-w-0`;
+const LIST_BODY_CELL_CLASS = `${TABLE_CELL_PADDING_CLASS} min-w-0`;
+const LIST_GRID_TEMPLATE_CLASS =
+  "grid grid-cols-[2.5rem_minmax(0,1fr)_fit-content(7.5rem)_6rem_fit-content(11.5rem)] lg:grid-cols-[2.5rem_minmax(0,1fr)_fit-content(8.5rem)_6.5rem_fit-content(12.5rem)] xl:grid-cols-[2.5rem_minmax(0,1fr)_fit-content(10.75rem)_7.25rem_fit-content(23.25rem)] 2xl:grid-cols-[2.5rem_minmax(0,1fr)_fit-content(9.5rem)_fit-content(16.5rem)_9rem_fit-content(38rem)]";
+const LIST_SUBGRID_ROW_CLASS = "col-span-full grid grid-cols-subgrid";
 
 interface PriorityCellProps {
   taskId: string;
@@ -124,6 +129,7 @@ export function ListView({
   // Track sort version - incremented on view/filter changes, not status changes
   const [sortVersion, setSortVersion] = useState(0);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
+  const [showExpandedTagsAtXl, setShowExpandedTagsAtXl] = useState(false);
   const [showAllTagsOnWideScreens, setShowAllTagsOnWideScreens] = useState(false);
   const {
     searchQuery,
@@ -166,12 +172,19 @@ export function ListView({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const mediaQuery = window.matchMedia("(min-width: 1536px)");
-    const sync = (matches: boolean) => setShowAllTagsOnWideScreens(matches);
-    sync(mediaQuery.matches);
-    const listener = (event: MediaQueryListEvent) => sync(event.matches);
-    mediaQuery.addEventListener("change", listener);
-    return () => mediaQuery.removeEventListener("change", listener);
+    const xlQuery = window.matchMedia("(min-width: 1280px)");
+    const twoXlQuery = window.matchMedia("(min-width: 1536px)");
+    const sync = () => {
+      setShowExpandedTagsAtXl(xlQuery.matches);
+      setShowAllTagsOnWideScreens(twoXlQuery.matches);
+    };
+    sync();
+    xlQuery.addEventListener("change", sync);
+    twoXlQuery.addEventListener("change", sync);
+    return () => {
+      xlQuery.removeEventListener("change", sync);
+      twoXlQuery.removeEventListener("change", sync);
+    };
   }, []);
 
   // Build children map for sorting context - memoize based on sortVersion to prevent re-sorting on status changes
@@ -464,7 +477,7 @@ export function ListView({
       <button
         disabled={!editable}
         className={cn(
-          "flex items-center gap-1.5 text-sm px-2 py-1 rounded transition-colors",
+          "flex w-full min-w-0 items-center gap-1.5 overflow-hidden px-2 py-1 text-sm rounded transition-colors",
           dueDateColor,
           editable ? "cursor-pointer hover:bg-muted/50" : "cursor-not-allowed opacity-60"
         )}
@@ -475,16 +488,16 @@ export function ListView({
             <span className="hidden 2xl:inline uppercase tracking-wide">
               {t(`composer.dates.${task.dateType || "due"}`)}
             </span>
-            <span>{format(task.dueDate, "MMM d, yyyy")}</span>
+            <span className="truncate">{format(task.dueDate, "MMM d, yyyy")}</span>
             {task.dueTime && (
-              <span className="hidden xl:inline-flex items-center gap-1.5">
+              <span className="hidden 2xl:inline-flex shrink-0 items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
                 <span>{task.dueTime}</span>
               </span>
             )}
           </>
         ) : (
-          <span className="text-muted-foreground">{t("listView.dates.setDate")}</span>
+          <span className="truncate text-muted-foreground">{t("listView.dates.setDate")}</span>
         )}
       </button>
     );
@@ -515,8 +528,9 @@ export function ListView({
       <TaskTagChipRow
         task={task}
         expanded={Boolean(expandedChipRows[task.id])}
-        maxVisibleTags={2}
+        maxVisibleTags={showExpandedTagsAtXl ? 2 : 1}
         showAllTags={showAllTagsOnWideScreens}
+        className="min-w-0"
         onToggleExpanded={(expanded) =>
           setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
         }
@@ -541,10 +555,20 @@ export function ListView({
 
       {/* Table */}
       <div ref={tableContainerRef} className="scrollbar-main-view flex-1 overflow-x-auto">
-        <table className="w-full min-w-full table-fixed">
-          <thead className="sticky top-0 bg-background border-b border-border z-10">
-            <tr>
-              <th className="text-left p-2 2xl:p-3 w-10">
+        <div
+          role="table"
+          aria-label={t("listView.sort.task")}
+          className={cn("min-w-full", LIST_GRID_TEMPLATE_CLASS)}
+        >
+          <div role="rowgroup" className="contents">
+            <div
+              role="row"
+              className={cn(
+                LIST_SUBGRID_ROW_CLASS,
+                "sticky top-0 z-10 items-center border-b border-border bg-background"
+              )}
+            >
+              <div role="columnheader" className="min-w-0 px-2 py-2 2xl:px-3">
                 <div className="flex items-center gap-1">
                   {(sortField !== "priority" || sortDirection !== "asc") && (
                     <button
@@ -556,51 +580,50 @@ export function ListView({
                     </button>
                   )}
                 </div>
-              </th>
-              <th className={cn("text-left w-auto", TABLE_CELL_PADDING_CLASS)}>
+              </div>
+              <div role="columnheader" className={cn(LIST_HEADER_CELL_CLASS, "text-left")}>
                 <SortButton field="content">
                   <span className="inline-flex items-center gap-1">
                     <ListTodo className="w-3 h-3 text-muted-foreground" />
                     {t("listView.sort.task")}
                   </span>
                 </SortButton>
-              </th>
-              <th className={cn("hidden 2xl:table-cell text-left 2xl:w-28", TABLE_CELL_PADDING_CLASS)}>
+              </div>
+              <div role="columnheader" className={cn(LIST_HEADER_CELL_CLASS, "hidden 2xl:flex items-center text-left")}>
                 <SortButton field="status">
                   <span className="inline-flex items-center gap-1">
                     <Activity className="w-3 h-3 text-muted-foreground" />
                     {t("listView.sort.status")}
                   </span>
                 </SortButton>
-              </th>
-              <th className={cn("text-left w-40 lg:w-44 xl:w-56 2xl:w-[19rem]", TABLE_CELL_PADDING_CLASS)}>
+              </div>
+              <div role="columnheader" className={cn(LIST_HEADER_CELL_CLASS, "text-left")}>
                 <SortButton field="dueDate">
                   <span className="inline-flex items-center gap-1">
                     <Calendar className="w-3 h-3 text-muted-foreground" />
                     {t("listView.sort.dueDate")}
                   </span>
                 </SortButton>
-              </th>
-              <th className={cn("text-left w-24", TABLE_CELL_PADDING_CLASS)}>
+              </div>
+              <div role="columnheader" className={cn(LIST_HEADER_CELL_CLASS, "text-left")}>
                 <SortButton field="priority">
                   <span className="inline-flex items-center gap-1">
                     <Flag className="w-3 h-3 text-muted-foreground" />
                     {t("listView.sort.priority")}
                   </span>
                 </SortButton>
-              </th>
-              <th className={cn("text-left w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]", TABLE_CELL_PADDING_CLASS)}>
+              </div>
+              <div role="columnheader" className={cn(LIST_HEADER_CELL_CLASS, "text-left")}>
                 <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
                   <Tags className="w-3 h-3" />
                   {t("tasks.tags")}
                 </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </div>
+            </div>
+          </div>
+          <div role="rowgroup" className="contents">
             {shouldShowScreenEmptyState ? (
-              <tr>
-                <td colSpan={6} className="p-0">
+              <div className="col-span-full p-0">
                   <FilteredEmptyState
                     variant="collection"
                     isHydrating={isHydrating}
@@ -608,8 +631,7 @@ export function ListView({
                     contextTaskTitle={focusedTask?.content}
                     className="py-8"
                   />
-                </td>
-              </tr>
+              </div>
             ) : (
               <>
                 {listTasks.map((task) => {
@@ -619,17 +641,19 @@ export function ListView({
                 const contentPreview = getTableContentPreview(task.content);
                 
                 return (
-                  <tr
+                  <div
+                    role="row"
                     key={task.id}
                     data-task-id={task.id}
                     className={cn(
-                      "border-b border-border hover:bg-muted/30 transition-colors",
+                      LIST_SUBGRID_ROW_CLASS,
+                      "items-start border-b border-border hover:bg-muted/30 transition-colors",
                       isTaskTerminalStatus(task.status) && "opacity-60",
                       isLockedUntilStart && "opacity-50 grayscale",
                       isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
                     )}
                   >
-                    <td className="p-2 2xl:p-3 w-10">
+                    <div role="cell" className="min-w-0 px-2 py-2 2xl:px-3">
                       <DropdownMenu
                         open={Boolean(statusMenuOpenByTaskId[task.id])}
                         onOpenChange={(open) => {
@@ -749,8 +773,8 @@ export function ListView({
                           </DropdownMenuContent>
                         )}
                       </DropdownMenu>
-                    </td>
-                    <td className={cn("min-w-0 w-auto", TABLE_CELL_PADDING_CLASS)}>
+                    </div>
+                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "min-w-0")}>
                       <div className="space-y-1">
                         {/* Parent context */}
                         {ancestorChain.length > 0 && (
@@ -784,30 +808,29 @@ export function ListView({
                           {contentPreview}
                         </div>
                       </div>
-                    </td>
-                    <td className={cn("hidden 2xl:table-cell", TABLE_CELL_PADDING_CLASS)}>
+                    </div>
+                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "hidden 2xl:flex items-center")}>
                       <StatusCell task={task} />
-                    </td>
-                    <td className={cn("w-40 lg:w-44 xl:w-56 2xl:w-[19rem]", TABLE_CELL_PADDING_CLASS)}>
+                    </div>
+                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "flex items-center")}>
                       <DueDateCell task={task} />
-                    </td>
-                    <td className={cn("w-28 xl:w-32", TABLE_CELL_PADDING_CLASS)}>
+                    </div>
+                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "flex items-center")}>
                       <PriorityCell
                         taskId={task.id}
                         taskContent={task.content}
                         priority={task.priority}
                         editable={canCompleteTask(task)}
                       />
-                    </td>
-                    <td className={cn("min-w-0 w-[clamp(8rem,15vw,20rem)] 2xl:w-[clamp(20rem,24vw,30rem)]", TABLE_CELL_PADDING_CLASS)}>
+                    </div>
+                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "min-w-0")}>
                       <TagsCell task={task} />
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 );
               })}
                 {shouldShowScopeFooterHint ? (
-                  <tr>
-                    <td colSpan={6} className="p-0">
+                  <div className="col-span-full p-0">
                       <FilteredEmptyState
                         variant="collection"
                         isHydrating={isHydrating}
@@ -816,12 +839,10 @@ export function ListView({
                         mode="footer"
                         className="py-6"
                       />
-                    </td>
-                  </tr>
+                  </div>
                 ) : null}
                 {shouldShowInlineEmptyHint ? (
-                  <tr>
-                    <td colSpan={6} className="p-0">
+                  <div className="col-span-full p-0">
                       <FilteredEmptyState
                         variant="collection"
                         isHydrating={isHydrating}
@@ -830,13 +851,12 @@ export function ListView({
                         mode="inline"
                         className="py-6"
                       />
-                    </td>
-                  </tr>
+                  </div>
                 ) : null}
               </>
             )}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
       <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
 

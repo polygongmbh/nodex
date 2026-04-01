@@ -116,13 +116,16 @@ describe("ListView priority control", () => {
     );
 
     // Protect the responsive table contract: non-content columns stay bounded below 2xl.
-    const table = container.querySelector("table");
-    expect(table).toHaveClass("table-fixed");
+    const table = screen.getByRole("table", { name: /task/i });
+    expect(table).toBeInTheDocument();
+    expect(table).toHaveClass("grid");
 
-    const taskRow = container.querySelector('tr[data-task-id="task-layout"]');
-    const cells = taskRow?.querySelectorAll("td");
+    const taskRow = container.querySelector('[data-task-id="task-layout"]');
+    expect(taskRow).toHaveClass("grid", "grid-cols-subgrid", "col-span-full");
+    const cells = taskRow?.querySelectorAll('[role="cell"]');
+    expect(cells).toHaveLength(6);
     expect(cells?.[1]).toHaveClass("min-w-0");
-    expect(cells?.[4]).toHaveClass("w-28", "xl:w-32");
+    expect(cells?.[2]).toHaveClass("hidden");
 
     const prioritySelect = screen.getByRole("combobox", {
       name: /priority for task content with a longer preview/i,

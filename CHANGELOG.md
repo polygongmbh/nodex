@@ -7,7 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 - Added desktop shortcuts to toggle channel match mode (`AND`/`OR`), recent and priority quick filters, and compact tree/kanban cards; tree and kanban cards now drop rich media previews so attachments stay feed-only, and kanban keeps priority pinned on the right edge of each card.
-- List view table rows now keep their intended column balance below `2xl` again, so task text no longer crowds out sibling columns and inline priority dropdowns stay within the table on larger desktop widths.
+- List view now uses an explicit responsive row-layout model for the desktop table, so the task column owns leftover width predictably while due-date, priority, and tags stay compact until wider breakpoints.
 - Shared desktop composer mention requests triggered from author clicks are now consumed only once, so removing that mention no longer causes it to reappear after switching views.
 
 ## [2.9.0] - 2026-04-01
