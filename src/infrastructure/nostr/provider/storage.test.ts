@@ -49,18 +49,27 @@ describe("relay list persistence", () => {
   });
 
   it("normalizes a persisted Noas default host URL", () => {
-    savePersistedNoasDefaultHostUrl("example.com///");
+    savePersistedNoasDefaultHostUrl("example.com///", "nodex.nexus");
 
-    expect(loadPersistedNoasDefaultHostUrl()).toBe("https://example.com");
+    expect(loadPersistedNoasDefaultHostUrl("nodex.nexus")).toBe("https://example.com");
   });
 
   it("returns an empty Noas default host when none is stored", () => {
-    expect(loadPersistedNoasDefaultHostUrl()).toBe("");
+    expect(loadPersistedNoasDefaultHostUrl("nodex.nexus")).toBe("");
   });
 
   it("returns an empty Noas default host for malformed persisted values", () => {
     window.localStorage.setItem(STORAGE_KEY_NOAS_DEFAULT_HOST, "://bad url");
 
-    expect(loadPersistedNoasDefaultHostUrl()).toBe("");
+    expect(loadPersistedNoasDefaultHostUrl("nodex.nexus")).toBe("");
+  });
+
+  it("keeps persisted Noas default hosts isolated by scope key", () => {
+    savePersistedNoasDefaultHostUrl("alpha.example", "alpha.example");
+    savePersistedNoasDefaultHostUrl("beta.example", "beta.example");
+
+    expect(loadPersistedNoasDefaultHostUrl("alpha.example")).toBe("https://alpha.example");
+    expect(loadPersistedNoasDefaultHostUrl("beta.example")).toBe("https://beta.example");
+    expect(loadPersistedNoasDefaultHostUrl("gamma.example")).toBe("");
   });
 });

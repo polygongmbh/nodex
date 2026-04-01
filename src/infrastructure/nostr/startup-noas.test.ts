@@ -58,6 +58,7 @@ describe("startup Noas bootstrap", () => {
       source: "persisted",
       needsAsyncFallback: false,
     });
+    expect(storageModule.loadPersistedNoasDefaultHostUrl).toHaveBeenCalledWith("localhost");
   });
 
   it("marks fallback resolution as pending when no env or persisted host exists", () => {
@@ -80,7 +81,7 @@ describe("startup Noas bootstrap", () => {
       needsAsyncFallback: false,
     });
     expect(noasClientModule.discoverNoasApiBaseUrl).toHaveBeenCalledWith("http://localhost");
-    expect(storageModule.savePersistedNoasDefaultHostUrl).toHaveBeenCalledWith("http://localhost");
+    expect(storageModule.savePersistedNoasDefaultHostUrl).toHaveBeenCalledWith("http://localhost", "localhost");
   });
 
   it("does not persist a root-domain host when discovery finds no Noas response", async () => {

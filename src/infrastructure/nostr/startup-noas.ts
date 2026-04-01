@@ -1,9 +1,9 @@
 import { discoverNoasApiBaseUrl, normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
-import {
-  loadPersistedNoasDefaultHostUrl,
-  savePersistedNoasDefaultHostUrl,
-} from "@/infrastructure/nostr/provider/storage";
+import { loadPersistedNoasDefaultHostUrl, savePersistedNoasDefaultHostUrl } from "@/infrastructure/nostr/provider/storage";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { resolveCurrentNoasHostScopeKey, resolveNoasRootDomainHostname } from "@/infrastructure/nostr/noas-host-scope";
+
+export { resolveNoasRootDomainHostname } from "@/infrastructure/nostr/noas-host-scope";
 
 export interface StartupNoasBootstrap {
   defaultHostUrl: string;
@@ -17,24 +17,6 @@ function resolveConfiguredNoasHostUrl(): string {
       || (import.meta.env.VITE_NOAS_API_URL as string | undefined)
       || ""
   );
-}
-
-function isIpAddress(hostname: string): boolean {
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) return true;
-  return hostname.includes(":");
-}
-
-export function resolveNoasRootDomainHostname(hostname: string): string {
-  const normalizedHostname = hostname.trim().toLowerCase().replace(/\.$/, "");
-  if (!normalizedHostname || normalizedHostname === "localhost" || isIpAddress(normalizedHostname)) {
-    return normalizedHostname;
-  }
-
-  const labels = normalizedHostname.split(".").filter(Boolean);
-  if (labels.length >= 3) {
-    return labels.slice(1).join(".");
-  }
-  return normalizedHostname;
 }
 
 function resolveRootDomainHostUrl(): string {
@@ -54,7 +36,7 @@ export function readStartupNoasBootstrap(): StartupNoasBootstrap {
     };
   }
 
-  const persistedNoasHostUrl = loadPersistedNoasDefaultHostUrl();
+  const persistedNoasHostUrl = loadPersistedNoasDefaultHostUrl(resolveCurrentNoasHostScopeKey());
   if (persistedNoasHostUrl) {
     return {
       defaultHostUrl: persistedNoasHostUrl,
@@ -101,7 +83,7 @@ export async function resolveStartupNoasBootstrap(): Promise<StartupNoasBootstra
       };
     }
 
-    savePersistedNoasDefaultHostUrl(rootDomainHostUrl);
+    savePersistedNoasDefaultHostUrl(rootDomainHostUrl, resolveCurrentNoasHostScopeKey());
     return {
       defaultHostUrl: rootDomainHostUrl,
       source: "fallback",

@@ -82,6 +82,7 @@ import {
   relayInfoSummaryToNip11Document,
 } from "@/infrastructure/cache/ndk-cache-adapter";
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
+import { resolveCurrentNoasHostScopeKey } from "@/infrastructure/nostr/noas-host-scope";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
@@ -144,7 +145,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         defaultNoasHostUrl
         || import.meta.env.VITE_NOAS_HOST_URL
         || import.meta.env.VITE_NOAS_API_URL
-        || loadPersistedNoasDefaultHostUrl()
+        || loadPersistedNoasDefaultHostUrl(resolveCurrentNoasHostScopeKey())
         || ""
       ),
     [defaultNoasHostUrl]

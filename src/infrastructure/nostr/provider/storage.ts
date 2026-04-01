@@ -11,6 +11,8 @@ export const STORAGE_KEY_RELAYS = "nostr_relays";
 export const STORAGE_KEY_NOAS_USERNAME = "nostr_noas_username";
 export const STORAGE_KEY_NOAS_DEFAULT_HOST = "nostr_noas_default_host";
 
+type PersistedNoasHostMap = Record<string, string>;
+
 export const hasNostrExtension = (): boolean =>
   typeof window !== "undefined" && Boolean((window as WindowWithNostr).nostr);
 
@@ -48,19 +50,54 @@ export function savePersistedRelayUrls(urls: string[]): void {
   });
 }
 
-export function loadPersistedNoasDefaultHostUrl(): string {
-  if (typeof window === "undefined" || !window.localStorage) return "";
+function readPersistedNoasHostMap(): PersistedNoasHostMap {
+  if (typeof window === "undefined" || !window.localStorage) return {};
   const raw = window.localStorage.getItem(STORAGE_KEY_NOAS_DEFAULT_HOST);
-  const normalized = normalizeNoasBaseUrl(raw || "");
-  return isValidNoasBaseUrl(normalized) ? normalized : "";
+  if (!raw) return {};
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(parsed)
+        .map(([scopeKey, value]) => {
+          const normalizedScopeKey = scopeKey.trim().toLowerCase();
+          const normalizedValue = typeof value === "string" ? normalizeNoasBaseUrl(value) : "";
+          return [normalizedScopeKey, normalizedValue];
+        })
+        .filter(([scopeKey, normalizedValue]) => scopeKey && isValidNoasBaseUrl(normalizedValue))
+    );
+  } catch {
+    return {};
+  }
 }
 
-export function savePersistedNoasDefaultHostUrl(url: string): void {
+export function loadPersistedNoasDefaultHostUrl(scopeKey = "default"): string {
+  const normalizedScopeKey = scopeKey.trim().toLowerCase();
+  if (!normalizedScopeKey) return "";
+
+  const persistedHosts = readPersistedNoasHostMap();
+  return persistedHosts[normalizedScopeKey] || "";
+}
+
+export function savePersistedNoasDefaultHostUrl(url: string, scopeKey = "default"): void {
   if (typeof window === "undefined" || !window.localStorage) return;
+  const normalizedScopeKey = scopeKey.trim().toLowerCase();
+  if (!normalizedScopeKey) return;
+
   const normalized = normalizeNoasBaseUrl(url);
   if (!isValidNoasBaseUrl(normalized)) return;
 
-  safeLocalStorageSetItem(STORAGE_KEY_NOAS_DEFAULT_HOST, normalized, {
+  const persistedHosts = readPersistedNoasHostMap();
+  const nextPersistedHosts = {
+    ...persistedHosts,
+    [normalizedScopeKey]: normalized,
+  };
+
+  safeLocalStorageSetItem(STORAGE_KEY_NOAS_DEFAULT_HOST, JSON.stringify(nextPersistedHosts), {
     context: "nostr-provider-noas-default-host",
   });
 }
