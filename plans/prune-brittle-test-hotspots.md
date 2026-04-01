@@ -6,12 +6,19 @@ Reduce brittle UI tests that over-couple to localized copy or incidental compone
 ## Current Hotspot Snapshot
 From `expect(screen.(getByText|queryByText)(...))` counts:
 - `src/components/onboarding/OnboardingGuide.test.tsx` (40)
-- `src/components/tasks/TaskComposer.test.tsx` (24)
+- `src/components/tasks/TaskComposer.test.tsx` (21)
 - `src/components/tasks/FilteredEmptyState.test.tsx` (21)
-- `src/components/tasks/FeedView.test.tsx` (12)
-- `src/components/tasks/FailedPublishQueueBanner.test.tsx` (9)
-- `src/components/auth/NoasAuthForms.test.tsx` (8)
-- `src/components/auth/NostrAuthModal.test.tsx` (7)
+- `src/components/tasks/FeedView.test.tsx` (11)
+- `src/components/mobile/UnifiedBottomBar.test.tsx` (9)
+- `src/components/relay/RelayManagement.test.tsx` (8)
+- `src/components/auth/NoasAuthForms.test.tsx` (4)
+- `src/components/auth/NostrAuthModal.test.tsx` (4)
+- `src/components/tasks/FailedPublishQueueBanner.test.tsx` (3)
+- `src/components/mobile/MobileFilters.test.tsx` (1)
+
+Notes:
+- The older snapshot in this file is stale; `FailedPublishQueueBanner`, `NoasAuthForms`, and `NostrAuthModal` were already reduced materially.
+- The current highest-value work is still concentrated in onboarding, composer, filtered empty state, feed, and mobile shell tests.
 
 ## Opinionated Strategy
 1. Prefer behavior/outcome assertions over copy presence.
@@ -47,34 +54,40 @@ Actions:
 
 ### Phase 2: Secondary Hotspots
 - `src/components/tasks/FeedView.test.tsx`
+- `src/components/mobile/UnifiedBottomBar.test.tsx`
+- `src/components/relay/RelayManagement.test.tsx`
+
+Actions:
+- Focus on event/reducer outcomes, rendered task/state-entry identity, dispatch calls, and keyboard/selection behavior.
+- Keep role-level presence checks only where the control itself is the contract.
+
+### Phase 3: Remaining Medium/Small Files
 - `src/components/tasks/FailedPublishQueueBanner.test.tsx`
 - `src/components/auth/NoasAuthForms.test.tsx`
 - `src/components/auth/NostrAuthModal.test.tsx`
-
-Actions:
-- Focus on event/reducer outcomes, rendered task/state-entry identity, and auth flow callbacks.
-- Keep only minimal role-level presence checks for primary controls.
-
-### Phase 3: Remaining Medium/Small Files
-- `src/components/relay/RelayManagement.test.tsx`
-- `src/components/mobile/UnifiedBottomBar.test.tsx`
 - `src/components/mobile/MobileFilters.test.tsx`
 - Tail files with 1-3 occurrences.
 
 Actions:
 - Sweep remaining copy assertions and convert to behavioral checks where not intentional copy contracts.
 
+### Phase 4: Optional Enforcement Pass
+- Add a lightweight lint-like grep check to review notes or local verification for the worst hotspots only.
+- Do not add CI enforcement yet; keep this as a maintenance aid until the counts are low enough that false positives are manageable.
+
 ## Commit Slicing
 Use small, reviewable `test:` commits by domain:
 1. `test: reduce copy-coupled onboarding assertions`
 2. `test: harden task composer/empty-state behavioral checks`
-3. `test: decouple feed/auth/banner tests from incidental copy`
-4. `test: final brittle-assertion cleanup sweep`
+3. `test: decouple feed/mobile interaction tests from incidental copy`
+4. `test: prune remaining auth/banner/relay copy assertions`
+5. `test: final brittle-assertion cleanup sweep`
 
 ## Verification Plan
 Per phase:
 - Run targeted suites for changed files only.
 - Ensure no net-new runtime `data-testid` usage outside approved exceptions.
+- Re-run the hotspot grep for touched files and note whether the count moved down in the intended direction.
 
 Final pass:
 - `npx vitest run`
@@ -85,3 +98,4 @@ Final pass:
 - Hotspot files no longer depend on sentence-level copy for interaction-flow validity.
 - Behavioral intent remains covered (actions, state transitions, and accessibility contracts).
 - Test suite remains green with improved resilience to localization/copy edits.
+- The top 3 hotspot files are materially lower than the current baseline of `40 / 21 / 21`.

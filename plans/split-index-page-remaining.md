@@ -1,22 +1,44 @@
-# Plan: Finish Splitting `src/pages/Index.tsx`
+# Plan: Consolidate the Remaining `Index.tsx` Split
 
 ## Goal
 
-Reduce [`src/pages/Index.tsx`](/Users/tj/IT/nodex/src/pages/Index.tsx) from ~867 lines to a composition root closer to ~450-600 lines, without changing route contracts or task/feed behavior.
+Reduce [`src/pages/Index.tsx`](/Users/tj/IT/nostr/nodex/src/pages/Index.tsx) from its current `1070` lines into a thin route/composition shell, without changing route contracts or feed/task behavior.
 
-This plan supersedes the older broad split plan by pruning already-landed work and focusing only on the remaining seams.
+This file is now the single source of truth for the `Index.tsx` split work.
+It supersedes the older Index-related guidance that was scattered across:
 
-Architecture steer:
+- [post-architecture-next-steps.md](/Users/tj/IT/nostr/nodex/plans/post-architecture-next-steps.md)
+- [multi-frontend-domain-architecture.md](/Users/tj/IT/nostr/nodex/plans/multi-frontend-domain-architecture.md)
 
-- do not keep solving this with more root-level `src/hooks/use-index-*` files
-- future extractions should prefer:
+## Architecture Steer
+
+- Do not solve this by adding more root-level `src/hooks/use-index-*` files.
+- Prefer real delegation:
   - `src/features/feed-page/controllers/` for feed-page orchestration
-  - `src/domain/*` for pure reusable rules
+  - `src/features/feed-page/views/` for desktop/mobile/view composition
+  - `src/domain/*` for pure rules
   - `src/infrastructure/*` for Nostr/storage/browser adapters
+- Do not create a mega `useFeedPageController` unless the dependency graph becomes materially simpler.
+- The target is genuine responsibility reduction, not just moving lines around.
 
-This plan should now be executed in alignment with [multi-frontend-domain-architecture.md](/Users/tj/IT/nodex/plans/multi-frontend-domain-architecture.md), not as an isolated page-cleanup exercise.
+## What Has Already Landed
 
-## Already Extracted
+The page is no longer the primary owner of:
+
+- feed navigation
+- filter orchestration
+- onboarding state
+- publish flow
+- task status control
+- listing status publishing
+- relay-scoped presence publishing
+- auth policy derivation
+- derived task/channel data
+- pinned sidebar channel state
+- auth modal route wiring
+- desktop shell / view pane extraction
+
+Concrete extractions already in place:
 
 - `use-feed-navigation.ts`
 - `use-index-filters.ts`
@@ -29,119 +51,127 @@ This plan should now be executed in alignment with [multi-frontend-domain-archit
 - `use-pinned-sidebar-channels.ts`
 - `use-index-relay-shell.ts`
 - `use-auth-modal-route.ts`
-- `completion-cheer.ts`
-- onboarding overlay dedupe
+- `use-listing-status-publish.ts`
+- `use-feed-auth-policy.ts`
+- `use-relay-scoped-presence.ts`
+- `FeedPageDesktopShell`
+- `FeedPageViewPane`
 
-`Index.tsx` is no longer the main owner of feed navigation, filter orchestration, onboarding state, publish queue logic, task status control, derived task/channel data, or relay/sidebar pinning. The remaining size is now concentrated in cross-controller composition, a few page-owned publish/bootstrap branches, and large layout wiring.
+## Current Reality
 
-## What Still Smells
+Despite the extractions, `Index.tsx` is still large because it still owns too much assembly and adapter work:
 
-- `handleListingStatusChange` is still a page-owned publish branch
-- onboarding bootstrap still crosses domains through `ensureGuideDataAvailable`
-- `selectedRelayUrls` still lives in the page solely to support profile hydration
-- the sidebar boundary is incomplete because `Index` still calls `getPinnedChannelIdsForView(...)` directly
-- `Index` still owns a large “compose view props + render current view + choose mobile/desktop shell” block
-- route/auth/presence shell concerns still sit together in one page component:
-  - auth modal route wiring
-  - presence publish effects
-  - guide bootstrap
-  - desktop/mobile layout composition
-## Remaining Milestone A: Extract Listing Status Publish Branch
+- `selectedRelayUrls` is derived in the page and threaded into profile hydration
+- onboarding/demo bootstrap still crosses domains through `ensureGuideDataAvailable`
+- the sidebar boundary is incomplete because the page still calls `getPinnedChannelIdsForView(...)` directly
+- the page still assembles large `mobileViewState`, `desktopHeader`, and `desktopContent` objects
+- desktop/mobile shell selection, auth wiring, presence wiring, and guide bootstrap still coexist in one component
 
-Move `handleListingStatusChange` out of the page into a dedicated feed-page controller or helper.
+This means the file is no longer controller-heavy, but it is still too much of an orchestration hub.
+
+## Remaining Work
+
+### Milestone 1: Finish the Sidebar Boundary
+
+This is the best next step now that listing-status publishing is already extracted.
+
+Target:
+- stop computing pinned-channel view ids directly in `Index.tsx`
+- return already-consumable pinned ids from `usePinnedSidebarChannels`
+- keep the page unaware of pin derivation details
 
 Preferred shape:
+- `usePinnedSidebarChannels` returns `pinnedChannelIds`
+- `Index.tsx` passes those ids directly into the sidebar/view shell config
 
-- `src/features/feed-page/controllers/use-listing-status-publish.ts`
+Secondary opportunity:
+- review whether `selectedRelayUrls` belongs in `useIndexRelayShell` or another feature controller instead of staying page-local
 
-### Why
+### Milestone 2: Extract Guide / Demo Bootstrap
 
-It is now the last obvious page-owned publish branch and sits awkwardly next to already-extracted status and publish controllers.
+Move the remaining bootstrap branch out of the page.
 
-## Remaining Milestone B: Isolate Onboarding Bootstrap
-
-This is probably the final cleanup pass, not the next step.
-
-### Candidates
-
+Target:
 - `ensureGuideDataAvailable`
-- maybe a tiny `use-guide-demo-bootstrap.ts` or `use-feed-demo-bootstrap.ts`
+- any residual guide/demo loading path that still makes `Index.tsx` know about bootstrap timing
 
-### Why Now
+Preferred shape:
+- keep it in `src/features/feed-page/controllers/`
+- likely as a small feed-page bootstrap hook instead of a generic root hook
 
-The larger controller extractions are already done. This is now one of the main remaining cross-domain branches in the page.
+Why:
+- this is one of the last page-owned cross-domain side-effect branches
 
-## Remaining Milestone C: Finish Sidebar Boundary
+### Milestone 3: Collapse View-State Assembly
 
-Complete the sidebar boundary so `Index` no longer needs direct pinned-channel derivation calls.
+The largest remaining bulk is not raw business logic, it is the page assembling big prop objects for mobile/desktop shells.
 
-### Candidates
+Target:
+- shrink or remove page-owned `mobileViewState`
+- shrink or remove page-owned `desktopHeader`
+- shrink or remove page-owned `desktopContent`
 
-- return `pinnedChannelIds` from `usePinnedSidebarChannels`
-- consider moving `selectedRelayUrls` into `useIndexRelayShell` or `useKind0People` input preparation
-- remove direct `getPinnedChannelIdsForView(...)` usage from the page
+Preferred direction:
+- introduce thin feature-side adapter helpers or view config builders under `src/features/feed-page/views/`
+- keep `Index.tsx` responsible for choosing desktop vs mobile, not for constructing every nested prop object inline
 
-### Why
+Guardrail:
+- do not create one giant prop-builder if that only hides the complexity
+- split by real boundary: sidebar config, shell config, task-pane config, mobile config
 
-The page currently still knows too much about how the sidebar pinning model is computed.
+### Milestone 4: Re-home the Remaining Relay/Profile Glue
 
-## Remaining Milestone D: Consolidate Feed-Page Composition
+If the page is still too large after the first three milestones, move the relay/profile adapter seams out next.
 
-After the last page-owned branches are extracted, decide whether to stop or do one final composition cleanup.
+Best candidates:
+- `selectedRelayUrls`
+- any profile-hydration preparation currently done in-page purely to satisfy `useKind0People`
+- any remaining page-local relay list shaping that is not route wiring
 
-### Candidates
-
-- move current root-level feed-page hooks under `src/features/feed-page/controllers/`
-- introduce `use-feed-page-controller.ts` that assembles:
-  - derived data
-  - filters
-  - relay shell
-  - publish/status handlers
-- leave `Index.tsx` as route/layout composition only
-
-### Why
-
-The remaining size is now mostly composition. A final consolidation may improve structure more than another small extraction.
+This step should happen only if the earlier boundary work does not shrink the page enough.
 
 ## Recommended Order
 
-1. Extract listing status publish branch.
+1. Finish the sidebar boundary.
 2. Extract guide/demo bootstrap.
-3. Finish sidebar boundary.
-4. Decide whether to consolidate feed-page composition under `features/feed-page/controllers`.
+3. Collapse desktop/mobile view-state assembly.
+4. Re-home remaining relay/profile glue only if still necessary.
+
+## Explicit Non-Goals
+
+- Do not restart the old “many small hook files” pattern.
+- Do not hide the same coupling behind a single mega-controller.
+- Do not mix unrelated architecture work such as listings-map or generic domain expansion into this plan.
+- Do not rewrite stable child component contracts unless that clearly simplifies a boundary.
 
 ## Success Criteria
 
-- `Index.tsx` under ~600 lines, or clearly justified as a thin composition shell
-- only light composition memos/props remain
-- no page-owned publish/bootstrap side branches remain
-- child component props stay stable unless a focused simplification is intentional
+- `Index.tsx` drops below roughly `500-650` lines, or is otherwise obviously a thin shell
+- the page mostly instantiates controllers and selects desktop/mobile layout
+- no page-owned bootstrap side branches remain
+- no direct pinned-channel derivation logic remains in the page
+- the page imports primarily from `features/feed-page/*`, shared components, types, and routing utilities
 
 ## Verification Strategy
 
-For each milestone:
+Per milestone:
 
-1. Add focused tests for the new hook/helper.
-2. Run `npx eslint` on touched files.
-3. Run targeted Vitest coverage for the extracted area.
-4. Run `npm run build`.
+1. Add focused tests for the extracted hook/helper/boundary.
+2. Run targeted tests for touched files.
+3. Run `npm run build`.
 
-For the final major cleanup milestone:
+Final pass for the full cleanup:
 
 1. `npm run lint`
 2. `npx vitest run`
 3. `npm run build`
 
-## Current Best Next Step
+## Decision Checkpoint
 
-Extract the listing status publish branch first.
+If `Index.tsx` is still too large after Milestones 1-3, stop and decide explicitly between:
 
-Reason:
+- one higher-level feed-page presenter object assembled from existing controllers, or
+- a few additional feature-side view adapters
 
-- it is now the clearest remaining page-owned business branch
-- it is adjacent to already-extracted publish/status logic
-- it should shrink `Index` without reopening the larger controller extractions
-
-Additional steer:
-
-- if a proposed extraction still requires large numbers of page setters and page-local assumptions, it probably belongs in `features/feed-page/controllers`, not in `src/hooks` and not in `src/domain`
+Do not guess past that point.
+The right next move depends on whether the remaining weight is mostly state assembly or still-hidden orchestration.

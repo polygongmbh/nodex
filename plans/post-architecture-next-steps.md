@@ -6,7 +6,6 @@ Use the new `domain -> infrastructure -> features` shape to finish the highest-v
 
 Primary outcomes:
 
-- reduce `src/pages/Index.tsx` from a large composition hub to a route shell
 - separate pure submission-routing rules from Nostr/logging concerns
 - establish the next reusable listings seam for map/marketplace frontends
 
@@ -21,44 +20,13 @@ Primary outcomes:
 
 ### Remaining friction
 
-- `src/pages/Index.tsx` is still 807 lines
 - `src/lib/nostr/task-relay-routing.ts` still mixes reusable decision logic with Nostr-flavored logging placement
 - `src/domain/listings/` is still too thin to prove a second frontend
 - a few `src/lib/nostr/*` modules remain, but most are acceptable shared support modules rather than urgent architecture debt
 
 ## Recommendation Order
 
-### Milestone 1: Thin `Index.tsx` Through View Composition
-
-This is the highest-value next step.
-
-Do not resume small hook extractions as the main strategy. Instead:
-
-- create `src/features/feed-page/views/`
-- move major page assembly/render sections out of `Index.tsx`
-- keep `Index.tsx` responsible for:
-  - route params
-  - top-level controller instantiation
-  - desktop/mobile shell selection
-
-Candidate view modules:
-
-- `feed-page-layout.tsx`
-- `feed-page-desktop.tsx`
-- `feed-page-mobile.tsx`
-- possibly a sidebar/task-pane composition component if that creates a clean boundary
-
-Guardrail:
-
-- do not create a giant `useFeedPageController` unless it actually simplifies dependencies
-- prefer a thin composition page over a mega-controller
-
-Success criteria:
-
-- `Index.tsx` drops materially below its current size
-- page imports mostly `features/feed-page/controllers/*`, `features/feed-page/views/*`, and shared UI/layout only
-
-### Milestone 2: Split Submission Routing Into Pure Domain Logic
+### Milestone 1: Split Submission Routing Into Pure Domain Logic
 
 Target: `src/lib/nostr/task-relay-routing.ts`
 
@@ -85,7 +53,7 @@ Success criteria:
 - domain routing functions import only app/domain types
 - no `nostrDevLog` in the moved pure logic
 
-### Milestone 3: Grow `domain/listings` Beyond Identity
+### Milestone 2: Grow `domain/listings` Beyond Identity
 
 Target the next pure reusable listings seam.
 
@@ -112,9 +80,9 @@ Success criteria:
 
 - listings domain can support feed, map, and marketplace projections without importing React or Nostr adapters
 
-### Milestone 4: Validate With a Second Frontend Slice
+### Milestone 3: Validate With a Second Frontend Slice
 
-Do this only after Milestones 1 and 3 are far enough along.
+Do this only after the submission-routing split and the first real `domain/listings` expansion are far enough along.
 
 Best target:
 
@@ -159,9 +127,9 @@ Use small functional commits by boundary, not by file move.
 
 Recommended sequence:
 
-1. `refactor: extract feed page view composition from Index`
-2. `refactor: move submission routing rules into domain`
-3. `refactor: establish listing location domain rules`
+1. `refactor: move submission routing rules into domain`
+2. `refactor: establish listing location domain rules`
+3. `refactor:` add one more meaningful listings-domain seam
 4. `feat:` or `refactor:` build the first listings-map/frontend proof slice
 
 ## Verification
@@ -180,11 +148,9 @@ For smaller sub-steps inside a milestone:
 
 ## Decision Checkpoint
 
-If `Index.tsx` thinning reveals that the remaining complexity is mostly rendering composition, continue with view modules.
+After moving submission routing and expanding `domain/listings`, reassess whether the next best frontier is:
 
-If it instead reveals a still-too-large controller/state graph, stop and decide explicitly whether the feed page needs:
+- another reusable domain seam that would help alternate frontends, or
+- the first thin map/listings proof slice to validate the architecture in practice
 
-- a single higher-level controller assembly hook, or
-- a page-level presenter object assembled from existing controllers
-
-Do not guess past that point. That is the next real architecture decision boundary.
+Do not keep moving files mechanically once the architecture stops gaining real reuse value.

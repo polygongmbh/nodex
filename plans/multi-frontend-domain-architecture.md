@@ -60,7 +60,7 @@ src/
   lib/              ~ residual — still has unclassified modules
   lib/nostr/        ~ residual — some files still need moving or deletion
   pages/
-    Index.tsx       ✗ needs slimming — 1089 lines / 59 imports, grew during feature work
+    Index.tsx       ✗ still larger than intended; should end as route/layout composition only
 ```
 
 ## Remaining Work
@@ -122,19 +122,15 @@ This is a mechanical rename — no logic changes.
 - `safe-local-storage.ts`, `runtime-storage-guard.ts` — storage utilities used by infrastructure
 - `attachments.ts` — attachment helpers used across features
 
-### 4. Slim `Index.tsx`
+### 4. Keep Page-Level Orchestration Thin
 
-Currently **1089 lines / 59 imports** — it grew during feature work instead of shrinking. The views/ layer was added to features/feed-page but Index.tsx wasn't updated to delegate to it.
+This plan is not the detailed cleanup plan for `Index.tsx`, but the architecture constraint still matters:
 
-Target: route wiring + layout composition only (~100–150 lines).
+- pages should stay as route wiring + layout composition
+- feed-specific orchestration belongs in `features/feed-page/controllers/` and `features/feed-page/views/`
+- do not create a single mega-hook just to cosmetically reduce imports
 
-Steps:
-- Audit which imports in Index.tsx still come from `@/lib/*` and `@/hooks/*` directly — each is a candidate for moving into a feature controller
-- Move presence publishing orchestration into a dedicated controller hook
-- Move guide/demo bootstrap logic (already partially in `use-feed-demo-bootstrap`) fully out of Index.tsx
-- Once `features/feed-page/views/` shells are complete, Index.tsx should only instantiate controllers and render the appropriate shell
-
-Do not create a single mega-hook to reduce the import count. The goal is genuine delegation, not cosmetic consolidation.
+Treat page slimming as an ongoing guardrail, not the main deliverable of this architecture plan.
 
 ### 5. Establish `domain/listings` (Milestone F)
 
@@ -186,7 +182,7 @@ grep "^import" src/pages/Index.tsx | grep -v "from.*@/features\|from.*@/componen
 ## What To Avoid
 
 - Adding more files to `features/feed-page/controllers/` without renaming to `hooks/` first — establishes the wrong pattern for future features
-- Growing Index.tsx further before slimming it — the gap between goal and reality is already large
+- Growing page-level orchestration further before the feature boundaries are clearer
 - Letting `features/feed-page/interactions/` expand without a clear definition of what it owns
 - Moving `lib/nostr/types.ts` — the import blast radius is not worth it; leave it in place
 - Creating `domain/listings` files that are too thin to be meaningful — wait until there is real listing logic to extract, not just stubs
@@ -195,7 +191,7 @@ grep "^import" src/pages/Index.tsx | grep -v "from.*@/features\|from.*@/componen
 ## Success Criteria
 
 - Alternate frontends can import `domain/*` and `infrastructure/*` without touching `features/feed-page/` or `pages/Index.tsx`
-- `Index.tsx` is route wiring and layout composition, not an orchestration hub
+- Page components stay as route/layout shells rather than frontend-specific orchestration hubs
 - `src/lib/` contains only narrow-scope utilities with no clear domain home
 - `src/hooks/` contains only genuinely cross-cutting UI hooks
 - Pure business logic is testable without React, localStorage, or NDK
