@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 - Task priority now displays consistently as `P1` through `P5` across composers, task chips, and inline priority editors, and priority dropdowns now use severity-style labels (`Minor` through `Critical`) while Nodex continues storing and publishing the canonical `20-100` values under the hood.
 - Sidebar quick filters now use `priority` wording consistently, show minimum priority on the same `1-5` scale, and size the recent/priority number inputs to their actual content width instead of a fixed spinner width.
+- When a task/thread is active, the folded Channels and People sidebar previews now only show entries that are active inside that focused scope instead of unrelated global sidebar items.
 - Channel and people filters now suspend while you are focused inside a task/subtask, restore when you return to all tasks shortly after, and reset to the unfiltered all-tasks view after a longer stay in scoped task mode.
 - Noas auth now immediately connects relay URLs returned by sign-in responses, and Noas sign-up submissions now include the app’s currently connected relay URLs in the same array format.
 - Noas API-base resolution now caches discovered Noas instances by the hostname entered in the auth host field, so one previously used host/domain no longer overrides a different entered host.
