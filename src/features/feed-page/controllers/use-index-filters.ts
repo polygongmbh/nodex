@@ -172,11 +172,12 @@ export function useIndexFilters({
       toast(t("toasts.success.showingOnlyChannel", { channelName: channel?.name || intent.channelId }));
     },
     "sidebar.channel.toggleAll": () => {
-      const allNeutral =
-        channelFilterStates.size === 0 ||
-        Array.from(channelFilterStates.values()).every((state) => state === "neutral");
-      setChannelFilterStates(() => setAllChannelFilters(channels, allNeutral ? "included" : "neutral"));
-      toast(allNeutral ? t("toasts.success.allChannelsIncluded") : t("toasts.success.allChannelsReset"));
+      const hasActiveFilters =
+        channelFilterStates.size > 0 &&
+        Array.from(channelFilterStates.values()).some((state) => state !== "neutral");
+      if (!hasActiveFilters) return;
+      setChannelFilterStates(() => setAllChannelFilters(channels, "neutral"));
+      toast(t("toasts.success.allChannelsReset"));
     },
     "sidebar.channel.matchMode.change": (intent) => {
       setChannelMatchMode(intent.mode);
@@ -237,20 +238,16 @@ export function useIndexFilters({
         return;
       }
       const sidebarIds = new Set(sidebarPeople.map((person) => person.id));
-      const selectedCount = sidebarPeople.filter((person) => person.isSelected).length;
-      const shouldSelectAll = selectedCount !== sidebarPeople.length;
+      const hasSelectedPeople = people.some((person) => sidebarIds.has(person.id) && person.isSelected);
+      if (!hasSelectedPeople) return;
       setPeople((prev) =>
         prev.map((person) =>
           sidebarIds.has(person.id)
-            ? { ...person, isSelected: shouldSelectAll }
+            ? { ...person, isSelected: false }
             : person
         )
       );
-      toast(
-        shouldSelectAll
-          ? t("toasts.success.frequentPeopleSelected")
-          : t("toasts.success.frequentPeopleDeselected")
-      );
+      toast(t("toasts.success.frequentPeopleDeselected"));
     },
     "filter.applyAuthorExclusive": (intent) => {
       const author = intent.author;

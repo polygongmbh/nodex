@@ -126,6 +126,14 @@ export function Sidebar({
 
   const pinnedChannelSet = useMemo(() => new Set(pinnedChannelIds), [pinnedChannelIds]);
   const pinnedPersonSet = useMemo(() => new Set(pinnedPersonIds), [pinnedPersonIds]);
+  const hasActiveChannelFilters = useMemo(
+    () => channels.some((channel) => channel.filterState !== "neutral"),
+    [channels]
+  );
+  const hasActivePeopleFilters = useMemo(
+    () => people.some((person) => person.isSelected),
+    [people]
+  );
 
   const collapsedPreviewChannelIds = useMemo(
     () =>
@@ -367,7 +375,18 @@ export function Sidebar({
           icon={Hash}
           isExpanded={expandedSections.channels}
           onToggle={() => toggleSection("channels")}
-          iconIntent="sidebar.channel.toggleAll"
+          onIconClick={() => {
+            if (hasActiveChannelFilters) {
+              void dispatchFeedInteraction({ type: "sidebar.channel.toggleAll" });
+              return;
+            }
+            toggleSection("channels");
+          }}
+          iconLabel={
+            hasActiveChannelFilters
+              ? t("sidebar.actions.clearActiveFilters")
+              : `${expandedSections.channels ? t("tasks.actions.collapse") : t("tasks.actions.expand")} ${t("sidebar.sections.channels")}`
+          }
           action={
             <ChannelMatchModeToggle
               mode={channelMatchMode}
@@ -394,7 +413,18 @@ export function Sidebar({
           icon={Users}
           isExpanded={expandedSections.people}
           onToggle={() => toggleSection("people")}
-          iconIntent="sidebar.person.toggleAll"
+          onIconClick={() => {
+            if (hasActivePeopleFilters) {
+              void dispatchFeedInteraction({ type: "sidebar.person.toggleAll" });
+              return;
+            }
+            toggleSection("people");
+          }}
+          iconLabel={
+            hasActivePeopleFilters
+              ? t("sidebar.actions.clearActiveFilters")
+              : `${expandedSections.people ? t("tasks.actions.collapse") : t("tasks.actions.expand")} ${t("sidebar.sections.people")}`
+          }
         >
           {people.map((person) => (
             <PersonItem

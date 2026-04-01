@@ -18,6 +18,7 @@ export interface SidebarSectionProps {
   onToggle: () => void;
   onIconClick?: () => void;
   iconIntent?: SidebarSectionIconIntent;
+  iconLabel?: string;
   hint?: string;
   action?: React.ReactNode;
   animationMode?: SidebarSectionAnimationMode;
@@ -32,6 +33,7 @@ export function SidebarSection({
   onToggle,
   onIconClick,
   iconIntent,
+  iconLabel,
   hint,
   action,
   animationMode = "previewCollapse",
@@ -42,7 +44,8 @@ export function SidebarSection({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [contentHeight, setContentHeight] = useState(0);
-  const toggleLabel = `${isExpanded ? t("tasks.actions.collapse") : t("tasks.actions.expandAll")} ${title}`;
+  const toggleLabel = `${isExpanded ? t("tasks.actions.collapse") : t("tasks.actions.expand")} ${title}`;
+  const resolvedIconLabel = iconLabel ?? t("sidebar.actions.toggleAllFor", { title: title.toLowerCase() });
 
   useEffect(() => {
     if (animationMode === "none") return;
@@ -77,8 +80,8 @@ export function SidebarSection({
               }
             }}
             className="hover:ring-2 hover:ring-primary/50 rounded p-0.5 focus:outline-none focus:ring-2 focus:ring-primary/50"
-            title={t("sidebar.actions.toggleAll")}
-            aria-label={t("sidebar.actions.toggleAllFor", { title: title.toLowerCase() })}
+            title={resolvedIconLabel}
+            aria-label={resolvedIconLabel}
           >
             <Icon className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
           </button>

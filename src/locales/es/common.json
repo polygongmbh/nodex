@@ -284,8 +284,9 @@
       "shortcutsTooltip": "Atajos de teclado (?)",
       "openGuide": "Abrir guía de onboarding",
       "guide": "Guía",
-      "toggleAll": "Activar/desactivar todo",
-      "toggleAllFor": "Activar/desactivar todos en {{title}}",
+      "clearActiveFilters": "Quitar filtros activos",
+      "toggleAll": "Mostrar u ocultar todos los filtros de esta sección",
+      "toggleAllFor": "Mostrar u ocultar todos los filtros de {{title}}",
       "toggleSidebar": "Mostrar/ocultar barra lateral"
     },
     "filterStates": {
@@ -294,19 +295,19 @@
       "unfiltered": "sin filtrar"
     },
     "filters": {
-      "toggleRelay": "Activar/desactivar space {{name}}",
-      "showOnlyRelay": "Mostrar solo space {{name}}",
-      "toggleChannelTo": "Cambiar #{{name}} a {{nextState}}",
-      "toggleChannelFilter": "Activar/desactivar filtro de #{{name}}",
-      "showOnlyChannel": "Mostrar solo #{{name}}",
-      "togglePerson": "Activar/desactivar {{name}}",
-      "showOnlyPerson": "Mostrar solo {{name}}",
+      "toggleRelay": "Mostrar u ocultar publicaciones de {{name}}",
+      "showOnlyRelay": "Mostrar solo publicaciones de {{name}}",
+      "toggleChannelTo": "Incluir, excluir o ignorar #{{name}}",
+      "toggleChannelFilter": "Incluir, excluir o ignorar #{{name}}",
+      "showOnlyChannel": "Mostrar solo publicaciones con #{{name}}",
+      "togglePerson": "Mostrar u ocultar publicaciones con {{name}}",
+      "showOnlyPerson": "Mostrar solo publicaciones con {{name}}",
       "selected": "{{name}} seleccionado",
       "me": "Yo",
-      "pinChannelToView": "Fijar #{{name}} a esta vista",
-      "unpinChannelFromView": "Desfijar #{{name}} de esta vista",
-      "pinPersonToView": "Fijar {{name}} a esta vista",
-      "unpinPersonFromView": "Desfijar {{name}} de esta vista"
+      "pinChannelToView": "Mantener #{{name}} visible en la barra lateral",
+      "unpinChannelFromView": "Dejar de mantener #{{name}} visible en la barra lateral",
+      "pinPersonToView": "Mantener {{name}} visible en la barra lateral",
+      "unpinPersonFromView": "Dejar de mantener {{name}} visible en la barra lateral"
     },
     "quickFilters": {
       "chips": {
@@ -324,8 +325,8 @@
         "edit": "Editar",
         "clear": "Limpiar",
         "remove": "Quitar {{filterName}}",
-        "toggleRecent": "Alternar filtro de recientes",
-        "toggleImportant": "Alternar filtro de importantes"
+        "toggleRecent": "Mostrar solo publicaciones de los últimos {{days}} días",
+        "toggleImportant": "Mostrar solo tareas con la prioridad mínima o superior"
       }
     }
   },
@@ -715,7 +716,7 @@
     "channels": {
       "title": "Canales",
       "cycleHint": "Toca para cambiar: neutral → incluir → excluir",
-      "matchMode": "Modo de coincidencia de canales incluidos",
+      "matchMode": "Mostrar publicaciones que coincidan con todos los canales seleccionados (Y) o con cualquiera de los canales seleccionados (O)",
       "modeAnd": "Y",
       "modeOr": "O"
     },
@@ -918,6 +919,7 @@
       "filterAndMention": "Filtrar y mencionar {{authorName}}",
       "filterTag": "Filtrar por #{{tag}}",
       "collapse": "Contraer",
+      "expand": "Expandir",
       "expandAll": "Expandir (todo)",
       "expandMatchingOnly": "Expandir (solo coincidentes)",
       "showMore": "Mostrar más",

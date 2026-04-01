@@ -284,8 +284,9 @@
       "shortcutsTooltip": "Keyboard shortcuts (?)",
       "openGuide": "Open onboarding guide",
       "guide": "Guide",
-      "toggleAll": "Toggle all on/off",
-      "toggleAllFor": "Toggle all {{title}}",
+      "clearActiveFilters": "Clear active filters",
+      "toggleAll": "Show or hide all filters in this section",
+      "toggleAllFor": "Show or hide all filters in {{title}}",
       "toggleSidebar": "Toggle sidebar"
     },
     "filterStates": {
@@ -294,19 +295,19 @@
       "unfiltered": "unfiltered"
     },
     "filters": {
-      "toggleRelay": "Toggle {{name}} space",
-      "showOnlyRelay": "Show only {{name}} space",
-      "toggleChannelTo": "Toggle #{{name}} to {{nextState}}",
-      "toggleChannelFilter": "Toggle #{{name}} filter",
-      "showOnlyChannel": "Show only #{{name}}",
-      "togglePerson": "Toggle {{name}}",
-      "showOnlyPerson": "Show only {{name}}",
+      "toggleRelay": "Show or hide posts from {{name}}",
+      "showOnlyRelay": "Show only posts from {{name}}",
+      "toggleChannelTo": "Include, exclude, or ignore #{{name}}",
+      "toggleChannelFilter": "Include, exclude, or ignore #{{name}}",
+      "showOnlyChannel": "Show only posts tagged #{{name}}",
+      "togglePerson": "Show or hide posts involving {{name}}",
+      "showOnlyPerson": "Show only posts involving {{name}}",
       "selected": "{{name}} selected",
       "me": "Me",
-      "pinChannelToView": "Pin #{{name}} to this view",
-      "unpinChannelFromView": "Unpin #{{name}} from this view",
-      "pinPersonToView": "Pin {{name}} to this view",
-      "unpinPersonFromView": "Unpin {{name}} from this view"
+      "pinChannelToView": "Keep #{{name}} visible in the sidebar",
+      "unpinChannelFromView": "Stop keeping #{{name}} visible in the sidebar",
+      "pinPersonToView": "Keep {{name}} visible in the sidebar",
+      "unpinPersonFromView": "Stop keeping {{name}} visible in the sidebar"
     },
     "quickFilters": {
       "chips": {
@@ -324,8 +325,8 @@
         "edit": "Edit",
         "clear": "Clear",
         "remove": "Remove {{filterName}}",
-        "toggleRecent": "Toggle recent filter",
-        "toggleImportant": "Toggle important filter"
+        "toggleRecent": "Show only posts from the last {{days}} days",
+        "toggleImportant": "Show only tasks at or above the minimum priority"
       }
     }
   },
@@ -715,7 +716,7 @@
     "channels": {
       "title": "Channels",
       "cycleHint": "Tap to cycle: neutral -> include -> exclude",
-      "matchMode": "Included channel match mode",
+      "matchMode": "Show posts that match all selected channels (AND) or any selected channel (OR)",
       "modeAnd": "AND",
       "modeOr": "OR"
     },
@@ -918,6 +919,7 @@
       "filterAndMention": "Filter and mention {{authorName}}",
       "filterTag": "Filter to #{{tag}}",
       "collapse": "Collapse",
+      "expand": "Expand",
       "expandAll": "Expand (all)",
       "expandMatchingOnly": "Expand (matching only)",
       "showMore": "Show more",

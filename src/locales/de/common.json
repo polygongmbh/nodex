@@ -284,8 +284,9 @@
       "shortcutsTooltip": "Tastenkürzel (?)",
       "openGuide": "Onboarding-Guide öffnen",
       "guide": "Leitfaden",
-      "toggleAll": "Alle ein-/ausschalten",
-      "toggleAllFor": "Alle {{title}} umschalten",
+      "clearActiveFilters": "Aktive Filter zurücksetzen",
+      "toggleAll": "Alle Filter in diesem Bereich ein- oder ausblenden",
+      "toggleAllFor": "Alle Filter in {{title}} ein- oder ausblenden",
       "toggleSidebar": "Seitenleiste umschalten"
     },
     "filterStates": {
@@ -294,19 +295,19 @@
       "unfiltered": "ungefiltert"
     },
     "filters": {
-      "toggleRelay": "Space {{name}} umschalten",
-      "showOnlyRelay": "Nur Space {{name}} anzeigen",
-      "toggleChannelTo": "#{{name}} auf {{nextState}} umschalten",
-      "toggleChannelFilter": "#{{name}}-Filter umschalten",
-      "showOnlyChannel": "Nur #{{name}} anzeigen",
-      "togglePerson": "{{name}} umschalten",
-      "showOnlyPerson": "Nur {{name}} anzeigen",
+      "toggleRelay": "Beiträge aus {{name}} ein- oder ausblenden",
+      "showOnlyRelay": "Nur Beiträge aus {{name}} anzeigen",
+      "toggleChannelTo": "#{{name}} einbeziehen, ausschließen oder ignorieren",
+      "toggleChannelFilter": "#{{name}} einbeziehen, ausschließen oder ignorieren",
+      "showOnlyChannel": "Nur Beiträge mit #{{name}} anzeigen",
+      "togglePerson": "Beiträge mit {{name}} ein- oder ausblenden",
+      "showOnlyPerson": "Nur Beiträge mit {{name}} anzeigen",
       "selected": "{{name}} ausgewählt",
       "me": "Ich",
-      "pinChannelToView": "#{{name}} an diese Ansicht anheften",
-      "unpinChannelFromView": "#{{name}} von dieser Ansicht lösen",
-      "pinPersonToView": "{{name}} an diese Ansicht anheften",
-      "unpinPersonFromView": "{{name}} von dieser Ansicht lösen"
+      "pinChannelToView": "#{{name}} in der Seitenleiste sichtbar halten",
+      "unpinChannelFromView": "#{{name}} nicht mehr in der Seitenleiste sichtbar halten",
+      "pinPersonToView": "{{name}} in der Seitenleiste sichtbar halten",
+      "unpinPersonFromView": "{{name}} nicht mehr in der Seitenleiste sichtbar halten"
     },
     "quickFilters": {
       "chips": {
@@ -324,8 +325,8 @@
         "edit": "Bearbeiten",
         "clear": "Zurücksetzen",
         "remove": "{{filterName}} entfernen",
-        "toggleRecent": "Filter \"Neu\" umschalten",
-        "toggleImportant": "Filter \"Wichtig\" umschalten"
+        "toggleRecent": "Nur Beiträge der letzten {{days}} Tage anzeigen",
+        "toggleImportant": "Nur Aufgaben ab der Mindestpriorität anzeigen"
       }
     }
   },
@@ -715,7 +716,7 @@
     "channels": {
       "title": "Kanäle",
       "cycleHint": "Tippen zum Wechseln: neutral -> einschließen -> ausschließen",
-      "matchMode": "Abgleichsmodus für eingeschlossene Kanäle",
+      "matchMode": "Beiträge anzeigen, die allen ausgewählten Kanälen (UND) oder einem beliebigen ausgewählten Kanal (ODER) entsprechen",
       "modeAnd": "UND",
       "modeOr": "ODER"
     },
@@ -918,6 +919,7 @@
       "filterAndMention": "{{authorName}} filtern und erwähnen",
       "filterTag": "Auf #{{tag}} filtern",
       "collapse": "Einklappen",
+      "expand": "Ausklappen",
       "expandAll": "Ausklappen (alle)",
       "expandMatchingOnly": "Ausklappen (nur Treffer)",
       "showMore": "Mehr anzeigen",

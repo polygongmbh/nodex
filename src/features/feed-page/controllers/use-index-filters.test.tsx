@@ -9,6 +9,7 @@ import { makeChannel, makePerson, makeRelay } from "@/test/fixtures";
 import type { Channel, Person, PostedTag, Relay } from "@/types";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
+import { toast } from "sonner";
 
 const mockApi: FeedInteractionPipelineApi = {
   dispatch: () => Promise.resolve({ envelope: { id: 0, dispatchedAtMs: 0, intent: { type: "ui.openGuide" } }, outcome: { status: "handled" } }),
@@ -93,8 +94,10 @@ function Harness({
     <>
       <button onClick={() => relayState.handleRelayExclusive("relay-one")}>RelayExclusive</button>
       <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.toggle", channelId: "general" })}>ChannelToggle</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.toggleAll" })}>ChannelClearAll</button>
       <button onClick={() => callHandler(filters.handlers, { type: "sidebar.channel.matchMode.change", mode: "or" })}>ModeOr</button>
       <button onClick={() => callHandler(filters.handlers, { type: "sidebar.person.exclusive", personId: "alice" })}>PersonExclusive</button>
+      <button onClick={() => callHandler(filters.handlers, { type: "sidebar.person.toggleAll" })}>PersonClearAll</button>
       <button onClick={() => callHandler(filters.handlers, { type: "filter.applyHashtagExclusive", tag: "urgent" })}>HashtagExclusive</button>
       <button onClick={() => setVisibleChannels([channels[1]])}>HideGeneralSidebarChannel</button>
       <button onClick={() => {
@@ -157,6 +160,7 @@ function renderHarness(options?: {
 describe("useIndexFilters", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.mocked(toast).mockClear();
   });
 
   it("adds a missing hashtag to postedTags and applies an exclusive channel filter", () => {
@@ -277,5 +281,29 @@ describe("useIndexFilters", () => {
     fireEvent.click(screen.getByRole("button", { name: "PersonExclusive" }));
 
     expect(screen.getByTestId("selected-people")).toHaveTextContent("");
+  });
+
+  it("clears active channel filters without selecting every channel", () => {
+    renderHarness();
+
+    fireEvent.click(screen.getByRole("button", { name: "ChannelToggle" }));
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("included");
+
+    fireEvent.click(screen.getByRole("button", { name: "ChannelClearAll" }));
+
+    expect(screen.getByTestId("channel-state-general")).toHaveTextContent("neutral");
+    expect(toast).toHaveBeenCalledWith("toasts.success.allChannelsReset");
+  });
+
+  it("clears selected people without selecting the full sidebar list", () => {
+    renderHarness();
+
+    fireEvent.click(screen.getByRole("button", { name: "PersonExclusive" }));
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
+
+    fireEvent.click(screen.getByRole("button", { name: "PersonClearAll" }));
+
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("");
+    expect(toast).toHaveBeenCalledWith("toasts.success.frequentPeopleDeselected");
   });
 });

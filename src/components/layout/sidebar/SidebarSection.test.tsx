@@ -41,12 +41,29 @@ describe("SidebarSection", () => {
       </SidebarSection>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Toggle all people" }));
+    fireEvent.click(screen.getByRole("button", { name: "Show or hide all filters in people" }));
     fireEvent.click(screen.getByRole("button", { name: "Action" }));
 
     expect(onIconClick).toHaveBeenCalledTimes(1);
     expect(onActionClick).toHaveBeenCalledTimes(1);
     expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it("uses a custom icon label when provided", () => {
+    render(
+      <SidebarSection
+        title="People"
+        icon={Hash}
+        isExpanded
+        onToggle={vi.fn()}
+        onIconClick={vi.fn()}
+        iconLabel="Clear active filters"
+      >
+        <div>Content</div>
+      </SidebarSection>
+    );
+
+    expect(screen.getByRole("button", { name: "Clear active filters" })).toBeInTheDocument();
   });
 
   it("applies onboarding data attributes to the section element without an mb-3 wrapper", () => {

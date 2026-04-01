@@ -68,8 +68,8 @@ describe("Sidebar", () => {
   it("starts channels and people folded by default", () => {
     renderSidebar(baseRelays);
 
-    expect(screen.getByRole("button", { name: /expand \(all\) channels/i })).toHaveAttribute("aria-expanded", "false");
-    expect(screen.getByRole("button", { name: /expand \(all\) people/i })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getAllByRole("button", { name: /expand channels/i }).find((button) => button.getAttribute("aria-expanded") === "false")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /expand people/i }).find((button) => button.getAttribute("aria-expanded") === "false")).toBeTruthy();
   });
 
   it("keeps pinned channels visible in folded mode", () => {
@@ -90,6 +90,6 @@ describe("Sidebar", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Show only #release" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Show only posts tagged #release" })).toBeInTheDocument();
   });
 });
