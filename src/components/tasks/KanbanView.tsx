@@ -28,14 +28,12 @@ import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
 import { TaskAttachmentList } from "./TaskAttachmentList";
-import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
-import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
-import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { useKanbanViewState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
+import { useTaskViewServices } from "./use-task-view-services";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -72,15 +70,8 @@ export function KanbanView({
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { onNewTask } = useFeedTaskCommands();
+  const { authPolicy, guardModify, onNewTask, focusSidebar, focusTask } = useTaskViewServices();
   const { people } = useFeedSurfaceState();
-  const focusTask = (taskId: string | null) => {
-    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
-  };
-  const focusSidebar = () => {
-    void dispatchFeedInteraction({ type: "ui.focusSidebar" });
-  };
-  const authPolicy = useAuthActionPolicy();
   const columns = useMemo(() => getColumns((key) => t(key)), [t]);
   const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
@@ -143,6 +134,10 @@ export function KanbanView({
     (task: Task): TaskStatus => optimisticStatusByTaskId[task.id] || task.status || "todo",
     [optimisticStatusByTaskId]
   );
+  const hasChildren = useCallback(
+    (taskId: string): boolean => allTasks.some((task) => task.taskType === "task" && task.parentId === taskId),
+    [allTasks]
+  );
   const dispatchStatusChange = useCallback(
     (taskId: string, newStatus: TaskStatus) => {
       void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status: newStatus });
@@ -158,24 +153,13 @@ export function KanbanView({
     ],
     [tasksByStatus]
   );
-  const {
-    mediaItems,
-    activeMediaIndex,
-    activeMediaItem,
-    activePostMediaIndex,
-    activePostMediaCount,
-    openTaskMedia,
-    goToPreviousMedia,
-    goToNextMedia,
-    goToPreviousPost,
-    goToNextPost,
-    closeMediaPreview,
-  } = useTaskMediaPreview(orderedKanbanTasks);
+  const mediaController = useTaskViewMedia(orderedKanbanTasks);
+  const { openTaskMedia } = mediaController;
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     if (isInteractionBlocked) {
-      void dispatchFeedInteraction({ type: "ui.interaction.guardModify" });
+      guardModify();
       return;
     }
     
@@ -256,7 +240,7 @@ export function KanbanView({
   // Handle moving task left (to previous column) - preserves focus
   const handleMoveLeft = () => {
     if (isInteractionBlocked) {
-      void dispatchFeedInteraction({ type: "ui.interaction.guardModify" });
+      guardModify();
       return;
     }
     const focusedId = keyboardFocusedTaskIdRef.current;
@@ -280,7 +264,7 @@ export function KanbanView({
   // Handle moving task right (to next column) - preserves focus
   const handleMoveRight = () => {
     if (isInteractionBlocked) {
-      void dispatchFeedInteraction({ type: "ui.interaction.guardModify" });
+      guardModify();
       return;
     }
     const focusedId = keyboardFocusedTaskIdRef.current;
@@ -586,22 +570,7 @@ export function KanbanView({
           </div>
         </DragDropContext>
       </div>
-      <TaskMediaLightbox
-        open={activeMediaIndex !== null}
-        mediaItem={activeMediaItem}
-        mediaCount={mediaItems.length}
-        mediaIndex={activeMediaIndex ?? 0}
-        postMediaIndex={activePostMediaIndex}
-        postMediaCount={activePostMediaCount}
-        onOpenChange={(open) => {
-          if (!open) closeMediaPreview();
-        }}
-        onPrevious={goToPreviousMedia}
-        onNext={goToNextMedia}
-        onPreviousPost={goToPreviousPost}
-        onNextPost={goToNextPost}
-        onOpenTask={focusTask}
-      />
+      <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
 
     </main>
   );

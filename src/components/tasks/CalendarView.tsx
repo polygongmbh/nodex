@@ -42,8 +42,6 @@ import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { TaskAttachmentList } from "./TaskAttachmentList";
-import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
-import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,14 +54,13 @@ import {
   shouldOpenStatusMenuForDirectSelection,
 } from "@/lib/task-status-toggle";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
-import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
-import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import {
   createCalendarSelectors,
   useTaskViewSource,
 } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
+import { useTaskViewServices } from "./use-task-view-services";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -95,13 +92,8 @@ export function CalendarView({
   isHydrating = false,
 }: CalendarViewProps) {
   const { t } = useTranslation();
-  const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { onNewTask } = useFeedTaskCommands();
+  const { authPolicy, onNewTask, focusTask } = useTaskViewServices();
   const { people } = useFeedSurfaceState();
-  const authPolicy = useAuthActionPolicy();
-  const focusTask = (taskId: string | null) => {
-    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
-  };
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -180,19 +172,8 @@ export function CalendarView({
     () => (selectedDate ? getTasksForDay(selectedDate) : []),
     [getTasksForDay, selectedDate]
   );
-  const {
-    mediaItems,
-    activeMediaIndex,
-    activeMediaItem,
-    activePostMediaIndex,
-    activePostMediaCount,
-    openTaskMedia,
-    goToPreviousMedia,
-    goToNextMedia,
-    goToPreviousPost,
-    goToNextPost,
-    closeMediaPreview,
-  } = useTaskMediaPreview(selectedDayTasks);
+  const mediaController = useTaskViewMedia(selectedDayTasks);
+  const { openTaskMedia } = mediaController;
 
   const alignDesktopScrollToMonth = useCallback(
     (month: Date, behavior: ScrollBehavior = "auto") => {
@@ -1134,22 +1115,7 @@ export function CalendarView({
         )}
       </div>
 
-      <TaskMediaLightbox
-        open={activeMediaIndex !== null}
-        mediaItem={activeMediaItem}
-        mediaCount={mediaItems.length}
-        mediaIndex={activeMediaIndex ?? 0}
-        postMediaIndex={activePostMediaIndex}
-        postMediaCount={activePostMediaCount}
-        onOpenChange={(open) => {
-          if (!open) closeMediaPreview();
-        }}
-        onPrevious={goToPreviousMedia}
-        onNext={goToNextMedia}
-        onPreviousPost={goToPreviousPost}
-        onNextPost={goToNextPost}
-        onOpenTask={focusTask}
-      />
+      <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
 
     </main>
   );

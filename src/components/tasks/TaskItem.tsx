@@ -7,7 +7,6 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
-import type { NostrProfile } from "@/infrastructure/nostr/use-nostr-profiles";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
@@ -40,6 +39,7 @@ import {
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useTaskAuthorProfiles } from "./task-author-profiles-context";
 
 // Fold states: collapsed -> matchingOnly -> allVisible
 type FoldState = "collapsed" | "matchingOnly" | "allVisible";
@@ -65,7 +65,6 @@ interface TaskItemProps {
   isInteractionBlocked?: boolean;
   onMediaClick?: (taskId: string, url: string) => void;
   sortContext?: SortContext;
-  authorProfiles?: Record<string, NostrProfile>;
 }
 
 export function TaskItem({
@@ -89,12 +88,12 @@ export function TaskItem({
   isInteractionBlocked = false,
   onMediaClick,
   sortContext,
-  authorProfiles,
 }: TaskItemProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { people: contextPeople } = useFeedSurfaceState();
   const people = peopleProp ?? contextPeople;
+  const authorProfiles = useTaskAuthorProfiles();
   const getStatusToggleHint = (status?: TaskStatus): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -763,7 +762,6 @@ export function TaskItem({
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
                       sortContext={sortContext}
-                      authorProfiles={authorProfiles}
                     />
                   );
                 })}
@@ -795,7 +793,6 @@ export function TaskItem({
                       isPendingPublishTask={isPendingPublishTask}
                       onMediaClick={onMediaClick}
                       sortContext={sortContext}
-                      authorProfiles={authorProfiles}
                     />
                   );
                 })}

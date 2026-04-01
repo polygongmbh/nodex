@@ -21,8 +21,6 @@ import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/dom
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
-import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
-import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
 import {
@@ -46,11 +44,11 @@ import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
-import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { useListViewState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
+import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
+import { useTaskViewServices } from "./use-task-view-services";
 
 interface ListViewProps {
   tasks: Task[];
@@ -119,17 +117,10 @@ export function ListView({
 }: ListViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { onNewTask } = useFeedTaskCommands();
+  const { authPolicy, onNewTask, focusSidebar, focusTask } = useTaskViewServices();
   const { channels, people } = useFeedSurfaceState();
   const interactionModel = useFeedViewInteractionModel();
-  const authPolicy = useAuthActionPolicy();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
-  const focusTask = (taskId: string | null) => {
-    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
-  };
-  const focusSidebar = () => {
-    void dispatchFeedInteraction({ type: "ui.focusSidebar" });
-  };
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const [sortField, setSortField] = useState<SortField>("priority");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -308,18 +299,7 @@ export function ListView({
   const shouldShowInlineEmptyHint = hasActiveFilters && hasSourceListContent && listTasks.length === 0;
   const shouldShowScopeFooterHint = hasSelectedScope && listTasks.length > 0;
   const shouldShowScreenEmptyState = listTasks.length === 0 && !shouldShowInlineEmptyHint;
-  const {
-    mediaItems,
-    activeMediaIndex,
-    activeMediaItem,
-    activePostMediaIndex,
-    activePostMediaCount,
-    goToPreviousMedia,
-    goToNextMedia,
-    goToPreviousPost,
-    goToNextPost,
-    closeMediaPreview,
-  } = useTaskMediaPreview(listTasks);
+  const mediaController = useTaskViewMedia(listTasks);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -893,22 +873,7 @@ export function ListView({
           </tbody>
         </table>
       </div>
-      <TaskMediaLightbox
-        open={activeMediaIndex !== null}
-        mediaItem={activeMediaItem}
-        mediaCount={mediaItems.length}
-        mediaIndex={activeMediaIndex ?? 0}
-        postMediaIndex={activePostMediaIndex}
-        postMediaCount={activePostMediaCount}
-        onOpenChange={(open) => {
-          if (!open) closeMediaPreview();
-        }}
-        onPrevious={goToPreviousMedia}
-        onNext={goToNextMedia}
-        onPreviousPost={goToPreviousPost}
-        onNextPost={goToNextPost}
-        onOpenTask={focusTask}
-      />
+      <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
 
     </main>
   );

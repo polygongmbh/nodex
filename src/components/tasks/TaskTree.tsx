@@ -3,19 +3,16 @@ import { Task, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest, Pu
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
-import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
-import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
-import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
-import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import {
   createTreeSelectors,
   useTaskViewSource,
 } from "@/features/feed-page/controllers/use-task-view-states";
+import { useTaskViewServices } from "./use-task-view-services";
+import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
+import { TaskAuthorProfilesProvider } from "./task-author-profiles-context";
 
 interface TaskTreeProps {
   tasks: Task[];
@@ -51,17 +48,9 @@ export function TaskTree({
   isInteractionBlocked = false,
   isHydrating = false,
 }: TaskTreeProps) {
-  const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { onNewTask } = useFeedTaskCommands();
   const interactionModel = useFeedViewInteractionModel();
-  const authPolicy = useAuthActionPolicy();
+  const { authPolicy, onNewTask, focusSidebar, focusTask } = useTaskViewServices();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
-  const focusTask = (taskId: string | null) => {
-    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
-  };
-  const focusSidebar = () => {
-    void dispatchFeedInteraction({ type: "ui.focusSidebar" });
-  };
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
   const taskSource = useTaskViewSource({
@@ -81,19 +70,8 @@ export function TaskTree({
   const { shouldShowInlineEmptyHint, shouldShowScopeFooterHint, shouldShowScreenEmptyState } =
     treeSelectors.getEmptyStateFlags({ isMobile });
   const hasActiveFilters = treeSelectors.hasActiveFilters();
-  const {
-    mediaItems,
-    activeMediaIndex,
-    activeMediaItem,
-    activePostMediaIndex,
-    activePostMediaCount,
-    openTaskMedia,
-    goToPreviousMedia,
-    goToNextMedia,
-    goToPreviousPost,
-    goToNextPost,
-    closeMediaPreview,
-  } = useTaskMediaPreview(displayedTasks);
+  const mediaController = useTaskViewMedia(displayedTasks);
+  const { openTaskMedia } = mediaController;
   const handleGoUp = () => {
     if (!currentContextTask) {
       focusTask(null);
@@ -146,14 +124,6 @@ export function TaskTree({
     });
     return ids;
   }, [visibleTasks]);
-
-  const visibleAuthorPubkeys = useMemo(() => {
-    const pubkeys = allTasks
-      .map((task) => task.author.id)
-      .filter((authorId) => authorId.length === 64 && /^[a-f0-9]+$/i.test(authorId));
-    return Array.from(new Set(pubkeys));
-  }, [allTasks]);
-  const { profiles: authorProfiles } = useNostrProfiles(visibleAuthorPubkeys);
 
   // Task navigation with keyboard
   const { focusedTaskId: keyboardFocusedTaskId } = useTaskNavigation({
@@ -281,72 +251,61 @@ export function TaskTree({
       />
 
       {/* Task List */}
-      <div ref={scrollContainerRef} className="scrollbar-main-view flex-1 px-2 sm:px-3 py-4 space-y-1" data-onboarding="task-list">
-        {shouldShowScreenEmptyState ? (
-          <FilteredEmptyState
-            variant="collection"
-            isHydrating={isHydrating}
-            searchQuery={searchQuery}
-            contextTaskTitle={currentContextTask?.content}
-          />
-        ) : (
-          <>
-            {displayedTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                filteredChildren={getFilteredChildren(task.id)}
-                allTasks={allTasks}
-                childrenMap={childrenMap}
-                currentUser={currentUser}
-                matchedByFilter={isTaskDirectMatch(task.id)}
-                isDirectMatchFn={isTaskDirectMatch}
-                getFilteredChildrenFn={getFilteredChildren}
-                hasActiveFilters={hasActiveFilters}
-                activeRelays={activeRelays}
-                isKeyboardFocused={keyboardFocusedTaskId === task.id}
-                isPendingPublishTask={isPendingPublishTask}
-                isInteractionBlocked={isInteractionBlocked}
-                onMediaClick={openTaskMedia}
-                sortContext={sortContext}
-                authorProfiles={authorProfiles}
-              />
-            ))}
-            {shouldShowScopeFooterHint ? (
-              <FilteredEmptyState
-                variant="collection"
-                isHydrating={isHydrating}
-                searchQuery={searchQuery}
-                contextTaskTitle={currentContextTask?.content}
-                mode="footer"
-              />
-            ) : null}
-            {shouldShowInlineEmptyHint ? (
-              <FilteredEmptyState
-                variant="collection"
-                isHydrating={isHydrating}
-                searchQuery={searchQuery}
-                contextTaskTitle={currentContextTask?.content}
-                mode="inline"
-              />
-            ) : null}
-          </>
-        )}
-      </div>
-      <TaskMediaLightbox
-        open={activeMediaIndex !== null}
-        mediaItem={activeMediaItem}
-        mediaCount={mediaItems.length}
-        mediaIndex={activeMediaIndex ?? 0}
-        postMediaIndex={activePostMediaIndex}
-        postMediaCount={activePostMediaCount}
-        onOpenChange={(open) => {
-          if (!open) closeMediaPreview();
-        }}
-        onPrevious={goToPreviousMedia}
-        onNext={goToNextMedia}
-        onPreviousPost={goToPreviousPost}
-        onNextPost={goToNextPost}
+      <TaskAuthorProfilesProvider tasks={allTasks}>
+        <div ref={scrollContainerRef} className="scrollbar-main-view flex-1 px-2 sm:px-3 py-4 space-y-1" data-onboarding="task-list">
+          {shouldShowScreenEmptyState ? (
+            <FilteredEmptyState
+              variant="collection"
+              isHydrating={isHydrating}
+              searchQuery={searchQuery}
+              contextTaskTitle={currentContextTask?.content}
+            />
+          ) : (
+            <>
+              {displayedTasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  filteredChildren={getFilteredChildren(task.id)}
+                  allTasks={allTasks}
+                  childrenMap={childrenMap}
+                  currentUser={currentUser}
+                  matchedByFilter={isTaskDirectMatch(task.id)}
+                  isDirectMatchFn={isTaskDirectMatch}
+                  getFilteredChildrenFn={getFilteredChildren}
+                  hasActiveFilters={hasActiveFilters}
+                  activeRelays={activeRelays}
+                  isKeyboardFocused={keyboardFocusedTaskId === task.id}
+                  isPendingPublishTask={isPendingPublishTask}
+                  isInteractionBlocked={isInteractionBlocked}
+                  onMediaClick={openTaskMedia}
+                  sortContext={sortContext}
+                />
+              ))}
+              {shouldShowScopeFooterHint ? (
+                <FilteredEmptyState
+                  variant="collection"
+                  isHydrating={isHydrating}
+                  searchQuery={searchQuery}
+                  contextTaskTitle={currentContextTask?.content}
+                  mode="footer"
+                />
+              ) : null}
+              {shouldShowInlineEmptyHint ? (
+                <FilteredEmptyState
+                  variant="collection"
+                  isHydrating={isHydrating}
+                  searchQuery={searchQuery}
+                  contextTaskTitle={currentContextTask?.content}
+                  mode="inline"
+                />
+              ) : null}
+            </>
+          )}
+        </div>
+      </TaskAuthorProfilesProvider>
+      <TaskViewMediaLightbox
+        controller={mediaController}
         onOpenTask={focusTask}
       />
 

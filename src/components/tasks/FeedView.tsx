@@ -40,8 +40,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
-import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { getCommentCreatedTooltip, getStatusUpdatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
@@ -60,8 +58,6 @@ import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/f
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
-import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import {
   useFeedViewState,
   type FeedEntry,
@@ -70,6 +66,8 @@ import {
   useFeedPersonLookup,
   useFeedSurfaceState,
 } from "@/features/feed-page/views/feed-surface-context";
+import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
+import { useTaskViewServices } from "./use-task-view-services";
 
 function formatCompactRelativeTime(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
@@ -210,17 +208,11 @@ export function FeedView({
 }: FeedViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { onNewTask } = useFeedTaskCommands();
+  const { authPolicy, onNewTask, focusSidebar, focusTask } = useTaskViewServices();
   const { channels, people } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
   const interactionModel = useFeedViewInteractionModel();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
-  const focusTask = (taskId: string | null) => {
-    void dispatchFeedInteraction({ type: "task.focus.change", taskId });
-  };
-  const focusSidebar = () => {
-    void dispatchFeedInteraction({ type: "ui.focusSidebar" });
-  };
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -236,8 +228,6 @@ export function FeedView({
     if (showFull || value.length <= 11) return value;
     return `${value.slice(0, 8)}…${value.slice(-3)}`;
   };
-
-  const authPolicy = useAuthActionPolicy();
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
   const [isTwoXLDesktop, setIsTwoXLDesktop] = useState(false);
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
@@ -320,19 +310,8 @@ export function FeedView({
     () => activeFeedEntries.slice(0, visibleEntryCount),
     [activeFeedEntries, visibleEntryCount]
   );
-  const {
-    mediaItems,
-    activeMediaIndex,
-    activeMediaItem,
-    activePostMediaIndex,
-    activePostMediaCount,
-    openTaskMedia,
-    goToPreviousMedia,
-    goToNextMedia,
-    goToPreviousPost,
-    goToNextPost,
-    closeMediaPreview,
-  } = useTaskMediaPreview(mediaPreviewTasks);
+  const mediaController = useTaskViewMedia(mediaPreviewTasks);
+  const { openTaskMedia } = mediaController;
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => feedTasks.map(t => t.id), [feedTasks]);
@@ -1206,22 +1185,7 @@ export function FeedView({
           </>
         )}
       </div>
-      <TaskMediaLightbox
-        open={activeMediaIndex !== null}
-        mediaItem={activeMediaItem}
-        mediaCount={mediaItems.length}
-        mediaIndex={activeMediaIndex ?? 0}
-        postMediaIndex={activePostMediaIndex}
-        postMediaCount={activePostMediaCount}
-        onOpenChange={(open) => {
-          if (!open) closeMediaPreview();
-        }}
-        onPrevious={goToPreviousMedia}
-        onNext={goToNextMedia}
-        onPreviousPost={goToPreviousPost}
-        onNextPost={goToNextPost}
-        onOpenTask={focusTask}
-      />
+      <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
       <RawNostrEventDialog
         open={rawEventDialogOpen}
         onOpenChange={setRawEventDialogOpen}
