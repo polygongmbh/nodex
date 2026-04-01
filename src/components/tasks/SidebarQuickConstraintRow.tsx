@@ -23,7 +23,7 @@ export function SidebarQuickConstraintRow({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const displayedMinPriority = displayPriorityFromStored(quickFilters.minPriority) ?? 1;
-  const getNumericInputWidth = (maxDigits: number, value: string) => `${Math.max(maxDigits, value.length) + 1.5}ch`;
+  const getNumericInputWidth = (maxDigits: number, value: string) => `${Math.max(maxDigits, value.length) + 3.25}ch`;
 
   return (
     <div className={cn("grid grid-cols-2 gap-1 pb-1", className)}>
@@ -53,7 +53,7 @@ export function SidebarQuickConstraintRow({
             title={t("sidebar.quickFilters.actions.toggleRecent", { days: quickFilters.recentDays })}
           >
             <Clock3 className="h-3 w-3 shrink-0" />
-            <span className="truncate">{t("sidebar.quickFilters.labels.recent")}</span>
+            <span className="hidden truncate lg:inline">{t("sidebar.quickFilters.labels.recent")}</span>
           </button>
           <Input
             type="number"
@@ -66,7 +66,7 @@ export function SidebarQuickConstraintRow({
                 days: Number(event.target.value),
               });
             }}
-            className="h-6 px-1.5 text-[11px]"
+            className="h-6 min-w-[3.75rem] px-1.5 text-[11px]"
             style={{ width: getNumericInputWidth(MAX_RECENT_DAYS_DIGITS, String(quickFilters.recentDays)) }}
             aria-label={t("sidebar.quickFilters.labels.recentDays")}
             title={t("sidebar.quickFilters.labels.recentDays")}
@@ -100,7 +100,7 @@ export function SidebarQuickConstraintRow({
             title={t("sidebar.quickFilters.actions.toggleImportant")}
           >
             <Flag className="h-3 w-3 shrink-0" />
-            <span className="truncate">{t("sidebar.quickFilters.labels.important")}</span>
+            <span className="hidden truncate lg:inline">{t("sidebar.quickFilters.labels.important")}</span>
           </button>
           <Input
             type="number"
@@ -115,7 +115,7 @@ export function SidebarQuickConstraintRow({
                 priority: storedPriority,
               });
             }}
-            className="h-6 px-1.5 text-[11px]"
+            className="h-6 min-w-[3rem] px-1.5 text-[11px]"
             style={{ width: getNumericInputWidth(MAX_DISPLAY_PRIORITY_DIGITS, String(displayedMinPriority)) }}
             aria-label={t("sidebar.quickFilters.labels.minPriority")}
             title={t("sidebar.quickFilters.labels.minPriority")}
