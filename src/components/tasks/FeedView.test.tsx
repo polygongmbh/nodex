@@ -253,7 +253,7 @@ describe("FeedView", () => {
     expect(middleButton).toBeInTheDocument();
   });
 
-  it("omits fallback npub text on slim desktop and keeps it available via hover title", async () => {
+  it("shows a shortened fallback npub on slim desktop", async () => {
     const pubkeyOnlyAuthor: Person = {
       id: author.id,
       name: author.id,
@@ -287,15 +287,16 @@ describe("FeedView", () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByTestId("feed-author-primary-task-pubkey")).not.toBeInTheDocument();
+      expect(screen.getByTestId("feed-author-primary-task-pubkey")).toBeInTheDocument();
     });
-    expect(
-      screen.getByRole("button", { name: /filter and mention npub1/i })
-    ).toHaveAttribute("title", expect.stringContaining("npub1"));
+    const fallbackAuthorLabel = screen.getByTestId("feed-author-primary-task-pubkey");
+    expect(fallbackAuthorLabel).toHaveTextContent("npub1");
+    expect(fallbackAuthorLabel.textContent).toContain("…");
+    expect(fallbackAuthorLabel.closest("button")).toHaveAttribute("title", expect.stringContaining("npub1"));
     matchMediaSpy.mockRestore();
   });
 
-  it("shows the full fallback npub on 2xl desktop widths", async () => {
+  it("shows the full fallback npub on xl desktop widths", async () => {
     const pubkeyOnlyAuthor: Person = {
       id: author.id,
       name: author.id,
@@ -307,7 +308,7 @@ describe("FeedView", () => {
     const matchMediaSpy = vi
       .spyOn(window, "matchMedia")
       .mockImplementation((query: string) => ({
-        matches: query === "(min-width: 1536px)",
+        matches: query === "(min-width: 1280px)",
         media: query,
         onchange: null,
         addListener: () => {},

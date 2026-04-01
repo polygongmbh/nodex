@@ -220,14 +220,14 @@ export function FeedView({
   };
 
   const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1023px)";
-  const TWO_XL_DESKTOP_QUERY = "(min-width: 1536px)";
+  const XL_DESKTOP_QUERY = "(min-width: 1280px)";
   const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
   const formatFeedNpubLabel = (value: string, showFull: boolean): string => {
     if (showFull || value.length <= 11) return value;
     return `${value.slice(0, 8)}…${value.slice(-3)}`;
   };
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
-  const [isTwoXLDesktop, setIsTwoXLDesktop] = useState(false);
+  const [isXLDesktop, setIsXLDesktop] = useState(false);
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
@@ -276,13 +276,13 @@ export function FeedView({
 
   useEffect(() => {
     if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
-      setIsTwoXLDesktop(false);
+      setIsXLDesktop(false);
       return;
     }
 
-    const mediaQuery = window.matchMedia(TWO_XL_DESKTOP_QUERY);
+    const mediaQuery = window.matchMedia(XL_DESKTOP_QUERY);
     const handleMediaQueryChange = () => {
-      setIsTwoXLDesktop(mediaQuery.matches);
+      setIsXLDesktop(mediaQuery.matches);
     };
 
     handleMediaQueryChange();
@@ -601,10 +601,9 @@ export function FeedView({
     const isPubkeyPrimary =
       authorMeta.primary === resolvedAuthor.id ||
       authorMeta.primary === authorUserFacingId;
-    const displayNpub = formatFeedNpubLabel(authorUserFacingId, isTwoXLDesktop);
+    const displayNpub = formatFeedNpubLabel(authorUserFacingId, isXLDesktop);
     const primaryAuthorLabelRaw = (() => {
       if (!isPubkeyPrimary) return authorMeta.primary;
-      if (isSlimDesktop) return "";
       return displayNpub;
     })();
     const primaryAuthorLabel = primaryAuthorLabelRaw;
