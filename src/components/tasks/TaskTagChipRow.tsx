@@ -4,6 +4,7 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { formatPriorityLabel } from "@/domain/content/task-priority";
 
 interface TaskTagChipRowProps {
   task: Task;
@@ -47,7 +48,7 @@ export function TaskTagChipRow({
     <div className={cn("flex flex-wrap gap-1", className)} data-testid={testId}>
       {hasPriority && (
         <span className="inline-flex items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
-          P{priority}
+          {formatPriorityLabel(priority)}
         </span>
       )}
       <TaskMentionChips

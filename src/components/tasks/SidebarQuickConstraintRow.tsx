@@ -4,6 +4,12 @@ import type { QuickFilterState } from "@/types";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import {
+  MAX_DISPLAY_PRIORITY_DIGITS,
+  MAX_RECENT_DAYS_DIGITS,
+  displayPriorityFromStored,
+  storedPriorityFromDisplay,
+} from "@/domain/content/task-priority";
 
 interface SidebarQuickConstraintRowProps {
   quickFilters: QuickFilterState;
@@ -16,6 +22,8 @@ export function SidebarQuickConstraintRow({
 }: SidebarQuickConstraintRowProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const displayedMinPriority = displayPriorityFromStored(quickFilters.minPriority) ?? 1;
+  const getNumericInputWidth = (maxDigits: number, value: string) => `${Math.max(maxDigits, value.length) + 1.5}ch`;
 
   return (
     <div className={cn("grid grid-cols-2 gap-1 pb-1", className)}>
@@ -27,7 +35,7 @@ export function SidebarQuickConstraintRow({
             : "border-border/60 bg-muted/35"
         )}
       >
-        <div className="flex items-center justify-between gap-1">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
           <button
             type="button"
             onClick={() => {
@@ -58,7 +66,8 @@ export function SidebarQuickConstraintRow({
                 days: Number(event.target.value),
               });
             }}
-            className="h-6 w-14 px-1.5 text-[11px]"
+            className="h-6 px-1.5 text-[11px]"
+            style={{ width: getNumericInputWidth(MAX_RECENT_DAYS_DIGITS, String(quickFilters.recentDays)) }}
             aria-label={t("sidebar.quickFilters.labels.recentDays")}
             title={t("sidebar.quickFilters.labels.recentDays")}
           />
@@ -73,7 +82,7 @@ export function SidebarQuickConstraintRow({
             : "border-border/60 bg-muted/35"
         )}
       >
-        <div className="flex items-center justify-between gap-1">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1">
           <button
             type="button"
             onClick={() => {
@@ -95,16 +104,19 @@ export function SidebarQuickConstraintRow({
           </button>
           <Input
             type="number"
-            min={0}
-            max={100}
-            value={quickFilters.minPriority}
+            min={1}
+            max={5}
+            value={displayedMinPriority}
             onChange={(event) => {
+              const storedPriority = storedPriorityFromDisplay(Number(event.target.value));
+              if (typeof storedPriority !== "number") return;
               void dispatchFeedInteraction({
                 type: "sidebar.quickFilter.minPriority.change",
-                priority: Number(event.target.value),
+                priority: storedPriority,
               });
             }}
-            className="h-6 w-14 px-1.5 text-[11px]"
+            className="h-6 px-1.5 text-[11px]"
+            style={{ width: getNumericInputWidth(MAX_DISPLAY_PRIORITY_DIGITS, String(displayedMinPriority)) }}
             aria-label={t("sidebar.quickFilters.labels.minPriority")}
             title={t("sidebar.quickFilters.labels.minPriority")}
           />

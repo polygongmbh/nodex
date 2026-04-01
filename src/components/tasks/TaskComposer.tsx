@@ -65,6 +65,12 @@ import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedComposerOptions } from "@/features/feed-page/views/feed-surface-context";
+import {
+  DISPLAY_PRIORITY_OPTIONS,
+  displayPriorityFromStored,
+  formatPriorityLabel,
+  storedPriorityFromDisplay,
+} from "@/domain/content/task-priority";
 
 interface TaskComposerProps {
   onSubmit: ComposerSubmit;
@@ -286,7 +292,7 @@ export function TaskComposer({
   });
   const [priority, setPriority] = useState<number | undefined>(() => {
     if (typeof initialDraft?.priority !== "number") return undefined;
-    return Number.isFinite(initialDraft.priority) ? initialDraft.priority : undefined;
+    return displayPriorityFromStored(initialDraft.priority);
   });
   const [attachments, setAttachments] = useState<ComposeAttachment[]>(() => {
     const initial = initialDraft?.attachments || [];
@@ -474,7 +480,7 @@ export function TaskComposer({
     setDueDate(restoreState.dueDate);
     setDueTime(restoreState.dueTime || "");
     setDateType(restoreState.dateType || "due");
-    setPriority(typeof restoreState.priority === "number" ? restoreState.priority : undefined);
+    setPriority(displayPriorityFromStored(restoreState.priority));
     setNip99({ ...(restoreState.nip99 || {}) });
     const restoredGeohash = normalizeGeohash(restoreState.locationGeohash);
     setLocationGeohash(restoredGeohash);
@@ -530,7 +536,7 @@ export function TaskComposer({
           selectedRelays,
           explicitTagNames,
           explicitMentionPubkeys,
-          priority,
+          priority: storedPriorityFromDisplay(priority),
           nip99,
           locationGeohash,
           attachments: attachments
@@ -908,6 +914,7 @@ export function TaskComposer({
     setIsPublishing(true);
     toast.loading(t("composer.blocked.publishing"), { id: publishingToastId });
     let result: TaskCreateResult;
+    const submittedPriority = storedPriorityFromDisplay(priority);
     try {
       const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
       result = await Promise.resolve(
@@ -921,7 +928,7 @@ export function TaskComposer({
               submissionDueTime,
               submissionDateType,
               explicitMentionPubkeys,
-              priority,
+              submittedPriority,
               uploadedAttachments,
               listingMetadata,
               normalizedLocationGeohash
@@ -935,7 +942,7 @@ export function TaskComposer({
               submissionDueTime,
               submissionDateType,
               explicitMentionPubkeys,
-              priority,
+              submittedPriority,
               uploadedAttachments,
               listingMetadata
             )
@@ -1884,11 +1891,11 @@ export function TaskComposer({
               className="h-8 w-full cursor-pointer rounded-md border-none bg-transparent px-2 text-xs text-foreground shadow-none focus:outline-none"
             >
               <option value="">{t("composer.labels.priority")}</option>
-              <option value="20">P20</option>
-              <option value="40">P40</option>
-              <option value="60">P60</option>
-              <option value="80">P80</option>
-              <option value="100">P100</option>
+              {DISPLAY_PRIORITY_OPTIONS.map((option) => (
+                <option key={option} value={String(option)}>
+                  {formatPriorityLabel(storedPriorityFromDisplay(option))}
+                </option>
+              ))}
             </select>
           </div>
 

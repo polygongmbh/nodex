@@ -158,8 +158,8 @@ describe("KanbanView closed column", () => {
       />
     );
 
-    expect(screen.getByText("P80")).toBeInTheDocument();
-    expect(screen.queryByText("P40")).not.toBeInTheDocument();
+    expect(screen.getByText("P4")).toBeInTheDocument();
+    expect(screen.queryByText("P2")).not.toBeInTheDocument();
   });
 
   it("renders priority and other chips in the same metadata row", () => {
@@ -189,7 +189,7 @@ describe("KanbanView closed column", () => {
 
     const chipRow = screen.getByTestId("kanban-chip-row-priority-and-tag-task");
     const hashtagChip = screen.getByRole("button", { name: /filter to #general/i });
-    expect(chipRow).toHaveTextContent("P80");
+    expect(chipRow).toHaveTextContent("P4");
     expect(chipRow).toContainElement(hashtagChip);
   });
 

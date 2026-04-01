@@ -54,6 +54,12 @@ import {
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import {
+  DISPLAY_PRIORITY_OPTIONS,
+  displayPriorityFromStored,
+  formatPriorityLabel,
+  storedPriorityFromDisplay,
+} from "@/domain/content/task-priority";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
@@ -286,7 +292,7 @@ export function UnifiedBottomBar({
     setDueDate(restoreState.dueDate);
     setDueTime(restoreState.dueTime || "");
     setDateType(restoreState.dateType || "due");
-    setPriority(typeof restoreState.priority === "number" ? restoreState.priority : undefined);
+    setPriority(displayPriorityFromStored(restoreState.priority));
     setAttachments(
       (restoreState.attachments || []).map((attachment, index) => ({
         id: `restore-${composeRestoreRequest.id}-${index}`,
@@ -497,6 +503,7 @@ export function UnifiedBottomBar({
         : undefined;
 
     let result: TaskCreateResult;
+    const submittedPriority = storedPriorityFromDisplay(priority);
     try {
       const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
       result = await Promise.resolve(
@@ -510,7 +517,7 @@ export function UnifiedBottomBar({
               dueTime || undefined,
               dateType,
               explicitMentionPubkeys,
-              priority,
+              submittedPriority,
               uploadedAttachments,
               listingMetadata,
               normalizedLocationGeohash
@@ -524,7 +531,7 @@ export function UnifiedBottomBar({
               dueTime || undefined,
               dateType,
               explicitMentionPubkeys,
-              priority,
+              submittedPriority,
               uploadedAttachments,
               listingMetadata
             )
@@ -1270,11 +1277,11 @@ export function UnifiedBottomBar({
                   className="h-8 min-w-[4.5rem] rounded-md border border-border bg-background px-2 text-xs text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
                 >
                   <option value="">{t("composer.labels.priorityShort")}</option>
-                  <option value="20">P20</option>
-                  <option value="40">P40</option>
-                  <option value="60">P60</option>
-                  <option value="80">P80</option>
-                  <option value="100">P100</option>
+                  {DISPLAY_PRIORITY_OPTIONS.map((option) => (
+                    <option key={option} value={String(option)}>
+                      {formatPriorityLabel(storedPriorityFromDisplay(option))}
+                    </option>
+                  ))}
                 </select>
                 <button
                   onClick={() => toggleSelector("date")}

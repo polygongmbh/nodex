@@ -277,7 +277,7 @@ describe("UnifiedBottomBar auth gating", () => {
       />
     );
 
-    fireEvent.change(screen.getByLabelText("Priority"), { target: { value: "40" } });
+    fireEvent.change(screen.getByLabelText("Priority"), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("button", { name: /^create task$/i }));
 
     await waitFor(() => {
@@ -287,7 +287,7 @@ describe("UnifiedBottomBar auth gating", () => {
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     expect(field).toHaveFocus();
     expect(screen.getByText(format(dueDate, "MMM d"))).toBeInTheDocument();
-    expect(screen.getByLabelText("Priority")).toHaveValue("40");
+    expect(screen.getByLabelText("Priority")).toHaveValue("2");
   });
 
   it("opens relay selection when task posting is blocked by multiple active feeds", () => {

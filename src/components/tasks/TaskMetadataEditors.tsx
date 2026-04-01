@@ -4,6 +4,12 @@ import { useTranslation } from "react-i18next";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { TaskDateType } from "@/types";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import {
+  DISPLAY_PRIORITY_OPTIONS,
+  displayPriorityFromStored,
+  formatPriorityLabel,
+  storedPriorityFromDisplay,
+} from "@/domain/content/task-priority";
 
 const TASK_DATE_TYPE_OPTION_KEYS: Array<{ value: TaskDateType; labelKey: string }> = [
   { value: "due", labelKey: "composer.dates.due" },
@@ -12,8 +18,6 @@ const TASK_DATE_TYPE_OPTION_KEYS: Array<{ value: TaskDateType; labelKey: string 
   { value: "end", labelKey: "composer.dates.end" },
   { value: "milestone", labelKey: "composer.dates.milestone" },
 ];
-
-const TASK_PRIORITY_OPTIONS = [20, 40, 60, 80, 100] as const;
 
 interface TaskDueDateEditorFormProps {
   taskId: string;
@@ -131,7 +135,10 @@ export function TaskPrioritySelect({
   stopPropagation = false,
 }: TaskPrioritySelectProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const value = typeof priority === "number" ? String(priority) : "";
+  const value = (() => {
+    const displayPriority = displayPriorityFromStored(priority);
+    return typeof displayPriority === "number" ? String(displayPriority) : "";
+  })();
   return (
     <select
       id={id}
@@ -142,8 +149,9 @@ export function TaskPrioritySelect({
         const next = event.target.value;
         if (!next) return;
         const parsed = Number.parseInt(next, 10);
-        if (Number.isFinite(parsed)) {
-          void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: parsed });
+        const storedPriority = storedPriorityFromDisplay(parsed);
+        if (typeof storedPriority === "number") {
+          void dispatchFeedInteraction({ type: "task.updatePriority", taskId, priority: storedPriority });
         }
       }}
       onClick={(event) => {
@@ -155,9 +163,9 @@ export function TaskPrioritySelect({
       className={className}
     >
       {includeEmptyOption && <option value="">—</option>}
-      {TASK_PRIORITY_OPTIONS.map((option) => (
+      {DISPLAY_PRIORITY_OPTIONS.map((option) => (
         <option key={option} value={String(option)}>
-          P{option}
+          {formatPriorityLabel(storedPriorityFromDisplay(option))}
         </option>
       ))}
     </select>

@@ -383,7 +383,7 @@ describe("TaskItem status actions", () => {
     );
 
     fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
-      target: { value: "80" },
+      target: { value: "4" },
     });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({

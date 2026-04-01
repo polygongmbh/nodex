@@ -607,7 +607,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(getTaskComposerInput()).toHaveFocus();
     expect(getTaskComposerInput()).toHaveValue("");
     expect(screen.getByRole("button", { name: format(dueDate, "MMM d, yyyy") })).toBeInTheDocument();
-    expect(screen.getByLabelText("Priority")).toHaveValue("40");
+    expect(screen.getByLabelText("Priority")).toHaveValue("2");
     expect(screen.getByRole("button", { name: /insert hashtag/i })).toBeInTheDocument();
   });
 

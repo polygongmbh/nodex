@@ -209,7 +209,7 @@ describe("CalendarView responsiveness", () => {
     );
 
     const chipRow = screen.getByTestId("calendar-chip-row-calendar-priority-task");
-    expect(chipRow).toHaveTextContent("P80");
+    expect(chipRow).toHaveTextContent("P4");
     expect(screen.getByRole("button", { name: /filter to #general/i })).toBeInTheDocument();
   });
 });

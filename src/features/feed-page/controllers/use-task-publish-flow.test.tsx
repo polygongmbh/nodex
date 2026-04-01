@@ -141,7 +141,7 @@ function Harness({
       <button onClick={() => hook.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due")}>
         Due
       </button>
-      <button onClick={() => hook.handlePriorityChange("task-1", 3)}>Priority</button>
+      <button onClick={() => hook.handlePriorityChange("task-1", 60)}>Priority</button>
       <output data-testid="draft-count">{String(hook.failedPublishDrafts.length)}</output>
       <output data-testid="visible-draft-count">{String(hook.visibleFailedPublishDrafts.length)}</output>
       <output data-testid="suppressed-count">{String(suppressedNostrEventIds.size)}</output>
@@ -248,7 +248,7 @@ describe("useTaskPublishFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Priority" }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("first-priority")).toHaveTextContent("3");
+      expect(screen.getByTestId("first-priority")).toHaveTextContent("60");
     });
     expect(screen.getByTestId("first-due-date")).toHaveTextContent("2026-04-01T10:00:00.000Z");
   });
