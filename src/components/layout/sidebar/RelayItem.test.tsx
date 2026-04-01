@@ -25,8 +25,8 @@ describe("RelayItem", () => {
       </FeedInteractionProvider>
     );
 
-    const exclusiveButton = screen.getByRole("button", { name: "Show only damus space" });
-    const toggleButton = screen.getByRole("button", { name: "Toggle damus space" });
+    const exclusiveButton = screen.getByRole("button", { name: "Show only posts from relay.damus.io" });
+    const toggleButton = screen.getByRole("button", { name: "Show or hide posts from relay.damus.io" });
 
     fireEvent.click(exclusiveButton);
     fireEvent.click(toggleButton);
@@ -49,7 +49,7 @@ describe("RelayItem", () => {
     );
 
     const exclusiveButton = screen.getByRole("button", {
-      name: /show only very-long-space-name-that-should-not-push-the-status-indicator-out-of-view\.example/i,
+      name: /show only posts from very-long-space-name-that-should-not-push-the-status-indicator-out-of-view\.example/i,
     });
     const relayLabel = screen.getByText(
       "very-long-space-name-that-should-not-push-the-status-indicator-out-of-view.example"
@@ -73,7 +73,7 @@ describe("RelayItem", () => {
       </FeedInteractionProvider>
     );
 
-    const toggleButton = screen.getByRole("button", { name: "Toggle damus space" });
+    const toggleButton = screen.getByRole("button", { name: "Show or hide posts from relay.damus.io" });
     const iconChip = toggleButton.querySelector("div");
 
     expect(iconChip).not.toBeNull();

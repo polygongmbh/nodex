@@ -205,6 +205,7 @@ export function RelayManagement({
             ) : (
               relays.map((relay, index) => {
                 const relayName = stripRelayProtocol(relay.url);
+                const relayProtocol = relay.url.startsWith("ws://") ? "ws://" : "wss://";
 
                 return (
                   <div
@@ -249,9 +250,14 @@ export function RelayManagement({
 
                     {/* Relay info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-mono truncate text-foreground">
-                        {stripRelayProtocol(relay.url)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex rounded border border-border/60 bg-background/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {relayProtocol}
+                        </span>
+                        <p className="min-w-0 flex-1 truncate text-sm font-mono text-foreground">
+                          {stripRelayProtocol(relay.url)}
+                        </p>
+                      </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         {getStatusIcon(relay.status)}
                         <span className="text-xs text-muted-foreground capitalize">

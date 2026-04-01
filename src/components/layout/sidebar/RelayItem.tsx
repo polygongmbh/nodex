@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { getRelayStatusDotClass, getRelayStatusSurfaceClass } from "@/components/relay/relayStatusStyles";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
+import { relayUrlToName, stripRelayProtocol } from "@/infrastructure/nostr/relay-url";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   "building-2": Building2,
@@ -25,7 +25,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const Icon = iconMap[relay.icon] || Building2;
   const relayDisplayName = relay.url ? relayUrlToName(relay.url) : relay.name || relay.id;
-  const relayTooltipName = relay.url || relayDisplayName;
+  const relayTooltipName = relay.url ? stripRelayProtocol(relay.url) : relayDisplayName;
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
   const isConnectionActive = resolvedConnectionStatus === "connected";
   const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);

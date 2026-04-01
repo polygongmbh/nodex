@@ -69,6 +69,21 @@ describe("RelayManagement", () => {
     expect(screen.getByText(i18n.t("relay.status.readRejected"))).toBeInTheDocument();
   });
 
+  it("shows relay protocol separately from the stripped relay address", () => {
+    renderWithBus(
+      <RelayManagement
+        relays={[
+          { url: "wss://relay.one", status: "connected" },
+        ]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
+
+    expect(screen.getByText("wss://")).toBeInTheDocument();
+    expect(screen.getByText("relay.one")).toBeInTheDocument();
+  });
+
   it("shows the read-only relay explanatory hint", () => {
     renderWithBus(
       <RelayManagement
