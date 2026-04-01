@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Person, QuickFilterState, Relay } from "@/types";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
@@ -10,6 +10,7 @@ interface FilteredEmptyStateProps {
   relays?: Relay[];
   channels?: Channel[];
   people?: Person[];
+  quickFilters?: QuickFilterState;
   isHydrating?: boolean;
   searchQuery?: string;
   contextTaskTitle?: string;
@@ -22,6 +23,7 @@ export function FilteredEmptyState({
   relays: relaysProp,
   channels: channelsProp,
   people: peopleProp,
+  quickFilters: quickFiltersProp,
   isHydrating = false,
   searchQuery: searchQueryProp,
   contextTaskTitle = "",
@@ -33,11 +35,13 @@ export function FilteredEmptyState({
   const relays = relaysProp ?? surface.relays;
   const channels = channelsProp ?? surface.channels;
   const people = peopleProp ?? surface.people;
+  const quickFilters = quickFiltersProp ?? surface.quickFilters;
   const searchQuery = searchQueryProp ?? surface.searchQuery;
   const scopeModel = useEmptyScopeModel({
     relays,
     channels,
     people,
+    quickFilters,
     searchQuery,
     contextTaskTitle,
   });

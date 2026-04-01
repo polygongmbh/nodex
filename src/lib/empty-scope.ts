@@ -1,4 +1,6 @@
-import type { Channel, Person, Relay } from "@/types";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
+import { displayPriorityFromStored } from "@/domain/content/task-priority";
+import type { Channel, Person, QuickFilterState, Relay } from "@/types";
 
 interface TranslateFn {
   (key: string, options?: Record<string, unknown>): string;
@@ -8,6 +10,7 @@ interface BuildEmptyScopeModelParams {
   relays: Relay[];
   channels: Channel[];
   people: Person[];
+  quickFilters?: QuickFilterState;
   searchQuery?: string;
   contextTaskTitle?: string;
   locale: string;
@@ -86,12 +89,15 @@ export function buildEmptyScopeModel({
   relays,
   channels,
   people,
+  quickFilters,
   searchQuery = "",
   contextTaskTitle = "",
   locale,
   t,
 }: BuildEmptyScopeModelParams): EmptyScopeModel {
   const trimmedSearchQuery = searchQuery.trim();
+  const normalizedQuickFilters = normalizeQuickFilterState(quickFilters);
+  const displayPriority = displayPriorityFromStored(normalizedQuickFilters.minPriority) ?? 1;
   const formattedContextTitle = formatContextTaskTitle(contextTaskTitle);
   const activeRelays = relays.filter((relay) => relay.isActive);
   const includedChannels = channels.filter((channel) => channel.filterState === "included");
@@ -128,13 +134,17 @@ export function buildEmptyScopeModel({
     hasRelayFilter ||
     includedChannels.length > 0 ||
     excludedChannels.length > 0 ||
-    activePeople.length > 0;
+    activePeople.length > 0 ||
+    normalizedQuickFilters.recentEnabled ||
+    normalizedQuickFilters.priorityEnabled;
   const hasSelectedScope =
     Boolean(trimmedSearchQuery) ||
     hasRelaySelection ||
     includedChannels.length > 0 ||
     excludedChannels.length > 0 ||
     activePeople.length > 0 ||
+    normalizedQuickFilters.recentEnabled ||
+    normalizedQuickFilters.priorityEnabled ||
     Boolean(formattedContextTitle);
 
   if (!hasSelectedScope) {
@@ -189,6 +199,12 @@ export function buildEmptyScopeModel({
       : null,
     trimmedSearchQuery
       ? t("tasks.empty.scope.search", { query: trimmedSearchQuery })
+      : null,
+    normalizedQuickFilters.recentEnabled
+      ? t("tasks.empty.scope.recent", { days: normalizedQuickFilters.recentDays })
+      : null,
+    normalizedQuickFilters.priorityEnabled
+      ? t("tasks.empty.scope.priority", { priority: displayPriority })
       : null,
     formattedContextTitle
       ? t("tasks.empty.scope.contextUnder", {

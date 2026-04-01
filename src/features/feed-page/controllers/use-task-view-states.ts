@@ -149,7 +149,7 @@ export function useTaskViewSource({
   focusedTaskId,
   searchQueryOverride,
 }: BaseViewStateInput): TaskViewSource {
-  const { relays, channels, people, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
+  const { relays, channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
     useFeedSurfaceState();
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -171,6 +171,7 @@ export function useTaskViewSource({
     relays,
     channels,
     people,
+    quickFilters,
     searchQuery: deferredSearchQuery,
     focusedTaskId: currentContextId,
     taskById,
@@ -413,7 +414,7 @@ export function useFeedViewState({
   focusedTaskId,
   searchQueryOverride,
 }: BaseViewStateInput): FeedViewState {
-  const { relays, channels, people, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
+  const { relays, channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
     useFeedSurfaceState();
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -505,6 +506,7 @@ export function useFeedViewState({
     relays,
     channels,
     people,
+    quickFilters,
     searchQuery: deferredSearchQuery,
     focusedTaskId,
     taskById,
@@ -538,7 +540,7 @@ export function useListViewState({
   searchQueryOverride,
   depthMode = "leaves",
 }: BaseViewStateInput & { depthMode?: KanbanDepthMode }): ListViewState {
-  const { relays, channels, people, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
+  const { relays, channels, people, quickFilters, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
     useFeedSurfaceState();
   const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
   const filteredTaskCandidates = useTaskViewFiltering({
@@ -567,6 +569,7 @@ export function useListViewState({
     relays,
     channels,
     people,
+    quickFilters,
     searchQuery,
     focusedTaskId,
     allTasks,
@@ -664,7 +667,7 @@ export function useMobileFallbackNoticeState({
   isHydrating = false,
 }: MobileScopedViewStateInput): MobileFallbackNoticeState {
   const { t } = useTranslation();
-  const { relays, channels, people, searchQuery, channelMatchMode = "and" } = useFeedSurfaceState();
+  const { relays, channels, people, quickFilters, searchQuery, channelMatchMode = "and" } = useFeedSurfaceState();
   const hasSearchQuery = searchQuery.trim().length > 0;
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
   const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
@@ -744,6 +747,7 @@ export function useMobileFallbackNoticeState({
     relays,
     channels,
     people,
+    quickFilters,
     searchQuery: "",
     focusedTaskId,
     taskById,

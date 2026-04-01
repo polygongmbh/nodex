@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilteredEmptyState } from "./FilteredEmptyState";
-import type { Channel, Person, Relay } from "@/types";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
+import type { Channel, Person, QuickFilterState, Relay } from "@/types";
 
 const relays: Relay[] = [
   {
@@ -44,6 +45,12 @@ const EMPTY_SCOPE_TEXT = `No post yet ${FILTER_SCOPE}`;
 const FOOTER_SCOPE_TEXT = `This is all ${FILTER_SCOPE}`;
 const MOBILE_SCOPE_TEXT = `Nothing yet ${FILTER_SCOPE}, showing everything.`;
 const PARENT_SCOPE_SUFFIX = ', under "Parent Task".';
+const RECENT_SCOPE = "from the last 7 days";
+const PRIORITY_SCOPE = "at priority P4 or higher";
+
+function makeQuickFilters(overrides?: Partial<QuickFilterState>): QuickFilterState {
+  return normalizeQuickFilterState(overrides);
+}
 
 describe("FilteredEmptyState", () => {
   afterEach(() => {
@@ -61,6 +68,34 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(screen.getByText(`${EMPTY_SCOPE_TEXT}.`)).toBeInTheDocument();
+  });
+
+  it("includes the recent-days quick filter in the empty-state scope summary", () => {
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays}
+        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+        people={[{ ...people[0], isSelected: false }]}
+        quickFilters={makeQuickFilters({ recentEnabled: true, recentDays: 7 })}
+      />
+    );
+
+    expect(screen.getByText(`No post yet on relay.one, ${RECENT_SCOPE}.`)).toBeInTheDocument();
+  });
+
+  it("includes the minimum-priority quick filter in the empty-state scope summary", () => {
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays}
+        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+        people={[{ ...people[0], isSelected: false }]}
+        quickFilters={makeQuickFilters({ priorityEnabled: true, minPriority: 80 })}
+      />
+    );
+
+    expect(screen.getByText(`No post yet on relay.one, ${PRIORITY_SCOPE}.`)).toBeInTheDocument();
   });
 
   it("renders a scope footer sentence for non-empty filtered results", () => {
@@ -93,6 +128,26 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText("This is all on relay.one.")).toBeInTheDocument();
   });
 
+  it("includes both quick filters in the footer scope sentence", () => {
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={singleRelay}
+        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+        people={[{ ...people[0], isSelected: false }]}
+        quickFilters={makeQuickFilters({
+          recentEnabled: true,
+          recentDays: 7,
+          priorityEnabled: true,
+          minPriority: 80,
+        })}
+        mode="footer"
+      />
+    );
+
+    expect(screen.getByText(`This is all on relay.one, ${RECENT_SCOPE}, ${PRIORITY_SCOPE}.`)).toBeInTheDocument();
+  });
+
   it("renders a scoped mobile fallback hint when filtered content is empty", () => {
     render(
       <FilteredEmptyState
@@ -106,6 +161,22 @@ describe("FilteredEmptyState", () => {
 
     expect(document.querySelector('[data-empty-mode="mobile"]')).toBeInTheDocument();
     expect(screen.getByText(MOBILE_SCOPE_TEXT)).toBeInTheDocument();
+  });
+
+  it("omits inactive quick filters from the scope summary", () => {
+    render(
+      <FilteredEmptyState
+        variant="feed"
+        relays={relays}
+        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+        people={[{ ...people[0], isSelected: false }]}
+        quickFilters={makeQuickFilters({ recentEnabled: false, priorityEnabled: false })}
+      />
+    );
+
+    expect(screen.getByText("No post yet on relay.one.")).toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(RECENT_SCOPE))).not.toBeInTheDocument();
+    expect(screen.queryByText(new RegExp(PRIORITY_SCOPE))).not.toBeInTheDocument();
   });
 
   it("appends immediate parent context to empty and footer scope sentences", () => {

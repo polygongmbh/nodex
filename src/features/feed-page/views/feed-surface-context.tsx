@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
-import type { Channel, ChannelMatchMode, Person, Relay } from "@/types";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
+import type { Channel, ChannelMatchMode, Person, QuickFilterState, Relay } from "@/types";
 
 export interface FeedSurfaceState {
   relays: Relay[];
@@ -8,6 +9,7 @@ export interface FeedSurfaceState {
   people: Person[];
   mentionablePeople?: Person[];
   searchQuery: string;
+  quickFilters: QuickFilterState;
   channelMatchMode?: ChannelMatchMode;
 }
 
@@ -18,6 +20,7 @@ const defaultFeedSurfaceState: FeedSurfaceState = {
   people: [],
   mentionablePeople: [],
   searchQuery: "",
+  quickFilters: normalizeQuickFilterState(),
   channelMatchMode: "and",
 };
 

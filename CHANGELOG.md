@@ -9,6 +9,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Added desktop shortcuts to toggle channel match mode (`AND`/`OR`), recent and priority quick filters, and compact tree/kanban cards; tree and kanban cards now drop rich media previews so attachments stay feed-only, and kanban keeps priority pinned on the right edge of each card.
 - List view now uses an explicit responsive row-layout model for the desktop table, so the task column owns leftover width predictably while due-date, priority, and tags stay compact until wider breakpoints.
 - Shared desktop composer mention requests triggered from author clicks are now consumed only once, so removing that mention no longer causes it to reappear after switching views.
+- Feed, list, and tree empty-state scope copy now includes active recent-days and minimum-priority quick filters, so `no matches` and end-of-feed lines explain the full active filter set.
 
 ## [2.9.0] - 2026-04-01
 Minor release for priority/filter polish, focused-task sidebar/filter scoping, and Noas host discovery cleanup.

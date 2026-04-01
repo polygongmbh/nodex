@@ -1018,6 +1018,8 @@
         "relays": "en {{relays}}",
         "relaysError": "desde {{relays}}",
         "search": "que coincidan con «{{query}}»",
+        "recent": "de los últimos {{days}} días",
+        "priority": "con prioridad P{{priority}} o superior",
         "contextUnder": "bajo {{title}}",
         "listWithOthers": "{{items}} y {{count}} más"
       }

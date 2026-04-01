@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel, type EmptyScopeModel } from "@/lib/empty-scope";
-import type { Channel, Person, Relay, Task } from "@/types";
+import type { Channel, Person, QuickFilterState, Relay, Task } from "@/types";
 
 interface UseEmptyScopeModelOptions {
   relays: Relay[];
   channels: Channel[];
   people: Person[];
+  quickFilters?: QuickFilterState;
   searchQuery?: string;
   contextTaskTitle?: string;
   focusedTaskId?: string | null;
@@ -18,6 +19,7 @@ export function useEmptyScopeModel({
   relays,
   channels,
   people,
+  quickFilters,
   searchQuery = "",
   contextTaskTitle,
   focusedTaskId = null,
@@ -49,11 +51,12 @@ export function useEmptyScopeModel({
         relays,
         channels,
         people,
+        quickFilters,
         searchQuery,
         contextTaskTitle: resolvedContextTaskTitle,
         locale,
         t,
       }),
-    [channels, locale, people, relays, resolvedContextTaskTitle, searchQuery, t]
+    [channels, locale, people, quickFilters, relays, resolvedContextTaskTitle, searchQuery, t]
   );
 }

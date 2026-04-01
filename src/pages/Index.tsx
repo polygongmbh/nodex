@@ -961,6 +961,7 @@ const Index = () => {
       people,
       mentionablePeople: mentionAutocompletePeople,
       searchQuery,
+      quickFilters,
       channelMatchMode,
     }),
     [
@@ -970,6 +971,7 @@ const Index = () => {
       people,
       mentionAutocompletePeople,
       searchQuery,
+      quickFilters,
       channelMatchMode,
     ]
   );
