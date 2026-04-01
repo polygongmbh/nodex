@@ -5,6 +5,7 @@ import {
   RelayProtocol,
 } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { resolveRootDomainHostname } from "@/lib/root-domain";
 
 const DEFAULT_RELAY_PROBE_TIMEOUT_MS = 1200;
 const DEFAULT_RELAY_PROBE_RETRY_COUNT = 1;
@@ -29,21 +30,16 @@ export function resolveDefaultRelayUrls(relayUrls?: string[]): string[] {
   return Array.from(new Set(normalized));
 }
 
-function isIpAddress(hostname: string): boolean {
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) return true;
-  return hostname.includes(":");
-}
-
 function getHostDerivedRelayCandidates(hostname: string, protocol: RelayProtocol): string[] {
   const normalizedHostname = hostname.trim().toLowerCase().replace(/\.$/, "");
-  if (!normalizedHostname || normalizedHostname === "localhost" || isIpAddress(normalizedHostname)) {
+  if (!normalizedHostname) {
     return [];
   }
 
-  const labels = normalizedHostname.split(".").filter(Boolean);
-  if (labels.length === 0) return [];
-
-  const targetBase = labels.length >= 3 ? labels.slice(1).join(".") : normalizedHostname;
+  const targetBase = resolveRootDomainHostname(normalizedHostname);
+  if (!targetBase || targetBase === "localhost" || targetBase.includes(":") || /^\d{1,3}(\.\d{1,3}){3}$/.test(targetBase)) {
+    return [];
+  }
   const discoveryPrefixes = getRelayDiscoveryPrefixes();
   return discoveryPrefixes.map((prefix) => `${protocol}://${prefix}.${targetBase}`);
 }
