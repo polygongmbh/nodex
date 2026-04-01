@@ -16,16 +16,14 @@ const TRANSFORMERS_ESM_URL = "https://cdn.jsdelivr.net/npm/@huggingface/transfor
 const DEFAULT_CAPTION_MODEL_ID = "Xenova/vit-gpt2-image-captioning";
 const MAX_CAPTION_CHARS = 160;
 const MODEL_IMPORT_TIMEOUT_MS = 30000;
-const DEFAULT_MODEL_INIT_TIMEOUT_MS = 25000;
-const DEFAULT_CAPTION_INFERENCE_TIMEOUT_MS = 20000;
+const DEFAULT_CAPTION_TIMEOUT_MS = 15000;
 
 let imageCaptionPipelinePromise: Promise<ImageCaptionPipeline> | null = null;
 let cachedInitializationFailure: { status: LocalImageCaptionStatus; error: string } | null = null;
 const notifiedFailureKeys = new Set<string>();
 let isCaptionModelReady = false;
 
-const DEFAULT_EXPERIMENTAL_ENABLED = true;
-const DEFAULT_REQUIRE_WEBGPU = false;
+const DEFAULT_CAPTIONS_ENABLED = true;
 
 export type LocalImageCaptionStatus =
   | "unsupported"
@@ -48,10 +46,7 @@ interface LoadPipelineOptions {
 }
 
 export interface LocalCaptionPolicy {
-  experimentalEnabled: boolean;
-  requireWebGpu: boolean;
-  modelInitTimeoutMs: number;
-  inferenceTimeoutMs: number;
+  enabled: boolean;
 }
 
 interface LocalCaptionCapabilities {
@@ -80,19 +75,9 @@ function parseBooleanFlag(value: unknown, fallback: boolean): boolean {
   return fallback;
 }
 
-function parsePositiveInt(value: unknown, fallback: number): number {
-  if (typeof value !== "string" || !value.trim()) return fallback;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-  return parsed;
-}
-
 export function resolveLocalCaptionPolicy(env: Record<string, unknown> = import.meta.env): LocalCaptionPolicy {
   return {
-    experimentalEnabled: parseBooleanFlag(env.VITE_LOCAL_CAPTION_EXPERIMENTAL, DEFAULT_EXPERIMENTAL_ENABLED),
-    requireWebGpu: parseBooleanFlag(env.VITE_LOCAL_CAPTION_REQUIRE_WEBGPU, DEFAULT_REQUIRE_WEBGPU),
-    modelInitTimeoutMs: parsePositiveInt(env.VITE_LOCAL_CAPTION_INIT_TIMEOUT_MS, DEFAULT_MODEL_INIT_TIMEOUT_MS),
-    inferenceTimeoutMs: parsePositiveInt(env.VITE_LOCAL_CAPTION_INFER_TIMEOUT_MS, DEFAULT_CAPTION_INFERENCE_TIMEOUT_MS),
+    enabled: parseBooleanFlag(env.VITE_LOCAL_CAPTIONS, DEFAULT_CAPTIONS_ENABLED),
   };
 }
 
@@ -113,12 +98,11 @@ export function resolveLocalCaptionSupport(
   policy: LocalCaptionPolicy,
   capabilities: LocalCaptionCapabilities
 ): { supported: boolean; reason: string | null } {
-  if (!policy.experimentalEnabled) return { supported: false, reason: "experimental_disabled" };
+  if (!policy.enabled) return { supported: false, reason: "disabled" };
   if (!capabilities.hasWindow) return { supported: false, reason: "non_browser" };
   if (!capabilities.hasWebAssembly) return { supported: false, reason: "webassembly_unavailable" };
   if (!capabilities.hasFileReader) return { supported: false, reason: "filereader_unavailable" };
   if (!capabilities.isSecureContext) return { supported: false, reason: "insecure_context" };
-  if (policy.requireWebGpu && !capabilities.hasWebGpu) return { supported: false, reason: "webgpu_required" };
   return { supported: true, reason: null };
 }
 
@@ -144,11 +128,6 @@ export function notifyAutoCaptionFailureOnce(result: LocalImageCaptionResult): v
   if (notifiedFailureKeys.has(dedupeKey)) return;
   notifiedFailureKeys.add(dedupeKey);
   toast.warning(message);
-}
-
-function getCaptionModelId(): string {
-  const configured = String(import.meta.env.VITE_LOCAL_CAPTION_MODEL_ID || "").trim();
-  return configured || DEFAULT_CAPTION_MODEL_ID;
 }
 
 function getNowMs(): number {
@@ -273,9 +252,9 @@ async function loadImageCaptionPipeline(
 
   imageCaptionPipelinePromise = (async () => {
     featureDebugLog("auto-caption", "Loading local image caption model", {
-      modelId: getCaptionModelId(),
+      modelId: DEFAULT_CAPTION_MODEL_ID,
       source: "cdn-jsdelivr",
-      initTimeoutMs: policy.modelInitTimeoutMs,
+      timeoutMs: DEFAULT_CAPTION_TIMEOUT_MS,
     });
     featureDebugLog("auto-caption", "Importing transformers runtime module", {
       timeoutMs: MODEL_IMPORT_TIMEOUT_MS,
@@ -288,7 +267,7 @@ async function loadImageCaptionPipeline(
       "runtime-import"
     );
     featureDebugLog("auto-caption", "Transformers runtime imported", {
-      modelId: getCaptionModelId(),
+      modelId: DEFAULT_CAPTION_MODEL_ID,
       importDurationMs: formatDurationMs(getNowMs() - runtimeImportStartedAt),
     });
     if (transformersModule?.env) {
@@ -296,22 +275,22 @@ async function loadImageCaptionPipeline(
       transformersModule.env.useBrowserCache = true;
     }
     featureDebugLog("auto-caption", "Initializing caption pipeline", {
-      modelId: getCaptionModelId(),
-      timeoutMs: policy.modelInitTimeoutMs,
+      modelId: DEFAULT_CAPTION_MODEL_ID,
+      timeoutMs: DEFAULT_CAPTION_TIMEOUT_MS,
     });
     const modelInitStartedAt = getNowMs();
     const pipeline = await withTimeout(
-      transformersModule.pipeline("image-to-text", getCaptionModelId(), {
+      transformersModule.pipeline("image-to-text", DEFAULT_CAPTION_MODEL_ID, {
         progress_callback: (progress: TransformersProgressPayload) => {
           options.onModelProgress?.(progress);
         },
       }),
-      policy.modelInitTimeoutMs,
+      DEFAULT_CAPTION_TIMEOUT_MS,
       "Local caption model initialization timed out",
       "model-init"
     );
     featureDebugLog("auto-caption", "Local image caption model ready", {
-      modelId: getCaptionModelId(),
+      modelId: DEFAULT_CAPTION_MODEL_ID,
       modelInitDurationMs: formatDurationMs(getNowMs() - modelInitStartedAt),
       totalLoadDurationMs: formatDurationMs(getNowMs() - loadStartedAt),
     });
@@ -459,7 +438,7 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
     });
     featureDebugLog("auto-caption", "Invoking caption pipeline", {
       fileName: file.name,
-      timeoutMs: policy.inferenceTimeoutMs,
+      timeoutMs: DEFAULT_CAPTION_TIMEOUT_MS,
     });
     toast.loading(i18n.t("autoCaption.toasts.generatingWithModel", { fileName: file.name }), { id: toastId });
     const modelInferenceStartedAt = getNowMs();
@@ -467,7 +446,7 @@ export async function generateLocalImageCaption(file: File): Promise<LocalImageC
       pipeline(dataUrl, {
         max_new_tokens: 24,
       }),
-      policy.inferenceTimeoutMs,
+      DEFAULT_CAPTION_TIMEOUT_MS,
       "Local caption inference timed out",
       "inference"
     );

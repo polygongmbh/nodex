@@ -23,26 +23,17 @@ describe("local-image-caption helpers", () => {
 
   it("resolves caption policy flags and timeouts from environment values", () => {
     const policy = resolveLocalCaptionPolicy({
-      VITE_LOCAL_CAPTION_EXPERIMENTAL: "false",
-      VITE_LOCAL_CAPTION_REQUIRE_WEBGPU: "true",
-      VITE_LOCAL_CAPTION_INIT_TIMEOUT_MS: "18000",
-      VITE_LOCAL_CAPTION_INFER_TIMEOUT_MS: "9000",
+      VITE_LOCAL_CAPTIONS: "false",
     });
     expect(policy).toEqual({
-      experimentalEnabled: false,
-      requireWebGpu: true,
-      modelInitTimeoutMs: 18000,
-      inferenceTimeoutMs: 9000,
+      enabled: false,
     });
   });
 
-  it("marks support as unsupported with an explicit reason when webgpu is required but unavailable", () => {
+  it("marks support as unsupported with an explicit reason when local captions are disabled", () => {
     const support = resolveLocalCaptionSupport(
       {
-        experimentalEnabled: true,
-        requireWebGpu: true,
-        modelInitTimeoutMs: 25000,
-        inferenceTimeoutMs: 20000,
+        enabled: false,
       },
       {
         hasWindow: true,
@@ -54,7 +45,7 @@ describe("local-image-caption helpers", () => {
     );
     expect(support).toEqual({
       supported: false,
-      reason: "webgpu_required",
+      reason: "disabled",
     });
   });
 });
