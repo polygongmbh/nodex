@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
+import { linkifyContent } from "@/lib/linkify";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
@@ -13,7 +13,6 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
-import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,9 +60,9 @@ interface TaskItemProps {
   parentFoldState?: FoldState; // Propagate parent's fold state for recursive expansion
   activeRelays?: Relay[]; // For showing relay source when multiple are active
   isKeyboardFocused?: boolean; // For keyboard navigation highlight
+  compactView?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
-  onMediaClick?: (taskId: string, url: string) => void;
   sortContext?: SortContext;
 }
 
@@ -84,9 +83,9 @@ export function TaskItem({
   parentFoldState,
   activeRelays = [],
   isKeyboardFocused = false,
+  compactView = false,
   isPendingPublishTask,
   isInteractionBlocked = false,
-  onMediaClick,
   sortContext,
 }: TaskItemProps) {
   const { t } = useTranslation();
@@ -211,25 +210,6 @@ export function TaskItem({
   const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
   const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
   const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
-  const standaloneEmbedUrls = new Set(
-    getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
-  );
-  const mediaCaptionByUrl = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const attachment of task.attachments || []) {
-      const normalizedUrl = attachment.url?.trim().toLowerCase();
-      if (!normalizedUrl) continue;
-      const caption = attachment.alt?.trim() || attachment.name?.trim();
-      if (caption) {
-        map.set(normalizedUrl, caption);
-      }
-    }
-    return map;
-  }, [task.attachments]);
-  const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
-    const normalizedUrl = attachment.url?.trim().toLowerCase();
-    return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
-  });
 
   // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {
@@ -272,6 +252,13 @@ export function TaskItem({
   };
   const editableMetadata = !isComment && canCompleteTask();
   const statusBlockedReason = getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people);
+  const showCompactPriority = compactView && !isComment && typeof task.priority === "number";
+  const showFullMetadataChips =
+    !compactView &&
+    (hasTaskMentionChips(task) ||
+      task.tags.length > 0 ||
+      task.locationGeohash ||
+      (typeof task.priority === "number" && !isComment));
 
   // Calculate indentation based on depth
   const indentStyle = depth > 0 ? { marginLeft: `${depth * 1.5}rem` } : {};
@@ -475,7 +462,7 @@ export function TaskItem({
         )}
 
         {/* Avatar - only show for comments */}
-        {isComment && (
+        {isComment && !compactView && (
           <button
             type="button"
             onClick={(event) => {
@@ -499,7 +486,7 @@ export function TaskItem({
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Meta info - author/time only for comments, counts only for tasks */}
-          {(isComment || allTaskChildren.length > 0 || allCommentChildren.length > 0) && (
+          {!compactView && (isComment || allTaskChildren.length > 0 || allCommentChildren.length > 0) && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
               {isComment && (
                 <>
@@ -560,21 +547,21 @@ export function TaskItem({
           {/* Task content */}
           <div className={cn(
             `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
-            hasCollapsibleContent && !isContentExpanded
-              ? "whitespace-pre-line line-clamp-3 overflow-hidden"
-              : "whitespace-pre-wrap",
+            compactView
+              ? "whitespace-pre-line line-clamp-2 overflow-hidden"
+              : hasCollapsibleContent && !isContentExpanded
+                ? "whitespace-pre-line line-clamp-3 overflow-hidden"
+                : "whitespace-pre-wrap",
             isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
           )}>
             {linkifyContent(task.content, dispatchHashtagExclusive, {
               plainHashtags: isTaskTerminalStatus(task.status),
               people,
               onMentionClick: dispatchAuthorExclusive,
-              disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
-              onStandaloneMediaClick: (url) => onMediaClick?.(task.id, url),
-              getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
+              disableStandaloneEmbeds: true,
             })}
           </div>
-          {hasCollapsibleContent && (
+          {!compactView && hasCollapsibleContent && (
             <button
               type="button"
               className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
@@ -586,10 +573,6 @@ export function TaskItem({
               {isContentExpanded ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
             </button>
           )}
-          <TaskAttachmentList
-            attachments={attachmentsWithoutInlineEmbeds}
-            onMediaClick={(url) => onMediaClick?.(task.id, url)}
-          />
 
           {/* Due date */}
           {task.dueDate && (
@@ -634,7 +617,25 @@ export function TaskItem({
             </Popover>
           )}
 
-          {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash || (typeof task.priority === "number" && !isComment)) && (
+          {showCompactPriority && (
+            <div className={cn(task.dueDate ? "mt-1.5" : "mt-1")}>
+              <TaskPrioritySelect
+                id={`task-priority-${task.id}`}
+                taskId={task.id}
+                priority={task.priority}
+                ariaLabel={t("composer.labels.priority")}
+                disabled={!editableMetadata}
+                stopPropagation
+                className={cn(
+                  "rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+                  editableMetadata && "cursor-pointer hover:bg-warning/20",
+                  !editableMetadata && "cursor-not-allowed opacity-60"
+                )}
+              />
+            </div>
+          )}
+
+          {showFullMetadataChips && (
             <div className={cn("flex flex-wrap gap-1", task.dueDate ? "mt-1.5" : "mt-1.5")}>
               {typeof task.priority === "number" && !isComment && (
                 <TaskPrioritySelect
@@ -683,6 +684,22 @@ export function TaskItem({
                   #{tag}
                 </button>
               ))}
+            </div>
+          )}
+
+          {compactView && isPendingPublish && (
+            <div className="mt-1.5">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
+                }}
+                className="text-xs font-medium text-warning hover:text-warning/80"
+                title={t("toasts.actions.undo")}
+              >
+                {t("toasts.actions.undo")}
+              </button>
             </div>
           )}
 
@@ -759,8 +776,8 @@ export function TaskItem({
                       hasActiveFilters={hasActiveFilters}
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
+                      compactView={compactView}
                       isPendingPublishTask={isPendingPublishTask}
-                      onMediaClick={onMediaClick}
                       sortContext={sortContext}
                     />
                   );
@@ -790,8 +807,8 @@ export function TaskItem({
                       hasActiveFilters={hasActiveFilters}
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
+                      compactView={compactView}
                       isPendingPublishTask={isPendingPublishTask}
-                      onMediaClick={onMediaClick}
                       sortContext={sortContext}
                     />
                   );

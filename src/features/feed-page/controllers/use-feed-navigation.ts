@@ -14,6 +14,10 @@ interface UseFeedNavigationOptions {
   isMobile: boolean;
   effectiveActiveRelayIds: Set<string>;
   relays: Relay[];
+  onToggleChannelMatchMode?: () => void;
+  onToggleRecentFilter?: () => void;
+  onTogglePriorityFilter?: () => void;
+  onToggleCompactView?: () => void;
 }
 
 export function useFeedNavigation({
@@ -21,6 +25,10 @@ export function useFeedNavigation({
   isMobile,
   effectiveActiveRelayIds,
   relays,
+  onToggleChannelMatchMode,
+  onToggleRecentFilter,
+  onTogglePriorityFilter,
+  onToggleCompactView,
 }: UseFeedNavigationOptions) {
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
@@ -102,6 +110,10 @@ export function useFeedNavigation({
 
   useKeyboardShortcuts({
     onViewChange: setCurrentView,
+    onToggleChannelMatchMode,
+    onToggleRecentFilter,
+    onTogglePriorityFilter,
+    onToggleCompactView,
     enabled: !isMobile,
   });
 

@@ -74,6 +74,10 @@ export function KeyboardShortcutsHelp({ isOpen, onClose }: KeyboardShortcutsHelp
       title: t("shortcuts.groups.general"),
       shortcuts: [
         { key: "?", description: t("shortcuts.items.toggleKeyboardShortcuts") },
+        { key: "M", description: t("shortcuts.items.toggleChannelMatchMode") },
+        { key: "R", description: t("shortcuts.items.toggleRecentFilter") },
+        { key: "P", description: t("shortcuts.items.togglePriorityFilter") },
+        { key: "C", description: t("shortcuts.items.toggleCompactCards") },
         { key: "Shift + Alt/Option + Click", description: t("shortcuts.items.openRawEventJson") },
       ],
     },

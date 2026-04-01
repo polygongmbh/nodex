@@ -158,11 +158,11 @@ describe("KanbanView closed column", () => {
       />
     );
 
-    expect(screen.getByText("P4")).toBeInTheDocument();
-    expect(screen.queryByText("P2")).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
+    expect(screen.getAllByRole("combobox", { name: /priority/i })).toHaveLength(1);
   });
 
-  it("renders priority and other chips in the same metadata row", () => {
+  it("keeps priority pinned outside the metadata chip row", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const task = makeTask({
       id: "priority-and-tag-task",
@@ -189,7 +189,8 @@ describe("KanbanView closed column", () => {
 
     const chipRow = screen.getByTestId("kanban-chip-row-priority-and-tag-task");
     const hashtagChip = screen.getByRole("button", { name: /filter to #general/i });
-    expect(chipRow).toHaveTextContent("P4");
+    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
+    expect(chipRow).not.toHaveTextContent("P4");
     expect(chipRow).toContainElement(hashtagChip);
   });
 
@@ -223,6 +224,73 @@ describe("KanbanView closed column", () => {
     const dueRow = screen.getByTestId("kanban-due-row-due-before-chip-task");
     const chipRow = screen.getByTestId("kanban-chip-row-due-before-chip-task");
     expect(dueRow.compareDocumentPosition(chipRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("does not render attachment previews in kanban cards", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const task = makeTask({
+      id: "attachment-task",
+      author,
+      status: "todo",
+      content: "Task with attachment #general",
+      attachments: [
+        {
+          url: "https://example.com/spec.pdf",
+          name: "spec.pdf",
+          mimeType: "application/pdf",
+        },
+      ],
+    });
+
+    render(
+      <KanbanView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        depthMode="leaves"
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText("spec.pdf")).not.toBeInTheDocument();
+  });
+
+  it("hides tag chips in compact kanban cards while keeping due date and priority", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const task = makeTask({
+      id: "compact-kanban-task",
+      author,
+      status: "todo",
+      content: "Compact kanban task #general",
+      tags: ["general"],
+      priority: 80,
+      dueDate: new Date("2026-02-18T10:00:00.000Z"),
+      dueTime: "10:00",
+    });
+
+    render(
+      <KanbanView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[author]}
+        currentUser={author}
+        searchQuery=""
+        depthMode="leaves"
+        compactTaskCardsEnabled
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole("combobox", { name: /priority/i })).toHaveValue("4");
+    expect(screen.getByTestId("kanban-due-row-compact-kanban-task")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /filter to #general/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("kanban-chip-row-compact-kanban-task")).not.toBeInTheDocument();
   });
 
   it("renders a droppable target for empty columns", () => {

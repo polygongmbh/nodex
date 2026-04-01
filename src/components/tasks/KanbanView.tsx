@@ -9,7 +9,7 @@ import {
   ComposeRestoreRequest,
 } from "@/types";
 import { TaskCreateComposer } from "./TaskCreateComposer";
-import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
+import { linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { hasTaskMentionChips } from "./TaskMentionChips";
 import { format } from "date-fns";
@@ -23,13 +23,12 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
-import { TaskAttachmentList } from "./TaskAttachmentList";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useKanbanViewState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
+import { TaskPrioritySelect } from "./TaskMetadataEditors";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -39,6 +38,7 @@ interface KanbanViewProps {
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode: KanbanDepthMode;
+  compactTaskCardsEnabled?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
   isHydrating?: boolean;
@@ -50,7 +50,6 @@ const getColumns = (t: (key: string) => string): { id: TaskStatus; label: string
   { id: "done", label: t("listView.status.done"), icon: <CheckCircle2 className="w-4 h-4" />, color: "text-primary" },
   { id: "closed", label: t("listView.status.closed"), icon: <X className="w-4 h-4" />, color: "text-muted-foreground" },
 ];
-const ACTIVE_KANBAN_STATUSES: TaskStatus[] = ["todo", "in-progress"];
 
 export function KanbanView({
   tasks,
@@ -59,10 +58,10 @@ export function KanbanView({
   searchQueryOverride,
   depthMode,
   focusedTaskId,
+  compactTaskCardsEnabled = false,
   isPendingPublishTask,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
-  isHydrating = false,
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -140,18 +139,6 @@ export function KanbanView({
     },
     [dispatchFeedInteraction]
   );
-  const orderedKanbanTasks = useMemo(
-    () => [
-      ...tasksByStatus["todo"],
-      ...tasksByStatus["in-progress"],
-      ...tasksByStatus["done"],
-      ...tasksByStatus["closed"],
-    ],
-    [tasksByStatus]
-  );
-  const mediaController = useTaskViewMedia(orderedKanbanTasks);
-  const { openTaskMedia } = mediaController;
-
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     if (isInteractionBlocked) {
@@ -363,7 +350,8 @@ export function KanbanView({
                         className="flex h-full min-h-full min-w-0 flex-col gap-2"
                       >
                         {tasksByStatus[column.id].map((task, index) => {
-                          const ancestorChain = showContext ? getAncestorChain(task.id) : [];
+                          const ancestorChain =
+                            !compactTaskCardsEnabled && showContext ? getAncestorChain(task.id) : [];
                           const displayStatus = getTaskEffectiveStatus(task);
                           const dueDateColor = getDueDateColorClass(task.dueDate, displayStatus);
                           const isKeyboardFocused = keyboardFocusedTaskId === task.id;
@@ -371,22 +359,8 @@ export function KanbanView({
                           const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
                           const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
                           const hasMetadataChips =
-                            typeof task.priority === "number" ||
-                            hasTaskMentionChips(task) ||
-                            task.tags.length > 0;
-                          const standaloneEmbedUrls = new Set(
-                            getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
-                          );
-                          const mediaCaptionByUrl = new Map<string, string>();
-                          for (const attachment of task.attachments || []) {
-                            const normalizedUrl = attachment.url?.trim().toLowerCase();
-                            const caption = attachment.alt?.trim() || attachment.name?.trim();
-                            if (normalizedUrl && caption) mediaCaptionByUrl.set(normalizedUrl, caption);
-                          }
-                          const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
-                            const normalizedUrl = attachment.url?.trim().toLowerCase();
-                            return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
-                          });
+                            !compactTaskCardsEnabled &&
+                            (hasTaskMentionChips(task) || task.tags.length > 0);
                           
                           return (
                             <Draggable
@@ -445,26 +419,37 @@ export function KanbanView({
                                   )}
 
                                   {/* Content */}
-                                  <div
-                                    className={cn(
-                                      `text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
-                                      isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
+                                  <div className="flex items-start gap-2">
+                                    <div
+                                      className={cn(
+                                        `min-w-0 flex-1 text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
+                                        isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
+                                      )}
+                                    >
+                                      {linkifyContent(task.content, (tag) => {
+                                        void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+                                      }, {
+                                        plainHashtags: isTaskTerminalStatus(displayStatus),
+                                        people,
+                                        disableStandaloneEmbeds: true,
+                                      })}
+                                    </div>
+                                    {typeof task.priority === "number" && (
+                                      <TaskPrioritySelect
+                                        id={`kanban-priority-${task.id}`}
+                                        taskId={task.id}
+                                        priority={task.priority}
+                                        ariaLabel={t("composer.labels.priority")}
+                                        disabled={!canChangeStatus}
+                                        stopPropagation
+                                        className={cn(
+                                          "ml-auto h-6 rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
+                                          canChangeStatus && "cursor-pointer hover:bg-warning/20",
+                                          !canChangeStatus && "cursor-not-allowed opacity-60"
+                                        )}
+                                      />
                                     )}
-                                  >
-                                    {linkifyContent(task.content, (tag) => {
-                                      void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-                                    }, {
-                                      plainHashtags: isTaskTerminalStatus(displayStatus),
-                                      people,
-                                      disableStandaloneEmbeds: true,
-                                      onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
-                                      getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
-                                    })}
                                   </div>
-                                  <TaskAttachmentList
-                                    attachments={attachmentsWithoutInlineEmbeds}
-                                    onMediaClick={(url) => openTaskMedia(task.id, url)}
-                                  />
                                   {/* Due date with color coding */}
                                   {task.dueDate && (
                                     <div
@@ -485,7 +470,6 @@ export function KanbanView({
                                   {hasMetadataChips && (
                                     <TaskTagChipRow
                                       task={task}
-                                      priority={task.priority}
                                       expanded={Boolean(expandedChipRows[task.id])}
                                       onToggleExpanded={(expanded) =>
                                         setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
@@ -511,7 +495,7 @@ export function KanbanView({
                                     </div>
                                   )}
                                   {/* Children indicator */}
-                                  {hasChildren(task.id) && (
+                                  {!compactTaskCardsEnabled && hasChildren(task.id) && (
                                     <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
                                       <Layers className="w-3 h-3" />
                                       <span>{t("kanban.hasSubtasks")}</span>
@@ -534,8 +518,6 @@ export function KanbanView({
           </div>
         </DragDropContext>
       </div>
-      <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
-
     </main>
   );
 }

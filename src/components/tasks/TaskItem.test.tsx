@@ -348,6 +348,61 @@ describe("TaskItem status actions", () => {
     });
   });
 
+  it("hides comment author actions and tag chips in compact mode while keeping the due date", () => {
+    const commentTask: Task = {
+      ...baseTask,
+      id: "compact-comment",
+      taskType: "comment",
+      content: "Compact comment #frontend",
+      dueDate: new Date("2026-05-01T00:00:00.000Z"),
+      dueTime: "10:00",
+      author: makePerson({
+        id: "compact-author",
+        name: "commentator",
+        displayName: "Commentator",
+      }),
+    };
+
+    render(
+      <TaskItem
+        task={commentTask}
+        filteredChildren={[]}
+        allTasks={[commentTask]}
+        currentUser={baseTask.author}
+        compactView
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /filter and mention commentator/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /filter to #frontend/i })).not.toBeInTheDocument();
+    expect(screen.getByText("May 1, 2026")).toBeInTheDocument();
+  });
+
+  it("does not render attachment previews in tree cards", () => {
+    const taskWithAttachment: Task = {
+      ...baseTask,
+      id: "attachment-task",
+      attachments: [
+        {
+          url: "https://example.com/spec.pdf",
+          name: "spec.pdf",
+          mimeType: "application/pdf",
+        },
+      ],
+    };
+
+    render(
+      <TaskItem
+        task={taskWithAttachment}
+        filteredChildren={[]}
+        allTasks={[taskWithAttachment]}
+        currentUser={baseTask.author}
+      />
+    );
+
+    expect(screen.queryByText("spec.pdf")).not.toBeInTheDocument();
+  });
+
   it("shows a precise hover timestamp for comment created time", () => {
     const commentTask: Task = {
       ...baseTask,
@@ -379,6 +434,28 @@ describe("TaskItem status actions", () => {
         filteredChildren={[]}
         allTasks={[baseTask]}
         currentUser={baseTask.author}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
+      target: { value: "4" },
+    });
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.updatePriority",
+      taskId: "t1",
+      priority: 80,
+    });
+  });
+
+  it("updates task priority from the compact priority control", () => {
+    render(
+      <TaskItem
+        task={{ ...baseTask, priority: 40 }}
+        filteredChildren={[]}
+        allTasks={[baseTask]}
+        currentUser={baseTask.author}
+        compactView
       />
     );
 

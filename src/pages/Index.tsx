@@ -22,6 +22,10 @@ import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
 import { loadPresencePublishingEnabled } from "@/infrastructure/preferences/user-preferences-storage";
+import {
+  loadCompactTaskCardsEnabled,
+  saveCompactTaskCardsEnabled,
+} from "@/infrastructure/preferences/user-preferences-storage";
 import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filter-snapshot";
 import type { Nip99ListingStatus } from "@/types";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
@@ -85,6 +89,7 @@ import {
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import { FeedSidebarControllerProvider } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
 import { MotdBanner } from "@/components/MotdBanner";
+import { featureDebugLog } from "@/lib/feature-debug";
 
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
@@ -337,6 +342,54 @@ const Index = () => {
 
   const shortcutsHelp = useKeyboardShortcutsHelp();
   const [kanbanDepthMode, setKanbanDepthMode] = useState<KanbanDepthMode>("leaves");
+  const [compactTaskCardsEnabled, setCompactTaskCardsEnabled] = useState<boolean>(() =>
+    loadCompactTaskCardsEnabled()
+  );
+
+  useEffect(() => {
+    saveCompactTaskCardsEnabled(compactTaskCardsEnabled);
+  }, [compactTaskCardsEnabled]);
+
+  const handleToggleChannelMatchModeShortcut = useCallback(() => {
+    setChannelMatchMode((previous) => {
+      const next = previous === "and" ? "or" : "and";
+      featureDebugLog("keyboard-shortcuts", "Toggled channel match mode via keyboard shortcut", {
+        previousMode: previous,
+        nextMode: next,
+      });
+      return next;
+    });
+  }, [setChannelMatchMode]);
+
+  const handleToggleRecentFilterShortcut = useCallback(() => {
+    setQuickFilters((previous) => {
+      const next = { ...previous, recentEnabled: !previous.recentEnabled };
+      featureDebugLog("keyboard-shortcuts", "Toggled recent quick filter via keyboard shortcut", {
+        enabled: next.recentEnabled,
+        recentDays: next.recentDays,
+      });
+      return next;
+    });
+  }, [setQuickFilters]);
+
+  const handleTogglePriorityFilterShortcut = useCallback(() => {
+    setQuickFilters((previous) => {
+      const next = { ...previous, priorityEnabled: !previous.priorityEnabled };
+      featureDebugLog("keyboard-shortcuts", "Toggled priority quick filter via keyboard shortcut", {
+        enabled: next.priorityEnabled,
+        minPriority: next.minPriority,
+      });
+      return next;
+    });
+  }, [setQuickFilters]);
+
+  const handleToggleCompactTaskCards = useCallback(() => {
+    setCompactTaskCardsEnabled((previous) => {
+      const next = !previous;
+      featureDebugLog("compact-cards", "Toggled compact task cards", { enabled: next });
+      return next;
+    });
+  }, []);
 
   const {
     hasDisconnectedSelectedRelays,
@@ -395,7 +448,16 @@ const Index = () => {
     setManageRouteActive,
     desktopSwipeHandlers,
     openedWithFocusedTaskRef,
-  } = useFeedNavigation({ allTasks, isMobile, effectiveActiveRelayIds, relays });
+  } = useFeedNavigation({
+    allTasks,
+    isMobile,
+    effectiveActiveRelayIds,
+    relays,
+    onToggleChannelMatchMode: handleToggleChannelMatchModeShortcut,
+    onToggleRecentFilter: handleToggleRecentFilterShortcut,
+    onTogglePriorityFilter: handleTogglePriorityFilterShortcut,
+    onToggleCompactView: handleToggleCompactTaskCards,
+  });
 
   const currentFilterSnapshot = useMemo<FilterSnapshot>(
     () =>
@@ -854,6 +916,7 @@ const Index = () => {
       mentionRequest,
       forceShowComposer: forceShowComposeForGuide,
       composeGuideActivationSignal,
+      compactTaskCardsEnabled,
       isInteractionBlocked,
       isHydrating,
     }),
@@ -867,6 +930,7 @@ const Index = () => {
       mentionRequest,
       forceShowComposeForGuide,
       composeGuideActivationSignal,
+      compactTaskCardsEnabled,
       isInteractionBlocked,
       isHydrating,
     ]

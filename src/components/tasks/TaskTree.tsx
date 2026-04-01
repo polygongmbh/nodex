@@ -11,7 +11,6 @@ import {
   useTaskViewSource,
 } from "@/features/feed-page/controllers/use-task-view-states";
 import { useTaskViewServices } from "./use-task-view-services";
-import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { TaskAuthorProfilesProvider } from "./task-author-profiles-context";
 
 interface TaskTreeProps {
@@ -24,6 +23,7 @@ interface TaskTreeProps {
   isMobile?: boolean;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
+  compactTaskCardsEnabled?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
   mentionRequest?: {
     mention: string;
@@ -42,6 +42,7 @@ export function TaskTree({
   isMobile = false,
   forceShowComposer,
   composeGuideActivationSignal,
+  compactTaskCardsEnabled = false,
   isPendingPublishTask,
   composeRestoreRequest = null,
   mentionRequest = null,
@@ -70,8 +71,6 @@ export function TaskTree({
   const { shouldShowInlineEmptyHint, shouldShowScopeFooterHint, shouldShowScreenEmptyState } =
     treeSelectors.getEmptyStateFlags({ isMobile });
   const hasActiveFilters = treeSelectors.hasActiveFilters();
-  const mediaController = useTaskViewMedia(displayedTasks);
-  const { openTaskMedia } = mediaController;
   const handleGoUp = () => {
     if (!currentContextTask) {
       focusTask(null);
@@ -242,9 +241,9 @@ export function TaskTree({
                   hasActiveFilters={hasActiveFilters}
                   activeRelays={activeRelays}
                   isKeyboardFocused={keyboardFocusedTaskId === task.id}
+                  compactView={compactTaskCardsEnabled}
                   isPendingPublishTask={isPendingPublishTask}
                   isInteractionBlocked={isInteractionBlocked}
-                  onMediaClick={openTaskMedia}
                   sortContext={sortContext}
                 />
               ))}
@@ -270,10 +269,6 @@ export function TaskTree({
           )}
         </div>
       </TaskAuthorProfilesProvider>
-      <TaskViewMediaLightbox
-        controller={mediaController}
-        onOpenTask={focusTask}
-      />
 
     </main>
   );

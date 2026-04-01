@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Added desktop shortcuts to toggle channel match mode (`AND`/`OR`), recent and priority quick filters, and compact tree/kanban cards; tree and kanban cards now drop rich media previews so attachments stay feed-only, and kanban keeps priority pinned on the right edge of each card.
+
 ## [2.9.0] - 2026-04-01
 Minor release for priority/filter polish, focused-task sidebar/filter scoping, and Noas host discovery cleanup.
 

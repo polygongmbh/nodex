@@ -1,5 +1,6 @@
 import {
   AUTO_CAPTION_ENABLED_STORAGE_KEY,
+  COMPACT_TASK_CARDS_ENABLED_STORAGE_KEY,
   COMPLETION_SOUND_ENABLED_STORAGE_KEY,
   PRESENCE_ENABLED_STORAGE_KEY,
   PUBLISH_DELAY_ENABLED_STORAGE_KEY,
@@ -50,6 +51,13 @@ export function loadCompletionSoundEnabled(): boolean {
 }
 export function saveCompletionSoundEnabled(enabled: boolean): void {
   saveBooleanPref(COMPLETION_SOUND_ENABLED_STORAGE_KEY, enabled);
+}
+
+export function loadCompactTaskCardsEnabled(): boolean {
+  return loadBooleanPref(COMPACT_TASK_CARDS_ENABLED_STORAGE_KEY, false);
+}
+export function saveCompactTaskCardsEnabled(enabled: boolean): void {
+  saveBooleanPref(COMPACT_TASK_CARDS_ENABLED_STORAGE_KEY, enabled);
 }
 
 export function loadReducedDataMode(): ReducedDataMode {

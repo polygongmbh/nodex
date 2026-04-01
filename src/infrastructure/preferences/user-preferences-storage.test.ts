@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   loadAutoCaptionEnabled,
+  loadCompactTaskCardsEnabled,
   loadCompletionSoundEnabled,
   loadPresencePublishingEnabled,
   loadPublishDelayEnabled,
   loadReducedDataMode,
   saveAutoCaptionEnabled,
+  saveCompactTaskCardsEnabled,
   saveCompletionSoundEnabled,
   savePresencePublishingEnabled,
   savePublishDelayEnabled,
@@ -59,6 +61,17 @@ describe("user-preferences", () => {
     it("persists false", () => {
       saveCompletionSoundEnabled(false);
       expect(loadCompletionSoundEnabled()).toBe(false);
+    });
+  });
+
+  describe("compact-task-cards", () => {
+    it("defaults to disabled", () => {
+      expect(loadCompactTaskCardsEnabled()).toBe(false);
+    });
+
+    it("persists true", () => {
+      saveCompactTaskCardsEnabled(true);
+      expect(loadCompactTaskCardsEnabled()).toBe(true);
     });
   });
 

@@ -18,6 +18,7 @@ export const AUTO_CAPTION_ENABLED_STORAGE_KEY = "nodex.auto-caption.v1";
 export const REDUCED_DATA_MODE_STORAGE_KEY = "nodex.reduced-data-mode.v1";
 export const PUBLISH_DELAY_ENABLED_STORAGE_KEY = "nodex.publish-delay.v1";
 export const COMPLETION_SOUND_ENABLED_STORAGE_KEY = "nodex.completion-sound.v1";
+export const COMPACT_TASK_CARDS_ENABLED_STORAGE_KEY = "nodex.compact-task-cards.v1";
 export const ACTIVE_RELAYS_STORAGE_KEY = "nodex.active-relays.v1";
 export const CHANNEL_FILTERS_STORAGE_KEY = "nodex.channel-filters.v1";
 export const CHANNEL_MATCH_MODE_STORAGE_KEY = "nodex.channel-match-mode.v1";
