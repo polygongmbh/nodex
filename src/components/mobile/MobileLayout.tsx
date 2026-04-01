@@ -10,16 +10,11 @@ import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import {
-  TaskCreateResult,
-  TaskDateType,
   ComposeRestoreRequest,
-  PublishedAttachment,
-  Nip99Metadata,
 } from "@/types";
 import { cn } from "@/lib/utils";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
@@ -80,7 +75,6 @@ export function MobileLayout({
   publishState,
 }: MobileLayoutProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { onNewTask } = useFeedTaskCommands();
   const { channels } = useFeedSurfaceState();
   const {
     canCreateContent,
@@ -237,40 +231,6 @@ export function MobileLayout({
     ]
   );
 
-  const handleMobileSubmit = useCallback((
-    content: string,
-    tags: string[],
-    relayIds: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata,
-    locationGeohash?: string
-  ): Promise<TaskCreateResult> => {
-    return Promise.resolve(
-      onNewTask(
-        content,
-        tags,
-        relayIds,
-        taskType,
-        dueDate,
-        dueTime,
-        dateType,
-        focusedTaskId || undefined,
-        undefined,
-        explicitMentionPubkeys,
-        priority,
-        attachments,
-        nip99,
-        locationGeohash
-      )
-    );
-  }, [focusedTaskId, onNewTask]);
-
   useEffect(() => {
     if (isManageRouteActive) {
       setShowFilters(true);
@@ -377,7 +337,6 @@ export function MobileLayout({
       
       <div hidden={showFilters}>
         <UnifiedBottomBar
-          onSubmit={handleMobileSubmit}
           currentView={activePrimaryView}
           focusedTaskId={focusedTaskId}
           selectedCalendarDate={activePrimaryView === "calendar" ? selectedCalendarDate : null}

@@ -6,7 +6,6 @@ import {
   Channel,
   Person,
   TaskCreateResult,
-  ComposerSubmit,
   TaskDateType,
   ComposeRestoreRequest,
   ComposeAttachment,
@@ -62,8 +61,6 @@ import {
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
-  // Compose props
-  onSubmit: ComposerSubmit;
   currentView: ViewType;
   focusedTaskId?: string | null;
   selectedCalendarDate?: Date | null;
@@ -112,7 +109,6 @@ function truncateWordSafe(value: string, maxLength: number): string {
 
 export function UnifiedBottomBar({
   searchQuery: searchQueryProp,
-  onSubmit,
   currentView,
   focusedTaskId = null,
   selectedCalendarDate = null,
@@ -505,36 +501,23 @@ export function UnifiedBottomBar({
     const submittedPriority = storedPriorityFromDisplay(priority);
     try {
       const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
-      result = await Promise.resolve(
-        normalizedLocationGeohash
-          ? onSubmit(
-              sharedText,
-              submitChannels,
-              relayIds,
-              submitType,
-              dueDate,
-              dueTime || undefined,
-              dateType,
-              explicitMentionPubkeys,
-              submittedPriority,
-              uploadedAttachments,
-              listingMetadata,
-              normalizedLocationGeohash
-            )
-          : onSubmit(
-              sharedText,
-              submitChannels,
-              relayIds,
-              submitType,
-              dueDate,
-              dueTime || undefined,
-              dateType,
-              explicitMentionPubkeys,
-              submittedPriority,
-              uploadedAttachments,
-              listingMetadata
-            )
-      );
+      const event = await dispatchFeedInteraction({
+        type: "task.create",
+        content: sharedText,
+        tags: submitChannels,
+        relays: relayIds,
+        taskType: submitType,
+        dueDate,
+        dueTime: dueTime || undefined,
+        dateType,
+        parentId: focusedTaskId || undefined,
+        explicitMentionPubkeys,
+        priority: submittedPriority,
+        attachments: uploadedAttachments,
+        nip99: listingMetadata,
+        locationGeohash: normalizedLocationGeohash,
+      });
+      result = (event.outcome.result as TaskCreateResult | undefined) ?? { ok: false, reason: "unexpected-error" };
     } catch (error) {
       console.error("Mobile task submit failed", error);
       notifyTaskCreationFailed(t);

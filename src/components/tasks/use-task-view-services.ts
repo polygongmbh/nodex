@@ -1,11 +1,9 @@
 import { useCallback, useMemo } from "react";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
 
 export function useTaskViewServices() {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { onNewTask } = useFeedTaskCommands();
   const authPolicy = useAuthActionPolicy();
 
   const focusTask = useCallback(
@@ -26,11 +24,10 @@ export function useTaskViewServices() {
   return useMemo(
     () => ({
       authPolicy,
-      onNewTask,
       focusTask,
       focusSidebar,
       guardModify,
     }),
-    [authPolicy, focusSidebar, focusTask, guardModify, onNewTask]
+    [authPolicy, focusSidebar, focusTask, guardModify]
   );
 }

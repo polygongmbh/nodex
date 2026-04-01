@@ -3,11 +3,7 @@ import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCc
 import {
   Task,
   Person,
-  TaskCreateResult,
-  TaskDateType,
   ComposeRestoreRequest,
-  PublishedAttachment,
-  Nip99Metadata,
   TaskStatus,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
@@ -117,7 +113,7 @@ export function ListView({
 }: ListViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { authPolicy, onNewTask, focusSidebar, focusTask } = useTaskViewServices();
+  const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { channels, people } = useFeedSurfaceState();
   const interactionModel = useFeedViewInteractionModel();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
@@ -337,36 +333,6 @@ export function ListView({
     setSortVersion(v => v + 1);
   };
 
-  const handleNewTask = (
-    content: string,
-    taskTags: string[],
-    taskRelays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ): Promise<TaskCreateResult> => {
-    return Promise.resolve(onNewTask(
-      content,
-      taskTags,
-      taskRelays,
-      taskType,
-      dueDate,
-      dueTime,
-      dateType,
-      focusedTaskId || undefined,
-      undefined,
-      explicitMentionPubkeys,
-      priority,
-      attachments,
-      nip99
-    ));
-  };
-
   const canCompleteTask = (task: Task) => {
     return authPolicy.canModifyContent && !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
@@ -562,7 +528,6 @@ export function ListView({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       <SharedViewComposer
         visible={authPolicy.canOpenCompose || effectiveForceShowComposer}
-        onSubmit={handleNewTask}
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}

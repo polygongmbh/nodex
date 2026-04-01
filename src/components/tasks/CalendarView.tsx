@@ -4,11 +4,7 @@ import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, Ca
 import {
   Task,
   Person,
-  TaskCreateResult,
-  TaskDateType,
   ComposeRestoreRequest,
-  PublishedAttachment,
-  Nip99Metadata,
   TaskStatus,
 } from "@/types";
 import {
@@ -32,7 +28,6 @@ import {
 import { cn } from "@/lib/utils";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { hasTaskMentionChips } from "./TaskMentionChips";
-import { TaskComposer } from "./TaskComposer";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { getAuthorColor } from "@/lib/author-color";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
@@ -60,6 +55,7 @@ import {
 } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
+import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useTaskViewServices } from "./use-task-view-services";
 
 interface CalendarViewProps {
@@ -92,7 +88,7 @@ export function CalendarView({
   isHydrating = false,
 }: CalendarViewProps) {
   const { t } = useTranslation();
-  const { authPolicy, onNewTask, focusTask } = useTaskViewServices();
+  const { authPolicy, focusTask } = useTaskViewServices();
   const { people } = useFeedSurfaceState();
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
@@ -362,42 +358,6 @@ export function CalendarView({
 
   const clearStatusMenuOpenIntent = (taskId: string) => {
     allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
-  };
-
-  const handleCreateEvent = async (
-    content: string,
-    taskTags: string[],
-    taskRelays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ): Promise<TaskCreateResult> => {
-    // Use the selected date if no due date was set
-    const eventDate = dueDate || selectedDate || new Date();
-    const result = await Promise.resolve(onNewTask(
-      content,
-      taskTags,
-      taskRelays,
-      taskType,
-      eventDate,
-      dueTime,
-      dateType,
-      focusedTaskId || undefined,
-      undefined,
-      explicitMentionPubkeys,
-      priority,
-      attachments,
-      nip99
-    ));
-    if (result.ok) {
-      setIsComposingEvent(false);
-    }
-    return result;
   };
 
   const navigateMonth = (direction: "prev" | "next") => {
@@ -828,10 +788,11 @@ export function CalendarView({
                       <X className="w-3 h-3" />
                     </button>
                   </div>
-                  <TaskComposer
-                    onSubmit={handleCreateEvent}
+                  <TaskCreateComposer
                     onCancel={() => setIsComposingEvent(false)}
                     compact
+                    parentId={focusedTaskId || undefined}
+                    closeOnSuccess
                     allowComment={false}
                     defaultDueDate={selectedDate}
                     composeRestoreRequest={composeRestoreRequest}

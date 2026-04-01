@@ -76,7 +76,6 @@ import {
   FeedTaskViewModelProvider,
   type FeedTaskViewModel,
 } from "@/features/feed-page/views/feed-task-view-model-context";
-import { FeedTaskCommandProvider } from "@/features/feed-page/views/feed-task-command-context";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 import { createFeedInteractionMiddlewareSkeleton } from "@/features/feed-page/interactions/feed-interaction-middleware-skeleton";
@@ -748,6 +747,24 @@ const Index = () => {
       "task.focus.change": (intent) => {
         setFocusedTaskId(intent.taskId);
       },
+      "task.create": (intent) => {
+        return handleNewTask(
+          intent.content,
+          intent.tags,
+          intent.relays,
+          intent.taskType,
+          intent.dueDate,
+          intent.dueTime,
+          intent.dateType,
+          intent.parentId,
+          intent.initialStatus,
+          intent.explicitMentionPubkeys,
+          intent.priority,
+          intent.attachments,
+          intent.nip99,
+          intent.locationGeohash
+        );
+      },
       "task.toggleComplete": (intent) => {
         handleToggleComplete(intent.taskId);
       },
@@ -804,6 +821,7 @@ const Index = () => {
       handlePersonUnpin,
       savedFilterController,
       setFocusedTaskId,
+      handleNewTask,
       handleToggleComplete,
       handleStatusChange,
       handleDueDateChange,
@@ -1017,22 +1035,20 @@ const Index = () => {
     return (
       <FeedInteractionProvider bus={feedInteractionBus}>
         <FeedPageUiConfigProvider value={uiConfig}>
-          <FeedTaskCommandProvider value={{ onNewTask: handleNewTask }}>
-            <FeedSurfaceProvider value={feedSurfaceState}>
-              <FeedTaskViewModelProvider value={feedTaskViewModel}>
-                <MotdBanner />
-                <FeedPageMobileShell
-                  controller={mobileController}
-                  authModalProps={{
-                    isOpen: isAuthModalOpen,
-                    onClose: handleCloseAuthModal,
-                    initialStep: authModalInitialStep,
-                  }}
-                  onboardingOverlays={onboardingOverlays}
-                />
-              </FeedTaskViewModelProvider>
-            </FeedSurfaceProvider>
-          </FeedTaskCommandProvider>
+          <FeedSurfaceProvider value={feedSurfaceState}>
+            <FeedTaskViewModelProvider value={feedTaskViewModel}>
+              <MotdBanner />
+              <FeedPageMobileShell
+                controller={mobileController}
+                authModalProps={{
+                  isOpen: isAuthModalOpen,
+                  onClose: handleCloseAuthModal,
+                  initialStep: authModalInitialStep,
+                }}
+                onboardingOverlays={onboardingOverlays}
+              />
+            </FeedTaskViewModelProvider>
+          </FeedSurfaceProvider>
         </FeedPageUiConfigProvider>
       </FeedInteractionProvider>
     );
@@ -1042,26 +1058,24 @@ const Index = () => {
   return (
     <FeedInteractionProvider bus={feedInteractionBus}>
       <FeedPageUiConfigProvider value={uiConfig}>
-        <FeedTaskCommandProvider value={{ onNewTask: handleNewTask }}>
-          <FeedSurfaceProvider value={feedSurfaceState}>
-            <FeedTaskViewModelProvider value={feedTaskViewModel}>
-              <FeedSidebarControllerProvider value={desktopSidebarController}>
-                <MotdBanner />
-                <FeedPageDesktopShell
-                  header={desktopHeader}
-                  content={desktopContent}
-                  shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-                  authModalProps={{
-                    isOpen: isAuthModalOpen,
-                    onClose: handleCloseAuthModal,
-                    initialStep: authModalInitialStep,
-                  }}
-                  onboardingOverlays={onboardingOverlays}
-                />
-              </FeedSidebarControllerProvider>
-            </FeedTaskViewModelProvider>
-          </FeedSurfaceProvider>
-        </FeedTaskCommandProvider>
+        <FeedSurfaceProvider value={feedSurfaceState}>
+          <FeedTaskViewModelProvider value={feedTaskViewModel}>
+            <FeedSidebarControllerProvider value={desktopSidebarController}>
+              <MotdBanner />
+              <FeedPageDesktopShell
+                header={desktopHeader}
+                content={desktopContent}
+                shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+                authModalProps={{
+                  isOpen: isAuthModalOpen,
+                  onClose: handleCloseAuthModal,
+                  initialStep: authModalInitialStep,
+                }}
+                onboardingOverlays={onboardingOverlays}
+              />
+            </FeedSidebarControllerProvider>
+          </FeedTaskViewModelProvider>
+        </FeedSurfaceProvider>
       </FeedPageUiConfigProvider>
     </FeedInteractionProvider>
   );

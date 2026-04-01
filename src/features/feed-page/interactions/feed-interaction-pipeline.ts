@@ -10,6 +10,7 @@ export type FeedInteractionOutcomeStatus = "handled" | "unhandled" | "blocked" |
 
 export interface FeedInteractionOutcome {
   status: FeedInteractionOutcomeStatus;
+  result?: unknown;
   error?: unknown;
 }
 
@@ -36,7 +37,7 @@ export type FeedInteractionMiddleware = (
 export type FeedInteractionHandler<TIntent extends FeedInteractionIntent = FeedInteractionIntent> = (
   intent: TIntent,
   api: FeedInteractionPipelineApi
-) => void | Promise<void>;
+) => unknown | Promise<unknown>;
 
 export type FeedInteractionHandlerMap = {
   [Type in FeedInteractionIntentType]?: FeedInteractionHandler<Extract<FeedInteractionIntent, { type: Type }>>;
@@ -105,8 +106,8 @@ export function createFeedInteractionBus(config: FeedInteractionPipelineConfig =
         outcome = { status: "unhandled" };
         return;
       }
-      await handler(envelope.intent, api);
-      outcome = { status: "handled" };
+      const result = await handler(envelope.intent, api);
+      outcome = { status: "handled", result };
     };
 
     let runChain = invokeHandler;

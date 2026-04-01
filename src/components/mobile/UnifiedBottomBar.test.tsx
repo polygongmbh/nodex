@@ -25,7 +25,7 @@ vi.mock("@/infrastructure/nostr/ndk-context", () => ({
 
 const buildDispatchEvent = (intent: FeedInteractionIntent) => ({
   envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
-  outcome: { status: "handled" as const },
+  outcome: { status: "handled" as const, result: successResult },
 });
 
 const dispatchFeedInteraction = vi.fn(async (intent: FeedInteractionIntent) => buildDispatchEvent(intent));
@@ -63,6 +63,12 @@ const people: Person[] = [
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
 const originalGeolocation = navigator.geolocation;
 
+function getTaskCreateCalls() {
+  return dispatchFeedInteraction.mock.calls
+    .map(([intent]) => intent as FeedInteractionIntent)
+    .filter((intent): intent is Extract<FeedInteractionIntent, { type: "task.create" }> => intent.type === "task.create");
+}
+
 function createPosition(latitude: number, longitude: number): GeolocationPosition {
   return {
     coords: {
@@ -95,7 +101,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -109,13 +114,10 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(screen.queryByRole("button", { name: /add file attachment/i })).not.toBeInTheDocument();
   });
 
-  it("routes signed-out create attempts through onSubmit", () => {
-    const onSubmit = vi.fn().mockResolvedValue({ ok: false, reason: "not-authenticated" });
-
+  it("routes signed-out create attempts through task.create dispatch", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -128,14 +130,13 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
-    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(getTaskCreateCalls()).toHaveLength(1);
   });
 
   it("disables the mobile primary send button when the textbox is actually empty", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -153,7 +154,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -181,7 +181,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -210,12 +209,9 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("shows a blocker panel and opens channel remediation when sending without a selected channel tag", () => {
-    const onSubmit = vi.fn(async () => successResult);
-
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -232,16 +228,13 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(blockPanel).toHaveTextContent("Can't post yet");
     expect(blockPanel).toHaveTextContent("Add or select at least one #channel");
     expect(screen.getByRole("button", { name: "#general" })).toBeInTheDocument();
-    expect(onSubmit).not.toHaveBeenCalled();
+    expect(getTaskCreateCalls()).toHaveLength(0);
   });
 
   it("shows the blocker CTA when content has only tags and mentions", () => {
-    const onSubmit = vi.fn(async () => successResult);
-
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -256,17 +249,15 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(sendButton).toBeEnabled();
     expect(sendButton).toHaveAttribute("title", "Write a message first");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(onSubmit).not.toHaveBeenCalled();
+    expect(getTaskCreateCalls()).toHaveLength(0);
   });
 
   it("keeps focus and preserves date and priority after mobile submit", async () => {
-    const onSubmit = vi.fn(async () => successResult);
     const dueDate = new Date("2026-03-19T00:00:00.000Z");
 
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="calendar"
         defaultContent="Ship #general"
         selectedCalendarDate={dueDate}
@@ -281,7 +272,7 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.click(screen.getByRole("button", { name: /^create task$/i }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(getTaskCreateCalls()).toHaveLength(1);
     });
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
@@ -291,12 +282,9 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("opens relay selection when task posting is blocked by multiple active feeds", () => {
-    const onSubmit = vi.fn(async () => successResult);
-
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="tree"
         relays={[
           { id: "relay-one", name: "Relay One", icon: "D", isActive: true },
@@ -314,16 +302,13 @@ describe("UnifiedBottomBar auth gating", () => {
 
     expect(screen.getByRole("button", { name: /relay one/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /relay two/i })).toBeInTheDocument();
-    expect(onSubmit).not.toHaveBeenCalled();
+    expect(getTaskCreateCalls()).toHaveLength(0);
   });
 
   it("allows focused-subtask send without explicit tags", async () => {
-    const onSubmit = vi.fn(async () => successResult);
-
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="tree"
         focusedTaskId="parent-task"
         relays={relays}
@@ -338,28 +323,34 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Follow-up details for parent task",
-        [],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expect(getTaskCreateCalls()).toHaveLength(1);
+    });
+    expect(getTaskCreateCalls()[0]).toEqual({
+      type: "task.create",
+      content: "Follow-up details for parent task",
+      tags: [],
+      relays: ["demo"],
+      taskType: "task",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: "parent-task",
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
     });
   });
 
   it("keeps compose text when submit returns a failure result", async () => {
-    const onSubmit = vi.fn(async () => ({ ok: false as const, reason: "relay-selection" as const }));
+    dispatchFeedInteraction.mockImplementation(async (intent: FeedInteractionIntent) => ({
+      envelope: { id: 1, dispatchedAtMs: Date.now(), intent },
+      outcome: { status: "handled" as const, result: { ok: false as const, reason: "relay-selection" as const } },
+    }));
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -373,18 +364,15 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(getTaskCreateCalls()).toHaveLength(1);
     });
     expect(field.value).toBe("Ship #general");
   });
 
   it("submits as comment on Alt+Enter when no hashtag token is being typed", () => {
-    const onSubmit = vi.fn(async () => successResult);
-
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -397,29 +385,28 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(composeField, { target: { value: "Ship #general now" } });
 
     fireEvent.keyDown(composeField, { key: "Enter", altKey: true });
-    expect(onSubmit).toHaveBeenCalledWith(
-      "Ship #general now",
-      ["general"],
-      ["demo"],
-      "comment",
-      undefined,
-      undefined,
-      "due",
-      [],
-      undefined,
-      [],
-      undefined
-    );
-
+    expect(getTaskCreateCalls()[0]).toEqual({
+      type: "task.create",
+      content: "Ship #general now",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "comment",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
+    });
   });
 
   it("submits current kind on Ctrl+Enter and Cmd+Enter", () => {
-    const onSubmit = vi.fn(async () => successResult);
-
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -432,44 +419,47 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(composeField, { target: { value: "Ship #general" } });
 
     fireEvent.keyDown(composeField, { key: "Enter", ctrlKey: true });
-    expect(onSubmit).toHaveBeenCalledWith(
-      "Ship #general",
-      ["general"],
-      ["demo"],
-      "task",
-      undefined,
-      undefined,
-      "due",
-      [],
-      undefined,
-      [],
-      undefined
-    );
+    expect(getTaskCreateCalls()[0]).toEqual({
+      type: "task.create",
+      content: "Ship #general",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "task",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
+    });
 
     fireEvent.change(composeField, { target: { value: "Ship again #general" } });
     fireEvent.keyDown(composeField, { key: "Enter", metaKey: true });
-    expect(onSubmit).toHaveBeenLastCalledWith(
-      "Ship again #general",
-      ["general"],
-      ["demo"],
-      "task",
-      undefined,
-      undefined,
-      "due",
-      [],
-      undefined,
-      [],
-      undefined
-    );
+    expect(getTaskCreateCalls().at(-1)).toEqual({
+      type: "task.create",
+      content: "Ship again #general",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "task",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
+    });
   });
 
   it("submits comment when add comment button is tapped", () => {
-    const onSubmit = vi.fn(async () => successResult);
-
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -483,27 +473,28 @@ describe("UnifiedBottomBar auth gating", () => {
     openMobileComposeOptions();
     fireEvent.click(getMobileCommentAction());
 
-    expect(onSubmit).toHaveBeenCalledWith(
-      "Reply #general",
-      ["general"],
-      ["demo"],
-      "comment",
-      undefined,
-      undefined,
-      "due",
-      [],
-      undefined,
-      [],
-      undefined
-    );
+    expect(getTaskCreateCalls()[0]).toEqual({
+      type: "task.create",
+      content: "Reply #general",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "comment",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
+    });
   });
 
   it("shows offer/request options in feed view and submits listing metadata", async () => {
-    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -520,31 +511,33 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(screen.getByRole("button", { name: /post request/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /post request/i }));
-    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(getTaskCreateCalls()).toHaveLength(1));
 
-    expect(onSubmit).toHaveBeenCalledWith(
-      "Need help #general",
-      ["general"],
-      ["demo"],
-      "request",
-      undefined,
-      undefined,
-      "due",
-      [],
-      undefined,
-      [],
-      {
+    expect(getTaskCreateCalls()[0]).toEqual({
+      type: "task.create",
+      content: "Need help #general",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "request",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: {
         title: "Need help",
         status: "active",
-      }
-    );
+      },
+      locationGeohash: undefined,
+    });
   });
 
   it("does not offer comment send options in tree view without a focused parent", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="tree"
         focusedTaskId={null}
         relays={relays}
@@ -563,7 +556,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="tree"
         focusedTaskId="parent-1"
         relays={relays}
@@ -590,7 +582,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         relays={relays}
         channels={channels}
@@ -607,7 +598,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         defaultContent="Ship #general"
         relays={relays}
@@ -626,7 +616,6 @@ describe("UnifiedBottomBar auth gating", () => {
     const { rerender } = render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         defaultContent="Ship #general"
         selectedCalendarDate={new Date()}
@@ -640,7 +629,6 @@ describe("UnifiedBottomBar auth gating", () => {
     rerender(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="calendar"
         defaultContent="Ship #general"
         selectedCalendarDate={nextDay}
@@ -658,7 +646,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -698,7 +685,6 @@ describe("UnifiedBottomBar auth gating", () => {
       return (
         <UnifiedBottomBar
           searchQuery=""
-          onSubmit={() => ({ ok: true, mode: "local" })}
           currentView="feed"
           relays={relays}
           channels={statefulChannels}
@@ -747,7 +733,6 @@ describe("UnifiedBottomBar auth gating", () => {
       return (
         <UnifiedBottomBar
           searchQuery=""
-          onSubmit={() => ({ ok: true, mode: "local" })}
           currentView="feed"
           relays={relays}
           channels={statefulChannels}
@@ -771,7 +756,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -798,7 +782,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -819,7 +802,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={autocompleteChannels}
@@ -846,7 +828,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -867,7 +848,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={autocompleteChannels}
@@ -886,11 +866,9 @@ describe("UnifiedBottomBar auth gating", () => {
   });
 
   it("adds mention tag via Alt+Enter without inserting mention text", async () => {
-    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -912,27 +890,28 @@ describe("UnifiedBottomBar auth gating", () => {
     });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
-    expect(onSubmit).toHaveBeenLastCalledWith(
-      "Ship #general ",
-      ["general"],
-      ["demo"],
-      "task",
-      undefined,
-      undefined,
-      "due",
-      ["e".repeat(64)],
-      undefined,
-      [],
-      undefined
-    );
+    expect(getTaskCreateCalls().at(-1)).toEqual({
+      type: "task.create",
+      content: "Ship #general ",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "task",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: ["e".repeat(64)],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
+    });
   });
 
   it("uses Alt+Click on mention autocomplete option to add mention tag-only", async () => {
-    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -957,27 +936,28 @@ describe("UnifiedBottomBar auth gating", () => {
     });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
-    expect(onSubmit).toHaveBeenLastCalledWith(
-      "Ship #general ",
-      ["general"],
-      ["demo"],
-      "task",
-      undefined,
-      undefined,
-      "due",
-      ["e".repeat(64)],
-      undefined,
-      [],
-      undefined
-    );
+    expect(getTaskCreateCalls().at(-1)).toEqual({
+      type: "task.create",
+      content: "Ship #general ",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "task",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: ["e".repeat(64)],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
+    });
   });
 
   it("submits on Cmd/Ctrl+Enter even when mention autocomplete is open", async () => {
-    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -993,17 +973,15 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.keyDown(field, { key: "Enter", metaKey: true });
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalled();
+      expect(getTaskCreateCalls()).toHaveLength(1);
     });
-    expect((onSubmit.mock.calls as unknown[][])[0][0]).toContain("@al");
+    expect(getTaskCreateCalls()[0].content).toContain("@al");
   });
 
   it("adds hashtag tag via Alt+Enter without keeping hashtag text, including new tags", async () => {
-    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -1026,27 +1004,28 @@ describe("UnifiedBottomBar auth gating", () => {
     });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
-    expect(onSubmit).toHaveBeenLastCalledWith(
-      "Ship ",
-      ["brandnew"],
-      ["demo"],
-      "task",
-      undefined,
-      undefined,
-      "due",
-      [],
-      undefined,
-      [],
-      undefined
-    );
+    expect(getTaskCreateCalls().at(-1)).toEqual({
+      type: "task.create",
+      content: "Ship ",
+      tags: ["brandnew"],
+      relays: ["demo"],
+      taskType: "task",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
+    });
   });
 
   it("uses Alt+Click on hashtag autocomplete option to add tag-only", async () => {
-    const onSubmit = vi.fn(async () => successResult);
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={autocompleteChannels}
@@ -1071,19 +1050,22 @@ describe("UnifiedBottomBar auth gating", () => {
     });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
-    expect(onSubmit).toHaveBeenLastCalledWith(
-      "Ship ",
-      ["general"],
-      ["demo"],
-      "task",
-      undefined,
-      undefined,
-      "due",
-      [],
-      undefined,
-      [],
-      undefined
-    );
+    expect(getTaskCreateCalls().at(-1)).toEqual({
+      type: "task.create",
+      content: "Ship ",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "task",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: undefined,
+    });
   });
 
   it("captures location directly from the location button without opening a selector menu", () => {
@@ -1100,7 +1082,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -1126,12 +1107,9 @@ describe("UnifiedBottomBar auth gating", () => {
       configurable: true,
       value: { getCurrentPosition },
     });
-    const onSubmit = vi.fn(async () => successResult);
-
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -1146,22 +1124,24 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(getTaskCreateCalls()).toHaveLength(1);
     });
-    expect(onSubmit).toHaveBeenCalledWith(
-      "Ship #general",
-      ["general"],
-      ["demo"],
-      "task",
-      undefined,
-      undefined,
-      "due",
-      [],
-      undefined,
-      [],
-      undefined,
-      expectedGeohash
-    );
+    expect(getTaskCreateCalls()[0]).toEqual({
+      type: "task.create",
+      content: "Ship #general",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "task",
+      dueDate: undefined,
+      dueTime: undefined,
+      dateType: "due",
+      parentId: undefined,
+      explicitMentionPubkeys: [],
+      priority: undefined,
+      attachments: [],
+      nip99: undefined,
+      locationGeohash: expectedGeohash,
+    });
   });
 
   it("removes the document pointerdown listener on unmount", () => {
@@ -1171,7 +1151,6 @@ describe("UnifiedBottomBar auth gating", () => {
     const { unmount } = render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -1196,12 +1175,10 @@ describe("UnifiedBottomBar auth gating", () => {
   it("clears the pending send-launch timeout on unmount", async () => {
     vi.useFakeTimers();
     const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
-    const onSubmit = vi.fn(() => successResult);
 
     const { unmount } = render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={onSubmit}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -1216,7 +1193,7 @@ describe("UnifiedBottomBar auth gating", () => {
 
     await Promise.resolve();
     await Promise.resolve();
-    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(getTaskCreateCalls()).toHaveLength(1);
 
     unmount();
 
@@ -1229,7 +1206,6 @@ describe("UnifiedBottomBar auth gating", () => {
     const { unmount } = render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -1260,7 +1236,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}
@@ -1300,7 +1275,6 @@ describe("UnifiedBottomBar auth gating", () => {
     render(
       <UnifiedBottomBar
         searchQuery=""
-        onSubmit={() => ({ ok: true, mode: "local" })}
         currentView="feed"
         relays={relays}
         channels={channels}

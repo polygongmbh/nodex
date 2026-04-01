@@ -1,15 +1,15 @@
-import { TaskComposer } from "./TaskComposer";
+import { TaskCreateComposer } from "./TaskCreateComposer";
 import type {
-  ComposerSubmit,
   ComposeRestoreRequest,
+  TaskInitialStatus,
 } from "@/types";
 
 interface SharedViewComposerProps {
   visible: boolean;
-  onSubmit: ComposerSubmit;
   onCancel?: () => void;
   draftStorageKey: string;
   parentId?: string;
+  initialStatus?: TaskInitialStatus;
   forceExpanded?: boolean;
   forceExpandSignal?: number;
   onExpandedChange?: (expanded: boolean) => void;
@@ -19,6 +19,7 @@ interface SharedViewComposerProps {
   } | null;
   defaultContent?: string;
   className?: string;
+  collapseOnSuccess?: boolean;
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
@@ -26,16 +27,17 @@ interface SharedViewComposerProps {
 
 export function SharedViewComposer({
   visible,
-  onSubmit,
   onCancel,
   draftStorageKey,
   parentId,
+  initialStatus,
   forceExpanded = false,
   forceExpandSignal,
   onExpandedChange,
   mentionRequest = null,
   defaultContent = "",
   className = "relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0",
+  collapseOnSuccess = false,
   allowComment = true,
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
@@ -44,18 +46,19 @@ export function SharedViewComposer({
 
   return (
     <div className={className} data-onboarding="focused-compose">
-      <TaskComposer
-        onSubmit={onSubmit}
+      <TaskCreateComposer
         onCancel={onCancel ?? (() => {})}
         compact
-        adaptiveSize
         draftStorageKey={draftStorageKey}
         parentId={parentId}
+        initialStatus={initialStatus}
+        adaptiveSize
         forceExpanded={forceExpanded}
         forceExpandSignal={forceExpandSignal}
         onExpandedChange={onExpandedChange}
         mentionRequest={mentionRequest}
         defaultContent={defaultContent}
+        collapseOnSuccess={collapseOnSuccess}
         allowComment={allowComment}
         allowFeedMessageTypes={allowFeedMessageTypes}
         composeRestoreRequest={composeRestoreRequest}

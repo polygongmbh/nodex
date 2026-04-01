@@ -2,13 +2,13 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect, useState, type ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
-import type { Channel, OnNewTask, Person, Relay, Task } from "@/types";
+import type { Channel, Person, Relay, Task } from "@/types";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
 import {
   FeedTaskViewModelProvider,
   type FeedTaskViewModel,
 } from "@/features/feed-page/views/feed-task-view-model-context";
-import { FeedTaskCommandProvider } from "@/features/feed-page/views/feed-task-command-context";
+import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 const ndkMock = {
   user: null as null | {
@@ -72,11 +72,9 @@ vi.mock("./UnifiedBottomBar", () => ({
   UnifiedBottomBar: ({
     searchQuery,
     canCreateContent,
-    onSubmit,
   }: {
     searchQuery: string;
     canCreateContent: boolean;
-    onSubmit: (...args: unknown[]) => unknown;
   }) => {
     const [value, setValue] = useState(searchQuery);
 
@@ -98,7 +96,13 @@ vi.mock("./UnifiedBottomBar", () => ({
           <button
             type="button"
             onClick={() => {
-              void onSubmit(value, ["general"], ["demo"], "task");
+              void dispatchFeedInteraction({
+                type: "task.create",
+                content: value,
+                tags: ["general"],
+                relays: ["demo"],
+                taskType: "task",
+              });
             }}
           >
             Sign in to create
@@ -135,7 +139,6 @@ const relays: Relay[] = [makeRelay()];
 const channels: Channel[] = [makeChannel()];
 const people: Person[] = [makePerson({ id: "me", name: "Me", displayName: "Me" })];
 const tasks: Task[] = [];
-const defaultOnNewTask = () => ({ ok: true as const, mode: "local" as const });
 
 type MobileLayoutProps = ComponentProps<typeof MobileLayout>;
 type MobileLayoutOverrides = {
@@ -144,14 +147,11 @@ type MobileLayoutOverrides = {
   composerState?: Partial<NonNullable<MobileLayoutProps["composerState"]>>;
   publishState?: Partial<NonNullable<MobileLayoutProps["publishState"]>>;
   taskViewModel?: Partial<FeedTaskViewModel>;
-  onNewTask?: OnNewTask;
+  surfaceState?: Partial<FeedSurfaceState>;
 };
 
 const baseProps: MobileLayoutProps = {
   viewState: {
-    relays,
-    channels,
-    people,
     canCreateContent: true,
     currentView: "tree",
   },
@@ -167,38 +167,68 @@ const baseTaskViewModel: FeedTaskViewModel = {
   currentUser: people[0],
   searchQuery: "",
 };
+const baseSurfaceState: FeedSurfaceState = {
+  relays,
+  channels,
+  composeChannels: channels,
+  people,
+  searchQuery: "",
+  channelMatchMode: "and",
+};
+
+function renderMobileLayoutTree({
+  taskViewModel,
+  surfaceState,
+  props,
+}: {
+  taskViewModel: FeedTaskViewModel;
+  surfaceState: FeedSurfaceState;
+  props: MobileLayoutProps;
+}) {
+  return (
+    <FeedSurfaceProvider value={surfaceState}>
+      <FeedTaskViewModelProvider value={taskViewModel}>
+        <MobileLayout {...props} />
+      </FeedTaskViewModelProvider>
+    </FeedSurfaceProvider>
+  );
+}
 
 function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
   const taskViewModel: FeedTaskViewModel = {
     ...baseTaskViewModel,
     ...overrides.taskViewModel,
   };
-  const onNewTask = overrides.onNewTask ?? defaultOnNewTask;
+  const surfaceState: FeedSurfaceState = {
+    ...baseSurfaceState,
+    relays: taskViewModel.relays,
+    channels: taskViewModel.channels,
+    composeChannels: taskViewModel.composeChannels ?? taskViewModel.channels,
+    people: taskViewModel.people,
+    searchQuery: taskViewModel.searchQuery ?? "",
+    channelMatchMode: taskViewModel.channelMatchMode ?? "and",
+    ...overrides.surfaceState,
+  };
+  const props: MobileLayoutProps = {
+    viewState: {
+      ...baseProps.viewState,
+      ...overrides.viewState,
+    },
+    actions: {
+      ...baseProps.actions,
+      ...overrides.actions,
+    },
+    composerState: {
+      ...baseProps.composerState,
+      ...overrides.composerState,
+    },
+    publishState: {
+      ...baseProps.publishState,
+      ...overrides.publishState,
+    },
+  };
 
-  return render(
-    <FeedTaskCommandProvider value={{ onNewTask }}>
-      <FeedTaskViewModelProvider value={taskViewModel}>
-        <MobileLayout
-          viewState={{
-            ...baseProps.viewState,
-            ...overrides.viewState,
-          }}
-          actions={{
-            ...baseProps.actions,
-            ...overrides.actions,
-          }}
-          composerState={{
-            ...baseProps.composerState,
-            ...overrides.composerState,
-          }}
-          publishState={{
-            ...baseProps.publishState,
-            ...overrides.publishState,
-          }}
-        />
-      </FeedTaskViewModelProvider>
-    </FeedTaskCommandProvider>
-  );
+  return render(renderMobileLayoutTree({ taskViewModel, surfaceState, props }));
 }
 
 function setSignedInUser() {
@@ -209,18 +239,23 @@ describe("MobileLayout auth wiring", () => {
   it("uses auth state (not current user) to gate compose", () => {
     ndkMock.user = null;
     ndkMock.needsProfileSetup = false;
-    const onNewTask = vi.fn().mockResolvedValue({ ok: false, reason: "not-authenticated" });
+    dispatchFeedInteraction.mockClear();
 
     renderMobileLayout({
       viewState: { canCreateContent: false },
-      onNewTask,
     });
 
     const field = screen.getByPlaceholderText(/search or create task/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: "Ship #general" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in to create/i }));
 
-    expect(onNewTask).toHaveBeenCalledTimes(1);
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "task.create",
+      content: "Ship #general",
+      tags: ["general"],
+      relays: ["demo"],
+      taskType: "task",
+    });
   });
 
   it("redirects to manage view and opens profile editor when profile completion prompt signal increments", async () => {
@@ -241,18 +276,18 @@ describe("MobileLayout auth wiring", () => {
     ndkMock.needsProfileSetup = false;
 
     rerender(
-      <FeedTaskCommandProvider value={{ onNewTask: defaultOnNewTask }}>
-        <FeedTaskViewModelProvider value={baseTaskViewModel}>
-          <MobileLayout
-            viewState={{
-              ...baseProps.viewState,
-              canCreateContent: true,
-              profileCompletionPromptSignal: 1,
-            }}
-            actions={baseProps.actions}
-          />
-        </FeedTaskViewModelProvider>
-      </FeedTaskCommandProvider>
+      renderMobileLayoutTree({
+        taskViewModel: baseTaskViewModel,
+        surfaceState: baseSurfaceState,
+        props: {
+          viewState: {
+            ...baseProps.viewState,
+            canCreateContent: true,
+            profileCompletionPromptSignal: 1,
+          },
+          actions: baseProps.actions,
+        },
+      })
     );
 
     await waitFor(() => {
@@ -365,7 +400,7 @@ describe("MobileLayout auth wiring", () => {
     ];
 
     renderMobileLayout({
-      viewState: {
+      surfaceState: {
         channels: [
           makeChannel({ id: "nodex", name: "nodex", filterState: "included" }),
           makeChannel({ id: "nostr", name: "nostr", filterState: "included" }),
@@ -403,6 +438,8 @@ describe("MobileLayout auth wiring", () => {
     renderMobileLayout({
       viewState: {
         currentView: "list",
+      },
+      surfaceState: {
         channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
       },
       taskViewModel: {
@@ -468,20 +505,20 @@ describe("MobileLayout auth wiring", () => {
     });
 
     rerender(
-      <FeedTaskCommandProvider value={{ onNewTask: defaultOnNewTask }}>
-        <FeedTaskViewModelProvider value={baseTaskViewModel}>
-          <MobileLayout
-            viewState={{
-              ...baseProps.viewState,
-              canCreateContent: true,
-              currentView: "tree",
-              isOnboardingOpen: true,
-              activeOnboardingStepId: "mobile-compose-combobox",
-            }}
-            actions={baseProps.actions}
-          />
-        </FeedTaskViewModelProvider>
-      </FeedTaskCommandProvider>
+      renderMobileLayoutTree({
+        taskViewModel: baseTaskViewModel,
+        surfaceState: baseSurfaceState,
+        props: {
+          viewState: {
+            ...baseProps.viewState,
+            canCreateContent: true,
+            currentView: "tree",
+            isOnboardingOpen: true,
+            activeOnboardingStepId: "mobile-compose-combobox",
+          },
+          actions: baseProps.actions,
+        },
+      })
     );
 
     await waitFor(() => {
@@ -503,18 +540,18 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.queryByTestId("feed-view")).not.toBeInTheDocument();
 
     rerender(
-      <FeedTaskCommandProvider value={{ onNewTask: defaultOnNewTask }}>
-        <FeedTaskViewModelProvider value={baseTaskViewModel}>
-          <MobileLayout
-            viewState={{
-              ...baseProps.viewState,
-              canCreateContent: true,
-              currentView: "feed",
-            }}
-            actions={baseProps.actions}
-          />
-        </FeedTaskViewModelProvider>
-      </FeedTaskCommandProvider>
+      renderMobileLayoutTree({
+        taskViewModel: baseTaskViewModel,
+        surfaceState: baseSurfaceState,
+        props: {
+          viewState: {
+            ...baseProps.viewState,
+            canCreateContent: true,
+            currentView: "feed",
+          },
+          actions: baseProps.actions,
+        },
+      })
     );
 
     await waitFor(() => {

@@ -26,7 +26,6 @@ import {
   TaskType,
   TaskDateType,
   TaskCreateResult,
-  ComposerSubmit,
   ComposeRestoreRequest,
   ComposeAttachment,
   PublishedAttachment,
@@ -72,7 +71,7 @@ import {
 } from "@/domain/content/task-priority";
 
 interface TaskComposerProps {
-  onSubmit: ComposerSubmit;
+  onSubmit: TaskComposerSubmit;
   relays?: Relay[];
   channels?: Channel[];
   people?: Person[];
@@ -90,12 +89,27 @@ interface TaskComposerProps {
     mention: string;
     id: number;
   } | null;
+  collapseOnSuccess?: boolean;
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
 type ComposerMessageType = TaskType | FeedMessageType;
+export type TaskComposerSubmit = (
+  content: string,
+  tags: string[],
+  relays: string[],
+  taskType: string,
+  dueDate?: Date,
+  dueTime?: string,
+  dateType?: TaskDateType,
+  explicitMentionPubkeys?: string[],
+  priority?: number,
+  attachments?: PublishedAttachment[],
+  nip99?: Nip99Metadata,
+  locationGeohash?: string
+) => Promise<TaskCreateResult> | TaskCreateResult;
 
 interface ComposeDraftState {
   content?: string;
@@ -212,6 +226,7 @@ export function TaskComposer({
   forceExpanded = false,
   forceExpandSignal,
   mentionRequest = null,
+  collapseOnSuccess = false,
   allowComment = true,
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
@@ -916,35 +931,23 @@ export function TaskComposer({
     const submittedPriority = storedPriorityFromDisplay(priority);
     try {
       const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
+      const submitArgs = [
+        content,
+        submitTags,
+        effectiveSelectedRelayIds,
+        effectiveTaskType,
+        submissionDueDate,
+        submissionDueTime,
+        submissionDateType,
+        explicitMentionPubkeys,
+        submittedPriority,
+        uploadedAttachments,
+        listingMetadata,
+      ] as const;
       result = await Promise.resolve(
         normalizedLocationGeohash
-          ? onSubmit(
-              content,
-              submitTags,
-              effectiveSelectedRelayIds,
-              effectiveTaskType,
-              submissionDueDate,
-              submissionDueTime,
-              submissionDateType,
-              explicitMentionPubkeys,
-              submittedPriority,
-              uploadedAttachments,
-              listingMetadata,
-              normalizedLocationGeohash
-            )
-          : onSubmit(
-              content,
-              submitTags,
-              effectiveSelectedRelayIds,
-              effectiveTaskType,
-              submissionDueDate,
-              submissionDueTime,
-              submissionDateType,
-              explicitMentionPubkeys,
-              submittedPriority,
-              uploadedAttachments,
-              listingMetadata
-            )
+          ? onSubmit(...submitArgs, normalizedLocationGeohash)
+          : onSubmit(...submitArgs)
       );
     } catch (error) {
       console.error("Task submit failed", error);
@@ -980,7 +983,9 @@ export function TaskComposer({
     setIsNip99SummaryTouched(false);
     setAttachments([]);
     attachmentFileRef.current = {};
-    if (adaptiveSize) {
+    if (collapseOnSuccess && adaptiveSize) {
+      setIsExpanded(false);
+    } else if (adaptiveSize) {
       setIsExpanded(true);
     }
     window.setTimeout(() => {

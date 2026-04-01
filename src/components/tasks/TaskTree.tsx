@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { Task, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, Nip99Metadata } from "@/types";
+import { Task, Person, ComposeRestoreRequest } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
@@ -49,7 +49,7 @@ export function TaskTree({
   isHydrating = false,
 }: TaskTreeProps) {
   const interactionModel = useFeedViewInteractionModel();
-  const { authPolicy, onNewTask, focusSidebar, focusTask } = useTaskViewServices();
+  const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
@@ -78,40 +78,6 @@ export function TaskTree({
       return;
     }
     focusTask(currentContextTask.parentId || null);
-  };
-
-  const handleNewTask = async (
-    content: string,
-    taskTags: string[],
-    taskRelays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ): Promise<TaskCreateResult> => {
-    const result = await Promise.resolve(onNewTask(
-      content,
-      taskTags,
-      taskRelays,
-      taskType,
-      dueDate,
-      dueTime,
-      dateType,
-      currentContextId ?? undefined,
-      undefined,
-      explicitMentionPubkeys,
-      priority,
-      attachments,
-      nip99
-    ));
-    if (result.ok) {
-      setIsComposerExpanded(false);
-    }
-    return result;
   };
 
   // Flatten visible task IDs for keyboard navigation
@@ -236,7 +202,6 @@ export function TaskTree({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       <SharedViewComposer
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
-        onSubmit={handleNewTask}
         onCancel={() => setIsComposerExpanded(false)}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={currentContextId || undefined}
@@ -247,6 +212,7 @@ export function TaskTree({
         composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
         defaultContent={composerDefaultContent}
+        collapseOnSuccess
         allowComment={Boolean(currentContextId)}
       />
 

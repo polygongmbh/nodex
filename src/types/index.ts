@@ -78,20 +78,6 @@ export type OnNewTask = (
   nip99?: Nip99Metadata,
   locationGeohash?: string
 ) => Promise<TaskCreateResult> | TaskCreateResult;
-export type ComposerSubmit = (
-  content: string,
-  tags: string[],
-  relays: string[],
-  taskType: string,
-  dueDate?: Date,
-  dueTime?: string,
-  dateType?: TaskDateType,
-  explicitMentionPubkeys?: string[],
-  priority?: number,
-  attachments?: PublishedAttachment[],
-  nip99?: Nip99Metadata,
-  locationGeohash?: string
-) => Promise<TaskCreateResult> | TaskCreateResult;
 
 export interface TaskStateUpdate {
   id: string;

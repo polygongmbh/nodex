@@ -3,12 +3,8 @@ import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, C
 import {
   Task,
   Person,
-  TaskCreateResult,
-  TaskDateType,
   Nip99ListingStatus,
   ComposeRestoreRequest,
-  PublishedAttachment,
-  Nip99Metadata,
   TaskStatus,
   RawNostrEvent,
 } from "@/types";
@@ -208,7 +204,7 @@ export function FeedView({
 }: FeedViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { authPolicy, onNewTask, focusSidebar, focusTask } = useTaskViewServices();
+  const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { channels, people } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
   const interactionModel = useFeedViewInteractionModel();
@@ -415,36 +411,6 @@ export function FeedView({
       }
     }
   }, [keyboardFocusedTaskId]);
-
-  const handleNewTask = (
-    content: string,
-    taskTags: string[],
-    taskRelays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ): Promise<TaskCreateResult> => {
-    return Promise.resolve(onNewTask(
-      content,
-      taskTags,
-      taskRelays,
-      taskType,
-      dueDate,
-      dueTime,
-      dateType,
-      focusedTaskId || undefined,
-      undefined,
-      explicitMentionPubkeys,
-      priority,
-      attachments,
-      nip99
-    ));
-  };
 
   const canCompleteTask = (task: Task) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
@@ -1134,7 +1100,6 @@ export function FeedView({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       <SharedViewComposer
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
-        onSubmit={handleNewTask}
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
         parentId={focusedTaskId || undefined}

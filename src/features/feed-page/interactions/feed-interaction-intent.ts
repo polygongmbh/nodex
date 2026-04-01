@@ -2,6 +2,9 @@ import type {
   ChannelMatchMode,
   Nip99ListingStatus,
   Person,
+  PublishedAttachment,
+  Nip99Metadata,
+  TaskInitialStatus,
   TaskDateType,
   TaskStatus,
 } from "@/types";
@@ -51,6 +54,23 @@ export type FeedInteractionIntent =
   | { type: "sidebar.quickFilter.minPriority.change"; priority: number }
   | { type: "sidebar.quickFilter.priorityEnabled.change"; enabled: boolean }
   | { type: "task.focus.change"; taskId: string | null }
+  | {
+      type: "task.create";
+      content: string;
+      tags: string[];
+      relays: string[];
+      taskType: string;
+      dueDate?: Date;
+      dueTime?: string;
+      dateType?: TaskDateType;
+      parentId?: string;
+      initialStatus?: TaskInitialStatus;
+      explicitMentionPubkeys?: string[];
+      priority?: number;
+      attachments?: PublishedAttachment[];
+      nip99?: Nip99Metadata;
+      locationGeohash?: string;
+    }
   | { type: "task.toggleComplete"; taskId: string }
   | { type: "task.changeStatus"; taskId: string; status: TaskStatus }
   | { type: "task.updateDueDate"; taskId: string; dueDate?: Date; dueTime?: string; dateType?: TaskDateType }

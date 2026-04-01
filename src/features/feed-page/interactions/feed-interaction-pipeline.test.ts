@@ -71,4 +71,17 @@ describe("feed interaction pipeline", () => {
     expect(onUnhandledIntent).toHaveBeenCalledTimes(1);
     expect(onUnhandledIntent.mock.calls[0][0].intent.type).toBe("ui.focusSidebar");
   });
+
+  it("exposes the handler result on the interaction outcome", async () => {
+    const bus = createFeedInteractionBus({
+      handlers: {
+        "ui.focusSidebar": async () => ({ ok: true }),
+      },
+    });
+
+    const event = await bus.dispatch({ type: "ui.focusSidebar" });
+
+    expect(event.outcome.status).toBe("handled");
+    expect(event.outcome.result).toEqual({ ok: true });
+  });
 });

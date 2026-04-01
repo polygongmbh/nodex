@@ -4,15 +4,11 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import {
   Task,
   Person,
-  TaskCreateResult,
-  TaskDateType,
   TaskInitialStatus,
   TaskStatus,
   ComposeRestoreRequest,
-  PublishedAttachment,
-  Nip99Metadata,
 } from "@/types";
-import { TaskComposer } from "./TaskComposer";
+import { TaskCreateComposer } from "./TaskCreateComposer";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { hasTaskMentionChips } from "./TaskMentionChips";
@@ -70,7 +66,7 @@ export function KanbanView({
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { authPolicy, guardModify, onNewTask, focusSidebar, focusTask } = useTaskViewServices();
+  const { authPolicy, guardModify, focusSidebar, focusTask } = useTaskViewServices();
   const { people } = useFeedSurfaceState();
   const columns = useMemo(() => getColumns((key) => t(key)), [t]);
   const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
@@ -173,40 +169,6 @@ export function KanbanView({
     setOptimisticStatusByTaskId((previous) => ({ ...previous, [taskId]: newStatus }));
     
     dispatchStatusChange(taskId, newStatus);
-  };
-
-  const handleNewTask = async (
-    content: string,
-    taskTags: string[],
-    taskRelays: string[],
-    taskType: string,
-    dueDate?: Date,
-    dueTime?: string,
-    dateType?: TaskDateType,
-    explicitMentionPubkeys?: string[],
-    priority?: number,
-    attachments?: PublishedAttachment[],
-    nip99?: Nip99Metadata
-  ): Promise<TaskCreateResult> => {
-    const result = await Promise.resolve(onNewTask(
-      content,
-      taskTags,
-      taskRelays,
-      taskType,
-      dueDate,
-      dueTime,
-      dateType,
-      focusedTaskId || undefined,
-      composingColumn || undefined,
-      explicitMentionPubkeys,
-      priority,
-      attachments,
-      nip99
-    ));
-    if (result.ok) {
-      setComposingColumn(null);
-    }
-    return result;
   };
 
   // Flatten all visible task IDs for keyboard navigation (across all columns)
@@ -374,10 +336,12 @@ export function KanbanView({
                         <X className="w-3 h-3" />
                       </button>
                     </div>
-                      <TaskComposer
-                        onSubmit={handleNewTask}
+                      <TaskCreateComposer
                         onCancel={() => setComposingColumn(null)}
                         compact
+                        parentId={focusedTaskId || undefined}
+                        initialStatus={composingColumn || undefined}
+                        closeOnSuccess
                         allowComment={false}
                         composeRestoreRequest={composeRestoreRequest}
                       />
