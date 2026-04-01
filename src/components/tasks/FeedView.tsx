@@ -250,6 +250,7 @@ export function FeedView({
     allTasks,
     focusedTaskId,
     searchQueryOverride,
+    isMobile,
   });
 
   useEffect(() => {

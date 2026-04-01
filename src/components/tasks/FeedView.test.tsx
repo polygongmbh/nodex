@@ -1,10 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
 import i18n from "@/lib/i18n/config";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
+import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: (): { user: null } => ({ user: null }),
@@ -44,6 +46,31 @@ vi.mock("@/features/feed-page/interactions/feed-interaction-context", () => ({
 beforeEach(() => {
   dispatchFeedInteraction.mockClear();
 });
+
+type FeedViewProps = ComponentProps<typeof FeedView>;
+
+function renderFeedView(
+  props: FeedViewProps,
+  surfaceOverrides: Partial<FeedSurfaceState> = {}
+) {
+  const surfaceState: FeedSurfaceState = {
+    relays,
+    channels,
+    composeChannels: channels,
+    people: [author],
+    mentionablePeople: [author],
+    searchQuery: "",
+    quickFilters: normalizeQuickFilterState(),
+    channelMatchMode: "and",
+    ...surfaceOverrides,
+  };
+
+  return render(
+    <FeedSurfaceProvider value={surfaceState}>
+      <FeedView {...props} />
+    </FeedSurfaceProvider>
+  );
+}
 
 describe("FeedView", () => {
   it("focuses breadcrumb target without bubbling card focus", () => {
@@ -157,28 +184,41 @@ describe("FeedView", () => {
       })
     );
 
-    const { container, rerender } = render(
-      <FeedView
-        tasks={manyTasks}
-        allTasks={manyTasks}
-        relays={relays}
-        channels={[makeChannel({ id: "frontend", name: "frontend", filterState: "included" })]}
-        people={[author]}
-        searchQuery=""
-      />
+    const includedChannel = makeChannel({ id: "frontend", name: "frontend", filterState: "included" });
+    const neutralChannel = makeChannel({ id: "frontend", name: "frontend", filterState: "neutral" });
+    const { container, rerender } = renderFeedView(
+      {
+        tasks: manyTasks,
+        allTasks: manyTasks,
+        searchQueryOverride: "",
+      },
+      {
+        channels: [includedChannel],
+        composeChannels: [includedChannel],
+      }
     );
 
     expect(container.querySelectorAll("[data-task-id]").length).toBe(10);
 
     rerender(
-      <FeedView
-        tasks={manyTasks}
-        allTasks={manyTasks}
-        relays={relays}
-        channels={[makeChannel({ id: "frontend", name: "frontend", filterState: "neutral" })]}
-        people={[author]}
-        searchQuery=""
-      />
+      <FeedSurfaceProvider
+        value={{
+          relays,
+          channels: [neutralChannel],
+          composeChannels: [neutralChannel],
+          people: [author],
+          mentionablePeople: [author],
+          searchQuery: "",
+          quickFilters: normalizeQuickFilterState(),
+          channelMatchMode: "and",
+        }}
+      >
+        <FeedView
+          tasks={manyTasks}
+          allTasks={manyTasks}
+          searchQueryOverride=""
+        />
+      </FeedSurfaceProvider>
     );
 
     expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
@@ -509,21 +549,17 @@ describe("FeedView", () => {
       status: "todo",
     });
 
-    render(
-      <FeedView
-        tasks={[mentionTask]}
-        allTasks={[mentionTask]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
-      />
-    );
+    renderFeedView({
+      tasks: [mentionTask],
+      allTasks: [mentionTask],
+      searchQueryOverride: "",
+    });
 
-    const mention = screen.getByRole("button", { name: "Open user alice" });
+    const mention = screen.getByText("@alice").closest("button");
+    expect(mention).not.toBeNull();
     expect(mention).toHaveTextContent("@alice");
 
-    fireEvent.click(mention);
+    fireEvent.click(mention as HTMLButtonElement);
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "filter.applyAuthorExclusive",
       author,
@@ -577,16 +613,11 @@ describe("FeedView", () => {
       mentions: [author.id],
     });
 
-    render(
-      <FeedView
-        tasks={[mentionTask]}
-        allTasks={[mentionTask]}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
-      />
-    );
+    renderFeedView({
+      tasks: [mentionTask],
+      allTasks: [mentionTask],
+      searchQueryOverride: "",
+    });
 
     expect(screen.getByText("alice")).toBeInTheDocument();
   });
@@ -802,78 +833,117 @@ describe("FeedView", () => {
   });
 
   it("renders an inline scope hint on desktop when source posts exist but none match the current scope", () => {
-    render(
-      <FeedView
-        tasks={tasks}
-        allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery="nomatchquery"
-      />
+    const { container } = renderFeedView(
+      {
+        tasks,
+        allTasks: tasks,
+        searchQueryOverride: "nomatchquery",
+      },
+      {
+        channels: [makeChannel({ id: "general", name: "general", filterState: "included" })],
+      }
     );
 
-    expect(document.querySelector('[data-empty-mode="inline"]')).toBeInTheDocument();
-    expect(screen.getByText((content) =>
-      content.includes("nomatchquery") &&
-      content.includes("Demo")
-    )).toBeInTheDocument();
-    expect(screen.queryByText("Broaden the scope or break the silence.")).not.toBeInTheDocument();
+    const inlineState = container.querySelector('[data-empty-mode="inline"]');
+    expect(inlineState).toBeInTheDocument();
+    expect(inlineState).toHaveTextContent("nomatchquery");
+    expect(inlineState).toHaveTextContent("Demo");
+    expect(container.querySelector('[data-task-id="task-1"]')).not.toBeInTheDocument();
   });
 
   it("renders a scope footer hint at the end when filtered results are visible", () => {
     const selectedAuthor = { ...author, isSelected: true };
-    render(
-      <FeedView
-        tasks={tasks}
-        allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[selectedAuthor]}
-        searchQuery=""
-      />
+    const { container } = renderFeedView(
+      {
+        tasks,
+        allTasks: tasks,
+        searchQueryOverride: "",
+      },
+      {
+        people: [selectedAuthor],
+        mentionablePeople: [selectedAuthor],
+      }
     );
 
-    expect(document.querySelector('[data-empty-mode="footer"]')).toBeInTheDocument();
-    expect(screen.getByText((content) =>
-      content.includes("Alice Doe") &&
-      content.includes("Demo")
-    )).toBeInTheDocument();
-    expect(document.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
+    const footerState = container.querySelector('[data-empty-mode="footer"]');
+    expect(footerState).toBeInTheDocument();
+    expect(footerState).toHaveTextContent("Alice Doe");
+    expect(footerState).toHaveTextContent("Demo");
+    expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
   });
 
   it("renders a scope footer hint at the end for a feed-only selection", () => {
     const singleRelay = [makeRelay({ id: "feed-example", name: "Feed Example", url: "wss://feed.example.com" })];
-    render(
-      <FeedView
-        tasks={tasks}
-        allTasks={tasks}
-        relays={singleRelay}
-        channels={channels}
-        people={[author]}
-        searchQuery=""
-      />
+    const { container } = renderFeedView(
+      {
+        tasks,
+        allTasks: tasks,
+        searchQueryOverride: "",
+      },
+      {
+        relays: singleRelay,
+      }
     );
 
-    expect(document.querySelector('[data-empty-mode="footer"]')).toBeInTheDocument();
-    expect(screen.getByText((content) => content.includes("feed.example.com"))).toBeInTheDocument();
+    const footerState = container.querySelector('[data-empty-mode="footer"]');
+    expect(footerState).toBeInTheDocument();
+    expect(footerState).toHaveTextContent("feed.example.com");
   });
 
   it("keeps showing feed posts on mobile when the current scope has no matches", () => {
-    const { container } = render(
-      <FeedView
-        tasks={tasks}
-        allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[author]}
-        searchQuery="nomatchquery"
-        isMobile
-      />
+    const { container } = renderFeedView(
+      {
+        tasks,
+        allTasks: tasks,
+        searchQueryOverride: "nomatchquery",
+        isMobile: true,
+      },
+      {
+        channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+      }
     );
 
     expect(document.querySelector('[data-empty-mode="mobile"]')).not.toBeInTheDocument();
     expect(container.querySelector('[data-task-id="task-1"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-empty-mode="footer"]')).not.toBeInTheDocument();
+  });
+
+  it("ignores selected people as well as channel filters for the mobile fallback", () => {
+    const selectedAuthor = { ...author, isSelected: true };
+    const otherAuthor: Person = {
+      id: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      name: "bob",
+      displayName: "Bob Doe",
+      isOnline: true,
+      isSelected: false,
+    };
+    const otherTask = makeTask({
+      id: "task-2",
+      content: "Ship #general",
+      tags: ["general"],
+      author: otherAuthor,
+      status: "todo",
+    });
+
+    const { container } = renderFeedView(
+      {
+        tasks: [otherTask],
+        allTasks: [otherTask],
+        searchQueryOverride: "",
+        isMobile: true,
+      },
+      {
+        channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+        composeChannels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+        people: [selectedAuthor, otherAuthor],
+        mentionablePeople: [selectedAuthor, otherAuthor],
+      }
+    );
+
+    expect(document.querySelector('[data-empty-mode="mobile"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-task-id="task-2"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
   });
 
   it("updates task priority from the feed priority chip", () => {

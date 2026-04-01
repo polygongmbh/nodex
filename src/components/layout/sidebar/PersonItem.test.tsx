@@ -35,7 +35,7 @@ describe("PersonItem", () => {
   it("enables exclusive filter when clicking the person text", () => {
     const dispatch = renderPersonItem(basePerson);
 
-    const exclusiveButton = screen.getByRole("button", { name: "Show only Alice" });
+    const exclusiveButton = screen.getByTestId("person-item-exclusive-npub123");
 
     fireEvent.click(exclusiveButton);
 
@@ -45,7 +45,7 @@ describe("PersonItem", () => {
   it("toggles filter when clicking the avatar", () => {
     const dispatch = renderPersonItem(basePerson);
 
-    fireEvent.click(screen.getByRole("button", { name: "Toggle Alice" }));
+    fireEvent.click(screen.getByTestId("person-item-toggle-npub123"));
 
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.person.toggle", personId: "npub123" });
   });
@@ -62,7 +62,7 @@ describe("PersonItem", () => {
       </FeedInteractionProvider>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Pin Alice to this view" }));
+    fireEvent.click(screen.getByTestId("person-item-pin-npub123"));
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.person.pin", personId: "npub123" });
 
     rerender(
@@ -71,7 +71,7 @@ describe("PersonItem", () => {
       </FeedInteractionProvider>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Unpin Alice from this view" }));
+    fireEvent.click(screen.getByTestId("person-item-pin-npub123"));
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.person.unpin", personId: "npub123" });
   });
 });

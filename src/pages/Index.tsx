@@ -48,7 +48,6 @@ import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-rela
 import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
 import { useRelayScopedPresence } from "@/features/feed-page/controllers/use-relay-scoped-presence";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
-import { taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
 import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
@@ -535,15 +534,15 @@ const Index = () => {
     allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
   });
 
-  const filteredTasks = useMemo(
+  const relayScopedTasks = useMemo(
     () =>
       filterTasksByRelayAndPeople({
         tasks: allTasks,
         activeRelayIds: effectiveActiveRelayIds,
-        people,
+        people: [],
         allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
-      }).filter((task) => taskMatchesQuickFilters(task, quickFilters)),
-    [allTasks, effectiveActiveRelayIds, hasLiveHydratedRelayScope, people, quickFilters]
+      }),
+    [allTasks, effectiveActiveRelayIds, hasLiveHydratedRelayScope]
   );
 
   const { ensureGuideDataAvailable } = useFeedDemoBootstrap({
@@ -908,7 +907,7 @@ const Index = () => {
   );
   const feedTaskViewModel: FeedTaskViewModel = useMemo(
     () => ({
-      tasks: filteredTasks,
+      tasks: relayScopedTasks,
       allTasks,
       currentUser,
       focusedTaskId,
@@ -925,7 +924,7 @@ const Index = () => {
       isHydrating,
     }),
     [
-      filteredTasks,
+      relayScopedTasks,
       allTasks,
       currentUser,
       focusedTaskId,

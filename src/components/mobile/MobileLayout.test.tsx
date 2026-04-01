@@ -458,6 +458,35 @@ describe("MobileLayout auth wiring", () => {
     expect(status).toHaveClass("text-center");
   });
 
+  it("shows the mobile scope fallback notice when selected people and channels remove all scoped matches", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const selectedPerson = makePerson({ id: "me", name: "me", displayName: "Me", isSelected: true });
+    const otherPerson = makePerson({ id: "bob", name: "bob", displayName: "Bob", isSelected: false });
+    const sampleTasks: Task[] = [
+      makeTask({ id: "task-1", content: "Ship #general", tags: ["general"], author: otherPerson }),
+    ];
+
+    renderMobileLayout({
+      surfaceState: {
+        channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+        composeChannels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+        people: [selectedPerson, otherPerson],
+      },
+      taskViewModel: {
+        tasks: sampleTasks,
+        allTasks: sampleTasks,
+        people: [selectedPerson, otherPerson],
+      },
+    });
+
+    const status = screen.getByRole("status");
+    expect(status).toBeInTheDocument();
+    expect(status).toHaveTextContent("Nothing yet by Me, in #nodex, on Demo, showing everything.");
+    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
+  });
+
   it("shows a single loading row on mobile upcoming while hydrating", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;

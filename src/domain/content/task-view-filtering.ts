@@ -1,4 +1,6 @@
-import type { ChannelMatchMode, Person, Task } from "@/types";
+import { taskMatchesSelectedPeople } from "@/domain/content/person-filter";
+import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
+import type { ChannelMatchMode, Person, QuickFilterState, Task } from "@/types";
 
 function normalize(value: string): string {
   return value.trim().toLowerCase();
@@ -135,6 +137,7 @@ interface FilterTasksForViewParams {
   hideClosedTasks?: boolean;
   searchQuery: string;
   people: Person[];
+  quickFilters?: QuickFilterState;
   includedChannels: string[];
   excludedChannels: string[];
   channelMatchMode: ChannelMatchMode;
@@ -150,6 +153,7 @@ export function filterTasksForView({
   hideClosedTasks = false,
   searchQuery,
   people,
+  quickFilters = normalizeQuickFilterState(),
   includedChannels,
   excludedChannels,
   channelMatchMode,
@@ -159,6 +163,7 @@ export function filterTasksForView({
   const descendantIds = focusedTaskId
     ? effectiveFilterIndex.descendantIdsByTaskId.get(focusedTaskId) ?? new Set<string>()
     : null;
+  const selectedPeople = people.filter((person) => person.isSelected);
 
   return allTasks.filter((task) => {
     const isExplicitlyFocusedTask =
@@ -169,6 +174,8 @@ export function filterTasksForView({
     if (taskPredicate && !taskPredicate(task)) return false;
     if (!prefilteredTaskIds.has(task.id)) return false;
     if (hideClosedTasks && task.status === "closed" && !isExplicitlyFocusedTask) return false;
+    if (!taskMatchesSelectedPeople(task, selectedPeople)) return false;
+    if (!taskMatchesQuickFilters(task, quickFilters)) return false;
 
     if (focusedTaskId) {
       if (task.id === focusedTaskId) {

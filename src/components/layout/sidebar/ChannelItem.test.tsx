@@ -27,7 +27,7 @@ describe("ChannelItem", () => {
   it("enables exclusive filter when clicking the channel text", () => {
     const dispatch = renderChannelItem(<ChannelItem channel={baseChannel} />);
 
-    const exclusiveButton = screen.getByRole("button", { name: "Show only #general" });
+    const exclusiveButton = screen.getByTestId("channel-item-exclusive-general");
 
     fireEvent.click(exclusiveButton);
 
@@ -36,7 +36,7 @@ describe("ChannelItem", () => {
 
   it("toggles filter when clicking the hashtag icon", () => {
     const dispatch = renderChannelItem(<ChannelItem channel={baseChannel} />);
-    const toggleButton = screen.getByRole("button", { name: "Toggle #general filter" });
+    const toggleButton = screen.getByTestId("channel-item-toggle-general");
 
     fireEvent.click(toggleButton);
 
@@ -45,13 +45,13 @@ describe("ChannelItem", () => {
 
   it("renders pin button", () => {
     renderChannelItem(<ChannelItem channel={baseChannel} />);
-    expect(screen.getByRole("button", { name: /pin #general/i })).toBeInTheDocument();
+    expect(screen.getByTestId("channel-item-pin-general")).toBeInTheDocument();
   });
 
   it("dispatches pin when pin button is clicked and channel is not pinned", () => {
     const dispatch = renderChannelItem(<ChannelItem channel={baseChannel} isPinned={false} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /pin #general/i }));
+    fireEvent.click(screen.getByTestId("channel-item-pin-general"));
 
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.channel.pin", channelId: "general" });
   });
@@ -59,7 +59,7 @@ describe("ChannelItem", () => {
   it("dispatches unpin when pin button is clicked and channel is pinned", () => {
     const dispatch = renderChannelItem(<ChannelItem channel={baseChannel} isPinned={true} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /unpin #general/i }));
+    fireEvent.click(screen.getByTestId("channel-item-pin-general"));
 
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.channel.unpin", channelId: "general" });
   });
@@ -75,12 +75,8 @@ describe("ChannelItem", () => {
       />
     );
 
-    const pinButton = screen.getByRole("button", {
-      name: /pin #very-long-channel-name-that-should-not-shift-the-hashtag-column/i,
-    });
-    const toggleButton = screen.getByRole("button", {
-      name: /toggle #very-long-channel-name-that-should-not-shift-the-hashtag-column filter/i,
-    });
+    const pinButton = screen.getByTestId("channel-item-pin-general");
+    const toggleButton = screen.getByTestId("channel-item-toggle-general");
 
     expect(pinButton.className).toContain("absolute");
     expect(pinButton.className).toContain("left-1");

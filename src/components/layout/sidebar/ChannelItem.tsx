@@ -35,6 +35,7 @@ export function ChannelItem({
       className={cn("relative gap-2 py-1.5", className)}
     >
       <SidebarPinButton
+        dataTestId={`channel-item-pin-${channel.id}`}
         isPinned={isPinned}
         onClick={(e) => {
           e.stopPropagation();
@@ -54,6 +55,7 @@ export function ChannelItem({
 
       {/* Icon - click for toggle */}
       <button
+        data-testid={`channel-item-toggle-${channel.id}`}
         onClick={(e) => {
           e.stopPropagation();
           void dispatchFeedInteraction({ type: "sidebar.channel.toggle", channelId: channel.id });
@@ -74,6 +76,7 @@ export function ChannelItem({
 
       {/* Name - click for exclusive */}
       <button
+        data-testid={`channel-item-exclusive-${channel.id}`}
         onClick={() => {
           void dispatchFeedInteraction({ type: "sidebar.channel.exclusive", channelId: channel.id });
         }}

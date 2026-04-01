@@ -6,6 +6,7 @@ interface SidebarPinButtonProps {
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
   title: string;
   ariaLabel: string;
+  dataTestId?: string;
 }
 
 export function SidebarPinButton({
@@ -13,9 +14,11 @@ export function SidebarPinButton({
   onClick,
   title,
   ariaLabel,
+  dataTestId,
 }: SidebarPinButtonProps) {
   return (
     <button
+      data-testid={dataTestId}
       onClick={onClick}
       title={title}
       aria-label={ariaLabel}

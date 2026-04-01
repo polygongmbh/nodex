@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
-import type { Channel, ChannelMatchMode, Person, Task } from "@/types";
+import type { Channel, ChannelMatchMode, Person, QuickFilterState, Task } from "@/types";
 
 interface UseTaskViewFilteringParams {
   allTasks: Task[];
@@ -11,6 +11,7 @@ interface UseTaskViewFilteringParams {
   hideClosedTasks?: boolean;
   searchQuery: string;
   people: Person[];
+  quickFilters?: QuickFilterState;
   channels: Channel[];
   channelMatchMode: ChannelMatchMode;
   taskPredicate?: (task: Task) => boolean;
@@ -24,6 +25,7 @@ export function useTaskViewFiltering({
   hideClosedTasks = false,
   searchQuery,
   people,
+  quickFilters,
   channels,
   channelMatchMode,
   taskPredicate,
@@ -49,6 +51,7 @@ export function useTaskViewFiltering({
         hideClosedTasks,
         searchQuery,
         people,
+        quickFilters,
         includedChannels: included,
         excludedChannels: excluded,
         channelMatchMode,
@@ -64,6 +67,7 @@ export function useTaskViewFiltering({
       included,
       excluded,
       people,
+      quickFilters,
       prefilteredTaskIds,
       searchQuery,
       taskPredicate,

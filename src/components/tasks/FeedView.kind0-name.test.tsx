@@ -4,6 +4,8 @@ import "@testing-library/jest-dom/vitest";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
+import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: (): { user: null } => ({ user: null }),
@@ -34,17 +36,28 @@ const relays: Relay[] = [makeRelay()];
 describe("FeedView kind:0 author labels", () => {
   it("prefers kind:0 metadata label and uses abbreviated pubkey when name exists", () => {
     render(
-      <FeedView
-        tasks={tasks}
-        allTasks={tasks}
-        relays={relays}
-        channels={channels}
-        people={[peopleAuthor]}
-        searchQuery=""
-      />
+      <FeedSurfaceProvider
+        value={{
+          relays,
+          channels,
+          composeChannels: channels,
+          people: [peopleAuthor],
+          mentionablePeople: [peopleAuthor],
+          searchQuery: "",
+          quickFilters: normalizeQuickFilterState(),
+          channelMatchMode: "and",
+        }}
+      >
+        <FeedView
+          tasks={tasks}
+          allTasks={tasks}
+          searchQueryOverride=""
+        />
+      </FeedSurfaceProvider>
     );
 
-    expect(screen.getByTestId("feed-author-secondary-task-1")).toHaveTextContent("(npub");
+    expect(screen.getByTestId("feed-author-primary-task-1")).toHaveTextContent("Janek");
+    expect(screen.getByTestId("feed-author-secondary-task-1")).toHaveTextContent("npub");
     expect(screen.queryByText(/You/)).not.toBeInTheDocument();
   });
 });

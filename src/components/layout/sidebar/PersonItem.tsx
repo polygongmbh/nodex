@@ -36,6 +36,7 @@ export function PersonItem({
       )}
     >
       <SidebarPinButton
+        dataTestId={`person-item-pin-${person.id}`}
         isPinned={isPinned}
         onClick={(e) => {
           e.stopPropagation();
@@ -53,6 +54,7 @@ export function PersonItem({
           : t("sidebar.filters.pinPersonToView", { name: personName })}
       />
       <button
+        data-testid={`person-item-toggle-${person.id}`}
         onClick={(e) => {
           e.stopPropagation();
           void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.id });
@@ -78,6 +80,7 @@ export function PersonItem({
         )}
       </button>
       <button
+        data-testid={`person-item-exclusive-${person.id}`}
         onClick={() => {
           void dispatchFeedInteraction({ type: "sidebar.person.exclusive", personId: person.id });
         }}

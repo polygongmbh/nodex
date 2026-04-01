@@ -23,6 +23,7 @@ export function ChannelMatchModeToggle({
   return (
     <button
       type="button"
+      data-testid="channel-match-mode-toggle"
       onClick={() => {
         const nextMode = mode === "and" ? "or" : "and";
         if (onChange) {

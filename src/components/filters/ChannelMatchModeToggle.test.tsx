@@ -8,7 +8,7 @@ describe("ChannelMatchModeToggle", () => {
 
     render(<ChannelMatchModeToggle mode="and" onChange={onChange} />);
 
-    const button = screen.getByRole("button", { name: /included channel match mode/i });
+    const button = screen.getByTestId("channel-match-mode-toggle");
     expect(button).toHaveAttribute("aria-pressed", "false");
 
     fireEvent.click(button);
