@@ -16,6 +16,28 @@ interface MobileNavProps {
 const allSegments: MobileViewType[] = ["feed", "tree", "list", "calendar"];
 const DRAG_START_THRESHOLD_PX = 8;
 
+interface HorizontalRect {
+  left: number;
+  right: number;
+}
+
+export function resolveSegmentFromClientX(
+  clientX: number,
+  containerRect: HorizontalRect,
+  childRects: HorizontalRect[]
+): MobileViewType | null {
+  if (clientX < containerRect.left || clientX > containerRect.right) {
+    return null;
+  }
+  for (let i = 0; i < childRects.length; i += 1) {
+    const childRect = childRects[i];
+    if (clientX >= childRect.left && clientX <= childRect.right) {
+      return allSegments[i];
+    }
+  }
+  return null;
+}
+
 export function MobileNav({ currentView, onViewChange, onManageOpen, isManageActive = false }: MobileNavProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -87,16 +109,12 @@ export function MobileNav({ currentView, onViewChange, onManageOpen, isManageAct
   const getSegmentFromX = useCallback((clientX: number): MobileViewType | null => {
     const container = containerRef.current;
     if (!container) return null;
-    const x = clientX - container.getBoundingClientRect().left;
     const children = container.querySelectorAll<HTMLElement>("[data-segment-index]");
-    for (let i = 0; i < children.length; i++) {
-      const childRect = children[i].getBoundingClientRect();
-      if (clientX >= childRect.left && clientX <= childRect.right) {
-        return allSegments[i];
-      }
-    }
-    if (x <= 0) return allSegments[0];
-    return allSegments[allSegments.length - 1];
+    return resolveSegmentFromClientX(
+      clientX,
+      container.getBoundingClientRect(),
+      Array.from(children, (child) => child.getBoundingClientRect())
+    );
   }, []);
 
   const clearSuppressedClick = useCallback(() => {

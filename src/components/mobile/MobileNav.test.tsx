@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { MobileNav } from "./MobileNav";
+import { MobileNav, resolveSegmentFromClientX } from "./MobileNav";
 
 function mockSegmentLayout() {
   const segments = screen.getAllByRole("tab");
@@ -72,6 +72,34 @@ describe("MobileNav", () => {
     fireEvent.pointerDown(container, { button: 0, buttons: 1, pointerId: 1, clientX: 40 });
 
     expect(container.setPointerCapture).not.toHaveBeenCalled();
+  });
+
+  it("returns null for captured drag positions outside the segmented control", () => {
+    const containerRect = { left: 0, right: 320 };
+    const childRects = [
+      { left: 0, right: 80 },
+      { left: 80, right: 160 },
+      { left: 160, right: 240 },
+      { left: 240, right: 320 },
+    ];
+
+    expect(resolveSegmentFromClientX(35, containerRect, childRects)).toBe("feed");
+    expect(resolveSegmentFromClientX(120, containerRect, childRects)).toBe("tree");
+    expect(resolveSegmentFromClientX(340, containerRect, childRects)).toBeNull();
+    expect(resolveSegmentFromClientX(-10, containerRect, childRects)).toBeNull();
+  });
+
+  it("does not switch to calendar when a drag leaves the control on the right", () => {
+    const onViewChange = vi.fn();
+
+    render(<MobileNav currentView="tree" onViewChange={onViewChange} />);
+
+    const { container } = mockSegmentLayout();
+
+    fireEvent.pointerDown(container, { button: 0, buttons: 1, pointerId: 1, clientX: 120 });
+    fireEvent.pointerUp(container, { pointerId: 1, clientX: 360 });
+
+    expect(onViewChange).not.toHaveBeenCalledWith("calendar");
   });
 
   it("calls onManageOpen when hamburger button is clicked", () => {
