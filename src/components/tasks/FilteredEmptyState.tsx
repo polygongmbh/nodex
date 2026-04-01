@@ -60,18 +60,11 @@ export function FilteredEmptyState({
     return t(waitingPromptKeys[index]);
   }, [t]);
   const collectionTitle = useMemo(() => {
-    const options = t("tasks.empty.unfiltered.collectionTitleOptions", {
+    const options = t("tasks.empty.options", {
       returnObjects: true,
-      defaultValue: [],
-    });
-    if (Array.isArray(options) && options.length > 0) {
-      const index = Math.floor(Math.random() * options.length);
-      const selected = options[index];
-      if (typeof selected === "string" && selected.length > 0) {
-        return selected;
-      }
-    }
-    return t("tasks.empty.unfiltered.collectionTitle");
+    }) as string[];
+    const index = Math.floor(Math.random() * options.length);
+    return options[index];
   }, [t]);
 
   if (mode === "screen" && (isHydrating || scopeModel.screenState === "loading")) {

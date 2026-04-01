@@ -998,16 +998,13 @@
         "readRejected": "Read access was rejected by the selected space.",
         "mixed": "Some selected spaces are unavailable, and others rejected read access."
       },
-      "unfiltered": {
-        "collectionTitle": "This space is empty for now. Be the first to fill it.",
-        "collectionTitleOptions": [
-          "Silence lives here for now. Leave the first trace.",
-          "A quiet page awaits. Write the opening line.",
-          "Nothing has bloomed here yet. Plant the first seed.",
-          "This room is still untouched. Start its story.",
-          "Only open sky for now. Be the first star."
-        ]
-      },
+      "options": [
+        "Silence lives here for now. Leave the first trace.",
+        "A quiet page awaits. Write the opening line.",
+        "Nothing has bloomed here yet. Plant the first seed.",
+        "This room is still untouched. Start its story.",
+        "Only open sky for now. Be the first star."
+      ],
       "scope": {
         "includedChannels": "in {{channels}}",
         "includedChannelsLoading": "from {{channels}}",

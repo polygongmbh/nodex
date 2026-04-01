@@ -998,16 +998,13 @@
         "readRejected": "Lesezugriff auf den ausgewählten Space wurde abgelehnt.",
         "mixed": "Einige ausgewählte Spaces sind nicht erreichbar und andere lehnen Lesezugriff ab."
       },
-      "unfiltered": {
-        "collectionTitle": "Dieser Bereich ist noch leer. Füll ihn als Erste:r.",
-        "collectionTitleOptions": [
-          "Hier ist es noch still. Setz den ersten Ton.",
-          "Hier fehlt nur noch ein erster Funke. Deiner.",
-          "Es ist noch leer zwischen den Zeilen. Schreib die erste.",
-          "Noch ruht dieser Raum. Bring ihn zum Klingen.",
-          "Alles bereit, nur der Anfang fehlt. Setz ihn jetzt."
-        ]
-      },
+      "options": [
+        "Hier ist es noch still. Setz den ersten Ton.",
+        "Hier fehlt nur noch ein erster Funke. Deiner.",
+        "Es ist noch leer zwischen den Zeilen. Schreib die erste.",
+        "Noch ruht dieser Raum. Bring ihn zum Klingen.",
+        "Alles bereit, nur der Anfang fehlt. Setz ihn jetzt."
+      ],
       "scope": {
         "includedChannels": "in {{channels}}",
         "includedChannelsLoading": "aus {{channels}}",
