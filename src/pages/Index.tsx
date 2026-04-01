@@ -48,6 +48,7 @@ import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-rela
 import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
 import { useRelayScopedPresence } from "@/features/feed-page/controllers/use-relay-scoped-presence";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
+import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
@@ -471,14 +472,6 @@ const Index = () => {
     [effectiveActiveRelayIds, channelFilterStates, people, channelMatchMode, quickFilters]
   );
 
-  const { discardTaskScopeFilterRestore } = useTaskScopeSpecificFilters({
-    focusedTaskId,
-    currentFilterSnapshot,
-    setChannelFilterStates,
-    setChannelMatchMode,
-    setPeople,
-  });
-
   const sidebarChannels = useMemo(() => {
     const activeChannelIds = new Set(
       Array.from(channelFilterStates.entries())
@@ -544,6 +537,45 @@ const Index = () => {
       }),
     [allTasks, effectiveActiveRelayIds, hasLiveHydratedRelayScope]
   );
+
+  const shouldRestoreTaskScopeFilters = useCallback((snapshot: FilterSnapshot) => {
+    const selectedPeopleIds = new Set(snapshot.selectedPeopleIds);
+    const snapshotPeople = people.map((person) => ({
+      ...person,
+      isSelected: selectedPeopleIds.has(person.id),
+    }));
+    const snapshotFilterIndex = buildTaskViewFilterIndex(allTasks, snapshotPeople);
+    const prefilteredTaskIds = new Set(relayScopedTasks.map((task) => task.id));
+    const includedChannels = Object.entries(snapshot.channelStates)
+      .filter(([, filterState]) => filterState === "included")
+      .map(([channelId]) => channelId.trim().toLowerCase())
+      .filter(Boolean);
+    const excludedChannels = Object.entries(snapshot.channelStates)
+      .filter(([, filterState]) => filterState === "excluded")
+      .map(([channelId]) => channelId.trim().toLowerCase())
+      .filter(Boolean);
+
+    return filterTasksForView({
+      allTasks,
+      filterIndex: snapshotFilterIndex,
+      prefilteredTaskIds,
+      searchQuery,
+      people: snapshotPeople,
+      quickFilters: snapshot.quickFilters,
+      includedChannels,
+      excludedChannels,
+      channelMatchMode: snapshot.channelMatchMode,
+    }).length > 0;
+  }, [allTasks, people, relayScopedTasks, searchQuery]);
+
+  const { discardTaskScopeFilterRestore } = useTaskScopeSpecificFilters({
+    focusedTaskId,
+    currentFilterSnapshot,
+    shouldRestoreSnapshot: shouldRestoreTaskScopeFilters,
+    setChannelFilterStates,
+    setChannelMatchMode,
+    setPeople,
+  });
 
   const { ensureGuideDataAvailable } = useFeedDemoBootstrap({
     totalTasks: allTasks.length,

@@ -9,6 +9,7 @@ export const TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS = 5 * 60 * 1000;
 interface UseTaskScopeSpecificFiltersOptions {
   focusedTaskId: string | null;
   currentFilterSnapshot: FilterSnapshot;
+  shouldRestoreSnapshot?: (snapshot: FilterSnapshot) => boolean;
   setChannelFilterStates: Dispatch<SetStateAction<Map<string, Channel["filterState"]>>>;
   setChannelMatchMode: Dispatch<SetStateAction<ChannelMatchMode>>;
   setPeople: Dispatch<SetStateAction<Person[]>>;
@@ -25,6 +26,7 @@ function restoreChannelFilterStates(snapshot: FilterSnapshot): Map<string, Chann
 export function useTaskScopeSpecificFilters({
   focusedTaskId,
   currentFilterSnapshot,
+  shouldRestoreSnapshot = () => true,
   setChannelFilterStates,
   setChannelMatchMode,
   setPeople,
@@ -64,8 +66,9 @@ export function useTaskScopeSpecificFilters({
       const hasCurrentPeopleFilters = currentFilterSnapshot.selectedPeopleIds.length > 0;
       const shouldPreserveCurrentSelections = hasCurrentChannelFilters || hasCurrentPeopleFilters;
       const shouldRestore = now() - enteredScopedAtMs <= restoreTimeoutMs;
+      const shouldRestoreSelections = shouldRestoreSnapshot(snapshot);
 
-      if (!shouldPreserveCurrentSelections && shouldRestore) {
+      if (!shouldPreserveCurrentSelections && shouldRestore && shouldRestoreSelections) {
         setChannelFilterStates(restoreChannelFilterStates(snapshot));
         setChannelMatchMode(snapshot.channelMatchMode);
         setPeople((previous) =>
@@ -85,6 +88,7 @@ export function useTaskScopeSpecificFilters({
     setChannelFilterStates,
     setChannelMatchMode,
     setPeople,
+    shouldRestoreSnapshot,
   ]);
 
   const discardTaskScopeFilterRestore = () => {

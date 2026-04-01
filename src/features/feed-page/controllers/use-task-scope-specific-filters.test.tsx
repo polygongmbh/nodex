@@ -17,9 +17,15 @@ const peopleSeed: Person[] = [
 function Harness({
   initialFocusedTaskId = null,
   restoreTimeoutMs = TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS,
+  shouldRestoreSnapshot,
 }: {
   initialFocusedTaskId?: string | null;
   restoreTimeoutMs?: number;
+  shouldRestoreSnapshot?: (typeof useTaskScopeSpecificFilters extends (
+    options: infer T
+  ) => unknown
+    ? T["shouldRestoreSnapshot"]
+    : never);
 }) {
   const [focusedTaskId, setFocusedTaskId] = useState<string | null>(initialFocusedTaskId);
   const [channelFilterStates, setChannelFilterStates] = useState<Map<string, Channel["filterState"]>>(
@@ -46,6 +52,7 @@ function Harness({
   const { discardTaskScopeFilterRestore } = useTaskScopeSpecificFilters({
     focusedTaskId,
     currentFilterSnapshot,
+    shouldRestoreSnapshot,
     setChannelFilterStates,
     setChannelMatchMode,
     setPeople,
@@ -151,6 +158,18 @@ describe("useTaskScopeSpecificFilters", () => {
     fireEvent.click(screen.getByRole("button", { name: "Unfocus" }));
 
     expect(screen.getByTestId("match-mode")).toHaveTextContent("or");
+  });
+
+  it("does not restore the previous filters when they no longer match any all-task results", () => {
+    render(<Harness restoreTimeoutMs={1000} shouldRestoreSnapshot={() => false} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "FocusOne" }));
+    fireEvent.click(screen.getByRole("button", { name: "Unfocus" }));
+
+    expect(screen.getByTestId("channel-general")).toHaveTextContent("neutral");
+    expect(screen.getByTestId("channel-ops")).toHaveTextContent("neutral");
+    expect(screen.getByTestId("match-mode")).toHaveTextContent("and");
+    expect(screen.getByTestId("selected-people")).toHaveTextContent("");
   });
 
   it("can discard the pending restore for explicit reset flows", () => {
