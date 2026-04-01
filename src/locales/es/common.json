@@ -160,7 +160,7 @@
     },
     "savedFilters": {
       "actions": {
-        "saveCurrent": "Guardar actual",
+        "saveCurrent": "Guardar filtros",
         "rename": "Renombrar",
         "delete": "Eliminar",
         "menu": "Opciones de filtros guardados"
@@ -337,7 +337,7 @@
         "clear": "Limpiar",
         "remove": "Quitar {{filterName}}",
         "toggleRecent": "Mostrar solo publicaciones de los últimos {{days}} días",
-        "togglePriority": "Mostrar solo tareas con la prioridad mínima o superior"
+        "togglePriority": "Ocultar tareas por debajo de la prioridad mínima"
       }
     }
   },

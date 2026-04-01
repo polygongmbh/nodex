@@ -160,7 +160,7 @@
     },
     "savedFilters": {
       "actions": {
-        "saveCurrent": "Save current",
+        "saveCurrent": "Save filters",
         "rename": "Rename",
         "delete": "Delete",
         "menu": "Saved filter options"
@@ -337,7 +337,7 @@
         "clear": "Clear",
         "remove": "Remove {{filterName}}",
         "toggleRecent": "Show only posts from the last {{days}} days",
-        "togglePriority": "Show only tasks at or above the minimum priority"
+        "togglePriority": "Hide tasks below the minimum priority"
       }
     }
   },

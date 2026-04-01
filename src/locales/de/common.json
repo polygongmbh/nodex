@@ -160,7 +160,7 @@
     },
     "savedFilters": {
       "actions": {
-        "saveCurrent": "Aktuelle speichern",
+        "saveCurrent": "Filter speichern",
         "rename": "Umbenennen",
         "delete": "Löschen",
         "menu": "Gespeicherte Filteroptionen"
