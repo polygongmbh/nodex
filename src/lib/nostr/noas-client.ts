@@ -42,6 +42,7 @@ interface NoasDiscoveryResult {
 }
 
 const noasApiBaseDiscoverySessionCache = new Map<string, string>();
+const NOAS_API_BASE_CACHE_STORAGE_KEY = "nostr_noas_api_base_cache_map";
 
 function resolveDiscoveredNoasApiBaseUrl(discoveryOrigin: string, rawApiBase: unknown): string {
   if (typeof rawApiBase !== "string") return "";
@@ -133,12 +134,46 @@ function loadSessionCachedNoasApiBaseUrl(discoveryOrigin: string): string {
   return isValidNoasBaseUrl(normalizedApiBaseUrl) ? normalizedApiBaseUrl : "";
 }
 
+function loadPersistedNoasApiBaseUrl(discoveryOrigin: string): string {
+  if (typeof window === "undefined" || !window.localStorage) return "";
+  const raw = window.localStorage.getItem(NOAS_API_BASE_CACHE_STORAGE_KEY);
+  if (!raw) return "";
+
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const cachedApiBaseUrl = typeof parsed?.[discoveryOrigin] === "string" ? parsed[discoveryOrigin] : "";
+    const normalizedApiBaseUrl = normalizeNoasBaseUrl(cachedApiBaseUrl);
+    return isValidNoasBaseUrl(normalizedApiBaseUrl) ? normalizedApiBaseUrl : "";
+  } catch {
+    return "";
+  }
+}
+
 function cacheNoasApiBaseUrlInSession(discoveryOrigin: string, apiBaseUrl: string): void {
   noasApiBaseDiscoverySessionCache.set(discoveryOrigin, apiBaseUrl);
 }
 
+function cacheNoasApiBaseUrlInStorage(discoveryOrigin: string, apiBaseUrl: string): void {
+  if (typeof window === "undefined" || !window.localStorage) return;
+
+  try {
+    const raw = window.localStorage.getItem(NOAS_API_BASE_CACHE_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) as Record<string, unknown> : {};
+    const nextCache = {
+      ...(parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {}),
+      [discoveryOrigin]: apiBaseUrl,
+    };
+    window.localStorage.setItem(NOAS_API_BASE_CACHE_STORAGE_KEY, JSON.stringify(nextCache));
+  } catch {
+    // Ignore cache persistence failures and continue with in-memory caching only.
+  }
+}
+
 export function clearNoasApiBaseDiscoverySessionCacheForTests(): void {
   noasApiBaseDiscoverySessionCache.clear();
+  if (typeof window !== "undefined" && window.localStorage) {
+    window.localStorage.removeItem(NOAS_API_BASE_CACHE_STORAGE_KEY);
+  }
 }
 
 export async function discoverNoasApiBaseUrl(rawValue: string): Promise<NoasDiscoveryResult | null> {
@@ -157,6 +192,19 @@ export async function discoverNoasApiBaseUrl(rawValue: string): Promise<NoasDisc
     return {
       discoveryOrigin,
       discoveredApiBaseUrl: cachedApiBaseUrl,
+    };
+  }
+
+  const persistedApiBaseUrl = loadPersistedNoasApiBaseUrl(discoveryOrigin);
+  if (persistedApiBaseUrl) {
+    cacheNoasApiBaseUrlInSession(discoveryOrigin, persistedApiBaseUrl);
+    nostrDevLog("noas", "Using persisted NoaS API base URL cache", {
+      submittedBaseUrl: normalizedBaseUrl,
+      apiBaseUrl: persistedApiBaseUrl,
+    });
+    return {
+      discoveryOrigin,
+      discoveredApiBaseUrl: persistedApiBaseUrl,
     };
   }
 
@@ -191,6 +239,7 @@ export async function discoverNoasApiBaseUrl(rawValue: string): Promise<NoasDisc
   }
 
   cacheNoasApiBaseUrlInSession(discoveryOrigin, discoveredApiBaseUrl);
+  cacheNoasApiBaseUrlInStorage(discoveryOrigin, discoveredApiBaseUrl);
   nostrDevLog("noas", "Discovered NoaS API base URL", {
     submittedBaseUrl: normalizedBaseUrl,
     discoveryOrigin,

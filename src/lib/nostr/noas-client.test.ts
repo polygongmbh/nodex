@@ -38,7 +38,27 @@ describe("resolveNoasApiBaseUrl", () => {
         Accept: "application/nostr+json, application/json",
       },
     });
-    expect(window.localStorage.getItem("nostr_noas_api_base_cache:https://noas.example")).toBeNull();
+    expect(window.localStorage.getItem("nostr_noas_api_base_cache_map")).toBe(
+      JSON.stringify({
+        "https://noas.example": "https://api.noas.example/custom",
+      })
+    );
+  });
+
+  it("uses a persisted api-base mapping for the submitted host origin", async () => {
+    window.localStorage.setItem(
+      "nostr_noas_api_base_cache_map",
+      JSON.stringify({
+        "https://noas.example": "https://api.noas.example/custom",
+        "https://other.example": "https://api.other.example/custom",
+      })
+    );
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(resolveNoasApiBaseUrl("https://noas.example/signin")).resolves.toBe("https://api.noas.example/custom");
+    await expect(resolveNoasApiBaseUrl("https://other.example")).resolves.toBe("https://api.other.example/custom");
+
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("falls back to a canonical api base when discovery does not expose a valid api_base", async () => {

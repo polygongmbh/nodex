@@ -7,7 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 - Noas auth now immediately connects relay URLs returned by sign-in responses, and Noas sign-up submissions now include the app’s currently connected relay URLs in the same array format.
-- Persisted Noas default hosts are now stored per root-domain scope instead of as one global cached host, preventing one previously used site/domain from overriding another site's Noas bootstrap.
+- Noas API-base resolution now caches discovered Noas instances by the hostname entered in the auth host field, so one previously used host/domain no longer overrides a different entered host.
 
 ## [2.8.0] - 2026-03-27
 Minor release for relay-scope correctness, startup performance, and mobile/task-view polish (1875 production lines changed since `v2.7.6`).
