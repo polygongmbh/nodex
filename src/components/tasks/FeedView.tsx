@@ -55,6 +55,7 @@ import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
+  getAncestorChainFromSource,
   useFeedViewState,
   type FeedEntry,
 } from "@/features/feed-page/controllers/use-task-view-states";
@@ -442,21 +443,7 @@ export function FeedView({
       .trim();
 
   const getParentBreadcrumb = (task: Task): { id: string; text: string }[] => {
-    const breadcrumb: { id: string; text: string }[] = [];
-    let current = task;
-    while (current.parentId) {
-      const parent = taskById.get(current.parentId);
-      if (parent) {
-        breadcrumb.unshift({
-          id: parent.id,
-          text: formatBreadcrumbLabel(parent.content)
-        });
-        current = parent;
-      } else {
-        break;
-      }
-    }
-    return breadcrumb;
+    return getAncestorChainFromSource({ taskById }, task.id, focusedTaskId);
   };
 
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});

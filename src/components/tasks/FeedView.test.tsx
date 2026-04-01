@@ -293,6 +293,39 @@ describe("FeedView", () => {
     expect(middleButton).toBeInTheDocument();
   });
 
+  it("omits the active focused item from task-card breadcrumbs", () => {
+    const root = makeTask({ id: "root", content: "Root breadcrumb", author, status: "todo" });
+    const middle = makeTask({
+      id: "middle",
+      parentId: "root",
+      content: "Middle breadcrumb",
+      author,
+      status: "todo",
+    });
+    const leaf = makeTask({
+      id: "leaf",
+      parentId: "middle",
+      content: "Leaf task",
+      author,
+      status: "todo",
+    });
+
+    render(
+      <FeedView
+        tasks={[leaf]}
+        allTasks={[root, middle, leaf]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+        focusedTaskId="middle"
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /focus task: root breadcrumb/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /focus task: middle breadcrumb/i })).not.toBeInTheDocument();
+  });
+
   it("shows a shortened fallback npub on slim desktop", async () => {
     const pubkeyOnlyAuthor: Person = {
       id: author.id,

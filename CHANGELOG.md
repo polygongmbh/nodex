@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Task-card breadcrumbs in focused task views now start from the active task context instead of repeating ancestors above it, so descendant rows and cards show local path context consistently across feed, list, kanban, and calendar views.
+
 ## [2.10.0] - 2026-04-02
 Minor release for desktop task-view controls, filter-scope empty-state clarity, and mobile focused-task navigation fixes.
 

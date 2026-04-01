@@ -40,9 +40,11 @@ import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
-import { useListViewState } from "@/features/feed-page/controllers/use-task-view-states";
+import {
+  getAncestorChainFromSource,
+  useListViewState,
+} from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 
@@ -212,26 +214,9 @@ export function ListView({
     return 1 + getDepth(task.parentId);
   }, [taskLookup]);
 
-  // Get full ancestor chain for a task
   const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
-    const chain: { id: string; text: string }[] = [];
-    let current = taskLookup.get(taskId);
-    
-    while (current?.parentId) {
-      const parent = taskLookup.get(current.parentId);
-      if (parent) {
-        chain.unshift({
-          id: parent.id,
-          text: formatBreadcrumbLabel(parent.content)
-        });
-        current = parent;
-      } else {
-        break;
-      }
-    }
-    
-    return chain;
-  }, [taskLookup]);
+    return getAncestorChainFromSource({ taskById: taskLookup }, taskId, focusedTaskId);
+  }, [focusedTaskId, taskLookup]);
 
   const sortListTasks = useCallback((taskCandidates: Task[]) => {
     let filtered = filterTasksByDepthMode({

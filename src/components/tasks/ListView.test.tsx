@@ -43,6 +43,32 @@ describe("ListView priority control", () => {
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
   });
 
+  it("omits the active focused item from row breadcrumbs", () => {
+    mockUser = { id: "me" };
+    const root = makeTask({ id: "root", content: "Root task #general", status: "todo" });
+    const middle = makeTask({ id: "middle", parentId: "root", content: "Middle task #general", status: "todo" });
+    const leaf = makeTask({ id: "leaf", parentId: "middle", content: "Leaf task #general", status: "todo" });
+    const relays = [makeRelay()];
+    const channels = [makeChannel()];
+    const people = [makePerson({ id: root.author.id, name: root.author.name, displayName: root.author.displayName })];
+
+    render(
+      <ListView
+        tasks={[leaf]}
+        allTasks={[root, middle, leaf]}
+        relays={relays}
+        channels={channels}
+        people={people}
+        currentUser={people[0]}
+        searchQuery=""
+        focusedTaskId="middle"
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /focus task: root task general/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /focus task: middle task general/i })).not.toBeInTheDocument();
+  });
+
   it("keeps priority select focused across unrelated parent rerenders", () => {
     mockUser = { id: "me" };
     const task = makeTask({

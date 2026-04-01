@@ -208,16 +208,28 @@ export function useTaskViewSource({
 
 export function getAncestorChainFromSource(
   source: Pick<TaskViewSource, "taskById">,
-  taskId: string
+  taskId: string,
+  relativeToTaskId?: string | null
 ): { id: string; text: string }[] {
+  if (relativeToTaskId && taskId === relativeToTaskId) {
+    return [];
+  }
+
   const chain: { id: string; text: string }[] = [];
   let current = source.taskById.get(taskId);
-  while (current?.parentId) {
+  const visited = new Set<string>();
+
+  while (current?.parentId && !visited.has(current.id)) {
+    visited.add(current.id);
     const parent = source.taskById.get(current.parentId);
     if (!parent) break;
+    if (relativeToTaskId && parent.id === relativeToTaskId) {
+      return chain;
+    }
     chain.unshift({ id: parent.id, text: formatBreadcrumbLabel(parent.content) });
     current = parent;
   }
+
   return chain;
 }
 
@@ -280,7 +292,7 @@ export function createCalendarSelectors(source: TaskViewSource): CalendarSelecto
       return getTasksByDay().get(format(startOfDay(day), "yyyy-MM-dd")) || [];
     },
     getAncestorChain(taskId: string) {
-      return getAncestorChainFromSource(source, taskId);
+      return getAncestorChainFromSource(source, taskId, source.focusedTaskId);
     },
   };
 }
@@ -637,17 +649,9 @@ export function useKanbanViewState({
   );
   const getAncestorChain = useCallback(
     (taskId: string): { id: string; text: string }[] => {
-      const chain: { id: string; text: string }[] = [];
-      let current = taskById.get(taskId);
-      while (current?.parentId) {
-        const parent = taskById.get(current.parentId);
-        if (!parent) break;
-        chain.unshift({ id: parent.id, text: formatBreadcrumbLabel(parent.content) });
-        current = parent;
-      }
-      return chain;
+      return getAncestorChainFromSource({ taskById }, taskId, focusedTaskId);
     },
-    [taskById]
+    [focusedTaskId, taskById]
   );
   const filteredTaskCandidates = useTaskViewFiltering({
     allTasks,
