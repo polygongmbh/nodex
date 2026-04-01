@@ -89,6 +89,7 @@ interface TaskComposerProps {
     mention: string;
     id: number;
   } | null;
+  onMentionRequestConsumed?: (requestId: number) => void;
   collapseOnSuccess?: boolean;
   allowComment?: boolean;
   allowFeedMessageTypes?: boolean;
@@ -226,6 +227,7 @@ export function TaskComposer({
   forceExpanded = false,
   forceExpandSignal,
   mentionRequest = null,
+  onMentionRequestConsumed,
   collapseOnSuccess = false,
   allowComment = true,
   allowFeedMessageTypes = false,
@@ -351,6 +353,7 @@ export function TaskComposer({
   const autoManagedFilterMentionPubkeysRef = useRef<Set<string>>(new Set());
   const lastForceExpandSignalRef = useRef<number | undefined>(undefined);
   const lastAppliedRestoreRequestIdRef = useRef<number | null>(null);
+  const lastAppliedMentionRequestIdRef = useRef<number | null>(null);
   const dragDepthRef = useRef(0);
   const [highlightedTarget, setHighlightedTarget] = useState<"input" | "attachments" | "blocker" | null>(null);
   const [isDraggingFilesOverComposer, setIsDraggingFilesOverComposer] = useState(false);
@@ -574,6 +577,8 @@ export function TaskComposer({
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
+    if (lastAppliedMentionRequestIdRef.current === mentionRequest.id) return;
+    lastAppliedMentionRequestIdRef.current = mentionRequest.id;
     const mention = mentionRequest.mention.startsWith("@")
       ? mentionRequest.mention
       : `@${mentionRequest.mention}`;
@@ -597,7 +602,8 @@ export function TaskComposer({
       const end = textarea.value.length;
       textarea.setSelectionRange(end, end);
     });
-  }, [mentionRequest, adaptiveSize]);
+    onMentionRequestConsumed?.(mentionRequest.id);
+  }, [mentionRequest, adaptiveSize, onMentionRequestConsumed]);
 
   const handleAttachmentUpload = async (file: File, id: string) => {
     try {

@@ -25,6 +25,7 @@ interface TaskTreeProps {
   composeGuideActivationSignal?: number;
   compactTaskCardsEnabled?: boolean;
   isPendingPublishTask?: (taskId: string) => boolean;
+  onMentionRequestConsumed?: (requestId: number) => void;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -44,6 +45,7 @@ export function TaskTree({
   composeGuideActivationSignal,
   compactTaskCardsEnabled = false,
   isPendingPublishTask,
+  onMentionRequestConsumed,
   composeRestoreRequest = null,
   mentionRequest = null,
   isInteractionBlocked = false,
@@ -208,6 +210,7 @@ export function TaskTree({
         forceExpandSignal={composeGuideActivationSignal}
         onExpandedChange={setIsComposerExpanded}
         mentionRequest={mentionRequest}
+        onMentionRequestConsumed={onMentionRequestConsumed}
         composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
         defaultContent={composerDefaultContent}

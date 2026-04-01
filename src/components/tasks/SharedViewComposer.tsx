@@ -17,6 +17,7 @@ interface SharedViewComposerProps {
     mention: string;
     id: number;
   } | null;
+  onMentionRequestConsumed?: (requestId: number) => void;
   defaultContent?: string;
   className?: string;
   collapseOnSuccess?: boolean;
@@ -35,6 +36,7 @@ export function SharedViewComposer({
   forceExpandSignal,
   onExpandedChange,
   mentionRequest = null,
+  onMentionRequestConsumed,
   defaultContent = "",
   className = "relative z-20 border-b border-border px-2 sm:px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0",
   collapseOnSuccess = false,
@@ -57,6 +59,7 @@ export function SharedViewComposer({
         forceExpandSignal={forceExpandSignal}
         onExpandedChange={onExpandedChange}
         mentionRequest={mentionRequest}
+        onMentionRequestConsumed={onMentionRequestConsumed}
         defaultContent={defaultContent}
         collapseOnSuccess={collapseOnSuccess}
         allowComment={allowComment}

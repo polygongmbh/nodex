@@ -85,6 +85,7 @@ interface FeedViewProps {
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
   isPendingPublishTask?: (taskId: string) => boolean;
+  onMentionRequestConsumed?: (requestId: number) => void;
   mentionRequest?: {
     mention: string;
     id: number;
@@ -198,6 +199,7 @@ export function FeedView({
   composeGuideActivationSignal,
   isPendingPublishTask,
   composeRestoreRequest = null,
+  onMentionRequestConsumed,
   mentionRequest = null,
   isInteractionBlocked = false,
   isHydrating = false,
@@ -1106,6 +1108,7 @@ export function FeedView({
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         mentionRequest={mentionRequest}
+        onMentionRequestConsumed={onMentionRequestConsumed}
         composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
         defaultContent={composerDefaultContent}

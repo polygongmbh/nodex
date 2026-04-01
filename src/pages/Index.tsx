@@ -302,6 +302,7 @@ const Index = () => {
 
   const {
     mentionRequest,
+    setMentionRequest,
     channelFilterStates,
     setChannelFilterStates,
     channelMatchMode,
@@ -914,6 +915,9 @@ const Index = () => {
       isPendingPublishTask,
       composeRestoreRequest,
       mentionRequest,
+      onMentionRequestConsumed: (requestId: number) => {
+        setMentionRequest((current) => (current?.id === requestId ? null : current));
+      },
       forceShowComposer: forceShowComposeForGuide,
       composeGuideActivationSignal,
       compactTaskCardsEnabled,
@@ -928,6 +932,7 @@ const Index = () => {
       isPendingPublishTask,
       composeRestoreRequest,
       mentionRequest,
+      setMentionRequest,
       forceShowComposeForGuide,
       composeGuideActivationSignal,
       compactTaskCardsEnabled,

@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { format } from "date-fns";
+import { useState } from "react";
 import { TaskComposer } from "./TaskComposer";
 import type { Channel, Relay, Person, TaskCreateResult } from "@/types";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
@@ -192,6 +193,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     attachmentUploadEnabledSpy.mockReturnValue(true);
     uploadAttachmentSpy.mockReset();
     uploadAttachmentSpy.mockResolvedValue(successfulUploadedAttachment);
+    localStorage.clear();
   });
 
   it("shows a single attachment action", () => {
@@ -1397,6 +1399,60 @@ describe("TaskComposer hashtag autocomplete", () => {
         undefined
       );
     });
+  });
+
+  it("does not reapply a consumed mention request after remount", async () => {
+    const consumedRequestIds: number[] = [];
+
+    function MentionRequestHarness() {
+      const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>({
+        mention: "@alice@example.com",
+        id: 7,
+      });
+      const [visible, setVisible] = useState(true);
+
+      return (
+        <>
+          <button type="button" onClick={() => setVisible((current) => !current)}>
+            toggle composer
+          </button>
+          {visible ? (
+            <TaskComposer
+              onSubmit={() => successfulCreateResult}
+              relays={relays}
+              channels={channels}
+              people={people}
+              onCancel={() => {}}
+              mentionRequest={mentionRequest}
+              onMentionRequestConsumed={(requestId) => {
+                consumedRequestIds.push(requestId);
+                setMentionRequest((current) => (current?.id === requestId ? null : current));
+              }}
+            />
+          ) : null}
+        </>
+      );
+    }
+
+    render(<MentionRequestHarness />);
+
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
+    await waitFor(() => {
+      expect(textarea.value).toBe("@alice@example.com ");
+    });
+    expect(consumedRequestIds).toEqual([7]);
+
+    fireEvent.change(textarea, { target: { value: "" } });
+    expect(textarea.value).toBe("");
+
+    fireEvent.click(screen.getByRole("button", { name: "toggle composer" }));
+    expect(screen.queryByRole("textbox", { name: /what's up\? use #channels and @mentions/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "toggle composer" }));
+
+    const remountedTextarea = getTaskComposerInput() as HTMLTextAreaElement;
+    expect(remountedTextarea.value).toBe("");
+    expect(consumedRequestIds).toEqual([7]);
   });
 
   it("focuses and highlights the composer input when clicking a parsed hashtag chip", async () => {

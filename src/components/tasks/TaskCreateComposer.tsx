@@ -26,6 +26,7 @@ interface TaskCreateComposerProps {
     mention: string;
     id: number;
   } | null;
+  onMentionRequestConsumed?: (requestId: number) => void;
   collapseOnSuccess?: boolean;
   closeOnSuccess?: boolean;
   allowComment?: boolean;
@@ -46,6 +47,7 @@ export function TaskCreateComposer({
   forceExpanded = false,
   forceExpandSignal,
   mentionRequest = null,
+  onMentionRequestConsumed,
   collapseOnSuccess = false,
   closeOnSuccess = false,
   allowComment = true,
@@ -110,6 +112,7 @@ export function TaskCreateComposer({
       forceExpanded={forceExpanded}
       forceExpandSignal={forceExpandSignal}
       mentionRequest={mentionRequest}
+      onMentionRequestConsumed={onMentionRequestConsumed}
       collapseOnSuccess={collapseOnSuccess}
       allowComment={allowComment}
       allowFeedMessageTypes={allowFeedMessageTypes}
