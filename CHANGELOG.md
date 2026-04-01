@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.9.0] - 2026-04-01
+Minor release for priority/filter polish, focused-task sidebar/filter scoping, and Noas host discovery cleanup.
+
 - Task priority now displays consistently as `P1` through `P5` across composers, task chips, and inline priority editors, and priority dropdowns now use severity-style labels (`Minor` through `Critical`) while Nodex continues storing and publishing the canonical `20-100` values under the hood.
 - Sidebar quick filters now use `priority` wording consistently, show minimum priority on the same `1-5` scale, and size the recent/priority number inputs to their actual content width instead of a fixed spinner width.
 - When a task/thread is active, the folded Channels and People sidebar previews now only show entries that are active inside that focused scope instead of unrelated global sidebar items.

@@ -18,7 +18,7 @@
 ## Core Concepts
 - Tasks and comments are Nostr events.
 - Channels are hashtag-based labels and filters.
-- Views share the same feed/channel/people filter state.
+- Views share the same feed/channel/people filter state in the main all-tasks context; channel/people filters suspend while you are focused inside a specific task/thread and restore when you return shortly after.
 
 ## Navigation
 - Use the top view switcher to move between Tree, Feed, Kanban, Table, and Calendar.
@@ -54,7 +54,8 @@
 ### Filter logic
 - Included channels respect the Channels match mode toggle (`AND` or `OR`).
 - Excluded channels hide items containing any excluded channel.
-- When Channels/People are collapsed in the desktop sidebar, selected filters stay visible alongside a compact preview of recent top entries.
+- When Channels/People are collapsed in the desktop sidebar, selected filters stay visible alongside a compact preview of top entries.
+- While a specific task/thread is focused, those folded Channel/People previews only list entries active inside the current focused scope.
 
 ## People Filtering
 - Desktop:
