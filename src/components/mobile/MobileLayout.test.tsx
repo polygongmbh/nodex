@@ -58,6 +58,9 @@ vi.mock("./MobileNav", () => ({
       <button onClick={() => onViewChange("tree")} aria-label="Switch to tree view">
         Tree
       </button>
+      <button onClick={() => onViewChange("calendar")} aria-label="Switch to calendar view">
+        Calendar
+      </button>
       <button onClick={onManageOpen} aria-label="Switch to Manage view">
         Manage
       </button>
@@ -350,6 +353,29 @@ describe("MobileLayout auth wiring", () => {
     fireEvent.click(screen.getByRole("button", { name: /switch to tree view/i }));
 
     expect(screen.getByPlaceholderText(/search or create task/i)).toHaveValue("Draft with #general");
+  });
+
+  it("exits manage by routing directly to the selected view", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+    dispatchFeedInteraction.mockClear();
+
+    renderMobileLayout({
+      viewState: { currentView: "list" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /switch to manage view/i }));
+    fireEvent.click(screen.getByRole("button", { name: /switch to calendar view/i }));
+
+    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(1, {
+      type: "ui.manageRoute.change",
+      isActive: true,
+    });
+    expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(2, {
+      type: "ui.view.change",
+      view: "calendar",
+    });
+    expect(dispatchFeedInteraction).toHaveBeenCalledTimes(2);
   });
 
   it("falls back to showing all tasks when mobile quick filter has no matches", () => {

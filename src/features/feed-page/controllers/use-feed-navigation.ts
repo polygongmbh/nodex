@@ -32,12 +32,18 @@ export function useFeedNavigation({
 }: UseFeedNavigationOptions) {
   const { view: urlView, taskId: urlTaskId } = useParams<{ view: string; taskId: string }>();
   const navigate = useNavigate();
+  const lastContentViewRef = useRef<ViewType>("feed");
 
   const isManageRouteActive = urlView === MOBILE_MANAGE_ROUTE;
-
-  const currentView: ViewType = VALID_VIEWS.includes(urlView as ViewType)
+  const resolvedUrlView = VALID_VIEWS.includes(urlView as ViewType)
     ? (urlView as ViewType)
-    : "feed";
+    : null;
+
+  if (resolvedUrlView !== null) {
+    lastContentViewRef.current = resolvedUrlView;
+  }
+
+  const currentView: ViewType = resolvedUrlView ?? lastContentViewRef.current;
 
   const focusedTaskId = urlTaskId || null;
 

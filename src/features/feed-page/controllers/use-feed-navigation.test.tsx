@@ -34,7 +34,9 @@ function Harness({
       <output data-testid="current-view">{nav.currentView}</output>
       <output data-testid="focused-task-id">{nav.focusedTaskId ?? "null"}</output>
       <output data-testid="is-manage">{String(nav.isManageRouteActive)}</output>
+      <button onClick={() => nav.setCurrentView("tree")}>go-tree</button>
       <button onClick={() => nav.setCurrentView("kanban")}>go-kanban</button>
+      <button onClick={() => nav.setCurrentView("calendar")}>go-calendar</button>
       <button onClick={() => nav.setFocusedTaskId("task-abc")}>focus-task</button>
       <button onClick={() => nav.setFocusedTaskId(null)}>unfocus-task</button>
       <button onClick={() => nav.setManageRouteActive(true)}>open-manage</button>
@@ -118,6 +120,29 @@ describe("useFeedNavigation", () => {
     renderAt("/manage");
     // After toggling off manage, we expect to be back on the default view.
     act(() => screen.getByRole("button", { name: "close-manage" }).click());
+    expect(screen.getByTestId("is-manage")).toHaveTextContent("false");
+  });
+
+  it("preserves the last non-manage view while the manage route is active", () => {
+    renderAt("/tree");
+
+    act(() => screen.getByRole("button", { name: "open-manage" }).click());
+    expect(screen.getByTestId("current-view")).toHaveTextContent("tree");
+    expect(screen.getByTestId("is-manage")).toHaveTextContent("true");
+
+    act(() => screen.getByRole("button", { name: "close-manage" }).click());
+    expect(screen.getByTestId("current-view")).toHaveTextContent("tree");
+    expect(screen.getByTestId("is-manage")).toHaveTextContent("false");
+  });
+
+  it("switches directly to the chosen view from manage instead of falling back to feed", () => {
+    renderAt("/list");
+
+    act(() => screen.getByRole("button", { name: "open-manage" }).click());
+    expect(screen.getByTestId("current-view")).toHaveTextContent("list");
+
+    act(() => screen.getByRole("button", { name: "go-calendar" }).click());
+    expect(screen.getByTestId("current-view")).toHaveTextContent("calendar");
     expect(screen.getByTestId("is-manage")).toHaveTextContent("false");
   });
 

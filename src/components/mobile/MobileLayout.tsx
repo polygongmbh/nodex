@@ -133,6 +133,7 @@ export function MobileLayout({
     setShowFilters(false);
     if (nextView) {
       void dispatchFeedInteraction({ type: "ui.view.change", view: nextView });
+      return;
     }
     onManageRouteChange(false);
   }, [dispatchFeedInteraction, onManageRouteChange]);

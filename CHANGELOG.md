@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Mobile manage navigation now preserves the last selected view, so choosing tree, upcoming, or calendar from the mobile menu no longer jumps through the timeline first.
 - Returning from a focused task to `All tasks` now skips restoring suspended channel/people filters when those old filters no longer match any visible tasks, preventing an immediate jump back into an empty view.
 - Mobile calendar and upcoming views now keep the focused-task breadcrumb visible again, so parent-task navigation is available consistently across mobile task views.
 - Desktop timelines and feeds now keep channel and quick-filter empty states scoped instead of broadening to unrelated posts, while mobile fallback keeps the existing “showing everything” notice and now truly ignores both people and hashtag filters when it broadens.
