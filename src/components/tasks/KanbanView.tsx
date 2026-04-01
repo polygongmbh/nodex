@@ -3,11 +3,11 @@ import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Lock
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import {
   Task,
+  Person,
   TaskCreateResult,
   TaskDateType,
   TaskInitialStatus,
   TaskStatus,
-  SharedTaskViewContext,
   ComposeRestoreRequest,
   PublishedAttachment,
   Nip99Metadata,
@@ -18,7 +18,7 @@ import { TaskTagChipRow } from "./TaskTagChipRow";
 import { hasTaskMentionChips } from "./TaskMentionChips";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getDueDateColorClass, sortTasks, buildChildrenMap, SortContext } from "@/domain/content/task-sorting";
+import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
@@ -27,8 +27,6 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
-import { useTaskViewFiltering } from "@/features/feed-page/controllers/use-task-view-filtering";
-import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
 import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
@@ -36,10 +34,16 @@ import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
+import { useKanbanViewState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
-interface KanbanViewProps extends SharedTaskViewContext {
+interface KanbanViewProps {
+  tasks: Task[];
+  allTasks: Task[];
+  currentUser?: Person;
+  focusedTaskId?: string | null;
+  searchQueryOverride?: string;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode: KanbanDepthMode;
   isPendingPublishTask?: (taskId: string) => boolean;
   isInteractionBlocked?: boolean;
@@ -57,11 +61,8 @@ const ACTIVE_KANBAN_STATUSES: TaskStatus[] = ["todo", "in-progress"];
 export function KanbanView({
   tasks,
   allTasks,
-  channels: channelsProp,
-  channelMatchMode: channelMatchModeProp,
-  people: peopleProp,
   currentUser,
-  searchQuery: searchQueryProp,
+  searchQueryOverride,
   depthMode,
   focusedTaskId,
   isPendingPublishTask,
@@ -72,11 +73,7 @@ export function KanbanView({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
-  const surface = useFeedSurfaceState();
-  const channels = channelsProp ?? surface.channels;
-  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
-  const people = peopleProp ?? surface.people;
-  const searchQuery = searchQueryProp ?? surface.searchQuery;
+  const { people } = useFeedSurfaceState();
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
   };
@@ -88,77 +85,13 @@ export function KanbanView({
   const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
   const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskStatus>>({});
-
-  // Build children map
-  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
-
-  const sortContext: SortContext = useMemo(() => ({
-    childrenMap,
-    allTasks,
-    taskById,
-  }), [childrenMap, allTasks, taskById]);
-
-  // Check if task has children
-  const hasChildren = useCallback((taskId: string): boolean => {
-    const children = childrenMap.get(taskId) || [];
-    return children.some(c => c.taskType === "task");
-  }, [childrenMap]);
-
-  // Get depth of task from root
-  const getDepth = useCallback((taskId: string): number => {
-    const task = taskById.get(taskId);
-    if (!task?.parentId) return 1;
-    return 1 + getDepth(task.parentId);
-  }, [taskById]);
-
-  // Get full ancestor chain for a task
-  const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
-    const chain: { id: string; text: string }[] = [];
-    let current = taskById.get(taskId);
-    
-    while (current?.parentId) {
-      const parent = taskById.get(current.parentId);
-      if (parent) {
-        chain.unshift({
-          id: parent.id,
-          text: formatBreadcrumbLabel(parent.content)
-        });
-        current = parent;
-      } else {
-        break;
-      }
-    }
-    
-    return chain;
-  }, [taskById]);
-
-  const filteredTaskCandidates = useTaskViewFiltering({
-    allTasks,
+  const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
     tasks,
+    allTasks,
     focusedTaskId,
-    searchQuery,
-    people,
-    channels,
-    channelMatchMode,
-    taskPredicate: (task) => task.taskType === "task",
-  });
-  
-  const kanbanTasks = useMemo(() => {
-    return filterTasksByDepthMode({
-      tasks: filteredTaskCandidates,
-      depthMode,
-      focusedTaskId,
-      getDepth,
-      hasChildren,
-    });
-  }, [
+    searchQueryOverride,
     depthMode,
-    filteredTaskCandidates,
-    focusedTaskId,
-    getDepth,
-    hasChildren,
-  ]);
+  });
 
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
@@ -173,15 +106,12 @@ export function KanbanView({
       grouped[status].push(task);
     });
 
-    // Keep terminal columns chronological; apply shared priority ordering elsewhere.
-    for (const status of ACTIVE_KANBAN_STATUSES) {
-      grouped[status] = sortTasks(grouped[status], sortContext);
-    }
+    // Active columns retain the filtered order from the shared state hook.
     grouped["done"] = sortByLatestModified(grouped["done"]);
     grouped["closed"] = sortByLatestModified(grouped["closed"]);
 
     return grouped;
-  }, [kanbanTasks, optimisticStatusByTaskId, sortContext]);
+  }, [kanbanTasks, optimisticStatusByTaskId]);
   const canonicalStatusByTaskId = useMemo(() => {
     const map = new Map<string, TaskStatus>();
     for (const task of kanbanTasks) {
@@ -413,9 +343,6 @@ export function KanbanView({
     }
   }, [keyboardFocusedTaskId]);
   
-  // Determine if we should show context (depth > 1 or leaves mode)
-  const showContext = depthMode !== "1";
-
   return (
     <main className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Kanban Columns */}

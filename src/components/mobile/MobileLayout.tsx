@@ -10,11 +10,6 @@ import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import {
-  Relay,
-  Channel,
-  ChannelMatchMode,
-  Person,
-  Task,
   TaskCreateResult,
   TaskDateType,
   ComposeRestoreRequest,
@@ -22,22 +17,13 @@ import {
   Nip99Metadata,
 } from "@/types";
 import { cn } from "@/lib/utils";
-import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
-import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
-import { useTranslation } from "react-i18next";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
-import { resolveMobileFallbackNoticeType } from "@/domain/content/mobile-fallback-notice";
-import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
+import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 export interface MobileLayoutViewState {
-  relays?: Relay[];
-  channels?: Channel[];
-  channelMatchMode?: ChannelMatchMode;
-  people?: Person[];
   canCreateContent: boolean;
   profileCompletionPromptSignal?: number;
   currentView: ViewType;
@@ -95,12 +81,8 @@ export function MobileLayout({
 }: MobileLayoutProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
-  const surface = useFeedSurfaceState();
+  const { channels } = useFeedSurfaceState();
   const {
-    relays: relaysProp,
-    channels: channelsProp,
-    channelMatchMode: channelMatchModeProp,
-    people: peopleProp,
     canCreateContent,
     profileCompletionPromptSignal = 0,
     currentView,
@@ -108,10 +90,6 @@ export function MobileLayout({
     activeOnboardingStepId = null,
     isManageRouteActive = false,
   } = viewState;
-  const relays = relaysProp ?? surface.relays;
-  const channels = channelsProp ?? surface.channels;
-  const people = peopleProp ?? surface.people;
-  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
   const dispatchManageRouteChange = useCallback((isActive: boolean) => {
     void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
   }, [dispatchFeedInteraction]);
@@ -124,7 +102,6 @@ export function MobileLayout({
     tasks,
     allTasks,
     focusedTaskId = null,
-    searchQuery: viewModelSearchQuery,
     composeRestoreRequest: contextComposeRestoreRequest = null,
     mentionRequest: contextMentionRequest = null,
     forceShowComposer: contextForceShowComposer = false,
@@ -142,8 +119,6 @@ export function MobileLayout({
     visibleFailedPublishDrafts,
     selectedPublishableRelayIds = [],
   } = publishState ?? {};
-  const searchQuery = viewModelSearchQuery ?? surface.searchQuery;
-  const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
@@ -229,146 +204,20 @@ export function MobileLayout({
   });
 
   const mobileCurrentView: MobileViewType = activePrimaryView;
-  const hasSearchQuery = searchQuery.trim().length > 0;
   const viewFallback = <div className="h-full" aria-hidden="true" />;
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
-  const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
-  const taskFilterIndex = useMemo(() => buildTaskViewFilterIndex(allTasks, people), [allTasks, people]);
-  const { included: includedChannelNames, excluded: excludedChannelNames } = useMemo(
-    () => getIncludedExcludedChannelNames(channels),
-    [channels]
-  );
-  const activeViewTaskPredicate = useMemo(() => {
-    if (activePrimaryView !== "list" && activePrimaryView !== "calendar") {
-      return undefined;
-    }
-    return (task: Task) =>
-      task.taskType === "task" && Boolean(task.dueDate) && !isTaskTerminalStatus(task.status);
-  }, [activePrimaryView]);
-  const includeFocusedTaskForActiveView = activePrimaryView === "feed";
-  const hideClosedForActiveView = activePrimaryView === "feed";
-  const scopedMatchesWithSearch = useMemo(
-    () =>
-      filterTasksForView({
-        allTasks,
-        filterIndex: taskFilterIndex,
-        prefilteredTaskIds,
-        focusedTaskId,
-        includeFocusedTask: includeFocusedTaskForActiveView,
-        hideClosedTasks: hideClosedForActiveView,
-        searchQuery,
-        people,
-        includedChannels: includedChannelNames,
-        excludedChannels: excludedChannelNames,
-        channelMatchMode,
-        taskPredicate: activeViewTaskPredicate,
-      }),
-    [
-      allTasks,
-      taskFilterIndex,
-      prefilteredTaskIds,
-      focusedTaskId,
-      includeFocusedTaskForActiveView,
-      hideClosedForActiveView,
-      searchQuery,
-      people,
-      includedChannelNames,
-      excludedChannelNames,
-      channelMatchMode,
-      activeViewTaskPredicate,
-    ]
-  );
-  const scopedMatchesWithoutSearch = useMemo(
-    () =>
-      filterTasksForView({
-        allTasks,
-        filterIndex: taskFilterIndex,
-        prefilteredTaskIds,
-        focusedTaskId,
-        includeFocusedTask: includeFocusedTaskForActiveView,
-        hideClosedTasks: hideClosedForActiveView,
-        searchQuery: "",
-        people,
-        includedChannels: includedChannelNames,
-        excludedChannels: excludedChannelNames,
-        channelMatchMode,
-        taskPredicate: activeViewTaskPredicate,
-      }),
-    [
-      allTasks,
-      taskFilterIndex,
-      prefilteredTaskIds,
-      focusedTaskId,
-      includeFocusedTaskForActiveView,
-      hideClosedForActiveView,
-      people,
-      includedChannelNames,
-      excludedChannelNames,
-      channelMatchMode,
-      activeViewTaskPredicate,
-    ]
-  );
-  const sourceMatchesWithoutScope = useMemo(
-    () =>
-      filterTasksForView({
-        allTasks,
-        filterIndex: taskFilterIndex,
-        prefilteredTaskIds,
-        focusedTaskId,
-        includeFocusedTask: includeFocusedTaskForActiveView,
-        hideClosedTasks: hideClosedForActiveView,
-        searchQuery: "",
-        people,
-        includedChannels: [],
-        excludedChannels: [],
-        channelMatchMode,
-        taskPredicate: activeViewTaskPredicate,
-      }),
-    [
-      allTasks,
-      taskFilterIndex,
-      prefilteredTaskIds,
-      focusedTaskId,
-      includeFocusedTaskForActiveView,
-      hideClosedForActiveView,
-      people,
-      channelMatchMode,
-      activeViewTaskPredicate,
-    ]
-  );
-  const hasScopedMatchesWithSearch = scopedMatchesWithSearch.length > 0;
-  const hasScopedMatchesWithoutSearch = scopedMatchesWithoutSearch.length > 0;
-  const hasSourceContent = sourceMatchesWithoutScope.length > 0;
-  const shouldOmitSearchQuery = !showFilters && hasSearchQuery && !hasScopedMatchesWithSearch && hasSourceContent;
-  const effectiveSearchQuery = shouldOmitSearchQuery ? "" : searchQuery;
-  const scopeModelWithoutQuickSearch = useEmptyScopeModel({
-    relays,
-    channels,
-    people,
-    searchQuery: "",
+  const {
+    effectiveSearchQuery,
+    mobileFallbackMessage,
+    shouldShowMobileFallbackNotice,
+    mobileShellFocusedTaskId,
+  } = useMobileFallbackNoticeState({
+    tasks,
+    allTasks,
     focusedTaskId,
-    taskById,
+    currentView: activePrimaryView,
+    showFilters,
+    isHydrating,
   });
-  const quickFilterFallbackMessage = scopeModelWithoutQuickSearch.scopeDescription
-    ? t("tasks.empty.mobileQuickFilterFallbackScoped", { scope: scopeModelWithoutQuickSearch.scopeDescription })
-    : t("tasks.empty.mobileQuickFilterFallback");
-  const mobileFallbackNoticeType = resolveMobileFallbackNoticeType({
-    hasSourceContent,
-    hasScopeFilters: scopeModelWithoutQuickSearch.hasActiveFilters,
-    hasScopedMatchesWithSearch,
-    hasScopedMatchesWithoutSearch,
-    hasSearchQuery,
-  });
-  const mobileFallbackMessage = mobileFallbackNoticeType === "scope"
-    ? scopeModelWithoutQuickSearch.mobileFallbackHint
-    : mobileFallbackNoticeType === "quick"
-      ? quickFilterFallbackMessage
-      : null;
-  const shouldShowMobileFallbackNotice = !showFilters && !isHydrating && Boolean(mobileFallbackMessage);
-  const mobileShellFocusedTaskId =
-    activePrimaryView !== "list" && activePrimaryView !== "calendar"
-      ? focusedTaskId
-      : null;
   const effectiveTaskViewModel = useMemo(
     () => ({
       ...feedTaskViewModel,

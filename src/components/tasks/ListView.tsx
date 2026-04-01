@@ -2,8 +2,8 @@ import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags, X } from "lucide-react";
 import {
   Task,
+  Person,
   TaskCreateResult,
-  SharedTaskViewContext,
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
@@ -20,12 +20,10 @@ import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { hasTextSelection } from "@/lib/click-intent";
-import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
-import { useTaskViewFiltering } from "@/features/feed-page/controllers/use-task-view-filtering";
 import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
 import {
   DropdownMenu,
@@ -50,11 +48,17 @@ import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/f
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
-import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
+import { useListViewState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
-interface ListViewProps extends SharedTaskViewContext {
+interface ListViewProps {
+  tasks: Task[];
+  allTasks: Task[];
+  currentUser?: Person;
+  focusedTaskId?: string | null;
+  searchQueryOverride?: string;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode?: KanbanDepthMode;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
@@ -103,12 +107,8 @@ const PriorityCell = memo(function PriorityCell({
 export function ListView({
   tasks,
   allTasks,
-  relays: relaysProp,
-  channels: channelsProp,
-  channelMatchMode: channelMatchModeProp,
-  people: peopleProp,
   currentUser,
-  searchQuery: searchQueryProp,
+  searchQueryOverride,
   depthMode = "leaves",
   focusedTaskId,
   forceShowComposer,
@@ -120,12 +120,7 @@ export function ListView({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
-  const surface = useFeedSurfaceState();
-  const relays = relaysProp ?? surface.relays;
-  const channels = channelsProp ?? surface.channels;
-  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
-  const people = peopleProp ?? surface.people;
-  const searchQuery = searchQueryProp ?? surface.searchQuery;
+  const { channels, people } = useFeedSurfaceState();
   const interactionModel = useFeedViewInteractionModel();
   const authPolicy = useAuthActionPolicy();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
@@ -143,6 +138,22 @@ export function ListView({
   const [sortVersion, setSortVersion] = useState(0);
   const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
   const [showAllTagsOnWideScreens, setShowAllTagsOnWideScreens] = useState(false);
+  const {
+    searchQuery,
+    focusedTask,
+    taskById,
+    filteredTaskCandidates,
+    baseListTaskCandidates,
+    hasActiveFilters,
+    hasSelectedScope,
+    composerDefaultContent,
+  } = useListViewState({
+    tasks,
+    allTasks,
+    focusedTaskId,
+    searchQueryOverride,
+    depthMode,
+  });
   const prevTasksRef = useRef<string>("");
   const prevSearchRef = useRef(searchQuery);
   const prevFocusedRef = useRef(focusedTaskId);
@@ -178,36 +189,36 @@ export function ListView({
 
   // Build children map for sorting context - memoize based on sortVersion to prevent re-sorting on status changes
   const sortContextRef = useRef<SortContext | null>(null);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const taskLookup = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
   
   const sortContext: SortContext = useMemo(() => {
     const childrenMap = buildChildrenMap(allTasks);
     sortContextRef.current = {
       childrenMap,
       allTasks,
-      taskById,
+      taskById: taskLookup,
     };
     return sortContextRef.current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortVersion, taskById]);
+  }, [sortVersion, taskLookup]);
 
   const hasChildren = useCallback((taskId: string): boolean => {
     return allTasks.some((task) => task.taskType === "task" && task.parentId === taskId);
   }, [allTasks]);
 
   const getDepth = useCallback((taskId: string): number => {
-    const task = taskById.get(taskId);
+    const task = taskLookup.get(taskId);
     if (!task?.parentId) return 1;
     return 1 + getDepth(task.parentId);
-  }, [taskById]);
+  }, [taskLookup]);
 
   // Get full ancestor chain for a task
   const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
     const chain: { id: string; text: string }[] = [];
-    let current = taskById.get(taskId);
+    let current = taskLookup.get(taskId);
     
     while (current?.parentId) {
-      const parent = taskById.get(current.parentId);
+      const parent = taskLookup.get(current.parentId);
       if (parent) {
         chain.unshift({
           id: parent.id,
@@ -220,29 +231,7 @@ export function ListView({
     }
     
     return chain;
-  }, [taskById]);
-
-  const filteredTaskCandidates = useTaskViewFiltering({
-    allTasks,
-    tasks,
-    focusedTaskId,
-    searchQuery,
-    people,
-    channels,
-    channelMatchMode,
-    taskPredicate: (task) => task.taskType === "task",
-  });
-
-  const baseListTaskCandidates = useTaskViewFiltering({
-    allTasks,
-    tasks,
-    focusedTaskId,
-    searchQuery: "",
-    people,
-    channels: channels.map((channel) => ({ ...channel, filterState: "neutral" })),
-    channelMatchMode,
-    taskPredicate: (task) => task.taskType === "task",
-  });
+  }, [taskLookup]);
 
   const sortListTasks = useCallback((taskCandidates: Task[]) => {
     let filtered = filterTasksByDepthMode({
@@ -315,19 +304,9 @@ export function ListView({
     () => sortListTasks(baseListTaskCandidates),
     [baseListTaskCandidates, sortListTasks]
   );
-  const scopeModel = useEmptyScopeModel({
-    relays,
-    channels,
-    people,
-    searchQuery,
-    focusedTaskId,
-    allTasks,
-  });
   const hasSourceListContent = baseListTasks.length > 0;
-  const shouldShowInlineEmptyHint =
-    scopeModel.hasActiveFilters && listTasks.length === 0 && hasSourceListContent;
-  const shouldShowScopeFooterHint =
-    scopeModel.hasSelectedScope && listTasks.length > 0;
+  const shouldShowInlineEmptyHint = hasActiveFilters && hasSourceListContent && listTasks.length === 0;
+  const shouldShowScopeFooterHint = hasSelectedScope && listTasks.length > 0;
   const shouldShowScreenEmptyState = listTasks.length === 0 && !shouldShowInlineEmptyHint;
   const {
     mediaItems,
@@ -421,7 +400,6 @@ export function ListView({
     if (canCompleteTask(task)) return t("tasks.actions.setStatus");
     return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || t("tasks.actions.setStatus");
   };
-  const focusedTask = focusedTaskId ? allTasks.find((t) => t.id === focusedTaskId) : null;
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => listTasks.map(t => t.id), [listTasks]);
@@ -612,7 +590,7 @@ export function ListView({
         forceExpandSignal={composeGuideActivationSignal}
         composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
-        defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
+        defaultContent={composerDefaultContent}
         allowComment={false}
       />
 

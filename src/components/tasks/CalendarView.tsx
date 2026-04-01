@@ -3,8 +3,8 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
 import {
   Task,
+  Person,
   TaskCreateResult,
-  SharedTaskViewContext,
   TaskDateType,
   ComposeRestoreRequest,
   PublishedAttachment,
@@ -39,10 +39,8 @@ import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
-import { buildChildrenMap, sortTasks, type SortContext } from "@/domain/content/task-sorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
-import { useTaskViewFiltering } from "@/features/feed-page/controllers/use-task-view-filtering";
 import { TaskAttachmentList } from "./TaskAttachmentList";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
@@ -61,10 +59,16 @@ import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
+import { useCalendarViewState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
-interface CalendarViewProps extends SharedTaskViewContext {
+interface CalendarViewProps {
+  tasks: Task[];
+  allTasks: Task[];
+  currentUser?: Person;
+  focusedTaskId?: string | null;
+  searchQueryOverride?: string;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
   selectedDate?: Date | null;
   onSelectedDateChange?: (date: Date | null) => void;
   isMobile?: boolean;
@@ -77,11 +81,8 @@ const getMonthKey = (month: Date) => format(startOfMonth(month), "yyyy-MM");
 export function CalendarView({
   tasks,
   allTasks,
-  channels: channelsProp,
-  channelMatchMode: channelMatchModeProp,
-  people: peopleProp,
   currentUser,
-  searchQuery: searchQueryProp,
+  searchQueryOverride,
   focusedTaskId,
   selectedDate: controlledSelectedDate,
   onSelectedDateChange,
@@ -93,11 +94,7 @@ export function CalendarView({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
-  const surface = useFeedSurfaceState();
-  const channels = channelsProp ?? surface.channels;
-  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
-  const people = peopleProp ?? surface.people;
-  const searchQuery = searchQueryProp ?? surface.searchQuery;
+  const { people } = useFeedSurfaceState();
   const authPolicy = useAuthActionPolicy();
   const focusTask = (taskId: string | null) => {
     void dispatchFeedInteraction({ type: "task.focus.change", taskId });
@@ -132,70 +129,12 @@ export function CalendarView({
   const prependCompensationRef = useRef<{ previousHeight: number } | null>(null);
   const loadingCooldownUntilRef = useRef(0);
   const syncMonthRafIdRef = useRef<number | null>(null);
-
-  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
-  const sortContext: SortContext = useMemo(
-    () => ({ childrenMap, allTasks, taskById }),
-    [childrenMap, allTasks, taskById]
-  );
-
-  // Get full ancestor chain for a task
-  const getAncestorChain = useCallback((taskId: string): { id: string; text: string }[] => {
-    const chain: { id: string; text: string }[] = [];
-    let current = taskById.get(taskId);
-    
-    while (current?.parentId) {
-      const parent = taskById.get(current.parentId);
-      if (parent) {
-        chain.unshift({
-          id: parent.id,
-          text: formatBreadcrumbLabel(parent.content)
-        });
-        current = parent;
-      } else {
-        break;
-      }
-    }
-    
-    return chain;
-  }, [taskById]);
-
-  const filteredTaskCandidates = useTaskViewFiltering({
-    allTasks,
+  const { searchQuery, tasksWithDueDates, upcomingTasks, getTasksForDay, getAncestorChain } = useCalendarViewState({
     tasks,
+    allTasks,
     focusedTaskId,
-    hideClosedTasks: true,
-    searchQuery,
-    people,
-    channels,
-    channelMatchMode,
-    taskPredicate: (task) => Boolean(task.dueDate) && task.taskType === "task",
+    searchQueryOverride,
   });
-  
-  const tasksWithDueDates = useMemo(() => {
-    return filteredTaskCandidates.filter((task) => Boolean(task.dueDate));
-  }, [
-    filteredTaskCandidates,
-  ]);
-
-  const tasksByDay = useMemo(() => {
-    const byDay = new Map<string, Task[]>();
-    for (const task of tasksWithDueDates) {
-      if (!task.dueDate) continue;
-      const dayKey = format(startOfDay(task.dueDate), "yyyy-MM-dd");
-      const bucket = byDay.get(dayKey);
-      if (bucket) {
-        bucket.push(task);
-      } else {
-        byDay.set(dayKey, [task]);
-      }
-    }
-    for (const [dayKey, dayTasks] of byDay.entries()) {
-      byDay.set(dayKey, sortTasks(dayTasks, sortContext));
-    }
-    return byDay;
-  }, [tasksWithDueDates, sortContext]);
 
   const desktopMonthSections = useMemo(() => {
     return desktopMonths
@@ -227,10 +166,6 @@ export function CalendarView({
       })
       .sort((a, b) => a.month.getTime() - b.month.getTime());
   }, [desktopMonths]);
-
-  const getTasksForDay = useCallback((day: Date) => {
-    return tasksByDay.get(format(startOfDay(day), "yyyy-MM-dd")) || [];
-  }, [tasksByDay]);
 
   const selectedDayTasks = useMemo(
     () => (selectedDate ? getTasksForDay(selectedDate) : []),
@@ -269,12 +204,6 @@ export function CalendarView({
       return [...prev, monthStart].sort((a, b) => a.getTime() - b.getTime());
     });
   }, []);
-
-  // Shared task-ordering for upcoming feed groups (non-feed views).
-  const upcomingTasks = useMemo(() => {
-    const active = tasksWithDueDates.filter((task) => !isTaskTerminalStatus(task.status));
-    return sortTasks(active, sortContext);
-  }, [tasksWithDueDates, sortContext]);
 
   // Group upcoming tasks by date category
   const groupedUpcoming = useMemo(() => {

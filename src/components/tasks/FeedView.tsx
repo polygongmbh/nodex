@@ -1,19 +1,14 @@
-import { startTransition, useDeferredValue, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
+import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X } from "lucide-react";
 import {
   Task,
-  Relay,
-  Channel,
-  ChannelMatchMode,
   Person,
   TaskCreateResult,
-  SharedTaskViewContext,
   TaskDateType,
   Nip99ListingStatus,
   ComposeRestoreRequest,
   PublishedAttachment,
   Nip99Metadata,
-  TaskStateUpdate,
   TaskStatus,
   RawNostrEvent,
 } from "@/types";
@@ -28,12 +23,10 @@ import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
 import { formatAuthorMetaParts } from "@/lib/person-label";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
-import { useTaskViewFiltering } from "@/features/feed-page/controllers/use-task-view-filtering";
 import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
 import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import {
@@ -69,9 +62,11 @@ import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
-import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 import {
-  FeedSurfaceProvider,
+  useFeedViewState,
+  type FeedEntry,
+} from "@/features/feed-page/controllers/use-task-view-states";
+import {
   useFeedPersonLookup,
   useFeedSurfaceState,
 } from "@/features/feed-page/views/feed-surface-context";
@@ -85,7 +80,13 @@ function formatCompactRelativeTime(date: Date): string {
   return format(date, "MMM d");
 }
 
-interface FeedViewProps extends SharedTaskViewContext {
+interface FeedViewProps {
+  tasks: Task[];
+  allTasks: Task[];
+  currentUser?: Person;
+  focusedTaskId?: string | null;
+  searchQueryOverride?: string;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
   isMobile?: boolean;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
@@ -97,10 +98,6 @@ interface FeedViewProps extends SharedTaskViewContext {
   isInteractionBlocked?: boolean;
   isHydrating?: boolean;
 }
-
-type FeedEntry =
-  | { type: "task"; id: string; timestamp: Date; task: Task }
-  | { type: "state-update"; id: string; timestamp: Date; task: Task; update: TaskStateUpdate };
 
 const INITIAL_VISIBLE_FEED_ENTRIES = 40;
 const FEED_REVEAL_BATCH_SIZE = 30;
@@ -199,13 +196,9 @@ function FeedPriorityChip({ task, editable }: FeedPriorityChipProps) {
 export function FeedView({
   tasks,
   allTasks,
-  relays: relaysProp,
-  channels: channelsProp,
-  channelMatchMode: channelMatchModeProp,
-  people: peopleProp,
   currentUser,
-  searchQuery: searchQueryProp,
   focusedTaskId,
+  searchQueryOverride,
   isMobile = false,
   forceShowComposer,
   composeGuideActivationSignal,
@@ -218,13 +211,8 @@ export function FeedView({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
-  const surface = useFeedSurfaceState();
+  const { channels, people } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
-  const relays = relaysProp ?? surface.relays;
-  const channels = channelsProp ?? surface.channels;
-  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
-  const people = peopleProp ?? surface.people;
-  const searchQuery = searchQueryProp ?? surface.searchQuery;
   const interactionModel = useFeedViewInteractionModel();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
   const focusTask = (taskId: string | null) => {
@@ -250,12 +238,31 @@ export function FeedView({
   };
 
   const authPolicy = useAuthActionPolicy();
-  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
   const [isTwoXLDesktop, setIsTwoXLDesktop] = useState(false);
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
   const [activeRawEvent, setActiveRawEvent] = useState<RawNostrEvent | null>(null);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
+  const {
+    searchQuery,
+    focusedTask,
+    taskById,
+    feedTasks,
+    feedEntries,
+    activeFeedEntries,
+    mediaPreviewTasks,
+    feedDisclosureKey,
+    shouldShowMobileScopeFallback,
+    shouldShowInlineEmptyHint,
+    shouldShowScopeFooterHint,
+    shouldShowScreenEmptyState,
+    composerDefaultContent,
+  } = useFeedViewState({
+    tasks,
+    allTasks,
+    focusedTaskId,
+    searchQueryOverride,
+  });
 
   useEffect(() => {
     if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
@@ -301,144 +308,10 @@ export function FeedView({
     return () => mediaQuery.removeListener(handleMediaQueryChange);
   }, [isMobile]);
 
-  const filteredFeedTasks = useTaskViewFiltering({
-    allTasks,
-    tasks,
-    focusedTaskId,
-    includeFocusedTask: true,
-    hideClosedTasks: true,
-    searchQuery: deferredSearchQuery,
-    people,
-    channels,
-    channelMatchMode,
-  });
-  const neutralChannels = useMemo(
-    () => channels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
-    [channels]
-  );
-  const unfilteredFeedTasks = useTaskViewFiltering({
-    allTasks,
-    tasks,
-    focusedTaskId,
-    includeFocusedTask: true,
-    hideClosedTasks: true,
-    searchQuery: "",
-    people,
-    channels: neutralChannels,
-    channelMatchMode,
-  });
-  const filteredFeedTasksWithClosed = useTaskViewFiltering({
-    allTasks,
-    tasks,
-    focusedTaskId,
-    includeFocusedTask: true,
-    hideClosedTasks: false,
-    searchQuery: deferredSearchQuery,
-    people,
-    channels,
-    channelMatchMode,
-  });
-  const unfilteredFeedTasksWithClosed = useTaskViewFiltering({
-    allTasks,
-    tasks,
-    focusedTaskId,
-    includeFocusedTask: true,
-    hideClosedTasks: false,
-    searchQuery: "",
-    people,
-    channels: neutralChannels,
-    channelMatchMode,
-  });
-  const feedTasks = useMemo(
-    () => [...filteredFeedTasks].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()),
-    [filteredFeedTasks]
-  );
-  const allFeedEntries = useMemo<FeedEntry[]>(() => {
-    const entries: FeedEntry[] = [];
-    for (const task of [...unfilteredFeedTasksWithClosed].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())) {
-      if (task.status !== "closed" || task.id === focusedTaskId) {
-        entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
-      }
-      for (const update of task.stateUpdates || []) {
-        entries.push({
-          type: "state-update",
-          id: `${task.id}-state-${update.id}`,
-          timestamp: update.timestamp,
-          task,
-          update,
-        });
-      }
-    }
-    return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [focusedTaskId, unfilteredFeedTasksWithClosed]);
-  const feedEntries = useMemo<FeedEntry[]>(() => {
-    const entries: FeedEntry[] = [];
-    for (const task of [...filteredFeedTasksWithClosed].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())) {
-      if (task.status !== "closed" || task.id === focusedTaskId) {
-        entries.push({ type: "task", id: task.id, timestamp: task.timestamp, task });
-      }
-      for (const update of task.stateUpdates || []) {
-        entries.push({
-          type: "state-update",
-          id: `${task.id}-state-${update.id}`,
-          timestamp: update.timestamp,
-          task,
-          update,
-        });
-      }
-    }
-    return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [filteredFeedTasksWithClosed, focusedTaskId]);
-  const activeChannelFiltersKey = useMemo(
-    () => channels
-      .filter((channel) => channel.filterState && channel.filterState !== "neutral")
-      .map((channel) => `${channel.id}:${channel.filterState}`)
-      .sort()
-      .join(","),
-    [channels]
-  );
-  const selectedPeopleKey = useMemo(
-    () => people
-      .filter((person) => person.isSelected)
-      .map((person) => person.id)
-      .sort()
-      .join(","),
-    [people]
-  );
-  const feedDisclosureKey = useMemo(
-    () => [
-      focusedTaskId || "",
-      deferredSearchQuery.trim().toLowerCase(),
-      channelMatchMode,
-      activeChannelFiltersKey,
-      selectedPeopleKey,
-    ].join("|"),
-    [activeChannelFiltersKey, channelMatchMode, deferredSearchQuery, focusedTaskId, selectedPeopleKey]
-  );
   const [feedDisclosureState, setFeedDisclosureState] = useState<FeedDisclosureState>(() => ({
     key: feedDisclosureKey,
     visibleEntryCount: INITIAL_VISIBLE_FEED_ENTRIES,
   }));
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
-  const propPeopleById = useMemo(
-    () =>
-      peopleProp
-        ? new Map(peopleProp.map((person) => [person.id.toLowerCase(), person] as const))
-        : null,
-    [peopleProp]
-  );
-  const scopeModel = useEmptyScopeModel({
-    relays,
-    channels,
-    people,
-    searchQuery: deferredSearchQuery,
-    focusedTaskId,
-    taskById,
-  });
-  const hasSourceFeedContent = allFeedEntries.length > 0;
-  const shouldShowMobileScopeFallback =
-    isMobile && scopeModel.hasActiveFilters && feedEntries.length === 0 && hasSourceFeedContent;
-  const activeFeedEntries = shouldShowMobileScopeFallback ? allFeedEntries : feedEntries;
   const visibleEntryCount =
     feedDisclosureState.key === feedDisclosureKey
       ? feedDisclosureState.visibleEntryCount
@@ -447,11 +320,6 @@ export function FeedView({
     () => activeFeedEntries.slice(0, visibleEntryCount),
     [activeFeedEntries, visibleEntryCount]
   );
-  const shouldShowInlineEmptyHint =
-    !isMobile && scopeModel.hasActiveFilters && feedEntries.length === 0 && hasSourceFeedContent;
-  const shouldShowScopeFooterHint =
-    !isMobile && scopeModel.hasSelectedScope && feedEntries.length > 0;
-  const shouldShowScreenEmptyState = feedEntries.length === 0 && !shouldShowMobileScopeFallback && !shouldShowInlineEmptyHint;
   const {
     mediaItems,
     activeMediaIndex,
@@ -464,7 +332,7 @@ export function FeedView({
     goToPreviousPost,
     goToNextPost,
     closeMediaPreview,
-  } = useTaskMediaPreview(shouldShowMobileScopeFallback ? unfilteredFeedTasks : feedTasks);
+  } = useTaskMediaPreview(mediaPreviewTasks);
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => feedTasks.map(t => t.id), [feedTasks]);
@@ -643,7 +511,6 @@ export function FeedView({
     return breadcrumb;
   };
 
-  const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
   const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
   const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
@@ -675,7 +542,6 @@ export function FeedView({
     if (entry.type === "state-update") {
       const { task, update } = entry;
       const resolvedUpdateAuthor =
-        propPeopleById?.get(update.authorPubkey.toLowerCase()) ||
         peopleById.get(update.authorPubkey.toLowerCase()) ||
         task.author;
       const updateAuthorMeta = formatAuthorMetaParts({
@@ -777,7 +643,6 @@ export function FeedView({
     const isKeyboardFocused = keyboardFocusedTaskId === task.id;
     const isLockedUntilStart = isTaskLockedUntilStart(task);
     const resolvedAuthor =
-      propPeopleById?.get(task.author.id.toLowerCase()) ??
       peopleById.get(task.author.id.toLowerCase()) ??
       task.author;
     const authorMeta = formatAuthorMetaParts({
@@ -1286,21 +1151,8 @@ export function FeedView({
     );
   };
 
-  const viewSurfaceValue = useMemo(
-    () => ({
-      ...surface,
-      relays,
-      channels,
-      people,
-      searchQuery,
-      channelMatchMode,
-    }),
-    [channelMatchMode, channels, people, relays, searchQuery, surface]
-  );
-
   return (
-    <FeedSurfaceProvider value={viewSurfaceValue}>
-      <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
+    <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       <SharedViewComposer
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onSubmit={handleNewTask}
@@ -1312,7 +1164,7 @@ export function FeedView({
         mentionRequest={mentionRequest}
         composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm"
-        defaultContent={buildComposePrefillFromFiltersAndContext(channels, focusedTask?.tags)}
+        defaultContent={composerDefaultContent}
         allowFeedMessageTypes
       />
 
@@ -1377,6 +1229,5 @@ export function FeedView({
       />
 
       </main>
-    </FeedSurfaceProvider>
   );
 }
