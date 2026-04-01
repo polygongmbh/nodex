@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   readStartupNoasBootstrap,
-  resolveNoasRootDomainHostname,
   resolveStartupNoasBootstrap,
 } from "./startup-noas";
+import { resolveRootDomainHostname } from "@/lib/root-domain";
 
 const noasClientModule = vi.hoisted(() => ({
   discoverNoasApiBaseUrl: vi.fn(),
@@ -93,13 +93,13 @@ describe("startup Noas bootstrap", () => {
   });
 });
 
-describe("resolveNoasRootDomainHostname", () => {
+describe("resolveRootDomainHostname", () => {
   it.each([
     ["app.example.com", "example.com"],
     ["example.com", "example.com"],
     ["localhost", "localhost"],
     ["192.168.1.5", "192.168.1.5"],
   ])("maps %s to %s", (input, expected) => {
-    expect(resolveNoasRootDomainHostname(input)).toBe(expected);
+    expect(resolveRootDomainHostname(input)).toBe(expected);
   });
 });
