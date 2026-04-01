@@ -50,7 +50,7 @@ describe("startup Noas bootstrap", () => {
     expect(storageModule.loadPersistedNoasDefaultHostUrl).not.toHaveBeenCalled();
   });
 
-  it("uses a persisted host when env configuration is absent", () => {
+  it("uses a persisted host when host configuration is absent", () => {
     storageModule.loadPersistedNoasDefaultHostUrl.mockReturnValue("https://persisted.example.com");
 
     expect(readStartupNoasBootstrap()).toEqual({
@@ -60,7 +60,7 @@ describe("startup Noas bootstrap", () => {
     });
   });
 
-  it("marks fallback resolution as pending when no env or persisted host exists", () => {
+  it("marks fallback resolution as pending when no host or persisted host exists", () => {
     expect(readStartupNoasBootstrap()).toEqual({
       defaultHostUrl: "",
       source: "fallback",

@@ -11,6 +11,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Channel and people filters now suspend while you are focused inside a task/subtask, restore when you return to all tasks shortly after, and reset to the unfiltered all-tasks view after a longer stay in scoped task mode.
 - Noas auth now immediately connects relay URLs returned by sign-in responses, and Noas sign-up submissions now include the app’s currently connected relay URLs in the same array format.
 - Noas API-base resolution now caches discovered Noas instances by the hostname entered in the auth host field, so one previously used host/domain no longer overrides a different entered host.
+- Noas bootstrap and auth configuration now use `VITE_NOAS_HOST_URL` as the only environment override, so configured hosts always go through `/.well-known/nostr.json` discovery instead of bypassing discovery with a direct API base.
 
 ## [2.8.0] - 2026-03-27
 Minor release for relay-scope correctness, startup performance, and mobile/task-view polish (1875 production lines changed since `v2.7.6`).

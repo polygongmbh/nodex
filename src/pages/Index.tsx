@@ -121,7 +121,7 @@ const Index = () => {
   } = useAuthModalRoute();
   const [guideDemoFeedEnabled, setGuideDemoFeedEnabled] = useState(false);
   const demoFeedActive = DEMO_FEED_ENABLED || guideDemoFeedEnabled;
-  const hasConfiguredNoasAuth = Boolean(import.meta.env.VITE_NOAS_API_URL || import.meta.env.VITE_NOAS_HOST_URL);
+  const hasConfiguredNoasAuth = Boolean(import.meta.env.VITE_NOAS_HOST_URL);
 
   const subscribedKinds = useMemo<NostrEventKind[]>(
     () => [

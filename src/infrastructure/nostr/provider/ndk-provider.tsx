@@ -143,7 +143,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       normalizeNoasBaseUrl(
         defaultNoasHostUrl
         || import.meta.env.VITE_NOAS_HOST_URL
-        || import.meta.env.VITE_NOAS_API_URL
         || loadPersistedNoasDefaultHostUrl()
         || ""
       ),

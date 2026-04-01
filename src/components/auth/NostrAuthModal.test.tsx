@@ -78,7 +78,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("starts on the auth chooser and still shows Noas when no Noas env is configured", () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
@@ -348,7 +347,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("shows an immediately editable empty Noas host when no Noas env is configured", () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
@@ -362,7 +360,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("prefills the Noas host as a bare domain and opens directly to Noas when startup discovery resolved a host", () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.defaultNoasHostUrl = "https://example.com";
 
@@ -373,7 +370,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("submits a configured noas https host with internal protocol normalization", async () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.defaultNoasHostUrl = "https://example.com";
 
@@ -390,7 +386,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("keeps explicit http noas hosts unchanged in the prefilled host field", () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.defaultNoasHostUrl = "http://localhost:3000/custom/noas/path?mode=dev";
 
@@ -400,7 +395,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("shows a connection-specific Noas error when the host request fails", async () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.loginWithNoas = vi.fn(async () => ({ success: false, errorCode: "connection_failed" }));
 
@@ -418,7 +412,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("shows a key-mismatch-specific Noas error when decrypted and returned pubkeys differ", async () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.loginWithNoas = vi.fn(async () => ({ success: false, errorCode: "key_mismatch" }));
 
@@ -438,7 +431,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("shows the raw Noas sign-in error payload with HTTP status when provided", async () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.loginWithNoas = vi.fn(async () => ({
       success: false,
@@ -460,7 +452,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("shows the raw Noas sign-up error payload with HTTP status when provided", async () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.signupWithNoas = vi.fn(async () => ({
       success: false,
@@ -486,7 +477,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("toasts the returned Noas message and switches to sign in when signup succeeds without active status", async () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.signupWithNoas = vi.fn(async () => ({
       success: false,
@@ -516,7 +506,6 @@ describe("NostrAuthModal", () => {
   });
 
   it("suppresses the generic signup toast when the Noas server returns an active signup message", async () => {
-    vi.stubEnv("VITE_NOAS_API_URL", "");
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.signupWithNoas = vi.fn(async () => ({
       success: true,

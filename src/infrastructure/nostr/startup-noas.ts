@@ -10,9 +10,7 @@ export interface StartupNoasBootstrap {
 
 function resolveConfiguredNoasHostUrl(): string {
   return normalizeNoasBaseUrl(
-    (import.meta.env.VITE_NOAS_HOST_URL as string | undefined)
-      || (import.meta.env.VITE_NOAS_API_URL as string | undefined)
-      || ""
+    (import.meta.env.VITE_NOAS_HOST_URL as string | undefined) || ""
   );
 }
 
