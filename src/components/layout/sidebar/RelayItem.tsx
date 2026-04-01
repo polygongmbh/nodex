@@ -25,6 +25,7 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const Icon = iconMap[relay.icon] || Building2;
   const relayDisplayName = relay.url ? relayUrlToName(relay.url) : relay.name || relay.id;
+  const relayTooltipName = relay.url || relayDisplayName;
   const resolvedConnectionStatus = relay.id === "demo" || !relay.connectionStatus ? "connected" : relay.connectionStatus;
   const isConnectionActive = resolvedConnectionStatus === "connected";
   const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
@@ -46,8 +47,8 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           e.stopPropagation();
           void dispatchFeedInteraction({ type: "sidebar.relay.toggle", relayId: relay.id });
         }}
-        title={t("sidebar.filters.toggleRelay", { name: relayDisplayName })}
-        aria-label={t("sidebar.filters.toggleRelay", { name: relayDisplayName })}
+        title={t("sidebar.filters.toggleRelay", { name: relayTooltipName })}
+        aria-label={t("sidebar.filters.toggleRelay", { name: relayTooltipName })}
       >
         <div
           className={cn(
@@ -67,8 +68,8 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
           void dispatchFeedInteraction({ type: "sidebar.relay.exclusive", relayId: relay.id });
         }}
         className="flex-1 min-w-0 text-left"
-        title={t("sidebar.filters.showOnlyRelay", { name: relayDisplayName })}
-        aria-label={t("sidebar.filters.showOnlyRelay", { name: relayDisplayName })}
+        title={t("sidebar.filters.showOnlyRelay", { name: relayTooltipName })}
+        aria-label={t("sidebar.filters.showOnlyRelay", { name: relayTooltipName })}
       >
         <span
           className={cn(
