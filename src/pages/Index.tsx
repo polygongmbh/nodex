@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useFeedNavigation } from "@/features/feed-page/controllers/use-feed-navigation";
+import { useFocusedTaskCollapsedSidebarPreview } from "@/features/feed-page/controllers/use-focused-task-collapsed-sidebar-preview";
 import { useTaskScopeSpecificFilters } from "@/features/feed-page/controllers/use-task-scope-specific-filters";
 import { useNostrEventCache } from "@/infrastructure/nostr/use-nostr-event-cache";
 import { useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
@@ -463,6 +464,15 @@ const Index = () => {
     allTasks,
   });
 
+  const focusedTaskCollapsedSidebarPreview = useFocusedTaskCollapsedSidebarPreview({
+    allTasks,
+    focusedTaskId,
+    activeRelayIds: effectiveActiveRelayIds,
+    channels: channelsWithState,
+    people: peopleWithState,
+    allowUnknownRelayMetadata: !hasLiveHydratedRelayScope,
+  });
+
   const filteredTasks = useMemo(
     () =>
       filterTasksByRelayAndPeople({
@@ -917,8 +927,10 @@ const Index = () => {
     () => ({
       relays: relaysWithActiveState,
       channels: channelsWithState,
+      collapsedPreviewChannels: focusedTaskCollapsedSidebarPreview.channels,
       channelMatchMode,
       people: peopleWithState,
+      collapsedPreviewPeople: focusedTaskCollapsedSidebarPreview.people,
       nostrRelays,
       isFocused: isSidebarFocused,
       quickFilters,
@@ -938,8 +950,10 @@ const Index = () => {
     [
       relaysWithActiveState,
       channelsWithState,
+      focusedTaskCollapsedSidebarPreview.channels,
       channelMatchMode,
       peopleWithState,
+      focusedTaskCollapsedSidebarPreview.people,
       nostrRelays,
       isSidebarFocused,
       quickFilters,

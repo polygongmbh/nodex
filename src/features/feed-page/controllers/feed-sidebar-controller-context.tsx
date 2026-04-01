@@ -6,8 +6,10 @@ import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 export interface FeedSidebarState {
   relays: Relay[];
   channels: Channel[];
+  collapsedPreviewChannels?: Channel[];
   channelMatchMode: ChannelMatchMode;
   people: Person[];
+  collapsedPreviewPeople?: Person[];
   nostrRelays: NDKRelayStatus[];
   isFocused: boolean;
   quickFilters?: QuickFilterState;
@@ -19,8 +21,10 @@ export interface FeedSidebarState {
 const defaultSidebarState: FeedSidebarState = {
   relays: [],
   channels: [],
+  collapsedPreviewChannels: undefined,
   channelMatchMode: "and",
   people: [],
+  collapsedPreviewPeople: undefined,
   nostrRelays: [],
   isFocused: false,
   quickFilters: undefined,

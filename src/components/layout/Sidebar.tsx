@@ -72,8 +72,10 @@ export function SidebarHeader({ className }: SidebarHeaderProps) {
 export interface SidebarProps {
   relays: Relay[];
   channels: Channel[];
+  collapsedPreviewChannels?: Channel[];
   channelMatchMode?: ChannelMatchMode;
   people: Person[];
+  collapsedPreviewPeople?: Person[];
   nostrRelays: NDKRelayStatus[];
   isFocused?: boolean;
   quickFilters?: QuickFilterState;
@@ -86,8 +88,10 @@ export interface SidebarProps {
 export function Sidebar({
   relays,
   channels,
+  collapsedPreviewChannels,
   channelMatchMode = "and",
   people,
+  collapsedPreviewPeople,
   nostrRelays,
   isFocused = false,
   quickFilters,
@@ -140,7 +144,7 @@ export function Sidebar({
       new Set(
         buildCollapsedPreviewItems(
           {
-            items: [...channels].sort((a, b) => {
+            items: [...(collapsedPreviewChannels ?? channels)].sort((a, b) => {
               const usageDiff = (b.usageCount ?? 0) - (a.usageCount ?? 0);
               if (usageDiff !== 0) return usageDiff;
               return a.name.localeCompare(b.name);
@@ -152,20 +156,20 @@ export function Sidebar({
           }
         ).map((channel) => channel.id)
       ),
-    [channels, collapsedPreviewLimit, pinnedChannelSet]
+    [channels, collapsedPreviewChannels, collapsedPreviewLimit, pinnedChannelSet]
   );
   const collapsedPreviewPersonIds = useMemo(
     () =>
       new Set(
         buildCollapsedPreviewItems({
-          items: people,
+          items: collapsedPreviewPeople ?? people,
           isSelected: (person) => person.isSelected,
           isPinned: (person) => pinnedPersonSet.has(person.id),
           maxItems: collapsedPreviewLimit,
           alwaysIncludePinned: true,
         }).map((person) => person.id)
       ),
-    [collapsedPreviewLimit, people, pinnedPersonSet]
+    [collapsedPreviewLimit, collapsedPreviewPeople, people, pinnedPersonSet]
   );
 
   // Build a flat list of all focusable items
