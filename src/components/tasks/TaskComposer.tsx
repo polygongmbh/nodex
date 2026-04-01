@@ -68,7 +68,6 @@ import { useFeedComposerOptions } from "@/features/feed-page/views/feed-surface-
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
-  formatPriorityLabel,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
 
@@ -1893,7 +1892,7 @@ export function TaskComposer({
               <option value="">{t("composer.labels.priority")}</option>
               {DISPLAY_PRIORITY_OPTIONS.map((option) => (
                 <option key={option} value={String(option)}>
-                  {formatPriorityLabel(storedPriorityFromDisplay(option))}
+                  {t(`composer.priorityLevels.${option}`)}
                 </option>
               ))}
             </select>

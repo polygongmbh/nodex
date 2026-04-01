@@ -123,14 +123,21 @@
     "labels": {
       "dateType": "Datumstyp",
       "priority": "Priorität",
+      "priorityShort": "⚑ Priorität",
       "kind": "Typ",
       "task": "Aufgabe",
       "comment": "Kommentar",
       "offer": "Angebot",
       "request": "Gesuch",
       "mentions": "Erwähnungen",
-      "date": "Datum",
-      "priorityShort": "⚑ Prio"
+      "date": "Datum"
+    },
+    "priorityLevels": {
+      "1": "P1 - Gering",
+      "2": "P2 - Moderat",
+      "3": "P3 - Erheblich",
+      "4": "P4 - Schwerwiegend",
+      "5": "P5 - Kritisch"
     },
     "hints": {
       "composeField": "#channel-Tags und @Erwähnungen in diesem Feld verwenden",
@@ -316,12 +323,12 @@
     "quickFilters": {
       "chips": {
         "recent": "Neu {{days}}T",
-        "priority": "Wichtig P{{priority}}+"
+        "priority": "Priorität P{{priority}}+"
       },
       "labels": {
         "recent": "Neu",
         "recentDays": "Alter in Tagen",
-        "important": "Wichtig",
+        "priority": "Priorität",
         "minPriority": "Mindestpriorität"
       },
       "actions": {
@@ -330,7 +337,7 @@
         "clear": "Zurücksetzen",
         "remove": "{{filterName}} entfernen",
         "toggleRecent": "Nur Beiträge der letzten {{days}} Tage anzeigen",
-        "toggleImportant": "Nur Aufgaben ab der Mindestpriorität anzeigen"
+        "togglePriority": "Nur Aufgaben ab der Mindestpriorität anzeigen"
       }
     }
   },

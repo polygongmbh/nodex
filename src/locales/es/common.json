@@ -123,14 +123,21 @@
     "labels": {
       "dateType": "Tipo de fecha",
       "priority": "Prioridad",
+      "priorityShort": "⚑ Prioridad",
       "kind": "Tipo",
       "task": "Tarea",
       "comment": "Comentario",
       "offer": "Oferta",
       "request": "Solicitud",
       "mentions": "Menciones",
-      "date": "Fecha",
-      "priorityShort": "⚑ Prio"
+      "date": "Fecha"
+    },
+    "priorityLevels": {
+      "1": "P1 - Menor",
+      "2": "P2 - Moderada",
+      "3": "P3 - Significativa",
+      "4": "P4 - Grave",
+      "5": "P5 - Crítica"
     },
     "hints": {
       "composeField": "Usa etiquetas #canal y @menciones en este campo",
@@ -316,12 +323,12 @@
     "quickFilters": {
       "chips": {
         "recent": "Recientes {{days}}d",
-        "priority": "Importantes P{{priority}}+"
+        "priority": "Prioridad P{{priority}}+"
       },
       "labels": {
         "recent": "Recientes",
         "recentDays": "Antigüedad en días",
-        "important": "Importantes",
+        "priority": "Prioridad",
         "minPriority": "Prioridad mínima"
       },
       "actions": {
@@ -330,7 +337,7 @@
         "clear": "Limpiar",
         "remove": "Quitar {{filterName}}",
         "toggleRecent": "Mostrar solo publicaciones de los últimos {{days}} días",
-        "toggleImportant": "Mostrar solo tareas con la prioridad mínima o superior"
+        "togglePriority": "Mostrar solo tareas con la prioridad mínima o superior"
       }
     }
   },

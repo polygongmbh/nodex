@@ -7,7 +7,6 @@ import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/fe
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
-  formatPriorityLabel,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
 
@@ -134,6 +133,7 @@ export function TaskPrioritySelect({
   ariaLabel,
   stopPropagation = false,
 }: TaskPrioritySelectProps) {
+  const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const value = (() => {
     const displayPriority = displayPriorityFromStored(priority);
@@ -165,7 +165,7 @@ export function TaskPrioritySelect({
       {includeEmptyOption && <option value="">—</option>}
       {DISPLAY_PRIORITY_OPTIONS.map((option) => (
         <option key={option} value={String(option)}>
-          {formatPriorityLabel(storedPriorityFromDisplay(option))}
+          {t(`composer.priorityLevels.${option}`)}
         </option>
       ))}
     </select>

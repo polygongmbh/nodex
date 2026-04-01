@@ -123,14 +123,21 @@
     "labels": {
       "dateType": "Date type",
       "priority": "Priority",
+      "priorityShort": "⚑ Priority",
       "kind": "Kind",
       "task": "Task",
       "comment": "Comment",
       "offer": "Offer",
       "request": "Request",
       "mentions": "Mentions",
-      "date": "Date",
-      "priorityShort": "⚑ Prio"
+      "date": "Date"
+    },
+    "priorityLevels": {
+      "1": "P1 - Minor",
+      "2": "P2 - Moderate",
+      "3": "P3 - Significant",
+      "4": "P4 - Major",
+      "5": "P5 - Critical"
     },
     "hints": {
       "composeField": "Use #channel tags and @mentions in this field",
@@ -316,12 +323,12 @@
     "quickFilters": {
       "chips": {
         "recent": "Recent {{days}}d",
-        "priority": "Important P{{priority}}+"
+        "priority": "Priority P{{priority}}+"
       },
       "labels": {
         "recent": "Recent",
         "recentDays": "Age in days",
-        "important": "Important",
+        "priority": "Priority",
         "minPriority": "Minimum priority"
       },
       "actions": {
@@ -330,7 +337,7 @@
         "clear": "Clear",
         "remove": "Remove {{filterName}}",
         "toggleRecent": "Show only posts from the last {{days}} days",
-        "toggleImportant": "Show only tasks at or above the minimum priority"
+        "togglePriority": "Show only tasks at or above the minimum priority"
       }
     }
   },

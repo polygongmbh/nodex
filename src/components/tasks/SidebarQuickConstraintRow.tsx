@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
-  MAX_DISPLAY_PRIORITY_DIGITS,
   MAX_RECENT_DAYS_DIGITS,
   displayPriorityFromStored,
   storedPriorityFromDisplay,
@@ -97,11 +96,11 @@ export function SidebarQuickConstraintRow({
               quickFilters.priorityEnabled ? "text-primary" : "text-muted-foreground"
             )}
             aria-pressed={quickFilters.priorityEnabled}
-            aria-label={t("sidebar.quickFilters.actions.toggleImportant")}
-            title={t("sidebar.quickFilters.actions.toggleImportant")}
+            aria-label={t("sidebar.quickFilters.actions.togglePriority")}
+            title={t("sidebar.quickFilters.actions.togglePriority")}
           >
             <Flag className="h-3 w-3 shrink-0" />
-            <span className="hidden truncate lg:inline">{t("sidebar.quickFilters.labels.important")}</span>
+            <span className="hidden truncate lg:inline">{t("sidebar.quickFilters.labels.priority")}</span>
           </button>
           <Input
             type="number"

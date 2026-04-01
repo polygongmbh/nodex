@@ -24,7 +24,7 @@ function renderRow(dispatch = vi.fn().mockResolvedValue({
 }
 
 describe("SidebarQuickConstraintRow", () => {
-  it("shows display-scale importance values and submits canonical priority values", () => {
+  it("shows display-scale priority values and submits canonical priority values", () => {
     const dispatch = renderRow();
 
     const minPriorityInput = screen.getByLabelText("Minimum priority") as HTMLInputElement;
@@ -55,7 +55,7 @@ describe("SidebarQuickConstraintRow", () => {
 
     expect(screen.getByText("Recent").className).toContain("hidden");
     expect(screen.getByText("Recent").className).toContain("lg:inline");
-    expect(screen.getByText("Important").className).toContain("hidden");
-    expect(screen.getByText("Important").className).toContain("lg:inline");
+    expect(screen.getByText("Priority").className).toContain("hidden");
+    expect(screen.getByText("Priority").className).toContain("lg:inline");
   });
 });
