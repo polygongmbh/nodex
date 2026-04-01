@@ -1,26 +1,29 @@
-import { useState, useMemo, useCallback, useDeferredValue, useEffect, useLayoutEffect, useRef } from "react";
-import { Task, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, SharedTaskViewContext, Nip99Metadata } from "@/types";
+import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { Task, Person, TaskCreateResult, TaskDateType, ComposeRestoreRequest, PublishedAttachment, Nip99Metadata } from "@/types";
 import { TaskItem } from "./TaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
-import { sortTasks, buildChildrenMap, SortContext } from "@/domain/content/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { taskMatchesTextQuery } from "@/domain/content/task-text-filter";
-import { buildComposePrefillFromFiltersAndContext } from "@/lib/compose-prefill";
-import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 import { useTaskMediaPreview } from "@/hooks/use-task-media-preview";
 import { TaskMediaLightbox } from "@/components/tasks/TaskMediaLightbox";
 import { useNostrProfiles } from "@/infrastructure/nostr/use-nostr-profiles";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
-import { useTranslation } from "react-i18next";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
-import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
-import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import {
+  createTreeSelectors,
+  useTaskViewSource,
+} from "@/features/feed-page/controllers/use-task-view-states";
 
-interface TaskTreeProps extends SharedTaskViewContext {
+interface TaskTreeProps {
+  tasks: Task[];
+  allTasks: Task[];
+  currentUser?: Person;
+  focusedTaskId?: string | null;
+  searchQueryOverride?: string;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
   isMobile?: boolean;
   forceShowComposer?: boolean;
   composeGuideActivationSignal?: number;
@@ -36,12 +39,8 @@ interface TaskTreeProps extends SharedTaskViewContext {
 export function TaskTree({
   tasks,
   allTasks,
-  relays: relaysProp,
-  channels: channelsProp,
-  channelMatchMode: channelMatchModeProp,
-  people: peopleProp,
   currentUser,
-  searchQuery: searchQueryProp,
+  searchQueryOverride,
   focusedTaskId,
   isMobile = false,
   forceShowComposer,
@@ -52,15 +51,8 @@ export function TaskTree({
   isInteractionBlocked = false,
   isHydrating = false,
 }: TaskTreeProps) {
-  const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { onNewTask } = useFeedTaskCommands();
-  const surface = useFeedSurfaceState();
-  const relays = relaysProp ?? surface.relays;
-  const channels = channelsProp ?? surface.channels;
-  const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
-  const people = peopleProp ?? surface.people;
-  const searchQuery = searchQueryProp ?? surface.searchQuery;
   const interactionModel = useFeedViewInteractionModel();
   const authPolicy = useAuthActionPolicy();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
@@ -70,9 +62,25 @@ export function TaskTree({
   const focusSidebar = () => {
     void dispatchFeedInteraction({ type: "ui.focusSidebar" });
   };
-  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const SHARED_COMPOSE_DRAFT_KEY = COMPOSE_DRAFT_STORAGE_KEY;
+  const taskSource = useTaskViewSource({
+    tasks,
+    allTasks,
+    focusedTaskId,
+    searchQueryOverride,
+  });
+  const treeSelectors = useMemo(() => createTreeSelectors(taskSource), [taskSource]);
+  const { activeRelays, childrenMap, currentContextId, searchQuery, sortContext } = taskSource;
+  const currentContextTask = treeSelectors.getCurrentContextTask();
+  const visibleTasks = treeSelectors.getVisibleTasks();
+  const displayedTasks = treeSelectors.getDisplayedTasks({ useMobileFallback: isMobile });
+  const getFilteredChildren = treeSelectors.getFilteredChildren;
+  const isTaskDirectMatch = treeSelectors.isDirectMatch;
+  const composerDefaultContent = treeSelectors.getComposerDefaultContent();
+  const { shouldShowInlineEmptyHint, shouldShowScopeFooterHint, shouldShowScreenEmptyState } =
+    treeSelectors.getEmptyStateFlags({ isMobile });
+  const hasActiveFilters = treeSelectors.hasActiveFilters();
   const {
     mediaItems,
     activeMediaIndex,
@@ -85,140 +93,7 @@ export function TaskTree({
     goToPreviousPost,
     goToNextPost,
     closeMediaPreview,
-  } = useTaskMediaPreview(tasks);
-
-  const currentContextId = focusedTaskId || null;
-
-  // Build a map of task ID to children
-  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
-  const filteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
-  const activeRelays = useMemo(() => relays.filter((relay) => relay.isActive), [relays]);
-
-  const sortContext: SortContext = useMemo(() => ({
-    childrenMap,
-    allTasks,
-    taskById,
-  }), [childrenMap, allTasks, taskById]);
-
-  const { included: includedChannels, excluded: excludedChannels } = useMemo(
-    () => getIncludedExcludedChannelNames(channels),
-    [channels]
-  );
-
-  // Check if a task or any of its descendants matches the filter
-  const taskMatchesFilter = useCallback((task: Task, query: string, included: string[], excluded: string[]): boolean => {
-    const matchesQuery = taskMatchesTextQuery(task, query, people);
-    const matchesChannels = taskMatchesChannelFilters(task.tags, included, excluded, channelMatchMode);
-    return matchesQuery && matchesChannels;
-  }, [channelMatchMode, people]);
-
-  // Find all tasks that directly match the filter
-  const getDirectlyMatchingTasks = useCallback((query: string, includedChannels: string[], excludedChannels: string[]): Set<string> => {
-    const matching = new Set<string>();
-    
-    for (const task of allTasks) {
-      if (taskMatchesFilter(task, query, includedChannels, excludedChannels)) {
-        matching.add(task.id);
-      }
-    }
-    
-    return matching;
-  }, [allTasks, taskMatchesFilter]);
-
-  // Get all descendants of given task IDs
-  const getDescendants = useCallback((taskIds: Set<string>): Set<string> => {
-    const descendants = new Set<string>();
-    
-    const addDescendants = (parentId: string) => {
-      const children = childrenMap.get(parentId) || [];
-      for (const child of children) {
-        descendants.add(child.id);
-        addDescendants(child.id);
-      }
-    };
-    
-    taskIds.forEach(id => addDescendants(id));
-    return descendants;
-  }, [childrenMap]);
-
-  // Get ancestors of matching tasks to keep them visible
-  const getAncestors = useCallback((matchingIds: Set<string>): Set<string> => {
-    const ancestors = new Set<string>();
-    
-    const findAncestors = (taskId: string) => {
-      const task = taskById.get(taskId);
-      if (task?.parentId) {
-        ancestors.add(task.parentId);
-        findAncestors(task.parentId);
-      }
-    };
-    
-    matchingIds.forEach(id => findAncestors(id));
-    return ancestors;
-  }, [taskById]);
-
-  const hasActiveFilters = searchQuery.trim() !== "" || includedChannels.length > 0 || excludedChannels.length > 0;
-
-  // Compute matching tasks once
-  const { directlyMatchingIds, ancestorIds, descendantIds, allVisibleIds } = useMemo(() => {
-    if (!hasActiveFilters) {
-      return { directlyMatchingIds: new Set<string>(), ancestorIds: new Set<string>(), descendantIds: new Set<string>(), allVisibleIds: new Set<string>() };
-    }
-    
-    const directly = getDirectlyMatchingTasks(deferredSearchQuery, includedChannels, excludedChannels);
-    const ancestors = getAncestors(directly);
-    const descendants = getDescendants(directly);
-    const allVisible = new Set([...directly, ...ancestors, ...descendants]);
-    
-    return { directlyMatchingIds: directly, ancestorIds: ancestors, descendantIds: descendants, allVisibleIds: allVisible };
-  }, [deferredSearchQuery, hasActiveFilters, includedChannels, excludedChannels, getDirectlyMatchingTasks, getAncestors, getDescendants]);
-
-  // Get visible tasks based on context and filters, sorted with priority system
-  const baseVisibleTasks = useMemo(() => {
-    let rootTasks: Task[];
-
-    if (currentContextId) {
-      rootTasks = childrenMap.get(currentContextId) || [];
-    } else {
-      rootTasks = (childrenMap.get(undefined) || []).filter(task => task.taskType !== "comment");
-    }
-
-    rootTasks = rootTasks.filter(task => filteredTaskIds.has(task.id));
-
-    return sortTasks(rootTasks, sortContext);
-  }, [currentContextId, childrenMap, filteredTaskIds, sortContext]);
-
-  const visibleTasks = useMemo(() => {
-    let rootTasks = baseVisibleTasks;
-
-    if (hasActiveFilters) {
-      rootTasks = rootTasks.filter(task => allVisibleIds.has(task.id));
-    }
-
-    return rootTasks;
-  }, [allVisibleIds, baseVisibleTasks, hasActiveFilters]);
-
-  const scopeModel = useEmptyScopeModel({
-    relays,
-    channels,
-    people,
-    searchQuery: deferredSearchQuery,
-    focusedTaskId: currentContextId,
-    taskById,
-  });
-  const hasSourceTaskContent = baseVisibleTasks.length > 0;
-  const shouldShowMobileScopeFallback =
-    isMobile && scopeModel.hasActiveFilters && visibleTasks.length === 0 && hasSourceTaskContent;
-  const displayedTasks = shouldShowMobileScopeFallback ? baseVisibleTasks : visibleTasks;
-  const shouldShowInlineEmptyHint =
-    !isMobile && scopeModel.hasActiveFilters && visibleTasks.length === 0 && hasSourceTaskContent;
-  const shouldShowScopeFooterHint =
-    !isMobile && scopeModel.hasSelectedScope && visibleTasks.length > 0;
-  const shouldShowScreenEmptyState =
-    visibleTasks.length === 0 && !shouldShowMobileScopeFallback && !shouldShowInlineEmptyHint;
-
-  const currentContextTask = currentContextId ? taskById.get(currentContextId) || null : null;
+  } = useTaskMediaPreview(displayedTasks);
   const handleGoUp = () => {
     if (!currentContextTask) {
       focusTask(null);
@@ -259,27 +134,6 @@ export function TaskTree({
       setIsComposerExpanded(false);
     }
     return result;
-  };
-
-  const getFilteredChildren = (parentId: string): Task[] => {
-    let children = childrenMap.get(parentId) || [];
-    
-    // Filter by pre-filtered tasks from Index (relay/person filtering)
-    children = children.filter(child => filteredTaskIds.has(child.id));
-    
-    if (hasActiveFilters) {
-      // Show children that are in the visible set (matching, ancestors, or descendants)
-      children = children.filter(child => allVisibleIds.has(child.id));
-    }
-
-    // Sort using the new priority system
-    return sortTasks(children, sortContext);
-  };
-
-  // Check if a task directly matches the filter (for determining fold state)
-  const isTaskDirectMatch = (taskId: string): boolean => {
-    if (!hasActiveFilters) return true;
-    return directlyMatchingIds.has(taskId);
   };
 
   // Flatten visible task IDs for keyboard navigation
@@ -422,7 +276,7 @@ export function TaskTree({
         mentionRequest={mentionRequest}
         composeRestoreRequest={composeRestoreRequest}
         className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
-        defaultContent={buildComposePrefillFromFiltersAndContext(channels, currentContextTask?.tags)}
+        defaultContent={composerDefaultContent}
         allowComment={Boolean(currentContextId)}
       />
 

@@ -14,7 +14,8 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { useEmptyScopeModel } from "./use-empty-scope-model";
 import { useTaskViewFiltering } from "./use-task-view-filtering";
 import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
-import type { Task, TaskStateUpdate, TaskStatus } from "@/types";
+import type { EmptyScopeModel } from "@/lib/empty-scope";
+import type { Channel, ChannelMatchMode, Person, Relay, Task, TaskStateUpdate, TaskStatus } from "@/types";
 
 interface BaseViewStateInput {
   tasks: Task[];
@@ -73,32 +74,47 @@ export interface KanbanViewState {
   showContext: boolean;
 }
 
-export interface CalendarViewState {
+export interface TaskViewSource {
+  allTasks: Task[];
+  focusedTaskId: string | null;
+  currentContextId: string | null;
   searchQuery: string;
-  tasksWithDueDates: Task[];
-  upcomingTasks: Task[];
-  tasksByDay: Map<string, Task[]>;
-  getTasksForDay: (day: Date) => Task[];
-  getAncestorChain: (taskId: string) => { id: string; text: string }[];
+  deferredSearchQuery: string;
+  relays: Relay[];
+  activeRelays: Relay[];
+  channels: Channel[];
+  neutralChannels: Channel[];
+  people: Person[];
+  channelMatchMode: ChannelMatchMode;
+  taskById: Map<string, Task>;
+  childrenMap: Map<string | undefined, Task[]>;
+  prefilteredTaskIds: Set<string>;
+  filterIndex: ReturnType<typeof buildTaskViewFilterIndex>;
+  sortContext: SortContext;
+  scopeModel: EmptyScopeModel;
 }
 
-export interface TaskTreeViewState {
-  searchQuery: string;
-  currentContextId: string | null;
-  currentContextTask: Task | null;
-  childrenMap: Map<string | undefined, Task[]>;
-  sortContext: SortContext;
-  activeRelays: { id: string; name: string; icon: string; isActive?: boolean }[];
-  displayedTasks: Task[];
-  visibleTasks: Task[];
-  hasActiveFilters: boolean;
-  shouldShowMobileScopeFallback: boolean;
-  shouldShowInlineEmptyHint: boolean;
-  shouldShowScopeFooterHint: boolean;
-  shouldShowScreenEmptyState: boolean;
-  composerDefaultContent: string;
-  getFilteredChildren: (parentId: string) => Task[];
-  isTaskDirectMatch: (taskId: string) => boolean;
+export interface CalendarSelectors {
+  getTasksWithDueDates(): Task[];
+  getUpcomingTasks(): Task[];
+  getTasksForDay(day: Date): Task[];
+  getAncestorChain(taskId: string): { id: string; text: string }[];
+}
+
+export interface TreeSelectors {
+  hasActiveFilters(): boolean;
+  getCurrentContextTask(): Task | null;
+  getVisibleTasks(): Task[];
+  getDisplayedTasks(options?: { useMobileFallback?: boolean }): Task[];
+  getFilteredChildren(parentId: string): Task[];
+  isDirectMatch(taskId: string): boolean;
+  getComposerDefaultContent(): string;
+  getEmptyStateFlags(options?: { isMobile?: boolean }): {
+    shouldShowMobileScopeFallback: boolean;
+    shouldShowInlineEmptyHint: boolean;
+    shouldShowScopeFooterHint: boolean;
+    shouldShowScreenEmptyState: boolean;
+  };
 }
 
 export interface MobileFallbackNoticeState {
@@ -125,6 +141,270 @@ function buildFeedEntries(tasks: Task[], focusedTaskId?: string | null): FeedEnt
     }
   }
   return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+}
+
+export function useTaskViewSource({
+  tasks,
+  allTasks,
+  focusedTaskId,
+  searchQueryOverride,
+}: BaseViewStateInput): TaskViewSource {
+  const { relays, channels, people, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
+    useFeedSurfaceState();
+  const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
+  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
+  const prefilteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
+  const filterIndex = useMemo(() => buildTaskViewFilterIndex(allTasks, people), [allTasks, people]);
+  const sortContext = useMemo<SortContext>(
+    () => ({ childrenMap, allTasks, taskById }),
+    [allTasks, childrenMap, taskById]
+  );
+  const neutralChannels = useMemo(
+    () => channels.map((channel) => ({ ...channel, filterState: "neutral" as const })),
+    [channels]
+  );
+  const activeRelays = useMemo(() => relays.filter((relay) => relay.isActive), [relays]);
+  const currentContextId = focusedTaskId || null;
+  const scopeModel = useEmptyScopeModel({
+    relays,
+    channels,
+    people,
+    searchQuery: deferredSearchQuery,
+    focusedTaskId: currentContextId,
+    taskById,
+  });
+
+  return {
+    allTasks,
+    focusedTaskId: focusedTaskId ?? null,
+    currentContextId,
+    searchQuery,
+    deferredSearchQuery,
+    relays,
+    activeRelays,
+    channels,
+    neutralChannels,
+    people,
+    channelMatchMode,
+    taskById,
+    childrenMap,
+    prefilteredTaskIds,
+    filterIndex,
+    sortContext,
+    scopeModel,
+  };
+}
+
+export function getAncestorChainFromSource(
+  source: Pick<TaskViewSource, "taskById">,
+  taskId: string
+): { id: string; text: string }[] {
+  const chain: { id: string; text: string }[] = [];
+  let current = source.taskById.get(taskId);
+  while (current?.parentId) {
+    const parent = source.taskById.get(current.parentId);
+    if (!parent) break;
+    chain.unshift({ id: parent.id, text: formatBreadcrumbLabel(parent.content) });
+    current = parent;
+  }
+  return chain;
+}
+
+export function createCalendarSelectors(source: TaskViewSource): CalendarSelectors {
+  let tasksWithDueDatesCache: Task[] | null = null;
+  let tasksByDayCache: Map<string, Task[]> | null = null;
+  let upcomingTasksCache: Task[] | null = null;
+  const { included, excluded } = getIncludedExcludedChannelNames(source.channels);
+
+  const getTasksWithDueDates = () => {
+    if (tasksWithDueDatesCache) return tasksWithDueDatesCache;
+    tasksWithDueDatesCache = filterTasksForView({
+      allTasks: source.allTasks,
+      filterIndex: source.filterIndex,
+      prefilteredTaskIds: source.prefilteredTaskIds,
+      focusedTaskId: source.focusedTaskId,
+      hideClosedTasks: true,
+      searchQuery: source.searchQuery,
+      people: source.people,
+      includedChannels: included,
+      excludedChannels: excluded,
+      channelMatchMode: source.channelMatchMode,
+      taskPredicate: (task) => Boolean(task.dueDate) && task.taskType === "task",
+    }).filter((task) => Boolean(task.dueDate));
+    return tasksWithDueDatesCache;
+  };
+
+  const getTasksByDay = () => {
+    if (tasksByDayCache) return tasksByDayCache;
+    const byDay = new Map<string, Task[]>();
+    for (const task of getTasksWithDueDates()) {
+      if (!task.dueDate) continue;
+      const dayKey = format(startOfDay(task.dueDate), "yyyy-MM-dd");
+      const bucket = byDay.get(dayKey);
+      if (bucket) {
+        bucket.push(task);
+      } else {
+        byDay.set(dayKey, [task]);
+      }
+    }
+    for (const [dayKey, dayTasks] of byDay.entries()) {
+      byDay.set(dayKey, sortTasks(dayTasks, source.sortContext));
+    }
+    tasksByDayCache = byDay;
+    return tasksByDayCache;
+  };
+
+  return {
+    getTasksWithDueDates,
+    getUpcomingTasks() {
+      if (upcomingTasksCache) return upcomingTasksCache;
+      upcomingTasksCache = sortTasks(
+        getTasksWithDueDates().filter((task) => !isTaskTerminalStatus(task.status)),
+        source.sortContext
+      );
+      return upcomingTasksCache;
+    },
+    getTasksForDay(day: Date) {
+      return getTasksByDay().get(format(startOfDay(day), "yyyy-MM-dd")) || [];
+    },
+    getAncestorChain(taskId: string) {
+      return getAncestorChainFromSource(source, taskId);
+    },
+  };
+}
+
+export function createTreeSelectors(source: TaskViewSource): TreeSelectors {
+  let visibilityCache:
+    | {
+        hasActiveFilters: boolean;
+        directlyMatchingIds: Set<string>;
+        allVisibleIds: Set<string>;
+        baseVisibleTasks: Task[];
+        visibleTasks: Task[];
+      }
+    | null = null;
+
+  const getVisibility = () => {
+    if (visibilityCache) return visibilityCache;
+    const { included, excluded } = getIncludedExcludedChannelNames(source.channels);
+    const hasActiveFilters =
+      source.searchQuery.trim() !== "" || included.length > 0 || excluded.length > 0;
+
+    const matchesFilter = (task: Task) =>
+      taskMatchesTextQuery(task, source.deferredSearchQuery, source.people) &&
+      taskMatchesChannelFilters(task.tags, included, excluded, source.channelMatchMode);
+
+    const directlyMatchingIds = new Set<string>();
+    const allVisibleIds = new Set<string>();
+
+    if (hasActiveFilters) {
+      for (const task of source.allTasks) {
+        if (matchesFilter(task)) {
+          directlyMatchingIds.add(task.id);
+          allVisibleIds.add(task.id);
+          let current = source.taskById.get(task.id);
+          while (current?.parentId) {
+            allVisibleIds.add(current.parentId);
+            current = source.taskById.get(current.parentId);
+          }
+        }
+      }
+      const addDescendants = (parentId: string) => {
+        const children = source.childrenMap.get(parentId) || [];
+        for (const child of children) {
+          allVisibleIds.add(child.id);
+          addDescendants(child.id);
+        }
+      };
+      directlyMatchingIds.forEach((taskId) => addDescendants(taskId));
+    }
+
+    let rootTasks: Task[];
+    if (source.currentContextId) {
+      rootTasks = source.childrenMap.get(source.currentContextId) || [];
+    } else {
+      rootTasks = (source.childrenMap.get(undefined) || []).filter((task) => task.taskType !== "comment");
+    }
+    rootTasks = rootTasks.filter((task) => source.prefilteredTaskIds.has(task.id));
+    const baseVisibleTasks = sortTasks(rootTasks, source.sortContext);
+    const visibleTasks = hasActiveFilters
+      ? baseVisibleTasks.filter((task) => allVisibleIds.has(task.id))
+      : baseVisibleTasks;
+
+    visibilityCache = {
+      hasActiveFilters,
+      directlyMatchingIds,
+      allVisibleIds,
+      baseVisibleTasks,
+      visibleTasks,
+    };
+    return visibilityCache;
+  };
+
+  return {
+    hasActiveFilters() {
+      return getVisibility().hasActiveFilters;
+    },
+    getCurrentContextTask() {
+      return source.currentContextId ? source.taskById.get(source.currentContextId) || null : null;
+    },
+    getVisibleTasks() {
+      return getVisibility().visibleTasks;
+    },
+    getDisplayedTasks(options = {}) {
+      const visibility = getVisibility();
+      const shouldUseFallback =
+        Boolean(options.useMobileFallback) &&
+        source.scopeModel.hasActiveFilters &&
+        visibility.visibleTasks.length === 0 &&
+        visibility.baseVisibleTasks.length > 0;
+      return shouldUseFallback ? visibility.baseVisibleTasks : visibility.visibleTasks;
+    },
+    getFilteredChildren(parentId: string) {
+      let children = source.childrenMap.get(parentId) || [];
+      children = children.filter((child) => source.prefilteredTaskIds.has(child.id));
+      if (getVisibility().hasActiveFilters) {
+        children = children.filter((child) => getVisibility().allVisibleIds.has(child.id));
+      }
+      return sortTasks(children, source.sortContext);
+    },
+    isDirectMatch(taskId: string) {
+      const visibility = getVisibility();
+      if (!visibility.hasActiveFilters) return true;
+      return visibility.directlyMatchingIds.has(taskId);
+    },
+    getComposerDefaultContent() {
+      return buildComposePrefillFromFiltersAndContext(
+        source.channels,
+        source.currentContextId ? source.taskById.get(source.currentContextId)?.tags : undefined
+      );
+    },
+    getEmptyStateFlags(options = {}) {
+      const visibility = getVisibility();
+      const shouldShowMobileScopeFallback =
+        Boolean(options.isMobile) &&
+        source.scopeModel.hasActiveFilters &&
+        visibility.visibleTasks.length === 0 &&
+        visibility.baseVisibleTasks.length > 0;
+      const shouldShowInlineEmptyHint =
+        !options.isMobile &&
+        source.scopeModel.hasActiveFilters &&
+        visibility.visibleTasks.length === 0 &&
+        visibility.baseVisibleTasks.length > 0;
+      return {
+        shouldShowMobileScopeFallback,
+        shouldShowInlineEmptyHint,
+        shouldShowScopeFooterHint:
+          !options.isMobile && source.scopeModel.hasSelectedScope && visibility.visibleTasks.length > 0,
+        shouldShowScreenEmptyState:
+          visibility.visibleTasks.length === 0 &&
+          !shouldShowMobileScopeFallback &&
+          !shouldShowInlineEmptyHint,
+      };
+    },
+  };
 }
 
 export function useFeedViewState({
@@ -372,214 +652,6 @@ export function useKanbanViewState({
     tasksByStatus,
     getAncestorChain,
     showContext: depthMode !== "1",
-  };
-}
-
-export function useCalendarViewState({
-  tasks,
-  allTasks,
-  focusedTaskId,
-  searchQueryOverride,
-}: BaseViewStateInput): CalendarViewState {
-  const { channels, people, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } = useFeedSurfaceState();
-  const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
-  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
-  const sortContext = useMemo<SortContext>(() => ({ childrenMap, allTasks, taskById }), [allTasks, childrenMap, taskById]);
-  const getAncestorChain = useCallback(
-    (taskId: string): { id: string; text: string }[] => {
-      const chain: { id: string; text: string }[] = [];
-      let current = taskById.get(taskId);
-      while (current?.parentId) {
-        const parent = taskById.get(current.parentId);
-        if (!parent) break;
-        chain.unshift({ id: parent.id, text: formatBreadcrumbLabel(parent.content) });
-        current = parent;
-      }
-      return chain;
-    },
-    [taskById]
-  );
-  const filteredTaskCandidates = useTaskViewFiltering({
-    allTasks,
-    tasks,
-    focusedTaskId,
-    hideClosedTasks: true,
-    searchQuery,
-    people,
-    channels,
-    channelMatchMode,
-    taskPredicate: (task) => Boolean(task.dueDate) && task.taskType === "task",
-  });
-  const tasksWithDueDates = useMemo(
-    () => filteredTaskCandidates.filter((task) => Boolean(task.dueDate)),
-    [filteredTaskCandidates]
-  );
-  const tasksByDay = useMemo(() => {
-    const byDay = new Map<string, Task[]>();
-    for (const task of tasksWithDueDates) {
-      if (!task.dueDate) continue;
-      const dayKey = format(startOfDay(task.dueDate), "yyyy-MM-dd");
-      const bucket = byDay.get(dayKey);
-      if (bucket) {
-        bucket.push(task);
-      } else {
-        byDay.set(dayKey, [task]);
-      }
-    }
-    for (const [dayKey, dayTasks] of byDay.entries()) {
-      byDay.set(dayKey, sortTasks(dayTasks, sortContext));
-    }
-    return byDay;
-  }, [sortContext, tasksWithDueDates]);
-  const getTasksForDay = useCallback(
-    (day: Date) => tasksByDay.get(format(startOfDay(day), "yyyy-MM-dd")) || [],
-    [tasksByDay]
-  );
-  return {
-    searchQuery,
-    tasksWithDueDates,
-    upcomingTasks: sortTasks(
-      tasksWithDueDates.filter((task) => !isTaskTerminalStatus(task.status)),
-      sortContext
-    ),
-    tasksByDay,
-    getTasksForDay,
-    getAncestorChain,
-  };
-}
-
-export function useTaskTreeViewState({
-  tasks,
-  allTasks,
-  focusedTaskId,
-  searchQueryOverride,
-}: BaseViewStateInput): TaskTreeViewState {
-  const { relays, channels, people, searchQuery: surfaceSearchQuery, channelMatchMode = "and" } =
-    useFeedSurfaceState();
-  const searchQuery = searchQueryOverride ?? surfaceSearchQuery;
-  const deferredSearchQuery = useDeferredValue(searchQuery);
-  const currentContextId = focusedTaskId || null;
-  const childrenMap = useMemo(() => buildChildrenMap(allTasks), [allTasks]);
-  const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
-  const filteredTaskIds = useMemo(() => new Set(tasks.map((task) => task.id)), [tasks]);
-  const activeRelays = useMemo(() => relays.filter((relay) => relay.isActive), [relays]);
-  const sortContext = useMemo<SortContext>(() => ({ childrenMap, allTasks, taskById }), [allTasks, childrenMap, taskById]);
-  const { included: includedChannels, excluded: excludedChannels } = useMemo(
-    () => getIncludedExcludedChannelNames(channels),
-    [channels]
-  );
-  const taskMatchesFilter = useCallback(
-    (task: Task, query: string, included: string[], excluded: string[]) => {
-      const matchesQuery = taskMatchesTextQuery(task, query, people);
-      const matchesChannels = taskMatchesChannelFilters(task.tags, included, excluded, channelMatchMode);
-      return matchesQuery && matchesChannels;
-    },
-    [channelMatchMode, people]
-  );
-  const getDirectlyMatchingTasks = useCallback(
-    (query: string, nextIncludedChannels: string[], nextExcludedChannels: string[]) => {
-      const matching = new Set<string>();
-      for (const task of allTasks) {
-        if (taskMatchesFilter(task, query, nextIncludedChannels, nextExcludedChannels)) {
-          matching.add(task.id);
-        }
-      }
-      return matching;
-    },
-    [allTasks, taskMatchesFilter]
-  );
-  const getDescendants = useCallback(
-    (taskIds: Set<string>) => {
-      const descendants = new Set<string>();
-      const addDescendants = (parentId: string) => {
-        const children = childrenMap.get(parentId) || [];
-        for (const child of children) {
-          descendants.add(child.id);
-          addDescendants(child.id);
-        }
-      };
-      taskIds.forEach((id) => addDescendants(id));
-      return descendants;
-    },
-    [childrenMap]
-  );
-  const getAncestors = useCallback(
-    (matchingIds: Set<string>) => {
-      const ancestors = new Set<string>();
-      const findAncestors = (taskId: string) => {
-        const task = taskById.get(taskId);
-        if (task?.parentId) {
-          ancestors.add(task.parentId);
-          findAncestors(task.parentId);
-        }
-      };
-      matchingIds.forEach((id) => findAncestors(id));
-      return ancestors;
-    },
-    [taskById]
-  );
-  const hasActiveFilters = searchQuery.trim() !== "" || includedChannels.length > 0 || excludedChannels.length > 0;
-  const { directlyMatchingIds, allVisibleIds } = useMemo(() => {
-    if (!hasActiveFilters) {
-      return { directlyMatchingIds: new Set<string>(), allVisibleIds: new Set<string>() };
-    }
-    const directly = getDirectlyMatchingTasks(deferredSearchQuery, includedChannels, excludedChannels);
-    const ancestors = getAncestors(directly);
-    const descendants = getDescendants(directly);
-    return {
-      directlyMatchingIds: directly,
-      allVisibleIds: new Set([...directly, ...ancestors, ...descendants]),
-    };
-  }, [deferredSearchQuery, excludedChannels, getAncestors, getDescendants, getDirectlyMatchingTasks, hasActiveFilters, includedChannels]);
-  const baseVisibleTasks = useMemo(() => {
-    let rootTasks: Task[];
-    if (currentContextId) {
-      rootTasks = childrenMap.get(currentContextId) || [];
-    } else {
-      rootTasks = (childrenMap.get(undefined) || []).filter((task) => task.taskType !== "comment");
-    }
-    rootTasks = rootTasks.filter((task) => filteredTaskIds.has(task.id));
-    return sortTasks(rootTasks, sortContext);
-  }, [childrenMap, currentContextId, filteredTaskIds, sortContext]);
-  const visibleTasks = useMemo(() => {
-    if (!hasActiveFilters) return baseVisibleTasks;
-    return baseVisibleTasks.filter((task) => allVisibleIds.has(task.id));
-  }, [allVisibleIds, baseVisibleTasks, hasActiveFilters]);
-  const scopeModel = useEmptyScopeModel({ relays, channels, people, searchQuery: deferredSearchQuery, focusedTaskId: currentContextId, taskById });
-  const hasSourceTaskContent = baseVisibleTasks.length > 0;
-  const shouldShowMobileScopeFallback = scopeModel.hasActiveFilters && visibleTasks.length === 0 && hasSourceTaskContent;
-  const displayedTasks = shouldShowMobileScopeFallback ? baseVisibleTasks : visibleTasks;
-  const getFilteredChildren = useCallback(
-    (parentId: string) => {
-      let children = childrenMap.get(parentId) || [];
-      children = children.filter((child) => filteredTaskIds.has(child.id));
-      if (hasActiveFilters) {
-        children = children.filter((child) => allVisibleIds.has(child.id));
-      }
-      return sortTasks(children, sortContext);
-    },
-    [allVisibleIds, childrenMap, filteredTaskIds, hasActiveFilters, sortContext]
-  );
-  const isTaskDirectMatch = useCallback((taskId: string) => directlyMatchingIds.has(taskId), [directlyMatchingIds]);
-  const currentContextTask = currentContextId ? taskById.get(currentContextId) || null : null;
-  return {
-    searchQuery,
-    currentContextId,
-    currentContextTask,
-    childrenMap,
-    sortContext,
-    activeRelays,
-    displayedTasks,
-    visibleTasks,
-    hasActiveFilters,
-    shouldShowMobileScopeFallback,
-    shouldShowInlineEmptyHint: scopeModel.hasActiveFilters && visibleTasks.length === 0 && hasSourceTaskContent,
-    shouldShowScopeFooterHint: scopeModel.hasSelectedScope && visibleTasks.length > 0,
-    shouldShowScreenEmptyState: visibleTasks.length === 0,
-    composerDefaultContent: buildComposePrefillFromFiltersAndContext(channels, currentContextTask?.tags),
-    getFilteredChildren,
-    isTaskDirectMatch,
   };
 }
 

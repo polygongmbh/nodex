@@ -59,7 +59,10 @@ import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import { useFeedTaskCommands } from "@/features/feed-page/views/feed-task-command-context";
-import { useCalendarViewState } from "@/features/feed-page/controllers/use-task-view-states";
+import {
+  createCalendarSelectors,
+  useTaskViewSource,
+} from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface CalendarViewProps {
@@ -129,12 +132,18 @@ export function CalendarView({
   const prependCompensationRef = useRef<{ previousHeight: number } | null>(null);
   const loadingCooldownUntilRef = useRef(0);
   const syncMonthRafIdRef = useRef<number | null>(null);
-  const { searchQuery, tasksWithDueDates, upcomingTasks, getTasksForDay, getAncestorChain } = useCalendarViewState({
+  const taskSource = useTaskViewSource({
     tasks,
     allTasks,
     focusedTaskId,
     searchQueryOverride,
   });
+  const calendarSelectors = useMemo(() => createCalendarSelectors(taskSource), [taskSource]);
+  const searchQuery = taskSource.searchQuery;
+  const tasksWithDueDates = calendarSelectors.getTasksWithDueDates();
+  const upcomingTasks = calendarSelectors.getUpcomingTasks();
+  const getTasksForDay = calendarSelectors.getTasksForDay;
+  const getAncestorChain = calendarSelectors.getAncestorChain;
 
   const desktopMonthSections = useMemo(() => {
     return desktopMonths
