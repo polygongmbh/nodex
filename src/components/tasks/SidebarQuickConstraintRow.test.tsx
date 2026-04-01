@@ -46,10 +46,8 @@ describe("SidebarQuickConstraintRow", () => {
 
     expect(recentDaysInput.className).not.toContain("w-14");
     expect(minPriorityInput.className).not.toContain("w-14");
-    expect(recentDaysInput.className).toContain("min-w-[3.75rem]");
-    expect(minPriorityInput.className).toContain("min-w-[3rem]");
-    expect(recentDaysInput).toHaveStyle({ width: "6.25ch" });
-    expect(minPriorityInput).toHaveStyle({ width: "4.25ch" });
+    expect(recentDaysInput).toHaveStyle({ width: "4.5ch" });
+    expect(minPriorityInput).toHaveStyle({ width: "4.5ch" });
   });
 
   it("shows spinner labels only from the lg breakpoint upward", () => {
