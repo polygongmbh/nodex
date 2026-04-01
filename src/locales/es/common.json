@@ -999,8 +999,6 @@
         "mixed": "Algunos spaces seleccionados no están disponibles y otros rechazaron el acceso de lectura."
       },
       "unfiltered": {
-        "feedTitle": "No hay nadie aquí salvo nuestras gallinas.",
-        "feedDescription": "Sé la primera persona en publicar.",
         "collectionTitle": "Este espacio está vacío por ahora. Sé quien lo llene primero.",
         "collectionTitleOptions": [
           "Aquí reina el silencio por ahora. Deja la primera huella.",

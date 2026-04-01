@@ -1124,7 +1124,6 @@ export function FeedView({
       >
         {shouldShowScreenEmptyState ? (
           <FilteredEmptyState
-            variant="feed"
             isHydrating={isHydrating}
             searchQuery={searchQuery}
             contextTaskTitle={focusedTask?.content}
@@ -1134,7 +1133,6 @@ export function FeedView({
             {displayedFeedEntries.map(renderFeedEntry)}
             {shouldShowScopeFooterHint ? (
               <FilteredEmptyState
-                variant="feed"
                 isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={focusedTask?.content}
@@ -1143,7 +1141,6 @@ export function FeedView({
             ) : null}
             {shouldShowInlineEmptyHint ? (
               <FilteredEmptyState
-                variant="feed"
                 isHydrating={isHydrating}
                 searchQuery={searchQuery}
                 contextTaskTitle={focusedTask?.content}

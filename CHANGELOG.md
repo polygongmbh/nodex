@@ -15,6 +15,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - List view now uses an explicit responsive row-layout model for the desktop table, so the task column owns leftover width predictably while due-date, priority, and tags stay compact until wider breakpoints.
 - Shared desktop composer mention requests triggered from author clicks are now consumed only once, so removing that mention no longer causes it to reappear after switching views.
 - Feed, list, and tree empty-state scope copy now includes active recent-days and minimum-priority quick filters, so `no matches` and end-of-feed lines explain the full active filter set.
+- Unfiltered empty states now use the same rotating poetic copy across feed, list, and tree views, and the old fixed `Nobody here but us chickens.` message has been removed.
 
 ## [2.9.0] - 2026-04-01
 Minor release for priority/filter polish, focused-task sidebar/filter scoping, and Noas host discovery cleanup.

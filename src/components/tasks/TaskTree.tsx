@@ -223,7 +223,6 @@ export function TaskTree({
         <div ref={scrollContainerRef} className="scrollbar-main-view flex-1 px-2 sm:px-3 py-4 space-y-1" data-onboarding="task-list">
           {shouldShowScreenEmptyState ? (
             <FilteredEmptyState
-              variant="collection"
               isHydrating={isHydrating}
               searchQuery={searchQuery}
               contextTaskTitle={currentContextTask?.content}
@@ -252,7 +251,6 @@ export function TaskTree({
               ))}
               {shouldShowScopeFooterHint ? (
                 <FilteredEmptyState
-                  variant="collection"
                   isHydrating={isHydrating}
                   searchQuery={searchQuery}
                   contextTaskTitle={currentContextTask?.content}
@@ -261,7 +259,6 @@ export function TaskTree({
               ) : null}
               {shouldShowInlineEmptyHint ? (
                 <FilteredEmptyState
-                  variant="collection"
                   isHydrating={isHydrating}
                   searchQuery={searchQuery}
                   contextTaskTitle={currentContextTask?.content}

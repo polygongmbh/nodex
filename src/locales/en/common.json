@@ -999,8 +999,6 @@
         "mixed": "Some selected spaces are unavailable, and others rejected read access."
       },
       "unfiltered": {
-        "feedTitle": "Nobody here but us chickens.",
-        "feedDescription": "Be the first to post.",
         "collectionTitle": "This space is empty for now. Be the first to fill it.",
         "collectionTitleOptions": [
           "Silence lives here for now. Leave the first trace.",

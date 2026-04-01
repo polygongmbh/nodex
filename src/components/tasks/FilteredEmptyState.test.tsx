@@ -60,7 +60,6 @@ describe("FilteredEmptyState", () => {
   it("renders the selected filtered scope summary", () => {
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -73,7 +72,6 @@ describe("FilteredEmptyState", () => {
   it("includes the recent-days quick filter in the empty-state scope summary", () => {
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
@@ -87,7 +85,6 @@ describe("FilteredEmptyState", () => {
   it("includes the minimum-priority quick filter in the empty-state scope summary", () => {
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
@@ -101,7 +98,6 @@ describe("FilteredEmptyState", () => {
   it("renders a scope footer sentence for non-empty filtered results", () => {
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -117,7 +113,6 @@ describe("FilteredEmptyState", () => {
   it("renders a scope footer sentence for a feed-only selection", () => {
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={singleRelay}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
@@ -131,7 +126,6 @@ describe("FilteredEmptyState", () => {
   it("includes both quick filters in the footer scope sentence", () => {
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={singleRelay}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
@@ -151,7 +145,6 @@ describe("FilteredEmptyState", () => {
   it("renders a scoped mobile fallback hint when filtered content is empty", () => {
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -166,7 +159,6 @@ describe("FilteredEmptyState", () => {
   it("omits inactive quick filters from the scope summary", () => {
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
@@ -183,7 +175,6 @@ describe("FilteredEmptyState", () => {
     const parentTitle = "Parent Task\nSecond line should not be shown";
     const { rerender } = render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -195,7 +186,6 @@ describe("FilteredEmptyState", () => {
 
     rerender(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -212,7 +202,6 @@ describe("FilteredEmptyState", () => {
     const expectedTail = longParentTitle.slice(-20);
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -233,7 +222,6 @@ describe("FilteredEmptyState", () => {
     const expectedTail = umlautEndingTitle.slice(-20);
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays}
         channels={channels}
         people={people}
@@ -253,7 +241,6 @@ describe("FilteredEmptyState", () => {
 
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={[{ ...relays[0], connectionStatus: "connecting" }, relays[1]]}
         channels={channels}
         people={people}
@@ -269,7 +256,6 @@ describe("FilteredEmptyState", () => {
 
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={relays.map((relay) => ({ ...relay, isActive: true }))}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
@@ -278,13 +264,26 @@ describe("FilteredEmptyState", () => {
     );
 
     expect(screen.getByText("Loading events from relay…")).toBeInTheDocument();
-    expect(screen.queryByText("Nobody here but us chickens.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Silence lives here for now. Leave the first trace.")).not.toBeInTheDocument();
   });
 
-  it("renders a feed error message when the selected relay is unavailable", () => {
+  it("renders a rotating poetic empty-state line when unfiltered content is empty", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
     render(
       <FilteredEmptyState
-        variant="feed"
+        relays={relays.map((relay) => ({ ...relay, isActive: true }))}
+        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+        people={[{ ...people[0], isSelected: false }]}
+      />
+    );
+
+    expect(screen.getByText("Silence lives here for now. Leave the first trace.")).toBeInTheDocument();
+  });
+
+  it("renders an error message when the selected relay is unavailable", () => {
+    render(
+      <FilteredEmptyState
         relays={[{ ...relays[0], connectionStatus: "connection-error" }, relays[1]]}
         channels={channels}
         people={people}
@@ -303,7 +302,6 @@ describe("FilteredEmptyState", () => {
   it("renders a read-rejected subtitle when the relay denies read access", () => {
     render(
       <FilteredEmptyState
-        variant="feed"
         relays={[{ ...relays[0], connectionStatus: "verification-failed" }, relays[1]]}
         channels={channels}
         people={people}

@@ -6,7 +6,6 @@ import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-s
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 
 interface FilteredEmptyStateProps {
-  variant: "feed" | "collection";
   relays?: Relay[];
   channels?: Channel[];
   people?: Person[];
@@ -19,7 +18,6 @@ interface FilteredEmptyStateProps {
 }
 
 export function FilteredEmptyState({
-  variant,
   relays: relaysProp,
   channels: channelsProp,
   people: peopleProp,
@@ -162,21 +160,11 @@ export function FilteredEmptyState({
     );
   }
 
-  const title = variant === "feed"
-    ? t("tasks.empty.unfiltered.feedTitle")
-    : collectionTitle;
-  const description = variant === "feed"
-    ? t("tasks.empty.unfiltered.feedDescription")
-    : null;
-
   return (
     <div
       className={cn("flex min-h-full flex-col items-center justify-center px-6 py-12 text-center", className)}
     >
-      <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">{title}</p>
-      {description ? (
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">{description}</p>
-      ) : null}
+      <p className="max-w-3xl text-lg leading-relaxed text-foreground sm:text-2xl">{collectionTitle}</p>
     </div>
   );
 }

@@ -625,7 +625,6 @@ export function ListView({
             {shouldShowScreenEmptyState ? (
               <div className="col-span-full p-0">
                   <FilteredEmptyState
-                    variant="collection"
                     isHydrating={isHydrating}
                     searchQuery={searchQuery}
                     contextTaskTitle={focusedTask?.content}
@@ -832,7 +831,6 @@ export function ListView({
                 {shouldShowScopeFooterHint ? (
                   <div className="col-span-full p-0">
                       <FilteredEmptyState
-                        variant="collection"
                         isHydrating={isHydrating}
                         searchQuery={searchQuery}
                         contextTaskTitle={focusedTask?.content}
@@ -844,7 +842,6 @@ export function ListView({
                 {shouldShowInlineEmptyHint ? (
                   <div className="col-span-full p-0">
                       <FilteredEmptyState
-                        variant="collection"
                         isHydrating={isHydrating}
                         searchQuery={searchQuery}
                         contextTaskTitle={focusedTask?.content}
