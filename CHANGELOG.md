@@ -5,6 +5,7 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+- Noas API-base discovery is now isolated from the auth client and cached in memory only, so stale `noas.api_base` values are no longer reused from browser storage across app restarts.
 
 ## [2.10.1] - 2026-04-02
 

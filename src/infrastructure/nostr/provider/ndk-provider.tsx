@@ -13,7 +13,8 @@ import NDK, {
   NDKSubscription,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
-import { isValidNoasBaseUrl, NoasClient, normalizeNoasBaseUrl, resolveNoasApiBaseUrl, type NoasAuthResult } from "@/lib/nostr/noas-client";
+import { NoasClient, type NoasAuthResult } from "@/lib/nostr/noas-client";
+import { isValidNoasBaseUrl, normalizeNoasBaseUrl, resolveNoasApiBaseUrl } from "@/lib/nostr/noas-discovery";
 import { privateKeyHexToNsec } from "@/lib/nostr/nip49-utils";
 import {
   buildKind0Content,

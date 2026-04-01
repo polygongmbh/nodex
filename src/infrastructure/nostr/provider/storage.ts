@@ -1,5 +1,5 @@
 import { safeLocalStorageSetItem } from "@/lib/safe-local-storage";
-import { isValidNoasBaseUrl, normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
+import { isValidNoasBaseUrl, normalizeNoasBaseUrl } from "@/lib/nostr/noas-discovery";
 
 type WindowWithNostr = Window & { nostr?: unknown };
 

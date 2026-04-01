@@ -5,7 +5,7 @@ import { Label } from "../ui/label";
 import { Pencil } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import type { TFunction } from "i18next";
-import { isValidNoasBaseUrl } from "@/lib/nostr/noas-client";
+import { isValidNoasBaseUrl } from "@/lib/nostr/noas-discovery";
 
 export function validateNoasUsername(username: string, t: TFunction): string | null {
   const trimmedUsername = username.trim();

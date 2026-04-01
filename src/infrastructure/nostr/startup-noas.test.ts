@@ -24,7 +24,7 @@ const storageModule = vi.hoisted(() => ({
   savePersistedNoasDefaultHostUrl: vi.fn(),
 }));
 
-vi.mock("@/lib/nostr/noas-client", () => noasClientModule);
+vi.mock("@/lib/nostr/noas-discovery", () => noasClientModule);
 vi.mock("@/infrastructure/nostr/provider/storage", () => storageModule);
 vi.mock("@/lib/nostr/dev-logs", () => ({
   nostrDevLog: vi.fn(),

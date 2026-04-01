@@ -312,6 +312,9 @@ vi.mock("@nostr-dev-kit/ndk", () => ({
 
 vi.mock("@/lib/nostr/noas-client", () => ({
   NoasClient: noasClientModule.NoasClient,
+}));
+
+vi.mock("@/lib/nostr/noas-discovery", () => ({
   resolveNoasApiBaseUrl: noasClientModule.resolveNoasApiBaseUrl,
   normalizeNoasBaseUrl: noasClientModule.normalizeNoasBaseUrl,
   isValidNoasBaseUrl: noasClientModule.isValidNoasBaseUrl,

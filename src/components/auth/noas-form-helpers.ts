@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
+import { normalizeNoasBaseUrl } from "@/lib/nostr/noas-discovery";
 import { validateNoasBaseUrl } from "./NoasSharedFields";
 
 export function resolveNoasHostDisplayValue(noasHostUrl: string | undefined): string {

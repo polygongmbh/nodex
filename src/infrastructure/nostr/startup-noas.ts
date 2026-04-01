@@ -1,4 +1,4 @@
-import { discoverNoasApiBaseUrl, normalizeNoasBaseUrl } from "@/lib/nostr/noas-client";
+import { discoverNoasApiBaseUrl, normalizeNoasBaseUrl } from "@/lib/nostr/noas-discovery";
 import { loadPersistedNoasDefaultHostUrl, savePersistedNoasDefaultHostUrl } from "@/infrastructure/nostr/provider/storage";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { resolveRootDomainHostname } from "@/lib/root-domain";
