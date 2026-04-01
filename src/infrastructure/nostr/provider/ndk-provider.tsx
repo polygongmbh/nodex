@@ -1167,6 +1167,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     };
 
     ndkInstance.connect().then(() => {
+      if (disposed) return;
       nostrDevLog("provider", "NDK connected to relay pool");
       syncRelayStatusesFromPool();
     });

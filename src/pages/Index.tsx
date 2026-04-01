@@ -88,7 +88,7 @@ import { MotdBanner } from "@/components/MotdBanner";
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
-let _demoSeedTasksCache: ReturnType<typeof mergeTasks> | undefined;
+let _demoSeedTasksCache: Task[] | undefined;
 function getDemoSeedTasks() {
   return (_demoSeedTasksCache ??= mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents())));
 }

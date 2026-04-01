@@ -80,7 +80,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Suspense>
+            <Suspense fallback={null}>
               <Routes>
                 <Route path="/" element={<Navigate to="/feed" replace />} />
                 <Route path="/signin" element={<Index />} />
