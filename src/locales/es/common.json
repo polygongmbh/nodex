@@ -284,9 +284,13 @@
       "shortcutsTooltip": "Atajos de teclado (?)",
       "openGuide": "Abrir guía de onboarding",
       "guide": "Guía",
-      "clearActiveFilters": "Quitar filtros activos",
-      "toggleAll": "Mostrar u ocultar todos los filtros de esta sección",
-      "toggleAllFor": "Mostrar u ocultar todos los filtros de {{title}}",
+      "clearChannelFilters": "Quitar filtros de canales",
+      "clearPeopleFilters": "Quitar filtros de personas",
+      "showAllChannels": "Mostrar todos los canales",
+      "hideChannels": "Contraer canales",
+      "showAllPeople": "Mostrar todas las personas",
+      "hidePeople": "Contraer personas",
+      "toggleAllConnectedSpaces": "Alternar todos los spaces conectados",
       "toggleSidebar": "Mostrar/ocultar barra lateral"
     },
     "filterStates": {

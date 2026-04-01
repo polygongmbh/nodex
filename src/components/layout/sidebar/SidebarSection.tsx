@@ -16,6 +16,7 @@ export interface SidebarSectionProps {
   icon: LucideIcon;
   isExpanded: boolean;
   onToggle: () => void;
+  toggleLabel?: string;
   onIconClick?: () => void;
   iconIntent?: SidebarSectionIconIntent;
   iconLabel?: string;
@@ -31,6 +32,7 @@ export function SidebarSection({
   icon: Icon,
   isExpanded,
   onToggle,
+  toggleLabel,
   onIconClick,
   iconIntent,
   iconLabel,
@@ -44,8 +46,8 @@ export function SidebarSection({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const contentRef = useRef<HTMLDivElement | null>(null);
   const [contentHeight, setContentHeight] = useState(0);
-  const toggleLabel = `${isExpanded ? t("tasks.actions.collapse") : t("tasks.actions.expand")} ${title}`;
-  const resolvedIconLabel = iconLabel ?? t("sidebar.actions.toggleAllFor", { title: title.toLowerCase() });
+  const resolvedToggleLabel = toggleLabel ?? `${isExpanded ? t("tasks.actions.collapse") : t("tasks.actions.expand")} ${title}`;
+  const resolvedIconLabel = iconLabel ?? title;
 
   useEffect(() => {
     if (animationMode === "none") return;
@@ -90,8 +92,8 @@ export function SidebarSection({
             className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left focus:outline-none"
             onClick={onToggle}
             aria-expanded={isExpanded}
-            aria-label={toggleLabel}
-            title={toggleLabel}
+            aria-label={resolvedToggleLabel}
+            title={resolvedToggleLabel}
           >
             <span className="flex min-w-0 items-center gap-2">
               <span className="text-sm font-medium text-sidebar-foreground">{title}</span>

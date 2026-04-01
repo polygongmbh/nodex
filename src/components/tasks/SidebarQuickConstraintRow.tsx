@@ -41,8 +41,8 @@ export function SidebarQuickConstraintRow({
               quickFilters.recentEnabled ? "text-primary" : "text-muted-foreground"
             )}
             aria-pressed={quickFilters.recentEnabled}
-            aria-label={t("sidebar.quickFilters.actions.toggleRecent")}
-            title={t("sidebar.quickFilters.actions.toggleRecent")}
+            aria-label={t("sidebar.quickFilters.actions.toggleRecent", { days: quickFilters.recentDays })}
+            title={t("sidebar.quickFilters.actions.toggleRecent", { days: quickFilters.recentDays })}
           >
             <Clock3 className="h-3 w-3 shrink-0" />
             <span className="truncate">{t("sidebar.quickFilters.labels.recent")}</span>

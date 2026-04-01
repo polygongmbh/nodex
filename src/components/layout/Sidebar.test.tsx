@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { Sidebar } from "./Sidebar";
 import type { Channel, Person, Relay } from "@/types";
@@ -43,6 +43,12 @@ function renderSidebar(relays: Relay[]) {
   );
 }
 
+function getSectionToggle(sectionLabel: "channels-section" | "people-section" | "relays-section") {
+  const section = document.querySelector(`[data-onboarding="${sectionLabel}"]`);
+  expect(section).toBeTruthy();
+  return within(section as HTMLElement).getByRole("button", { expanded: false });
+}
+
 describe("Sidebar", () => {
   it("preserves spaces section expansion state across remounts while relay lists change", () => {
     const firstRender = renderSidebar(baseRelays);
@@ -68,8 +74,8 @@ describe("Sidebar", () => {
   it("starts channels and people folded by default", () => {
     renderSidebar(baseRelays);
 
-    expect(screen.getAllByRole("button", { name: /expand channels/i }).find((button) => button.getAttribute("aria-expanded") === "false")).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: /expand people/i }).find((button) => button.getAttribute("aria-expanded") === "false")).toBeTruthy();
+    expect(getSectionToggle("channels-section")).toHaveAttribute("aria-expanded", "false");
+    expect(getSectionToggle("people-section")).toHaveAttribute("aria-expanded", "false");
   });
 
   it("keeps pinned channels visible in folded mode", () => {
@@ -90,6 +96,6 @@ describe("Sidebar", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Show only posts tagged #release" })).toBeInTheDocument();
+    expect(document.querySelector('[data-sidebar-item="channel-release"]')).toBeVisible();
   });
 });

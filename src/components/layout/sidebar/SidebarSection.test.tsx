@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { Hash } from "lucide-react";
 import { SidebarSection } from "./SidebarSection";
 
+function getSectionButtons() {
+  return screen.getAllByRole("button");
+}
+
 describe("SidebarSection", () => {
   it("toggles when clicking anywhere on the section header", () => {
     const onToggle = vi.fn();
@@ -18,7 +22,7 @@ describe("SidebarSection", () => {
       </SidebarSection>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Collapse Channels" }));
+    fireEvent.click(screen.getByRole("button", { expanded: true }));
 
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
@@ -41,8 +45,10 @@ describe("SidebarSection", () => {
       </SidebarSection>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Show or hide all filters in people" }));
-    fireEvent.click(screen.getByRole("button", { name: "Action" }));
+    const [iconButton, , actionButton] = getSectionButtons();
+
+    fireEvent.click(iconButton);
+    fireEvent.click(actionButton);
 
     expect(onIconClick).toHaveBeenCalledTimes(1);
     expect(onActionClick).toHaveBeenCalledTimes(1);
@@ -63,7 +69,7 @@ describe("SidebarSection", () => {
       </SidebarSection>
     );
 
-    expect(screen.getByRole("button", { name: "Clear active filters" })).toBeInTheDocument();
+    expect(getSectionButtons()[0]).toHaveAccessibleName("Clear active filters");
   });
 
   it("applies onboarding data attributes to the section element without an mb-3 wrapper", () => {

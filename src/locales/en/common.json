@@ -284,9 +284,13 @@
       "shortcutsTooltip": "Keyboard shortcuts (?)",
       "openGuide": "Open onboarding guide",
       "guide": "Guide",
-      "clearActiveFilters": "Clear active filters",
-      "toggleAll": "Show or hide all filters in this section",
-      "toggleAllFor": "Show or hide all filters in {{title}}",
+      "clearChannelFilters": "Clear channel filters",
+      "clearPeopleFilters": "Clear people filters",
+      "showAllChannels": "Show all channels",
+      "hideChannels": "Collapse channels",
+      "showAllPeople": "Show all people",
+      "hidePeople": "Collapse people",
+      "toggleAllConnectedSpaces": "Toggle all connected spaces",
       "toggleSidebar": "Toggle sidebar"
     },
     "filterStates": {

@@ -331,6 +331,7 @@ export function Sidebar({
           animationMode="fullCollapse"
           onToggle={() => toggleSection("feeds")}
           iconIntent="sidebar.relay.toggleAll"
+          iconLabel={t("sidebar.actions.toggleAllConnectedSpaces")}
           hint={t("sidebar.hints.relays")}
           action={
             <TooltipProvider>
@@ -375,6 +376,11 @@ export function Sidebar({
           icon={Hash}
           isExpanded={expandedSections.channels}
           onToggle={() => toggleSection("channels")}
+          toggleLabel={
+            expandedSections.channels
+              ? t("sidebar.actions.hideChannels")
+              : t("sidebar.actions.showAllChannels")
+          }
           onIconClick={() => {
             if (hasActiveChannelFilters) {
               void dispatchFeedInteraction({ type: "sidebar.channel.toggleAll" });
@@ -384,8 +390,10 @@ export function Sidebar({
           }}
           iconLabel={
             hasActiveChannelFilters
-              ? t("sidebar.actions.clearActiveFilters")
-              : `${expandedSections.channels ? t("tasks.actions.collapse") : t("tasks.actions.expand")} ${t("sidebar.sections.channels")}`
+              ? t("sidebar.actions.clearChannelFilters")
+              : expandedSections.channels
+                ? t("sidebar.actions.hideChannels")
+                : t("sidebar.actions.showAllChannels")
           }
           action={
             <ChannelMatchModeToggle
@@ -413,6 +421,11 @@ export function Sidebar({
           icon={Users}
           isExpanded={expandedSections.people}
           onToggle={() => toggleSection("people")}
+          toggleLabel={
+            expandedSections.people
+              ? t("sidebar.actions.hidePeople")
+              : t("sidebar.actions.showAllPeople")
+          }
           onIconClick={() => {
             if (hasActivePeopleFilters) {
               void dispatchFeedInteraction({ type: "sidebar.person.toggleAll" });
@@ -422,8 +435,10 @@ export function Sidebar({
           }}
           iconLabel={
             hasActivePeopleFilters
-              ? t("sidebar.actions.clearActiveFilters")
-              : `${expandedSections.people ? t("tasks.actions.collapse") : t("tasks.actions.expand")} ${t("sidebar.sections.people")}`
+              ? t("sidebar.actions.clearPeopleFilters")
+              : expandedSections.people
+                ? t("sidebar.actions.hidePeople")
+                : t("sidebar.actions.showAllPeople")
           }
         >
           {people.map((person) => (
