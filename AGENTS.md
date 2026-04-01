@@ -220,6 +220,8 @@ policies:
 - Avoid introducing new cross-component callback props with bare `(string) => void` signatures for interaction flows; prefer dispatching typed interaction intents at the event site or using a typed command API when a return value is required.
 - Close any background terminal sessions started for the task once they are no longer needed, and always clean them up after each commit before handoff or further workflow steps.
 - When changing shared user-facing copy in locale files, propagate equivalent updates across all supported languages in `src/locales/` in the same change unless an omission is explicitly documented.
+- When adding, removing, renaming, or changing the semantics/defaults of supported environment variables, update `.env.example` in the same change.
+- Use semantic linebreaks in prose-heavy docs/config comments such as `AGENTS.md`, `README.md`, and `.env.example`.
 - Do not leave hardcoded user-facing strings in production code; route them through i18n and keep `en`, `de`, and `es` in sync unless a documented compliance/jurisdiction exception applies.
 - If unrelated files change while working, ignore incidental changes unless they directly conflict with target files.
 - Include blockers/uncertainty with `⚠️` and revised estimates.
