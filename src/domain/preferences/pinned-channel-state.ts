@@ -1,35 +1,25 @@
-export interface PinnedChannelEntry {
-  channelId: string;
-  pinnedAt: string;
-  order: number;
-}
+import {
+  createEmptyPinnedEntityState,
+  getPinnedEntityIdsForRelays,
+  isPinnedEntityForAnyRelay,
+  pinEntityForRelays,
+  unpinEntityFromRelays,
+  type PinnedEntityEntry,
+  type PinnedEntityState,
+} from "./pinned-entity-state";
 
-export interface PinnedChannelsState {
-  version: 3;
-  updatedAt: string;
-  byRelay: Partial<Record<string, PinnedChannelEntry[]>>;
-}
+export type PinnedChannelEntry = PinnedEntityEntry<"channelId">;
+export type PinnedChannelsState = PinnedEntityState<"channelId">;
 
 export function createEmptyPinnedChannelsState(): PinnedChannelsState {
-  return { version: 3, updatedAt: "", byRelay: {} };
+  return createEmptyPinnedEntityState();
 }
 
 export function getPinnedChannelIdsForRelays(
   state: PinnedChannelsState,
   relayIds: string[]
 ): string[] {
-  const minOrderById = new Map<string, number>();
-  for (const relayId of relayIds) {
-    for (const entry of state.byRelay[relayId] ?? []) {
-      const current = minOrderById.get(entry.channelId);
-      if (current === undefined || entry.order < current) {
-        minOrderById.set(entry.channelId, entry.order);
-      }
-    }
-  }
-  return Array.from(minOrderById.entries())
-    .sort(([idA, orderA], [idB, orderB]) => orderA - orderB || idA.localeCompare(idB))
-    .map(([id]) => id);
+  return getPinnedEntityIdsForRelays(state, relayIds, "channelId");
 }
 
 export function isChannelPinnedForAnyRelay(
@@ -37,9 +27,7 @@ export function isChannelPinnedForAnyRelay(
   relayIds: string[],
   channelId: string
 ): boolean {
-  return relayIds.some((relayId) =>
-    (state.byRelay[relayId] ?? []).some((entry) => entry.channelId === channelId)
-  );
+  return isPinnedEntityForAnyRelay(state, relayIds, channelId, "channelId");
 }
 
 export function pinChannelForRelays(
@@ -47,23 +35,7 @@ export function pinChannelForRelays(
   relayIds: string[],
   channelId: string
 ): PinnedChannelsState {
-  let next = state;
-  const now = new Date().toISOString();
-  for (const relayId of relayIds) {
-    const entries = next.byRelay[relayId] ?? [];
-    if (entries.some((entry) => entry.channelId === channelId)) continue;
-    const maxOrder = entries.length > 0 ? Math.max(...entries.map((entry) => entry.order)) : -1;
-    const newEntry: PinnedChannelEntry = { channelId, pinnedAt: now, order: maxOrder + 1 };
-    next = {
-      ...next,
-      updatedAt: now,
-      byRelay: {
-        ...next.byRelay,
-        [relayId]: [...entries, newEntry],
-      },
-    };
-  }
-  return next;
+  return pinEntityForRelays(state, relayIds, channelId, "channelId");
 }
 
 export function unpinChannelFromRelays(
@@ -71,19 +43,5 @@ export function unpinChannelFromRelays(
   relayIds: string[],
   channelId: string
 ): PinnedChannelsState {
-  let next = state;
-  const now = new Date().toISOString();
-  for (const relayId of relayIds) {
-    const entries = next.byRelay[relayId] ?? [];
-    if (!entries.some((entry) => entry.channelId === channelId)) continue;
-    next = {
-      ...next,
-      updatedAt: now,
-      byRelay: {
-        ...next.byRelay,
-        [relayId]: entries.filter((entry) => entry.channelId !== channelId),
-      },
-    };
-  }
-  return next;
+  return unpinEntityFromRelays(state, relayIds, channelId, "channelId");
 }

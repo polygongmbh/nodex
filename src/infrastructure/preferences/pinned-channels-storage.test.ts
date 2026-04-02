@@ -23,14 +23,25 @@ describe("loadPinnedChannelsState", () => {
   });
 
   it("returns empty state on corrupt JSON", () => {
-    localStorage.setItem("nodex.pinned-channels.guest.v3", "not-json{{{");
+    localStorage.setItem("nodex.pinned-channels.guest", "not-json{{{");
     expect(loadPinnedChannelsState()).toEqual(createEmptyPinnedChannelsState());
   });
 
-  it("strips entries with empty channel ids from v3 state", () => {
+  it("returns empty state for a nonconforming payload", () => {
+    localStorage.setItem(
+      "nodex.pinned-channels.guest",
+      JSON.stringify({
+        byRelay: {
+          [RELAY_A]: { channelId: "work" },
+        },
+      })
+    );
+
+    expect(loadPinnedChannelsState()).toEqual(createEmptyPinnedChannelsState());
+  });
+
+  it("strips entries with empty channel ids", () => {
     const raw: PinnedChannelsState = {
-      version: 3,
-      updatedAt: "",
       byRelay: {
         [RELAY_A]: [
           { channelId: "valid", pinnedAt: "2026-01-01T00:00:00.000Z", order: 0 },
@@ -38,43 +49,19 @@ describe("loadPinnedChannelsState", () => {
         ],
       },
     };
-    localStorage.setItem("nodex.pinned-channels.guest.v3", JSON.stringify(raw));
+    localStorage.setItem("nodex.pinned-channels.guest", JSON.stringify(raw));
     const state = loadPinnedChannelsState();
     expect(getPinnedChannelIdsForRelays(state, [RELAY_A])).toEqual(["valid"]);
-  });
-
-  it("migrates legacy v2 view-scoped state into relay-scoped pins", () => {
-    const legacyState = {
-      version: 2,
-      updatedAt: "",
-      byView: {
-        feed: {
-          [RELAY_A]: [{ channelId: "work", pinnedAt: "2026-01-01T00:00:00.000Z", order: 1 }],
-        },
-        tree: {
-          [RELAY_A]: [{ channelId: "ops", pinnedAt: "2026-01-01T00:00:00.000Z", order: 0 }],
-          [RELAY_B]: [{ channelId: "release", pinnedAt: "2026-01-01T00:00:00.000Z", order: 0 }],
-        },
-      },
-    };
-    localStorage.setItem("nodex.pinned-channels.guest.v2", JSON.stringify(legacyState));
-
-    const state = loadPinnedChannelsState();
-
-    expect(getPinnedChannelIdsForRelays(state, [RELAY_A])).toEqual(["ops", "work"]);
-    expect(getPinnedChannelIdsForRelays(state, [RELAY_B])).toEqual(["release"]);
   });
 
   it("uses the pubkey prefix as part of the storage key", () => {
     const pubkey = "abcdef1234567890";
     const raw: PinnedChannelsState = {
-      version: 3,
-      updatedAt: "",
       byRelay: {
         [RELAY_A]: [{ channelId: "work", pinnedAt: "2026-01-01T00:00:00.000Z", order: 0 }],
       },
     };
-    localStorage.setItem("nodex.pinned-channels.abcdef12.v3", JSON.stringify(raw));
+    localStorage.setItem("nodex.pinned-channels.abcdef12", JSON.stringify(raw));
     expect(getPinnedChannelIdsForRelays(loadPinnedChannelsState(pubkey), [RELAY_A])).toEqual([
       "work",
     ]);

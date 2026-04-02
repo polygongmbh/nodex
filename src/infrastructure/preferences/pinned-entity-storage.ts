@@ -1,47 +1,42 @@
-import { z } from "zod";
 import type {
+  PinnedEntityEntry,
   PinnedEntityState,
-  ViewPinnedEntityEntry,
 } from "@/domain/preferences/pinned-entity-state";
-
-function buildPinnedEntityStateSchema(idKey: string) {
-  const entryShape: z.ZodRawShape = {
-    pinnedAt: z.string(),
-    order: z.number().finite(),
-  };
-  entryShape[idKey] = z.string();
-
-  return z.object({
-    version: z.literal(2),
-    updatedAt: z.string(),
-    byView: z.record(
-      z.string(),
-      z.record(z.string(), z.array(z.object(entryShape)).optional()).optional()
-    ),
-  });
-}
 
 function storageKey(namespace: string, pubkey?: string): string {
   const prefix = pubkey ? pubkey.slice(0, 8) : "guest";
-  return `nodex.${namespace}.${prefix}.v2`;
+  return `nodex.${namespace}.${prefix}`;
 }
 
 function stripInvalidEntries<IdKey extends string>(
-  rawState: PinnedEntityState<IdKey>,
+  rawByRelay: unknown,
   idKey: IdKey
-): PinnedEntityState<IdKey>["byView"] {
-  const byView: PinnedEntityState<IdKey>["byView"] = {};
-  for (const [view, byRelay] of Object.entries(rawState.byView)) {
-    if (!byRelay) continue;
-    const cleanedByRelay: Partial<Record<string, ViewPinnedEntityEntry<IdKey>[]>> = {};
-    for (const [relayId, entries] of Object.entries(byRelay)) {
-      if (!entries) continue;
-      const valid = entries.filter((entry) => entry[idKey].trim() !== "");
-      if (valid.length > 0) cleanedByRelay[relayId] = valid;
+): PinnedEntityState<IdKey>["byRelay"] {
+  const byRelay: PinnedEntityState<IdKey>["byRelay"] = {};
+  if (!rawByRelay || typeof rawByRelay !== "object") return byRelay;
+
+  for (const [relayId, entries] of Object.entries(rawByRelay)) {
+    if (!Array.isArray(entries)) continue;
+    const valid = entries.filter((entry): entry is PinnedEntityEntry<IdKey> => {
+      if (!entry || typeof entry !== "object") return false;
+      const candidate = entry as Record<string, unknown>;
+      return (
+        typeof candidate[idKey] === "string" &&
+        candidate[idKey].trim() !== "" &&
+        typeof candidate.pinnedAt === "string" &&
+        typeof candidate.order === "number" &&
+        Number.isFinite(candidate.order)
+      );
+    });
+    if (valid.length > 0) {
+      byRelay[relayId] = valid.map((entry) => ({
+        [idKey]: entry[idKey].trim(),
+        pinnedAt: entry.pinnedAt,
+        order: entry.order,
+      })) as PinnedEntityEntry<IdKey>[];
     }
-    if (Object.keys(cleanedByRelay).length > 0) byView[view] = cleanedByRelay;
   }
-  return byView;
+  return byRelay;
 }
 
 export function loadPinnedEntityState<IdKey extends string>(params: {
@@ -54,13 +49,9 @@ export function loadPinnedEntityState<IdKey extends string>(params: {
   try {
     const raw = localStorage.getItem(storageKey(namespace, pubkey));
     if (!raw) return createEmptyState();
-    const parsed = buildPinnedEntityStateSchema(idKey).safeParse(JSON.parse(raw));
-    if (!parsed.success) return createEmptyState();
-    const validData = parsed.data as PinnedEntityState<IdKey>;
+    const parsed = JSON.parse(raw) as { byRelay?: unknown };
     return {
-      version: 2,
-      updatedAt: validData.updatedAt,
-      byView: stripInvalidEntries(validData, idKey),
+      byRelay: stripInvalidEntries(parsed.byRelay, idKey),
     };
   } catch {
     return createEmptyState();

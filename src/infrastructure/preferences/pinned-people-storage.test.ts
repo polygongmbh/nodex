@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   createEmptyPinnedPeopleState,
-  getPinnedPersonIdsForView,
+  getPinnedPersonIdsForRelays,
   pinPersonForRelays,
   type PinnedPeopleState,
 } from "@/domain/preferences/pinned-person-state";
@@ -21,31 +21,38 @@ describe("loadPinnedPeopleState", () => {
     expect(loadPinnedPeopleState()).toEqual(createEmptyPinnedPeopleState());
   });
 
+  it("returns empty state for a nonconforming payload", () => {
+    localStorage.setItem(
+      "nodex.pinned-people.guest",
+      JSON.stringify({
+        byRelay: {
+          [RELAY_A]: "alice",
+        },
+      })
+    );
+
+    expect(loadPinnedPeopleState()).toEqual(createEmptyPinnedPeopleState());
+  });
+
   it("strips entries with empty person ids", () => {
     const raw: PinnedPeopleState = {
-      version: 2,
-      updatedAt: "",
-      byView: {
-        feed: {
-          [RELAY_A]: [
-            { personId: "alice", pinnedAt: "2026-01-01T00:00:00.000Z", order: 0 },
-            { personId: "", pinnedAt: "2026-01-01T00:00:00.000Z", order: 1 },
-          ],
-        },
+      byRelay: {
+        [RELAY_A]: [
+          { personId: "alice", pinnedAt: "2026-01-01T00:00:00.000Z", order: 0 },
+          { personId: "", pinnedAt: "2026-01-01T00:00:00.000Z", order: 1 },
+        ],
       },
     };
-    localStorage.setItem("nodex.pinned-people.guest.v2", JSON.stringify(raw));
+    localStorage.setItem("nodex.pinned-people.guest", JSON.stringify(raw));
     const state = loadPinnedPeopleState();
-    expect(getPinnedPersonIdsForView(state, "feed", [RELAY_A])).toEqual(["alice"]);
+    expect(getPinnedPersonIdsForRelays(state, [RELAY_A])).toEqual(["alice"]);
   });
 });
 
 describe("savePinnedPeopleState", () => {
   it("round-trips persisted state", () => {
-    const state = pinPersonForRelays(createEmptyPinnedPeopleState(), "feed", [RELAY_A], "alice");
+    const state = pinPersonForRelays(createEmptyPinnedPeopleState(), [RELAY_A], "alice");
     savePinnedPeopleState(state);
-    expect(getPinnedPersonIdsForView(loadPinnedPeopleState(), "feed", [RELAY_A])).toEqual([
-      "alice",
-    ]);
+    expect(getPinnedPersonIdsForRelays(loadPinnedPeopleState(), [RELAY_A])).toEqual(["alice"]);
   });
 });

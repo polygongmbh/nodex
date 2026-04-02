@@ -17,7 +17,7 @@ import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
 import {
   getPinnedChannelIdsForRelays,
 } from "@/domain/preferences/pinned-channel-state";
-import { getPinnedPersonIdsForView } from "@/domain/preferences/pinned-person-state";
+import { getPinnedPersonIdsForRelays } from "@/domain/preferences/pinned-person-state";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
@@ -511,7 +511,6 @@ const Index = () => {
     handlePersonUnpin,
   } = usePinnedSidebarPeople({
     userPubkey: user?.pubkey,
-    currentView,
     effectiveActiveRelayIds,
     people: sidebarPeopleWithSelected,
     allTasks,
@@ -1059,11 +1058,7 @@ const Index = () => {
         pinnedChannelsState,
         activeRelayIdList
       ),
-      pinnedPersonIds: getPinnedPersonIdsForView(
-        pinnedPeopleState,
-        currentView,
-        activeRelayIdList
-      ),
+      pinnedPersonIds: getPinnedPersonIdsForRelays(pinnedPeopleState, activeRelayIdList),
     }),
     [
       relaysWithActiveState,
@@ -1079,7 +1074,6 @@ const Index = () => {
       savedFilterController.activeConfigurationId,
       pinnedChannelsState,
       pinnedPeopleState,
-      currentView,
       activeRelayIdList,
     ]
   );

@@ -1,51 +1,47 @@
 import {
   createEmptyPinnedEntityState,
-  getPinnedEntityIdsForView,
+  getPinnedEntityIdsForRelays,
   isPinnedEntityForAnyRelay,
   pinEntityForRelays,
   unpinEntityFromRelays,
   type PinnedEntityState,
-  type ViewPinnedEntityEntry,
+  type PinnedEntityEntry,
 } from "./pinned-entity-state";
 
-export type ViewPinnedPersonEntry = ViewPinnedEntityEntry<"personId">;
+export type PinnedPersonEntry = PinnedEntityEntry<"personId">;
 export type PinnedPeopleState = PinnedEntityState<"personId">;
 
 export function createEmptyPinnedPeopleState(): PinnedPeopleState {
   return createEmptyPinnedEntityState();
 }
 
-export function getPinnedPersonIdsForView(
+export function getPinnedPersonIdsForRelays(
   state: PinnedPeopleState,
-  view: string,
   relayIds: string[]
 ): string[] {
-  return getPinnedEntityIdsForView(state, view, relayIds, "personId");
+  return getPinnedEntityIdsForRelays(state, relayIds, "personId");
 }
 
 export function isPersonPinnedForAnyRelay(
   state: PinnedPeopleState,
-  view: string,
   relayIds: string[],
   personId: string
 ): boolean {
-  return isPinnedEntityForAnyRelay(state, view, relayIds, personId, "personId");
+  return isPinnedEntityForAnyRelay(state, relayIds, personId, "personId");
 }
 
 export function pinPersonForRelays(
   state: PinnedPeopleState,
-  view: string,
   relayIds: string[],
   personId: string
 ): PinnedPeopleState {
-  return pinEntityForRelays(state, view, relayIds, personId, "personId");
+  return pinEntityForRelays(state, relayIds, personId, "personId");
 }
 
 export function unpinPersonFromRelays(
   state: PinnedPeopleState,
-  view: string,
   relayIds: string[],
   personId: string
 ): PinnedPeopleState {
-  return unpinEntityFromRelays(state, view, relayIds, personId, "personId");
+  return unpinEntityFromRelays(state, relayIds, personId, "personId");
 }
