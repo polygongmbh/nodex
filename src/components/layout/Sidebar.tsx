@@ -48,7 +48,7 @@ export function SidebarHeader({ className }: SidebarHeaderProps) {
   const appVersionHint = `Nodex v${APP_VERSION || "0.0.0"}`;
 
   return (
-    <div className={cn("w-44 lg:w-64 overflow-hidden px-3 lg:px-4 border-b border-sidebar-border flex items-center flex-shrink-0", className)}>
+    <div className={cn("w-44 lg:w-56 xl:w-64 overflow-hidden px-3 lg:px-4 border-b border-sidebar-border flex items-center flex-shrink-0", className)}>
       <div className="flex items-center gap-2 lg:gap-3">
         <div className="w-8 h-8 xl:w-10 xl:h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
           <Radio className="w-4 h-4 xl:w-5 xl:h-5 text-primary" />
@@ -308,7 +308,7 @@ export function Sidebar({
     <aside 
       ref={sidebarRef}
       className={cn(
-        "w-44 lg:w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden flex-shrink-0",
+        "w-44 lg:w-56 xl:w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col overflow-hidden flex-shrink-0",
         isFocused && "ring-2 ring-primary/30 ring-inset"
       )}
     >

@@ -34,7 +34,7 @@ export function ChannelMatchModeToggle({
       }}
       className={cn(
         "relative inline-flex items-center rounded-full border border-border/90 bg-muted/50",
-        isSidebar ? "h-5 w-11 shrink-0 lg:h-6 lg:w-16" : "h-8 w-24",
+        isSidebar ? "h-5 w-11 shrink-0 lg:h-6 lg:w-16 xl:w-[4.5rem]" : "h-8 w-24",
         className
       )}
       aria-label={t("filters.channels.matchMode")}
