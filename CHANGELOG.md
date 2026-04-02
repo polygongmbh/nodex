@@ -5,8 +5,11 @@ All notable changes to Nodex are documented in this file.
 The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [2.10.2] - 2026-04-02
+
 - Noas API-base discovery is now isolated from the auth client and cached in memory only, so stale `noas.api_base` values are no longer reused from browser storage across app restarts.
-- Noas sign-in and sign-up now use a single username/full-handle field with inline default-host suffixing, so browser autocomplete can treat the credential as one identifier while `@host` overrides still work when needed.
+- Noas sign-in and sign-up now use a single username/full-handle field with inline default-host suffixing, prefill the full handle before submit so password managers can save it correctly, and still let typed `@host` values override the default host when needed.
 
 ## [2.10.1] - 2026-04-02
 
