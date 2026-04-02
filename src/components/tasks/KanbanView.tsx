@@ -29,6 +29,7 @@ import { useKanbanViewState } from "@/features/feed-page/controllers/use-task-vi
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskViewServices } from "./use-task-view-services";
 import { TaskPrioritySelect } from "./TaskMetadataEditors";
+import { FilteredEmptyState } from "./FilteredEmptyState";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -62,6 +63,7 @@ export function KanbanView({
   isPendingPublishTask,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
+  isHydrating = false,
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -105,6 +107,10 @@ export function KanbanView({
     }
     return map;
   }, [kanbanTasks]);
+  const focusedTaskTitle = useMemo(
+    () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? "" : ""),
+    [allTasks, focusedTaskId]
+  );
 
   useEffect(() => {
     setOptimisticStatusByTaskId((previous) => {
@@ -265,6 +271,7 @@ export function KanbanView({
 
   // Scroll focused task into view
   const columnsContainerRef = useRef<HTMLDivElement>(null);
+  const showEmptyOverlay = kanbanTasks.length === 0;
   useEffect(() => {
     if (keyboardFocusedTaskId && columnsContainerRef.current) {
       const element = columnsContainerRef.current.querySelector(
@@ -281,7 +288,7 @@ export function KanbanView({
       {/* Kanban Columns */}
       <div
         ref={columnsContainerRef}
-        className="scrollbar-auto flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4"
+        className="scrollbar-auto relative flex-1 overflow-x-auto overflow-y-hidden px-4 pt-4"
         data-onboarding="kanban-board"
       >
         <DragDropContext onDragEnd={handleDragEnd}>
@@ -376,7 +383,11 @@ export function KanbanView({
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   data-task-id={task.id}
-                                  onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
+                                  onClick={() => {
+                                    if (!hasTextSelection() && hasChildren(task.id)) {
+                                      focusTask(task.id);
+                                    }
+                                  }}
                                   className={cn(
                                     `relative min-w-0 bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                                     snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "",
@@ -517,6 +528,14 @@ export function KanbanView({
             ))}
           </div>
         </DragDropContext>
+        {showEmptyOverlay ? (
+          <FilteredEmptyState
+            isHydrating={isHydrating}
+            searchQuery={searchQueryOverride}
+            contextTaskTitle={focusedTaskTitle}
+            mode="overlay"
+          />
+        ) : null}
       </div>
     </main>
   );

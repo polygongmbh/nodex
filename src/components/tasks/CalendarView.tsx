@@ -57,6 +57,7 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useTaskViewServices } from "./use-task-view-services";
+import { FilteredEmptyState } from "./FilteredEmptyState";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -132,6 +133,15 @@ export function CalendarView({
   const upcomingTasks = calendarSelectors.getUpcomingTasks();
   const getTasksForDay = calendarSelectors.getTasksForDay;
   const getAncestorChain = calendarSelectors.getAncestorChain;
+  const hasChildren = useCallback(
+    (taskId: string): boolean => allTasks.some((task) => task.taskType === "task" && task.parentId === taskId),
+    [allTasks]
+  );
+  const showEmptyOverlay = tasksWithDueDates.length === 0 && upcomingTasks.length === 0;
+  const focusedTaskTitle = useMemo(
+    () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? "" : ""),
+    [allTasks, focusedTaskId]
+  );
 
   const desktopMonthSections = useMemo(() => {
     return desktopMonths
@@ -374,7 +384,7 @@ export function CalendarView({
     <main className="flex-1 flex flex-col h-full w-full overflow-hidden">
       <div
         className={cn(
-          "flex-1 flex overflow-hidden min-h-0",
+          "relative flex-1 flex overflow-hidden min-h-0",
           isMobile ? "flex-col" : "flex-col xl:flex-row"
         )}
       >
@@ -561,7 +571,11 @@ export function CalendarView({
                             </DropdownMenu>
                             <div className="flex-1 min-w-0">
                               <p
-                                onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
+                                onClick={() => {
+                                  if (!hasTextSelection() && hasChildren(task.id)) {
+                                    focusTask(task.id);
+                                  }
+                                }}
                                 className={`text-sm cursor-pointer ${TASK_INTERACTION_STYLES.hoverText} line-clamp-2`}
                               >
                                 {task.content}
@@ -830,7 +844,11 @@ export function CalendarView({
                         <div
                         key={task.id}
                         data-task-id={task.id}
-                        onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
+                        onClick={() => {
+                          if (!hasTextSelection() && hasChildren(task.id)) {
+                            focusTask(task.id);
+                          }
+                        }}
                         className={cn(
                           `p-3 rounded-lg border border-border border-l-4 border-l-transparent bg-card transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
                           isTaskTerminalStatus(task.status) && "opacity-60",
@@ -1074,6 +1092,14 @@ export function CalendarView({
           )}
         </div>
         )}
+        {showEmptyOverlay ? (
+          <FilteredEmptyState
+            isHydrating={isHydrating}
+            searchQuery={searchQuery}
+            contextTaskTitle={focusedTaskTitle}
+            mode="overlay"
+          />
+        ) : null}
       </div>
 
       <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />

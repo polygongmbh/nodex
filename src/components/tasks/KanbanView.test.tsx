@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { KanbanView } from "./KanbanView";
@@ -312,6 +312,69 @@ describe("KanbanView closed column", () => {
 
     const todoDropTarget = container.querySelector('[data-droppable-id="todo"]');
     expect(todoDropTarget).toBeInTheDocument();
+  });
+
+  it("shows a floating empty hint while keeping the board visible", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+
+    const { container } = render(
+      <KanbanView
+        tasks={[]}
+        allTasks={[]}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    expect(container.querySelector('[data-onboarding="kanban-board"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-empty-mode="overlay"]')).toBeInTheDocument();
+  });
+
+  it("focuses branch tasks from kanban cards", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const parent = makeTask({ id: "parent-task", author, status: "todo", content: "Parent task #general" });
+    const child = makeTask({
+      id: "child-task",
+      author,
+      status: "todo",
+      content: "Child task #general",
+      parentId: "parent-task",
+    });
+
+    render(
+      <KanbanView
+        tasks={[parent, child]}
+        allTasks={[parent, child]}
+        currentUser={author}
+        depthMode="all"
+      />
+    );
+
+    const parentCard = document.querySelector('[data-task-id="parent-task"]');
+    expect(parentCard).toBeInTheDocument();
+    fireEvent.click(parentCard!);
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "parent-task" });
+  });
+
+  it("does not focus leaf tasks from kanban cards", () => {
+    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
+    const leaf = makeTask({ id: "leaf-task", author, status: "todo", content: "Leaf task #general" });
+
+    render(
+      <KanbanView
+        tasks={[leaf]}
+        allTasks={[leaf]}
+        currentUser={author}
+        depthMode="leaves"
+      />
+    );
+
+    const leafCard = document.querySelector('[data-task-id="leaf-task"]');
+    expect(leafCard).toBeInTheDocument();
+    fireEvent.click(leafCard!);
+
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "leaf-task" });
   });
 
   it("optimistically places dropped cards in destination column before parent props refresh", () => {

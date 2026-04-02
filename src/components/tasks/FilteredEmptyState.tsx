@@ -13,7 +13,7 @@ interface FilteredEmptyStateProps {
   isHydrating?: boolean;
   searchQuery?: string;
   contextTaskTitle?: string;
-  mode?: "screen" | "inline" | "mobile" | "footer";
+  mode?: "screen" | "inline" | "mobile" | "footer" | "overlay";
   className?: string;
 }
 
@@ -100,6 +100,46 @@ export function FilteredEmptyState({
   const shouldRenderScopedState = mode === "footer"
     ? scopeModel.hasSelectedScope
     : scopeModel.hasActiveFilters;
+
+  if (mode === "overlay") {
+    const shouldRenderOverlayScope = scopeModel.hasSelectedScope;
+    const overlayTitle =
+      isHydrating || scopeModel.screenState === "loading"
+        ? isHydrating
+          ? t("feed.hydrating")
+          : scopeModel.loadingSentence
+        : scopeModel.screenState === "error"
+          ? scopeModel.errorSentence
+          : shouldRenderOverlayScope
+            ? scopeModel.filteredSentence
+            : collectionTitle;
+    const overlaySubtitle =
+      isHydrating || scopeModel.screenState === "loading"
+        ? loadingSubtitle
+        : scopeModel.screenState === "error"
+          ? scopeModel.errorSubtitle
+          : shouldRenderOverlayScope
+            ? t("tasks.empty.filtered.action")
+            : null;
+
+    return (
+      <div
+        data-empty-mode="overlay"
+        className={cn("pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center px-4", className)}
+      >
+        <div className="max-w-xl rounded-2xl border border-border/70 bg-background/90 px-4 py-3 text-center shadow-lg backdrop-blur-sm">
+          <p className="text-sm font-medium leading-relaxed text-foreground sm:text-base">
+            {overlayTitle}
+          </p>
+          {overlaySubtitle ? (
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+              {overlaySubtitle}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   if (shouldRenderScopedState) {
     if (mode === "mobile") {

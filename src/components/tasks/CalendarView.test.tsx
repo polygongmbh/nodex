@@ -212,4 +212,74 @@ describe("CalendarView responsiveness", () => {
     expect(chipRow).toHaveTextContent("P4");
     expect(screen.getByRole("button", { name: /filter to #general/i })).toBeInTheDocument();
   });
+
+  it("shows a floating empty hint while keeping the calendar shell visible", () => {
+    const { container } = render(
+      <CalendarView
+        tasks={[]}
+        allTasks={[]}
+      />
+    );
+
+    expect(container.querySelector('[data-onboarding="calendar-month-stack"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-empty-mode="overlay"]')).toBeInTheDocument();
+  });
+
+  it("focuses branch tasks from selected-day cards", () => {
+    dispatchFeedInteraction.mockClear();
+    const parent = makeTask({
+      id: "calendar-parent",
+      author: people[0],
+      content: "Calendar parent #general",
+      status: "todo",
+      dueDate: new Date("2026-02-18T10:00:00.000Z"),
+    });
+    const child = makeTask({
+      id: "calendar-child",
+      author: people[0],
+      content: "Calendar child #general",
+      status: "todo",
+      dueDate: new Date("2026-02-18T11:00:00.000Z"),
+      parentId: "calendar-parent",
+    });
+
+    const { container } = render(
+      <CalendarView
+        tasks={[parent, child]}
+        allTasks={[parent, child]}
+        selectedDate={new Date("2026-02-18T00:00:00.000Z")}
+      />
+    );
+
+    const parentCard = container.querySelector('[data-task-id="calendar-parent"]');
+    expect(parentCard).toBeInTheDocument();
+    fireEvent.click(parentCard!);
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "calendar-parent" });
+  });
+
+  it("does not focus leaf tasks from selected-day cards", () => {
+    dispatchFeedInteraction.mockClear();
+    const leaf = makeTask({
+      id: "calendar-leaf",
+      author: people[0],
+      content: "Calendar leaf #general",
+      status: "todo",
+      dueDate: new Date("2026-02-18T10:00:00.000Z"),
+    });
+
+    const { container } = render(
+      <CalendarView
+        tasks={[leaf]}
+        allTasks={[leaf]}
+        selectedDate={new Date("2026-02-18T00:00:00.000Z")}
+      />
+    );
+
+    const leafCard = container.querySelector('[data-task-id="calendar-leaf"]');
+    expect(leafCard).toBeInTheDocument();
+    fireEvent.click(leafCard!);
+
+    expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({ type: "task.focus.change", taskId: "calendar-leaf" });
+  });
 });
