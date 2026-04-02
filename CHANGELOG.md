@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Timeline progress-update rows now let task titles truncate against the actual space left in the row, keep the actor ahead of the task title, and show the full trimmed first line in hover tooltips instead of a pre-shortened title.
+
 ## [2.10.2] - 2026-04-02
 
 - Noas API-base discovery is now isolated from the auth client and cached in memory only, so stale `noas.api_base` values are no longer reused from browser storage across app restarts.

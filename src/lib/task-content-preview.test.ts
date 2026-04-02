@@ -3,6 +3,7 @@ import {
   getCollapsedTaskContentPreview,
   getFirstTaskContentLine,
   getTaskContentLines,
+  getTrimmedFirstTaskContentLine,
   shouldCollapseTaskContent,
 } from "./task-content-preview";
 
@@ -13,6 +14,10 @@ describe("task-content-preview", () => {
 
   it("returns only the first line for compact previews", () => {
     expect(getFirstTaskContentLine("alpha\nbeta\ngamma")).toBe("alpha");
+  });
+
+  it("returns the trimmed first line for tooltip and compact-label uses", () => {
+    expect(getTrimmedFirstTaskContentLine("\n \n  alpha  \n beta")).toBe("alpha");
   });
 
   it("collapses only when content has more than four lines", () => {

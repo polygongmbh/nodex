@@ -34,6 +34,7 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
+import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
   getAncestorChainFromSource,
@@ -428,7 +429,7 @@ export function FeedView({
         ? formatCompactRelativeTime(update.timestamp)
         : formatDistanceToNow(update.timestamp, { addSuffix: true });
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
-      const taskSummary = breadcrumbTaskSummary.slice(0, 40) + (breadcrumbTaskSummary.length > 40 ? "..." : "");
+      const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
       const stateLabel = getStateLabel(update.status);
       const statusDescription = update.statusDescription?.trim();
       const isDefaultInProgressDescription =
@@ -459,38 +460,42 @@ export function FeedView({
               ) : (
                 <Circle className={cn("text-muted-foreground flex-shrink-0", isMobile ? "w-3 h-3" : "w-3.5 h-3.5")} />
               )}
-              <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-1 overflow-hidden whitespace-nowrap">
-                <span>{stateLabel}</span>
-                {showStatusDescription && (
-                  <span className="truncate">{`: ${statusDescription}`}</span>
-                )}
-                <span className="shrink-0">·</span>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    focusTask(task.id);
-                  }}
-                  className={cn(TASK_INTERACTION_STYLES.hoverLinkText, "font-semibold text-foreground shrink-0")}
-                  title={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
-                  aria-label={t("tasks.focusBreadcrumbTitle", { title: taskSummary })}
-                >
-                  {taskSummary}
-                </button>
-                <span className="shrink-0">·</span>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedUpdateAuthor });
-                  }}
-                  className="hover:text-foreground shrink-0"
-                  aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
-                  title={updateAuthorUserFacingId}
-                >
-                  {updateAuthorMeta.primary}
-                </button>
-                <span className="shrink-0">·</span>
+              <div className="min-w-0 flex-1 text-xs text-muted-foreground inline-flex items-center gap-2">
+                <div className="min-w-0 inline-flex flex-1 items-center gap-1 overflow-hidden whitespace-nowrap">
+                  <span className="shrink-0">{stateLabel}</span>
+                  {showStatusDescription && (
+                    <span className="truncate">{`: ${statusDescription}`}</span>
+                  )}
+                  <span className="shrink-0">·</span>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedUpdateAuthor });
+                    }}
+                    className="hover:text-foreground shrink-0"
+                    aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
+                    title={updateAuthorUserFacingId}
+                  >
+                    {updateAuthorMeta.primary}
+                  </button>
+                  <span className="shrink-0">·</span>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      focusTask(task.id);
+                    }}
+                    className={cn(
+                      TASK_INTERACTION_STYLES.hoverLinkText,
+                      "min-w-0 max-w-[60vw] shrink truncate text-left font-semibold text-foreground"
+                    )}
+                    title={t("tasks.focusBreadcrumbTitle", { title: taskTooltipTitle })}
+                    aria-label={t("tasks.focusBreadcrumbTitle", { title: taskTooltipTitle })}
+                  >
+                    {breadcrumbTaskSummary}
+                  </button>
+                </div>
                 <span className="shrink-0" title={getStatusUpdatedTooltip(update.timestamp)}>
                   {updateTimeLabel}
                 </span>

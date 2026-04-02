@@ -14,6 +14,12 @@ export function getTaskContentLines(content: string): string[] {
   return content.split(LINE_BREAK_REGEX);
 }
 
+export function getTrimmedFirstTaskContentLine(content: string | null | undefined): string {
+  const trimmed = (content || "").trim();
+  if (!trimmed) return "";
+  return (trimmed.split(/\r?\n/u, 1)[0] ?? "").trim();
+}
+
 export function getFirstTaskContentLine(content: string): string {
   return getTaskContentLines(content)[0] ?? "";
 }

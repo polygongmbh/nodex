@@ -1,5 +1,6 @@
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import { displayPriorityFromStored } from "@/domain/content/task-priority";
+import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
 import type { Channel, Person, QuickFilterState, Relay } from "@/types";
 
 interface TranslateFn {
@@ -73,8 +74,7 @@ function trimAtWordBoundaryEnd(value: string, maxChars: number): string {
 }
 
 function formatContextTaskTitle(title: string): string {
-  const firstLine = title.split(/\r?\n/u, 1)[0] ?? "";
-  const normalized = firstLine.replace(/\s+/g, " ").trim();
+  const normalized = getTrimmedFirstTaskContentLine(title).replace(/\s+/g, " ").trim();
   if (!normalized) return "";
   if (normalized.length <= CONTEXT_TITLE_MAX_CHARS) {
     return `"${normalized}"`;

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { FeedView } from "./FeedView";
@@ -696,8 +696,60 @@ describe("FeedView", () => {
     expect(screen.getAllByTestId(/feed-state-entry-/)).toHaveLength(2);
     expect(screen.getAllByTitle(/status updated at/i)).toHaveLength(2);
     expect(
-      screen.getAllByRole("button", { name: /focus task: reconnect relays after resume infra/i })
+      screen.getAllByRole("button", { name: /focus task: reconnect relays after resume #infra/i })
     ).toHaveLength(2);
+  });
+
+  it("uses first-line-only task titles with capped width after the actor in progress update rows", () => {
+    const taskWithLongMultilineTitle = makeTask({
+      id: "task-state-title-tooltip",
+      author,
+      content: "Reconnect relays after resume infra and verify mobile queue drain #general\nSecond line should stay out of the tooltip",
+      status: "todo",
+      stateUpdates: [
+        {
+          id: "state-title-tooltip",
+          status: "in-progress",
+          statusDescription: "Working on relay reconnect",
+          timestamp: new Date(Date.now() - 5 * 60 * 1000),
+          authorPubkey: author.id,
+        },
+      ],
+    });
+
+    render(
+      <FeedView
+        tasks={[taskWithLongMultilineTitle]}
+        allTasks={[taskWithLongMultilineTitle]}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+      />
+    );
+
+    const titleButton = screen.getByRole("button", {
+      name: /^focus task: reconnect relays after resume infra and verify mobile queue drain #general$/i,
+    });
+    const stateRow = screen.getByTestId("feed-state-entry-state-title-tooltip");
+    const actorButton = within(stateRow).getByRole("button", {
+      name: /filter and mention alice doe/i,
+    });
+
+    expect(titleButton).toHaveAttribute(
+      "title",
+      "Focus task: Reconnect relays after resume infra and verify mobile queue drain #general"
+    );
+    expect(titleButton).not.toHaveAttribute("title", expect.stringContaining("Second line"));
+    expect(titleButton).not.toHaveAttribute("title", expect.stringContaining("..."));
+    expect(
+      actorButton.compareDocumentPosition(titleButton) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    // Protect the contract that visible truncation follows available row width with a capped task-title width.
+    expect(titleButton.className).toContain("min-w-0");
+    expect(titleButton.className).toContain("max-w-[60vw]");
+    expect(titleButton.className).toContain("shrink");
+    expect(titleButton.className).toContain("truncate");
   });
 
   it("does not duplicate state label when status description matches it", () => {
