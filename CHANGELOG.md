@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.10.1] - 2026-04-02
+
 - Task-card breadcrumbs in focused task views now start from the active task context instead of repeating ancestors above it, so descendant rows and cards show local path context consistently across feed, list, kanban, and calendar views.
 - Desktop task views now keep their native layouts visible while the shared bottom-overlay loading/empty hint renders from one parent surface, and clicking kanban/calendar cards now only drills into tasks that actually have subtasks.
 - Pinned channels now persist by relay scope only instead of varying by active view, so sidebar ordering and shared scope copy stay consistent when you switch between timeline, tree, kanban, calendar, and table.
