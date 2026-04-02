@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, MoreHorizontal, Calendar, Clock, Circle, CircleDot, CheckCircle2, BadgeCheck, X } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronsDown, MessageSquare, CheckSquare, Calendar, Clock, Circle, CircleDot, CheckCircle2, BadgeCheck, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task, Person, TaskStatus, Relay } from "@/types";
 import { formatDistanceToNow, format } from "date-fns";
@@ -711,14 +711,6 @@ export function TaskItem({
             </div>
           )}
         </div>
-
-        {/* Actions */}
-        <button
-          onClick={(e) => e.stopPropagation()}
-          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted transition-opacity"
-        >
-          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-        </button>
       </div>
 
       {/* Children - three states: collapsed, matchingOnly, allVisible */}
