@@ -124,8 +124,6 @@ export function ListView({
   
   // Track sort version - incremented on view/filter changes, not status changes
   const [sortVersion, setSortVersion] = useState(0);
-  const [showExpandedTagsAtXl, setShowExpandedTagsAtXl] = useState(false);
-  const [showAllTagsOnWideScreens, setShowAllTagsOnWideScreens] = useState(false);
   const {
     searchQuery,
     focusedTask,
@@ -158,23 +156,6 @@ export function ListView({
       prevFocusedRef.current = focusedTaskId;
     }
   }, [tasks, searchQuery, focusedTaskId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const xlQuery = window.matchMedia("(min-width: 1280px)");
-    const twoXlQuery = window.matchMedia("(min-width: 1536px)");
-    const sync = () => {
-      setShowExpandedTagsAtXl(xlQuery.matches);
-      setShowAllTagsOnWideScreens(twoXlQuery.matches);
-    };
-    sync();
-    xlQuery.addEventListener("change", sync);
-    twoXlQuery.addEventListener("change", sync);
-    return () => {
-      xlQuery.removeEventListener("change", sync);
-      twoXlQuery.removeEventListener("change", sync);
-    };
-  }, []);
 
   // Build children map for sorting context - memoize based on sortVersion to prevent re-sorting on status changes
   const sortContextRef = useRef<SortContext | null>(null);
@@ -468,8 +449,7 @@ export function ListView({
     return (
       <TaskTagChipRow
         task={task}
-        maxVisibleTags={showExpandedTagsAtXl ? 2 : 1}
-        showAllTags={showAllTagsOnWideScreens}
+        layout="scroll"
         className="min-w-0"
       />
     );

@@ -136,6 +136,7 @@ export function KanbanTaskCard({
       {hasMetadataChips ? (
         <TaskTagChipRow
           task={task}
+          layout="scroll"
           className="mt-2"
           showEmptyPlaceholder={false}
           testId={`kanban-chip-row-${task.id}`}

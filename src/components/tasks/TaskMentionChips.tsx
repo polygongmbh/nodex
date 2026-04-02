@@ -75,7 +75,7 @@ export function TaskMentionChips({
             event.stopPropagation();
             onPersonClick(clickablePerson);
           }}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
+          className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
           aria-label={`Open user ${label}`}
           title={`@${toUserFacingPubkey(pubkey)}`}
         >
@@ -88,7 +88,7 @@ export function TaskMentionChips({
     return (
       <span
         key={pubkey}
-        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
+        className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary"
         title={`@${toUserFacingPubkey(pubkey)}`}
       >
         <AtSign className="w-3 h-3" />
