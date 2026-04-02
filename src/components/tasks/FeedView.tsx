@@ -3,34 +3,21 @@ import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, C
 import {
   Task,
   Person,
-  Nip99ListingStatus,
   ComposeRestoreRequest,
-  TaskStatus,
   RawNostrEvent,
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
-import { UserAvatar } from "@/components/ui/user-avatar";
-import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
+import { FeedTaskCard } from "./feed/FeedTaskCard";
 import { formatDistanceToNow, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
-import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
+import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { formatAuthorMetaParts } from "@/lib/person-label";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
+import { getTaskDateTypeLabel } from "@/lib/task-dates";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { useTranslation } from "react-i18next";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
-import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
-import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
@@ -41,17 +28,11 @@ import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
-import {
-  handleTaskStatusToggleClick,
-  shouldOpenStatusMenuForDirectSelection,
-} from "@/lib/task-status-toggle";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
-import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
-import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
@@ -222,11 +203,6 @@ export function FeedView({
 
   const SLIM_DESKTOP_QUERY = "(min-width: 768px) and (max-width: 1023px)";
   const XL_DESKTOP_QUERY = "(min-width: 1280px)";
-  const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
-  const formatFeedNpubLabel = (value: string, showFull: boolean): string => {
-    if (showFull || value.length <= 11) return value;
-    return `${value.slice(0, 8)}…${value.slice(-3)}`;
-  };
   const [isSlimDesktop, setIsSlimDesktop] = useState(false);
   const [isXLDesktop, setIsXLDesktop] = useState(false);
   const [rawEventDialogOpen, setRawEventDialogOpen] = useState(false);
@@ -417,16 +393,6 @@ export function FeedView({
   const canCompleteTask = (task: Task) => {
     return !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   };
-  const dispatchStatusChange = (taskId: string, status: TaskStatus) => {
-    void dispatchFeedInteraction({ type: "task.changeStatus", taskId, status });
-  };
-  const dispatchToggleComplete = (taskId: string) => {
-    void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
-  };
-  const getStatusButtonTitle = (task: Task) => {
-    if (canCompleteTask(task)) return getStatusToggleHint(task.status);
-    return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || getStatusToggleHint(task.status);
-  };
   const getStateLabel = (status: Task["status"]) => {
     if (status === "done") return t("listView.status.done");
     if (status === "closed") return t("listView.status.closed");
@@ -444,32 +410,7 @@ export function FeedView({
     return getAncestorChainFromSource({ taskById }, task.id, focusedTaskId);
   };
 
-  const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
   const [expandedContentByTaskId, setExpandedContentByTaskId] = useState<Record<string, boolean>>({});
-  const statusTriggerPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
-  const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
-  const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
-
-  const openStatusMenu = (taskId: string) => {
-    setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
-  };
-
-  const closeStatusMenu = (taskId: string) => {
-    setStatusMenuOpenByTaskId((prev) => {
-      if (!prev[taskId]) return prev;
-      const next = { ...prev };
-      delete next[taskId];
-      return next;
-    });
-  };
-
-  const allowStatusMenuOpen = (taskId: string) => {
-    allowStatusMenuOpenTaskIdsRef.current.add(taskId);
-  };
-
-  const clearStatusMenuOpenIntent = (taskId: string) => {
-    allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
-  };
 
   const renderFeedEntry = (entry: FeedEntry) => {
     if (entry.type === "state-update") {
@@ -561,525 +502,58 @@ export function FeedView({
     }
 
     const task = entry.task;
-    const isComment = task.taskType === "comment";
-    const isListing = Boolean(task.feedMessageType);
-    const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
-    const isSoldListing = isListing && listingStatus === "sold";
-    const isCompletedVisual = isTaskTerminalStatus(task.status) || isSoldListing;
-    const feedMessageLabel =
-      task.feedMessageType === "offer"
-        ? "Offer"
-        : task.feedMessageType === "request"
-          ? "Request"
-          : t("tasks.comment");
     const breadcrumb = getParentBreadcrumb(task);
     const isKeyboardFocused = keyboardFocusedTaskId === task.id;
-    const isLockedUntilStart = isTaskLockedUntilStart(task);
     const resolvedAuthor =
       peopleById.get(task.author.id.toLowerCase()) ??
       task.author;
-    const authorMeta = formatAuthorMetaParts({
-      personId: resolvedAuthor.id,
-      displayName: resolvedAuthor.displayName,
-      username: resolvedAuthor.name,
-    });
-    const authorUserFacingId = toUserFacingPubkey(resolvedAuthor.id);
-    const isPubkeyPrimary =
-      authorMeta.primary === resolvedAuthor.id ||
-      authorMeta.primary === authorUserFacingId;
-    const displayNpub = formatFeedNpubLabel(authorUserFacingId, isXLDesktop);
-    const primaryAuthorLabelRaw = (() => {
-      if (!isPubkeyPrimary) return authorMeta.primary;
-      return displayNpub;
-    })();
-    const primaryAuthorLabel = primaryAuthorLabelRaw;
-    const hasPrimaryAuthorLabel = primaryAuthorLabel.length > 0;
-    const secondaryAuthorLabel = (() => {
-      if (!authorMeta.secondary) return "";
-      if (!NPUB_DISPLAY_PATTERN.test(authorMeta.secondary)) return authorMeta.secondary;
-      if (isSlimDesktop) {
-        return authorMeta.secondary
-          .replace(NPUB_DISPLAY_PATTERN, "")
-          .replace(/\s*[·•]\s*$/, "")
-          .replace(/\s{2,}/g, " ")
-          .trim();
-      }
-      return authorMeta.secondary.replace(NPUB_DISPLAY_PATTERN, displayNpub);
-    })();
-    const timeLabel = isMobile
-      ? formatCompactRelativeTime(task.timestamp)
-      : formatDistanceToNow(task.timestamp, { addSuffix: true });
-    const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
     const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
-    const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
     const isContentExpanded = Boolean(expandedContentByTaskId[task.id]);
-    const isActiveTask = focusedTaskId === task.id;
-    const canUpdateListingStatus =
-      !isInteractionBlocked &&
-      isListing &&
-      Boolean(currentUser?.id && currentUser.id.toLowerCase() === task.author.id.toLowerCase());
-    const standaloneEmbedUrls = new Set(
-      getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
-    );
-    const mediaCaptionByUrl = new Map<string, string>();
-    for (const attachment of task.attachments || []) {
-      const normalizedUrl = attachment.url?.trim().toLowerCase();
-      const caption = attachment.alt?.trim() || attachment.name?.trim();
-      if (normalizedUrl && caption) {
-        mediaCaptionByUrl.set(normalizedUrl, caption);
-      }
-    }
-    const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
-      const normalizedUrl = attachment.url?.trim().toLowerCase();
-      return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
-    });
 
     return (
-      <div
+      <FeedTaskCard
         key={task.id}
-        data-task-id={task.id}
-        onClick={(event) => {
-          if (task.rawNostrEvent && isRawNostrEventShortcutClick(event)) {
-            event.preventDefault();
-            event.stopPropagation();
-            setActiveRawEvent(task.rawNostrEvent);
-            setRawEventDialogOpen(true);
-            return;
-          }
-          if (hasTextSelection()) return;
-          focusTask(task.id);
+        task={task}
+        people={people}
+        currentUser={currentUser}
+        resolvedAuthor={resolvedAuthor}
+        breadcrumb={breadcrumb}
+        focusedTaskId={focusedTaskId}
+        isKeyboardFocused={isKeyboardFocused}
+        isMobile={isMobile}
+        isSlimDesktop={isSlimDesktop}
+        isXLDesktop={isXLDesktop}
+        isInteractionBlocked={isInteractionBlocked}
+        isPendingPublish={isPendingPublish}
+        expandedContent={isContentExpanded}
+        timeLabelFormatter={(date) =>
+          isMobile ? formatCompactRelativeTime(date) : formatDistanceToNow(date, { addSuffix: true })
+        }
+        onOpenTaskMedia={openTaskMedia}
+        onToggleExpandedContent={(taskId) => {
+          setExpandedContentByTaskId((prev) => ({
+            ...prev,
+            [taskId]: !prev[taskId],
+          }));
         }}
-        className={cn(
-          `border-b border-border transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-          isMobile
-            ? "py-3"
-            : breadcrumb.length > 0
-              ? "pb-4 pt-2.5"
-              : "py-4",
-          isCompletedVisual && "opacity-60",
-          isLockedUntilStart && "opacity-50 grayscale",
-          isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
+        onOpenRawEvent={(event) => {
+          setActiveRawEvent(event);
+          setRawEventDialogOpen(true);
+        }}
+        renderPriorityChip={(task) => (
+          <FeedPriorityChip
+            task={task}
+            editable={canCompleteTask(task)}
+          />
         )}
-      >
-        <div className={cn(isMobile ? "px-3" : DESKTOP_FEED_ROW_CONTENT_PADDING)}>
-          {/* Parent breadcrumb - clickable */}
-          {breadcrumb.length > 0 && (
-            <div className="mb-1.5 flex min-w-0 items-center gap-1 overflow-hidden text-xs text-muted-foreground">
-              {breadcrumb.map((crumb, i) => (
-                <span key={crumb.id} className="flex min-w-0 max-w-[50%] items-center gap-1">
-                  {i > 0 && <span className="shrink-0">/</span>}
-                  <button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      focusTask(crumb.id);
-                    }}
-                    className={cn(
-                      TASK_INTERACTION_STYLES.hoverLinkText,
-                      "min-w-0 max-w-full cursor-pointer truncate whitespace-nowrap text-left"
-                    )}
-                    title={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
-                    aria-label={t("tasks.focusBreadcrumbTitle", { title: crumb.text })}
-                  >
-                    {crumb.text}
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className={cn("flex items-start gap-3", isMobile && "gap-2.5")}>
-          {/* Status toggle or comment icon */}
-          {!isComment ? (
-            <DropdownMenu
-              open={Boolean(statusMenuOpenByTaskId[task.id])}
-              onOpenChange={(open) => {
-                if (!open) {
-                  closeStatusMenu(task.id);
-                  clearStatusMenuOpenIntent(task.id);
-                  statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                  return;
-                }
-                if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
-                  openStatusMenu(task.id);
-                } else {
-                  closeStatusMenu(task.id);
-                }
-                clearStatusMenuOpenIntent(task.id);
-                statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-              }}
-            >
-              <DropdownMenuTrigger asChild>
-                <button
-                  onClick={(e) => {
-                    if (!canCompleteTask(task)) return;
-                    if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
-                      e.stopPropagation();
-                      return;
-                    }
-                    handleTaskStatusToggleClick(e, {
-                      status: task.status,
-                      hasStatusChangeHandler: canCompleteTask(task),
-                      isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
-                      openMenu: () => openStatusMenu(task.id),
-                      closeMenu: () => closeStatusMenu(task.id),
-                      allowMenuOpen: () => allowStatusMenuOpen(task.id),
-                      clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                      toggleStatus: () => dispatchToggleComplete(task.id),
-                      focusTask: () => focusTask(task.id),
-                    });
-                  }}
-                  onFocus={(e) => {
-                    if (!canCompleteTask(task)) return;
-                    if (
-                      shouldAutoOpenStatusMenuOnFocus(
-                        e.currentTarget,
-                        statusTriggerPointerDownTaskIdsRef.current.has(task.id)
-                      )
-                    ) {
-                      allowStatusMenuOpen(task.id);
-                      openStatusMenu(task.id);
-                    }
-                    statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                  }}
-                  onPointerDown={() => {
-                    statusTriggerPointerDownTaskIdsRef.current.add(task.id);
-                    clearStatusMenuOpenIntent(task.id);
-                    statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                  }}
-                  onPointerDownCapture={(e) => {
-                    if (!canCompleteTask(task)) return;
-                    if (
-                      shouldOpenStatusMenuForDirectSelection({
-                        status: task.status,
-                        altKey: e.altKey,
-                        hasStatusChangeHandler: canCompleteTask(task),
-                      })
-                    ) {
-                      e.preventDefault();
-                      allowStatusMenuOpen(task.id);
-                      statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
-                      openStatusMenu(task.id);
-                    }
-                  }}
-                  onBlur={() => {
-                    statusTriggerPointerDownTaskIdsRef.current.delete(task.id);
-                    clearStatusMenuOpenIntent(task.id);
-                    statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                  }}
-                  disabled={!canCompleteTask(task)}
-                  aria-label={t("tasks.actions.setStatus")}
-                  title={getStatusButtonTitle(task)}
-                  className={cn(
-                    "flex-shrink-0 mt-0.5 rounded transition-colors",
-                    isMobile ? "p-1.5" : "p-0.5",
-                    canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
-                  )}
-                >
-                  {task.status === "done" ? (
-                    <CheckCircle2 className={cn("text-primary", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                  ) : task.status === "closed" ? (
-                    <X className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                  ) : task.status === "in-progress" ? (
-                    <CircleDot className={cn("text-warning", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                  ) : (
-                    <Circle className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              {canCompleteTask(task) && (
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      dispatchStatusChange(task.id, "todo");
-                    }}
-                  >
-                    <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                    {t("listView.status.todo")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      dispatchStatusChange(task.id, "in-progress");
-                    }}
-                  >
-                    <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                    {t("listView.status.inProgress")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      dispatchStatusChange(task.id, "done");
-                    }}
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                    {t("listView.status.done")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      dispatchStatusChange(task.id, "closed");
-                    }}
-                  >
-                    <X className="w-4 h-4 mr-2 text-muted-foreground" />
-                    {t("listView.status.closed")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              )}
-            </DropdownMenu>
-          ) : (
-            isListing ? (
-              <button
-                type="button"
-                disabled={!canUpdateListingStatus}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  if (!canUpdateListingStatus) return;
-                  void dispatchFeedInteraction({
-                    type: "task.listingStatus.change",
-                    taskId: task.id,
-                    status: listingStatus === "sold" ? "active" : "sold",
-                  });
-                }}
-                title={
-                  canUpdateListingStatus
-                    ? listingStatus === "sold"
-                      ? "Mark listing active"
-                      : "Mark listing sold"
-                    : listingStatus === "sold"
-                      ? "Listing sold"
-                      : "Listing active"
-                }
-                aria-label={listingStatus === "sold" ? "Listing sold" : "Listing active"}
-                className={cn(
-                  "flex-shrink-0 mt-0.5 rounded transition-colors",
-                  isMobile ? "p-1.5" : "p-0.5",
-                  canUpdateListingStatus ? "hover:bg-muted cursor-pointer" : "cursor-default"
-                )}
-              >
-                {task.feedMessageType === "offer" ? (
-                  <Package
-                    className={cn(
-                      listingStatus === "sold" ? "text-muted-foreground" : "text-muted-foreground",
-                      isMobile ? "w-4 h-4" : "w-5 h-5"
-                    )}
-                  />
-                ) : (
-                  <HandHelping
-                    className={cn(
-                      listingStatus === "sold" ? "text-muted-foreground" : "text-muted-foreground",
-                      isMobile ? "w-4 h-4" : "w-5 h-5"
-                    )}
-                  />
-                )}
-              </button>
-            ) : (
-              <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4 mx-1.5" : "w-5 h-5")} />
-            )
-          )}
-
-          {/* Avatar */}
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedAuthor });
-            }}
-            className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-            aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
-            title={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
-          >
-            <UserAvatar
-              id={resolvedAuthor.id}
-              displayName={resolvedAuthor.displayName}
-              avatarUrl={resolvedAuthor.avatar}
-              className={cn("flex-shrink-0", isMobile ? "w-7 h-7" : "w-8 h-8")}
-              beamTestId={`feed-beam-${task.id}`}
-            />
-          </button>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div
-              className={cn(
-                "flex items-center min-w-0 text-muted-foreground mb-1",
-                isMobile ? "gap-1 text-xs" : "gap-2 text-sm",
-                "flex-wrap"
-              )}
-            >
-              {hasPrimaryAuthorLabel && (
-                <>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedAuthor });
-                    }}
-                    className={cn(
-                      "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
-                      isMobile && "max-w-[45vw]"
-                    )}
-                    aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
-                    title={authorUserFacingId}
-                  >
-                    <span
-                      title={authorMeta.primary}
-                      data-testid={`feed-author-primary-${task.id}`}
-                      className="inline-block max-w-full align-bottom truncate"
-                    >
-                      {primaryAuthorLabel}
-                    </span>
-                    {secondaryAuthorLabel && !isMobile && (
-                      <span
-                        data-testid={`feed-author-secondary-${task.id}`}
-                        className="opacity-60 inline"
-                      >
-                        {` (${secondaryAuthorLabel})`}
-                      </span>
-                    )}
-                  </button>
-                  <span className="shrink-0">·</span>
-                </>
-              )}
-              <span
-                className="shrink-0"
-                title={isComment ? getCommentCreatedTooltip(task.timestamp) : getTaskCreatedTooltip(task.timestamp)}
-              >
-                {timeLabel}
-              </span>
-              {!isComment && typeof task.priority === "number" && (
-                <>
-                  <span className="shrink-0">·</span>
-                  <FeedPriorityChip
-                    task={task}
-                    editable={canCompleteTask(task)}
-                  />
-                </>
-              )}
-              {isComment && !isMobile && (
-                <>
-                  <span className="shrink-0">·</span>
-                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{feedMessageLabel}</span>
-                  {isListing && (
-                    <span
-                      className={cn(
-                        "text-xs px-1.5 py-0.5 rounded",
-                        listingStatus === "sold"
-                          ? "bg-muted text-muted-foreground line-through"
-                          : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {listingStatus}
-                    </span>
-                  )}
-                </>
-              )}
-              {task.dueDate && (
-                <>
-                  <span className="shrink-0">·</span>
-                  <FeedDueDateChip
-                    task={task}
-                    editable={canCompleteTask(task)}
-                    dueDateColor={dueDateColor}
-                  />
-                </>
-              )}
-              {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash) && (
-                <>
-                  <span className="shrink-0">·</span>
-                  <span className="inline-flex flex-wrap items-center gap-1">
-                    <TaskMentionChips
-                      task={task}
-                      onPersonClick={(author) => {
-                        void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
-                      }}
-                      inline
-                    />
-                    {task.locationGeohash && (
-                      <TaskLocationChip
-                        geohash={task.locationGeohash}
-                        className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
-                      />
-                    )}
-                    {task.tags.map((tag) => (
-                      <button
-                        key={tag}
-                        data-onboarding="content-hashtag"
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-                        }}
-                        className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
-                        aria-label={`Filter to #${tag}`}
-                        title={`Filter to #${tag}`}
-                      >
-                        #{tag}
-                      </button>
-                    ))}
-                  </span>
-                </>
-              )}
-              {isPendingPublish && (
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
-                  }}
-                  className="ml-auto shrink-0 text-warning hover:text-warning/80 font-medium"
-                  title={t("toasts.actions.undo")}
-                >
-                  {t("toasts.actions.undo")}
-                </button>
-              )}
-            </div>
-
-            <div
-              className={cn(
-                `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
-                hasCollapsibleContent && !isContentExpanded && !isActiveTask
-                  ? "whitespace-pre-line line-clamp-3 overflow-hidden"
-                  : "whitespace-pre-wrap",
-                isCompletedVisual && "line-through text-muted-foreground"
-              )}
-            >
-              {linkifyContent(task.content, (tag) => {
-                void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-              }, {
-                plainHashtags: isCompletedVisual,
-                people,
-                onMentionClick: (author) => {
-                  void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
-                },
-                disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded && !isActiveTask,
-                onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
-                getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
-              })}
-            </div>
-            {hasCollapsibleContent && !isActiveTask && (
-              <button
-                type="button"
-                className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setExpandedContentByTaskId((prev) => ({
-                    ...prev,
-                    [task.id]: !isContentExpanded,
-                  }));
-                }}
-              >
-                {isContentExpanded ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
-              </button>
-            )}
-            <TaskAttachmentList
-              attachments={attachmentsWithoutInlineEmbeds}
-              onMediaClick={(url) => openTaskMedia(task.id, url)}
-            />
-          </div>
-          </div>
-        </div>
-      </div>
+        renderDueDateChip={(task) => (
+          <FeedDueDateChip
+            task={task}
+            editable={canCompleteTask(task)}
+            dueDateColor={getDueDateColorClass(task.dueDate, task.status)}
+          />
+        )}
+      />
     );
   };
 

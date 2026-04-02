@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Plus, X, Circle, CircleDot, CheckCircle2, Calendar, Clock, Layers, Lock } from "lucide-react";
+import { Plus, X, Circle, CircleDot, CheckCircle2 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import {
   Task,
@@ -9,26 +9,17 @@ import {
   ComposeRestoreRequest,
 } from "@/types";
 import { TaskCreateComposer } from "./TaskCreateComposer";
-import { linkifyContent } from "@/lib/linkify";
-import { TaskTagChipRow } from "./TaskTagChipRow";
-import { hasTaskMentionChips } from "./TaskMentionChips";
-import { format } from "date-fns";
+import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
 import { cn } from "@/lib/utils";
-import { getDueDateColorClass } from "@/domain/content/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { sortByLatestModified } from "@/lib/kanban-sorting";
-import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { hasTextSelection } from "@/lib/click-intent";
-import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { useTranslation } from "react-i18next";
-import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useKanbanViewState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskViewServices } from "./use-task-view-services";
-import { TaskPrioritySelect } from "./TaskMetadataEditors";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -69,7 +60,6 @@ export function KanbanView({
   const { people } = useFeedSurfaceState();
   const columns = useMemo(() => getColumns((key) => t(key)), [t]);
   const [composingColumn, setComposingColumn] = useState<TaskInitialStatus | null>(null);
-  const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
   const [optimisticStatusByTaskId, setOptimisticStatusByTaskId] = useState<Record<string, TaskStatus>>({});
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
     tasks,
@@ -350,18 +340,7 @@ export function KanbanView({
                         className="flex h-full min-h-full min-w-0 flex-col gap-2"
                       >
                         {tasksByStatus[column.id].map((task, index) => {
-                          const ancestorChain =
-                            !compactTaskCardsEnabled && showContext ? getAncestorChain(task.id) : [];
-                          const displayStatus = getTaskEffectiveStatus(task);
-                          const dueDateColor = getDueDateColorClass(task.dueDate, displayStatus);
-                          const isKeyboardFocused = keyboardFocusedTaskId === task.id;
-                          const isLockedUntilStart = isTaskLockedUntilStart(task);
                           const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
-                          const isPendingPublish = Boolean(isPendingPublishTask?.(task.id));
-                          const hasMetadataChips =
-                            !compactTaskCardsEnabled &&
-                            (hasTaskMentionChips(task) || task.tags.length > 0);
-                          
                           return (
                             <Draggable
                               key={task.id}
@@ -375,137 +354,21 @@ export function KanbanView({
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  data-task-id={task.id}
-                                  onClick={() => {
-                                    if (!hasTextSelection() && hasChildren(task.id)) {
-                                      focusTask(task.id);
-                                    }
-                                  }}
-                                  className={cn(
-                                    `relative min-w-0 bg-card border border-border rounded-lg p-3 shadow-sm transition-shadow cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
-                                    snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "",
-                                    !canChangeStatus && "border-dashed border-muted-foreground/60 bg-muted/40",
-                                    isTaskTerminalStatus(displayStatus) && "opacity-70",
-                                    isLockedUntilStart && "opacity-50 grayscale",
-                                    isKeyboardFocused && !snapshot.isDragging && "ring-2 ring-primary ring-offset-1 ring-offset-background"
-                                  )}
+                                  className={cn(snapshot.isDragging ? "shadow-lg ring-2 ring-primary/20" : "")}
                                 >
-                                  {!canChangeStatus && (
-                                    <div
-                                      className="absolute right-2 top-2 rounded-full bg-muted/80 p-1 text-muted-foreground"
-                                      title={t("tasks.readOnly")}
-                                      aria-label={t("tasks.readOnly")}
-                                    >
-                                      <Lock className="h-3 w-3" />
-                                    </div>
-                                  )}
-
-                                  {/* Parent chain for context */}
-                                  {ancestorChain.length > 0 && (
-                                      <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground mb-2">
-                                        {ancestorChain.map((ancestor, i) => (
-                                        <span key={ancestor.id} className="flex max-w-[50%] items-center gap-1">
-                                          {i > 0 && <span className="text-muted-foreground/50">›</span>}
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              focusTask(ancestor.id);
-                                          }}
-                                          className={`${TASK_INTERACTION_STYLES.hoverLinkText} max-w-full truncate`}
-                                          title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
-                                          aria-label={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
-                                        >
-                                            {ancestor.text}
-                                          </button>
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
-
-                                  {/* Content */}
-                                  <div className="flex items-start gap-2">
-                                    <div
-                                      className={cn(
-                                        `min-w-0 flex-1 text-sm leading-relaxed whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
-                                        isTaskTerminalStatus(displayStatus) && "line-through text-muted-foreground"
-                                      )}
-                                    >
-                                      {linkifyContent(task.content, (tag) => {
-                                        void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-                                      }, {
-                                        plainHashtags: isTaskTerminalStatus(displayStatus),
-                                        people,
-                                        disableStandaloneEmbeds: true,
-                                      })}
-                                    </div>
-                                    {typeof task.priority === "number" && (
-                                      <TaskPrioritySelect
-                                        id={`kanban-priority-${task.id}`}
-                                        taskId={task.id}
-                                        priority={task.priority}
-                                        ariaLabel={t("composer.labels.priority")}
-                                        disabled={!canChangeStatus}
-                                        stopPropagation
-                                        className={cn(
-                                          "ml-auto h-6 rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning focus:outline-none",
-                                          canChangeStatus && "cursor-pointer hover:bg-warning/20",
-                                          !canChangeStatus && "cursor-not-allowed opacity-60"
-                                        )}
-                                      />
-                                    )}
-                                  </div>
-                                  {/* Due date with color coding */}
-                                  {task.dueDate && (
-                                    <div
-                                      className={cn("flex items-center gap-1.5 text-xs mt-2", dueDateColor)}
-                                      data-testid={`kanban-due-row-${task.id}`}
-                                    >
-                                      <Calendar className="w-3 h-3" />
-                                      <span className="uppercase tracking-wide">{getTaskDateTypeLabel(task.dateType)}</span>
-                                      <span>{format(task.dueDate, "MMM d")}</span>
-                                      {task.dueTime && (
-                                        <>
-                                          <Clock className="w-3 h-3" />
-                                          <span>{task.dueTime}</span>
-                                        </>
-                                      )}
-                                    </div>
-                                  )}
-                                  {hasMetadataChips && (
-                                    <TaskTagChipRow
-                                      task={task}
-                                      expanded={Boolean(expandedChipRows[task.id])}
-                                      onToggleExpanded={(expanded) =>
-                                        setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
-                                      }
-                                      className="mt-2"
-                                      showEmptyPlaceholder={false}
-                                      testId={`kanban-chip-row-${task.id}`}
-                                    />
-                                  )}
-                                  {isPendingPublish && (
-                                    <div className="mt-2">
-                                      <button
-                                        type="button"
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                          void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
-                                        }}
-                                        className="text-xs font-medium text-warning hover:text-warning/80"
-                                        title={t("toasts.actions.undo")}
-                                      >
-                                        {t("toasts.actions.undo")}
-                                      </button>
-                                    </div>
-                                  )}
-                                  {/* Children indicator */}
-                                  {!compactTaskCardsEnabled && hasChildren(task.id) && (
-                                    <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-                                      <Layers className="w-3 h-3" />
-                                      <span>{t("kanban.hasSubtasks")}</span>
-                                    </div>
-                                  )}
-
+                                  <KanbanTaskCard
+                                    task={task}
+                                    currentUser={currentUser}
+                                    people={people}
+                                    displayStatus={getTaskEffectiveStatus(task)}
+                                    ancestorChain={!compactTaskCardsEnabled && showContext ? getAncestorChain(task.id) : []}
+                                    showContext={showContext}
+                                    compactTaskCardsEnabled={compactTaskCardsEnabled}
+                                    isKeyboardFocused={keyboardFocusedTaskId === task.id && !snapshot.isDragging}
+                                    isInteractionBlocked={isInteractionBlocked}
+                                    isPendingPublish={Boolean(isPendingPublishTask?.(task.id))}
+                                    hasChildren={hasChildren}
+                                  />
                                 </div>
                               )}
                             </Draggable>

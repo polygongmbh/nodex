@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Task, Person } from "@/types";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
@@ -10,12 +11,10 @@ interface TaskTagChipRowProps {
   task: Task;
   people?: Person[];
   priority?: number;
-  expanded?: boolean;
   maxVisibleTags?: number;
   showAllTags?: boolean;
   className?: string;
   tagClassName?: string;
-  onToggleExpanded?: (expanded: boolean) => void;
   stopPropagation?: boolean;
   showEmptyPlaceholder?: boolean;
   testId?: string;
@@ -25,22 +24,21 @@ export function TaskTagChipRow({
   task,
   people: peopleProp,
   priority,
-  expanded = false,
   maxVisibleTags = 3,
   showAllTags = false,
   className,
   tagClassName,
-  onToggleExpanded,
   stopPropagation = true,
   showEmptyPlaceholder = true,
   testId,
 }: TaskTagChipRowProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const [isExpanded, setIsExpanded] = useState(false);
   const hasPriority = typeof priority === "number";
   const hasMentions = hasTaskMentionChips(task);
   const hasTags = task.tags.length > 0;
-  const showAll = showAllTags || expanded;
+  const showAll = showAllTags || isExpanded;
   const visibleTags = showAll ? task.tags : task.tags.slice(0, maxVisibleTags);
   const hiddenTagCount = Math.max(0, task.tags.length - visibleTags.length);
 
@@ -83,7 +81,7 @@ export function TaskTagChipRow({
           type="button"
           onClick={(event) => {
             if (stopPropagation) event.stopPropagation();
-            onToggleExpanded?.(true);
+            setIsExpanded(true);
           }}
           className="text-xs text-muted-foreground hover:text-foreground"
           aria-label={t("tasks.tagsShowMoreAria", { count: hiddenTagCount })}
@@ -97,7 +95,7 @@ export function TaskTagChipRow({
           type="button"
           onClick={(event) => {
             if (stopPropagation) event.stopPropagation();
-            onToggleExpanded?.(false);
+            setIsExpanded(false);
           }}
           className="text-xs text-muted-foreground hover:text-foreground"
           aria-label={t("tasks.tagsShowLess")}

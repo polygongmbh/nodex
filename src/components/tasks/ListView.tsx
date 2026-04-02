@@ -8,15 +8,13 @@ import {
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { TaskTagChipRow } from "./TaskTagChipRow";
+import { ListTaskRow } from "./list/ListTaskRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { sortTasks, buildChildrenMap, SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
-import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
-import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { hasTextSelection } from "@/lib/click-intent";
-import { isTaskLockedUntilStart } from "@/lib/task-dates";
+import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import type { KanbanDepthMode } from "./DesktopSearchDock";
 import { filterTasksByDepthMode } from "@/domain/content/depth-mode-filter";
 import {
@@ -32,10 +30,6 @@ import {
 } from "@/components/ui/popover";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
-import {
-  handleTaskStatusToggleClick,
-  shouldOpenStatusMenuForDirectSelection,
-} from "@/lib/task-status-toggle";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
@@ -130,7 +124,6 @@ export function ListView({
   
   // Track sort version - incremented on view/filter changes, not status changes
   const [sortVersion, setSortVersion] = useState(0);
-  const [expandedChipRows, setExpandedChipRows] = useState<Record<string, boolean>>({});
   const [showExpandedTagsAtXl, setShowExpandedTagsAtXl] = useState(false);
   const [showAllTagsOnWideScreens, setShowAllTagsOnWideScreens] = useState(false);
   const {
@@ -149,9 +142,6 @@ export function ListView({
   const prevTasksRef = useRef<string>("");
   const prevSearchRef = useRef(searchQuery);
   const prevFocusedRef = useRef(focusedTaskId);
-  const [statusMenuOpenByTaskId, setStatusMenuOpenByTaskId] = useState<Record<string, boolean>>({});
-  const allowStatusMenuOpenTaskIdsRef = useRef<Set<string>>(new Set());
-  const statusMenuOpenedOnPointerDownTaskIdsRef = useRef<Set<string>>(new Set());
 
   // Detect filter/view changes (not status changes) to trigger re-sort
   useEffect(() => {
@@ -294,27 +284,6 @@ export function ListView({
     }
   };
 
-  const openStatusMenu = (taskId: string) => {
-    setStatusMenuOpenByTaskId((prev) => ({ ...prev, [taskId]: true }));
-  };
-
-  const closeStatusMenu = (taskId: string) => {
-    setStatusMenuOpenByTaskId((prev) => {
-      if (!prev[taskId]) return prev;
-      const next = { ...prev };
-      delete next[taskId];
-      return next;
-    });
-  };
-
-  const allowStatusMenuOpen = (taskId: string) => {
-    allowStatusMenuOpenTaskIdsRef.current.add(taskId);
-  };
-
-  const clearStatusMenuOpenIntent = (taskId: string) => {
-    allowStatusMenuOpenTaskIdsRef.current.delete(taskId);
-  };
-
   const handleResetSort = () => {
     setSortField("priority");
     setSortDirection("asc");
@@ -330,10 +299,7 @@ export function ListView({
   const dispatchToggleComplete = (taskId: string) => {
     void dispatchFeedInteraction({ type: "task.toggleComplete", taskId });
   };
-  const getStatusButtonTitle = (task: Task) => {
-    if (canCompleteTask(task)) return t("tasks.actions.setStatus");
-    return getTaskStatusChangeBlockedReason(task, currentUser, isInteractionBlocked, people) || t("tasks.actions.setStatus");
-  };
+  const getStatusToggleHint = () => t("tasks.actions.setStatus");
 
   // Task IDs for keyboard navigation
   const taskIds = useMemo(() => listTasks.map(t => t.id), [listTasks]);
@@ -502,13 +468,9 @@ export function ListView({
     return (
       <TaskTagChipRow
         task={task}
-        expanded={Boolean(expandedChipRows[task.id])}
         maxVisibleTags={showExpandedTagsAtXl ? 2 : 1}
         showAllTags={showAllTagsOnWideScreens}
         className="min-w-0"
-        onToggleExpanded={(expanded) =>
-          setExpandedChipRows((prev) => ({ ...prev, [task.id]: expanded }))
-        }
       />
     );
   };
@@ -601,196 +563,33 @@ export function ListView({
               {listTasks.map((task) => {
                 const ancestorChain = getAncestorChain(task.id);
                 const isKeyboardFocused = keyboardFocusedTaskId === task.id;
-                const isLockedUntilStart = isTaskLockedUntilStart(task);
                 const contentPreview = getTableContentPreview(task.content);
                 
                 return (
-                  <div
-                    role="row"
+                  <ListTaskRow
                     key={task.id}
-                    data-task-id={task.id}
-                    className={cn(
-                      LIST_SUBGRID_ROW_CLASS,
-                      "items-start border-b border-border hover:bg-muted/30 transition-colors",
-                      isTaskTerminalStatus(task.status) && "opacity-60",
-                      isLockedUntilStart && "opacity-50 grayscale",
-                      isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
-                    )}
-                  >
-                    <div role="cell" className="min-w-0 px-2 py-2 2xl:px-3">
-                      <DropdownMenu
-                        open={Boolean(statusMenuOpenByTaskId[task.id])}
-                        onOpenChange={(open) => {
-                          if (!open) {
-                            closeStatusMenu(task.id);
-                            clearStatusMenuOpenIntent(task.id);
-                            statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                            return;
-                          }
-                          if (allowStatusMenuOpenTaskIdsRef.current.has(task.id)) {
-                            openStatusMenu(task.id);
-                          } else {
-                            closeStatusMenu(task.id);
-                          }
-                          clearStatusMenuOpenIntent(task.id);
-                          statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                        }}
-                      >
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            onClick={(event) => {
-                              if (!canCompleteTask(task)) return;
-                              if (statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id)) {
-                                event.stopPropagation();
-                                return;
-                              }
-                              handleTaskStatusToggleClick(event, {
-                                status: task.status,
-                                hasStatusChangeHandler: canCompleteTask(task),
-                                isMenuOpen: Boolean(statusMenuOpenByTaskId[task.id]),
-                                openMenu: () => openStatusMenu(task.id),
-                                closeMenu: () => closeStatusMenu(task.id),
-                                allowMenuOpen: () => allowStatusMenuOpen(task.id),
-                                clearMenuOpenIntent: () => clearStatusMenuOpenIntent(task.id),
-                                toggleStatus: () => dispatchToggleComplete(task.id),
-                                focusTask: () => focusTask(task.id),
-                                focusOnQuickToggle: false,
-                              });
-                            }}
-                            onPointerDown={(event) => {
-                              if (!canCompleteTask(task)) return;
-                              statusMenuOpenedOnPointerDownTaskIdsRef.current.delete(task.id);
-                              if (
-                                shouldOpenStatusMenuForDirectSelection({
-                                  status: task.status,
-                                  altKey: event.altKey,
-                                  hasStatusChangeHandler: canCompleteTask(task),
-                                })
-                              ) {
-                                event.preventDefault();
-                                allowStatusMenuOpen(task.id);
-                                statusMenuOpenedOnPointerDownTaskIdsRef.current.add(task.id);
-                                openStatusMenu(task.id);
-                              }
-                            }}
-                            disabled={!canCompleteTask(task)}
-                            aria-label={t("tasks.actions.setStatus")}
-                            title={getStatusButtonTitle(task)}
-                            className={cn(
-                              "p-0.5 rounded transition-colors",
-                              canCompleteTask(task) ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
-                            )}
-                          >
-                            {task.status === "done" ? (
-                              <CheckCircle2 className="w-5 h-5 text-primary" />
-                            ) : task.status === "closed" ? (
-                              <X className="w-5 h-5 text-muted-foreground" />
-                            ) : task.status === "in-progress" ? (
-                              <CircleDot className="w-5 h-5 text-warning" />
-                            ) : (
-                              <Circle className="w-5 h-5 text-muted-foreground" />
-                            )}
-                          </button>
-                        </DropdownMenuTrigger>
-                        {canCompleteTask(task) && (
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                dispatchStatusChange(task.id, "todo");
-                              }}
-                              className={cn((task.status || "todo") === "todo" && "bg-muted")}
-                            >
-                              <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
-                              {t("listView.status.todo")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                dispatchStatusChange(task.id, "in-progress");
-                              }}
-                              className={cn(task.status === "in-progress" && "bg-muted")}
-                            >
-                              <CircleDot className="w-4 h-4 mr-2 text-warning" />
-                              {t("listView.status.inProgress")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                dispatchStatusChange(task.id, "done");
-                              }}
-                              className={cn(task.status === "done" && "bg-muted")}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                              {t("listView.status.done")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                dispatchStatusChange(task.id, "closed");
-                              }}
-                              className={cn(task.status === "closed" && "bg-muted")}
-                            >
-                              <X className="w-4 h-4 mr-2 text-muted-foreground" />
-                              {t("listView.status.closed")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        )}
-                      </DropdownMenu>
-                    </div>
-                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "min-w-0")}>
-                      <div className="space-y-1">
-                        {/* Parent context */}
-                        {ancestorChain.length > 0 && (
-                          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-                            {ancestorChain.map((ancestor, i) => (
-                              <span key={ancestor.id} className="flex max-w-[50%] items-center gap-1">
-                                {i > 0 && <span className="text-muted-foreground/50">›</span>}
-                                <button
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    focusTask(ancestor.id);
-                                  }}
-                                  className={`${TASK_INTERACTION_STYLES.hoverLinkText} max-w-full truncate`}
-                                  title={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
-                                  aria-label={t("tasks.focusBreadcrumbTitle", { title: ancestor.text })}
-                                >
-                                  {ancestor.text}
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <div
-                          onClick={() => { if (!hasTextSelection()) focusTask(task.id); }}
-                          className={cn(
-                            `text-sm cursor-pointer break-words whitespace-pre-line line-clamp-2 overflow-hidden ${TASK_INTERACTION_STYLES.hoverText}`,
-                            isTaskTerminalStatus(task.status) && "line-through text-muted-foreground"
-                          )}
-                          title={t("tasks.focusTaskTitle", { type: t("tasks.task").toLowerCase() })}
-                        >
-                          {contentPreview}
-                        </div>
-                      </div>
-                    </div>
-                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "hidden 2xl:flex items-center")}>
-                      <StatusCell task={task} />
-                    </div>
-                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "flex items-center")}>
-                      <DueDateCell task={task} />
-                    </div>
-                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "flex items-center")}>
+                    task={task}
+                    currentUser={currentUser}
+                    people={people}
+                    ancestorChain={ancestorChain}
+                    isKeyboardFocused={isKeyboardFocused}
+                    isInteractionBlocked={isInteractionBlocked}
+                    getStatusToggleHint={getStatusToggleHint}
+                    rowClassName={LIST_SUBGRID_ROW_CLASS}
+                    bodyCellClassName={LIST_BODY_CELL_CLASS}
+                    contentPreview={contentPreview}
+                    renderStatusCell={(task) => <StatusCell task={task} />}
+                    renderDueDateCell={(task) => <DueDateCell task={task} />}
+                    renderPriorityCell={(task, editable) => (
                       <PriorityCell
                         taskId={task.id}
                         taskContent={task.content}
                         priority={task.priority}
-                        editable={canCompleteTask(task)}
+                        editable={editable}
                       />
-                    </div>
-                    <div role="cell" className={cn(LIST_BODY_CELL_CLASS, "min-w-0")}>
-                      <TagsCell task={task} />
-                    </div>
-                  </div>
+                    )}
+                    renderTagsCell={(task) => <TagsCell task={task} />}
+                  />
                 );
               })}
               {shouldShowScopeFooterHint ? (

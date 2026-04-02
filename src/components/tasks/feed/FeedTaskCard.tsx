@@ -1,0 +1,463 @@
+import { Circle, CircleDot, CheckCircle2, HandHelping, MessageSquare, Package, X } from "lucide-react";
+import type { ReactNode } from "react";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
+import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
+import { TaskMentionChips, hasTaskMentionChips } from "@/components/tasks/TaskMentionChips";
+import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
+import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
+import { useTaskStatusMenu } from "@/components/tasks/task-card/use-task-status-menu";
+import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
+import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
+import { cn } from "@/lib/utils";
+import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
+import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
+import { hasTextSelection } from "@/lib/click-intent";
+import { isTaskTerminalStatus } from "@/domain/content/task-status";
+import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
+import { formatAuthorMetaParts } from "@/lib/person-label";
+import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
+import { isTaskLockedUntilStart } from "@/lib/task-dates";
+import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
+import { useTranslation } from "react-i18next";
+import type { Nip99ListingStatus, Person, RawNostrEvent, Task } from "@/types";
+
+interface FeedTaskCardProps {
+  task: Task;
+  people: Person[];
+  currentUser?: Person;
+  resolvedAuthor: Person;
+  breadcrumb: { id: string; text: string }[];
+  focusedTaskId?: string | null;
+  isKeyboardFocused: boolean;
+  isMobile: boolean;
+  isSlimDesktop: boolean;
+  isXLDesktop: boolean;
+  isInteractionBlocked: boolean;
+  isPendingPublish: boolean;
+  expandedContent: boolean;
+  timeLabelFormatter: (date: Date) => string;
+  onOpenTaskMedia: (taskId: string, url: string) => void;
+  onToggleExpandedContent: (taskId: string) => void;
+  onOpenRawEvent: (event: RawNostrEvent) => void;
+  renderPriorityChip: (task: Task) => ReactNode;
+  renderDueDateChip: (task: Task) => ReactNode;
+}
+
+export function FeedTaskCard({
+  task,
+  people,
+  currentUser,
+  resolvedAuthor,
+  breadcrumb,
+  focusedTaskId,
+  isKeyboardFocused,
+  isMobile,
+  isSlimDesktop,
+  isXLDesktop,
+  isInteractionBlocked,
+  isPendingPublish,
+  expandedContent,
+  timeLabelFormatter,
+  onOpenTaskMedia,
+  onToggleExpandedContent,
+  onOpenRawEvent,
+  renderPriorityChip,
+  renderDueDateChip,
+}: FeedTaskCardProps) {
+  const { t } = useTranslation();
+  const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { focusTask } = useTaskViewServices();
+  const getStatusToggleHint = (status?: Task["status"]): string => {
+    const alternateKey = getAlternateModifierLabel();
+    if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
+    if (status === "done") return t("hints.statusToggle.done");
+    if (status === "closed") return t("hints.statusToggle.closed");
+    return t("hints.statusToggle.todo", { alternateKey });
+  };
+  const NPUB_DISPLAY_PATTERN = /npub1[023456789acdefghjklmnpqrstuvwxyz…]+/i;
+  const formatFeedNpubLabel = (value: string, showFull: boolean): string => {
+    if (showFull || value.length <= 11) return value;
+    return `${value.slice(0, 8)}…${value.slice(-3)}`;
+  };
+  const {
+    canCompleteTask,
+    statusMenuOpen,
+    statusButtonTitle,
+    triggerProps,
+    handleOpenChange,
+    dispatchStatusChange,
+  } = useTaskStatusMenu({
+    task,
+    currentUser,
+    people,
+    isInteractionBlocked,
+    getStatusToggleHint,
+  });
+  const isComment = task.taskType === "comment";
+  const isListing = Boolean(task.feedMessageType);
+  const listingStatus: Nip99ListingStatus = task.nip99?.status === "sold" ? "sold" : "active";
+  const isSoldListing = isListing && listingStatus === "sold";
+  const isCompletedVisual = isTaskTerminalStatus(task.status) || isSoldListing;
+  const isLockedUntilStart = isTaskLockedUntilStart(task);
+  const feedMessageLabel =
+    task.feedMessageType === "offer"
+      ? "Offer"
+      : task.feedMessageType === "request"
+        ? "Request"
+        : t("tasks.comment");
+  const authorMeta = formatAuthorMetaParts({
+    personId: resolvedAuthor.id,
+    displayName: resolvedAuthor.displayName,
+    username: resolvedAuthor.name,
+  });
+  const authorUserFacingId = toUserFacingPubkey(resolvedAuthor.id);
+  const isPubkeyPrimary =
+    authorMeta.primary === resolvedAuthor.id ||
+    authorMeta.primary === authorUserFacingId;
+  const displayNpub = formatFeedNpubLabel(authorUserFacingId, isXLDesktop);
+  const primaryAuthorLabel = isPubkeyPrimary ? displayNpub : authorMeta.primary;
+  const hasPrimaryAuthorLabel = primaryAuthorLabel.length > 0;
+  const secondaryAuthorLabel = (() => {
+    if (!authorMeta.secondary) return "";
+    if (!NPUB_DISPLAY_PATTERN.test(authorMeta.secondary)) return authorMeta.secondary;
+    if (isSlimDesktop) {
+      return authorMeta.secondary
+        .replace(NPUB_DISPLAY_PATTERN, "")
+        .replace(/\s*[·•]\s*$/, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+    return authorMeta.secondary.replace(NPUB_DISPLAY_PATTERN, displayNpub);
+  })();
+  const timeLabel = timeLabelFormatter(task.timestamp);
+  const hasCollapsibleContent = shouldCollapseTaskContent(task.content);
+  const isActiveTask = focusedTaskId === task.id;
+  const canUpdateListingStatus =
+    !isInteractionBlocked &&
+    isListing &&
+    Boolean(currentUser?.id && currentUser.id.toLowerCase() === task.author.id.toLowerCase());
+  const standaloneEmbedUrls = new Set(
+    getStandaloneEmbeddableUrls(task.content).map((url) => url.trim().toLowerCase())
+  );
+  const mediaCaptionByUrl = new Map<string, string>();
+  for (const attachment of task.attachments || []) {
+    const normalizedUrl = attachment.url?.trim().toLowerCase();
+    const caption = attachment.alt?.trim() || attachment.name?.trim();
+    if (normalizedUrl && caption) {
+      mediaCaptionByUrl.set(normalizedUrl, caption);
+    }
+  }
+  const attachmentsWithoutInlineEmbeds = (task.attachments || []).filter((attachment) => {
+    const normalizedUrl = attachment.url?.trim().toLowerCase();
+    return !normalizedUrl || !standaloneEmbedUrls.has(normalizedUrl);
+  });
+
+  return (
+    <TaskSurface
+      taskId={task.id}
+      onClick={(event) => {
+        if (task.rawNostrEvent && isRawNostrEventShortcutClick(event)) {
+          event.preventDefault();
+          event.stopPropagation();
+          onOpenRawEvent(task.rawNostrEvent);
+          return;
+        }
+        if (hasTextSelection()) return;
+        focusTask(task.id);
+      }}
+      className={cn(
+        `border-b border-border transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
+        isMobile ? "py-3" : breadcrumb.length > 0 ? "pb-4 pt-2.5" : "py-4",
+        isCompletedVisual && "opacity-60",
+        isLockedUntilStart && "opacity-50 grayscale",
+        isKeyboardFocused && "ring-2 ring-primary ring-inset bg-primary/5"
+      )}
+    >
+      <div className={cn(isMobile ? "px-3" : "px-3")}>
+        <TaskBreadcrumbRow
+          breadcrumbs={breadcrumb}
+          onFocusTask={focusTask}
+          className="mb-1.5 overflow-hidden"
+          itemClassName="min-w-0"
+          separator="/"
+        />
+        <div className={cn("flex items-start gap-3", isMobile && "gap-2.5")}>
+          {!isComment ? (
+            <DropdownMenu
+              open={statusMenuOpen}
+              onOpenChange={handleOpenChange}
+            >
+              <DropdownMenuTrigger asChild>
+                <button
+                  {...triggerProps}
+                  disabled={!canCompleteTask}
+                  aria-label={t("tasks.actions.setStatus")}
+                  title={statusButtonTitle}
+                  className={cn(
+                    "flex-shrink-0 mt-0.5 rounded transition-colors",
+                    isMobile ? "p-1.5" : "p-0.5",
+                    canCompleteTask ? "hover:bg-muted cursor-pointer" : "cursor-not-allowed opacity-50"
+                  )}
+                >
+                  {task.status === "done" ? (
+                    <CheckCircle2 className={cn("text-primary", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                  ) : task.status === "closed" ? (
+                    <X className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                  ) : task.status === "in-progress" ? (
+                    <CircleDot className={cn("text-warning", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                  ) : (
+                    <Circle className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              {canCompleteTask ? (
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("todo"); }}>
+                    <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
+                    {t("listView.status.todo")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("in-progress"); }}>
+                    <CircleDot className="w-4 h-4 mr-2 text-warning" />
+                    {t("listView.status.inProgress")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("done"); }}>
+                    <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
+                    {t("listView.status.done")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(event) => { event.stopPropagation(); dispatchStatusChange("closed"); }}>
+                    <X className="w-4 h-4 mr-2 text-muted-foreground" />
+                    {t("listView.status.closed")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              ) : null}
+            </DropdownMenu>
+          ) : isListing ? (
+            <button
+              type="button"
+              disabled={!canUpdateListingStatus}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (!canUpdateListingStatus) return;
+                void dispatchFeedInteraction({
+                  type: "task.listingStatus.change",
+                  taskId: task.id,
+                  status: listingStatus === "sold" ? "active" : "sold",
+                });
+              }}
+              title={
+                canUpdateListingStatus
+                  ? listingStatus === "sold"
+                    ? "Mark listing active"
+                    : "Mark listing sold"
+                  : listingStatus === "sold"
+                    ? "Listing sold"
+                    : "Listing active"
+              }
+              aria-label={listingStatus === "sold" ? "Listing sold" : "Listing active"}
+              className={cn(
+                "flex-shrink-0 mt-0.5 rounded transition-colors",
+                isMobile ? "p-1.5" : "p-0.5",
+                canUpdateListingStatus ? "hover:bg-muted cursor-pointer" : "cursor-default"
+              )}
+            >
+              {task.feedMessageType === "offer" ? (
+                <Package className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+              ) : (
+                <HandHelping className={cn("text-muted-foreground", isMobile ? "w-4 h-4" : "w-5 h-5")} />
+              )}
+            </button>
+          ) : (
+            <MessageSquare className={cn("text-muted-foreground flex-shrink-0 mt-0.5", isMobile ? "w-4 h-4 mx-1.5" : "w-5 h-5")} />
+          )}
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedAuthor });
+            }}
+            className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+            aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
+            title={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
+          >
+            <UserAvatar
+              id={resolvedAuthor.id}
+              displayName={resolvedAuthor.displayName}
+              avatarUrl={resolvedAuthor.avatar}
+              className={cn("flex-shrink-0", isMobile ? "w-7 h-7" : "w-8 h-8")}
+              beamTestId={`feed-beam-${task.id}`}
+            />
+          </button>
+          <div className="flex-1 min-w-0">
+            <div
+              className={cn(
+                "flex items-center min-w-0 text-muted-foreground mb-1",
+                isMobile ? "gap-1 text-xs" : "gap-2 text-sm",
+                "flex-wrap"
+              )}
+            >
+              {hasPrimaryAuthorLabel ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedAuthor });
+                    }}
+                    className={cn(
+                      "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
+                      isMobile && "max-w-[45vw]"
+                    )}
+                    aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
+                    title={authorUserFacingId}
+                  >
+                    <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
+                      {primaryAuthorLabel}
+                    </span>
+                    {secondaryAuthorLabel && !isMobile ? (
+                      <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
+                        {` (${secondaryAuthorLabel})`}
+                      </span>
+                    ) : null}
+                  </button>
+                  <span className="shrink-0">·</span>
+                </>
+              ) : null}
+              <span
+                className="shrink-0"
+                title={isComment ? getCommentCreatedTooltip(task.timestamp) : getTaskCreatedTooltip(task.timestamp)}
+              >
+                {timeLabel}
+              </span>
+              {!isComment && typeof task.priority === "number" ? (
+                <>
+                  <span className="shrink-0">·</span>
+                  {renderPriorityChip(task)}
+                </>
+              ) : null}
+              {isComment && !isMobile ? (
+                <>
+                  <span className="shrink-0">·</span>
+                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{feedMessageLabel}</span>
+                  {isListing ? (
+                    <span
+                      className={cn(
+                        "text-xs px-1.5 py-0.5 rounded",
+                        listingStatus === "sold"
+                          ? "bg-muted text-muted-foreground line-through"
+                          : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {listingStatus}
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+              {task.dueDate ? (
+                <>
+                  <span className="shrink-0">·</span>
+                  {renderDueDateChip(task)}
+                </>
+              ) : null}
+              {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash) ? (
+                <>
+                  <span className="shrink-0">·</span>
+                  <span className="inline-flex flex-wrap items-center gap-1">
+                    <TaskMentionChips
+                      task={task}
+                      onPersonClick={(author) => {
+                        void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
+                      }}
+                      inline
+                    />
+                    {task.locationGeohash ? (
+                      <TaskLocationChip
+                        geohash={task.locationGeohash}
+                        className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
+                      />
+                    ) : null}
+                    {task.tags.map((tag) => (
+                      <button
+                        key={tag}
+                        data-onboarding="content-hashtag"
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+                        }}
+                        className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
+                        aria-label={`Filter to #${tag}`}
+                        title={`Filter to #${tag}`}
+                      >
+                        #{tag}
+                      </button>
+                    ))}
+                  </span>
+                </>
+              ) : null}
+              {isPendingPublish ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void dispatchFeedInteraction({ type: "task.undoPendingPublish", taskId: task.id });
+                  }}
+                  className="ml-auto shrink-0 text-warning hover:text-warning/80 font-medium"
+                  title={t("toasts.actions.undo")}
+                >
+                  {t("toasts.actions.undo")}
+                </button>
+              ) : null}
+            </div>
+            <div
+              className={cn(
+                `text-sm leading-relaxed ${TASK_INTERACTION_STYLES.hoverText}`,
+                hasCollapsibleContent && !expandedContent && !isActiveTask
+                  ? "whitespace-pre-line line-clamp-3 overflow-hidden"
+                  : "whitespace-pre-wrap",
+                isCompletedVisual && "line-through text-muted-foreground"
+              )}
+            >
+              {linkifyContent(task.content, (tag) => {
+                void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+              }, {
+                plainHashtags: isCompletedVisual,
+                people,
+                onMentionClick: (author) => {
+                  void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
+                },
+                disableStandaloneEmbeds: hasCollapsibleContent && !expandedContent && !isActiveTask,
+                onStandaloneMediaClick: (url) => onOpenTaskMedia(task.id, url),
+                getStandaloneMediaCaption: (url) => mediaCaptionByUrl.get(url.trim().toLowerCase()),
+              })}
+            </div>
+            {hasCollapsibleContent && !isActiveTask ? (
+              <button
+                type="button"
+                className="mt-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleExpandedContent(task.id);
+                }}
+              >
+                {expandedContent ? t("tasks.actions.showLess") : t("tasks.actions.showMore")}
+              </button>
+            ) : null}
+            <TaskAttachmentList
+              attachments={attachmentsWithoutInlineEmbeds}
+              onMediaClick={(url) => onOpenTaskMedia(task.id, url)}
+            />
+          </div>
+        </div>
+      </div>
+    </TaskSurface>
+  );
+}
