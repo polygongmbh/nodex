@@ -442,9 +442,8 @@ function renderMarkdownBlock(
   };
 
   return (
-    <div className="whitespace-normal">
+    <div className="whitespace-normal" key={baseKey}>
       <ReactMarkdown
-        key={`${baseKey}-md`}
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
           p: MarkdownParagraph,
