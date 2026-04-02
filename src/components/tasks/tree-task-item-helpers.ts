@@ -4,11 +4,9 @@ import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/domain/content/ta
 export type TreeTaskFoldState = "collapsed" | "matchingOnly" | "allVisible";
 
 interface DeriveTreeTaskItemChildrenParams {
-  taskId: string;
-  allTasks: Task[];
+  allChildren: Task[];
   filteredChildren: Task[];
   hasActiveFilters: boolean;
-  childrenMap?: Map<string | undefined, Task[]>;
 }
 
 export interface TreeTaskItemChildrenState {
@@ -27,13 +25,10 @@ export interface TreeTaskItemChildrenState {
 }
 
 export function deriveTreeTaskItemChildren({
-  taskId,
-  allTasks,
+  allChildren,
   filteredChildren,
   hasActiveFilters,
-  childrenMap,
 }: DeriveTreeTaskItemChildrenParams): TreeTaskItemChildrenState {
-  const allChildren = childrenMap?.get(taskId) || allTasks.filter((candidate) => candidate.parentId === taskId);
   const allTaskChildren = allChildren.filter((child) => child.taskType === "task");
   const allCommentChildren = allChildren.filter((child) => child.taskType === "comment");
   const filteredTaskChildren = filteredChildren.filter((child) => child.taskType === "task");

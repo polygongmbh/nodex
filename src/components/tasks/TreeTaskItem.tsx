@@ -48,16 +48,13 @@ import {
 interface TreeTaskItemProps {
   task: Task;
   filteredChildren: Task[];
-  allTasks: Task[];
-  childrenMap?: Map<string | undefined, Task[]>;
+  childrenMap: Map<string | undefined, Task[]>;
   people?: Person[];
   currentUser?: Person;
   depth?: number;
-  isExpanded?: boolean;
-  onToggleExpand?: () => void;
   matchedByFilter?: boolean;
   isDirectMatchFn?: (taskId: string) => boolean;
-  getFilteredChildrenFn?: (parentId: string) => Task[];
+  getFilteredChildrenFn: (parentId: string) => Task[];
   hasActiveFilters?: boolean;
   parentFoldState?: TreeTaskFoldState; // Propagate parent's fold state for recursive expansion
   activeRelays?: Relay[]; // For showing relay source when multiple are active
@@ -71,13 +68,10 @@ interface TreeTaskItemProps {
 export function TreeTaskItem({
   task,
   filteredChildren,
-  allTasks,
   childrenMap,
   people: peopleProp,
   currentUser,
   depth = 0,
-  isExpanded,
-  onToggleExpand,
   matchedByFilter = true,
   isDirectMatchFn,
   getFilteredChildrenFn,
@@ -181,8 +175,9 @@ export function TreeTaskItem({
     };
   }, []);
 
+  const allChildren = useMemo(() => childrenMap.get(task.id) || [], [childrenMap, task.id]);
+
   const {
-    allChildren,
     allTaskChildren,
     allCommentChildren,
     filteredTaskChildren,
@@ -197,13 +192,11 @@ export function TreeTaskItem({
   } = useMemo(
     () =>
       deriveTreeTaskItemChildren({
-        taskId: task.id,
-        allTasks,
+        allChildren,
         filteredChildren,
         hasActiveFilters,
-        childrenMap,
       }),
-    [allTasks, childrenMap, filteredChildren, hasActiveFilters, task.id]
+    [allChildren, filteredChildren, hasActiveFilters]
   );
   const isComment = task.taskType === "comment";
   const isLockedUntilStart = isTaskLockedUntilStart(task);
@@ -215,7 +208,6 @@ export function TreeTaskItem({
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
     setLocalFoldState((prev) => getNextTreeTaskFoldState(prev, allVisibleDiffersFromMatching));
-    onToggleExpand?.();
   };
 
   useEffect(() => {
@@ -737,9 +729,7 @@ export function TreeTaskItem({
               <>
                 {/* Comments first (maintain original order) */}
                 {commentsToShow.map((child) => {
-                  const childFilteredChildren = getFilteredChildrenFn
-                    ? getFilteredChildrenFn(child.id)
-                    : childrenMap?.get(child.id) || allTasks.filter((candidate) => candidate.parentId === child.id);
+                  const childFilteredChildren = getFilteredChildrenFn(child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible" 
                     ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
@@ -749,7 +739,6 @@ export function TreeTaskItem({
                       key={child.id}
                       task={child}
                       filteredChildren={childFilteredChildren}
-                      allTasks={allTasks}
                       childrenMap={childrenMap}
                       currentUser={currentUser}
                       depth={depth + 1}
@@ -768,9 +757,7 @@ export function TreeTaskItem({
                 })}
                 {/* Subtasks after - now sorted */}
                 {sortedTasksToShow.map((child) => {
-                  const childFilteredChildren = getFilteredChildrenFn
-                    ? getFilteredChildrenFn(child.id)
-                    : childrenMap?.get(child.id) || allTasks.filter((candidate) => candidate.parentId === child.id);
+                  const childFilteredChildren = getFilteredChildrenFn(child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible"
                     ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
@@ -780,7 +767,6 @@ export function TreeTaskItem({
                       key={child.id}
                       task={child}
                       filteredChildren={childFilteredChildren}
-                      allTasks={allTasks}
                       childrenMap={childrenMap}
                       currentUser={currentUser}
                       depth={depth + 1}

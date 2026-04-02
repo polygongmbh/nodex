@@ -14,11 +14,9 @@ describe("deriveTreeTaskItemChildren", () => {
     const commentChild = makeTask({ id: "comment-child", parentId: "parent", taskType: "comment" });
 
     const summary = deriveTreeTaskItemChildren({
-      taskId: "parent",
-      allTasks: [parent, openChild, doneChild, commentChild],
+      allChildren: buildChildrenMap([parent, openChild, doneChild, commentChild]).get("parent") || [],
       filteredChildren: [openChild, doneChild, commentChild],
       hasActiveFilters: true,
-      childrenMap: buildChildrenMap([parent, openChild, doneChild, commentChild]),
     });
 
     expect(summary.taskChildCount).toBe(2);
@@ -28,14 +26,12 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("uses non-terminal task children as the default matching set when filters are inactive", () => {
-    const parent = makeTask({ id: "parent" });
     const openChild = makeTask({ id: "open-child", parentId: "parent", status: "todo" });
     const closedChild = makeTask({ id: "closed-child", parentId: "parent", status: "closed" });
     const commentChild = makeTask({ id: "comment-child", parentId: "parent", taskType: "comment" });
 
     const summary = deriveTreeTaskItemChildren({
-      taskId: "parent",
-      allTasks: [parent, openChild, closedChild, commentChild],
+      allChildren: [openChild, closedChild, commentChild],
       filteredChildren: [],
       hasActiveFilters: false,
     });
@@ -46,14 +42,12 @@ describe("deriveTreeTaskItemChildren", () => {
   });
 
   it("uses filtered children as the matching set when filters are active", () => {
-    const parent = makeTask({ id: "parent" });
     const visibleTask = makeTask({ id: "visible-task", parentId: "parent", status: "todo" });
     const hiddenTask = makeTask({ id: "hidden-task", parentId: "parent", status: "todo" });
     const visibleComment = makeTask({ id: "visible-comment", parentId: "parent", taskType: "comment" });
 
     const summary = deriveTreeTaskItemChildren({
-      taskId: "parent",
-      allTasks: [parent, visibleTask, hiddenTask, visibleComment],
+      allChildren: [visibleTask, hiddenTask, visibleComment],
       filteredChildren: [visibleTask, visibleComment],
       hasActiveFilters: true,
     });

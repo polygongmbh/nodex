@@ -234,7 +234,6 @@ export function TaskTree({
                   key={task.id}
                   task={task}
                   filteredChildren={getFilteredChildren(task.id)}
-                  allTasks={allTasks}
                   childrenMap={childrenMap}
                   currentUser={currentUser}
                   matchedByFilter={isTaskDirectMatch(task.id)}

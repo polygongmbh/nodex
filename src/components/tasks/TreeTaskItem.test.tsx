@@ -1,9 +1,10 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { beforeEach, describe, it, expect, vi } from "vitest";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { TreeTaskItem } from "./TreeTaskItem";
 import type { Task } from "@/types";
 import { makePerson, makeTask } from "@/test/fixtures";
+import { buildChildrenMap } from "@/domain/content/task-sorting";
 
 const dispatchFeedInteraction = vi.fn();
 
@@ -50,16 +51,24 @@ beforeEach(() => {
   dispatchFeedInteraction.mockClear();
 });
 
+function renderTreeTaskItem(props: Partial<ComponentProps<typeof TreeTaskItem>> = {}) {
+  const allTasks = props.task ? [props.task] : [baseTask];
+  const childrenMap = buildChildrenMap(allTasks);
+  const defaultProps: ComponentProps<typeof TreeTaskItem> = {
+    task: props.task ?? baseTask,
+    filteredChildren: props.filteredChildren ?? [],
+    childrenMap: props.childrenMap ?? childrenMap,
+    currentUser: props.currentUser ?? baseTask.author,
+    getFilteredChildrenFn: props.getFilteredChildrenFn ?? (() => []),
+    ...props,
+  };
+
+  return render(<TreeTaskItem {...defaultProps} />);
+}
+
 describe("TreeTaskItem status actions", () => {
   it("cycles status on plain click even when status menu exists", () => {
-    render(
-      <TreeTaskItem
-        task={baseTask}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem();
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
@@ -68,14 +77,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task when toggling from in progress to done", () => {
-    render(
-      <TreeTaskItem
-        task={{ ...baseTask, status: "in-progress" }}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: { ...baseTask, status: "in-progress" } });
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
@@ -84,14 +86,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task on option-click", () => {
-    render(
-      <TreeTaskItem
-        task={baseTask}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem();
 
     fireEvent.click(screen.getByLabelText("Set status"), { altKey: true });
 
@@ -112,14 +107,7 @@ describe("TreeTaskItem status actions", () => {
       },
     };
 
-    render(
-      <TreeTaskItem
-        task={taskWithRawEvent}
-        filteredChildren={[]}
-        allTasks={[taskWithRawEvent]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: taskWithRawEvent });
 
     fireEvent.click(screen.getByRole("button", { name: /task: ship feature #frontend/i }), {
       shiftKey: true,
@@ -133,14 +121,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not enter the task when selecting a status from the dropdown", () => {
-    render(
-      <TreeTaskItem
-        task={{ ...baseTask, status: "done" }}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: { ...baseTask, status: "done" } });
 
     fireEvent.click(screen.getByLabelText("Set status"));
     fireEvent.click(screen.getByText("In Progress"));
@@ -154,14 +135,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("allows directly marking a task as done", () => {
-    render(
-      <TreeTaskItem
-        task={baseTask}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem();
 
     fireEvent.click(screen.getByText("Done"));
 
@@ -173,14 +147,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("allows directly marking a task as closed", () => {
-    render(
-      <TreeTaskItem
-        task={baseTask}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem();
 
     fireEvent.click(screen.getByText("Closed"));
 
@@ -192,14 +159,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not cycle done tasks on click when status menu is available", () => {
-    render(
-      <TreeTaskItem
-        task={{ ...baseTask, status: "done" }}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: { ...baseTask, status: "done" } });
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
@@ -207,14 +167,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("does not cycle closed tasks on click when status menu is available", () => {
-    render(
-      <TreeTaskItem
-        task={{ ...baseTask, status: "closed" }}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: { ...baseTask, status: "closed" } });
 
     fireEvent.click(screen.getByLabelText("Set status"));
 
@@ -222,14 +175,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("shows a status hover hint on the task checkbox", () => {
-    render(
-      <TreeTaskItem
-        task={baseTask}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem();
 
     expect(screen.getByLabelText("Set status")).toHaveAttribute(
       "title",
@@ -238,18 +184,13 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("blocks status changes when task is assigned to another user", () => {
-    render(
-      <TreeTaskItem
-        task={{
-          ...baseTask,
-          author: makePerson({ id: "other-pubkey", name: "bob" }),
-          content: "Follow up with @alice",
-        }}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({
+      task: {
+        ...baseTask,
+        author: makePerson({ id: "other-pubkey", name: "bob" }),
+        content: "Follow up with @alice",
+      },
+    });
 
     const statusButton = screen.getByLabelText("Set status");
     expect(statusButton).toBeDisabled();
@@ -264,17 +205,12 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("allows status changes when an unassigned task belongs to another user", () => {
-    render(
-      <TreeTaskItem
-        task={{
-          ...baseTask,
-          author: makePerson({ id: "other-pubkey", name: "alice" }),
-        }}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({
+      task: {
+        ...baseTask,
+        author: makePerson({ id: "other-pubkey", name: "alice" }),
+      },
+    });
 
     const statusButton = screen.getByLabelText("Set status");
     expect(statusButton).not.toBeDisabled();
@@ -295,19 +231,14 @@ describe("TreeTaskItem status actions", () => {
       nip05: "ryan@example.com",
     });
 
-    render(
-      <TreeTaskItem
-        task={{
-          ...baseTask,
-          author: sparseAuthor,
-          mentions: [sparseAuthor.id],
-        }}
-        people={[knownPerson]}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({
+      task: {
+        ...baseTask,
+        author: sparseAuthor,
+        mentions: [sparseAuthor.id],
+      },
+      people: [knownPerson],
+    });
 
     const statusButton = screen.getByLabelText("Set status");
     expect(statusButton).toBeDisabled();
@@ -331,14 +262,7 @@ describe("TreeTaskItem status actions", () => {
       }),
     };
 
-    render(
-      <TreeTaskItem
-        task={commentTask}
-        filteredChildren={[]}
-        allTasks={[commentTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: commentTask });
 
     fireEvent.click(screen.getAllByRole("button", { name: /filter and mention alice/i })[0]);
 
@@ -363,15 +287,7 @@ describe("TreeTaskItem status actions", () => {
       }),
     };
 
-    render(
-      <TreeTaskItem
-        task={commentTask}
-        filteredChildren={[]}
-        allTasks={[commentTask]}
-        currentUser={baseTask.author}
-        compactView
-      />
-    );
+    renderTreeTaskItem({ task: commentTask, compactView: true });
 
     expect(screen.queryByRole("button", { name: /filter and mention commentator/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /filter to #frontend/i })).not.toBeInTheDocument();
@@ -391,14 +307,7 @@ describe("TreeTaskItem status actions", () => {
       ],
     };
 
-    render(
-      <TreeTaskItem
-        task={taskWithAttachment}
-        filteredChildren={[]}
-        allTasks={[taskWithAttachment]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: taskWithAttachment });
 
     expect(screen.queryByText("spec.pdf")).not.toBeInTheDocument();
   });
@@ -412,14 +321,7 @@ describe("TreeTaskItem status actions", () => {
       timestamp: new Date("2026-03-01T23:57:11.000Z"),
     };
 
-    render(
-      <TreeTaskItem
-        task={commentTask}
-        filteredChildren={[]}
-        allTasks={[commentTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: commentTask });
 
     expect(screen.getByTitle(/comment created at/i)).toHaveAttribute(
       "title",
@@ -428,14 +330,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("updates task priority from the priority chip", () => {
-    render(
-      <TreeTaskItem
-        task={{ ...baseTask, priority: 40 }}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: { ...baseTask, priority: 40 } });
 
     fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
       target: { value: "4" },
@@ -449,15 +344,7 @@ describe("TreeTaskItem status actions", () => {
   });
 
   it("updates task priority from the compact priority control", () => {
-    render(
-      <TreeTaskItem
-        task={{ ...baseTask, priority: 40 }}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-        compactView
-      />
-    );
+    renderTreeTaskItem({ task: { ...baseTask, priority: 40 }, compactView: true });
 
     fireEvent.change(screen.getByRole("combobox", { name: /priority/i }), {
       target: { value: "4" },
@@ -472,14 +359,7 @@ describe("TreeTaskItem status actions", () => {
 
   it("updates date type from the due date chip controls", () => {
     const dueDate = new Date("2026-05-01T00:00:00.000Z");
-    render(
-      <TreeTaskItem
-        task={{ ...baseTask, dueDate, dateType: "due" }}
-        filteredChildren={[]}
-        allTasks={[baseTask]}
-        currentUser={baseTask.author}
-      />
-    );
+    renderTreeTaskItem({ task: { ...baseTask, dueDate, dateType: "due" } });
 
     fireEvent.change(screen.getByRole("combobox", { name: /type/i }), {
       target: { value: "scheduled" },
