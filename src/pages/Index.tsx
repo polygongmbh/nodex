@@ -986,8 +986,10 @@ const Index = () => {
     () => ({
       relays: feedSurfaceRelays,
       channels: channelsWithState,
+      visibleChannels: channelsWithState,
       composeChannels: composeChannelsWithState,
       people,
+      visiblePeople: peopleWithState,
       mentionablePeople: mentionAutocompletePeople,
       searchQuery,
       quickFilters,
@@ -998,6 +1000,7 @@ const Index = () => {
       channelsWithState,
       composeChannelsWithState,
       people,
+      peopleWithState,
       mentionAutocompletePeople,
       searchQuery,
       quickFilters,

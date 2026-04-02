@@ -1,3 +1,4 @@
+import type { Person } from "@/types";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 interface AuthorMetaLabelInput {
@@ -10,6 +11,8 @@ interface AuthorMetaLabelParts {
   primary: string;
   secondary?: string;
 }
+
+type PersonLabelSource = Pick<Person, "id" | "displayName" | "name">;
 
 function abbreviatePubkey(pubkey: string): string {
   return formatUserFacingPubkey(pubkey, { prefix: 6, suffix: 4, ellipsis: "…" });
@@ -48,6 +51,20 @@ function isPubkeyDerivedPlaceholder(value: string, personId: string): boolean {
   addVariants(normalizedUserFacingPubkey);
 
   return placeholders.has(normalizedValue);
+}
+
+export function getPersonDisplayName(person: PersonLabelSource): string {
+  return person.displayName.trim() || person.name.trim() || person.id.trim();
+}
+
+export function getCompactPersonLabel(person: PersonLabelSource): string {
+  const displayName = getPersonDisplayName(person);
+
+  if (isPubkeyDerivedPlaceholder(displayName, person.id)) {
+    return formatUserFacingPubkey(person.id, { prefix: 10, suffix: 6, ellipsis: "…" });
+  }
+
+  return displayName;
 }
 
 export function formatAuthorMetaLabel({

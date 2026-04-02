@@ -75,7 +75,8 @@ export function MobileLayout({
   publishState,
 }: MobileLayoutProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const { channels } = useFeedSurfaceState();
+  const surface = useFeedSurfaceState();
+  const channels = surface.visibleChannels ?? surface.channels;
   const {
     canCreateContent,
     profileCompletionPromptSignal = 0,

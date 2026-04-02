@@ -7,6 +7,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 ## [Unreleased]
 
 - Timeline rows now right-align timestamps across progress updates and regular feed cards, use `HH:MM` for same-day posts, `yesterday HH:MM` for previous-day posts, short month/day labels from two days through 10 months, and locale short dates beyond that; progress-update task titles also truncate against actual row space while hover tooltips keep the full trimmed first line.
+- Mobile Manage and the mobile bottom-bar people selector now use the same relay-scoped visible channel and people filter lists as the desktop sidebar, and mobile people chips now prefer display names over raw usernames while composer/mention data stays broader where needed.
 
 ## [2.10.2] - 2026-04-02
 

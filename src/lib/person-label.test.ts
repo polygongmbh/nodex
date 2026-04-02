@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { nip19 } from "@nostr-dev-kit/ndk";
-import { formatAuthorMetaLabel, formatAuthorMetaParts } from "./person-label";
+import {
+  formatAuthorMetaLabel,
+  formatAuthorMetaParts,
+  getCompactPersonLabel,
+  getPersonDisplayName,
+} from "./person-label";
 
 describe("formatAuthorMetaLabel", () => {
   it("includes display name, username, and abbreviated pubkey", () => {
@@ -60,5 +65,37 @@ describe("formatAuthorMetaLabel", () => {
 
     expect(parts.primary).toBe("Alice Doe");
     expect(parts.secondary?.startsWith("@alice · npub")).toBe(true);
+  });
+
+  it("prefers display name over username for compact person labels", () => {
+    expect(
+      getCompactPersonLabel({
+        id: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        displayName: "Alice Doe",
+        name: "alice",
+      })
+    ).toBe("Alice Doe");
+  });
+
+  it("falls back to username when no display name is available", () => {
+    expect(
+      getPersonDisplayName({
+        id: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        displayName: "",
+        name: "alice",
+      })
+    ).toBe("alice");
+  });
+
+  it("abbreviates pubkey-derived placeholders for compact person labels", () => {
+    const pubkey = "e752d82f04fb53a2e328ea9fb23a6d7ea52b8ba6f833de31e48d95107e8cb9f2";
+
+    expect(
+      getCompactPersonLabel({
+        id: pubkey,
+        displayName: pubkey,
+        name: pubkey,
+      })
+    ).toBe(nip19.npubEncode(pubkey).replace(/^(.{10}).+(.{6})$/, "$1…$2"));
   });
 });

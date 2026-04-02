@@ -14,6 +14,8 @@ import {
   getMobileSubmitBlockPanel,
   openMobileComposeOptions,
 } from "@/test/ui";
+import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
@@ -112,6 +114,56 @@ describe("UnifiedBottomBar auth gating", () => {
     expect(screen.getByRole("button", { name: /add attachment/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add image attachment/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add file attachment/i })).not.toBeInTheDocument();
+  });
+
+  it("uses shared visible people in the selector and prefers display names over usernames", () => {
+    render(
+      <FeedSurfaceProvider
+        value={{
+          relays,
+          channels,
+          visibleChannels: channels,
+          composeChannels: channels,
+          people: [
+            {
+              id: "broad-person",
+              name: "broad-user",
+              displayName: "Broad Person",
+              avatar: "",
+              isOnline: false,
+              isSelected: false,
+            },
+          ],
+          visiblePeople: [
+            {
+              id: "visible-person",
+              name: "visible-user",
+              displayName: "Visible Person",
+              avatar: "",
+              isOnline: true,
+              isSelected: false,
+            },
+          ],
+          searchQuery: "",
+          quickFilters: normalizeQuickFilterState(),
+          channelMatchMode: "and",
+        }}
+      >
+        <UnifiedBottomBar
+          searchQuery=""
+          currentView="feed"
+          relays={relays}
+          channels={channels}
+          canCreateContent={true}
+        />
+      </FeedSurfaceProvider>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "People" }));
+
+    expect(screen.getByRole("button", { name: /visible person/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /visible-user/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /broad person/i })).not.toBeInTheDocument();
   });
 
   it("routes signed-out create attempts through task.create dispatch", () => {

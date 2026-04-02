@@ -20,6 +20,7 @@ import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { getCompactPersonLabel, getPersonDisplayName } from "@/lib/person-label";
 
 interface MobileFiltersProps {
   relays?: Relay[];
@@ -49,14 +50,10 @@ export function MobileFilters({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const relays = relaysProp ?? surface.relays;
-  const channels = channelsProp ?? surface.channels;
-  const people = peopleProp ?? surface.people;
+  const channels = channelsProp ?? surface.visibleChannels ?? surface.channels;
+  const people = peopleProp ?? surface.visiblePeople ?? surface.people;
   const channelMatchMode = channelMatchModeProp ?? surface.channelMatchMode ?? "and";
   const legalContactEmail = useMemo(() => resolveLegalContactEmail(), []);
-  const truncateMobilePubkey = (value: string): string => {
-    if (value.length <= 18) return value;
-    return `${value.slice(0, 10)}…${value.slice(-6)}`;
-  };
 
   const { user, authMethod, logout, getGuestPrivateKey, needsProfileSetup, updateUserProfile, publishEvent } = useNDK();
   const [newRelayUrl, setNewRelayUrl] = useState("");
@@ -527,8 +524,8 @@ export function MobileFilters({
           </div>
           <div className="flex flex-wrap gap-2">
             {people.map((person) => {
-              const personLabel =
-                person.name === person.id ? truncateMobilePubkey(person.name) : person.name;
+              const personDisplayName = getPersonDisplayName(person);
+              const personLabel = getCompactPersonLabel(person);
               return (
                 <button
                   key={person.id}
@@ -544,11 +541,11 @@ export function MobileFilters({
                 >
                   <UserAvatar
                     id={person.id}
-                    displayName={person.displayName || person.name}
+                    displayName={personDisplayName}
                     avatarUrl={person.avatar}
                     className="w-6 h-6"
                   />
-                  <span className="truncate max-w-[9rem]" title={person.name}>
+                  <span className="truncate max-w-[9rem]" title={personDisplayName}>
                     {personLabel}
                   </span>
                   {person.isSelected && <Check className="w-3.5 h-3.5" />}

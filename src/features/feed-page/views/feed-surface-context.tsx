@@ -5,8 +5,10 @@ import type { Channel, ChannelMatchMode, Person, QuickFilterState, Relay } from 
 export interface FeedSurfaceState {
   relays: Relay[];
   channels: Channel[];
+  visibleChannels?: Channel[];
   composeChannels?: Channel[];
   people: Person[];
+  visiblePeople?: Person[];
   mentionablePeople?: Person[];
   searchQuery: string;
   quickFilters: QuickFilterState;
@@ -16,8 +18,10 @@ export interface FeedSurfaceState {
 const defaultFeedSurfaceState: FeedSurfaceState = {
   relays: [],
   channels: [],
+  visibleChannels: [],
   composeChannels: [],
   people: [],
+  visiblePeople: [],
   mentionablePeople: [],
   searchQuery: "",
   quickFilters: normalizeQuickFilterState(),

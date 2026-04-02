@@ -58,6 +58,7 @@ import {
   displayPriorityFromStored,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
+import { getCompactPersonLabel, getPersonDisplayName } from "@/lib/person-label";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;
@@ -123,8 +124,9 @@ export function UnifiedBottomBar({
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const relays = relaysProp ?? surface.relays;
-  const channels = channelsProp ?? surface.channels;
+  const channels = channelsProp ?? surface.visibleChannels ?? surface.channels;
   const people = peopleProp ?? surface.people;
+  const visiblePeople = peopleProp ?? surface.visiblePeople ?? surface.people;
   const searchQuery = searchQueryProp ?? surface.searchQuery;
   const dispatchSearchChange = useCallback(
     (query: string) => {
@@ -133,11 +135,6 @@ export function UnifiedBottomBar({
     [dispatchFeedInteraction]
   );
   const { createHttpAuthHeader } = useNDK();
-  const truncateMobilePubkey = (value: string): string => {
-    if (value.length <= 18) return value;
-    return `${value.slice(0, 10)}…${value.slice(-6)}`;
-  };
-
   const includedChannels = channels.filter((c) => c.filterState === "included").map((c) => c.name);
   const [sharedText, setSharedText] = useState(() => searchQuery || defaultContent);
   const [activeSelector, setActiveSelector] = useState<SelectorType>(null);
@@ -1140,9 +1137,9 @@ export function UnifiedBottomBar({
           )}
           {activeSelector === "person" && (
             <div className="flex flex-wrap gap-2">
-              {people.map((person) => {
-                const personLabel =
-                  person.name === person.id ? truncateMobilePubkey(person.name) : person.name;
+              {visiblePeople.map((person) => {
+                const personDisplayName = getPersonDisplayName(person);
+                const personLabel = getCompactPersonLabel(person);
                 return (
                   <button
                     key={person.id}
@@ -1158,11 +1155,11 @@ export function UnifiedBottomBar({
                   >
                     <UserAvatar
                       id={person.id}
-                      displayName={person.displayName || person.name}
+                      displayName={personDisplayName}
                       avatarUrl={person.avatar}
                       className="w-6 h-6"
                     />
-                    <span className="truncate max-w-[8rem]" title={person.name}>
+                    <span className="truncate max-w-[8rem]" title={personDisplayName}>
                       {personLabel}
                     </span>
                     {person.isSelected && <Check className="w-3.5 h-3.5" />}
@@ -1350,6 +1347,7 @@ export function UnifiedBottomBar({
             </button>
             <button
               onClick={() => toggleSelector("person")}
+              aria-label={t("filters.people.title")}
               className={cn(
                 "relative p-2.5 rounded-lg transition-colors touch-target-sm active:scale-95",
                 activeSelector === "person" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"

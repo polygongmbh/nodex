@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileFilters } from "./MobileFilters";
+import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import type { Channel, Person, Relay } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
@@ -222,6 +224,54 @@ describe("MobileFilters management view", () => {
       type: "sidebar.channel.matchMode.change",
       mode: "or",
     });
+  });
+
+  it("prefers shared visible channel and people lists over broader surface datasets", () => {
+    render(
+      <FeedSurfaceProvider
+        value={{
+          relays,
+          channels: [
+            { id: "broad-channel", name: "broad-channel", filterState: "neutral" },
+          ],
+          visibleChannels: [
+            { id: "visible-channel", name: "visible-channel", filterState: "neutral" },
+          ],
+          composeChannels: channels,
+          people: [
+            {
+              id: "broad-person",
+              name: "Broad Person",
+              displayName: "Broad Person",
+              avatar: "",
+              isOnline: false,
+              isSelected: false,
+            },
+          ],
+          visiblePeople: [
+            {
+              id: "visible-person",
+              name: "visible-user",
+              displayName: "Visible Person",
+              avatar: "",
+              isOnline: true,
+              isSelected: false,
+            },
+          ],
+          searchQuery: "",
+          quickFilters: normalizeQuickFilterState(),
+          channelMatchMode: "and",
+        }}
+      >
+        <MobileFilters />
+      </FeedSurfaceProvider>
+    );
+
+    expect(screen.getByRole("button", { name: /#visible-channel/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /#broad-channel/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /visible person/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /visible-user/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /broad person/i })).not.toBeInTheDocument();
   });
 
   it("renders app preferences outside the profile editor card", () => {
