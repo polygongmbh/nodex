@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { Task, Person, ComposeRestoreRequest } from "@/types";
-import { TaskItem } from "./TaskItem";
+import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { COMPOSE_DRAFT_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
@@ -230,7 +230,7 @@ export function TaskTree({
           ) : (
             <>
               {displayedTasks.map((task) => (
-                <TaskItem
+                <TreeTaskItem
                   key={task.id}
                   task={task}
                   filteredChildren={getFilteredChildren(task.id)}

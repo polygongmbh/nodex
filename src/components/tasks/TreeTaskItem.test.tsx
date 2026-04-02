@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import type { ReactNode } from "react";
-import { TaskItem } from "./TaskItem";
+import { TreeTaskItem } from "./TreeTaskItem";
 import type { Task } from "@/types";
 import { makePerson, makeTask } from "@/test/fixtures";
 
@@ -50,10 +50,10 @@ beforeEach(() => {
   dispatchFeedInteraction.mockClear();
 });
 
-describe("TaskItem status actions", () => {
+describe("TreeTaskItem status actions", () => {
   it("cycles status on plain click even when status menu exists", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={baseTask}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -69,7 +69,7 @@ describe("TaskItem status actions", () => {
 
   it("does not enter the task when toggling from in progress to done", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{ ...baseTask, status: "in-progress" }}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -85,7 +85,7 @@ describe("TaskItem status actions", () => {
 
   it("does not enter the task on option-click", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={baseTask}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -113,7 +113,7 @@ describe("TaskItem status actions", () => {
     };
 
     render(
-      <TaskItem
+      <TreeTaskItem
         task={taskWithRawEvent}
         filteredChildren={[]}
         allTasks={[taskWithRawEvent]}
@@ -134,7 +134,7 @@ describe("TaskItem status actions", () => {
 
   it("does not enter the task when selecting a status from the dropdown", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{ ...baseTask, status: "done" }}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -155,7 +155,7 @@ describe("TaskItem status actions", () => {
 
   it("allows directly marking a task as done", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={baseTask}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -174,7 +174,7 @@ describe("TaskItem status actions", () => {
 
   it("allows directly marking a task as closed", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={baseTask}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -193,7 +193,7 @@ describe("TaskItem status actions", () => {
 
   it("does not cycle done tasks on click when status menu is available", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{ ...baseTask, status: "done" }}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -208,7 +208,7 @@ describe("TaskItem status actions", () => {
 
   it("does not cycle closed tasks on click when status menu is available", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{ ...baseTask, status: "closed" }}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -223,7 +223,7 @@ describe("TaskItem status actions", () => {
 
   it("shows a status hover hint on the task checkbox", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={baseTask}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -239,7 +239,7 @@ describe("TaskItem status actions", () => {
 
   it("blocks status changes when task is assigned to another user", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{
           ...baseTask,
           author: makePerson({ id: "other-pubkey", name: "bob" }),
@@ -265,7 +265,7 @@ describe("TaskItem status actions", () => {
 
   it("allows status changes when an unassigned task belongs to another user", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{
           ...baseTask,
           author: makePerson({ id: "other-pubkey", name: "alice" }),
@@ -296,7 +296,7 @@ describe("TaskItem status actions", () => {
     });
 
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{
           ...baseTask,
           author: sparseAuthor,
@@ -332,7 +332,7 @@ describe("TaskItem status actions", () => {
     };
 
     render(
-      <TaskItem
+      <TreeTaskItem
         task={commentTask}
         filteredChildren={[]}
         allTasks={[commentTask]}
@@ -364,7 +364,7 @@ describe("TaskItem status actions", () => {
     };
 
     render(
-      <TaskItem
+      <TreeTaskItem
         task={commentTask}
         filteredChildren={[]}
         allTasks={[commentTask]}
@@ -392,7 +392,7 @@ describe("TaskItem status actions", () => {
     };
 
     render(
-      <TaskItem
+      <TreeTaskItem
         task={taskWithAttachment}
         filteredChildren={[]}
         allTasks={[taskWithAttachment]}
@@ -413,7 +413,7 @@ describe("TaskItem status actions", () => {
     };
 
     render(
-      <TaskItem
+      <TreeTaskItem
         task={commentTask}
         filteredChildren={[]}
         allTasks={[commentTask]}
@@ -429,7 +429,7 @@ describe("TaskItem status actions", () => {
 
   it("updates task priority from the priority chip", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{ ...baseTask, priority: 40 }}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -450,7 +450,7 @@ describe("TaskItem status actions", () => {
 
   it("updates task priority from the compact priority control", () => {
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{ ...baseTask, priority: 40 }}
         filteredChildren={[]}
         allTasks={[baseTask]}
@@ -473,7 +473,7 @@ describe("TaskItem status actions", () => {
   it("updates date type from the due date chip controls", () => {
     const dueDate = new Date("2026-05-01T00:00:00.000Z");
     render(
-      <TaskItem
+      <TreeTaskItem
         task={{ ...baseTask, dueDate, dateType: "due" }}
         filteredChildren={[]}
         allTasks={[baseTask]}

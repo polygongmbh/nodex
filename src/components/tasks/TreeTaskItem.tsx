@@ -39,11 +39,13 @@ import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
+import {
+  deriveTreeTaskItemChildren,
+  getNextTreeTaskFoldState,
+  type TreeTaskFoldState,
+} from "./tree-task-item-helpers";
 
-// Fold states: collapsed -> matchingOnly -> allVisible
-type FoldState = "collapsed" | "matchingOnly" | "allVisible";
-
-interface TaskItemProps {
+interface TreeTaskItemProps {
   task: Task;
   filteredChildren: Task[];
   allTasks: Task[];
@@ -57,7 +59,7 @@ interface TaskItemProps {
   isDirectMatchFn?: (taskId: string) => boolean;
   getFilteredChildrenFn?: (parentId: string) => Task[];
   hasActiveFilters?: boolean;
-  parentFoldState?: FoldState; // Propagate parent's fold state for recursive expansion
+  parentFoldState?: TreeTaskFoldState; // Propagate parent's fold state for recursive expansion
   activeRelays?: Relay[]; // For showing relay source when multiple are active
   isKeyboardFocused?: boolean; // For keyboard navigation highlight
   compactView?: boolean;
@@ -66,7 +68,7 @@ interface TaskItemProps {
   sortContext?: SortContext;
 }
 
-export function TaskItem({
+export function TreeTaskItem({
   task,
   filteredChildren,
   allTasks,
@@ -87,7 +89,7 @@ export function TaskItem({
   isPendingPublishTask,
   isInteractionBlocked = false,
   sortContext,
-}: TaskItemProps) {
+}: TreeTaskItemProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { people: contextPeople } = useFeedSurfaceState();
@@ -102,10 +104,10 @@ export function TaskItem({
   };
 
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
-  const [localFoldState, setLocalFoldState] = useState<FoldState>("matchingOnly");
+  const [localFoldState, setLocalFoldState] = useState<TreeTaskFoldState>("matchingOnly");
   
   // If parent is in allVisible state, this child should also be allVisible
-  const foldState: FoldState = parentFoldState === "allVisible" ? "allVisible" : localFoldState;
+  const foldState: TreeTaskFoldState = parentFoldState === "allVisible" ? "allVisible" : localFoldState;
   const prevStatusRef = useRef(task.status);
   const cheerTimeoutRef = useRef<number | null>(null);
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
@@ -179,32 +181,30 @@ export function TaskItem({
     };
   }, []);
 
-  // Get ALL children from allTasks for total counts
-  const allChildren = useMemo(
-    () => childrenMap?.get(task.id) || allTasks.filter((candidate) => candidate.parentId === task.id),
-    [allTasks, childrenMap, task.id]
+  const {
+    allChildren,
+    allTaskChildren,
+    allCommentChildren,
+    filteredTaskChildren,
+    filteredCommentChildren,
+    defaultMatchingTaskChildren,
+    defaultMatchingCommentChildren,
+    taskChildCount,
+    commentChildCount,
+    completedTaskChildCount,
+    hasChildren,
+    allVisibleDiffersFromMatching,
+  } = useMemo(
+    () =>
+      deriveTreeTaskItemChildren({
+        taskId: task.id,
+        allTasks,
+        filteredChildren,
+        hasActiveFilters,
+        childrenMap,
+      }),
+    [allTasks, childrenMap, filteredChildren, hasActiveFilters, task.id]
   );
-  const allTaskChildren = allChildren.filter(c => c.taskType === "task");
-  const allCommentChildren = allChildren.filter(c => c.taskType === "comment");
-  
-  // Get filtered children for display (matching filter OR not done when no filters)
-  const filteredTaskChildren = filteredChildren.filter(c => c.taskType === "task");
-  const filteredCommentChildren = filteredChildren.filter(c => c.taskType === "comment");
-  
-  // When no active filters, "matching" means not done
-  const defaultMatchingTaskChildren = allTaskChildren.filter(
-    (child) => !isTaskTerminalStatus(child.status)
-  );
-  const defaultMatchingCommentChildren = allCommentChildren;
-  
-  // Determine if "expand all" would differ from "expand matching"
-  const matchingTaskCount = hasActiveFilters ? filteredTaskChildren.length : defaultMatchingTaskChildren.length;
-  const matchingCommentCount = hasActiveFilters ? filteredCommentChildren.length : defaultMatchingCommentChildren.length;
-  const allVisibleDiffersFromMatching = 
-    allTaskChildren.length !== matchingTaskCount || 
-    allCommentChildren.length !== matchingCommentCount;
-  
-  const hasChildren = allChildren.length > 0;
   const isComment = task.taskType === "comment";
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const dueDateColor = getDueDateColorClass(task.dueDate, task.status);
@@ -214,15 +214,7 @@ export function TaskItem({
   // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setLocalFoldState(prev => {
-      if (prev === "matchingOnly") return "collapsed";
-      if (prev === "collapsed") {
-        // Skip allVisible if it's the same as matching
-        return allVisibleDiffersFromMatching ? "allVisible" : "matchingOnly";
-      }
-      // From allVisible, go back to matchingOnly
-      return "matchingOnly";
-    });
+    setLocalFoldState((prev) => getNextTreeTaskFoldState(prev, allVisibleDiffersFromMatching));
     onToggleExpand?.();
   };
 
@@ -486,7 +478,7 @@ export function TaskItem({
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Meta info - author/time only for comments, counts only for tasks */}
-          {!compactView && (isComment || allTaskChildren.length > 0 || allCommentChildren.length > 0) && (
+          {!compactView && (isComment || taskChildCount > 0 || commentChildCount > 0) && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
               {isComment && (
                 <>
@@ -511,20 +503,20 @@ export function TaskItem({
                   <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>
                 </>
               )}
-              {!isComment && allTaskChildren.length > 0 && (
+              {!isComment && taskChildCount > 0 && (
                 <>
                   <span className="flex items-center gap-1">
                     <CheckSquare className="w-3 h-3" />
-                    {allTaskChildren.filter((child) => isTaskCompletedStatus(child.status)).length}/{allTaskChildren.length}
+                    {completedTaskChildCount}/{taskChildCount}
                   </span>
                 </>
               )}
-              {allCommentChildren.length > 0 && (
+              {commentChildCount > 0 && (
                 <>
-                  {!isComment && allTaskChildren.length > 0 && <span>·</span>}
+                  {!isComment && taskChildCount > 0 && <span>·</span>}
                   <span className="flex items-center gap-1">
                     <MessageSquare className="w-3 h-3" />
-                    {allCommentChildren.length}
+                    {commentChildCount}
                   </span>
                 </>
               )}
@@ -753,7 +745,7 @@ export function TaskItem({
                     ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
                     : true;
                   return (
-                    <TaskItem
+                    <TreeTaskItem
                       key={child.id}
                       task={child}
                       filteredChildren={childFilteredChildren}
@@ -784,7 +776,7 @@ export function TaskItem({
                     ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
                     : true;
                   return (
-                    <TaskItem
+                    <TreeTaskItem
                       key={child.id}
                       task={child}
                       filteredChildren={childFilteredChildren}
