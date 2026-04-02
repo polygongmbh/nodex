@@ -346,17 +346,21 @@ describe("NostrAuthModal", () => {
     expect(screen.getByLabelText(/^password$/i)).toHaveValue("password123");
   });
 
-  it("shows an immediately editable empty Noas host when no Noas env is configured", () => {
+  it("requires a full handle when no Noas env is configured", () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
     openNoasEntryIfNeeded();
 
-    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
-    expect(hostInput).toHaveValue("");
-    expect(hostInput).not.toHaveAttribute("readonly");
-    expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^host$/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    expect(screen.getByText(/enter your full nip-05 handle/i)).toBeInTheDocument();
   });
 
   it("prefills the Noas host as a bare domain and opens directly to Noas when startup discovery resolved a host", () => {
@@ -366,7 +370,7 @@ describe("NostrAuthModal", () => {
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
     expect(screen.queryByRole("button", { name: /noas authentication/i })).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/^host$/i)).toHaveValue("example.com");
+    expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@example.com");
   });
 
   it("submits a configured noas https host with internal protocol normalization", async () => {
@@ -385,13 +389,13 @@ describe("NostrAuthModal", () => {
     });
   });
 
-  it("keeps explicit http noas hosts unchanged in the prefilled host field", () => {
+  it("keeps explicit http noas hosts unchanged in the inline suffix", () => {
     vi.stubEnv("VITE_NOAS_HOST_URL", "");
     ndkMock.defaultNoasHostUrl = "http://localhost:3000/custom/noas/path?mode=dev";
 
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
-    expect(screen.getByLabelText(/^host$/i)).toHaveValue("http://localhost:3000/custom/noas/path?mode=dev");
+    expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@http://localhost:3000/custom/noas/path?mode=dev");
   });
 
   it("shows a connection-specific Noas error when the host request fails", async () => {
@@ -401,8 +405,7 @@ describe("NostrAuthModal", () => {
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
     openNoasEntryIfNeeded();
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
@@ -418,8 +421,7 @@ describe("NostrAuthModal", () => {
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
     openNoasEntryIfNeeded();
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
@@ -442,8 +444,7 @@ describe("NostrAuthModal", () => {
     render(<NostrAuthModal isOpen onClose={vi.fn()} />);
 
     openNoasEntryIfNeeded();
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
@@ -464,8 +465,7 @@ describe("NostrAuthModal", () => {
 
     openNoasEntryIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
@@ -490,8 +490,7 @@ describe("NostrAuthModal", () => {
 
     openNoasEntryIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
@@ -519,8 +518,7 @@ describe("NostrAuthModal", () => {
 
     openNoasEntryIfNeeded();
     fireEvent.click(screen.getByRole("button", { name: /^sign up$/i }));
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
-    fireEvent.change(screen.getByLabelText(/^host$/i), { target: { value: "https://custom.noas.example/api" } });
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
       target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },

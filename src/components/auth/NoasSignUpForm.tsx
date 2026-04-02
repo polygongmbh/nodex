@@ -6,9 +6,9 @@ import { Loader2, UserPlus, Copy, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { getPublicKey } from "nostr-tools";
-import { NoasSharedFields, validateNoasUsername } from "./NoasSharedFields";
+import { NoasSharedFields } from "./NoasSharedFields";
 import { NoasAuthPanelShell } from "./NoasAuthPanelShell";
-import { resolveNoasBaseUrlForSubmit } from "./noas-form-helpers";
+import { resolveNoasCredentialsForSubmit } from "./noas-form-helpers";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 interface NoasSignUpFormProps {
@@ -56,6 +56,12 @@ export function NoasSignUpForm({
   const displayedError = localError ?? error;
   const userFacingPubkey = toUserFacingPubkey(pubkey);
 
+  const normalizeUsernameFieldForSubmit = () => {
+    const { fullHandle, error: noasCredentialError } = resolveNoasCredentialsForSubmit(username, noasHostUrl, t);
+    if (noasCredentialError || !fullHandle) return;
+    onUsernameChange(fullHandle);
+  };
+
   const derivePublicKeyFromHex = (hexPrivateKey: string): string | null => {
     const normalizedPrivateKey = hexPrivateKey.trim().toLowerCase();
     if (!/^[a-f0-9]{64}$/.test(normalizedPrivateKey)) {
@@ -101,20 +107,20 @@ export function NoasSignUpForm({
     e.preventDefault();
     setLocalError(null);
 
-    const usernameError = validateNoasUsername(username, t);
-    if (usernameError) {
-      setLocalError(usernameError);
-      return;
-    }
-
     if (!password) {
       setLocalError(t("auth.errors.passwordRequired"));
       return;
     }
 
-    const { baseUrl: normalizedNoasBaseUrl, error: noasHostError } = resolveNoasBaseUrlForSubmit(noasHostUrl, t);
-    if (noasHostError) {
-      setLocalError(noasHostError);
+    const {
+      username: normalizedUsername,
+      fullHandle: normalizedFullHandle,
+      baseUrl: normalizedNoasBaseUrl,
+      error: noasCredentialError,
+    } =
+      resolveNoasCredentialsForSubmit(username, noasHostUrl, t);
+    if (noasCredentialError) {
+      setLocalError(noasCredentialError);
       return;
     }
 
@@ -137,7 +143,8 @@ export function NoasSignUpForm({
       }
     }
 
-    await onSignUp(username.trim(), password, privateKey.trim(), finalPubkey, {
+    onUsernameChange(normalizedFullHandle);
+    await onSignUp(normalizedUsername, password, privateKey.trim(), finalPubkey, {
       baseUrl: normalizedNoasBaseUrl,
     });
   };
@@ -151,7 +158,15 @@ export function NoasSignUpForm({
       footerText={undefined}
       showBackAction={false}
     >
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form
+        onSubmit={handleSubmit}
+        onKeyDownCapture={(event) => {
+          if (event.key === "Enter") {
+            normalizeUsernameFieldForSubmit();
+          }
+        }}
+        className="space-y-3"
+      >
         <NoasSharedFields
           t={t}
           username={username}
@@ -262,7 +277,12 @@ export function NoasSignUpForm({
           </div>
         </div>
 
-        <Button type="submit" disabled={isLoading} className="w-full gap-2">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full gap-2"
+          onPointerDownCapture={normalizeUsernameFieldForSubmit}
+        >
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />

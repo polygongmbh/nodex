@@ -51,6 +51,36 @@ function ControlledNoasAuthForm({
   );
 }
 
+function ControlledNoasSignUpForm({
+  onSignUp = vi.fn(async () => true),
+  initialUsername = "",
+  initialPassword = "",
+  initialNoasHostUrl = "https://noas.example.com",
+}: {
+  onSignUp?: Parameters<typeof NoasSignUpForm>[0]["onSignUp"];
+  initialUsername?: string;
+  initialPassword?: string;
+  initialNoasHostUrl?: string;
+}) {
+  const [username, setUsername] = useState(initialUsername);
+  const [password, setPassword] = useState(initialPassword);
+
+  return (
+    <NoasSignUpForm
+      onSignUp={onSignUp}
+      onSignIn={vi.fn()}
+      username={username}
+      password={password}
+      isEditingHostUrl={false}
+      isLoading={false}
+      noasHostUrl={initialNoasHostUrl}
+      onUsernameChange={setUsername}
+      onPasswordChange={setPassword}
+      onToggleHostEdit={vi.fn()}
+    />
+  );
+}
+
 describe("Noas auth forms", () => {
   it("shows a more options button on the sign-in form", () => {
     render(
@@ -60,70 +90,20 @@ describe("Noas auth forms", () => {
     expect(screen.getByRole("button", { name: /nostr authentication options/i })).toBeInTheDocument();
   });
 
-  it("edits the noas host in the username row only after enabling the pencil control", () => {
-    const onNoasHostUrlChange = vi.fn();
+  it("shows the configured host as a grey inline suffix until the user types @", () => {
+    render(<ControlledNoasAuthForm initialNoasHostUrl="https://custom.noas.example:8443" />);
 
-    render(<ControlledNoasAuthForm onNoasHostUrlChange={onNoasHostUrlChange} />);
+    expect(screen.getByTestId("noas-username-suffix")).toHaveTextContent("@custom.noas.example:8443");
 
-    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
-    expect(hostInput).toHaveAttribute("readonly");
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@other.example" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
-    expect(hostInput).not.toHaveAttribute("readonly");
-    expect(hostInput).toHaveFocus();
-    expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
-
-    fireEvent.change(hostInput, { target: { value: "https://custom.noas.example/api" } });
-    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example/api");
+    expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
   });
 
-  it("keeps username@host inline and uses the simplified host placeholder", () => {
-    render(<ControlledNoasAuthForm initialNoasHostUrl="" />);
+  it("does not show an inline suffix when no default host is available", () => {
+    render(<ControlledNoasAuthForm initialNoasHostUrl="" allowDirectHostEdit />);
 
-    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
-    expect(hostInput).toHaveAttribute("placeholder", "example.com");
-
-    const atDivider = screen.getByText("@");
-    expect(atDivider.className).not.toContain("hidden");
-  });
-
-  it("preserves the port in the displayed and edited noas host", () => {
-    const onNoasHostUrlChange = vi.fn();
-
-    render(
-      <ControlledNoasAuthForm
-        onNoasHostUrlChange={onNoasHostUrlChange}
-        initialNoasHostUrl="https://custom.noas.example:8443"
-      />
-    );
-
-    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
-    expect(hostInput.value).toBe("https://custom.noas.example:8443");
-
-    fireEvent.click(screen.getByRole("button", { name: /edit noas host/i }));
-    fireEvent.change(hostInput, { target: { value: "https://other.noas.example:9443/custom/path" } });
-
-    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://other.noas.example:9443/custom/path");
-  });
-
-  it("shows an unlocked empty host field without the pencil control when direct host edit is allowed", () => {
-    const onNoasHostUrlChange = vi.fn();
-
-    render(
-      <ControlledNoasAuthForm
-        allowDirectHostEdit
-        initialNoasHostUrl=""
-        onNoasHostUrlChange={onNoasHostUrlChange}
-      />
-    );
-
-    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
-    expect(hostInput.value).toBe("");
-    expect(hostInput).not.toHaveAttribute("readonly");
-    expect(screen.queryByRole("button", { name: /edit noas host/i })).not.toBeInTheDocument();
-
-    fireEvent.change(hostInput, { target: { value: "https://custom.noas.example:7443/custom/path" } });
-    expect(onNoasHostUrlChange).toHaveBeenCalledWith("https://custom.noas.example:7443/custom/path");
+    expect(screen.queryByTestId("noas-username-suffix")).not.toBeInTheDocument();
   });
 
   it("submits matching noas auth url and nip05 domain", async () => {
@@ -139,6 +119,16 @@ describe("Noas auth forms", () => {
     expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
       baseUrl: "https://custom.noas.example",
     });
+    expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@custom.noas.example");
+  });
+
+  it("fills in the default host on submit-button press before sign-in submit", () => {
+    render(<ControlledNoasAuthForm initialNoasHostUrl="https://custom.noas.example" />);
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.pointerDown(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@custom.noas.example");
   });
 
   it("uses explicit credential semantics for username and password fields", () => {
@@ -150,56 +140,43 @@ describe("Noas auth forms", () => {
     expect(screen.getByLabelText(/^password$/i)).toHaveAttribute("autocomplete", "current-password");
   });
 
-  it("normalizes a bare custom host to https on submit", () => {
+  it("normalizes a full nip05 handle to https on submit when no default host is configured", () => {
     const onLogin = vi.fn(async () => true);
 
     render(
       <ControlledNoasAuthForm
         allowDirectHostEdit
         onLogin={onLogin}
-        initialNoasHostUrl="custom.noas.example:7443/api"
+        initialNoasHostUrl=""
       />
     );
 
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@custom.noas.example:7443" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
     expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
-      baseUrl: "https://custom.noas.example:7443/api",
+      baseUrl: "https://custom.noas.example:7443",
     });
   });
 
-  it("keeps long custom URLs intact in the editable host field", () => {
-    render(
-      <ControlledNoasAuthForm
-        allowDirectHostEdit
-        initialNoasHostUrl="http://localhost:3000/custom/noas/path?mode=dev"
-      />
-    );
-
-    const hostInput = screen.getByLabelText(/^host$/i) as HTMLInputElement;
-    expect(hostInput.value).toBe("http://localhost:3000/custom/noas/path?mode=dev");
-    expect(hostInput).toHaveAttribute("title", "http://localhost:3000/custom/noas/path?mode=dev");
-  });
-
-  it("shows a host-specific validation error for malformed custom URLs", () => {
+  it("shows a handle-specific validation error for malformed full handles", () => {
     const onLogin = vi.fn(async () => true);
 
     render(
       <ControlledNoasAuthForm
         allowDirectHostEdit
         onLogin={onLogin}
-        initialNoasHostUrl="https://bad host"
+        initialNoasHostUrl=""
       />
     );
 
-    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@bad host" } });
     fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
     fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
 
     expect(onLogin).not.toHaveBeenCalled();
-    expect(screen.getByText(/enter a valid host url/i)).toBeInTheDocument();
+    expect(screen.getByText(/enter a valid full handle/i)).toBeInTheDocument();
   });
 
   it("validates sign-in username with sign-up rules before submitting", () => {
@@ -227,6 +204,40 @@ describe("Noas auth forms", () => {
     expect(onLogin).toHaveBeenCalledWith("alice-test", "password123", {
       baseUrl: "https://noas.example.com",
     });
+  });
+
+  it("keeps an explicit full handle in the field after sign-in submit", () => {
+    const onLogin = vi.fn(async () => true);
+
+    render(<ControlledNoasAuthForm onLogin={onLogin} initialNoasHostUrl="https://noas.example.com" />);
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice@other.example" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    expect(onLogin).toHaveBeenCalledWith("alice", "password123", {
+      baseUrl: "https://other.example",
+    });
+    expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@other.example");
+  });
+
+  it("requires a full nip05 handle when no default host is available", () => {
+    const onLogin = vi.fn(async () => true);
+
+    render(
+      <ControlledNoasAuthForm
+        allowDirectHostEdit
+        onLogin={onLogin}
+        initialNoasHostUrl=""
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign in$/i })[1]);
+
+    expect(onLogin).not.toHaveBeenCalled();
+    expect(screen.getByText(/enter your full nip-05 handle/i)).toBeInTheDocument();
   });
 
   it("shows only one sign-in error message when submit failure also returns a parent error", async () => {
@@ -340,5 +351,36 @@ describe("Noas auth forms", () => {
     await waitFor(() => {
       expect(screen.getByText(expectedUserFacingPubkey)).toBeInTheDocument();
     });
+  });
+
+  it("fills in the default host in the field before sign-up submit", () => {
+    const onSignUp = vi.fn(async () => true);
+
+    render(<ControlledNoasSignUpForm onSignUp={onSignUp} />);
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.change(screen.getByLabelText(/^password$/i), { target: { value: "password123" } });
+    fireEvent.change(screen.getByRole("textbox", { name: /^private key$/i }), {
+      target: { value: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef" },
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+
+    expect(onSignUp).toHaveBeenCalledWith(
+      "alice",
+      "password123",
+      "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      expect.any(String),
+      { baseUrl: "https://noas.example.com" }
+    );
+    expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@noas.example.com");
+  });
+
+  it("fills in the default host on submit-button press before sign-up submit", () => {
+    render(<ControlledNoasSignUpForm initialNoasHostUrl="https://noas.example.com" />);
+
+    fireEvent.change(screen.getByLabelText(/^username$/i), { target: { value: "alice" } });
+    fireEvent.pointerDown(screen.getAllByRole("button", { name: /^sign up$/i })[1]);
+
+    expect(screen.getByLabelText(/^username$/i)).toHaveValue("alice@noas.example.com");
   });
 });

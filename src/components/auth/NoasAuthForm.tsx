@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Loader2, LogIn } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { NoasSharedFields, validateNoasUsername } from "./NoasSharedFields";
+import { NoasSharedFields } from "./NoasSharedFields";
 import { NoasAuthPanelShell } from "./NoasAuthPanelShell";
-import { resolveNoasBaseUrlForSubmit } from "./noas-form-helpers";
+import { resolveNoasCredentialsForSubmit } from "./noas-form-helpers";
 
 interface NoasAuthFormProps {
   onLogin: (username: string, password: string, config?: { baseUrl?: string }) => Promise<boolean>;
@@ -43,28 +43,35 @@ export function NoasAuthForm({
   const [localError, setLocalError] = useState<string | null>(null);
   const displayedError = localError ?? error;
 
+  const normalizeUsernameFieldForSubmit = () => {
+    const { fullHandle, error: noasCredentialError } = resolveNoasCredentialsForSubmit(username, noasHostUrl, t);
+    if (noasCredentialError || !fullHandle) return;
+    onUsernameChange(fullHandle);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
-
-    const usernameError = validateNoasUsername(username, t);
-    if (usernameError) {
-      setLocalError(usernameError);
-      return;
-    }
 
     if (!password) {
       setLocalError(t("auth.errors.passwordRequired"));
       return;
     }
 
-    const { baseUrl: normalizedNoasBaseUrl, error: noasHostError } = resolveNoasBaseUrlForSubmit(noasHostUrl, t);
-    if (noasHostError) {
-      setLocalError(noasHostError);
+    const {
+      username: normalizedUsername,
+      fullHandle: normalizedFullHandle,
+      baseUrl: normalizedNoasBaseUrl,
+      error: noasCredentialError,
+    } =
+      resolveNoasCredentialsForSubmit(username, noasHostUrl, t);
+    if (noasCredentialError) {
+      setLocalError(noasCredentialError);
       return;
     }
 
-    await onLogin(username.trim(), password, {
+    onUsernameChange(normalizedFullHandle);
+    await onLogin(normalizedUsername, password, {
       baseUrl: normalizedNoasBaseUrl,
     });
   };
@@ -77,7 +84,15 @@ export function NoasAuthForm({
       onSignUp={onSignUp}
       onBack={onBack}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={handleSubmit}
+        onKeyDownCapture={(event) => {
+          if (event.key === "Enter") {
+            normalizeUsernameFieldForSubmit();
+          }
+        }}
+        className="space-y-4"
+      >
         <NoasSharedFields
           t={t}
           username={username}
@@ -93,7 +108,12 @@ export function NoasAuthForm({
           onToggleHostEdit={onToggleHostEdit}
         />
 
-        <Button type="submit" disabled={isLoading} className="w-full gap-2">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full gap-2"
+          onPointerDownCapture={normalizeUsernameFieldForSubmit}
+        >
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />

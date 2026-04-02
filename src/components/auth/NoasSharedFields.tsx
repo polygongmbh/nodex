@@ -1,11 +1,8 @@
-import { useEffect, useRef } from "react";
-import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Pencil } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import type { TFunction } from "i18next";
 import { isValidNoasBaseUrl } from "@/lib/nostr/noas-discovery";
+import { resolveNoasHostDisplayValue } from "./noas-form-helpers";
 
 export function validateNoasUsername(username: string, t: TFunction): string | null {
   const trimmedUsername = username.trim();
@@ -68,87 +65,56 @@ export function NoasSharedFields({
   onNoasHostUrlChange,
   onToggleHostEdit,
 }: NoasSharedFieldsProps) {
-  const hostReadOnly = allowDirectHostEdit ? false : !isEditingHostUrl;
-  const shouldShowHostEditButton = !allowDirectHostEdit && hostReadOnly;
-  const hostValue = noasHostUrl;
-  const normalizedPlaceholder = "example.com";
-  const hostInputRef = useRef<HTMLInputElement | null>(null);
+  void isEditingHostUrl;
+  void onNoasHostUrlChange;
+  void onToggleHostEdit;
 
-  useEffect(() => {
-    if (!hostReadOnly) {
-      hostInputRef.current?.focus();
-    }
-  }, [hostReadOnly]);
+  const usernamePlaceholder = allowDirectHostEdit
+    ? t("auth.noas.fullHandlePlaceholder")
+    : t("auth.usernamePlaceholder");
+  const defaultHostSuffix = username.includes("@") ? "" : resolveNoasHostDisplayValue(noasHostUrl);
+  const usernameSuffixMeasureValue = username || usernamePlaceholder;
 
   return (
     <>
       <div className="space-y-2">
         <Label htmlFor="noas-username">{t("auth.username")}</Label>
-        <div className="grid items-start gap-2 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-          <div className={showUsernameHint ? "space-y-1 min-w-0" : "min-w-0"}>
+        <div className={showUsernameHint ? "space-y-1 min-w-0" : "min-w-0"}>
+          <div className="relative">
+            {defaultHostSuffix ? (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-3 text-sm"
+              >
+                <span className="invisible whitespace-pre">{usernameSuffixMeasureValue}</span>
+                <span
+                  data-testid="noas-username-suffix"
+                  className="whitespace-pre text-muted-foreground/70"
+                >
+                  @{defaultHostSuffix}
+                </span>
+              </div>
+            ) : null}
             <Input
               id="noas-username"
               name="username"
               type="text"
               value={username}
               onChange={(e) => onUsernameChange(e.target.value.toLowerCase())}
-              placeholder={t("auth.usernamePlaceholder")}
+              placeholder={usernamePlaceholder}
               disabled={isLoading}
               autoComplete="username"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              className="h-10"
+              className={`h-10 ${defaultHostSuffix ? "bg-transparent" : ""}`}
             />
-            {showUsernameHint ? (
-              <p className="text-xs text-muted-foreground">{t("auth.noas.usernameHint")}</p>
-            ) : null}
           </div>
-          <div className="flex h-10 items-center justify-center text-sm font-medium text-muted-foreground" aria-hidden="true">
-            @
-          </div>
-          <div className="space-y-1 min-w-0">
-            <div className="relative">
-              <Input
-                ref={hostInputRef}
-                value={hostValue}
-                readOnly={hostReadOnly}
-                onChange={(e) => onNoasHostUrlChange?.(e.target.value)}
-                aria-label={t("auth.noas.host")}
-                placeholder={normalizedPlaceholder}
-                title={hostValue || undefined}
-                className={`h-10 text-sm ${shouldShowHostEditButton ? "pr-10" : ""} ${
-                  hostReadOnly ? "text-muted-foreground" : "text-foreground"
-                }`}
-              />
-              {shouldShowHostEditButton ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={onToggleHostEdit}
-                        disabled={isLoading}
-                        aria-pressed={isEditingHostUrl}
-                        aria-label={t("auth.noas.editHost")}
-                        className="absolute right-1 top-1 h-8 w-8 px-0"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t("auth.noas.editHostWarning")}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : null}
-            </div>
-            {allowDirectHostEdit ? null : (
-              <p className="text-[11px] leading-none text-muted-foreground whitespace-nowrap">
-                {t("auth.noas.hostHint")}
-              </p>
-            )}
-          </div>
+          {showUsernameHint ? (
+            <p className="text-xs text-muted-foreground">
+              {allowDirectHostEdit ? t("auth.noas.fullHandleHint") : t("auth.noas.usernameHint")}
+            </p>
+          ) : null}
         </div>
       </div>
 
