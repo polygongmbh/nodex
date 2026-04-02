@@ -127,12 +127,12 @@ export function FilteredEmptyState({
         data-empty-mode="overlay"
         className={cn("pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center px-4", className)}
       >
-        <div className="max-w-xl rounded-2xl border border-border/70 bg-background/90 px-4 py-3 text-center shadow-lg backdrop-blur-sm">
-          <p className="text-sm font-medium leading-relaxed text-foreground sm:text-base">
+        <div className="max-w-2xl rounded-2xl border border-border/70 bg-background/90 px-5 py-4 text-center shadow-lg backdrop-blur-sm sm:px-6 sm:py-5">
+          <p className="text-base font-medium leading-relaxed text-foreground sm:text-lg">
             {overlayTitle}
           </p>
           {overlaySubtitle ? (
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground sm:text-base">
               {overlaySubtitle}
             </p>
           ) : null}

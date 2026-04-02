@@ -156,6 +156,22 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText(MOBILE_SCOPE_TEXT)).toBeInTheDocument();
   });
 
+  it("renders overlay scope copy with the larger overlay type scale", () => {
+    render(
+      <FilteredEmptyState
+        relays={relays}
+        channels={channels}
+        people={people}
+        mode="overlay"
+      />
+    );
+
+    const overlay = document.querySelector('[data-empty-mode="overlay"]');
+    expect(overlay).toBeInTheDocument();
+    expect(screen.getByText(`${EMPTY_SCOPE_TEXT}.`)).toBeInTheDocument();
+    expect(screen.getByText(`${EMPTY_SCOPE_TEXT}.`).className).toContain("text-base");
+  });
+
   it("omits inactive quick filters from the scope summary", () => {
     render(
       <FilteredEmptyState

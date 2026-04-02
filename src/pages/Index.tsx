@@ -15,7 +15,7 @@ import { mergeTasks } from "@/domain/content/task-merge";
 import { getRelayIdFromUrl, getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
 import {
-  getPinnedChannelIdsForView,
+  getPinnedChannelIdsForRelays,
 } from "@/domain/preferences/pinned-channel-state";
 import { getPinnedPersonIdsForView } from "@/domain/preferences/pinned-person-state";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -498,7 +498,6 @@ const Index = () => {
     handleChannelUnpin,
   } = usePinnedSidebarChannels({
     userPubkey: user?.pubkey,
-    currentView,
     effectiveActiveRelayIds,
     channels: sidebarChannels,
     channelFilterStates,
@@ -1056,9 +1055,8 @@ const Index = () => {
       quickFilters,
       savedFilterConfigurations: savedFilterController.configurations,
       activeSavedFilterConfigurationId: savedFilterController.activeConfigurationId,
-      pinnedChannelIds: getPinnedChannelIdsForView(
+      pinnedChannelIds: getPinnedChannelIdsForRelays(
         pinnedChannelsState,
-        currentView,
         activeRelayIdList
       ),
       pinnedPersonIds: getPinnedPersonIdsForView(

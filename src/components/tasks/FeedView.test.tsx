@@ -865,7 +865,7 @@ describe("FeedView", () => {
     }
   });
 
-  it("renders an inline scope hint on desktop when source posts exist but none match the current scope", () => {
+  it("does not render a local inline scope hint when source posts exist but none match the current scope", () => {
     const { container } = renderFeedView(
       {
         tasks,
@@ -877,10 +877,7 @@ describe("FeedView", () => {
       }
     );
 
-    const inlineState = container.querySelector('[data-empty-mode="inline"]');
-    expect(inlineState).toBeInTheDocument();
-    expect(inlineState).toHaveTextContent("nomatchquery");
-    expect(inlineState).toHaveTextContent("Demo");
+    expect(container.querySelector('[data-empty-mode="inline"]')).not.toBeInTheDocument();
     expect(container.querySelector('[data-task-id="task-1"]')).not.toBeInTheDocument();
   });
 

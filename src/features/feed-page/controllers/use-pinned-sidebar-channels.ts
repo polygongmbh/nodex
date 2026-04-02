@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import type { Channel, Task } from "@/types";
-import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import {
-  getPinnedChannelIdsForView,
+  getPinnedChannelIdsForRelays,
   pinChannelForRelays,
   unpinChannelFromRelays,
   type PinnedChannelsState,
@@ -14,7 +13,6 @@ import {
 
 export interface UsePinnedSidebarChannelsOptions {
   userPubkey: string | undefined;
-  currentView: ViewType;
   effectiveActiveRelayIds: Set<string>;
   channels: Channel[];
   channelFilterStates: Map<string, Channel["filterState"]>;
@@ -32,7 +30,6 @@ export interface UsePinnedSidebarChannelsResult {
 
 export function usePinnedSidebarChannels({
   userPubkey,
-  currentView,
   effectiveActiveRelayIds,
   channels,
   channelFilterStates,
@@ -71,11 +68,7 @@ export function usePinnedSidebarChannels({
   }, [allTasks]);
 
   const channelsWithState: Channel[] = useMemo(() => {
-    const pinnedIds = getPinnedChannelIdsForView(
-      pinnedChannelsState,
-      currentView,
-      activeRelayIdList
-    );
+    const pinnedIds = getPinnedChannelIdsForRelays(pinnedChannelsState, activeRelayIdList);
     const pinnedSet = new Set(pinnedIds);
     const existingIds = new Set(channels.map((c) => c.id));
     const stubs: Channel[] = pinnedIds
@@ -95,7 +88,6 @@ export function usePinnedSidebarChannels({
     channels,
     channelFilterStates,
     pinnedChannelsState,
-    currentView,
     activeRelayIdList,
   ]);
 
@@ -106,18 +98,16 @@ export function usePinnedSidebarChannels({
         ? activeRelayIdList.filter((r) => relaysWithTag.has(r))
         : activeRelayIdList;
       const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
-      setPinnedChannelsState((prev) => pinChannelForRelays(prev, currentView, relayIds, id));
+      setPinnedChannelsState((prev) => pinChannelForRelays(prev, relayIds, id));
     },
-    [activeRelayIdList, channelRelayIds, currentView]
+    [activeRelayIdList, channelRelayIds]
   );
 
   const handleChannelUnpin = useCallback(
     (id: string) => {
-      setPinnedChannelsState((prev) =>
-        unpinChannelFromRelays(prev, currentView, activeRelayIdList, id)
-      );
+      setPinnedChannelsState((prev) => unpinChannelFromRelays(prev, activeRelayIdList, id));
     },
-    [activeRelayIdList, currentView]
+    [activeRelayIdList]
   );
 
   return {

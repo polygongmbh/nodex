@@ -213,18 +213,6 @@ describe("CalendarView responsiveness", () => {
     expect(screen.getByRole("button", { name: /filter to #general/i })).toBeInTheDocument();
   });
 
-  it("shows a floating empty hint while keeping the calendar shell visible", () => {
-    const { container } = render(
-      <CalendarView
-        tasks={[]}
-        allTasks={[]}
-      />
-    );
-
-    expect(container.querySelector('[data-onboarding="calendar-month-stack"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-empty-mode="overlay"]')).toBeInTheDocument();
-  });
-
   it("focuses branch tasks from selected-day cards", () => {
     dispatchFeedInteraction.mockClear();
     const parent = makeTask({

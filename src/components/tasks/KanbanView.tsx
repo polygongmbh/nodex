@@ -29,7 +29,6 @@ import { useKanbanViewState } from "@/features/feed-page/controllers/use-task-vi
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskViewServices } from "./use-task-view-services";
 import { TaskPrioritySelect } from "./TaskMetadataEditors";
-import { FilteredEmptyState } from "./FilteredEmptyState";
 
 interface KanbanViewProps {
   tasks: Task[];
@@ -63,7 +62,6 @@ export function KanbanView({
   isPendingPublishTask,
   composeRestoreRequest = null,
   isInteractionBlocked = false,
-  isHydrating = false,
 }: KanbanViewProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -107,10 +105,6 @@ export function KanbanView({
     }
     return map;
   }, [kanbanTasks]);
-  const focusedTaskTitle = useMemo(
-    () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? "" : ""),
-    [allTasks, focusedTaskId]
-  );
 
   useEffect(() => {
     setOptimisticStatusByTaskId((previous) => {
@@ -271,7 +265,6 @@ export function KanbanView({
 
   // Scroll focused task into view
   const columnsContainerRef = useRef<HTMLDivElement>(null);
-  const showEmptyOverlay = kanbanTasks.length === 0;
   useEffect(() => {
     if (keyboardFocusedTaskId && columnsContainerRef.current) {
       const element = columnsContainerRef.current.querySelector(
@@ -528,14 +521,6 @@ export function KanbanView({
             ))}
           </div>
         </DragDropContext>
-        {showEmptyOverlay ? (
-          <FilteredEmptyState
-            isHydrating={isHydrating}
-            searchQuery={searchQueryOverride}
-            contextTaskTitle={focusedTaskTitle}
-            mode="overlay"
-          />
-        ) : null}
       </div>
     </main>
   );

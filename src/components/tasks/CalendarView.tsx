@@ -57,7 +57,6 @@ import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-con
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useTaskViewServices } from "./use-task-view-services";
-import { FilteredEmptyState } from "./FilteredEmptyState";
 
 interface CalendarViewProps {
   tasks: Task[];
@@ -136,11 +135,6 @@ export function CalendarView({
   const hasChildren = useCallback(
     (taskId: string): boolean => allTasks.some((task) => task.taskType === "task" && task.parentId === taskId),
     [allTasks]
-  );
-  const showEmptyOverlay = tasksWithDueDates.length === 0 && upcomingTasks.length === 0;
-  const focusedTaskTitle = useMemo(
-    () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId)?.content ?? "" : ""),
-    [allTasks, focusedTaskId]
   );
 
   const desktopMonthSections = useMemo(() => {
@@ -1092,14 +1086,6 @@ export function CalendarView({
           )}
         </div>
         )}
-        {showEmptyOverlay ? (
-          <FilteredEmptyState
-            isHydrating={isHydrating}
-            searchQuery={searchQuery}
-            contextTaskTitle={focusedTaskTitle}
-            mode="overlay"
-          />
-        ) : null}
       </div>
 
       <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />

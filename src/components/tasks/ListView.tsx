@@ -136,10 +136,7 @@ export function ListView({
   const {
     searchQuery,
     focusedTask,
-    taskById,
     filteredTaskCandidates,
-    baseListTaskCandidates,
-    hasActiveFilters,
     hasSelectedScope,
     composerDefaultContent,
   } = useListViewState({
@@ -285,14 +282,7 @@ export function ListView({
     () => sortListTasks(filteredTaskCandidates),
     [filteredTaskCandidates, sortListTasks]
   );
-  const baseListTasks = useMemo(
-    () => sortListTasks(baseListTaskCandidates),
-    [baseListTaskCandidates, sortListTasks]
-  );
-  const hasSourceListContent = baseListTasks.length > 0;
-  const shouldShowInlineEmptyHint = hasActiveFilters && hasSourceListContent && listTasks.length === 0;
   const shouldShowScopeFooterHint = hasSelectedScope && listTasks.length > 0;
-  const shouldShowScreenEmptyState = listTasks.length === 0 && !shouldShowInlineEmptyHint;
   const mediaController = useTaskViewMedia(listTasks);
 
   const handleSort = (field: SortField) => {
@@ -607,18 +597,8 @@ export function ListView({
             </div>
           </div>
           <div role="rowgroup" className="contents">
-            {shouldShowScreenEmptyState ? (
-              <div className="col-span-full p-0">
-                  <FilteredEmptyState
-                    isHydrating={isHydrating}
-                    searchQuery={searchQuery}
-                    contextTaskTitle={focusedTask?.content}
-                    className="py-8"
-                  />
-              </div>
-            ) : (
-              <>
-                {listTasks.map((task) => {
+            <>
+              {listTasks.map((task) => {
                 const ancestorChain = getAncestorChain(task.id);
                 const isKeyboardFocused = keyboardFocusedTaskId === task.id;
                 const isLockedUntilStart = isTaskLockedUntilStart(task);
@@ -813,30 +793,18 @@ export function ListView({
                   </div>
                 );
               })}
-                {shouldShowScopeFooterHint ? (
-                  <div className="col-span-full p-0">
-                      <FilteredEmptyState
-                        isHydrating={isHydrating}
-                        searchQuery={searchQuery}
-                        contextTaskTitle={focusedTask?.content}
-                        mode="footer"
-                        className="py-6"
-                      />
-                  </div>
-                ) : null}
-                {shouldShowInlineEmptyHint ? (
-                  <div className="col-span-full p-0">
-                      <FilteredEmptyState
-                        isHydrating={isHydrating}
-                        searchQuery={searchQuery}
-                        contextTaskTitle={focusedTask?.content}
-                        mode="inline"
-                        className="py-6"
-                      />
-                  </div>
-                ) : null}
-              </>
-            )}
+              {shouldShowScopeFooterHint ? (
+                <div className="col-span-full p-0">
+                    <FilteredEmptyState
+                      isHydrating={isHydrating}
+                      searchQuery={searchQuery}
+                      contextTaskTitle={focusedTask?.content}
+                      mode="footer"
+                      className="py-6"
+                    />
+                </div>
+              ) : null}
+            </>
           </div>
         </div>
       </div>

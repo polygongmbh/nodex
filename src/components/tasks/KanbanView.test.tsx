@@ -314,22 +314,6 @@ describe("KanbanView closed column", () => {
     expect(todoDropTarget).toBeInTheDocument();
   });
 
-  it("shows a floating empty hint while keeping the board visible", () => {
-    const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
-
-    const { container } = render(
-      <KanbanView
-        tasks={[]}
-        allTasks={[]}
-        currentUser={author}
-        depthMode="leaves"
-      />
-    );
-
-    expect(container.querySelector('[data-onboarding="kanban-board"]')).toBeInTheDocument();
-    expect(container.querySelector('[data-empty-mode="overlay"]')).toBeInTheDocument();
-  });
-
   it("focuses branch tasks from kanban cards", () => {
     const author = makePerson({ id: "me", name: "me", displayName: "Me", isOnline: false });
     const parent = makeTask({ id: "parent-task", author, status: "todo", content: "Parent task #general" });

@@ -242,9 +242,7 @@ export function FeedView({
     mediaPreviewTasks,
     feedDisclosureKey,
     shouldShowMobileScopeFallback,
-    shouldShowInlineEmptyHint,
     shouldShowScopeFooterHint,
-    shouldShowScreenEmptyState,
     composerDefaultContent,
   } = useFeedViewState({
     tasks,
@@ -1109,33 +1107,15 @@ export function FeedView({
         data-onboarding="task-list"
         onScroll={handleFeedScroll}
       >
-        {shouldShowScreenEmptyState ? (
+        {displayedFeedEntries.map(renderFeedEntry)}
+        {shouldShowScopeFooterHint ? (
           <FilteredEmptyState
             isHydrating={isHydrating}
             searchQuery={searchQuery}
             contextTaskTitle={focusedTask?.content}
+            mode="footer"
           />
-        ) : (
-          <>
-            {displayedFeedEntries.map(renderFeedEntry)}
-            {shouldShowScopeFooterHint ? (
-              <FilteredEmptyState
-                isHydrating={isHydrating}
-                searchQuery={searchQuery}
-                contextTaskTitle={focusedTask?.content}
-                mode="footer"
-              />
-            ) : null}
-            {shouldShowInlineEmptyHint ? (
-              <FilteredEmptyState
-                isHydrating={isHydrating}
-                searchQuery={searchQuery}
-                contextTaskTitle={focusedTask?.content}
-                mode="inline"
-              />
-            ) : null}
-          </>
-        )}
+        ) : null}
       </div>
       <TaskViewMediaLightbox controller={mediaController} onOpenTask={focusTask} />
       <RawNostrEventDialog

@@ -70,7 +70,7 @@ export function TaskTree({
   const getFilteredChildren = treeSelectors.getFilteredChildren;
   const isTaskDirectMatch = treeSelectors.isDirectMatch;
   const composerDefaultContent = treeSelectors.getComposerDefaultContent();
-  const { shouldShowInlineEmptyHint, shouldShowScopeFooterHint, shouldShowScreenEmptyState } =
+  const { shouldShowScopeFooterHint } =
     treeSelectors.getEmptyStateFlags({ isMobile });
   const hasActiveFilters = treeSelectors.hasActiveFilters();
   const handleGoUp = () => {
@@ -221,51 +221,33 @@ export function TaskTree({
       {/* Task List */}
       <TaskAuthorProfilesProvider tasks={allTasks}>
         <div ref={scrollContainerRef} className="scrollbar-main-view flex-1 px-2 sm:px-3 py-4 space-y-1" data-onboarding="task-list">
-          {shouldShowScreenEmptyState ? (
+          {displayedTasks.map((task) => (
+            <TreeTaskItem
+              key={task.id}
+              task={task}
+              filteredChildren={getFilteredChildren(task.id)}
+              childrenMap={childrenMap}
+              currentUser={currentUser}
+              matchedByFilter={isTaskDirectMatch(task.id)}
+              isDirectMatchFn={isTaskDirectMatch}
+              getFilteredChildrenFn={getFilteredChildren}
+              hasActiveFilters={hasActiveFilters}
+              activeRelays={activeRelays}
+              isKeyboardFocused={keyboardFocusedTaskId === task.id}
+              compactView={compactTaskCardsEnabled}
+              isPendingPublishTask={isPendingPublishTask}
+              isInteractionBlocked={isInteractionBlocked}
+              sortContext={sortContext}
+            />
+          ))}
+          {shouldShowScopeFooterHint ? (
             <FilteredEmptyState
               isHydrating={isHydrating}
               searchQuery={searchQuery}
               contextTaskTitle={currentContextTask?.content}
+              mode="footer"
             />
-          ) : (
-            <>
-              {displayedTasks.map((task) => (
-                <TreeTaskItem
-                  key={task.id}
-                  task={task}
-                  filteredChildren={getFilteredChildren(task.id)}
-                  childrenMap={childrenMap}
-                  currentUser={currentUser}
-                  matchedByFilter={isTaskDirectMatch(task.id)}
-                  isDirectMatchFn={isTaskDirectMatch}
-                  getFilteredChildrenFn={getFilteredChildren}
-                  hasActiveFilters={hasActiveFilters}
-                  activeRelays={activeRelays}
-                  isKeyboardFocused={keyboardFocusedTaskId === task.id}
-                  compactView={compactTaskCardsEnabled}
-                  isPendingPublishTask={isPendingPublishTask}
-                  isInteractionBlocked={isInteractionBlocked}
-                  sortContext={sortContext}
-                />
-              ))}
-              {shouldShowScopeFooterHint ? (
-                <FilteredEmptyState
-                  isHydrating={isHydrating}
-                  searchQuery={searchQuery}
-                  contextTaskTitle={currentContextTask?.content}
-                  mode="footer"
-                />
-              ) : null}
-              {shouldShowInlineEmptyHint ? (
-                <FilteredEmptyState
-                  isHydrating={isHydrating}
-                  searchQuery={searchQuery}
-                  contextTaskTitle={currentContextTask?.content}
-                  mode="inline"
-                />
-              ) : null}
-            </>
-          )}
+          ) : null}
         </div>
       </TaskAuthorProfilesProvider>
 

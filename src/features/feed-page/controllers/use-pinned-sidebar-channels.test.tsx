@@ -13,7 +13,6 @@ function Harness({
 }) {
   const result = usePinnedSidebarChannels({
     userPubkey: undefined,
-    currentView: "feed",
     effectiveActiveRelayIds: new Set(["relay-one"]),
     channels,
     channelFilterStates,
