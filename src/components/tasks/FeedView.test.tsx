@@ -500,6 +500,60 @@ describe("FeedView", () => {
     );
   });
 
+  it("right-aligns timeline timestamps and formats same-day and yesterday labels", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-03T12:00:00.000Z"));
+    try {
+      const taskWithStateUpdates = makeTask({
+        id: "task-timestamp-formatting",
+        author,
+        content: "Reconnect relays after resume #infra",
+        status: "todo",
+        timestamp: new Date("2026-04-03T09:15:00.000Z"),
+        stateUpdates: [
+          {
+            id: "state-timestamp-yesterday",
+            status: "in-progress",
+            statusDescription: "Working on relay reconnect",
+            timestamp: new Date("2026-04-02T18:45:00.000Z"),
+            authorPubkey: author.id,
+          },
+        ],
+      });
+
+      render(
+        <FeedView
+          tasks={[taskWithStateUpdates]}
+          allTasks={[taskWithStateUpdates]}
+          relays={relays}
+          channels={channels}
+          people={[author]}
+          searchQuery=""
+        />
+      );
+
+      const taskTimestamp = screen.getByTitle(/task created at/i);
+      const stateTimestamp = screen.getByTitle(/status updated at/i);
+      const expectedTaskTime = new Intl.DateTimeFormat("en", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date("2026-04-03T09:15:00.000Z"));
+      const expectedYesterdayTime = new Intl.DateTimeFormat("en", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date("2026-04-02T18:45:00.000Z"));
+
+      expect(taskTimestamp).toHaveTextContent(expectedTaskTime);
+      expect(taskTimestamp.className).toContain("ml-auto");
+      expect(taskTimestamp.className).toContain("text-right");
+      expect(stateTimestamp).toHaveTextContent(`yesterday ${expectedYesterdayTime}`);
+      expect(stateTimestamp.className).toContain("ml-auto");
+      expect(stateTimestamp.className).toContain("text-right");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("hides secondary author metadata on mobile for a denser header row", () => {
     render(
       <FeedView

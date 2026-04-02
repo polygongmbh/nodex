@@ -297,112 +297,107 @@ export function FeedTaskCard({
             />
           </button>
           <div className="flex-1 min-w-0">
-            <div
-              className={cn(
-                "flex items-center min-w-0 text-muted-foreground mb-1",
-                isMobile ? "gap-1 text-xs" : "gap-2 text-sm",
-                "flex-wrap"
-              )}
-            >
-              {hasPrimaryAuthorLabel ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedAuthor });
-                    }}
-                    className={cn(
-                      "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
-                      isMobile && "max-w-[45vw]"
-                    )}
-                    aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
-                    title={authorUserFacingId}
-                  >
-                    <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
-                      {primaryAuthorLabel}
-                    </span>
-                    {secondaryAuthorLabel && !isMobile ? (
-                      <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
-                        {` (${secondaryAuthorLabel})`}
+            <div className={cn("mb-1 flex min-w-0 items-start text-muted-foreground", isMobile ? "gap-1 text-xs" : "gap-2 text-sm")}>
+              <div className={cn("min-w-0 flex-1 flex-wrap items-center", isMobile ? "gap-1" : "gap-2", "inline-flex")}>
+                {hasPrimaryAuthorLabel ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedAuthor });
+                      }}
+                      className={cn(
+                        "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
+                        isMobile && "max-w-[45vw]"
+                      )}
+                      aria-label={t("tasks.actions.filterAndMention", { authorName: authorMeta.primary })}
+                      title={authorUserFacingId}
+                    >
+                      <span title={authorMeta.primary} data-testid={`feed-author-primary-${task.id}`} className="inline-block max-w-full align-bottom truncate">
+                        {primaryAuthorLabel}
+                      </span>
+                      {secondaryAuthorLabel && !isMobile ? (
+                        <span data-testid={`feed-author-secondary-${task.id}`} className="opacity-60 inline">
+                          {` (${secondaryAuthorLabel})`}
+                        </span>
+                      ) : null}
+                    </button>
+                    <span className="shrink-0">·</span>
+                  </>
+                ) : null}
+                {!isComment && typeof task.priority === "number" ? (
+                  <>
+                    {renderPriorityChip(task)}
+                    <span className="shrink-0">·</span>
+                  </>
+                ) : null}
+                {isComment && !isMobile ? (
+                  <>
+                    <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{feedMessageLabel}</span>
+                    {isListing ? (
+                      <span
+                        className={cn(
+                          "text-xs px-1.5 py-0.5 rounded",
+                          listingStatus === "sold"
+                            ? "bg-muted text-muted-foreground line-through"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {listingStatus}
                       </span>
                     ) : null}
-                  </button>
-                  <span className="shrink-0">·</span>
-                </>
-              ) : null}
+                    <span className="shrink-0">·</span>
+                  </>
+                ) : null}
+                {task.dueDate ? (
+                  <>
+                    {renderDueDateChip(task)}
+                    <span className="shrink-0">·</span>
+                  </>
+                ) : null}
+                {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash) ? (
+                  <>
+                    <span className="inline-flex flex-wrap items-center gap-1">
+                      <TaskMentionChips
+                        task={task}
+                        onPersonClick={(author) => {
+                          void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
+                        }}
+                        inline
+                      />
+                      {task.locationGeohash ? (
+                        <TaskLocationChip
+                          geohash={task.locationGeohash}
+                          className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
+                        />
+                      ) : null}
+                      {task.tags.map((tag) => (
+                        <button
+                          key={tag}
+                          data-onboarding="content-hashtag"
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
+                          }}
+                          className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
+                          aria-label={`Filter to #${tag}`}
+                          title={`Filter to #${tag}`}
+                        >
+                          #{tag}
+                        </button>
+                      ))}
+                    </span>
+                  </>
+                ) : null}
+              </div>
               <span
-                className="shrink-0"
+                className="ml-auto shrink-0 text-right"
                 title={isComment ? getCommentCreatedTooltip(task.timestamp) : getTaskCreatedTooltip(task.timestamp)}
               >
                 {timeLabel}
               </span>
-              {!isComment && typeof task.priority === "number" ? (
-                <>
-                  <span className="shrink-0">·</span>
-                  {renderPriorityChip(task)}
-                </>
-              ) : null}
-              {isComment && !isMobile ? (
-                <>
-                  <span className="shrink-0">·</span>
-                  <span className="text-xs bg-muted px-1.5 py-0.5 rounded">{feedMessageLabel}</span>
-                  {isListing ? (
-                    <span
-                      className={cn(
-                        "text-xs px-1.5 py-0.5 rounded",
-                        listingStatus === "sold"
-                          ? "bg-muted text-muted-foreground line-through"
-                          : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {listingStatus}
-                    </span>
-                  ) : null}
-                </>
-              ) : null}
-              {task.dueDate ? (
-                <>
-                  <span className="shrink-0">·</span>
-                  {renderDueDateChip(task)}
-                </>
-              ) : null}
-              {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash) ? (
-                <>
-                  <span className="shrink-0">·</span>
-                  <span className="inline-flex flex-wrap items-center gap-1">
-                    <TaskMentionChips
-                      task={task}
-                      onPersonClick={(author) => {
-                        void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
-                      }}
-                      inline
-                    />
-                    {task.locationGeohash ? (
-                      <TaskLocationChip
-                        geohash={task.locationGeohash}
-                        className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
-                      />
-                    ) : null}
-                    {task.tags.map((tag) => (
-                      <button
-                        key={tag}
-                        data-onboarding="content-hashtag"
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-                        }}
-                        className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
-                        aria-label={`Filter to #${tag}`}
-                        title={`Filter to #${tag}`}
-                      >
-                        #{tag}
-                      </button>
-                    ))}
-                  </span>
-                </>
-              ) : null}
               {isPendingPublish ? (
                 <button
                   type="button"

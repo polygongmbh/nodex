@@ -8,7 +8,7 @@ import {
 } from "@/types";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FeedTaskCard } from "./feed/FeedTaskCard";
-import { formatDistanceToNow, format } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
@@ -35,6 +35,7 @@ import { RawNostrEventDialog } from "@/components/tasks/RawNostrEventDialog";
 import { useFeedViewInteractionModel } from "@/features/feed-page/interactions/feed-view-interaction-context";
 import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
+import { formatTimelineTimestamp } from "@/lib/timeline-timestamp";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import {
   getAncestorChainFromSource,
@@ -47,15 +48,6 @@ import {
 } from "@/features/feed-page/views/feed-surface-context";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
-
-function formatCompactRelativeTime(date: Date): string {
-  const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
-  if (diffSeconds < 60) return "now";
-  if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m`;
-  if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h`;
-  if (diffSeconds < 604800) return `${Math.floor(diffSeconds / 86400)}d`;
-  return format(date, "MMM d");
-}
 
 interface FeedViewProps {
   tasks: Task[];
@@ -187,7 +179,7 @@ export function FeedView({
   isInteractionBlocked = false,
   isHydrating = false,
 }: FeedViewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
   const { channels, people } = useFeedSurfaceState();
@@ -425,9 +417,7 @@ export function FeedView({
         username: resolvedUpdateAuthor.name,
       });
       const updateAuthorUserFacingId = toUserFacingPubkey(resolvedUpdateAuthor.id);
-      const updateTimeLabel = isMobile
-        ? formatCompactRelativeTime(update.timestamp)
-        : formatDistanceToNow(update.timestamp, { addSuffix: true });
+      const updateTimeLabel = formatTimelineTimestamp(update.timestamp, i18n.resolvedLanguage);
       const breadcrumbTaskSummary = formatBreadcrumbLabel(task.content);
       const taskTooltipTitle = getTrimmedFirstTaskContentLine(task.content) || breadcrumbTaskSummary;
       const stateLabel = getStateLabel(update.status);
@@ -496,7 +486,7 @@ export function FeedView({
                     {breadcrumbTaskSummary}
                   </button>
                 </div>
-                <span className="shrink-0" title={getStatusUpdatedTooltip(update.timestamp)}>
+                <span className="ml-auto shrink-0 text-right" title={getStatusUpdatedTooltip(update.timestamp)}>
                   {updateTimeLabel}
                 </span>
               </div>
@@ -531,9 +521,7 @@ export function FeedView({
         isInteractionBlocked={isInteractionBlocked}
         isPendingPublish={isPendingPublish}
         expandedContent={isContentExpanded}
-        timeLabelFormatter={(date) =>
-          isMobile ? formatCompactRelativeTime(date) : formatDistanceToNow(date, { addSuffix: true })
-        }
+        timeLabelFormatter={(date) => formatTimelineTimestamp(date, i18n.resolvedLanguage)}
         onOpenTaskMedia={openTaskMedia}
         onToggleExpandedContent={(taskId) => {
           setExpandedContentByTaskId((prev) => ({

@@ -6,7 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-- Timeline progress-update rows now let task titles truncate against the actual space left in the row, keep the actor ahead of the task title, and show the full trimmed first line in hover tooltips instead of a pre-shortened title.
+- Timeline rows now right-align timestamps across progress updates and regular feed cards, use `HH:MM` for same-day posts, `yesterday HH:MM` for previous-day posts, short month/day labels from two days through 10 months, and locale short dates beyond that; progress-update task titles also truncate against actual row space while hover tooltips keep the full trimmed first line.
 
 ## [2.10.2] - 2026-04-02
 
