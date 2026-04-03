@@ -1,11 +1,13 @@
 import { render, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
+import { FeedTaskViewModelProvider } from "@/features/feed-page/views/feed-task-view-model-context";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
 import { getComposerPrimaryAction, getTaskComposerInput } from "@/test/ui";
 import { TaskCreateComposer } from "./TaskCreateComposer";
+import { makeTask } from "@/test/fixtures";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" }, createHttpAuthHeader: vi.fn(async () => null) }),
@@ -59,13 +61,15 @@ describe("TaskCreateComposer", () => {
           channelMatchMode: "and",
         }}
       >
-        <TaskCreateComposer
-          onCancel={onCancel}
-          parentId="parent-task"
-          initialStatus="in-progress"
-          closeOnSuccess
-          allowComment={false}
-        />
+        <FeedTaskViewModelProvider value={{ tasks: [], allTasks: [] }}>
+          <TaskCreateComposer
+            onCancel={onCancel}
+            parentId="parent-task"
+            initialStatus="in-progress"
+            closeOnSuccess
+            allowComment={false}
+          />
+        </FeedTaskViewModelProvider>
       </FeedSurfaceProvider>
     );
 
@@ -85,5 +89,42 @@ describe("TaskCreateComposer", () => {
       );
     });
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render the composer when the parent only lives on read-only relays", () => {
+    const readOnlyRelays: Relay[] = [{
+      id: "relay-a",
+      name: "Relay A",
+      url: "wss://relay-a.example.com",
+      icon: "R",
+      isActive: true,
+      connectionStatus: "read-only",
+    }];
+    const parentTask = makeTask({
+      id: "parent-task",
+      relays: ["relay-a"],
+    });
+
+    const { container } = render(
+      <FeedSurfaceProvider
+        value={{
+          relays: readOnlyRelays,
+          channels,
+          people,
+          searchQuery: "",
+          channelMatchMode: "and",
+        }}
+      >
+        <FeedTaskViewModelProvider value={{ tasks: [parentTask], allTasks: [parentTask], focusedTaskId: "parent-task" }}>
+          <TaskCreateComposer
+            onCancel={() => {}}
+            parentId="parent-task"
+          />
+        </FeedTaskViewModelProvider>
+      </FeedSurfaceProvider>
+    );
+
+    expect(container).toBeEmptyDOMElement();
+    expect(dispatchFeedInteraction).not.toHaveBeenCalled();
   });
 });

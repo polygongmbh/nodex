@@ -1,9 +1,12 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { TaskComposer, type TaskComposerSubmit } from "./TaskComposer";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import type {
   ComposeRestoreRequest,
   PostType,
+  Relay,
   TaskCreateResult,
   TaskDateType,
   TaskInitialStatus,
@@ -35,6 +38,10 @@ interface TaskCreateComposerProps {
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
+function isWritableRelay(relay: Relay | undefined): boolean {
+  return relay?.connectionStatus === undefined || relay.connectionStatus === "connected";
+}
+
 export function TaskCreateComposer({
   onCancel,
   compact = false,
@@ -56,6 +63,17 @@ export function TaskCreateComposer({
   composeRestoreRequest = null,
 }: TaskCreateComposerProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { relays } = useFeedSurfaceState();
+  const { allTasks } = useFeedTaskViewModel();
+  const parentTask = useMemo(
+    () => (parentId ? allTasks.find((task) => task.id === parentId) : undefined),
+    [allTasks, parentId]
+  );
+  const shouldHideComposer = useMemo(() => {
+    if (!parentTask || parentTask.relays.length === 0) return false;
+    const relaysById = new Map(relays.map((relay) => [relay.id, relay] as const));
+    return parentTask.relays.every((relayId) => !isWritableRelay(relaysById.get(relayId)));
+  }, [parentTask, relays]);
 
   const handleSubmit = useCallback<TaskComposerSubmit>(
     async (
@@ -98,6 +116,10 @@ export function TaskCreateComposer({
     },
     [closeOnSuccess, dispatchFeedInteraction, initialStatus, onCancel, parentId]
   );
+
+  if (shouldHideComposer) {
+    return null;
+  }
 
   return (
     <TaskComposer

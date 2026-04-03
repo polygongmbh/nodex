@@ -22,6 +22,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Blocked relay selections now stop `Cmd/Ctrl+Enter` submits before the composer enters its publishing state, so read-only/disconnected relay warnings no longer leave a stuck `Publishing...` toast behind.
 - Parent-scoped comments, offers, and requests now reuse the same writable-relay banner as root-level composer posts, so replying into a read-only space is blocked in-place instead of starting a publish attempt first.
 - Feed-surface composer relays now retain their real connection status instead of dropping it at the page boundary, so read-only spaces no longer masquerade as writable and trigger a misleading publish attempt.
+- Parent-scoped composers now stay hidden when the parent task only exists on read-only relays, so reply composers no longer appear in contexts where publishing back to that space is impossible.
 
 ## [2.11.0] - 2026-04-03
 Minor release for shared person interactions, task metadata consistency, timeline timestamp clarity, and mobile relay-scoped filter alignment.
