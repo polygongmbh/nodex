@@ -813,7 +813,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
   // Initialize NDK
   useEffect(() => {
-    let disposed = false;
     nostrDevLog("provider", "Initializing NDK provider", {
       configuredDefaultRelays: resolvedDefaultRelays,
     });
@@ -1078,14 +1077,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           const signer = new NDKPrivateKeySigner(savedNsec);
           ndkInstance.signer = signer;
           const ndkUser = await signer.user();
-          if (disposed) return;
           setUser({
             pubkey: ndkUser.pubkey,
             npub: ndkUser.npub,
           });
           setAuthMethod("guest");
         } catch {
-          if (disposed) return;
           localStorage.removeItem(STORAGE_KEY_AUTH);
         }
         return;
@@ -1103,7 +1100,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           : await waitForNostrExtensionAvailability({ signal: extensionRestoreController.signal });
 
         if (!isExtensionAvailable) {
-          if (disposed) return;
           nostrDevLog("auth", "Extension restore failed: extension unavailable after wait window");
           localStorage.removeItem(STORAGE_KEY_AUTH);
           return;
@@ -1113,7 +1109,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         ndkInstance.signer = signer;
         try {
           const ndkUser = await signer.user();
-          if (disposed) return;
           setUser({
             pubkey: ndkUser.pubkey,
             npub: ndkUser.npub,
@@ -1121,7 +1116,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           setAuthMethod("extension");
           nostrDevLog("auth", "Extension session restored", { pubkey: ndkUser.pubkey });
         } catch (error) {
-          if (disposed) return;
           nostrDevLog("auth", "Extension restore failed while resolving signer user", {
             error: error instanceof Error ? error.message : String(error),
           });
@@ -1141,9 +1135,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         ndkInstance.signer = signer;
         try {
           const ndkUser: NDKUser = await signer.blockUntilReady();
-          if (disposed) return;
           await ndkUser.fetchProfile();
-          if (disposed) return;
           setUser({
             pubkey: ndkUser.pubkey,
             npub: ndkUser.npub,
@@ -1157,7 +1149,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           });
           setAuthMethod("nostrConnect");
         } catch {
-          if (disposed) return;
           localStorage.removeItem(STORAGE_KEY_AUTH);
           localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
           localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
@@ -1165,17 +1156,12 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
     };
 
-    ndkInstance.connect().then(() => {
-      if (disposed) return;
-      nostrDevLog("provider", "NDK connected to relay pool");
-      syncRelayStatusesFromPool();
-    });
+    void ndkInstance.connect();
     void restoreSession();
     const relayCurrentInstance = relayCurrentInstanceRef.current;
     const inFlightKind0ProfileRequests = kind0ProfileInFlightRef.current;
 
     return () => {
-      disposed = true;
       extensionRestoreController?.abort();
       window.clearInterval(reconcileIntervalId);
       clearAllTrackedRelayTimeouts();
