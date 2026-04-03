@@ -6,7 +6,7 @@ import type { Person } from "@/types/person";
 import { formatDistanceToNow, format } from "date-fns";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { linkifyContent } from "@/lib/linkify";
-import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
+import { TaskTagChipInline, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { sortTasks, type SortContext, getDueDateColorClass } from "@/domain/content/task-sorting";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
@@ -26,7 +26,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { TaskDueDateEditorForm, TaskPrioritySelect } from "./TaskMetadataEditors";
-import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
 import { getCommentCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { isTaskCompletedStatus, isTaskTerminalStatus } from "@/domain/content/task-status";
 import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
@@ -240,10 +239,7 @@ export function TreeTaskItem({
   const showCompactPriority = compactView && !isComment && typeof task.priority === "number";
   const showFullMetadataChips =
     !compactView &&
-    (hasTaskMentionChips(task) ||
-      task.tags.length > 0 ||
-      task.locationGeohash ||
-      (typeof task.priority === "number" && !isComment));
+    (hasTaskMetadataChips(task, activeRelays.length) || (typeof task.priority === "number" && !isComment));
 
   // Calculate indentation based on depth
   const indentStyle = depth > 0 ? { marginLeft: `${depth * 1.5}rem` } : {};
@@ -637,38 +633,12 @@ export function TreeTaskItem({
                   )}
                 />
               )}
-              <TaskMentionChips
+              <TaskTagChipInline
                 task={task}
-                onPersonClick={dispatchAuthorExclusive}
-                inline
+                people={people}
+                stopPropagation
+                showEmptyPlaceholder={false}
               />
-              {activeRelays.length > 1 && task.relays.length > 0 && (
-                <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground">
-                  {activeRelays.find(r => task.relays.includes(r.id))?.name || task.relays[0]}
-                </span>
-              )}
-              {task.locationGeohash && (
-                <TaskLocationChip
-                  geohash={task.locationGeohash}
-                  className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
-                />
-              )}
-              {task.tags.map((tag) => (
-                <button
-                  key={tag}
-                  data-onboarding="content-hashtag"
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    dispatchHashtagExclusive(tag);
-                  }}
-                  className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
-                  aria-label={t("tasks.actions.filterTag", { tag })}
-                  title={t("tasks.actions.filterTag", { tag })}
-                >
-                  #{tag}
-                </button>
-              ))}
             </div>
           )}
 

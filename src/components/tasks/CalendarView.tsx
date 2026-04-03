@@ -23,8 +23,7 @@ import {
 } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
-import { hasTaskMentionChips } from "./TaskMentionChips";
-import { TaskTagChipRow } from "./TaskTagChipRow";
+import { TaskTagChipRow, hasTaskMetadataChips } from "./TaskTagChipRow";
 import { getAuthorColor } from "@/lib/author-color";
 import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { canUserChangeTaskStatus, getTaskStatusChangeBlockedReason } from "@/domain/content/task-permissions";
@@ -85,7 +84,8 @@ export function CalendarView({
 }: CalendarViewProps) {
   const { t } = useTranslation();
   const { authPolicy, focusTask } = useTaskViewServices();
-  const { people } = useFeedSurfaceState();
+  const { people, relays } = useFeedSurfaceState();
+  const activeRelays = relays.filter((relay) => relay.isActive);
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -1059,7 +1059,7 @@ export function CalendarView({
                                 <span>{task.dueTime}</span>
                               </div>
                             )}
-                            {(typeof task.priority === "number" || hasTaskMentionChips(task) || task.tags.length > 0) && (
+                            {(typeof task.priority === "number" || hasTaskMetadataChips(task, activeRelays.length)) && (
                               <TaskTagChipRow
                                 task={task}
                                 priority={task.priority}

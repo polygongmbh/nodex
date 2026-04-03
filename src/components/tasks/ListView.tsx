@@ -3,7 +3,7 @@ import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCc
 import {   Task, ComposeRestoreRequest, TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
-import { TaskTagChipRow } from "./TaskTagChipRow";
+import { ScrollableTaskTagChipRow } from "./TaskTagChipRow";
 import { ListTaskRow } from "./list/ListTaskRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -443,9 +443,8 @@ export function ListView({
   // Editable tags cell
   const TagsCell = ({ task }: { task: Task }) => {
     return (
-      <TaskTagChipRow
+      <ScrollableTaskTagChipRow
         task={task}
-        layout="scroll"
         className="min-w-0"
       />
     );

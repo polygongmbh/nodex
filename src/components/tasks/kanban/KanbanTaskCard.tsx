@@ -1,5 +1,5 @@
 import { Calendar, Clock, Layers, Lock } from "lucide-react";
-import { TaskTagChipRow } from "@/components/tasks/TaskTagChipRow";
+import { ScrollableTaskTagChipRow, hasTaskMetadataChips } from "@/components/tasks/TaskTagChipRow";
 import { TaskPrioritySelect } from "@/components/tasks/TaskMetadataEditors";
 import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
@@ -13,7 +13,7 @@ import { linkifyContent } from "@/lib/linkify";
 import { hasTextSelection } from "@/lib/click-intent";
 import { getTaskDateTypeLabel, isTaskLockedUntilStart } from "@/lib/task-dates";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
-import { hasTaskMentionChips } from "@/components/tasks/TaskMentionChips";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import type { Task, TaskStatus } from "@/types";
@@ -49,11 +49,13 @@ export function KanbanTaskCard({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();
+  const { relays } = useFeedSurfaceState();
+  const activeRelayCount = relays.filter((relay) => relay.isActive).length;
   const dueDateColor = getDueDateColorClass(task.dueDate, displayStatus);
   const isLockedUntilStart = isTaskLockedUntilStart(task);
   const canChangeStatus = !isInteractionBlocked && canUserChangeTaskStatus(task, currentUser);
   const hasMetadataChips =
-    !compactTaskCardsEnabled && (hasTaskMentionChips(task) || task.tags.length > 0);
+    !compactTaskCardsEnabled && hasTaskMetadataChips(task, activeRelayCount);
 
   return (
     <TaskSurface
@@ -135,9 +137,8 @@ export function KanbanTaskCard({
         </div>
       ) : null}
       {hasMetadataChips ? (
-        <TaskTagChipRow
+        <ScrollableTaskTagChipRow
           task={task}
-          layout="scroll"
           className="mt-2"
           showEmptyPlaceholder={false}
           testId={`kanban-chip-row-${task.id}`}

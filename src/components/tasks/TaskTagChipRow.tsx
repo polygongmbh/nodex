@@ -1,20 +1,18 @@
-import { useState } from "react";
 import { Task } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
+import { TaskLocationChip } from "./TaskLocationChip";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { formatPriorityLabel } from "@/domain/content/task-priority";
 
-interface TaskTagChipRowProps {
+interface BaseTaskTagChipProps {
   task: Task;
   people?: Person[];
   priority?: number;
-  layout?: "wrap" | "scroll";
-  maxVisibleTags?: number;
-  showAllTags?: boolean;
   className?: string;
   tagClassName?: string;
   stopPropagation?: boolean;
@@ -22,55 +20,62 @@ interface TaskTagChipRowProps {
   testId?: string;
 }
 
-export function TaskTagChipRow({
+type TaskTagChipInlineProps = Omit<BaseTaskTagChipProps, "priority" | "className" | "testId">;
+
+export function hasTaskMetadataChips(task: Task, activeRelayCount: number): boolean {
+  return (
+    (activeRelayCount > 1 && task.relays.length > 0) ||
+    Boolean(task.locationGeohash) ||
+    hasTaskMentionChips(task) ||
+    task.tags.length > 0
+  );
+}
+
+export function TaskTagChipInline({
   task,
   people: peopleProp,
-  priority,
-  layout = "wrap",
-  maxVisibleTags = 3,
-  showAllTags = false,
-  className,
   tagClassName,
   stopPropagation = true,
   showEmptyPlaceholder = true,
-  testId,
-}: TaskTagChipRowProps) {
+}: TaskTagChipInlineProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const isScrollable = layout === "scroll";
-  const hasPriority = typeof priority === "number";
+  const { relays, people: contextPeople } = useFeedSurfaceState();
+  const people = peopleProp ?? contextPeople;
+  const activeRelays = relays.filter((relay) => relay.isActive);
+  const relayLabel =
+    activeRelays.length > 1 && task.relays.length > 0
+      ? activeRelays.find((relay) => task.relays.includes(relay.id))?.name || task.relays[0]
+      : null;
   const hasMentions = hasTaskMentionChips(task);
   const hasTags = task.tags.length > 0;
-  const showAll = showAllTags || isScrollable || isExpanded;
-  const visibleTags = showAll ? task.tags : task.tags.slice(0, maxVisibleTags);
-  const hiddenTagCount = Math.max(0, task.tags.length - visibleTags.length);
+
+  if (!hasTaskMetadataChips(task, activeRelays.length)) {
+    return showEmptyPlaceholder ? <span className="shrink-0 text-xs text-muted-foreground">—</span> : null;
+  }
 
   return (
-    <div
-      className={cn(
-        "gap-1",
-        isScrollable
-          ? "flex overflow-x-auto overflow-y-hidden whitespace-nowrap pb-1"
-          : "flex flex-wrap",
-        className
-      )}
-      data-testid={testId}
-    >
-      {hasPriority && (
-        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
-          {formatPriorityLabel(priority)}
+    <>
+      {relayLabel ? (
+        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+          {relayLabel}
         </span>
-      )}
+      ) : null}
+      {task.locationGeohash ? (
+        <TaskLocationChip
+          geohash={task.locationGeohash}
+          className="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
+        />
+      ) : null}
       <TaskMentionChips
         task={task}
-        people={peopleProp}
+        people={people}
         onPersonClick={(author) => {
           void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
         }}
         inline
       />
-      {visibleTags.map((tag) => (
+      {task.tags.map((tag) => (
         <button
           key={tag}
           type="button"
@@ -89,37 +94,71 @@ export function TaskTagChipRow({
           #{tag}
         </button>
       ))}
-      {!isScrollable && !showAll && hiddenTagCount > 0 && (
-        <button
-          type="button"
-          onClick={(event) => {
-            if (stopPropagation) event.stopPropagation();
-            setIsExpanded(true);
-          }}
-          className="text-xs text-muted-foreground hover:text-foreground"
-          aria-label={t("tasks.tagsShowMoreAria", { count: hiddenTagCount })}
-          title={t("tasks.tagsShowAll")}
-        >
-          +{hiddenTagCount}
-        </button>
-      )}
-      {!isScrollable && !showAllTags && showAll && task.tags.length > maxVisibleTags && (
-        <button
-          type="button"
-          onClick={(event) => {
-            if (stopPropagation) event.stopPropagation();
-            setIsExpanded(false);
-          }}
-          className="text-xs text-muted-foreground hover:text-foreground"
-          aria-label={t("tasks.tagsShowLess")}
-          title={t("tasks.tagsShowLess")}
-        >
-          {t("tasks.less")}
-        </button>
-      )}
-      {showEmptyPlaceholder && !hasPriority && !hasMentions && !hasTags && (
-        <span className="shrink-0 text-xs text-muted-foreground">—</span>
-      )}
+    </>
+  );
+}
+
+type TaskTagChipRowProps = BaseTaskTagChipProps;
+
+export function TaskTagChipRow({
+  task,
+  people,
+  priority,
+  className,
+  tagClassName,
+  stopPropagation = true,
+  showEmptyPlaceholder = true,
+  testId,
+}: TaskTagChipRowProps) {
+  const hasPriority = typeof priority === "number";
+
+  return (
+    <div className={cn("flex flex-wrap gap-1", className)} data-testid={testId}>
+      {hasPriority ? (
+        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
+          {formatPriorityLabel(priority)}
+        </span>
+      ) : null}
+      <TaskTagChipInline
+        task={task}
+        people={people}
+        tagClassName={tagClassName}
+        stopPropagation={stopPropagation}
+        showEmptyPlaceholder={showEmptyPlaceholder && !hasPriority}
+      />
+    </div>
+  );
+}
+
+export function ScrollableTaskTagChipRow({
+  task,
+  people,
+  priority,
+  className,
+  tagClassName,
+  stopPropagation = true,
+  showEmptyPlaceholder = true,
+  testId,
+}: TaskTagChipRowProps) {
+  const hasPriority = typeof priority === "number";
+
+  return (
+    <div
+      className={cn("flex overflow-x-auto overflow-y-hidden whitespace-nowrap gap-1 pb-1", className)}
+      data-testid={testId}
+    >
+      {hasPriority ? (
+        <span className="inline-flex shrink-0 whitespace-nowrap items-center rounded bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
+          {formatPriorityLabel(priority)}
+        </span>
+      ) : null}
+      <TaskTagChipInline
+        task={task}
+        people={people}
+        tagClassName={tagClassName}
+        stopPropagation={stopPropagation}
+        showEmptyPlaceholder={showEmptyPlaceholder && !hasPriority}
+      />
     </div>
   );
 }

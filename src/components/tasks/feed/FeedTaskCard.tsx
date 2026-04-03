@@ -8,13 +8,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TaskAttachmentList } from "@/components/tasks/TaskAttachmentList";
-import { TaskLocationChip } from "@/components/tasks/TaskLocationChip";
-import { TaskMentionChips, hasTaskMentionChips } from "@/components/tasks/TaskMentionChips";
+import { TaskTagChipInline, hasTaskMetadataChips } from "@/components/tasks/TaskTagChipRow";
 import { TaskBreadcrumbRow } from "@/components/tasks/task-card/TaskBreadcrumbRow";
 import { TaskSurface } from "@/components/tasks/task-card/TaskSurface";
 import { useTaskStatusMenu } from "@/components/tasks/task-card/use-task-status-menu";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "@/lib/linkify";
 import { cn } from "@/lib/utils";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
@@ -77,6 +77,8 @@ export function FeedTaskCard({
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { focusTask } = useTaskViewServices();
+  const { relays } = useFeedSurfaceState();
+  const activeRelayCount = relays.filter((relay) => relay.isActive).length;
   const getStatusToggleHint = (status?: Task["status"]): string => {
     const alternateKey = getAlternateModifierLabel();
     if (status === "in-progress") return t("hints.statusToggle.inProgress", { alternateKey });
@@ -357,38 +359,10 @@ export function FeedTaskCard({
                     <span className="shrink-0">·</span>
                   </>
                 ) : null}
-                {(hasTaskMentionChips(task) || task.tags.length > 0 || task.locationGeohash) ? (
+                {hasTaskMetadataChips(task, activeRelayCount) ? (
                   <>
                     <span className="inline-flex flex-wrap items-center gap-1">
-                      <TaskMentionChips
-                        task={task}
-                        onPersonClick={(author) => {
-                          void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
-                        }}
-                        inline
-                      />
-                      {task.locationGeohash ? (
-                        <TaskLocationChip
-                          geohash={task.locationGeohash}
-                          className="px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
-                        />
-                      ) : null}
-                      {task.tags.map((tag) => (
-                        <button
-                          key={tag}
-                          data-onboarding="content-hashtag"
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-                          }}
-                          className={`px-1.5 py-0.5 rounded text-xs font-medium ${TASK_INTERACTION_STYLES.hashtagChip}`}
-                          aria-label={`Filter to #${tag}`}
-                          title={`Filter to #${tag}`}
-                        >
-                          #{tag}
-                        </button>
-                      ))}
+                      <TaskTagChipInline task={task} people={people} showEmptyPlaceholder={false} />
                     </span>
                   </>
                 ) : null}
