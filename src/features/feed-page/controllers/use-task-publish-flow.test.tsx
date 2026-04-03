@@ -156,6 +156,26 @@ function Harness({
       >
         SubmitRootOfferWithDate
       </button>
+      <button
+        onClick={async () => {
+          const result = await hook.handleNewTask(
+            "Assign @alice #general",
+            ["general"],
+            ["relay-one"],
+            "task",
+            undefined,
+            undefined,
+            "due",
+            undefined,
+            undefined,
+            [],
+            [],
+          );
+          window.__TEST_RESULT__ = result;
+        }}
+      >
+        SubmitAuthoritativeMentions
+      </button>
       <button onClick={() => hook.handleRetryFailedPublish(hook.failedPublishDrafts[0]?.id || "")}>Retry</button>
       <button onClick={() => hook.handleDueDateChange("task-1", new Date("2026-04-01T10:00:00.000Z"), "10:00", "due")}>
         Due
@@ -168,6 +188,7 @@ function Harness({
       <output data-testid="first-priority">{String(localTasks[0]?.priority ?? "")}</output>
       <output data-testid="first-due-date">{localTasks[0]?.dueDate?.toISOString() || ""}</output>
       <output data-testid="first-assignees">{(localTasks[0]?.assigneePubkeys || []).join(",")}</output>
+      <output data-testid="first-mentions">{(localTasks[0]?.mentions || []).join(",")}</output>
       <output data-testid="posted-tags">{postedTags.map((tag) => `${tag.name}:${tag.relayIds.join("|")}`).join(",")}</output>
     </>
   );
@@ -307,6 +328,34 @@ describe("useTaskPublishFlow", () => {
       expect(screen.getByTestId("local-count")).toHaveTextContent("1");
     });
     expect(screen.getByTestId("first-assignees")).toBeEmptyDOMElement();
+  });
+
+  it("uses provided mention identifiers as the authoritative mention set", async () => {
+    const publishEvent = vi.fn(async () => ({
+      success: true,
+      eventId: "f".repeat(64),
+      publishedRelayUrls: ["wss://relay.one"],
+    }));
+
+    renderHarness({
+      publishEvent,
+      people: [makePerson({ id: "a".repeat(64), name: "alice", displayName: "Alice" })],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "SubmitAuthoritativeMentions" }));
+
+    await waitFor(() => {
+      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+    });
+
+    const [, , publishTags] = publishEvent.mock.calls[0] as unknown as [
+      number,
+      string,
+      string[][] | undefined,
+    ];
+    expect(publishTags).toEqual(expect.arrayContaining([["t", "general"]]));
+    expect(publishTags).not.toEqual(expect.arrayContaining([["p", "a".repeat(64)]]));
+    expect(screen.getByTestId("first-assignees")).toBeEmptyDOMElement();
+    expect(screen.getByTestId("first-mentions")).toBeEmptyDOMElement();
   });
 
   it("defaults root offer submissions to the only active relay when none is explicitly selected", async () => {

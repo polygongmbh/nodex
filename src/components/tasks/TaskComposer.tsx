@@ -13,6 +13,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
+  normalizeMentionIdentifier,
 } from "@/lib/mentions";
 import { hasMeaningfulComposerText } from "@/lib/composer-content";
 import { notifyNeedTag, notifyTaskCreationFailed } from "@/lib/notifications";
@@ -110,6 +111,7 @@ export interface TaskComposerSubmitRequest {
   dueTime?: string;
   dateType?: TaskDateType;
   explicitMentionPubkeys?: string[];
+  mentionIdentifiers?: string[];
   priority?: number;
   attachments?: PublishedAttachment[];
   nip99?: Nip99Metadata;
@@ -891,6 +893,7 @@ export function TaskComposer({
         dueTime: submissionDueTime,
         dateType: submissionDateType,
         explicitMentionPubkeys,
+        mentionIdentifiers: authoritativeMentionIdentifiers,
         priority: submittedPriority,
         attachments: uploadedAttachments,
         nip99: listingMetadata,
@@ -987,6 +990,13 @@ export function TaskComposer({
       explicitPubkey: explicitMention.pubkey,
     });
   }
+  const authoritativeMentionIdentifiers = Array.from(
+    new Set(
+      Array.from(mentionChipMap.values())
+        .map((chip) => normalizeMentionIdentifier(chip.identifier))
+        .filter(Boolean)
+    )
+  );
   const mentionChipItems = Array.from(mentionChipMap.values()).map((chip) => {
     const normalized = chip.identifier.trim().toLowerCase();
     const matchingPerson = mentionOptionByAlias.get(normalized);

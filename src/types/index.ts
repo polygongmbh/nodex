@@ -65,6 +65,7 @@ export type OnNewTask = (
   parentId?: string,
   initialStatus?: TaskInitialStatus,
   explicitMentionPubkeys?: string[],
+  mentionIdentifiers?: string[],
   priority?: number,
   attachments?: PublishedAttachment[],
   nip99?: Nip99Metadata,

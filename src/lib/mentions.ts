@@ -21,6 +21,16 @@ export function extractMentionIdentifiersFromContent(content: string): string[] 
   return Array.from(new Set(normalized));
 }
 
+export function normalizeMentionIdentifiers(mentionIdentifiers: string[]): string[] {
+  return Array.from(
+    new Set(
+      mentionIdentifiers
+        .map((identifier) => normalizeMentionIdentifier(identifier))
+        .filter(Boolean)
+    )
+  );
+}
+
 export function getPreferredMentionIdentifier(person: Person): string {
   const normalizedNip05 = normalizeMentionIdentifier(person.nip05 || "");
   if (NIP05_PATTERN.test(normalizedNip05)) {
@@ -66,12 +76,19 @@ export function personMatchesMentionQuery(person: Person, query: string): boolea
 }
 
 export function resolveMentionedPubkeys(content: string, people: Person[]): string[] {
-  const mentionIdentifiers = extractMentionIdentifiersFromContent(content);
-  if (mentionIdentifiers.length === 0) return [];
+  return resolveMentionIdentifiersToPubkeys(extractMentionIdentifiersFromContent(content), people);
+}
+
+export function resolveMentionIdentifiersToPubkeys(
+  mentionIdentifiers: string[],
+  people: Person[]
+): string[] {
+  const normalizedMentionIdentifiers = normalizeMentionIdentifiers(mentionIdentifiers);
+  if (normalizedMentionIdentifiers.length === 0) return [];
 
   const resolved = new Set<string>();
 
-  for (const mentionIdentifier of mentionIdentifiers) {
+  for (const mentionIdentifier of normalizedMentionIdentifiers) {
     if (isHexPubkey(mentionIdentifier)) {
       resolved.add(mentionIdentifier);
       continue;
@@ -90,7 +107,7 @@ export function resolveMentionedPubkeys(content: string, people: Person[]): stri
       : npubToHexPubkey(normalizedPersonId);
     if (!pubkey) continue;
     const aliases = new Set(getMentionAliases(person));
-    if (mentionIdentifiers.some((identifier) => aliases.has(identifier))) {
+    if (normalizedMentionIdentifiers.some((identifier) => aliases.has(identifier))) {
       resolved.add(pubkey);
     }
   }
@@ -102,16 +119,16 @@ interface ResolveMentionedPubkeysAsyncOptions {
   resolveNip05: (identifier: string) => Promise<string | null>;
 }
 
-export async function resolveMentionedPubkeysAsync(
-  content: string,
+export async function resolveMentionIdentifiersToPubkeysAsync(
+  mentionIdentifiers: string[],
   people: Person[],
   options: ResolveMentionedPubkeysAsyncOptions
 ): Promise<string[]> {
-  const mentionIdentifiers = extractMentionIdentifiersFromContent(content);
-  if (mentionIdentifiers.length === 0) return [];
+  const normalizedMentionIdentifiers = normalizeMentionIdentifiers(mentionIdentifiers);
+  if (normalizedMentionIdentifiers.length === 0) return [];
 
-  const resolved = new Set(resolveMentionedPubkeys(content, people));
-  const unresolvedNip05 = mentionIdentifiers.filter((identifier) => {
+  const resolved = new Set(resolveMentionIdentifiersToPubkeys(normalizedMentionIdentifiers, people));
+  const unresolvedNip05 = normalizedMentionIdentifiers.filter((identifier) => {
     if (!NIP05_PATTERN.test(identifier)) return false;
     return true;
   });
@@ -142,6 +159,18 @@ export async function resolveMentionedPubkeysAsync(
   });
 
   return Array.from(resolved);
+}
+
+export async function resolveMentionedPubkeysAsync(
+  content: string,
+  people: Person[],
+  options: ResolveMentionedPubkeysAsyncOptions
+): Promise<string[]> {
+  return resolveMentionIdentifiersToPubkeysAsync(
+    extractMentionIdentifiersFromContent(content),
+    people,
+    options
+  );
 }
 
 export function formatMentionIdentifierForDisplay(identifier: string): string {

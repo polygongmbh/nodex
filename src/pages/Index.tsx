@@ -845,6 +845,7 @@ const Index = () => {
           intent.parentId,
           intent.initialStatus,
           intent.explicitMentionPubkeys,
+          intent.mentionIdentifiers,
           intent.priority,
           intent.attachments,
           intent.nip99,

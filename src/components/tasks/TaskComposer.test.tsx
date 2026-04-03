@@ -159,9 +159,31 @@ describe("TaskComposer", () => {
       taskType: "task",
       dateType: "due",
       explicitMentionPubkeys: [],
+      mentionIdentifiers: [],
       attachments: [],
     });
     expect(request).not.toHaveProperty("relays");
+  });
+
+  it("submits the visible mention chips as the authoritative mention set", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+    renderComposer({ onSubmit });
+
+    const textarea = getComposerInput() as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: { value: "Check with @ali #backend", selectionStart: 15 },
+    });
+    fireEvent.keyDown(textarea, { key: "Enter" });
+    fireEvent.click(screen.getByRole("button", { name: /create task/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+    });
+
+    const request = onSubmit.mock.calls[0][0] as TaskComposerSubmitRequest;
+    expect(request.mentionIdentifiers).toEqual(["alice@example.com"]);
+    expect(request.explicitMentionPubkeys).toEqual([]);
+    expect(request.content).toContain("@alice@example.com");
   });
 
   it("submits request-specific fields from request mode", async () => {

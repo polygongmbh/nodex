@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {   removeCachedNostrEventById, type CachedNostrEvent, } from "@/infrastructure/nostr/event-cache";
 import {   loadFailedPublishDrafts, saveFailedPublishDrafts, type FailedPublishDraft, } from "@/infrastructure/preferences/failed-publish-drafts-storage";
-import { resolveMentionedPubkeysAsync } from "@/lib/mentions";
+import {
+  extractMentionIdentifiersFromContent,
+  normalizeMentionIdentifiers,
+  resolveMentionIdentifiersToPubkeysAsync,
+} from "@/lib/mentions";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
@@ -20,7 +24,7 @@ import { buildTaskPublishTags } from "@/infrastructure/nostr/task-publish-tags";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { loadPublishDelayEnabled } from "@/infrastructure/preferences/user-preferences-storage";
-import { canUserUpdateTask, extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
+import { canUserUpdateTask } from "@/domain/content/task-permissions";
 import {   notifyLocalSaved, notifyNeedTag, notifyPartialPublish, notifyPublished, notifyPublishSavedForRetry, notifyStatusRestricted, } from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import type {
@@ -166,8 +170,8 @@ export function useTaskPublishFlow({
     blockedIds.forEach((eventId) => removeCachedNostrEventById(eventId));
   }, [queryClient, suppressedNostrEventIds]);
 
-  const resolveMentionPubkeys = useCallback(async (content: string): Promise<string[]> => {
-    return resolveMentionedPubkeysAsync(content, people, {
+  const resolveMentionPubkeys = useCallback(async (mentionIdentifiers: string[]): Promise<string[]> => {
+    return resolveMentionIdentifiersToPubkeysAsync(mentionIdentifiers, people, {
       resolveNip05: resolveNip05Identifier,
     });
   }, [people]);
@@ -250,6 +254,7 @@ export function useTaskPublishFlow({
     parentId?: string,
     initialStatus?: TaskInitialStatus,
     explicitMentionPubkeys: string[] = [],
+    mentionIdentifiers?: string[],
     priority?: number,
     attachments: PublishedAttachment[] = [],
     nip99?: Nip99Metadata,
@@ -345,7 +350,12 @@ export function useTaskPublishFlow({
           .filter((pubkey) => /^[a-f0-9]{64}$/i.test(pubkey))
       )
     );
-    const resolvedMentionPubkeys = await resolveMentionPubkeys(content);
+    const normalizedMentionIdentifiers = normalizeMentionIdentifiers(
+      mentionIdentifiers === undefined
+        ? extractMentionIdentifiersFromContent(content)
+        : mentionIdentifiers
+    );
+    const resolvedMentionPubkeys = await resolveMentionPubkeys(normalizedMentionIdentifiers);
     const mentionPubkeys = Array.from(new Set([...resolvedMentionPubkeys, ...dedupedExplicitMentionPubkeys]));
     const assigneePubkeys = normalizedTaskType === "task"
       ? Array.from(new Set(mentionPubkeys))
@@ -492,9 +502,7 @@ export function useTaskPublishFlow({
       dueTime: submissionDueTime,
       dateType: submissionDateType,
       parentId: submissionParentId,
-      mentions: Array.from(
-        new Set([...extractAssignedMentionsFromContent(content), ...mentionPubkeys])
-      ),
+      mentions: Array.from(new Set([...normalizedMentionIdentifiers, ...mentionPubkeys])),
       assigneePubkeys:
         normalizedTaskType === "task" && (assigneePubkeys?.length || 0) > 0
           ? assigneePubkeys
