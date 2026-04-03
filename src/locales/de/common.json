@@ -234,7 +234,8 @@
     "warnings": {
       "parentLocalOnly": "Parent-Referenz ist nur lokal; Aufgabe wird ohne Parent-Link veröffentlicht",
       "disconnectedSelectedFeeds": "Verbinde die ausgewählten Spaces wieder, bevor du etwas änderst oder veröffentlichst",
-      "partialPublish": "Veröffentlicht auf {{publishedCount}} von {{targetCount}} ausgewählten Spaces"
+      "partialPublish": "Veröffentlicht auf {{publishedCount}} von {{targetCount}} ausgewählten Spaces",
+      "readOnlyParentReplyHidden": "Dieser Thread liegt auf einem schreibgeschützten Space, daher sind Antworten hier deaktiviert."
     }
   },
   "listView": {

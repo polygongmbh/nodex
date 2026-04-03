@@ -24,6 +24,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Feed-surface composer relays now retain their real connection status instead of dropping it at the page boundary, so read-only spaces no longer masquerade as writable and trigger a misleading publish attempt.
 - Parent-scoped composers now stay hidden when the parent task only exists on read-only relays, so reply composers no longer appear in contexts where publishing back to that space is impossible.
 - Focused task views now remove the shared composer row entirely when replies are impossible on a read-only parent relay, so hiding the reply composer no longer leaves an empty bordered gap below the breadcrumb.
+- Signed-in users now get a warning toast when a focused reply composer is hidden because the parent thread lives on a read-only space, clarifying why the reply box disappeared.
 - Parent-scoped submit capability is now resolved in the `TaskCreateComposer` wrapper instead of passing raw parent ids into `TaskComposer`, reducing reply-context policy inside the rendered composer component.
 
 ## [2.11.0] - 2026-04-03

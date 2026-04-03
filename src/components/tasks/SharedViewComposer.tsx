@@ -1,6 +1,10 @@
+import { useEffect, useRef } from "react";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import type {
   ComposeRestoreRequest,
   Relay,
@@ -51,13 +55,26 @@ export function SharedViewComposer({
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
 }: SharedViewComposerProps) {
+  const { t } = useTranslation();
+  const authPolicy = useAuthActionPolicy();
   const { relays } = useFeedSurfaceState();
   const { allTasks } = useFeedTaskViewModel();
+  const hasWarnedHiddenComposerRef = useRef(false);
   const parentTask = parentId ? allTasks.find((task) => task.id === parentId) : undefined;
   const shouldHideComposer =
     parentTask
     && parentTask.relays.length > 0
     && parentTask.relays.every((relayId) => !isWritableRelay(relays.find((relay) => relay.id === relayId)));
+
+  useEffect(() => {
+    if (!visible || !shouldHideComposer || !authPolicy.canCreateContent) {
+      hasWarnedHiddenComposerRef.current = false;
+      return;
+    }
+    if (hasWarnedHiddenComposerRef.current) return;
+    hasWarnedHiddenComposerRef.current = true;
+    toast.warning(t("toasts.warnings.readOnlyParentReplyHidden"));
+  }, [authPolicy.canCreateContent, shouldHideComposer, t, visible]);
 
   if (!visible) return null;
   if (shouldHideComposer) return null;
