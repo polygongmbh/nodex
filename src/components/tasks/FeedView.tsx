@@ -70,7 +70,6 @@ interface FeedViewProps {
 }
 
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
-const FEED_REVEAL_VIEWPORT_MULTIPLIER = 1.5;
 const DESKTOP_FEED_ROW_CONTENT_PADDING = "px-3";
 
 interface FeedDueDateChipProps {
@@ -301,14 +300,10 @@ export function FeedView({
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
-  const [isNearFeedEnd, setIsNearFeedEnd] = useState(false);
-
-  const getRevealThresholdPx = (container: HTMLDivElement) =>
-    Math.max(FEED_REVEAL_SCROLL_THRESHOLD_PX, container.clientHeight * FEED_REVEAL_VIEWPORT_MULTIPLIER);
 
   const isWithinRevealThreshold = (container: HTMLDivElement) => {
     const remainingDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
-    return remainingDistance <= getRevealThresholdPx(container);
+    return remainingDistance <= FEED_REVEAL_SCROLL_THRESHOLD_PX;
   };
 
   useEffect(() => {
@@ -327,17 +322,11 @@ export function FeedView({
 
   const handleFeedScroll = (event: UIEvent<HTMLDivElement>) => {
     const container = event.currentTarget;
-    const nearFeedEnd = isWithinRevealThreshold(container);
-    setIsNearFeedEnd(nearFeedEnd);
-    if (!nearFeedEnd) return;
+    if (!isWithinRevealThreshold(container)) return;
     revealMoreEntries("scroll");
   };
 
   useEffect(() => {
-    if (!hasMoreEntries) {
-      setIsNearFeedEnd(false);
-      return;
-    }
     if (!hasMoreEntries) return;
     const root = scrollContainerRef.current;
     const sentinel = loadMoreSentinelRef.current;
@@ -346,7 +335,6 @@ export function FeedView({
     const observer = new IntersectionObserver(
       (entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
-        setIsNearFeedEnd(true);
         revealMoreEntries("scroll");
       },
       {
@@ -361,36 +349,6 @@ export function FeedView({
       observer.disconnect();
     };
   }, [hasMoreEntries, revealMoreEntries, visibleEntryCount]);
-
-  useEffect(() => {
-    const root = scrollContainerRef.current;
-    if (!root || !hasMoreEntries) {
-      setIsNearFeedEnd(false);
-      return;
-    }
-
-    const nextNearFeedEnd = isWithinRevealThreshold(root);
-    setIsNearFeedEnd((previous) => (previous === nextNearFeedEnd ? previous : nextNearFeedEnd));
-  }, [activeFeedEntries.length, hasMoreEntries, visibleEntryCount]);
-
-  useEffect(() => {
-    if (!hasMoreEntries || !isNearFeedEnd) return;
-    const root = scrollContainerRef.current;
-    if (!root || typeof window === "undefined") return;
-
-    const frameId = window.requestAnimationFrame(() => {
-      if (!scrollContainerRef.current) return;
-      if (!isWithinRevealThreshold(scrollContainerRef.current)) {
-        setIsNearFeedEnd(false);
-        return;
-      }
-      revealMoreEntries("scroll");
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [hasMoreEntries, isNearFeedEnd, revealMoreEntries, visibleEntryCount]);
 
   useEffect(() => {
     if (keyboardFocusedTaskId && scrollContainerRef.current) {
@@ -594,7 +552,7 @@ export function FeedView({
         onScroll={handleFeedScroll}
       >
         {displayedFeedEntries.map(renderFeedEntry)}
-        {hasMoreEntries && isNearFeedEnd ? (
+        {hasMoreEntries ? (
           <div className="flex justify-center px-4 py-4 text-center">
             <p className="text-sm text-muted-foreground">
               {t("feed.loadingMoreEvents")}

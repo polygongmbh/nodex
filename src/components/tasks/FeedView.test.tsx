@@ -202,137 +202,6 @@ describe("FeedView", () => {
     expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
   });
 
-  it("continues revealing while the viewport remains near the end after a batch append", async () => {
-    const manyTasks = Array.from({ length: 75 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: `Task ${index + 1} #general`,
-        author,
-        status: "todo",
-        timestamp: new Date(2026, 0, 1, 0, 75 - index),
-      })
-    );
-
-    const { container } = render(
-      <FeedView
-        tasks={manyTasks}
-        allTasks={manyTasks}
-        searchQueryOverride=""
-      />
-    );
-
-    const scroller = container.querySelector('[data-onboarding="task-list"]');
-    expect(scroller).not.toBeNull();
-
-    Object.defineProperty(scroller, "scrollHeight", {
-      configurable: true,
-      get: () => 1800,
-    });
-    Object.defineProperty(scroller, "clientHeight", {
-      configurable: true,
-      value: 1200,
-    });
-    Object.defineProperty(scroller, "scrollTop", {
-      configurable: true,
-      value: 600,
-    });
-
-    fireEvent.scroll(scroller as HTMLElement);
-
-    await waitFor(() => {
-      expect(container.querySelectorAll("[data-task-id]").length).toBe(75);
-    });
-  });
-
-  it("uses a viewport-scaled reveal threshold so larger screens preload earlier", () => {
-    const manyTasks = Array.from({ length: 75 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: `Task ${index + 1} #general`,
-        author,
-        status: "todo",
-        timestamp: new Date(2026, 0, 1, 0, 75 - index),
-      })
-    );
-
-    const { container } = render(
-      <FeedView
-        tasks={manyTasks}
-        allTasks={manyTasks}
-        searchQueryOverride=""
-      />
-    );
-
-    const scroller = container.querySelector('[data-onboarding="task-list"]');
-    expect(scroller).not.toBeNull();
-
-    Object.defineProperty(scroller, "scrollHeight", {
-      configurable: true,
-      value: 3000,
-    });
-    Object.defineProperty(scroller, "clientHeight", {
-      configurable: true,
-      value: 1000,
-    });
-    Object.defineProperty(scroller, "scrollTop", {
-      configurable: true,
-      value: 600,
-    });
-
-    fireEvent.scroll(scroller as HTMLElement);
-
-    expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
-  });
-
-  it("continues loading mixed-relay feed batches near the end without requiring a second scroll", async () => {
-    const relayOne = makeRelay({ id: "relay-one", name: "Relay One", url: "wss://relay.one" });
-    const relayTwo = makeRelay({ id: "relay-two", name: "Relay Two", url: "wss://relay.two" });
-    const manyTasks = Array.from({ length: 90 }, (_, index) =>
-      makeTask({
-        id: `task-${index + 1}`,
-        content: `Task ${index + 1} #general`,
-        author,
-        relays: index % 2 === 0 ? ["relay-one"] : ["relay-two"],
-        status: "todo",
-        timestamp: new Date(2026, 0, 1, 0, 90 - index),
-      })
-    );
-
-    const { container } = renderFeedView(
-      {
-        tasks: manyTasks,
-        allTasks: manyTasks,
-        searchQueryOverride: "",
-      },
-      {
-        relays: [relayOne, relayTwo],
-      }
-    );
-
-    const scroller = container.querySelector('[data-onboarding="task-list"]');
-    expect(scroller).not.toBeNull();
-    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
-
-    Object.defineProperty(scroller, "scrollHeight", {
-      configurable: true,
-      get: () => 1800,
-    });
-    Object.defineProperty(scroller, "clientHeight", {
-      configurable: true,
-      value: 1200,
-    });
-    Object.defineProperty(scroller, "scrollTop", {
-      configurable: true,
-      value: 600,
-    });
-
-    fireEvent.scroll(scroller as HTMLElement);
-
-    await waitFor(() => {
-      expect(container.querySelectorAll("[data-task-id]").length).toBe(90);
-    });
-  });
-
   it("hides the scope footer while more feed entries still remain to hydrate", () => {
     const manyTasks = Array.from({ length: 75 }, (_, index) =>
       makeTask({
@@ -486,7 +355,7 @@ describe("FeedView", () => {
     fireEvent.scroll(scroller as HTMLElement);
 
     await waitFor(() => {
-      expect(container.querySelectorAll("[data-task-id]").length).toBe(90);
+      expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
     });
 
     rerender(
@@ -552,7 +421,7 @@ describe("FeedView", () => {
     fireEvent.scroll(scroller as HTMLElement);
 
     await waitFor(() => {
-      expect(container.querySelectorAll("[data-task-id]").length).toBe(90);
+      expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
     });
 
     rerender(
