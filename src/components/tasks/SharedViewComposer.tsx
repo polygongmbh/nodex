@@ -1,6 +1,9 @@
 import { TaskCreateComposer } from "./TaskCreateComposer";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import type {
   ComposeRestoreRequest,
+  Relay,
   TaskInitialStatus,
 } from "@/types";
 
@@ -26,6 +29,10 @@ interface SharedViewComposerProps {
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
+function isWritableRelay(relay: Relay | undefined): boolean {
+  return relay?.connectionStatus === undefined || relay.connectionStatus === "connected";
+}
+
 export function SharedViewComposer({
   visible,
   onCancel,
@@ -44,7 +51,16 @@ export function SharedViewComposer({
   allowFeedMessageTypes = false,
   composeRestoreRequest = null,
 }: SharedViewComposerProps) {
+  const { relays } = useFeedSurfaceState();
+  const { allTasks } = useFeedTaskViewModel();
+  const parentTask = parentId ? allTasks.find((task) => task.id === parentId) : undefined;
+  const shouldHideComposer =
+    parentTask
+    && parentTask.relays.length > 0
+    && parentTask.relays.every((relayId) => !isWritableRelay(relays.find((relay) => relay.id === relayId)));
+
   if (!visible) return null;
+  if (shouldHideComposer) return null;
 
   return (
     <div className={className} data-onboarding="focused-compose">
