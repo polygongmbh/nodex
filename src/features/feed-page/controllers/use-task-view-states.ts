@@ -50,7 +50,6 @@ export interface FeedViewState {
   feedEntries: FeedEntry[];
   activeFeedEntries: FeedEntry[];
   mediaPreviewTasks: Task[];
-  feedDisclosureKey: string;
   shouldShowMobileScopeFallback: boolean;
   shouldShowInlineEmptyHint: boolean;
   shouldShowScopeFooterHint: boolean;
@@ -509,62 +508,6 @@ export function useFeedViewState({
     () => buildFeedEntries(filteredFeedTasksWithClosed, focusedTaskId),
     [filteredFeedTasksWithClosed, focusedTaskId]
   );
-  const activeChannelFiltersKey = useMemo(
-    () =>
-      channels
-        .filter((channel) => channel.filterState && channel.filterState !== "neutral")
-        .map((channel) => `${channel.id}:${channel.filterState}`)
-        .sort()
-        .join(","),
-    [channels]
-  );
-  const activeRelayScopeKey = useMemo(
-    () =>
-      relays
-        .filter((relay) => relay.isActive)
-        .map((relay) => relay.id)
-        .sort()
-        .join(","),
-    [relays]
-  );
-  const selectedPeopleKey = useMemo(
-    () =>
-      people
-        .filter((person) => person.isSelected)
-        .map((person) => person.id)
-        .sort()
-        .join(","),
-    [people]
-  );
-  const quickFiltersKey = useMemo(
-    () =>
-      [
-        quickFilters.recentEnabled ? `recent:${quickFilters.recentDays}` : "recent:off",
-        quickFilters.priorityEnabled ? `priority:${quickFilters.minPriority}` : "priority:off",
-      ].join("|"),
-    [quickFilters.minPriority, quickFilters.priorityEnabled, quickFilters.recentDays, quickFilters.recentEnabled]
-  );
-  const feedDisclosureKey = useMemo(
-    () =>
-      [
-        focusedTaskId || "",
-        deferredSearchQuery.trim().toLowerCase(),
-        channelMatchMode,
-        activeRelayScopeKey,
-        activeChannelFiltersKey,
-        selectedPeopleKey,
-        quickFiltersKey,
-      ].join("|"),
-    [
-      activeChannelFiltersKey,
-      activeRelayScopeKey,
-      channelMatchMode,
-      deferredSearchQuery,
-      focusedTaskId,
-      quickFiltersKey,
-      selectedPeopleKey,
-    ]
-  );
   const taskById = useMemo(() => new Map(allTasks.map((task) => [task.id, task] as const)), [allTasks]);
   const focusedTask = focusedTaskId ? taskById.get(focusedTaskId) || null : null;
   const scopeModel = useEmptyScopeModel({
@@ -595,7 +538,6 @@ export function useFeedViewState({
     feedEntries,
     activeFeedEntries,
     mediaPreviewTasks: shouldShowMobileScopeFallback ? unfilteredFeedTasks : feedTasks,
-    feedDisclosureKey,
     shouldShowMobileScopeFallback,
     shouldShowInlineEmptyHint,
     shouldShowScopeFooterHint: !isMobile && scopeModel.hasSelectedScope && feedEntries.length > 0,

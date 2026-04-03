@@ -47,6 +47,7 @@ import { useTaskViewServices } from "./use-task-view-services";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import { useFeedHydrationWindow } from "./use-feed-hydration-window";
+import { buildFeedDisclosureResetKey } from "./feed-disclosure-reset";
 
 interface FeedViewProps {
   tasks: Task[];
@@ -174,7 +175,7 @@ export function FeedView({
   const { t, i18n } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { authPolicy, focusSidebar, focusTask } = useTaskViewServices();
-  const { channels, people } = useFeedSurfaceState();
+  const { relays, channels, people, quickFilters, channelMatchMode = "and" } = useFeedSurfaceState();
   const { peopleById } = useFeedPersonLookup();
   const interactionModel = useFeedViewInteractionModel();
   const effectiveForceShowComposer = forceShowComposer ?? interactionModel.forceShowComposer;
@@ -201,7 +202,6 @@ export function FeedView({
     feedEntries,
     activeFeedEntries,
     mediaPreviewTasks,
-    feedDisclosureKey,
     shouldShowMobileScopeFallback,
     shouldShowScopeFooterHint,
     composerDefaultContent,
@@ -212,6 +212,19 @@ export function FeedView({
     searchQueryOverride,
     isMobile,
   });
+  const feedDisclosureKey = useMemo(
+    () =>
+      buildFeedDisclosureResetKey({
+        focusedTaskId,
+        searchQuery,
+        relays,
+        channels,
+        people,
+        quickFilters,
+        channelMatchMode,
+      }),
+    [focusedTaskId, searchQuery, relays, channels, people, quickFilters, channelMatchMode]
+  );
 
   useEffect(() => {
     if (isMobile || typeof window === "undefined" || typeof window.matchMedia !== "function") {
@@ -348,6 +361,17 @@ export function FeedView({
       observer.disconnect();
     };
   }, [hasMoreEntries, revealMoreEntries, visibleEntryCount]);
+
+  useEffect(() => {
+    const root = scrollContainerRef.current;
+    if (!root || !hasMoreEntries) {
+      setIsNearFeedEnd(false);
+      return;
+    }
+
+    const nextNearFeedEnd = isWithinRevealThreshold(root);
+    setIsNearFeedEnd((previous) => (previous === nextNearFeedEnd ? previous : nextNearFeedEnd));
+  }, [activeFeedEntries.length, hasMoreEntries, visibleEntryCount]);
 
   useEffect(() => {
     if (!hasMoreEntries || !isNearFeedEnd) return;
