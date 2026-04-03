@@ -6,6 +6,9 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-04-03
+Minor release for shared person interactions, task metadata consistency, timeline timestamp clarity, and mobile relay-scoped filter alignment.
+
 - Person clicks are now split more consistently across the app: sidebar people stay filter-first, while author names, avatars, mention chips, and inline mentions now open a shared person action menu, support hover profile previews, and expose explicit filter or mention actions instead of always mutating both at once.
 - Task metadata chips now render in one consistent ordered set across tree, timeline, calendar, list, and kanban views, with relay/location chips included where applicable and horizontal scrolling used for tighter list and kanban layouts.
 - Timeline rows now right-align timestamps across progress updates and regular feed cards, use `HH:MM` for same-day posts, `yesterday HH:MM` for previous-day posts, short month/day labels from two days through 10 months, and locale short dates beyond that; progress-update task titles also truncate against actual row space while hover tooltips keep the full trimmed first line.
