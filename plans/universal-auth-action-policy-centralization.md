@@ -3,6 +3,22 @@
 ## Scope
 Create a single app-wide auth/capability policy layer and migrate inline auth-gating logic to it.
 
+## Current Status
+
+The core centralization is already landed:
+- `src/domain/auth/action-policy.ts`
+- `src/features/auth/controllers/use-auth-action-policy.ts`
+- `src/features/auth/controllers/use-profile-completion-prompt-signal.ts`
+
+Much of the first migration wave is also landed:
+- `MobileLayout` consumes signal-driven prompt state
+- `TaskComposer` consumes `useAuthActionPolicy()`
+- feed/list/tree/kanban/calendar surfaces now share auth/focus access through `use-task-view-services.ts`
+- `use-task-publish-controls` already consumes `canModifyContent`
+
+This plan should now be read as the architecture rationale for the policy layer.
+The remaining cleanup rollout is more concretely tracked in `full-universal-auth-policy-rollout.md`.
+
 This explicitly avoids:
 - adding new orchestration branches to `Index`
 - making policy mobile-specific
@@ -47,48 +63,44 @@ Suggested `AuthActionPolicy` shape:
 ## Integration Points (Inline -> Hook)
 
 1. Mobile sign-in/profile transition orchestration
-- Current inline logic:
-  - `src/components/mobile/MobileLayout.tsx:150-152`
-  - `src/components/mobile/MobileLayout.tsx:477-484`
+- Historical inline target:
+  - `src/components/mobile/MobileLayout.tsx`
 - Replace with:
   - consume `promptSignal` + `canCreateContent` from policy/controller props
   - remove direct `useNDK()` + `previousSignedInRef` from `MobileLayout`
 
 2. Mobile composer gating + sign-in affordance
-- Current inline logic:
-  - `src/components/mobile/UnifiedBottomBar.tsx:717-739`
-  - `src/components/mobile/UnifiedBottomBar.tsx:879-887`
-  - `src/components/mobile/UnifiedBottomBar.tsx:1552-1556`
+- Historical inline target:
+  - `src/components/mobile/UnifiedBottomBar.tsx`
 - Replace with:
   - policy-driven flags (`canCreateContent`, `signInCtaLabelKey`)
   - keep local relay/tag/attachment checks local; auth part from policy
 
 3. Desktop/shared TaskComposer auth gating
-- Current inline logic:
-  - `src/components/tasks/TaskComposer.tsx:1068-1070`
-  - `src/components/tasks/TaskComposer.tsx:2222-2236`
+- Historical inline target:
+  - `src/components/tasks/TaskComposer.tsx`
 - Replace with:
   - policy input instead of raw `Boolean(user)`
   - sign-in button/copy from policy (or policy-provided key)
 
 4. Composer visibility in feed/task views
-- Current inline logic:
-  - `src/components/tasks/TaskTree.tsx:414`
-  - `src/components/tasks/FeedView.tsx:1280`
-  - `src/components/tasks/ListView.tsx:605`
+- Historical inline targets:
+  - `src/components/tasks/TaskTree.tsx`
+  - `src/components/tasks/FeedView.tsx`
+  - `src/components/tasks/ListView.tsx`
 - Replace with:
   - `canOpenCompose` from policy (plus existing guide override)
 
 5. Publish guard logic (post/modify)
-- Current inline logic:
-  - `src/features/feed-page/controllers/use-task-publish-controls.ts:62-79`
+- Historical inline target:
+  - `src/features/feed-page/controllers/use-task-publish-controls.ts`
 - Replace with:
   - auth branch from policy (`canCreateContent`/`canModifyContent`)
   - keep relay-connectivity branch local or add as separate capability input
 
 6. Publish flow failure mapping
-- Current inline logic:
-  - `src/features/feed-page/controllers/use-task-publish-flow.ts:275-279`
+- Historical inline target:
+  - `src/features/feed-page/controllers/use-task-publish-flow.ts`
 - Replace with:
   - use guard outcome codes from shared policy/controller helper
   - map to `TaskCreateFailureReason` in one shared utility

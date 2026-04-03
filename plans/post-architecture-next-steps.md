@@ -22,6 +22,7 @@ Primary outcomes:
 
 - `src/lib/nostr/task-relay-routing.ts` still mixes reusable decision logic with Nostr-flavored logging placement
 - `src/domain/listings/` is still too thin to prove a second frontend
+- `src/features/feed-page/` now has the right basic split, but the next reusable seams are no longer page-structure changes; they are domain extraction and second-frontend proof work
 - a few `src/lib/nostr/*` modules remain, but most are acceptable shared support modules rather than urgent architecture debt
 
 ## Recommendation Order
@@ -56,6 +57,9 @@ Success criteria:
 ### Milestone 2: Grow `domain/listings` Beyond Identity
 
 Target the next pure reusable listings seam.
+
+Current state:
+- `src/domain/listings/` still only contains `listing-identity.ts`
 
 First candidate:
 
@@ -131,6 +135,8 @@ Recommended sequence:
 2. `refactor: establish listing location domain rules`
 3. `refactor:` add one more meaningful listings-domain seam
 4. `feat:` or `refactor:` build the first listings-map/frontend proof slice
+
+Avoid a commit that is just "move a bunch of helpers" unless it clearly unlocks one of the two goals above.
 
 ## Verification
 

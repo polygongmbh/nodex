@@ -6,6 +6,20 @@ Add user-pinned channels that:
 - are always ordered at the top of channel sections
 - persist per-user (with local fallback)
 
+## Current Status
+
+The local-only foundation is already landed:
+- domain state lives under `src/domain/preferences/pinned-channel-state.ts`
+- local persistence lives under `src/infrastructure/preferences/pinned-channels-storage.ts`
+- sidebar pin/unpin UI exists on desktop channel rows
+- pinned channels already stay visible and ordered first in the sidebar path
+
+What is not landed yet:
+- NIP-78 sync
+- mobile pin/unpin UI parity
+- selector-panel parity in mobile composer/filter surfaces
+- cross-device reconciliation
+
 ## Product Behavior Contract
 1. Pin/unpin action exists on channel rows/chips in desktop and mobile filter surfaces.
 2. Pinned channels render before non-pinned channels.
@@ -20,7 +34,7 @@ Add user-pinned channels that:
   - `['d', 'nodex.pinned-channels.v1']`
   - content: versioned JSON list of pinned channel ids + timestamps/order.
 - Local fallback cache (for startup/offline/unsigned):
-  - `localStorage` key `nodex.pinned-channels.v1`
+  - current implementation already persists per-user local pinned state through `pinned-channels-storage.ts`
 - No encryption required (metadata visibility accepted).
 
 ## Data Model
@@ -45,41 +59,28 @@ interface PinnedChannelsStateV1 {
 
 ## Implementation Steps
 
-1. Add pinned channel persistence module.
-- New file: `src/lib/pinned-channels-preferences.ts`
-- Responsibilities:
-  - validate/load/save local fallback
-  - normalize IDs (lowercase, trim)
-  - toggle pin/unpin helpers
-  - deterministic ordering helpers
+1. Keep the landed local state as the baseline.
+- Existing modules:
+  - `src/domain/preferences/pinned-channel-state.ts`
+  - `src/infrastructure/preferences/pinned-channels-storage.ts`
+  - `src/features/feed-page/controllers/use-pinned-sidebar-channels.ts`
 
 2. Add NIP-78 pinned channel sync adapter.
-- New file: `src/lib/nostr/pinned-channels-sync.ts`
+- New file: `src/infrastructure/nostr/` or `src/lib/nostr/` depending on the current architecture choice for app-data sync
 - Responsibilities:
   - fetch by `kind:30078` + `#d=['nodex.pinned-channels.v1']`
   - publish replaceable app-data event
   - map payload <-> local domain model
   - reconcile local and remote with `updatedAt` precedence
 
-3. Integrate pinned state in `Index` page channel derivation.
-- File: `src/pages/Index.tsx`
-- Add state:
-  - `pinnedChannelsState` loaded from local fallback
-- During channel derivation:
-  - merge derived channels + pinned channel IDs (inject missing pinned channels with `usageCount: 0`)
-  - project final ordered list: pinned first by `order`, then existing behavior for unpinned
-  - keep `channelFilterStates` compatibility unchanged
+3. Finish mobile parity.
+- `src/components/mobile/MobileFilters.tsx`
+  - add the same pin/unpin affordance that desktop sidebar rows already have
+- optional parity:
+  - `src/components/mobile/UnifiedBottomBar.tsx`
+  - any channel selector panels should respect pinned-first ordering if they expose channels directly
 
-4. Add pin actions to UI surfaces.
-- Desktop sidebar: `src/components/layout/Sidebar.tsx`
-  - add pin/unpin affordance per channel row
-  - ensure collapsed preview prioritizes pinned channels
-- Mobile manage filters: `src/components/mobile/MobileFilters.tsx`
-  - same pin/unpin affordance
-- Optional parity: `src/components/mobile/UnifiedBottomBar.tsx`
-  - show pinned channels first in selector panel
-
-5. Wire persistence and sync lifecycle.
+4. Wire sync lifecycle.
 - On pin/unpin:
   - update local state immediately
   - save local fallback immediately
@@ -90,7 +91,7 @@ interface PinnedChannelsStateV1 {
   - reconcile and apply once
   - loop prevention via last-applied checksum/ref
 
-6. i18n + UX details.
+5. i18n + UX details.
 - Add labels/tooltips for pin actions in locale files.
 - Optional visual indicator (pin icon) for pinned channels.
 - Keep keyboard navigation and accessibility labels intact.
@@ -144,13 +145,9 @@ interface PinnedChannelsStateV1 {
 
 ## File Touch Forecast
 - New:
-  - `src/lib/pinned-channels-preferences.ts`
-  - `src/lib/pinned-channels-preferences.test.ts`
   - `src/lib/nostr/pinned-channels-sync.ts`
   - `src/lib/nostr/pinned-channels-sync.test.ts`
 - Updated:
-  - `src/pages/Index.tsx`
-  - `src/components/layout/Sidebar.tsx`
   - `src/components/mobile/MobileFilters.tsx`
   - `src/components/mobile/UnifiedBottomBar.tsx` (if included)
   - locale json files for labels/tooltips

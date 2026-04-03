@@ -3,6 +3,23 @@
 ## Objective
 Finish migration to a single universal auth-action policy so auth/write restrictions are consistent across all views and controllers, with no view-level inline auth orchestration.
 
+## Current Status
+
+Foundational pieces are already landed:
+- `src/domain/auth/action-policy.ts`
+- `src/features/auth/controllers/use-auth-action-policy.ts`
+- `src/features/auth/controllers/use-profile-completion-prompt-signal.ts`
+- `src/features/feed-page/controllers/use-feed-auth-policy.ts`
+
+Large parts of the view migration are also landed:
+- `MobileLayout` now consumes `canCreateContent` and `profileCompletionPromptSignal`
+- `UnifiedBottomBar` already consumes `canCreateContent`
+- `TaskComposer` already uses `useAuthActionPolicy()`
+- task views now share auth/focus helpers through `use-task-view-services.ts`
+- `use-task-publish-controls` already takes `canModifyContent`
+
+What remains is mostly cleanup and consistency work, not initial architecture.
+
 ## Principles
 - Keep `Index` thin (wiring only), no new branching logic there.
 - Centralize identity/profile capabilities in shared policy.
@@ -24,34 +41,23 @@ Finish migration to a single universal auth-action policy so auth/write restrict
 ## Remaining Integration Work
 
 ### A. Controller Layer
-1. `use-task-publish-controls`
-- Replace direct `!user` branch with injected/auth hook capability (`canModifyContent` / `canCreateContent`) using the straightforward pattern:
-  - preferred: pass policy capability from caller (no extra hook nesting), OR
-  - fallback: use `useAuthActionPolicy()` directly.
-- Keep disconnected-relay blocking local.
-- Keep notifications and auth-modal side effects in this controller.
-
-2. `use-task-publish-flow`
+1. `use-task-publish-flow`
 - Replace duplicated post-failure mapping (`not-authenticated` etc.) with one shared guard outcome mapping utility.
 - Ensure consistent `TaskCreateFailureReason` output across all create paths.
 
-3. `use-task-status-controller` / related modify flows
-- Audit for direct auth assumptions and route universal auth checks through shared capability inputs where applicable.
+2. `use-task-status-controller` / related modify flows
+- Audit for any remaining direct auth assumptions and route universal auth checks through shared capability inputs where applicable.
 
 ### B. View/Component Layer
-1. `KanbanView`
-- Replace `Boolean(user)` and direct auth visibility checks with policy-derived flags.
-
-2. `CalendarView`
-- Replace `user`-based create affordance checks with policy capability.
-- Keep date/status permission logic local where ownership/state is task-specific.
-
-3. `TaskComposer` + `UnifiedBottomBar`
+1. `TaskComposer` + `UnifiedBottomBar`
 - Ensure both use the same policy semantics for sign-in CTA, submit disable rules, and blocker copy triggers.
 - Eliminate any remaining divergent auth conditions.
 
-4. `MobileLayout` / shells
-- Ensure profile completion prompt is fully signal-driven with no fallback auth derivation in layout.
+2. `MobileFilters`
+- Keep profile editor behavior local, but remove any avoidable auth-policy duplication around profile-completion gating and sign-in presentation.
+
+3. shared task-view services
+- Verify `use-task-view-services.ts` is now the canonical auth entry point for feed/list/tree/kanban/calendar surfaces.
 
 ### C. Contract Cleanup
 1. Normalize prop naming across surfaces:
@@ -70,6 +76,7 @@ Finish migration to a single universal auth-action policy so auth/write restrict
 - mobile profile prompt orchestration via signal.
 - compose gating parity between `TaskComposer` and `UnifiedBottomBar`.
 - publish controls auth behavior via shared capability path.
+- task-view auth behavior through `use-task-view-services.ts`
 
 3. Dead-path pruning tests:
 - remove fixture-only legacy props/callbacks no longer used.
@@ -79,11 +86,10 @@ Finish migration to a single universal auth-action policy so auth/write restrict
 - finalize policy shape and capability names.
 
 2. Finish controller migration first
-- `use-task-publish-controls` -> shared capability input.
 - `use-task-publish-flow` -> shared guard outcome mapping.
 
 3. Finish remaining views
-- `KanbanView`, `CalendarView`, any residual user-derived compose visibility.
+- `MobileFilters`, any residual user-derived compose visibility, and shared task-view cleanup.
 
 4. Perform cleanup pass
 - remove transitional props/legacy checks.

@@ -52,10 +52,12 @@ src/
     preferences/    ✅ complete — all *-storage.ts adapters, storage-registry
   features/
     feed-page/
-      controllers/  ✅ complete — 17+ hooks covering filters, publish, navigation,
-                                  relay state, sidebar, status, onboarding
+      controllers/  ✅ substantial — hooks plus controller-scoped contexts covering
+                                  filters, publish, navigation, relay state,
+                                  sidebar, status, onboarding
       interactions/ ~ new — interaction pipeline, intents, middleware skeleton
-      views/        ~ started — desktop/mobile shells, sidebar, view pane
+      views/        ~ active — desktop/mobile shells, sidebar, view pane,
+                               ui config context
   hooks/            ~ clean — cross-cutting UI hooks only
   lib/              ~ residual — still has unclassified modules
   lib/nostr/        ~ residual — some files still need moving or deletion
@@ -67,9 +69,13 @@ src/
 
 ### 1. Rename `features/feed-page/controllers/` → `features/feed-page/hooks/`
 
-The word "controllers" is not React-idiomatic. The feature directory already provides the scope signal; the subdirectory name should use the same vocabulary as the rest of the React codebase.
+The rename is no longer a purely mechanical cleanup, because the directory now contains both hooks and controller-scoped context providers such as `feed-sidebar-controller-context.tsx`.
 
-This is a mechanical rename — no logic changes.
+Revised decision point:
+- either split non-hook files out first, then rename `controllers/` → `hooks/`
+- or keep `controllers/` intentionally and document that this repo uses it for feature orchestration modules, not just hooks
+
+Do not treat this as a trivial rename anymore.
 
 ### 2. Finish `lib/nostr/` classification
 
@@ -84,9 +90,6 @@ This is a mechanical rename — no logic changes.
   - Pure relay selection policy for submission: which relay to target based on task type, parent task, and selected relays
   - Remove the `nostrDevLog` call before moving (domain must not import logging infrastructure)
   - The `RELAY_SELECTION_ERROR_KEY` i18n string can stay as a typed constant
-
-**Delete:**
-- `event-converter.test.ts` — ghost test; source moved to `infrastructure/nostr/task-converter.ts`
 
 **Leave in `lib/nostr/`** (not worth moving):
 - `types.ts` — shared Nostr type definitions used everywhere; moving requires touching all importers
@@ -134,7 +137,7 @@ Treat page slimming as an ongoing guardrail, not the main deliverable of this ar
 
 ### 5. Establish `domain/listings` (Milestone F)
 
-`listing-identity.ts` is the only file so far. Add:
+`listing-identity.ts` is still the only file there today. Add:
 - `location.ts` — pure geohash math and location display helpers (split from `infrastructure/nostr/geohash-location.ts`)
 - `listing-status.ts` — listing status rules and transition policies (currently embedded in controller code)
 - `listing-projections.ts` — view-model projection helpers for listing cards and markers
@@ -153,7 +156,13 @@ Without a clear rule, this directory risks becoming a second `lib/` inside `feat
 
 ### 7. Validate `infrastructure/cache/`
 
-`ndk-cache-adapter.ts` appeared as a new subdirectory not in the original plan. Confirm it belongs there and not in `infrastructure/nostr/` (which already has `event-cache.ts`). If it's an NDK cache adapter specifically, it may be a better fit as `infrastructure/nostr/ndk-cache-adapter.ts`.
+`ndk-cache-adapter.ts` now exists and currently stores relay NIP-11 status summaries rather than broader event/query cache data.
+
+Decision to make:
+- keep it in `infrastructure/cache/` as the home for adapter-backed caches in general, or
+- move it closer to relay/Nostr infrastructure if this file remains specifically about relay metadata
+
+This is no longer a hypothetical validation; it is an actual placement decision for an active file.
 
 ### 8. Prototype second frontend (Milestone G)
 
@@ -175,13 +184,13 @@ grep -r "from.*@/lib/nostr" src/domain/
 # infrastructure/preferences must not import React
 grep -r "from.*react" src/infrastructure/preferences/
 
-# Index.tsx should only import from features/, components/, and @/types
+# Page shells should mostly import from features/, components/, and routing/types
 grep "^import" src/pages/Index.tsx | grep -v "from.*@/features\|from.*@/components\|from.*@/types\|from.*react\|from.*react-router"
 ```
 
 ## What To Avoid
 
-- Adding more files to `features/feed-page/controllers/` without renaming to `hooks/` first — establishes the wrong pattern for future features
+- Letting `features/feed-page/controllers/` continue to mix hooks and non-hook controller modules without a clear rule
 - Growing page-level orchestration further before the feature boundaries are clearer
 - Letting `features/feed-page/interactions/` expand without a clear definition of what it owns
 - Moving `lib/nostr/types.ts` — the import blast radius is not worth it; leave it in place

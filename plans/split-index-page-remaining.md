@@ -2,7 +2,7 @@
 
 ## Goal
 
-Reduce [`src/pages/Index.tsx`](/Users/tj/IT/nostr/nodex/src/pages/Index.tsx) from its current `1070` lines into a thin route/composition shell, without changing route contracts or feed/task behavior.
+Reduce [`src/pages/Index.tsx`](/Users/tj/IT/nostr/nodex/src/pages/Index.tsx) from its current `1179` lines into a thin route/composition shell, without changing route contracts or feed/task behavior.
 
 This file is now the single source of truth for the `Index.tsx` split work.
 It supersedes the older Index-related guidance that was scattered across:
@@ -36,7 +36,8 @@ The page is no longer the primary owner of:
 - derived task/channel data
 - pinned sidebar channel state
 - auth modal route wiring
-- desktop shell / view pane extraction
+- desktop/mobile shell extraction
+- feed-page UI config/context extraction
 
 Concrete extractions already in place:
 
@@ -55,19 +56,23 @@ Concrete extractions already in place:
 - `use-feed-auth-policy.ts`
 - `use-relay-scoped-presence.ts`
 - `FeedPageDesktopShell`
+- `FeedPageMobileShell`
 - `FeedPageViewPane`
+- `feed-page-ui-config.tsx`
 
 ## Current Reality
 
-Despite the extractions, `Index.tsx` is still large because it still owns too much assembly and adapter work:
+Despite the extractions, `Index.tsx` is still larger than before because recent feature work added more top-level assembly than it removed.
+The current problem is no longer “missing controllers”; it is that the page still owns too much assembly and adapter work:
 
 - `selectedRelayUrls` is derived in the page and threaded into profile hydration
 - onboarding/demo bootstrap still crosses domains through `ensureGuideDataAvailable`
 - the sidebar boundary is incomplete because the page still calls `getPinnedChannelIdsForView(...)` directly
 - the page still assembles large `mobileViewState`, `desktopHeader`, and `desktopContent` objects
+- the page still assembles feed sidebar/controller state before handing it to feature-side providers
 - desktop/mobile shell selection, auth wiring, presence wiring, and guide bootstrap still coexist in one component
 
-This means the file is no longer controller-heavy, but it is still too much of an orchestration hub.
+This means the file is less business-logic-heavy than before, but still too much of an orchestration and config hub.
 
 ## Remaining Work
 

@@ -4,6 +4,21 @@
 
 Make Nodex reduce network and media usage on mobile when the browser exposes a reduced-data signal, while still giving users a reliable manual override because browser support is incomplete.
 
+## Current Status
+
+The groundwork is already partially landed:
+- reduced-data preference persistence exists in `src/infrastructure/preferences/user-preferences-storage.ts`
+- the browser-signal hook exists in `src/hooks/use-reduced-data-mode.ts`
+- image/lightbox media gating exists through `TaskProgressiveImage` and `TaskMediaLightbox`
+- reduced-data tests already exist around media behavior
+
+What is still missing:
+- a user-facing setting in mobile UI
+- avatar gating in `UserAvatar`
+- richer inline embed deferral
+- any meaningful subscription/network-throttling rollout
+- explicit reduced-data handling for local caption-model downloads
+
 ## Feasibility
 
 This is possible from a browser application, but only partially via automatic detection.
@@ -43,12 +58,12 @@ Based on the current codebase, the main wins are here:
 
 ### 1. Add a reduced-data preference layer
 
-- Create a small preference module in `src/lib/` to persist `auto | on | off`.
-- Add a hook that computes `isReducedDataEnabled` from:
-  - stored preference
-  - `navigator.connection.saveData`
-  - optional `effectiveType` hint for non-blocking UI messaging only
-- Listen for `navigator.connection` changes where supported so `auto` updates without reload.
+This is already landed:
+- persistence in `src/infrastructure/preferences/user-preferences-storage.ts`
+- state resolution in `src/hooks/use-reduced-data-mode.ts`
+
+Remaining refinement:
+- decide whether `effectiveType` should stay out entirely, or be used only for non-blocking messaging
 
 ### 2. Expose the setting in the mobile UI
 
@@ -65,6 +80,11 @@ Based on the current codebase, the main wins are here:
 - Disable autoplay for video in the media lightbox when reduced-data mode is active.
 - Ensure media elements keep `preload="metadata"` or stricter behavior; do not upgrade preload behavior under reduced-data mode.
 - For inline linked media previews, show a lightweight placeholder with a tap-to-load action instead of auto-fetching rich embeds.
+
+Current state:
+- video autoplay gating is already landed in `TaskMediaLightbox`
+- progressive full-image deferral is already landed in `TaskProgressiveImage`
+- avatar and link-preview gating still remain
 
 ### 4. Reduce background network pressure
 
