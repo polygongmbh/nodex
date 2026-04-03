@@ -11,6 +11,25 @@ interface AppErrorBoundaryState {
   errorMessage?: string;
 }
 
+const CHUNK_ERROR_RELOAD_KEY = "nodex.chunk-error-reload";
+const CHUNK_ERROR_PATTERNS = [
+  /Importing a module script failed/i,
+  /Failed to fetch dynamically imported module/i,
+  /error loading dynamically imported module/i,
+  /ChunkLoadError/i,
+];
+
+function isChunkLoadError(error: Error): boolean {
+  const message = error?.message ?? "";
+  return CHUNK_ERROR_PATTERNS.some((pattern) => pattern.test(message));
+}
+
+function reloadWithCacheBypass() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("reload", String(Date.now()));
+  window.location.replace(url.toString());
+}
+
 export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
   state: AppErrorBoundaryState = { hasError: false };
 
@@ -23,15 +42,44 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error("Unhandled application error", { error, errorInfo });
+
+    if (!isChunkLoadError(error)) return;
+    if (typeof window === "undefined") return;
+
+    const hasRetried = window.sessionStorage.getItem(CHUNK_ERROR_RELOAD_KEY) === "1";
+    if (hasRetried) {
+      console.warn("Chunk import failed after automatic reload attempt", { message: error.message });
+      return;
+    }
+
+    window.sessionStorage.setItem(CHUNK_ERROR_RELOAD_KEY, "1");
+    console.warn("Chunk import failed, reloading once with cache bypass", { message: error.message });
+    reloadWithCacheBypass();
   }
 
   handleReload = () => {
-    window.location.reload();
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(CHUNK_ERROR_RELOAD_KEY);
+    }
+    reloadWithCacheBypass();
   };
 
   handleGoHome = () => {
     window.location.assign("/");
   };
+
+  componentDidMount(): void {
+    if (typeof window === "undefined") return;
+    if (!window.location.search.includes("reload=")) {
+      window.sessionStorage.removeItem(CHUNK_ERROR_RELOAD_KEY);
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("reload");
+    window.history.replaceState(window.history.state, "", url.toString());
+    window.sessionStorage.removeItem(CHUNK_ERROR_RELOAD_KEY);
+  }
 
   render() {
     if (!this.state.hasError) {
