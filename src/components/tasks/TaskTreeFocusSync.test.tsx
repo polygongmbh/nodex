@@ -1,9 +1,12 @@
 import { render, screen, fireEvent } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TaskTree } from "./TaskTree";
 import { TaskViewStatusRow } from "./TaskViewStatusRow";
+import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import type { Channel, Relay, Task } from "@/types";
 import type { Person } from "@/types/person";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: () => ({ user: { id: "me" } }),
@@ -46,21 +49,40 @@ const childTask: Task = {
   parentId: "root",
 };
 
+const doneGrandchildTask: Task = {
+  ...rootTask,
+  id: "done-grandchild",
+  content: "Done grandchild",
+  parentId: "root",
+  status: "done",
+};
+
+function renderTaskTree(
+  ui: ReactNode,
+  surfaceOverrides: Partial<FeedSurfaceState> = {}
+) {
+  const surfaceState: FeedSurfaceState = {
+    relays,
+    channels,
+    composeChannels: channels,
+    people,
+    mentionablePeople: people,
+    searchQuery: "",
+    quickFilters: makeQuickFilterState(),
+    channelMatchMode: "and",
+    ...surfaceOverrides,
+  };
+
+  return render(<FeedSurfaceProvider value={surfaceState}>{ui}</FeedSurfaceProvider>);
+}
+
 describe("TaskTree focus sync", () => {
   it("uses focusedTaskId as context and supports going up through focus dispatch", () => {
     dispatchFeedInteraction.mockClear();
-    render(
+    renderTaskTree(
       <>
         <TaskViewStatusRow allTasks={[rootTask, childTask]} focusedTaskId="root" />
-        <TaskTree
-          tasks={[rootTask, childTask]}
-          allTasks={[rootTask, childTask]}
-          relays={relays}
-          channels={channels}
-          people={people}
-          searchQuery=""
-          focusedTaskId="root"
-        />
+        <TaskTree tasks={[rootTask, childTask]} allTasks={[rootTask, childTask]} focusedTaskId="root" />
       </>
     );
 
@@ -71,18 +93,10 @@ describe("TaskTree focus sync", () => {
 
   it("activates a task when clicking it from the focused composer", () => {
     dispatchFeedInteraction.mockClear();
-    render(
+    renderTaskTree(
       <>
         <TaskViewStatusRow allTasks={[rootTask, childTask]} focusedTaskId="root" />
-        <TaskTree
-          tasks={[rootTask, childTask]}
-          allTasks={[rootTask, childTask]}
-          relays={relays}
-          channels={channels}
-          people={people}
-          searchQuery=""
-          focusedTaskId="root"
-        />
+        <TaskTree tasks={[rootTask, childTask]} allTasks={[rootTask, childTask]} focusedTaskId="root" />
       </>
     );
 
@@ -100,5 +114,39 @@ describe("TaskTree focus sync", () => {
     fireEvent.click(taskButton);
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "task.focus.change", taskId: "child" });
+  });
+
+  it("keeps done subtasks behind the third fold state when only broader scope filters are active", () => {
+    dispatchFeedInteraction.mockClear();
+    renderTaskTree(
+      <TaskTree
+        tasks={[rootTask, childTask, doneGrandchildTask]}
+        allTasks={[rootTask, childTask, doneGrandchildTask]}
+      />,
+      {
+        quickFilters: makeQuickFilterState({ recentEnabled: true, recentDays: 30 }),
+      }
+    );
+
+    const foldToggle = screen.getByTestId("tree-fold-toggle-root");
+
+    expect(foldToggle).toHaveAttribute("data-fold-state", "matchingOnly");
+    expect(screen.getByText("Child task")).toBeInTheDocument();
+    expect(screen.queryByText("Done grandchild")).not.toBeInTheDocument();
+
+    fireEvent.click(foldToggle);
+    expect(screen.getByTestId("tree-fold-toggle-root")).toHaveAttribute("data-fold-state", "collapsed");
+    expect(screen.queryByText("Child task")).not.toBeInTheDocument();
+    expect(screen.queryByText("Done grandchild")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("tree-fold-toggle-root"));
+    expect(screen.getByTestId("tree-fold-toggle-root")).toHaveAttribute("data-fold-state", "allVisible");
+    expect(screen.getByText("Child task")).toBeInTheDocument();
+    expect(screen.getByText("Done grandchild")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("tree-fold-toggle-root"));
+    expect(screen.getByTestId("tree-fold-toggle-root")).toHaveAttribute("data-fold-state", "matchingOnly");
+    expect(screen.getByText("Child task")).toBeInTheDocument();
+    expect(screen.queryByText("Done grandchild")).not.toBeInTheDocument();
   });
 });

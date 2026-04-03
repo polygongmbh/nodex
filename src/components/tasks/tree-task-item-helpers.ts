@@ -5,16 +5,17 @@ export type TreeTaskFoldState = "collapsed" | "matchingOnly" | "allVisible";
 
 interface DeriveTreeTaskItemChildrenParams {
   allChildren: Task[];
-  filteredChildren: Task[];
-  hasActiveFilters: boolean;
+  matchingChildren: Task[];
+  hasMatchingFilters: boolean;
+  currentTaskIsDirectMatch: boolean;
 }
 
 export interface TreeTaskItemChildrenState {
   allChildren: Task[];
   allTaskChildren: Task[];
   allCommentChildren: Task[];
-  filteredTaskChildren: Task[];
-  filteredCommentChildren: Task[];
+  matchingTaskChildren: Task[];
+  matchingCommentChildren: Task[];
   defaultMatchingTaskChildren: Task[];
   defaultMatchingCommentChildren: Task[];
   taskChildCount: number;
@@ -26,13 +27,14 @@ export interface TreeTaskItemChildrenState {
 
 export function deriveTreeTaskItemChildren({
   allChildren,
-  filteredChildren,
-  hasActiveFilters,
+  matchingChildren,
+  hasMatchingFilters,
+  currentTaskIsDirectMatch,
 }: DeriveTreeTaskItemChildrenParams): TreeTaskItemChildrenState {
   const allTaskChildren = allChildren.filter((child) => child.taskType === "task");
   const allCommentChildren = allChildren.filter((child) => child.taskType === "comment");
-  const filteredTaskChildren = filteredChildren.filter((child) => child.taskType === "task");
-  const filteredCommentChildren = filteredChildren.filter((child) => child.taskType === "comment");
+  const matchingTaskChildren = matchingChildren.filter((child) => child.taskType === "task");
+  const matchingCommentChildren = matchingChildren.filter((child) => child.taskType === "comment");
   const defaultMatchingTaskChildren = allTaskChildren.filter(
     (child) => !isTaskTerminalStatus(child.status)
   );
@@ -40,15 +42,20 @@ export function deriveTreeTaskItemChildren({
   const taskChildCount = allTaskChildren.length;
   const commentChildCount = allCommentChildren.length;
   const completedTaskChildCount = allTaskChildren.filter((child) => isTaskCompletedStatus(child.status)).length;
-  const matchingTaskCount = hasActiveFilters ? filteredTaskChildren.length : defaultMatchingTaskChildren.length;
-  const matchingCommentCount = hasActiveFilters ? filteredCommentChildren.length : defaultMatchingCommentChildren.length;
+  const shouldUseFilteredMatchingChildren = hasMatchingFilters && !currentTaskIsDirectMatch;
+  const effectiveMatchingTaskChildren = shouldUseFilteredMatchingChildren
+    ? matchingTaskChildren
+    : defaultMatchingTaskChildren;
+  const effectiveMatchingCommentChildren = shouldUseFilteredMatchingChildren
+    ? matchingCommentChildren
+    : defaultMatchingCommentChildren;
 
   return {
     allChildren,
     allTaskChildren,
     allCommentChildren,
-    filteredTaskChildren,
-    filteredCommentChildren,
+    matchingTaskChildren: effectiveMatchingTaskChildren,
+    matchingCommentChildren: effectiveMatchingCommentChildren,
     defaultMatchingTaskChildren,
     defaultMatchingCommentChildren,
     taskChildCount,
@@ -56,7 +63,8 @@ export function deriveTreeTaskItemChildren({
     completedTaskChildCount,
     hasChildren: allChildren.length > 0,
     allVisibleDiffersFromMatching:
-      taskChildCount !== matchingTaskCount || commentChildCount !== matchingCommentCount,
+      taskChildCount !== effectiveMatchingTaskChildren.length ||
+      commentChildCount !== effectiveMatchingCommentChildren.length,
   };
 }
 
@@ -68,5 +76,5 @@ export function getNextTreeTaskFoldState(
   if (current === "collapsed") {
     return allVisibleDiffersFromMatching ? "allVisible" : "matchingOnly";
   }
-  return "matchingOnly";
+  return allVisibleDiffersFromMatching ? "matchingOnly" : "collapsed";
 }

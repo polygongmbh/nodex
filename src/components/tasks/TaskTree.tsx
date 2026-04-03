@@ -68,12 +68,12 @@ export function TaskTree({
   const currentContextTask = treeSelectors.getCurrentContextTask();
   const visibleTasks = treeSelectors.getVisibleTasks();
   const displayedTasks = treeSelectors.getDisplayedTasks({ useMobileFallback: isMobile });
-  const getFilteredChildren = treeSelectors.getFilteredChildren;
+  const getMatchingChildren = treeSelectors.getMatchingChildren;
   const isTaskDirectMatch = treeSelectors.isDirectMatch;
   const composerDefaultContent = treeSelectors.getComposerDefaultContent();
   const { shouldShowScopeFooterHint } =
     treeSelectors.getEmptyStateFlags({ isMobile });
-  const hasActiveFilters = treeSelectors.hasActiveFilters();
+  const hasMatchingFilters = treeSelectors.hasMatchingFilters();
   const handleGoUp = () => {
     if (!currentContextTask) {
       focusTask(null);
@@ -226,13 +226,13 @@ export function TaskTree({
             <TreeTaskItem
               key={task.id}
               task={task}
-              filteredChildren={getFilteredChildren(task.id)}
+              matchingChildren={getMatchingChildren(task.id)}
               childrenMap={childrenMap}
               currentUser={currentUser}
               matchedByFilter={isTaskDirectMatch(task.id)}
               isDirectMatchFn={isTaskDirectMatch}
-              getFilteredChildrenFn={getFilteredChildren}
-              hasActiveFilters={hasActiveFilters}
+              getMatchingChildrenFn={getMatchingChildren}
+              hasMatchingFilters={hasMatchingFilters}
               activeRelays={activeRelays}
               isKeyboardFocused={keyboardFocusedTaskId === task.id}
               compactView={compactTaskCardsEnabled}

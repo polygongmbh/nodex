@@ -49,15 +49,15 @@ import {
 
 interface TreeTaskItemProps {
   task: Task;
-  filteredChildren: Task[];
+  matchingChildren: Task[];
   childrenMap: Map<string | undefined, Task[]>;
   people?: Person[];
   currentUser?: Person;
   depth?: number;
   matchedByFilter?: boolean;
   isDirectMatchFn?: (taskId: string) => boolean;
-  getFilteredChildrenFn: (parentId: string) => Task[];
-  hasActiveFilters?: boolean;
+  getMatchingChildrenFn: (parentId: string) => Task[];
+  hasMatchingFilters?: boolean;
   parentFoldState?: TreeTaskFoldState; // Propagate parent's fold state for recursive expansion
   activeRelays?: Relay[]; // For showing relay source when multiple are active
   isKeyboardFocused?: boolean; // For keyboard navigation highlight
@@ -69,15 +69,15 @@ interface TreeTaskItemProps {
 
 export function TreeTaskItem({
   task,
-  filteredChildren,
+  matchingChildren,
   childrenMap,
   people: peopleProp,
   currentUser,
   depth = 0,
   matchedByFilter = true,
   isDirectMatchFn,
-  getFilteredChildrenFn,
-  hasActiveFilters = false,
+  getMatchingChildrenFn,
+  hasMatchingFilters = false,
   parentFoldState,
   activeRelays = [],
   isKeyboardFocused = false,
@@ -100,13 +100,15 @@ export function TreeTaskItem({
   };
 
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
-  const [localFoldState, setLocalFoldState] = useState<TreeTaskFoldState>("matchingOnly");
-  
-  // If parent is in allVisible state, this child should also be allVisible
-  const foldState: TreeTaskFoldState = parentFoldState === "allVisible" ? "allVisible" : localFoldState;
+  const [localFoldState, setLocalFoldState] = useState<TreeTaskFoldState>(
+    depth > 0 ? "collapsed" : "matchingOnly"
+  );
+  const [hasLocalFoldOverride, setHasLocalFoldOverride] = useState(false);
+  const foldState: TreeTaskFoldState =
+    parentFoldState === "allVisible" && !hasLocalFoldOverride ? "allVisible" : localFoldState;
   const prevStatusRef = useRef(task.status);
   const cheerTimeoutRef = useRef<number | null>(null);
-  const prevHasActiveFiltersRef = useRef(hasActiveFilters);
+  const prevHasMatchingFiltersRef = useRef(hasMatchingFilters);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isCheering, setIsCheering] = useState(false);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
@@ -134,11 +136,12 @@ export function TreeTaskItem({
 
   // Reset fold state when filters change
   useEffect(() => {
-    if (prevHasActiveFiltersRef.current !== hasActiveFilters) {
-      setLocalFoldState("matchingOnly");
-      prevHasActiveFiltersRef.current = hasActiveFilters;
+    if (prevHasMatchingFiltersRef.current !== hasMatchingFilters) {
+      setLocalFoldState(depth > 0 ? "collapsed" : "matchingOnly");
+      setHasLocalFoldOverride(false);
+      prevHasMatchingFiltersRef.current = hasMatchingFilters;
     }
-  }, [hasActiveFilters]);
+  }, [depth, hasMatchingFilters]);
 
   // Auto-expand when marked in-progress, auto-collapse when marked done
   useEffect(() => {
@@ -147,9 +150,11 @@ export function TreeTaskItem({
     
     if (prevStatus !== currentStatus) {
       if (currentStatus === "in-progress") {
-        setLocalFoldState("matchingOnly");
+        setLocalFoldState(depth > 0 ? "collapsed" : "matchingOnly");
+        setHasLocalFoldOverride(false);
       } else if (isTaskTerminalStatus(currentStatus)) {
         setLocalFoldState("collapsed");
+        setHasLocalFoldOverride(false);
         if (isTaskCompletedStatus(currentStatus)) {
           setIsCheering(true);
           if (cheerTimeoutRef.current !== null) {
@@ -164,7 +169,7 @@ export function TreeTaskItem({
       }
       prevStatusRef.current = currentStatus;
     }
-  }, [task.status]);
+  }, [depth, task.status]);
 
   useEffect(() => {
     return () => {
@@ -175,14 +180,13 @@ export function TreeTaskItem({
   }, []);
 
   const allChildren = useMemo(() => childrenMap.get(task.id) || [], [childrenMap, task.id]);
+  const currentTaskIsDirectMatch = isDirectMatchFn ? isDirectMatchFn(task.id) : !hasMatchingFilters;
 
   const {
     allTaskChildren,
     allCommentChildren,
-    filteredTaskChildren,
-    filteredCommentChildren,
-    defaultMatchingTaskChildren,
-    defaultMatchingCommentChildren,
+    matchingTaskChildren,
+    matchingCommentChildren,
     taskChildCount,
     commentChildCount,
     completedTaskChildCount,
@@ -192,10 +196,11 @@ export function TreeTaskItem({
     () =>
       deriveTreeTaskItemChildren({
         allChildren,
-        filteredChildren,
-        hasActiveFilters,
+        matchingChildren,
+        hasMatchingFilters,
+        currentTaskIsDirectMatch,
       }),
-    [allChildren, filteredChildren, hasActiveFilters]
+    [allChildren, currentTaskIsDirectMatch, hasMatchingFilters, matchingChildren]
   );
   const isComment = task.taskType === "comment";
   const isLockedUntilStart = isTaskLockedUntilStart(task);
@@ -206,11 +211,16 @@ export function TreeTaskItem({
   // Cycle through fold states: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setLocalFoldState((prev) => getNextTreeTaskFoldState(prev, allVisibleDiffersFromMatching));
+    setHasLocalFoldOverride(true);
+    setLocalFoldState(getNextTreeTaskFoldState(foldState, allVisibleDiffersFromMatching));
   };
 
   useEffect(() => {
     setIsContentExpanded(false);
+  }, [task.id]);
+
+  useEffect(() => {
+    setHasLocalFoldOverride(false);
   }, [task.id]);
 
   const handleSelect = () => {
@@ -239,15 +249,26 @@ export function TreeTaskItem({
   const showFullMetadataChips =
     !compactView &&
     (hasTaskMetadataChips(task, activeRelays.length) || (typeof task.priority === "number" && !isComment));
+  const matchingChildrenLabel =
+    hasMatchingFilters && !currentTaskIsDirectMatch
+      ? t("tasks.actions.expandMatchingOnly")
+      : t("tasks.actions.expandOpenSubtasks");
+  const foldToggleLabel =
+    foldState === "matchingOnly"
+      ? t("tasks.actions.collapseSubtasks")
+      : foldState === "collapsed"
+        ? (allVisibleDiffersFromMatching ? t("tasks.actions.expandAllSubtasks") : matchingChildrenLabel)
+        : matchingChildrenLabel;
 
   // Calculate indentation based on depth
   const indentStyle = depth > 0 ? { marginLeft: `${depth * 1.5}rem` } : {};
 
   return (
-    <div className={cn(!matchedByFilter && "opacity-50", isCheering && "motion-completion-cheer")} data-task-id={task.id}>
+    <div className={cn(isCheering && "motion-completion-cheer")} data-task-id={task.id}>
       <div
         className={cn(
           `group flex items-start gap-3 py-2.5 px-3 rounded-lg transition-colors cursor-pointer ${TASK_INTERACTION_STYLES.cardSurface}`,
+          !matchedByFilter && "opacity-50",
           isComment 
             ? "bg-muted/30"
             : "",
@@ -275,9 +296,13 @@ export function TreeTaskItem({
         {/* Expand/Collapse Toggle - three states */}
         {hasChildren && !isComment ? (
           <button
+            type="button"
             onClick={handleToggleExpand}
+            data-testid={`tree-fold-toggle-${task.id}`}
+            data-fold-state={foldState}
             className="flex-shrink-0 p-0.5 rounded hover:bg-muted mt-1"
-            title={foldState === "matchingOnly" ? t("tasks.actions.collapse") : foldState === "collapsed" ? (allVisibleDiffersFromMatching ? t("tasks.actions.expandAll") : t("tasks.actions.expandMatchingOnly")) : t("tasks.actions.expandMatchingOnly")}
+            title={foldToggleLabel}
+            aria-label={foldToggleLabel}
           >
             {foldState === "matchingOnly" ? (
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -677,14 +702,8 @@ export function TreeTaskItem({
               commentsToShow = allCommentChildren;
               tasksToShow = allTaskChildren;
             } else {
-              // matchingOnly: show filtered if filters active, otherwise show non-done tasks
-              if (hasActiveFilters) {
-                commentsToShow = filteredCommentChildren;
-                tasksToShow = filteredTaskChildren;
-              } else {
-                commentsToShow = defaultMatchingCommentChildren;
-                tasksToShow = defaultMatchingTaskChildren;
-              }
+              commentsToShow = matchingCommentChildren;
+              tasksToShow = matchingTaskChildren;
             }
             
             const sortedTasksToShow =
@@ -696,24 +715,24 @@ export function TreeTaskItem({
               <>
                 {/* Comments first (maintain original order) */}
                 {commentsToShow.map((child) => {
-                  const childFilteredChildren = getFilteredChildrenFn(child.id);
+                  const childMatchingChildren = getMatchingChildrenFn(child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible" 
-                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
+                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasMatchingFilters ? true : !isTaskTerminalStatus(child.status)))
                     : true;
                   return (
                     <TreeTaskItem
                       key={child.id}
                       task={child}
-                      filteredChildren={childFilteredChildren}
+                      matchingChildren={childMatchingChildren}
                       childrenMap={childrenMap}
                       currentUser={currentUser}
                       depth={depth + 1}
 
                       matchedByFilter={childMatched}
                       isDirectMatchFn={isDirectMatchFn}
-                      getFilteredChildrenFn={getFilteredChildrenFn}
-                      hasActiveFilters={hasActiveFilters}
+                      getMatchingChildrenFn={getMatchingChildrenFn}
+                      hasMatchingFilters={hasMatchingFilters}
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
                       compactView={compactView}
@@ -724,24 +743,24 @@ export function TreeTaskItem({
                 })}
                 {/* Subtasks after - now sorted */}
                 {sortedTasksToShow.map((child) => {
-                  const childFilteredChildren = getFilteredChildrenFn(child.id);
+                  const childMatchingChildren = getMatchingChildrenFn(child.id);
                   // Determine if child matches based on fold state
                   const childMatched = foldState === "allVisible"
-                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasActiveFilters ? true : !isTaskTerminalStatus(child.status)))
+                    ? (isDirectMatchFn ? isDirectMatchFn(child.id) : (hasMatchingFilters ? true : !isTaskTerminalStatus(child.status)))
                     : true;
                   return (
                     <TreeTaskItem
                       key={child.id}
                       task={child}
-                      filteredChildren={childFilteredChildren}
+                      matchingChildren={childMatchingChildren}
                       childrenMap={childrenMap}
                       currentUser={currentUser}
                       depth={depth + 1}
 
                       matchedByFilter={childMatched}
                       isDirectMatchFn={isDirectMatchFn}
-                      getFilteredChildrenFn={getFilteredChildrenFn}
-                      hasActiveFilters={hasActiveFilters}
+                      getMatchingChildrenFn={getMatchingChildrenFn}
+                      hasMatchingFilters={hasMatchingFilters}
                       parentFoldState={foldState}
                       activeRelays={activeRelays}
                       compactView={compactView}

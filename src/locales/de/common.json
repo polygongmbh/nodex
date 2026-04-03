@@ -958,9 +958,12 @@
       "filterAndMention": "Nach {{authorName}} filtern und {{authorName}} erwähnen",
       "filterTag": "Auf #{{tag}} filtern",
       "collapse": "Einklappen",
+      "collapseSubtasks": "Unteraufgaben ausblenden",
       "expand": "Ausklappen",
       "expandAll": "Ausklappen (alle)",
-      "expandMatchingOnly": "Ausklappen (nur Treffer)",
+      "expandAllSubtasks": "Alle Unteraufgaben anzeigen",
+      "expandMatchingOnly": "Nur gefilterte Unteraufgaben anzeigen",
+      "expandOpenSubtasks": "Offene Unteraufgaben anzeigen",
       "showMore": "Mehr anzeigen",
       "showLess": "Weniger anzeigen"
     },

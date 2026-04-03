@@ -14,8 +14,9 @@ describe("deriveTreeTaskItemChildren", () => {
 
     const summary = deriveTreeTaskItemChildren({
       allChildren: [openChild, doneChild, commentChild],
-      filteredChildren: [openChild, doneChild, commentChild],
-      hasActiveFilters: true,
+      matchingChildren: [openChild, doneChild, commentChild],
+      hasMatchingFilters: true,
+      currentTaskIsDirectMatch: false,
     });
 
     expect(summary.taskChildCount).toBe(2);
@@ -31,8 +32,9 @@ describe("deriveTreeTaskItemChildren", () => {
 
     const summary = deriveTreeTaskItemChildren({
       allChildren: [openChild, closedChild, commentChild],
-      filteredChildren: [],
-      hasActiveFilters: false,
+      matchingChildren: [],
+      hasMatchingFilters: false,
+      currentTaskIsDirectMatch: false,
     });
 
     expect(summary.defaultMatchingTaskChildren.map((child) => child.id)).toEqual(["open-child"]);
@@ -47,12 +49,43 @@ describe("deriveTreeTaskItemChildren", () => {
 
     const summary = deriveTreeTaskItemChildren({
       allChildren: [visibleTask, hiddenTask, visibleComment],
-      filteredChildren: [visibleTask, visibleComment],
-      hasActiveFilters: true,
+      matchingChildren: [visibleTask, visibleComment],
+      hasMatchingFilters: true,
+      currentTaskIsDirectMatch: false,
     });
 
-    expect(summary.filteredTaskChildren.map((child) => child.id)).toEqual(["visible-task"]);
-    expect(summary.filteredCommentChildren.map((child) => child.id)).toEqual(["visible-comment"]);
+    expect(summary.matchingTaskChildren.map((child) => child.id)).toEqual(["visible-task"]);
+    expect(summary.matchingCommentChildren.map((child) => child.id)).toEqual(["visible-comment"]);
+    expect(summary.allVisibleDiffersFromMatching).toBe(true);
+  });
+
+  it("falls back to open children for matching-only when tree matching filters are inactive", () => {
+    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "todo" });
+    const doneChild = makeTask({ id: "done-child", parentId: "parent", status: "done" });
+
+    const summary = deriveTreeTaskItemChildren({
+      allChildren: [openChild, doneChild],
+      matchingChildren: [openChild, doneChild],
+      hasMatchingFilters: false,
+      currentTaskIsDirectMatch: false,
+    });
+
+    expect(summary.matchingTaskChildren.map((child) => child.id)).toEqual(["open-child"]);
+    expect(summary.allVisibleDiffersFromMatching).toBe(true);
+  });
+
+  it("falls back to normal open-child matching when the current task directly matches the filter", () => {
+    const openChild = makeTask({ id: "open-child", parentId: "parent", status: "todo" });
+    const doneChild = makeTask({ id: "done-child", parentId: "parent", status: "done" });
+
+    const summary = deriveTreeTaskItemChildren({
+      allChildren: [openChild, doneChild],
+      matchingChildren: [openChild, doneChild],
+      hasMatchingFilters: true,
+      currentTaskIsDirectMatch: true,
+    });
+
+    expect(summary.matchingTaskChildren.map((child) => child.id)).toEqual(["open-child"]);
     expect(summary.allVisibleDiffersFromMatching).toBe(true);
   });
 });
@@ -72,5 +105,9 @@ describe("getNextTreeTaskFoldState", () => {
 
   it("cycles allVisible back to matchingOnly", () => {
     expect(getNextTreeTaskFoldState("allVisible", true)).toBe("matchingOnly");
+  });
+
+  it("collapses from allVisible when matching already equals all visible", () => {
+    expect(getNextTreeTaskFoldState("allVisible", false)).toBe("collapsed");
   });
 });

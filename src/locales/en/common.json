@@ -958,9 +958,12 @@
       "filterAndMention": "Filter for and mention {{authorName}}",
       "filterTag": "Filter to #{{tag}}",
       "collapse": "Collapse",
+      "collapseSubtasks": "Hide subtasks",
       "expand": "Expand",
       "expandAll": "Expand (all)",
-      "expandMatchingOnly": "Expand (matching only)",
+      "expandAllSubtasks": "Show all subtasks",
+      "expandMatchingOnly": "Show matching subtasks",
+      "expandOpenSubtasks": "Show open subtasks",
       "showMore": "Show more",
       "showLess": "Show less"
     },
