@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Presence status publishing now targets every active writable relay instead of retry-churning the last successful one, skips read-only relays, only sends offline presence on unload/logout, and backs failed relay retries off beyond the per-relay publish timeout.
 - Feed hydration now stays bounded until you scroll or focus deeper items, so media-heavy spaces no longer auto-mount the entire hidden timeline while idle.
 - Audio attachments and standalone audio embeds now stay inline-only with their native player, and task media popup navigation now rotates only through visual media instead of opening audio in the lightbox.
 - The top-level `Index` route now loads eagerly again instead of through `React.lazy`, avoiding stale module-script failures after restarting the Vite dev server with an already open tab.

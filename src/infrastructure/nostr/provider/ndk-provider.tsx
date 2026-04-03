@@ -83,6 +83,12 @@ import {
   relayInfoSummaryToNip11Document,
 } from "@/infrastructure/cache/ndk-cache-adapter";
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
+import {
+  dedupeNormalizedRelayUrls,
+  filterRelayUrlsToWritableSet,
+  normalizeRelayUrl,
+  resolveWritableNdkRelayUrls,
+} from "@/lib/nostr/relay-write-targets";
 export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
@@ -92,24 +98,18 @@ const RELAY_AUTH_PREFLIGHT_TIMEOUT_MS = 4000;
 const KIND0_PROFILE_CACHE_TTL_MS = 120000;
 const KIND0_PROFILE_FAILURE_COOLDOWN_MS = 15000;
 type RelayOperation = "read" | "write" | "unknown";
-const normalizeRelayUrl = (url: string) => url.replace(/\/+$/, "");
 const WS_READY_STATE_CONNECTING = 0;
 const WS_READY_STATE_OPEN = 1;
-
-function dedupeNormalizedRelayUrls(relayUrls: string[]): string[] {
-  return Array.from(
-    new Set(relayUrls.map((relayUrl) => normalizeRelayUrl(relayUrl)).filter(Boolean))
-  );
-}
 
 function resolveOfflinePresenceRelayUrls(params: {
   relayUrlsOverride?: string[];
   registeredRelayUrls?: string[];
+  writableRelayUrls?: string[];
 }): string[] {
-  return dedupeNormalizedRelayUrls([
+  return filterRelayUrlsToWritableSet([
     ...(params.relayUrlsOverride || []),
     ...(params.registeredRelayUrls || []),
-  ]);
+  ], new Set(dedupeNormalizedRelayUrls(params.writableRelayUrls || [])));
 }
 
 function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
@@ -1713,6 +1713,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       const relayUrls = resolveOfflinePresenceRelayUrls({
         relayUrlsOverride,
         registeredRelayUrls: presenceRelayUrlsRef.current,
+        writableRelayUrls: resolveWritableNdkRelayUrls(relays),
       });
       if (relayUrls.length === 0) return;
       const relaySet = NDKRelaySet.fromRelayUrls(
@@ -1742,9 +1743,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
   const setPresenceRelayUrls = useCallback((relayUrls: string[]) => {
     presenceRelayUrlsRef.current = dedupeNormalizedRelayUrls(relayUrls);
-    nostrDevLog("presence", "Registered presence relay cleanup scope", {
-      relayUrls: presenceRelayUrlsRef.current,
-    });
   }, []);
 
   const logout = useCallback(() => {
@@ -1871,13 +1869,15 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       
       await event.sign();
       signedEventId = event.id;
-      
-      const urls = (relayUrls && relayUrls.length > 0)
-        ? relayUrls
-        : relays.map((r) => r.url);
-      targetRelayUrls = Array.from(
-        new Set((urls.length > 0 ? urls : resolvedDefaultRelays).map(normalizeRelayUrl).filter(Boolean))
-      );
+
+      const writableRelayUrls = resolveWritableNdkRelayUrls(relays);
+      if (relayUrls && relayUrls.length > 0) {
+        targetRelayUrls = filterRelayUrlsToWritableSet(relayUrls, new Set(writableRelayUrls));
+      } else if (writableRelayUrls.length > 0) {
+        targetRelayUrls = writableRelayUrls;
+      } else {
+        targetRelayUrls = dedupeNormalizedRelayUrls(resolvedDefaultRelays);
+      }
       nostrDevLog("publish", "Preparing publish relay set", {
         kind,
         eventTagCount: eventTags.length,
@@ -1885,6 +1885,10 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         reason: relayUrls && relayUrls.length > 0 ? "explicit relay override" : "active relays fallback",
         targetRelayUrls,
       });
+      if (targetRelayUrls.length === 0) {
+        console.warn("Event publish skipped: no writable relay targets available");
+        return { success: false, eventId: event.id };
+      }
       const publishedRelayUrlSet = new Set<string>();
       let rejectionReason: string | undefined;
 

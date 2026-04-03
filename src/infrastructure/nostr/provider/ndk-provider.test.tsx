@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NDKProvider, useNDK } from "./ndk-provider";
 import { fetchRelayInfo } from "../relay-info";
 import { RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
+import { NostrEventKind } from "@/lib/nostr/types";
 
 const mockedNdk = vi.hoisted(() => {
   interface NdkLike {
@@ -346,6 +347,7 @@ function Harness() {
     reconnectRelay,
     loginAsGuest,
     logout,
+    publishEvent,
     relays,
     setPresenceRelayUrls,
   } = useNDK();
@@ -358,8 +360,22 @@ function Harness() {
       <button onClick={() => reconnectRelay("wss://relay.one")}>reconnect relay</button>
       <button onClick={() => reconnectRelay("wss://relay.one", { forceNewSocket: true })}>hard reconnect relay</button>
       <button onClick={() => setPresenceRelayUrls(["wss://relay.two"])}>set presence relays</button>
+      <button onClick={() => setPresenceRelayUrls(["wss://relay.one", "wss://relay.two"])}>set all presence relays</button>
       <button onClick={() => logout()}>logout</button>
       <button onClick={() => void loginAsGuest()}>login as guest</button>
+      <button
+        onClick={() => {
+          void publishEvent(
+            NostrEventKind.TextNote,
+            "hello",
+            [],
+            undefined,
+            ["wss://relay.one", "wss://relay.two"]
+          );
+        }}
+      >
+        publish to both relays
+      </button>
       <output data-testid="relay-state">
         {relays
           .map((relay) => `${relay.url}:${relay.status}`)
@@ -890,6 +906,97 @@ describe("NDKProvider relay lifecycle", () => {
       expect(mockedNdk.publishedEvents).toContainEqual(
         expect.objectContaining({
           kind: 30315,
+          relayUrls: ["wss://relay.two"],
+        })
+      );
+    });
+  });
+
+  it("skips read-only relays when publishing with an explicit relay target list", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/", "wss://relay.two/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two:connected");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      relay.emitServerMessage(
+        '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+    });
+
+    mockedNdk.publishedEvents.length = 0;
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "publish to both relays" }));
+    });
+
+    await waitFor(() => {
+      expect(mockedNdk.publishedEvents).toContainEqual(
+        expect.objectContaining({
+          kind: NostrEventKind.TextNote,
+          relayUrls: ["wss://relay.two"],
+        })
+      );
+    });
+  });
+
+  it("skips read-only relays when publishing logout offline presence", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/", "wss://relay.two/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.two:connected");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      relay.emitServerMessage(
+        '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+    });
+
+    mockedNdk.publishedEvents.length = 0;
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "set all presence relays" }));
+      fireEvent.click(screen.getByRole("button", { name: "logout" }));
+    });
+
+    await waitFor(() => {
+      expect(mockedNdk.publishedEvents).toContainEqual(
+        expect.objectContaining({
+          kind: NostrEventKind.UserStatus,
           relayUrls: ["wss://relay.two"],
         })
       );

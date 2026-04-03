@@ -3,6 +3,12 @@ import { isNostrEventId } from "@/lib/nostr/event-id";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
+  dedupeNormalizedRelayUrls,
+  filterRelayUrlsToWritableSet,
+  normalizeRelayUrl,
+  resolveWritableAppRelayUrls,
+} from "@/lib/nostr/relay-write-targets";
+import {
   NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS,
   NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS,
   buildActivePresenceContent,
@@ -11,12 +17,12 @@ import {
 } from "@/lib/presence-status";
 import type { Relay, Task } from "@/types";
 
-const DEMO_RELAY_ID = "demo";
 const OFFLINE_PRESENCE_FINGERPRINT = "offline";
-const DEFAULT_RELAY_SWITCH_DEBOUNCE_MS = 750;
+const DEFAULT_RELAY_SWITCH_DEBOUNCE_MS = 3000;
 const DEFAULT_UNCHANGED_REFRESH_MS = Math.floor(
   (NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS * 1000) / 2
 );
+const DEFAULT_FAILED_RETRY_MS = 15000;
 
 interface PublishResult {
   success: boolean;
@@ -28,6 +34,12 @@ interface PresencePublishTarget {
   content: string;
   fingerprint: string;
   taskId: string | null;
+}
+
+interface RelayPresenceState {
+  fingerprint: string;
+  lastAttemptedAt: number;
+  lastPublishedAt?: number;
 }
 
 interface BuildRelayScopedPresenceTargetsOptions {
@@ -50,24 +62,7 @@ interface UseRelayScopedPresenceOptions extends BuildRelayScopedPresenceTargetsO
   setPresenceRelayUrls?: (relayUrls: string[]) => void;
   relaySwitchDebounceMs?: number;
   unchangedRefreshMs?: number;
-}
-
-function normalizeRelayUrl(url: string): string {
-  return url.trim().replace(/\/+$/, "");
-}
-
-function dedupeRelayUrls(relayUrls: string[]): string[] {
-  const seen = new Set<string>();
-  const result: string[] = [];
-
-  relayUrls.forEach((relayUrl) => {
-    const normalized = normalizeRelayUrl(relayUrl);
-    if (!normalized || seen.has(normalized)) return;
-    seen.add(normalized);
-    result.push(normalized);
-  });
-
-  return result;
+  failedRetryMs?: number;
 }
 
 function buildActivePresenceFingerprint(currentView: string, taskId: string | null): string {
@@ -79,7 +74,7 @@ function buildTargetGroup(
   currentView: string,
   taskId: string | null
 ): PresencePublishTarget | null {
-  const normalizedRelayUrls = dedupeRelayUrls(relayUrls);
+  const normalizedRelayUrls = dedupeNormalizedRelayUrls(relayUrls);
   if (normalizedRelayUrls.length === 0) return null;
 
   return {
@@ -91,17 +86,19 @@ function buildTargetGroup(
 }
 
 function buildOfflinePresenceTarget(relayUrls: string[]): PresencePublishTarget[] {
-  const normalizedRelayUrls = dedupeRelayUrls(relayUrls);
+  const normalizedRelayUrls = dedupeNormalizedRelayUrls(relayUrls);
   if (normalizedRelayUrls.length === 0) return [];
 
-  return [
-    {
-      relayUrls: normalizedRelayUrls,
-      content: buildOfflinePresenceContent(),
-      fingerprint: OFFLINE_PRESENCE_FINGERPRINT,
-      taskId: null,
-    },
-  ];
+  return [{
+    relayUrls: normalizedRelayUrls,
+    content: buildOfflinePresenceContent(),
+    fingerprint: OFFLINE_PRESENCE_FINGERPRINT,
+    taskId: null,
+  }];
+}
+
+function resolveWritableRelayUrlSet(relays: Relay[]): Set<string> {
+  return new Set(resolveWritableAppRelayUrls(relays));
 }
 
 export function buildRelayScopedPresenceTargets({
@@ -110,9 +107,11 @@ export function buildRelayScopedPresenceTargets({
   relayScopeIds,
   relays,
 }: BuildRelayScopedPresenceTargetsOptions): PresencePublishTarget[] {
-  const relayTargets = relays.filter(
-    (relay) => relay.id !== DEMO_RELAY_ID && Boolean(relay.url) && relayScopeIds.has(relay.id)
-  );
+  const writableRelayUrls = resolveWritableRelayUrlSet(relays);
+  const relayTargets = relays.filter((relay) => {
+    if (!relay.url || !relayScopeIds.has(relay.id)) return false;
+    return writableRelayUrls.has(normalizeRelayUrl(relay.url));
+  });
 
   if (relayTargets.length === 0) {
     return [];
@@ -147,25 +146,24 @@ export function buildRelayScopedPresenceTargets({
 function filterTargetsNeedingPublish(
   targets: PresencePublishTarget[],
   now: number,
-  lastFingerprintByRelayUrl: Map<string, string>,
-  lastPublishedAtByRelayUrl: Map<string, number>,
-  unchangedRefreshMs: number
+  relayStateByRelayUrl: Map<string, RelayPresenceState>,
+  unchangedRefreshMs: number,
+  failedRetryMs: number
 ): PresencePublishTarget[] {
   return targets
     .map((target) => ({
       ...target,
       relayUrls: target.relayUrls.filter((relayUrl) => {
-        const previousFingerprint = lastFingerprintByRelayUrl.get(relayUrl);
-        if (previousFingerprint !== target.fingerprint) {
+        const previous = relayStateByRelayUrl.get(relayUrl);
+        if (!previous || previous.fingerprint !== target.fingerprint) {
           return true;
         }
 
-        const previousPublishedAt = lastPublishedAtByRelayUrl.get(relayUrl);
-        if (previousPublishedAt === undefined) {
-          return true;
+        if (typeof previous.lastPublishedAt === "number") {
+          return now - previous.lastPublishedAt >= unchangedRefreshMs;
         }
 
-        return now - previousPublishedAt >= unchangedRefreshMs;
+        return now - previous.lastAttemptedAt >= failedRetryMs;
       }),
     }))
     .filter((target) => target.relayUrls.length > 0);
@@ -173,33 +171,38 @@ function filterTargetsNeedingPublish(
 
 function getCleanupRelayUrls(
   selectedRelayUrls: string[],
-  lastFingerprintByRelayUrl: Map<string, string>
+  relayStateByRelayUrl: Map<string, RelayPresenceState>,
+  writableRelayUrls: Set<string>
 ): string[] {
-  return dedupeRelayUrls([
+  return filterRelayUrlsToWritableSet([
     ...selectedRelayUrls,
-    ...Array.from(lastFingerprintByRelayUrl.entries())
-      .filter(([, fingerprint]) => fingerprint !== OFFLINE_PRESENCE_FINGERPRINT)
+    ...Array.from(relayStateByRelayUrl.entries())
+      .filter(([, state]) => state.fingerprint !== OFFLINE_PRESENCE_FINGERPRINT)
       .map(([relayUrl]) => relayUrl),
-  ]);
+  ], writableRelayUrls);
 }
 
 function computeNextRefreshDelay(
   selectedRelayUrls: string[],
-  lastPublishedAtByRelayUrl: Map<string, number>,
+  relayStateByRelayUrl: Map<string, RelayPresenceState>,
   unchangedRefreshMs: number,
+  failedRetryMs: number,
   now: number
 ): number | null {
   if (selectedRelayUrls.length === 0) return null;
 
   const refreshAt = selectedRelayUrls.reduce<number | null>((earliest, relayUrl) => {
-    const publishedAt = lastPublishedAtByRelayUrl.get(relayUrl);
-    if (publishedAt === undefined) {
+    const previous = relayStateByRelayUrl.get(relayUrl);
+    if (!previous) {
       return 0;
     }
 
-    const dueAt = publishedAt + unchangedRefreshMs;
-    if (earliest === null || dueAt < earliest) {
-      return dueAt;
+    const nextDueAt = typeof previous.lastPublishedAt === "number"
+      ? previous.lastPublishedAt + unchangedRefreshMs
+      : previous.lastAttemptedAt + failedRetryMs;
+
+    if (earliest === null || nextDueAt < earliest) {
+      return nextDueAt;
     }
     return earliest;
   }, null);
@@ -211,14 +214,27 @@ function computeNextRefreshDelay(
 async function publishPresenceTargets(
   targets: PresencePublishTarget[],
   publishEvent: UseRelayScopedPresenceOptions["publishEvent"],
-  lastFingerprintByRelayUrl: Map<string, string>,
-  lastPublishedAtByRelayUrl: Map<string, number>,
-  expirySeconds: number
+  relayStateByRelayUrl: Map<string, RelayPresenceState>
 ): Promise<void> {
   for (const target of targets) {
-    const expirationUnix = Math.floor(Date.now() / 1000) + expirySeconds;
+    const attemptedRelayUrls = dedupeNormalizedRelayUrls(target.relayUrls);
+    if (attemptedRelayUrls.length === 0) continue;
+
+    const attemptedAt = Date.now();
+    attemptedRelayUrls.forEach((relayUrl) => {
+      relayStateByRelayUrl.set(relayUrl, {
+        fingerprint: target.fingerprint,
+        lastAttemptedAt: attemptedAt,
+      });
+    });
+
+    const expirationUnix = Math.floor(attemptedAt / 1000) + (
+      target.fingerprint === OFFLINE_PRESENCE_FINGERPRINT
+        ? NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
+        : NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS
+    );
     nostrDevLog("presence", "Publishing relay-scoped presence", {
-      relayUrls: target.relayUrls,
+      relayUrls: attemptedRelayUrls,
       fingerprint: target.fingerprint,
       taskId: target.taskId,
     });
@@ -228,20 +244,23 @@ async function publishPresenceTargets(
       target.content,
       buildPresenceTags(expirationUnix),
       undefined,
-      target.relayUrls
+      attemptedRelayUrls
     );
 
-    if (!result.success) continue;
-
-    const publishedRelayUrls = dedupeRelayUrls(
-      result.publishedRelayUrls && result.publishedRelayUrls.length > 0
-        ? result.publishedRelayUrls
-        : target.relayUrls
+    const publishedRelayUrls = dedupeNormalizedRelayUrls(
+      result.success
+        ? ((result.publishedRelayUrls && result.publishedRelayUrls.length > 0)
+            ? result.publishedRelayUrls
+            : attemptedRelayUrls)
+        : []
     );
-    const publishedAt = Date.now();
+
     publishedRelayUrls.forEach((relayUrl) => {
-      lastFingerprintByRelayUrl.set(relayUrl, target.fingerprint);
-      lastPublishedAtByRelayUrl.set(relayUrl, publishedAt);
+      relayStateByRelayUrl.set(relayUrl, {
+        fingerprint: target.fingerprint,
+        lastAttemptedAt: attemptedAt,
+        lastPublishedAt: Date.now(),
+      });
     });
   }
 }
@@ -257,6 +276,7 @@ export function useRelayScopedPresence({
   setPresenceRelayUrls,
   relaySwitchDebounceMs = DEFAULT_RELAY_SWITCH_DEBOUNCE_MS,
   unchangedRefreshMs = DEFAULT_UNCHANGED_REFRESH_MS,
+  failedRetryMs = DEFAULT_FAILED_RETRY_MS,
 }: UseRelayScopedPresenceOptions) {
   const [syncVersion, setSyncVersion] = useState(0);
   const activeTargets = useMemo(
@@ -264,12 +284,12 @@ export function useRelayScopedPresence({
     [currentView, focusedTask, relayScopeIds, relays]
   );
   const selectedRelayUrls = useMemo(
-    () => dedupeRelayUrls(activeTargets.flatMap((target) => target.relayUrls)),
+    () => dedupeNormalizedRelayUrls(activeTargets.flatMap((target) => target.relayUrls)),
     [activeTargets]
   );
+  const writableRelayUrlSet = useMemo(() => resolveWritableRelayUrlSet(relays), [relays]);
   const scopeKey = useMemo(() => selectedRelayUrls.join("|"), [selectedRelayUrls]);
-  const lastPublishedFingerprintByRelayUrlRef = useRef<Map<string, string>>(new Map());
-  const lastPublishedAtByRelayUrlRef = useRef<Map<string, number>>(new Map());
+  const relayStateByRelayUrlRef = useRef<Map<string, RelayPresenceState>>(new Map());
   const previousScopeKeyRef = useRef<string | null>(null);
   const previousUserPubkeyRef = useRef<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -292,17 +312,19 @@ export function useRelayScopedPresence({
     setPresenceRelayUrls(
       getCleanupRelayUrls(
         selectedRelayUrls,
-        lastPublishedFingerprintByRelayUrlRef.current
+        relayStateByRelayUrlRef.current,
+        writableRelayUrlSet
       )
     );
-  }, [presenceEnabled, selectedRelayUrls, setPresenceRelayUrls, userPubkey]);
+  }, [presenceEnabled, selectedRelayUrls, setPresenceRelayUrls, userPubkey, writableRelayUrlSet]);
 
   const publishOfflinePresenceNow = useCallback(async () => {
     if (!presenceEnabled || !userPubkey) return;
 
     const cleanupRelayUrls = getCleanupRelayUrls(
       selectedRelayUrls,
-      lastPublishedFingerprintByRelayUrlRef.current
+      relayStateByRelayUrlRef.current,
+      writableRelayUrlSet
     );
     const offlineTargets = buildOfflinePresenceTarget(cleanupRelayUrls);
     if (offlineTargets.length === 0) return;
@@ -310,15 +332,13 @@ export function useRelayScopedPresence({
     await publishPresenceTargets(
       offlineTargets,
       publishEvent,
-      lastPublishedFingerprintByRelayUrlRef.current,
-      lastPublishedAtByRelayUrlRef.current,
-      NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
+      relayStateByRelayUrlRef.current
     );
 
     if (mountedRef.current) {
       setSyncVersion((version) => version + 1);
     }
-  }, [presenceEnabled, publishEvent, selectedRelayUrls, userPubkey]);
+  }, [presenceEnabled, publishEvent, selectedRelayUrls, userPubkey, writableRelayUrlSet]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -338,8 +358,7 @@ export function useRelayScopedPresence({
     if (!presenceEnabled || !userPubkey) {
       previousScopeKeyRef.current = null;
       previousUserPubkeyRef.current = userPubkey ?? null;
-      lastPublishedFingerprintByRelayUrlRef.current.clear();
-      lastPublishedAtByRelayUrlRef.current.clear();
+      relayStateByRelayUrlRef.current.clear();
       refreshRegisteredRelayUrls();
       return;
     }
@@ -347,54 +366,30 @@ export function useRelayScopedPresence({
     if (previousUserPubkeyRef.current !== userPubkey) {
       previousUserPubkeyRef.current = userPubkey;
       previousScopeKeyRef.current = null;
-      lastPublishedFingerprintByRelayUrlRef.current.clear();
-      lastPublishedAtByRelayUrlRef.current.clear();
+      relayStateByRelayUrlRef.current.clear();
     }
 
     const now = Date.now();
-    const staleActiveRelayUrls = Array.from(
-      lastPublishedFingerprintByRelayUrlRef.current.entries()
-    )
-      .filter(
-        ([relayUrl, fingerprint]) =>
-          fingerprint !== OFFLINE_PRESENCE_FINGERPRINT &&
-          !selectedRelayUrls.includes(relayUrl)
-      )
-      .map(([relayUrl]) => relayUrl);
     const activeTargetsToPublish = filterTargetsNeedingPublish(
       activeTargets,
       now,
-      lastPublishedFingerprintByRelayUrlRef.current,
-      lastPublishedAtByRelayUrlRef.current,
-      unchangedRefreshMs
+      relayStateByRelayUrlRef.current,
+      unchangedRefreshMs,
+      failedRetryMs
     );
     const scopeChanged =
       previousScopeKeyRef.current !== null && previousScopeKeyRef.current !== scopeKey;
     previousScopeKeyRef.current = scopeKey;
 
-    if (staleActiveRelayUrls.length > 0 || activeTargetsToPublish.length > 0) {
+    if (activeTargetsToPublish.length > 0) {
       const delayMs = scopeChanged ? relaySwitchDebounceMs : 0;
       timerRef.current = setTimeout(() => {
         void (async () => {
-          if (staleActiveRelayUrls.length > 0) {
-            await publishPresenceTargets(
-              buildOfflinePresenceTarget(staleActiveRelayUrls),
-              publishEvent,
-              lastPublishedFingerprintByRelayUrlRef.current,
-              lastPublishedAtByRelayUrlRef.current,
-              NIP38_PRESENCE_CLEAR_EXPIRY_SECONDS
-            );
-          }
-
-          if (activeTargetsToPublish.length > 0) {
-            await publishPresenceTargets(
-              activeTargetsToPublish,
-              publishEvent,
-              lastPublishedFingerprintByRelayUrlRef.current,
-              lastPublishedAtByRelayUrlRef.current,
-              NIP38_PRESENCE_ACTIVE_EXPIRY_SECONDS
-            );
-          }
+          await publishPresenceTargets(
+            activeTargetsToPublish,
+            publishEvent,
+            relayStateByRelayUrlRef.current
+          );
 
           if (mountedRef.current) {
             setSyncVersion((version) => version + 1);
@@ -406,8 +401,9 @@ export function useRelayScopedPresence({
 
     const nextRefreshDelay = computeNextRefreshDelay(
       selectedRelayUrls,
-      lastPublishedAtByRelayUrlRef.current,
+      relayStateByRelayUrlRef.current,
       unchangedRefreshMs,
+      failedRetryMs,
       now
     );
     if (nextRefreshDelay === null) {
@@ -422,6 +418,7 @@ export function useRelayScopedPresence({
   }, [
     activeTargets,
     clearTimer,
+    failedRetryMs,
     presenceEnabled,
     publishEvent,
     refreshRegisteredRelayUrls,
