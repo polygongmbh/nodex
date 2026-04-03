@@ -23,6 +23,8 @@ const linkify = new LinkifyIt();
 
 const HASH_LINK_PREFIX = "https://nodex.local/hashtag/";
 const MENTION_LINK_PREFIX = "https://nodex.local/mention/";
+const INLINE_TOKEN_CLASS =
+  `${TASK_INTERACTION_STYLES.inlineLink} inline whitespace-normal break-all align-baseline p-0 border-0 bg-transparent font-inherit`;
 
 function formatPubkeyMention(pubkey: string): string {
   return formatUserFacingPubkey(pubkey);
@@ -329,7 +331,7 @@ function renderMarkdownBlock(
             event.stopPropagation();
             onHashtagClick?.(hashtag);
           }}
-          className={options?.plainHashtags ? "" : TASK_INTERACTION_STYLES.inlineLink}
+          className={options?.plainHashtags ? "inline whitespace-normal break-all align-baseline" : INLINE_TOKEN_CLASS}
           data-onboarding="content-hashtag"
           aria-label={`Filter by #${hashtag}`}
           title={`Filter to #${hashtag}`}
@@ -355,7 +357,7 @@ function renderMarkdownBlock(
             <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
               <button
                 type="button"
-                className={`${TASK_INTERACTION_STYLES.inlineLink} break-all text-left`}
+                className={`${INLINE_TOKEN_CLASS} text-left`}
                 aria-label={`Person actions for ${mentionLabel}`}
               >
                 @{mentionLabel}
@@ -366,7 +368,10 @@ function renderMarkdownBlock(
       }
 
       return (
-        <span className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`} title={`@${userFacingMentionIdentifier}`}>
+        <span
+          className={`${TASK_INTERACTION_STYLES.inlineLink} inline whitespace-normal break-all align-baseline`}
+          title={`@${userFacingMentionIdentifier}`}
+        >
           @{mentionLabel}
         </span>
       );
@@ -382,7 +387,7 @@ function renderMarkdownBlock(
         target="_blank"
         rel="noopener noreferrer"
         onClick={(event) => event.stopPropagation()}
-        className={`${TASK_INTERACTION_STYLES.inlineLink} break-all`}
+        className={`${TASK_INTERACTION_STYLES.inlineLink} inline whitespace-normal break-all align-baseline`}
       >
         {children}
       </a>

@@ -51,6 +51,29 @@ describe("linkifyContent interaction styles", () => {
     expect(hashtag).toBeInTheDocument();
   });
 
+  it("keeps long inline hashtag and mention tokens breakable for clamped content", () => {
+    render(
+      <div>
+        {linkifyContent("Ping @averyveryveryverylongusername about #averyveryveryverylongtag", undefined, {
+          people: [{
+            ...alice,
+            id: "c".repeat(64),
+            name: "averyveryveryverylongusername",
+            displayName: "Avery Long",
+          }],
+        })}
+      </div>
+    );
+
+    const mention = screen.getByRole("button", { name: "Person actions for averyveryveryverylongusername" });
+    const hashtag = screen.getByRole("button", { name: "Filter by #averyveryveryverylongtag" });
+
+    expect(mention.className).toContain("break-all");
+    expect(mention.className).toContain("inline");
+    expect(hashtag.className).toContain("break-all");
+    expect(hashtag.className).toContain("inline");
+  });
+
   it("renders @mentions with resolved @name labels and supports modifier shortcuts", () => {
     const dispatch = renderWithDispatch(
       linkifyContent(`Assign to @${alice.id}`, undefined, {

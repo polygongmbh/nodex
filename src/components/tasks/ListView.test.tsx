@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ListView } from "./ListView";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
+import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 let mockUser: { id: string } | null = { id: "me" };
 const dispatchFeedInteraction = vi.fn();
@@ -309,11 +310,11 @@ describe("ListView priority control", () => {
     expect(screen.getByText("In Progress")).toBeInTheDocument();
   });
 
-  it("renders plain text content previews without autolink in table rows", () => {
+  it("renders breadcrumb-formatted plain text previews without autolink in table rows", () => {
     mockUser = { id: "me" };
     const task = makeTask({
       id: "task-first-line",
-      content: "Top line https://example.com/image.png\nSecond line should be hidden",
+      content: "Top line #frontend **bold** https://example.com/image.png\nSecond line should be hidden",
       status: "todo",
     });
 
@@ -329,9 +330,33 @@ describe("ListView priority control", () => {
       />
     );
 
-    const preview = screen.getByText((value) => value.includes("Top line https://example.com/image.png"));
+    const preview = screen.getByText(formatBreadcrumbLabel(task.content));
     expect(preview).toBeInTheDocument();
-    expect(preview).toHaveTextContent("Second line should be hidden");
+    expect(preview).not.toHaveTextContent("Second line should be hidden");
     expect(screen.queryByRole("link", { name: "https://example.com/image.png" })).not.toBeInTheDocument();
+  });
+
+  it("reuses breadcrumb stripping for raw pubkey mention tokens in table previews", () => {
+    mockUser = { id: "me" };
+    const task = makeTask({
+      id: "task-pubkey-preview",
+      content: "nostr:npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq can you try implementing this",
+      status: "todo",
+    });
+
+    render(
+      <ListView
+        tasks={[task]}
+        allTasks={[task]}
+        relays={[makeRelay()]}
+        channels={[makeChannel()]}
+        people={[makePerson({ id: task.author.id, name: task.author.name, displayName: task.author.displayName })]}
+        currentUser={task.author}
+        searchQuery=""
+      />
+    );
+
+    expect(screen.getByText("nostr npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq can you try implementing this")).toBeInTheDocument();
+    expect(screen.queryByText(/nostr:npub1/i)).not.toBeInTheDocument();
   });
 });

@@ -37,6 +37,7 @@ import {
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
+import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 interface ListViewProps {
   tasks: Task[];
@@ -77,7 +78,7 @@ interface PriorityCellProps {
 }
 
 function getTableContentPreview(content: string): string {
-  return content.trim();
+  return formatBreadcrumbLabel(content);
 }
 
 const PriorityCell = memo(function PriorityCell({

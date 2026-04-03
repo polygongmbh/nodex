@@ -311,7 +311,7 @@ export function FeedTaskCard({
                           type="button"
                           className={cn(
                             "font-medium text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded min-w-0",
-                            isMobile && "max-w-[45vw]"
+                            isMobile && "max-w-full"
                           )}
                           aria-label={t("people.actions.openMenu", { name: authorMeta.primary })}
                         >
