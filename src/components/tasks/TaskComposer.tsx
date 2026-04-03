@@ -52,7 +52,7 @@ interface TaskComposerProps {
   compact?: boolean;
   defaultDueDate?: Date;
   defaultContent?: string;
-  isParentScoped?: boolean;
+  submitPolicy?: TaskComposerSubmitPolicy;
   adaptiveSize?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   draftStorageKey?: string;
@@ -70,19 +70,28 @@ interface TaskComposerProps {
 }
 
 type ComposerMessageType = PostType;
+export interface TaskComposerSubmitPolicy {
+  canInheritParentTags: boolean;
+  requiresSingleWritableRelayForTasks: boolean;
+}
+
+export interface TaskComposerSubmitRequest {
+  content: string;
+  tags: string[];
+  relays: string[];
+  taskType: ComposerMessageType;
+  dueDate?: Date;
+  dueTime?: string;
+  dateType?: TaskDateType;
+  explicitMentionPubkeys?: string[];
+  priority?: number;
+  attachments?: PublishedAttachment[];
+  nip99?: Nip99Metadata;
+  locationGeohash?: string;
+}
+
 export type TaskComposerSubmit = (
-  content: string,
-  tags: string[],
-  relays: string[],
-  taskType: ComposerMessageType,
-  dueDate?: Date,
-  dueTime?: string,
-  dateType?: TaskDateType,
-  explicitMentionPubkeys?: string[],
-  priority?: number,
-  attachments?: PublishedAttachment[],
-  nip99?: Nip99Metadata,
-  locationGeohash?: string
+  request: TaskComposerSubmitRequest
 ) => Promise<TaskCreateResult> | TaskCreateResult;
 
 interface ComposeDraftState {
@@ -105,6 +114,10 @@ const NIP99_TITLE_MAX_LENGTH = 80;
 const NIP99_SUMMARY_MAX_LENGTH = 160;
 const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
 const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.5;
+const ROOT_SUBMIT_POLICY: TaskComposerSubmitPolicy = {
+  canInheritParentTags: false,
+  requiresSingleWritableRelayForTasks: true,
+};
 
 function normalizeListingTextFromContent(content: string): string {
   return content
@@ -193,7 +206,7 @@ export function TaskComposer({
   compact = false, 
   defaultDueDate, 
   defaultContent = "",
-  isParentScoped = false,
+  submitPolicy = ROOT_SUBMIT_POLICY,
   adaptiveSize = false,
   onExpandedChange,
   draftStorageKey,
@@ -874,7 +887,7 @@ export function TaskComposer({
     
     const extractedTags = extractHashtagsFromContent(content);
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
-    if (submitTags.length === 0 && !isParentScoped) {
+    if (submitTags.length === 0 && !submitPolicy.canInheritParentTags) {
       notifyNeedTag(t);
       return;
     }
@@ -914,24 +927,21 @@ export function TaskComposer({
     const submittedPriority = storedPriorityFromDisplay(priority);
     try {
       const normalizedLocationGeohash = normalizeGeohash(locationGeohash);
-      const submitArgs = [
+      const request: TaskComposerSubmitRequest = {
         content,
-        submitTags,
-        effectiveSelectedRelayIds,
-        effectiveTaskType,
-        submissionDueDate,
-        submissionDueTime,
-        submissionDateType,
+        tags: submitTags,
+        relays: effectiveSelectedRelayIds,
+        taskType: effectiveTaskType,
+        dueDate: submissionDueDate,
+        dueTime: submissionDueTime,
+        dateType: submissionDateType,
         explicitMentionPubkeys,
-        submittedPriority,
-        uploadedAttachments,
-        listingMetadata,
-      ] as const;
-      result = await Promise.resolve(
-        normalizedLocationGeohash
-          ? onSubmit(...submitArgs, normalizedLocationGeohash)
-          : onSubmit(...submitArgs)
-      );
+        priority: submittedPriority,
+        attachments: uploadedAttachments,
+        nip99: listingMetadata,
+        ...(normalizedLocationGeohash ? { locationGeohash: normalizedLocationGeohash } : {}),
+      };
+      result = await Promise.resolve(onSubmit(request));
     } catch (error) {
       console.error("Task submit failed", error);
       notifyTaskCreationFailed(t);
@@ -1036,7 +1046,7 @@ export function TaskComposer({
       }),
   ];
   const hasAtLeastOneTag = countHashtagsInContent(content) + explicitTagNames.length > 0;
-  const canInheritParentTags = isParentScoped;
+  const canInheritParentTags = submitPolicy.canInheritParentTags;
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
@@ -1050,7 +1060,9 @@ export function TaskComposer({
   const selectedRelayObjects = relays.filter((relay) => effectiveSelectedRelayIds.includes(relay.id));
   const hasNoConnectedRelay = !selectedRelayObjects.some(isPostableRelay);
   const hasInvalidRootTaskRelaySelection =
-    taskType === "task" && !isParentScoped && (effectiveSelectedRelayIds.length !== 1 || hasNoConnectedRelay);
+    taskType === "task"
+    && submitPolicy.requiresSingleWritableRelayForTasks
+    && (effectiveSelectedRelayIds.length !== 1 || hasNoConnectedRelay);
   const isCommentLikeRootPostType = taskType === "comment" || taskType === "offer" || taskType === "request";
   const hasInvalidRootCommentRelaySelection =
     isCommentLikeRootPostType && hasNoConnectedRelay;

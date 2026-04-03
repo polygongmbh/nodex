@@ -15,6 +15,7 @@ import {
   getRequestComposerInput,
   getTaskComposerInput,
 } from "@/test/ui";
+import type { TaskComposerSubmitRequest } from "./TaskComposer";
 
 let mockUser: { id: string } | null = { id: "me" };
 
@@ -208,6 +209,17 @@ const getHashtagChip = (tag: string) => getChipButton("hashtag", tag);
 const queryHashtagChip = (tag: string) => queryChipButton("hashtag", tag);
 const getMentionChip = (value: string) => getChipButton("mention", value);
 const queryMentionChip = (value: string) => queryChipButton("mention", value);
+const parentScopedSubmitPolicy = {
+  canInheritParentTags: true,
+  requiresSingleWritableRelayForTasks: false,
+} as const;
+
+function expectSubmittedRequest(
+  onSubmit: ReturnType<typeof vi.fn>,
+  request: Partial<TaskComposerSubmitRequest>
+) {
+  expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining(request));
+}
 
 describe("TaskComposer hashtag autocomplete", () => {
   beforeEach(() => {
@@ -392,11 +404,11 @@ describe("TaskComposer hashtag autocomplete", () => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
     });
 
-    const [content, tags, relayIds, taskType] = onSubmit.mock.calls[0];
-    expect(content).toBe("Ship #backend now");
-    expect(tags).toContain("backend");
-    expect(Array.isArray(relayIds)).toBe(true);
-    expect(taskType).toBe("task");
+    const [request] = onSubmit.mock.calls[0] as [TaskComposerSubmitRequest];
+    expect(request.content).toBe("Ship #backend now");
+    expect(request.tags).toContain("backend");
+    expect(Array.isArray(request.relays)).toBe(true);
+    expect(request.taskType).toBe("task");
   });
 
   it("disables the desktop submit button when the textbox is actually empty", () => {
@@ -574,18 +586,14 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.click(screen.getByRole("button", { name: "Post Request" }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Need a designer #design",
-        ["design"],
-        ["demo"],
-        "request",
-        undefined,
-        undefined,
-        undefined,
-        [],
-        undefined,
-        [],
-        {
+      expectSubmittedRequest(onSubmit, {
+        content: "Need a designer #design",
+        tags: ["design"],
+        relays: ["demo"],
+        taskType: "request",
+        explicitMentionPubkeys: [],
+        attachments: [],
+        nip99: {
           identifier: undefined,
           title: "Need designer for mobile UI",
           summary: undefined,
@@ -595,8 +603,8 @@ describe("TaskComposer hashtag autocomplete", () => {
           frequency: undefined,
           status: "active",
           publishedAt: undefined,
-        }
-      );
+        },
+      });
     });
   });
 
@@ -679,18 +687,14 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.click(screen.getByRole("button", { name: "Post Offer" }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Selling mountain bike @alice@example.com #bikes",
-        ["bikes"],
-        ["demo"],
-        "offer",
-        undefined,
-        undefined,
-        undefined,
-        [],
-        undefined,
-        [],
-        {
+      expectSubmittedRequest(onSubmit, {
+        content: "Selling mountain bike @alice@example.com #bikes",
+        tags: ["bikes"],
+        relays: ["demo"],
+        taskType: "offer",
+        explicitMentionPubkeys: [],
+        attachments: [],
+        nip99: {
           identifier: undefined,
           title: "Selling mountain bike",
           summary: undefined,
@@ -700,8 +704,8 @@ describe("TaskComposer hashtag autocomplete", () => {
           frequency: undefined,
           status: "active",
           publishedAt: undefined,
-        }
-      );
+        },
+      });
     });
   });
 
@@ -865,19 +869,15 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship ",
-        ["backend"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship ",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -909,19 +909,15 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship ",
-        ["backend"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship ",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -956,19 +952,15 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship ",
-        ["backend"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship ",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -1000,19 +992,15 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship ",
-        ["brandnew"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship ",
+        tags: ["brandnew"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -1112,19 +1100,14 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.keyDown(textarea, { key: "Enter", altKey: true });
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship #backend now",
-        ["backend"],
-        ["demo"],
-        "comment",
-        undefined,
-        undefined,
-        undefined,
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship #backend now",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "comment",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -1137,7 +1120,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        isParentScoped
+        submitPolicy={parentScopedSubmitPolicy}
       />
     );
 
@@ -1150,19 +1133,14 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Looks good #backend",
-        ["backend"],
-        ["demo"],
-        "comment",
-        undefined,
-        undefined,
-        undefined,
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Looks good #backend",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "comment",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -1263,19 +1241,15 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship #backend with ",
-        ["backend"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        ["f".repeat(64)],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship #backend with ",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: ["f".repeat(64)],
+        attachments: [],
+      });
     });
   });
 
@@ -1310,19 +1284,15 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship #backend with ",
-        ["backend"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        ["f".repeat(64)],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship #backend with ",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: ["f".repeat(64)],
+        attachments: [],
+      });
     });
   });
 
@@ -1349,7 +1319,8 @@ describe("TaskComposer hashtag autocomplete", () => {
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalled();
     });
-    expect((onSubmit.mock.calls as unknown[][])[0][0]).toContain("@al");
+    const [request] = onSubmit.mock.calls[0] as [TaskComposerSubmitRequest];
+    expect(request.content).toContain("@al");
   });
 
   it("removes metadata-only hashtag chip when clicked", async () => {
@@ -1412,19 +1383,15 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship #backend with ",
-        ["backend"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship #backend with ",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -1593,19 +1560,15 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship feature now",
-        ["backend"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship feature now",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
 
     expect(getHashtagChip("backend")).toBeInTheDocument();
@@ -1634,19 +1597,15 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship #backend now",
-        ["backend"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [alicePubkey],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship #backend now",
+        tags: ["backend"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [alicePubkey],
+        attachments: [],
+      });
     });
 
     expect(getMentionChip(alicePubkey)).toBeInTheDocument();
@@ -2043,19 +2002,15 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Ship #backend now",
-        ["backend"],
-        ["relay-a"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Ship #backend now",
+        tags: ["backend"],
+        relays: ["relay-a"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
@@ -2088,7 +2043,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        isParentScoped
+        submitPolicy={parentScopedSubmitPolicy}
       />
     );
 
@@ -2098,19 +2053,15 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Follow-up update for this thread",
-        [],
-        ["relay-a", "relay-b"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Follow-up update for this thread",
+        tags: [],
+        relays: ["relay-a", "relay-b"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -2132,19 +2083,15 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.click(screen.getByRole("button", { name: /create task/i }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "email#backend release #design",
-        ["design"],
-        ["demo"],
-        "task",
-        undefined,
-        undefined,
-        "due",
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "email#backend release #design",
+        tags: ["design"],
+        relays: ["demo"],
+        taskType: "task",
+        dateType: "due",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -2238,19 +2185,14 @@ describe("TaskComposer hashtag autocomplete", () => {
     fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(
-        "Looks good #backend",
-        ["backend"],
-        ["relay-a"],
-        "comment",
-        undefined,
-        undefined,
-        undefined,
-        [],
-        undefined,
-        [],
-        undefined
-      );
+      expectSubmittedRequest(onSubmit, {
+        content: "Looks good #backend",
+        tags: ["backend"],
+        relays: ["relay-a"],
+        taskType: "comment",
+        explicitMentionPubkeys: [],
+        attachments: [],
+      });
     });
   });
 
@@ -2361,7 +2303,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        isParentScoped
+        submitPolicy={parentScopedSubmitPolicy}
       />
     );
 
@@ -2387,7 +2329,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        isParentScoped
+        submitPolicy={parentScopedSubmitPolicy}
       />
     );
 

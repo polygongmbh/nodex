@@ -1,17 +1,18 @@
 import { useCallback, useMemo } from "react";
-import { TaskComposer, type TaskComposerSubmit } from "./TaskComposer";
+import {
+  TaskComposer,
+  type TaskComposerSubmit,
+  type TaskComposerSubmitPolicy,
+  type TaskComposerSubmitRequest,
+} from "./TaskComposer";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import type {
   ComposeRestoreRequest,
-  PostType,
   Relay,
   TaskCreateResult,
-  TaskDateType,
   TaskInitialStatus,
-  PublishedAttachment,
-  Nip99Metadata,
 } from "@/types";
 
 interface TaskCreateComposerProps {
@@ -74,22 +75,29 @@ export function TaskCreateComposer({
     const relaysById = new Map(relays.map((relay) => [relay.id, relay] as const));
     return parentTask.relays.every((relayId) => !isWritableRelay(relaysById.get(relayId)));
   }, [parentTask, relays]);
+  const submitPolicy = useMemo<TaskComposerSubmitPolicy>(
+    () => ({
+      canInheritParentTags: Boolean(parentId),
+      requiresSingleWritableRelayForTasks: !parentId,
+    }),
+    [parentId]
+  );
 
   const handleSubmit = useCallback<TaskComposerSubmit>(
-    async (
-      content: string,
-      tags: string[],
-      relays: string[],
-      taskType: PostType,
-      dueDate?: Date,
-      dueTime?: string,
-      dateType?: TaskDateType,
-      explicitMentionPubkeys?: string[],
-      priority?: number,
-      attachments?: PublishedAttachment[],
-      nip99?: Nip99Metadata,
-      locationGeohash?: string
-    ) => {
+    async ({
+      content,
+      tags,
+      relays,
+      taskType,
+      dueDate,
+      dueTime,
+      dateType,
+      explicitMentionPubkeys,
+      priority,
+      attachments,
+      nip99,
+      locationGeohash,
+    }: TaskComposerSubmitRequest) => {
       const event = await dispatchFeedInteraction({
         type: "task.create",
         content,
@@ -128,7 +136,7 @@ export function TaskCreateComposer({
       compact={compact}
       defaultDueDate={defaultDueDate}
       defaultContent={defaultContent}
-      isParentScoped={Boolean(parentId)}
+      submitPolicy={submitPolicy}
       adaptiveSize={adaptiveSize}
       onExpandedChange={onExpandedChange}
       draftStorageKey={draftStorageKey}
