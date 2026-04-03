@@ -152,7 +152,7 @@ export function PersonHoverCard({
     >
       <HoverCardTrigger asChild>
         <span
-          className={cn("inline-flex", triggerClassName)}
+          className={cn("inline align-baseline", triggerClassName)}
           onMouseOver={handleHoverIntent}
           onPointerOver={handleHoverIntent}
           onFocusCapture={() => {

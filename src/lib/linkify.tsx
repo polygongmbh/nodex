@@ -325,9 +325,16 @@ function renderMarkdownBlock(
     if (href?.startsWith(HASH_LINK_PREFIX)) {
       const hashtag = decodeURIComponent(href.slice(HASH_LINK_PREFIX.length));
       return (
-        <button
-          type="button"
+        <span
+          role="button"
+          tabIndex={0}
           onClick={(event) => {
+            event.stopPropagation();
+            onHashtagClick?.(hashtag);
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+            event.preventDefault();
             event.stopPropagation();
             onHashtagClick?.(hashtag);
           }}
@@ -337,7 +344,7 @@ function renderMarkdownBlock(
           title={`Filter to #${hashtag}`}
         >
           #{hashtag}
-        </button>
+        </span>
       );
     }
 
@@ -355,13 +362,14 @@ function renderMarkdownBlock(
         return (
           <PersonHoverCard person={clickablePerson}>
             <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
-              <button
-                type="button"
+              <span
+                role="button"
+                tabIndex={0}
                 className={`${INLINE_TOKEN_CLASS} text-left`}
                 aria-label={`Person actions for ${mentionLabel}`}
               >
                 @{mentionLabel}
-              </button>
+              </span>
             </PersonActionMenu>
           </PersonHoverCard>
         );

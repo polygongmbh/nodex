@@ -659,11 +659,10 @@ describe("FeedView", () => {
       searchQueryOverride: "",
     });
 
-    const mention = screen.getByText("@alice").closest("button");
-    expect(mention).not.toBeNull();
+    const mention = screen.getByRole("button", { name: "Person actions for alice" });
     expect(mention).toHaveTextContent("@alice");
 
-    fireEvent.click(mention as HTMLButtonElement, { ctrlKey: true });
+    fireEvent.click(mention, { ctrlKey: true });
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
       type: "person.filter.exclusive",
       person: author,
