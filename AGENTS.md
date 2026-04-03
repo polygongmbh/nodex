@@ -218,6 +218,7 @@ policies:
 - Prefer explicit, parseable rules for automation; keep prose for rationale and edge cases.
 - When a policy already exists in a machine-readable block or matrix, update that source first and keep prose sections non-duplicative.
 - Avoid introducing new cross-component callback props with bare `(string) => void` signatures for interaction flows; prefer dispatching typed interaction intents at the event site or using a typed command API when a return value is required.
+- Always strive to reduce [Index.tsx](/Users/tj/IT/nostr/nodex/src/pages/Index.tsx); prefer moving new logic into focused controllers, view components, or domain/helpers instead of expanding the page file.
 - Close any background terminal sessions started for the task once they are no longer needed, and always clean them up after each commit before handoff or further workflow steps.
 - When changing shared user-facing copy in locale files, propagate equivalent updates across all supported languages in `src/locales/` in the same change unless an omission is explicitly documented.
 - When adding, removing, renaming, or changing the semantics/defaults of supported environment variables, update `.env.example` in the same change.
