@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import type { Task } from "@/types";
-import { collectTaskMediaItems, type TaskMediaItem } from "@/lib/task-media";
+import { collectTaskPreviewMediaItems, type TaskPreviewMediaItem } from "@/lib/task-media";
 
 interface UseTaskMediaPreviewResult {
-  mediaItems: TaskMediaItem[];
+  mediaItems: TaskPreviewMediaItem[];
   activeMediaIndex: number | null;
-  activeMediaItem: TaskMediaItem | null;
+  activeMediaItem: TaskPreviewMediaItem | null;
   activePostMediaIndex: number;
   activePostMediaCount: number;
   openTaskMedia: (taskId: string, url: string) => void;
@@ -20,7 +20,7 @@ const normalizeUrl = (value: string): string => value.trim().toLowerCase();
 
 export function useTaskMediaPreview(orderedTasks: Task[]): UseTaskMediaPreviewResult {
   const mediaItems = useMemo(() => {
-    return orderedTasks.flatMap((task) => collectTaskMediaItems(task));
+    return orderedTasks.flatMap((task) => collectTaskPreviewMediaItems(task));
   }, [orderedTasks]);
 
   const mediaIndexByTaskAndUrl = useMemo(() => {

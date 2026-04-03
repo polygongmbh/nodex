@@ -162,6 +162,22 @@ describe("linkifyContent interaction styles", () => {
     expect(screen.getByTitle("Embedded video")).toBeInTheDocument();
   });
 
+  it("keeps standalone audio embeds inline without triggering preview open", () => {
+    const onStandaloneMediaClick = vi.fn();
+
+    const { container } = render(
+      <div>
+        {linkifyContent("https://example.com/voice-note.mp3", undefined, {
+          onStandaloneMediaClick,
+        })}
+      </div>
+    );
+
+    fireEvent.click(container.querySelector("audio") as HTMLAudioElement);
+
+    expect(onStandaloneMediaClick).not.toHaveBeenCalled();
+  });
+
   it("preserves multiline rendering and basic markdown formatting", () => {
     render(<div>{linkifyContent("first line\n**bold** and *italic* and `code`")}</div>);
 

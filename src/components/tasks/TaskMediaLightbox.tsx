@@ -46,6 +46,7 @@ export function TaskMediaLightbox({
   const mediaBoundsRef = useRef<HTMLDivElement | null>(null);
   const [overlayBounds, setOverlayBounds] = useState({ top: 0, height: 0 });
   const caption = mediaItem?.alt || mediaItem?.name || mediaItem?.url || "";
+  const isPreviewableMedia = mediaItem?.kind === "image" || mediaItem?.kind === "video";
   const canGoPrevious = mediaCount > 1 && mediaIndex > 0;
   const canGoNext = mediaCount > 1 && mediaIndex < mediaCount - 1;
   const postMediaLabel = `${Math.max(1, postMediaIndex + 1)} / ${Math.max(1, postMediaCount)}`;
@@ -158,7 +159,7 @@ export function TaskMediaLightbox({
       >
         <DialogTitle className="sr-only">{t("mediaLightbox.title")}</DialogTitle>
         <DialogDescription className="sr-only">{t("mediaLightbox.description")}</DialogDescription>
-        {mediaItem ? (
+        {mediaItem && isPreviewableMedia ? (
           <div className="relative min-w-0 max-w-full bg-background">
             <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-muted-foreground">
               <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
@@ -210,11 +211,6 @@ export function TaskMediaLightbox({
                     <video controls preload="metadata" autoPlay={!reducedDataMode} className="block max-h-[68vh] max-w-full w-auto object-contain">
                       <source src={mediaItem.url} />
                     </video>
-                  )}
-                  {mediaItem.kind === "audio" && (
-                    <audio controls preload="metadata" className="w-full max-w-2xl">
-                      <source src={mediaItem.url} />
-                    </audio>
                   )}
                 </div>
                 <button

@@ -82,7 +82,6 @@ export function TaskAttachmentList({
                 preload="metadata"
                 onClick={(event) => {
                   event.stopPropagation();
-                  onMediaClick?.(attachment.url);
                 }}
                 className="w-full"
               >

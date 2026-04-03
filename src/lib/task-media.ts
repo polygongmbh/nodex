@@ -3,6 +3,7 @@ import { guessMimeTypeFromUrl, normalizePublishedAttachments } from "@/lib/attac
 import type { Task } from "@/types";
 
 export type TaskMediaKind = "image" | "video" | "audio";
+export type TaskPreviewMediaKind = Exclude<TaskMediaKind, "audio">;
 
 export interface TaskMediaItem {
   key: string;
@@ -18,6 +19,10 @@ export interface TaskMediaItem {
   previewImageUrl?: string;
   dimensions?: string;
   source: "attachment" | "standalone";
+}
+
+export interface TaskPreviewMediaItem extends TaskMediaItem {
+  kind: TaskPreviewMediaKind;
 }
 
 const IMAGE_MIME_PREFIX = "image/";
@@ -129,4 +134,10 @@ export function collectTaskMediaItems(task: Task): TaskMediaItem[] {
   }
 
   return mediaItems;
+}
+
+export function collectTaskPreviewMediaItems(task: Task): TaskPreviewMediaItem[] {
+  return collectTaskMediaItems(task).filter(
+    (item): item is TaskPreviewMediaItem => item.kind === "image" || item.kind === "video"
+  );
 }
