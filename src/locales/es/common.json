@@ -1036,7 +1036,7 @@
         "includedChannels": "en {{channels}}",
         "includedChannelsLoading": "desde {{channels}}",
         "excludedChannels": "excluyendo {{channels}}",
-        "people": "de {{people}}",
+        "people": "con {{people}}",
         "relays": "en {{relays}}",
         "relaysError": "desde {{relays}}",
         "search": "que coincidan con «{{query}}»",

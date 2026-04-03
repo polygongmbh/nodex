@@ -999,7 +999,7 @@
         "showingOnlyScope": "Das ist alles {{scope}}.",
         "mobileFallback": "Noch nichts im aktuellen Bereich, alles wird angezeigt.",
         "mobileFallbackScoped": "Noch nichts {{scope}}, alles wird angezeigt.",
-        "action": "Erweitere den Bereich oder brich die Stille."
+        "action": "Lockere die Filter oder mach den Anfang."
       },
       "loading": {
         "scopeOnly": "Lade Beiträge {{scope}}.",
@@ -1036,10 +1036,10 @@
         "includedChannels": "in {{channels}}",
         "includedChannelsLoading": "aus {{channels}}",
         "excludedChannels": "ohne {{channels}}",
-        "people": "von {{people}}",
+        "people": "mit {{people}}",
         "relays": "auf {{relays}}",
         "relaysError": "aus {{relays}}",
-        "search": "mit „{{query}}“",
+        "search": "mit dem Text „{{query}}“",
         "recent": "aus den letzten {{days}} Tagen",
         "priority": "mit Priorität P{{priority}} oder höher",
         "contextUnder": "unter {{title}}",

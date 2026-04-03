@@ -1,5 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import i18n from "@/lib/i18n/config";
 import { FilteredEmptyState } from "./FilteredEmptyState";
 import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
@@ -41,7 +42,7 @@ const people: Person[] = [
   },
 ];
 
-const FILTER_SCOPE = "by Alice, in #ops, excluding #frontend, on relay.one";
+const FILTER_SCOPE = "with Alice, in #ops, excluding #frontend, on relay.one";
 const EMPTY_SCOPE_TEXT = `No post yet ${FILTER_SCOPE}`;
 const FOOTER_SCOPE_TEXT = `This is all ${FILTER_SCOPE}`;
 const MOBILE_SCOPE_TEXT = `Nothing yet ${FILTER_SCOPE}, showing everything.`;
@@ -169,6 +170,29 @@ describe("FilteredEmptyState", () => {
     expect(screen.getByText(`${EMPTY_SCOPE_TEXT}.`).className).toContain("text-base");
   });
 
+  it("uses the revised german search and action copy", async () => {
+    await act(async () => {
+      await i18n.changeLanguage("de");
+    });
+    try {
+      render(
+        <FilteredEmptyState
+          relays={singleRelay}
+          channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
+          people={[{ ...people[0], isSelected: false }]}
+          searchQuery="alpha"
+          mode="overlay"
+        />
+      );
+
+      expect(screen.getByText("Noch kein Beitrag auf relay.one, mit dem Text „alpha“.")).toBeInTheDocument();
+      expect(screen.getByText("Lockere die Filter oder mach den Anfang.")).toBeInTheDocument();
+    } finally {
+      await act(async () => {
+        await i18n.changeLanguage("en");
+      });
+    }
+  });
   it("omits inactive quick filters from the scope summary", () => {
     render(
       <FilteredEmptyState
@@ -260,7 +284,7 @@ describe("FilteredEmptyState", () => {
       />
     );
 
-    expect(screen.getByText("Loading posts by Alice, from #ops, excluding #frontend, on relay.one.")).toBeInTheDocument();
+    expect(screen.getByText("Loading posts with Alice, from #ops, excluding #frontend, on relay.one.")).toBeInTheDocument();
     expect(screen.getByText("One calm breath while we pull this in.")).toBeInTheDocument();
   });
 

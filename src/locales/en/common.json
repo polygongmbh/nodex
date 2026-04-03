@@ -1036,7 +1036,7 @@
         "includedChannels": "in {{channels}}",
         "includedChannelsLoading": "from {{channels}}",
         "excludedChannels": "excluding {{channels}}",
-        "people": "by {{people}}",
+        "people": "with {{people}}",
         "relays": "on {{relays}}",
         "relaysError": "from {{relays}}",
         "search": "matching “{{query}}”",
