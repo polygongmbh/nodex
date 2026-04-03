@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { resolveManualRelayReconnectAction, shouldReconnectRelayOnSelection } from "./relay-reconnect-policy";
 
 describe("shouldReconnectRelayOnSelection", () => {
-  it("reconnects only relay transport failure states on selection", () => {
+  it("reconnects for any selection state that maps to a manual reconnect action", () => {
     expect(shouldReconnectRelayOnSelection("disconnected")).toBe(true);
     expect(shouldReconnectRelayOnSelection("connection-error")).toBe(true);
     expect(shouldReconnectRelayOnSelection("verification-failed")).toBe(true);
+    expect(shouldReconnectRelayOnSelection("read-only")).toBe(true);
 
     expect(shouldReconnectRelayOnSelection("connected")).toBe(false);
-    expect(shouldReconnectRelayOnSelection("read-only")).toBe(false);
     expect(shouldReconnectRelayOnSelection("connecting")).toBe(false);
   });
 

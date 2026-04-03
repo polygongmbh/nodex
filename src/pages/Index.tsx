@@ -84,6 +84,7 @@ import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-
 import { createFeedInteractionMiddlewareSkeleton } from "@/features/feed-page/interactions/feed-interaction-middleware-skeleton";
 import {
   createFeedInteractionBus,
+  type FeedInteractionPipelineApi,
   type FeedInteractionHandlerMap,
 } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import { FeedSidebarControllerProvider } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
@@ -175,7 +176,6 @@ const Index = () => {
   } = useRelaySelectionController({
     relays,
     t,
-    reconnectRelay,
   });
   useRelayAutoReconnect({
     relays,
@@ -782,8 +782,14 @@ const Index = () => {
         setManageRouteActive(intent.isActive);
       },
       ...filterHandlers,
-      "sidebar.relay.select": (intent) => {
-        handleRelaySelectIntent(intent.relayId, intent.mode);
+      "sidebar.relay.select": (intent, api: FeedInteractionPipelineApi) => {
+        const reconnectRelayUrl = handleRelaySelectIntent(intent.relayId, intent.mode);
+        if (reconnectRelayUrl) {
+          return api.dispatch({
+            type: "sidebar.relay.reconnect",
+            url: reconnectRelayUrl,
+          });
+        }
       },
       "sidebar.relay.toggle": (intent) => {
         handleRelayToggle(intent.relayId);
@@ -901,7 +907,6 @@ const Index = () => {
       handleAddRelay,
       reorderRelays,
       handleRemoveRelay,
-      reconnectRelay,
       handleChannelPin,
       handleChannelUnpin,
       handlePersonPin,

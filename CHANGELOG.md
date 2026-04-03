@@ -6,7 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
-- Manual relay reconnect now retries relay auth for `read-only` and read-rejected spaces on the existing live session, so reconnect can recover access without unnecessarily tearing down a healthy websocket.
+- Manual relay reconnect now retries relay auth for `read-only` and read-rejected spaces on the existing live session, and activating those spaces in the list now dispatches the same reconnect intent used by the relay-management reload action, so access recovery no longer depends on a separate button click or unnecessary websocket teardown.
 - Guest/profile setup no longer force-opens on reload when the app already has cached or fetched profile data for the current identity, and read-only-only relay sessions no longer prompt for profile publishing that cannot succeed.
 - Task composer mention publishing now follows the visible chip row exactly, so stale hidden person tags are no longer carried into a post when the composer no longer shows that mention.
 - Presence status publishing now targets every active writable relay instead of retry-churning the last successful one, skips read-only relays, only sends offline presence on unload/logout, and backs failed relay retries off beyond the per-relay publish timeout.

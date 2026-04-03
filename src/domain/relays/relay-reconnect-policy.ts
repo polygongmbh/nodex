@@ -1,11 +1,5 @@
 import type { Relay } from "@/types";
 
-const RECONNECT_ON_SELECTION_STATUSES = new Set<NonNullable<Relay["connectionStatus"]>>([
-  "disconnected",
-  "connection-error",
-  "verification-failed",
-]);
-
 export interface ManualRelayReconnectAction {
   reconnectTransport: boolean;
   retryAuth: boolean;
@@ -21,8 +15,8 @@ const DEFAULT_MANUAL_RECONNECT_ACTION: ManualRelayReconnectAction = {
 };
 
 export function shouldReconnectRelayOnSelection(status: Relay["connectionStatus"]): boolean {
-  if (!status) return false;
-  return RECONNECT_ON_SELECTION_STATUSES.has(status);
+  const reconnectAction = resolveManualRelayReconnectAction(status);
+  return reconnectAction.reconnectTransport || reconnectAction.retryAuth;
 }
 
 export function resolveManualRelayReconnectAction(

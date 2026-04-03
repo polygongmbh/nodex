@@ -10,7 +10,6 @@ type RelaySelectionMode = "toggle" | "exclusive";
 interface UseRelaySelectionControllerOptions {
   relays: Relay[];
   t: TFunction;
-  reconnectRelay: (url: string, options?: { forceNewSocket?: boolean }) => void;
   reconnectFailureGraceMs?: number;
 }
 
@@ -50,7 +49,6 @@ function isFailedRelaySelectionTarget(relay: Relay): boolean {
 export function useRelaySelectionController({
   relays,
   t,
-  reconnectRelay,
   reconnectFailureGraceMs = DEFAULT_RECONNECT_FAILURE_GRACE_MS,
 }: UseRelaySelectionControllerOptions) {
   const pendingReconnectSelectionsRef = useRef<Map<string, PendingReconnectSelection>>(new Map());
@@ -106,7 +104,6 @@ export function useRelaySelectionController({
         timeoutId,
       });
       toast.info(t("toasts.info.relayReconnectAttempt", { relayDomain }));
-      reconnectRelay(relayUrl);
     },
   });
 
@@ -170,12 +167,23 @@ export function useRelaySelectionController({
   }, []);
 
   const handleRelaySelectIntent = useCallback((relayId: string, mode: RelaySelectionMode) => {
+    const relay = relays.find((entry) => entry.id === relayId);
+    const relayUrl = relay?.url ? normalizeRelayUrl(relay.url) : null;
+    const isCurrentlyActive = activeRelayIds.has(relayId);
+    const willEnable = mode === "exclusive"
+      ? !(activeRelayIds.size === 1 && isCurrentlyActive)
+      : !isCurrentlyActive;
+    const reconnectRelayUrl = willEnable && relay && isFailedRelaySelectionTarget(relay) && relayUrl
+      ? relayUrl
+      : null;
+
     if (mode === "exclusive") {
       handleRelayExclusive(relayId);
-      return;
+      return reconnectRelayUrl;
     }
     handleRelayToggle(relayId);
-  }, [handleRelayExclusive, handleRelayToggle]);
+    return reconnectRelayUrl;
+  }, [activeRelayIds, handleRelayExclusive, handleRelayToggle, relays]);
 
   return {
     activeRelayIds,
