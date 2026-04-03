@@ -16,6 +16,7 @@ const ndkMock = {
   defaultNoasHostUrl: "",
   isAuthenticating: false,
   isConnected: true,
+  hasWritableRelayConnection: true,
   user: null as NostrUser | null,
   authMethod: null as AuthMethod,
   logout: vi.fn(),
@@ -67,6 +68,7 @@ describe("NostrAuthModal", () => {
     vi.unstubAllEnvs();
     vi.stubEnv("VITE_ALLOW_GUEST_SIGN_IN", "true");
     ndkMock.isConnected = true;
+    ndkMock.hasWritableRelayConnection = true;
     ndkMock.user = null;
     ndkMock.authMethod = null;
     ndkMock.needsProfileSetup = false;
@@ -199,6 +201,23 @@ describe("NostrAuthModal", () => {
     ndkMock.isConnected = true;
   });
 
+  it("does not auto-open setup profile dialog when only read-only relays are available", () => {
+    ndkMock.user = {
+      npub: "npub1test",
+      pubkey: "b".repeat(64),
+      profile: { name: "" },
+    };
+    ndkMock.authMethod = "guest";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
+    ndkMock.isConnected = true;
+    ndkMock.hasWritableRelayConnection = false;
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("uses cached kind:0 metadata for current user display when profile is missing", () => {
     const pubkey = "f".repeat(64);
     window.localStorage.setItem(
@@ -222,6 +241,35 @@ describe("NostrAuthModal", () => {
     render(<NostrUserMenu onSignInClick={vi.fn()} />);
 
     expect(screen.getByText("Cached Alice")).toBeInTheDocument();
+  });
+
+  it("does not auto-open setup profile dialog when cached kind:0 metadata already has a name", () => {
+    const pubkey = "e".repeat(64);
+    window.localStorage.setItem(
+      "nodex.kind0.cache.v1",
+      JSON.stringify([
+        {
+          kind: NostrEventKind.Metadata,
+          pubkey,
+          created_at: 456,
+          content: JSON.stringify({ name: "Cached Guest" }),
+        },
+      ])
+    );
+    ndkMock.user = {
+      npub: "npub1cachedguest",
+      pubkey,
+      profile: {},
+    };
+    ndkMock.authMethod = "guest";
+    ndkMock.needsProfileSetup = true;
+    ndkMock.isProfileSyncing = false;
+    ndkMock.hasWritableRelayConnection = true;
+
+    render(<NostrUserMenu onSignInClick={vi.fn()} />);
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("Cached Guest")).toBeInTheDocument();
   });
 
   it("keeps auto-opened profile setup dialog focused on identity fields", () => {

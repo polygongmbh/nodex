@@ -11,6 +11,7 @@ import {
 } from "@/infrastructure/nostr/profile-metadata";
 import { verifyNip05 } from "@/lib/nostr/nip05-verify";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
+import { currentUserHasResolvedProfile } from "@/lib/current-user-profile-cache";
 import type { NDKRelayStatus, NostrUser } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { PublishCallbacks } from "./use-publish";
@@ -211,14 +212,14 @@ export function useProfileSync(
           profile: nextProfile,
         };
       });
-      setNeedsProfileSetup(!hasRequiredProfileFields(mergedProfile));
+      setNeedsProfileSetup(!currentUserHasResolvedProfile(user.pubkey, mergedProfile));
       setIsProfileSyncing(false);
     };
 
     void syncProfile().catch((error) => {
       if (isStale()) return;
       console.warn("Profile sync failed", error);
-      setNeedsProfileSetup(!(baseProfile && hasRequiredProfileFields(baseProfile)));
+      setNeedsProfileSetup(!currentUserHasResolvedProfile(user.pubkey, baseProfile));
       setIsProfileSyncing(false);
     });
     return () => {

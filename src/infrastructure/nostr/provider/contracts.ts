@@ -41,6 +41,7 @@ export interface NDKRelayStatus {
 export interface NDKContextValue {
   ndk: NDK | null;
   isConnected: boolean;
+  hasWritableRelayConnection: boolean;
   relays: NDKRelayStatus[];
   defaultNoasHostUrl: string;
   user: NostrUser | null;

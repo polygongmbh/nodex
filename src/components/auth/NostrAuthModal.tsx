@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { nip19 } from "nostr-tools";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
-import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
+import { currentUserHasResolvedProfile, resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
@@ -659,6 +659,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     user,
     authMethod,
     isConnected,
+    hasWritableRelayConnection,
     logout,
     getGuestPrivateKey,
     needsProfileSetup,
@@ -753,8 +754,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   useEffect(() => {
     if (
       user
-      && isConnected
+      && hasWritableRelayConnection
       && needsProfileSetup
+      && !currentUserHasResolvedProfile(user.pubkey, effectiveProfile)
       && !isProfileSyncing
       && !isProfileEditorOpen
       && !hasForcedProfileSetupOpen
@@ -762,7 +764,16 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       setHasForcedProfileSetupOpen(true);
       openProfileEditor();
     }
-  }, [user, isConnected, needsProfileSetup, isProfileSyncing, isProfileEditorOpen, hasForcedProfileSetupOpen, openProfileEditor]);
+  }, [
+    user,
+    hasWritableRelayConnection,
+    needsProfileSetup,
+    effectiveProfile,
+    isProfileSyncing,
+    isProfileEditorOpen,
+    hasForcedProfileSetupOpen,
+    openProfileEditor,
+  ]);
 
   const canDismissProfileEditor = !needsProfileSetup || hasForcedProfileSetupOpen;
 

@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Guest/profile setup no longer force-opens on reload when the app already has cached or fetched profile data for the current identity, and read-only-only relay sessions no longer prompt for profile publishing that cannot succeed.
 - Task composer mention publishing now follows the visible chip row exactly, so stale hidden person tags are no longer carried into a post when the composer no longer shows that mention.
 - Presence status publishing now targets every active writable relay instead of retry-churning the last successful one, skips read-only relays, only sends offline presence on unload/logout, and backs failed relay retries off beyond the per-relay publish timeout.
 - Feed hydration now stays bounded until you scroll or focus deeper items, so media-heavy spaces no longer auto-mount the entire hidden timeline while idle.

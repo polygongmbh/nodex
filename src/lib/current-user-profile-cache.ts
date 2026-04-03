@@ -39,3 +39,17 @@ export function resolveCurrentUserProfile(
 
   return merged;
 }
+
+export function currentUserHasResolvedProfile(
+  pubkey: string | null | undefined,
+  profile: ProfileWithCacheFallback | null | undefined
+): boolean {
+  const resolved = resolveCurrentUserProfile(pubkey, profile);
+  return [
+    resolved.name,
+    resolved.displayName,
+    resolved.picture,
+    resolved.about,
+    resolved.nip05,
+  ].some((value) => typeof value === "string" && value.trim().length > 0);
+}

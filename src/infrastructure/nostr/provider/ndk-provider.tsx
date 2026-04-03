@@ -77,6 +77,7 @@ import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
 import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
+import { currentUserHasResolvedProfile } from "@/lib/current-user-profile-cache";
 import {
   createNodexCacheAdapter,
   getFreshRelayInfoSummaryFromCache,
@@ -2038,14 +2039,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           profile: nextProfile,
         };
       });
-      setNeedsProfileSetup(!hasRequiredProfileFields(mergedProfile));
+      setNeedsProfileSetup(!currentUserHasResolvedProfile(user.pubkey, mergedProfile));
       setIsProfileSyncing(false);
     };
 
     void syncProfile().catch((error) => {
       if (isStale()) return;
       console.warn("Profile sync failed", error);
-      setNeedsProfileSetup(!(baseProfile && hasRequiredProfileFields(baseProfile)));
+      setNeedsProfileSetup(!currentUserHasResolvedProfile(user.pubkey, baseProfile));
       setIsProfileSyncing(false);
     });
     return () => {
@@ -2147,9 +2148,14 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     return relays.some((r) => r.status === "connected" || r.status === "read-only");
   }, [relays]);
 
+  const hasWritableRelayConnection = useMemo(() => {
+    return relays.some((relay) => relay.status === "connected");
+  }, [relays]);
+
   const contextValue: NDKContextValue = useMemo(() => ({
     ndk,
     isConnected,
+    hasWritableRelayConnection,
     relays,
     defaultNoasHostUrl: configuredDefaultNoasHostUrl,
     user,
@@ -2178,6 +2184,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   }), [
     ndk,
     isConnected,
+    hasWritableRelayConnection,
     relays,
     configuredDefaultNoasHostUrl,
     user,

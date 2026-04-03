@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { rememberCachedKind0Profile } from "@/infrastructure/nostr/people-from-kind0";
-import { resolveCurrentUserProfile } from "./current-user-profile-cache";
+import {
+  currentUserHasResolvedProfile,
+  resolveCurrentUserProfile,
+} from "./current-user-profile-cache";
 
 describe("resolveCurrentUserProfile", () => {
   beforeEach(() => {
@@ -39,5 +42,20 @@ describe("resolveCurrentUserProfile", () => {
     });
     expect(resolved.name).toBe("Bob Live");
     expect(resolved.displayName).toBe("Bob");
+  });
+
+  it("treats cached current-user metadata as existing profile evidence", () => {
+    const pubkey = "c".repeat(64);
+    rememberCachedKind0Profile(pubkey, {
+      name: "Cached Carol",
+    });
+
+    expect(currentUserHasResolvedProfile(pubkey, {})).toBe(true);
+  });
+
+  it("treats an empty current-user profile as missing profile evidence", () => {
+    const pubkey = "d".repeat(64);
+
+    expect(currentUserHasResolvedProfile(pubkey, {})).toBe(false);
   });
 });
