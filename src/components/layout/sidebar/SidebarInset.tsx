@@ -8,7 +8,7 @@ interface SidebarInsetProps extends HTMLAttributes<HTMLDivElement> {
 
 export function SidebarInset({ className, children, ...props }: SidebarInsetProps) {
   return (
-    <div {...props} className={cn("px-1 lg:px-2", className)}>
+    <div {...props} className={cn("px-3", className)}>
       {children}
     </div>
   );

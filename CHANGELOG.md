@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Desktop sidebar rows and section headers now use the restored left gutter spacing from before the `v2.8.0` sidebar inset refactor, so sidebar content no longer sits tight against the left border.
 - Tree view now restores its old fold semantics: `matching only` is based on tree search and channel matching again instead of the broader scope model, so completed subtasks stay hidden until the explicit `all visible` state.
 - Inline mentions now render more cleanly inside clamped timeline and tree content, and table previews strip raw `npub` mention tokens instead of showing the full `nostr:npub...` payload.
 - Desktop loading and empty-scope overlays now keep their text selectable, and the German scope-search and fallback lines are phrased more naturally.
