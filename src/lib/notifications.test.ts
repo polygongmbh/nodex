@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { toast } from "sonner";
-import { notifyPartialPublish, notifyPublishSavedForRetry } from "./notifications";
+import { notifyPartialPublish, notifyPublishSavedForRetry, notifyPublished } from "./notifications";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -53,5 +53,30 @@ describe("notifyPartialPublish", () => {
     expect(vi.mocked(toast.warning)).toHaveBeenCalledWith(
       'toasts.warnings.partialPublish:{"publishedCount":1,"targetCount":3}'
     );
+  });
+});
+
+describe("notifyPublished", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("uses a space-specific success toast when one space is known", () => {
+    notifyPublished(t, "comment", { spaceNames: ["relay.one"] });
+    expect(vi.mocked(toast.success)).toHaveBeenCalledWith(
+      'toasts.success.publishedToSpaces:{"spaceNames":"relay.one"}'
+    );
+  });
+
+  it("lists all known spaces in the success toast", () => {
+    notifyPublished(t, "comment", { spaceNames: ["relay.one", "relay.two", "relay.three"] });
+    expect(vi.mocked(toast.success)).toHaveBeenCalledWith(
+      'toasts.success.publishedToSpaces:{"spaceNames":"relay.one, relay.two, relay.three"}'
+    );
+  });
+
+  it("falls back to the generic success toast when no space is known", () => {
+    notifyPublished(t, "comment");
+    expect(vi.mocked(toast.success)).toHaveBeenCalledWith("toasts.success.publishedComment");
   });
 });

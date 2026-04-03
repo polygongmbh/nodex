@@ -2272,6 +2272,33 @@ describe("TaskComposer hashtag autocomplete", () => {
       target: { value: "Looks good #backend" },
     });
 
+    expect(screen.getByRole("alert")).toHaveTextContent("Select at least one green space to post a comment");
+    expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select space");
+  });
+
+  it("shows the relay warning banner when a restored comment relay selection is non-writable", () => {
+    const draftStorageKey = "task-composer-read-only-comment-relay";
+    localStorage.setItem(draftStorageKey, JSON.stringify({
+      messageType: "comment",
+      selectedRelays: ["relay-a"],
+    }));
+
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={readOnlyRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        draftStorageKey={draftStorageKey}
+      />
+    );
+
+    fireEvent.change(getCommentComposerInput(), {
+      target: { value: "Looks good #backend" },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Select at least one green space to post a comment");
     expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select space");
   });
 

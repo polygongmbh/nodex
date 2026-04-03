@@ -199,6 +199,7 @@
     "success": {
       "publishedTask": "Tarea publicada en Nostr y añadida localmente",
       "publishedComment": "Comentario publicado en Nostr y añadido localmente",
+      "publishedToSpaces": "Publicado en el space {{spaceNames}}",
       "localTask": "Tarea añadida localmente (solo demo)",
       "localComment": "Comentario añadido localmente (solo demo)",
       "publishUndone": "Publicación cancelada antes de enviar",

@@ -622,7 +622,9 @@ export function useTaskPublishFlow({
           )
         );
         notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
-        notifyPublished(t, normalizedTaskType);
+        notifyPublished(t, normalizedTaskType, {
+          relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
+        });
       }, PUBLISH_UNDO_DELAY_MS);
 
       const toastId = toast(t("toasts.info.pendingPublish", { seconds: Math.floor(PUBLISH_UNDO_DELAY_MS / 1000) }), {
@@ -675,7 +677,9 @@ export function useTaskPublishFlow({
       ...prev,
     ]);
     notifyIfPartialPublish(selectedRelayUrls, publishResult.publishedRelayUrls);
-    notifyPublished(t, normalizedTaskType);
+    notifyPublished(t, normalizedTaskType, {
+      relayUrls: publishResult.publishedRelayUrls?.length ? publishResult.publishedRelayUrls : selectedRelayUrls,
+    });
     return { ok: true, mode: "published" };
   }, [
     allTasks,
@@ -783,7 +787,9 @@ export function useTaskPublishFlow({
       fallbackRelayUrls: relayUrls,
     });
 
-    notifyPublished(t, draft.taskType);
+    notifyPublished(t, draft.taskType, {
+      relayUrls: result.publishedRelayUrls?.length ? result.publishedRelayUrls : relayUrls,
+    });
   }, [
     demoFeedActive,
     demoRelayId,

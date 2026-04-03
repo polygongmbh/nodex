@@ -199,6 +199,7 @@
     "success": {
       "publishedTask": "Task published to Nostr and added locally",
       "publishedComment": "Comment published to Nostr and added locally",
+      "publishedToSpaces": "Published to space {{spaceNames}}",
       "localTask": "Task added locally (demo only)",
       "localComment": "Comment added locally (demo only)",
       "publishUndone": "Post canceled before publish",
