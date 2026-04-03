@@ -2,16 +2,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { NDKProvider } from "@/infrastructure/nostr/ndk-context";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { resolveStartupRelayBootstrap, readStartupRelayBootstrap } from "@/infrastructure/nostr/startup-relays";
 import { readStartupNoasBootstrap, resolveStartupNoasBootstrap } from "@/infrastructure/nostr/startup-noas";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-
-const Index = lazy(() => import("./pages/Index"));
 
 const queryClient = new QueryClient();
 
@@ -80,17 +79,15 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Suspense fallback={null}>
-              <Routes>
-                <Route path="/" element={<Navigate to="/feed" replace />} />
-                <Route path="/signin" element={<Index />} />
-                <Route path="/signup" element={<Index />} />
-                <Route path="/:view" element={<Index />} />
-                <Route path="/:view/:taskId" element={<Index />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            <Routes>
+              <Route path="/" element={<Navigate to="/feed" replace />} />
+              <Route path="/signin" element={<Index />} />
+              <Route path="/signup" element={<Index />} />
+              <Route path="/:view" element={<Index />} />
+              <Route path="/:view/:taskId" element={<Index />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </BrowserRouter>
       </TooltipProvider>
       </NostrBootstrapProvider>

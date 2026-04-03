@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- The top-level `Index` route now loads eagerly again instead of through `React.lazy`, avoiding stale module-script failures after restarting the Vite dev server with an already open tab.
 - The app now retries once with a cache-bypassing reload when a deployed JS chunk or module script goes missing after an update, reducing blank error-boundary failures from stale tabs after a new release.
 - Desktop sidebar rows and section headers now use the restored left gutter spacing from before the `v2.8.0` sidebar inset refactor, so sidebar content no longer sits tight against the left border.
 - Tree view now restores its old fold semantics: `matching only` is based on tree search and channel matching again instead of the broader scope model, so completed subtasks stay hidden until the explicit `all visible` state.
