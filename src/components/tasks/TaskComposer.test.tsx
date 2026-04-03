@@ -84,6 +84,32 @@ const connectedInactiveRelays: Relay[] = [{
   isActive: false,
   connectionStatus: "connected",
 }];
+const mixedWritableRelays: Relay[] = [
+  {
+    id: "relay-a",
+    name: "Relay A",
+    url: "wss://relay-a.example.com",
+    icon: "R",
+    isActive: true,
+    connectionStatus: "connected",
+  },
+  {
+    id: "relay-b",
+    name: "Relay B",
+    url: "wss://relay-b.example.com",
+    icon: "R",
+    isActive: true,
+    connectionStatus: "read-only",
+  },
+];
+const readOnlyRelays: Relay[] = [{
+  id: "relay-a",
+  name: "Relay A",
+  url: "wss://relay-a.example.com",
+  icon: "R",
+  isActive: true,
+  connectionStatus: "read-only",
+}];
 
 const channels: Channel[] = [
   { id: "backend", name: "backend", filterState: "neutral" },
@@ -2188,6 +2214,65 @@ describe("TaskComposer hashtag autocomplete", () => {
 
     expect(screen.queryByText("Select a task to reply to")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /add comment/i })).not.toBeDisabled();
+  });
+
+  it("submits root-level comments with only the writable relay subset", async () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={mixedWritableRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+    fireEvent.change(getCommentComposerInput(), {
+      target: { value: "Looks good #backend" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add comment/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        "Looks good #backend",
+        ["backend"],
+        ["relay-a"],
+        "comment",
+        undefined,
+        undefined,
+        undefined,
+        [],
+        undefined,
+        [],
+        undefined
+      );
+    });
+  });
+
+  it("blocks root-level comments when no writable relay is selected", () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={readOnlyRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+    fireEvent.change(getCommentComposerInput(), {
+      target: { value: "Looks good #backend" },
+    });
+
+    expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select space");
   });
 
   it("uses the comment-specific relay warning when no postable relay is selected", () => {

@@ -14,6 +14,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Inline mentions now render more cleanly inside clamped timeline and tree content, while breadcrumb labels and table previews strip raw `npub` mention tokens and lightweight markdown markers without dropping ordinary punctuation or channel words.
 - Desktop loading and empty-scope overlays now keep their text selectable, and the German scope-search and fallback lines are phrased more naturally.
 - Failed relay rows in the sidebar now show their connection issue across the whole row on hover, read-only relay dots use a larger hover target with shorter status copy, and relays selected during a reconnect attempt now show reconnect/error toasts instead of the default selection toast while still being automatically deselected again if recovery fails.
+- Root comments, offers, and requests now publish through the writable subset of selected relays instead of being blocked or targeting read-only relays, so mixed relay selections still send as long as at least one selected relay can write.
 
 ## [2.11.0] - 2026-04-03
 Minor release for shared person interactions, task metadata consistency, timeline timestamp clarity, and mobile relay-scoped filter alignment.

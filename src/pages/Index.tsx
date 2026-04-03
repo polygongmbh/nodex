@@ -654,6 +654,7 @@ const Index = () => {
     people,
     currentUser,
     user,
+    canCreateContent: authPolicy.canCreateContent,
     effectiveActiveRelayIds,
     demoFeedActive,
     demoRelayId: DEMO_RELAY_ID,

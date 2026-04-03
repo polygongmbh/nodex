@@ -12,6 +12,7 @@ const makeRelay = (id: string, url?: string): Relay => ({
   icon: "R",
   isActive: true,
   url,
+  connectionStatus: "connected",
 });
 
 const makeTask = (overrides: Partial<Task> = {}): Task => ({
@@ -77,6 +78,36 @@ describe("resolveRelaySelectionForSubmission", () => {
       demoRelayId: "demo",
     });
     expect(result.relayIds).toEqual(["relay-a", "relay-b"]);
+  });
+
+  it("keeps only writable selected relays for top-level comments", () => {
+    const result = resolveRelaySelectionForSubmission({
+      taskType: "comment",
+      selectedRelayIds: ["relay-a", "relay-b"],
+      relays: [
+        makeRelay("relay-a", "wss://a.example"),
+        { ...makeRelay("relay-b", "wss://b.example"), connectionStatus: "read-only" },
+      ],
+      demoRelayId: undefined,
+    });
+
+    expect(result.relayIds).toEqual(["relay-a"]);
+    expect(result.errorKey).toBeUndefined();
+  });
+
+  it("rejects top-level comments when every selected relay is non-writable", () => {
+    const result = resolveRelaySelectionForSubmission({
+      taskType: "comment",
+      selectedRelayIds: ["relay-a", "relay-b"],
+      relays: [
+        { ...makeRelay("relay-a", "wss://a.example"), connectionStatus: "read-only" },
+        { ...makeRelay("relay-b", "wss://b.example"), connectionStatus: "disconnected" },
+      ],
+      demoRelayId: undefined,
+    });
+
+    expect(result.relayIds).toEqual([]);
+    expect(result.errorKey).toBe(RELAY_SELECTION_ERROR_KEY);
   });
 
   it("routes child task and comment submissions to parent origin relay", () => {

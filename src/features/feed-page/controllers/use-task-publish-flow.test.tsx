@@ -39,6 +39,8 @@ function Harness({
   publishTaskDueUpdate = vi.fn(async () => true),
   publishTaskPriorityUpdate = vi.fn(async () => true),
   forceLocalMode = false,
+  relays = [makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" })] as Relay[],
+  hasDisconnectedSelectedRelays = false,
   queryClient = new QueryClient(),
 }: {
   publishEvent?: ReturnType<typeof vi.fn>;
@@ -49,21 +51,23 @@ function Harness({
   publishTaskDueUpdate?: ReturnType<typeof vi.fn>;
   publishTaskPriorityUpdate?: ReturnType<typeof vi.fn>;
   forceLocalMode?: boolean;
+  relays?: Relay[];
+  hasDisconnectedSelectedRelays?: boolean;
   queryClient?: QueryClient;
 }) {
   const [localTasks, setLocalTasks] = useState<Task[]>(initialTasks);
   const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const [suppressedNostrEventIds, setSuppressedNostrEventIds] = useState<Set<string>>(new Set());
-  const relay = makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" });
   const availablePeople = people.length > 0 ? people : [currentUser];
   const allTasks = [...localTasks];
   const hook = useTaskPublishFlow({
     allTasks,
-    relays: [relay] as Relay[],
+    relays,
     people: availablePeople,
     currentUser,
     user: { pubkey: currentUser.id, npub: "npub1alice", profile: { name: "Alice" } },
-    effectiveActiveRelayIds: forceLocalMode ? new Set() : new Set(["relay-one"]),
+    canCreateContent: true,
+    effectiveActiveRelayIds: forceLocalMode ? new Set() : new Set(relays.map((relay) => relay.id)),
     demoFeedActive: forceLocalMode,
     demoRelayId: "demo",
     queryClient,
@@ -74,13 +78,14 @@ function Harness({
     setSuppressedNostrEventIds,
     dispatchFrecencyIntent,
     guardInteraction: vi.fn(() => false),
-    hasDisconnectedSelectedRelays: false,
+    hasDisconnectedSelectedRelays,
     resolveRelayUrlsFromIds: (relayIds: string[]) =>
       forceLocalMode
         ? []
-        : relayIds.includes("relay-one")
-          ? ["wss://relay.one"]
-          : [],
+        : relays
+          .filter((relay) => relayIds.includes(relay.id))
+          .map((relay) => relay.url)
+          .filter((url): url is string => Boolean(url)),
     publishEvent,
     publishTaskDueUpdate,
     publishTaskPriorityUpdate,
@@ -104,6 +109,19 @@ function Harness({
         }}
       >
         SubmitRootOfferNoRelay
+      </button>
+      <button
+        onClick={async () => {
+          const result = await hook.handleNewTask(
+            "Need support #general",
+            ["general"],
+            ["relay-one", "relay-two"],
+            "offer"
+          );
+          window.__TEST_RESULT__ = result;
+        }}
+      >
+        SubmitRootOfferMixedRelays
       </button>
       <button
         onClick={async () => {
@@ -299,6 +317,37 @@ describe("useTaskPublishFlow", () => {
     }));
     renderHarness({ publishEvent });
     fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferNoRelay" }));
+
+    await waitFor(() => {
+      expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });
+    });
+    expect(publishEvent).toHaveBeenCalledTimes(1);
+    const [, , , , relayUrls] = publishEvent.mock.calls[0] as unknown as [
+      number,
+      string,
+      string[][] | undefined,
+      string | undefined,
+      string[] | undefined
+    ];
+    expect(relayUrls).toEqual(["wss://relay.one"]);
+  });
+
+  it("publishes root offers when at least one selected relay remains writable", async () => {
+    const publishEvent = vi.fn(async () => ({
+      success: true,
+      eventId: "f".repeat(64),
+      publishedRelayUrls: ["wss://relay.one"],
+    }));
+
+    renderHarness({
+      publishEvent,
+      hasDisconnectedSelectedRelays: true,
+      relays: [
+        makeRelay({ id: "relay-one", url: "wss://relay.one", connectionStatus: "connected" }),
+        makeRelay({ id: "relay-two", url: "wss://relay.two", connectionStatus: "disconnected" }),
+      ],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "SubmitRootOfferMixedRelays" }));
 
     await waitFor(() => {
       expect(window.__TEST_RESULT__).toEqual({ ok: true, mode: "published" });

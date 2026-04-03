@@ -7,16 +7,14 @@ function dedupeRelayIds(relayIds: string[]): string[] {
   return Array.from(new Set(relayIds.filter(Boolean)));
 }
 
-function isPostableRelay(relay: Relay): boolean {
-  return relay.connectionStatus === undefined
-    || relay.connectionStatus === "connected"
-    || relay.connectionStatus === "read-only";
+function isWritableRelay(relay: Relay): boolean {
+  return relay.connectionStatus === undefined || relay.connectionStatus === "connected";
 }
 
-function resolveSingleActivePostableRelayId(relays: Relay[], demoRelayId?: string): string | undefined {
+function resolveSingleActiveWritableRelayId(relays: Relay[], demoRelayId?: string): string | undefined {
   const candidates = relays.filter((relay) =>
     relay.isActive
-    && isPostableRelay(relay)
+    && isWritableRelay(relay)
     && (!demoRelayId || relay.id !== demoRelayId)
   );
   return candidates.length === 1 ? candidates[0]?.id : undefined;
@@ -38,15 +36,21 @@ export function resolveRelaySelectionForSubmission(params: {
   demoRelayId?: string;
 }): { relayIds: string[]; errorKey?: string } {
   const { taskType, selectedRelayIds, relays, parentTask, demoRelayId } = params;
-  const availableRelayIds = new Set(relays.map((relay) => relay.id));
+  const relayById = new Map(relays.map((relay) => [relay.id, relay]));
+  const availableRelayIds = new Set(relayById.keys());
   const normalizedSelectedRelayIds = dedupeRelayIds(selectedRelayIds).filter((relayId) =>
     availableRelayIds.has(relayId)
   );
-  const fallbackSingleRelayId = resolveSingleActivePostableRelayId(relays, demoRelayId);
+  const writableSelectedRelayIds = normalizedSelectedRelayIds.filter((relayId) => {
+    const relay = relayById.get(relayId);
+    return relay ? isWritableRelay(relay) : false;
+  });
+  const fallbackSingleRelayId = resolveSingleActiveWritableRelayId(relays, demoRelayId);
   nostrDevLog("routing", "Evaluating relay selection for submission", {
     taskType,
     selectedRelayIds,
     normalizedSelectedRelayIds,
+    writableSelectedRelayIds,
     hasParentTask: Boolean(parentTask),
     fallbackSingleRelayId: fallbackSingleRelayId || null,
   });
@@ -64,8 +68,8 @@ export function resolveRelaySelectionForSubmission(params: {
 
   if (taskType === "task") {
     const selectedNonDemoRelays = demoRelayId
-      ? normalizedSelectedRelayIds.filter((relayId) => relayId !== demoRelayId)
-      : normalizedSelectedRelayIds;
+      ? writableSelectedRelayIds.filter((relayId) => relayId !== demoRelayId)
+      : writableSelectedRelayIds;
     if (selectedNonDemoRelays.length === 0 && fallbackSingleRelayId) {
       return { relayIds: [fallbackSingleRelayId] };
     }
@@ -74,12 +78,12 @@ export function resolveRelaySelectionForSubmission(params: {
         selectedNonDemoRelays,
         count: selectedNonDemoRelays.length,
       });
-      return { relayIds: normalizedSelectedRelayIds, errorKey: RELAY_SELECTION_ERROR_KEY };
+      return { relayIds: writableSelectedRelayIds, errorKey: RELAY_SELECTION_ERROR_KEY };
     }
     return { relayIds: [selectedNonDemoRelays[0]] };
   }
 
-  if (normalizedSelectedRelayIds.length === 0) {
+  if (writableSelectedRelayIds.length === 0) {
     if (fallbackSingleRelayId) {
       return { relayIds: [fallbackSingleRelayId] };
     }
@@ -89,5 +93,5 @@ export function resolveRelaySelectionForSubmission(params: {
     return { relayIds: [], errorKey: RELAY_SELECTION_ERROR_KEY };
   }
 
-  return { relayIds: normalizedSelectedRelayIds };
+  return { relayIds: writableSelectedRelayIds };
 }

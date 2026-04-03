@@ -66,6 +66,7 @@ interface UseTaskPublishFlowOptions {
   people: Person[];
   currentUser?: Person;
   user: SessionUser | null | undefined;
+  canCreateContent: boolean;
   effectiveActiveRelayIds: Set<string>;
   demoFeedActive: boolean;
   demoRelayId: string;
@@ -114,6 +115,7 @@ export function useTaskPublishFlow({
   people,
   currentUser,
   user,
+  canCreateContent,
   effectiveActiveRelayIds,
   demoFeedActive,
   demoRelayId,
@@ -253,12 +255,6 @@ export function useTaskPublishFlow({
     nip99?: Nip99Metadata,
     locationGeohash?: string
   ): Promise<TaskCreateResult> => {
-    if (guardInteraction("post")) {
-      return hasDisconnectedSelectedRelays
-        ? { ok: false, reason: "relay-selection" }
-        : { ok: false, reason: "not-authenticated" };
-    }
-
     const normalizedMessageType = normalizeComposerMessageType(taskType);
     if (normalizedMessageType !== taskType) {
       console.warn("Unexpected taskType payload; defaulting to task", { taskType });
@@ -274,6 +270,30 @@ export function useTaskPublishFlow({
       : (demoFeedActive ? [demoRelayId] : []);
     const submissionParentId = parentId;
     const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
+    const resolvedRelaySelection = resolveRelaySelectionForSubmission({
+      taskType: normalizedTaskType,
+      selectedRelayIds: requestedRelayIds,
+      relays,
+      parentTask,
+      demoRelayId: demoFeedActive ? demoRelayId : undefined,
+    });
+    const shouldAllowDisconnectedRelayBypass =
+      hasDisconnectedSelectedRelays
+      && normalizedTaskType !== "task"
+      && !parentTask
+      && !resolvedRelaySelection.errorKey;
+
+    if (!canCreateContent) {
+      guardInteraction("post");
+      return { ok: false, reason: "not-authenticated" };
+    }
+
+    if (!shouldAllowDisconnectedRelayBypass && guardInteraction("post")) {
+      return hasDisconnectedSelectedRelays
+        ? { ok: false, reason: "relay-selection" }
+        : { ok: false, reason: "not-authenticated" };
+    }
+
     const normalizedExtractedTags = Array.from(
       new Set(extractedTags.map((tag) => tag.trim().toLowerCase()).filter(Boolean))
     );
@@ -282,14 +302,6 @@ export function useTaskPublishFlow({
       notifyNeedTag(t);
       return { ok: false, reason: "missing-tag" };
     }
-
-    const resolvedRelaySelection = resolveRelaySelectionForSubmission({
-      taskType: normalizedTaskType,
-      selectedRelayIds: requestedRelayIds,
-      relays,
-      parentTask,
-      demoRelayId: demoFeedActive ? demoRelayId : undefined,
-    });
     if (resolvedRelaySelection.errorKey) {
       toast.error(t(resolvedRelaySelection.errorKey));
       nostrDevLog("routing", "Relay selection rejected for submission", {
