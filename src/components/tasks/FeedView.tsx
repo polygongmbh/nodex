@@ -69,6 +69,7 @@ interface FeedViewProps {
 }
 
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
+const FEED_REVEAL_VIEWPORT_MULTIPLIER = 1.5;
 const DESKTOP_FEED_ROW_CONTENT_PADDING = "px-3";
 
 interface FeedDueDateChipProps {
@@ -289,9 +290,12 @@ export function FeedView({
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const [isNearFeedEnd, setIsNearFeedEnd] = useState(false);
 
+  const getRevealThresholdPx = (container: HTMLDivElement) =>
+    Math.max(FEED_REVEAL_SCROLL_THRESHOLD_PX, container.clientHeight * FEED_REVEAL_VIEWPORT_MULTIPLIER);
+
   const isWithinRevealThreshold = (container: HTMLDivElement) => {
     const remainingDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
-    return remainingDistance <= FEED_REVEAL_SCROLL_THRESHOLD_PX;
+    return remainingDistance <= getRevealThresholdPx(container);
   };
 
   useEffect(() => {
@@ -569,7 +573,7 @@ export function FeedView({
         {hasMoreEntries && isNearFeedEnd ? (
           <div className="flex justify-center px-4 py-4 text-center">
             <p className="text-sm text-muted-foreground">
-              {t("feed.hydrating")}
+              {t("feed.loadingMoreEvents")}
             </p>
           </div>
         ) : null}

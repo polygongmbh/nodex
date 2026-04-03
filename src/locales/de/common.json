@@ -936,7 +936,8 @@
     }
   },
   "feed": {
-    "hydrating": "Lade Ereignisse vom Relay…"
+    "hydrating": "Lade Ereignisse vom Relay…",
+    "loadingMoreEvents": "Lade weitere Ereignisse"
   },
   "tasks": {
     "task": "Aufgabe",
