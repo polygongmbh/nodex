@@ -193,7 +193,8 @@
       "locationCaptureFailed": "No se pudo obtener tu ubicación actual",
       "relayVerificationReadFailed": "La verificación del relay para lectura falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
       "relayVerificationWriteFailed": "La verificación del relay para publicación falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
-      "relayVerificationUnknownFailed": "La verificación del relay falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay."
+      "relayVerificationUnknownFailed": "La verificación del relay falló en {{relayUrl}}. Revisa el acceso del firmante y los permisos del relay.",
+      "relayReconnectFailedDeselected": "No se pudo reconectar {{relayDomain}}. El space volvió a deseleccionarse."
     },
     "success": {
       "publishedTask": "Tarea publicada en Nostr y añadida localmente",
@@ -223,7 +224,8 @@
       "relayVerificationUnknown": "Verificación del relay completada en {{relayUrl}}"
     },
     "info": {
-      "pendingPublish": "Enviando en {{seconds}} segundos"
+      "pendingPublish": "Enviando en {{seconds}} segundos",
+      "relayReconnectAttempt": "Intentando reconectar {{relayDomain}}"
     },
     "actions": {
       "undo": "Deshacer"

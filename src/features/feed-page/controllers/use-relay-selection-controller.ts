@@ -1,0 +1,189 @@
+import { useCallback, useEffect, useRef } from "react";
+import type { TFunction } from "i18next";
+import { toast } from "sonner";
+import type { Relay } from "@/types";
+import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
+import { getRelayDomain, useRelayFilterState } from "./use-relay-filter-state";
+
+type RelaySelectionMode = "toggle" | "exclusive";
+
+interface UseRelaySelectionControllerOptions {
+  relays: Relay[];
+  t: TFunction;
+  reconnectRelay: (url: string, options?: { forceNewSocket?: boolean }) => void;
+  reconnectFailureGraceMs?: number;
+}
+
+interface PendingReconnectSelection {
+  relayId: string;
+  sawRecoveringState: boolean;
+  timeoutId: number;
+}
+
+const RECOVERING_STATUSES = new Set<NonNullable<Relay["connectionStatus"]>>([
+  "connecting",
+]);
+const SUCCESS_STATUSES = new Set<NonNullable<Relay["connectionStatus"]>>([
+  "connected",
+  "read-only",
+]);
+const FAILED_STATUSES = new Set<NonNullable<Relay["connectionStatus"]>>([
+  "disconnected",
+  "connection-error",
+  "verification-failed",
+]);
+const DEFAULT_RECONNECT_FAILURE_GRACE_MS = 1500;
+
+function resolveRelayStatus(relay: Relay | undefined): NonNullable<Relay["connectionStatus"]> {
+  if (!relay?.connectionStatus || relay.id === "demo") return "connected";
+  return relay.connectionStatus;
+}
+
+function normalizeRelayUrl(url: string): string {
+  return url.trim().replace(/\/+$/, "");
+}
+
+function isFailedRelaySelectionTarget(relay: Relay): boolean {
+  return Boolean(relay.url) && shouldReconnectRelayOnSelection(relay.connectionStatus);
+}
+
+export function useRelaySelectionController({
+  relays,
+  t,
+  reconnectRelay,
+  reconnectFailureGraceMs = DEFAULT_RECONNECT_FAILURE_GRACE_MS,
+}: UseRelaySelectionControllerOptions) {
+  const pendingReconnectSelectionsRef = useRef<Map<string, PendingReconnectSelection>>(new Map());
+  const relaysRef = useRef(relays);
+
+  const {
+    activeRelayIds,
+    setActiveRelayIds,
+    effectiveActiveRelayIds,
+    handleRelayToggle,
+    handleRelayExclusive,
+    handleToggleAllRelays,
+  } = useRelayFilterState({
+    relays,
+    t,
+    getEnableToastMessage: (relay) => {
+      if (!isFailedRelaySelectionTarget(relay)) return undefined;
+      return null;
+    },
+    onRelayEnabled: (relay) => {
+      if (!isFailedRelaySelectionTarget(relay) || !relay.url) return;
+
+      const relayUrl = normalizeRelayUrl(relay.url);
+      const relayDomain = getRelayDomain(relay, relay.id);
+      const existing = pendingReconnectSelectionsRef.current.get(relay.id);
+      if (existing) {
+        window.clearTimeout(existing.timeoutId);
+      }
+
+      const timeoutId = window.setTimeout(() => {
+        const latestRelay = relaysRef.current.find((entry) => entry.id === relay.id);
+        const latestStatus = resolveRelayStatus(latestRelay);
+        if (FAILED_STATUSES.has(latestStatus)) {
+          setActiveRelayIds((previous) => {
+            if (!previous.has(relay.id)) return previous;
+            const next = new Set(previous);
+            next.delete(relay.id);
+            return next;
+          });
+          toast.error(t("toasts.errors.relayReconnectFailedDeselected", { relayDomain }));
+          pendingReconnectSelectionsRef.current.delete(relay.id);
+          return;
+        }
+
+        if (SUCCESS_STATUSES.has(latestStatus)) {
+          pendingReconnectSelectionsRef.current.delete(relay.id);
+        }
+      }, reconnectFailureGraceMs);
+
+      pendingReconnectSelectionsRef.current.set(relay.id, {
+        relayId: relay.id,
+        sawRecoveringState: false,
+        timeoutId,
+      });
+      toast.info(t("toasts.info.relayReconnectAttempt", { relayDomain }));
+      reconnectRelay(relayUrl);
+    },
+  });
+
+  relaysRef.current = relays;
+
+  const clearPendingReconnectSelection = useCallback((relayId: string) => {
+    const pendingSelection = pendingReconnectSelectionsRef.current.get(relayId);
+    if (!pendingSelection) return;
+    window.clearTimeout(pendingSelection.timeoutId);
+    pendingReconnectSelectionsRef.current.delete(relayId);
+  }, []);
+
+  useEffect(() => {
+    pendingReconnectSelectionsRef.current.forEach((pendingSelection, relayId) => {
+      if (!activeRelayIds.has(relayId)) {
+        clearPendingReconnectSelection(relayId);
+        return;
+      }
+
+      const relay = relays.find((entry) => entry.id === relayId);
+      if (!relay) {
+        clearPendingReconnectSelection(relayId);
+        return;
+      }
+
+      const relayStatus = resolveRelayStatus(relay);
+      if (SUCCESS_STATUSES.has(relayStatus)) {
+        clearPendingReconnectSelection(relayId);
+        return;
+      }
+
+      if (RECOVERING_STATUSES.has(relayStatus)) {
+        pendingReconnectSelectionsRef.current.set(relayId, {
+          ...pendingSelection,
+          sawRecoveringState: true,
+        });
+        return;
+      }
+
+      if (FAILED_STATUSES.has(relayStatus) && pendingSelection.sawRecoveringState) {
+        const relayDomain = getRelayDomain(relay, relayId);
+        setActiveRelayIds((previous) => {
+          if (!previous.has(relayId)) return previous;
+          const next = new Set(previous);
+          next.delete(relayId);
+          return next;
+        });
+        toast.error(t("toasts.errors.relayReconnectFailedDeselected", { relayDomain }));
+        clearPendingReconnectSelection(relayId);
+      }
+    });
+  }, [activeRelayIds, clearPendingReconnectSelection, relays, setActiveRelayIds]);
+
+  useEffect(() => {
+    return () => {
+      pendingReconnectSelectionsRef.current.forEach((pendingSelection) => {
+        window.clearTimeout(pendingSelection.timeoutId);
+      });
+      pendingReconnectSelectionsRef.current.clear();
+    };
+  }, []);
+
+  const handleRelaySelectIntent = useCallback((relayId: string, mode: RelaySelectionMode) => {
+    if (mode === "exclusive") {
+      handleRelayExclusive(relayId);
+      return;
+    }
+    handleRelayToggle(relayId);
+  }, [handleRelayExclusive, handleRelayToggle]);
+
+  return {
+    activeRelayIds,
+    setActiveRelayIds,
+    effectiveActiveRelayIds,
+    handleRelayToggle,
+    handleRelayExclusive,
+    handleRelaySelectIntent,
+    handleToggleAllRelays,
+  };
+}

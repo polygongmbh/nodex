@@ -12,9 +12,13 @@ interface UseRelayFilterStateOptions {
   relays: Relay[];
   t: TFunction;
   onRelayEnabled?: (relay: Relay) => void;
+  getEnableToastMessage?: (
+    relay: Relay,
+    context: { mode: "toggle" | "exclusive" | "all" }
+  ) => string | null | undefined;
 }
 
-function getRelayDomain(relay: Relay | undefined, fallbackId: string): string {
+export function getRelayDomain(relay: Relay | undefined, fallbackId: string): string {
   const relayUrl = relay?.url?.trim();
   if (relayUrl) {
     try {
@@ -30,7 +34,12 @@ function getRelayDomain(relay: Relay | undefined, fallbackId: string): string {
   return fallbackId;
 }
 
-export function useRelayFilterState({ relays, t, onRelayEnabled }: UseRelayFilterStateOptions) {
+export function useRelayFilterState({
+  relays,
+  t,
+  onRelayEnabled,
+  getEnableToastMessage,
+}: UseRelayFilterStateOptions) {
   const [activeRelayIds, setActiveRelayIds] = useState<Set<string>>(() =>
     loadPersistedRelayIds()
   );
@@ -53,11 +62,16 @@ export function useRelayFilterState({ relays, t, onRelayEnabled }: UseRelayFilte
           onRelayEnabled?.(relay);
         }
       }
-      toast(
-        isEnabled
-          ? t("toasts.success.relayFilterDisabled", { relayDomain })
-          : t("toasts.success.relayFilterEnabled", { relayDomain })
-      );
+      if (isEnabled) {
+        toast(t("toasts.success.relayFilterDisabled", { relayDomain }));
+      } else {
+        const enabledToastMessage = relay
+          ? getEnableToastMessage?.(relay, { mode: "toggle" })
+          : undefined;
+        if (enabledToastMessage !== null) {
+          toast(enabledToastMessage ?? t("toasts.success.relayFilterEnabled", { relayDomain }));
+        }
+      }
       return next;
     });
   };
@@ -74,7 +88,12 @@ export function useRelayFilterState({ relays, t, onRelayEnabled }: UseRelayFilte
       if (relay) {
         onRelayEnabled?.(relay);
       }
-      toast(t("toasts.success.showingOnlyRelay", { relayDomain }));
+      const enabledToastMessage = relay
+        ? getEnableToastMessage?.(relay, { mode: "exclusive" })
+        : undefined;
+      if (enabledToastMessage !== null) {
+        toast(enabledToastMessage ?? t("toasts.success.showingOnlyRelay", { relayDomain }));
+      }
       return new Set([id]);
     });
   };

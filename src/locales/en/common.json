@@ -193,7 +193,8 @@
       "locationCaptureFailed": "Unable to capture your current location",
       "relayVerificationReadFailed": "Relay verification failed for reading on {{relayUrl}}. Check signer access and relay permissions.",
       "relayVerificationWriteFailed": "Relay verification failed for publishing on {{relayUrl}}. Check signer access and relay permissions.",
-      "relayVerificationUnknownFailed": "Relay verification failed on {{relayUrl}}. Check signer access and relay permissions."
+      "relayVerificationUnknownFailed": "Relay verification failed on {{relayUrl}}. Check signer access and relay permissions.",
+      "relayReconnectFailedDeselected": "Unable to connect to {{relayDomain}}. It was deselected again."
     },
     "success": {
       "publishedTask": "Task published to Nostr and added locally",
@@ -223,7 +224,8 @@
       "relayVerificationUnknown": "Relay verification succeeded on {{relayUrl}}"
     },
     "info": {
-      "pendingPublish": "Sending in {{seconds}} seconds"
+      "pendingPublish": "Sending in {{seconds}} seconds",
+      "relayReconnectAttempt": "Trying to reconnect {{relayDomain}}"
     },
     "actions": {
       "undo": "Undo"

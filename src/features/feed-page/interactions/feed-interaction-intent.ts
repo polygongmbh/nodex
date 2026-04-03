@@ -32,6 +32,7 @@ export type FeedInteractionIntent =
   | { type: "person.filterAndMention"; person: Person }
   | { type: "filter.clearChannel"; channelId: string }
   | { type: "filter.clearPerson"; personId: string }
+  | { type: "sidebar.relay.select"; relayId: string; mode: "toggle" | "exclusive" }
   | { type: "sidebar.relay.toggle"; relayId: string }
   | { type: "sidebar.relay.exclusive"; relayId: string }
   | { type: "sidebar.relay.toggleAll" }

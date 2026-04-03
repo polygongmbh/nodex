@@ -30,7 +30,6 @@ import { buildFilterSnapshot, type FilterSnapshot } from "@/domain/content/filte
 import type { Nip99ListingStatus } from "@/types";
 import { useIndexFilters } from "@/features/feed-page/controllers/use-index-filters";
 import { useIndexOnboarding } from "@/features/feed-page/controllers/use-index-onboarding";
-import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
 import { useSavedFilterConfigs } from "@/features/feed-page/controllers/use-saved-filter-configs";
 import { useTaskPublishFlow } from "@/features/feed-page/controllers/use-task-publish-flow";
 import { useTaskPublishControls } from "@/features/feed-page/controllers/use-task-publish-controls";
@@ -47,9 +46,9 @@ import { useListingStatusPublish } from "@/features/feed-page/controllers/use-li
 import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-relay-auto-reconnect";
 import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
 import { useRelayScopedPresence } from "@/features/feed-page/controllers/use-relay-scoped-presence";
+import { useRelaySelectionController } from "@/features/feed-page/controllers/use-relay-selection-controller";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
-import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
 import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
@@ -171,19 +170,12 @@ const Index = () => {
     effectiveActiveRelayIds,
     handleRelayToggle,
     handleRelayExclusive,
+    handleRelaySelectIntent,
     handleToggleAllRelays,
-  } = useRelayFilterState({
+  } = useRelaySelectionController({
     relays,
     t,
-    onRelayEnabled: (relay) => {
-      if (
-        relay.id !== DEMO_RELAY_ID &&
-        relay.url &&
-        shouldReconnectRelayOnSelection(relay.connectionStatus)
-      ) {
-        reconnectRelay(relay.url);
-      }
-    },
+    reconnectRelay,
   });
   useRelayAutoReconnect({
     relays,
@@ -789,6 +781,9 @@ const Index = () => {
         setManageRouteActive(intent.isActive);
       },
       ...filterHandlers,
+      "sidebar.relay.select": (intent) => {
+        handleRelaySelectIntent(intent.relayId, intent.mode);
+      },
       "sidebar.relay.toggle": (intent) => {
         handleRelayToggle(intent.relayId);
       },

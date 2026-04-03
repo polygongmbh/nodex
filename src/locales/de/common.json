@@ -193,7 +193,8 @@
       "locationCaptureFailed": "Aktueller Standort konnte nicht ermittelt werden",
       "relayVerificationReadFailed": "Relay-Verifizierung fürs Lesen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
       "relayVerificationWriteFailed": "Relay-Verifizierung fürs Veröffentlichen auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
-      "relayVerificationUnknownFailed": "Relay-Verifizierung auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen."
+      "relayVerificationUnknownFailed": "Relay-Verifizierung auf {{relayUrl}} fehlgeschlagen. Signer-Zugriff und Relay-Berechtigungen prüfen.",
+      "relayReconnectFailedDeselected": "Verbindung zu {{relayDomain}} konnte nicht wiederhergestellt werden. Der Space wurde wieder abgewählt."
     },
     "success": {
       "publishedTask": "Aufgabe an Nostr veröffentlicht und lokal hinzugefügt",
@@ -223,7 +224,8 @@
       "relayVerificationUnknown": "Relay-Verifizierung auf {{relayUrl}} erfolgreich"
     },
     "info": {
-      "pendingPublish": "Wird in {{seconds}} Sekunden gesendet"
+      "pendingPublish": "Wird in {{seconds}} Sekunden gesendet",
+      "relayReconnectAttempt": "Verbindung zu {{relayDomain}} wird erneut versucht"
     },
     "actions": {
       "undo": "Rückgängig"
