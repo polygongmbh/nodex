@@ -2,9 +2,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect, useState, type ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
-import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import type { Channel, Person, Relay, Task } from "@/types";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 import {
   FeedTaskViewModelProvider,
   type FeedTaskViewModel,
@@ -179,7 +179,7 @@ const baseSurfaceState: FeedSurfaceState = {
   composeChannels: channels,
   people,
   searchQuery: "",
-  quickFilters: normalizeQuickFilterState(),
+  quickFilters: makeQuickFilterState(),
   channelMatchMode: "and",
 };
 
@@ -213,7 +213,7 @@ function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
     composeChannels: taskViewModel.composeChannels ?? taskViewModel.channels,
     people: taskViewModel.people,
     searchQuery: taskViewModel.searchQuery ?? "",
-    quickFilters: normalizeQuickFilterState(),
+    quickFilters: makeQuickFilterState(),
     channelMatchMode: taskViewModel.channelMatchMode ?? "and",
     ...overrides.surfaceState,
   };

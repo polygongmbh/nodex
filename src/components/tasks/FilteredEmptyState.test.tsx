@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilteredEmptyState } from "./FilteredEmptyState";
-import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
-import type { Channel, Person, QuickFilterState, Relay } from "@/types";
+import type { Channel, Person, Relay } from "@/types";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 const relays: Relay[] = [
   {
@@ -48,10 +48,6 @@ const PARENT_SCOPE_SUFFIX = ', under "Parent Task".';
 const RECENT_SCOPE = "from the last 7 days";
 const PRIORITY_SCOPE = "at priority P4 or higher";
 
-function makeQuickFilters(overrides?: Partial<QuickFilterState>): QuickFilterState {
-  return normalizeQuickFilterState(overrides);
-}
-
 describe("FilteredEmptyState", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -75,7 +71,7 @@ describe("FilteredEmptyState", () => {
         relays={relays}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
-        quickFilters={makeQuickFilters({ recentEnabled: true, recentDays: 7 })}
+        quickFilters={makeQuickFilterState({ recentEnabled: true, recentDays: 7 })}
       />
     );
 
@@ -88,7 +84,7 @@ describe("FilteredEmptyState", () => {
         relays={relays}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
-        quickFilters={makeQuickFilters({ priorityEnabled: true, minPriority: 80 })}
+        quickFilters={makeQuickFilterState({ priorityEnabled: true, minPriority: 80 })}
       />
     );
 
@@ -129,7 +125,7 @@ describe("FilteredEmptyState", () => {
         relays={singleRelay}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
-        quickFilters={makeQuickFilters({
+        quickFilters={makeQuickFilterState({
           recentEnabled: true,
           recentDays: 7,
           priorityEnabled: true,
@@ -178,7 +174,7 @@ describe("FilteredEmptyState", () => {
         relays={relays}
         channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
         people={[{ ...people[0], isSelected: false }]}
-        quickFilters={makeQuickFilters({ recentEnabled: false, priorityEnabled: false })}
+        quickFilters={makeQuickFilterState({ recentEnabled: false, priorityEnabled: false })}
       />
     );
 

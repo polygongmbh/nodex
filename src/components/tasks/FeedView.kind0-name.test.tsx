@@ -4,8 +4,8 @@ import "@testing-library/jest-dom/vitest";
 import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
-import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: (): { user: null } => ({ user: null }),
@@ -44,7 +44,7 @@ describe("FeedView kind:0 author labels", () => {
           people: [peopleAuthor],
           mentionablePeople: [peopleAuthor],
           searchQuery: "",
-          quickFilters: normalizeQuickFilterState(),
+          quickFilters: makeQuickFilterState(),
           channelMatchMode: "and",
         }}
       >

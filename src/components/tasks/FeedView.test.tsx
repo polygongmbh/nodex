@@ -5,8 +5,8 @@ import { FeedView } from "./FeedView";
 import { Task, Channel, Relay, Person } from "@/types";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
 import i18n from "@/lib/i18n/config";
-import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({
   useNDK: (): { user: null } => ({ user: null }),
@@ -60,7 +60,7 @@ function renderFeedView(
     people: [author],
     mentionablePeople: [author],
     searchQuery: "",
-    quickFilters: normalizeQuickFilterState(),
+    quickFilters: makeQuickFilterState(),
     channelMatchMode: "and",
     ...surfaceOverrides,
   };
@@ -209,7 +209,7 @@ describe("FeedView", () => {
           people: [author],
           mentionablePeople: [author],
           searchQuery: "",
-          quickFilters: normalizeQuickFilterState(),
+          quickFilters: makeQuickFilterState(),
           channelMatchMode: "and",
         }}
       >
@@ -534,19 +534,11 @@ describe("FeedView", () => {
 
       const taskTimestamp = screen.getByTitle(/task created at/i);
       const stateTimestamp = screen.getByTitle(/status updated at/i);
-      const expectedTaskTime = new Intl.DateTimeFormat("en", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date("2026-04-03T09:15:00.000Z"));
-      const expectedYesterdayTime = new Intl.DateTimeFormat("en", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date("2026-04-02T18:45:00.000Z"));
 
-      expect(taskTimestamp).toHaveTextContent(expectedTaskTime);
+      expect(taskTimestamp).toHaveTextContent("11:15 AM");
       expect(taskTimestamp.className).toContain("ml-auto");
       expect(taskTimestamp.className).toContain("text-right");
-      expect(stateTimestamp).toHaveTextContent(`yesterday ${expectedYesterdayTime}`);
+      expect(stateTimestamp).toHaveTextContent("yesterday 08:45 PM");
       expect(stateTimestamp.className).toContain("ml-auto");
       expect(stateTimestamp.className).toContain("text-right");
     } finally {

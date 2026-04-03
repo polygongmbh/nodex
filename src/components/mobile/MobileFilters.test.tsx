@@ -2,10 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileFilters } from "./MobileFilters";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
-import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import type { Channel, Person, Relay } from "@/types";
 import { NostrEventKind } from "@/lib/nostr/types";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 const ndkMock = {
   user: {
@@ -259,7 +259,7 @@ describe("MobileFilters management view", () => {
             },
           ],
           searchQuery: "",
-          quickFilters: normalizeQuickFilterState(),
+          quickFilters: makeQuickFilterState(),
           channelMatchMode: "and",
         }}
       >

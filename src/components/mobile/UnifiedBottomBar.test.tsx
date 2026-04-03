@@ -15,7 +15,7 @@ import {
   openMobileComposeOptions,
 } from "@/test/ui";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
-import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 const successResult: TaskCreateResult = { ok: true, mode: "local" };
 
@@ -145,7 +145,7 @@ describe("UnifiedBottomBar auth gating", () => {
             },
           ],
           searchQuery: "",
-          quickFilters: normalizeQuickFilterState(),
+          quickFilters: makeQuickFilterState(),
           channelMatchMode: "and",
         }}
       >
