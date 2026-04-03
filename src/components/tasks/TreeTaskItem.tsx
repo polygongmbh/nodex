@@ -39,6 +39,8 @@ import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useTaskAuthorProfiles } from "./task-author-profiles-context";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
+import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import {
   deriveTreeTaskItemChildren,
   getNextTreeTaskFoldState,
@@ -128,9 +130,6 @@ export function TreeTaskItem({
   };
   const dispatchHashtagExclusive = (tag: string) => {
     void dispatchFeedInteraction({ type: "filter.applyHashtagExclusive", tag });
-  };
-  const dispatchAuthorExclusive = (author: Person) => {
-    void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
   };
 
   // Reset fold state when filters change
@@ -444,24 +443,23 @@ export function TreeTaskItem({
 
         {/* Avatar - only show for comments */}
         {isComment && !compactView && (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              dispatchAuthorExclusive(authorPerson);
-            }}
-            className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
-            aria-label={t("tasks.actions.filterAndMention", { authorName })}
-            title={t("tasks.actions.filterAndMention", { authorName })}
-          >
-            <UserAvatar
-              id={task.author.id}
-              displayName={authorName}
-              avatarUrl={authorAvatar}
-              className="w-6 h-6 flex-shrink-0"
-              beamTestId={`task-item-beam-${task.id}`}
-            />
-          </button>
+          <PersonHoverCard person={authorPerson}>
+            <PersonActionMenu person={authorPerson} enableModifierShortcuts>
+              <button
+                type="button"
+                className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50"
+                aria-label={t("people.actions.openMenu", { name: authorName })}
+              >
+                <UserAvatar
+                  id={task.author.id}
+                  displayName={authorName}
+                  avatarUrl={authorAvatar}
+                  className="w-6 h-6 flex-shrink-0"
+                  beamTestId={`task-item-beam-${task.id}`}
+                />
+              </button>
+            </PersonActionMenu>
+          </PersonHoverCard>
         )}
 
         {/* Content */}
@@ -471,23 +469,22 @@ export function TreeTaskItem({
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-0.5">
               {isComment && (
                 <>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      dispatchAuthorExclusive(authorPerson);
-                    }}
-                    className="font-medium text-foreground/80 flex items-center gap-1 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
-                    aria-label={t("tasks.actions.filterAndMention", { authorName })}
-                    title={t("tasks.actions.filterAndMention", { authorName })}
-                  >
-                    {authorName}
-                    {authorNip05 && (
-                      <span title={authorNip05}>
-                        <BadgeCheck className="w-3 h-3 text-success" />
-                      </span>
-                    )}
-                  </button>
+                  <PersonHoverCard person={authorPerson}>
+                    <PersonActionMenu person={authorPerson} enableModifierShortcuts>
+                      <button
+                        type="button"
+                        className="font-medium text-foreground/80 flex items-center gap-1 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
+                        aria-label={t("people.actions.openMenu", { name: authorName })}
+                      >
+                        {authorName}
+                        {authorNip05 && (
+                          <span title={authorNip05}>
+                            <BadgeCheck className="w-3 h-3 text-success" />
+                          </span>
+                        )}
+                      </button>
+                    </PersonActionMenu>
+                  </PersonHoverCard>
                   <span>·</span>
                   <span title={getCommentCreatedTooltip(task.timestamp)}>{timeAgo}</span>
                 </>
@@ -538,7 +535,6 @@ export function TreeTaskItem({
             {linkifyContent(task.content, dispatchHashtagExclusive, {
               plainHashtags: isTaskTerminalStatus(task.status),
               people,
-              onMentionClick: dispatchAuthorExclusive,
               disableStandaloneEmbeds: true,
             })}
           </div>

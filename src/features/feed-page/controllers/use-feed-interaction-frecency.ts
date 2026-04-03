@@ -83,10 +83,21 @@ export function useFeedInteractionFrecency(): UseFeedInteractionFrecencyResult {
             });
             return;
           case "filter.applyAuthorExclusive":
+          case "person.filterAndMention":
+          case "person.filter.exclusive":
             dispatchFrecencyIntent({
               type: "person.bump",
-              personId: event.envelope.intent.author.id,
+              personId: "author" in event.envelope.intent
+                ? event.envelope.intent.author.id
+                : event.envelope.intent.person.id,
               weight: 1.9,
+            });
+            return;
+          case "person.filter.toggle":
+            dispatchFrecencyIntent({
+              type: "person.bump",
+              personId: event.envelope.intent.person.id,
+              weight: 1.25,
             });
             return;
           case "sidebar.person.toggle":

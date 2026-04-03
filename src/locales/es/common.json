@@ -210,9 +210,10 @@
       "allChannelsIncluded": "Mostrando todos los canales",
       "allChannelsReset": "Se limpiaron los canales activos",
       "showingOnlyTag": "Mostrando #{{tag}}",
-      "showingOnlyPerson": "Mostrando publicaciones de {{personName}} y que le etiquetan",
+      "showingOnlyPerson": "Mostrando publicaciones que involucran a {{personName}}",
+      "showingOnlyPersonExclusive": "Mostrando solo publicaciones con {{personName}}",
+      "removedPersonFilter": "Se quitó el filtro de {{personName}}",
       "selectedUserFallback": "persona seleccionada",
-      "showingOnlyAuthorAndTagging": "Mostrando publicaciones de {{authorName}} y etiquetando {{mention}}",
       "noFrequentPeople": "No hay personas frecuentes para seleccionar",
       "frequentPeopleSelected": "Personas frecuentes seleccionadas",
       "frequentPeopleDeselected": "Se limpiaron las personas seleccionadas",
@@ -312,7 +313,7 @@
       "toggleChannelFilter": "Incluir, excluir o ignorar #{{name}}",
       "showOnlyChannel": "Mostrar solo publicaciones con #{{name}}",
       "togglePerson": "Mostrar u ocultar publicaciones con {{name}}",
-      "showOnlyPerson": "Mostrar solo publicaciones con {{name}}",
+      "showOnlyPerson": "Mostrar solo contenido que involucre a {{name}}",
       "selected": "{{name}} seleccionado",
       "me": "Yo",
       "pinChannelToView": "Mantener #{{name}} visible en la barra lateral",
@@ -608,7 +609,7 @@
       },
       "filtersPeople": {
         "title": "Filtros de personas",
-        "description": "En *Personas*, haz clic en el nombre de una persona para mostrar solo sus publicaciones. Haz clic en el avatar/icono para alternar esa persona. Haz clic en el icono a la izquierda de *Personas* para restablecer filtros de personas."
+        "description": "En *Personas*, haz clic en el nombre de una persona para mostrar solo contenido que involucre a esa persona. Haz clic en el avatar/icono para alternar esa persona. Haz clic en el icono a la izquierda de *Personas* para restablecer filtros de personas."
       },
       "filtersSearch": {
         "title": "Barra de búsqueda",
@@ -896,6 +897,25 @@
     "embeddedVideo": "Vídeo incrustado",
     "embeddedAttachment": "Archivo incrustado"
   },
+  "people": {
+    "status": {
+      "online": "en línea",
+      "recent": "activo hace poco",
+      "offline": "sin conexión"
+    },
+    "actions": {
+      "openMenu": "Acciones de persona para {{name}}",
+      "showOnly": "Mostrar solo contenido que involucre a {{name}}",
+      "mention": "Mencionar a {{name}}",
+      "filterAndMention": "Filtrar por {{name}} y mencionarlo",
+      "copyPubkey": "Copiar clave pública",
+      "privateChat": "Chat privado (próximamente)"
+    },
+    "toasts": {
+      "pubkeyCopied": "Clave pública copiada al portapapeles.",
+      "pubkeyCopyFailed": "No se pudo copiar la clave pública."
+    }
+  },
   "autoCaption": {
     "warnings": {
       "unsupported": "El autodescrito es experimental y no es compatible con este navegador o dispositivo.",
@@ -935,7 +955,7 @@
     "tagsShowMoreAria": "Mostrar {{count}} etiquetas más",
     "actions": {
       "setStatus": "Establecer estado",
-      "filterAndMention": "Filtrar y mencionar {{authorName}}",
+      "filterAndMention": "Filtrar por {{authorName}} y mencionarlo",
       "filterTag": "Filtrar por #{{tag}}",
       "collapse": "Contraer",
       "expand": "Expandir",

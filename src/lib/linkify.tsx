@@ -14,6 +14,8 @@ import {
   npubToHexPubkey,
   toUserFacingPubkey,
 } from "@/lib/nostr/user-facing-pubkey";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
+import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 
 const TOKEN_REGEX =
   /(^|[^A-Za-z0-9_])(#([A-Za-z0-9_]+)|@([A-Za-z0-9._-]+(?:@[A-Za-z0-9.-]+\.[A-Za-z]{2,})?)|nostr:(npub1[023456789acdefghjklmnpqrstuvwxyz]+))/gi;
@@ -61,7 +63,6 @@ function buildFallbackMentionPerson(identifier: string): Person | null {
 interface LinkifyOptions {
   plainHashtags?: boolean;
   people?: Person[];
-  onMentionClick?: (person: Person) => void;
   onStandaloneMediaClick?: (url: string) => void;
   getStandaloneMediaCaption?: (url: string) => string | undefined;
   disableStandaloneEmbeds?: boolean;
@@ -348,21 +349,19 @@ function renderMarkdownBlock(
         || (fallbackPerson ? formatPubkeyMention(fallbackPerson.id) : formatPubkeyMention(mentionIdentifier));
       const userFacingMentionIdentifier = toUserFacingPubkey(mentionIdentifier);
 
-      if (clickablePerson && options?.onMentionClick) {
+      if (clickablePerson) {
         return (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              options.onMentionClick?.(clickablePerson);
-            }}
-            className={`${TASK_INTERACTION_STYLES.inlineLink} break-all text-left`}
-            aria-label={`Open user ${mentionLabel}`}
-            title={`@${userFacingMentionIdentifier}`}
-          >
-            @{mentionLabel}
-          </button>
+          <PersonHoverCard person={clickablePerson}>
+            <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
+              <button
+                type="button"
+                className={`${TASK_INTERACTION_STYLES.inlineLink} break-all text-left`}
+                aria-label={`Person actions for ${mentionLabel}`}
+              >
+                @{mentionLabel}
+              </button>
+            </PersonActionMenu>
+          </PersonHoverCard>
         );
       }
 

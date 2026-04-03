@@ -4,6 +4,8 @@ import { AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { useFeedPersonLookup, useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
+import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 
 const PUBKEY_PATTERN = /^[a-f0-9]{64}$/i;
 
@@ -40,7 +42,6 @@ export function hasTaskMentionChips(task: Task): boolean {
 interface TaskMentionChipsProps {
   task: Task;
   people?: Person[];
-  onPersonClick?: (person: Person) => void;
   className?: string;
   inline?: boolean;
 }
@@ -48,7 +49,6 @@ interface TaskMentionChipsProps {
 export function TaskMentionChips({
   task,
   people: peopleProp,
-  onPersonClick,
   className,
   inline = false,
 }: TaskMentionChipsProps) {
@@ -66,23 +66,20 @@ export function TaskMentionChips({
     const clickablePerson = matchedPerson || fallbackPerson;
     const label = matchedPerson?.name || matchedPerson?.displayName || fallbackPerson.displayName;
 
-    if (onPersonClick && clickablePerson) {
+    if (clickablePerson) {
       return (
-        <button
-          key={pubkey}
-          type="button"
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            onPersonClick(clickablePerson);
-          }}
-          className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
-          aria-label={`Open user ${label}`}
-          title={`@${toUserFacingPubkey(pubkey)}`}
-        >
-          <AtSign className="w-3 h-3" />
-          {label}
-        </button>
+        <PersonHoverCard key={pubkey} person={clickablePerson}>
+          <PersonActionMenu person={clickablePerson} enableModifierShortcuts>
+            <button
+              type="button"
+              className="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/15"
+              aria-label={`Person actions for ${label}`}
+            >
+              <AtSign className="h-3 w-3" />
+              {label}
+            </button>
+          </PersonActionMenu>
+        </PersonHoverCard>
       );
     }
 

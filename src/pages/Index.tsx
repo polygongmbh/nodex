@@ -321,10 +321,8 @@ const Index = () => {
     people,
     setPeople,
     sidebarPeople: sidebarPeopleWithSelected,
-    isMobile,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
     isHydrating,
-    setSearchQuery,
     t,
   });
 

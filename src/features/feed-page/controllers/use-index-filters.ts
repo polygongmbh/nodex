@@ -24,7 +24,7 @@ import {
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import { featureDebugLog } from "@/lib/feature-debug";
 import type { Channel, ChannelMatchMode, PostedTag, QuickFilterState, Relay } from "@/types";
-import type { Person } from "@/types/person";
+import { isPubkeyDerivedPlaceholder, type Person } from "@/types/person";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 
 interface UseIndexFiltersOptions {
@@ -36,10 +36,8 @@ interface UseIndexFiltersOptions {
   people: Person[];
   setPeople: Dispatch<SetStateAction<Person[]>>;
   sidebarPeople: Person[];
-  isMobile: boolean;
   hasLiveHydratedScope?: boolean;
   isHydrating?: boolean;
-  setSearchQuery: Dispatch<SetStateAction<string>>;
   t: TFunction;
 }
 
@@ -52,10 +50,8 @@ export function useIndexFilters({
   people,
   setPeople,
   sidebarPeople,
-  isMobile,
   hasLiveHydratedScope = false,
   isHydrating = false,
-  setSearchQuery,
   t,
 }: UseIndexFiltersOptions) {
   const [mentionRequest, setMentionRequest] = useState<{ mention: string; id: number } | null>(null);
@@ -66,6 +62,18 @@ export function useIndexFilters({
     () => loadPersistedChannelMatchMode()
   );
   const [quickFilters, setQuickFilters] = useState<QuickFilterState>(() => normalizeQuickFilterState());
+
+  const getToastPersonName = useCallback((person?: Person | null) => {
+    if (!person) return t("toasts.success.selectedUserFallback");
+
+    const displayName = person.displayName.trim();
+    if (displayName && !isPubkeyDerivedPlaceholder(displayName, person.id)) return displayName;
+
+    const username = person.name.trim();
+    if (username && !isPubkeyDerivedPlaceholder(username, person.id)) return username;
+
+    return t("toasts.success.selectedUserFallback");
+  }, [t]);
 
   const channelsWithState = useMemo(
     () =>
@@ -138,6 +146,45 @@ export function useIndexFilters({
   useEffect(() => {
     savePersistedChannelMatchMode(channelMatchMode);
   }, [channelMatchMode]);
+
+  const normalizeInteractivePerson = useCallback((person: Person): Person => ({
+    ...person,
+    avatar: person.avatar || "",
+    isOnline: person.isOnline ?? true,
+    onlineStatus: person.onlineStatus ?? "online",
+    isSelected: person.isSelected ?? false,
+  }), []);
+
+  const queueMentionForPerson = useCallback((person: Person) => {
+    const mention = `@${getPreferredMentionIdentifier(person)}`;
+    setMentionRequest({ mention, id: Date.now() });
+    return mention;
+  }, []);
+
+  const applyExclusivePersonFilter = useCallback((person: Person) => {
+    const normalizedPerson = normalizeInteractivePerson(person);
+    setPeople((prev) => {
+      const next = prev.some((entry) => entry.id === normalizedPerson.id)
+        ? prev
+        : [...prev, normalizedPerson];
+      return next.map((entry) => ({
+        ...entry,
+        isSelected: entry.id === normalizedPerson.id,
+      }));
+    });
+  }, [normalizeInteractivePerson, setPeople]);
+
+  const toggleInteractivePerson = useCallback((person: Person) => {
+    const normalizedPerson = normalizeInteractivePerson(person);
+    setPeople((prev) => {
+      const next = prev.some((entry) => entry.id === normalizedPerson.id)
+        ? prev
+        : [...prev, normalizedPerson];
+      return next.map((entry) =>
+        entry.id === normalizedPerson.id ? { ...entry, isSelected: !entry.isSelected } : entry
+      );
+    });
+  }, [normalizeInteractivePerson, setPeople]);
 
   const filterHandlers: FeedInteractionHandlerMap = useMemo(() => ({
     "sidebar.channel.toggle": (intent) => {
@@ -228,8 +275,8 @@ export function useIndexFilters({
       setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === intent.personId));
       const person = people.find((entry) => entry.id === intent.personId);
       toast(
-        t("toasts.success.showingOnlyPerson", {
-          personName: person?.displayName || person?.name || t("toasts.success.selectedUserFallback"),
+        t("toasts.success.showingOnlyPersonExclusive", {
+          personName: getToastPersonName(person),
         })
       );
     },
@@ -250,45 +297,32 @@ export function useIndexFilters({
       );
       toast(t("toasts.success.frequentPeopleDeselected"));
     },
-    "filter.applyAuthorExclusive": (intent) => {
-      const author = intent.author;
-      setPeople((prev) => {
-        const exists = prev.some((person) => person.id === author.id);
-        const next = exists
-          ? prev
-          : [
-              ...prev,
-              {
-                ...author,
-                avatar: author.avatar || "",
-                isOnline: author.isOnline ?? true,
-                onlineStatus: author.onlineStatus ?? "online",
-                isSelected: false,
-              },
-            ];
-        return next.map((person) => ({
-          ...person,
-          isSelected: person.id === author.id,
-        }));
-      });
-      const mention = `@${getPreferredMentionIdentifier(author)}`;
-      setMentionRequest({ mention, id: Date.now() });
-      if (isMobile) {
-        setSearchQuery((previous) => {
-          const escaped = mention.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          if (new RegExp(`(^|\\s)${escaped}(?=\\s|$)`, "i").test(previous)) {
-            return previous;
-          }
-          const separator = previous && !previous.endsWith(" ") ? " " : "";
-          return `${previous}${separator}${mention} `;
-        });
-      }
+    "person.filter.exclusive": (intent) => {
+      applyExclusivePersonFilter(intent.person);
       toast(
-        t("toasts.success.showingOnlyAuthorAndTagging", {
-          authorName: author.displayName || author.name,
-          mention,
+        t("toasts.success.showingOnlyPersonExclusive", {
+          personName: getToastPersonName(intent.person),
         })
       );
+    },
+    "person.filter.toggle": (intent) => {
+      const wasSelected = people.find((person) => person.id === intent.person.id)?.isSelected ?? intent.person.isSelected;
+      toggleInteractivePerson(intent.person);
+      toast(t(
+        wasSelected ? "toasts.success.removedPersonFilter" : "toasts.success.showingOnlyPerson",
+        { personName: getToastPersonName(intent.person) }
+      ));
+    },
+    "person.compose.mention": (intent) => {
+      queueMentionForPerson(intent.person);
+    },
+    "person.filterAndMention": (intent) => {
+      applyExclusivePersonFilter(intent.person);
+      queueMentionForPerson(intent.person);
+    },
+    "filter.applyAuthorExclusive": (intent) => {
+      applyExclusivePersonFilter(intent.author);
+      queueMentionForPerson(intent.author);
     },
     "sidebar.quickFilter.recentDays.change": (intent) => {
       const nextDays = clampRecentDays(intent.days);
@@ -335,11 +369,13 @@ export function useIndexFilters({
     people,
     setPeople,
     sidebarPeople,
-    isMobile,
-    setSearchQuery,
+    applyExclusivePersonFilter,
+    getToastPersonName,
+    queueMentionForPerson,
     setQuickFilters,
     setChannelFilterStates,
     setChannelMatchMode,
+    toggleInteractivePerson,
     t,
   ]);
 

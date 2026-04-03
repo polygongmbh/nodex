@@ -1,3 +1,5 @@
+import type { MouseEvent } from "react";
+import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Person } from "@/types/person";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -5,6 +7,9 @@ import { SidebarFilterRow } from "./SidebarFilterRow";
 import { SidebarPinButton } from "./SidebarPinButton";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
+import { getPersonShortcutIntent, toPersonShortcutInteraction } from "@/components/people/person-shortcuts";
 
 interface PersonItemProps {
   person: Person;
@@ -24,6 +29,20 @@ export function PersonItem({
   const personName = person.id === "me" ? t("sidebar.filters.me") : person.displayName;
   const onlineStatus = person.onlineStatus ?? (person.isOnline ? "online" : "offline");
   const statusDotClassName = onlineStatus === "online" ? "bg-success" : onlineStatus === "recent" ? "bg-warning" : null;
+  const handlePersonShortcut = (event: MouseEvent, fallback: "toggle" | "exclusive") => {
+    const shortcutIntent = getPersonShortcutIntent(event);
+    if (shortcutIntent) {
+      event.stopPropagation();
+      void dispatchFeedInteraction(toPersonShortcutInteraction(person, shortcutIntent));
+      return true;
+    }
+    if (fallback === "toggle") {
+      void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.id });
+    } else {
+      void dispatchFeedInteraction({ type: "sidebar.person.exclusive", personId: person.id });
+    }
+    return false;
+  };
 
   return (
     <SidebarFilterRow
@@ -53,56 +72,72 @@ export function PersonItem({
           ? t("sidebar.filters.unpinPersonFromView", { name: personName })
           : t("sidebar.filters.pinPersonToView", { name: personName })}
       />
-      <button
-        data-testid={`person-item-toggle-${person.id}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          void dispatchFeedInteraction({ type: "sidebar.person.toggle", personId: person.id });
-        }}
-        title={t("sidebar.filters.togglePerson", { name: personName })}
-        aria-label={t("sidebar.filters.togglePerson", { name: personName })}
-        className="relative rounded-full hover:ring-2 hover:ring-primary/50"
+      <PersonHoverCard
+        person={person}
+        side="right"
+        triggerClassName="flex-1 min-w-0"
+        sideOffset={32}
       >
-        <UserAvatar
-          id={person.id}
-          displayName={person.displayName}
-          avatarUrl={person.avatar}
-          className={cn(
-            "w-7 h-7 transition-colors",
-            person.isSelected
-              ? "ring-2 ring-primary/50 motion-filter-pop"
-              : "group-hover:opacity-90"
-          )}
-          beamTestId={`sidebar-person-beam-${person.id}`}
-        />
-        {statusDotClassName && (
-          <div className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-sidebar", statusDotClassName)} />
-        )}
-      </button>
-      <button
-        data-testid={`person-item-exclusive-${person.id}`}
-        onClick={() => {
-          void dispatchFeedInteraction({ type: "sidebar.person.exclusive", personId: person.id });
-        }}
-        className="flex-1 min-w-0 text-left"
-        aria-label={t("sidebar.filters.showOnlyPerson", { name: personName })}
-        title={t("sidebar.filters.showOnlyPerson", { name: personName })}
-      >
-        <span
-          className={cn(
-            "block truncate text-sm transition-colors",
-            person.isSelected ? "text-foreground font-semibold" : "text-sidebar-foreground hover:text-primary"
-          )}
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <button
+            data-testid={`person-item-toggle-${person.id}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              handlePersonShortcut(event, "toggle");
+            }}
+            aria-label={t("sidebar.filters.togglePerson", { name: personName })}
+            className="relative rounded-full hover:ring-2 hover:ring-primary/50"
+          >
+            <UserAvatar
+              id={person.id}
+              displayName={person.displayName}
+              avatarUrl={person.avatar}
+              className={cn(
+                "w-7 h-7 transition-colors",
+                person.isSelected
+                  ? "ring-2 ring-primary/50 motion-filter-pop"
+                  : "group-hover:opacity-90"
+              )}
+              beamTestId={`sidebar-person-beam-${person.id}`}
+            />
+            {statusDotClassName && (
+              <div className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-sidebar", statusDotClassName)} />
+            )}
+          </button>
+          <button
+            data-testid={`person-item-exclusive-${person.id}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              handlePersonShortcut(event, "exclusive");
+            }}
+            className="flex w-full min-w-0 items-center gap-2 text-left"
+            aria-label={t("sidebar.filters.showOnlyPerson", { name: personName })}
+          >
+            <span
+              className={cn(
+                "block min-w-0 flex-1 truncate text-sm transition-colors",
+                person.isSelected ? "text-foreground font-semibold" : "text-sidebar-foreground hover:text-primary"
+              )}
+            >
+              {personName}
+            </span>
+            {person.isSelected && (
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      </PersonHoverCard>
+      <PersonActionMenu person={person} align="end">
+        <button
+          type="button"
+          data-testid={`person-item-actions-${person.id}`}
+          className="rounded p-1 text-sidebar-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-sidebar-accent/70 hover:text-foreground"
+          aria-label={t("people.actions.openMenu", { name: personName })}
+          title={t("people.actions.openMenu", { name: personName })}
         >
-          {personName}
-        </span>
-      </button>
-      {person.isSelected && (
-        <div
-          className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
-          aria-label={t("sidebar.filters.selected", { name: personName })}
-        />
-      )}
+          <MoreHorizontal className="h-3.5 w-3.5" />
+        </button>
+      </PersonActionMenu>
     </SidebarFilterRow>
   );
 }

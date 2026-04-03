@@ -210,9 +210,10 @@
       "allChannelsIncluded": "Showing all channels",
       "allChannelsReset": "Cleared active channels",
       "showingOnlyTag": "Showing #{{tag}}",
-      "showingOnlyPerson": "Showing posts by and tagging {{personName}}",
+      "showingOnlyPerson": "Showing posts involving {{personName}}",
+      "showingOnlyPersonExclusive": "Showing only posts with {{personName}}",
+      "removedPersonFilter": "Removed filter for {{personName}}",
       "selectedUserFallback": "selected person",
-      "showingOnlyAuthorAndTagging": "Showing posts by {{authorName}} and tagging {{mention}}",
       "noFrequentPeople": "No frequent people to select",
       "frequentPeopleSelected": "Selected frequent people",
       "frequentPeopleDeselected": "Cleared selected people",
@@ -312,7 +313,7 @@
       "toggleChannelFilter": "Include, exclude, or ignore #{{name}}",
       "showOnlyChannel": "Show only posts tagged #{{name}}",
       "togglePerson": "Show or hide posts involving {{name}}",
-      "showOnlyPerson": "Show only posts involving {{name}}",
+      "showOnlyPerson": "Show only content involving {{name}}",
       "selected": "{{name}} selected",
       "me": "Me",
       "pinChannelToView": "Keep #{{name}} visible in the sidebar",
@@ -608,7 +609,7 @@
       },
       "filtersPeople": {
         "title": "People filters",
-        "description": "In *People*, click a person name to show only posts from that person. Click the avatar/icon to toggle that person. Click the icon to the left of *People* to reset people filters."
+        "description": "In *People*, click a person name to show only content involving that person. Click the avatar/icon to toggle that person. Click the icon to the left of *People* to reset people filters."
       },
       "filtersSearch": {
         "title": "Search bar",
@@ -896,6 +897,25 @@
     "embeddedVideo": "Embedded video",
     "embeddedAttachment": "Embedded attachment"
   },
+  "people": {
+    "status": {
+      "online": "online",
+      "recent": "recent",
+      "offline": "offline"
+    },
+    "actions": {
+      "openMenu": "Person actions for {{name}}",
+      "showOnly": "Show only content involving {{name}}",
+      "mention": "Mention {{name}}",
+      "filterAndMention": "Filter for and mention {{name}}",
+      "copyPubkey": "Copy public key",
+      "privateChat": "Private chat (coming soon)"
+    },
+    "toasts": {
+      "pubkeyCopied": "Public key copied to clipboard.",
+      "pubkeyCopyFailed": "Could not copy the public key."
+    }
+  },
   "autoCaption": {
     "warnings": {
       "unsupported": "Auto-caption is experimental and unsupported in this browser or device.",
@@ -935,7 +955,7 @@
     "tagsShowMoreAria": "Show {{count}} more tags",
     "actions": {
       "setStatus": "Set status",
-      "filterAndMention": "Filter and mention {{authorName}}",
+      "filterAndMention": "Filter for and mention {{authorName}}",
       "filterTag": "Filter to #{{tag}}",
       "collapse": "Collapse",
       "expand": "Expand",

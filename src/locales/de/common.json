@@ -210,9 +210,10 @@
       "allChannelsIncluded": "Alle Kanäle werden angezeigt",
       "allChannelsReset": "Aktive Kanäle zurückgesetzt",
       "showingOnlyTag": "#{{tag}} wird angezeigt",
-      "showingOnlyPerson": "Beiträge von {{personName}} und mit Erwähnung von {{personName}} werden angezeigt",
+      "showingOnlyPerson": "Zeige Inhalte mit {{personName}}",
+      "showingOnlyPersonExclusive": "Zeige nur Inhalte mit {{personName}}",
+      "removedPersonFilter": "Filter für {{personName}} entfernt",
       "selectedUserFallback": "ausgewählte Person",
-      "showingOnlyAuthorAndTagging": "Beiträge von {{authorName}} und mit Erwähnung {{mention}} werden angezeigt",
       "noFrequentPeople": "Keine häufigen Personen zum Auswählen",
       "frequentPeopleSelected": "Häufige Personen ausgewählt",
       "frequentPeopleDeselected": "Ausgewählte Personen abgewählt",
@@ -312,7 +313,7 @@
       "toggleChannelFilter": "#{{name}} einbeziehen, ausschließen oder ignorieren",
       "showOnlyChannel": "Nur Beiträge mit #{{name}} anzeigen",
       "togglePerson": "Beiträge mit {{name}} ein- oder ausblenden",
-      "showOnlyPerson": "Nur Beiträge mit {{name}} anzeigen",
+      "showOnlyPerson": "Nur Inhalte mit Beteiligung von {{name}} anzeigen",
       "selected": "{{name}} ausgewählt",
       "me": "Ich",
       "pinChannelToView": "#{{name}} in der Seitenleiste sichtbar halten",
@@ -608,7 +609,7 @@
       },
       "filtersPeople": {
         "title": "Personenfilter",
-        "description": "In *Personen* zeigt ein Klick auf einen Namen nur Beiträge dieser Person. Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen."
+        "description": "In *Personen* zeigt ein Klick auf einen Namen nur Inhalte mit Beteiligung dieser Person. Klicke auf Avatar/Icon zum Umschalten. Klicke auf das Icon links von *Personen*, um Personenfilter zurückzusetzen."
       },
       "filtersSearch": {
         "title": "Suchleiste",
@@ -896,6 +897,25 @@
     "embeddedVideo": "Eingebettetes Video",
     "embeddedAttachment": "Eingebetteter Anhang"
   },
+  "people": {
+    "status": {
+      "online": "online",
+      "recent": "kürzlich aktiv",
+      "offline": "offline"
+    },
+    "actions": {
+      "openMenu": "Personenaktionen für {{name}}",
+      "showOnly": "Nur Inhalte mit Beteiligung von {{name}} anzeigen",
+      "mention": "{{name}} erwähnen",
+      "filterAndMention": "Nach {{name}} filtern und {{name}} erwähnen",
+      "copyPubkey": "Öffentlichen Schlüssel kopieren",
+      "privateChat": "Privater Chat (kommt bald)"
+    },
+    "toasts": {
+      "pubkeyCopied": "Öffentlicher Schlüssel in die Zwischenablage kopiert.",
+      "pubkeyCopyFailed": "Der öffentliche Schlüssel konnte nicht kopiert werden."
+    }
+  },
   "autoCaption": {
     "warnings": {
       "unsupported": "Auto-Beschriftung ist experimentell und wird in diesem Browser oder auf diesem Gerät nicht unterstützt.",
@@ -935,7 +955,7 @@
     "tagsShowMoreAria": "{{count}} weitere Tags anzeigen",
     "actions": {
       "setStatus": "Status setzen",
-      "filterAndMention": "{{authorName}} filtern und erwähnen",
+      "filterAndMention": "Nach {{authorName}} filtern und {{authorName}} erwähnen",
       "filterTag": "Auf #{{tag}} filtern",
       "collapse": "Einklappen",
       "expand": "Ausklappen",

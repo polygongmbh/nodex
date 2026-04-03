@@ -44,6 +44,8 @@ import {
 } from "@/features/feed-page/views/feed-surface-context";
 import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
+import { PersonActionMenu } from "@/components/people/PersonActionMenu";
+import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 
 interface FeedViewProps {
   tasks: Task[];
@@ -453,18 +455,17 @@ export function FeedView({
                     <span className="truncate">{`: ${statusDescription}`}</span>
                   )}
                   <span className="shrink-0">·</span>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author: resolvedUpdateAuthor });
-                    }}
-                    className="hover:text-foreground shrink-0"
-                    aria-label={t("tasks.actions.filterAndMention", { authorName: updateAuthorMeta.primary })}
-                    title={updateAuthorUserFacingId}
-                  >
-                    {updateAuthorMeta.primary}
-                  </button>
+                  <PersonHoverCard person={resolvedUpdateAuthor}>
+                    <PersonActionMenu person={resolvedUpdateAuthor} enableModifierShortcuts>
+                      <button
+                        type="button"
+                        className="hover:text-foreground shrink-0"
+                        aria-label={t("people.actions.openMenu", { name: updateAuthorMeta.primary })}
+                      >
+                        {updateAuthorMeta.primary}
+                      </button>
+                    </PersonActionMenu>
+                  </PersonHoverCard>
                   <span className="shrink-0">·</span>
                   <button
                     type="button"

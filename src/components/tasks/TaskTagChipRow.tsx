@@ -87,9 +87,6 @@ function TaskTagChipContent({
       <TaskMentionChips
         task={task}
         people={people}
-        onPersonClick={(author) => {
-          void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
-        }}
         inline
       />
       {task.tags.map((tag) => (

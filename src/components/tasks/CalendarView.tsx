@@ -1020,9 +1020,6 @@ export function CalendarView({
                               }, {
                                 plainHashtags: isTaskTerminalStatus(task.status),
                                 people,
-                                onMentionClick: (author) => {
-                                  void dispatchFeedInteraction({ type: "filter.applyAuthorExclusive", author });
-                                },
                                 disableStandaloneEmbeds: hasCollapsibleContent && !isContentExpanded,
                                 onStandaloneMediaClick: (url) => openTaskMedia(task.id, url),
                                 getStandaloneMediaCaption: (url) =>
