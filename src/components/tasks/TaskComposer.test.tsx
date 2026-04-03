@@ -1,21 +1,30 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { format } from "date-fns";
-import { useState } from "react";
-import { TaskComposer } from "./TaskComposer";
+import { useState, type ComponentProps } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  TaskComposer as BaseTaskComposer,
+  type TaskComposerSubmitRequest as BaseTaskComposerSubmitRequest,
+} from "./TaskComposer";
 import type { Channel, Relay, TaskCreateResult } from "@/types";
 import type { Person } from "@/types/person";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import { toast } from "sonner";
 import * as attachmentUpload from "@/lib/nostr/nip96-attachment-upload";
+import { resolveComposeSubmitBlock, type ComposeSubmitBlockState } from "@/lib/compose-submit-block";
 import {
   getCommentComposerInput,
   getOfferComposerInput,
   getRequestComposerInput,
   getTaskComposerInput,
 } from "@/test/ui";
-import type { TaskComposerSubmitRequest } from "./TaskComposer";
+import { TaskComposerRuntimeProvider } from "./task-composer-runtime";
+
+type TaskComposerSubmitRequest = BaseTaskComposerSubmitRequest & {
+  relays: string[];
+};
 
 let mockUser: { id: string } | null = { id: "me" };
 
@@ -209,10 +218,100 @@ const getHashtagChip = (tag: string) => getChipButton("hashtag", tag);
 const queryHashtagChip = (tag: string) => queryChipButton("hashtag", tag);
 const getMentionChip = (value: string) => getChipButton("mention", value);
 const queryMentionChip = (value: string) => queryChipButton("mention", value);
-const parentScopedSubmitPolicy = {
-  canInheritParentTags: true,
-  requiresSingleWritableRelayForTasks: false,
-} as const;
+const parentAllowsEmptyTags = true;
+
+function buildTaskComposerRuntimeValue(
+  draftStorageKey?: string,
+  overrides?: {
+    relays?: Relay[];
+    channels?: Channel[];
+    people?: Person[];
+  }
+) {
+  const runtimeRelays = overrides?.relays ?? relays;
+  const runtimeChannels = overrides?.channels ?? channels;
+  const runtimePeople = overrides?.people ?? people;
+  return {
+    environment: {
+      relays: runtimeRelays,
+      channels: runtimeChannels,
+      people: runtimePeople,
+      mentionablePeople: runtimePeople,
+      includedChannels: runtimeChannels
+        .filter((channel) => channel.filterState === "included")
+        .map((channel) => channel.name.trim().toLowerCase()),
+      selectedPeoplePubkeys: runtimePeople
+        .filter((person) => person.isSelected)
+        .map((person) => person.id.trim().toLowerCase()),
+    },
+    draftStorageKey,
+  };
+}
+
+type TestTaskComposerProps = Omit<ComponentProps<typeof BaseTaskComposer>, "onSubmit" | "submitBlockByType"> & {
+  relays?: Relay[];
+  draftStorageKey?: string;
+  onSubmit: (request: TaskComposerSubmitRequest) => Promise<TaskCreateResult> | TaskCreateResult;
+};
+
+function TaskComposer({
+  relays: runtimeRelays = relays,
+  channels: runtimeChannels = channels,
+  people: runtimePeople = people,
+  draftStorageKey,
+  onSubmit,
+  allowEmptyTags = false,
+  ...props
+}: TestTaskComposerProps) {
+  const { t } = useTranslation();
+  const activeWritableRelayIds = runtimeRelays
+    .filter((relay) => relay.isActive && (relay.connectionStatus === undefined || relay.connectionStatus === "connected"))
+    .map((relay) => relay.id);
+  const commentBlock = resolveComposeSubmitBlock({
+    isSignedIn: true,
+    hasMeaningfulContent: true,
+    hasAtLeastOneTag: true,
+    canInheritParentTags: true,
+    hasPendingAttachmentUploads: false,
+    hasFailedAttachmentUploads: false,
+    hasInvalidRootCommentRelaySelection: activeWritableRelayIds.length === 0,
+    t,
+  });
+  const submitBlockByType: Partial<Record<"task" | "comment" | "offer" | "request", ComposeSubmitBlockState | null>> = {
+    task: resolveComposeSubmitBlock({
+      isSignedIn: true,
+      hasMeaningfulContent: true,
+      hasAtLeastOneTag: true,
+      canInheritParentTags: true,
+      hasPendingAttachmentUploads: false,
+      hasFailedAttachmentUploads: false,
+      hasInvalidRootTaskRelaySelection: !allowEmptyTags && activeWritableRelayIds.length !== 1,
+      t,
+    }),
+    comment: commentBlock,
+    offer: commentBlock,
+    request: commentBlock,
+  };
+
+  return (
+    <TaskComposerRuntimeProvider
+      value={buildTaskComposerRuntimeValue(draftStorageKey, {
+        relays: runtimeRelays,
+        channels: runtimeChannels,
+        people: runtimePeople,
+      })}
+    >
+      <BaseTaskComposer
+        {...props}
+        allowEmptyTags={allowEmptyTags}
+        channels={runtimeChannels}
+        people={runtimePeople}
+        submitBlockByType={submitBlockByType}
+        onSubmit={(request) => onSubmit({ ...request, relays: activeWritableRelayIds })}
+      />
+    </TaskComposerRuntimeProvider>
+  );
+}
 
 function expectSubmittedRequest(
   onSubmit: ReturnType<typeof vi.fn>,
@@ -1120,7 +1219,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        submitPolicy={parentScopedSubmitPolicy}
+        allowEmptyTags={parentAllowsEmptyTags}
       />
     );
 
@@ -1970,7 +2069,7 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /create task/i })).toHaveTextContent("Select space");
   });
 
-  it("allows submit when a single active relay exists even if stored relay selection is empty", async () => {
+  it("allows submit when a single active relay exists", async () => {
     const onSubmit = vi.fn(async () => successfulCreateResult);
     const singleRelay = [{
       id: "relay-a",
@@ -1980,10 +2079,6 @@ describe("TaskComposer hashtag autocomplete", () => {
       isActive: true,
       connectionStatus: "connected" as const,
     }];
-    const draftStorageKey = "task-composer-single-relay-default";
-    localStorage.setItem(draftStorageKey, JSON.stringify({
-      selectedRelays: [],
-    }));
 
     render(
       <TaskComposer
@@ -1992,7 +2087,6 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        draftStorageKey={draftStorageKey}
       />
     );
 
@@ -2043,7 +2137,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        submitPolicy={parentScopedSubmitPolicy}
+        allowEmptyTags={parentAllowsEmptyTags}
       />
     );
 
@@ -2245,32 +2339,6 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Select at least one green space to post a comment");
   });
 
-  it("shows the relay warning banner when a restored comment relay selection is non-writable", () => {
-    const draftStorageKey = "task-composer-read-only-comment-relay";
-    localStorage.setItem(draftStorageKey, JSON.stringify({
-      messageType: "comment",
-      selectedRelays: ["relay-a"],
-    }));
-
-    render(
-      <TaskComposer
-        onSubmit={() => successfulCreateResult}
-        relays={readOnlyRelays}
-        channels={channels}
-        people={people}
-        onCancel={() => {}}
-        draftStorageKey={draftStorageKey}
-      />
-    );
-
-    fireEvent.change(getCommentComposerInput(), {
-      target: { value: "Looks good #backend" },
-    });
-
-    expect(screen.getByRole("alert")).toHaveTextContent("Select at least one green space to post a comment");
-    expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select space");
-  });
-
   it("uses the comment-specific relay warning when no postable relay is selected", () => {
     render(
       <TaskComposer
@@ -2303,7 +2371,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        submitPolicy={parentScopedSubmitPolicy}
+        allowEmptyTags={parentAllowsEmptyTags}
       />
     );
 
@@ -2329,7 +2397,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        submitPolicy={parentScopedSubmitPolicy}
+        allowEmptyTags={parentAllowsEmptyTags}
       />
     );
 

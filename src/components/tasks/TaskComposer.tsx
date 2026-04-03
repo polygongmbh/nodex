@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, HandHelping, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {   Relay, Channel, Nip99Metadata, PostType, TaskDateType, TaskCreateResult, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
+import { Channel, Nip99Metadata, PostType, TaskDateType, TaskCreateResult, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
 import type { Person } from "@/types/person";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -13,9 +13,6 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,
-  getMentionAliases,
-  getPreferredMentionIdentifier,
-  personMatchesMentionQuery,
 } from "@/lib/mentions";
 import { hasMeaningfulComposerText } from "@/lib/composer-content";
 import { notifyNeedTag, notifyTaskCreationFailed } from "@/lib/notifications";
@@ -33,7 +30,12 @@ import { generateLocalImageCaption, notifyAutoCaptionFailureOnce } from "@/lib/l
 import { DEFAULT_GEOHASH_PRECISION, encodeGeohash, normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
 import { countHashtagsInContent, extractHashtagsFromContent, getHashtagQueryAtCursor } from "@/lib/hashtags";
 import { filterChannelsForAutocomplete, getComposerAutocompleteMatch, hasMentionQueryAtCursor } from "@/lib/composer-autocomplete";
-import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
+import {
+  getComposeSubmitBlockFocusTarget,
+  resolveComposeSubmitBlock,
+  shouldShowComposeSubmitBlockDetail,
+  type ComposeSubmitBlockState,
+} from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
 import {
@@ -46,24 +48,45 @@ import {
   getTaskComposerRestoreMessageType,
   resolveTaskComposerInitialState,
   resolveTaskComposerMention,
-  useTaskComposerEnvironment,
+  useTaskComposerDraftStorageKey,
+  useTaskComposerModel,
   writeTaskComposerDraft,
   type TaskComposerDraftState,
 } from "./task-composer-runtime";
 
-interface TaskComposerProps {
-  onSubmit: TaskComposerSubmit;
-  relays?: Relay[];
-  channels?: Channel[];
-  people?: Person[];
-  onCancel: () => void;
+export interface TaskComposerOptions {
   compact?: boolean;
   defaultDueDate?: Date;
   defaultContent?: string;
-  submitPolicy?: TaskComposerSubmitPolicy;
+  allowEmptyTags?: boolean;
   adaptiveSize?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
-  draftStorageKey?: string;
+  forceExpanded?: boolean;
+  forceExpandSignal?: number;
+  mentionRequest?: {
+    mention: string;
+    id: number;
+  } | null;
+  onMentionRequestConsumed?: (requestId: number) => void;
+  collapseOnSuccess?: boolean;
+  allowComment?: boolean;
+  allowFeedMessageTypes?: boolean;
+  composeRestoreRequest?: ComposeRestoreRequest | null;
+}
+
+interface TaskComposerProps {
+  onSubmit: TaskComposerSubmit;
+  channels?: Channel[];
+  people?: Person[];
+  onCancel: () => void;
+  options?: TaskComposerOptions;
+  submitBlockByType?: Partial<Record<PostType, ComposeSubmitBlockState | null>>;
+  compact?: boolean;
+  defaultDueDate?: Date;
+  defaultContent?: string;
+  allowEmptyTags?: boolean;
+  adaptiveSize?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
   forceExpanded?: boolean;
   forceExpandSignal?: number;
   mentionRequest?: {
@@ -78,15 +101,10 @@ interface TaskComposerProps {
 }
 
 type ComposerMessageType = PostType;
-export interface TaskComposerSubmitPolicy {
-  canInheritParentTags: boolean;
-  requiresSingleWritableRelayForTasks: boolean;
-}
 
 export interface TaskComposerSubmitRequest {
   content: string;
   tags: string[];
-  relays: string[];
   taskType: ComposerMessageType;
   dueDate?: Date;
   dueTime?: string;
@@ -106,11 +124,6 @@ const NIP99_TITLE_MAX_LENGTH = 80;
 const NIP99_SUMMARY_MAX_LENGTH = 160;
 const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
 const COMPOSER_MAX_VIEWPORT_HEIGHT_RATIO = 0.5;
-const ROOT_SUBMIT_POLICY: TaskComposerSubmitPolicy = {
-  canInheritParentTags: false,
-  requiresSingleWritableRelayForTasks: true,
-};
-
 function normalizeListingTextFromContent(content: string): string {
   return content
     .replace(/(^|\s)#\w+/g, " ")
@@ -149,9 +162,6 @@ function deriveNip99AutofillFromContent(content: string): Pick<Nip99Metadata, "t
   };
 }
 
-const isPostableRelay = (r: Relay) =>
-  r.connectionStatus === undefined || r.connectionStatus === "connected";
-
 function extractFilesFromDataTransfer(dataTransfer: DataTransfer | null | undefined): File[] {
   if (!dataTransfer) return [];
   if (dataTransfer.items && dataTransfer.items.length > 0) {
@@ -179,40 +189,57 @@ function extractPlainTextFromDataTransfer(dataTransfer: DataTransfer | null | un
 
 export function TaskComposer({
   onSubmit,
-  relays: relaysProp,
   channels: channelsProp,
   people: peopleProp,
   onCancel, 
-  compact = false, 
+  options,
+  submitBlockByType,
+  compact,
   defaultDueDate, 
-  defaultContent = "",
-  submitPolicy = ROOT_SUBMIT_POLICY,
-  adaptiveSize = false,
+  defaultContent,
+  allowEmptyTags,
+  adaptiveSize,
   onExpandedChange,
-  draftStorageKey,
-  forceExpanded = false,
+  forceExpanded,
   forceExpandSignal,
-  mentionRequest = null,
+  mentionRequest,
   onMentionRequestConsumed,
-  collapseOnSuccess = false,
-  allowComment = true,
-  allowFeedMessageTypes = false,
-  composeRestoreRequest = null,
+  collapseOnSuccess,
+  allowComment,
+  allowFeedMessageTypes,
+  composeRestoreRequest,
 }: TaskComposerProps) {
+  const resolvedOptions = options ?? {};
+  compact = resolvedOptions.compact ?? compact ?? false;
+  defaultDueDate = resolvedOptions.defaultDueDate ?? defaultDueDate;
+  defaultContent = resolvedOptions.defaultContent ?? defaultContent ?? "";
+  allowEmptyTags = resolvedOptions.allowEmptyTags ?? allowEmptyTags ?? false;
+  adaptiveSize = resolvedOptions.adaptiveSize ?? adaptiveSize ?? false;
+  onExpandedChange = resolvedOptions.onExpandedChange ?? onExpandedChange;
+  forceExpanded = resolvedOptions.forceExpanded ?? forceExpanded ?? false;
+  forceExpandSignal = resolvedOptions.forceExpandSignal ?? forceExpandSignal;
+  mentionRequest = resolvedOptions.mentionRequest ?? mentionRequest ?? null;
+  onMentionRequestConsumed = resolvedOptions.onMentionRequestConsumed ?? onMentionRequestConsumed;
+  collapseOnSuccess = resolvedOptions.collapseOnSuccess ?? collapseOnSuccess ?? false;
+  allowComment = resolvedOptions.allowComment ?? allowComment ?? true;
+  allowFeedMessageTypes = resolvedOptions.allowFeedMessageTypes ?? allowFeedMessageTypes ?? false;
+  composeRestoreRequest = resolvedOptions.composeRestoreRequest ?? composeRestoreRequest ?? null;
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const {
-    relays,
-    channels,
-    people,
-    mentionablePeople,
+    channelOptions,
+    mentionOptions,
     includedChannels,
     selectedPeoplePubkeys,
-  } = useTaskComposerEnvironment({
-    relays: relaysProp,
+    channelIdByName,
+    selectedPersonIdByPubkey,
+    mentionOptionByPubkey,
+    mentionOptionByAlias,
+  } = useTaskComposerModel({
     channels: channelsProp,
     people: peopleProp,
   });
+  const draftStorageKey = useTaskComposerDraftStorageKey();
   const { createHttpAuthHeader } = useNDK();
   const authPolicy = useAuthActionPolicy();
   const initialComposerState = useMemo(
@@ -221,15 +248,13 @@ export function TaskComposer({
         draftStorageKey,
         defaultContent,
         defaultDueDate,
-        relays,
         allowFeedMessageTypes,
       }),
-    [allowFeedMessageTypes, defaultContent, defaultDueDate, draftStorageKey, relays]
+    [allowFeedMessageTypes, defaultContent, defaultDueDate, draftStorageKey]
   );
   
   const [content, setContent] = useState(initialComposerState.content);
   const [taskType, setTaskType] = useState<ComposerMessageType>(initialComposerState.taskType);
-  const [selectedRelays, setSelectedRelays] = useState<string[]>(initialComposerState.selectedRelays);
   const [dueDate, setDueDate] = useState<Date | undefined>(initialComposerState.dueDate);
   const [dueTime, setDueTime] = useState(initialComposerState.dueTime);
   const [dateType, setDateType] = useState<TaskDateType>(initialComposerState.dateType);
@@ -456,9 +481,6 @@ export function TaskComposer({
         .map((pubkey) => pubkey.trim().toLowerCase())
         .filter((pubkey) => /^[a-f0-9]{64}$/i.test(pubkey))
     );
-    if (restoreState.selectedRelays && restoreState.selectedRelays.length > 0) {
-      setSelectedRelays(restoreState.selectedRelays);
-    }
     if (adaptiveSize) {
       setIsExpanded(true);
     }
@@ -480,7 +502,6 @@ export function TaskComposer({
       dueDate: dueDate ? dueDate.toISOString() : undefined,
       dueTime,
       dateType,
-      selectedRelays,
       explicitTagNames,
       explicitMentionPubkeys,
       priority: storedPriorityFromDisplay(priority),
@@ -499,7 +520,7 @@ export function TaskComposer({
           name: attachment.name || attachment.fileName,
         })),
     } satisfies TaskComposerDraftState);
-  }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, draftStorageKey]);
+  }, [content, taskType, dueDate, dueTime, dateType, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
@@ -699,11 +720,6 @@ export function TaskComposer({
     setAttachments((previous) => previous.filter((attachment) => attachment.id !== attachmentId));
   };
 
-  // Keep selected publish targets aligned with currently active relay filters.
-  useEffect(() => {
-    setSelectedRelays(relays.filter(r => r.isActive && isPostableRelay(r)).map(r => r.id));
-  }, [relays]);
-
   useEffect(() => {
     const previous = new Set(prevIncludedChannelsRef.current);
     const next = new Set(includedChannels);
@@ -827,7 +843,7 @@ export function TaskComposer({
     
     const extractedTags = extractHashtagsFromContent(content);
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
-    if (submitTags.length === 0 && !submitPolicy.canInheritParentTags) {
+    if (submitTags.length === 0 && !allowEmptyTags) {
       notifyNeedTag(t);
       return;
     }
@@ -870,7 +886,6 @@ export function TaskComposer({
       const request: TaskComposerSubmitRequest = {
         content,
         tags: submitTags,
-        relays: effectiveSelectedRelayIds,
         taskType: effectiveTaskType,
         dueDate: submissionDueDate,
         dueTime: submissionDueTime,
@@ -929,15 +944,25 @@ export function TaskComposer({
     }
   };
 
-  const filteredChannels = filterChannelsForAutocomplete(channels, hashtagFilter);
-  const filteredPeople = mentionablePeople.filter((person) => {
-    return personMatchesMentionQuery(person, mentionFilter);
-  }).slice(0, 8);
+  const filteredChannels = filterChannelsForAutocomplete(
+    channelOptions.map((channel) => ({
+      id: channel.id,
+      name: channel.name,
+      filterState: channel.isIncluded ? "included" : "neutral" as const,
+    })),
+    hashtagFilter
+  );
+  const normalizedMentionFilter = mentionFilter.trim().toLowerCase();
+  const filteredPeople = mentionOptions.filter((person) =>
+    normalizedMentionFilter.length === 0
+      ? true
+      : person.aliases.some((alias) => alias.includes(normalizedMentionFilter))
+  ).slice(0, 8);
   const parsedMentions = extractMentionIdentifiersFromContent(content);
   const parsedMentionSet = new Set(parsedMentions.map((identifier) => identifier.trim().toLowerCase()));
   const explicitMentionItems = explicitMentionPubkeys.map((pubkey) => {
-    const person = people.find((candidate) => candidate.id.toLowerCase() === pubkey);
-    const identifier = person ? getPreferredMentionIdentifier(person) : pubkey;
+    const person = mentionOptionByPubkey.get(pubkey);
+    const identifier = person?.identifier || pubkey;
     return {
       pubkey,
       identifier,
@@ -964,8 +989,8 @@ export function TaskComposer({
   }
   const mentionChipItems = Array.from(mentionChipMap.values()).map((chip) => {
     const normalized = chip.identifier.trim().toLowerCase();
-    const matchingPerson = people.find((person) => getMentionAliases(person).includes(normalized));
-    const resolvedLabel = (matchingPerson?.name || matchingPerson?.displayName || "").trim();
+    const matchingPerson = mentionOptionByAlias.get(normalized);
+    const resolvedLabel = matchingPerson?.primaryLabel || "";
     const filterBacked = chip.metadataOnly && Boolean(chip.explicitPubkey && selectedPeoplePubkeys.includes(chip.explicitPubkey));
     return {
       ...chip,
@@ -986,43 +1011,22 @@ export function TaskComposer({
       }),
   ];
   const hasAtLeastOneTag = countHashtagsInContent(content) + explicitTagNames.length > 0;
-  const canInheritParentTags = submitPolicy.canInheritParentTags;
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
-  const fallbackDefaultRelayIds = (() => {
-    const activePostableRelayIds = relays
-      .filter((relay) => relay.isActive && isPostableRelay(relay))
-      .map((relay) => relay.id);
-    return activePostableRelayIds.length === 1 ? [activePostableRelayIds[0]] : [];
-  })();
-  const effectiveSelectedRelayIds = selectedRelays.length > 0 ? selectedRelays : fallbackDefaultRelayIds;
-  const selectedRelayObjects = relays.filter((relay) => effectiveSelectedRelayIds.includes(relay.id));
-  const hasNoConnectedRelay = !selectedRelayObjects.some(isPostableRelay);
-  const hasInvalidRootTaskRelaySelection =
-    taskType === "task"
-    && submitPolicy.requiresSingleWritableRelayForTasks
-    && (effectiveSelectedRelayIds.length !== 1 || hasNoConnectedRelay);
-  const isCommentLikeRootPostType = taskType === "comment" || taskType === "offer" || taskType === "request";
-  const hasInvalidRootCommentRelaySelection =
-    isCommentLikeRootPostType && hasNoConnectedRelay;
-  const submitBlock = resolveComposeSubmitBlock({
+  const localSubmitBlock = resolveComposeSubmitBlock({
     isSignedIn: authPolicy.canCreateContent,
     hasMeaningfulContent,
     hasAtLeastOneTag,
-    canInheritParentTags,
-    hasInvalidRootCommentRelaySelection,
-    hasInvalidRootTaskRelaySelection,
+    canInheritParentTags: allowEmptyTags,
     hasPendingAttachmentUploads,
     hasFailedAttachmentUploads,
     t,
   });
+  const submitBlock = localSubmitBlock ?? submitBlockByType?.[taskType] ?? null;
   const submitBlockedReason = submitBlock?.reason ?? null;
   const showSubmitBlockBanner = submitBlock?.code !== "write";
-  const showSubmitBlockDetail = submitBlock?.code === "relay"
-    || submitBlock?.code === "selectTask"
-    || submitBlock?.code === "uploading"
-    || submitBlock?.code === "uploadFailed";
+  const showSubmitBlockDetail = shouldShowComposeSubmitBlockDetail(submitBlock);
   const isSubmitButtonEmptyDisabled = authPolicy.canCreateContent && content.trim().length === 0;
   const submitButtonLabel = isSubmitButtonEmptyDisabled ? null : submitBlock?.ctaLabel;
 
@@ -1065,19 +1069,14 @@ export function TaskComposer({
 
   const handleBlockedSubmitAttempt = () => {
     if (!submitBlock) return;
-    switch (submitBlock.action) {
-      case "focus-input":
-        focusComposerInput();
+    switch (getComposeSubmitBlockFocusTarget(submitBlock)) {
+      case "input":
+        focusComposerInput({ openHashtagSuggestions: submitBlock.action === "open-channel-selector" });
         break;
-      case "open-channel-selector":
-        focusComposerInput({ openHashtagSuggestions: true });
-        break;
-      case "focus-attachments":
+      case "attachments":
         focusAttachments();
         break;
-      case "open-relay-selector":
-      case "focus-task-context":
-      case "review-blocker":
+      case "blocker":
         if (typeof blockerPanelRef.current?.scrollIntoView === "function") {
           blockerPanelRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
@@ -1144,7 +1143,7 @@ export function TaskComposer({
         e.preventDefault();
         const selected = filteredPeople[Math.max(activeSuggestionIndex, 0)] || filteredPeople[0];
         if (selected) {
-          insertMention(getPreferredMentionIdentifier(selected));
+          insertMention(selected.identifier);
         }
         return;
       }
@@ -1318,8 +1317,8 @@ export function TaskComposer({
     setActiveSuggestionIndex(0);
   };
 
-  const addMentionTagOnly = (person: Person) => {
-    const normalizedPubkey = person.id.trim().toLowerCase();
+  const addMentionTagOnly = (person: { pubkey: string }) => {
+    const normalizedPubkey = person.pubkey.trim().toLowerCase();
     if (!/^[a-f0-9]{64}$/i.test(normalizedPubkey)) {
       return;
     }
@@ -1361,10 +1360,10 @@ export function TaskComposer({
   const removeExplicitHashtag = (tagName: string) => {
     const normalizedTag = tagName.trim().toLowerCase();
     if (!normalizedTag) return;
-    const channel = channels.find((entry) => entry.name.trim().toLowerCase() === normalizedTag);
-    if (channel?.filterState === "included") {
+    const channelId = channelIdByName.get(normalizedTag);
+    if (channelId && includedChannels.includes(normalizedTag)) {
       autoManagedFilterTagNamesRef.current.delete(normalizedTag);
-      void dispatchFeedInteraction({ type: "filter.clearChannel", channelId: channel.id });
+      void dispatchFeedInteraction({ type: "filter.clearChannel", channelId });
     }
     setExplicitTagNames((previous) => previous.filter((tag) => tag !== normalizedTag));
   };
@@ -1372,10 +1371,10 @@ export function TaskComposer({
   const removeExplicitMention = (pubkey: string | undefined) => {
     if (!pubkey) return;
     const normalizedPubkey = pubkey.trim().toLowerCase();
-    const person = people.find((entry) => entry.id.trim().toLowerCase() === normalizedPubkey);
-    if (person?.isSelected) {
+    const personId = selectedPersonIdByPubkey.get(normalizedPubkey);
+    if (personId) {
       autoManagedFilterMentionPubkeysRef.current.delete(normalizedPubkey);
-      void dispatchFeedInteraction({ type: "filter.clearPerson", personId: person.id });
+      void dispatchFeedInteraction({ type: "filter.clearPerson", personId });
     }
     setExplicitMentionPubkeys((previous) => previous.filter((value) => value !== normalizedPubkey));
   };
@@ -1560,8 +1559,8 @@ export function TaskComposer({
         {showMentionSuggestions && filteredPeople.length > 0 && (
           <div className="absolute left-0 top-full mt-1 bg-popover border border-border rounded-lg shadow-lg z-[115] w-[22rem] max-w-[calc(100vw-2rem)] py-1 max-h-72 overflow-y-auto overscroll-contain">
             {filteredPeople.map((person) => {
-                  const mentionIdentifier = getPreferredMentionIdentifier(person);
-                  const mentionDisplay = formatMentionIdentifierForDisplay(mentionIdentifier);
+                  const mentionIdentifier = person.identifier;
+                  const mentionDisplay = person.mentionDisplay;
                   const isActive = filteredPeople[activeSuggestionIndex]?.id === person.id;
                   return (
                     <button
@@ -1586,12 +1585,12 @@ export function TaskComposer({
                   )}
                   >
                   <UserAvatar
-                    id={person.id}
-                    displayName={person.displayName || person.name}
+                    id={person.pubkey}
+                    displayName={person.primaryLabel}
                     avatarUrl={person.avatar}
                     className="w-4 h-4"
                   />
-                  <span className="text-sm min-w-0 flex-1 truncate">@{person.name || person.displayName}</span>
+                  <span className="text-sm min-w-0 flex-1 truncate">@{person.primaryLabel}</span>
                   <span
                     className="text-xs text-muted-foreground max-w-[11rem] truncate"
                     title={`@${mentionIdentifier}`}

@@ -27,6 +27,12 @@ export interface ComposeSubmitBlockState {
   isHardDisabled: boolean;
 }
 
+export type ComposeSubmitBlockFocusTarget =
+  | "input"
+  | "attachments"
+  | "blocker"
+  | null;
+
 interface ResolveComposeSubmitBlockOptions {
   isSignedIn: boolean;
   hasMeaningfulContent: boolean;
@@ -141,4 +147,31 @@ export function resolveComposeSubmitBlock({
   }
 
   return null;
+}
+
+export function shouldShowComposeSubmitBlockDetail(block: ComposeSubmitBlockState | null): boolean {
+  return block?.code === "relay"
+    || block?.code === "selectTask"
+    || block?.code === "uploading"
+    || block?.code === "uploadFailed"
+    || block?.code === "commentRelay";
+}
+
+export function getComposeSubmitBlockFocusTarget(
+  block: ComposeSubmitBlockState | null
+): ComposeSubmitBlockFocusTarget {
+  switch (block?.action) {
+    case "focus-input":
+    case "open-channel-selector":
+      return "input";
+    case "focus-attachments":
+      return "attachments";
+    case "open-relay-selector":
+    case "focus-task-context":
+    case "review-blocker":
+      return "blocker";
+    case null:
+    case undefined:
+      return null;
+  }
 }

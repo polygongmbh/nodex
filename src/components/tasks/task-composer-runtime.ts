@@ -1,8 +1,12 @@
 import { createContext, createElement, useContext, useMemo, type PropsWithChildren } from "react";
 import { useFeedComposerOptions } from "@/features/feed-page/views/feed-surface-context";
+import {
+  formatMentionIdentifierForDisplay,
+  getMentionAliases,
+  getPreferredMentionIdentifier,
+} from "@/lib/mentions";
 import type {
   Channel,
-  ComposeRestoreRequest,
   Nip99Metadata,
   PostType,
   PublishedAttachment,
@@ -18,7 +22,6 @@ export interface TaskComposerDraftState {
   dueDate?: string;
   dueTime?: string;
   dateType?: TaskDateType;
-  selectedRelays?: string[];
   explicitMentionPubkeys?: string[];
   explicitTagNames?: string[];
   priority?: number;
@@ -33,7 +36,6 @@ export interface TaskComposerInitialState {
   dueDate?: Date;
   dueTime: string;
   dateType: TaskDateType;
-  selectedRelays: string[];
   explicitMentionPubkeys: string[];
   explicitTagNames: string[];
   priority?: number;
@@ -51,6 +53,39 @@ export interface ResolvedTaskComposerEnvironment {
   selectedPeoplePubkeys: string[];
 }
 
+export interface TaskComposerChannelOption {
+  id: string;
+  name: string;
+  isIncluded: boolean;
+}
+
+export interface TaskComposerMentionOption {
+  id: string;
+  pubkey: string;
+  identifier: string;
+  mentionDisplay: string;
+  primaryLabel: string;
+  avatar?: string;
+  isSelected: boolean;
+  aliases: string[];
+}
+
+export interface TaskComposerModel {
+  channelOptions: TaskComposerChannelOption[];
+  mentionOptions: TaskComposerMentionOption[];
+  includedChannels: string[];
+  selectedPeoplePubkeys: string[];
+  channelIdByName: Map<string, string>;
+  selectedPersonIdByPubkey: Map<string, string>;
+  mentionOptionByPubkey: Map<string, TaskComposerMentionOption>;
+  mentionOptionByAlias: Map<string, TaskComposerMentionOption>;
+}
+
+interface TaskComposerRuntimeContextValue {
+  environment: ResolvedTaskComposerEnvironment;
+  draftStorageKey?: string;
+}
+
 const defaultTaskComposerEnvironment: ResolvedTaskComposerEnvironment = {
   relays: [],
   channels: [],
@@ -60,13 +95,13 @@ const defaultTaskComposerEnvironment: ResolvedTaskComposerEnvironment = {
   selectedPeoplePubkeys: [],
 };
 
-const TaskComposerEnvironmentContext = createContext<ResolvedTaskComposerEnvironment | null>(null);
+const TaskComposerRuntimeContext = createContext<TaskComposerRuntimeContextValue | null>(null);
 
-export function TaskComposerEnvironmentProvider({
+export function TaskComposerRuntimeProvider({
   value,
   children,
-}: PropsWithChildren<{ value: ResolvedTaskComposerEnvironment }>) {
-  return createElement(TaskComposerEnvironmentContext.Provider, { value }, children);
+}: PropsWithChildren<{ value: TaskComposerRuntimeContextValue }>) {
+  return createElement(TaskComposerRuntimeContext.Provider, { value }, children);
 }
 
 export function useResolvedTaskComposerEnvironment({
@@ -108,9 +143,74 @@ export function useTaskComposerEnvironment(fallback?: {
   channels?: Channel[];
   people?: Person[];
 }): ResolvedTaskComposerEnvironment {
-  const providedEnvironment = useContext(TaskComposerEnvironmentContext);
+  const runtimeContext = useContext(TaskComposerRuntimeContext);
   const fallbackEnvironment = useResolvedTaskComposerEnvironment(fallback ?? defaultTaskComposerEnvironment);
-  return providedEnvironment ?? fallbackEnvironment;
+  return runtimeContext?.environment ?? fallbackEnvironment;
+}
+
+export function useTaskComposerDraftStorageKey() {
+  return useContext(TaskComposerRuntimeContext)?.draftStorageKey;
+}
+
+export function useTaskComposerModel(fallback?: {
+  relays?: Relay[];
+  channels?: Channel[];
+  people?: Person[];
+}): TaskComposerModel {
+  const environment = useTaskComposerEnvironment(fallback);
+
+  return useMemo(() => {
+    const channelOptions = environment.channels.map((channel) => ({
+      id: channel.id,
+      name: channel.name,
+      isIncluded: channel.filterState === "included",
+    }));
+
+    const mentionOptions = environment.people.map((person) => {
+      const identifier = getPreferredMentionIdentifier(person);
+      const primaryLabel = (person.name || person.displayName || "").trim()
+        || formatMentionIdentifierForDisplay(identifier);
+      return {
+        id: person.id,
+        pubkey: person.id.trim().toLowerCase(),
+        identifier,
+        mentionDisplay: formatMentionIdentifierForDisplay(identifier),
+        primaryLabel,
+        avatar: person.avatar,
+        isSelected: person.isSelected,
+        aliases: getMentionAliases(person),
+      };
+    });
+
+    const channelIdByName = new Map(
+      channelOptions.map((channel) => [channel.name.trim().toLowerCase(), channel.id] as const)
+    );
+    const selectedPersonIdByPubkey = new Map(
+      mentionOptions
+        .filter((person) => person.isSelected)
+        .map((person) => [person.pubkey, person.id] as const)
+    );
+    const mentionOptionByPubkey = new Map(
+      mentionOptions.map((person) => [person.pubkey, person] as const)
+    );
+    const mentionOptionByAlias = new Map<string, TaskComposerMentionOption>();
+    for (const person of mentionOptions) {
+      for (const alias of person.aliases) {
+        mentionOptionByAlias.set(alias, person);
+      }
+    }
+
+    return {
+      channelOptions,
+      mentionOptions,
+      includedChannels: environment.includedChannels,
+      selectedPeoplePubkeys: environment.selectedPeoplePubkeys,
+      channelIdByName,
+      selectedPersonIdByPubkey,
+      mentionOptionByPubkey,
+      mentionOptionByAlias,
+    };
+  }, [environment]);
 }
 
 export function readTaskComposerDraft(key: string): TaskComposerDraftState | null {
@@ -149,13 +249,11 @@ export function resolveTaskComposerInitialState({
   draftStorageKey,
   defaultContent,
   defaultDueDate,
-  relays,
   allowFeedMessageTypes,
 }: {
   draftStorageKey?: string;
   defaultContent: string;
   defaultDueDate?: Date;
-  relays: Relay[];
   allowFeedMessageTypes: boolean;
 }): TaskComposerInitialState {
   const draftState = draftStorageKey ? readTaskComposerDraft(draftStorageKey) : null;
@@ -166,11 +264,6 @@ export function resolveTaskComposerInitialState({
     dueDate: parseDraftDueDate(draftState?.dueDate) ?? defaultDueDate,
     dueTime: draftState?.dueTime || "",
     dateType: draftState?.dateType || "due",
-    selectedRelays:
-      draftState?.selectedRelays?.filter((id): id is string => typeof id === "string")
-      ?? relays
-        .filter((relay) => relay.isActive && (relay.connectionStatus === undefined || relay.connectionStatus === "connected"))
-        .map((relay) => relay.id),
     explicitTagNames:
       draftState?.explicitTagNames
         ?.filter((value): value is string => typeof value === "string")

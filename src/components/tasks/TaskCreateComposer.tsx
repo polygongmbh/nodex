@@ -2,18 +2,20 @@ import { useCallback, useMemo } from "react";
 import {
   TaskComposer,
   type TaskComposerSubmit,
-  type TaskComposerSubmitPolicy,
   type TaskComposerSubmitRequest,
 } from "./TaskComposer";
 import {
-  TaskComposerEnvironmentProvider,
+  TaskComposerRuntimeProvider,
   useResolvedTaskComposerEnvironment,
 } from "./task-composer-runtime";
+import { resolveComposeSubmitBlock, type ComposeSubmitBlockState } from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
+import { useTranslation } from "react-i18next";
 import type {
   ComposeRestoreRequest,
+  PostType,
   Relay,
   TaskCreateResult,
   TaskInitialStatus,
@@ -69,6 +71,7 @@ export function TaskCreateComposer({
 }: TaskCreateComposerProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { relays } = useFeedSurfaceState();
+  const { t } = useTranslation();
   const composerEnvironment = useResolvedTaskComposerEnvironment({});
   const { allTasks } = useFeedTaskViewModel();
   const parentTask = useMemo(
@@ -80,19 +83,46 @@ export function TaskCreateComposer({
     const relaysById = new Map(relays.map((relay) => [relay.id, relay] as const));
     return parentTask.relays.every((relayId) => !isWritableRelay(relaysById.get(relayId)));
   }, [parentTask, relays]);
-  const submitPolicy = useMemo<TaskComposerSubmitPolicy>(
-    () => ({
-      canInheritParentTags: Boolean(parentId),
-      requiresSingleWritableRelayForTasks: !parentId,
-    }),
-    [parentId]
+  const activeWritableRelayIds = useMemo(
+    () => relays.filter((relay) => relay.isActive && isWritableRelay(relay)).map((relay) => relay.id),
+    [relays]
+  );
+  const submitBlockByType = useMemo<Partial<Record<PostType, ComposeSubmitBlockState | null>>>(
+    () => {
+      const taskBlock = resolveComposeSubmitBlock({
+        isSignedIn: true,
+        hasMeaningfulContent: true,
+        hasAtLeastOneTag: true,
+        canInheritParentTags: true,
+        hasPendingAttachmentUploads: false,
+        hasFailedAttachmentUploads: false,
+        hasInvalidRootTaskRelaySelection: !parentId && activeWritableRelayIds.length !== 1,
+        t,
+      });
+      const replyBlock = resolveComposeSubmitBlock({
+        isSignedIn: true,
+        hasMeaningfulContent: true,
+        hasAtLeastOneTag: true,
+        canInheritParentTags: true,
+        hasPendingAttachmentUploads: false,
+        hasFailedAttachmentUploads: false,
+        hasInvalidRootCommentRelaySelection: activeWritableRelayIds.length === 0,
+        t,
+      });
+      return {
+        task: taskBlock,
+        comment: replyBlock,
+        offer: replyBlock,
+        request: replyBlock,
+      };
+    },
+    [activeWritableRelayIds, parentId, t]
   );
 
   const handleSubmit = useCallback<TaskComposerSubmit>(
     async ({
       content,
       tags,
-      relays,
       taskType,
       dueDate,
       dueTime,
@@ -107,7 +137,7 @@ export function TaskCreateComposer({
         type: "task.create",
         content,
         tags,
-        relays,
+        relays: activeWritableRelayIds,
         taskType,
         dueDate,
         dueTime,
@@ -127,7 +157,7 @@ export function TaskCreateComposer({
       }
       return result;
     },
-    [closeOnSuccess, dispatchFeedInteraction, initialStatus, onCancel, parentId]
+    [activeWritableRelayIds, closeOnSuccess, dispatchFeedInteraction, initialStatus, onCancel, parentId]
   );
 
   if (shouldHideComposer) {
@@ -135,26 +165,30 @@ export function TaskCreateComposer({
   }
 
   return (
-    <TaskComposerEnvironmentProvider value={composerEnvironment}>
+    <TaskComposerRuntimeProvider
+      value={{ environment: composerEnvironment, draftStorageKey }}
+    >
       <TaskComposer
         onSubmit={handleSubmit}
         onCancel={onCancel}
-        compact={compact}
-        defaultDueDate={defaultDueDate}
-        defaultContent={defaultContent}
-        submitPolicy={submitPolicy}
-        adaptiveSize={adaptiveSize}
-        onExpandedChange={onExpandedChange}
-        draftStorageKey={draftStorageKey}
-        forceExpanded={forceExpanded}
-        forceExpandSignal={forceExpandSignal}
-        mentionRequest={mentionRequest}
-        onMentionRequestConsumed={onMentionRequestConsumed}
-        collapseOnSuccess={collapseOnSuccess}
-        allowComment={allowComment}
-        allowFeedMessageTypes={allowFeedMessageTypes}
-        composeRestoreRequest={composeRestoreRequest}
+        submitBlockByType={submitBlockByType}
+        options={{
+          compact,
+          defaultDueDate,
+          defaultContent,
+          allowEmptyTags: Boolean(parentId),
+          adaptiveSize,
+          onExpandedChange,
+          forceExpanded,
+          forceExpandSignal,
+          mentionRequest,
+          onMentionRequestConsumed,
+          collapseOnSuccess,
+          allowComment,
+          allowFeedMessageTypes,
+          composeRestoreRequest,
+        }}
       />
-    </TaskComposerEnvironmentProvider>
+    </TaskComposerRuntimeProvider>
   );
 }
