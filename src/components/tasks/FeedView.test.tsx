@@ -366,7 +366,7 @@ describe("FeedView", () => {
     const fallbackAuthorLabel = screen.getByTestId("feed-author-primary-task-pubkey");
     expect(fallbackAuthorLabel).toHaveTextContent("npub1");
     expect(fallbackAuthorLabel.textContent).toContain("…");
-    expect(fallbackAuthorLabel.closest("button")).toHaveAttribute("title", expect.stringContaining("npub1"));
+    expect(fallbackAuthorLabel.closest("button")).not.toHaveAttribute("title");
     matchMediaSpy.mockRestore();
   });
 
@@ -600,7 +600,7 @@ describe("FeedView", () => {
     expect(focusedRow?.querySelector(".line-clamp-3")).toBeNull();
   });
 
-  it("calls author quick action when clicking the author label", () => {
+  it("supports modifier-based author filtering from the author label", () => {
     render(
       <FeedView
         tasks={tasks}
@@ -612,15 +612,39 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.click(screen.getAllByRole("button", { name: /filter and mention/i })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /person actions for/i })[0], { ctrlKey: true });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "filter.applyAuthorExclusive",
-      author,
+      type: "person.filter.exclusive",
+      person: author,
     });
   });
 
-  it("renders pubkey mentions as @name links and triggers author quick action", () => {
+  it("supports Ctrl/Cmd+Alt author shortcuts for filter and mention", () => {
+    render(
+      <FeedView
+        tasks={tasks}
+        allTasks={tasks}
+        relays={relays}
+        channels={channels}
+        people={[author]}
+        searchQuery=""
+      />
+    );
+
+    fireEvent.mouseDown(screen.getAllByRole("button", { name: /person actions for/i })[0], {
+      button: 0,
+      ctrlKey: true,
+      altKey: true,
+    });
+
+    expect(dispatchFeedInteraction).toHaveBeenCalledWith({
+      type: "person.filterAndMention",
+      person: author,
+    });
+  });
+
+  it("renders pubkey mentions as @name links and supports modifier shortcuts", () => {
     const mentionedPubkey = author.id;
     const mentionTask = makeTask({
       id: "task-mention",
@@ -639,10 +663,10 @@ describe("FeedView", () => {
     expect(mention).not.toBeNull();
     expect(mention).toHaveTextContent("@alice");
 
-    fireEvent.click(mention as HTMLButtonElement);
+    fireEvent.click(mention as HTMLButtonElement, { ctrlKey: true });
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "filter.applyAuthorExclusive",
-      author,
+      type: "person.filter.exclusive",
+      person: author,
     });
     expect(dispatchFeedInteraction).not.toHaveBeenCalledWith({
       type: "task.focus.change",
@@ -650,7 +674,7 @@ describe("FeedView", () => {
     });
   });
 
-  it("uses fallback person activation for unresolved mention tokens and does not focus row", () => {
+  it("uses fallback person shortcuts for unresolved mention tokens and does not focus row", () => {
     const unresolvedPubkey = "b".repeat(64);
     const mentionTask = makeTask({
       id: "task-mention-fallback",
@@ -670,10 +694,10 @@ describe("FeedView", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /open user npub1/i }));
+    fireEvent.click(screen.getByRole("button", { name: /person actions for npub1/i }), { altKey: true });
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "filter.applyAuthorExclusive",
-      author: expect.objectContaining({
+      type: "person.compose.mention",
+      person: expect.objectContaining({
         id: unresolvedPubkey,
       }),
     });
@@ -780,7 +804,7 @@ describe("FeedView", () => {
     });
     const stateRow = screen.getByTestId("feed-state-entry-state-title-tooltip");
     const actorButton = within(stateRow).getByRole("button", {
-      name: /filter and mention alice doe/i,
+      name: /person actions for alice doe/i,
     });
 
     expect(titleButton).toHaveAttribute(

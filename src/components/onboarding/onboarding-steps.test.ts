@@ -34,7 +34,7 @@ describe("onboarding steps", () => {
     expect(channelStep?.description).toContain("left of *Channels*");
     expect(peopleStep?.description).toContain("left of *People*");
     expect(channelStep?.description).toContain("show only posts with that channel");
-    expect(peopleStep?.description).toContain("show only posts from that person");
+    expect(peopleStep?.description).toContain("show only content involving that person");
     expect(channelStep?.requiredAction).toBeUndefined();
     expect(peopleStep?.requiredAction).toBeUndefined();
     expect(searchStep?.target).toBe('[data-onboarding="search-bar"]');

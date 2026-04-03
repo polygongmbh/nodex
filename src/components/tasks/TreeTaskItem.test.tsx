@@ -18,6 +18,8 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenuItem: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
     <button onClick={onClick}>{children}</button>
   ),
+  DropdownMenuSeparator: () => <div />,
+  DropdownMenuShortcut: ({ children }: { children: ReactNode }) => <span>{children}</span>,
 }));
 
 vi.mock("@/components/ui/popover", () => ({
@@ -246,7 +248,7 @@ describe("TreeTaskItem status actions", () => {
     expect(statusButton).toHaveAttribute("title", expect.stringContaining(sparseAuthor.id));
   });
 
-  it("calls author quick action for comment avatar/name clicks", () => {
+  it("supports modifier-based author filtering from comment avatar/name clicks", () => {
     const commentTask: Task = {
       ...baseTask,
       id: "c1",
@@ -261,11 +263,11 @@ describe("TreeTaskItem status actions", () => {
 
     renderTreeTaskItem({ task: commentTask });
 
-    fireEvent.click(screen.getAllByRole("button", { name: /filter and mention alice/i })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: /person actions for alice/i })[0], { ctrlKey: true });
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({
-      type: "filter.applyAuthorExclusive",
-      author: commentTask.author,
+      type: "person.filter.exclusive",
+      person: commentTask.author,
     });
   });
 
@@ -286,7 +288,7 @@ describe("TreeTaskItem status actions", () => {
 
     renderTreeTaskItem({ task: commentTask, compactView: true });
 
-    expect(screen.queryByRole("button", { name: /filter and mention commentator/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /person actions for commentator/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /filter to #frontend/i })).not.toBeInTheDocument();
     expect(screen.getByText("May 1, 2026")).toBeInTheDocument();
   });

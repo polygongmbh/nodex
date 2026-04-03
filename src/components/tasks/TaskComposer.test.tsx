@@ -1456,6 +1456,32 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(consumedRequestIds).toEqual([7]);
   });
 
+  it("focuses the composer when applying an external mention request", async () => {
+    render(
+      <TaskComposer
+        onSubmit={() => successfulCreateResult}
+        relays={relays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        mentionRequest={{ mention: "@alice@example.com", id: 11 }}
+      />
+    );
+
+    const textarea = getTaskComposerInput() as HTMLTextAreaElement;
+    const outsideButton = document.createElement("button");
+    document.body.appendChild(outsideButton);
+    outsideButton.focus();
+    expect(document.activeElement).toBe(outsideButton);
+
+    await waitFor(() => {
+      expect(textarea.value).toBe("@alice@example.com ");
+      expect(document.activeElement).toBe(textarea);
+    });
+
+    outsideButton.remove();
+  });
+
   it("focuses and highlights the composer input when clicking a parsed hashtag chip", async () => {
     render(
       <TaskComposer

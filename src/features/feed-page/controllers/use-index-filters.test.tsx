@@ -83,10 +83,8 @@ function Harness({
     people,
     setPeople,
     sidebarPeople: visibleSidebarPeople,
-    isMobile,
     hasLiveHydratedScope,
     isHydrating,
-    setSearchQuery,
     t: ((key: string, values?: Record<string, unknown>) =>
       values ? `${key}:${JSON.stringify(values)}` : key) as unknown as TFunction,
   });
@@ -175,14 +173,14 @@ describe("useIndexFilters", () => {
     expect(screen.getByTestId("channel-state-general")).toHaveTextContent("neutral");
   });
 
-  it("selects the clicked author and queues a mention request on mobile", () => {
+  it("selects the clicked author and queues a mention request", () => {
     renderHarness({ isMobile: true });
 
     fireEvent.click(screen.getByRole("button", { name: "AuthorClick" }));
 
     expect(screen.getByTestId("selected-people")).toHaveTextContent("alice");
     expect(screen.getByTestId("mention-request")).toHaveTextContent("@alice");
-    expect(screen.getByTestId("search-query")).toHaveTextContent("@alice");
+    expect(screen.getByTestId("search-query")).toHaveTextContent("");
   });
 
   it("resets relay, channel, people, and match-mode filters to defaults", () => {

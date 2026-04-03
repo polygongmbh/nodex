@@ -47,7 +47,7 @@ function renderSidebar(relays: Relay[]) {
 function getSectionToggle(sectionLabel: "channels-section" | "people-section" | "relays-section") {
   const section = document.querySelector(`[data-onboarding="${sectionLabel}"]`);
   expect(section).toBeTruthy();
-  return within(section as HTMLElement).getByRole("button", { expanded: false });
+  return (section as HTMLElement).querySelector('button[aria-expanded]') as HTMLButtonElement;
 }
 
 describe("Sidebar", () => {

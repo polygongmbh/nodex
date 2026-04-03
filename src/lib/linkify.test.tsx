@@ -1,8 +1,10 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "./linkify";
 import type { Person } from "@/types/person";
 import { hexPubkeyToNpub } from "@/lib/nostr/user-facing-pubkey";
+import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const alice: Person = {
   id: "a".repeat(64),
@@ -14,6 +16,19 @@ const alice: Person = {
 };
 
 describe("linkifyContent interaction styles", () => {
+  const renderWithDispatch = (content: ReactNode) => {
+    const dispatch = vi.fn().mockResolvedValue({
+      envelope: { id: 1, dispatchedAtMs: Date.now(), intent: { type: "ui.focusTasks" } },
+      outcome: { status: "handled" },
+    });
+    render(
+      <FeedInteractionProvider bus={{ dispatch, dispatchBatch: vi.fn().mockResolvedValue([]) }}>
+        <div>{content}</div>
+      </FeedInteractionProvider>
+    );
+    return dispatch;
+  };
+
   it("parses hashtags and URLs and triggers hashtag filtering", () => {
     const onHashtagClick = vi.fn();
 
@@ -36,70 +51,66 @@ describe("linkifyContent interaction styles", () => {
     expect(hashtag).toBeInTheDocument();
   });
 
-  it("renders @mentions with resolved @name labels and supports person click callback", () => {
-    const onMentionClick = vi.fn();
-
-    render(
-      <div>
-        {linkifyContent(`Assign to @${alice.id}`, undefined, {
-          people: [alice],
-          onMentionClick,
-        })}
-      </div>
+  it("renders @mentions with resolved @name labels and supports modifier shortcuts", () => {
+    const dispatch = renderWithDispatch(
+      linkifyContent(`Assign to @${alice.id}`, undefined, {
+        people: [alice],
+      })
     );
 
-    const mention = screen.getByRole("button", { name: "Open user alice" });
+    const mention = screen.getByRole("button", { name: "Person actions for alice" });
     expect(mention).toHaveTextContent("@alice");
 
-    fireEvent.click(mention);
-    expect(onMentionClick).toHaveBeenCalledWith(alice);
+    fireEvent.click(mention, { ctrlKey: true });
+    expect(dispatch).toHaveBeenCalledWith({ type: "person.filter.exclusive", person: alice });
   });
 
-  it("supports unresolved pubkey mention clicks via fallback person", () => {
+  it("supports unresolved pubkey mention shortcuts via fallback person", () => {
     const unresolvedPubkey = "b".repeat(64);
-    const onMentionClick = vi.fn();
+    const dispatch = renderWithDispatch(linkifyContent(`Assign to @${unresolvedPubkey}`));
 
-    render(
-      <div>
-        {linkifyContent(`Assign to @${unresolvedPubkey}`, undefined, {
-          onMentionClick,
-        })}
-      </div>
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /open user npub1/i }));
-    expect(onMentionClick).toHaveBeenCalledWith(
-      expect.objectContaining({
+    fireEvent.click(screen.getByRole("button", { name: /person actions for npub1/i }), { altKey: true });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "person.compose.mention",
+      person: expect.objectContaining({
         id: unresolvedPubkey,
         isOnline: false,
         isSelected: false,
-      })
-    );
+      }),
+    });
   });
 
-  it("linkifies nostr:npub mentions and routes clicks via mention callback", () => {
+  it("routes Ctrl/Cmd+Alt mention shortcuts to filter and mention before opening the menu", () => {
+    const dispatch = renderWithDispatch(
+      linkifyContent(`Assign to @${alice.id}`, undefined, {
+        people: [alice],
+      })
+    );
+
+    fireEvent.mouseDown(screen.getByRole("button", { name: "Person actions for alice" }), {
+      button: 0,
+      ctrlKey: true,
+      altKey: true,
+    });
+    expect(dispatch).toHaveBeenCalledWith({ type: "person.filterAndMention", person: alice });
+  });
+
+  it("linkifies nostr:npub mentions and routes modifier clicks through fallback person actions", () => {
     const unresolvedPubkey = "b".repeat(64);
     const npub = hexPubkeyToNpub(unresolvedPubkey);
     expect(npub).toBeTruthy();
-    const onMentionClick = vi.fn();
+    const dispatch = renderWithDispatch(linkifyContent(`Assign to nostr:${npub}`));
 
-    render(
-      <div>
-        {linkifyContent(`Assign to nostr:${npub}`, undefined, {
-          onMentionClick,
-        })}
-      </div>
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /open user npub1/i }));
-    expect(onMentionClick).toHaveBeenCalledWith(
-      expect.objectContaining({
+    fireEvent.click(screen.getByRole("button", { name: /person actions for npub1/i }), { ctrlKey: true });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "person.filter.exclusive",
+      person: expect.objectContaining({
         id: unresolvedPubkey,
-      })
-    );
+      }),
+    });
   });
 
-  it("keeps original mention token as hover title after resolving display label", () => {
+  it("does not add a tooltip when the mention opens a profile popover", () => {
     render(
       <div>
         {linkifyContent("Assign to @alice@example.com", undefined, {
@@ -108,7 +119,7 @@ describe("linkifyContent interaction styles", () => {
       </div>
     );
 
-    expect(screen.getByText("@alice")).toHaveAttribute("title", "@alice@example.com");
+    expect(screen.getByText("@alice")).not.toHaveAttribute("title");
   });
 
   it("formats raw pubkey mention labels as npub", () => {
@@ -118,7 +129,7 @@ describe("linkifyContent interaction styles", () => {
 
     const mention = screen.getByText((value) => value.startsWith("@npub1"));
     expect(mention).toBeInTheDocument();
-    expect(mention).toHaveAttribute("title", expect.stringContaining("@npub1"));
+    expect(mention).not.toHaveAttribute("title");
   });
 
   it("replaces a standalone embeddable URL line with an embed", () => {
