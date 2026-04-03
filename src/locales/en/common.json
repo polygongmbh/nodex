@@ -937,7 +937,7 @@
   },
   "feed": {
     "hydrating": "Loading events from relay…",
-    "loadingMoreEvents": "Loading more events"
+    "loadingMoreEvents": "Loading more events..."
   },
   "tasks": {
     "task": "Task",
