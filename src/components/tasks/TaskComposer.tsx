@@ -1053,7 +1053,7 @@ export function TaskComposer({
     taskType === "task" && !parentId && (effectiveSelectedRelayIds.length !== 1 || hasNoConnectedRelay);
   const isCommentLikeRootPostType = taskType === "comment" || taskType === "offer" || taskType === "request";
   const hasInvalidRootCommentRelaySelection =
-    isCommentLikeRootPostType && !parentId && hasNoConnectedRelay;
+    isCommentLikeRootPostType && hasNoConnectedRelay;
   const submitBlock = resolveComposeSubmitBlock({
     isSignedIn: authPolicy.canCreateContent,
     hasMeaningfulContent,

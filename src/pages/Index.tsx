@@ -971,6 +971,7 @@ const Index = () => {
         name: relay.name,
         icon: relay.icon,
         isActive: relay.isActive,
+        connectionStatus: relay.connectionStatus,
         url: relay.url,
       })),
     [relaysWithActiveState]

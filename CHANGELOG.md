@@ -18,6 +18,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Successful publish toasts now name the target space when one is known, and the composer explicitly shows the existing relay warning banner when a restored comment relay selection is not writable.
 - Successful publish toasts now list every space that actually accepted the event instead of naming only the first successful space.
 - Blocked relay selections now stop `Cmd/Ctrl+Enter` submits before the composer enters its publishing state, so read-only/disconnected relay warnings no longer leave a stuck `Publishing...` toast behind.
+- Parent-scoped comments, offers, and requests now reuse the same writable-relay banner as root-level composer posts, so replying into a read-only space is blocked in-place instead of starting a publish attempt first.
+- Feed-surface composer relays now retain their real connection status instead of dropping it at the page boundary, so read-only spaces no longer masquerade as writable and trigger a misleading publish attempt.
 
 ## [2.11.0] - 2026-04-03
 Minor release for shared person interactions, task metadata consistency, timeline timestamp clarity, and mobile relay-scoped filter alignment.

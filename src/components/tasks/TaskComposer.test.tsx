@@ -2351,6 +2351,34 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select space");
   });
 
+  it("blocks parent-scoped comments on read-only relays before publishing starts", () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={readOnlyRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+        parentId="some-task-id"
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+    const textarea = getCommentComposerInput() as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: { value: "Looks good #backend" },
+    });
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(vi.mocked(toast.loading)).not.toHaveBeenCalledWith("Publishing...", { id: "task-composer-publishing" });
+    expect(screen.getByRole("alert")).toHaveTextContent("Select at least one green space to post a comment");
+  });
+
   it("allows comment submit when parentId is provided", () => {
     render(
       <TaskComposer
