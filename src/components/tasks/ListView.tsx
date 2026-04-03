@@ -3,7 +3,7 @@ import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCc
 import {   Task, ComposeRestoreRequest, TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
-import { ScrollableTaskTagChipRow } from "./TaskTagChipRow";
+import { TaskMentionTagChipRow } from "./TaskTagChipRow";
 import { ListTaskRow } from "./list/ListTaskRow";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -57,8 +57,16 @@ type SortDirection = "asc" | "desc";
 const TABLE_CELL_PADDING_CLASS = "px-3 py-2";
 const LIST_HEADER_CELL_CLASS = `${TABLE_CELL_PADDING_CLASS} min-w-0`;
 const LIST_BODY_CELL_CLASS = `${TABLE_CELL_PADDING_CLASS} min-w-0`;
-const LIST_GRID_TEMPLATE_CLASS =
-  "grid grid-cols-[2.5rem_minmax(0,1fr)_fit-content(7.5rem)_6rem_fit-content(11.5rem)] lg:grid-cols-[2.5rem_minmax(0,1fr)_fit-content(8.5rem)_6.5rem_fit-content(12.5rem)] xl:grid-cols-[2.5rem_minmax(0,1fr)_fit-content(10.75rem)_7.25rem_fit-content(23.25rem)] 2xl:grid-cols-[2.5rem_minmax(0,1fr)_fit-content(9.5rem)_fit-content(16.5rem)_9rem_fit-content(38rem)]";
+// columns: status toggle | task | status | due date | priority | tags
+const LIST_GRID_BASE_CLASS =
+  "grid-cols-[2.5rem_minmax(0,1fr)_fit-content(7.5rem)_6rem_minmax(0,1fr)]";
+const LIST_GRID_LG_CLASS =
+  "lg:grid-cols-[2.5rem_minmax(0,1fr)_fit-content(8.5rem)_7rem_minmax(0,1fr)]";
+const LIST_GRID_XL_CLASS =
+  "xl:grid-cols-[2.5rem_minmax(0,3fr)_fit-content(10.75rem)_7rem_minmax(0,2fr)]";
+const LIST_GRID_2XL_CLASS =
+  "2xl:grid-cols-[2.5rem_minmax(0,2fr)_fit-content(8.75rem)_minmax(0,1fr)_8.5rem_minmax(0,1fr)]";
+const LIST_GRID_TEMPLATE_CLASS = `grid ${LIST_GRID_BASE_CLASS} ${LIST_GRID_LG_CLASS} ${LIST_GRID_XL_CLASS} ${LIST_GRID_2XL_CLASS}`;
 const LIST_SUBGRID_ROW_CLASS = "col-span-full grid grid-cols-subgrid";
 
 interface PriorityCellProps {
@@ -140,7 +148,7 @@ export function ListView({
   // Detect filter/view changes (not status changes) to trigger re-sort
   useEffect(() => {
     const taskIdsSnapshot = tasks.map(t => t.id).sort().join(",");
-    const filtersChanged = 
+    const filtersChanged =
       prevTasksRef.current !== taskIdsSnapshot ||
       prevSearchRef.current !== searchQuery ||
       prevFocusedRef.current !== focusedTaskId;
@@ -354,21 +362,21 @@ export function ListView({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onClick={() => dispatchStatusChange(task.id, "todo")}
             className={cn(status === "todo" && "bg-muted")}
           >
             <Circle className="w-4 h-4 mr-2 text-muted-foreground" />
             {t("listView.status.todo")}
           </DropdownMenuItem>
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onClick={() => dispatchStatusChange(task.id, "in-progress")}
             className={cn(status === "in-progress" && "bg-muted")}
           >
             <CircleDot className="w-4 h-4 mr-2 text-warning" />
             {t("listView.status.inProgress")}
           </DropdownMenuItem>
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onClick={() => dispatchStatusChange(task.id, "done")}
             className={cn(status === "done" && "bg-muted")}
           >
@@ -443,7 +451,7 @@ export function ListView({
   // Editable tags cell
   const TagsCell = ({ task }: { task: Task }) => {
     return (
-      <ScrollableTaskTagChipRow
+      <TaskMentionTagChipRow
         task={task}
         className="min-w-0"
       />

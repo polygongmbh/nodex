@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Task } from "@/types";
 import type { Person } from "@/types/person";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
@@ -22,35 +23,51 @@ interface BaseTaskTagChipProps {
 
 type TaskTagChipInlineProps = Omit<BaseTaskTagChipProps, "priority" | "className" | "testId">;
 
-export function hasTaskMetadataChips(task: Task, activeRelayCount: number): boolean {
+function hasTaskChipContent(
+  task: Task,
+  activeRelayCount: number,
+  includeRelayChip: boolean,
+  includeLocationChip: boolean
+): boolean {
   return (
-    (activeRelayCount > 1 && task.relays.length > 0) ||
-    Boolean(task.locationGeohash) ||
+    (includeRelayChip && activeRelayCount > 1 && task.relays.length > 0) ||
+    (includeLocationChip && Boolean(task.locationGeohash)) ||
     hasTaskMentionChips(task) ||
     task.tags.length > 0
   );
 }
 
-export function TaskTagChipInline({
+export function hasTaskMetadataChips(task: Task, activeRelayCount: number): boolean {
+  return hasTaskChipContent(task, activeRelayCount, true, true);
+}
+
+export function hasTaskMentionTagChips(task: Task): boolean {
+  return hasTaskMentionChips(task) || task.tags.length > 0;
+}
+
+function TaskTagChipContent({
   task,
   people: peopleProp,
   tagClassName,
   stopPropagation = true,
   showEmptyPlaceholder = true,
-}: TaskTagChipInlineProps) {
+  includeRelayChip,
+  includeLocationChip,
+}: TaskTagChipInlineProps & {
+  includeRelayChip: boolean;
+  includeLocationChip: boolean;
+}) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { relays, people: contextPeople } = useFeedSurfaceState();
   const people = peopleProp ?? contextPeople;
   const activeRelays = relays.filter((relay) => relay.isActive);
   const relayLabel =
-    activeRelays.length > 1 && task.relays.length > 0
+    includeRelayChip && activeRelays.length > 1 && task.relays.length > 0
       ? activeRelays.find((relay) => task.relays.includes(relay.id))?.name || task.relays[0]
       : null;
-  const hasMentions = hasTaskMentionChips(task);
-  const hasTags = task.tags.length > 0;
 
-  if (!hasTaskMetadataChips(task, activeRelays.length)) {
+  if (!hasTaskChipContent(task, activeRelays.length, includeRelayChip, includeLocationChip)) {
     return showEmptyPlaceholder ? <span className="shrink-0 text-xs text-muted-foreground">—</span> : null;
   }
 
@@ -61,7 +78,7 @@ export function TaskTagChipInline({
           {relayLabel}
         </span>
       ) : null}
-      {task.locationGeohash ? (
+      {includeLocationChip && task.locationGeohash ? (
         <TaskLocationChip
           geohash={task.locationGeohash}
           className="shrink-0 whitespace-nowrap px-1.5 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground"
@@ -98,9 +115,33 @@ export function TaskTagChipInline({
   );
 }
 
+export function TaskTagChipInline({
+  task,
+  people: peopleProp,
+  tagClassName,
+  stopPropagation = true,
+  showEmptyPlaceholder = true,
+}: TaskTagChipInlineProps) {
+  return (
+    <TaskTagChipContent
+      task={task}
+      people={peopleProp}
+      tagClassName={tagClassName}
+      stopPropagation={stopPropagation}
+      showEmptyPlaceholder={showEmptyPlaceholder}
+      includeRelayChip
+      includeLocationChip
+    />
+  );
+}
+
+export function TaskMentionTagChipInline(props: TaskTagChipInlineProps) {
+  return <TaskTagChipContent {...props} includeRelayChip={false} includeLocationChip={false} />;
+}
+
 type TaskTagChipRowProps = BaseTaskTagChipProps;
 
-export function TaskTagChipRow({
+function TaskChipRow({
   task,
   people,
   priority,
@@ -109,7 +150,10 @@ export function TaskTagChipRow({
   stopPropagation = true,
   showEmptyPlaceholder = true,
   testId,
-}: TaskTagChipRowProps) {
+  renderInline,
+}: TaskTagChipRowProps & {
+  renderInline: (props: TaskTagChipInlineProps) => ReactNode;
+}) {
   const hasPriority = typeof priority === "number";
 
   return (
@@ -119,15 +163,23 @@ export function TaskTagChipRow({
           {formatPriorityLabel(priority)}
         </span>
       ) : null}
-      <TaskTagChipInline
-        task={task}
-        people={people}
-        tagClassName={tagClassName}
-        stopPropagation={stopPropagation}
-        showEmptyPlaceholder={showEmptyPlaceholder && !hasPriority}
-      />
+      {renderInline({
+        task: task,
+        people: people,
+        tagClassName: tagClassName,
+        stopPropagation: stopPropagation,
+        showEmptyPlaceholder: showEmptyPlaceholder && !hasPriority
+      })}
     </div>
   );
+}
+
+export function TaskTagChipRow(props: TaskTagChipRowProps) {
+  return <TaskChipRow {...props} renderInline={(inlineProps) => <TaskTagChipInline {...inlineProps} />} />;
+}
+
+export function TaskMentionTagChipRow(props: TaskTagChipRowProps) {
+  return <TaskChipRow {...props} renderInline={(inlineProps) => <TaskMentionTagChipInline {...inlineProps} />} />;
 }
 
 export function ScrollableTaskTagChipRow({
