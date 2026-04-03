@@ -860,6 +860,10 @@ export function TaskComposer({
 
   const handleSubmit = async (submitType?: unknown) => {
     if (isPublishing) return;
+    if (submitBlock && submitBlock.code !== "signin" && !submitBlock.isHardDisabled) {
+      handleBlockedSubmitAttempt();
+      return;
+    }
     if (!content.trim()) return;
     if (!hasMeaningfulComposerText(content)) return;
     const effectiveTaskType = resolveSubmitType(submitType);
@@ -1122,7 +1126,9 @@ export function TaskComposer({
       case "open-relay-selector":
       case "focus-task-context":
       case "review-blocker":
-        blockerPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        if (typeof blockerPanelRef.current?.scrollIntoView === "function") {
+          blockerPanelRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
         pulseTarget("blocker");
         break;
       case null:

@@ -2276,6 +2276,33 @@ describe("TaskComposer hashtag autocomplete", () => {
     expect(screen.getByRole("button", { name: /add comment/i })).toHaveTextContent("Select space");
   });
 
+  it("does not start publishing when Ctrl+Enter is used while comment relay selection is blocked", () => {
+    const onSubmit = vi.fn(async () => successfulCreateResult);
+
+    render(
+      <TaskComposer
+        onSubmit={onSubmit}
+        relays={readOnlyRelays}
+        channels={channels}
+        people={people}
+        onCancel={() => {}}
+      />
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: /kind/i }), {
+      target: { value: "comment" },
+    });
+    const textarea = getCommentComposerInput() as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: { value: "Looks good #backend" },
+    });
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(vi.mocked(toast.loading)).not.toHaveBeenCalledWith("Publishing...", { id: "task-composer-publishing" });
+    expect(screen.getByRole("alert")).toHaveTextContent("Select at least one green space to post a comment");
+  });
+
   it("shows the relay warning banner when a restored comment relay selection is non-writable", () => {
     const draftStorageKey = "task-composer-read-only-comment-relay";
     localStorage.setItem(draftStorageKey, JSON.stringify({

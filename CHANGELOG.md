@@ -17,6 +17,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Root comments, offers, and requests now publish through the writable subset of selected relays instead of being blocked or targeting read-only relays, so mixed relay selections still send as long as at least one selected relay can write.
 - Successful publish toasts now name the target space when one is known, and the composer explicitly shows the existing relay warning banner when a restored comment relay selection is not writable.
 - Successful publish toasts now list every space that actually accepted the event instead of naming only the first successful space.
+- Blocked relay selections now stop `Cmd/Ctrl+Enter` submits before the composer enters its publishing state, so read-only/disconnected relay warnings no longer leave a stuck `Publishing...` toast behind.
 
 ## [2.11.0] - 2026-04-03
 Minor release for shared person interactions, task metadata consistency, timeline timestamp clarity, and mobile relay-scoped filter alignment.
