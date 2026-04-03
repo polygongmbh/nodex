@@ -52,7 +52,7 @@ interface TaskComposerProps {
   compact?: boolean;
   defaultDueDate?: Date;
   defaultContent?: string;
-  parentId?: string;
+  isParentScoped?: boolean;
   adaptiveSize?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   draftStorageKey?: string;
@@ -193,7 +193,7 @@ export function TaskComposer({
   compact = false, 
   defaultDueDate, 
   defaultContent = "",
-  parentId,
+  isParentScoped = false,
   adaptiveSize = false,
   onExpandedChange,
   draftStorageKey,
@@ -874,7 +874,7 @@ export function TaskComposer({
     
     const extractedTags = extractHashtagsFromContent(content);
     const submitTags = Array.from(new Set([...extractedTags, ...explicitTagNames]));
-    if (submitTags.length === 0 && !parentId) {
+    if (submitTags.length === 0 && !isParentScoped) {
       notifyNeedTag(t);
       return;
     }
@@ -1036,7 +1036,7 @@ export function TaskComposer({
       }),
   ];
   const hasAtLeastOneTag = countHashtagsInContent(content) + explicitTagNames.length > 0;
-  const canInheritParentTags = Boolean(parentId);
+  const canInheritParentTags = isParentScoped;
   const hasMeaningfulContent = hasMeaningfulComposerText(content);
   const hasPendingAttachmentUploads = attachments.some((attachment) => attachment.status === "uploading");
   const hasFailedAttachmentUploads = attachments.some((attachment) => attachment.status === "failed");
@@ -1050,7 +1050,7 @@ export function TaskComposer({
   const selectedRelayObjects = relays.filter((relay) => effectiveSelectedRelayIds.includes(relay.id));
   const hasNoConnectedRelay = !selectedRelayObjects.some(isPostableRelay);
   const hasInvalidRootTaskRelaySelection =
-    taskType === "task" && !parentId && (effectiveSelectedRelayIds.length !== 1 || hasNoConnectedRelay);
+    taskType === "task" && !isParentScoped && (effectiveSelectedRelayIds.length !== 1 || hasNoConnectedRelay);
   const isCommentLikeRootPostType = taskType === "comment" || taskType === "offer" || taskType === "request";
   const hasInvalidRootCommentRelaySelection =
     isCommentLikeRootPostType && hasNoConnectedRelay;

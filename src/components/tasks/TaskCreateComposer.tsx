@@ -128,7 +128,7 @@ export function TaskCreateComposer({
       compact={compact}
       defaultDueDate={defaultDueDate}
       defaultContent={defaultContent}
-      parentId={parentId}
+      isParentScoped={Boolean(parentId)}
       adaptiveSize={adaptiveSize}
       onExpandedChange={onExpandedChange}
       draftStorageKey={draftStorageKey}

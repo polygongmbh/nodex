@@ -1137,7 +1137,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        parentId="parent-task"
+        isParentScoped
       />
     );
 
@@ -2088,7 +2088,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        parentId="parent-task"
+        isParentScoped
       />
     );
 
@@ -2361,7 +2361,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        parentId="some-task-id"
+        isParentScoped
       />
     );
 
@@ -2387,7 +2387,7 @@ describe("TaskComposer hashtag autocomplete", () => {
         channels={channels}
         people={people}
         onCancel={() => {}}
-        parentId="some-task-id"
+        isParentScoped
       />
     );
 
