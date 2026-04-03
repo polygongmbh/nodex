@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeTaskType } from "./task-type";
+import { normalizeComposerMessageType, normalizeTaskType } from "./task-type";
 
 describe("normalizeTaskType", () => {
   it("keeps valid task types", () => {
@@ -18,5 +18,20 @@ describe("normalizeTaskType", () => {
     expect(normalizeTaskType("")).toBe("task");
     expect(normalizeTaskType("notes")).toBe("task");
     expect(normalizeTaskType({})).toBe("task");
+  });
+});
+
+describe("normalizeComposerMessageType", () => {
+  it("keeps all supported post types", () => {
+    expect(normalizeComposerMessageType("task")).toBe("task");
+    expect(normalizeComposerMessageType("comment")).toBe("comment");
+    expect(normalizeComposerMessageType("offer")).toBe("offer");
+    expect(normalizeComposerMessageType("request")).toBe("request");
+  });
+
+  it("falls back to task for malformed values", () => {
+    expect(normalizeComposerMessageType(undefined)).toBe("task");
+    expect(normalizeComposerMessageType("")).toBe("task");
+    expect(normalizeComposerMessageType("listing")).toBe("task");
   });
 });

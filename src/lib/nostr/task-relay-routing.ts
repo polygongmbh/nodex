@@ -1,4 +1,4 @@
-import type { Relay, Task, TaskType } from "@/types";
+import type { Relay, Task, TaskEntryType } from "@/types";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 
 export const RELAY_SELECTION_ERROR_KEY = "toasts.errors.selectRelayOrParent";
@@ -31,7 +31,7 @@ export function resolveOriginRelayIdForTask(task: Task | undefined, demoRelayId?
 }
 
 export function resolveRelaySelectionForSubmission(params: {
-  taskType: TaskType;
+  taskType: TaskEntryType;
   selectedRelayIds: string[];
   relays: Relay[];
   parentTask?: Task;

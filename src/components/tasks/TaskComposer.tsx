@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, HandHelping, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {   Relay, Channel, FeedMessageType, Nip99Metadata, TaskType, TaskDateType, TaskCreateResult, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
+import {   Relay, Channel, Nip99Metadata, PostType, TaskDateType, TaskCreateResult, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
 import type { Person } from "@/types/person";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -69,12 +69,12 @@ interface TaskComposerProps {
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 
-type ComposerMessageType = TaskType | FeedMessageType;
+type ComposerMessageType = PostType;
 export type TaskComposerSubmit = (
   content: string,
   tags: string[],
   relays: string[],
-  taskType: string,
+  taskType: ComposerMessageType,
   dueDate?: Date,
   dueTime?: string,
   dateType?: TaskDateType,

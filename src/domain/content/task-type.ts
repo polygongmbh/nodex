@@ -1,8 +1,8 @@
-import type { FeedMessageType, TaskType } from "@/types";
+import type { PostType, TaskEntryType } from "@/types";
 
-export type ComposerMessageType = TaskType | FeedMessageType;
+export type ComposerMessageType = PostType;
 
-export function normalizeTaskType(value: unknown): TaskType {
+export function normalizeTaskType(value: unknown): TaskEntryType {
   if (value === "task" || value === "comment") {
     return value;
   }

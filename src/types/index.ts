@@ -26,8 +26,11 @@ export type ChannelMatchMode = "and" | "or";
 // Legacy alias for compatibility
 export type Tag = Channel;
 
-export type TaskType = "task" | "comment";
+export type TaskEntryType = "task" | "comment";
 export type FeedMessageType = "offer" | "request";
+export type PostType = TaskEntryType | FeedMessageType;
+// Legacy alias for compatibility with older task/comment-only call sites.
+export type TaskType = TaskEntryType;
 export type Nip99ListingStatus = "active" | "sold";
 export interface Nip99Metadata {
   identifier?: string;
@@ -55,7 +58,7 @@ export type OnNewTask = (
   content: string,
   tags: string[],
   relays: string[],
-  taskType: string,
+  taskType: PostType,
   dueDate?: Date,
   dueTime?: string,
   dateType?: TaskDateType,
@@ -117,8 +120,8 @@ export interface ComposeAttachment extends PublishedAttachment {
 
 export interface ComposeRestoreState {
   content: string;
-  taskType: TaskType;
-  messageType?: TaskType | FeedMessageType;
+  taskType: TaskEntryType;
+  messageType?: PostType;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
   dueDate?: Date;
@@ -142,7 +145,7 @@ export interface Task {
   content: string;
   tags: string[];
   relays: string[];
-  taskType: TaskType;
+  taskType: TaskEntryType;
   feedMessageType?: FeedMessageType;
   nip99?: Nip99Metadata;
   locationGeohash?: string;
@@ -228,6 +231,4 @@ export interface SavedFilterController {
 // Legacy aliases for compatibility
 export type { FilterState as TagFilterState };
 
-// Legacy aliases for compatibility
-export type PostType = TaskType;
 export type Post = Task;

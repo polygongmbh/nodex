@@ -1,4 +1,13 @@
-import type { ChannelMatchMode, Nip99ListingStatus, PublishedAttachment, Nip99Metadata, TaskInitialStatus, TaskDateType, TaskStatus } from "@/types";
+import type {
+  ChannelMatchMode,
+  Nip99ListingStatus,
+  PublishedAttachment,
+  Nip99Metadata,
+  PostType,
+  TaskInitialStatus,
+  TaskDateType,
+  TaskStatus,
+} from "@/types";
 import type { Person } from "@/types/person";
 
 export type FeedViewType = "tree" | "feed" | "kanban" | "calendar" | "list";
@@ -51,7 +60,7 @@ export type FeedInteractionIntent =
       content: string;
       tags: string[];
       relays: string[];
-      taskType: string;
+      taskType: PostType;
       dueDate?: Date;
       dueTime?: string;
       dateType?: TaskDateType;

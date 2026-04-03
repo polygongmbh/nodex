@@ -23,7 +23,20 @@ import { loadPublishDelayEnabled } from "@/infrastructure/preferences/user-prefe
 import { canUserUpdateTask, extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
 import {   notifyLocalSaved, notifyNeedTag, notifyPartialPublish, notifyPublished, notifyPublishSavedForRetry, notifyStatusRestricted, } from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
-import type {   ComposeRestoreRequest, ComposeRestoreState, Nip99Metadata, Nip99ListingStatus, PublishedAttachment, PostedTag, Relay, Task, TaskCreateResult, TaskDateType, TaskInitialStatus } from "@/types";
+import type {
+  ComposeRestoreRequest,
+  ComposeRestoreState,
+  Nip99Metadata,
+  Nip99ListingStatus,
+  PostType,
+  PublishedAttachment,
+  PostedTag,
+  Relay,
+  Task,
+  TaskCreateResult,
+  TaskDateType,
+  TaskInitialStatus,
+} from "@/types";
 import type { Person } from "@/types/person";
 
 const PUBLISH_UNDO_DELAY_MS = 5000;
@@ -228,7 +241,7 @@ export function useTaskPublishFlow({
     content: string,
     extractedTags: string[],
     relayIds: string[],
-    taskType: string,
+    taskType: PostType,
     dueDate?: Date,
     dueTime?: string,
     dateType: TaskDateType = "due",

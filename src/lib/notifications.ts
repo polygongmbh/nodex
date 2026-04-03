@@ -1,6 +1,6 @@
 import { TFunction } from "i18next";
 import { toast } from "sonner";
-import { TaskType } from "@/types";
+import type { TaskEntryType } from "@/types";
 
 export function notifyNeedSigninModify(t: TFunction): void {
   toast.error(t("toasts.errors.needSigninModify"));
@@ -26,11 +26,11 @@ export function notifyDisconnectedSelectedFeeds(t: TFunction): void {
   toast.warning(t("toasts.warnings.disconnectedSelectedFeeds"), { id: "disconnected-selected-feeds" });
 }
 
-export function notifyPublished(t: TFunction, taskType: TaskType): void {
+export function notifyPublished(t: TFunction, taskType: TaskEntryType): void {
   toast.success(taskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
 }
 
-export function notifyLocalSaved(t: TFunction, taskType: TaskType): void {
+export function notifyLocalSaved(t: TFunction, taskType: TaskEntryType): void {
   toast.success(taskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
 }
 

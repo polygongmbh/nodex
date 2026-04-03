@@ -3,6 +3,7 @@ import { TaskComposer, type TaskComposerSubmit } from "./TaskComposer";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import type {
   ComposeRestoreRequest,
+  PostType,
   TaskCreateResult,
   TaskDateType,
   TaskInitialStatus,
@@ -61,7 +62,7 @@ export function TaskCreateComposer({
       content: string,
       tags: string[],
       relays: string[],
-      taskType: string,
+      taskType: PostType,
       dueDate?: Date,
       dueTime?: string,
       dateType?: TaskDateType,
