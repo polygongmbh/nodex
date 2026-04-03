@@ -442,6 +442,143 @@ describe("FeedView", () => {
     expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
   });
 
+  it("re-clamps the visible feed window when active relay scope changes", async () => {
+    const relayOne = makeRelay({ id: "relay-one", name: "Relay One", url: "wss://relay.one", isActive: true });
+    const relayTwo = makeRelay({ id: "relay-two", name: "Relay Two", url: "wss://relay.two", isActive: true });
+    const manyTasks = Array.from({ length: 90 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: `Task ${index + 1} #general`,
+        author,
+        relays: index < 45 ? ["relay-one"] : ["relay-two"],
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 90 - index),
+      })
+    );
+
+    const { container, rerender } = renderFeedView(
+      {
+        tasks: manyTasks,
+        allTasks: manyTasks,
+        searchQueryOverride: "",
+      },
+      {
+        relays: [relayOne, relayTwo],
+      }
+    );
+
+    const scroller = container.querySelector('[data-onboarding="task-list"]');
+    expect(scroller).not.toBeNull();
+
+    Object.defineProperty(scroller, "scrollHeight", {
+      configurable: true,
+      get: () => 1800,
+    });
+    Object.defineProperty(scroller, "clientHeight", {
+      configurable: true,
+      value: 1200,
+    });
+    Object.defineProperty(scroller, "scrollTop", {
+      configurable: true,
+      value: 600,
+    });
+
+    fireEvent.scroll(scroller as HTMLElement);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll("[data-task-id]").length).toBe(90);
+    });
+
+    rerender(
+      <FeedSurfaceProvider
+        value={{
+          relays: [relayOne, { ...relayTwo, isActive: false }],
+          channels,
+          composeChannels: channels,
+          people: [author],
+          mentionablePeople: [author],
+          searchQuery: "",
+          quickFilters: makeQuickFilterState(),
+          channelMatchMode: "and",
+        }}
+      >
+        <FeedView
+          tasks={manyTasks.filter((task) => task.relays.includes("relay-one"))}
+          allTasks={manyTasks}
+          searchQueryOverride=""
+        />
+      </FeedSurfaceProvider>
+    );
+
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+  });
+
+  it("re-clamps the visible feed window when quick filters change", async () => {
+    const manyTasks = Array.from({ length: 90 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: `Task ${index + 1} #general`,
+        author,
+        priority: index < 45 ? 80 : 20,
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 90 - index),
+      })
+    );
+
+    const { container, rerender } = renderFeedView(
+      {
+        tasks: manyTasks,
+        allTasks: manyTasks,
+        searchQueryOverride: "",
+      }
+    );
+
+    const scroller = container.querySelector('[data-onboarding="task-list"]');
+    expect(scroller).not.toBeNull();
+
+    Object.defineProperty(scroller, "scrollHeight", {
+      configurable: true,
+      get: () => 1800,
+    });
+    Object.defineProperty(scroller, "clientHeight", {
+      configurable: true,
+      value: 1200,
+    });
+    Object.defineProperty(scroller, "scrollTop", {
+      configurable: true,
+      value: 600,
+    });
+
+    fireEvent.scroll(scroller as HTMLElement);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll("[data-task-id]").length).toBe(90);
+    });
+
+    rerender(
+      <FeedSurfaceProvider
+        value={{
+          relays,
+          channels,
+          composeChannels: channels,
+          people: [author],
+          mentionablePeople: [author],
+          searchQuery: "",
+          quickFilters: makeQuickFilterState({ priorityEnabled: true, minPriority: 50 }),
+          channelMatchMode: "and",
+        }}
+      >
+        <FeedView
+          tasks={manyTasks}
+          allTasks={manyTasks}
+          searchQueryOverride=""
+        />
+      </FeedSurfaceProvider>
+    );
+
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+  });
+
   it("renders breadcrumb focus buttons for long labels", () => {
     const root = makeTask({ id: "root", content: "Root breadcrumb label that should not wrap", author, status: "todo" });
     const child = makeTask({
