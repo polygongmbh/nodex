@@ -126,9 +126,9 @@ export function FilteredEmptyState({
     return (
       <div
         data-empty-mode="overlay"
-        className={cn("pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center px-4", className)}
+        className={cn("absolute inset-x-0 bottom-4 z-10 flex justify-center px-4", className)}
       >
-        <div className="max-w-2xl rounded-2xl border border-border/70 bg-background/90 px-5 py-4 text-center shadow-lg backdrop-blur-sm sm:px-6 sm:py-5">
+        <div className="pointer-events-none max-w-2xl select-text rounded-2xl border border-border/70 bg-background/90 px-5 py-4 text-center shadow-lg backdrop-blur-sm sm:px-6 sm:py-5">
           <p className="text-base font-medium leading-relaxed text-foreground sm:text-lg">
             {overlayTitle}
           </p>

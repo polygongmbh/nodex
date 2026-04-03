@@ -8,6 +8,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 - Tree view now restores its old fold semantics: `matching only` is based on tree search and channel matching again instead of the broader scope model, so completed subtasks stay hidden until the explicit `all visible` state.
 - Inline mentions now render more cleanly inside clamped timeline and tree content, and table previews strip raw `npub` mention tokens instead of showing the full `nostr:npub...` payload.
+- Desktop loading and empty-scope overlays now keep their text selectable, and the German scope-search and fallback lines are phrased more naturally.
 
 ## [2.11.0] - 2026-04-03
 Minor release for shared person interactions, task metadata consistency, timeline timestamp clarity, and mobile relay-scoped filter alignment.

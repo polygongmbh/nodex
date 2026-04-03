@@ -55,6 +55,23 @@ describe("FilteredEmptyState", () => {
     vi.restoreAllMocks();
   });
 
+  it("keeps overlay copy selectable without re-enabling click capture", () => {
+    render(
+      <FilteredEmptyState
+        relays={relays}
+        channels={channels}
+        people={people}
+        mode="overlay"
+      />
+    );
+
+    const overlay = document.querySelector('[data-empty-mode="overlay"]');
+    const card = overlay?.firstElementChild;
+    expect(overlay?.className).not.toContain("pointer-events-none");
+    expect(card?.className).toContain("pointer-events-none");
+    expect(card?.className).toContain("select-text");
+  });
+
   it("renders the selected filtered scope summary", () => {
     render(
       <FilteredEmptyState
