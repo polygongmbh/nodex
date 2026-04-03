@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
+import { useEffect, useRef, useMemo, useState, type UIEvent } from "react";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X } from "lucide-react";
 import {   Task, ComposeRestoreRequest, RawNostrEvent } from "@/types";
 import type { Person } from "@/types/person";
@@ -46,6 +46,7 @@ import { TaskViewMediaLightbox, useTaskViewMedia } from "./task-view-media";
 import { useTaskViewServices } from "./use-task-view-services";
 import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
+import { useFeedHydrationWindow } from "./use-feed-hydration-window";
 
 interface FeedViewProps {
   tasks: Task[];
@@ -67,9 +68,6 @@ interface FeedViewProps {
   isHydrating?: boolean;
 }
 
-const INITIAL_VISIBLE_FEED_ENTRIES = 40;
-const FEED_REVEAL_BATCH_SIZE = 30;
-const FEED_REVEAL_DELAY_MS = 80;
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
 const DESKTOP_FEED_ROW_CONTENT_PADDING = "px-3";
 
@@ -77,11 +75,6 @@ interface FeedDueDateChipProps {
   task: Task;
   editable: boolean;
   dueDateColor: string;
-}
-
-interface FeedDisclosureState {
-  key: string;
-  visibleEntryCount: number;
 }
 
 function FeedDueDateChip({
@@ -263,14 +256,15 @@ export function FeedView({
     return () => mediaQuery.removeListener(handleMediaQueryChange);
   }, [isMobile]);
 
-  const [feedDisclosureState, setFeedDisclosureState] = useState<FeedDisclosureState>(() => ({
-    key: feedDisclosureKey,
-    visibleEntryCount: INITIAL_VISIBLE_FEED_ENTRIES,
-  }));
-  const visibleEntryCount =
-    feedDisclosureState.key === feedDisclosureKey
-      ? feedDisclosureState.visibleEntryCount
-      : INITIAL_VISIBLE_FEED_ENTRIES;
+  const {
+    hasMoreEntries,
+    visibleEntryCount,
+    revealMoreEntries,
+    revealEntriesThroughIndex,
+  } = useFeedHydrationWindow({
+    disclosureKey: feedDisclosureKey,
+    totalEntryCount: activeFeedEntries.length,
+  });
   const displayedFeedEntries = useMemo(
     () => activeFeedEntries.slice(0, visibleEntryCount),
     [activeFeedEntries, visibleEntryCount]
@@ -292,48 +286,13 @@ export function FeedView({
 
   // Scroll focused task into view
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const revealMoreEntries = useCallback((reason: "timer" | "scroll" | "focus") => {
-    if (activeFeedEntries.length <= visibleEntryCount) return;
-    startTransition(() => {
-      setFeedDisclosureState((previous) => {
-        const previousVisibleCount =
-          previous.key === feedDisclosureKey
-            ? previous.visibleEntryCount
-            : INITIAL_VISIBLE_FEED_ENTRIES;
-        const next = Math.min(activeFeedEntries.length, previousVisibleCount + FEED_REVEAL_BATCH_SIZE);
-        if (next !== previousVisibleCount) {
-          nostrDevLog("feed", "Revealed incremental feed batch", {
-            reason,
-            visibleEntryCount: next,
-            totalEntryCount: activeFeedEntries.length,
-          });
-        }
-        return {
-          key: feedDisclosureKey,
-          visibleEntryCount: next,
-        };
-      });
-    });
-  }, [activeFeedEntries.length, feedDisclosureKey, visibleEntryCount]);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const [isNearFeedEnd, setIsNearFeedEnd] = useState(false);
 
-  useEffect(() => {
-    startTransition(() => {
-      setFeedDisclosureState({
-        key: feedDisclosureKey,
-        visibleEntryCount: INITIAL_VISIBLE_FEED_ENTRIES,
-      });
-    });
-  }, [feedDisclosureKey]);
-
-  useEffect(() => {
-    if (activeFeedEntries.length <= visibleEntryCount) return;
-    const timeoutId = window.setTimeout(() => {
-      revealMoreEntries("timer");
-    }, FEED_REVEAL_DELAY_MS);
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [activeFeedEntries.length, revealMoreEntries, visibleEntryCount]);
+  const isWithinRevealThreshold = (container: HTMLDivElement) => {
+    const remainingDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
+    return remainingDistance <= FEED_REVEAL_SCROLL_THRESHOLD_PX;
+  };
 
   useEffect(() => {
     if (!focusedTaskId) return;
@@ -341,34 +300,69 @@ export function FeedView({
       (entry) => entry.type === "task" && entry.task.id === focusedTaskId
     );
     if (focusedIndex === -1 || focusedIndex < visibleEntryCount) return;
-    startTransition(() => {
-      setFeedDisclosureState((previous) => {
-        const previousVisibleCount =
-          previous.key === feedDisclosureKey
-            ? previous.visibleEntryCount
-            : INITIAL_VISIBLE_FEED_ENTRIES;
-        const next = Math.min(activeFeedEntries.length, focusedIndex + 1 + FEED_REVEAL_BATCH_SIZE);
-        if (next !== previousVisibleCount) {
-          nostrDevLog("feed", "Expanded feed window to include focused task", {
-            focusedTaskId,
-            visibleEntryCount: next,
-            totalEntryCount: activeFeedEntries.length,
-          });
-        }
-        return {
-          key: feedDisclosureKey,
-          visibleEntryCount: next,
-        };
-      });
+    nostrDevLog("feed", "Expanded feed window to include focused task", {
+      focusedTaskId,
+      visibleEntryCount: focusedIndex + 1,
+      totalEntryCount: activeFeedEntries.length,
     });
-  }, [activeFeedEntries, feedDisclosureKey, focusedTaskId, visibleEntryCount]);
+    revealEntriesThroughIndex(focusedIndex);
+  }, [activeFeedEntries, focusedTaskId, revealEntriesThroughIndex, visibleEntryCount]);
 
   const handleFeedScroll = (event: UIEvent<HTMLDivElement>) => {
     const container = event.currentTarget;
-    const remainingDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
-    if (remainingDistance > FEED_REVEAL_SCROLL_THRESHOLD_PX) return;
+    const nearFeedEnd = isWithinRevealThreshold(container);
+    setIsNearFeedEnd(nearFeedEnd);
+    if (!nearFeedEnd) return;
     revealMoreEntries("scroll");
   };
+
+  useEffect(() => {
+    if (!hasMoreEntries) {
+      setIsNearFeedEnd(false);
+      return;
+    }
+    if (!hasMoreEntries) return;
+    const root = scrollContainerRef.current;
+    const sentinel = loadMoreSentinelRef.current;
+    if (!root || !sentinel || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        setIsNearFeedEnd(true);
+        revealMoreEntries("scroll");
+      },
+      {
+        root,
+        rootMargin: "0px 0px 480px 0px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(sentinel);
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMoreEntries, revealMoreEntries, visibleEntryCount]);
+
+  useEffect(() => {
+    if (!hasMoreEntries || !isNearFeedEnd) return;
+    const root = scrollContainerRef.current;
+    if (!root || typeof window === "undefined") return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      if (!scrollContainerRef.current) return;
+      if (!isWithinRevealThreshold(scrollContainerRef.current)) {
+        setIsNearFeedEnd(false);
+        return;
+      }
+      revealMoreEntries("scroll");
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [hasMoreEntries, isNearFeedEnd, revealMoreEntries, visibleEntryCount]);
 
   useEffect(() => {
     if (keyboardFocusedTaskId && scrollContainerRef.current) {
@@ -567,12 +561,20 @@ export function FeedView({
       {/* Feed List */}
       <div
         ref={scrollContainerRef}
-        className="scrollbar-main-view flex-1"
+        className="scrollbar-main-view flex-1 overflow-y-auto"
         data-onboarding="task-list"
         onScroll={handleFeedScroll}
       >
         {displayedFeedEntries.map(renderFeedEntry)}
-        {shouldShowScopeFooterHint ? (
+        {hasMoreEntries && isNearFeedEnd ? (
+          <div className="flex justify-center px-4 py-4 text-center">
+            <p className="text-sm text-muted-foreground">
+              {t("feed.hydrating")}
+            </p>
+          </div>
+        ) : null}
+        {hasMoreEntries ? <div ref={loadMoreSentinelRef} aria-hidden="true" className="h-px w-full" /> : null}
+        {shouldShowScopeFooterHint && !hasMoreEntries && !isHydrating ? (
           <FilteredEmptyState
             isHydrating={isHydrating}
             searchQuery={searchQuery}

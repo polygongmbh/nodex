@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Feed hydration now stays bounded until you scroll or focus deeper items, so media-heavy spaces no longer auto-mount the entire hidden timeline while idle.
 - Audio attachments and standalone audio embeds now stay inline-only with their native player, and task media popup navigation now rotates only through visual media instead of opening audio in the lightbox.
 - The top-level `Index` route now loads eagerly again instead of through `React.lazy`, avoiding stale module-script failures after restarting the Vite dev server with an already open tab.
 - The app now retries once with a cache-bypassing reload when a deployed JS chunk or module script goes missing after an update, reducing blank error-boundary failures from stale tabs after a new release.

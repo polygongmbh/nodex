@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { FeedView } from "./FeedView";
@@ -136,7 +136,6 @@ describe("FeedView", () => {
   });
 
   it("hydrates the feed incrementally instead of mounting all entries at once", () => {
-    vi.useFakeTimers();
     const manyTasks = Array.from({ length: 75 }, (_, index) =>
       makeTask({
         id: `task-${index + 1}`,
@@ -159,21 +158,150 @@ describe("FeedView", () => {
     );
 
     expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+    expect(screen.queryByText("Task 41 #general")).not.toBeInTheDocument();
+  });
 
-    act(() => {
-      vi.advanceTimersByTime(80);
+  it("reveals more entries when scrolling near the end of the feed", () => {
+    const manyTasks = Array.from({ length: 75 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: `Task ${index + 1} #general`,
+        author,
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 75 - index),
+      })
+    );
+
+    const { container } = render(
+      <FeedView
+        tasks={manyTasks}
+        allTasks={manyTasks}
+        searchQueryOverride=""
+      />
+    );
+
+    const scroller = container.querySelector('[data-onboarding="task-list"]');
+    expect(scroller).not.toBeNull();
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+
+    Object.defineProperty(scroller, "scrollHeight", {
+      configurable: true,
+      value: 2400,
     });
+    Object.defineProperty(scroller, "clientHeight", {
+      configurable: true,
+      value: 1200,
+    });
+    Object.defineProperty(scroller, "scrollTop", {
+      configurable: true,
+      value: 600,
+    });
+
+    fireEvent.scroll(scroller as HTMLElement);
+
     expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
+  });
 
-    act(() => {
-      vi.advanceTimersByTime(80);
+  it("continues revealing while the viewport remains near the end after a batch append", async () => {
+    const manyTasks = Array.from({ length: 75 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: `Task ${index + 1} #general`,
+        author,
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 75 - index),
+      })
+    );
+
+    const { container } = render(
+      <FeedView
+        tasks={manyTasks}
+        allTasks={manyTasks}
+        searchQueryOverride=""
+      />
+    );
+
+    const scroller = container.querySelector('[data-onboarding="task-list"]');
+    expect(scroller).not.toBeNull();
+
+    Object.defineProperty(scroller, "scrollHeight", {
+      configurable: true,
+      get: () => 1800,
     });
-    expect(container.querySelectorAll("[data-task-id]").length).toBe(75);
-    vi.useRealTimers();
+    Object.defineProperty(scroller, "clientHeight", {
+      configurable: true,
+      value: 1200,
+    });
+    Object.defineProperty(scroller, "scrollTop", {
+      configurable: true,
+      value: 600,
+    });
+
+    fireEvent.scroll(scroller as HTMLElement);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll("[data-task-id]").length).toBe(75);
+    });
+  });
+
+  it("hides the scope footer while more feed entries still remain to hydrate", () => {
+    const manyTasks = Array.from({ length: 75 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: `Task ${index + 1} #general`,
+        author,
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 75 - index),
+      })
+    );
+
+    const scopedPerson = { ...author, isSelected: true };
+    const { container } = renderFeedView(
+      {
+        tasks: manyTasks,
+        allTasks: manyTasks,
+        searchQueryOverride: "",
+      },
+      {
+        people: [scopedPerson],
+        mentionablePeople: [scopedPerson],
+      }
+    );
+
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+    expect(container.querySelector('[data-empty-mode="footer"]')).not.toBeInTheDocument();
+  });
+
+  it("hides the scope footer while the feed is still hydrating even if the current batch is full", () => {
+    const manyTasks = Array.from({ length: 40 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: `Task ${index + 1} #general`,
+        author,
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 40 - index),
+      })
+    );
+
+    const scopedPerson = { ...author, isSelected: true };
+    const { container } = renderFeedView(
+      {
+        tasks: manyTasks,
+        allTasks: manyTasks,
+        searchQueryOverride: "",
+        isHydrating: true,
+      },
+      {
+        people: [scopedPerson],
+        mentionablePeople: [scopedPerson],
+      }
+    );
+
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+    expect(container.querySelector('[data-empty-mode="footer"]')).not.toBeInTheDocument();
   });
 
   it("re-clamps the visible feed window when clearing a broadening filter", () => {
-    vi.useFakeTimers();
     const manyTasks = Array.from({ length: 75 }, (_, index) =>
       makeTask({
         id: `task-${index + 1}`,
@@ -223,13 +351,6 @@ describe("FeedView", () => {
     );
 
     expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
-
-    act(() => {
-      vi.advanceTimersByTime(80);
-    });
-    expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
-
-    vi.useRealTimers();
   });
 
   it("renders breadcrumb focus buttons for long labels", () => {
