@@ -125,20 +125,17 @@ export function RelayManagement({
   };
 
   const getStatusLabel = (relay: NDKRelayStatus) => {
-    const { status, nip11 } = relay;
+    const { status } = relay;
     switch (status) {
       case "connection-error":
         return t("relay.status.connectionError");
       case "verification-failed":
-        if (nip11?.authRequired) return t("relay.status.readRejectedAuthRequired");
         return t("relay.status.readRejected");
       case "read-only":
         return t("relay.status.readOnly");
       case "connected":
-        if (nip11?.authRequired) return t("relay.status.connectedAuthRequired");
         return t("relay.status.connected");
       case "connecting":
-        if (nip11?.authRequired) return t("relay.status.connectingAuthRequired");
         return t("relay.status.connecting");
       case "disconnected":
         return t("relay.status.disconnected");

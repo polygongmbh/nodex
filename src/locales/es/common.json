@@ -840,20 +840,15 @@
     "debugTitle": "Utilidades de depuración",
     "debugSummary": "conectados {{connected}} · solo lectura {{readOnly}} · conectando {{connecting}} · desconectados {{disconnected}} · conexión {{connectionError}} · lectura rechazada {{verificationFailed}}",
     "status": {
-      "connected": "conectado",
-      "readOnly": "solo lectura",
-      "connecting": "conectando",
-      "disconnected": "desconectado",
-      "connectionError": "problema de conexión",
-      "verificationFailed": "lectura rechazada",
-      "readRejected": "lectura rechazada",
-      "connectedAuthRequired": "conectado (auth requerida)",
-      "connectingAuthRequired": "conectando (auth requerida)",
-      "verificationFailedAuthRequired": "lectura rechazada (auth requerida)",
-      "readRejectedAuthRequired": "lectura rechazada (auth requerida)"
+      "connected": "Conectado",
+      "readOnly": "Solo Lectura",
+      "connecting": "Conectando",
+      "disconnected": "Desconectado",
+      "connectionError": "Problema de Conexión",
+      "readRejected": "Lectura Rechazada"
     },
     "statusHints": {
-      "readOnly": "Seguir leyendo desde este relay funciona, pero publicar en él no está disponible ahora mismo."
+      "readOnly": "Este space es de solo lectura."
     },
     "details": {
       "show": "Mostrar detalles del relay",

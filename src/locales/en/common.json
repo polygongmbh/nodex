@@ -840,20 +840,15 @@
     "debugTitle": "Debug utilities",
     "debugSummary": "connected {{connected}} · read-only {{readOnly}} · connecting {{connecting}} · disconnected {{disconnected}} · connection {{connectionError}} · read-rejected {{verificationFailed}}",
     "status": {
-      "connected": "connected",
-      "readOnly": "read only",
-      "connecting": "connecting",
-      "disconnected": "disconnected",
-      "connectionError": "connection issue",
-      "verificationFailed": "read rejected",
-      "readRejected": "read rejected",
-      "connectedAuthRequired": "connected (auth required)",
-      "connectingAuthRequired": "connecting (auth required)",
-      "verificationFailedAuthRequired": "read rejected (auth required)",
-      "readRejectedAuthRequired": "read rejected (auth required)"
+      "connected": "Connected",
+      "readOnly": "Read Only",
+      "connecting": "Connecting",
+      "disconnected": "Disconnected",
+      "connectionError": "Connection Issue",
+      "readRejected": "Read Rejected"
     },
     "statusHints": {
-      "readOnly": "Reads from this relay still work, but publishing to it is currently unavailable."
+      "readOnly": "This space is read-only."
     },
     "details": {
       "show": "Show relay details",

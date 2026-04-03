@@ -20,6 +20,26 @@ interface RelayItemProps {
   isKeyboardFocused?: boolean;
 }
 
+const STATUS_DOT_CLASS = "inline-block h-2 w-2 rounded-full";
+const STATUS_TOOLTIP_SIDE = "right";
+const STATUS_TOOLTIP_ALIGN = "start";
+
+function resolveRelayIssueTooltip(
+  t: ReturnType<typeof useTranslation>["t"],
+  connectionStatus: NonNullable<Relay["connectionStatus"]>
+): string | null {
+  switch (connectionStatus) {
+    case "connection-error":
+      return t("relay.status.connectionError");
+    case "verification-failed":
+      return t("relay.status.readRejected");
+    case "disconnected":
+      return t("relay.status.disconnected");
+    default:
+      return null;
+  }
+}
+
 export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
@@ -30,8 +50,10 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
   const isConnectionActive = resolvedConnectionStatus === "connected";
   const connectionDotClass = getRelayStatusDotClass(resolvedConnectionStatus);
   const connectionSurfaceClass = getRelayStatusSurfaceClass(resolvedConnectionStatus);
+  const relayIssueTooltip = resolveRelayIssueTooltip(t, resolvedConnectionStatus);
+  const suppressInteractionTitles = relayIssueTooltip !== null;
 
-  return (
+  const rowContent = (
     <SidebarFilterRow
       itemId={`relay-${relay.id}`}
       isKeyboardFocused={isKeyboardFocused}
@@ -45,9 +67,9 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
       <button
         onClick={(e) => {
           e.stopPropagation();
-          void dispatchFeedInteraction({ type: "sidebar.relay.toggle", relayId: relay.id });
+          void dispatchFeedInteraction({ type: "sidebar.relay.select", relayId: relay.id, mode: "toggle" });
         }}
-        title={t("sidebar.filters.toggleRelay", { name: relayTooltipName })}
+        title={suppressInteractionTitles ? undefined : t("sidebar.filters.toggleRelay", { name: relayTooltipName })}
         aria-label={t("sidebar.filters.toggleRelay", { name: relayTooltipName })}
       >
         <div
@@ -65,10 +87,10 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
       {/* Name - click for exclusive */}
       <button
         onClick={() => {
-          void dispatchFeedInteraction({ type: "sidebar.relay.exclusive", relayId: relay.id });
+          void dispatchFeedInteraction({ type: "sidebar.relay.select", relayId: relay.id, mode: "exclusive" });
         }}
         className="flex-1 min-w-0 text-left"
-        title={t("sidebar.filters.showOnlyRelay", { name: relayTooltipName })}
+        title={suppressInteractionTitles ? undefined : t("sidebar.filters.showOnlyRelay", { name: relayTooltipName })}
         aria-label={t("sidebar.filters.showOnlyRelay", { name: relayTooltipName })}
       >
         <span
@@ -84,24 +106,31 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
                 <TooltipTrigger asChild>
                   <span
                     className={cn(
-                      "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
-                      connectionDotClass
+                      "relative -m-2 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                     )}
-                    aria-label={t("relay.statusHints.readOnly")}
-                  />
+                    aria-label={t("relay.status.readOnly")}
+                  >
+                    <span
+                      className={cn(
+                        STATUS_DOT_CLASS,
+                        connectionDotClass
+                      )}
+                    />
+                  </span>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-56 text-xs">
-                  {t("relay.statusHints.readOnly")}
+                <TooltipContent side={STATUS_TOOLTIP_SIDE} align={STATUS_TOOLTIP_ALIGN} sideOffset={8} className="max-w-56 text-xs">
+                  {t("relay.status.readOnly")}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           ) : (
             <span
               className={cn(
-                "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
+                STATUS_DOT_CLASS,
+                "flex-shrink-0",
                 connectionDotClass
               )}
-              title={resolvedConnectionStatus}
               aria-label={resolvedConnectionStatus}
             />
           )}
@@ -112,5 +141,20 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
         <span className="text-xs text-muted-foreground">{relay.postCount}</span>
       )}
     </SidebarFilterRow>
+  );
+
+  if (!relayIssueTooltip) return rowContent;
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="w-full">{rowContent}</div>
+        </TooltipTrigger>
+        <TooltipContent side={STATUS_TOOLTIP_SIDE} align={STATUS_TOOLTIP_ALIGN} sideOffset={8} className="max-w-56 text-xs">
+          {relayIssueTooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

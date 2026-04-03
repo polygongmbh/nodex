@@ -840,20 +840,15 @@
     "debugTitle": "Debug-Werkzeuge",
     "debugSummary": "verbunden {{connected}} · nur lesen {{readOnly}} · verbindet {{connecting}} · getrennt {{disconnected}} · Verbindung {{connectionError}} · Lesen abgelehnt {{verificationFailed}}",
     "status": {
-      "connected": "verbunden",
-      "readOnly": "nur lesen",
-      "connecting": "verbindet",
-      "disconnected": "getrennt",
+      "connected": "Verbunden",
+      "readOnly": "Schreibgeschützt",
+      "connecting": "Verbindet",
+      "disconnected": "Getrennt",
       "connectionError": "Verbindungsproblem",
-      "verificationFailed": "Lesen abgelehnt",
-      "readRejected": "Lesen abgelehnt",
-      "connectedAuthRequired": "verbunden (Auth erforderlich)",
-      "connectingAuthRequired": "verbindet (Auth erforderlich)",
-      "verificationFailedAuthRequired": "Lesen abgelehnt (Auth erforderlich)",
-      "readRejectedAuthRequired": "Lesen abgelehnt (Auth erforderlich)"
+      "readRejected": "Lesen abgelehnt"
     },
     "statusHints": {
-      "readOnly": "Lesen von diesem Relay funktioniert weiter, aber Veröffentlichen dorthin ist derzeit nicht verfügbar."
+      "readOnly": "Dieser Space ist schreibgeschützt."
     },
     "details": {
       "show": "Relay-Details anzeigen",

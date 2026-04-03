@@ -13,7 +13,7 @@ const baseRelay: Relay = {
 };
 
 describe("RelayItem", () => {
-  it("supports exclusive and toggle relay actions", () => {
+  it("dispatches typed relay selection intents for exclusive and toggle actions", () => {
     const dispatch = vi.fn().mockResolvedValue({
       envelope: { id: 1, dispatchedAtMs: Date.now(), intent: { type: "ui.focusTasks" } },
       outcome: { status: "handled" },
@@ -31,8 +31,8 @@ describe("RelayItem", () => {
     fireEvent.click(exclusiveButton);
     fireEvent.click(toggleButton);
 
-    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.exclusive", relayId: "relay-1" });
-    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.toggle", relayId: "relay-1" });
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.select", relayId: "relay-1", mode: "exclusive" });
+    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.select", relayId: "relay-1", mode: "toggle" });
   });
 
   it("keeps the status dot visible while allowing long names to truncate", () => {
@@ -59,6 +59,8 @@ describe("RelayItem", () => {
     expect(exclusiveButton.className).toContain("min-w-0");
     expect(relayLabel.className).toContain("truncate");
     expect(statusDot.className).toContain("flex-shrink-0");
+    expect(statusDot.className).toContain("h-2");
+    expect(statusDot.className).toContain("w-2");
   });
 
   it("tints the active relay icon by relay status instead of always using the primary color", () => {
@@ -80,5 +82,86 @@ describe("RelayItem", () => {
     expect(iconChip?.className).toContain("text-destructive");
     expect(iconChip?.className).toContain("bg-destructive/15");
     expect(iconChip?.className).not.toContain("text-primary");
+  });
+
+  it("shows the connection issue tooltip across the whole row and suppresses button title tooltips", async () => {
+    const dispatch = vi.fn().mockResolvedValue({
+      envelope: { id: 1, dispatchedAtMs: Date.now(), intent: { type: "ui.focusTasks" } },
+      outcome: { status: "handled" },
+    });
+
+    render(
+      <FeedInteractionProvider bus={{ dispatch, dispatchBatch: vi.fn().mockResolvedValue([]) }}>
+        <RelayItem
+          relay={{
+            ...baseRelay,
+            connectionStatus: "connection-error",
+          }}
+        />
+      </FeedInteractionProvider>
+    );
+
+    const exclusiveButton = screen.getByRole("button", { name: "Show only posts from relay.damus.io" });
+    const toggleButton = screen.getByRole("button", { name: "Show or hide posts from relay.damus.io" });
+    const rowTrigger = exclusiveButton.closest("[data-sidebar-item]")?.parentElement as HTMLElement;
+
+    expect(exclusiveButton).not.toHaveAttribute("title");
+    expect(toggleButton).not.toHaveAttribute("title");
+
+    fireEvent.mouseEnter(rowTrigger);
+    fireEvent.pointerMove(rowTrigger);
+
+    expect((await screen.findAllByText("Connection Issue")).length).toBeGreaterThan(0);
+    expect(document.querySelector("[data-side='right']")).not.toBeNull();
+  });
+
+  it("shows a disconnected relay popover across the whole row", async () => {
+    render(
+      <FeedInteractionProvider bus={{ dispatch: vi.fn().mockResolvedValue(undefined), dispatchBatch: vi.fn().mockResolvedValue([]) }}>
+        <RelayItem
+          relay={{
+            ...baseRelay,
+            connectionStatus: "disconnected",
+          }}
+        />
+      </FeedInteractionProvider>
+    );
+
+    const exclusiveButton = screen.getByRole("button", { name: "Show only posts from relay.damus.io" });
+    const rowTrigger = exclusiveButton.closest("[data-sidebar-item]")?.parentElement as HTMLElement;
+
+    fireEvent.mouseEnter(rowTrigger);
+    fireEvent.pointerMove(rowTrigger);
+
+    expect((await screen.findAllByText("Disconnected")).length).toBeGreaterThan(0);
+  });
+
+  it("keeps the default row tooltip while enlarging the read-only status hit area", async () => {
+    render(
+      <FeedInteractionProvider bus={{ dispatch: vi.fn().mockResolvedValue(undefined), dispatchBatch: vi.fn().mockResolvedValue([]) }}>
+        <RelayItem
+          relay={{
+            ...baseRelay,
+            connectionStatus: "read-only",
+          }}
+        />
+      </FeedInteractionProvider>
+    );
+
+    const exclusiveButton = screen.getByRole("button", { name: "Show only posts from relay.damus.io" });
+    const toggleButton = screen.getByRole("button", { name: "Show or hide posts from relay.damus.io" });
+    const readOnlyTrigger = screen.getByLabelText("Read Only");
+
+    expect(exclusiveButton).toHaveAttribute("title", "Show only posts from relay.damus.io");
+    expect(toggleButton).toHaveAttribute("title", "Show or hide posts from relay.damus.io");
+    expect(readOnlyTrigger.className).toContain("h-6");
+    expect(readOnlyTrigger.className).toContain("w-6");
+    expect(readOnlyTrigger.className).toContain("-m-2");
+
+    fireEvent.mouseEnter(readOnlyTrigger);
+    fireEvent.pointerMove(readOnlyTrigger);
+
+    expect((await screen.findAllByText("Read Only")).length).toBeGreaterThan(0);
+    expect(document.querySelector("[data-side='right']")).not.toBeNull();
   });
 });
