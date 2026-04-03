@@ -10,7 +10,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - The app now retries once with a cache-bypassing reload when a deployed JS chunk or module script goes missing after an update, reducing blank error-boundary failures from stale tabs after a new release.
 - Desktop sidebar rows and section headers now use the restored left gutter spacing from before the `v2.8.0` sidebar inset refactor, so sidebar content no longer sits tight against the left border.
 - Tree view now restores its old fold semantics: `matching only` is based on tree search and channel matching again instead of the broader scope model, so completed subtasks stay hidden until the explicit `all visible` state.
-- Inline mentions now render more cleanly inside clamped timeline and tree content, and table previews strip raw `npub` mention tokens instead of showing the full `nostr:npub...` payload.
+- Inline mentions now render more cleanly inside clamped timeline and tree content, while breadcrumb labels and table previews strip raw `npub` mention tokens and lightweight markdown markers without dropping ordinary punctuation or channel words.
 - Desktop loading and empty-scope overlays now keep their text selectable, and the German scope-search and fallback lines are phrased more naturally.
 - Failed relay rows in the sidebar now show their connection issue across the whole row on hover, read-only relay dots use a larger hover target with shorter status copy, and relays selected during a reconnect attempt now show reconnect/error toasts instead of the default selection toast while still being automatically deselected again if recovery fails.
 

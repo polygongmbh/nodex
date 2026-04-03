@@ -336,7 +336,7 @@ describe("ListView priority control", () => {
     expect(screen.queryByRole("link", { name: "https://example.com/image.png" })).not.toBeInTheDocument();
   });
 
-  it("reuses breadcrumb stripping for raw pubkey mention tokens in table previews", () => {
+  it("reuses breadcrumb stripping to remove raw pubkey mention tokens from table previews", () => {
     mockUser = { id: "me" };
     const task = makeTask({
       id: "task-pubkey-preview",
@@ -356,7 +356,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    expect(screen.getByText("nostr npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq can you try implementing this")).toBeInTheDocument();
+    expect(screen.getByText("can you try implementing this")).toBeInTheDocument();
     expect(screen.queryByText(/nostr:npub1/i)).not.toBeInTheDocument();
   });
 });
