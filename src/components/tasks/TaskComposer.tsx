@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, HandHelping, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {   Relay, Channel, Nip99Metadata, PostType, TaskDateType, TaskCreateResult, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
@@ -36,12 +36,20 @@ import { filterChannelsForAutocomplete, getComposerAutocompleteMatch, hasMention
 import { resolveComposeSubmitBlock } from "@/lib/compose-submit-block";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useAuthActionPolicy } from "@/features/auth/controllers/use-auth-action-policy";
-import { useFeedComposerOptions } from "@/features/feed-page/views/feed-surface-context";
 import {
   DISPLAY_PRIORITY_OPTIONS,
   displayPriorityFromStored,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
+import {
+  clearTaskComposerDraft,
+  getTaskComposerRestoreMessageType,
+  resolveTaskComposerInitialState,
+  resolveTaskComposerMention,
+  useTaskComposerEnvironment,
+  writeTaskComposerDraft,
+  type TaskComposerDraftState,
+} from "./task-composer-runtime";
 
 interface TaskComposerProps {
   onSubmit: TaskComposerSubmit;
@@ -94,22 +102,6 @@ export type TaskComposerSubmit = (
   request: TaskComposerSubmitRequest
 ) => Promise<TaskCreateResult> | TaskCreateResult;
 
-interface ComposeDraftState {
-  content?: string;
-  taskType?: ComposerMessageType;
-  messageType?: ComposerMessageType;
-  dueDate?: string;
-  dueTime?: string;
-  dateType?: TaskDateType;
-  selectedRelays?: string[];
-  explicitMentionPubkeys?: string[];
-  explicitTagNames?: string[];
-  priority?: number;
-  attachments?: PublishedAttachment[];
-  nip99?: Nip99Metadata;
-  locationGeohash?: string;
-}
-
 const NIP99_TITLE_MAX_LENGTH = 80;
 const NIP99_SUMMARY_MAX_LENGTH = 160;
 const COMMON_NIP99_CURRENCY_CODES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF"];
@@ -155,18 +147,6 @@ function deriveNip99AutofillFromContent(content: string): Pick<Nip99Metadata, "t
     title: truncateWordSafe(normalized, NIP99_TITLE_MAX_LENGTH),
     summary: truncateWordSafe(normalized, NIP99_SUMMARY_MAX_LENGTH),
   };
-}
-
-function readComposeDraft(key: string): ComposeDraftState | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as ComposeDraftState;
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed;
-  } catch {
-    return null;
-  }
 }
 
 const isPostableRelay = (r: Relay) =>
@@ -221,50 +201,38 @@ export function TaskComposer({
 }: TaskComposerProps) {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
-  const composerOptions = useFeedComposerOptions();
-  const relays = relaysProp ?? composerOptions.relays;
-  const channels = channelsProp ?? composerOptions.channels;
-  const people = peopleProp ?? composerOptions.people;
-  const mentionablePeople = peopleProp ?? composerOptions.mentionablePeople ?? people;
-  const { user, createHttpAuthHeader } = useNDK();
+  const {
+    relays,
+    channels,
+    people,
+    mentionablePeople,
+    includedChannels,
+    selectedPeoplePubkeys,
+  } = useTaskComposerEnvironment({
+    relays: relaysProp,
+    channels: channelsProp,
+    people: peopleProp,
+  });
+  const { createHttpAuthHeader } = useNDK();
   const authPolicy = useAuthActionPolicy();
-  const includedChannels = channels
-    .filter((c) => c.filterState === "included")
-    .map((c) => c.name.trim().toLowerCase())
-    .filter(Boolean);
-  const selectedPeoplePubkeys = people
-    .filter((person) => person.isSelected)
-    .map((person) => person.id.trim().toLowerCase())
-    .filter((value) => /^[a-f0-9]{64}$/i.test(value));
-  const initialDraft = draftStorageKey ? readComposeDraft(draftStorageKey) : null;
-  const initialContent = initialDraft?.content ?? defaultContent;
+  const initialComposerState = useMemo(
+    () =>
+      resolveTaskComposerInitialState({
+        draftStorageKey,
+        defaultContent,
+        defaultDueDate,
+        relays,
+        allowFeedMessageTypes,
+      }),
+    [allowFeedMessageTypes, defaultContent, defaultDueDate, draftStorageKey, relays]
+  );
   
-  const [content, setContent] = useState(initialContent);
-  const [taskType, setTaskType] = useState<ComposerMessageType>(() => {
-    const draftMessageType = initialDraft?.messageType;
-    if (draftMessageType === "task" || draftMessageType === "comment") return draftMessageType;
-    if (allowFeedMessageTypes && (draftMessageType === "offer" || draftMessageType === "request")) {
-      return draftMessageType;
-    }
-    return initialDraft?.taskType === "comment" ? "comment" : "task";
-  });
-  const [selectedRelays, setSelectedRelays] = useState<string[]>(() => {
-    if (initialDraft?.selectedRelays && Array.isArray(initialDraft.selectedRelays)) {
-      return initialDraft.selectedRelays.filter((id): id is string => typeof id === "string");
-    }
-    return relays.filter(r => r.isActive && isPostableRelay(r)).map(r => r.id);
-  });
-  const [dueDate, setDueDate] = useState<Date | undefined>(() => {
-    if (initialDraft?.dueDate) {
-      const parsedDate = new Date(initialDraft.dueDate);
-      if (!Number.isNaN(parsedDate.getTime())) {
-        return parsedDate;
-      }
-    }
-    return defaultDueDate;
-  });
-  const [dueTime, setDueTime] = useState(initialDraft?.dueTime || "");
-  const [dateType, setDateType] = useState<TaskDateType>(initialDraft?.dateType || "due");
+  const [content, setContent] = useState(initialComposerState.content);
+  const [taskType, setTaskType] = useState<ComposerMessageType>(initialComposerState.taskType);
+  const [selectedRelays, setSelectedRelays] = useState<string[]>(initialComposerState.selectedRelays);
+  const [dueDate, setDueDate] = useState<Date | undefined>(initialComposerState.dueDate);
+  const [dueTime, setDueTime] = useState(initialComposerState.dueTime);
+  const [dateType, setDateType] = useState<TaskDateType>(initialComposerState.dateType);
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [hashtagFilter, setHashtagFilter] = useState("");
@@ -274,30 +242,14 @@ export function TaskComposer({
   const [isComposerFocused, setIsComposerFocused] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSendLaunching, setIsSendLaunching] = useState(false);
-  const [explicitTagNames, setExplicitTagNames] = useState<string[]>(() => {
-    if (!initialDraft?.explicitTagNames || !Array.isArray(initialDraft.explicitTagNames)) {
-      return [];
-    }
-    return initialDraft.explicitTagNames
-      .filter((value): value is string => typeof value === "string")
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  });
-  const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>(() => {
-    if (!initialDraft?.explicitMentionPubkeys || !Array.isArray(initialDraft.explicitMentionPubkeys)) {
-      return [];
-    }
-    return initialDraft.explicitMentionPubkeys
-      .filter((value): value is string => typeof value === "string")
-      .map((value) => value.trim().toLowerCase())
-      .filter((value) => /^[a-f0-9]{64}$/i.test(value));
-  });
+  const [explicitTagNames, setExplicitTagNames] = useState<string[]>(initialComposerState.explicitTagNames);
+  const [explicitMentionPubkeys, setExplicitMentionPubkeys] = useState<string[]>(initialComposerState.explicitMentionPubkeys);
   const [priority, setPriority] = useState<number | undefined>(() => {
-    if (typeof initialDraft?.priority !== "number") return undefined;
-    return displayPriorityFromStored(initialDraft.priority);
+    if (typeof initialComposerState.priority !== "number") return undefined;
+    return displayPriorityFromStored(initialComposerState.priority);
   });
   const [attachments, setAttachments] = useState<ComposeAttachment[]>(() => {
-    const initial = initialDraft?.attachments || [];
+    const initial = initialComposerState.attachments || [];
     return initial.map((attachment, index) => ({
       id: `draft-${index}-${Date.now().toString(36)}`,
       fileName: attachment.name || attachment.url,
@@ -306,19 +258,19 @@ export function TaskComposer({
       ...attachment,
     }));
   });
-  const [nip99, setNip99] = useState<Nip99Metadata>(() => ({ ...(initialDraft?.nip99 || {}) }));
-  const [locationGeohash, setLocationGeohash] = useState<string | undefined>(() => normalizeGeohash(initialDraft?.locationGeohash));
+  const [nip99, setNip99] = useState<Nip99Metadata>(() => ({ ...initialComposerState.nip99 }));
+  const [locationGeohash, setLocationGeohash] = useState<string | undefined>(() => normalizeGeohash(initialComposerState.locationGeohash));
   const [showLocationControls, setShowLocationControls] = useState<boolean>(
-    () => Boolean(normalizeGeohash(initialDraft?.locationGeohash))
+    () => Boolean(normalizeGeohash(initialComposerState.locationGeohash))
   );
   const [isNip99TitleTouched, setIsNip99TitleTouched] = useState(
-    () => Boolean(initialDraft?.nip99?.title?.trim())
+    () => Boolean(initialComposerState.nip99.title?.trim())
   );
   const [isNip99SummaryTouched, setIsNip99SummaryTouched] = useState(
-    () => Boolean(initialDraft?.nip99?.summary?.trim())
+    () => Boolean(initialComposerState.nip99.summary?.trim())
   );
   const [isExpanded, setIsExpanded] = useState(
-    () => !adaptiveSize || initialContent.trim().length > 0
+    () => !adaptiveSize || initialComposerState.content.trim().length > 0
   );
   const uploadEnabled = isAttachmentUploadConfigured();
   const attachmentMaxFileSizeBytes = getAttachmentMaxFileSizeBytes();
@@ -468,18 +420,13 @@ export function TaskComposer({
     lastAppliedRestoreRequestIdRef.current = composeRestoreRequest.id;
     const restoreState = composeRestoreRequest.state;
     setContent(restoreState.content || "");
-    const requestedMessageType = restoreState.messageType;
-    const restoredTaskType = allowComment && restoreState.taskType === "comment" ? "comment" : "task";
-    if (!allowComment) {
-      setTaskType("task");
-    } else if (
-      allowFeedMessageTypes &&
-      (requestedMessageType === "offer" || requestedMessageType === "request")
-    ) {
-      setTaskType(requestedMessageType);
-    } else {
-      setTaskType(restoredTaskType);
-    }
+    setTaskType(
+      getTaskComposerRestoreMessageType(
+        composeRestoreRequest,
+        allowComment,
+        allowFeedMessageTypes
+      )
+    );
     setDueDate(restoreState.dueDate);
     setDueTime(restoreState.dueTime || "");
     setDateType(restoreState.dateType || "due");
@@ -526,48 +473,41 @@ export function TaskComposer({
 
   useEffect(() => {
     if (!draftStorageKey) return;
-    try {
-      localStorage.setItem(
-        draftStorageKey,
-        JSON.stringify({
-          content,
-          taskType,
-          messageType: taskType,
-          dueDate: dueDate ? dueDate.toISOString() : undefined,
-          dueTime,
-          dateType,
-          selectedRelays,
-          explicitTagNames,
-          explicitMentionPubkeys,
-          priority: storedPriorityFromDisplay(priority),
-          nip99,
-          locationGeohash,
-          attachments: attachments
-            .filter((attachment) => attachment.status === "uploaded" && attachment.url)
-            .map((attachment) => ({
-              url: attachment.url,
-              mimeType: attachment.mimeType,
-              sha256: attachment.sha256,
-              size: attachment.size,
-              dimensions: attachment.dimensions,
-              blurhash: attachment.blurhash,
-              alt: attachment.alt,
-              name: attachment.name || attachment.fileName,
-            })),
-        } satisfies ComposeDraftState)
-      );
-    } catch {
-      // Ignore persistence errors.
-    }
+    writeTaskComposerDraft(draftStorageKey, {
+      content,
+      taskType,
+      messageType: taskType,
+      dueDate: dueDate ? dueDate.toISOString() : undefined,
+      dueTime,
+      dateType,
+      selectedRelays,
+      explicitTagNames,
+      explicitMentionPubkeys,
+      priority: storedPriorityFromDisplay(priority),
+      nip99,
+      locationGeohash,
+      attachments: attachments
+        .filter((attachment) => attachment.status === "uploaded" && attachment.url)
+        .map((attachment) => ({
+          url: attachment.url,
+          mimeType: attachment.mimeType,
+          sha256: attachment.sha256,
+          size: attachment.size,
+          dimensions: attachment.dimensions,
+          blurhash: attachment.blurhash,
+          alt: attachment.alt,
+          name: attachment.name || attachment.fileName,
+        })),
+    } satisfies TaskComposerDraftState);
   }, [content, taskType, dueDate, dueTime, dateType, selectedRelays, explicitTagNames, explicitMentionPubkeys, priority, nip99, locationGeohash, attachments, draftStorageKey]);
 
   useEffect(() => {
     if (!mentionRequest?.mention) return;
     if (lastAppliedMentionRequestIdRef.current === mentionRequest.id) return;
     lastAppliedMentionRequestIdRef.current = mentionRequest.id;
-    const mention = mentionRequest.mention.startsWith("@")
-      ? mentionRequest.mention
-      : `@${mentionRequest.mention}`;
+    const resolvedMentionRequest = resolveTaskComposerMention(mentionRequest);
+    if (!resolvedMentionRequest) return;
+    const mention = resolvedMentionRequest.mention;
 
     setContent((previousContent) => {
       if (hasMention(previousContent, mention)) {
@@ -985,7 +925,7 @@ export function TaskComposer({
       textareaRef.current?.focus();
     }, 0);
     if (draftStorageKey) {
-      localStorage.removeItem(draftStorageKey);
+      clearTaskComposerDraft(draftStorageKey);
     }
   };
 

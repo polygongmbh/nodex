@@ -5,6 +5,10 @@ import {
   type TaskComposerSubmitPolicy,
   type TaskComposerSubmitRequest,
 } from "./TaskComposer";
+import {
+  TaskComposerEnvironmentProvider,
+  useResolvedTaskComposerEnvironment,
+} from "./task-composer-runtime";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
@@ -65,6 +69,7 @@ export function TaskCreateComposer({
 }: TaskCreateComposerProps) {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const { relays } = useFeedSurfaceState();
+  const composerEnvironment = useResolvedTaskComposerEnvironment({});
   const { allTasks } = useFeedTaskViewModel();
   const parentTask = useMemo(
     () => (parentId ? allTasks.find((task) => task.id === parentId) : undefined),
@@ -130,24 +135,26 @@ export function TaskCreateComposer({
   }
 
   return (
-    <TaskComposer
-      onSubmit={handleSubmit}
-      onCancel={onCancel}
-      compact={compact}
-      defaultDueDate={defaultDueDate}
-      defaultContent={defaultContent}
-      submitPolicy={submitPolicy}
-      adaptiveSize={adaptiveSize}
-      onExpandedChange={onExpandedChange}
-      draftStorageKey={draftStorageKey}
-      forceExpanded={forceExpanded}
-      forceExpandSignal={forceExpandSignal}
-      mentionRequest={mentionRequest}
-      onMentionRequestConsumed={onMentionRequestConsumed}
-      collapseOnSuccess={collapseOnSuccess}
-      allowComment={allowComment}
-      allowFeedMessageTypes={allowFeedMessageTypes}
-      composeRestoreRequest={composeRestoreRequest}
-    />
+    <TaskComposerEnvironmentProvider value={composerEnvironment}>
+      <TaskComposer
+        onSubmit={handleSubmit}
+        onCancel={onCancel}
+        compact={compact}
+        defaultDueDate={defaultDueDate}
+        defaultContent={defaultContent}
+        submitPolicy={submitPolicy}
+        adaptiveSize={adaptiveSize}
+        onExpandedChange={onExpandedChange}
+        draftStorageKey={draftStorageKey}
+        forceExpanded={forceExpanded}
+        forceExpandSignal={forceExpandSignal}
+        mentionRequest={mentionRequest}
+        onMentionRequestConsumed={onMentionRequestConsumed}
+        collapseOnSuccess={collapseOnSuccess}
+        allowComment={allowComment}
+        allowFeedMessageTypes={allowFeedMessageTypes}
+        composeRestoreRequest={composeRestoreRequest}
+      />
+    </TaskComposerEnvironmentProvider>
   );
 }
