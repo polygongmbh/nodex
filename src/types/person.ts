@@ -5,6 +5,7 @@ export interface Person {
   name: string;
   displayName: string;
   nip05?: string;
+  about?: string;
   avatar?: string;
   isOnline: boolean;
   onlineStatus?: "online" | "recent" | "offline";

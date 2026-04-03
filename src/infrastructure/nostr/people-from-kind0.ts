@@ -283,6 +283,7 @@ export function derivePeopleFromKind0Events(
       name,
       displayName,
       nip05: parsed.nip05?.trim().toLowerCase(),
+      about: parsed.about?.trim(),
       avatar: parsed.picture,
       isOnline: true,
       isSelected: previousSelection.get(pubkey) || false,

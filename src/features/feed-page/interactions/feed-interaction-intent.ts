@@ -26,6 +26,10 @@ export type FeedInteractionIntent =
   | { type: "ui.manageRoute.change"; isActive: boolean }
   | { type: "filter.applyHashtagExclusive"; tag: string }
   | { type: "filter.applyAuthorExclusive"; author: Person }
+  | { type: "person.filter.exclusive"; person: Person }
+  | { type: "person.filter.toggle"; person: Person }
+  | { type: "person.compose.mention"; person: Person }
+  | { type: "person.filterAndMention"; person: Person }
   | { type: "filter.clearChannel"; channelId: string }
   | { type: "filter.clearPerson"; personId: string }
   | { type: "sidebar.relay.toggle"; relayId: string }
