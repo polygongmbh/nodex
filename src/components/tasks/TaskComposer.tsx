@@ -1,35 +1,8 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
-import {
-  Hash,
-  Calendar,
-  Clock,
-  X,
-  AtSign,
-  AlertTriangle,
-  Flag,
-  CheckSquare,
-  MessageSquare,
-  Package,
-  HandHelping,
-  LocateFixed,
-  MapPin,
-  LogIn,
-  Paperclip,
-} from "lucide-react";
+import {   Hash, Calendar, Clock, X, AtSign, AlertTriangle, Flag, CheckSquare, MessageSquare, Package, HandHelping, LocateFixed, MapPin, LogIn, Paperclip, } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Relay,
-  Channel,
-  Person,
-  FeedMessageType,
-  Nip99Metadata,
-  TaskType,
-  TaskDateType,
-  TaskCreateResult,
-  ComposeRestoreRequest,
-  ComposeAttachment,
-  PublishedAttachment,
-} from "@/types";
+import {   Relay, Channel, FeedMessageType, Nip99Metadata, TaskType, TaskDateType, TaskCreateResult, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment } from "@/types";
+import type { Person } from "@/types/person";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";

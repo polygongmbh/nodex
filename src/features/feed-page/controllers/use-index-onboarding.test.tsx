@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useIndexOnboarding } from "./use-index-onboarding";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Relay } from "@/types";
+import type { Person } from "@/types/person";
 
 const relays: Relay[] = [
   makeRelay({ id: "relay-one", name: "Relay One" }),

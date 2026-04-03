@@ -1,4 +1,5 @@
-import type { Channel, ChannelMatchMode, Person, Task } from "@/types";
+import type { Channel, ChannelMatchMode, Task } from "@/types";
+import type { Person } from "@/types/person";
 import { taskMatchesSelectedPeople } from "@/domain/content/person-filter";
 import { getIncludedExcludedChannelNames, taskMatchesChannelFilters } from "@/domain/content/channel-filtering";
 

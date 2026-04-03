@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { useMemo, useRef, useState } from "react";
 import { buildFilterSnapshot } from "@/domain/content/filter-snapshot";
 import { makePerson } from "@/test/fixtures";
-import type { Channel, ChannelMatchMode, Person } from "@/types";
+import type { Channel, ChannelMatchMode } from "@/types";
+import type { Person } from "@/types/person";
 import {
   TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS,
   useTaskScopeSpecificFilters,

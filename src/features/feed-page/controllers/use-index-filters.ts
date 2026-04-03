@@ -23,7 +23,8 @@ import {
 } from "@/domain/content/quick-filter-constraints";
 import { useFilterUrlSync } from "@/features/feed-page/controllers/use-filter-url-sync";
 import { featureDebugLog } from "@/lib/feature-debug";
-import type { Channel, ChannelMatchMode, Person, PostedTag, QuickFilterState, Relay } from "@/types";
+import type { Channel, ChannelMatchMode, PostedTag, QuickFilterState, Relay } from "@/types";
+import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 
 interface UseIndexFiltersOptions {

@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
-import type { Channel, ChannelMatchMode, Person, QuickFilterState, Task } from "@/types";
+import type { Channel, ChannelMatchMode, QuickFilterState, Task } from "@/types";
+import type { Person } from "@/types/person";
 
 interface UseTaskViewFilteringParams {
   allTasks: Task[];

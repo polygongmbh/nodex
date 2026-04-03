@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { CalendarView } from "./CalendarView";
-import type { Channel, Person, Relay, Task } from "@/types";
+import type { Channel, Relay, Task } from "@/types";
+import type { Person } from "@/types/person";
 import { makeTask } from "@/test/fixtures";
 
 vi.mock("@/infrastructure/nostr/ndk-context", () => ({

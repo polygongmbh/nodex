@@ -1,4 +1,4 @@
-import { Person } from "@/types";
+import type { Person } from "@/types/person";
 
 const DEFAULT_HUE = 210;
 

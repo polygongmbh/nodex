@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Task, Person } from "@/types";
+import { Task } from "@/types";
+import type { Person } from "@/types/person";
 import { TaskMentionChips, hasTaskMentionChips } from "./TaskMentionChips";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { cn } from "@/lib/utils";

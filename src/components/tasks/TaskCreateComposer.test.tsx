@@ -2,7 +2,8 @@ import { render, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
 import type { FeedInteractionIntent } from "@/features/feed-page/interactions/feed-interaction-intent";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Relay } from "@/types";
+import type { Person } from "@/types/person";
 import { getComposerPrimaryAction, getTaskComposerInput } from "@/test/ui";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 

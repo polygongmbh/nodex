@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Person } from "@/types";
+import type { Person } from "@/types/person";
 import { areFilterSnapshotsEqual, buildFilterSnapshot, type FilterSnapshot } from "./filter-snapshot";
 
 const createPerson = (id: string, isSelected: boolean): Person => ({

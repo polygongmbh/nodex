@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { usePinnedSidebarPeople } from "./use-pinned-sidebar-people";
 import { makePerson, makeTask } from "@/test/fixtures";
-import type { Person } from "@/types";
+import type { Person } from "@/types/person";
 import {
   createEmptyPinnedPeopleState,
   pinPersonForRelays,

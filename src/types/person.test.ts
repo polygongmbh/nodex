@@ -5,9 +5,9 @@ import {
   formatAuthorMetaParts,
   getCompactPersonLabel,
   getPersonDisplayName,
-} from "./person-label";
+} from "./person";
 
-describe("formatAuthorMetaLabel", () => {
+describe("person helpers", () => {
   it("includes display name, username, and abbreviated pubkey", () => {
     const pubkey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     const label = formatAuthorMetaLabel({

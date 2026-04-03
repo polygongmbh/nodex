@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, type PropsWithChildren } from "react";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
-import type { Channel, ChannelMatchMode, Person, QuickFilterState, Relay } from "@/types";
+import type { Channel, ChannelMatchMode, QuickFilterState, Relay } from "@/types";
+import type { Person } from "@/types/person";
 
 export interface FeedSurfaceState {
   relays: Relay[];

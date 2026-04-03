@@ -1,4 +1,5 @@
-import type { Channel, Person, Relay, Task } from "@/types";
+import type { Channel, Relay, Task } from "@/types";
+import type { Person } from "@/types/person";
 
 const DEFAULT_TIME = new Date("2026-01-01T00:00:00.000Z");
 

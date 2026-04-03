@@ -1,11 +1,7 @@
 import { memo, useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Circle, CircleDot, CheckCircle2, Calendar, Clock, ArrowUpDown, RotateCcw, ListTodo, Activity, Flag, Tags, X } from "lucide-react";
-import {
-  Task,
-  Person,
-  ComposeRestoreRequest,
-  TaskStatus,
-} from "@/types";
+import {   Task, ComposeRestoreRequest, TaskStatus } from "@/types";
+import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { TaskTagChipRow } from "./TaskTagChipRow";
 import { ListTaskRow } from "./list/ListTaskRow";

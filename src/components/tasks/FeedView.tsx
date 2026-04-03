@@ -1,18 +1,14 @@
 import { startTransition, useEffect, useRef, useMemo, useState, useCallback, type UIEvent } from "react";
 import { Circle, CircleDot, CheckCircle2, MessageSquare, Package, HandHelping, Calendar, Clock, X } from "lucide-react";
-import {
-  Task,
-  Person,
-  ComposeRestoreRequest,
-  RawNostrEvent,
-} from "@/types";
+import {   Task, ComposeRestoreRequest, RawNostrEvent } from "@/types";
+import type { Person } from "@/types/person";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { FeedTaskCard } from "./feed/FeedTaskCard";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
-import { formatAuthorMetaParts } from "@/lib/person-label";
+import { formatAuthorMetaParts } from "@/types/person";
 import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { getTaskDateTypeLabel } from "@/lib/task-dates";
 import { getDueDateColorClass } from "@/domain/content/task-sorting";

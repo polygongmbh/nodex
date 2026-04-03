@@ -2,7 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useFocusedTaskCollapsedSidebarPreview } from "./use-focused-task-collapsed-sidebar-preview";
 import { makeChannel, makePerson, makeTask } from "@/test/fixtures";
-import type { Channel, Person, Task } from "@/types";
+import type { Channel, Task } from "@/types";
+import type { Person } from "@/types/person";
 
 const channels: Channel[] = [
   makeChannel({ id: "general", name: "general" }),

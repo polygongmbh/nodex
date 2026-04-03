@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import type { FilterSnapshot } from "@/domain/content/filter-snapshot";
-import type { Channel, ChannelMatchMode, Person } from "@/types";
+import type { Channel, ChannelMatchMode } from "@/types";
+import type { Person } from "@/types/person";
 
 export const TASK_SCOPE_FILTER_RESTORE_TIMEOUT_MS = 5 * 60 * 1000;
 

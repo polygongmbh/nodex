@@ -1,4 +1,5 @@
-import type { Person, Task } from "@/types";
+import type { Task } from "@/types";
+import type { Person } from "@/types/person";
 
 function normalize(value: string): string {
   return value.trim().toLowerCase();

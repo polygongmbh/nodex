@@ -1,4 +1,5 @@
-import type { Person, Task } from "@/types";
+import type { Task } from "@/types";
+import type { Person } from "@/types/person";
 import { extractMentionIdentifiersFromContent } from "@/lib/mentions";
 
 export function extractAssignedMentionsFromContent(content: string): string[] {

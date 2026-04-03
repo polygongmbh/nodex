@@ -13,7 +13,8 @@ import {
   shouldForceFeedAndResetFiltersOnStep,
 } from "@/lib/onboarding-step-rules";
 import { mapPeopleSelection, setAllChannelFilters } from "@/domain/content/filter-state-utils";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Relay } from "@/types";
+import type { Person } from "@/types/person";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 
 interface UseIndexOnboardingOptions {

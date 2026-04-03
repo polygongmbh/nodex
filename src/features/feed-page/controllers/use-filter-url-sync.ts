@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import type { Channel, Person } from "@/types";
+import type { Channel } from "@/types";
+import type { Person } from "@/types/person";
 
 const CHANNEL_INCLUDE_PARAM = "ch";
 const CHANNEL_EXCLUDE_PARAM = "ex";

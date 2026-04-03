@@ -1,4 +1,5 @@
-import type { Person, Task } from "@/types";
+import type { Task } from "@/types";
+import type { Person } from "@/types/person";
 
 const DEFAULT_MIN_POSTS = 3;
 const ONLINE_WINDOW_MS = 3 * 60 * 1000;

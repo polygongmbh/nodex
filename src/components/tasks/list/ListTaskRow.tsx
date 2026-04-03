@@ -15,7 +15,8 @@ import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { useTranslation } from "react-i18next";
-import type { Person, Task } from "@/types";
+import type { Task } from "@/types";
+import type { Person } from "@/types/person";
 
 interface ListTaskRowProps {
   task: Task;

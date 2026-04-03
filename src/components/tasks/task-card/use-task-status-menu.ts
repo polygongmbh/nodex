@@ -4,7 +4,8 @@ import { shouldAutoOpenStatusMenuOnFocus } from "@/lib/status-menu-focus";
 import { handleTaskStatusToggleClick, shouldOpenStatusMenuForDirectSelection } from "@/lib/task-status-toggle";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useTaskViewServices } from "@/components/tasks/use-task-view-services";
-import type { Person, Task, TaskStatus } from "@/types";
+import type { Task, TaskStatus } from "@/types";
+import type { Person } from "@/types/person";
 
 interface UseTaskStatusMenuOptions {
   task: Task;

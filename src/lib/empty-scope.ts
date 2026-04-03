@@ -1,7 +1,8 @@
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import { displayPriorityFromStored } from "@/domain/content/task-priority";
 import { getTrimmedFirstTaskContentLine } from "@/lib/task-content-preview";
-import type { Channel, Person, QuickFilterState, Relay } from "@/types";
+import type { Channel, QuickFilterState, Relay } from "@/types";
+import type { Person } from "@/types/person";
 
 interface TranslateFn {
   (key: string, options?: Record<string, unknown>): string;

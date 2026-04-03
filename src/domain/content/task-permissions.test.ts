@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import type { Person, Task } from "@/types";
+import type { Task } from "@/types";
+import type { Person } from "@/types/person";
 import {
   canPubkeyUpdateTask,
   canUserChangeTaskStatus,

@@ -1,4 +1,5 @@
-import type { Person, Task } from "@/types";
+import type { Task } from "@/types";
+import type { Person } from "@/types/person";
 import { extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
 
 function normalize(value?: unknown): string {

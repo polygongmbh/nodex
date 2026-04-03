@@ -1,4 +1,4 @@
-import type { Person } from "@/types";
+import type { Person } from "@/types/person";
 import { normalizeCachedRelayUrl } from "@/infrastructure/nostr/event-cache";
 import { formatUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { NostrEventKind } from "@/lib/nostr/types";

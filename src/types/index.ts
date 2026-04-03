@@ -26,17 +26,6 @@ export type ChannelMatchMode = "and" | "or";
 // Legacy alias for compatibility
 export type Tag = Channel;
 
-export interface Person {
-  id: string;
-  name: string;
-  displayName: string;
-  nip05?: string;
-  avatar?: string;
-  isOnline: boolean;
-  onlineStatus?: "online" | "recent" | "offline";
-  isSelected: boolean;
-}
-
 export type TaskType = "task" | "comment";
 export type FeedMessageType = "offer" | "request";
 export type Nip99ListingStatus = "active" | "sold";

@@ -1,5 +1,6 @@
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { Person, PublishedAttachment, TaskDateType, TaskInitialStatus, TaskType } from "@/types";
+import type { PublishedAttachment, TaskDateType, TaskInitialStatus, TaskType } from "@/types";
+import type { Person } from "@/types/person";
 import { z } from "zod";
 
 import { FAILED_PUBLISH_DRAFTS_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";

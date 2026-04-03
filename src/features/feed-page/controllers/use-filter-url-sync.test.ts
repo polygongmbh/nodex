@@ -4,7 +4,7 @@ import {
   mergeFilterSearchParams,
   parseFilterSearchParams,
 } from "./use-filter-url-sync";
-import type { Person } from "@/types";
+import type { Person } from "@/types/person";
 
 describe("parseFilterSearchParams", () => {
   it("returns null when no filter params present", () => {

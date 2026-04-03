@@ -1,5 +1,15 @@
-import type { Person } from "@/types";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
+
+export interface Person {
+  id: string;
+  name: string;
+  displayName: string;
+  nip05?: string;
+  avatar?: string;
+  isOnline: boolean;
+  onlineStatus?: "online" | "recent" | "offline";
+  isSelected: boolean;
+}
 
 interface AuthorMetaLabelInput {
   personId: string;
@@ -18,7 +28,7 @@ function abbreviatePubkey(pubkey: string): string {
   return formatUserFacingPubkey(pubkey, { prefix: 6, suffix: 4, ellipsis: "…" });
 }
 
-function isPubkeyDerivedPlaceholder(value: string, personId: string): boolean {
+export function isPubkeyDerivedPlaceholder(value: string, personId: string): boolean {
   const normalizedValue = value.trim().toLowerCase();
   const normalizedPubkey = personId.trim().toLowerCase();
   const normalizedUserFacingPubkey = toUserFacingPubkey(normalizedPubkey).toLowerCase();

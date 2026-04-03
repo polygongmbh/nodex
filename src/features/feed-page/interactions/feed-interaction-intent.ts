@@ -1,13 +1,5 @@
-import type {
-  ChannelMatchMode,
-  Nip99ListingStatus,
-  Person,
-  PublishedAttachment,
-  Nip99Metadata,
-  TaskInitialStatus,
-  TaskDateType,
-  TaskStatus,
-} from "@/types";
+import type { ChannelMatchMode, Nip99ListingStatus, PublishedAttachment, Nip99Metadata, TaskInitialStatus, TaskDateType, TaskStatus } from "@/types";
+import type { Person } from "@/types/person";
 
 export type FeedViewType = "tree" | "feed" | "kanban" | "calendar" | "list";
 export type FeedKanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";

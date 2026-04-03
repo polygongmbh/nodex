@@ -16,7 +16,8 @@ import { TASK_INTERACTION_STYLES } from "@/lib/task-interaction-styles";
 import { hasTaskMentionChips } from "@/components/tasks/TaskMentionChips";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
-import type { Person, Task, TaskStatus } from "@/types";
+import type { Task, TaskStatus } from "@/types";
+import type { Person } from "@/types/person";
 
 interface KanbanTaskCardProps {
   task: Task;

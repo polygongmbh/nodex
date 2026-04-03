@@ -1,13 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Radio, Hash, Users, Plus, Keyboard, BookOpen } from "lucide-react";
-import {
-  Relay,
-  Channel,
-  ChannelMatchMode,
-  Person,
-  QuickFilterState,
-  SavedFilterConfiguration,
-} from "@/types";
+import {   Relay, Channel, ChannelMatchMode, QuickFilterState, SavedFilterConfiguration } from "@/types";
+import type { Person } from "@/types/person";
 import { RelayItem } from "./sidebar/RelayItem";
 import { ChannelItem } from "./sidebar/ChannelItem";
 import { PersonItem } from "./sidebar/PersonItem";

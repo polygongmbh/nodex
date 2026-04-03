@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Channel, Person, Task } from "@/types";
+import type { Channel, Task } from "@/types";
+import type { Person } from "@/types/person";
 import { filterTasks, filterTasksByRelayAndPeople } from "./task-filtering";
 
 const alice: Person = {

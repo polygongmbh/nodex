@@ -1,18 +1,8 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { Search, X, Hash, Radio, Users, Check, Minus, Calendar, Clock, MessageSquare, CheckSquare, Send, LogIn, Building2, Gamepad2, Cpu, PlayCircle, Paperclip, Package, HandHelping, MapPin, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Relay,
-  Channel,
-  Person,
-  TaskCreateResult,
-  TaskDateType,
-  ComposeRestoreRequest,
-  ComposeAttachment,
-  PublishedAttachment,
-  Nip99Metadata,
-  FeedMessageType,
-} from "@/types";
+import {   Relay, Channel, TaskCreateResult, TaskDateType, ComposeRestoreRequest, ComposeAttachment, PublishedAttachment, Nip99Metadata, FeedMessageType } from "@/types";
+import type { Person } from "@/types/person";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -58,7 +48,7 @@ import {
   displayPriorityFromStored,
   storedPriorityFromDisplay,
 } from "@/domain/content/task-priority";
-import { getCompactPersonLabel, getPersonDisplayName } from "@/lib/person-label";
+import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 
 interface UnifiedBottomBarProps {
   searchQuery?: string;

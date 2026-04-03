@@ -1,6 +1,7 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
 import type { ChannelMatchMode, QuickFilterState, SavedFilterConfiguration } from "@/types";
-import type { Relay, Channel, Person } from "@/types";
+import type { Relay, Channel } from "@/types";
+import type { Person } from "@/types/person";
 import type { NDKRelayStatus } from "@/infrastructure/nostr/ndk-context";
 
 export interface FeedSidebarState {

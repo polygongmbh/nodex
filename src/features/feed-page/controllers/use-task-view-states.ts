@@ -17,7 +17,8 @@ import { useEmptyScopeModel } from "./use-empty-scope-model";
 import { useTaskViewFiltering } from "./use-task-view-filtering";
 import type { KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
 import type { EmptyScopeModel } from "@/lib/empty-scope";
-import type { Channel, ChannelMatchMode, Person, Relay, Task, TaskStateUpdate, TaskStatus } from "@/types";
+import type { Channel, ChannelMatchMode, Relay, Task, TaskStateUpdate, TaskStatus } from "@/types";
+import type { Person } from "@/types/person";
 
 interface BaseViewStateInput {
   tasks: Task[];

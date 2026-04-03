@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import type { Person } from "@/types";
+import type { Person } from "@/types/person";
 import {
   derivePeopleFromKind0Events,
   loadCachedKind0Events,

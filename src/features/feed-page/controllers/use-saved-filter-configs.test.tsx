@@ -5,7 +5,8 @@ import { useSavedFilterConfigs } from "./use-saved-filter-configs";
 import { buildFilterSnapshot } from "@/domain/content/filter-snapshot";
 import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import { makePerson, makeRelay } from "@/test/fixtures";
-import type { Channel, ChannelMatchMode, Person, Relay } from "@/types";
+import type { Channel, ChannelMatchMode, Relay } from "@/types";
+import type { Person } from "@/types/person";
 
 const relays: Relay[] = [
   makeRelay({ id: "relay-one", name: "Relay One" }),

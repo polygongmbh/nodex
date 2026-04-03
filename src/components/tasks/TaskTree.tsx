@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { Task, Person, ComposeRestoreRequest } from "@/types";
+import { Task, ComposeRestoreRequest } from "@/types";
+import type { Person } from "@/types/person";
 import { TreeTaskItem } from "./TreeTaskItem";
 import { SharedViewComposer } from "./SharedViewComposer";
 import { useTaskNavigation } from "@/hooks/use-task-navigation";

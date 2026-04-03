@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { buildTaskViewFilterIndex } from "@/domain/content/task-view-filtering";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
-import type { Channel, Person, Task } from "@/types";
+import type { Channel, Task } from "@/types";
+import type { Person } from "@/types/person";
 
 function normalize(value: string): string {
   return value.trim().toLowerCase();

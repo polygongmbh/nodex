@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "./linkify";
-import type { Person } from "@/types";
+import type { Person } from "@/types/person";
 import { hexPubkeyToNpub } from "@/lib/nostr/user-facing-pubkey";
 
 const alice: Person = {

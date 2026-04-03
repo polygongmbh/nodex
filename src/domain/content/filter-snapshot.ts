@@ -1,4 +1,5 @@
-import type { Channel, ChannelMatchMode, Person, QuickFilterState } from "@/types";
+import type { Channel, ChannelMatchMode, QuickFilterState } from "@/types";
+import type { Person } from "@/types/person";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 
 export interface FilterSnapshot {

@@ -8,7 +8,8 @@ import { useIndexFilters } from "./use-index-filters";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { PersonFrecencyState } from "@/lib/person-frecency";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Person, PostedTag, Relay } from "@/types";
+import type { PostedTag, Relay } from "@/types";
+import type { Person } from "@/types/person";
 import type { FeedInteractionHandlerMap, FeedInteractionPipelineApi } from "@/features/feed-page/interactions/feed-interaction-pipeline";
 import type { FeedInteractionIntent, FeedInteractionIntentType } from "@/features/feed-page/interactions/feed-interaction-intent";
 

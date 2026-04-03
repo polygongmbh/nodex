@@ -7,7 +7,8 @@ import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
 import { isNostrEventId } from "@/lib/nostr/event-id";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
-import type { Nip99ListingStatus, Person, Task } from "@/types";
+import type { Nip99ListingStatus, Task } from "@/types";
+import type { Person } from "@/types/person";
 
 interface PublishResult {
   success: boolean;

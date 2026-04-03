@@ -4,59 +4,27 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
-import {
-  removeCachedNostrEventById,
-  type CachedNostrEvent,
-} from "@/infrastructure/nostr/event-cache";
-import {
-  loadFailedPublishDrafts,
-  saveFailedPublishDrafts,
-  type FailedPublishDraft,
-} from "@/infrastructure/preferences/failed-publish-drafts-storage";
+import {   removeCachedNostrEventById, type CachedNostrEvent, } from "@/infrastructure/nostr/event-cache";
+import {   loadFailedPublishDrafts, saveFailedPublishDrafts, type FailedPublishDraft, } from "@/infrastructure/preferences/failed-publish-drafts-storage";
 import { resolveMentionedPubkeysAsync } from "@/lib/mentions";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { resolveNip05Identifier } from "@/lib/nostr/nip05-resolver";
 import { getRelayIdFromUrl } from "@/infrastructure/nostr/relay-identity";
 import { normalizeComposerMessageType } from "@/domain/content/task-type";
 import { resolveSubmissionTags } from "@/lib/submission-tags";
-import {
-  resolveRelaySelectionForSubmission,
-} from "@/lib/nostr/task-relay-routing";
+import {   resolveRelaySelectionForSubmission, } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { normalizeGeohash } from "@/infrastructure/nostr/geohash-location";
-import {
-  buildImetaTag,
-  extractEmbeddableAttachmentsFromContent,
-  normalizePublishedAttachments,
-} from "@/lib/attachments";
+import {   buildImetaTag, extractEmbeddableAttachmentsFromContent, normalizePublishedAttachments, } from "@/lib/attachments";
 import { buildTaskPublishTags } from "@/infrastructure/nostr/task-publish-tags";
 import { buildNip99PublishTags } from "@/infrastructure/nostr/nip99-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { loadPublishDelayEnabled } from "@/infrastructure/preferences/user-preferences-storage";
 import { canUserUpdateTask, extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
-import {
-  notifyLocalSaved,
-  notifyNeedTag,
-  notifyPartialPublish,
-  notifyPublished,
-  notifyPublishSavedForRetry,
-  notifyStatusRestricted,
-} from "@/lib/notifications";
+import {   notifyLocalSaved, notifyNeedTag, notifyPartialPublish, notifyPublished, notifyPublishSavedForRetry, notifyStatusRestricted, } from "@/lib/notifications";
 import type { FeedInteractionFrecencyIntent } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
-import type {
-  ComposeRestoreRequest,
-  ComposeRestoreState,
-  Nip99Metadata,
-  Nip99ListingStatus,
-  Person,
-  PublishedAttachment,
-  PostedTag,
-  Relay,
-  Task,
-  TaskCreateResult,
-  TaskDateType,
-  TaskInitialStatus,
-} from "@/types";
+import type {   ComposeRestoreRequest, ComposeRestoreState, Nip99Metadata, Nip99ListingStatus, PublishedAttachment, PostedTag, Relay, Task, TaskCreateResult, TaskDateType, TaskInitialStatus } from "@/types";
+import type { Person } from "@/types/person";
 
 const PUBLISH_UNDO_DELAY_MS = 5000;
 const MAX_FAILED_PUBLISH_DRAFTS = 50;

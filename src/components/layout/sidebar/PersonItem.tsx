@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Person } from "@/types";
+import type { Person } from "@/types/person";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { SidebarFilterRow } from "./SidebarFilterRow";
 import { SidebarPinButton } from "./SidebarPinButton";

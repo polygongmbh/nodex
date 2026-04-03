@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import type { Channel, Person, QuickFilterState, Relay } from "@/types";
+import type { Channel, QuickFilterState, Relay } from "@/types";
+import type { Person } from "@/types/person";
 import { useEmptyScopeModel } from "@/features/feed-page/controllers/use-empty-scope-model";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 

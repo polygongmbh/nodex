@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FilteredEmptyState } from "./FilteredEmptyState";
-import type { Channel, Person, Relay } from "@/types";
+import type { Channel, Relay } from "@/types";
+import type { Person } from "@/types/person";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 const relays: Relay[] = [

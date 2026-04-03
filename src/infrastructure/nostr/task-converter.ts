@@ -1,4 +1,5 @@
-import { type FeedMessageType, type TaskStateUpdate, type TaskStatus, Person, Task } from "@/types";
+import { type FeedMessageType, type TaskStateUpdate, type TaskStatus, Task } from "@/types";
+import type { Person } from "@/types/person";
 import { extractAssignedMentionsFromContent } from "@/domain/content/task-permissions";
 import {
   extractTaskStateTargetId,

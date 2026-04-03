@@ -1,4 +1,5 @@
-import type { Channel, Person } from "@/types";
+import type { Channel } from "@/types";
+import type { Person } from "@/types/person";
 
 export function buildChannelFilterMap(
   channels: Channel[],

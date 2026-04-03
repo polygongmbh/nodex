@@ -1,25 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import {
-  findSavedFilterConfiguration,
-} from "@/domain/preferences/saved-filter-state";
+import {   findSavedFilterConfiguration, } from "@/domain/preferences/saved-filter-state";
 import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
-import {
-  loadSavedFilterState,
-  saveSavedFilterState,
-} from "@/infrastructure/preferences/saved-filter-configurations-storage";
+import {   loadSavedFilterState, saveSavedFilterState, } from "@/infrastructure/preferences/saved-filter-configurations-storage";
 import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import { areFilterSnapshotsEqual, type FilterSnapshot } from "@/domain/content/filter-snapshot";
-import type {
-  Channel,
-  ChannelMatchMode,
-  Person,
-  QuickFilterState,
-  Relay,
-  SavedFilterConfiguration,
-  SavedFilterController,
-  SavedFilterState,
-} from "@/types";
+import type {   Channel, ChannelMatchMode, QuickFilterState, Relay, SavedFilterConfiguration, SavedFilterController, SavedFilterState } from "@/types";
+import type { Person } from "@/types/person";
 
 interface UseSavedFilterConfigsOptions {
   currentFilterSnapshot: FilterSnapshot;

@@ -1,6 +1,7 @@
 import { taskMatchesSelectedPeople } from "@/domain/content/person-filter";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
-import type { ChannelMatchMode, Person, QuickFilterState, Task } from "@/types";
+import type { ChannelMatchMode, QuickFilterState, Task } from "@/types";
+import type { Person } from "@/types/person";
 
 function normalize(value: string): string {
   return value.trim().toLowerCase();

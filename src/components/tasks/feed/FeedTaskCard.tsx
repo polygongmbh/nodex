@@ -22,13 +22,14 @@ import { isRawNostrEventShortcutClick } from "@/lib/raw-nostr-shortcut";
 import { hasTextSelection } from "@/lib/click-intent";
 import { isTaskTerminalStatus } from "@/domain/content/task-status";
 import { shouldCollapseTaskContent } from "@/lib/task-content-preview";
-import { formatAuthorMetaParts } from "@/lib/person-label";
+import { formatAuthorMetaParts } from "@/types/person";
 import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getAlternateModifierLabel } from "@/lib/keyboard-platform";
 import { isTaskLockedUntilStart } from "@/lib/task-dates";
 import { getCommentCreatedTooltip, getTaskCreatedTooltip } from "@/lib/task-timestamp-tooltip";
 import { useTranslation } from "react-i18next";
-import type { Nip99ListingStatus, Person, RawNostrEvent, Task } from "@/types";
+import type { Nip99ListingStatus, RawNostrEvent, Task } from "@/types";
+import type { Person } from "@/types/person";
 
 interface FeedTaskCardProps {
   task: Task;

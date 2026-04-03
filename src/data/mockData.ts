@@ -1,4 +1,5 @@
-import { Relay, Channel, Person, Task, TaskStatus } from "@/types";
+import { Relay, Channel, Task, TaskStatus } from "@/types";
+import type { Person } from "@/types/person";
 import { addDays, subDays } from "date-fns";
 
 const today = new Date();

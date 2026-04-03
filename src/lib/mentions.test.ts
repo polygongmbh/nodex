@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { nip19 } from "@nostr-dev-kit/ndk";
-import type { Person } from "@/types";
+import type { Person } from "@/types/person";
 import {
   extractMentionIdentifiersFromContent,
   formatMentionIdentifierForDisplay,

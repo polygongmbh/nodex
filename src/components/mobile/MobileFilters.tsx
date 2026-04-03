@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Radio, Hash, Users, Check, X, Minus, Plus, User, LogOut, Sparkles, LogIn, Trash2, Building2, Gamepad2, Cpu, PlayCircle, Pencil, ChevronDown, Mail } from "lucide-react";
-import { Relay, Channel, ChannelMatchMode, Person } from "@/types";
+import { Relay, Channel, ChannelMatchMode } from "@/types";
+import type { Person } from "@/types/person";
 import { cn } from "@/lib/utils";
 import { getRelayStatusDotClass } from "@/components/relay/relayStatusStyles";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,7 @@ import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { relayUrlToName } from "@/infrastructure/nostr/relay-url";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
-import { getCompactPersonLabel, getPersonDisplayName } from "@/lib/person-label";
+import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 
 interface MobileFiltersProps {
   relays?: Relay[];

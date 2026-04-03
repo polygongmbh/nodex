@@ -2,7 +2,8 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { FeedView } from "./FeedView";
-import { Task, Channel, Relay, Person } from "@/types";
+import { Task, Channel, Relay } from "@/types";
+import type { Person } from "@/types/person";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
 import i18n from "@/lib/i18n/config";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";

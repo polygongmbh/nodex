@@ -1,12 +1,8 @@
 import { useState, useMemo, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import { hasTextSelection } from "@/lib/click-intent";
 import { ChevronLeft, ChevronRight, Plus, Circle, CircleDot, CheckCircle2, X, CalendarPlus, Clock, List, Grid } from "lucide-react";
-import {
-  Task,
-  Person,
-  ComposeRestoreRequest,
-  TaskStatus,
-} from "@/types";
+import {   Task, ComposeRestoreRequest, TaskStatus } from "@/types";
+import type { Person } from "@/types/person";
 import {
   format,
   startOfMonth,

@@ -1,13 +1,8 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Plus, X, Circle, CircleDot, CheckCircle2 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import {
-  Task,
-  Person,
-  TaskInitialStatus,
-  TaskStatus,
-  ComposeRestoreRequest,
-} from "@/types";
+import {   Task, TaskInitialStatus, TaskStatus, ComposeRestoreRequest } from "@/types";
+import type { Person } from "@/types/person";
 import { TaskCreateComposer } from "./TaskCreateComposer";
 import { KanbanTaskCard } from "./kanban/KanbanTaskCard";
 import { cn } from "@/lib/utils";

@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { buildEmptyScopeModel, type EmptyScopeModel } from "@/lib/empty-scope";
-import type { Channel, Person, QuickFilterState, Relay, Task } from "@/types";
+import type { Channel, QuickFilterState, Relay, Task } from "@/types";
+import type { Person } from "@/types/person";
 
 interface UseEmptyScopeModelOptions {
   relays: Relay[];

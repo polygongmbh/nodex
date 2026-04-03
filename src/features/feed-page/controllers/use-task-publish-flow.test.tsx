@@ -5,7 +5,8 @@ import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskPublishFlow } from "./use-task-publish-flow";
 import { makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Person, PostedTag, Relay, Task } from "@/types";
+import type { PostedTag, Relay, Task } from "@/types";
+import type { Person } from "@/types/person";
 
 vi.mock("sonner", () => ({
   toast: Object.assign(vi.fn(() => "toast-id"), {

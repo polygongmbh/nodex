@@ -1,4 +1,4 @@
-import type { Person } from "@/types";
+import type { Person } from "@/types/person";
 
 interface AuthUserLike {
   pubkey: string;
