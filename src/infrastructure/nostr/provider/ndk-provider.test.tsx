@@ -417,7 +417,7 @@ function SubscribeIdentityHarness() {
 }
 
 function AuthReplayHarness() {
-  const { relays, subscribe, loginAsGuest } = useNDK();
+  const { relays, subscribe, loginAsGuest, reconnectRelay } = useNDK();
   return (
     <div>
       <button
@@ -429,6 +429,7 @@ function AuthReplayHarness() {
         start feed sub
       </button>
       <button onClick={() => void loginAsGuest()}>login as guest</button>
+      <button onClick={() => reconnectRelay("wss://relay.one")}>reconnect relay</button>
       <output data-testid="relay-state">
         {relays
           .map((relay) => `${relay.url}:${relay.status}`)
@@ -821,6 +822,56 @@ describe("NDKProvider relay lifecycle", () => {
     });
   });
 
+  it("retries auth for read-only relays on reconnect without forcing a new socket", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <Harness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+    });
+
+    await act(async () => {
+      relay.emitServerMessage(
+        '["OK","event-id",false,"auth-required: event author pubkey not in whitelist"]'
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:read-only");
+    });
+
+    const subscribeCallsBeforeReconnect = ndk.subscribeCalls.length;
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
+    });
+
+    await waitFor(() => {
+      expect(ndk.subscribeCalls.length).toBeGreaterThan(subscribeCallsBeforeReconnect);
+    });
+
+    expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(1);
+    expect(relay.disconnectCalls).toBe(0);
+
+    await act(async () => {
+      ndk.pool.emit("relay:authed", relay);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+  });
+
   it("marks relay verification-failed when websocket returns CLOSED auth-required reason", async () => {
     render(
       <NDKProvider defaultRelays={["wss://relay.one/"]}>
@@ -878,6 +929,57 @@ describe("NDKProvider relay lifecycle", () => {
       expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(1);
       expect(firstRelay.disconnectCalls).toBe(0);
       expect(ndk.pool.getOpenSocketCount("wss://relay.one")).toBe(1);
+    });
+  });
+
+  it("retries auth and replays subscriptions for verification-failed relays on reconnect", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <AuthReplayHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login as guest" }));
+      fireEvent.click(screen.getByRole("button", { name: "start feed sub" }));
+    });
+
+    const ndk = mockedNdk.ndkInstances[0];
+    const relay = ndk.pool.getRelay("wss://relay.one", false);
+
+    await act(async () => {
+      relay.emitServerMessage('["CLOSED","kinds-limit-subid","auth-required: pubkey not in whitelist"]');
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:verification-failed");
+    });
+
+    const subscribeCallsBeforeReconnect = ndk.subscribeCalls.length;
+    const replayedSubscriptionsBeforeAuth = relay.subscribeCalls.length;
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "reconnect relay" }));
+    });
+
+    await waitFor(() => {
+      expect(ndk.subscribeCalls.length).toBeGreaterThan(subscribeCallsBeforeReconnect);
+    });
+
+    expect(ndk.pool.getCreatedRelays("wss://relay.one")).toHaveLength(1);
+    expect(relay.disconnectCalls).toBe(0);
+
+    await act(async () => {
+      ndk.pool.emit("relay:authed", relay);
+    });
+
+    await waitFor(() => {
+      expect(relay.subscribeCalls.length).toBeGreaterThan(replayedSubscriptionsBeforeAuth);
+      expect(screen.getByTestId("relay-state").textContent).toContain("wss://relay.one:connected");
     });
   });
 
