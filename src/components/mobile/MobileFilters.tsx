@@ -15,7 +15,6 @@ import { useTranslation } from "react-i18next";
 import { LanguageToggle } from "@/components/theme/LanguageToggle";
 import { ChannelMatchModeToggle } from "@/components/filters/ChannelMatchModeToggle";
 import { GuestPrivateKeyRow } from "@/components/auth/GuestPrivateKeyRow";
-import { resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
@@ -60,10 +59,7 @@ export function MobileFilters({
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  const effectiveProfile = useMemo(
-    () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
-    [user?.profile, user?.pubkey]
-  );
+  const effectiveProfile = user?.profile ?? {};
   const {
     fields: {
       profileName,

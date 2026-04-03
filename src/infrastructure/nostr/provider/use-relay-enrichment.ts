@@ -4,7 +4,7 @@ import { NDKEvent } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { normalizeRelayUrl } from "./relay-list";
 import { filterAutoAddRelayUrls } from "./relay-list";
-import { resolveVerifiedNip05RelayUrls } from "@/lib/nostr/nip05-verify";
+import { getNip05For } from "@nostr-dev-kit/ndk";
 import {
   extractRelayUrlsFromNip65Tags,
   selectComplementaryRelayUrls,
@@ -76,9 +76,11 @@ export function useRelayEnrichment(
       const nip65RelayUrls = await fetchLatestNip65RelayUrls(user.pubkey);
       if (cancelled) return;
 
-      const nip05RelayUrls = nip65RelayUrls.length === 0 && normalizedNip05
-        ? await resolveVerifiedNip05RelayUrls(normalizedNip05, user.pubkey)
-        : [];
+      let nip05RelayUrls: string[] = [];
+      if (nip65RelayUrls.length === 0 && normalizedNip05) {
+        const pointer = await getNip05For(ndk, normalizedNip05);
+        nip05RelayUrls = pointer?.pubkey === user.pubkey ? (pointer.relays ?? []) : [];
+      }
       if (cancelled) return;
 
       const relaySelection = selectComplementaryRelayUrls({

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Key, User, Zap, AlertCircle, Loader2, LogOut, BadgeCheck, LogIn, Link2, CircleHelp, Pencil, Eye, EyeOff } from "lucide-react";
+import { Key, User, Zap, AlertCircle, Loader2, LogOut, LogIn, Link2, CircleHelp, Pencil, Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,6 @@ import { cn } from "@/lib/utils";
 import { nip19 } from "nostr-tools";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTranslation } from "react-i18next";
-import { currentUserHasResolvedProfile, resolveCurrentUserProfile } from "@/lib/current-user-profile-cache";
 import { formatUserFacingPubkey, toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 import { getAppPreferenceDefinitions } from "@/lib/app-preferences";
 import { useProfileEditor } from "@/hooks/use-profile-editor";
@@ -670,10 +669,7 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [hasForcedProfileSetupOpen, setHasForcedProfileSetupOpen] = useState(false);
-  const effectiveProfile = useMemo(
-    () => resolveCurrentUserProfile(user?.pubkey, user?.profile),
-    [user?.profile, user?.pubkey]
-  );
+  const effectiveProfile = user?.profile ?? {};
   const {
     fields: {
       profileName,
@@ -756,7 +752,6 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
       user
       && hasWritableRelayConnection
       && needsProfileSetup
-      && !currentUserHasResolvedProfile(user.pubkey, effectiveProfile)
       && !isProfileSyncing
       && !isProfileEditorOpen
       && !hasForcedProfileSetupOpen
@@ -768,7 +763,6 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
     user,
     hasWritableRelayConnection,
     needsProfileSetup,
-    effectiveProfile,
     isProfileSyncing,
     isProfileEditorOpen,
     hasForcedProfileSetupOpen,
@@ -858,14 +852,9 @@ export function NostrUserMenu({ onSignInClick }: NostrUserMenuProps) {
                   <div className="min-w-0">
                     <div className="flex items-center gap-1">
                       <span className="text-sm font-medium truncate">{displayName}</span>
-                      {effectiveProfile.nip05Verified && (
-                        <span className="flex items-center gap-1 text-xs text-success" title={`Verified: ${effectiveProfile.nip05}`}>
-                          <BadgeCheck className="w-3.5 h-3.5" />
-                        </span>
-                      )}
-                      {effectiveProfile.nip05 && !effectiveProfile.nip05Verified && (
-                        <span className="text-xs text-muted-foreground" title={effectiveProfile.nip05}>
-                          ✓
+                      {effectiveProfile.nip05 && (
+                        <span className="text-xs text-muted-foreground truncate" title={effectiveProfile.nip05}>
+                          {effectiveProfile.nip05}
                         </span>
                       )}
                     </div>

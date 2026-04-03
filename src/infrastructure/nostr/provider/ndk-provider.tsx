@@ -11,6 +11,7 @@ import NDK, {
   NDKRelay,
   NDKFilter,
   NDKSubscription,
+  profileFromEvent,
 } from "@nostr-dev-kit/ndk";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { NoasClient, type NoasAuthResult } from "@/lib/nostr/noas-client";
@@ -19,7 +20,6 @@ import { privateKeyHexToNsec } from "@/lib/nostr/nip49-utils";
 import {
   buildKind0Content,
   hasRequiredProfileFields,
-  mergeKind0Profiles,
   type EditableNostrProfile,
 } from "@/infrastructure/nostr/profile-metadata";
 import {
@@ -34,7 +34,6 @@ import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
-import { mapNdkUser } from "./contracts";
 import {
   hasNostrExtension,
   loadPersistedNoasDefaultHostUrl,
@@ -54,7 +53,6 @@ import {
 } from "./relay-status";
 import { reorderResolvedRelayStatuses } from "./relay-list";
 import { waitForNostrExtensionAvailability } from "./session-restore";
-import { verifyNip05 } from "@/lib/nostr/nip05-verify";
 import { createRelayNip42AuthPolicy, type RelayVerificationEvent } from "@/infrastructure/nostr/nip42-relay-auth-policy";
 import { createNip98AuthHeader } from "@/lib/nostr/nip98-http-auth";
 import {
@@ -77,7 +75,6 @@ import { applyPerformanceAwareSubscriptionLimits } from "./subscription-limits";
 import { fetchRelayInfo, type RelayInfoSummary } from "@/infrastructure/nostr/relay-info";
 import i18n from "@/lib/i18n/config";
 import { toast } from "sonner";
-import { currentUserHasResolvedProfile } from "@/lib/current-user-profile-cache";
 import {
   createNodexCacheAdapter,
   getFreshRelayInfoSummaryFromCache,
@@ -749,18 +746,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         clearTrackedRelayTimeout(fallbackTimeout.id);
         endRelayOperation("read");
         subscription.stop();
-        const profile = candidates.length === 0
-          ? null
-          : (() => {
-            const parsed = mergeKind0Profiles(candidates);
-            return {
-              name: parsed.name,
-              displayName: parsed.displayName,
-              picture: parsed.picture,
-              about: parsed.about,
-              nip05: parsed.nip05,
-            };
-          })();
+        let profile = null;
+        if (candidates.length > 0) {
+          const best = candidates.sort((a, b) => b.createdAt - a.createdAt)[0];
+          const event = new NDKEvent(ndk);
+          event.content = best.content;
+          profile = profileFromEvent(event);
+        }
         kind0ProfileCacheRef.current.set(normalizedPubkey, {
           profile,
           fetchedAt: Date.now(),
@@ -804,17 +796,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
   const userProfileSnapshot = useMemo<NostrUser["profile"] | null>(() => {
     if (!user?.profile) return null;
-    return {
-      name: user.profile.name,
-      displayName: user.profile.displayName,
-      picture: user.profile.picture,
-      about: user.profile.about,
-      nip05: user.profile.nip05,
-      nip05Verified: user.profile.nip05Verified,
-    };
-  }, [
-    user?.profile,
-  ]);
+    return { ...user.profile };
+  }, [user?.profile]);
 
   // Initialize NDK
   useEffect(() => {
@@ -1085,7 +1068,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           const signer = new NDKPrivateKeySigner(savedNsec);
           ndkInstance.signer = signer;
           const ndkUser = await signer.user();
-          setUser(mapNdkUser(ndkUser));
+          setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
           setAuthMethod("guest");
         } catch {
           localStorage.removeItem(STORAGE_KEY_AUTH);
@@ -1114,7 +1097,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         ndkInstance.signer = signer;
         try {
           const ndkUser = await signer.user();
-          setUser(mapNdkUser(ndkUser));
+          setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
           setAuthMethod("extension");
           nostrDevLog("auth", "Extension session restored", { pubkey: ndkUser.pubkey });
         } catch (error) {
@@ -1138,7 +1121,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         try {
           const ndkUser: NDKUser = await signer.blockUntilReady();
           await ndkUser.fetchProfile();
-          setUser(mapNdkUser(ndkUser));
+          setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
           setAuthMethod("nostrConnect");
         } catch {
           localStorage.removeItem(STORAGE_KEY_AUTH);
@@ -1181,7 +1164,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       ndk.signer = signer;
       
       const ndkUser = await signer.user();
-      setUser(mapNdkUser(ndkUser));
+      setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
       setAuthMethod("extension");
       localStorage.setItem(STORAGE_KEY_AUTH, "extension");
       retryNip42RelaysAfterSignIn();
@@ -1204,7 +1187,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       
       const ndkUser = await signer.user();
       
-      setUser(mapNdkUser(ndkUser));
+      setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
       setAuthMethod("privateKey");
       localStorage.setItem(STORAGE_KEY_AUTH, "privateKey");
       // Don't store private key for security
@@ -1456,40 +1439,13 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         });
         return { success: false, errorCode: "key_mismatch" };
       }
-      const profile = await fetchLatestKind0Profile(ndkUser.pubkey, { force: true });
-
-      // Get profile picture if available
-      let profilePicture: string | undefined;
-      const pictureResponse = await noasClient.getProfilePicture(signInResponse.publicKey);
-      if (pictureResponse.profilePicture && pictureResponse.profilePictureType) {
-        const blob = new Blob([pictureResponse.profilePicture as BlobPart], { type: pictureResponse.profilePictureType });
-        profilePicture = URL.createObjectURL(blob);
-      }
-
-      const profileNip05 = profile?.nip05?.trim();
-      const normalizedProfileNip05 = profileNip05?.toLowerCase();
-      const nip05Verified = normalizedProfileNip05
-        ? await verifyNip05(normalizedProfileNip05, ndkUser.pubkey)
-        : false;
-
-      setUser({
-        pubkey: ndkUser.pubkey,
-        npub: ndkUser.npub,
-        profile: {
-          name: profile?.name || username,
-          displayName: profile?.displayName || username,
-          picture: profilePicture || profile?.picture,
-          about: profile?.about,
-          nip05: profileNip05 || undefined,
-          nip05Verified,
-        },
-      });
+      setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub });
 
       // Store Noas session information
       setAuthMethod("noas");
       localStorage.setItem(STORAGE_KEY_AUTH, "noas");
       localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
-      
+
       connectResolvedAuthRelayUrls(resolveNoasAuthRelayUrls(signInResponse));
 
       retryNip42RelaysAfterSignIn();
@@ -1500,7 +1456,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, fetchLatestKind0Profile, ndk, retryNip42RelaysAfterSignIn]);
+  }, [configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, ndk, retryNip42RelaysAfterSignIn]);
 
   const signupWithNoas = useCallback(async (
     username: string,
@@ -1604,35 +1560,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         return { success: false, errorCode: "server_error" };
       }
 
-      const ndkUser = await signer.user();
-      const profile = await fetchLatestKind0Profile(ndkUser.pubkey, { force: true });
-
-      // Get profile picture if available
-      let profilePicture: string | undefined;
-      const pictureResponse = await noasClient.getProfilePicture(signUpResponse.user.publicKey);
-      if (pictureResponse.profilePicture && pictureResponse.profilePictureType) {
-        const blob = new Blob([pictureResponse.profilePicture as BlobPart], { type: pictureResponse.profilePictureType });
-        profilePicture = URL.createObjectURL(blob);
-      }
-
-      const profileNip05 = profile?.nip05?.trim();
-      const normalizedProfileNip05 = profileNip05?.toLowerCase();
-      const nip05Verified = normalizedProfileNip05
-        ? await verifyNip05(normalizedProfileNip05, ndkUser.pubkey)
-        : false;
-
-      setUser({
-        pubkey: ndkUser.pubkey,
-        npub: ndkUser.npub,
-        profile: {
-          name: profile?.name || username,
-          displayName: profile?.displayName || username,
-          picture: profilePicture || profile?.picture,
-          about: profile?.about,
-          nip05: profileNip05 || undefined,
-          nip05Verified,
-        },
-      });
+      setUser({ pubkey, npub: new NDKUser({ pubkey }).npub });
 
       // Store Noas session information
       setAuthMethod("noas");
@@ -1654,7 +1582,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     } finally {
       setIsAuthenticating(false);
     }
-  }, [configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, fetchLatestKind0Profile, ndk, relays, retryNip42RelaysAfterSignIn]);
+  }, [configuredDefaultNoasHostUrl, connectResolvedAuthRelayUrls, ndk, relays, retryNip42RelaysAfterSignIn]);
 
   const getGuestPrivateKey = useCallback((): string | null => {
     if (authMethod !== "guest") return null;
@@ -1994,25 +1922,20 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       return false;
     }
 
-    let nip05Verified = false;
-    if (profile.nip05) {
-      nip05Verified = await verifyNip05(profile.nip05, user?.pubkey || "");
-    }
-
     setUser((prev) => prev ? ({
       ...prev,
       profile: {
+        ...prev.profile,
         name: profile.name.trim(),
         displayName: profile.displayName?.trim() || undefined,
         picture: profile.picture?.trim() || undefined,
         about: profile.about?.trim() || undefined,
         nip05: profile.nip05?.trim() || undefined,
-        nip05Verified,
       },
     }) : prev);
     setNeedsProfileSetup(false);
     return true;
-  }, [publishEvent, relays, user?.pubkey]);
+  }, [publishEvent, relays]);
 
   useEffect(() => {
     if (!user?.pubkey) {
@@ -2021,7 +1944,6 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       return;
     }
 
-    const baseProfile = userProfileSnapshot;
     const syncRun = profileSyncRunRef.current + 1;
     profileSyncRunRef.current = syncRun;
     let cancelled = false;
@@ -2038,41 +1960,30 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         ...(kind0Profile || {}),
       };
 
-      let nip05Verified = false;
-      if (mergedProfile.nip05) {
-        nip05Verified = await verifyNip05(mergedProfile.nip05, user.pubkey);
-      }
-      if (isStale()) return;
-
-      const nextProfile = {
-        ...mergedProfile,
-        nip05Verified,
-      };
-
       setUser((prev) => {
         if (!prev || prev.pubkey !== user.pubkey) return prev;
-        const previousProfile = prev.profile;
+        const p = prev.profile;
         const isUnchanged =
-          previousProfile?.name === nextProfile.name &&
-          previousProfile?.displayName === nextProfile.displayName &&
-          previousProfile?.picture === nextProfile.picture &&
-          previousProfile?.about === nextProfile.about &&
-          previousProfile?.nip05 === nextProfile.nip05 &&
-          previousProfile?.nip05Verified === nextProfile.nip05Verified;
+          p?.name === mergedProfile.name &&
+          p?.displayName === mergedProfile.displayName &&
+          p?.picture === mergedProfile.picture &&
+          p?.about === mergedProfile.about &&
+          p?.nip05 === mergedProfile.nip05;
         if (isUnchanged) return prev;
-        return {
-          ...prev,
-          profile: nextProfile,
-        };
+        return { ...prev, profile: mergedProfile };
       });
-      setNeedsProfileSetup(!currentUserHasResolvedProfile(user.pubkey, mergedProfile));
+
+      const hasProfile = !!(mergedProfile.name || mergedProfile.displayName || mergedProfile.picture || mergedProfile.about || mergedProfile.nip05);
+      setNeedsProfileSetup(!hasProfile);
       setIsProfileSyncing(false);
     };
 
     void syncProfile().catch((error) => {
       if (isStale()) return;
       console.warn("Profile sync failed", error);
-      setNeedsProfileSetup(!currentUserHasResolvedProfile(user.pubkey, baseProfile));
+      const p = userProfileSnapshot;
+      const hasProfile = !!(p?.name || p?.displayName || p?.picture || p?.about || p?.nip05);
+      setNeedsProfileSetup(!hasProfile);
       setIsProfileSyncing(false);
     });
     return () => {

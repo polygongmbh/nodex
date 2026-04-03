@@ -1,25 +1,23 @@
 import { useCallback, useEffect, useMemo } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
-import { NDKEvent } from "@nostr-dev-kit/ndk";
+import { NDKEvent, profileFromEvent } from "@nostr-dev-kit/ndk";
+import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
 import type { MutableRefObject } from "react";
 import { NostrEventKind } from "@/lib/nostr/types";
 import {
   hasRequiredProfileFields,
-  mergeKind0Profiles,
   buildKind0Content,
   type EditableNostrProfile,
 } from "@/infrastructure/nostr/profile-metadata";
-import { verifyNip05 } from "@/lib/nostr/nip05-verify";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import { currentUserHasResolvedProfile } from "@/lib/current-user-profile-cache";
 import type { NDKRelayStatus, NostrUser } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { PublishCallbacks } from "./use-publish";
 
 export interface ProfileSyncCallbacks {
-  fetchLatestKind0Profile: (pubkey: string) => Promise<NostrUser["profile"] | null>;
+  fetchLatestKind0Profile: (pubkey: string) => Promise<NDKUserProfile | null>;
   updateUserProfile: (profile: EditableNostrProfile) => Promise<boolean>;
-  userProfileSnapshot: NostrUser["profile"] | null;
+  userProfileSnapshot: NDKUserProfile | null;
 }
 
 export function useProfileSync(
@@ -35,7 +33,7 @@ export function useProfileSync(
   endRelayOperation: RelayVerificationCallbacks["endRelayOperation"],
 ): ProfileSyncCallbacks {
 
-  const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NostrUser["profile"] | null> => {
+  const fetchLatestKind0Profile = useCallback(async (pubkey: string): Promise<NDKUserProfile | null> => {
     if (!ndk) return null;
 
     return await new Promise((resolve) => {
@@ -52,14 +50,10 @@ export function useProfileSync(
           resolve(null);
           return;
         }
-        const parsed = mergeKind0Profiles(candidates);
-        resolve({
-          name: parsed.name,
-          displayName: parsed.displayName,
-          picture: parsed.picture,
-          about: parsed.about,
-          nip05: parsed.nip05,
-        });
+        const best = candidates.sort((a, b) => b.createdAt - a.createdAt)[0];
+        const event = new NDKEvent(ndk);
+        event.content = best.content;
+        resolve(profileFromEvent(event));
       };
 
       beginRelayOperation("read");
@@ -80,16 +74,9 @@ export function useProfileSync(
     });
   }, [ndk, beginRelayOperation, endRelayOperation]);
 
-  const userProfileSnapshot = useMemo<NostrUser["profile"] | null>(() => {
+  const userProfileSnapshot = useMemo<NDKUserProfile | null>(() => {
     if (!user?.profile) return null;
-    return {
-      name: user.profile.name,
-      displayName: user.profile.displayName,
-      picture: user.profile.picture,
-      about: user.profile.about,
-      nip05: user.profile.nip05,
-      nip05Verified: user.profile.nip05Verified,
-    };
+    return { ...user.profile };
   }, [user?.profile]);
 
   const updateUserProfile = useCallback(async (profile: EditableNostrProfile): Promise<boolean> => {
@@ -119,25 +106,20 @@ export function useProfileSync(
       return false;
     }
 
-    let nip05Verified = false;
-    if (profile.nip05) {
-      nip05Verified = await verifyNip05(profile.nip05, user?.pubkey || "");
-    }
-
     setUser((prev) => prev ? ({
       ...prev,
       profile: {
+        ...prev.profile,
         name: profile.name.trim(),
         displayName: profile.displayName?.trim() || undefined,
         picture: profile.picture?.trim() || undefined,
         about: profile.about?.trim() || undefined,
         nip05: profile.nip05?.trim() || undefined,
-        nip05Verified,
       },
     }) : prev);
     setNeedsProfileSetup(false);
     return true;
-  }, [publishEvent, relays, user?.pubkey, setUser, setNeedsProfileSetup]);
+  }, [publishEvent, relays, setUser, setNeedsProfileSetup]);
 
   useEffect(() => {
     if (!user?.pubkey) {
@@ -146,7 +128,6 @@ export function useProfileSync(
       return;
     }
 
-    const baseProfile = userProfileSnapshot;
     const syncRun = profileSyncRunRef.current + 1;
     profileSyncRunRef.current = syncRun;
     let cancelled = false;
@@ -155,20 +136,14 @@ export function useProfileSync(
     setIsProfileSyncing(true);
 
     const syncProfile = async () => {
-      let signerProfile: NostrUser["profile"] | null = null;
+      let signerProfile: NDKUserProfile | null = null;
       if (ndk?.signer) {
         try {
           const signerUser = await ndk.signer.user();
           if (!isStale() && signerUser.pubkey === user.pubkey) {
             await signerUser.fetchProfile();
             if (!isStale()) {
-              signerProfile = {
-                name: signerUser.profile?.name,
-                displayName: signerUser.profile?.displayName,
-                picture: signerUser.profile?.image,
-                about: signerUser.profile?.about,
-                nip05: signerUser.profile?.nip05,
-              };
+              signerProfile = signerUser.profile ?? null;
             }
           }
         } catch (error) {
@@ -179,47 +154,36 @@ export function useProfileSync(
       const kind0Profile = await fetchLatestKind0Profile(user.pubkey);
       if (isStale()) return;
 
-      const mergedProfile = {
+      const mergedProfile: NDKUserProfile = {
         ...(userProfileSnapshot || {}),
         ...(signerProfile || {}),
         ...(kind0Profile || {}),
       };
 
-      let nip05Verified = false;
-      if (mergedProfile.nip05) {
-        nip05Verified = await verifyNip05(mergedProfile.nip05, user.pubkey);
-      }
-      if (isStale()) return;
-
-      const nextProfile = {
-        ...mergedProfile,
-        nip05Verified,
-      };
-
       setUser((prev) => {
         if (!prev || prev.pubkey !== user.pubkey) return prev;
-        const previousProfile = prev.profile;
+        const p = prev.profile;
         const isUnchanged =
-          previousProfile?.name === nextProfile.name &&
-          previousProfile?.displayName === nextProfile.displayName &&
-          previousProfile?.picture === nextProfile.picture &&
-          previousProfile?.about === nextProfile.about &&
-          previousProfile?.nip05 === nextProfile.nip05 &&
-          previousProfile?.nip05Verified === nextProfile.nip05Verified;
+          p?.name === mergedProfile.name &&
+          p?.displayName === mergedProfile.displayName &&
+          p?.picture === mergedProfile.picture &&
+          p?.about === mergedProfile.about &&
+          p?.nip05 === mergedProfile.nip05;
         if (isUnchanged) return prev;
-        return {
-          ...prev,
-          profile: nextProfile,
-        };
+        return { ...prev, profile: mergedProfile };
       });
-      setNeedsProfileSetup(!currentUserHasResolvedProfile(user.pubkey, mergedProfile));
+
+      const hasProfile = !!(mergedProfile.name || mergedProfile.displayName || mergedProfile.picture || mergedProfile.about || mergedProfile.nip05);
+      setNeedsProfileSetup(!hasProfile);
       setIsProfileSyncing(false);
     };
 
     void syncProfile().catch((error) => {
       if (isStale()) return;
       console.warn("Profile sync failed", error);
-      setNeedsProfileSetup(!currentUserHasResolvedProfile(user.pubkey, baseProfile));
+      const p = userProfileSnapshot;
+      const hasProfile = !!(p?.name || p?.displayName || p?.picture || p?.about || p?.nip05);
+      setNeedsProfileSetup(!hasProfile);
       setIsProfileSyncing(false);
     });
     return () => {

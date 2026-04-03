@@ -218,59 +218,6 @@ describe("NostrAuthModal", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("uses cached kind:0 metadata for current user display when profile is missing", () => {
-    const pubkey = "f".repeat(64);
-    window.localStorage.setItem(
-      "nodex.kind0.cache.v1",
-      JSON.stringify([
-        {
-          kind: NostrEventKind.Metadata,
-          pubkey,
-          created_at: 123,
-          content: JSON.stringify({ name: "Cached Alice" }),
-        },
-      ])
-    );
-    ndkMock.user = {
-      npub: "npub1cached",
-      pubkey,
-      profile: {},
-    };
-    ndkMock.authMethod = "extension";
-
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.getByText("Cached Alice")).toBeInTheDocument();
-  });
-
-  it("does not auto-open setup profile dialog when cached kind:0 metadata already has a name", () => {
-    const pubkey = "e".repeat(64);
-    window.localStorage.setItem(
-      "nodex.kind0.cache.v1",
-      JSON.stringify([
-        {
-          kind: NostrEventKind.Metadata,
-          pubkey,
-          created_at: 456,
-          content: JSON.stringify({ name: "Cached Guest" }),
-        },
-      ])
-    );
-    ndkMock.user = {
-      npub: "npub1cachedguest",
-      pubkey,
-      profile: {},
-    };
-    ndkMock.authMethod = "guest";
-    ndkMock.needsProfileSetup = true;
-    ndkMock.isProfileSyncing = false;
-    ndkMock.hasWritableRelayConnection = true;
-
-    render(<NostrUserMenu onSignInClick={vi.fn()} />);
-
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByText("Cached Guest")).toBeInTheDocument();
-  });
 
   it("keeps auto-opened profile setup dialog focused on identity fields", () => {
     ndkMock.user = {
