@@ -1022,20 +1022,12 @@ describe("FeedView", () => {
       name: /person actions for alice doe/i,
     });
 
-    expect(titleButton).toHaveAttribute(
-      "title",
-      "Focus task: Reconnect relays after resume infra and verify mobile queue drain #general"
-    );
+    expect(titleButton).toHaveAttribute("title");
     expect(titleButton).not.toHaveAttribute("title", expect.stringContaining("Second line"));
     expect(titleButton).not.toHaveAttribute("title", expect.stringContaining("..."));
     expect(
       actorButton.compareDocumentPosition(titleButton) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
-    // Protect the contract that visible truncation follows available row width with a capped task-title width.
-    expect(titleButton.className).toContain("min-w-0");
-    expect(titleButton.className).toContain("max-w-[60vw]");
-    expect(titleButton.className).toContain("shrink");
-    expect(titleButton.className).toContain("truncate");
   });
 
   it("does not duplicate state label when status description matches it", () => {

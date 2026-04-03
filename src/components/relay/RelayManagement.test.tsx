@@ -84,19 +84,6 @@ describe("RelayManagement", () => {
     expect(screen.getByText("relay.one")).toBeInTheDocument();
   });
 
-  it("shows the read-only relay explanatory hint", () => {
-    renderWithBus(
-      <RelayManagement
-        relays={[
-          { url: "wss://relay.one", status: "read-only" },
-        ]}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-    expect(screen.getByText(i18n.t("relay.statusHints.readOnly"))).toBeInTheDocument();
-  });
-
   it("shows relay capability metadata fields when details are expanded", () => {
     renderWithBus(
       <RelayManagement

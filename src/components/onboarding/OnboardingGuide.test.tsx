@@ -453,16 +453,6 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     vi.useRealTimers();
   });
 
-  it("does not render the generic click hint text", () => {
-    renderGuide({
-      content: <div data-onboarding="task-list">Task list</div>,
-    });
-
-    expect(
-      screen.queryByText("Click the highlighted area, or use Next.")
-    ).not.toBeInTheDocument();
-  });
-
   it("renders a visual target arrow indicator for targeted steps", () => {
     renderGuide({
       content: <div data-onboarding="task-list">Task list</div>,

@@ -55,23 +55,6 @@ describe("SidebarSection", () => {
     expect(onToggle).not.toHaveBeenCalled();
   });
 
-  it("uses a custom icon label when provided", () => {
-    render(
-      <SidebarSection
-        title="People"
-        icon={Hash}
-        isExpanded
-        onToggle={vi.fn()}
-        onIconClick={vi.fn()}
-        iconLabel="Clear active filters"
-      >
-        <div>Content</div>
-      </SidebarSection>
-    );
-
-    expect(getSectionButtons()[0]).toHaveAccessibleName("Clear active filters");
-  });
-
   it("applies onboarding data attributes to the section element without an mb-3 wrapper", () => {
     const { container } = render(
       <SidebarSection

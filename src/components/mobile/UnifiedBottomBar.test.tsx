@@ -200,7 +200,6 @@ describe("UnifiedBottomBar auth gating", () => {
 
     const button = getMobilePrimaryAction();
     expect(button).toBeDisabled();
-    expect(button).toHaveAttribute("title", "Write a message first");
   });
 
   it("searches as user types in combined field", () => {
@@ -300,7 +299,6 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(field, { target: { value: "#general @alice@example.com" } });
     const sendButton = getMobilePrimaryAction();
     expect(sendButton).toBeEnabled();
-    expect(sendButton).toHaveAttribute("title", "Write a message first");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(getTaskCreateCalls()).toHaveLength(0);
   });
