@@ -17,6 +17,7 @@ import {
 import { buildDeterministicGuestName } from "@/lib/guest-name";
 import { hasNostrExtension, STORAGE_KEY_AUTH, STORAGE_KEY_NIP46_BUNKER, STORAGE_KEY_NIP46_LOCAL_NSEC, STORAGE_KEY_NSEC } from "./storage";
 import type { AuthMethod, NDKRelayStatus, NostrUser } from "./contracts";
+import { mapNdkUser } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { PublishCallbacks } from "./use-publish";
 
@@ -59,19 +60,7 @@ export function useAuthActions(
       ndk.signer = signer;
 
       const ndkUser = await signer.user();
-      setUser({
-        pubkey: ndkUser.pubkey,
-        npub: ndkUser.npub,
-        profile: ndkUser.profile
-          ? {
-              name: ndkUser.profile.name,
-              displayName: ndkUser.profile.displayName,
-              picture: ndkUser.profile.image,
-              about: ndkUser.profile.about,
-              nip05: ndkUser.profile.nip05,
-            }
-          : undefined,
-      });
+      setUser(mapNdkUser(ndkUser));
       setAuthMethod("extension");
       localStorage.setItem(STORAGE_KEY_AUTH, "extension");
       retryNip42RelaysAfterSignIn();

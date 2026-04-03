@@ -1,11 +1,18 @@
 import type NDK from "@nostr-dev-kit/ndk";
-import type { NDKEvent, NDKFilter, NDKSubscription } from "@nostr-dev-kit/ndk";
+import type { NDKEvent, NDKFilter, NDKSubscription, NDKUser } from "@nostr-dev-kit/ndk";
 import type { ReactNode } from "react";
 import type { NoasAuthResult } from "@/lib/nostr/noas-client";
 import type { EditableNostrProfile } from "@/infrastructure/nostr/profile-metadata";
 import { NostrEventKind } from "@/lib/nostr/types";
 
 export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | "noas" | null;
+
+export function mapNdkUser(ndkUser: NDKUser): NostrUser {
+  const { pubkey, npub } = ndkUser;
+  if (!ndkUser.profile) return { pubkey, npub };
+  const { name, displayName, picture, about, nip05 } = ndkUser.profile;
+  return { pubkey, npub, profile: { name, displayName, picture, about, nip05 } };
+}
 
 export interface NostrUser {
   pubkey: string;

@@ -34,6 +34,7 @@ import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
+import { mapNdkUser } from "./contracts";
 import {
   hasNostrExtension,
   loadPersistedNoasDefaultHostUrl,
@@ -1077,10 +1078,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           const signer = new NDKPrivateKeySigner(savedNsec);
           ndkInstance.signer = signer;
           const ndkUser = await signer.user();
-          setUser({
-            pubkey: ndkUser.pubkey,
-            npub: ndkUser.npub,
-          });
+          setUser(mapNdkUser(ndkUser));
           setAuthMethod("guest");
         } catch {
           localStorage.removeItem(STORAGE_KEY_AUTH);
@@ -1109,10 +1107,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         ndkInstance.signer = signer;
         try {
           const ndkUser = await signer.user();
-          setUser({
-            pubkey: ndkUser.pubkey,
-            npub: ndkUser.npub,
-          });
+          setUser(mapNdkUser(ndkUser));
           setAuthMethod("extension");
           nostrDevLog("auth", "Extension session restored", { pubkey: ndkUser.pubkey });
         } catch (error) {
@@ -1136,17 +1131,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         try {
           const ndkUser: NDKUser = await signer.blockUntilReady();
           await ndkUser.fetchProfile();
-          setUser({
-            pubkey: ndkUser.pubkey,
-            npub: ndkUser.npub,
-            profile: {
-              name: ndkUser.profile?.name,
-              displayName: ndkUser.profile?.displayName,
-              picture: ndkUser.profile?.image,
-              about: ndkUser.profile?.about,
-              nip05: ndkUser.profile?.nip05,
-            },
-          });
+          setUser(mapNdkUser(ndkUser));
           setAuthMethod("nostrConnect");
         } catch {
           localStorage.removeItem(STORAGE_KEY_AUTH);
@@ -1189,19 +1174,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       ndk.signer = signer;
       
       const ndkUser = await signer.user();
-      setUser({
-        pubkey: ndkUser.pubkey,
-        npub: ndkUser.npub,
-        profile: ndkUser.profile
-          ? {
-              name: ndkUser.profile.name,
-              displayName: ndkUser.profile.displayName,
-              picture: ndkUser.profile.image,
-              about: ndkUser.profile.about,
-              nip05: ndkUser.profile.nip05,
-            }
-          : undefined,
-      });
+      setUser(mapNdkUser(ndkUser));
       setAuthMethod("extension");
       localStorage.setItem(STORAGE_KEY_AUTH, "extension");
       retryNip42RelaysAfterSignIn();
@@ -1224,10 +1197,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       
       const ndkUser = await signer.user();
       
-      setUser({
-        pubkey: ndkUser.pubkey,
-        npub: ndkUser.npub,
-      });
+      setUser(mapNdkUser(ndkUser));
       setAuthMethod("privateKey");
       localStorage.setItem(STORAGE_KEY_AUTH, "privateKey");
       // Don't store private key for security
