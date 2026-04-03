@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { getPublicKey } from "nostr-tools";
 import { NoasAuthForm } from "./NoasAuthForm";
 import { NoasSignUpForm } from "./NoasSignUpForm";
-import { toUserFacingPubkey } from "@/lib/nostr/user-facing-pubkey";
 
 function ControlledNoasAuthForm({
   onLogin = vi.fn(async () => true),
@@ -339,17 +337,13 @@ describe("Noas auth forms", () => {
     );
 
     const privateKey = "1".repeat(64);
-    const privateKeyBytes = new Uint8Array(32);
-    for (let index = 0; index < 32; index += 1) {
-      privateKeyBytes[index] = parseInt(privateKey.slice(index * 2, index * 2 + 2), 16);
-    }
-    const expectedPubkey = getPublicKey(privateKeyBytes);
-    const expectedUserFacingPubkey = toUserFacingPubkey(expectedPubkey);
     const privateKeyInput = screen.getByRole("textbox", { name: /^private key$/i });
     fireEvent.change(privateKeyInput, { target: { value: privateKey } });
 
     await waitFor(() => {
-      expect(screen.getByText(expectedUserFacingPubkey)).toBeInTheDocument();
+      expect(
+        screen.getByText("npub1fu64hh9hes90w2808n8tjc2ajp5yhddjef0ctx4s7zmsgp6cwx4qgy4eg9")
+      ).toBeInTheDocument();
     });
   });
 

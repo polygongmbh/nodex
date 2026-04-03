@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { useMemo, useRef, useState } from "react";
-import { buildFilterSnapshot } from "@/domain/content/filter-snapshot";
 import { makePerson } from "@/test/fixtures";
+import { makeFilterSnapshot } from "@/test/filter-state";
 import type { Channel, ChannelMatchMode } from "@/types";
 import type { Person } from "@/types/person";
 import {
@@ -41,10 +41,11 @@ function Harness({
 
   const currentFilterSnapshot = useMemo(
     () =>
-      buildFilterSnapshot({
-        activeRelayIds: new Set(),
-        channelFilterStates,
-        people,
+      makeFilterSnapshot({
+        channelStates: Object.fromEntries(
+          Array.from(channelFilterStates.entries()).filter(([, state]) => state === "included" || state === "excluded")
+        ),
+        selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.id).sort(),
         channelMatchMode,
       }),
     [channelFilterStates, channelMatchMode, people]

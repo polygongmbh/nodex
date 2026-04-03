@@ -2,9 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { useMemo, useState } from "react";
 import { useSavedFilterConfigs } from "./use-saved-filter-configs";
-import { buildFilterSnapshot } from "@/domain/content/filter-snapshot";
-import { mapPeopleSelection } from "@/domain/content/filter-state-utils";
 import { makePerson, makeRelay } from "@/test/fixtures";
+import { makeFilterSnapshot, makeQuickFilters, selectPeople } from "@/test/filter-state";
 import type { Channel, ChannelMatchMode, Relay } from "@/types";
 import type { Person } from "@/types/person";
 
@@ -24,22 +23,22 @@ function Harness() {
     new Map([["general", "included"]])
   );
   const [channelMatchMode, setChannelMatchMode] = useState<ChannelMatchMode>("or");
-  const [people, setPeople] = useState<Person[]>(
-    mapPeopleSelection(peopleSeed, (person) => person.id === "alice")
-  );
-  const [quickFilters, setQuickFilters] = useState({
+  const [people, setPeople] = useState<Person[]>(selectPeople(peopleSeed, ["alice"]));
+  const [quickFilters, setQuickFilters] = useState(makeQuickFilters({
     recentEnabled: true,
     recentDays: 7,
     priorityEnabled: true,
     minPriority: 50,
-  });
+  }));
 
   const currentFilterSnapshot = useMemo(
     () =>
-      buildFilterSnapshot({
-        activeRelayIds,
-        channelFilterStates,
-        people,
+      makeFilterSnapshot({
+        relayIds: Array.from(activeRelayIds).sort(),
+        channelStates: Object.fromEntries(
+          Array.from(channelFilterStates.entries()).filter(([, state]) => state === "included" || state === "excluded")
+        ),
+        selectedPeopleIds: people.filter((person) => person.isSelected).map((person) => person.id).sort(),
         channelMatchMode,
         quickFilters,
       }),
@@ -58,13 +57,8 @@ function Harness() {
       setActiveRelayIds(new Set());
       setChannelFilterStates(new Map());
       setChannelMatchMode("and");
-      setPeople((prev) => mapPeopleSelection(prev, () => false));
-      setQuickFilters({
-        recentEnabled: false,
-        recentDays: 7,
-        priorityEnabled: false,
-        minPriority: 50,
-      });
+      setPeople((prev) => selectPeople(prev, []));
+      setQuickFilters(makeQuickFilters());
     },
   });
 
@@ -86,13 +80,13 @@ function Harness() {
           setActiveRelayIds(new Set(["relay-two"]));
           setChannelFilterStates(new Map([["general", "excluded"]]));
           setChannelMatchMode("and");
-          setPeople((prev) => mapPeopleSelection(prev, (person) => person.id === "bob"));
-          setQuickFilters({
+          setPeople((prev) => selectPeople(prev, ["bob"]));
+          setQuickFilters(makeQuickFilters({
             recentEnabled: true,
             recentDays: 21,
             priorityEnabled: true,
             minPriority: 80,
-          });
+          }));
         }}
       >
         Mutate

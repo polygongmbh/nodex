@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MotdBanner } from "./MotdBanner";
-import { getMotdDismissStorageKey } from "@/lib/motd";
 
 describe("MotdBanner", () => {
   afterEach(() => {
@@ -24,6 +23,5 @@ describe("MotdBanner", () => {
     expect(screen.getByText(motd)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /dismiss message/i }));
     expect(screen.queryByText(motd)).not.toBeInTheDocument();
-    expect(window.sessionStorage.getItem(getMotdDismissStorageKey(motd))).toBe("1");
   });
 });

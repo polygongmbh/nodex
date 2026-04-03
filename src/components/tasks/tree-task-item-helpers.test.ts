@@ -4,7 +4,6 @@ import {
   getNextTreeTaskFoldState,
 } from "./tree-task-item-helpers";
 import { makeTask } from "@/test/fixtures";
-import { buildChildrenMap } from "@/domain/content/task-sorting";
 
 describe("deriveTreeTaskItemChildren", () => {
   it("separates task children from comment children and counts completed subtasks", () => {
@@ -14,7 +13,7 @@ describe("deriveTreeTaskItemChildren", () => {
     const commentChild = makeTask({ id: "comment-child", parentId: "parent", taskType: "comment" });
 
     const summary = deriveTreeTaskItemChildren({
-      allChildren: buildChildrenMap([parent, openChild, doneChild, commentChild]).get("parent") || [],
+      allChildren: [openChild, doneChild, commentChild],
       filteredChildren: [openChild, doneChild, commentChild],
       hasActiveFilters: true,
     });

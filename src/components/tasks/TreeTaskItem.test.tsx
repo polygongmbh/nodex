@@ -4,7 +4,6 @@ import type { ComponentProps, ReactNode } from "react";
 import { TreeTaskItem } from "./TreeTaskItem";
 import type { Task } from "@/types";
 import { makePerson, makeTask } from "@/test/fixtures";
-import { buildChildrenMap } from "@/domain/content/task-sorting";
 
 const dispatchFeedInteraction = vi.fn();
 
@@ -52,12 +51,10 @@ beforeEach(() => {
 });
 
 function renderTreeTaskItem(props: Partial<ComponentProps<typeof TreeTaskItem>> = {}) {
-  const allTasks = props.task ? [props.task] : [baseTask];
-  const childrenMap = buildChildrenMap(allTasks);
   const defaultProps: ComponentProps<typeof TreeTaskItem> = {
     task: props.task ?? baseTask,
     filteredChildren: props.filteredChildren ?? [],
-    childrenMap: props.childrenMap ?? childrenMap,
+    childrenMap: new Map(),
     currentUser: props.currentUser ?? baseTask.author,
     getFilteredChildrenFn: props.getFilteredChildrenFn ?? (() => []),
     ...props,
