@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import type { Channel, Task } from "@/types";
 import {
   getPinnedChannelIdsForRelays,
@@ -10,6 +10,7 @@ import {
   loadPinnedChannelsState,
   savePinnedChannelsState,
 } from "@/infrastructure/preferences/pinned-channels-storage";
+import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 export interface UsePinnedSidebarChannelsOptions {
   userPubkey: string | undefined;
@@ -36,26 +37,21 @@ export function usePinnedSidebarChannels({
   channelFilterStates,
   allTasks,
 }: UsePinnedSidebarChannelsOptions): UsePinnedSidebarChannelsResult {
-  const [pinnedChannelsState, setPinnedChannelsState] = useState<PinnedChannelsState>(
-    () => loadPinnedChannelsState(userPubkey)
-  );
-
-  useEffect(() => {
-    setPinnedChannelsState(loadPinnedChannelsState(userPubkey));
-  }, [userPubkey]);
-
-  useEffect(() => {
-    savePinnedChannelsState(pinnedChannelsState, userPubkey);
-  }, [pinnedChannelsState, userPubkey]);
-
-  const activeRelayIdList = useMemo(
-    () => Array.from(effectiveActiveRelayIds),
-    [effectiveActiveRelayIds]
-  );
-  const pinnedChannelIds = useMemo(
-    () => getPinnedChannelIdsForRelays(pinnedChannelsState, activeRelayIdList),
-    [activeRelayIdList, pinnedChannelsState]
-  );
+  const {
+    state: pinnedChannelsState,
+    activeRelayIdList,
+    pinnedIds: pinnedChannelIds,
+    pinAcrossRelays,
+    unpinAcrossRelays,
+  } = usePinnedSidebarEntityState<PinnedChannelsState>({
+    userPubkey,
+    effectiveActiveRelayIds,
+    loadState: loadPinnedChannelsState,
+    saveState: savePinnedChannelsState,
+    getPinnedIdsForRelays: getPinnedChannelIdsForRelays,
+    pinForRelays: pinChannelForRelays,
+    unpinFromRelays: unpinChannelFromRelays,
+  });
 
   const channelRelayIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -101,16 +97,16 @@ export function usePinnedSidebarChannels({
         ? activeRelayIdList.filter((r) => relaysWithTag.has(r))
         : activeRelayIdList;
       const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
-      setPinnedChannelsState((prev) => pinChannelForRelays(prev, relayIds, id));
+      pinAcrossRelays(relayIds, id);
     },
-    [activeRelayIdList, channelRelayIds]
+    [activeRelayIdList, channelRelayIds, pinAcrossRelays]
   );
 
   const handleChannelUnpin = useCallback(
     (id: string) => {
-      setPinnedChannelsState((prev) => unpinChannelFromRelays(prev, activeRelayIdList, id));
+      unpinAcrossRelays(id);
     },
-    [activeRelayIdList]
+    [unpinAcrossRelays]
   );
 
   return {

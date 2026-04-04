@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import type { Task } from "@/types";
 import type { Person } from "@/types/person";
 import {
@@ -11,6 +11,7 @@ import {
   loadPinnedPeopleState,
   savePinnedPeopleState,
 } from "@/infrastructure/preferences/pinned-people-storage";
+import { usePinnedSidebarEntityState } from "./use-pinned-sidebar-entity-state";
 
 function normalizePersonId(id: string): string {
   return id.trim().toLowerCase();
@@ -39,26 +40,21 @@ export function usePinnedSidebarPeople({
   people,
   allTasks,
 }: UsePinnedSidebarPeopleOptions): UsePinnedSidebarPeopleResult {
-  const [pinnedPeopleState, setPinnedPeopleState] = useState<PinnedPeopleState>(
-    () => loadPinnedPeopleState(userPubkey)
-  );
-
-  useEffect(() => {
-    setPinnedPeopleState(loadPinnedPeopleState(userPubkey));
-  }, [userPubkey]);
-
-  useEffect(() => {
-    savePinnedPeopleState(pinnedPeopleState, userPubkey);
-  }, [pinnedPeopleState, userPubkey]);
-
-  const activeRelayIdList = useMemo(
-    () => Array.from(effectiveActiveRelayIds),
-    [effectiveActiveRelayIds]
-  );
-  const pinnedPersonIds = useMemo(
-    () => getPinnedPersonIdsForRelays(pinnedPeopleState, activeRelayIdList),
-    [activeRelayIdList, pinnedPeopleState]
-  );
+  const {
+    state: pinnedPeopleState,
+    activeRelayIdList,
+    pinnedIds: pinnedPersonIds,
+    pinAcrossRelays,
+    unpinAcrossRelays,
+  } = usePinnedSidebarEntityState<PinnedPeopleState>({
+    userPubkey,
+    effectiveActiveRelayIds,
+    loadState: loadPinnedPeopleState,
+    saveState: savePinnedPeopleState,
+    getPinnedIdsForRelays: getPinnedPersonIdsForRelays,
+    pinForRelays: pinPersonForRelays,
+    unpinFromRelays: unpinPersonFromRelays,
+  });
 
   const personRelayIds = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -107,16 +103,16 @@ export function usePinnedSidebarPeople({
         ? activeRelayIdList.filter((relayId) => relaysWithPerson.has(relayId))
         : activeRelayIdList;
       const relayIds = targetRelayIds.length > 0 ? targetRelayIds : activeRelayIdList;
-      setPinnedPeopleState((prev) => pinPersonForRelays(prev, relayIds, id));
+      pinAcrossRelays(relayIds, id);
     },
-    [activeRelayIdList, personRelayIds]
+    [activeRelayIdList, personRelayIds, pinAcrossRelays]
   );
 
   const handlePersonUnpin = useCallback(
     (id: string) => {
-      setPinnedPeopleState((prev) => unpinPersonFromRelays(prev, activeRelayIdList, id));
+      unpinAcrossRelays(id);
     },
-    [activeRelayIdList]
+    [unpinAcrossRelays]
   );
 
   return {
