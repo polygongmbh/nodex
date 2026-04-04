@@ -59,7 +59,7 @@ export function KanbanView({
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
     tasks,
     allTasks,
-    focusedTaskId,
+    focusedTaskId: focusedTaskId ?? null,
     searchQueryOverride,
     depthMode,
   });

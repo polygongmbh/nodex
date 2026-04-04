@@ -60,11 +60,17 @@ export function TaskTree({
   const taskSource = useTaskViewSource({
     tasks,
     allTasks,
-    focusedTaskId,
+    focusedTaskId: focusedTaskId ?? null,
     searchQueryOverride,
   });
   const treeSelectors = useMemo(() => createTreeSelectors(taskSource), [taskSource]);
-  const { activeRelays, childrenMap, currentContextId, searchQuery, sortContext } = taskSource;
+  const {
+    activeRelays,
+    childrenMap,
+    focusedTaskId: normalizedFocusedTaskId,
+    searchQuery,
+    sortContext,
+  } = taskSource;
   const currentContextTask = treeSelectors.getCurrentContextTask();
   const visibleTasks = treeSelectors.getVisibleTasks();
   const displayedTasks = treeSelectors.getDisplayedTasks({ useMobileFallback: isMobile });
@@ -206,7 +212,7 @@ export function TaskTree({
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onCancel={() => setIsComposerExpanded(false)}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
-        parentId={currentContextId || undefined}
+        parentId={normalizedFocusedTaskId || undefined}
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         onExpandedChange={setIsComposerExpanded}
@@ -216,7 +222,7 @@ export function TaskTree({
         className="relative z-20 border-b border-border px-3 py-3 bg-background/95 backdrop-blur-sm flex-shrink-0"
         defaultContent={composerDefaultContent}
         collapseOnSuccess
-        allowComment={Boolean(currentContextId)}
+        allowComment={Boolean(normalizedFocusedTaskId)}
       />
 
       {/* Task List */}

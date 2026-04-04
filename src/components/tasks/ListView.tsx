@@ -138,7 +138,7 @@ export function ListView({
   } = useListViewState({
     tasks,
     allTasks,
-    focusedTaskId,
+    focusedTaskId: focusedTaskId ?? null,
     searchQueryOverride,
     depthMode,
   });

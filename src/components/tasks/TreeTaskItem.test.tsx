@@ -139,7 +139,7 @@ describe("TreeTaskItem status actions", () => {
     expect(screen.queryByText("Done child")).not.toBeInTheDocument();
   });
 
-  it("shows all open subtasks when the parent directly matches an active filter", () => {
+  it("keeps matching descendant branches visible when the parent directly matches an active filter", () => {
     const doneChild = makeTask({ id: "b", parentId: "t1", content: "Task B", status: "done" });
     const openChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
     const openGrandchild = makeTask({ id: "d", parentId: "c", content: "Task D", status: "todo" });
@@ -156,12 +156,12 @@ describe("TreeTaskItem status actions", () => {
       getMatchingChildrenFn: (parentId) => childrenMap.get(parentId) || [],
     });
 
-    expect(screen.queryByText("Task B")).not.toBeInTheDocument();
+    expect(screen.getByText("Task B")).toBeInTheDocument();
     expect(screen.getByText("Task C")).toBeInTheDocument();
-    expect(screen.queryByText("Task D")).not.toBeInTheDocument();
+    expect(screen.getByText("Task D")).toBeInTheDocument();
   });
 
-  it("shows only matching branches when the parent does not directly match an active filter", () => {
+  it("shows matching branches far enough to reveal deep descendants when the parent does not directly match", () => {
     const doneChild = makeTask({ id: "b", parentId: "t1", content: "Task B", status: "done" });
     const matchingChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
     const openGrandchild = makeTask({ id: "d", parentId: "c", content: "Task D", status: "todo" });
@@ -184,7 +184,32 @@ describe("TreeTaskItem status actions", () => {
 
     expect(screen.queryByText("Task B")).not.toBeInTheDocument();
     expect(screen.getByText("Task C")).toBeInTheDocument();
-    expect(screen.queryByText("Task D")).not.toBeInTheDocument();
+    expect(screen.getByText("Task D")).toBeInTheDocument();
+  });
+
+  it("auto-unfolds nested matching branches far enough to reveal deep matches", () => {
+    const matchingChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
+    const matchingGrandchild = makeTask({ id: "d", parentId: "c", content: "Task D", status: "todo" });
+    const childrenMap = new Map<string | undefined, Task[]>([
+      ["t1", [matchingChild]],
+      ["c", [matchingGrandchild]],
+    ]);
+
+    renderTreeTaskItem({
+      childrenMap,
+      matchingChildren: [matchingChild],
+      hasMatchingFilters: true,
+      matchedByFilter: false,
+      isDirectMatchFn: (taskId) => taskId === "d",
+      getMatchingChildrenFn: (parentId) => {
+        if (parentId === "t1") return [matchingChild];
+        if (parentId === "c") return [matchingGrandchild];
+        return [];
+      },
+    });
+
+    expect(screen.getByTestId("tree-fold-toggle-c")).toHaveAttribute("data-fold-state", "matchingOnly");
+    expect(screen.getByText("Task D")).toBeInTheDocument();
   });
 
   it("dims only the non-matching ancestor row while keeping matching descendants undimmed", () => {

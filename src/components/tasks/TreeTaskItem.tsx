@@ -43,6 +43,7 @@ import { PersonActionMenu } from "@/components/people/PersonActionMenu";
 import { PersonHoverCard } from "@/components/people/PersonHoverCard";
 import {
   deriveTreeTaskItemChildren,
+  getDefaultTreeTaskFoldState,
   getNextTreeTaskFoldState,
   type TreeTaskFoldState,
 } from "./tree-task-item-helpers";
@@ -98,10 +99,11 @@ export function TreeTaskItem({
     if (status === "closed") return t("hints.statusToggle.closed");
     return t("hints.statusToggle.todo", { alternateKey });
   };
+  const hasMatchingChildren = matchingChildren.length > 0;
 
   // Three-state fold: matchingOnly -> collapsed -> allVisible (skip allVisible if same as matching)
   const [localFoldState, setLocalFoldState] = useState<TreeTaskFoldState>(
-    depth > 0 ? "collapsed" : "matchingOnly"
+    getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren)
   );
   const [hasLocalFoldOverride, setHasLocalFoldOverride] = useState(false);
   const foldState: TreeTaskFoldState =
@@ -137,11 +139,11 @@ export function TreeTaskItem({
   // Reset fold state when filters change
   useEffect(() => {
     if (prevHasMatchingFiltersRef.current !== hasMatchingFilters) {
-      setLocalFoldState(depth > 0 ? "collapsed" : "matchingOnly");
+      setLocalFoldState(getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren));
       setHasLocalFoldOverride(false);
       prevHasMatchingFiltersRef.current = hasMatchingFilters;
     }
-  }, [depth, hasMatchingFilters]);
+  }, [depth, hasMatchingChildren, hasMatchingFilters]);
 
   // Auto-expand when marked in-progress, auto-collapse when marked done
   useEffect(() => {
@@ -150,7 +152,7 @@ export function TreeTaskItem({
     
     if (prevStatus !== currentStatus) {
       if (currentStatus === "in-progress") {
-        setLocalFoldState(depth > 0 ? "collapsed" : "matchingOnly");
+        setLocalFoldState(getDefaultTreeTaskFoldState(depth, hasMatchingFilters, hasMatchingChildren));
         setHasLocalFoldOverride(false);
       } else if (isTaskTerminalStatus(currentStatus)) {
         setLocalFoldState("collapsed");
@@ -169,7 +171,7 @@ export function TreeTaskItem({
       }
       prevStatusRef.current = currentStatus;
     }
-  }, [depth, task.status]);
+  }, [depth, hasMatchingChildren, hasMatchingFilters, task.status]);
 
   useEffect(() => {
     return () => {

@@ -1,10 +1,15 @@
 import { taskMatchesSelectedPeople } from "@/domain/content/person-filter";
 import { normalizeQuickFilterState, taskMatchesQuickFilters } from "@/domain/content/quick-filter-constraints";
+import {
+  buildTaskSearchableText,
+  normalizeTaskSearchValue,
+  searchableTextMatchesQuery,
+} from "@/domain/content/task-search-document";
 import type { ChannelMatchMode, QuickFilterState, Task } from "@/types";
 import type { Person } from "@/types/person";
 
 function normalize(value: string): string {
-  return value.trim().toLowerCase();
+  return normalizeTaskSearchValue(value);
 }
 
 export interface TaskViewFilterIndex {
@@ -37,32 +42,7 @@ export function buildTaskViewFilterIndex(
 
     const tags = (task.tags ?? []).map(normalize).filter(Boolean);
     normalizedTagsByTaskId.set(task.id, new Set(tags));
-
-    const mentions = task.mentions ?? [];
-    const assignees = task.assigneePubkeys ?? [];
-    const authorId = task.author?.id?.trim().toLowerCase();
-    const resolvedAuthor =
-      (authorId ? peopleById.get(authorId) : undefined) ?? task.author;
-
-    searchableTextByTaskId.set(
-      task.id,
-      [
-        task.content,
-        ...tags,
-        ...tags.map((tag) => `#${tag}`),
-        ...mentions,
-        ...mentions.map((mention) => `@${mention}`),
-        ...assignees,
-        ...assignees.map((assignee) => `@${assignee}`),
-        resolvedAuthor?.name ?? "",
-        resolvedAuthor?.displayName ?? "",
-        resolvedAuthor?.nip05 ?? "",
-        resolvedAuthor?.id ?? "",
-      ]
-        .filter(Boolean)
-        .map(normalize)
-        .join("\n")
-    );
+    searchableTextByTaskId.set(task.id, buildTaskSearchableText(task, peopleById));
   }
 
   const descendantIdsByTaskId = new Map<string, Set<string>>();
@@ -105,10 +85,8 @@ function taskMatchesSearchIndex(
   searchQuery: string,
   filterIndex: TaskViewFilterIndex
 ): boolean {
-  const normalizedQuery = normalize(searchQuery);
-  if (!normalizedQuery) return true;
   const haystack = filterIndex.searchableTextByTaskId.get(taskId) ?? "";
-  return haystack.includes(normalizedQuery);
+  return searchableTextMatchesQuery(haystack, searchQuery);
 }
 
 function taskMatchesChannelIndex(
@@ -145,7 +123,7 @@ interface FilterTasksForViewParams {
   taskPredicate?: (task: Task) => boolean;
 }
 
-export function filterTasksForView({
+export function getDirectMatchTaskIdsForView({
   allTasks,
   filterIndex,
   prefilteredTaskIds,
@@ -159,43 +137,55 @@ export function filterTasksForView({
   excludedChannels,
   channelMatchMode,
   taskPredicate,
-}: FilterTasksForViewParams): Task[] {
+}: FilterTasksForViewParams): Set<string> {
   const effectiveFilterIndex = filterIndex ?? buildTaskViewFilterIndex(allTasks, people);
   const descendantIds = focusedTaskId
     ? effectiveFilterIndex.descendantIdsByTaskId.get(focusedTaskId) ?? new Set<string>()
     : null;
   const selectedPeople = people.filter((person) => person.isSelected);
+  const matchingIds = new Set<string>();
 
-  return allTasks.filter((task) => {
+  for (const task of allTasks) {
     const isExplicitlyFocusedTask =
       includeFocusedTask &&
       Boolean(focusedTaskId) &&
       task.id === focusedTaskId;
 
-    if (taskPredicate && !taskPredicate(task)) return false;
-    if (!prefilteredTaskIds.has(task.id)) return false;
-    if (hideClosedTasks && task.status === "closed" && !isExplicitlyFocusedTask) return false;
-    if (!taskMatchesSelectedPeople(task, selectedPeople)) return false;
-    if (!taskMatchesQuickFilters(task, quickFilters)) return false;
+    if (taskPredicate && !taskPredicate(task)) continue;
+    if (!prefilteredTaskIds.has(task.id)) continue;
+    if (hideClosedTasks && task.status === "closed" && !isExplicitlyFocusedTask) continue;
+    if (!taskMatchesSelectedPeople(task, selectedPeople)) continue;
+    if (!taskMatchesQuickFilters(task, quickFilters)) continue;
 
     if (focusedTaskId) {
       if (task.id === focusedTaskId) {
-        if (!includeFocusedTask) return false;
+        if (!includeFocusedTask) continue;
       } else if (!descendantIds?.has(task.id)) {
-        return false;
+        continue;
       }
     }
 
     if (!taskMatchesSearchIndex(task.id, searchQuery, effectiveFilterIndex)) {
-      return false;
+      continue;
     }
 
-    return taskMatchesChannelIndex(
+    if (!taskMatchesChannelIndex(
       task.id,
       includedChannels,
       excludedChannels,
       channelMatchMode,
       effectiveFilterIndex
-    );
-  });
+    )) {
+      continue;
+    }
+
+    matchingIds.add(task.id);
+  }
+
+  return matchingIds;
+}
+
+export function filterTasksForView(params: FilterTasksForViewParams): Task[] {
+  const matchingIds = getDirectMatchTaskIdsForView(params);
+  return params.allTasks.filter((task) => matchingIds.has(task.id));
 }

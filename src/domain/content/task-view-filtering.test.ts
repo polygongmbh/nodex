@@ -3,6 +3,7 @@ import { makePerson, makeTask } from "@/test/fixtures";
 import {
   buildTaskViewFilterIndex,
   filterTasksForView,
+  getDirectMatchTaskIdsForView,
   getDescendantTaskIds,
 } from "./task-view-filtering";
 
@@ -89,6 +90,38 @@ describe("task view filtering", () => {
     });
 
     expect(result.map((task) => task.id)).toEqual(["descendant-hit"]);
+  });
+
+  it("matches hashtag queries and plain tag queries through the shared search index", () => {
+    const task = makeTask({
+      id: "tagged-task",
+      content: "Discuss launch timing",
+      tags: ["beta"],
+    });
+    const filterIndex = buildTaskViewFilterIndex([task]);
+    const baseParams = {
+      allTasks: [task],
+      filterIndex,
+      prefilteredTaskIds: new Set([task.id]),
+      people: [],
+      includedChannels: [],
+      excludedChannels: [],
+      channelMatchMode: "and" as const,
+    };
+
+    expect(
+      getDirectMatchTaskIdsForView({
+        ...baseParams,
+        searchQuery: "#beta",
+      })
+    ).toEqual(new Set(["tagged-task"]));
+
+    expect(
+      getDirectMatchTaskIdsForView({
+        ...baseParams,
+        searchQuery: "beta",
+      })
+    ).toEqual(new Set(["tagged-task"]));
   });
 
   it("supports include focused task and OR channel mode while honoring excludes", () => {

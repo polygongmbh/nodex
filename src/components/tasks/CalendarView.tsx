@@ -119,7 +119,7 @@ export function CalendarView({
   const taskSource = useTaskViewSource({
     tasks,
     allTasks,
-    focusedTaskId,
+    focusedTaskId: focusedTaskId ?? null,
     searchQueryOverride,
   });
   const calendarSelectors = useMemo(() => createCalendarSelectors(taskSource), [taskSource]);

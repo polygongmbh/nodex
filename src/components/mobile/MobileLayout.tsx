@@ -210,7 +210,7 @@ export function MobileLayout({
   } = useMobileFallbackNoticeState({
     tasks,
     allTasks,
-    focusedTaskId,
+    focusedTaskId: focusedTaskId ?? null,
     currentView: activePrimaryView,
     showFilters,
     isHydrating,

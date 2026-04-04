@@ -51,4 +51,20 @@ describe("taskMatchesTextQuery", () => {
     expect(taskMatchesTextQuery(task, "alice", people)).toBe(true);
     expect(taskMatchesTextQuery(task, "alice example", people)).toBe(true);
   });
+
+  it("matches via resolved mention display names and usernames", () => {
+    const person = makePerson({
+      id: "f".repeat(64),
+      name: "alice",
+      displayName: "Alice Example",
+      nip05: "alice@example.com",
+    });
+    const task = makeTask({
+      content: "Content without visible person label",
+      mentions: ["alice@example.com"],
+    });
+
+    expect(taskMatchesTextQuery(task, "alice", [person])).toBe(true);
+    expect(taskMatchesTextQuery(task, "alice example", [person])).toBe(true);
+  });
 });

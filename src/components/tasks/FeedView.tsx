@@ -208,7 +208,7 @@ export function FeedView({
   } = useFeedViewState({
     tasks,
     allTasks,
-    focusedTaskId,
+    focusedTaskId: focusedTaskId ?? null,
     searchQueryOverride,
     isMobile,
   });

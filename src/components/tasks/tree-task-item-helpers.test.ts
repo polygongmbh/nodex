@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   deriveTreeTaskItemChildren,
+  getDefaultTreeTaskFoldState,
   getNextTreeTaskFoldState,
 } from "./tree-task-item-helpers";
 import { makeTask } from "@/test/fixtures";
@@ -74,19 +75,37 @@ describe("deriveTreeTaskItemChildren", () => {
     expect(summary.allVisibleDiffersFromMatching).toBe(true);
   });
 
-  it("falls back to normal open-child matching when the current task directly matches the filter", () => {
+  it("keeps matching descendant branches visible when the current task directly matches the filter", () => {
     const openChild = makeTask({ id: "open-child", parentId: "parent", status: "todo" });
     const doneChild = makeTask({ id: "done-child", parentId: "parent", status: "done" });
+    const matchingDoneChild = makeTask({ id: "matching-done-child", parentId: "parent", status: "done" });
 
     const summary = deriveTreeTaskItemChildren({
-      allChildren: [openChild, doneChild],
-      matchingChildren: [openChild, doneChild],
+      allChildren: [openChild, doneChild, matchingDoneChild],
+      matchingChildren: [matchingDoneChild],
       hasMatchingFilters: true,
       currentTaskIsDirectMatch: true,
     });
 
-    expect(summary.matchingTaskChildren.map((child) => child.id)).toEqual(["open-child"]);
+    expect(summary.matchingTaskChildren.map((child) => child.id)).toEqual([
+      "open-child",
+      "matching-done-child",
+    ]);
     expect(summary.allVisibleDiffersFromMatching).toBe(true);
+  });
+});
+
+describe("getDefaultTreeTaskFoldState", () => {
+  it("keeps the root open in matching-only mode", () => {
+    expect(getDefaultTreeTaskFoldState(0, false, false)).toBe("matchingOnly");
+  });
+
+  it("auto-expands nested branches when active filters have matching descendants", () => {
+    expect(getDefaultTreeTaskFoldState(1, true, true)).toBe("matchingOnly");
+  });
+
+  it("keeps unrelated nested branches collapsed", () => {
+    expect(getDefaultTreeTaskFoldState(1, true, false)).toBe("collapsed");
   });
 });
 

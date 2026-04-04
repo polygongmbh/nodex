@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getAncestorChainFromSource } from "./use-task-view-states";
+import {
+  buildTreeVisibilityState,
+  getAncestorChainFromSource,
+} from "./use-task-view-states";
+import { buildChildrenMap } from "@/domain/content/task-sorting";
 import { makeTask } from "@/test/fixtures";
 
 describe("getAncestorChainFromSource", () => {
@@ -55,5 +59,28 @@ describe("getAncestorChainFromSource", () => {
       { id: "root", text: "Root task general" },
       { id: "middle", text: "Middle task general" },
     ]);
+  });
+});
+
+describe("buildTreeVisibilityState", () => {
+  it("keeps ancestor paths visible for deep matches", () => {
+    const root = makeTask({ id: "root", content: "Root task" });
+    const middle = makeTask({ id: "middle", parentId: "root", content: "Middle task" });
+    const leaf = makeTask({ id: "leaf", parentId: "middle", content: "Leaf task #beta", tags: ["beta"] });
+    const tasks = [root, middle, leaf];
+    const taskById = new Map(tasks.map((task) => [task.id, task] as const));
+    const childrenMap = buildChildrenMap(tasks);
+    const visibility = buildTreeVisibilityState({
+      currentContextId: null,
+      taskById,
+      childrenMap,
+      prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+      sortContext: { childrenMap, allTasks: tasks, taskById },
+      directlyMatchingIds: new Set(["leaf"]),
+    });
+
+    expect(visibility.visibleTasks.map((task) => task.id)).toEqual(["root"]);
+    expect(Array.from(visibility.matchingVisibleIds)).toEqual(["leaf", "middle", "root"]);
+    expect(Array.from(visibility.directlyMatchingIds)).toEqual(["leaf"]);
   });
 });

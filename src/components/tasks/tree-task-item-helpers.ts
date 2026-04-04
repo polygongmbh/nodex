@@ -25,6 +25,15 @@ export interface TreeTaskItemChildrenState {
   allVisibleDiffersFromMatching: boolean;
 }
 
+function mergeChildrenPreservingOrder(allChildren: Task[], primaryChildren: Task[], extraChildren: Task[]): Task[] {
+  const includedIds = new Set<string>([
+    ...primaryChildren.map((child) => child.id),
+    ...extraChildren.map((child) => child.id),
+  ]);
+
+  return allChildren.filter((child) => includedIds.has(child.id));
+}
+
 export function deriveTreeTaskItemChildren({
   allChildren,
   matchingChildren,
@@ -45,10 +54,14 @@ export function deriveTreeTaskItemChildren({
   const shouldUseFilteredMatchingChildren = hasMatchingFilters && !currentTaskIsDirectMatch;
   const effectiveMatchingTaskChildren = shouldUseFilteredMatchingChildren
     ? matchingTaskChildren
-    : defaultMatchingTaskChildren;
+    : hasMatchingFilters
+      ? mergeChildrenPreservingOrder(allTaskChildren, defaultMatchingTaskChildren, matchingTaskChildren)
+      : defaultMatchingTaskChildren;
   const effectiveMatchingCommentChildren = shouldUseFilteredMatchingChildren
     ? matchingCommentChildren
-    : defaultMatchingCommentChildren;
+    : hasMatchingFilters
+      ? mergeChildrenPreservingOrder(allCommentChildren, defaultMatchingCommentChildren, matchingCommentChildren)
+      : defaultMatchingCommentChildren;
 
   return {
     allChildren,
@@ -66,6 +79,16 @@ export function deriveTreeTaskItemChildren({
       taskChildCount !== effectiveMatchingTaskChildren.length ||
       commentChildCount !== effectiveMatchingCommentChildren.length,
   };
+}
+
+export function getDefaultTreeTaskFoldState(
+  depth: number,
+  hasMatchingFilters: boolean,
+  hasMatchingChildren: boolean
+): TreeTaskFoldState {
+  if (depth === 0) return "matchingOnly";
+  if (hasMatchingFilters && hasMatchingChildren) return "matchingOnly";
+  return "collapsed";
 }
 
 export function getNextTreeTaskFoldState(
