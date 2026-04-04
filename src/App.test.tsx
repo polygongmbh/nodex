@@ -17,10 +17,6 @@ const ndkContextModule = vi.hoisted(() => ({
   NDKProvider: vi.fn(({ children }: { children: ReactNode }) => <>{children}</>),
 }));
 
-vi.mock("@/components/ui/toaster", () => ({
-  Toaster: (): null => null,
-}));
-
 vi.mock("@/components/ui/sonner", () => ({
   Toaster: (): null => null,
 }));
