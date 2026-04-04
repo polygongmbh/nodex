@@ -37,6 +37,12 @@ describe("Sonner toaster", () => {
       expect(sonnerModule.renderToaster).toHaveBeenLastCalledWith(
         expect.objectContaining({
           position: "top-center",
+          offset: expect.objectContaining({
+            top: "calc(var(--mobile-toast-top-offset, 0px) + 12px)",
+            left: 12,
+            right: 12,
+            bottom: 12,
+          }),
           mobileOffset: expect.objectContaining({
             top: "calc(var(--mobile-toast-top-offset, 0px) + 12px)",
             left: 12,

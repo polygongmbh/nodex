@@ -5,6 +5,12 @@ import { MOBILE_TOAST_TOP_OFFSET_CSS_VAR } from "@/components/mobile/use-mobile-
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 const MOBILE_TOAST_TOP_OFFSET = `calc(var(${MOBILE_TOAST_TOP_OFFSET_CSS_VAR}, 0px) + 12px)`;
+const MOBILE_TOAST_OFFSET = {
+  top: MOBILE_TOAST_TOP_OFFSET,
+  right: 12,
+  bottom: 12,
+  left: 12,
+} as const;
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { mode } = useThemeMode();
@@ -42,7 +48,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       closeButton
       swipeDirections={[]}
       visibleToasts={2}
-      offset={12}
+      offset={isMobile ? MOBILE_TOAST_OFFSET : 12}
       mobileOffset={{ top: MOBILE_TOAST_TOP_OFFSET, left: 12, right: 12 }}
       toastOptions={{
         duration: isMobile ? 1800 : 2800,
