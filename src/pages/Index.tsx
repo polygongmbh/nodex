@@ -42,6 +42,7 @@ import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-rela
 import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
 import { useRelayScopedPresence } from "@/features/feed-page/controllers/use-relay-scoped-presence";
 import { useRelaySelectionController } from "@/features/feed-page/controllers/use-relay-selection-controller";
+import { useIndexFeedInteractionBus } from "@/features/feed-page/controllers/use-index-feed-interaction-bus";
 import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
@@ -64,22 +65,12 @@ import {
 } from "@/features/feed-page/views/FeedPageMobileShell";
 import { useFeedPageShellConfig } from "@/features/feed-page/views/use-feed-page-shell-config";
 import {
-  FeedPageUiConfigProvider,
   type FeedPageUiConfig,
 } from "@/features/feed-page/views/feed-page-ui-config";
 import {
-  FeedTaskViewModelProvider,
   type FeedTaskViewModel,
 } from "@/features/feed-page/views/feed-task-view-model-context";
-import { FeedSurfaceProvider } from "@/features/feed-page/views/feed-surface-context";
-import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
-import { createFeedInteractionMiddlewareSkeleton } from "@/features/feed-page/interactions/feed-interaction-middleware-skeleton";
-import {
-  createFeedInteractionBus,
-  type FeedInteractionPipelineApi,
-  type FeedInteractionHandlerMap,
-} from "@/features/feed-page/interactions/feed-interaction-pipeline";
-import { FeedSidebarControllerProvider } from "@/features/feed-page/controllers/feed-sidebar-controller-context";
+import { FeedPageProviders } from "@/features/feed-page/views/FeedPageProviders";
 import { MotdBanner } from "@/components/MotdBanner";
 import { featureDebugLog } from "@/lib/feature-debug";
 
@@ -722,200 +713,45 @@ const Index = () => {
     }),
     [completionSoundEnabled, handleToggleCompletionSound]
   );
-  const feedInteractionHandlers: FeedInteractionHandlerMap = useMemo(
-    () => ({
-      "ui.openAuthModal": (intent) => {
-        if (
-          intent.initialStep === "choose" ||
-          intent.initialStep === "noas" ||
-          intent.initialStep === "noasSignUp"
-        ) {
-          handleOpenAuthModal(intent.initialStep);
-          return;
-        }
-        handleOpenAuthModal();
-      },
-      "ui.openShortcutsHelp": () => {
-        shortcutsHelp.open();
-      },
-      "ui.openGuide": () => {
-        handleOpenGuide();
-      },
-      "ui.focusSidebar": () => {
-        handleFocusSidebar();
-      },
-      "ui.focusTasks": () => {
-        handleFocusTasks();
-      },
-      "ui.interaction.guardModify": () => {
-        guardInteraction("modify");
-      },
-      "ui.view.change": (intent) => {
-        setCurrentView(intent.view);
-      },
-      "ui.search.change": (intent) => {
-        setSearchQuery(intent.query);
-      },
-      "ui.kanbanDepth.change": (intent) => {
-        setKanbanDepthMode(intent.mode);
-      },
-      "ui.manageRoute.change": (intent) => {
-        setManageRouteActive(intent.isActive);
-      },
-      ...filterHandlers,
-      "sidebar.relay.select": (intent, api: FeedInteractionPipelineApi) => {
-        const reconnectRelayUrl = handleRelaySelectIntent(intent.relayId, intent.mode);
-        if (reconnectRelayUrl) {
-          return api.dispatch({
-            type: "sidebar.relay.reconnect",
-            url: reconnectRelayUrl,
-          });
-        }
-      },
-      "sidebar.relay.toggle": (intent) => {
-        handleRelayToggle(intent.relayId);
-      },
-      "sidebar.relay.exclusive": (intent) => {
-        handleRelayExclusive(intent.relayId);
-      },
-      "sidebar.relay.toggleAll": () => {
-        handleToggleAllRelays();
-      },
-      "sidebar.relay.add": (intent) => {
-        handleAddRelay(intent.url);
-      },
-      "sidebar.relay.reorder": (intent) => {
-        reorderRelays(intent.orderedUrls);
-      },
-      "sidebar.relay.remove": (intent) => {
-        handleRemoveRelay(intent.url);
-      },
-      "sidebar.relay.reconnect": (intent) => {
-        reconnectRelay(intent.url);
-      },
-      "sidebar.channel.pin": (intent) => {
-        handleChannelPin(intent.channelId);
-      },
-      "sidebar.channel.unpin": (intent) => {
-        handleChannelUnpin(intent.channelId);
-      },
-      "sidebar.person.pin": (intent) => {
-        handlePersonPin(intent.personId);
-      },
-      "sidebar.person.unpin": (intent) => {
-        handlePersonUnpin(intent.personId);
-      },
-      "sidebar.savedFilter.apply": (intent) => {
-        savedFilterController.onApplyConfiguration(intent.configurationId);
-      },
-      "sidebar.savedFilter.saveCurrent": (intent) => {
-        savedFilterController.onSaveCurrentConfiguration(intent.name);
-      },
-      "sidebar.savedFilter.rename": (intent) => {
-        savedFilterController.onRenameConfiguration(intent.configurationId, intent.name);
-      },
-      "sidebar.savedFilter.delete": (intent) => {
-        savedFilterController.onDeleteConfiguration(intent.configurationId);
-      },
-      "task.focus.change": (intent) => {
-        setFocusedTaskId(intent.taskId);
-      },
-      "task.create": (intent) => {
-        return handleNewTask(
-          intent.content,
-          intent.tags,
-          intent.relays,
-          intent.taskType,
-          intent.dueDate,
-          intent.dueTime,
-          intent.dateType,
-          intent.parentId,
-          intent.initialStatus,
-          intent.explicitMentionPubkeys,
-          intent.mentionIdentifiers,
-          intent.priority,
-          intent.attachments,
-          intent.nip99,
-          intent.locationGeohash
-        );
-      },
-      "task.toggleComplete": (intent) => {
-        handleToggleComplete(intent.taskId);
-      },
-      "task.changeStatus": (intent) => {
-        handleStatusChange(intent.taskId, intent.status);
-      },
-      "task.updateDueDate": (intent) => {
-        handleDueDateChange(intent.taskId, intent.dueDate, intent.dueTime, intent.dateType);
-      },
-      "task.updatePriority": (intent) => {
-        handlePriorityChange(intent.taskId, intent.priority);
-      },
-      "task.listingStatus.change": (intent) => {
-        handleListingStatusChange(intent.taskId, intent.status);
-      },
-      "task.undoPendingPublish": (intent) => {
-        handleUndoPendingPublish(intent.taskId);
-      },
-      "publish.failed.retry": (intent) => {
-        handleRetryFailedPublish(intent.draftId);
-      },
-      "publish.failed.repost": (intent) => {
-        handleRepostFailedPublish(intent.draftId);
-      },
-      "publish.failed.dismiss": (intent) => {
-        handleDismissFailedPublish(intent.draftId);
-      },
-      "publish.failed.dismissAll": () => {
-        handleDismissAllFailedPublish();
-      },
-    }),
-    [
-      handleOpenAuthModal,
-      shortcutsHelp,
-      handleOpenGuide,
-      handleFocusSidebar,
-      handleFocusTasks,
-      guardInteraction,
-      setCurrentView,
-      setSearchQuery,
-      setKanbanDepthMode,
-      setManageRouteActive,
-      filterHandlers,
-      handleRelayToggle,
-      handleRelayExclusive,
-      handleToggleAllRelays,
-      handleAddRelay,
-      reorderRelays,
-      handleRemoveRelay,
-      handleChannelPin,
-      handleChannelUnpin,
-      handlePersonPin,
-      handlePersonUnpin,
-      savedFilterController,
-      setFocusedTaskId,
-      handleNewTask,
-      handleToggleComplete,
-      handleStatusChange,
-      handleDueDateChange,
-      handlePriorityChange,
-      handleListingStatusChange,
-      handleUndoPendingPublish,
-      handleRetryFailedPublish,
-      handleRepostFailedPublish,
-      handleDismissFailedPublish,
-      handleDismissAllFailedPublish,
-    ]
-  );
-  const feedInteractionBus = useMemo(
-    () =>
-      createFeedInteractionBus({
-        middlewares: createFeedInteractionMiddlewareSkeleton(),
-        handlers: feedInteractionHandlers,
-        effects: frecencyInteractionEffects,
-      }),
-    [feedInteractionHandlers, frecencyInteractionEffects]
-  );
+  const feedInteractionBus = useIndexFeedInteractionBus({
+    handleOpenAuthModal,
+    openShortcutsHelp: shortcutsHelp.open,
+    handleOpenGuide,
+    handleFocusSidebar,
+    handleFocusTasks,
+    guardInteraction,
+    setCurrentView,
+    setSearchQuery,
+    setKanbanDepthMode,
+    setManageRouteActive,
+    filterHandlers,
+    handleRelaySelectIntent,
+    handleRelayToggle,
+    handleRelayExclusive,
+    handleToggleAllRelays,
+    handleAddRelay,
+    reorderRelays,
+    handleRemoveRelay,
+    reconnectRelay,
+    handleChannelPin,
+    handleChannelUnpin,
+    handlePersonPin,
+    handlePersonUnpin,
+    savedFilterController,
+    setFocusedTaskId,
+    handleNewTask,
+    handleToggleComplete,
+    handleStatusChange,
+    handleDueDateChange,
+    handlePriorityChange,
+    handleListingStatusChange,
+    handleUndoPendingPublish,
+    handleRetryFailedPublish,
+    handleRepostFailedPublish,
+    handleDismissFailedPublish,
+    handleDismissAllFailedPublish,
+    interactionEffects: frecencyInteractionEffects,
+  });
   const feedTaskViewModel: FeedTaskViewModel = useMemo(
     () => ({
       tasks: relayScopedTasks,
@@ -1028,51 +864,48 @@ const Index = () => {
   // Mobile layout
   if (isMobile) {
     return (
-      <FeedInteractionProvider bus={feedInteractionBus}>
-        <FeedPageUiConfigProvider value={uiConfig}>
-          <FeedSurfaceProvider value={feedSurfaceState}>
-            <FeedTaskViewModelProvider value={feedTaskViewModel}>
-              <MotdBanner />
-              <FeedPageMobileShell
-                controller={mobileController}
-                authModalProps={{
-                  isOpen: isAuthModalOpen,
-                  onClose: handleCloseAuthModal,
-                  initialStep: authModalInitialStep,
-                }}
-                onboardingOverlays={onboardingOverlays}
-              />
-            </FeedTaskViewModelProvider>
-          </FeedSurfaceProvider>
-        </FeedPageUiConfigProvider>
-      </FeedInteractionProvider>
+      <FeedPageProviders
+        interactionBus={feedInteractionBus}
+        uiConfig={uiConfig}
+        surfaceState={feedSurfaceState}
+        taskViewModel={feedTaskViewModel}
+      >
+        <MotdBanner />
+        <FeedPageMobileShell
+          controller={mobileController}
+          authModalProps={{
+            isOpen: isAuthModalOpen,
+            onClose: handleCloseAuthModal,
+            initialStep: authModalInitialStep,
+          }}
+          onboardingOverlays={onboardingOverlays}
+        />
+      </FeedPageProviders>
     );
   }
 
   // Desktop layout
   return (
-    <FeedInteractionProvider bus={feedInteractionBus}>
-      <FeedPageUiConfigProvider value={uiConfig}>
-        <FeedSurfaceProvider value={feedSurfaceState}>
-          <FeedTaskViewModelProvider value={feedTaskViewModel}>
-            <FeedSidebarControllerProvider value={desktopSidebarController}>
-              <MotdBanner />
-              <FeedPageDesktopShell
-                header={desktopHeader}
-                content={desktopContent}
-                shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
-                authModalProps={{
-                  isOpen: isAuthModalOpen,
-                  onClose: handleCloseAuthModal,
-                  initialStep: authModalInitialStep,
-                }}
-                onboardingOverlays={onboardingOverlays}
-              />
-            </FeedSidebarControllerProvider>
-          </FeedTaskViewModelProvider>
-        </FeedSurfaceProvider>
-      </FeedPageUiConfigProvider>
-    </FeedInteractionProvider>
+    <FeedPageProviders
+      interactionBus={feedInteractionBus}
+      uiConfig={uiConfig}
+      surfaceState={feedSurfaceState}
+      taskViewModel={feedTaskViewModel}
+      sidebarController={desktopSidebarController}
+    >
+      <MotdBanner />
+      <FeedPageDesktopShell
+        header={desktopHeader}
+        content={desktopContent}
+        shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
+        authModalProps={{
+          isOpen: isAuthModalOpen,
+          onClose: handleCloseAuthModal,
+          initialStep: authModalInitialStep,
+        }}
+        onboardingOverlays={onboardingOverlays}
+      />
+    </FeedPageProviders>
   );
 };
 
