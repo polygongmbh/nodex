@@ -179,35 +179,6 @@ describe("MobileFilters management view", () => {
     });
   });
 
-  it("uses cached kind:0 metadata for current user label when profile is missing", () => {
-    const pubkey = "c".repeat(64);
-    window.localStorage.setItem(
-      "nodex.kind0.cache.v1",
-      JSON.stringify([
-        {
-          kind: NostrEventKind.Metadata,
-          pubkey,
-          created_at: 123,
-          content: JSON.stringify({ name: "Cached Carol" }),
-        },
-      ])
-    );
-    ndkMock.user = {
-      pubkey,
-      npub: "npub1carol",
-      profile: { displayName: "" },
-    };
-
-    render(
-      <MobileFilters
-        relays={relays}
-        channels={channels}
-        people={people}
-      />
-    );
-
-    expect(screen.getByText("Cached Carol")).toBeInTheDocument();
-  });
 
   it("allows switching channel include match mode", () => {
     render(

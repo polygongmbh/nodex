@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import { NostrAuthModal, NostrUserMenu } from "./NostrAuthModal";
-import type { AuthMethod, NostrUser } from "@/infrastructure/nostr/ndk-context";
+import type { AuthMethod, NDKUser } from "@/infrastructure/nostr/ndk-context";
 import { NostrEventKind } from "@/lib/nostr/types";
 
 const loginWithExtension = vi.fn(() => new Promise<boolean>(() => {}));
@@ -17,7 +17,7 @@ const ndkMock = {
   isAuthenticating: false,
   isConnected: true,
   hasWritableRelayConnection: true,
-  user: null as NostrUser | null,
+  user: null as NDKUser | null,
   authMethod: null as AuthMethod,
   logout: vi.fn(),
   getGuestPrivateKey: vi.fn(() => null),

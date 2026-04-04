@@ -1,5 +1,5 @@
 import type NDK from "@nostr-dev-kit/ndk";
-import type { NDKEvent, NDKFilter, NDKSubscription, NDKUserProfile } from "@nostr-dev-kit/ndk";
+import type { NDKEvent, NDKFilter, NDKSubscription, NDKUser } from "@nostr-dev-kit/ndk";
 import type { ReactNode } from "react";
 import type { NoasAuthResult } from "@/lib/nostr/noas-client";
 import type { EditableNostrProfile } from "@/infrastructure/nostr/profile-metadata";
@@ -7,11 +7,7 @@ import { NostrEventKind } from "@/lib/nostr/types";
 
 export type AuthMethod = "extension" | "privateKey" | "guest" | "nostrConnect" | "noas" | null;
 
-export interface NostrUser {
-  pubkey: string;
-  npub: string;
-  profile?: NDKUserProfile;
-}
+export type { NDKUser };
 
 export interface NDKRelayStatus {
   url: string;
@@ -30,7 +26,7 @@ export interface NDKContextValue {
   hasWritableRelayConnection: boolean;
   relays: NDKRelayStatus[];
   defaultNoasHostUrl: string;
-  user: NostrUser | null;
+  user: NDKUser | null;
   authMethod: AuthMethod;
   isAuthenticating: boolean;
   loginWithExtension: () => Promise<boolean>;

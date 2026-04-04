@@ -16,7 +16,7 @@ import {
 } from "@/lib/presence-status";
 import { buildDeterministicGuestName } from "@/lib/guest-name";
 import { hasNostrExtension, STORAGE_KEY_AUTH, STORAGE_KEY_NIP46_BUNKER, STORAGE_KEY_NIP46_LOCAL_NSEC, STORAGE_KEY_NSEC } from "./storage";
-import type { AuthMethod, NDKRelayStatus, NostrUser } from "./contracts";
+import type { AuthMethod, NDKRelayStatus, NDKUser } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { PublishCallbacks } from "./use-publish";
 
@@ -37,7 +37,7 @@ export function useAuthActions(
   retryNip42RelaysAfterSignIn: RelayVerificationCallbacks["retryNip42RelaysAfterSignIn"],
   publishEvent: PublishCallbacks["publishEvent"],
   profileSyncRunRef: MutableRefObject<number>,
-  setUser: React.Dispatch<React.SetStateAction<NostrUser | null>>,
+  setUser: React.Dispatch<React.SetStateAction<NDKUser | null>>,
   setAuthMethod: React.Dispatch<React.SetStateAction<AuthMethod>>,
   setIsAuthenticating: React.Dispatch<React.SetStateAction<boolean>>,
   setIsProfileSyncing: React.Dispatch<React.SetStateAction<boolean>>,
@@ -59,7 +59,7 @@ export function useAuthActions(
       ndk.signer = signer;
 
       const ndkUser = await signer.user();
-      setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
+      setUser(ndkUser);
       setAuthMethod("extension");
       localStorage.setItem(STORAGE_KEY_AUTH, "extension");
       retryNip42RelaysAfterSignIn();
@@ -82,11 +82,7 @@ export function useAuthActions(
       ndk.signer = signer;
 
       const ndkUser = await signer.user();
-
-      setUser({
-        pubkey: ndkUser.pubkey,
-        npub: ndkUser.npub,
-      });
+      setUser(ndkUser);
       setAuthMethod("privateKey");
       localStorage.setItem(STORAGE_KEY_AUTH, "privateKey");
       // Don't store private key for security
@@ -123,14 +119,8 @@ export function useAuthActions(
 
       ndk.signer = signer;
       const ndkUser = await signer.user();
-
-      setUser({
-        pubkey: ndkUser.pubkey,
-        npub: ndkUser.npub,
-        profile: {
-          name: buildDeterministicGuestName(ndkUser.pubkey),
-        },
-      });
+      ndkUser.profile = { name: buildDeterministicGuestName(ndkUser.pubkey) };
+      setUser(ndkUser);
       setAuthMethod("guest");
       localStorage.setItem(STORAGE_KEY_AUTH, "guest");
       retryNip42RelaysAfterSignIn();
@@ -159,8 +149,7 @@ export function useAuthActions(
 
       const ndkUser: NDKUser = await signer.blockUntilReady();
       await ndkUser.fetchProfile();
-
-      setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
+      setUser(ndkUser);
       setAuthMethod("nostrConnect");
       localStorage.setItem(STORAGE_KEY_AUTH, "nostrConnect");
       localStorage.setItem(STORAGE_KEY_NIP46_BUNKER, bunkerUrl.trim());

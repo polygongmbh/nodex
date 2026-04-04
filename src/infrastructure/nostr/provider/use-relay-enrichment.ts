@@ -10,13 +10,13 @@ import {
   selectComplementaryRelayUrls,
 } from "@/infrastructure/nostr/relay-enrichment";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import type { NDKRelayStatus, NostrUser } from "./contracts";
+import type { NDKRelayStatus, NDKUser } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { MutableRefObject } from "react";
 
 export function useRelayEnrichment(
   ndk: NDK | null,
-  user: NostrUser | null,
+  user: NDKUser | null,
   relays: NDKRelayStatus[],
   removedRelaysRef: MutableRefObject<Set<string>>,
   addRelay: (url: string) => void,

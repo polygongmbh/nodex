@@ -1,7 +1,7 @@
 export { NDKProvider, useNDK } from "@/infrastructure/nostr/provider/ndk-provider";
 export type {
   AuthMethod,
-  NostrUser,
+  NDKUser,
   NDKRelayStatus,
   NDKContextValue,
 } from "@/infrastructure/nostr/provider/contracts";

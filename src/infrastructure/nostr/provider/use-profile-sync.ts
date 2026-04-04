@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import type NDK from "@nostr-dev-kit/ndk";
-import { NDKEvent, profileFromEvent } from "@nostr-dev-kit/ndk";
+import { NDKEvent, NDKUser, profileFromEvent } from "@nostr-dev-kit/ndk";
 import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
 import type { MutableRefObject } from "react";
 import { NostrEventKind } from "@/lib/nostr/types";
@@ -10,7 +10,7 @@ import {
   type EditableNostrProfile,
 } from "@/infrastructure/nostr/profile-metadata";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
-import type { NDKRelayStatus, NostrUser } from "./contracts";
+import type { NDKRelayStatus } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { PublishCallbacks } from "./use-publish";
 
@@ -22,11 +22,11 @@ export interface ProfileSyncCallbacks {
 
 export function useProfileSync(
   ndk: NDK | null,
-  user: NostrUser | null,
+  user: NDKUser | null,
   relays: NDKRelayStatus[],
   publishEvent: PublishCallbacks["publishEvent"],
   profileSyncRunRef: MutableRefObject<number>,
-  setUser: React.Dispatch<React.SetStateAction<NostrUser | null>>,
+  setUser: React.Dispatch<React.SetStateAction<NDKUser | null>>,
   setNeedsProfileSetup: React.Dispatch<React.SetStateAction<boolean>>,
   setIsProfileSyncing: React.Dispatch<React.SetStateAction<boolean>>,
   beginRelayOperation: RelayVerificationCallbacks["beginRelayOperation"],
@@ -106,17 +106,19 @@ export function useProfileSync(
       return false;
     }
 
-    setUser((prev) => prev ? ({
-      ...prev,
-      profile: {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = new NDKUser({ pubkey: prev.pubkey });
+      updated.profile = {
         ...prev.profile,
         name: profile.name.trim(),
         displayName: profile.displayName?.trim() || undefined,
         picture: profile.picture?.trim() || undefined,
         about: profile.about?.trim() || undefined,
         nip05: profile.nip05?.trim() || undefined,
-      },
-    }) : prev);
+      };
+      return updated;
+    });
     setNeedsProfileSetup(false);
     return true;
   }, [publishEvent, relays, setUser, setNeedsProfileSetup]);
@@ -170,7 +172,9 @@ export function useProfileSync(
           p?.about === mergedProfile.about &&
           p?.nip05 === mergedProfile.nip05;
         if (isUnchanged) return prev;
-        return { ...prev, profile: mergedProfile };
+        const updated = new NDKUser({ pubkey: prev.pubkey });
+        updated.profile = mergedProfile;
+        return updated;
       });
 
       const hasProfile = !!(mergedProfile.name || mergedProfile.displayName || mergedProfile.picture || mergedProfile.about || mergedProfile.nip05);

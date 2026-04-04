@@ -33,7 +33,8 @@ import { isRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { extractHashtagsFromContent } from "@/lib/hashtags";
 import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-references";
-import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus, NostrUser } from "./contracts";
+import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
+import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus } from "./contracts";
 import {
   hasNostrExtension,
   loadPersistedNoasDefaultHostUrl,
@@ -82,6 +83,7 @@ import {
   relayInfoSummaryToNip11Document,
 } from "@/infrastructure/cache/ndk-cache-adapter";
 import { buildNoasSignupOptions, resolveNoasAuthRelayUrls } from "@/infrastructure/nostr/noas-auth-helpers";
+import { loadCachedKind0Events } from "@/infrastructure/nostr/people-from-kind0";
 import {
   dedupeNormalizedRelayUrls,
   filterRelayUrlsToWritableSet,
@@ -89,7 +91,7 @@ import {
   resolveWritableNdkRelayUrls,
 } from "@/lib/nostr/relay-write-targets";
 import { resolveManualRelayReconnectAction } from "@/domain/relays/relay-reconnect-policy";
-export type { AuthMethod, NostrUser, NDKRelayStatus, NDKContextValue } from "./contracts";
+export type { AuthMethod, NDKUser, NDKRelayStatus, NDKContextValue } from "./contracts";
 
 const NDKContext = createContext<NDKContextValue | null>(null);
 const RELAY_VERIFICATION_TOAST_DEDUPE_MS = 15000;
@@ -134,6 +136,15 @@ function mapRelayTransportStatus(relay: NDKRelay): NDKRelayStatus["status"] {
   return mappedStatus;
 }
 
+function profileFromCachedKind0(pubkey: string): NDKUserProfile | undefined {
+  const events = loadCachedKind0Events().filter(e => e.pubkey === pubkey);
+  if (events.length === 0) return undefined;
+  const best = events.sort((a, b) => (b.created_at || 0) - (a.created_at || 0))[0];
+  const event = new NDKEvent();
+  event.content = best.content;
+  return profileFromEvent(event);
+}
+
 export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDKProviderProps) {
   const configuredDefaultRelays = useMemo(
     () => defaultRelays || getConfiguredDefaultRelays(),
@@ -154,7 +165,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     return persisted ?? configuredDefaultRelays;
   }, [configuredDefaultRelays]);
   const [ndk, setNdk] = useState<NDK | null>(null);
-  const [user, setUser] = useState<NostrUser | null>(null);
+  const [user, setUser] = useState<NDKUser | null>(null);
   const [authMethod, setAuthMethod] = useState<AuthMethod>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [relays, setRelays] = useState<NDKRelayStatus[]>([]);
@@ -180,8 +191,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const relayWriteRejectedRef = useRef<Map<string, boolean>>(new Map());
   const relayTimeoutIdsRef = useRef<Set<number>>(new Set());
   const relaysPendingAuthSubscriptionReplayRef = useRef<Set<string>>(new Set());
-  const kind0ProfileCacheRef = useRef<Map<string, { profile: NostrUser["profile"] | null; fetchedAt: number }>>(new Map());
-  const kind0ProfileInFlightRef = useRef<Map<string, Promise<NostrUser["profile"] | null>>>(new Map());
+  const kind0ProfileCacheRef = useRef<Map<string, { profile: NDKUserProfile | null; fetchedAt: number }>>(new Map());
+  const kind0ProfileInFlightRef = useRef<Map<string, Promise<NDKUserProfile | null>>>(new Map());
   const kind0ProfileFailureUntilRef = useRef<Map<string, number>>(new Map());
   const relayCurrentInstanceRef = useRef<Map<string, NDKRelay>>(new Map());
   const relayOkRejectObserverRef = useRef<Map<string, { ws: WebSocket; handler: (event: MessageEvent) => void }>>(new Map());
@@ -713,7 +724,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const fetchLatestKind0Profile = useCallback(async (
     pubkey: string,
     options?: { force?: boolean }
-  ): Promise<NostrUser["profile"] | null> => {
+  ): Promise<NDKUserProfile | null> => {
     if (!ndk) return null;
 
     const normalizedPubkey = pubkey.trim().toLowerCase();
@@ -736,7 +747,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       }
     }
 
-    const request = new Promise<NostrUser["profile"] | null>((resolve) => {
+    const request = new Promise<NDKUserProfile | null>((resolve) => {
       const candidates: { createdAt: number; content: string }[] = [];
       let settled = false;
       const fallbackTimeout = { id: undefined as number | undefined };
@@ -794,7 +805,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     return await request;
   }, [beginRelayOperation, clearTrackedRelayTimeout, endRelayOperation, ndk, scheduleRelayTimeout]);
 
-  const userProfileSnapshot = useMemo<NostrUser["profile"] | null>(() => {
+  const userProfileSnapshot = useMemo<NDKUserProfile | null>(() => {
     if (!user?.profile) return null;
     return { ...user.profile };
   }, [user?.profile]);
@@ -1068,7 +1079,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           const signer = new NDKPrivateKeySigner(savedNsec);
           ndkInstance.signer = signer;
           const ndkUser = await signer.user();
-          setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
+          if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
+          setUser(ndkUser);
           setAuthMethod("guest");
         } catch {
           localStorage.removeItem(STORAGE_KEY_AUTH);
@@ -1097,7 +1109,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         ndkInstance.signer = signer;
         try {
           const ndkUser = await signer.user();
-          setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
+          if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
+          setUser(ndkUser);
           setAuthMethod("extension");
           nostrDevLog("auth", "Extension session restored", { pubkey: ndkUser.pubkey });
         } catch (error) {
@@ -1121,7 +1134,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         try {
           const ndkUser: NDKUser = await signer.blockUntilReady();
           await ndkUser.fetchProfile();
-          setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
+          if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
+          setUser(ndkUser);
           setAuthMethod("nostrConnect");
         } catch {
           localStorage.removeItem(STORAGE_KEY_AUTH);
@@ -1164,7 +1178,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       ndk.signer = signer;
       
       const ndkUser = await signer.user();
-      setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
+      if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
+      setUser(ndkUser);
       setAuthMethod("extension");
       localStorage.setItem(STORAGE_KEY_AUTH, "extension");
       retryNip42RelaysAfterSignIn();
@@ -1186,8 +1201,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       ndk.signer = signer;
       
       const ndkUser = await signer.user();
-      
-      setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub, profile: ndkUser.profile ?? undefined });
+      if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
+      setUser(ndkUser);
       setAuthMethod("privateKey");
       localStorage.setItem(STORAGE_KEY_AUTH, "privateKey");
       // Don't store private key for security
@@ -1223,14 +1238,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       
       ndk.signer = signer;
       const ndkUser = await signer.user();
-      
-      setUser({
-        pubkey: ndkUser.pubkey,
-        npub: ndkUser.npub,
-        profile: {
-          name: buildDeterministicGuestName(ndkUser.pubkey),
-        },
-      });
+      ndkUser.profile = { name: buildDeterministicGuestName(ndkUser.pubkey) };
+      setUser(ndkUser);
       setAuthMethod("guest");
       localStorage.setItem(STORAGE_KEY_AUTH, "guest");
       retryNip42RelaysAfterSignIn();
@@ -1258,12 +1267,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
       const ndkUser = await signer.blockUntilReady();
       const profile = await fetchLatestKind0Profile(ndkUser.pubkey, { force: true });
-
-      setUser({
-        pubkey: ndkUser.pubkey,
-        npub: ndkUser.npub,
-        profile: profile || undefined,
-      });
+      if (profile) ndkUser.profile = profile;
+      else if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
+      setUser(ndkUser);
       setAuthMethod("nostrConnect");
       localStorage.setItem(STORAGE_KEY_AUTH, "nostrConnect");
       localStorage.setItem(STORAGE_KEY_NIP46_BUNKER, bunkerUrl.trim());
@@ -1439,7 +1445,8 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         });
         return { success: false, errorCode: "key_mismatch" };
       }
-      setUser({ pubkey: ndkUser.pubkey, npub: ndkUser.npub });
+      ndkUser.profile = { name: username, displayName: username, picture: `${noasApiUrl}/picture/${ndkUser.pubkey}` };
+      setUser(ndkUser);
 
       // Store Noas session information
       setAuthMethod("noas");
@@ -1560,7 +1567,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         return { success: false, errorCode: "server_error" };
       }
 
-      setUser({ pubkey, npub: new NDKUser({ pubkey }).npub });
+      const noasUser = new NDKUser({ pubkey });
+      noasUser.profile = { name: username, displayName: username, picture: `${noasApiUrl}/picture/${pubkey}` };
+      setUser(noasUser);
 
       // Store Noas session information
       setAuthMethod("noas");
@@ -1922,17 +1931,19 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       return false;
     }
 
-    setUser((prev) => prev ? ({
-      ...prev,
-      profile: {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = new NDKUser({ pubkey: prev.pubkey });
+      updated.profile = {
         ...prev.profile,
         name: profile.name.trim(),
         displayName: profile.displayName?.trim() || undefined,
         picture: profile.picture?.trim() || undefined,
         about: profile.about?.trim() || undefined,
         nip05: profile.nip05?.trim() || undefined,
-      },
-    }) : prev);
+      };
+      return updated;
+    });
     setNeedsProfileSetup(false);
     return true;
   }, [publishEvent, relays]);
@@ -1970,7 +1981,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           p?.about === mergedProfile.about &&
           p?.nip05 === mergedProfile.nip05;
         if (isUnchanged) return prev;
-        return { ...prev, profile: mergedProfile };
+        const updated = new NDKUser({ pubkey: prev.pubkey });
+        updated.profile = mergedProfile;
+        return updated;
       });
 
       const hasProfile = !!(mergedProfile.name || mergedProfile.displayName || mergedProfile.picture || mergedProfile.about || mergedProfile.nip05);

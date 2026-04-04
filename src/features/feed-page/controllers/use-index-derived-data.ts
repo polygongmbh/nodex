@@ -3,7 +3,7 @@ import type { Task, Channel, Relay, TaskStatus, PostedTag } from "@/types";
 import type { Person } from "@/types/person";
 import type { CachedNostrEvent } from "@/infrastructure/nostr/event-cache";
 import type { Kind0LikeEvent } from "@/infrastructure/nostr/people-from-kind0";
-import type { NostrUser } from "@/infrastructure/nostr/ndk-context";
+import type { NDKUser } from "@/infrastructure/nostr/ndk-context";
 import type { LatestPresenceSnapshot } from "@/lib/presence-status";
 import {
   nostrEventsToTasks,
@@ -43,7 +43,7 @@ export interface UseIndexDerivedDataOptions {
   people: Person[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   cachedKind0Events: Kind0LikeEvent[];
-  user: NostrUser | null;
+  user: NDKUser | null;
   effectiveActiveRelayIds: Set<string>;
   relays: Relay[];
   channelFrecencyState: ChannelFrecencyState;
