@@ -42,6 +42,24 @@ interface UseKind0PeopleResult {
   removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
+function arePeopleListsEqual(previous: Person[], next: Person[]): boolean {
+  if (previous.length !== next.length) return false;
+  return previous.every((person, index) => {
+    const candidate = next[index];
+    return (
+      person.id === candidate.id &&
+      person.name === candidate.name &&
+      person.displayName === candidate.displayName &&
+      person.nip05 === candidate.nip05 &&
+      person.about === candidate.about &&
+      person.avatar === candidate.avatar &&
+      person.isOnline === candidate.isOnline &&
+      person.onlineStatus === candidate.onlineStatus &&
+      person.isSelected === candidate.isSelected
+    );
+  });
+}
+
 export function useKind0People(
   nostrEvents: CachedNostrEvent[],
   selectedRelayUrls: string[],
@@ -235,7 +253,8 @@ export function useKind0People(
         ];
       }
 
-      return sortPeopleByPriority(next);
+      const sortedPeople = sortPeopleByPriority(next);
+      return arePeopleListsEqual(prev, sortedPeople) ? prev : sortedPeople;
     });
   }, [cachedKind0Events, fallbackKind0Events, loggedInIdentityPriority, user, visiblePubkeys]);
 

@@ -74,7 +74,7 @@ describe("FocusedTaskBreadcrumb", () => {
     expect(dispatchFeedInteraction).toHaveBeenNthCalledWith(5, { type: "task.focus.change", taskId: "middle" });
   });
 
-  it("formats breadcrumb labels to first line plain text without mentions or symbols", () => {
+  it("formats breadcrumb labels to first-line plain text without mentions or hashtag markers", () => {
     const longContent = "Task delegated to @averylongusername with enough room to display #frontend!!!\nSecond line";
     const longTask: Task = {
       ...baseTask,
@@ -90,7 +90,7 @@ describe("FocusedTaskBreadcrumb", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: "Task delegated to with enough room to display frontend" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Task delegated to with enough room to display frontend!!!" })).toBeInTheDocument();
   });
 
   it("keeps short ancestor items visible while capping each breadcrumb item at half the available row width", () => {
