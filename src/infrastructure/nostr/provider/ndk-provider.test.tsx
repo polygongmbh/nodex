@@ -5,6 +5,7 @@ import { NDKProvider, useNDK } from "./ndk-provider";
 import { fetchRelayInfo } from "../relay-info";
 import { RELAY_STATUS_CACHE_STORAGE_KEY } from "@/infrastructure/preferences/storage-registry";
 import { NostrEventKind } from "@/lib/nostr/types";
+import { STORAGE_KEY_AUTH, STORAGE_KEY_SESSION_NOAS_STATE, STORAGE_KEY_SESSION_PRIVATE_KEY } from "./storage";
 
 const mockedNdk = vi.hoisted(() => {
   interface NdkLike {
@@ -470,6 +471,21 @@ function NoasSignupHarness() {
   );
 }
 
+function AuthSessionHarness() {
+  const { authMethod, loginWithNoas, loginWithPrivateKey, user } = useNDK();
+
+  return (
+    <div>
+      <button onClick={() => void loginWithPrivateKey("nsec1privatekey")}>login with private key</button>
+      <button onClick={() => void loginWithNoas("alice", "hunter2")}>login with noas</button>
+      <output data-testid="auth-method">{authMethod ?? ""}</output>
+      <output data-testid="user-pubkey">{user?.pubkey ?? ""}</output>
+      <output data-testid="user-name">{user?.profile?.name ?? ""}</output>
+      <output data-testid="user-picture">{user?.profile?.picture ?? ""}</output>
+    </div>
+  );
+}
+
 describe("NDKProvider relay lifecycle", () => {
   beforeEach(() => {
     mockedNdk.ndkInstances.length = 0;
@@ -487,6 +503,7 @@ describe("NDKProvider relay lifecycle", () => {
       message: "Account activated.",
     };
     window.localStorage.clear();
+    window.sessionStorage.clear();
     vi.mocked(fetchRelayInfo).mockReset();
     vi.mocked(fetchRelayInfo).mockResolvedValue(null);
   });
@@ -593,6 +610,98 @@ describe("NDKProvider relay lifecycle", () => {
         relays: ["wss://relay.one", "wss://relay.two"],
       })
     );
+  });
+
+  it("stores private-key auth in session storage and restores it on reload", async () => {
+    const { unmount } = render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <AuthSessionHarness />
+      </NDKProvider>
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login with private key" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth-method")).toHaveTextContent("privateKey");
+    });
+    expect(window.localStorage.getItem(STORAGE_KEY_AUTH)).toBeNull();
+    expect(window.sessionStorage.getItem(STORAGE_KEY_AUTH)).toBe("privateKey");
+    expect(window.sessionStorage.getItem(STORAGE_KEY_SESSION_PRIVATE_KEY)).toBe("nsec1privatekey");
+
+    unmount();
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <AuthSessionHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth-method")).toHaveTextContent("privateKey");
+    });
+    expect(screen.getByTestId("user-pubkey")).toHaveTextContent("pub");
+  });
+
+  it("stores Noas auth in session storage and restores it on reload", async () => {
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]} defaultNoasHostUrl="https://noas.example">
+        <AuthSessionHarness />
+      </NDKProvider>
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "login with noas" }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth-method")).toHaveTextContent("noas");
+    });
+    expect(window.localStorage.getItem(STORAGE_KEY_AUTH)).toBeNull();
+    expect(window.localStorage.getItem("nostr_noas_username")).toBeNull();
+    expect(window.sessionStorage.getItem(STORAGE_KEY_AUTH)).toBe("noas");
+    expect(window.sessionStorage.getItem(STORAGE_KEY_SESSION_PRIVATE_KEY)).toMatch(/^nsec/);
+    expect(window.sessionStorage.getItem(STORAGE_KEY_SESSION_NOAS_STATE)).toContain("\"username\":\"alice\"");
+    expect(screen.getByTestId("user-picture")).toHaveTextContent("https://noas.example/api/v1/picture/pub");
+  });
+
+  it("restores a Noas session from session storage without a fresh sign-in", async () => {
+    window.sessionStorage.setItem(STORAGE_KEY_AUTH, "noas");
+    window.sessionStorage.setItem(STORAGE_KEY_SESSION_PRIVATE_KEY, "nsec1restored");
+    window.sessionStorage.setItem(STORAGE_KEY_SESSION_NOAS_STATE, JSON.stringify({
+      apiBaseUrl: "https://noas.example/api/v1",
+      username: "alice",
+      relayUrls: ["wss://relay.one"],
+    }));
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <AuthSessionHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth-method")).toHaveTextContent("noas");
+    });
+    expect(screen.getByTestId("user-name")).toHaveTextContent("alice");
+    expect(screen.getByTestId("user-picture")).toHaveTextContent("https://noas.example/api/v1/picture/pub");
+  });
+
+  it("clears stale legacy private-key auth without session material", async () => {
+    window.localStorage.setItem(STORAGE_KEY_AUTH, "privateKey");
+
+    render(
+      <NDKProvider defaultRelays={["wss://relay.one/"]}>
+        <AuthSessionHarness />
+      </NDKProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth-method")).toHaveTextContent("");
+    });
+    expect(window.localStorage.getItem(STORAGE_KEY_AUTH)).toBeNull();
+    expect(window.sessionStorage.getItem(STORAGE_KEY_AUTH)).toBeNull();
   });
 
   it.each(["re-add relay slash", "re-add relay no slash"] as const)(

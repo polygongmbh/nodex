@@ -15,7 +15,18 @@ import {
   buildPresenceTags,
 } from "@/lib/presence-status";
 import { buildDeterministicGuestName } from "@/lib/guest-name";
-import { hasNostrExtension, STORAGE_KEY_AUTH, STORAGE_KEY_NIP46_BUNKER, STORAGE_KEY_NIP46_LOCAL_NSEC, STORAGE_KEY_NSEC } from "./storage";
+import {
+  clearSessionNoasState,
+  clearSessionPrivateKey,
+  clearStoredAuthMethod,
+  hasNostrExtension,
+  savePersistentAuthMethod,
+  saveSessionAuthMethod,
+  saveSessionPrivateKey,
+  STORAGE_KEY_NIP46_BUNKER,
+  STORAGE_KEY_NIP46_LOCAL_NSEC,
+  STORAGE_KEY_NSEC,
+} from "./storage";
 import type { AuthMethod, NDKRelayStatus, NDKUser } from "./contracts";
 import type { RelayVerificationCallbacks } from "./use-relay-verification";
 import type { PublishCallbacks } from "./use-publish";
@@ -61,7 +72,9 @@ export function useAuthActions(
       const ndkUser = await signer.user();
       setUser(ndkUser);
       setAuthMethod("extension");
-      localStorage.setItem(STORAGE_KEY_AUTH, "extension");
+      clearSessionPrivateKey();
+      clearSessionNoasState();
+      savePersistentAuthMethod("extension");
       retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
@@ -84,8 +97,9 @@ export function useAuthActions(
       const ndkUser = await signer.user();
       setUser(ndkUser);
       setAuthMethod("privateKey");
-      localStorage.setItem(STORAGE_KEY_AUTH, "privateKey");
-      // Don't store private key for security
+      saveSessionPrivateKey(nsecOrHex);
+      clearSessionNoasState();
+      saveSessionAuthMethod("privateKey");
       retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
@@ -122,7 +136,9 @@ export function useAuthActions(
       ndkUser.profile = { name: buildDeterministicGuestName(ndkUser.pubkey) };
       setUser(ndkUser);
       setAuthMethod("guest");
-      localStorage.setItem(STORAGE_KEY_AUTH, "guest");
+      clearSessionPrivateKey();
+      clearSessionNoasState();
+      savePersistentAuthMethod("guest");
       retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
@@ -151,7 +167,9 @@ export function useAuthActions(
       await ndkUser.fetchProfile();
       setUser(ndkUser);
       setAuthMethod("nostrConnect");
-      localStorage.setItem(STORAGE_KEY_AUTH, "nostrConnect");
+      clearSessionPrivateKey();
+      clearSessionNoasState();
+      savePersistentAuthMethod("nostrConnect");
       localStorage.setItem(STORAGE_KEY_NIP46_BUNKER, bunkerUrl.trim());
       if (signer.localSigner?.privateKey) {
         localStorage.setItem(STORAGE_KEY_NIP46_LOCAL_NSEC, signer.localSigner.privateKey);
@@ -206,7 +224,9 @@ export function useAuthActions(
     }
     setUser(null);
     setAuthMethod(null);
-    localStorage.removeItem(STORAGE_KEY_AUTH);
+    clearStoredAuthMethod();
+    clearSessionPrivateKey();
+    clearSessionNoasState();
     localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
     localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
     // Keep guest key for potential re-login

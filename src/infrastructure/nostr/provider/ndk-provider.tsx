@@ -36,15 +36,23 @@ import { extractNostrReferenceTagsFromContent } from "@/lib/nostr/content-refere
 import type { NDKUserProfile } from "@nostr-dev-kit/ndk";
 import type { AuthMethod, NDKContextValue, NDKProviderProps, NDKRelayStatus } from "./contracts";
 import {
+  clearSessionNoasState,
+  clearSessionPrivateKey,
+  clearStoredAuthMethod,
   hasNostrExtension,
+  loadSessionNoasState,
+  loadSessionPrivateKey,
   loadPersistedNoasDefaultHostUrl,
   loadPersistedRelayUrls,
+  loadStoredAuthMethod,
+  savePersistentAuthMethod,
   savePersistedRelayUrls,
-  STORAGE_KEY_AUTH,
+  saveSessionAuthMethod,
+  saveSessionNoasState,
+  saveSessionPrivateKey,
   STORAGE_KEY_NIP46_BUNKER,
   STORAGE_KEY_NIP46_LOCAL_NSEC,
   STORAGE_KEY_NSEC,
-  STORAGE_KEY_NOAS_USERNAME,
 } from "./storage";
 import {
   mapNativeRelayStatus,
@@ -184,6 +192,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
   const pendingRelayVerificationRef = useRef<Map<string, { operation: RelayOperation; requestedAt: number }>>(new Map());
   const relayAuthRetryHistoryRef = useRef<Map<string, number>>(new Map());
   const presenceRelayUrlsRef = useRef<string[]>([]);
+  const connectResolvedAuthRelayUrlsRef = useRef<(relayUrls: string[]) => void>(() => undefined);
   const relayAuthPreflightHistoryRef = useRef<Map<string, number>>(new Map());
   const relayInfoRef = useRef<Map<string, RelayInfoSummary>>(new Map());
   const relayInfoFetchedAtRef = useRef<Map<string, number>>(new Map());
@@ -1071,7 +1080,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       RELAY_STATUS_RECONCILE_INTERVAL_MS
     );
     const restoreSession = async (): Promise<void> => {
-      const savedAuthMethod = localStorage.getItem(STORAGE_KEY_AUTH) as AuthMethod;
+      const savedAuthMethod = loadStoredAuthMethod();
       if (savedAuthMethod === "guest") {
         const savedNsec = localStorage.getItem(STORAGE_KEY_NSEC);
         if (!savedNsec) return;
@@ -1083,7 +1092,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           setUser(ndkUser);
           setAuthMethod("guest");
         } catch {
-          localStorage.removeItem(STORAGE_KEY_AUTH);
+          clearStoredAuthMethod();
         }
         return;
       }
@@ -1101,7 +1110,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
 
         if (!isExtensionAvailable) {
           nostrDevLog("auth", "Extension restore failed: extension unavailable after wait window");
-          localStorage.removeItem(STORAGE_KEY_AUTH);
+          clearStoredAuthMethod();
           return;
         }
 
@@ -1117,7 +1126,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           nostrDevLog("auth", "Extension restore failed while resolving signer user", {
             error: error instanceof Error ? error.message : String(error),
           });
-          localStorage.removeItem(STORAGE_KEY_AUTH);
+          clearStoredAuthMethod();
         }
         return;
       }
@@ -1126,7 +1135,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         const bunkerUrl = localStorage.getItem(STORAGE_KEY_NIP46_BUNKER);
         const localKey = localStorage.getItem(STORAGE_KEY_NIP46_LOCAL_NSEC) || undefined;
         if (!bunkerUrl) {
-          localStorage.removeItem(STORAGE_KEY_AUTH);
+          clearStoredAuthMethod();
           return;
         }
         const signer = NDKNip46Signer.bunker(ndkInstance, bunkerUrl, localKey);
@@ -1138,9 +1147,60 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
           setUser(ndkUser);
           setAuthMethod("nostrConnect");
         } catch {
-          localStorage.removeItem(STORAGE_KEY_AUTH);
+          clearStoredAuthMethod();
           localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
           localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
+        }
+        return;
+      }
+
+      if (savedAuthMethod === "privateKey") {
+        const sessionPrivateKey = loadSessionPrivateKey();
+        if (!sessionPrivateKey) {
+          clearStoredAuthMethod();
+          return;
+        }
+
+        try {
+          const signer = new NDKPrivateKeySigner(sessionPrivateKey);
+          ndkInstance.signer = signer;
+          const ndkUser = await signer.user();
+          if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
+          setUser(ndkUser);
+          setAuthMethod("privateKey");
+        } catch {
+          clearStoredAuthMethod();
+          clearSessionPrivateKey();
+        }
+        return;
+      }
+
+      if (savedAuthMethod === "noas") {
+        const sessionPrivateKey = loadSessionPrivateKey();
+        const noasSession = loadSessionNoasState();
+        if (!sessionPrivateKey || !noasSession) {
+          clearStoredAuthMethod();
+          clearSessionPrivateKey();
+          clearSessionNoasState();
+          return;
+        }
+
+        try {
+          const signer = new NDKPrivateKeySigner(sessionPrivateKey);
+          ndkInstance.signer = signer;
+          const ndkUser = await signer.user();
+          ndkUser.profile = {
+            name: noasSession.username,
+            displayName: noasSession.username,
+            picture: `${noasSession.apiBaseUrl}/picture/${ndkUser.pubkey}`,
+          };
+          setUser(ndkUser);
+          setAuthMethod("noas");
+          connectResolvedAuthRelayUrlsRef.current(noasSession.relayUrls || []);
+        } catch {
+          clearStoredAuthMethod();
+          clearSessionPrivateKey();
+          clearSessionNoasState();
         }
       }
     };
@@ -1181,7 +1241,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
       setUser(ndkUser);
       setAuthMethod("extension");
-      localStorage.setItem(STORAGE_KEY_AUTH, "extension");
+      clearSessionPrivateKey();
+      clearSessionNoasState();
+      savePersistentAuthMethod("extension");
       retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
@@ -1204,8 +1266,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
       setUser(ndkUser);
       setAuthMethod("privateKey");
-      localStorage.setItem(STORAGE_KEY_AUTH, "privateKey");
-      // Don't store private key for security
+      saveSessionPrivateKey(nsecOrHex);
+      clearSessionNoasState();
+      saveSessionAuthMethod("privateKey");
       retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
@@ -1241,7 +1304,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       ndkUser.profile = { name: buildDeterministicGuestName(ndkUser.pubkey) };
       setUser(ndkUser);
       setAuthMethod("guest");
-      localStorage.setItem(STORAGE_KEY_AUTH, "guest");
+      clearSessionPrivateKey();
+      clearSessionNoasState();
+      savePersistentAuthMethod("guest");
       retryNip42RelaysAfterSignIn();
       return true;
     } catch (error) {
@@ -1271,7 +1336,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       else if (!ndkUser.profile) ndkUser.profile = profileFromCachedKind0(ndkUser.pubkey);
       setUser(ndkUser);
       setAuthMethod("nostrConnect");
-      localStorage.setItem(STORAGE_KEY_AUTH, "nostrConnect");
+      clearSessionPrivateKey();
+      clearSessionNoasState();
+      savePersistentAuthMethod("nostrConnect");
       localStorage.setItem(STORAGE_KEY_NIP46_BUNKER, bunkerUrl.trim());
       if (signer.localSigner?.privateKey) {
         localStorage.setItem(STORAGE_KEY_NIP46_LOCAL_NSEC, signer.localSigner.privateKey);
@@ -1351,6 +1418,7 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
         addRelay(relayUrl);
       });
   }, [addRelay]);
+  connectResolvedAuthRelayUrlsRef.current = connectResolvedAuthRelayUrls;
 
   const reorderRelays = useCallback((orderedUrls: string[]) => {
     if (!ndk) return;
@@ -1448,12 +1516,17 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       ndkUser.profile = { name: username, displayName: username, picture: `${noasApiUrl}/picture/${ndkUser.pubkey}` };
       setUser(ndkUser);
 
-      // Store Noas session information
       setAuthMethod("noas");
-      localStorage.setItem(STORAGE_KEY_AUTH, "noas");
-      localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
+      const noasRelayUrls = resolveNoasAuthRelayUrls(signInResponse);
+      saveSessionPrivateKey(signer.privateKey || privateKeyHexToNsec(decryptedPrivateKey));
+      saveSessionNoasState({
+        apiBaseUrl: noasApiUrl,
+        username,
+        relayUrls: noasRelayUrls,
+      });
+      saveSessionAuthMethod("noas");
 
-      connectResolvedAuthRelayUrls(resolveNoasAuthRelayUrls(signInResponse));
+      connectResolvedAuthRelayUrls(noasRelayUrls);
 
       retryNip42RelaysAfterSignIn();
       return { success: true };
@@ -1571,11 +1644,16 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
       noasUser.profile = { name: username, displayName: username, picture: `${noasApiUrl}/picture/${pubkey}` };
       setUser(noasUser);
 
-      // Store Noas session information
       setAuthMethod("noas");
-      localStorage.setItem(STORAGE_KEY_AUTH, "noas");
-      localStorage.setItem(STORAGE_KEY_NOAS_USERNAME, username);
-      connectResolvedAuthRelayUrls(resolveNoasAuthRelayUrls(signUpResponse));
+      const noasRelayUrls = resolveNoasAuthRelayUrls(signUpResponse);
+      saveSessionPrivateKey(nsecKey);
+      saveSessionNoasState({
+        apiBaseUrl: noasApiUrl,
+        username,
+        relayUrls: noasRelayUrls,
+      });
+      saveSessionAuthMethod("noas");
+      connectResolvedAuthRelayUrls(noasRelayUrls);
 
       retryNip42RelaysAfterSignIn();
       return {
@@ -1659,7 +1737,9 @@ export function NDKProvider({ children, defaultRelays, defaultNoasHostUrl }: NDK
     kind0ProfileCacheRef.current.clear();
     kind0ProfileInFlightRef.current.clear();
     kind0ProfileFailureUntilRef.current.clear();
-    localStorage.removeItem(STORAGE_KEY_AUTH);
+    clearStoredAuthMethod();
+    clearSessionPrivateKey();
+    clearSessionNoasState();
     localStorage.removeItem(STORAGE_KEY_NIP46_BUNKER);
     localStorage.removeItem(STORAGE_KEY_NIP46_LOCAL_NSEC);
     // Keep guest key for potential re-login

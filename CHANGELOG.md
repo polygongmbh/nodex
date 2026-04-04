@@ -6,6 +6,8 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Private-key and Noas sign-ins now survive a same-tab reload via `sessionStorage` without becoming durable browser sessions, and Noas no longer leaves behind the unused persisted username key.
+
 ## [2.12.1] - 2026-04-04
 
 - Mobile toast notifications now keep their top offset across the full mobile breakpoint range, so success and error toasts no longer slide up under the navigation chrome on larger mobile layouts.

@@ -15,6 +15,12 @@ function resolveLocalStorage(storage?: Storage | null): Storage | null {
   return window.localStorage;
 }
 
+function resolveSessionStorage(storage?: Storage | null): Storage | null {
+  if (storage) return storage;
+  if (typeof window === "undefined" || !window.sessionStorage) return null;
+  return window.sessionStorage;
+}
+
 export function safeLocalStorageSetItem(
   storageKey: string,
   value: string,
@@ -32,6 +38,32 @@ export function safeLocalStorageSetItem(
     if (!warnedStorageFailures.has(dedupeKey)) {
       warnedStorageFailures.add(dedupeKey);
       console.warn("localStorage write failed", {
+        storageKey,
+        context: options?.context || "unknown",
+        errorName,
+      });
+    }
+    return false;
+  }
+}
+
+export function safeSessionStorageSetItem(
+  storageKey: string,
+  value: string,
+  options?: { storage?: Storage | null; context?: string }
+): boolean {
+  const storage = resolveSessionStorage(options?.storage);
+  if (!storage) return false;
+
+  try {
+    storage.setItem(storageKey, value);
+    return true;
+  } catch (error) {
+    const errorName = getErrorName(error);
+    const dedupeKey = `${storageKey}:${errorName}`;
+    if (!warnedStorageFailures.has(dedupeKey)) {
+      warnedStorageFailures.add(dedupeKey);
+      console.warn("sessionStorage write failed", {
         storageKey,
         context: options?.context || "unknown",
         errorName,
