@@ -17,6 +17,7 @@ import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useMobileToastOffset } from "./use-mobile-toast-offset";
 
 export interface MobileLayoutViewState {
   canCreateContent: boolean;
@@ -214,6 +215,7 @@ export function MobileLayout({
     showFilters,
     isHydrating,
   });
+  const hasMobileBreadcrumbOffset = !showFilters && !isHydrating && Boolean(mobileShellFocusedTaskId);
   const effectiveTaskViewModel = useMemo(
     () => ({
       ...feedTaskViewModel,
@@ -270,6 +272,8 @@ export function MobileLayout({
     setProfileEditorOpenSignal((previous) => previous + 1);
   }, [openManageView, profileCompletionPromptSignal]);
 
+  useMobileToastOffset({ hasBreadcrumbOffset: hasMobileBreadcrumbOffset });
+
   const renderView = () => {
     if (showFilters) {
       return (
@@ -292,27 +296,30 @@ export function MobileLayout({
 
   return (
     <div className="flex flex-col app-shell-height bg-background overflow-hidden">
-      <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} onManageOpen={openManageView} isManageActive={showFilters} />
+      <div>
+        <MobileNav currentView={mobileCurrentView} onViewChange={handleMobileViewChange} onManageOpen={openManageView} isManageActive={showFilters} />
+      </div>
       <FailedPublishQueueBanner
         drafts={failedPublishDrafts}
         selectedFeedDrafts={visibleFailedPublishDrafts}
         selectedRelayIds={selectedPublishableRelayIds}
         isMobile
       />
-      
-      
+
       <main 
         className="flex-1 overflow-hidden relative"
         {...swipeHandlers}
       >
         <div className="h-full flex flex-col">
-          <TaskViewStatusRow
-            allTasks={allTasks}
-            focusedTaskId={mobileShellFocusedTaskId}
-            isHydrating={isHydrating}
-            className="h-10 px-3 text-xs"
-            visible={!showFilters}
-          />
+          <div>
+            <TaskViewStatusRow
+              allTasks={allTasks}
+              focusedTaskId={mobileShellFocusedTaskId}
+              isHydrating={isHydrating}
+              className="h-10 px-3 text-xs"
+              visible={!showFilters}
+            />
+          </div>
           {shouldShowMobileFallbackNotice && (
             <div
               role="status"

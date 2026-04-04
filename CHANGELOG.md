@@ -6,6 +6,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 
 ## [Unreleased]
 
+- Mobile toast notifications now offset beneath the mobile navigation and focused breadcrumb/status chrome instead of covering the top bars.
 - Feed hydration no longer retriggers kind-0 profile cache refreshes on every render, restoring incremental timeline loading after the onboarding/demo refactor.
 - Feed timelines now hydrate earlier as you approach the end of the visible list, instead of waiting until you are effectively at the bottom before loading the next batch.
 - Profile hover cards now show the latest presence report details, including when someone last reported status plus the current view and task they are looking at when NIP-38 presence data includes it.

@@ -1,8 +1,10 @@
 import { Toaster as Sonner, toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useThemeMode } from "@/components/theme/ThemeProvider";
+import { MOBILE_TOAST_TOP_OFFSET_CSS_VAR } from "@/components/mobile/use-mobile-toast-offset";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
+const MOBILE_TOAST_TOP_OFFSET = `calc(var(${MOBILE_TOAST_TOP_OFFSET_CSS_VAR}, 0px) + 12px)`;
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { mode } = useThemeMode();
@@ -41,7 +43,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       swipeDirections={[]}
       visibleToasts={2}
       offset={12}
-      mobileOffset={{ top: 12, left: 12, right: 12 }}
+      mobileOffset={{ top: MOBILE_TOAST_TOP_OFFSET, left: 12, right: 12 }}
       toastOptions={{
         duration: isMobile ? 1800 : 2800,
         // dismissible: true,

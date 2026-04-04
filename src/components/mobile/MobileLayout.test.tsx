@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect, useState, type ComponentProps } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MobileLayout } from "./MobileLayout";
+import { MOBILE_TOAST_TOP_OFFSET_CSS_VAR } from "./use-mobile-toast-offset";
 import type { Channel, Relay, Task } from "@/types";
 import type { Person } from "@/types/person";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
@@ -243,6 +244,10 @@ function renderMobileLayout(overrides: MobileLayoutOverrides = {}) {
 function setSignedInUser() {
   ndkMock.user = { pubkey: "abc123", npub: "npub1abc", profile: { displayName: "Guest User" } };
 }
+
+afterEach(() => {
+  document.documentElement.style.removeProperty(MOBILE_TOAST_TOP_OFFSET_CSS_VAR);
+});
 
 describe("MobileLayout auth wiring", () => {
   it("uses auth state (not current user) to gate compose", () => {
@@ -704,5 +709,55 @@ describe("MobileLayout auth wiring", () => {
 
     expect(dispatchFeedInteraction).toHaveBeenCalledWith({ type: "ui.view.change", view: "feed" });
     expect(onManageRouteChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it("publishes a larger mobile toast top offset when focused breadcrumb chrome is visible", async () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const rootTask = makeTask({
+      id: "root-task",
+      content: "Root task #general",
+      tags: ["general"],
+    });
+    const childTask = makeTask({
+      id: "child-task",
+      content: "Child task #general",
+      tags: ["general"],
+      parentId: "root-task",
+    });
+
+    const { rerender, unmount } = renderMobileLayout({
+      taskViewModel: {
+        tasks: [childTask],
+        allTasks: [rootTask, childTask],
+        focusedTaskId: null,
+      },
+    });
+
+    await waitFor(() => {
+      expect(document.documentElement.style.getPropertyValue(MOBILE_TOAST_TOP_OFFSET_CSS_VAR)).toBe("56px");
+    });
+
+    rerender(
+      renderMobileLayoutTree({
+        taskViewModel: {
+          ...baseTaskViewModel,
+          tasks: [childTask],
+          allTasks: [rootTask, childTask],
+          focusedTaskId: "child-task",
+        },
+        surfaceState: baseSurfaceState,
+        props: baseProps,
+      })
+    );
+
+    await waitFor(() => {
+      expect(document.documentElement.style.getPropertyValue(MOBILE_TOAST_TOP_OFFSET_CSS_VAR)).toBe("96px");
+    });
+
+    unmount();
+
+    expect(document.documentElement.style.getPropertyValue(MOBILE_TOAST_TOP_OFFSET_CSS_VAR)).toBe("");
   });
 });
