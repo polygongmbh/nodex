@@ -11,7 +11,7 @@ interface TaskCreateComposerProps {
   compact?: boolean;
   defaultDueDate?: Date;
   defaultContent?: string;
-  parentId?: string;
+  focusedTaskId: string | null;
   initialStatus?: TaskInitialStatus;
   adaptiveSize?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
@@ -35,7 +35,7 @@ export function TaskCreateComposer({
   compact = false,
   defaultDueDate,
   defaultContent = "",
-  parentId,
+  focusedTaskId,
   initialStatus,
   adaptiveSize = false,
   onExpandedChange,
@@ -53,10 +53,10 @@ export function TaskCreateComposer({
   const { createHttpAuthHeader } = useNDK();
   const environment = useResolvedTaskComposerEnvironment({});
   const { shouldHideComposer, activeWritableRelayIds, canCreateContent, externalSubmitBlockByType } =
-    useComposerRelayBlock(parentId);
+    useComposerRelayBlock(focusedTaskId);
   const filterSync = useComposerFilterSync(environment);
   const handleSubmit = useComposerSubmitHandler({
-    parentId,
+    focusedTaskId,
     initialStatus,
     activeRelayIds: activeWritableRelayIds,
     closeOnSuccess,
@@ -78,7 +78,7 @@ export function TaskCreateComposer({
           compact,
           defaultDueDate,
           defaultContent,
-          allowEmptyTags: Boolean(parentId),
+          allowEmptyTags: Boolean(focusedTaskId),
           adaptiveSize,
           onExpandedChange,
           forceExpanded,

@@ -18,7 +18,7 @@ interface TaskTreeProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   isMobile?: boolean;
@@ -60,7 +60,7 @@ export function TaskTree({
   const taskSource = useTaskViewSource({
     tasks,
     allTasks,
-    focusedTaskId: focusedTaskId ?? null,
+    focusedTaskId,
     searchQueryOverride,
   });
   const treeSelectors = useMemo(() => createTreeSelectors(taskSource), [taskSource]);
@@ -212,7 +212,7 @@ export function TaskTree({
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onCancel={() => setIsComposerExpanded(false)}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
-        parentId={normalizedFocusedTaskId || undefined}
+        focusedTaskId={normalizedFocusedTaskId}
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         onExpandedChange={setIsComposerExpanded}

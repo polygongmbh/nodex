@@ -12,7 +12,7 @@ interface SharedViewComposerProps {
   visible: boolean;
   onCancel?: () => void;
   draftStorageKey: string;
-  parentId?: string;
+  focusedTaskId: string | null;
   initialStatus?: TaskInitialStatus;
   forceExpanded?: boolean;
   forceExpandSignal?: number;
@@ -34,7 +34,7 @@ export function SharedViewComposer({
   visible,
   onCancel,
   draftStorageKey,
-  parentId,
+  focusedTaskId,
   initialStatus,
   forceExpanded = false,
   forceExpandSignal,
@@ -53,7 +53,7 @@ export function SharedViewComposer({
   const { relays } = useFeedSurfaceState();
   const { allTasks } = useFeedTaskViewModel();
   const hasWarnedHiddenComposerRef = useRef(false);
-  const parentTask = parentId ? allTasks.find((task) => task.id === parentId) : undefined;
+  const parentTask = focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId) : undefined;
   const shouldHideComposer =
     parentTask
     && parentTask.relays.length > 0
@@ -78,7 +78,7 @@ export function SharedViewComposer({
         onCancel={onCancel ?? (() => {})}
         compact
         draftStorageKey={draftStorageKey}
-        parentId={parentId}
+        focusedTaskId={focusedTaskId}
         initialStatus={initialStatus}
         adaptiveSize
         forceExpanded={forceExpanded}

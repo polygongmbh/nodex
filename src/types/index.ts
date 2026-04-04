@@ -183,7 +183,7 @@ export interface SharedTaskViewContext {
   people?: Person[];
   currentUser?: Person;
   searchQuery?: string;
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   composeRestoreRequest?: ComposeRestoreRequest | null;
 }
 

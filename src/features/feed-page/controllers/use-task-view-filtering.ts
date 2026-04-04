@@ -11,7 +11,7 @@ import type { Person } from "@/types/person";
 interface UseTaskViewFilteringParams {
   allTasks: Task[];
   tasks: Task[];
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   includeFocusedTask?: boolean;
   hideClosedTasks?: boolean;
   searchQuery: string;

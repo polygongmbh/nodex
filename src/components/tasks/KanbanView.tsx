@@ -20,7 +20,7 @@ interface KanbanViewProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode: KanbanDepthMode;
@@ -59,7 +59,7 @@ export function KanbanView({
   const { kanbanTasks, getAncestorChain, showContext } = useKanbanViewState({
     tasks,
     allTasks,
-    focusedTaskId: focusedTaskId ?? null,
+    focusedTaskId,
     searchQueryOverride,
     depthMode,
   });
@@ -311,7 +311,7 @@ export function KanbanView({
                       <TaskCreateComposer
                         onCancel={() => setComposingColumn(null)}
                         compact
-                        parentId={focusedTaskId || undefined}
+                        focusedTaskId={focusedTaskId}
                         initialStatus={composingColumn || undefined}
                         closeOnSuccess
                         allowComment={false}

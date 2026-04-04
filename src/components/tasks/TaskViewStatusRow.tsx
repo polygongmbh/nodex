@@ -4,7 +4,7 @@ import { HydrationStatusRow } from "@/components/tasks/HydrationStatusRow";
 
 interface TaskViewStatusRowProps {
   allTasks: Task[];
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   isHydrating?: boolean;
   className?: string;
   visible?: boolean;
@@ -12,7 +12,7 @@ interface TaskViewStatusRowProps {
 
 export function TaskViewStatusRow({
   allTasks,
-  focusedTaskId = null,
+  focusedTaskId,
   isHydrating = false,
   className,
   visible = true,

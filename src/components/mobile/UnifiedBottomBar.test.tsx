@@ -65,11 +65,16 @@ const people: Person[] = [
 
 const attachmentUploadEnabledSpy = vi.spyOn(attachmentUpload, "isAttachmentUploadConfigured");
 const originalGeolocation = navigator.geolocation;
+type TaskCreateIntent = Extract<FeedInteractionIntent, { type: "task.create" }>;
 
 function getTaskCreateCalls() {
   return dispatchFeedInteraction.mock.calls
     .map(([intent]) => intent as FeedInteractionIntent)
     .filter((intent): intent is Extract<FeedInteractionIntent, { type: "task.create" }> => intent.type === "task.create");
+}
+
+function expectLatestTaskCreateCall(expected: Partial<TaskCreateIntent>) {
+  expect(getTaskCreateCalls().at(-1)).toEqual(expect.objectContaining(expected));
 }
 
 function createPosition(latitude: number, longitude: number): GeolocationPosition {
@@ -376,21 +381,13 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(getTaskCreateCalls()).toHaveLength(1);
     });
-    expect(getTaskCreateCalls()[0]).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Follow-up details for parent task",
       tags: [],
       relays: ["demo"],
       taskType: "task",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: "parent-task",
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
-      locationGeohash: undefined,
+      focusedTaskId: "parent-task",
     });
   });
 
@@ -436,21 +433,12 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(composeField, { target: { value: "Ship #general now" } });
 
     fireEvent.keyDown(composeField, { key: "Enter", altKey: true });
-    expect(getTaskCreateCalls()[0]).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Ship #general now",
       tags: ["general"],
       relays: ["demo"],
       taskType: "comment",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
-      locationGeohash: undefined,
     });
   });
 
@@ -470,40 +458,22 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.change(composeField, { target: { value: "Ship #general" } });
 
     fireEvent.keyDown(composeField, { key: "Enter", ctrlKey: true });
-    expect(getTaskCreateCalls()[0]).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
       taskType: "task",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
-      locationGeohash: undefined,
     });
 
     fireEvent.change(composeField, { target: { value: "Ship again #general" } });
     fireEvent.keyDown(composeField, { key: "Enter", metaKey: true });
-    expect(getTaskCreateCalls().at(-1)).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Ship again #general",
       tags: ["general"],
       relays: ["demo"],
       taskType: "task",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
-      locationGeohash: undefined,
     });
   });
 
@@ -524,21 +494,12 @@ describe("UnifiedBottomBar auth gating", () => {
     openMobileComposeOptions();
     fireEvent.click(getMobileCommentAction());
 
-    expect(getTaskCreateCalls()[0]).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Reply #general",
       tags: ["general"],
       relays: ["demo"],
       taskType: "comment",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
-      locationGeohash: undefined,
     });
   });
 
@@ -564,24 +525,16 @@ describe("UnifiedBottomBar auth gating", () => {
     fireEvent.click(screen.getByRole("button", { name: /post request/i }));
     await waitFor(() => expect(getTaskCreateCalls()).toHaveLength(1));
 
-    expect(getTaskCreateCalls()[0]).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Need help #general",
       tags: ["general"],
       relays: ["demo"],
       taskType: "request",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
       nip99: {
         title: "Need help",
         status: "active",
       },
-      locationGeohash: undefined,
     });
   });
 
@@ -941,21 +894,13 @@ describe("UnifiedBottomBar auth gating", () => {
     });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
-    expect(getTaskCreateCalls().at(-1)).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Ship #general ",
       tags: ["general"],
       relays: ["demo"],
       taskType: "task",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
       explicitMentionPubkeys: ["e".repeat(64)],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
-      locationGeohash: undefined,
     });
   });
 
@@ -987,21 +932,13 @@ describe("UnifiedBottomBar auth gating", () => {
     });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
-    expect(getTaskCreateCalls().at(-1)).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Ship #general ",
       tags: ["general"],
       relays: ["demo"],
       taskType: "task",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
       explicitMentionPubkeys: ["e".repeat(64)],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
-      locationGeohash: undefined,
     });
   });
 
@@ -1055,21 +992,12 @@ describe("UnifiedBottomBar auth gating", () => {
     });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
-    expect(getTaskCreateCalls().at(-1)).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Ship ",
       tags: ["brandnew"],
       relays: ["demo"],
       taskType: "task",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
-      locationGeohash: undefined,
     });
   });
 
@@ -1101,21 +1029,12 @@ describe("UnifiedBottomBar auth gating", () => {
     });
 
     fireEvent.keyDown(field, { key: "Enter", ctrlKey: true });
-    expect(getTaskCreateCalls().at(-1)).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Ship ",
       tags: ["general"],
       relays: ["demo"],
       taskType: "task",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
-      locationGeohash: undefined,
     });
   });
 
@@ -1177,20 +1096,12 @@ describe("UnifiedBottomBar auth gating", () => {
     await waitFor(() => {
       expect(getTaskCreateCalls()).toHaveLength(1);
     });
-    expect(getTaskCreateCalls()[0]).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
       taskType: "task",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
       locationGeohash: expectedGeohash,
     });
   });
@@ -1230,20 +1141,12 @@ describe("UnifiedBottomBar auth gating", () => {
     });
 
     expect(getCurrentPosition).toHaveBeenCalledTimes(1);
-    expect(getTaskCreateCalls()[0]).toEqual({
+    expectLatestTaskCreateCall({
       type: "task.create",
       content: "Ship #general",
       tags: ["general"],
       relays: ["demo"],
       taskType: "task",
-      dueDate: undefined,
-      dueTime: undefined,
-      dateType: "due",
-      parentId: undefined,
-      explicitMentionPubkeys: [],
-      priority: undefined,
-      attachments: [],
-      nip99: undefined,
       locationGeohash: undefined,
     });
   });

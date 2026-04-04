@@ -100,7 +100,7 @@ function renderCreateComposer({
         channelMatchMode: "and",
       }}
     >
-      <FeedTaskViewModelProvider value={{ tasks, allTasks }}>
+      <FeedTaskViewModelProvider value={{ tasks, allTasks, focusedTaskId: null }}>
         <TaskCreateComposer onCancel={() => {}} {...props} />
       </FeedTaskViewModelProvider>
     </FeedSurfaceProvider>
@@ -117,7 +117,7 @@ describe("TaskCreateComposer", () => {
 
     renderCreateComposer({
       onCancel,
-      parentId: "parent-task",
+      focusedTaskId: "parent-task",
       initialStatus: "in-progress",
       closeOnSuccess: true,
       allowComment: false,
@@ -129,11 +129,11 @@ describe("TaskCreateComposer", () => {
     fireEvent.click(getComposerPrimaryAction());
 
     await waitFor(() => {
-      expect(dispatchFeedInteraction).toHaveBeenCalledWith(
+        expect(dispatchFeedInteraction).toHaveBeenCalledWith(
         expect.objectContaining({
           type: "task.create",
           content: "Ship #backend",
-          parentId: "parent-task",
+          focusedTaskId: "parent-task",
           initialStatus: "in-progress",
         })
       );
@@ -159,7 +159,7 @@ describe("TaskCreateComposer", () => {
       feedRelays: readOnlyRelays,
       tasks: [parentTask],
       allTasks: [parentTask],
-      parentId: "parent-task",
+      focusedTaskId: "parent-task",
     });
 
     expect(container).toBeEmptyDOMElement();
@@ -189,7 +189,7 @@ describe("TaskCreateComposer", () => {
       feedRelays: multiRelays,
       tasks: [parentTask],
       allTasks: [parentTask],
-      parentId: "parent-task",
+      focusedTaskId: "parent-task",
     });
 
     fireEvent.change(getTaskComposerInput(), {
@@ -202,7 +202,7 @@ describe("TaskCreateComposer", () => {
         type: "task.create",
         content: "Follow-up update for this thread",
         tags: [],
-        parentId: "parent-task",
+        focusedTaskId: "parent-task",
       }));
     });
   });

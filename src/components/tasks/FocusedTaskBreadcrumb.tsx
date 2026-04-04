@@ -8,7 +8,7 @@ import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 interface FocusedTaskBreadcrumbProps {
   allTasks: Task[];
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   className?: string;
   rightSlot?: ReactNode;
 }

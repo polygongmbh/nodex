@@ -69,7 +69,7 @@ export type FeedInteractionIntent =
       dueDate?: Date;
       dueTime?: string;
       dateType?: TaskDateType;
-      parentId?: string;
+      focusedTaskId: string | null;
       initialStatus?: TaskInitialStatus;
       explicitMentionPubkeys?: string[];
       mentionIdentifiers?: string[];

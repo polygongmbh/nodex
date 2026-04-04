@@ -260,7 +260,7 @@ export function useTaskPublishFlow({
     dueDate?: Date,
     dueTime?: string,
     dateType: TaskDateType = "due",
-    parentId?: string,
+    focusedTaskId: string | null = null,
     initialStatus?: TaskInitialStatus,
     explicitMentionPubkeys: string[] = [],
     mentionIdentifiers?: string[],
@@ -282,7 +282,7 @@ export function useTaskPublishFlow({
     const requestedRelayIds = relayIds.length > 0
       ? relayIds
       : (demoFeedActive ? [demoRelayId] : []);
-    const submissionParentId = parentId;
+    const submissionParentId = focusedTaskId;
     const parentTask = submissionParentId ? allTasks.find((task) => task.id === submissionParentId) : undefined;
     const resolvedRelaySelection = resolveRelaySelectionForSubmission({
       taskType: normalizedTaskType,

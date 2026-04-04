@@ -53,7 +53,7 @@ import { getCompactPersonLabel, getPersonDisplayName } from "@/types/person";
 interface UnifiedBottomBarProps {
   searchQuery?: string;
   currentView: ViewType;
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   selectedCalendarDate?: Date | null;
   relays?: Relay[];
   channels?: Channel[];
@@ -497,7 +497,7 @@ export function UnifiedBottomBar({
         dueDate,
         dueTime: dueTime || undefined,
         dateType,
-        parentId: focusedTaskId || undefined,
+        focusedTaskId,
         explicitMentionPubkeys,
         priority: submittedPriority,
         attachments: uploadedAttachments,

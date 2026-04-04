@@ -58,7 +58,7 @@ describe("SharedViewComposer", () => {
           <SharedViewComposer
             visible
             draftStorageKey="shared-view-composer-hidden-toast"
-            parentId="parent-task"
+            focusedTaskId="parent-task"
           />
         </FeedTaskViewModelProvider>
       </FeedSurfaceProvider>
@@ -96,7 +96,7 @@ describe("SharedViewComposer", () => {
           <SharedViewComposer
             visible
             draftStorageKey="shared-view-composer-gap"
-            parentId="parent-task"
+            focusedTaskId="parent-task"
           />
         </FeedTaskViewModelProvider>
       </FeedSurfaceProvider>
@@ -133,7 +133,7 @@ describe("SharedViewComposer", () => {
           <SharedViewComposer
             visible
             draftStorageKey="shared-view-composer-no-toast-signed-out"
-            parentId="parent-task"
+            focusedTaskId="parent-task"
           />
         </FeedTaskViewModelProvider>
       </FeedSurfaceProvider>

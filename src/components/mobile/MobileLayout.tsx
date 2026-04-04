@@ -54,7 +54,7 @@ export function MobileLayout() {
   const {
     tasks,
     allTasks,
-    focusedTaskId = null,
+    focusedTaskId,
     composeRestoreRequest = null,
     mentionRequest = null,
     forceShowComposer: forceComposeMode = false,
@@ -157,7 +157,7 @@ export function MobileLayout() {
   } = useMobileFallbackNoticeState({
     tasks,
     allTasks,
-    focusedTaskId: focusedTaskId ?? null,
+    focusedTaskId,
     currentView: activePrimaryView,
     showFilters,
     isHydrating,

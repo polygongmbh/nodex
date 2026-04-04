@@ -2,7 +2,7 @@ import type { Channel, ChannelMatchMode, QuickFilterState, Relay } from "@/types
 import type { Person } from "@/types/person";
 
 interface BuildFeedDisclosureResetKeyOptions {
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   searchQuery: string;
   relays: Relay[];
   channels: Channel[];

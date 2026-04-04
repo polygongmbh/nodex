@@ -836,6 +836,6 @@ export function useMobileFallbackNoticeState({
     effectiveSearchQuery,
     mobileFallbackMessage,
     shouldShowMobileFallbackNotice: !showFilters && !isHydrating && Boolean(mobileFallbackMessage),
-    mobileShellFocusedTaskId: focusedTaskId || null,
+    mobileShellFocusedTaskId: focusedTaskId,
   };
 }

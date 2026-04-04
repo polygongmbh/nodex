@@ -20,6 +20,7 @@ export interface FeedTaskViewModel extends SharedTaskViewContext {
 const defaultModel: FeedTaskViewModel = {
   tasks: [],
   allTasks: [],
+  focusedTaskId: null,
 };
 
 const FeedTaskViewModelContext = createContext<FeedTaskViewModel>(defaultModel);

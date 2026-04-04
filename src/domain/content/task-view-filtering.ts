@@ -115,7 +115,7 @@ export interface TaskViewFilterSource {
 }
 
 export interface TaskViewFilterScope {
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   includeFocusedTask?: boolean;
   hideClosedTasks?: boolean;
   taskPredicate?: (task: Task) => boolean;
@@ -139,7 +139,7 @@ export interface TaskViewFilterRequest {
 
 export function getDirectMatchTaskIdsForView({
   source,
-  scope = {},
+  scope = { focusedTaskId: null },
   criteria,
 }: TaskViewFilterRequest): Set<string> {
   const { allTasks, filterIndex, prefilteredTaskIds, people } = source;

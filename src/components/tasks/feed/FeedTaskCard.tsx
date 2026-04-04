@@ -39,7 +39,7 @@ interface FeedTaskCardProps {
   currentUser?: Person;
   resolvedAuthor: Person;
   breadcrumb: { id: string; text: string }[];
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   isKeyboardFocused: boolean;
   isMobile: boolean;
   isSlimDesktop: boolean;

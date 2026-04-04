@@ -7,7 +7,7 @@ import type { TaskComposerFormData } from "./TaskComposer";
 import type { TaskCreateResult, TaskInitialStatus } from "@/types";
 
 interface UseComposerSubmitHandlerOptions {
-  parentId?: string;
+  focusedTaskId: string | null;
   initialStatus?: TaskInitialStatus;
   activeRelayIds: string[];
   closeOnSuccess?: boolean;
@@ -15,7 +15,7 @@ interface UseComposerSubmitHandlerOptions {
 }
 
 export function useComposerSubmitHandler({
-  parentId,
+  focusedTaskId,
   initialStatus,
   activeRelayIds,
   closeOnSuccess = false,
@@ -41,7 +41,7 @@ export function useComposerSubmitHandler({
             dueDate: data.dueDate,
             dueTime: data.dueTime,
             dateType: data.dateType,
-            parentId,
+            focusedTaskId,
             initialStatus,
             explicitMentionPubkeys: data.explicitMentionPubkeys,
             mentionIdentifiers: data.mentionIdentifiers,
@@ -66,6 +66,6 @@ export function useComposerSubmitHandler({
         }
       })();
     },
-    [activeRelayIds, closeOnSuccess, dispatch, initialStatus, onCancel, parentId, t]
+    [activeRelayIds, closeOnSuccess, dispatch, focusedTaskId, initialStatus, onCancel, t]
   );
 }

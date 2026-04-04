@@ -8,7 +8,7 @@ interface DepthModeTask {
 interface FilterTasksByDepthModeInput<TTask extends DepthModeTask> {
   tasks: TTask[];
   depthMode: DepthMode;
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   getDepth: (taskId: string) => number;
   hasChildren: (taskId: string) => boolean;
 }
@@ -16,7 +16,7 @@ interface FilterTasksByDepthModeInput<TTask extends DepthModeTask> {
 function matchesDepthMode<TTask extends DepthModeTask>(
   task: TTask,
   depthMode: DepthMode,
-  focusedTaskId: string | null | undefined,
+  focusedTaskId: string | null,
   getDepth: (taskId: string) => number,
   hasChildren: (taskId: string) => boolean
 ): boolean {

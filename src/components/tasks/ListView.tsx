@@ -43,7 +43,7 @@ interface ListViewProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   depthMode?: KanbanDepthMode;
@@ -138,7 +138,7 @@ export function ListView({
   } = useListViewState({
     tasks,
     allTasks,
-    focusedTaskId: focusedTaskId ?? null,
+    focusedTaskId,
     searchQueryOverride,
     depthMode,
   });
@@ -465,7 +465,7 @@ export function ListView({
         visible={authPolicy.canOpenCompose || effectiveForceShowComposer}
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
-        parentId={focusedTaskId || undefined}
+        focusedTaskId={focusedTaskId}
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         composeRestoreRequest={composeRestoreRequest}

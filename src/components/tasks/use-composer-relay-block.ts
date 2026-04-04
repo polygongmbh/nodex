@@ -14,15 +14,15 @@ export interface ComposerRelayBlock {
   externalSubmitBlockByType: Partial<Record<PostType, ComposeSubmitBlockState | null>>;
 }
 
-export function useComposerRelayBlock(parentId?: string): ComposerRelayBlock {
+export function useComposerRelayBlock(focusedTaskId: string | null): ComposerRelayBlock {
   const { relays } = useFeedSurfaceState();
   const { allTasks } = useFeedTaskViewModel();
   const authPolicy = useAuthActionPolicy();
   const { t } = useTranslation();
 
   const parentTask = useMemo(
-    () => (parentId ? allTasks.find((task) => task.id === parentId) : undefined),
-    [allTasks, parentId]
+    () => (focusedTaskId ? allTasks.find((task) => task.id === focusedTaskId) : undefined),
+    [allTasks, focusedTaskId]
   );
 
   const shouldHideComposer = useMemo(() => {
@@ -44,7 +44,7 @@ export function useComposerRelayBlock(parentId?: string): ComposerRelayBlock {
       canInheritParentTags: true,
       hasPendingAttachmentUploads: false,
       hasFailedAttachmentUploads: false,
-      hasInvalidRootTaskRelaySelection: !parentId && activeWritableRelayIds.length !== 1,
+      hasInvalidRootTaskRelaySelection: !focusedTaskId && activeWritableRelayIds.length !== 1,
       t,
     });
     const replyBlock = resolveComposeSubmitBlock({
@@ -58,7 +58,7 @@ export function useComposerRelayBlock(parentId?: string): ComposerRelayBlock {
       t,
     });
     return { task: taskBlock, comment: replyBlock, offer: replyBlock, request: replyBlock };
-  }, [activeWritableRelayIds, authPolicy.canCreateContent, parentId, t]);
+  }, [activeWritableRelayIds, authPolicy.canCreateContent, focusedTaskId, t]);
 
   return {
     shouldHideComposer,

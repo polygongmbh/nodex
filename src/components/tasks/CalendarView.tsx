@@ -57,7 +57,7 @@ interface CalendarViewProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   selectedDate?: Date | null;
@@ -119,7 +119,7 @@ export function CalendarView({
   const taskSource = useTaskViewSource({
     tasks,
     allTasks,
-    focusedTaskId: focusedTaskId ?? null,
+    focusedTaskId,
     searchQueryOverride,
   });
   const calendarSelectors = useMemo(() => createCalendarSelectors(taskSource), [taskSource]);
@@ -795,7 +795,7 @@ export function CalendarView({
                   <TaskCreateComposer
                     onCancel={() => setIsComposingEvent(false)}
                     compact
-                    parentId={focusedTaskId || undefined}
+                    focusedTaskId={focusedTaskId}
                     closeOnSuccess
                     allowComment={false}
                     defaultDueDate={selectedDate}

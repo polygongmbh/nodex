@@ -53,7 +53,7 @@ interface FeedViewProps {
   tasks: Task[];
   allTasks: Task[];
   currentUser?: Person;
-  focusedTaskId?: string | null;
+  focusedTaskId: string | null;
   searchQueryOverride?: string;
   composeRestoreRequest?: ComposeRestoreRequest | null;
   isMobile?: boolean;
@@ -208,7 +208,7 @@ export function FeedView({
   } = useFeedViewState({
     tasks,
     allTasks,
-    focusedTaskId: focusedTaskId ?? null,
+    focusedTaskId,
     searchQueryOverride,
     isMobile,
   });
@@ -540,7 +540,7 @@ export function FeedView({
         visible={!isMobile && (authPolicy.canOpenCompose || effectiveForceShowComposer)}
         onCancel={() => {}}
         draftStorageKey={SHARED_COMPOSE_DRAFT_KEY}
-        parentId={focusedTaskId || undefined}
+        focusedTaskId={focusedTaskId}
         forceExpanded={effectiveForceShowComposer}
         forceExpandSignal={composeGuideActivationSignal}
         mentionRequest={mentionRequest}
