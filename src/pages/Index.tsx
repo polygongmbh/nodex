@@ -58,14 +58,11 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import {
   FeedPageDesktopShell,
-  type FeedPageDesktopContentConfig,
-  type FeedPageDesktopHeaderConfig,
 } from "@/features/feed-page/views/FeedPageDesktopShell";
 import {
   FeedPageMobileShell,
-  type FeedPageMobileController,
 } from "@/features/feed-page/views/FeedPageMobileShell";
-import { FeedPageViewPane } from "@/features/feed-page/views/FeedPageViewPane";
+import { useFeedPageShellConfig } from "@/features/feed-page/views/use-feed-page-shell-config";
 import {
   FeedPageUiConfigProvider,
   type FeedPageUiConfig,
@@ -993,120 +990,40 @@ const Index = () => {
     ]
   );
 
-  const mobileViewState = useMemo(
-    () => ({
-      canCreateContent: authPolicy.canCreateContent,
-      profileCompletionPromptSignal,
-      currentView,
-      isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
-      activeOnboardingStepId,
-      isManageRouteActive,
-    }),
-    [
-      authPolicy.canCreateContent,
-      profileCompletionPromptSignal,
-      currentView,
-      isOnboardingOpen,
-      isAuthModalOpen,
-      activeOnboardingStepId,
-      isManageRouteActive,
-    ]
-  );
-
-  const mobilePublishState = useMemo(
-    () => ({
-      failedPublishDrafts,
-      visibleFailedPublishDrafts,
-      selectedPublishableRelayIds,
-    }),
-    [failedPublishDrafts, visibleFailedPublishDrafts, selectedPublishableRelayIds]
-  );
-
-  const desktopHeader: FeedPageDesktopHeaderConfig = useMemo(
-    () => ({
-      currentView,
-    }),
-    [currentView]
-  );
-
-  const desktopSidebarController = useMemo(
-    () => ({
-      relays: relaysWithActiveState,
-      channels: channelsWithState,
-      collapsedPreviewChannels: focusedTaskCollapsedSidebarPreview.channels,
-      channelMatchMode,
-      people: peopleWithState,
-      collapsedPreviewPeople: focusedTaskCollapsedSidebarPreview.people,
-      nostrRelays,
-      isFocused: isSidebarFocused,
-      quickFilters,
-      savedFilterConfigurations: savedFilterController.configurations,
-      activeSavedFilterConfigurationId: savedFilterController.activeConfigurationId,
-      pinnedChannelIds,
-      pinnedPersonIds,
-    }),
-    [
-      relaysWithActiveState,
-      channelsWithState,
-      focusedTaskCollapsedSidebarPreview.channels,
-      channelMatchMode,
-      peopleWithState,
-      focusedTaskCollapsedSidebarPreview.people,
-      nostrRelays,
-      isSidebarFocused,
-      quickFilters,
-      savedFilterController.configurations,
-      savedFilterController.activeConfigurationId,
-      pinnedChannelIds,
-      pinnedPersonIds,
-    ]
-  );
-
-  const desktopContent: FeedPageDesktopContentConfig = useMemo(
-    () => ({
-      failedPublishQueueBannerState: {
-        drafts: failedPublishDrafts,
-        selectedFeedDrafts: visibleFailedPublishDrafts,
-        selectedRelayIds: selectedPublishableRelayIds,
-      },
-      desktopSwipeHandlers,
-      viewPane: (
-        <FeedPageViewPane
-          currentView={currentView}
-          kanbanDepthMode={kanbanDepthMode}
-          loadingLabel={t("app.loadingView")}
-        />
-      ),
-      searchDockState: {
-        searchQuery,
-        showKanbanLevels: currentView === "kanban" || currentView === "list",
-        kanbanDepthMode,
-      },
-    }),
-    [
-      failedPublishDrafts,
-      visibleFailedPublishDrafts,
-      selectedPublishableRelayIds,
-      desktopSwipeHandlers,
-      currentView,
-      kanbanDepthMode,
-      t,
-      searchQuery,
-    ]
-  );
-
-  const mobileController: FeedPageMobileController = useMemo(
-    () => ({
-      viewState: mobileViewState,
-      publishState: {
-        ...mobilePublishState,
-      },
-    }),
-    [
-      mobileViewState,
-      mobilePublishState,
-    ]
-  );
+  const {
+    mobileController,
+    desktopHeader,
+    desktopContent,
+    desktopSidebarController,
+  } = useFeedPageShellConfig({
+    canCreateContent: authPolicy.canCreateContent,
+    profileCompletionPromptSignal,
+    currentView,
+    isOnboardingOpen,
+    isAuthModalOpen,
+    activeOnboardingStepId,
+    isManageRouteActive,
+    failedPublishDrafts,
+    visibleFailedPublishDrafts,
+    selectedPublishableRelayIds,
+    relaysWithActiveState,
+    channelsWithState,
+    collapsedPreviewChannels: focusedTaskCollapsedSidebarPreview.channels,
+    channelMatchMode,
+    peopleWithState,
+    collapsedPreviewPeople: focusedTaskCollapsedSidebarPreview.people,
+    nostrRelays,
+    isSidebarFocused,
+    quickFilters,
+    savedFilterConfigurations: savedFilterController.configurations,
+    activeSavedFilterConfigurationId: savedFilterController.activeConfigurationId,
+    pinnedChannelIds,
+    pinnedPersonIds,
+    desktopSwipeHandlers,
+    kanbanDepthMode,
+    searchQuery,
+    t,
+  });
 
   // Mobile layout
   if (isMobile) {
