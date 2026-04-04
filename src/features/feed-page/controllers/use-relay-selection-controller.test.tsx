@@ -1,7 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Relay } from "@/types";
-import type { TFunction } from "i18next";
 import { useRelaySelectionController } from "./use-relay-selection-controller";
 import { toast } from "sonner";
 import type { RenderHookResult } from "@testing-library/react";
@@ -16,8 +15,6 @@ const { mockedToast } = vi.hoisted(() => ({
 vi.mock("sonner", () => ({
   toast: mockedToast,
 }));
-
-const t = ((key: string) => key) as unknown as TFunction;
 
 function buildRelay(overrides: Partial<Relay> = {}): Relay {
   return {
@@ -35,7 +32,7 @@ function renderSelectionController(relays: Relay[], reconnectFailureGraceMs = 50
   return renderHook(
     ({ currentRelays }) => useRelaySelectionController({
       relays: currentRelays,
-      t,
+      t: (key) => key,
       reconnectFailureGraceMs,
     }),
     {

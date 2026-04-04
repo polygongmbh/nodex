@@ -118,7 +118,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         vi.advanceTimersByTime(500);
       });
 
-      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Use breadcrumbs" })).toBeInTheDocument();
     });
     vi.useRealTimers();
   });
@@ -224,8 +224,8 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
-      const dialogBefore = screen.getByRole("dialog", { name: "Onboarding guide" });
+      expect(screen.getByRole("heading", { name: "Use breadcrumbs" })).toBeInTheDocument();
+      const dialogBefore = screen.getByTestId("onboarding-guide-dialog");
       const topBefore = (dialogBefore as HTMLElement).style.top;
       expect(topBefore).not.toBe("50%");
 
@@ -251,8 +251,8 @@ describe("OnboardingGuide breadcrumb transitions", () => {
         vi.advanceTimersByTime(120);
       });
 
-      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
-      const dialogDuring = screen.getByRole("dialog", { name: "Onboarding guide" });
+      expect(screen.getByRole("heading", { name: "Use breadcrumbs" })).toBeInTheDocument();
+      const dialogDuring = screen.getByTestId("onboarding-guide-dialog");
       expect((dialogDuring as HTMLElement).style.top).toBe(topBefore);
 
       act(() => {
@@ -285,7 +285,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Use breadcrumbs" })).toBeInTheDocument();
 
       fireEvent.click(screen.getByText("Breadcrumb row"));
       act(() => {
@@ -307,14 +307,14 @@ describe("OnboardingGuide breadcrumb transitions", () => {
     act(() => {
       vi.advanceTimersByTime(300);
     });
-    expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Use breadcrumbs" })).toBeInTheDocument();
 
     act(() => {
       vi.advanceTimersByTime(1500);
     });
 
-    expect(screen.queryByText("Breadcrumb is not visible right now")).not.toBeInTheDocument();
-    expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+    expect(screen.getByTestId("onboarding-guide-dialog")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Use breadcrumbs" })).toBeInTheDocument();
     vi.useRealTimers();
   });
 
@@ -344,14 +344,14 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      expect(screen.getByText("Use breadcrumbs")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Use breadcrumbs" })).toBeInTheDocument();
 
       act(() => {
         vi.advanceTimersByTime(500);
       });
 
       expect(screen.getByText("Breadcrumb row")).toBeInTheDocument();
-      expect(screen.queryByText("Breadcrumb is not visible right now")).not.toBeInTheDocument();
+      expect(screen.getByTestId("onboarding-guide-dialog")).toBeInTheDocument();
     });
     vi.useRealTimers();
   });
@@ -477,7 +477,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       </div>
     );
 
-    const skipButton = screen.getByRole("button", { name: "Skip" });
+    const skipButton = screen.getByTestId("onboarding-guide-skip");
     expect(skipButton).toBeDisabled();
 
     act(() => {
@@ -517,7 +517,7 @@ describe("OnboardingGuide breadcrumb transitions", () => {
       })
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByTestId("onboarding-guide-next"));
 
     expect(onStepChange).toHaveBeenLastCalledWith(
       expect.objectContaining({

@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useRef, useState } from "react";
 import { act } from "react";
-import type { TFunction } from "i18next";
 import { useIndexOnboarding } from "./use-index-onboarding";
 import { makeChannel, makePerson } from "@/test/fixtures";
 import type { Channel } from "@/types";
@@ -52,7 +51,7 @@ function Harness({
     setChannelFilterStates,
     setPeople,
     setIsAuthModalOpen: setAuthOpen,
-    t: ((key: string) => key) as unknown as TFunction,
+    t: (key) => key,
   });
 
   return (

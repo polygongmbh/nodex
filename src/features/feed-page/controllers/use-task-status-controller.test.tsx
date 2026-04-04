@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
-import type { TFunction } from "i18next";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskStatusController } from "./use-task-status-controller";
@@ -30,7 +29,7 @@ function Harness({ publishTaskStateUpdate }: { publishTaskStateUpdate: ReturnTyp
     guardInteraction: () => false,
     publishTaskStateUpdate,
     setLocalTasks,
-    t: ((key: string) => key) as unknown as TFunction,
+    t: (key) => key,
   });
 
   return (

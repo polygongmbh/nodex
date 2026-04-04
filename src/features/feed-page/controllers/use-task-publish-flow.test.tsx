@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { TFunction } from "i18next";
 import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useTaskPublishFlow } from "./use-task-publish-flow";
@@ -71,7 +70,7 @@ function Harness({
     demoFeedActive: forceLocalMode,
     demoRelayId: "demo",
     queryClient,
-    t: ((key: string) => key) as unknown as TFunction,
+    t: (key) => key,
     setLocalTasks,
     setPostedTags,
     suppressedNostrEventIds,

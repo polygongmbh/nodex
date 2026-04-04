@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
-import type { TFunction } from "i18next";
 import { MemoryRouter } from "react-router-dom";
 import { useIndexDerivedData } from "./use-index-derived-data";
 import { useIndexFilters } from "./use-index-filters";
@@ -97,8 +96,7 @@ function Harness() {
     sidebarPeople: [],
     isMobile: false,
     setSearchQuery,
-    t: ((key: string, values?: Record<string, unknown>) =>
-      values ? `${key}:${JSON.stringify(values)}` : key) as unknown as TFunction,
+    t: (key, values) => values ? `${key}:${JSON.stringify(values)}` : key,
   });
 
   const composeIncludedChannels = filters.composeChannelsWithState

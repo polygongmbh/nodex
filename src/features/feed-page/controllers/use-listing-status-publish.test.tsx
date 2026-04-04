@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
-import type { TFunction } from "i18next";
 import { describe, expect, it, vi } from "vitest";
 import { useListingStatusPublish } from "./use-listing-status-publish";
 import { makePerson, makeTask } from "@/test/fixtures";
@@ -42,7 +41,7 @@ function Harness({
     publishEvent,
     resolveTaskOriginRelay: () => ({ relayUrls: ["wss://relay.one"] }),
     setLocalTasks,
-    t: ((key: string) => key) as unknown as TFunction,
+    t: (key) => key,
   });
 
   return (

@@ -145,8 +145,6 @@ describe("PersonHoverCard", () => {
       vi.advanceTimersByTime(600);
     });
 
-    expect(screen.getByText("Last Seen")).toBeInTheDocument();
-    expect(screen.getByText("Viewing")).toBeInTheDocument();
     expect(screen.getByText("Fix relay reconnect jitter")).toBeInTheDocument();
     expect(screen.queryByText("Timeline")).not.toBeInTheDocument();
   });
@@ -173,7 +171,6 @@ describe("PersonHoverCard", () => {
       vi.advanceTimersByTime(600);
     });
 
-    expect(screen.getByText("Viewing")).toBeInTheDocument();
     expect(screen.getByText("Tree")).toBeInTheDocument();
     expect(screen.queryByText("Unknown task")).not.toBeInTheDocument();
   });

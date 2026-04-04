@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import type { TFunction } from "i18next";
 import { useState } from "react";
 import { useTaskPublishControls } from "./use-task-publish-controls";
 import { makeRelay, makeTask } from "@/test/fixtures";
@@ -36,7 +35,7 @@ function Harness({
       setPublishCount((count) => count + 1);
       return { success: true };
     },
-    t: ((key: string) => key) as unknown as TFunction,
+    t: (key) => key,
   });
 
   return (

@@ -1,7 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import type { TFunction } from "i18next";
 import { useState } from "react";
 import { useIndexFilters } from "./use-index-filters";
 import { useRelayFilterState } from "@/features/feed-page/controllers/use-relay-filter-state";
@@ -68,7 +67,7 @@ function Harness({
   const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const relayState = useRelayFilterState({
     relays,
-    t: ((key: string) => key) as unknown as TFunction,
+    t: (key) => key,
   });
   const relaysWithActiveState = relays.map((relay) => ({
     ...relay,
@@ -85,8 +84,7 @@ function Harness({
     sidebarPeople: visibleSidebarPeople,
     hasLiveHydratedScope,
     isHydrating,
-    t: ((key: string, values?: Record<string, unknown>) =>
-      values ? `${key}:${JSON.stringify(values)}` : key) as unknown as TFunction,
+    t: (key, values) => values ? `${key}:${JSON.stringify(values)}` : key,
   });
 
   return (

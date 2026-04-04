@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ListView } from "./ListView";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import { formatBreadcrumbLabel } from "@/lib/breadcrumb-label";
 
 let mockUser: { id: string } | null = { id: "me" };
 const dispatchFeedInteraction = vi.fn();
@@ -330,7 +329,7 @@ describe("ListView priority control", () => {
       />
     );
 
-    const preview = screen.getByText(formatBreadcrumbLabel(task.content));
+    const preview = screen.getByText("Top line frontend bold https://example.com/image.png");
     expect(preview).toBeInTheDocument();
     expect(preview).not.toHaveTextContent("Second line should be hidden");
     expect(screen.queryByRole("link", { name: "https://example.com/image.png" })).not.toBeInTheDocument();

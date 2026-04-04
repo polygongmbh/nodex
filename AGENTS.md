@@ -190,6 +190,10 @@ policies:
       - de
       - es
     production_code_user_facing_strings_must_be_localized: true
+    tests_should_avoid_i18n_import_backed_copy_assertions_by_default: true
+    allowed_test_i18n_import_exceptions:
+      - dedicated_i18n_configuration_or_locale_parity_coverage
+      - explicit_translation_contracts_not_expressible_via_semantics_or_stable_test_ids
     allowed_hardcoded_user_facing_string_exceptions:
       - jurisdiction_or_compliance_text_explicitly_documented_in_code
     locale_updates_must_cover_all_supported_languages: true
@@ -235,6 +239,7 @@ policies:
 - Keep UI tests focused on key flows and accessibility contracts.
 - Do not add cosmetic-only assertions unless explicitly required; any class/style assertion must include a short comment explaining the protected product contract.
 - Prefer semantics-based queries (`getByRole` with accessible names or stable `data-testid`) instead of literal text searches and keep copy-specific assertions inside dedicated i18n/messaging suites. Avoid adding new `data-testid` selectors when stable semantic queries (`getByRole`, labels, landmarks, accessible names) are available. Use `data-testid` only when semantics are genuinely unstable or absent, and keep those usages narrowly scoped and documented in the related test or review notes.
+- Avoid test assertions that depend on importing or mutating the shared i18n runtime just to obtain translated copy. Prefer semantics-based assertions, stable `data-testid` hooks, or narrow translation mocks. Keep direct i18n-import assertions only for dedicated i18n/config coverage or when the translation behavior itself is the product contract under test.
 - Snapshot tests are disallowed for complex UI unless narrowly scoped and justified inline.
 - Treat lint warnings as actionable backlog; do not introduce new warnings. If a lint rule is intentionally relaxed or disabled, document scope and rationale in the same commit.
 

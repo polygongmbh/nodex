@@ -420,8 +420,8 @@ describe("MobileLayout auth wiring", () => {
       taskViewModel: { tasks: sampleTasks, allTasks: sampleTasks, searchQuery: "nomatchquery", isHydrating: true },
     });
 
-    expect(screen.queryByText("No matches for the quick filter, showing all posts.")).not.toBeInTheDocument();
-    expect(screen.getByText("Loading events from relay…")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(/loading/i);
+    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
 
   it("shows scope fallback text when scope and quick filter both have no matches", () => {

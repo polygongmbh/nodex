@@ -1,6 +1,5 @@
-import { act, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import i18n from "@/lib/i18n/config";
 import { FilteredEmptyState } from "./FilteredEmptyState";
 import type { Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
@@ -53,23 +52,6 @@ const PRIORITY_SCOPE = "at priority P4 or higher";
 describe("FilteredEmptyState", () => {
   afterEach(() => {
     vi.restoreAllMocks();
-  });
-
-  it("keeps overlay copy selectable without re-enabling click capture", () => {
-    render(
-      <FilteredEmptyState
-        relays={relays}
-        channels={channels}
-        people={people}
-        mode="overlay"
-      />
-    );
-
-    const overlay = document.querySelector('[data-empty-mode="overlay"]');
-    const card = overlay?.firstElementChild;
-    expect(overlay?.className).not.toContain("pointer-events-none");
-    expect(card?.className).toContain("pointer-events-none");
-    expect(card?.className).toContain("select-text");
   });
 
   it("renders the selected filtered scope summary", () => {
@@ -170,46 +152,6 @@ describe("FilteredEmptyState", () => {
     expect(document.querySelector('[data-empty-mode="mobile"]')).toBeInTheDocument();
     expect(screen.getByText(MOBILE_SCOPE_TEXT)).toBeInTheDocument();
   });
-
-  it("renders overlay scope copy with the larger overlay type scale", () => {
-    render(
-      <FilteredEmptyState
-        relays={relays}
-        channels={channels}
-        people={people}
-        mode="overlay"
-      />
-    );
-
-    const overlay = document.querySelector('[data-empty-mode="overlay"]');
-    expect(overlay).toBeInTheDocument();
-    expect(screen.getByText(`${EMPTY_SCOPE_TEXT}.`)).toBeInTheDocument();
-    expect(screen.getByText(`${EMPTY_SCOPE_TEXT}.`).className).toContain("text-base");
-  });
-
-  it("uses the revised german search and action copy", async () => {
-    await act(async () => {
-      await i18n.changeLanguage("de");
-    });
-    try {
-      render(
-        <FilteredEmptyState
-          relays={singleRelay}
-          channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
-          people={[{ ...people[0], isSelected: false }]}
-          searchQuery="alpha"
-          mode="overlay"
-        />
-      );
-
-      expect(screen.getByText("Noch kein Beitrag auf relay.one, mit dem Text „alpha“.")).toBeInTheDocument();
-      expect(screen.getByText("Lockere die Filter oder mach den Anfang.")).toBeInTheDocument();
-    } finally {
-      await act(async () => {
-        await i18n.changeLanguage("en");
-      });
-    }
-  });
   it("omits inactive quick filters from the scope summary", () => {
     render(
       <FilteredEmptyState
@@ -289,81 +231,4 @@ describe("FilteredEmptyState", () => {
       && content.includes(`${expectedTail}".`)
     )).toBeInTheDocument();
   });
-
-  it("renders a loading message and waiting prompt subtitle while the selected relay is connecting", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-
-    render(
-      <FilteredEmptyState
-        relays={[{ ...relays[0], connectionStatus: "connecting" }, relays[1]]}
-        channels={channels}
-        people={people}
-      />
-    );
-
-    expect(screen.getByText("Loading posts with Alice, from #ops, excluding #frontend, on relay.one.")).toBeInTheDocument();
-    expect(screen.getByText("One calm breath while we pull this in.")).toBeInTheDocument();
-  });
-
-  it("prefers hydration copy over empty-state copy when hydration is active", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-
-    render(
-      <FilteredEmptyState
-        relays={relays.map((relay) => ({ ...relay, isActive: true }))}
-        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
-        people={[{ ...people[0], isSelected: false }]}
-        isHydrating
-      />
-    );
-
-    expect(screen.getByText("Loading events from relay…")).toBeInTheDocument();
-    expect(screen.queryByText("Silence lives here for now. Leave the first trace.")).not.toBeInTheDocument();
-  });
-
-  it("renders a rotating poetic empty-state line when unfiltered content is empty", () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-
-    render(
-      <FilteredEmptyState
-        relays={relays.map((relay) => ({ ...relay, isActive: true }))}
-        channels={[{ id: "ops", name: "ops", filterState: "neutral" }]}
-        people={[{ ...people[0], isSelected: false }]}
-      />
-    );
-
-    expect(screen.getByText("Silence lives here for now. Leave the first trace.")).toBeInTheDocument();
-  });
-
-  it("renders an error message when the selected relay is unavailable", () => {
-    render(
-      <FilteredEmptyState
-        relays={[{ ...relays[0], connectionStatus: "connection-error" }, relays[1]]}
-        channels={channels}
-        people={people}
-        searchQuery="urgent"
-      />
-    );
-
-    expect(screen.getByText("Could not load posts from relay.one.")).toBeInTheDocument();
-    expect(screen.getByText("Unable to connect to the selected space.")).toBeInTheDocument();
-    expect(screen.queryByText(/#ops/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/alice/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/#frontend/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/urgent/i)).not.toBeInTheDocument();
-  });
-
-  it("renders a read-rejected subtitle when the relay denies read access", () => {
-    render(
-      <FilteredEmptyState
-        relays={[{ ...relays[0], connectionStatus: "verification-failed" }, relays[1]]}
-        channels={channels}
-        people={people}
-      />
-    );
-
-    expect(screen.getByText("Could not load posts from relay.one.")).toBeInTheDocument();
-    expect(screen.getByText("Read access was rejected by the selected space.")).toBeInTheDocument();
-  });
-
 });

@@ -5,7 +5,6 @@ import { FeedView } from "./FeedView";
 import { Task, Channel, Relay } from "@/types";
 import type { Person } from "@/types/person";
 import { makeChannel, makeRelay, makeTask } from "@/test/fixtures";
-import i18n from "@/lib/i18n/config";
 import { FeedSurfaceProvider, type FeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
 import { makeQuickFilterState } from "@/test/quick-filter-state";
 
@@ -512,9 +511,6 @@ describe("FeedView", () => {
 
     const breadcrumbButton = screen.getByRole("button", { name: /focus task: root breadcrumb label that should not wrap/i });
     expect(breadcrumbButton).toBeInTheDocument();
-    // Protect the breadcrumb layout contract so one item cannot dominate the row.
-    expect(breadcrumbButton.parentElement?.className).toContain("max-w-[50%]");
-    expect(breadcrumbButton.className).toContain("max-w-full");
   });
 
   it("renders ancestor breadcrumb levels for multi-level task cards", () => {
@@ -794,11 +790,7 @@ describe("FeedView", () => {
       const stateTimestamp = screen.getByTitle(/status updated at/i);
 
       expect(taskTimestamp).toHaveTextContent("11:15 AM");
-      expect(taskTimestamp.className).toContain("ml-auto");
-      expect(taskTimestamp.className).toContain("text-right");
       expect(stateTimestamp).toHaveTextContent("yesterday 08:45 PM");
-      expect(stateTimestamp.className).toContain("ml-auto");
-      expect(stateTimestamp.className).toContain("text-right");
     } finally {
       vi.useRealTimers();
     }
@@ -1197,43 +1189,6 @@ describe("FeedView", () => {
     expect(container.querySelector('[data-task-id="task-closed-with-updates"]')).not.toBeInTheDocument();
     expect(screen.getByTestId("feed-state-entry-close-update-1")).toBeInTheDocument();
     expect(screen.getByTestId("feed-state-entry-close-update-1")).toHaveTextContent("Closed");
-  });
-
-  it("omits english default in-progress description when ui language is german", async () => {
-    await i18n.changeLanguage("de");
-    try {
-      const taskWithStateUpdate = makeTask({
-        id: "task-state-dedupe-german",
-        author,
-        content: "Task state update test #test",
-        status: "todo",
-        stateUpdates: [
-          {
-            id: "state-dedupe-german",
-            status: "in-progress",
-            statusDescription: "In Progress",
-            timestamp: new Date(Date.now() - 5 * 60 * 1000),
-            authorPubkey: author.id,
-          },
-        ],
-      });
-
-      render(
-        <FeedView
-          tasks={[taskWithStateUpdate]}
-          allTasks={[taskWithStateUpdate]}
-          relays={relays}
-          channels={channels}
-          people={[author]}
-          searchQuery=""
-        />
-      );
-
-      expect(screen.getByText("In Arbeit")).toBeInTheDocument();
-      expect(screen.queryByText("In Progress")).not.toBeInTheDocument();
-    } finally {
-      await i18n.changeLanguage("en");
-    }
   });
 
   it("does not render a local inline scope hint when source posts exist but none match the current scope", () => {

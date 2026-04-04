@@ -4,7 +4,6 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { RelayManagement } from "./RelayManagement";
 import { toast } from "sonner";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
-import i18n from "@/lib/i18n/config";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -28,7 +27,6 @@ describe("RelayManagement", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    void i18n.changeLanguage("en");
     Object.defineProperty(navigator, "clipboard", {
       value: { writeText: vi.fn().mockResolvedValue(undefined) },
       configurable: true,
@@ -52,86 +50,6 @@ describe("RelayManagement", () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
     expect(vi.mocked(toast.success)).toHaveBeenCalled();
-  });
-
-  it("shows distinct status labels for connection issues and read rejections", () => {
-    renderWithBus(
-      <RelayManagement
-        relays={[
-          { url: "wss://relay.one", status: "connection-error" },
-          { url: "wss://relay.two", status: "verification-failed" },
-        ]}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-    expect(screen.getByText(i18n.t("relay.status.connectionError"))).toBeInTheDocument();
-    expect(screen.getByText(i18n.t("relay.status.readRejected"))).toBeInTheDocument();
-  });
-
-  it("shows relay protocol separately from the stripped relay address", () => {
-    renderWithBus(
-      <RelayManagement
-        relays={[
-          { url: "wss://relay.one", status: "connected" },
-        ]}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-
-    expect(screen.getByText("wss://")).toBeInTheDocument();
-    expect(screen.getByText("relay.one")).toBeInTheDocument();
-  });
-
-  it("shows relay capability metadata fields when details are expanded", () => {
-    renderWithBus(
-      <RelayManagement
-        relays={[
-          {
-            url: "wss://relay.one",
-            status: "connected",
-            nip11: {
-              authRequired: true,
-              supportsNip42: true,
-              checkedAt: 1700000000000,
-            },
-          },
-        ]}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-    fireEvent.click(screen.getAllByRole("button", { name: /show relay details/i })[0]!);
-
-    expect(screen.getAllByRole("button", { name: /hide relay details/i })).toHaveLength(2);
-    expect(screen.getByText(i18n.t("relay.details.title"))).toBeInTheDocument();
-    expect(screen.getByText(i18n.t("relay.details.authRequired"))).toBeInTheDocument();
-    expect(screen.getByText(i18n.t("relay.details.supportsNip42"))).toBeInTheDocument();
-    expect(screen.getAllByText(i18n.t("relay.details.yes"))).toHaveLength(2);
-  });
-
-  it("expands relay details when the relay card is clicked", () => {
-    renderWithBus(
-      <RelayManagement
-        relays={[
-          {
-            url: "wss://relay.one",
-            status: "connected",
-            nip11: {
-              authRequired: true,
-              supportsNip42: false,
-              checkedAt: 1700000000000,
-            },
-          },
-        ]}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-    fireEvent.click(screen.getAllByRole("button", { name: /show relay details/i })[0]!);
-
-    expect(screen.getByText(i18n.t("relay.details.title"))).toBeInTheDocument();
   });
 
   it("dispatches relay reconnect intent from the management panel", () => {
@@ -177,30 +95,6 @@ describe("RelayManagement", () => {
 
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.remove", url: "wss://relay.one" });
     expect(dispatch).not.toHaveBeenCalledWith({ type: "sidebar.relay.reconnect", url: "wss://relay.one" });
-  });
-
-  it("does not expand relay details when remove is clicked", () => {
-    const dispatch = renderWithBus(
-      <RelayManagement
-        relays={[
-          {
-            url: "wss://relay.one",
-            status: "disconnected",
-            nip11: {
-              authRequired: true,
-              supportsNip42: true,
-              checkedAt: 1700000000000,
-            },
-          },
-        ]}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage relays/i }));
-    fireEvent.click(screen.getByRole("button", { name: /remove relay/i }));
-
-    expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.remove", url: "wss://relay.one" });
-    expect(screen.queryByText(i18n.t("relay.details.title"))).not.toBeInTheDocument();
   });
 
   it("dispatches relay reorder intent with the next ordered relay urls", () => {

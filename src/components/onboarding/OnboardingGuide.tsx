@@ -1092,6 +1092,7 @@ export function OnboardingGuide({
             role="dialog"
             aria-modal="true"
             aria-label={t("onboarding.dialog.ariaLabel")}
+            data-testid="onboarding-guide-dialog"
             ref={guideCardRef}
             className="pointer-events-auto rounded-xl border border-border bg-card/75 backdrop-blur-md text-card-foreground shadow-xl p-4 sm:p-5"
             style={{
@@ -1124,12 +1125,12 @@ export function OnboardingGuide({
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" onClick={onClose} disabled={skipDisabled}>{t("onboarding.dialog.skip")}</Button>
+                    <Button data-testid="onboarding-guide-skip" variant="ghost" onClick={onClose} disabled={skipDisabled}>{t("onboarding.dialog.skip")}</Button>
                     <Button variant="outline" onClick={handleBack} disabled={stepIndex === 0}>
                       {t("onboarding.dialog.back")}
                     </Button>
                   </div>
-                  <Button onClick={handleNext} disabled={nextDisabled}>
+                  <Button data-testid="onboarding-guide-next" onClick={handleNext} disabled={nextDisabled}>
                     {isLastStep ? t("onboarding.dialog.finish") : t("onboarding.dialog.next")}
                   </Button>
                 </div>

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { getOnboardingStepsBySection } from "./onboarding-steps";
-import i18n from "@/lib/i18n/config";
+
+const t = ((key: string) => key) as Parameters<typeof getOnboardingStepsBySection>[2];
 
 describe("onboarding steps", () => {
   it("starts desktop navigation onboarding with task focus before breadcrumb and view switching", () => {
-    const desktop = getOnboardingStepsBySection(false, "tree", i18n.getFixedT("en", "common"));
+    const desktop = getOnboardingStepsBySection(false, "tree", t);
     const navigationIds = desktop.navigation.map((step) => step.id);
 
     expect(navigationIds).toEqual([
@@ -15,7 +16,7 @@ describe("onboarding steps", () => {
   });
 
   it("folds reset guidance into channel and people filter steps", () => {
-    const desktop = getOnboardingStepsBySection(false, "tree", i18n.getFixedT("en", "common"));
+    const desktop = getOnboardingStepsBySection(false, "tree", t);
     const filterIds = desktop.filters.map((step) => step.id);
 
     expect(filterIds).toEqual([
@@ -31,17 +32,14 @@ describe("onboarding steps", () => {
     const peopleStep = desktop.filters.find((step) => step.id === "filters-people");
     const searchStep = desktop.filters.find((step) => step.id === "filters-search");
 
-    expect(channelStep?.description).toContain("left of *Channels*");
-    expect(peopleStep?.description).toContain("left of *People*");
-    expect(channelStep?.description).toContain("show only posts with that channel");
-    expect(peopleStep?.description).toContain("show only content involving that person");
+    expect(channelStep?.target).toBe('[data-onboarding="channels-section"]');
+    expect(peopleStep?.target).toBe('[data-onboarding="people-section"]');
     expect(channelStep?.requiredAction).toBeUndefined();
     expect(peopleStep?.requiredAction).toBeUndefined();
     expect(searchStep?.target).toBe('[data-onboarding="search-bar"]');
   });
 
   it("provides dedicated kanban and calendar guide steps on desktop", () => {
-    const t = i18n.getFixedT("en", "common");
     const kanban = getOnboardingStepsBySection(false, "kanban", t);
     const calendar = getOnboardingStepsBySection(false, "calendar", t);
 
