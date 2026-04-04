@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useRef, useState } from "react";
+import { act } from "react";
 import type { TFunction } from "i18next";
 import { useIndexOnboarding } from "./use-index-onboarding";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
@@ -108,6 +109,7 @@ function Harness({
 describe("useIndexOnboarding", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.useRealTimers();
   });
 
   it("resets view and filters on the mobile navigation-focus step", () => {
@@ -144,8 +146,14 @@ describe("useIndexOnboarding", () => {
   });
 
   it("does not reopen the welcome dialog after signing out later in the session", () => {
+    vi.useFakeTimers();
     render(<Harness />);
 
+    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
+
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
     expect(screen.getByTestId("intro-open")).toHaveTextContent("true");
 
     fireEvent.click(screen.getByRole("button", { name: "SignIn" }));
@@ -157,6 +165,21 @@ describe("useIndexOnboarding", () => {
 
   it("does not auto-open the welcome dialog when the app starts signed in", () => {
     render(<Harness initialUser={{ pubkey: "signed-in" }} />);
+
+    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
+  });
+
+  it("keeps the welcome dialog closed if sign-in finishes before the startup delay", () => {
+    vi.useFakeTimers();
+    render(<Harness />);
+
+    expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
+
+    fireEvent.click(screen.getByRole("button", { name: "SignIn" }));
+
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
 
     expect(screen.getByTestId("intro-open")).toHaveTextContent("false");
   });

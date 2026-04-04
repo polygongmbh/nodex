@@ -1,6 +1,9 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LogIn, Sparkles, UserPlus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+
+const INTRO_FADE_DURATION_MS = 400;
 
 interface OnboardingIntroPopoverProps {
   isOpen: boolean;
@@ -18,17 +21,71 @@ export function OnboardingIntroPopover({
   onSignIn,
 }: OnboardingIntroPopoverProps) {
   const { t } = useTranslation();
+  const [isRendered, setIsRendered] = useState(isOpen);
+  const [isVisible, setIsVisible] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      setIsRendered(true);
+      let secondAnimationFrame = 0;
+      const firstAnimationFrame = window.requestAnimationFrame(() => {
+        secondAnimationFrame = window.requestAnimationFrame(() => {
+          setIsVisible(true);
+        });
+      });
+
+      return () => {
+        window.cancelAnimationFrame(firstAnimationFrame);
+        window.cancelAnimationFrame(secondAnimationFrame);
+      };
+    }
+
+    setIsVisible(false);
+    if (!isRendered) {
+      return;
+    }
+
+    const closeTimeout = window.setTimeout(() => {
+      setIsRendered(false);
+    }, INTRO_FADE_DURATION_MS);
+
+    return () => {
+      window.clearTimeout(closeTimeout);
+    };
+  }, [isOpen, isRendered]);
+
+  if (!isRendered) return null;
+
+  const state = isVisible ? "open" : "closed";
+  const overlayStyle = {
+    opacity: isVisible ? 1 : 0,
+    transitionDuration: `${INTRO_FADE_DURATION_MS}ms`,
+  } as const;
+  const dialogStyle = {
+    opacity: isVisible ? 1 : 0,
+    transform: isVisible ? "translateY(0)" : "translateY(12px)",
+    transitionDuration: `${INTRO_FADE_DURATION_MS}ms`,
+  } as const;
 
   return (
-    <div className="fixed inset-0 z-[135] flex items-center justify-center pointer-events-auto" role="presentation">
-      <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
+    <div
+      className="fixed inset-0 z-[135] flex items-center justify-center pointer-events-auto"
+      data-state={state}
+      role="presentation"
+    >
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-black/40 transition-opacity"
+        data-state={state}
+        style={overlayStyle}
+      />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={t("onboarding.intro.ariaLabel")}
-        className="relative mx-2 w-full max-w-lg rounded-xl border border-border bg-card/95 p-6 text-card-foreground shadow-xl backdrop-blur-md"
+        className="relative mx-2 w-full max-w-lg rounded-xl border border-border bg-card/95 p-6 text-card-foreground shadow-xl backdrop-blur-md transition-all"
+        data-state={state}
+        style={dialogStyle}
       >
         <div className="space-y-3">
           <h2 className="text-xl font-semibold">{t("onboarding.intro.title")}</h2>

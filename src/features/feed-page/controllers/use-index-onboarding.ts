@@ -18,6 +18,8 @@ import type { Person } from "@/types/person";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useFeedDemoBootstrap } from "./use-feed-demo-bootstrap";
 
+const STARTUP_ONBOARDING_INTRO_DELAY_MS = 300;
+
 interface GuideDemoBootstrapOptions<Kind0Event> {
   totalTasks: number;
   demoFeedActive: boolean;
@@ -148,7 +150,13 @@ export function useIndexOnboarding<Kind0Event>({
       onboardingCompleted: onboardingState.completed,
       openedWithFocusedTask: openedWithFocusedTaskRef.current,
     }) && !user) {
-      queueOnboardingIntro(false, "all", !user);
+      const introTimeout = window.setTimeout(() => {
+        queueOnboardingIntro(false, "all", !user);
+      }, STARTUP_ONBOARDING_INTRO_DELAY_MS);
+
+      return () => {
+        window.clearTimeout(introTimeout);
+      };
     }
   }, [openedWithFocusedTaskRef, queueOnboardingIntro, user]);
 
