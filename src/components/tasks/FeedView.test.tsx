@@ -202,6 +202,47 @@ describe("FeedView", () => {
     expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
   });
 
+  it("reveals more entries before reaching the exact end of the feed", () => {
+    const manyTasks = Array.from({ length: 75 }, (_, index) =>
+      makeTask({
+        id: `task-${index + 1}`,
+        content: `Task ${index + 1} #general`,
+        author,
+        status: "todo",
+        timestamp: new Date(2026, 0, 1, 0, 75 - index),
+      })
+    );
+
+    const { container } = render(
+      <FeedView
+        tasks={manyTasks}
+        allTasks={manyTasks}
+        searchQueryOverride=""
+      />
+    );
+
+    const scroller = container.querySelector('[data-onboarding="task-list"]');
+    expect(scroller).not.toBeNull();
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(40);
+
+    Object.defineProperty(scroller, "scrollHeight", {
+      configurable: true,
+      value: 2400,
+    });
+    Object.defineProperty(scroller, "clientHeight", {
+      configurable: true,
+      value: 1200,
+    });
+    Object.defineProperty(scroller, "scrollTop", {
+      configurable: true,
+      value: 300,
+    });
+
+    fireEvent.scroll(scroller as HTMLElement);
+
+    expect(container.querySelectorAll("[data-task-id]").length).toBe(70);
+  });
+
   it("hides the scope footer while more feed entries still remain to hydrate", () => {
     const manyTasks = Array.from({ length: 75 }, (_, index) =>
       makeTask({

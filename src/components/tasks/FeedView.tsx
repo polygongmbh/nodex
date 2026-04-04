@@ -70,6 +70,7 @@ interface FeedViewProps {
 }
 
 const FEED_REVEAL_SCROLL_THRESHOLD_PX = 720;
+const FEED_REVEAL_SCROLL_THRESHOLD_VIEWPORT_RATIO = 0.75;
 const DESKTOP_FEED_ROW_CONTENT_PADDING = "px-3";
 
 interface FeedDueDateChipProps {
@@ -301,9 +302,15 @@ export function FeedView({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
 
+  const getRevealThresholdPx = (container: HTMLDivElement) =>
+    Math.max(
+      FEED_REVEAL_SCROLL_THRESHOLD_PX,
+      Math.round(container.clientHeight * FEED_REVEAL_SCROLL_THRESHOLD_VIEWPORT_RATIO)
+    );
+
   const isWithinRevealThreshold = (container: HTMLDivElement) => {
     const remainingDistance = container.scrollHeight - (container.scrollTop + container.clientHeight);
-    return remainingDistance <= FEED_REVEAL_SCROLL_THRESHOLD_PX;
+    return remainingDistance <= getRevealThresholdPx(container);
   };
 
   useEffect(() => {
@@ -339,7 +346,7 @@ export function FeedView({
       },
       {
         root,
-        rootMargin: "0px 0px 480px 0px",
+        rootMargin: `0px 0px ${getRevealThresholdPx(root)}px 0px`,
         threshold: 0,
       }
     );
