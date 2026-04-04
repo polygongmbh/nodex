@@ -59,7 +59,7 @@ export function MobileFilters({
   const [newRelayUrl, setNewRelayUrl] = useState("");
   const [showKey, setShowKey] = useState(false);
   const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
-  const effectiveProfile = user?.profile ?? {};
+  const effectiveProfile = useMemo(() => user?.profile ?? {}, [user?.profile]);
   const {
     fields: {
       profileName,

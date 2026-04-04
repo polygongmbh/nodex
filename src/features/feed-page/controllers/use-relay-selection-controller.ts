@@ -152,14 +152,15 @@ export function useRelaySelectionController({
         clearPendingReconnectSelection(relayId);
       }
     });
-  }, [activeRelayIds, clearPendingReconnectSelection, relays, setActiveRelayIds]);
+  }, [activeRelayIds, clearPendingReconnectSelection, relays, setActiveRelayIds, t]);
 
   useEffect(() => {
+    const pendingReconnectSelections = pendingReconnectSelectionsRef.current;
     return () => {
-      pendingReconnectSelectionsRef.current.forEach((pendingSelection) => {
+      pendingReconnectSelections.forEach((pendingSelection) => {
         window.clearTimeout(pendingSelection.timeoutId);
       });
-      pendingReconnectSelectionsRef.current.clear();
+      pendingReconnectSelections.clear();
     };
   }, []);
 

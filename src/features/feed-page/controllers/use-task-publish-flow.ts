@@ -691,6 +691,7 @@ export function useTaskPublishFlow({
     return { ok: true, mode: "published" };
   }, [
     allTasks,
+    canCreateContent,
     dispatchFrecencyIntent,
     currentUser,
     demoFeedActive,

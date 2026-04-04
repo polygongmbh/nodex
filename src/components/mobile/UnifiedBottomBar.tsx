@@ -954,7 +954,7 @@ export function UnifiedBottomBar({
     void handleSubmit("task");
   };
 
-  const useCurrentLocation = () => {
+  const captureCurrentLocation = () => {
     featureDebugLog("compose-location", "Attempting mobile location capture");
     if (!navigator.geolocation) {
       featureDebugLog("compose-location", "Mobile location capture unavailable: geolocation API missing");
@@ -982,7 +982,7 @@ export function UnifiedBottomBar({
       setLocationGeohash(undefined);
       return;
     }
-    useCurrentLocation();
+    captureCurrentLocation();
   };
 
   const addMentionTagOnly = (person: Person) => {
