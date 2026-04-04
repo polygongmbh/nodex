@@ -13,11 +13,25 @@ import {
   shouldForceFeedAndResetFiltersOnStep,
 } from "@/lib/onboarding-step-rules";
 import { mapPeopleSelection, setAllChannelFilters } from "@/domain/content/filter-state-utils";
-import type { Channel, Relay } from "@/types";
+import type { Channel, Relay, Task } from "@/types";
 import type { Person } from "@/types/person";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
+import { useFeedDemoBootstrap } from "./use-feed-demo-bootstrap";
 
-interface UseIndexOnboardingOptions {
+interface GuideDemoBootstrapOptions<Kind0Event> {
+  totalTasks: number;
+  demoFeedActive: boolean;
+  demoRelayId: string;
+  getDemoSeedTasks: () => Task[];
+  demoKind0Events: Kind0Event[];
+  setGuideDemoFeedEnabled: Dispatch<SetStateAction<boolean>>;
+  setLocalTasks: Dispatch<SetStateAction<Task[]>>;
+  seedCachedKind0Events: (events: Kind0Event[]) => void;
+  setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
+  navigate: (to: string) => void;
+}
+
+interface UseIndexOnboardingOptions<Kind0Event> {
   user: { pubkey?: string } | null | undefined;
   isMobile: boolean;
   currentView: ViewType;
@@ -25,7 +39,7 @@ interface UseIndexOnboardingOptions {
   relays: Relay[];
   openedWithFocusedTaskRef: MutableRefObject<boolean>;
   shouldForceAuthAfterOnboarding: boolean;
-  ensureGuideDataAvailable: () => void;
+  guideDemoBootstrap: GuideDemoBootstrapOptions<Kind0Event>;
   onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
@@ -37,7 +51,7 @@ interface UseIndexOnboardingOptions {
   t: TFunction;
 }
 
-export function useIndexOnboarding({
+export function useIndexOnboarding<Kind0Event>({
   user,
   isMobile,
   currentView,
@@ -45,7 +59,7 @@ export function useIndexOnboarding({
   relays,
   openedWithFocusedTaskRef,
   shouldForceAuthAfterOnboarding,
-  ensureGuideDataAvailable,
+  guideDemoBootstrap,
   onBeforeResetFocusedTaskScope,
   setCurrentView,
   setFocusedTaskId,
@@ -55,7 +69,8 @@ export function useIndexOnboarding({
   setPeople,
   setIsAuthModalOpen,
   t,
-}: UseIndexOnboardingOptions) {
+}: UseIndexOnboardingOptions<Kind0Event>) {
+  const { ensureGuideDataAvailable } = useFeedDemoBootstrap(guideDemoBootstrap);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isOnboardingIntroOpen, setIsOnboardingIntroOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);

@@ -37,7 +37,6 @@ import { usePinnedSidebarPeople } from "@/features/feed-page/controllers/use-pin
 import { useFeedInteractionFrecency } from "@/features/feed-page/controllers/use-feed-interaction-frecency";
 import { useIndexRelayShell } from "@/features/feed-page/controllers/use-index-relay-shell";
 import { useAuthModalRoute } from "@/features/feed-page/controllers/use-auth-modal-route";
-import { useFeedDemoBootstrap } from "@/features/feed-page/controllers/use-feed-demo-bootstrap";
 import { useListingStatusPublish } from "@/features/feed-page/controllers/use-listing-status-publish";
 import { useRelayAutoReconnect } from "@/features/feed-page/controllers/use-relay-auto-reconnect";
 import { useFeedAuthPolicy } from "@/features/feed-page/controllers/use-feed-auth-policy";
@@ -552,19 +551,6 @@ const Index = () => {
     setPeople,
   });
 
-  const { ensureGuideDataAvailable } = useFeedDemoBootstrap({
-    totalTasks: allTasks.length,
-    demoFeedActive,
-    demoRelayId: DEMO_RELAY_ID,
-    getDemoSeedTasks,
-    demoKind0Events: mockKind0Events,
-    setGuideDemoFeedEnabled,
-    setLocalTasks,
-    seedCachedKind0Events,
-    setActiveRelayIds,
-    navigate,
-  });
-
   const {
     isOnboardingOpen,
     isOnboardingIntroOpen,
@@ -589,7 +575,18 @@ const Index = () => {
     relays,
     openedWithFocusedTaskRef,
     shouldForceAuthAfterOnboarding,
-    ensureGuideDataAvailable,
+    guideDemoBootstrap: {
+      totalTasks: allTasks.length,
+      demoFeedActive,
+      demoRelayId: DEMO_RELAY_ID,
+      getDemoSeedTasks,
+      demoKind0Events: mockKind0Events,
+      setGuideDemoFeedEnabled,
+      setLocalTasks,
+      seedCachedKind0Events,
+      setActiveRelayIds,
+      navigate,
+    },
     onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,

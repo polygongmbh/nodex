@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useIndexOnboarding } from "./use-index-onboarding";
 import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Channel, Relay } from "@/types";
+import type { Channel, Relay, Task } from "@/types";
 import type { Person } from "@/types/person";
 
 const relays: Relay[] = [
@@ -42,6 +42,10 @@ function Harness({
   const [people, setPeople] = useState<Person[]>(peopleSeed);
   const [authOpen, setAuthOpen] = useState(false);
   const [guideBootstrapCount, setGuideBootstrapCount] = useState(0);
+  const [guideDemoFeedEnabled, setGuideDemoFeedEnabled] = useState(false);
+  const [localTasks, setLocalTasks] = useState<Task[]>([]);
+  const seedCachedKind0Events = vi.fn(() => setGuideBootstrapCount((count) => count + 1));
+  const navigate = vi.fn();
 
   const onboarding = useIndexOnboarding({
     user,
@@ -51,7 +55,18 @@ function Harness({
     relays,
     openedWithFocusedTaskRef,
     shouldForceAuthAfterOnboarding,
-    ensureGuideDataAvailable: () => setGuideBootstrapCount((count) => count + 1),
+    guideDemoBootstrap: {
+      totalTasks: 0,
+      demoFeedActive: false,
+      demoRelayId: "demo",
+      getDemoSeedTasks: () => [makeTask({ id: "demo-task" })],
+      demoKind0Events: [{ kind: 0 }],
+      setGuideDemoFeedEnabled,
+      setLocalTasks,
+      seedCachedKind0Events,
+      setActiveRelayIds,
+      navigate,
+    },
     setCurrentView,
     setFocusedTaskId,
     setSearchQuery,
@@ -84,6 +99,8 @@ function Harness({
       <output data-testid="guide-open">{String(onboarding.isOnboardingOpen)}</output>
       <output data-testid="intro-open">{String(onboarding.isOnboardingIntroOpen)}</output>
       <output data-testid="guide-bootstrap-count">{String(guideBootstrapCount)}</output>
+      <output data-testid="guide-demo-enabled">{String(guideDemoFeedEnabled)}</output>
+      <output data-testid="local-task-count">{String(localTasks.length)}</output>
     </>
   );
 }
@@ -122,6 +139,8 @@ describe("useIndexOnboarding", () => {
 
     expect(screen.getByTestId("guide-open")).toHaveTextContent("true");
     expect(screen.getByTestId("guide-bootstrap-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("guide-demo-enabled")).toHaveTextContent("true");
+    expect(screen.getByTestId("local-task-count")).toHaveTextContent("1");
   });
 
   it("does not reopen the welcome dialog after signing out later in the session", () => {
