@@ -5,7 +5,6 @@ export interface Relay {
   isActive: boolean;
   connectionStatus?: "connected" | "read-only" | "connecting" | "disconnected" | "connection-error" | "verification-failed";
   url?: string;
-  postCount?: number;
 }
 
 export interface Channel {

@@ -71,6 +71,7 @@ function Harness() {
 
   const derived = useIndexDerivedData({
     nostrEvents,
+    demoTasks: [],
     localTasks: [],
     postedTags,
     suppressedNostrEventIds: new Set(),
@@ -181,6 +182,7 @@ function SidebarPeopleHarness() {
 
   const derived = useIndexDerivedData({
     nostrEvents: [],
+    demoTasks: [],
     localTasks: tasks,
     postedTags: [],
     suppressedNostrEventIds: new Set(),
@@ -258,6 +260,7 @@ function MentionAutocompleteHarness() {
 
   const derived = useIndexDerivedData({
     nostrEvents,
+    demoTasks: [],
     localTasks: [],
     postedTags: [],
     suppressedNostrEventIds: new Set(),

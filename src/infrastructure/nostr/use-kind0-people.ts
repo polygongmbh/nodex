@@ -38,14 +38,13 @@ interface UseKind0PeopleResult {
   cachedKind0Events: Kind0LikeEvent[];
   latestPresenceByAuthor: Map<string, LatestPresenceSnapshot>;
   supplementalLatestActivityByAuthor: Map<string, number>;
-  seedCachedKind0Events: (events: Kind0LikeEvent[]) => void;
   removeCachedRelayProfile: (relayUrl: string) => void;
 }
 
 export function useKind0People(
   nostrEvents: CachedNostrEvent[],
   selectedRelayUrls: string[],
-  user: NostrUserLike | null
+  user: NostrUserLike | null,
 ): UseKind0PeopleResult {
   const [people, setPeople] = useState<Person[]>([]);
   const [cachedKind0Events, setCachedKind0Events] = useState<Kind0LikeEvent[]>(() =>
@@ -183,12 +182,14 @@ export function useKind0People(
     () =>
       Array.from(
         new Set(
-          nostrEvents
-            .map((event) => event.pubkey?.trim().toLowerCase())
+          [
+            ...nostrEvents.map((event) => event.pubkey?.trim().toLowerCase()),
+            ...cachedKind0Events.map((event) => event.pubkey?.trim().toLowerCase()),
+          ]
             .filter((pubkey): pubkey is string => Boolean(pubkey))
         )
       ),
-    [nostrEvents]
+    [cachedKind0Events, nostrEvents]
   );
 
   useEffect(() => {
@@ -230,15 +231,6 @@ export function useKind0People(
     });
   }, [cachedKind0Events, fallbackKind0Events, loggedInIdentityPriority, user, visiblePubkeys]);
 
-  const seedCachedKind0Events = useCallback(
-    (events: Kind0LikeEvent[]) => {
-      const existing = loadCachedKind0Events();
-      saveCachedKind0Events([...existing, ...events]);
-      setCacheRevision((previous) => previous + 1);
-    },
-    []
-  );
-
   const removeCachedRelayProfile = useCallback((relayUrl: string) => {
     removeCachedKind0EventsByRelayUrl(relayUrl);
     setCacheRevision((previous) => previous + 1);
@@ -250,7 +242,6 @@ export function useKind0People(
     cachedKind0Events,
     latestPresenceByAuthor,
     supplementalLatestActivityByAuthor,
-    seedCachedKind0Events,
     removeCachedRelayProfile,
   };
 }

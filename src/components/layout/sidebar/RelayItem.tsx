@@ -137,9 +137,6 @@ export function RelayItem({ relay, isKeyboardFocused = false }: RelayItemProps) 
         </span>
       </button>
 
-      {relay.postCount && relay.postCount > 0 && (
-        <span className="text-xs text-muted-foreground">{relay.postCount}</span>
-      )}
     </SidebarFilterRow>
   );
 

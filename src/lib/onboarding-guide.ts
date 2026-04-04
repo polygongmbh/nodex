@@ -7,11 +7,6 @@ interface ComposeForceParams {
   currentView?: "tree" | "feed" | "kanban" | "calendar" | "list";
 }
 
-interface GuideDemoBootstrapParams {
-  totalTasks: number;
-  demoFeedActive: boolean;
-}
-
 export function shouldForceComposeForGuide({
   isOnboardingOpen,
   activeOnboardingStepId,
@@ -29,11 +24,4 @@ export function shouldForceComposeForGuide({
 
 export function getOnboardingBehaviorGateId(stepId: string): string {
   return stepId;
-}
-
-export function shouldBootstrapGuideDemoFeed({
-  totalTasks,
-  demoFeedActive,
-}: GuideDemoBootstrapParams): boolean {
-  return totalTasks === 0 && !demoFeedActive;
 }

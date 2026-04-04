@@ -13,35 +13,19 @@ import {
   shouldForceFeedAndResetFiltersOnStep,
 } from "@/lib/onboarding-step-rules";
 import { mapPeopleSelection, setAllChannelFilters } from "@/domain/content/filter-state-utils";
-import type { Channel, Relay, Task } from "@/types";
+import type { Channel } from "@/types";
 import type { Person } from "@/types/person";
 import type { ViewType } from "@/components/tasks/ViewSwitcher";
-import { useFeedDemoBootstrap } from "./use-feed-demo-bootstrap";
 
 const STARTUP_ONBOARDING_INTRO_DELAY_MS = 300;
 
-interface GuideDemoBootstrapOptions<Kind0Event> {
-  totalTasks: number;
-  demoFeedActive: boolean;
-  demoRelayId: string;
-  getDemoSeedTasks: () => Task[];
-  demoKind0Events: Kind0Event[];
-  setGuideDemoFeedEnabled: Dispatch<SetStateAction<boolean>>;
-  setLocalTasks: Dispatch<SetStateAction<Task[]>>;
-  seedCachedKind0Events: (events: Kind0Event[]) => void;
-  setActiveRelayIds: Dispatch<SetStateAction<Set<string>>>;
-  navigate: (to: string) => void;
-}
-
-interface UseIndexOnboardingOptions<Kind0Event> {
+interface UseIndexOnboardingOptions {
   user: { pubkey?: string } | null | undefined;
   isMobile: boolean;
   currentView: ViewType;
   channels: Channel[];
-  relays: Relay[];
   openedWithFocusedTaskRef: MutableRefObject<boolean>;
   shouldForceAuthAfterOnboarding: boolean;
-  guideDemoBootstrap: GuideDemoBootstrapOptions<Kind0Event>;
   onBeforeResetFocusedTaskScope?: () => void;
   setCurrentView: (view: ViewType) => void;
   setFocusedTaskId: (taskId: string | null) => void;
@@ -53,15 +37,13 @@ interface UseIndexOnboardingOptions<Kind0Event> {
   t: TFunction;
 }
 
-export function useIndexOnboarding<Kind0Event>({
+export function useIndexOnboarding({
   user,
   isMobile,
   currentView,
   channels,
-  relays,
   openedWithFocusedTaskRef,
   shouldForceAuthAfterOnboarding,
-  guideDemoBootstrap,
   onBeforeResetFocusedTaskScope,
   setCurrentView,
   setFocusedTaskId,
@@ -71,8 +53,7 @@ export function useIndexOnboarding<Kind0Event>({
   setPeople,
   setIsAuthModalOpen,
   t,
-}: UseIndexOnboardingOptions<Kind0Event>) {
-  const { ensureGuideDataAvailable } = useFeedDemoBootstrap(guideDemoBootstrap);
+}: UseIndexOnboardingOptions) {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isOnboardingIntroOpen, setIsOnboardingIntroOpen] = useState(false);
   const [onboardingInitialSection, setOnboardingInitialSection] = useState<OnboardingInitialSection>(null);
@@ -107,20 +88,18 @@ export function useIndexOnboarding<Kind0Event>({
   }, []);
 
   const handleStartOnboardingTour = useCallback(() => {
-    ensureGuideDataAvailable();
     setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(true);
-  }, [ensureGuideDataAvailable]);
+  }, []);
 
   const handleOpenGuide = useCallback(() => {
-    ensureGuideDataAvailable();
     const initialSectionForOpen: OnboardingInitialSection = isMobile ? "all" : null;
     setOnboardingManualStart(true);
     setOnboardingInitialSection(initialSectionForOpen);
     setActiveOnboardingSection(null);
     setIsOnboardingIntroOpen(false);
     setIsOnboardingOpen(true);
-  }, [ensureGuideDataAvailable, isMobile]);
+  }, [isMobile]);
 
   const handleCloseGuide = useCallback(() => {
     setIsOnboardingIntroOpen(false);

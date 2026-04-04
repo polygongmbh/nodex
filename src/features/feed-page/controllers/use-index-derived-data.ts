@@ -37,6 +37,7 @@ const INITIAL_CHANNEL_SEED_LIMIT = 16;
 
 export interface UseIndexDerivedDataOptions {
   nostrEvents: CachedNostrEvent[];
+  demoTasks: Task[];
   localTasks: Task[];
   postedTags: PostedTag[];
   suppressedNostrEventIds: Set<string>;
@@ -81,6 +82,7 @@ function getPostedTagsForRelayScope(
 
 export function useIndexDerivedData({
   nostrEvents,
+  demoTasks,
   localTasks,
   postedTags,
   suppressedNostrEventIds,
@@ -137,9 +139,10 @@ export function useIndexDerivedData({
   }, [filteredNostrEvents, isHydrating]);
 
   const allTasks = useMemo(() => {
-    const localTasksForMerge = filterPendingLocalTasksForMerge(localTasks, nostrTasks);
-    return dedupeMergedTasks(mergeTasks(localTasksForMerge, nostrTasks));
-  }, [localTasks, nostrTasks]);
+    const fixtureAndNostrTasks = dedupeMergedTasks(mergeTasks(demoTasks, nostrTasks));
+    const localTasksForMerge = filterPendingLocalTasksForMerge(localTasks, fixtureAndNostrTasks);
+    return dedupeMergedTasks(mergeTasks(localTasksForMerge, fixtureAndNostrTasks));
+  }, [demoTasks, localTasks, nostrTasks]);
 
   const personalizedChannelScores = useMemo(
     () => getChannelFrecencyScores(channelFrecencyState),
@@ -150,17 +153,17 @@ export function useIndexDerivedData({
     [personFrecencyState]
   );
 
-  const scopedLocalTasksForChannels = useMemo(() => {
+  const scopedSeedTasksForChannels = useMemo(() => {
     const channelRelayScopeIds = resolveChannelRelayScopeIds(
       effectiveActiveRelayIds,
       relays.map((relay) => relay.id)
     );
-    return localTasks.filter(
+    return [...demoTasks, ...localTasks].filter(
       (task) =>
         task.relays.length === 0 ||
         task.relays.some((relayId) => channelRelayScopeIds.has(relayId))
     );
-  }, [effectiveActiveRelayIds, localTasks, relays]);
+  }, [demoTasks, effectiveActiveRelayIds, localTasks, relays]);
 
   const scopedNostrEventsForChannels = useMemo(() => {
     const channelRelayScopeIds = resolveChannelRelayScopeIds(
@@ -188,7 +191,7 @@ export function useIndexDerivedData({
       relays.map((relay) => relay.id)
     );
     return deriveChannels(
-      scopedLocalTasksForChannels,
+      scopedSeedTasksForChannels,
       scopedNostrEventsForChannels,
       scopedPostedTags,
       {
@@ -199,7 +202,7 @@ export function useIndexDerivedData({
       }
     );
   }, [
-    scopedLocalTasksForChannels,
+    scopedSeedTasksForChannels,
     scopedNostrEventsForChannels,
     postedTags,
     effectiveActiveRelayIds,
@@ -213,8 +216,8 @@ export function useIndexDerivedData({
       effectiveActiveRelayIds,
       relays.map((relay) => relay.id)
     );
-    return deriveChannels(scopedLocalTasksForChannels, scopedNostrEventsForChannels, scopedPostedTags, 1);
-  }, [postedTags, scopedLocalTasksForChannels, scopedNostrEventsForChannels, effectiveActiveRelayIds, relays]);
+    return deriveChannels(scopedSeedTasksForChannels, scopedNostrEventsForChannels, scopedPostedTags, 1);
+  }, [postedTags, scopedSeedTasksForChannels, scopedNostrEventsForChannels, effectiveActiveRelayIds, relays]);
 
   const mentionAutocompletePeople = useMemo(() => {
     const visiblePubkeys = Array.from(
@@ -276,7 +279,7 @@ export function useIndexDerivedData({
     nostrTasks,
     allTasks,
     personalizedChannelScores,
-    scopedLocalTasksForChannels,
+    scopedLocalTasksForChannels: scopedSeedTasksForChannels,
     scopedNostrEventsForChannels,
     channels,
     composeChannels,

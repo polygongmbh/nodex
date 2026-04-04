@@ -115,7 +115,7 @@ export function relayUrlToDomainMinusTld(
 }
 
 export function relayUrlToId(url: string): string {
-  return stripRelayProtocol(url).replace(/[./]/g, "-");
+  return stripRelayProtocol(url).toLowerCase().replace(/[./]/g, "-");
 }
 
 export function relayUrlToName(url: string): string {

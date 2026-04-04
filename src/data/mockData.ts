@@ -1,6 +1,8 @@
 import { Relay, Channel, Task, TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
 import { addDays, subDays } from "date-fns";
+import { NostrEventKind } from "@/lib/nostr/types";
+import { DEMO_RELAY_URL } from "./basic-nostr-events";
 
 const today = new Date();
 
@@ -14,7 +16,7 @@ const MOCK_PUBKEYS = {
 };
 
 export const mockRelays: Relay[] = [
-  { id: "demo", name: "Demo", icon: "play-circle", isActive: true, postCount: 42 },
+  { id: "demo", name: "Demo", icon: "play-circle", isActive: true, url: DEMO_RELAY_URL },
 ];
 
 export const mockChannels: Channel[] = [
@@ -41,27 +43,18 @@ export const mockPeople: Person[] = [
   { id: MOCK_PUBKEYS.david, name: "david", displayName: "David Kim", isOnline: false, isSelected: false },
 ];
 
-export interface MockKind0Event {
-  kind: number;
-  pubkey: string;
-  created_at: number;
-  content: string;
-}
-
-export const mockKind0Events: MockKind0Event[] = mockPeople.map((person, index) => {
-  const profile = {
+export const mockKind0Events = mockPeople.map((person, index) => ({
+  kind: NostrEventKind.Metadata,
+  pubkey: person.id,
+  created_at: Math.floor(Date.now() / 1000) - index,
+  content: JSON.stringify({
     name: person.name,
     displayName: person.displayName,
     picture: person.avatar,
     nip05: person.nip05,
-  };
-  return {
-    kind: 0,
-    pubkey: person.id,
-    created_at: Math.floor(Date.now() / 1000) - index,
-    content: JSON.stringify(profile),
-  };
-});
+    about: person.about,
+  }),
+}));
 
 // Counter for generating unique event IDs
 let eventCounter = 0;

@@ -11,9 +11,7 @@ import { useKeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 import { useNDK } from "@/infrastructure/nostr/ndk-context";
 import { OnboardingGuide } from "@/components/onboarding/OnboardingGuide";
 import { OnboardingIntroPopover } from "@/components/onboarding/OnboardingIntroPopover";
-import { mergeTasks } from "@/domain/content/task-merge";
 import { getRelayIdFromUrl, getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
-import { nostrEventsToTasks } from "@/infrastructure/nostr/task-converter";
 import { NostrEventKind } from "@/lib/nostr/types";
 import { shouldPromptSignInAfterOnboarding } from "@/lib/onboarding-auth-prompt";
 import { filterTasksByRelayAndPeople } from "@/domain/content/task-filtering";
@@ -47,8 +45,7 @@ import { applyTaskSortOverlays } from "@/domain/content/task-collections";
 import { buildTaskViewFilterIndex, filterTasksForView } from "@/domain/content/task-view-filtering";
 import { resolveChannelRelayScopeIds } from "@/domain/relays/relay-scope";
 import { isDemoFeedEnabled } from "@/lib/demo-feed-config";
-import { mockKind0Events, mockTasks, mockRelays as demoRelays } from "@/data/mockData";
-import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
+import { mockRelays as demoRelays } from "@/data/mockData";
 import {
   Relay,
   PostedTag,
@@ -77,10 +74,6 @@ import { featureDebugLog } from "@/lib/feature-debug";
 // Demo relay constant
 const DEMO_RELAY_ID = "demo";
 const DEMO_FEED_ENABLED = isDemoFeedEnabled(import.meta.env.VITE_ENABLE_DEMO_FEED);
-let _demoSeedTasksCache: Task[] | undefined;
-function getDemoSeedTasks() {
-  return (_demoSeedTasksCache ??= mergeTasks(mockTasks, nostrEventsToTasks(cloneBasicNostrEvents())));
-}
 const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -107,9 +100,11 @@ const Index = () => {
     handleOpenAuthModal,
     handleCloseAuthModal,
   } = useAuthModalRoute();
-  const [guideDemoFeedEnabled, setGuideDemoFeedEnabled] = useState(false);
-  const demoFeedActive = DEMO_FEED_ENABLED || guideDemoFeedEnabled;
-  const hasConfiguredNoasAuth = Boolean(import.meta.env.VITE_NOAS_HOST_URL);
+  const [localTasks, setLocalTasks] = useState<Task[]>([]);
+  const [demoTasks, setDemoTasks] = useState<Task[]>(() => (
+    DEMO_FEED_ENABLED ? initializeDemoFeedData() : []
+  ));
+  const demoFeedActive = demoTasks.some((task) => task.relays.includes(DEMO_RELAY_ID));
 
   const subscribedKinds = useMemo<NostrEventKind[]>(
     () => [
@@ -138,7 +133,6 @@ const Index = () => {
       isActive: r.status === "connected" || r.status === "read-only",
       connectionStatus: r.status,
       url: r.url,
-      postCount: undefined,
     }));
 
     if (!demoFeedActive) return nostrRelayItems;
@@ -166,16 +160,6 @@ const Index = () => {
     reconnectRelay,
   });
 
-  const subscriptionRelayIds = useMemo(
-    () =>
-      new Set(
-        relays
-          .map((relay) => relay.id)
-          .filter((relayId) => relayId !== DEMO_RELAY_ID)
-      ),
-    [relays]
-  );
-
   const {
     events: nostrEvents,
     hasLiveHydratedScope: hasLiveHydratedRelayScope,
@@ -183,24 +167,26 @@ const Index = () => {
   } = useNostrEventCache({
     isConnected: isNostrConnected,
     subscribedKinds,
-    activeRelayIds: subscriptionRelayIds,
+    activeRelayIds: new Set(
+      relays
+        .map((relay) => relay.id)
+        .filter((relayId) => relayId !== DEMO_RELAY_ID)
+    ),
     availableRelayIds: relays.map((relay) => relay.id),
     subscribe,
   });
-
-  const selectedRelayUrls = useMemo(
-    () => deriveSelectedRelayUrls(relays, effectiveActiveRelayIds),
-    [effectiveActiveRelayIds, relays]
-  );
 
   const {
     people,
     setPeople,
     cachedKind0Events,
     latestPresenceByAuthor,
-    seedCachedKind0Events,
     removeCachedRelayProfile,
-  } = useKind0People(nostrEvents, selectedRelayUrls, user);
+  } = useKind0People(
+    nostrEvents,
+    deriveSelectedRelayUrls(relays, effectiveActiveRelayIds),
+    user,
+  );
 
   const {
     nostrRelays,
@@ -217,16 +203,6 @@ const Index = () => {
     removeCachedRelayProfile,
   });
 
-  const selectedRelayScopeIds = useMemo(
-    () =>
-      resolveChannelRelayScopeIds(
-        effectiveActiveRelayIds,
-        relays.map((relay) => relay.id)
-      ),
-    [effectiveActiveRelayIds, relays]
-  );
-
-  const [localTasks, setLocalTasks] = useState<Task[]>(() => (DEMO_FEED_ENABLED ? getDemoSeedTasks() : []));
   const [postedTags, setPostedTags] = useState<PostedTag[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarFocused, setIsSidebarFocused] = useState(false);
@@ -248,6 +224,7 @@ const Index = () => {
     hasCachedCurrentUserProfileMetadata,
   } = useIndexDerivedData({
     nostrEvents,
+    demoTasks,
     localTasks,
     postedTags,
     suppressedNostrEventIds,
@@ -294,12 +271,6 @@ const Index = () => {
     t,
   });
 
-  const shouldForceAuthAfterOnboarding = useMemo(() => {
-    return shouldPromptSignInAfterOnboarding({
-      isSignedIn: Boolean(user),
-      relays: ndkRelays,
-    });
-  }, [ndkRelays, user]);
   const {
     authPolicy,
     profileCompletionPromptSignal,
@@ -564,21 +535,11 @@ const Index = () => {
     isMobile,
     currentView,
     channels,
-    relays,
     openedWithFocusedTaskRef,
-    shouldForceAuthAfterOnboarding,
-    guideDemoBootstrap: {
-      totalTasks: allTasks.length,
-      demoFeedActive,
-      demoRelayId: DEMO_RELAY_ID,
-      getDemoSeedTasks,
-      demoKind0Events: mockKind0Events,
-      setGuideDemoFeedEnabled,
-      setLocalTasks,
-      seedCachedKind0Events,
-      setActiveRelayIds,
-      navigate,
-    },
+    shouldForceAuthAfterOnboarding: shouldPromptSignInAfterOnboarding({
+      isSignedIn: Boolean(user),
+      relays: ndkRelays,
+    }),
     onBeforeResetFocusedTaskScope: discardTaskScopeFilterRestore,
     setCurrentView,
     setFocusedTaskId,
@@ -589,6 +550,7 @@ const Index = () => {
     setIsAuthModalOpen,
     t,
   });
+
   const { savedFilterController } = useSavedFilterConfigs({
     currentFilterSnapshot,
     relays,
@@ -650,20 +612,15 @@ const Index = () => {
     publishTaskCreateFollowUps,
   });
 
-  const handleFocusSidebar = useCallback(() => {
-    setIsSidebarFocused(true);
-  }, []);
-
-  const handleFocusTasks = useCallback(() => {
-    setIsSidebarFocused(false);
-  }, []);
-
   const { publishOfflinePresenceNow } = useRelayScopedPresence({
     userPubkey: user?.pubkey,
     presenceEnabled: loadPresencePublishingEnabled(),
     currentView,
     focusedTask,
-    relayScopeIds: selectedRelayScopeIds,
+    relayScopeIds: resolveChannelRelayScopeIds(
+      effectiveActiveRelayIds,
+      relays.map((relay) => relay.id)
+    ),
     relays,
     publishEvent,
     setPresenceRelayUrls,
@@ -688,8 +645,19 @@ const Index = () => {
     <>
       <OnboardingIntroPopover
         isOpen={isOnboardingIntroOpen && !isAuthModalOpen}
-        showCreateAccount={hasConfiguredNoasAuth}
-        onStartTour={handleStartOnboardingTour}
+        showCreateAccount={Boolean(import.meta.env.VITE_NOAS_HOST_URL)}
+        onStartTour={() => {
+          if (!demoFeedActive && allTasks.length === 0) {
+            setDemoTasks(initializeDemoFeedData());
+            setActiveRelayIds((previous) => {
+              const next = new Set(previous);
+              next.add(DEMO_RELAY_ID);
+              return next;
+            });
+            navigate("/feed");
+          }
+          handleStartOnboardingTour();
+        }}
         onCreateAccount={() => handleOpenAuthModal("noasSignUp")}
         onSignIn={() => handleOpenAuthModal("noas")}
       />
@@ -721,8 +689,8 @@ const Index = () => {
     handleOpenAuthModal,
     openShortcutsHelp: shortcutsHelp.open,
     handleOpenGuide,
-    handleFocusSidebar,
-    handleFocusTasks,
+    handleFocusSidebar: () => setIsSidebarFocused(true),
+    handleFocusTasks: () => setIsSidebarFocused(false),
     guardInteraction,
     setCurrentView,
     setSearchQuery,
@@ -791,9 +759,9 @@ const Index = () => {
     ]
   );
 
-  const feedSurfaceRelays = useMemo(
-    () =>
-      relaysWithActiveState.map((relay) => ({
+  const feedSurfaceState = useMemo(
+    () => ({
+      relays: relaysWithActiveState.map((relay) => ({
         id: relay.id,
         name: relay.name,
         icon: relay.icon,
@@ -801,12 +769,6 @@ const Index = () => {
         connectionStatus: relay.connectionStatus,
         url: relay.url,
       })),
-    [relaysWithActiveState]
-  );
-
-  const feedSurfaceState = useMemo(
-    () => ({
-      relays: feedSurfaceRelays,
       channels: channelsWithState,
       visibleChannels: channelsWithState,
       composeChannels: composeChannelsWithState,
@@ -818,7 +780,7 @@ const Index = () => {
       channelMatchMode,
     }),
     [
-      feedSurfaceRelays,
+      relaysWithActiveState,
       channelsWithState,
       composeChannelsWithState,
       people,

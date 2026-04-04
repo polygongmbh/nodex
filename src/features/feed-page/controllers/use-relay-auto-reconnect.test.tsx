@@ -26,7 +26,6 @@ function buildRelay(overrides: Partial<Relay> & Pick<Relay, "id">): Relay {
     isActive: overrides.isActive ?? false,
     connectionStatus: overrides.connectionStatus ?? "connected",
     url: overrides.url,
-    postCount: overrides.postCount,
   };
 }
 

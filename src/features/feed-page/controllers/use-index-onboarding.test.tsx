@@ -4,14 +4,9 @@ import { useRef, useState } from "react";
 import { act } from "react";
 import type { TFunction } from "i18next";
 import { useIndexOnboarding } from "./use-index-onboarding";
-import { makeChannel, makePerson, makeRelay, makeTask } from "@/test/fixtures";
-import type { Channel, Relay, Task } from "@/types";
+import { makeChannel, makePerson } from "@/test/fixtures";
+import type { Channel } from "@/types";
 import type { Person } from "@/types/person";
-
-const relays: Relay[] = [
-  makeRelay({ id: "relay-one", name: "Relay One" }),
-  makeRelay({ id: "relay-two", name: "Relay Two" }),
-];
 
 const channels: Channel[] = [
   makeChannel({ id: "general", name: "general" }),
@@ -42,32 +37,14 @@ function Harness({
   );
   const [people, setPeople] = useState<Person[]>(peopleSeed);
   const [authOpen, setAuthOpen] = useState(false);
-  const [guideBootstrapCount, setGuideBootstrapCount] = useState(0);
-  const [guideDemoFeedEnabled, setGuideDemoFeedEnabled] = useState(false);
-  const [localTasks, setLocalTasks] = useState<Task[]>([]);
-  const seedCachedKind0Events = vi.fn(() => setGuideBootstrapCount((count) => count + 1));
-  const navigate = vi.fn();
 
   const onboarding = useIndexOnboarding({
     user,
     isMobile,
     currentView,
     channels,
-    relays,
     openedWithFocusedTaskRef,
     shouldForceAuthAfterOnboarding,
-    guideDemoBootstrap: {
-      totalTasks: 0,
-      demoFeedActive: false,
-      demoRelayId: "demo",
-      getDemoSeedTasks: () => [makeTask({ id: "demo-task" })],
-      demoKind0Events: [{ kind: 0 }],
-      setGuideDemoFeedEnabled,
-      setLocalTasks,
-      seedCachedKind0Events,
-      setActiveRelayIds,
-      navigate,
-    },
     setCurrentView,
     setFocusedTaskId,
     setSearchQuery,
@@ -99,9 +76,6 @@ function Harness({
       <output data-testid="auth-open">{String(authOpen)}</output>
       <output data-testid="guide-open">{String(onboarding.isOnboardingOpen)}</output>
       <output data-testid="intro-open">{String(onboarding.isOnboardingIntroOpen)}</output>
-      <output data-testid="guide-bootstrap-count">{String(guideBootstrapCount)}</output>
-      <output data-testid="guide-demo-enabled">{String(guideDemoFeedEnabled)}</output>
-      <output data-testid="local-task-count">{String(localTasks.length)}</output>
     </>
   );
 }
@@ -134,15 +108,12 @@ describe("useIndexOnboarding", () => {
     expect(screen.getByTestId("auth-open")).toHaveTextContent("true");
   });
 
-  it("bootstraps guide data when the guide is opened manually", () => {
+  it("opens the guide manually", () => {
     render(<Harness isMobile={false} />);
 
     fireEvent.click(screen.getByRole("button", { name: "OpenGuide" }));
 
     expect(screen.getByTestId("guide-open")).toHaveTextContent("true");
-    expect(screen.getByTestId("guide-bootstrap-count")).toHaveTextContent("1");
-    expect(screen.getByTestId("guide-demo-enabled")).toHaveTextContent("true");
-    expect(screen.getByTestId("local-task-count")).toHaveTextContent("1");
   });
 
   it("does not reopen the welcome dialog after signing out later in the session", () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { nip19 } from "nostr-tools";
 import { Task } from "@/types";
-import { cloneBasicNostrEvents } from "@/data/basic-nostr-events";
+import { basicNostrEvents } from "@/data/basic-nostr-events";
 import { mergeTasks } from "@/domain/content/task-merge";
 import {
   eventHasTags,
@@ -422,7 +422,7 @@ describe("nostrEventToTask", () => {
 
 describe("nostrEventsToTasks", () => {
   it("converts multiple events to tasks", () => {
-    const events = cloneBasicNostrEvents();
+    const events = basicNostrEvents;
     
     const tasks = nostrEventsToTasks(events);
     

@@ -40,7 +40,7 @@ export interface UseIndexRelayShellResult {
 
 export function deriveSelectedRelayUrls(relays: Relay[], effectiveActiveRelayIds: Set<string>): string[] {
   return relays
-    .filter((relay) => relay.id !== "demo" && relay.url && effectiveActiveRelayIds.has(relay.id))
+    .filter((relay) => relay.url && effectiveActiveRelayIds.has(relay.id))
     .map((relay) => relay.url as string);
 }
 

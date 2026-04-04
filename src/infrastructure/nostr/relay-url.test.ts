@@ -3,6 +3,7 @@ import {
   getRelayCommonPrefixes,
   getRelayDiscoveryPrefixes,
   relayUrlToDomainMinusTld,
+  relayUrlToId,
   relayUrlToName,
 } from "./relay-url";
 
@@ -35,5 +36,10 @@ describe("relay-url naming", () => {
 
     vi.stubEnv("VITE_RELAY_DISCOVERY_PREFIXES", "tasks,base");
     expect(getRelayDiscoveryPrefixes()).toEqual(["tasks", "base"]);
+  });
+
+  it("normalizes relay ids to lowercase", () => {
+    expect(relayUrlToId("ws://Demo")).toBe("demo");
+    expect(relayUrlToId("wss://Relay.Example")).toBe("relay-example");
   });
 });
