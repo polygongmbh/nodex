@@ -2,49 +2,70 @@
 
 ## Goal
 
-Continue the same cleanup pattern used for `Person`:
+Continue reducing mixed-concern files by extracting cohesive type and helper clusters into obvious homes, without colliding with the parts of the repo that are currently in flight.
 
-- reduce oversized mixed-concern files
-- colocate type-specific helpers with the type or domain they belong to
-- remove low-signal barrels and “god files”
-- prefer cohesive extractions over cosmetic file shuffling
+## Current State
 
-This plan focuses on the next highest-signal candidates already visible in the current codebase.
+### Already done
+
+- `Person` is no longer in the shared type barrel.
+- Person-specific helper logic now lives with the type in [`src/types/person.ts`](/Users/tj/IT/nostr/nodex/src/types/person.ts).
+
+### Still true
+
+- [`src/types/index.ts`](/Users/tj/IT/nostr/nodex/src/types/index.ts) is still a broad mixed-domain bucket for:
+  - relay types
+  - channel/filter types
+  - task/post types
+  - compose/publish types
+  - listing types
+- [`src/components/tasks/TaskComposer.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx) and [`src/components/mobile/UnifiedBottomBar.tsx`](/Users/tj/IT/nostr/nodex/src/components/mobile/UnifiedBottomBar.tsx) still share extractable composer/listing helper logic.
+- [`src/features/feed-page/controllers/use-task-publish-flow.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-publish-flow.ts) still mixes several responsibilities.
+- [`src/lib/linkify.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx) still mixes several unrelated concerns.
+- [`src/components/layout/Sidebar.tsx`](/Users/tj/IT/nostr/nodex/src/components/layout/Sidebar.tsx) still combines rendering and navigation/state logic.
+
+### Current local-collision risk
+
+There are unrelated unstaged changes in:
+
+- [`src/components/tasks/FeedView.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/FeedView.tsx)
+- [`src/features/feed-page/controllers/use-task-view-states.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-view-states.ts)
+- [`src/features/feed-page/controllers/use-task-view-states.test.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-view-states.test.ts)
+
+There is also an unrelated deleted plan file:
+
+- [`plans/unify-task-text-search-across-views.md`](/Users/tj/IT/nostr/nodex/plans/unify-task-text-search-across-views.md)
+
+Because of that, the next extraction pass should avoid `FeedView` / `use-task-view-states` first and focus on lower-overlap targets.
 
 ## Guiding Principles
 
-1. Extract by domain responsibility, not by line count alone.
-2. Avoid introducing compatibility re-exports by default.
-3. Move helper logic next to the type/domain it actually serves.
-4. Prefer behavior-preserving refactors before semantic model changes.
-5. Separate broad structural refactors from behavior fixes.
+1. Extract by responsibility, not by file size alone.
+2. Do not reintroduce compatibility barrels unless there is a strong temporary migration reason.
+3. Prefer direct imports from the new type/helper file.
+4. Keep behavior-preserving refactors separate from semantic data-model changes.
+5. Avoid touching files that are already dirty unless the milestone explicitly needs them.
 
-## Recommended Execution Order
+## Revised Execution Order
 
-1. Split the remaining oversized type barrel in [`src/types/index.ts`](/Users/tj/IT/nostr/nodex/src/types/index.ts)
-2. Extract shared composer/listing helpers from [`src/components/tasks/TaskComposer.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx) and [`src/components/mobile/UnifiedBottomBar.tsx`](/Users/tj/IT/nostr/nodex/src/components/mobile/UnifiedBottomBar.tsx)
-3. Split [`src/features/feed-page/controllers/use-task-publish-flow.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-publish-flow.ts) by responsibility
-4. Decompose [`src/lib/linkify.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx)
-5. Extract sidebar state/navigation logic from [`src/components/layout/Sidebar.tsx`](/Users/tj/IT/nostr/nodex/src/components/layout/Sidebar.tsx)
-6. Reassess large view files (`FeedView`, `CalendarView`, `ListView`) after the shared helper moves
+1. Finish breaking up [`src/types/index.ts`](/Users/tj/IT/nostr/nodex/src/types/index.ts)
+2. Extract shared composer/listing/data-transfer helpers from `TaskComposer` and `UnifiedBottomBar`
+3. Split [`use-task-publish-flow.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-publish-flow.ts) by responsibility
+4. Decompose [`linkify.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx)
+5. Extract sidebar navigation/state logic from [`Sidebar.tsx`](/Users/tj/IT/nostr/nodex/src/components/layout/Sidebar.tsx)
+6. Reassess the large view/controller surfaces only after the current `FeedView` / `use-task-view-states` work settles
 
-That order is opinionated on purpose: it removes foundational coupling first, which makes later view/controller extraction easier and less repetitive.
+That order is now intentionally shaped around current worktree state, not just architecture purity.
 
 ---
 
 ## Phase 1: Finish Breaking Up `src/types/index.ts`
 
-### Why this should go first
+### Why this is now the best first move
 
-[`src/types/index.ts`](/Users/tj/IT/nostr/nodex/src/types/index.ts) still owns several unrelated domains:
-
-- relay types
-- channel/filter types
-- task/post types
-- compose/publish types
-- saved filter types
-
-This is exactly the same structural smell `Person` had before the split.
+- It has the highest architectural leverage.
+- It does not need to touch the currently dirty `FeedView` / `use-task-view-states` files directly.
+- It continues the exact cleanup pattern that already worked well for `Person`.
 
 ### Proposed target files
 
@@ -55,6 +76,19 @@ This is exactly the same structural smell `Person` had before the split.
   - `PostedTag`
   - `ChannelMatchMode`
   - legacy `Tag` alias only if still needed
+- [`src/types/listing.ts`](/Users/tj/IT/nostr/nodex/src/types/listing.ts)
+  - `Nip99ListingStatus`
+  - `Nip99Metadata`
+- [`src/types/task-dates.ts`](/Users/tj/IT/nostr/nodex/src/types/task-dates.ts)
+  - `TaskDateType`
+- [`src/types/compose.ts`](/Users/tj/IT/nostr/nodex/src/types/compose.ts)
+  - `PublishedAttachment`
+  - `ComposeAttachment`
+  - `ComposeRestoreState`
+  - `ComposeRestoreRequest`
+  - `TaskCreateFailureReason`
+  - `TaskCreateResult`
+  - `OnNewTask`
 - [`src/types/task.ts`](/Users/tj/IT/nostr/nodex/src/types/task.ts)
   - `Task`
   - `TaskStateUpdate`
@@ -65,58 +99,52 @@ This is exactly the same structural smell `Person` had before the split.
   - `FeedMessageType`
   - `PostType`
   - legacy `TaskType` alias only if still needed
-- [`src/types/compose.ts`](/Users/tj/IT/nostr/nodex/src/types/compose.ts)
-  - `PublishedAttachment`
-  - `ComposeAttachment`
-  - `ComposeRestoreState`
-  - `ComposeRestoreRequest`
-  - `TaskCreateFailureReason`
-  - `TaskCreateResult`
-  - `OnNewTask`
 - [`src/types/filters.ts`](/Users/tj/IT/nostr/nodex/src/types/filters.ts)
   - `FilterState`
   - `QuickFilterState`
   - `SavedFilterConfiguration`
   - `SavedFilterState`
   - `SavedFilterController`
-  - legacy `TagFilterState` alias if still necessary
-- [`src/types/listing.ts`](/Users/tj/IT/nostr/nodex/src/types/listing.ts)
-  - `Nip99ListingStatus`
-  - `Nip99Metadata`
-- [`src/types/task-dates.ts`](/Users/tj/IT/nostr/nodex/src/types/task-dates.ts)
-  - `TaskDateType`
+  - legacy `TagFilterState` alias only if still needed
 
-### Execution notes
+### Important boundary
 
-- Do not add re-exports back into `index.ts` if the goal is actually reducing barrel ownership.
-- Update imports directly at call sites to the new files.
-- Keep the split semantic, not merely alphabetical.
+Do not re-export these back through `src/types/index.ts` if the actual goal is to reduce barrel ownership.
+
+### Practical migration order inside the phase
+
+1. extract `relay.ts`, `channel.ts`, `listing.ts`, `task-dates.ts`
+2. extract `compose.ts`
+3. extract `task.ts`
+4. extract `filters.ts`
+5. shrink `index.ts` to only what truly still belongs there, or delete it if feasible
 
 ### Risks
 
-- `Task` references many other moved types; import cycles must be watched closely.
-- Some files currently import many unrelated symbols from `@/types`; those imports will need deliberate cleanup rather than blind rewriting.
+- `Task` depends on several other moved types, so import cycles must be checked carefully.
+- A blind import rewrite will make the diff noisy; prefer domain-by-domain edits.
 
-### Verification
+### Commit shape
 
-- `npm run lint`
-- `npx vitest run`
-- `npm run build`
+- `refactor: split remaining shared type domains out of types barrel`
 
 ---
 
-## Phase 2: Extract Shared Composer And Listing Helpers
+## Phase 2: Extract Shared Composer / Listing / Data-Transfer Helpers
 
-### Why this is next
+### Why this remains a strong second step
 
-[`src/components/tasks/TaskComposer.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx) and [`src/components/mobile/UnifiedBottomBar.tsx`](/Users/tj/IT/nostr/nodex/src/components/mobile/UnifiedBottomBar.tsx) still duplicate listing/composer text helper logic.
+[`TaskComposer.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx) and [`UnifiedBottomBar.tsx`](/Users/tj/IT/nostr/nodex/src/components/mobile/UnifiedBottomBar.tsx) still duplicate or closely mirror helper logic, but this phase does not need to touch `FeedView` or `use-task-view-states`.
 
-Confirmed overlap:
+### Confirmed overlap or cohesive clusters
 
-- `normalizeListingTextFromContent`
-- `truncateWordSafe`
-
-`TaskComposer` also contains closely-related NIP-99 autofill helpers and input-transfer helpers that belong in shared utility files.
+- [`normalizeListingTextFromContent`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx#L109)
+- [`truncateWordSafe`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx#L117)
+- NIP-99 autofill logic in [`deriveNip99AutofillFromContent`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx#L127)
+- drag/drop + clipboard transfer helpers:
+  - [`extractFilesFromDataTransfer`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx#L162)
+  - [`hasFilesInDataTransfer`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx#L173)
+  - [`extractPlainTextFromDataTransfer`](/Users/tj/IT/nostr/nodex/src/components/tasks/TaskComposer.tsx#L181)
 
 ### Proposed target files
 
@@ -131,248 +159,224 @@ Confirmed overlap:
 
 ### Desired end state
 
-- `TaskComposer` keeps orchestration and UI state
-- `UnifiedBottomBar` keeps mobile-specific interaction state
-- shared content/clipboard/listing logic lives in focused helpers
+- `TaskComposer` stays responsible for task-composer UI/orchestration
+- `UnifiedBottomBar` stays responsible for mobile-composer UI/orchestration
+- shared pure helpers live in one predictable place
 
-### Optional follow-up
+### Commit shape
 
-If the shared composer logic grows, create:
-
-- [`src/lib/composer/nip99-autofill.ts`](/Users/tj/IT/nostr/nodex/src/lib/composer/nip99-autofill.ts)
-
-instead of overloading a broader helper file.
-
-### Risks
-
-- `TaskComposer` and `UnifiedBottomBar` are already large; the extraction should not accidentally change behavior around compose mention/tag syncing.
-- Avoid mixing UI-only state helpers into generic utility files.
+- `refactor: extract shared composer text and transfer helpers`
 
 ---
 
 ## Phase 3: Split `use-task-publish-flow.ts` By Responsibility
 
-### Why this is high value
+### Why this is still high-value
 
-[`src/features/feed-page/controllers/use-task-publish-flow.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-publish-flow.ts) is a single controller doing several jobs:
+[`use-task-publish-flow.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-publish-flow.ts) still combines:
 
 - pending publish queue lifecycle
 - publish undo behavior
-- failed-publish suppression/cache cleanup
-- partial-publish notifications
-- publish-time mention/tag/task/listing construction
-- task creation orchestration
-
-That makes it hard to reason about and hard to test in slices.
+- suppression/cache cleanup
+- partial publish notifications
+- task/listing publish orchestration
 
 ### Proposed split
 
 - [`src/features/feed-page/controllers/use-pending-publish-queue.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-pending-publish-queue.ts)
-  - `failedPublishDrafts`
-  - `pendingPublishTaskIds`
+  - queue state
   - `clearPendingPublishTask`
   - `handleUndoPendingPublish`
-  - queue cleanup effects
+  - timeout/toast cleanup
 - [`src/features/feed-page/controllers/use-publish-cache-suppression.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-publish-cache-suppression.ts)
   - `suppressFailedPublishEvent`
-  - cache/query cleanup logic
+  - related query/cache invalidation
 - [`src/features/feed-page/controllers/use-publish-result-feedback.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-publish-result-feedback.ts)
   - `notifyIfPartialPublish`
-  - related publish success/failure feedback helpers
-- keep [`use-task-publish-flow.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-publish-flow.ts) as the orchestration shell that calls into those helpers/hooks
+  - publish result feedback helpers
+- keep [`use-task-publish-flow.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-publish-flow.ts) as the orchestration layer
 
-### Alternative
+### Alternative if you want a smaller first cut
 
-If extracting multiple hooks feels too granular, at minimum split out:
+Start with one helper file plus one queue hook:
 
-- a pure `task-publish-flow-helpers.ts`
-- a dedicated pending-publish hook
+- `task-publish-flow-helpers.ts`
+- `use-pending-publish-queue.ts`
 
 ### Risks
 
-- This file coordinates many callbacks with shared closure state; extraction should preserve memoization and callback identity where relied upon.
-- Undo/pending publish behavior is user-facing and high-impact; tests must stay strong here.
+- callback identity and closure coupling
+- undo/pending publish behavior is user-facing and must remain stable
 
-### Verification emphasis
+### Commit shape
 
-- target focused tests first around undo/pending publish and suppression paths
-- then full:
-  - `npm run lint`
-  - `npx vitest run`
-  - `npm run build`
+- `refactor: split pending publish and feedback responsibilities from task publish flow`
 
 ---
 
 ## Phase 4: Decompose `src/lib/linkify.tsx`
 
-### Why this matters
+### Why this remains a clean extraction target
 
-[`src/lib/linkify.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx) currently mixes:
+[`src/lib/linkify.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx) still mixes distinct concerns:
 
 - mention-person resolution
-- fallback person creation
-- embeddable-media URL classification
-- markdown token preprocessing
-- markdown component rendering
-- standalone media embed rendering
-
-This is several distinct concerns inside one very dense file.
+- fallback mention person creation
+- media URL classification
+- markdown preprocessing/rendering
+- standalone media embedding
 
 ### Proposed split
 
 - [`src/lib/linkify/person-mentions.ts`](/Users/tj/IT/nostr/nodex/src/lib/linkify/person-mentions.ts)
-  - `resolveMentionPerson`
-  - `buildFallbackMentionPerson`
+  - [`resolveMentionPerson`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx#L29)
+  - [`buildFallbackMentionPerson`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx#L44)
 - [`src/lib/linkify/media-embeds.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify/media-embeds.tsx)
-  - `getUrlExtension`
-  - `getYouTubeEmbedUrl`
-  - `getEmbeddableMediaKind`
-  - `isEmbeddableUrl`
-  - `renderStandaloneEmbed`
+  - [`getUrlExtension`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx#L76)
+  - [`getYouTubeEmbedUrl`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx#L88)
+  - [`getEmbeddableMediaKind`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx#L116)
+  - [`isEmbeddableUrl`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx#L134)
+  - [`renderStandaloneEmbed`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx#L143)
 - [`src/lib/linkify/markdown.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify/markdown.tsx)
-  - `preprocessMarkdownTokens`
-  - `renderMarkdownBlock`
+  - [`preprocessMarkdownTokens`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx#L274)
+  - [`renderMarkdownBlock`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx#L315)
 
-Then keep [`src/lib/linkify.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx) as the public composition layer.
+Keep [`src/lib/linkify.tsx`](/Users/tj/IT/nostr/nodex/src/lib/linkify.tsx) as the public composition layer.
 
-### Important constraint
+### Commit shape
 
-Do not let this become a “micro-file explosion.” The split is justified only because these are real independent subdomains, not because the file is long.
+- `refactor: split linkify mention media and markdown helpers`
 
 ---
 
-## Phase 5: Extract Sidebar State And Navigation Logic
+## Phase 5: Extract Sidebar State / Navigation Logic
 
-### Why this is a coherent extraction
+### Why this should stay after the lower-risk utility work
 
-[`src/components/layout/Sidebar.tsx`](/Users/tj/IT/nostr/nodex/src/components/layout/Sidebar.tsx) combines:
+[`src/components/layout/Sidebar.tsx`](/Users/tj/IT/nostr/nodex/src/components/layout/Sidebar.tsx) mixes:
 
-- rendering
+- render tree
 - expanded/collapsed section state
 - collapsed preview computation
-- keyboard navigation/focus movement
-- focused item scroll-into-view behavior
+- keyboard navigation
+- focused-item scrolling
 
-That is an ideal hook extraction.
+That is a good hook extraction, but it touches interactive behavior and should come after the simpler structural wins above.
 
 ### Proposed target
 
 - [`src/components/layout/use-sidebar-navigation.ts`](/Users/tj/IT/nostr/nodex/src/components/layout/use-sidebar-navigation.ts)
   - expanded section state
   - focusable item list building
-  - focused index state
+  - focus index handling
   - keyboard handlers
-  - scroll-into-view side effect
+  - scroll-into-view effect
 
-Potential second helper:
+### Commit shape
 
-- [`src/lib/sidebar-preview.ts`](/Users/tj/IT/nostr/nodex/src/lib/sidebar-preview.ts)
-  - collapsed preview selection rules if the logic grows further beyond the current helper usage
-
-### Why not split into many components first
-
-The rendering tree is not the primary problem here; mixed state/navigation logic is.
+- `refactor: extract sidebar navigation and focus state hook`
 
 ---
 
-## Phase 6: Reassess The Large View Files
+## Phase 6: Reassess Dirty Large View / Controller Surfaces Later
 
-### Candidates
+### Explicit deferral
+
+Do not make `FeedView` / `use-task-view-states` the next extraction target while those files are already locally modified.
+
+Deferred files:
 
 - [`src/components/tasks/FeedView.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/FeedView.tsx)
-- [`src/components/tasks/CalendarView.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/CalendarView.tsx)
-- [`src/components/tasks/ListView.tsx`](/Users/tj/IT/nostr/nodex/src/components/tasks/ListView.tsx)
+- [`src/features/feed-page/controllers/use-task-view-states.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-view-states.ts)
+- [`src/features/feed-page/controllers/use-task-view-states.test.ts`](/Users/tj/IT/nostr/nodex/src/features/feed-page/controllers/use-task-view-states.test.ts)
 
-### Why these should wait
+### Why defer
 
-A lot of the complexity in these files is downstream of missing shared helpers:
+- avoids merge/conflict churn with current in-progress work
+- avoids mixing architectural cleanup with likely behavior edits already underway
+- some view complexity may disappear naturally after earlier helper extractions
 
-- person label helpers
-- status-menu helpers
-- shared filter/empty-state helpers
-- shared task-card metadata fragments
+### Reassessment goal once clean
 
-After earlier phases, a second pass can identify what complexity is still intrinsic versus what was only duplicated support logic.
+After the worktree is clean or the in-flight change is committed, reassess:
 
-### Likely extraction targets after earlier phases
+- `FeedView`
+- `CalendarView`
+- `ListView`
+- `use-task-view-states`
 
-- shared task-status interaction helpers
-- shared breadcrumb/task-focus helpers
-- shared task-card metadata subcomponents
-- view-specific controller hooks for scroll/reveal/open-menu behavior
+for shared status-menu helpers, breadcrumb helpers, empty-state helpers, and view-controller hooks.
 
 ---
 
-## Optional Phase 7: Provider / Nostr Service Layer Splits
+## Optional Later Phase: `ndk-provider.tsx`
 
-### Highest-value candidate
+### Why it is not an immediate target
 
-- [`src/infrastructure/nostr/provider/ndk-provider.tsx`](/Users/tj/IT/nostr/nodex/src/infrastructure/nostr/provider/ndk-provider.tsx)
+[`src/infrastructure/nostr/provider/ndk-provider.tsx`](/Users/tj/IT/nostr/nodex/src/infrastructure/nostr/provider/ndk-provider.tsx) is still one of the largest files in the repo, but it is also one of the most coupled and risky to split.
 
-### Recommended split dimensions
+### Only attempt after earlier wins
+
+Potential split dimensions:
 
 - relay lifecycle and reconnect behavior
 - auth/session actions
-- publish/subscribe transport wiring
+- publish/subscription transport wiring
 - cache/profile hydration coordination
 
-### Why this is optional for now
-
-It is high-value but also high-risk and likely to cascade across many tests. It should follow the easier structural wins above, not precede them.
+This should come after the lighter-weight structural extractions above.
 
 ---
 
-## Concrete Milestone Plan
+## Milestone Plan
 
 ### Milestone A
 
-Split the remaining type barrel:
+Finish splitting the remaining type barrel.
 
-- relay
-- channel/filter
-- task/post
-- compose/publish
-- listing
+Commit:
 
-Commit as:
-
-- `refactor: split shared type domains out of types barrel`
+- `refactor: split remaining shared type domains out of types barrel`
 
 ### Milestone B
 
 Extract shared composer/listing/data-transfer helpers.
 
-Commit as:
+Commit:
 
-- `refactor: extract shared composer text and data-transfer helpers`
+- `refactor: extract shared composer text and transfer helpers`
 
 ### Milestone C
 
-Split pending publish queue/cache feedback responsibilities from `use-task-publish-flow.ts`.
+Split pending publish queue/cache feedback from `use-task-publish-flow.ts`.
 
-Commit as:
+Commit:
 
-- `refactor: split pending publish and publish feedback from task publish flow`
+- `refactor: split pending publish and feedback from task publish flow`
 
 ### Milestone D
 
-Decompose `linkify.tsx` into mention/media/markdown helpers.
+Split `linkify.tsx` into mention/media/markdown helpers.
 
-Commit as:
+Commit:
 
-- `refactor: split linkify media and mention helpers`
+- `refactor: split linkify mention media and markdown helpers`
 
 ### Milestone E
 
 Extract sidebar navigation/state hook.
 
-Commit as:
+Commit:
 
 - `refactor: extract sidebar navigation state hook`
 
+### Milestone F
+
+Reassess the large view/controller surfaces only after current dirty files are resolved.
+
 ---
 
-## Verification Strategy
+## Verification
 
 Treat each milestone as a broad refactor:
 
@@ -380,30 +384,14 @@ Treat each milestone as a broad refactor:
   - `git pull --rebase --autostash`
 - after each milestone:
   - `npm run lint`
-  - focused tests for touched area when useful
+  - focused tests for the touched area when useful
   - `npx vitest run`
   - `npm run build`
 
 ---
 
-## Refactor Review Checklist
+## Recommended Next Step
 
-For each milestone, explicitly review:
+If implementation starts immediately, do Milestone A now.
 
-- duplication removed
-- file ownership clearer
-- no new barrels introduced without strong reason
-- imports made more direct, not more indirect
-- behavior preserved
-- tests still describing product behavior rather than file layout
-
-## Recommended First Implementation Pass
-
-If you want me to start implementing, I’d begin with Milestone A:
-
-- split `Relay`
-- split `Channel` + filter-related types
-- split `Task`/compose/listing types
-- remove more responsibility from [`src/types/index.ts`](/Users/tj/IT/nostr/nodex/src/types/index.ts)
-
-That creates the best foundation for every other extraction in this plan.
+It is the highest-value structural win and the least likely to interfere with the currently dirty `FeedView` / `use-task-view-states` area.
