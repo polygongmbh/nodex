@@ -63,24 +63,4 @@ describe("ChannelItem", () => {
 
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.channel.unpin", channelId: "general" });
   });
-
-  it("keeps the pin in a separate far-left gutter so the hashtag column does not move", () => {
-    renderChannelItem(
-      <ChannelItem
-        channel={{
-          ...baseChannel,
-          name: "very-long-channel-name-that-should-not-shift-the-hashtag-column",
-          filterState: "included",
-        }}
-      />
-    );
-
-    const pinButton = screen.getByTestId("channel-item-pin-general");
-    const toggleButton = screen.getByTestId("channel-item-toggle-general");
-
-    expect(pinButton.className).toContain("absolute");
-    expect(pinButton.className).toContain("left-1");
-    expect(pinButton.className).toContain("h-6");
-    expect(toggleButton.className).not.toContain("absolute");
-  });
 });

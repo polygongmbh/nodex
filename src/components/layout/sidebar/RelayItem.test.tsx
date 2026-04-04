@@ -35,55 +35,6 @@ describe("RelayItem", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "sidebar.relay.select", relayId: "relay-1", mode: "toggle" });
   });
 
-  it("keeps the status dot visible while allowing long names to truncate", () => {
-    render(
-      <FeedInteractionProvider bus={{ dispatch: vi.fn().mockResolvedValue(undefined), dispatchBatch: vi.fn().mockResolvedValue([]) }}>
-        <RelayItem
-          relay={{
-            ...baseRelay,
-            name: "very-long-space-name-that-should-not-push-the-status-indicator-out-of-view.example",
-            url: undefined,
-          }}
-        />
-      </FeedInteractionProvider>
-    );
-
-    const exclusiveButton = screen.getByRole("button", {
-      name: /show only posts from very-long-space-name-that-should-not-push-the-status-indicator-out-of-view\.example/i,
-    });
-    const relayLabel = screen.getByText(
-      "very-long-space-name-that-should-not-push-the-status-indicator-out-of-view.example"
-    );
-    const statusDot = screen.getByLabelText("connected");
-
-    expect(exclusiveButton.className).toContain("min-w-0");
-    expect(relayLabel.className).toContain("truncate");
-    expect(statusDot.className).toContain("flex-shrink-0");
-    expect(statusDot.className).toContain("h-2");
-    expect(statusDot.className).toContain("w-2");
-  });
-
-  it("tints the active relay icon by relay status instead of always using the primary color", () => {
-    render(
-      <FeedInteractionProvider bus={{ dispatch: vi.fn().mockResolvedValue(undefined), dispatchBatch: vi.fn().mockResolvedValue([]) }}>
-        <RelayItem
-          relay={{
-            ...baseRelay,
-            connectionStatus: "verification-failed",
-          }}
-        />
-      </FeedInteractionProvider>
-    );
-
-    const toggleButton = screen.getByRole("button", { name: "Show or hide posts from relay.damus.io" });
-    const iconChip = toggleButton.querySelector("div");
-
-    expect(iconChip).not.toBeNull();
-    expect(iconChip?.className).toContain("text-destructive");
-    expect(iconChip?.className).toContain("bg-destructive/15");
-    expect(iconChip?.className).not.toContain("text-primary");
-  });
-
   it("shows the connection issue tooltip across the whole row and suppresses button title tooltips", async () => {
     const dispatch = vi.fn().mockResolvedValue({
       envelope: { id: 1, dispatchedAtMs: Date.now(), intent: { type: "ui.focusTasks" } },

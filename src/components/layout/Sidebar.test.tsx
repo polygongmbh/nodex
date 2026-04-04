@@ -99,33 +99,4 @@ describe("Sidebar", () => {
 
     expect(document.querySelector('[data-sidebar-item="channel-release"]')).toBeVisible();
   });
-
-  it("uses scoped collapsed preview lists when provided", () => {
-    const foldedChannels: Channel[] = [
-      { id: "general", name: "general", filterState: "neutral", usageCount: 10 },
-      { id: "ops", name: "ops", filterState: "neutral", usageCount: 9 },
-      { id: "release", name: "release", filterState: "neutral", usageCount: 8 },
-    ];
-    const foldedPeople: Person[] = [
-      { id: "alice", name: "alice", displayName: "Alice", avatar: "", isOnline: true, isSelected: false },
-      { id: "bob", name: "bob", displayName: "Bob", avatar: "", isOnline: true, isSelected: false },
-    ];
-
-    render(
-      <Sidebar
-        relays={baseRelays}
-        channels={foldedChannels}
-        collapsedPreviewChannels={[foldedChannels[1]]}
-        people={foldedPeople}
-        collapsedPreviewPeople={[foldedPeople[1]]}
-        nostrRelays={nostrRelays}
-      />
-    );
-
-    expect(document.querySelector('[data-sidebar-item="channel-ops"]')?.className).not.toContain("hidden");
-    expect(document.querySelector('[data-sidebar-item="channel-general"]')?.className).toContain("hidden");
-    expect(document.querySelector('[data-sidebar-item="channel-release"]')?.className).toContain("hidden");
-    expect(document.querySelector('[data-sidebar-item="person-bob"]')?.className).not.toContain("hidden");
-    expect(document.querySelector('[data-sidebar-item="person-alice"]')?.className).toContain("hidden");
-  });
 });

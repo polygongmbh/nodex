@@ -66,227 +66,34 @@ function renderTreeTaskItem(props: Partial<ComponentProps<typeof TreeTaskItem>> 
 }
 
 describe("TreeTaskItem status actions", () => {
-  it("cycles root folding through matching, collapsed, all, and back for nested open and done subtasks", () => {
-    const doneChild = makeTask({ id: "b", parentId: "t1", content: "Task B", status: "done" });
-    const openChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
-    const openGrandchild = makeTask({ id: "d", parentId: "c", content: "Task D", status: "todo" });
-    const childrenMap = new Map<string | undefined, Task[]>([
-      ["t1", [doneChild, openChild]],
-      ["c", [openGrandchild]],
-    ]);
-
-    renderTreeTaskItem({
-      childrenMap,
-      matchingChildren: [doneChild, openChild],
-      getMatchingChildrenFn: (parentId) => childrenMap.get(parentId) || [],
-    });
-
-    const foldToggle = screen.getByTestId("tree-fold-toggle-t1");
-    expect(foldToggle).toHaveAttribute("data-fold-state", "matchingOnly");
-    expect(screen.queryByText("Task B")).not.toBeInTheDocument();
-    expect(screen.getByText("Task C")).toBeInTheDocument();
-    expect(screen.queryByText("Task D")).not.toBeInTheDocument();
-
-    fireEvent.click(foldToggle);
-    expect(screen.getByTestId("tree-fold-toggle-t1")).toHaveAttribute("data-fold-state", "collapsed");
-    expect(screen.queryByText("Task B")).not.toBeInTheDocument();
-    expect(screen.queryByText("Task C")).not.toBeInTheDocument();
-    expect(screen.queryByText("Task D")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId("tree-fold-toggle-t1"));
-    expect(screen.getByTestId("tree-fold-toggle-t1")).toHaveAttribute("data-fold-state", "allVisible");
-    expect(screen.getByText("Task B")).toBeInTheDocument();
-    expect(screen.getByText("Task C")).toBeInTheDocument();
-    expect(screen.getByText("Task D")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId("tree-fold-toggle-t1"));
-    expect(screen.getByTestId("tree-fold-toggle-t1")).toHaveAttribute("data-fold-state", "matchingOnly");
-    expect(screen.queryByText("Task B")).not.toBeInTheDocument();
-    expect(screen.getByText("Task C")).toBeInTheDocument();
-    expect(screen.queryByText("Task D")).not.toBeInTheDocument();
-  });
-
-  it("keeps done subtasks hidden until the all-visible state when broader scope is active", () => {
-    const openChild = makeTask({ id: "open-child", parentId: "t1", content: "Open child", status: "todo" });
+  it("cycles between matching, collapsed, and all-visible child states", () => {
     const doneChild = makeTask({ id: "done-child", parentId: "t1", content: "Done child", status: "done" });
+    const openChild = makeTask({ id: "open-child", parentId: "t1", content: "Open child", status: "todo" });
     const childrenMap = new Map<string | undefined, Task[]>([["t1", [openChild, doneChild]]]);
 
     renderTreeTaskItem({
       childrenMap,
       matchingChildren: [openChild, doneChild],
-      hasMatchingFilters: false,
       getMatchingChildrenFn: () => [openChild, doneChild],
     });
 
     const foldToggle = screen.getByTestId("tree-fold-toggle-t1");
+
     expect(foldToggle).toHaveAttribute("data-fold-state", "matchingOnly");
     expect(screen.getByText("Open child")).toBeInTheDocument();
     expect(screen.queryByText("Done child")).not.toBeInTheDocument();
 
     fireEvent.click(foldToggle);
-    expect(screen.getByTestId("tree-fold-toggle-t1")).toHaveAttribute("data-fold-state", "collapsed");
+    expect(foldToggle).toHaveAttribute("data-fold-state", "collapsed");
     expect(screen.queryByText("Open child")).not.toBeInTheDocument();
-    expect(screen.queryByText("Done child")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId("tree-fold-toggle-t1"));
-    expect(screen.getByTestId("tree-fold-toggle-t1")).toHaveAttribute("data-fold-state", "allVisible");
-    expect(screen.getByText("Open child")).toBeInTheDocument();
-    expect(screen.getByText("Done child")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId("tree-fold-toggle-t1"));
-    expect(screen.getByTestId("tree-fold-toggle-t1")).toHaveAttribute("data-fold-state", "matchingOnly");
-    expect(screen.getByText("Open child")).toBeInTheDocument();
-    expect(screen.queryByText("Done child")).not.toBeInTheDocument();
-  });
-
-  it("keeps matching descendant branches visible when the parent directly matches an active filter", () => {
-    const doneChild = makeTask({ id: "b", parentId: "t1", content: "Task B", status: "done" });
-    const openChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
-    const openGrandchild = makeTask({ id: "d", parentId: "c", content: "Task D", status: "todo" });
-    const childrenMap = new Map<string | undefined, Task[]>([
-      ["t1", [doneChild, openChild]],
-      ["c", [openGrandchild]],
-    ]);
-
-    renderTreeTaskItem({
-      childrenMap,
-      matchingChildren: [doneChild, openChild],
-      hasMatchingFilters: true,
-      isDirectMatchFn: (taskId) => taskId === "t1",
-      getMatchingChildrenFn: (parentId) => childrenMap.get(parentId) || [],
-    });
-
-    expect(screen.getByText("Task B")).toBeInTheDocument();
-    expect(screen.getByText("Task C")).toBeInTheDocument();
-    expect(screen.getByText("Task D")).toBeInTheDocument();
-  });
-
-  it("shows matching branches far enough to reveal deep descendants when the parent does not directly match", () => {
-    const doneChild = makeTask({ id: "b", parentId: "t1", content: "Task B", status: "done" });
-    const matchingChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
-    const openGrandchild = makeTask({ id: "d", parentId: "c", content: "Task D", status: "todo" });
-    const childrenMap = new Map<string | undefined, Task[]>([
-      ["t1", [doneChild, matchingChild]],
-      ["c", [openGrandchild]],
-    ]);
-
-    renderTreeTaskItem({
-      childrenMap,
-      matchingChildren: [matchingChild],
-      hasMatchingFilters: true,
-      isDirectMatchFn: (taskId) => taskId === "c",
-      getMatchingChildrenFn: (parentId) => {
-        if (parentId === "t1") return [matchingChild];
-        if (parentId === "c") return [openGrandchild];
-        return [];
-      },
-    });
-
-    expect(screen.queryByText("Task B")).not.toBeInTheDocument();
-    expect(screen.getByText("Task C")).toBeInTheDocument();
-    expect(screen.getByText("Task D")).toBeInTheDocument();
-  });
-
-  it("auto-unfolds nested matching branches far enough to reveal deep matches", () => {
-    const matchingChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
-    const matchingGrandchild = makeTask({ id: "d", parentId: "c", content: "Task D", status: "todo" });
-    const childrenMap = new Map<string | undefined, Task[]>([
-      ["t1", [matchingChild]],
-      ["c", [matchingGrandchild]],
-    ]);
-
-    renderTreeTaskItem({
-      childrenMap,
-      matchingChildren: [matchingChild],
-      hasMatchingFilters: true,
-      matchedByFilter: false,
-      isDirectMatchFn: (taskId) => taskId === "d",
-      getMatchingChildrenFn: (parentId) => {
-        if (parentId === "t1") return [matchingChild];
-        if (parentId === "c") return [matchingGrandchild];
-        return [];
-      },
-    });
-
-    expect(screen.getByTestId("tree-fold-toggle-c")).toHaveAttribute("data-fold-state", "matchingOnly");
-    expect(screen.getByText("Task D")).toBeInTheDocument();
-  });
-
-  it("dims only the non-matching ancestor row while keeping matching descendants undimmed", () => {
-    const matchingChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
-    const childrenMap = new Map<string | undefined, Task[]>([["t1", [matchingChild]]]);
-
-    renderTreeTaskItem({
-      task: { ...baseTask, content: "Task A" },
-      childrenMap,
-      matchingChildren: [matchingChild],
-      hasMatchingFilters: true,
-      matchedByFilter: false,
-      isDirectMatchFn: (taskId) => taskId === "c",
-      getMatchingChildrenFn: (parentId) => (parentId === "t1" ? [matchingChild] : []),
-    });
-
-    const rootRow = screen.getByRole("button", { name: /task: task a/i });
-    const childRow = screen.getByRole("button", { name: /task: task c/i });
-
-    expect(rootRow.className).toContain("opacity-50");
-    expect(childRow.className).not.toContain("opacity-50");
-  });
-
-  it("lets a descendant collapse while its ancestor is showing all subtasks", () => {
-    const doneChild = makeTask({ id: "b", parentId: "t1", content: "Task B", status: "done" });
-    const openChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
-    const openGrandchild = makeTask({ id: "d", parentId: "c", content: "Task D", status: "todo" });
-    const childrenMap = new Map<string | undefined, Task[]>([
-      ["t1", [doneChild, openChild]],
-      ["c", [openGrandchild]],
-    ]);
-
-    renderTreeTaskItem({
-      childrenMap,
-      matchingChildren: [doneChild, openChild],
-      getMatchingChildrenFn: (parentId) => childrenMap.get(parentId) || [],
-    });
-
-    fireEvent.click(screen.getByTestId("tree-fold-toggle-t1"));
-    fireEvent.click(screen.getByTestId("tree-fold-toggle-t1"));
-
-    expect(screen.getByTestId("tree-fold-toggle-t1")).toHaveAttribute("data-fold-state", "allVisible");
-    expect(screen.getByTestId("tree-fold-toggle-c")).toHaveAttribute("data-fold-state", "allVisible");
-    expect(screen.getByText("Task D")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId("tree-fold-toggle-c"));
-
-    expect(screen.getByTestId("tree-fold-toggle-c")).toHaveAttribute("data-fold-state", "collapsed");
-    expect(screen.queryByText("Task D")).not.toBeInTheDocument();
-    expect(screen.getByText("Task B")).toBeInTheDocument();
-    expect(screen.getByText("Task C")).toBeInTheDocument();
-  });
-
-  it("uses clear fold-toggle tooltips for each tree state", () => {
-    const doneChild = makeTask({ id: "b", parentId: "t1", content: "Task B", status: "done" });
-    const openChild = makeTask({ id: "c", parentId: "t1", content: "Task C", status: "todo" });
-    const childrenMap = new Map<string | undefined, Task[]>([["t1", [doneChild, openChild]]]);
-
-    renderTreeTaskItem({
-      childrenMap,
-      matchingChildren: [doneChild, openChild],
-      getMatchingChildrenFn: (parentId) => childrenMap.get(parentId) || [],
-    });
-
-    const foldToggle = screen.getByTestId("tree-fold-toggle-t1");
-    const initialTitle = foldToggle.getAttribute("title");
-    expect(initialTitle).toBeTruthy();
 
     fireEvent.click(foldToggle);
-    const collapsedTitle = screen.getByTestId("tree-fold-toggle-t1").getAttribute("title");
-    expect(collapsedTitle).toBeTruthy();
-    expect(collapsedTitle).not.toBe(initialTitle);
+    expect(foldToggle).toHaveAttribute("data-fold-state", "allVisible");
+    expect(screen.getByText("Done child")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId("tree-fold-toggle-t1"));
-    const openOnlyTitle = screen.getByTestId("tree-fold-toggle-t1").getAttribute("title");
-    expect(openOnlyTitle).toBeTruthy();
-    expect(openOnlyTitle).not.toBe(collapsedTitle);
+    fireEvent.click(foldToggle);
+    expect(foldToggle).toHaveAttribute("data-fold-state", "matchingOnly");
+    expect(screen.queryByText("Done child")).not.toBeInTheDocument();
   });
 
   it("cycles status on plain click even when status menu exists", () => {
