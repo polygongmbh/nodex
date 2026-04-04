@@ -348,8 +348,12 @@ export function createTreeSelectors(source: TreeSelectorSource): TreeSelectors {
   const getVisibility = () => {
     if (visibilityCache) return visibilityCache;
     const { included, excluded } = getIncludedExcludedChannelNames(source.channels);
+    const hasSelectedPeople = source.people.some((person) => person.isSelected);
     const hasMatchingFilters =
-      source.deferredSearchQuery.trim().length > 0 || included.length > 0 || excluded.length > 0;
+      source.deferredSearchQuery.trim().length > 0 ||
+      included.length > 0 ||
+      excluded.length > 0 ||
+      hasSelectedPeople;
 
     if (hasMatchingFilters) {
       const directlyMatchingIds = getDirectMatchTaskIdsForView({
@@ -795,7 +799,11 @@ export function useMobileFallbackNoticeState({
   const hasScopedMatchesWithSearch = hasActiveViewMatches("scopedWithSearch");
   const hasScopedMatchesWithoutSearch = hasActiveViewMatches("scopedWithoutSearch");
   const hasSourceContent = hasActiveViewMatches("sourceWithoutScope");
-  const shouldOmitSearchQuery = !showFilters && hasSearchQuery && !hasScopedMatchesWithSearch && hasSourceContent;
+  const shouldOmitSearchQuery =
+    !showFilters &&
+    hasSearchQuery &&
+    !hasScopedMatchesWithSearch &&
+    hasScopedMatchesWithoutSearch;
   const effectiveSearchQuery = shouldOmitSearchQuery ? "" : searchQuery;
   const scopeModelWithoutQuickSearch = useEmptyScopeModel({
     relays,

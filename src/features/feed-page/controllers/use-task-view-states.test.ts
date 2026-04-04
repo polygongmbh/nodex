@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   buildTreeVisibilityState,
+  createTreeSelectors,
   getAncestorChainFromSource,
 } from "./use-task-view-states";
+import { buildTaskViewFilterIndex } from "@/domain/content/task-view-filtering";
+import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
 import { buildChildrenMap } from "@/domain/content/task-sorting";
-import { makeTask } from "@/test/fixtures";
+import { makeChannel, makePerson, makeTask } from "@/test/fixtures";
 
 describe("getAncestorChainFromSource", () => {
   it("returns the full ancestor chain when no active item is set", () => {
@@ -83,5 +86,51 @@ describe("buildTreeVisibilityState", () => {
     expect(visibility.visibleTasks.map((task) => task.id)).toEqual(["root"]);
     expect(Array.from(visibility.matchingVisibleIds)).toEqual(["leaf", "middle", "root"]);
     expect(Array.from(visibility.directlyMatchingIds)).toEqual(["leaf"]);
+  });
+});
+
+describe("createTreeSelectors", () => {
+  it("treats selected people as active matching filters", () => {
+    const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
+    const bob = makePerson({ id: "bob", name: "bob", displayName: "Bob Doe" });
+    const aliceTask = makeTask({ id: "alice-task", author: alice, content: "Ship #general" });
+    const bobTask = makeTask({ id: "bob-task", author: bob, content: "Review #general" });
+    const tasks = [aliceTask, bobTask];
+    const childrenMap = buildChildrenMap(tasks);
+    const taskById = new Map(tasks.map((task) => [task.id, task] as const));
+    const selectors = createTreeSelectors({
+      allTasks: tasks,
+      focusedTaskId: null,
+      deferredSearchQuery: "",
+      channels: [makeChannel()],
+      people: [alice, bob],
+      quickFilters: normalizeQuickFilterState(),
+      channelMatchMode: "and",
+      taskById,
+      childrenMap,
+      prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
+      filterIndex: buildTaskViewFilterIndex(tasks, [alice, bob]),
+      sortContext: {
+        childrenMap,
+        allTasks: tasks,
+        taskById,
+      },
+      scopeModel: {
+        hasActiveFilters: true,
+        hasSelectedScope: true,
+        scopeDescription: null,
+        filteredSentence: null,
+        scopeFooterSentence: null,
+        mobileFallbackHint: null,
+        loadingSentence: null,
+        errorSentence: null,
+        errorSubtitle: "",
+        screenState: "default",
+      },
+    });
+
+    expect(selectors.hasMatchingFilters()).toBe(true);
+    expect(selectors.getVisibleTasks().map((task) => task.id)).toEqual(["alice-task"]);
+    expect(selectors.getDisplayedTasks({ useMobileFallback: true }).map((task) => task.id)).toEqual(["alice-task"]);
   });
 });

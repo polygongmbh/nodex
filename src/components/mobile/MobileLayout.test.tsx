@@ -407,6 +407,60 @@ describe("MobileLayout auth wiring", () => {
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
 
+  it("drops only the text filter when an included channel still has matches", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const sampleTasks: Task[] = [
+      makeTask({ id: "task-nodex", content: "Ship #nodex", tags: ["nodex"] }),
+    ];
+
+    renderMobileLayout({
+      surfaceState: {
+        channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+      },
+      taskViewModel: {
+        tasks: sampleTasks,
+        allTasks: sampleTasks,
+        channels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+        composeChannels: [makeChannel({ id: "nodex", name: "nodex", filterState: "included" })],
+        searchQuery: "nomatchquery",
+      },
+    });
+
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("No matches for the quick filter, showing all posts");
+    expect(status).toHaveTextContent("#nodex");
+    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
+  });
+
+  it("drops only the text filter when a selected person still has matches", () => {
+    setSignedInUser();
+    ndkMock.needsProfileSetup = false;
+
+    const alice = makePerson({ id: "alice", name: "alice", displayName: "Alice Doe", isSelected: true });
+    const sampleTasks: Task[] = [
+      makeTask({ id: "task-alice", content: "Ship #general", author: alice }),
+    ];
+
+    renderMobileLayout({
+      surfaceState: {
+        people: [alice],
+      },
+      taskViewModel: {
+        tasks: sampleTasks,
+        allTasks: sampleTasks,
+        people: [alice],
+        searchQuery: "nomatchquery",
+      },
+    });
+
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("No matches for the quick filter, showing all posts");
+    expect(status).toHaveTextContent("Alice Doe");
+    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
+  });
+
   it("hides fallback notices while hydration is active", () => {
     setSignedInUser();
     ndkMock.needsProfileSetup = false;
@@ -456,7 +510,7 @@ describe("MobileLayout auth wiring", () => {
     expect(status).toHaveTextContent(
       "Nothing yet in #nodex and #nostr, excluding #tech, on Demo, showing everything."
     );
-    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
+    expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "nomatchquery");
   });
 
   it("uses the same scoped fallback contract on mobile upcoming view", () => {
@@ -585,7 +639,7 @@ describe("MobileLayout auth wiring", () => {
 
     const status = screen.getByRole("status");
     expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent("Nothing yet by Me, in #nodex, on Demo, showing everything.");
+    expect(status).toHaveTextContent("Nothing yet with Me, in #nodex, on Demo, showing everything.");
     expect(screen.getByTestId("task-tree")).toHaveAttribute("data-search-query", "");
   });
 
