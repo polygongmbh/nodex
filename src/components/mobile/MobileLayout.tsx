@@ -8,52 +8,13 @@ import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
 import { FailedPublishQueueBanner } from "@/components/tasks/FailedPublishQueueBanner";
 import { ViewType } from "@/components/tasks/ViewSwitcher";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
-import type { FailedPublishDraft } from "@/infrastructure/preferences/failed-publish-drafts-storage";
-import {
-  ComposeRestoreRequest,
-} from "@/types";
 import { cn } from "@/lib/utils";
 import { useFeedTaskViewModel } from "@/features/feed-page/views/feed-task-view-model-context";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
 import { useMobileFallbackNoticeState } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 import { useMobileToastOffset } from "./use-mobile-toast-offset";
-
-export interface MobileLayoutViewState {
-  canCreateContent: boolean;
-  profileCompletionPromptSignal?: number;
-  currentView: ViewType;
-  isOnboardingOpen?: boolean;
-  activeOnboardingStepId?: string | null;
-  isManageRouteActive?: boolean;
-}
-
-export interface MobileLayoutActions {
-  onManageRouteChange?: (isActive: boolean) => void;
-}
-
-export interface MobileLayoutComposerState {
-  forceComposeMode?: boolean;
-  composeRestoreRequest?: ComposeRestoreRequest | null;
-  mentionRequest?: {
-    mention: string;
-    id: number;
-  } | null;
-}
-
-export interface MobileLayoutPublishState {
-  isPendingPublishTask?: (taskId: string) => boolean;
-  failedPublishDrafts?: FailedPublishDraft[];
-  visibleFailedPublishDrafts?: FailedPublishDraft[];
-  selectedPublishableRelayIds?: string[];
-}
-
-interface MobileLayoutProps {
-  viewState: MobileLayoutViewState;
-  actions?: MobileLayoutActions;
-  composerState?: MobileLayoutComposerState;
-  publishState?: MobileLayoutPublishState;
-}
 
 // Mobile view order for swipe navigation
 const mobileViews: MobileViewType[] = ["feed", "tree", "list", "calendar"];
@@ -69,52 +30,38 @@ const CalendarView = lazy(() =>
   import("@/components/tasks/CalendarView").then((module) => ({ default: module.CalendarView }))
 );
 
-export function MobileLayout({
-  viewState,
-  actions,
-  composerState,
-  publishState,
-}: MobileLayoutProps) {
+export function MobileLayout() {
   const dispatchFeedInteraction = useFeedInteractionDispatch();
   const surface = useFeedSurfaceState();
   const channels = surface.visibleChannels ?? surface.channels;
   const {
     canCreateContent,
-    profileCompletionPromptSignal = 0,
+    profileCompletionPromptSignal,
     currentView,
-    isOnboardingOpen = false,
-    activeOnboardingStepId = null,
-    isManageRouteActive = false,
-  } = viewState;
+    isOnboardingOpen,
+    activeOnboardingStepId,
+    isManageRouteActive,
+    failedPublishDrafts,
+    visibleFailedPublishDrafts,
+    selectedPublishableRelayIds,
+  } = useFeedViewState();
+
   const dispatchManageRouteChange = useCallback((isActive: boolean) => {
     void dispatchFeedInteraction({ type: "ui.manageRoute.change", isActive });
   }, [dispatchFeedInteraction]);
-  const onManageRouteChange = useMemo(
-    () => actions?.onManageRouteChange ?? dispatchManageRouteChange,
-    [actions?.onManageRouteChange, dispatchManageRouteChange]
-  );
+
   const feedTaskViewModel = useFeedTaskViewModel();
   const {
     tasks,
     allTasks,
     focusedTaskId = null,
-    composeRestoreRequest: contextComposeRestoreRequest = null,
-    mentionRequest: contextMentionRequest = null,
-    forceShowComposer: contextForceShowComposer = false,
-    isPendingPublishTask: contextIsPendingPublishTask,
+    composeRestoreRequest = null,
+    mentionRequest = null,
+    forceShowComposer: forceComposeMode = false,
+    isPendingPublishTask,
     isHydrating = false,
   } = feedTaskViewModel;
-  const {
-    forceComposeMode = contextForceShowComposer,
-    composeRestoreRequest = contextComposeRestoreRequest,
-    mentionRequest = contextMentionRequest,
-  } = composerState ?? {};
-  const {
-    isPendingPublishTask = contextIsPendingPublishTask,
-    failedPublishDrafts = [],
-    visibleFailedPublishDrafts,
-    selectedPublishableRelayIds = [],
-  } = publishState ?? {};
+
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(new Date());
   const [profileEditorOpenSignal, setProfileEditorOpenSignal] = useState(0);
@@ -128,8 +75,8 @@ export function MobileLayout({
 
   const openManageView = useCallback(() => {
     setShowFilters(true);
-    onManageRouteChange(true);
-  }, [onManageRouteChange]);
+    dispatchManageRouteChange(true);
+  }, [dispatchManageRouteChange]);
 
   const closeManageView = useCallback((nextView?: ViewType) => {
     setShowFilters(false);
@@ -137,8 +84,8 @@ export function MobileLayout({
       void dispatchFeedInteraction({ type: "ui.view.change", view: nextView });
       return;
     }
-    onManageRouteChange(false);
-  }, [dispatchFeedInteraction, onManageRouteChange]);
+    dispatchManageRouteChange(false);
+  }, [dispatchFeedInteraction, dispatchManageRouteChange]);
 
   const handleMobileViewChange = useCallback((view: MobileViewType) => {
     if (showFilters) {
@@ -306,7 +253,7 @@ export function MobileLayout({
         isMobile
       />
 
-      <main 
+      <main
         className="flex-1 overflow-hidden relative"
         {...swipeHandlers}
       >
@@ -329,7 +276,7 @@ export function MobileLayout({
               {mobileFallbackMessage}
             </div>
           )}
-          <div 
+          <div
             ref={viewContainerRef}
             className={cn(
               "flex-1 min-h-0 w-full transition-all duration-200 ease-out",
@@ -343,7 +290,7 @@ export function MobileLayout({
           </div>
         </div>
       </main>
-      
+
       <div hidden={showFilters}>
         <UnifiedBottomBar
           currentView={activePrimaryView}

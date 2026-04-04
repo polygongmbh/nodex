@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { makePerson, makeTask } from "@/test/fixtures";
 import { FeedSurfaceProvider } from "./feed-surface-context";
 import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-view-model-context";
+import { FeedViewStateProvider } from "./feed-view-state-context";
 import { FeedPageViewPane } from "./FeedPageViewPane";
 
 vi.mock("@/components/tasks/TaskTree", () => ({
@@ -48,9 +49,26 @@ function renderPane(currentView: "feed" | "tree" | "kanban" | "calendar" | "list
         channelMatchMode: "and",
       }}
     >
-      <FeedTaskViewModelProvider value={value}>
-        <FeedPageViewPane currentView={currentView} kanbanDepthMode="leaves" loadingLabel="Loading view" />
-      </FeedTaskViewModelProvider>
+      <FeedViewStateProvider
+        value={{
+          currentView,
+          kanbanDepthMode: "leaves",
+          isSidebarFocused: false,
+          isOnboardingOpen: false,
+          activeOnboardingStepId: null,
+          isManageRouteActive: false,
+          canCreateContent: true,
+          profileCompletionPromptSignal: 0,
+          failedPublishDrafts: [],
+          visibleFailedPublishDrafts: [],
+          selectedPublishableRelayIds: [],
+          desktopSwipeHandlers: {},
+        }}
+      >
+        <FeedTaskViewModelProvider value={value}>
+          <FeedPageViewPane />
+        </FeedTaskViewModelProvider>
+      </FeedViewStateProvider>
     </FeedSurfaceProvider>
   );
 }

@@ -5,12 +5,14 @@ import type { FeedInteractionBus } from "@/features/feed-page/interactions/feed-
 import { FeedSurfaceProvider, type FeedSurfaceState } from "./feed-surface-context";
 import { FeedTaskViewModelProvider, type FeedTaskViewModel } from "./feed-task-view-model-context";
 import { FeedPageUiConfigProvider, type FeedPageUiConfig } from "./feed-page-ui-config";
+import { FeedViewStateProvider, type FeedViewState } from "./feed-view-state-context";
 
 interface FeedPageProvidersProps extends PropsWithChildren {
   interactionBus: FeedInteractionBus;
   uiConfig: FeedPageUiConfig;
   surfaceState: FeedSurfaceState;
   taskViewModel: FeedTaskViewModel;
+  viewState: FeedViewState;
   sidebarController?: FeedSidebarState;
 }
 
@@ -19,6 +21,7 @@ export function FeedPageProviders({
   uiConfig,
   surfaceState,
   taskViewModel,
+  viewState,
   sidebarController,
   children,
 }: FeedPageProvidersProps) {
@@ -30,7 +33,9 @@ export function FeedPageProviders({
     <FeedInteractionProvider bus={interactionBus}>
       <FeedPageUiConfigProvider value={uiConfig}>
         <FeedSurfaceProvider value={surfaceState}>
-          <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
+          <FeedViewStateProvider value={viewState}>
+            <FeedTaskViewModelProvider value={taskViewModel}>{content}</FeedTaskViewModelProvider>
+          </FeedViewStateProvider>
         </FeedSurfaceProvider>
       </FeedPageUiConfigProvider>
     </FeedInteractionProvider>

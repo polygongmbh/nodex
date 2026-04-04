@@ -10,22 +10,17 @@ import { VersionHint } from "@/components/layout/VersionHint";
 import { LegalDialog } from "@/components/legal/LegalDialog";
 import { useTranslation } from "react-i18next";
 import { useFeedInteractionDispatch } from "@/features/feed-page/interactions/feed-interaction-context";
+import { useFeedSurfaceState } from "@/features/feed-page/views/feed-surface-context";
+import { useFeedViewState } from "@/features/feed-page/views/feed-view-state-context";
 
 export type KanbanDepthMode = "1" | "2" | "3" | "all" | "leaves" | "projects";
 
-interface DesktopSearchDockProps {
-  searchQuery: string;
-  showKanbanLevels?: boolean;
-  kanbanDepthMode?: KanbanDepthMode;
-}
-
-export function DesktopSearchDock({
-  searchQuery,
-  showKanbanLevels = false,
-  kanbanDepthMode = "leaves",
-}: DesktopSearchDockProps) {
+export function DesktopSearchDock() {
   const { t } = useTranslation();
   const dispatchFeedInteraction = useFeedInteractionDispatch();
+  const { searchQuery } = useFeedSurfaceState();
+  const { currentView, kanbanDepthMode } = useFeedViewState();
+  const showKanbanLevels = currentView === "kanban" || currentView === "list";
   return (
     <div className="relative flex-shrink-0 border-t border-border bg-background/80 backdrop-blur-md">
       <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />

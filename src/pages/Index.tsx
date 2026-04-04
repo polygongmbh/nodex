@@ -61,7 +61,6 @@ import {
 import {
   FeedPageMobileShell,
 } from "@/features/feed-page/views/FeedPageMobileShell";
-import { useFeedPageShellConfig } from "@/features/feed-page/views/use-feed-page-shell-config";
 import {
   type FeedPageUiConfig,
 } from "@/features/feed-page/views/feed-page-ui-config";
@@ -803,40 +802,69 @@ const Index = () => {
     ]
   );
 
-  const {
-    mobileController,
-    desktopHeader,
-    desktopContent,
-    desktopSidebarController,
-  } = useFeedPageShellConfig({
-    canCreateContent: authPolicy.canCreateContent,
-    profileCompletionPromptSignal,
-    currentView,
-    isOnboardingOpen,
-    isAuthModalOpen,
-    activeOnboardingStepId,
-    isManageRouteActive,
-    failedPublishDrafts,
-    visibleFailedPublishDrafts,
-    selectedPublishableRelayIds,
-    relaysWithActiveState,
-    channelsWithState,
-    collapsedPreviewChannels: focusedTaskCollapsedSidebarPreview.channels,
-    channelMatchMode,
-    peopleWithState,
-    collapsedPreviewPeople: focusedTaskCollapsedSidebarPreview.people,
-    nostrRelays,
-    isSidebarFocused,
-    quickFilters,
-    savedFilterConfigurations: savedFilterController.configurations,
-    activeSavedFilterConfigurationId: savedFilterController.activeConfigurationId,
-    pinnedChannelIds,
-    pinnedPersonIds,
-    desktopSwipeHandlers,
-    kanbanDepthMode,
-    searchQuery,
-    t,
-  });
+  const desktopSidebarController = useMemo(
+    () => ({
+      relays: relaysWithActiveState,
+      channels: channelsWithState,
+      collapsedPreviewChannels: focusedTaskCollapsedSidebarPreview.channels,
+      channelMatchMode,
+      people: peopleWithState,
+      collapsedPreviewPeople: focusedTaskCollapsedSidebarPreview.people,
+      nostrRelays,
+      isFocused: isSidebarFocused,
+      quickFilters,
+      savedFilterConfigurations: savedFilterController.configurations,
+      activeSavedFilterConfigurationId: savedFilterController.activeConfigurationId,
+      pinnedChannelIds,
+      pinnedPersonIds,
+    }),
+    [
+      channelMatchMode,
+      channelsWithState,
+      focusedTaskCollapsedSidebarPreview.channels,
+      focusedTaskCollapsedSidebarPreview.people,
+      isSidebarFocused,
+      nostrRelays,
+      peopleWithState,
+      pinnedChannelIds,
+      pinnedPersonIds,
+      quickFilters,
+      relaysWithActiveState,
+      savedFilterController,
+    ]
+  );
+
+  const feedViewState = useMemo(
+    () => ({
+      currentView,
+      kanbanDepthMode,
+      isSidebarFocused,
+      isOnboardingOpen: isOnboardingOpen && !isAuthModalOpen,
+      activeOnboardingStepId,
+      isManageRouteActive,
+      canCreateContent: authPolicy.canCreateContent,
+      profileCompletionPromptSignal,
+      failedPublishDrafts,
+      visibleFailedPublishDrafts,
+      selectedPublishableRelayIds,
+      desktopSwipeHandlers,
+    }),
+    [
+      activeOnboardingStepId,
+      authPolicy.canCreateContent,
+      currentView,
+      desktopSwipeHandlers,
+      failedPublishDrafts,
+      isAuthModalOpen,
+      isManageRouteActive,
+      isOnboardingOpen,
+      isSidebarFocused,
+      kanbanDepthMode,
+      profileCompletionPromptSignal,
+      selectedPublishableRelayIds,
+      visibleFailedPublishDrafts,
+    ]
+  );
 
   // Mobile layout
   if (isMobile) {
@@ -846,10 +874,10 @@ const Index = () => {
         uiConfig={uiConfig}
         surfaceState={feedSurfaceState}
         taskViewModel={feedTaskViewModel}
+        viewState={feedViewState}
       >
         <MotdBanner />
         <FeedPageMobileShell
-          controller={mobileController}
           authModalProps={{
             isOpen: isAuthModalOpen,
             onClose: handleCloseAuthModal,
@@ -868,12 +896,11 @@ const Index = () => {
       uiConfig={uiConfig}
       surfaceState={feedSurfaceState}
       taskViewModel={feedTaskViewModel}
+      viewState={feedViewState}
       sidebarController={desktopSidebarController}
     >
       <MotdBanner />
       <FeedPageDesktopShell
-        header={desktopHeader}
-        content={desktopContent}
         shortcutsHelpProps={{ isOpen: shortcutsHelp.isOpen, onClose: shortcutsHelp.close }}
         authModalProps={{
           isOpen: isAuthModalOpen,

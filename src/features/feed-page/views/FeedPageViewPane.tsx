@@ -1,13 +1,13 @@
 import { Suspense, lazy, type ReactNode, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { FilteredEmptyState } from "@/components/tasks/FilteredEmptyState";
 import { TaskTree } from "@/components/tasks/TaskTree";
 import { TaskViewStatusRow } from "@/components/tasks/TaskViewStatusRow";
-import { type KanbanDepthMode } from "@/components/tasks/DesktopSearchDock";
-import type { ViewType } from "@/components/tasks/ViewSwitcher";
 import { getIncludedExcludedChannelNames } from "@/domain/content/channel-filtering";
 import { filterTasksForView } from "@/domain/content/task-view-filtering";
 import { useTaskViewSource } from "@/features/feed-page/controllers/use-task-view-states";
 import { useFeedTaskViewModel } from "./feed-task-view-model-context";
+import { useFeedViewState } from "./feed-view-state-context";
 
 const FeedView = lazy(() =>
   import("@/components/tasks/FeedView").then((module) => ({ default: module.FeedView }))
@@ -22,17 +22,10 @@ const ListView = lazy(() =>
   import("@/components/tasks/ListView").then((module) => ({ default: module.ListView }))
 );
 
-interface FeedPageViewPaneProps {
-  currentView: ViewType;
-  kanbanDepthMode: KanbanDepthMode;
-  loadingLabel: string;
-}
-
-export function FeedPageViewPane({
-  currentView,
-  kanbanDepthMode,
-  loadingLabel,
-}: FeedPageViewPaneProps) {
+export function FeedPageViewPane() {
+  const { t } = useTranslation();
+  const { currentView, kanbanDepthMode } = useFeedViewState();
+  const loadingLabel = t("app.loadingView");
   const viewModel = useFeedTaskViewModel();
   const taskSource = useTaskViewSource({
     tasks: viewModel.tasks,
