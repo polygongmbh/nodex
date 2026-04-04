@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
-import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import { notifyDisconnectedSelectedFeeds, notifyNeedSigninModify, notifyNeedSigninPost } from "@/lib/notifications";
+import type { TranslateFn } from "@/lib/i18n/translate";
 import { resolveOriginRelayIdForTask } from "@/lib/nostr/task-relay-routing";
 import { nostrDevLog } from "@/lib/nostr/dev-logs";
 import { isNostrEventId } from "@/lib/nostr/event-id";
@@ -34,7 +34,7 @@ interface UseTaskPublishControlsOptions {
     parentId?: string,
     relayUrls?: string[]
   ) => Promise<PublishResult>;
-  t: TFunction;
+  t: TranslateFn;
 }
 
 export function useTaskPublishControls({

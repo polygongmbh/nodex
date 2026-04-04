@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { TFunction } from "i18next";
 import type { Task, TaskStatus } from "@/types";
 import type { Person } from "@/types/person";
+import type { TranslateFn } from "@/lib/i18n/translate";
 import { applyTaskStatusUpdate, cycleTaskStatus } from "@/domain/content/task-status";
 import { canUserChangeTaskStatus } from "@/domain/content/task-permissions";
 import { notifyStatusRestricted } from "@/lib/notifications";
@@ -20,7 +20,7 @@ export interface UseTaskStatusControllerOptions {
   guardInteraction: (mode: "post" | "modify") => boolean;
   publishTaskStateUpdate: (taskId: string, status: TaskStatus) => Promise<unknown>;
   setLocalTasks: React.Dispatch<React.SetStateAction<Task[]>>;
-  t: TFunction;
+  t: TranslateFn;
 }
 
 export interface UseTaskStatusControllerResult {

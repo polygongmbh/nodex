@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { QueryClient } from "@tanstack/react-query";
-import type { TFunction } from "i18next";
 import { toast } from "sonner";
+import type { TranslateFn } from "@/lib/i18n/translate";
 import { NOSTR_EVENTS_QUERY_KEY } from "@/infrastructure/nostr/use-nostr-event-cache";
 import {   removeCachedNostrEventById, type CachedNostrEvent, } from "@/infrastructure/nostr/event-cache";
 import {   loadFailedPublishDrafts, saveFailedPublishDrafts, type FailedPublishDraft, } from "@/infrastructure/preferences/failed-publish-drafts-storage";
@@ -75,7 +75,7 @@ interface UseTaskPublishFlowOptions {
   demoFeedActive: boolean;
   demoRelayId: string;
   queryClient: QueryClient;
-  t: TFunction;
+  t: TranslateFn;
   setLocalTasks: Dispatch<SetStateAction<Task[]>>;
   setPostedTags: Dispatch<SetStateAction<PostedTag[]>>;
   suppressedNostrEventIds: Set<string>;

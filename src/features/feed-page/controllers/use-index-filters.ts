@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import { getPreferredMentionIdentifier } from "@/lib/mentions";
+import type { TranslateFn } from "@/lib/i18n/translate";
 import {
   loadPersistedChannelFilters,
   loadPersistedChannelMatchMode,
@@ -38,7 +38,7 @@ interface UseIndexFiltersOptions {
   sidebarPeople: Person[];
   hasLiveHydratedScope?: boolean;
   isHydrating?: boolean;
-  t: TFunction;
+  t: TranslateFn;
 }
 
 export function useIndexFilters({

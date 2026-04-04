@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
-import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import type { Relay } from "@/types";
+import type { TranslateFn } from "@/lib/i18n/translate";
 import { shouldReconnectRelayOnSelection } from "@/domain/relays/relay-reconnect-policy";
 import { normalizeRelayUrl } from "@/infrastructure/nostr/relay-url";
 import { getRelayDomain, useRelayFilterState } from "./use-relay-filter-state";
@@ -10,7 +10,7 @@ type RelaySelectionMode = "toggle" | "exclusive";
 
 interface UseRelaySelectionControllerOptions {
   relays: Relay[];
-  t: TFunction;
+  t: TranslateFn;
   reconnectFailureGraceMs?: number;
 }
 

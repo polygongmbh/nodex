@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import type { TFunction } from "i18next";
 import { toast } from "sonner";
+import type { TranslateFn } from "@/lib/i18n/translate";
 import { buildImetaTag } from "@/lib/attachments";
 import { getListingReplaceableKey } from "@/domain/listings/listing-identity";
 import { isNostrEventId } from "@/lib/nostr/event-id";
@@ -27,7 +27,7 @@ interface UseListingStatusPublishOptions {
   ) => Promise<PublishResult>;
   resolveTaskOriginRelay: (taskId: string) => { relayUrls: string[] };
   setLocalTasks: Dispatch<SetStateAction<Task[]>>;
-  t: TFunction;
+  t: TranslateFn;
 }
 
 const LISTING_EVENT_KIND = NostrEventKind.ClassifiedListing;

@@ -1,5 +1,5 @@
-import { TFunction } from "i18next";
 import { toast } from "sonner";
+import type { TranslateFn } from "@/lib/i18n/translate";
 import type { TaskEntryType } from "@/types";
 import { getRelayNameFromUrl } from "@/infrastructure/nostr/relay-identity";
 
@@ -8,32 +8,32 @@ interface PublishSuccessToastOptions {
   spaceNames?: string[];
 }
 
-export function notifyNeedSigninModify(t: TFunction): void {
+export function notifyNeedSigninModify(t: TranslateFn): void {
   toast.error(t("toasts.errors.needSigninModify"));
 }
 
-export function notifyNeedSigninPost(t: TFunction): void {
+export function notifyNeedSigninPost(t: TranslateFn): void {
   toast.error(t("toasts.errors.needSigninPost"));
 }
 
-export function notifyStatusRestricted(t: TFunction): void {
+export function notifyStatusRestricted(t: TranslateFn): void {
   toast.error(t("toasts.errors.statusRestricted"));
 }
 
-export function notifyNeedTag(t: TFunction): void {
+export function notifyNeedTag(t: TranslateFn): void {
   toast.error(t("toasts.errors.needTag"));
 }
 
-export function notifyTaskCreationFailed(t: TFunction): void {
+export function notifyTaskCreationFailed(t: TranslateFn): void {
   toast.error(t("toasts.errors.taskCreationFailed"));
 }
 
-export function notifyDisconnectedSelectedFeeds(t: TFunction): void {
+export function notifyDisconnectedSelectedFeeds(t: TranslateFn): void {
   toast.warning(t("toasts.warnings.disconnectedSelectedFeeds"), { id: "disconnected-selected-feeds" });
 }
 
 export function notifyPublished(
-  t: TFunction,
+  t: TranslateFn,
   taskType: TaskEntryType,
   options: PublishSuccessToastOptions = {}
 ): void {
@@ -54,7 +54,7 @@ export function notifyPublished(
   toast.success(taskType === "comment" ? t("toasts.success.publishedComment") : t("toasts.success.publishedTask"));
 }
 
-export function notifyLocalSaved(t: TFunction, taskType: TaskEntryType): void {
+export function notifyLocalSaved(t: TranslateFn, taskType: TaskEntryType): void {
   toast.success(taskType === "comment" ? t("toasts.success.localComment") : t("toasts.success.localTask"));
 }
 
@@ -63,11 +63,11 @@ interface PublishRetryToastOptions {
   reason?: string;
 }
 
-export function notifyPartialPublish(t: TFunction, options: { publishedCount: number; targetCount: number }): void {
+export function notifyPartialPublish(t: TranslateFn, options: { publishedCount: number; targetCount: number }): void {
   toast.warning(t("toasts.warnings.partialPublish", options));
 }
 
-export function notifyPublishSavedForRetry(t: TFunction, options: PublishRetryToastOptions = {}): void {
+export function notifyPublishSavedForRetry(t: TranslateFn, options: PublishRetryToastOptions = {}): void {
   const { relayUrl, reason } = options;
   if (relayUrl && reason) {
     toast.error(t("toasts.errors.publishSavedForRetryWithRelayReason", { relayUrl, reason }));

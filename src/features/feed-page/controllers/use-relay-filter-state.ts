@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { TFunction } from "i18next";
 import { toast } from "sonner";
 import { Relay } from "@/types";
+import type { TranslateFn } from "@/lib/i18n/translate";
 import { getEffectiveActiveRelayIds } from "@/domain/preferences/filter-state";
 import {
   loadPersistedRelayIds,
@@ -10,7 +10,7 @@ import {
 
 interface UseRelayFilterStateOptions {
   relays: Relay[];
-  t: TFunction;
+  t: TranslateFn;
   onRelayEnabled?: (relay: Relay) => void;
   getEnableToastMessage?: (
     relay: Relay,
