@@ -128,8 +128,8 @@ vi.mock("./MobileFilters", () => ({
 }));
 
 vi.mock("@/components/tasks/TaskTree", () => ({
-  TaskTree: ({ searchQuery }: { searchQuery: string }) => (
-    <div data-testid="task-tree" data-search-query={searchQuery} />
+  TaskTree: ({ searchQueryOverride }: { searchQueryOverride?: string }) => (
+    <div data-testid="task-tree" data-search-query={searchQueryOverride ?? ""} />
   ),
 }));
 

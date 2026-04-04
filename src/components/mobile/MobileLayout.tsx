@@ -219,7 +219,7 @@ export function MobileLayout({
   const effectiveTaskViewModel = useMemo(
     () => ({
       ...feedTaskViewModel,
-      searchQuery: effectiveSearchQuery,
+      searchQueryOverride: effectiveSearchQuery,
       composeRestoreRequest,
       mentionRequest,
       forceShowComposer: forceComposeMode,

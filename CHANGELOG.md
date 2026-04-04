@@ -18,6 +18,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning.
 - Presence status publishing now targets every active writable relay instead of retry-churning the last successful one, skips read-only relays, only sends offline presence on unload/logout, and backs failed relay retries off beyond the per-relay publish timeout.
 - Feed hydration now stays bounded until you scroll or focus deeper items, so media-heavy spaces no longer auto-mount the entire hidden timeline while idle.
 - Audio attachments and standalone audio embeds now stay inline-only with their native player, and task media popup navigation now rotates only through visual media instead of opening audio in the lightbox.
+- Mobile quick-filter fallback now reaches the actual task views again, so when mobile drops the text query it keeps the remaining channel and person scope instead of drifting back to the stale pre-fallback search state.
 - The top-level `Index` route now loads eagerly again instead of through `React.lazy`, avoiding stale module-script failures after restarting the Vite dev server with an already open tab.
 - The app now retries once with a cache-bypassing reload when a deployed JS chunk or module script goes missing after an update, reducing blank error-boundary failures from stale tabs after a new release.
 - Desktop sidebar rows and section headers now use the restored left gutter spacing from before the `v2.8.0` sidebar inset refactor, so sidebar content no longer sits tight against the left border.
