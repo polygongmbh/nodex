@@ -3,7 +3,11 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { NDKEvent, NDKFilter, NDKRelay, NDKSubscription } from "@nostr-dev-kit/ndk";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ALL_RELAYS_SCOPE_KEY } from "@/infrastructure/nostr/event-cache";
+import {
+  ALL_RELAYS_SCOPE_KEY,
+  NOSTR_EVENT_CACHE_SCOPE_PREFIX,
+  NOSTR_EVENT_CACHE_STORAGE_KEY,
+} from "@/infrastructure/nostr/event-cache";
 import {
   buildFeedScopeKey,
   drainPendingCachedEvents,
@@ -183,6 +187,7 @@ function Harness({ subscribe }: { subscribe: MockSubscriptionControls["subscribe
 describe("useNostrEventCache live subscription behavior", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    vi.useRealTimers();
   });
 
   it("keeps receiving events after EOSE and requests a persistent subscription", async () => {
@@ -248,5 +253,34 @@ describe("useNostrEventCache live subscription behavior", () => {
     await waitFor(() => {
       expect(screen.getByTestId("relay-urls").textContent).toBe("wss://relay.one|wss://relay.two");
     });
+  });
+
+  it("does not persist cache updates before the debounce window after a live flush", async () => {
+    vi.useFakeTimers();
+    const controls = createMockSubscriptionControls();
+    const queryClient = new QueryClient();
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <Harness subscribe={controls.subscribe} />
+      </QueryClientProvider>
+    );
+
+    expect(controls.subscribe).toHaveBeenCalled();
+
+    act(() => {
+      controls.emitEvent(makeNostrEvent("debounced-event"));
+      vi.advanceTimersByTime(64);
+    });
+
+    expect(screen.getByTestId("event-ids").textContent).toContain("debounced-event");
+
+    const cacheWritesBeforeDebounce = setItemSpy.mock.calls.filter(([key]) => {
+      return key === NOSTR_EVENT_CACHE_STORAGE_KEY || String(key).startsWith(NOSTR_EVENT_CACHE_SCOPE_PREFIX);
+    });
+    expect(cacheWritesBeforeDebounce).toHaveLength(0);
+
+    setItemSpy.mockRestore();
   });
 });

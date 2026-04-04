@@ -199,6 +199,7 @@ export function useNostrEventCache({
   const persistTimerRef = useRef<number | null>(null);
   const hydrationFlushTimerRef = useRef<number | null>(null);
   const pendingHydrationEventsRef = useRef<CachedNostrEvent[]>([]);
+  const latestPersistedEventsRef = useRef<CachedNostrEvent[]>([]);
 
   const clearHydrationFlushTimer = useCallback(() => {
     if (hydrationFlushTimerRef.current === null || typeof window === "undefined") return;
@@ -226,12 +227,14 @@ export function useNostrEventCache({
     );
 
     const remaining = pendingHydrationEventsRef.current.length;
-    nostrDevLog("hydrate", "Flushed cached Nostr events batch", {
-      feedScopeKey,
-      flushedCount: pendingBeforeFlush - remaining,
-      remaining,
-      flushAll,
-    });
+    if (!hasFinalizedBootstrapRef.current) {
+      nostrDevLog("hydrate", "Flushed cached Nostr events batch", {
+        feedScopeKey,
+        flushedCount: pendingBeforeFlush - remaining,
+        remaining,
+        flushAll,
+      });
+    }
 
     if (remaining > 0 && typeof window !== "undefined") {
       const delay = getFlushDelayMs(remaining);
@@ -269,6 +272,10 @@ export function useNostrEventCache({
     staleTime: Infinity,
     gcTime: Infinity,
   });
+
+  useEffect(() => {
+    latestPersistedEventsRef.current = nostrEvents;
+  }, [nostrEvents]);
 
   const markLiveHydratedScope = useCallback(() => {
     if (hasMarkedLiveHydratedScopeRef.current) return;
@@ -321,23 +328,37 @@ export function useNostrEventCache({
     };
   }, [finalizeBootstrapScope, flushPendingEvents, isConnected, pushEvent, subscribe, subscribedKinds]);
 
+  const flushPersist = useCallback(() => {
+    if (typeof window !== "undefined" && persistTimerRef.current !== null) {
+      window.clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
+    }
+    flushPendingEvents(true);
+    const latestEvents =
+      queryClient.getQueryData<CachedNostrEvent[]>(queryKey) || latestPersistedEventsRef.current;
+    saveCachedNostrEvents(latestEvents, feedScopeKey);
+  }, [feedScopeKey, flushPendingEvents, queryClient, queryKey]);
+
   useEffect(() => {
     if (typeof window === "undefined") {
       saveCachedNostrEvents(nostrEvents, feedScopeKey);
       return;
     }
 
-    const flushPersist = () => {
-      if (persistTimerRef.current !== null) {
-        window.clearTimeout(persistTimerRef.current);
-        persistTimerRef.current = null;
-      }
-      flushPendingEvents(true);
-      const latestEvents = queryClient.getQueryData<CachedNostrEvent[]>(queryKey) || nostrEvents;
-      saveCachedNostrEvents(latestEvents, feedScopeKey);
-    };
-
+    if (persistTimerRef.current !== null) {
+      window.clearTimeout(persistTimerRef.current);
+    }
     persistTimerRef.current = window.setTimeout(flushPersist, CACHE_PERSIST_DEBOUNCE_MS);
+
+    return () => {
+      if (persistTimerRef.current === null) return;
+      window.clearTimeout(persistTimerRef.current);
+      persistTimerRef.current = null;
+    };
+  }, [feedScopeKey, flushPersist, nostrEvents]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     const onVisibilityChange = () => {
       if (document.visibilityState !== "hidden") return;
       flushPersist();
@@ -347,7 +368,7 @@ export function useNostrEventCache({
       document.removeEventListener("visibilitychange", onVisibilityChange);
       flushPersist();
     };
-  }, [feedScopeKey, flushPendingEvents, nostrEvents, queryClient, queryKey]);
+  }, [flushPersist]);
 
   return {
     events: nostrEvents,
