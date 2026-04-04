@@ -5,9 +5,8 @@ import {
   getAncestorChainFromSource,
 } from "./use-task-view-states";
 import { buildTaskViewFilterIndex } from "@/domain/content/task-view-filtering";
-import { normalizeQuickFilterState } from "@/domain/content/quick-filter-constraints";
-import { buildChildrenMap } from "@/domain/content/task-sorting";
 import { makeChannel, makePerson, makeTask } from "@/test/fixtures";
+import { makeQuickFilterState } from "@/test/quick-filter-state";
 
 describe("getAncestorChainFromSource", () => {
   it("returns the full ancestor chain when no active item is set", () => {
@@ -71,7 +70,11 @@ describe("buildTreeVisibilityState", () => {
     const middle = makeTask({ id: "middle", parentId: "root", content: "Middle task" });
     const leaf = makeTask({ id: "leaf", parentId: "middle", content: "Leaf task #beta", tags: ["beta"] });
     const tasks = [root, middle, leaf];
-    const childrenMap = buildChildrenMap(tasks);
+    const childrenMap = new Map<string | undefined, typeof tasks>([
+      [undefined, [root]],
+      ["root", [middle]],
+      ["middle", [leaf]],
+    ]);
     const visibility = buildTreeVisibilityState({
       focusedTaskId: null,
       prefilteredTaskIds: new Set(tasks.map((task) => task.id)),
@@ -96,7 +99,9 @@ describe("createTreeSelectors", () => {
     const aliceTask = makeTask({ id: "alice-task", author: alice, content: "Ship #general" });
     const bobTask = makeTask({ id: "bob-task", author: bob, content: "Review #general" });
     const tasks = [aliceTask, bobTask];
-    const childrenMap = buildChildrenMap(tasks);
+    const childrenMap = new Map<string | undefined, typeof tasks>([
+      [undefined, [aliceTask, bobTask]],
+    ]);
     const taskById = new Map(tasks.map((task) => [task.id, task] as const));
     const selectors = createTreeSelectors({
       allTasks: tasks,
@@ -104,7 +109,7 @@ describe("createTreeSelectors", () => {
       deferredSearchQuery: "",
       channels: [makeChannel()],
       people: [alice, bob],
-      quickFilters: normalizeQuickFilterState(),
+      quickFilters: makeQuickFilterState(),
       channelMatchMode: "and",
       taskById,
       childrenMap,

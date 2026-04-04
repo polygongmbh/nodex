@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { getStandaloneEmbeddableUrls, linkifyContent } from "./linkify";
 import type { Person } from "@/types/person";
-import { hexPubkeyToNpub } from "@/lib/nostr/user-facing-pubkey";
 import { FeedInteractionProvider } from "@/features/feed-page/interactions/feed-interaction-context";
 
 const alice: Person = {
@@ -120,8 +119,7 @@ describe("linkifyContent interaction styles", () => {
 
   it("linkifies nostr:npub mentions and routes modifier clicks through fallback person actions", () => {
     const unresolvedPubkey = "b".repeat(64);
-    const npub = hexPubkeyToNpub(unresolvedPubkey);
-    expect(npub).toBeTruthy();
+    const npub = "npub1hwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwamhwasxw04hu";
     const dispatch = renderWithDispatch(linkifyContent(`Assign to nostr:${npub}`));
 
     fireEvent.click(screen.getByRole("button", { name: /person actions for npub1/i }), { ctrlKey: true });
